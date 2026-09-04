@@ -10,6 +10,42 @@
 > **Database:** PostgreSQL
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
+
+## [2026-09-04] — MASTER-002: routing foundation + architecture boundary checks
+
+### تم التنفيذ
+- أُنشئ registry TypeScript مركزي لمسارات الـbrowser المعتمدة في `src/shared/routing/`، مع حالة file expectation تفصل `required` عن `deferred` و`conditional` بدون إنشاء صفحات Astro وهمية.
+- أُنشئت policy helpers توضح أن metadata المسار ليست Authorization، وأن كل route محمي يحتاج re-authorization داخل الـApplication Use Case.
+- أُنشئ فحص معماري لـDelivery يمنع imports قاعدة البيانات/Domain/Business Rules وraw SQL من `src/pages` و`src/actions` و`src/ui` وmiddleware عند وجوده.
+- أُنشئ فحص route-file coverage يعطي مسارات الملفات الناقصة بوضوح ويخرج nonzero؛ النتيجة الحالية الناقصة متوقعة لأن صفحات الدومينات ما زالت غير منفذة، والـdeferred/conditional مستثناة عمدًا.
+- أُضيفت READMEs لتثبيت حدود modules/shared/ui/pages/db/tests قبل feature code.
+- ثُبّت Render Web Service و`qclevel.top` كأساس web/domain في وثائق التشغيل، مع Hostinger كمدير DNS حالي، وعدم اختراع hostname أو providers غير معتمدين.
+- كانت metadata في UI/UX وRoute Manifest بالفعل `FOUNDATION — APPROVED` من العمل السابق؛ تم التحقق منها ولم يتغير محتواها.
+
+### الملفات المتأثرة
+- `src/shared/routing/route-types.ts`, `src/shared/routing/route-policy.ts`, `src/shared/routing/routes.ts`
+- `scripts/architecture/check-boundaries.mjs`, `scripts/architecture/check-route-files.mjs`
+- `src/{modules,shared,ui}/README.md`, `src/pages/README.md`, `db/README.md`, `tests/README.md`
+- `tests/unit/routing-registry.test.ts`
+- `Documents/DEPLOYMENT-ARCHITECTURE.md`, `docs/operations/RENDER-DEPLOYMENT.md`
+
+### التحقق
+- TDD: اختبار الـrouting فشل أولًا بسبب غياب registry ثم نجح بعد التنفيذ؛ `pnpm test:unit` → 5 tests ✅
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build` ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅ بلا Delivery boundary violations.
+- `pnpm exec tsx scripts/architecture/check-route-files.mjs` → nonzero متوقع مع قائمة الملفات المطلوبة الناقصة؛ لا يشمل deferred/conditional routes ✅
+- إعادة قراءة metadata لأول 30 سطرًا من UI/UX وRoute Manifest، وفحص stale approval wording بلا نتائج ✅
+- إعادة التحقق من Render الرسمي: Web Service يحتاج binding على `0.0.0.0`، root A fallback هو `216.24.57.1`، و`www` CNAME يحتاج hostname فعلي؛ لا توجد Render service/hostname/DNS/TLS حاليًا.
+- `git diff --check` ✅
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** Foundation routing والحدود قابلة للفحص آليًا، مع بقاء تنفيذ صفحات الدومينات وتهيئة Render/DNS/قاعدة الإنتاج خارج نطاق التنفيذ الحالي.
+
+### ملاحظات / مشاكل مفتوحة
+- الجهاز المحلي ما زال Node `22.22.3` بينما الـruntime المقفل Node `24.20.0`؛ التحقق المحلي مرّ لكن توافق Node 24 ما زال غير متحقق محليًا.
+- PostgreSQL، object storage، KMS/secrets، telemetry، backup/PITR providers وRender service hostname غير معتمدة/غير منشأة؛ DNS commands لا تُنفذ قبل إنشاء الخدمة ونسخ hostname الفعلي.
+
 ## [2026-09-04] — إزالة قيد "Execute this prompt only" من خطة التنفيذ المدمجة
 
 ### تم التنفيذ

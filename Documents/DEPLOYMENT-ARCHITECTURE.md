@@ -895,13 +895,13 @@ Critical dependency unavailable
 | DEP-016 | Direct untracked manual production mutations are forbidden as normal practice |
 | DEP-017 | Production-derived lower-environment data requires approved security/sanitization handling |
 | DEP-018 | High-risk migrations require explicit recovery/readiness consideration before execution |
+| DEP-019 | The Astro SSR application web runtime is a Render Web Service; `qclevel.top` is the canonical production domain and Hostinger remains the DNS manager unless nameservers are intentionally moved |
 
 ---
 
 # 47. Deferred Deployment Decisions
 
 ```text
-DEP-DD-001 Hosting/cloud provider
 DEP-DD-002 Container vs platform-native artifact
 DEP-DD-003 Exact CI/CD provider
 DEP-DD-004 Exact production deployment mode: rolling/blue-green/canary/etc.
@@ -915,6 +915,11 @@ DEP-DD-011 Exact rollback retention window for artifacts
 DEP-DD-012 Exact HA/standby/cross-region topology
 DEP-DD-013 Exact vulnerability scanning tools/policies
 DEP-DD-014 Exact approval ceremony for high-risk releases
+DEP-DD-015 PostgreSQL provider
+DEP-DD-016 Object-storage provider
+DEP-DD-017 KMS/secrets provider
+DEP-DD-018 Telemetry backend
+DEP-DD-019 Physical backup/PITR provider implementation
 ```
 
 No deferred choice may be silently invented during implementation without explicit decision/evidence where material.
