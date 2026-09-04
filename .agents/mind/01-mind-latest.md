@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-017: Dashboard + Search + Notifications + Audit UI
+
+### تم التنفيذ
+- أُنشئت Dashboard port/use case وPostgreSQL read model يجمع مؤشرات وattention وactivity على الخادم، ويمرر actor المصادق عليه قبل القراءة.
+- فُصلت مؤشرات `Inspection PASS` عن `Released items`، وربط pending review بسجل approval المحدد، ومنع عدّ HOLD خارج predicate مالك السجل.
+- أُنشئت صفحات SSR لـ`/dashboard` و`/search` و`/notifications` و`/audit`؛ البحث يتحقق من `q`، والإشعارات recipient-only، ولا توجد mutations عبر GET.
+- أُنشئت Audit query service/port وPostgres adapter بفلترة composable، وإخراج view آمن لا يمرر payload، مع صلاحية `PERM-ADM-AUDIT-VIEW` صريحة.
+- عُدّل Topbar لفصل عدّاد الإشعارات عن عدّاد approvals، وأُضيفت سياسات Dashboard وAudit إلى policy registry.
+
+### الملفات المتأثرة
+- `src/modules/dashboard/{application,get-dashboard.ts,ports/dashboard-query.ts,infrastructure/postgres-dashboard-query.ts}`
+- `src/shared/audit/{audit-query.ts,postgres-audit-query.ts}`
+- `src/shared/authorization/policy-registry.ts`
+- `src/pages/{dashboard/index,search,notifications,audit}.astro`
+- `src/ui/shell/Topbar.astro`
+- `tests/integration/{dashboard/dashboard-query.test.ts,shared/audit-query.test.ts}`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- forbidden-pattern scan للـDelivery (SQL/mutations/role Admin bypass/secret payloads/browser storage) ✅
+- `pnpm exec vitest run ...MASTER-017 tests` ⚠️ محجوب: `node_modules/.bin/vitest` غير موجود.
+- `tsc --noEmit` ⚠️ محجوب باعتمادات ناقصة (`astro`, `kysely`, `vitest`, `pg` وغيرها)؛ أصلحت export خطأ MASTER-017 الذي ظهر في الفحص وأُعيد الفحص دون أخطاء خاصة إضافية ظاهرة بعده.
+- PostgreSQL integration وPlaywright/mobile/RTL لم تُشغّل: الاعتمادات/خدمة قاعدة البيانات غير متاحة في البيئة الحالية.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات القراءة والصفحات والاختبارات المركزة مكتوبة مع حدود authorization وscope وPASS/RELEASE منفصلة؛ إثبات runtime/build/browser/PostgreSQL ما زال محجوبًا بسبب البيئة.
+
+### ملاحظات / مشاكل مفتوحة
+- `SearchService` الحالي يعتمد authorizer injected من delivery ولا يملك بعد عقد ActorContext موحدًا؛ صفحة البحث تتحقق من `PERM-SRCH-USE` قبل الاستدعاء، وتحتاج wiring DI مركزي لاحقًا.
+- لا توجد بيانات trend معتمدة في read model الحالي، لذلك تعرض Dashboard حالة عدم توفر trend بدل اختراع سلسلة زمنية.
+
 ## [2026-09-04] — MASTER-016: tables, shell/navigation, feedback, e-signature UI, charts, and root/error pages
 
 ### تم التنفيذ

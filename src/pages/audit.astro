@@ -1,0 +1,16 @@
+---
+import AppLayout from '../ui/layouts/AppLayout.astro';
+import { getDatabase } from '../shared/database/database.js';
+import { AuditQueryService } from '../shared/audit/audit-query.js';
+import { PostgresAuditQuery } from '../shared/audit/postgres-audit-query.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Faudit');
+let result = { events: [], total: 0 } as Awaited<ReturnType<AuditQueryService['list']>>;
+try { result = await new AuditQueryService(new PostgresAuditQuery(getDatabase())).list(actor, { subjectType: Astro.url.searchParams.get('subjectType') ?? undefined, subjectId: Astro.url.searchParams.get('subjectId') ?? undefined }); } catch { result = { events: [], total: 0 }; }
+---
+<AppLayout title="Audit · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">GOVERNANCE</p><h1>Audit history</h1><p>Read-only history for authorized audit viewers. Record routes may compose this by subject.</p></div><span>{result.total} events</span></section>
+  {result.events.length ? <div class="table-wrap"><table><caption>Authorized audit events</caption><thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">Subject</th><th scope="col">Transition</th><th scope="col">Request</th></tr></thead><tbody>{result.events.map((event) => <tr><td><time datetime={event.occurredAt.toISOString()}>{event.occurredAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></td><td>{event.action}</td><td>{event.subjectType} · {event.subjectId}</td><td>{event.oldState ?? '—'} → {event.newState ?? '—'}</td><td>{event.requestId}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No authorized audit events</h2><p>The query returned no events, or the account does not hold the explicit audit-view permission.</p></section>}
+</AppLayout>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p,.page-head>span{color:var(--text-muted);font-size:.85rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.table-wrap{overflow-x:auto;margin-top:var(--space-6);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:700px;border-collapse:collapse}caption{padding:var(--space-4);text-align:start;color:var(--text-primary);font-weight:700}th,td{padding:var(--space-3) var(--space-4);border-block-start:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{color:var(--text-primary);background:var(--surface-raised);font-size:.72rem}.empty{margin-top:var(--space-6);padding:var(--space-10);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}
+</style>

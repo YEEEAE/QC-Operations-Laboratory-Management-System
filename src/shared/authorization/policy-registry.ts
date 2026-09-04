@@ -24,6 +24,10 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'NOTIFICATION',
     states: ['ACTIVE'],
   },
+  { permission: 'PERM-DASH-VIEW', action: 'VIEW', entityType: 'DASHBOARD', states: ['ACTIVE'] },
+  { permission: 'PERM-DASH-MANAGEMENT', action: 'VIEW', entityType: 'DASHBOARD', states: ['ACTIVE'] },
+  { permission: 'PERM-DASH-ADMIN', action: 'VIEW', entityType: 'DASHBOARD', states: ['ACTIVE'] },
+  { permission: 'PERM-ADM-AUDIT-VIEW', action: 'VIEW', entityType: 'AUDIT_EVENT', states: ['ACTIVE'] },
   {
     permission: 'PERM-INSP-REVIEW',
     action: 'REVIEW',

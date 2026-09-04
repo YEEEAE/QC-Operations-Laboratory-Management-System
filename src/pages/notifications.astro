@@ -1,0 +1,18 @@
+---
+import AppLayout from '../ui/layouts/AppLayout.astro';
+import { getDatabase } from '../shared/database/database.js';
+import { NotificationService } from '../shared/notifications/notification-service.js';
+import { PostgresNotificationRepository } from '../shared/notifications/postgres-notification-repository.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fnotifications');
+let notifications = [] as Awaited<ReturnType<NotificationService['listOwn']>>;
+const unreadOnly = Astro.url.searchParams.get('unread') === '1';
+try { notifications = await new NotificationService(new PostgresNotificationRepository(getDatabase())).listOwn(actor, unreadOnly); } catch { notifications = []; }
+const destination = (type?: string, id?: string) => id && type ? ({ TASK: `/tasks/${id}`, INSPECTION_REPORT: `/quarantine/inspections/${id}`, LAB_TEST: `/laboratory/tests/${id}`, NCR: `/quality/ncr/${id}`, CAPA: `/quality/capa/${id}`, DOCUMENT: `/documents/${id}`, CHANGE_REQUEST: `/change-requests/${id}` } as Record<string, string>)[type] ?? '/notifications' : '/notifications';
+---
+<AppLayout title="Notifications · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">INBOX</p><h1>Notifications</h1><p>Only notifications addressed to your authenticated account are shown.</p></div>{unreadOnly ? <a href="/notifications">All</a> : <a href="/notifications?unread=1">Unread</a>}</section>
+  {notifications.length ? <ul class="notifications">{notifications.map((notification) => <li class:list={{ unread: !notification.readAt }}><a href={destination(notification.subjectType, notification.subjectId)}><span class={`severity ${notification.severity.toLowerCase()}`} aria-label={notification.severity}></span><span><strong>{notification.title}</strong><span>{notification.message}</span><small>{notification.createdAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</small></span></a></li>)}</ul> : <section class="empty"><h2>You’re all caught up</h2><p>No notifications are available for this account.</p></section>}
+</AppLayout>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p{color:var(--text-muted);font-size:.85rem}.page-head a{color:var(--color-accent-primary-hover);font-size:.8rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.notifications{list-style:none;margin:var(--space-6) 0;padding:0;max-width:900px}.notifications li{border-block-start:1px solid var(--color-border-subtle)}.notifications a{display:flex;gap:var(--space-3);padding:var(--space-4) 0;color:inherit;text-decoration:none}.notifications a>span:last-child{display:grid;gap:4px}.notifications strong{color:var(--text-primary)}.notifications a span span,.notifications small{color:var(--text-secondary);font-size:.82rem}.notifications small{color:var(--text-muted);font-size:.72rem}.notifications .unread strong{color:var(--color-accent-primary-hover)}.severity{width:10px;height:10px;flex:0 0 auto;margin-top:6px;border-radius:50%;background:var(--status-neutral)}.severity.warning{background:var(--status-warning)}.severity.critical{background:var(--status-danger)}.empty{padding:var(--space-10);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}
+</style>
