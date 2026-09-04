@@ -1,0 +1,154 @@
+بما أنك عندك الآن:
+
+* `SYSTEM-INVARIANTS.md`
+* `README.md`
+* `QC-SYSTEM-DESIGN-CONSTITUTION.md`
+
+فأنت عندك **الرؤية + الدستور + القواعد العليا**. اللي ناقص الآن هو تحويلها إلى مواصفات قابلة للتنفيذ.
+
+أهم الملفات اللي أنصح تضيفها، بالترتيب:
+
+1. `DOMAIN-MAP.md`
+   يوضح كل Domain وحدوده وعلاقاته:
+   `Tasks`, `Quality`, `Quarantine`, `Laboratory`, `Equipment`, `Documents`, `Approvals`, `Change Requests`, `Reports`, `Administration`, `System Health`, `AI`.
+
+2. `BUSINESS-RULES.md`
+   كل قواعد العمل الفعلية، مثل:
+   متى Receiving Item ينتقل من Pending إلى Inspection، من يقدر يعمل Release، متى التقرير يصير قابل للمراجعة، متى يمنع التعديل، وما شروط PASS/HOLD/FAIL حسب المصدر المعتمد.
+
+3. `ROLE-MATRIX.md`
+   تعريف الأدوار رسميًا:
+   `Employee`, `Supervisor`, `Manager`, `Admin`
+   وما مسؤولية كل دور.
+
+4. `PERMISSION-MATRIX.md`
+   هذا أهم من Role Matrix لأنه يحدد كل Action بالتفصيل:
+   `create`, `view`, `edit`, `submit`, `review`, `approve`, `release`, `void`, `export`, `administer`.
+
+مثال:
+
+| Action                |    Employee |  Supervisor | Manager | Admin |
+| --------------------- | ----------: | ----------: | ------: | ----: |
+| Create Receiving Item |           ✓ |           ✓ |       ✓ |     ✓ |
+| Start Inspection      |           ✓ |           ✓ |       ✓ |     ✓ |
+| Review Report         |           ✗ |           ✓ |       ✓ |     ✓ |
+| Approve Report        |           ✗ |           ✗ |       ✓ |     ✓ |
+| System Release        | حسب السياسة | حسب السياسة |       ✓ |     ✓ |
+
+5. `STATE-MACHINES.md`
+   يوثق دورة حياة كل شيء:
+
+* Task
+* Receiving Item
+* Inspection Report
+* NCR
+* CAPA
+* Lab Test
+* Document
+* Equipment
+* Calibration
+* Change Request
+
+مثال:
+
+`DRAFT → SUBMITTED → UNDER_REVIEW → APPROVED`
+
+مع من يستطيع تنفيذ كل انتقال والشروط المطلوبة.
+
+6. `DATA-MODEL.md`
+   التصميم المنطقي لـPostgreSQL قبل كتابة migrations:
+   الجداول، العلاقات، PK/FK، ownership، versioning، snapshots، audit references.
+
+7. `DATA-DICTIONARY.md`
+   تعريف كل حقل.
+
+مثلاً `receiving_items`:
+
+```text
+doc_no
+item_code
+description
+lot
+qty
+received_date
+expiry_date
+inspection_status
+release_system
+version
+created_by
+created_at
+updated_at
+```
+
+لكل Field:
+النوع، المعنى، required أو لا، validation، المصدر، ومن يستطيع تعديله.
+
+8. `REQUIREMENTS-TRACEABILITY.md`
+   كل Requirement يأخذ ID:
+
+```text
+REQ-QUAR-001
+REQ-LAB-001
+REQ-DOC-001
+REQ-SEC-001
+```
+
+ثم لاحقًا تربطه بـ:
+
+`Requirement → Code → Test → Evidence`
+
+هذا مهم جدًا إذا تبي المشروع ما يضيع مع Codex أو تعدد الـPrompts.
+
+بعد هذه الثمانية، أنصح بمجموعة هندسية ثانية:
+
+* `ARCHITECTURE.md` — التفاصيل التقنية الفعلية للـModular Monolith + PostgreSQL.
+* `DATABASE-ARCHITECTURE.md` — PostgreSQL، transactions، concurrency، indexes، migrations، pooling.
+* `SECURITY.md` — Authentication، sessions، RBAC، CSRF، CSP، uploads، secrets، rate limits.
+* `AUDIT-AND-RECORD-INTEGRITY.md` — Audit، immutable records، snapshots، corrections، void/supersede.
+* `E-SIGNATURE-POLICY.md` — متى يستخدم E-Signature ومعنى كل توقيع.
+* `REPORTING-CONTRACT.md` — تعريف التقارير، scopes، CSV/XLSX/PDF.
+* `ERROR-ARCHITECTURE.md` — Error codes، request IDs، recovery messages.
+* `FILE-EVIDENCE-POLICY.md` — attachments، MIME، size، SHA-256، object storage.
+* `NOTIFICATION-MATRIX.md` — من يُبلغ، متى، وبأي حدث.
+* `SEARCH-CONTRACT.md` — البحث والفلترة والـpagination.
+* `BACKUP-RECOVERY.md` — PostgreSQL backup/restore/RPO/RTO.
+* `DEPLOYMENT.md` — Dev/Test/Staging/Production.
+* `ENVIRONMENT-CONTRACT.md` — جميع Environment Variables.
+* `TESTING-STRATEGY.md` — Unit/Integration/DB/RBAC/Negative/E2E.
+* `DEFINITION-OF-DONE.md` — متى نقول Feature مكتملة.
+* `DESIGN-SYSTEM.md` — UI tokens/components/forms/tables/states.
+* `UX-PRINCIPLES.md` — Role-based UX، keyboard-first، forms، accessibility.
+* `AI-GOVERNANCE.md` — حدود AI، HITL، ممنوعاته، evals.
+* `RISK-REGISTER.md` — المخاطر التشغيلية والتقنية.
+* `CURRENT-STATE.md` — الوضع الفعلي الحالي للمشروع.
+* `CHANGELOG.md` — التغييرات.
+* مجلد `ADR/` — القرارات المعمارية المهمة.
+
+لو أبي أختصرها لك إلى **الملفات التي يجب أن تكون جاهزة قبل كتابة أول Feature**، فهي فقط:
+
+```text
+README.md
+QC-SYSTEM-DESIGN-CONSTITUTION.md
+SYSTEM-INVARIANTS.md
+
+DOMAIN-MAP.md
+BUSINESS-RULES.md
+ROLE-MATRIX.md
+PERMISSION-MATRIX.md
+STATE-MACHINES.md
+DATA-MODEL.md
+DATA-DICTIONARY.md
+REQUIREMENTS-TRACEABILITY.md
+
+ARCHITECTURE.md
+SECURITY.md
+TESTING-STRATEGY.md
+DEFINITION-OF-DONE.md
+```
+
+هذه الـ15 تقريبًا تعتبر عندي **Foundation Pack** للمشروع.
+
+وأهم خطوة تالية عندك الآن تحديدًا:
+**`DOMAIN-MAP.md` → `BUSINESS-RULES.md` → `ROLE-MATRIX.md` → `PERMISSION-MATRIX.md` → `STATE-MACHINES.md` → `DATA-MODEL.md`**
+
+لأن بعد ما تخلص هذي، نقدر نبدأ PostgreSQL والـArchitecture بدون ما Codex يبدأ يخترع Business Rules من عنده.
