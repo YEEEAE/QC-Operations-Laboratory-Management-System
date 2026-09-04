@@ -1,5 +1,37 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-012: Identity domain + password/session authentication (جزئي)
+
+### تم التنفيذ
+- أُنشئت كيانات domain مستقلة لـUser/AccountState/Session بدون imports من PostgreSQL أو Kysely.
+- أُنشئت ports وPostgreSQL repositories لقراءة المستخدم والجلسة، إنشاء الجلسات، وتكرار revoke بشكل idempotent عبر predicates server-side.
+- أُنشئت SessionService بجلسات opaque عشوائية 256-bit، تخزين SHA-256 فقط، وفحص ACTIVE/expiry/revocation من الخادم.
+- أُنشئت Login/Logout/Resolve-session use cases؛ login لا يفرق للمستخدم بين unknown/wrong-password/disabled، وlogout يرجع cookie حذف idempotent.
+- أُنشئ Argon2id adapter بمعايير Security Architecture (memory 19 MiB، iterations 2، parallelism 1) ويفشل بإعداد آمن إذا الاعتمادية غير مثبتة.
+- أُضيفت اختبارات domain أولية واختبار configuration guard للـArgon2.
+
+### الملفات المتأثرة
+- `src/modules/identity/domain/`
+- `src/modules/identity/ports/`
+- `src/modules/identity/infrastructure/`
+- `src/modules/identity/security/`
+- `src/modules/identity/application/`
+- `src/shared/errors/error-codes.ts`
+- `tests/unit/identity/`
+
+### التحقق
+- `git diff --check` ✅
+- `pnpm exec tsc --noEmit` ⚠️ محجوب بعد محاولة pnpm لإعادة بناء `node_modules`؛ lockfile لم يتغير، لكن البيئة الحالية Node 22 بدل Node 24.20+ ولا توجد شبكة/اعتمادية Argon2.
+- اختبارات Vitest وreal PostgreSQL repository/session integration: لم تُشغّل لأن `node_modules` غير مكتمل وTestcontainers يحتاج runtime.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات الهوية الأساسية مكتوبة، لكن لا يوجد إثبات تشغيلي للاختبارات/PG، ولا يمكن اعتماد password hashing فعلي حتى تتوفر حزمة Argon2id في بيئة Node المعتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تثبيت `argon2` وتحديث lockfile عبر بيئة شبكة/حزمة معتمدة قبل تشغيل password tests.
+- لم تُضف Delivery actions/pages أو password-reset completion؛ خارج الملفات المطلوبة في هذا الـprompt.
+
 ## [2026-09-04] — MASTER-010: Notifications + Files/Evidence + Object Storage + Search
 
 ### تم التنفيذ
