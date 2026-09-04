@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-019: Tasks domain, persistence, use cases, Actions, and workspaces
+
+### تم التنفيذ
+- أُنشئ Tasks Domain مستقل يثبت حالات `DRAFT`, `OPEN`, `IN_PROGRESS`, `ON_HOLD`, `COMPLETED`, `CANCELLED` والانتقالات المعتمدة فقط؛ الانتقالات غير المعلنة، hold/cancel/reopen بدون سبب، وإكمال checklist الإلزامي تُرفض.
+- أُنشئت Task repository port وPostgreSQL adapter مربوطان بالجداول canonical الموجودة في migration `0006_tasks.sql`، مع UUID boundary، optimistic version matching، فلترة scope للقراءة، وحفظ checklist/assignment الأولي.
+- أُضيفت معاملات mutation ذرية لـcreate/update-draft/transition تشمل Audit وOutbox عند wiring الـPostgres adapters؛ state لا يأتي من العميل بل يُشتق من action intent.
+- أُنشئت use cases للإنشاء والقراءة والقائمة وتعديل Draft والانتقالات، مع إعادة authorization server-side، scope `OWN`/`ASSIGNED`، ورفض `CANCEL` لأن سياسة الصلاحية ما زالت غير معتمدة.
+- أُضيفت Astro Actions رفيعة وصفحات SSR لـ`/tasks`, `/tasks/new`, `/tasks/[taskId]`؛ الصفحات لا تحتوي SQL أو domain rules، وتعرض state/version/checklist وقدرات actions المصرح بها.
+- أُضيفت db type mappings وTask policy registry واختبارات unit/use-case/authorization/repository contract وPlaywright protection smoke.
+
+### الملفات المتأثرة
+- `src/modules/tasks/{domain,ports,infrastructure,application}/`
+- `src/shared/database/db-types.ts`
+- `src/shared/authorization/policy-registry.ts`
+- `src/actions/{index,tasks}.ts`
+- `src/pages/tasks/{index,new,[taskId]}.astro`
+- `tests/{unit/tasks,integration/tasks,e2e/tasks.spec.ts}`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- static scan لعدم وجود SQL/domain imports داخل صفحات Tasks ✅
+- `pnpm exec vitest run ...tasks...` ⚠️ محجوب: executable `vitest` غير موجود في `node_modules`.
+- `pnpm exec astro check` ⚠️ محجوب: executable `astro` غير موجود في `node_modules`.
+- `tsc --noEmit` ⚠️ محجوب باعتمادات ناقصة؛ بعد عزل نتائج Tasks بقيت أخطاء missing modules وimplicit-any الناتجة عن غياب type declarations، بدون خطأ domain إضافي ظاهر.
+- `node scripts/architecture/check-route-files.mjs` ⚠️ ما زال يفشل بسبب صفحات canonical سابقة كثيرة خارج هذا النطاق؛ صفحات Tasks المطلوبة لم تظهر ضمن النواقص.
+- PostgreSQL integration وPlaywright وbuild لم تُشغّل بسبب نفس نقص الاعتمادات/الخدمة.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** نطاق Tasks مكتوب محليًا مع حدود domain/application/repository/Delivery وauthorization/version/audit/outbox، لكن إثبات runtime الحقيقي محجوب حتى تُستعاد dependencies وبيئة Node المعتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- assignment history/checklist persistence موجودان عند الإنشاء، لكن mutations مستقلة للتعليقات والdependencies والrecurrence ورفع evidence ليست ضمن use-case paths المطلوبة ولا توجد لها سياسة/schema تنفيذية إضافية معتمدة في هذا النطاق.
+- `CANCEL` يبقى DENY UNTIL POLICY APPROVED حسب STATE-MACHINES.
+- يوجد تعديل سابق غير مرتبط في `IMPLEMENTATION-MASTER-PLAN-MERGED.md` وتم الحفاظ عليه كما هو.
+
 ## [2026-09-05] — MASTER-018: Report registry, scoped exports, and report pages
 
 ### تم التنفيذ

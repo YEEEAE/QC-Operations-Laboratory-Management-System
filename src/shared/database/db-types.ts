@@ -136,6 +136,16 @@ export interface NotificationDeliveriesTable {
   error_code: string | null;
 }
 
+export interface TasksTable {
+  id: Generated<string>; task_no: string; title: string; description: string | null; priority: string;
+  state: string; due_at: Date | null; current_assignee_id: string | null; completed_at: Date | null;
+  created_by: string; created_at: Generated<Date>; updated_by: string | null; updated_at: Generated<Date>; version: Generated<bigint>;
+}
+export interface TaskAssignmentsTable { id: Generated<string>; task_id: string; assignee_id: string; assigned_by: string; assigned_at: Generated<Date>; unassigned_at: Date | null; reason: string | null; }
+export interface TaskChecklistItemsTable { id: Generated<string>; task_id: string; label: string; required: boolean; position: number; completed: boolean; completed_by: string | null; completed_at: Date | null; version: Generated<bigint>; }
+export interface TaskCommentsTable { id: Generated<string>; task_id: string; author_id: string; body: string; created_at: Generated<Date>; edited_at: Date | null; }
+export interface TaskDependenciesTable { id: Generated<string>; task_id: string; depends_on_task_id: string; dependency_type: string; created_at: Generated<Date>; created_by: string; }
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -152,6 +162,11 @@ export interface DatabaseSchema {
   role_permissions: RolePermissionsTable;
   user_roles: UserRolesTable;
   user_scopes: UserScopesTable;
+  tasks: TasksTable;
+  task_assignments: TaskAssignmentsTable;
+  task_checklist_items: TaskChecklistItemsTable;
+  task_comments: TaskCommentsTable;
+  task_dependencies: TaskDependenciesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

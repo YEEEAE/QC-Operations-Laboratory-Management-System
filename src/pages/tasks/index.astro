@@ -1,0 +1,18 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Ftasks');
+const requestedState = Astro.url.searchParams.get('state');
+const validStates = ['DRAFT','OPEN','IN_PROGRESS','ON_HOLD','COMPLETED','CANCELLED'] as const;
+const state = validStates.find((value) => value === requestedState);
+const search = Astro.url.searchParams.get('q')?.slice(0, 200) || undefined;
+const tasks = await taskReadDependencies().list.execute({ actor, filter: state ? { state, search } : { search } });
+---
+<AppLayout title="Tasks · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">T2 OPERATIONAL WORK QUEUE</p><h1>Tasks</h1><p class="lede">Manage operational work and assignments within your authorized scope.</p></div><a class="button" href="/tasks/new">Create Task</a></section>
+  <form class="filters" method="get"><label>Search<input name="q" value={search ?? ''} maxlength="200" /></label><label>State<select name="state"><option value="">All states</option>{['DRAFT','OPEN','IN_PROGRESS','ON_HOLD','COMPLETED','CANCELLED'].map((value) => <option value={value} selected={state === value}>{value}</option>)}</select></label><button type="submit">Filter</button></form>
+  {tasks.length ? <div class="table-wrap"><table><caption>Authorized tasks</caption><thead><tr><th scope="col">Task ID</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.priority}</td><td>{task.state}</td><td>{task.currentAssigneeId ?? 'Unassigned'}</td><td>{task.dueAt?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? '—'}</td></tr>)}</tbody></table></div> : <p class="empty">No tasks match your authorized scope and filters.</p>}
+</AppLayout>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty{color:var(--text-muted);font-size:.86rem}.button,button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5)}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}th{font-weight:700}a{color:var(--color-accent-primary-hover)}@media(max-width:600px){.page-head,.filters{display:grid}.filters button{width:max-content}}
+</style>

@@ -1,0 +1,5 @@
+import { describe, expect, it } from 'vitest';
+import { authorize } from '../../../src/shared/authorization/authorize.js';
+import type { ActorContext } from '../../../src/shared/authorization/types.js';
+const employee: ActorContext = { id: '01900000-0000-7000-8000-000000000001', accountState: 'ACTIVE', roles: ['EMPLOYEE'], permissions: [{ code: 'PERM-TASK-VIEW', scopes: ['OWN'] }] };
+describe('Tasks authorization matrix', () => { it('denies missing permission and wrong owner scope', () => { expect(authorize({ actor: employee, permission: 'PERM-TASK-CREATE', action: 'CREATE', entity: { type: 'TASK', id: '01900000-0000-7000-8000-000000000002', state: 'DRAFT', ownerId: employee.id }, scope: {}, currentVersion: 1n, expectedVersion: 1n }).allowed).toBe(false); expect(authorize({ actor: employee, permission: 'PERM-TASK-VIEW', action: 'VIEW', entity: { type: 'TASK', id: '01900000-0000-7000-8000-000000000002', state: 'OPEN', ownerId: '01900000-0000-7000-8000-000000000003' }, scope: {}, currentVersion: 1n, expectedVersion: 1n }).allowed).toBe(false); }); });
