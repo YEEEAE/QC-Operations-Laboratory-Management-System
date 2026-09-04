@@ -1,0 +1,9 @@
+---
+interface Props { title?: string; }
+const { title } = Astro.props;
+---
+<article class="card">{title ? <h2>{title}</h2> : null}<slot /></article>
+<style>
+  .card { padding: var(--panel-padding); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); box-shadow: var(--shadow-1); }
+  .card h2 { margin: 0 0 var(--space-4); font-size: 1.0625rem; }
+</style>

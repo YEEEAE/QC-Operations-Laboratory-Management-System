@@ -1,0 +1,8 @@
+---
+interface Option { value: string; label: string; disabled?: boolean; }
+interface Props { id: string; label: string; options: Option[]; name?: string; value?: string; description?: string; error?: string; required?: boolean; disabled?: boolean; }
+const { id, label, options, name = id, value, description, error, required = false, disabled = false } = Astro.props;
+const describedBy = [description && `${id}-description`, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
+---
+<div class="form-field"><label for={id}>{label}{required ? <span aria-hidden="true"> *</span> : null}{required ? <span class="sr-only"> (required)</span> : null}</label>{description ? <p id={`${id}-description`} class="field-description">{description}</p> : null}<select id={id} name={name} required={required} disabled={disabled} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy}>{options.map((option) => <option value={option.value} selected={option.value === value} disabled={option.disabled}>{option.label}</option>)}</select>{error ? <p id={`${id}-error`} class="field-error" role="alert">{error}</p> : null}</div>
+<style>@import url('../form-control.css');</style>

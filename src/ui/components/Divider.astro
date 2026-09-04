@@ -1,0 +1,11 @@
+---
+interface Props { orientation?: 'horizontal' | 'vertical'; label?: string; }
+const { orientation = 'horizontal', label } = Astro.props;
+---
+<div class:list={['divider', `divider--${orientation}`]} role={label ? 'separator' : undefined} aria-label={label}>{label ? <span>{label}</span> : null}</div>
+<style>
+  .divider { background: var(--color-border-subtle); }
+  .divider--horizontal { block-size: 1px; inline-size: 100%; }
+  .divider--vertical { inline-size: 1px; block-size: 100%; min-block-size: 24px; }
+  .divider span { display: block; transform: translateY(-.75em); width: max-content; padding-inline: var(--space-2); background: var(--surface-page); color: var(--text-muted); font-size: .8125rem; }
+</style>

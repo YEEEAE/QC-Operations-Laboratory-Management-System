@@ -1,0 +1,8 @@
+.form-field { display: grid; gap: var(--space-2); }
+.form-field label { font-weight: 600; }
+.field-description { margin: 0; color: var(--text-secondary); font-size: .875rem; }
+.field-error { margin: 0; color: var(--status-danger); font-size: .875rem; }
+.form-field input:not([type="checkbox"]), .form-field select, .form-field textarea { width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--control-padding); background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
+.form-field textarea { min-height: 8rem; resize: vertical; }
+.form-field input[aria-invalid="true"], .form-field select[aria-invalid="true"], .form-field textarea[aria-invalid="true"] { border-color: var(--status-danger); }
+.form-field input:disabled, .form-field select:disabled, .form-field textarea:disabled { color: var(--color-text-disabled); background: var(--color-surface-1); }

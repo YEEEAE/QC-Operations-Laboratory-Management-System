@@ -1,0 +1,23 @@
+---
+import BaseLayout from './BaseLayout.astro';
+interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; }
+const props = Astro.props;
+---
+<BaseLayout {...props}>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <div class="app-shell">
+    <aside class="app-sidebar" aria-label="Primary navigation"><slot name="sidebar" /></aside>
+    <div class="app-workspace">
+      <header class="app-topbar"><slot name="topbar" /></header>
+      <main id="main-content" class="app-main"><slot /></main>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+  .app-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(220px, 264px) minmax(0, 1fr); background: var(--surface-page); }
+  .app-sidebar { background: var(--color-sidebar); border-inline-end: 1px solid var(--color-border-subtle); }
+  .app-workspace { min-width: 0; display: flex; flex-direction: column; }
+  .app-topbar { min-height: 64px; display: flex; align-items: center; padding: var(--space-3) var(--space-6); background: var(--surface-panel); border-block-end: 1px solid var(--color-border-subtle); }
+  .app-main { width: min(100% - 2 * var(--space-6), 1600px); margin-inline: auto; flex: 1; padding-block: var(--space-8); }
+  @media (max-width: 760px) { .app-shell { display: block; } .app-sidebar { border-inline-end: 0; border-block-end: 1px solid var(--color-border-subtle); } .app-main { width: min(100% - 2 * var(--space-4), 1600px); padding-block: var(--space-6); } .app-topbar { padding-inline: var(--space-4); } }
+</style>

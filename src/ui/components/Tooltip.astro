@@ -1,0 +1,11 @@
+---
+interface Props { label: string; }
+const { label } = Astro.props;
+---
+<span class="tooltip-wrap"><slot /><span class="tooltip" role="tooltip">{label}</span></span>
+<style>
+  .tooltip-wrap { position: relative; display: inline-flex; }
+  .tooltip { position: absolute; inset-block-start: calc(100% + var(--space-2)); inset-inline-start: 50%; z-index: 5; width: max-content; max-width: 240px; padding: var(--space-2) var(--space-3); transform: translateX(-50%); visibility: hidden; opacity: 0; background: var(--surface-popover); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); font-size: .8125rem; pointer-events: none; }
+  .tooltip-wrap:hover .tooltip, .tooltip-wrap:focus-within .tooltip { visibility: visible; opacity: 1; }
+  [dir="rtl"] .tooltip { transform: translateX(50%); }
+</style>

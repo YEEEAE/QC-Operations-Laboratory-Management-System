@@ -1,0 +1,82 @@
+:root {
+  color-scheme: dark;
+
+  /* Approved primitive palette — DESIGN-SYSTEM.md v1.0 */
+  --color-canvas: #141714;
+  --color-canvas-deep: #101310;
+  --color-sidebar: #111411;
+  --color-surface-1: #1b1f1b;
+  --color-surface-2: #222722;
+  --color-surface-3: #2a302a;
+  --color-surface-hover: #303630;
+  --color-surface-selected: #273128;
+  --color-border-subtle: #2d332d;
+  --color-border-default: #3a413a;
+  --color-border-strong: #505850;
+  --color-text-primary: #f2f4f1;
+  --color-text-secondary: #b8beb7;
+  --color-text-muted: #858c85;
+  --color-text-disabled: #626862;
+  --color-text-inverse: #151815;
+  --color-accent-primary: #6d9e67;
+  --color-accent-primary-hover: #7fb176;
+  --color-accent-primary-muted: #314631;
+  --status-approved: #6fa66d;
+  --status-approved-bg: #233424;
+  --status-pass: #79af70;
+  --status-pass-bg: #253a25;
+  --status-released: #4f9b91;
+  --status-released-bg: #1f3532;
+  --status-hold: #d2a24b;
+  --status-hold-bg: #3b3020;
+  --status-warning: #c9903d;
+  --status-warning-bg: #382b1d;
+  --status-danger: #c96666;
+  --status-danger-bg: #3b2323;
+  --status-review: #6d8dbb;
+  --status-review-bg: #222e3e;
+  --status-neutral: #8a918a;
+  --status-neutral-bg: #2b2f2b;
+
+  /* Semantic aliases keep component CSS independent of raw primitives. */
+  --surface-page: var(--color-canvas);
+  --surface-panel: var(--color-surface-1);
+  --surface-raised: var(--color-surface-2);
+  --surface-popover: var(--color-surface-3);
+  --border-default: var(--color-border-default);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --focus-ring: var(--color-accent-primary-hover);
+  --text-danger: var(--status-danger);
+
+  --font-latin: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Noto Sans Arabic", Tahoma, sans-serif;
+  --font-sans: var(--font-latin);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --shadow-1: 0 2px 8px rgb(0 0 0 / 18%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 24%);
+  --shadow-3: 0 16px 40px rgb(0 0 0 / 32%);
+  --motion-fast: 150ms;
+  --motion-standard: 200ms;
+  --motion-slow: 220ms;
+}
+
+[dir="rtl"] {
+  --font-sans: var(--font-arabic);
+}

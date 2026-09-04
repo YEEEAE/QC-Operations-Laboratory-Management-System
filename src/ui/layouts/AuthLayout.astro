@@ -1,0 +1,11 @@
+---
+import BaseLayout from './BaseLayout.astro';
+interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; }
+const props = Astro.props;
+---
+<BaseLayout {...props}>
+  <main class="auth-layout" id="main-content"><slot /></main>
+</BaseLayout>
+<style>
+  .auth-layout { min-height: 100vh; display: grid; place-items: center; padding: var(--space-6); background: var(--surface-page); }
+</style>

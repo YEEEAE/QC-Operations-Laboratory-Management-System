@@ -1,0 +1,7 @@
+---
+interface Props { id: string; label: string; name?: string; value?: string | number; min?: string | number; max?: string | number; description?: string; unit?: string; error?: string; required?: boolean; disabled?: boolean; }
+const { id, label, name = id, value, min, max, description, unit, error, required = false, disabled = false } = Astro.props;
+const describedBy = [description && `${id}-description`, unit && `${id}-unit`, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
+---
+<div class="form-field"><label for={id}>{label}{required ? <span aria-hidden="true"> *</span> : null}{required ? <span class="sr-only"> (required)</span> : null}</label>{description ? <p id={`${id}-description`} class="field-description">{description}</p> : null}<div class="number-control"><input id={id} name={name} type="number" value={value} min={min} max={max} required={required} disabled={disabled} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />{unit ? <span id={`${id}-unit`} class="unit">{unit}</span> : null}</div>{error ? <p id={`${id}-error`} class="field-error" role="alert">{error}</p> : null}</div>
+<style>@import url('../form-control.css'); .number-control { display: flex; align-items: center; gap: var(--space-2); } .number-control input { min-inline-size: 0; flex: 1; } .unit { color: var(--text-secondary); white-space: nowrap; }</style>

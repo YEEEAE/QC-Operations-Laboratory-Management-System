@@ -1,0 +1,9 @@
+---
+interface Props { tone?: 'info' | 'success' | 'warning' | 'danger'; title: string; message?: string; role?: 'status' | 'alert'; }
+const { tone = 'info', title, message, role = tone === 'danger' ? 'alert' : 'status' } = Astro.props;
+---
+<div class:list={['state-banner', `state-banner--${tone}`]} role={role}><strong>{title}</strong>{message ? <span>{message}</span> : null}<slot /></div>
+<style>
+  .state-banner { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid currentColor; border-radius: var(--radius-sm); }
+  .state-banner--info { color: var(--status-review); background: var(--status-review-bg); } .state-banner--success { color: var(--status-approved); background: var(--status-approved-bg); } .state-banner--warning { color: var(--status-warning); background: var(--status-warning-bg); } .state-banner--danger { color: var(--status-danger); background: var(--status-danger-bg); }
+</style>

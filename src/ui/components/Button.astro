@@ -1,0 +1,20 @@
+---
+interface Props { type?: 'button' | 'submit' | 'reset'; variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'controlled'; disabled?: boolean; loading?: boolean; controlled?: boolean; name?: string; value?: string; }
+const { type = 'button', variant = 'primary', disabled = false, loading = false, controlled = false, name, value } = Astro.props;
+---
+<button type={type} class:list={['ui-button', `ui-button--${variant}`, { 'is-loading': loading }]} disabled={disabled || loading} aria-busy={loading || undefined} data-controlled-action={controlled || variant === 'controlled' ? 'true' : undefined} name={name} value={value}>
+  {loading ? <span class="button-spinner" aria-hidden="true"></span> : null}<slot />
+</button>
+<style>
+  .ui-button { min-height: var(--control-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding-inline: var(--control-padding); border: 1px solid transparent; border-radius: var(--radius-sm); font-weight: 600; text-align: center; }
+  .ui-button--primary { background: var(--color-accent-primary); color: var(--color-text-inverse); }
+  .ui-button--secondary { background: var(--surface-raised); border-color: var(--border-default); color: var(--text-primary); }
+  .ui-button--ghost { background: transparent; color: var(--color-accent-primary-hover); }
+  .ui-button--danger { background: var(--status-danger-bg); border-color: var(--status-danger); color: var(--status-danger); }
+  .ui-button--controlled { background: var(--status-review-bg); border-color: var(--status-review); color: var(--text-primary); }
+  .ui-button:hover:not(:disabled) { background-color: var(--color-surface-hover); }
+  .ui-button--primary:hover:not(:disabled) { background-color: var(--color-accent-primary-hover); }
+  .ui-button:disabled { background: var(--color-surface-2); border-color: var(--color-border-subtle); color: var(--color-text-disabled); }
+  .button-spinner { width: 1em; height: 1em; border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: 50%; animation: spin 700ms linear infinite; }
+  @keyframes spin { to { transform: rotate(1turn); } }
+</style>

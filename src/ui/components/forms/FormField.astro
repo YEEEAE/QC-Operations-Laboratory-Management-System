@@ -1,0 +1,15 @@
+---
+interface Props { id: string; label: string; description?: string; error?: string; required?: boolean; }
+const { id, label, description, error, required = false } = Astro.props;
+const descriptionId = description ? `${id}-description` : undefined;
+const errorId = error ? `${id}-error` : undefined;
+---
+<div class="form-field">
+  <label for={id}>{label}{required ? <span aria-hidden="true"> *</span> : null}{required ? <span class="sr-only"> (required)</span> : null}</label>
+  {description ? <p id={descriptionId} class="field-description">{description}</p> : null}
+  <slot />
+  {error ? <p id={errorId} class="field-error" role="alert">{error}</p> : null}
+</div>
+<style>
+  .form-field { display: grid; gap: var(--space-2); } label { font-weight: 600; } .field-description { margin: 0; color: var(--text-secondary); font-size: .875rem; } .field-error { margin: 0; color: var(--status-danger); font-size: .875rem; }
+</style>

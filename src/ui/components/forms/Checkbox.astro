@@ -1,0 +1,7 @@
+---
+interface Props { id: string; label: string; name?: string; value?: string; checked?: boolean; description?: string; error?: string; required?: boolean; disabled?: boolean; }
+const { id, label, name = id, value = 'on', checked = false, description, error, required = false, disabled = false } = Astro.props;
+const describedBy = [description && `${id}-description`, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
+---
+<div class="checkbox-field"><label><input id={id} name={name} value={value} type="checkbox" checked={checked} required={required} disabled={disabled} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} /><span>{label}{required ? <span aria-hidden="true"> *</span> : null}</span></label>{description ? <p id={`${id}-description`} class="field-description">{description}</p> : null}{error ? <p id={`${id}-error`} class="field-error" role="alert">{error}</p> : null}</div>
+<style>@import url('../form-control.css'); .checkbox-field label { display: flex; align-items: flex-start; gap: var(--space-2); font-weight: 600; } .checkbox-field input { min-height: 24px; width: 24px; margin: 0; accent-color: var(--color-accent-primary); }</style>

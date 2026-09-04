@@ -1,0 +1,13 @@
+---
+interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; }
+const { title = 'QC Operations & Laboratory Management System', locale = 'en', direction = locale.startsWith('ar') ? 'rtl' : 'ltr', density = 'standard' } = Astro.props;
+---
+<!doctype html>
+<html lang={locale} dir={direction} data-density={density}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+  </head>
+  <body><slot /></body>
+</html>

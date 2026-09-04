@@ -1,0 +1,10 @@
+---
+interface Props { tone?: 'neutral' | 'accent' | 'danger'; }
+const { tone = 'neutral' } = Astro.props;
+---
+<span class:list={['badge', `badge--${tone}`]}><slot /></span>
+<style>
+  .badge { display: inline-flex; align-items: center; min-height: 24px; padding-inline: var(--space-2); border: 1px solid var(--color-border-default); border-radius: 999px; font-size: .8125rem; font-weight: 600; }
+  .badge--accent { color: var(--color-accent-primary-hover); background: var(--color-accent-primary-muted); border-color: var(--color-accent-primary); }
+  .badge--danger { color: var(--status-danger); background: var(--status-danger-bg); border-color: var(--status-danger); }
+</style>

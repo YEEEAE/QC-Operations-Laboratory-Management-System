@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-015: Design tokens, layouts, UI primitives, and QC forms
+
+### تم التنفيذ
+- أُنشئت طبقة tokens الداكنة المعتمدة حرفيًا للألوان، الحالات، الخطوط، المسافات، الحواف، الظلال، الحركة، والـdensity.
+- أُضيفت typography privacy-safe محلية فقط عبر font stacks لـInter وIBM Plex Sans Arabic بدون CDN أو طلبات خارجية، مع أساس RTL/LTR يعتمد على `lang` و`dir` من layout props.
+- أُنشئت Base/Auth/App layouts؛ AppLayout يركّب slots للـsidebar والـtopbar والمحتوى، ويضيف skip link بدون DB أو business logic.
+- أُنشئت primitives قابلة لإعادة الاستخدام: Button وIconButton وBadge وCard وDivider وTooltip وStatusBadge وStateBanner، مع focus-visible وloading وcontrolled-action semantics.
+- أُنشئت نماذج طويلة لـFormField وTextInput وTextArea وSelect وCheckbox وDateInput وNumberInput وErrorSummary وFormActions، مع labels ظاهرة، required indication، ARIA descriptions/errors، وعدم اختراع precision أو rounding.
+- فُصل `PASS` بصريًا عن `RELEASED`، وفُصل `Save Draft` عن controlled action؛ الواجهات لا تنفذ authorization ولا تتعامل مع state كحقيقة موثوقة من العميل.
+
+### الملفات المتأثرة
+- `src/ui/styles/{tokens,global,motion,density}.css`
+- `src/ui/layouts/{BaseLayout,AuthLayout,AppLayout}.astro`
+- `src/ui/components/{Button,IconButton,Badge,Card,Divider,Tooltip,StatusBadge,StateBanner}.astro`
+- `src/ui/components/forms/`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `git diff --check` ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- approved-token static contract: `24` مسار مطلوب موجود، وفحوص القيم المعتمدة ✅
+- UI forbidden-pattern scan (DB/SQL/Auth/debug/secrets) ✅
+- `pnpm build` ⚠️ محجوب: `astro` غير موجود في `node_modules`، والبيئة Node 22 بدل Node 24.20+
+- typecheck/lint/runtime browser accessibility: لم تُشغّل بسبب الاعتمادات الناقصة؛ تحتاج بيئة المشروع المعتمدة.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** نطاق MASTER-015 مكتوب محليًا مع tokens وlayouts وprimitives وforms وحدود UI صحيحة؛ إثبات Astro build/typecheck وbrowser accessibility ينتظر استعادة الاعتمادات وNode المعتمد.
+
+### ملاحظات / مشاكل مفتوحة
+- يوجد تعديل سابق غير مرتبط في `IMPLEMENTATION-MASTER-PLAN-MERGED.md` وتم الحفاظ عليه كما هو.
+- لا توجد بيانات علمية أو صلاحيات approval/release أو سياسات precision/rounding جديدة في هذا النطاق.
+
 ## [2026-09-04] — MASTER-014: Authorization administration repository, use cases, scopes, and Actions
 
 ### تم التنفيذ

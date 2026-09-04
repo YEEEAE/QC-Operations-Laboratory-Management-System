@@ -1,0 +1,9 @@
+---
+interface Props { label: string; type?: 'button' | 'submit' | 'reset'; disabled?: boolean; }
+const { label, type = 'button', disabled = false } = Astro.props;
+---
+<button type={type} class="icon-button" aria-label={label} title={label} disabled={disabled}><slot /></button>
+<style>
+  .icon-button { width: var(--control-height); min-height: var(--control-height); display: inline-grid; place-items: center; padding: var(--space-2); background: transparent; border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
+  .icon-button:hover:not(:disabled) { background: var(--color-surface-hover); }
+</style>
