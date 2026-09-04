@@ -6,6 +6,12 @@ export interface AuthorizationPolicy {
   states: readonly string[];
 }
 const policies: readonly AuthorizationPolicy[] = [
+  { permission: 'PERM-IDN-VIEW-SELF', action: 'VIEW', entityType: 'ACCOUNT', states: ['ACTIVE'] },
+  { permission: 'PERM-IDN-CHANGE-OWN-PASSWORD', action: 'CHANGE_PASSWORD', entityType: 'ACCOUNT', states: ['ACTIVE'] },
+  { permission: 'PERM-IDN-MANAGE-USERS', action: 'MANAGE', entityType: 'USER', states: ['ACTIVE', 'INACTIVE', 'DISABLED'] },
+  { permission: 'PERM-IDN-ACTIVATE', action: 'ACTIVATE', entityType: 'USER', states: ['INACTIVE', 'DISABLED'] },
+  { permission: 'PERM-IDN-DEACTIVATE', action: 'DEACTIVATE', entityType: 'USER', states: ['ACTIVE', 'INACTIVE'] },
+  { permission: 'PERM-IDN-RESET-PASSWORD', action: 'RESET_PASSWORD', entityType: 'USER', states: ['ACTIVE', 'INACTIVE', 'DISABLED'] },
   {
     permission: 'PERM-NOT-VIEW-OWN',
     action: 'VIEW',

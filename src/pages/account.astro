@@ -1,0 +1,18 @@
+---
+import { actions } from 'astro:actions';
+import { GetAccountUseCase } from '../modules/identity/application/get-account.js';
+import { identityDependencies } from '../modules/identity/application/identity-dependencies.js';
+const account = Astro.locals.actor ? await new GetAccountUseCase(identityDependencies().users).execute(Astro.locals.actor) : null;
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>Account · QC Operations</title></head>
+  <body>
+    <main>
+      <h1>Account</h1>
+      {account && <><section aria-labelledby="account-info"><h2 id="account-info">Account information</h2><dl><dt>Login identity</dt><dd>{account.loginIdentity}</dd><dt>Display name</dt><dd>{account.displayName}</dd><dt>Email</dt><dd>{account.email ?? '—'}</dd><dt>State</dt><dd>{account.accountState}</dd></dl></section>
+      <section aria-labelledby="security"><h2 id="security">Password and security</h2><form method="POST" action={actions.account.changePassword}><label for="currentPassword">Current password</label><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required /><label for="newPassword">New password</label><input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required /><button type="submit">Change password</button></form></section>
+      <form method="POST" action={actions.server.logout}><button type="submit">Sign out</button></form></>}
+    </main>
+  </body>
+</html>

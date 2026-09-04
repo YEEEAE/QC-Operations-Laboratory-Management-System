@@ -119,6 +119,10 @@ export interface NotificationsTable {
   created_at: Generated<Date>;
   read_at: Date | null;
 }
+export interface RolesTable { id: string; code: string; active: boolean; }
+export interface PermissionsTable { id: string; code: string; active: boolean; }
+export interface RolePermissionsTable { role_id: string; permission_id: string; }
+export interface UserRolesTable { id: string; user_id: string; role_id: string; revoked_at: Date | null; }
 
 export interface NotificationDeliveriesTable {
   id: Generated<string>;
@@ -142,6 +146,10 @@ export interface DatabaseSchema {
   evidence_links: EvidenceLinksTable;
   notifications: NotificationsTable;
   notification_deliveries: NotificationDeliveriesTable;
+  roles: RolesTable;
+  permissions: PermissionsTable;
+  role_permissions: RolePermissionsTable;
+  user_roles: UserRolesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

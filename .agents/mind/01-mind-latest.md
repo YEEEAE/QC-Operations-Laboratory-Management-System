@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-013: Account/admin-user use cases + Actions + login/account pages + middleware
+
+### تم التنفيذ
+- أُضيفت use cases لقراءة الحساب وتغيير كلمة المرور وإنشاء/تحديث/تعطيل المستخدم وAdministrative Password Reset، مع authorization server-side وصلاحيات الهوية الرسمية فقط.
+- تغيير كلمة المرور وAdministrative Reset وتعطيل الحساب تتحقق من current password/expected version حيث يلزم، وتبطل الجلسات في المسارات الأمنية المطلوبة؛ recovery/reset pages العامة لم تُنشأ.
+- أُضيفت Astro Actions رفيعة لـlogin/logout/change-password، مع `safeReturnTo`، cookies HttpOnly/SameSite، وتحويل الأخطاء إلى رسائل آمنة.
+- أُضيفت صفحات SSR لـ`/login` و`/account` بعناوين labels، password autocomplete، error alert، وPOST-only logout.
+- عُدّل middleware لإنشاء request context، وحل opaque session من الخادم، وتعبئة `Astro.locals.user/actor`، وحماية المسارات المحمية مع redirect محلي إلى login.
+- أُضيفت اختبارات مركزة للحساب/session، منع Admin role bypass، safe returnTo، وعقد middleware/actions.
+
+### الملفات المتأثرة
+- `src/modules/identity/application/{get-account,change-password,create-user,update-user,disable-user,admin-reset-password,identity-dependencies}.ts`
+- `src/modules/identity/{ports/user-repository,infrastructure/postgres-user-repository}.ts`
+- `src/actions/{index,auth,account}.ts`
+- `src/pages/{login,account}.astro`
+- `src/middleware.ts`, `src/env.d.ts`, `src/shared/authorization/policy-registry.ts`, `src/shared/database/db-types.ts`
+- `tests/integration/{identity,actions,http}`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- فحص عدم وجود recovery/reset pages ✅
+- فحص عدم وجود raw SQL/Kysely imports داخل Delivery ✅
+- `pnpm exec tsc --noEmit` ⚠️ البيئة ناقصة `node_modules` وأظهرت أخطاء dependencies/foundation؛ لم يظهر خطأ syntax في الملفات الجديدة بعد إصلاح الإغلاق.
+- `pnpm lint` ⚠️ محجوب: `eslint` غير موجود لأن `node_modules` غير مكتملة.
+- Vitest/Playwright/Build ⚠️ لم تُشغّل لنفس سبب نقص الاعتمادات؛ PostgreSQL/Testcontainers غير متاحين.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** تم تنفيذ نطاق MASTER-013 محليًا مع حدود Delivery صحيحة وفحوص static، لكن لا يمكن اعتبار runtime أو PostgreSQL أو Playwright متحققًا حتى تُستعاد الاعتمادات وبيئة Node المعتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل `pnpm install --frozen-lockfile` في بيئة شبكة/Node 24.20+، ثم تشغيل Vitest وPlaywright وAstro build.
+- يلزم مراجعة/تشغيل transaction integration الفعلية لتعريف إثبات atomicity بين mutation وsession invalidation وaudit على PostgreSQL.
+- ملف `IMPLEMENTATION-MASTER-PLAN-MERGED.md` فيه تعديل سابق غير مرتبط بالمهمة، وتم تركه كما هو.
+
 ## [2026-09-04] — MASTER-012: Identity domain + password/session authentication (جزئي)
 
 ### تم التنفيذ
