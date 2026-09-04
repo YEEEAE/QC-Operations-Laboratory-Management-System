@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-021: Quarantine Receiving + Inspection execution baseline
+
+### تم التنفيذ
+- أُنشئ Quarantine Receiving domain يحفظ Receiving identity والكمية الموجبة والحالات المنفصلة `workflowState` و`inspectionResult` و`releaseSystem=false`.
+- أُضيفت state transitions صريحة للـReceiving مع رفض target state العشوائي، أسباب إلزامية لـHOLD/CANCEL/EXPIRED، ورفض Remove Hold غير المحسوم.
+- أُضيفت Receiving repository port وPostgreSQL adapter وuse cases للإنشاء/القراءة/القائمة/تعديل Draft/الانتقال، مع authorization وscope وoptimistic version وaudit hooks.
+- أُنشئ Inspection domain مرتبطًا بـReceiving، ويشترط approved template version ويحفظ controlled template context؛ lifecycle منفصل عن `PASS/FAIL/HOLD`.
+- أُضيفت Inspection repository port وPostgreSQL adapter وuse cases للبدء/القراءة/القائمة/حفظ Draft/Submit؛ Submit يرفض المسودة الناقصة وينشئ submission snapshot داخل transaction، ولا يوجد مسار `/inspections/new` أو Release تلقائي.
+- أُضيفت سياسات Quarantine/Inspection للـauthorization، وdb type mappings للجداول canonical الموجودة في migration `0008`، واختبارات مركزة للنطاقين.
+
+### الملفات المتأثرة
+- `src/modules/quarantine/receiving/`
+- `src/modules/quarantine/inspection/`
+- `src/shared/authorization/policy-registry.ts`
+- `src/shared/database/db-types.ts`
+- `tests/integration/quarantine/`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- `pnpm exec vitest run tests/integration/quarantine --passWithNoTests` ⚠️ محجوب: Vitest غير مثبت في `node_modules`.
+- `pnpm exec tsc --noEmit` ⚠️ محجوب باعتمادات ناقصة (`kysely`, `vitest`, `pg`, Astro/Node types)؛ أخطاء Quarantine الظاهرة مرتبطة بالاعتمادات الناقصة.
+- فحص فصل PASS عن release وعدم وجود raw SQL في Delivery ✅ عبر boundary check؛ PostgreSQL/Playwright لم تُشغّل.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات domain/application/ports/PostgreSQL والاختبارات المركزة أُضيفت محليًا، مع إبقاء Release والسياسات العلمية/الاعتمادية غير المحسومة DENY؛ إثبات runtime الكامل ينتظر استعادة dependencies والخدمات.
+
+### ملاحظات / مشاكل مفتوحة
+- Approval/Review وRelease وما يتطلبه من SoD/e-signature ما زال policy-dependent، ولم يُنفذ ضمن هذا النطاق.
+- Adapter wiring الكامل لـAudit/Outbox ونتائج inspection typed persistence يحتاج استكمالًا قبل اعتماد production behavior.
+- لا يوجد commit أو push.
+
 ## [2026-09-05] — MASTER-020: Quality Finding → NCR → RCA → CAPA baseline
 
 ### تم التنفيذ

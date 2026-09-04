@@ -150,6 +150,14 @@ export interface TaskAssignmentsTable { id: Generated<string>; task_id: string; 
 export interface TaskChecklistItemsTable { id: Generated<string>; task_id: string; label: string; required: boolean; position: number; completed: boolean; completed_by: string | null; completed_at: Date | null; version: Generated<bigint>; }
 export interface TaskCommentsTable { id: Generated<string>; task_id: string; author_id: string; body: string; created_at: Generated<Date>; edited_at: Date | null; }
 export interface TaskDependenciesTable { id: Generated<string>; task_id: string; depends_on_task_id: string; dependency_type: string; created_at: Generated<Date>; created_by: string; }
+export interface ReceivingItemsTable { id: Generated<string>; receiving_no:string; doc_no:string; item_code:string; description:string; lot:string; qty:string|number; receiving_date:string|Date; expiry_date:string|Date|null; workflow_state:string; inspection_result:string; release_system:boolean; released_at:Date|null; released_by:string|null; created_by:string; created_at:Generated<Date>; updated_by:string|null; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface InspectionTemplatesTable { id:Generated<string>; template_code:string; name:string; description:string|null; active:boolean; created_at:Generated<Date>; created_by:string; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface InspectionTemplateVersionsTable { id:Generated<string>; template_id:string; version_no:string; state:string; effective_at:Date|null; approved_at:Date|null; approved_by:string|null; source_document:string|null; created_at:Generated<Date>; created_by:string; content_hash:string|null; version:Generated<bigint>; }
+export interface InspectionTemplateSectionsTable { id:Generated<string>; template_version_id:string; section_code:string|null; title:string; position:number; instructions:string|null; }
+export interface InspectionTemplatePointsTable { id:Generated<string>; section_id:string; point_code:string; label:string; requirement_text:string|null; data_type:string; unit:string|null; required:boolean; acceptance_rule_type:string|null; acceptance_rule_payload:unknown|null; source_reference:string|null; position:number; }
+export interface InspectionReportsTable { id:Generated<string>; inspection_no:string; receiving_item_id:string; template_version_id:string; state:string; final_result:string|null; author_id:string; submitted_at:Date|null; review_started_at:Date|null; approved_at:Date|null; rejected_at:Date|null; voided_at:Date|null; void_reason:string|null; snapshot_id:string|null; created_at:Generated<Date>; created_by:string; updated_at:Generated<Date>; updated_by:string|null; version:Generated<bigint>; }
+export interface InspectionReportResultsTable { id:Generated<string>; inspection_report_id:string; template_point_id:string; numeric_value:string|number|null; text_value:string|null; boolean_value:boolean|null; selected_value:string|null; unit:string|null; result:string|null; remarks:string|null; entered_by:string; entered_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface InspectionReportSnapshotsTable { id:Generated<string>; inspection_report_id:string; snapshot_version:number; snapshot_stage:string; receiving_snapshot:unknown; template_snapshot:unknown; controlled_source_snapshot:unknown|null; criteria_snapshot:unknown|null; created_at:Generated<Date>; snapshot_hash:string; }
 
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
@@ -172,6 +180,7 @@ export interface DatabaseSchema {
   task_checklist_items: TaskChecklistItemsTable;
   task_comments: TaskCommentsTable;
   task_dependencies: TaskDependenciesTable;
+  receiving_items: ReceivingItemsTable; inspection_templates: InspectionTemplatesTable; inspection_template_versions: InspectionTemplateVersionsTable; inspection_template_sections: InspectionTemplateSectionsTable; inspection_template_points: InspectionTemplatePointsTable; inspection_reports: InspectionReportsTable; inspection_report_results: InspectionReportResultsTable; inspection_report_snapshots: InspectionReportSnapshotsTable;
   findings: FindingsTable; ncrs: NcrsTable; rcas: RcasTable; capas: CapasTable; capa_actions: CapaActionsTable;
 }
 

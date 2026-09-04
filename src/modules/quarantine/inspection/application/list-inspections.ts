@@ -1,0 +1,1 @@
+import type{ActorContext}from'../../../../shared/authorization/types.js';import type{InspectionRepository}from'../ports/repository.js';import type{Inspection}from'../domain/inspection.js';export class ListInspectionsUseCase{constructor(private repo:InspectionRepository){}execute(i:{actor:ActorContext;assignedTo?:string;state?:Inspection['state']}){return this.repo.list(i);}}

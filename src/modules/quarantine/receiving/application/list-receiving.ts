@@ -1,0 +1,1 @@
+import type{ActorContext}from'../../../../shared/authorization/types.js';import type{ReceivingRepository}from'../ports/repository.js';import type{ReceivingItem}from'../domain/receiving-item.js';export class ListReceivingUseCase{constructor(private repo:ReceivingRepository){}execute(i:{actor:ActorContext;state?:ReceivingItem['workflowState']}){return this.repo.list(i);}}
