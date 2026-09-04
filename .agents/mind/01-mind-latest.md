@@ -1,5 +1,72 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — Commit ودفع تغييرات MASTER-008
+
+### تم التنفيذ
+- جرى تجهيز كل تغييرات MASTER-008 الحالية، بما فيها migrations وseeds وfactories والاختبارات وتحديث الـ mind.
+- تم اعتماد commit محلي واحد للتغييرات قبل الدفع.
+- تم الدفع إلى `origin/main` بعد تأكيد المستخدم.
+
+### الملفات المتأثرة
+- `db/migrations/0010_assets.sql` إلى `db/migrations/0014_backup_recovery_metadata.sql`
+- `db/seeds/`
+- `tests/`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- فحص حالة الفرع والريموت قبل الدفع ✅
+- `git push origin main` — سيُسجّل النجاح بعد التنفيذ
+
+### النتيجة
+- **الحالة:** قيد التنفيذ
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد.
+
+## [2026-09-04] — MASTER-008: Assets + Documents + Approvals + Change Requests + Backup metadata + seeds
+
+### تم التنفيذ
+- أُضيفت `0010_assets.sql` لكيانات Equipment/Calibration/Maintenance مع حالات lifecycle المعتمدة وFKs تاريخية `RESTRICT`، وربط `current_calibration_id` بدون اختراع interval أو overdue behavior.
+- أُضيفت `0011_documents.sql` لفصل Document Identity عن Version وعن File bridge، مع revision uniqueness وpartial unique index يمنع أكثر من EFFECTIVE version لكل document.
+- أُضيفت `0012_approvals_esignatures.sql` لـapproval cases/work items/append-only decisions/electronic signatures؛ لا توجد كلمات مرور أو reauth secrets أو Admin business bypass.
+- أُضيفت `0013_change_requests.sql` مع target version/snapshot وfield-level JSONB changes ومحاولات apply ذات sequence ونتيجة success/failed.
+- أُضيفت `0014_backup_recovery_metadata.sql` لـbackup/restore execution metadata فقط؛ لم تُخترع RPO/RTO أو retention/provider/production authority.
+- أُضيفت seeds غير إنتاجية deterministic وidempotent (`db/seeds/dev.ts`, `db/seeds/test.ts`) للأدوار الأربعة و197 permission canonical فقط، مع production guard؛ لا يتم إنشاء users أو credentials.
+- أُضيفت factories deterministic مع overrides صريحة للحالة والنسخة والـscope للاختبارات السلبية، واكتملت FKs المختبر المؤجلة إلى Equipment/Calibration/Documents داخل migrations المالكة.
+
+### الملفات المتأثرة
+- `db/migrations/0010_assets.sql`
+- `db/migrations/0011_documents.sql`
+- `db/migrations/0012_approvals_esignatures.sql`
+- `db/migrations/0013_change_requests.sql`
+- `db/migrations/0014_backup_recovery_metadata.sql`
+- `db/seeds/{common,dev,test}.ts`
+- `tests/helpers/factories.ts`
+- `tests/unit/seeds-factories.test.ts`
+- `tests/integration/database/seeds.test.ts`
+- `tests/integration/database/{migrations,constraints,upgrade-path}.test.ts`
+
+### التحقق
+- `pnpm test:unit` → 5 files / 15 tests ✅
+- `pnpm lint` ✅
+- `pnpm build` ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `prettier --check` للملفات الجديدة/المتأثرة ✅
+- `git diff --check` ✅
+- forbidden-pattern/secret scan ✅؛ لا `ON DELETE CASCADE` ولا `PERM-ADMIN-BYPASS-ALL` ولا credentials.
+- PostgreSQL مؤقت محلي مع substitution مؤقت لـ`uuidv7()` بسبب عدم توفر PostgreSQL 18 محليًا: fresh migration للسلسلة كاملة، FKs/قيود، seed مرتين، `roles=4`, `permissions=197`, `nonrestrict_fks=0`, وproduction guard blocked ✅ كتحقق compatibility فقط.
+- `pnpm exec vitest run tests/integration/database --passWithNoTests` ⚠️ محجوب: لا يوجد container runtime لـTestcontainers PostgreSQL 18.
+- `pnpm typecheck` ⚠️ 5 أخطاء foundation سابقة خارج النطاق في `src/middleware.ts` و`src/pages/api/health/ready.ts`.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** ملفات assets/documents/approvals/change/backup وseed/factories مكتوبة ومتحققة static/unit، ونجح PostgreSQL compatibility run؛ إثبات Testcontainers PostgreSQL 18 وtypecheck العام ما زالا محجوبين/خارج النطاق.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم PostgreSQL 18/container runtime لتشغيل fresh/upgrade/invalid-row/seed integration الرسمية.
+- `risk_level` للصلاحيات غير محدد في المواصفات، لذلك seed يستخدم قيمة metadata محايدة `UNSPECIFIED` ولا يوزع permissions على roles.
+- Production restore، RPO/RTO، retention، provider، وexact approval authorities تبقى DENY/POLICY-DEPENDENT.
+
 ## [2026-09-04] — MASTER-007: Tasks + Quality + Quarantine + Laboratory schemas
 
 ### تم التنفيذ
