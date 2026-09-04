@@ -11,6 +11,40 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — اعتماد Deployment + UAT + Production Readiness Foundation Closure Package
+
+### تم التنفيذ
+- إنشاء `Documents/DEPLOYMENT-ARCHITECTURE.md` بحالة `FOUNDATION — APPROVED DEPLOYMENT ARCHITECTURE BASELINE`.
+- إنشاء `Documents/UAT-ACCEPTANCE-PLAN.md` بحالة `FOUNDATION — APPROVED UAT ACCEPTANCE BASELINE`.
+- إنشاء `Documents/PRODUCTION-READINESS-CHECKLIST.md` بحالة `FOUNDATION — APPROVED PRODUCTION READINESS BASELINE`.
+- اعتماد Controlled Release Architecture: `Local/Development → Test/CI → Staging/UAT → Production`.
+- تثبيت release identity مرتبطة بـGit SHA + Build/Artifact ID + Migration Head، مع تفضيل build-once/promote-same-artifact حيث يكون ذلك ممكنًا تقنيًا.
+- تثبيت أن Production migrations خطوات explicit controlled وليست silent application-startup mutations، وأن code rollback لا يساوي database rollback.
+- اعتماد UAT بنموذج `Role × Domain × Workflow × State × Permission × Positive/Negative Scenario × Evidence` مع ربط النتائج بالـexact release candidate.
+- اعتماد Production Readiness كـfinal evidence-based Go/No-Go gate، ومنع percentage-based readiness من تجاوز أي blocker حرج.
+- تثبيت أن Critical FAIL/UNVERIFIED، required UAT failure، residual CRITICAL، required restore evidence missing، أو artifact/commit mismatch تمنع Go-Live.
+
+### الملفات المتأثرة
+- `Documents/DEPLOYMENT-ARCHITECTURE.md`
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `DEPLOYMENT-ARCHITECTURE.md` أُنشئ على `main` بالـcommit `2d35f7f62d08afa31757113ff9568936fcd745e6` وتمت إعادة قراءته؛ Blob SHA: `afd06581c9da000f281ce2e624c132e1ef56b738`.
+- `UAT-ACCEPTANCE-PLAN.md` أُنشئ على `main` بالـcommit `83a0f1c006f247e7f604d282d8b145d70eac4444` وتمت إعادة قراءته؛ Blob SHA: `3a2d88a1dedbdd173053cac43045d6578b59ddc7`.
+- `PRODUCTION-READINESS-CHECKLIST.md` أُنشئ على `main` بالـcommit `c5c31426e9ec3f43708f50f2e175914659a0a4b1` وتمت إعادة قراءته؛ Blob SHA: `529e263fb37555f37074b42df00d5278b784793b`.
+- تم التحقق من أن الملفات الثلاثة تحمل APPROVED statuses وليست Draft.
+- لم تُشغّل application tests/build لأن هذه المهمة توثيق Foundation فقط، ولا يوجد claim بأن CI/CD أو UAT runtime أو Production deployment مطبقة فعليًا.
+
+### النتيجة والقيود
+- حزمة Deployment/UAT/Production Readiness أصبحت Foundation baselines معتمدة.
+- لا يعني ذلك أن deployment pipeline أو UAT execution أو production readiness evidence موجودة فعليًا؛ implementation/runtime status يبقى UNVERIFIED حتى يوجد code + environment + current evidence.
+- Exact hosting/provider، CI/CD tooling، production release authority، RPO/RTO، retention، HA topology، deployment mode، وapproval ceremonies ما زالت POLICY/DEPLOYMENT-DEPENDENT حيث نصت الوثائق على ذلك.
+- `Documents/UI-UX-SPECIFICATION.md` و`Documents/ROUTE-MANIFEST-SPECIFICATION.md` تم اعتمادهما من المستخدم من ناحية المحتوى، لكن الـmetadata الحالي داخل الملفين ما زال يحمل `DRAFT FOR APPROVAL` ويحتاج normalization منفصل قبل إدخالهما في قائمة الـapproved canonical baseline داخل هذا الـMind.
+
+---
+
 ## [2026-09-04] — اعتماد Backup & Recovery Foundation Baseline
 
 ### تم التنفيذ
@@ -32,7 +66,7 @@
 - تمت إعادة قراءة `Documents/BACKUP-RECOVERY-PLAN.md` من `main` بعد الإنشاء.
 - Blob SHA المتحقق للوثيقة: `6b71c9189ecd3ae18bcdb9ccf737ea2e561afe6f`.
 - الـStatus المتحقق داخل الملف: `FOUNDATION — APPROVED BACKUP & RECOVERY BASELINE`.
-- لم تُشغّل application tests/build لأن المهمة توثيق Foundation فقط ولا يوجد claim بأن backup implementation أو runtime recovery جاهز.
+- لم تُشغّل application tests/build لأن التغيير توثيقي فقط ولا يوجد claim بأن backup implementation أو runtime recovery جاهز.
 
 ### النتيجة والقيود
 - الوثيقة نفسها مثبتة كـFoundation baseline معتمدة.
@@ -78,9 +112,11 @@
 
 الحالة الحالية:
 
-> **FOUNDATION / SPECIFICATION STAGE**
+> **FOUNDATION / SPECIFICATION STAGE — FOUNDATION CLOSURE NEARLY COMPLETE**
 
-لا يُفترض وجود application implementation أو database schema أو migrations أو tests أو deployment لمجرد وجود المواصفات.
+الـFoundation architecture/specification package الأساسية أصبحت مكتملة بدرجة كبيرة، لكن لا يُفترض وجود application implementation أو database schema/migrations/runtime/tests/deployment لمجرد وجود المواصفات.
+
+قبل الانتقال إلى implementation يجب تنظيف أي Foundation metadata متعارضة/قديمة، ثم بناء implementation plans قابلة للتنفيذ والتحقق.
 
 أي claim مثل:
 
@@ -100,7 +136,7 @@
 
 `Documents/`
 
-الوثائق الأساسية الحالية:
+الوثائق الأساسية المعتمدة حاليًا:
 
 - `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md`
 - `Documents/SYSTEM-INVARIANTS.md`
@@ -118,10 +154,17 @@
 - `Documents/ERROR-ARCHITECTURE.md`
 - `Documents/TESTING-STRATEGY.md`
 - `Documents/RISK-REGISTER.md`
+- `Documents/DESIGN-SYSTEM.md`
 - `Documents/OBSERVABILITY-ARCHITECTURE.md`
 - `Documents/BACKUP-RECOVERY-PLAN.md`
+- `Documents/DEPLOYMENT-ARCHITECTURE.md`
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
 
-`Documents/ROUTE-MANIFEST-SPECIFICATION.md` موجود حاليًا لكنه لا يدخل قائمة الـapproved canonical baseline إلا بعد إزالة Draft status واعتماده صراحة.
+الوثائق التالية موجودة ومحتواها معتمد من المستخدم، لكن الـmetadata داخل الملف نفسه ما زال `DRAFT FOR APPROVAL` ويجب تطبيعه قبل اعتبار الملف canonical APPROVED baseline هنا:
+
+- `Documents/UI-UX-SPECIFICATION.md`
+- `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
 
 الوثائق تصف الـFoundation. الكود يجب أن يطابقها، وليس العكس.
 
@@ -433,17 +476,26 @@ Evidence before assertion.
 
 # 16. Current Open Foundation Work
 
-الحالة الحالية ما زالت Foundation / Specification، ولم يبدأ إثبات runtime implementation بمجرد اعتماد الوثائق.
+الـFoundation package الأساسية أصبحت شبه مغلقة توثيقيًا.
 
-Recommended next areas:
+العمل المفتوح المباشر قبل بدء implementation planning:
 
-- اعتماد/إغلاق `ROUTE-MANIFEST-SPECIFICATION.md` إذا تقرر تثبيته كbaseline.
-- `DESIGN-SYSTEM.md`.
-- `UI-UX-SPECIFICATION.md`.
-- Deployment Architecture.
-- UAT Acceptance Plan.
-- Production Readiness Checklist.
-- Implementation plans حسب build phases بعد إغلاق المواصفات المطلوبة.
+1. تطبيع `Documents/UI-UX-SPECIFICATION.md` من `DRAFT FOR APPROVAL` إلى approved status المتوافق مع اعتماد المستخدم.
+2. تطبيع `Documents/ROUTE-MANIFEST-SPECIFICATION.md` من `DRAFT FOR APPROVAL` إلى approved status المتوافق مع اعتماد المستخدم.
+3. تحديث أي cross-reference/roadmap قديم إذا كان ما زال يعرض Deployment/UAT/Production Readiness كعمل مفتوح.
+4. بعد إغلاق metadata inconsistencies: إنشاء implementation plans حسب build phases بدل البدء العشوائي بالصفحات.
+
+المرحلة التالية بعد ذلك:
+
+```text
+FOUNDATION CLOSED
+→ IMPLEMENTATION PLANNING
+→ ASTRO / POSTGRESQL SCAFFOLDING
+→ AUTH / AUTHZ / AUDIT FOUNDATION
+→ DESIGN SYSTEM IMPLEMENTATION
+→ DOMAIN MODULE IMPLEMENTATION
+→ TEST / UAT / READINESS EVIDENCE
+```
 
 ---
 
