@@ -1,0 +1,13 @@
+/// <reference types="astro/client" />
+
+interface ImportMetaEnv {
+  readonly NODE_ENV: 'development' | 'test' | 'production';
+  readonly DATABASE_URL?: string;
+  readonly SESSION_SECRET?: string;
+  readonly OTEL_EXPORTER_OTLP_ENDPOINT?: string;
+  readonly OTEL_EXPORTER_OTLP_HEADERS?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: qc-operations-laboratory-management-system
+    runtime: node
+    buildCommand: corepack pnpm@11.25.0 install --frozen-lockfile && corepack pnpm@11.25.0 build
+    startCommand: node dist/server/entry.mjs
+    autoDeployTrigger: checksPass
+    domains:
+      - qclevel.top
+    renderSubdomainPolicy: enabled
+    healthCheckPath: /api/health/ready
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        sync: false
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false

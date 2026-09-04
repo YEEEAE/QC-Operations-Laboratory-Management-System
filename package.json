@@ -1,0 +1,51 @@
+{
+  "name": "qc-operations-laboratory-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "QC Operations & Laboratory Management System",
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.20.0 <25",
+    "pnpm": "11.25.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:migrate:check": "tsx scripts/db-migrate.ts --check"
+  },
+  "dependencies": {
+    "@astrojs/check": "0.9.10",
+    "@astrojs/node": "11.1.5",
+    "@opentelemetry/api": "1.9.1",
+    "astro": "7.3.1",
+    "kysely": "0.29.5",
+    "pg": "8.23.0",
+    "pino": "10.3.1",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.4.1",
+    "@types/pg": "8.23.1",
+    "@eslint/js": "10.0.1",
+    "typescript-eslint": "8.69.0",
+    "@vitest/coverage-v8": "5.0.0",
+    "eslint": "10.10.0",
+    "prettier": "3.9.6",
+    "testcontainers": "12.1.0",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0"
+  }
+}

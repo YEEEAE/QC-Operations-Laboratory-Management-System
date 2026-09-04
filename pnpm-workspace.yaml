@@ -1,0 +1,8 @@
+allowBuilds:
+  cpu-features: true
+  esbuild: true
+  protobufjs: true
+  ssh2: true
+minimumReleaseAgeExclude:
+  - '@eslint/plugin-kit@0.7.3'
+  - eslint@10.10.0

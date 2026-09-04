@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Astro / Vite / build output
+.astro/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Environment files (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# Runtime and local data
+*.log
+.cache/
+.tmp/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
