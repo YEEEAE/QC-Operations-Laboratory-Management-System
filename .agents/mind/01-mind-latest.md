@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-010: Notifications + Files/Evidence + Object Storage + Search
+
+### تم التنفيذ
+- أُنشئت notification capability بعقد domain/repository/service وPostgreSQL repository؛ القراءة محصورة بالمستلم، وmark-read يمرر recipient داخل UPDATE ويعيد نفس الحالة عند replay.
+- أُضيفت سياسات authorization صريحة لـ`PERM-NOT-VIEW-OWN` و`PERM-NOT-MARK-READ` بدون Admin bypass أو provider خارجي.
+- أُنشئت files/evidence capability مع metadata repository، ربط evidence تاريخيًا بدون حذف، SHA-256 للـbytes الفعلية، وFileService يفوض قبل upload/download ويتحقق من hash عند التحميل.
+- أُنشئ ObjectStore abstraction مع LocalObjectStore للاختبار/التطوير فقط ومنع traversal، وS3-compatible adapter يفرض `acl: private` بدون اختراع provider أو credentials.
+- أُنشئت SearchResult/SearchService/PostgresSearch للكيانات المعتمدة فقط؛ q محدود إلى 200 حرفًا، limit محدود إلى 100، والاستعلامات parameterized وتضع actor predicates داخل SQL.
+- أُضيفت اختبارات العزل بين المستخدمين، mark-read replay، hash mismatch، unauthorized access، path traversal، local roundtrip، private S3 contract، query limits وSQL-injection input.
+
+### الملفات المتأثرة
+- `src/shared/notifications/{notification,notification-repository,postgres-notification-repository,notification-service}.ts`
+- `src/shared/files/{file-record,file-repository,postgres-file-repository,object-store,local-object-store,s3-object-store,sha256,file-service}.ts`
+- `src/shared/search/{search-result,search-service,postgres-search}.ts`
+- `src/shared/authorization/policy-registry.ts`
+- `src/shared/database/db-types.ts`
+- `tests/integration/shared/{notifications,files,object-store,search}.test.ts`
+
+### التحقق
+- اختبارات مركزة MASTER-010: `4 files / 7 tests` ✅
+- `pnpm test:unit`: `8 files / 21 tests` ✅
+- `pnpm lint` ✅
+- `pnpm build` ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- `pnpm test:integration`: ⚠️ 5 PostgreSQL suites محجوبة لأن Testcontainers لم يجد container runtime؛ 8 suites غير PostgreSQL مرّت و14 اختبارًا PostgreSQL تخطّت.
+- `pnpm format:check`: ⚠️ ملف سابق خارج النطاق `db/seeds/common.ts` غير منسق؛ ملفات MASTER-010 منسقة.
+- `pnpm exec tsc --noEmit`: ⚠️ أخطاء foundation/dependency في Astro وNode 22، مع تصفية أخطاء ملفات MASTER-010 وعدم ظهور أخطاء TypeScript جديدة فيها.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** capability layers والاختبارات المحلية وbuild/lint مكتملة، لكن إثبات PostgreSQL 18 الفعلي وS3 disposable service محجوبان؛ لا يوجد claim بجاهزية الإنتاج.
+
+### ملاحظات / مشاكل مفتوحة
+- نموذج scope assignments غير معتمد في المواصفات؛ Search يطبق server-side ownership/assignee predicates الحالية فقط، وتحتاج scopes الأوسع read model/policy معتمدة قبل إضافتها.
+- لا توجد retention/MIME-size policy أو external email/SMS provider أو backup credential authority جديدة.
+
 ## [2026-09-04] — MASTER-009: concurrency + central authorization + SoD + audit + outbox
 
 ### تم التنفيذ

@@ -79,6 +79,58 @@ export interface IdempotencyRecordsTable {
   completed_at: Date | null;
 }
 
+export interface FilesTable {
+  id: Generated<string>;
+  original_filename: string;
+  storage_key: string;
+  storage_provider: string;
+  mime_type: string;
+  extension: string | null;
+  size_bytes: number | bigint;
+  sha256: string;
+  uploaded_by: string;
+  uploaded_at: Generated<Date>;
+  state: string;
+}
+
+export interface EvidenceLinksTable {
+  id: Generated<string>;
+  file_id: string;
+  subject_type: string;
+  subject_id: string;
+  evidence_type: string | null;
+  description: string | null;
+  linked_by: string;
+  linked_at: Generated<Date>;
+  removed_at: Date | null;
+  removal_reason: string | null;
+}
+
+export interface NotificationsTable {
+  id: Generated<string>;
+  recipient_user_id: string;
+  notification_type: string;
+  severity: string;
+  title: string;
+  message: string;
+  subject_type: string | null;
+  subject_id: string | null;
+  dedupe_key: string | null;
+  created_at: Generated<Date>;
+  read_at: Date | null;
+}
+
+export interface NotificationDeliveriesTable {
+  id: Generated<string>;
+  notification_id: string;
+  channel: string;
+  state: string;
+  attempt_count: Generated<number>;
+  last_attempt_at: Date | null;
+  delivered_at: Date | null;
+  error_code: string | null;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -86,6 +138,10 @@ export interface DatabaseSchema {
   audit_events: AuditEventsTable;
   outbox_events: OutboxEventsTable;
   idempotency_records: IdempotencyRecordsTable;
+  files: FilesTable;
+  evidence_links: EvidenceLinksTable;
+  notifications: NotificationsTable;
+  notification_deliveries: NotificationDeliveriesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

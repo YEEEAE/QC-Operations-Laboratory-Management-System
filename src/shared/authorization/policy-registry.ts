@@ -7,6 +7,18 @@ export interface AuthorizationPolicy {
 }
 const policies: readonly AuthorizationPolicy[] = [
   {
+    permission: 'PERM-NOT-VIEW-OWN',
+    action: 'VIEW',
+    entityType: 'NOTIFICATION',
+    states: ['ACTIVE'],
+  },
+  {
+    permission: 'PERM-NOT-MARK-READ',
+    action: 'MARK_READ',
+    entityType: 'NOTIFICATION',
+    states: ['ACTIVE'],
+  },
+  {
     permission: 'PERM-INSP-REVIEW',
     action: 'REVIEW',
     entityType: 'INSPECTION_REPORT',
