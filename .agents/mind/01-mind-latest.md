@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-007: Tasks + Quality + Quarantine + Laboratory schemas
+
+### تم التنفيذ
+- أُضيفت هجرات `0006` إلى `0009` لجداول Tasks وQuality وQuarantine وLaboratory حسب الكيانات migration-safe المعتمدة.
+- أُضيفت قيود حالات Task/Finding/NCR/RCA/CAPA/Receiving/Inspection/Lab، وفصلت `workflow_state` عن `inspection_result` وعن `release_system`.
+- حُفظت traceability للمختبر عبر template versions وsamples وraw typed measurements وretest self-reference/sequence/reason وhistorical snapshots.
+- حُفظت controlled history عبر `ON DELETE RESTRICT`، ومنعت snapshots من UPDATE/DELETE لصلاحية runtime؛ لم تُخترع limits علمية أو release/approval policy.
+- أُضيفت اختبارات migration ledger، upgrade count، وجود الجداول، وinvalid-row constraints للـquantity/state/retest.
+- لم تُهاجر recurrence rules أو CAPA effectiveness reviews أو retest_requests لأنها غير مؤكدة/تعتمد على policy. كما بقيت FKs إلى Equipment/Calibration/Documents مؤجلة للهجرات المالكة اللاحقة حتى لا ينكسر fresh ordering.
+
+### الملفات المتأثرة
+- `db/migrations/0006_tasks.sql`
+- `db/migrations/0007_quality.sql`
+- `db/migrations/0008_quarantine.sql`
+- `db/migrations/0009_laboratory.sql`
+- `tests/integration/database/{migrations,constraints,upgrade-path}.test.ts`
+
+### التحقق
+- `pnpm test:unit` → 4 files / 13 tests ✅
+- `pnpm lint` ✅
+- `pnpm build` ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `prettier --check tests/integration/database` ✅
+- `git diff --check` ✅
+- PostgreSQL مؤقت محلي مع substitution مؤقت لـ`uuidv7()` لأن النسخة المحلية ليست PostgreSQL 18: fresh application للسلسلة كاملة، 42 جدولًا، invalid quantity/state/retest rows مرفوضة، وruntime DDL privileges = false/false ✅ كتحقق صياغة/قيود فقط.
+- `vitest` integration الرسمي على Testcontainers PostgreSQL 18 ⚠️ محجوب: لا يوجد container runtime.
+- `pnpm typecheck` ⚠️ أخطاء foundation سابقة خارج النطاق في `src/middleware.ts` و`src/pages/api/health/ready.ts`.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** هجرات الدومينات واختبارات ledger/constraints مكتوبة ومراجعة، مع نجاح static/unit وPostgreSQL compatibility validation؛ إثبات Testcontainers PostgreSQL 18 وupgrade runner الفعلي ما زال محجوبًا ببيئة التشغيل.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل integration على PostgreSQL 18 فعليًا لإغلاق fresh/upgrade/invalid-row runtime verification.
+- يلزم تنفيذ هجرات Equipment/Calibration/Controlled Documents لاحقًا لإضافة FKs المؤجلة من usage bridges.
+- لا توجد قيم علمية أو سياسات release/approval/retest/effectiveness جديدة مخترعة.
+
 > **Status:** ACTIVE — canonical live project memory
 > **Repository:** `YEEEAE/QC-Operations-Laboratory-Management-System`
 > **Default branch:** `main`

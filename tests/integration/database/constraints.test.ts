@@ -159,4 +159,85 @@ describe('core PostgreSQL constraints and privileges', () => {
       ),
     ).rejects.toMatchObject({ code: '23514' });
   });
+
+  it('persists the Tasks, Quality, Quarantine, and Laboratory foundation tables', async () => {
+    const result = await pool!.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'qc'
+         AND table_name IN (
+           'tasks', 'task_assignments', 'task_checklist_items', 'task_comments', 'task_dependencies',
+           'findings', 'ncrs', 'rcas', 'capas', 'capa_actions',
+           'receiving_items', 'inspection_templates', 'inspection_template_versions',
+           'inspection_template_sections', 'inspection_template_points', 'inspection_reports',
+           'inspection_report_results', 'inspection_report_snapshots',
+           'lab_test_templates', 'lab_test_template_versions', 'lab_test_template_sections',
+           'lab_test_template_parameters', 'lab_tests', 'lab_samples', 'lab_measurements',
+           'lab_equipment_usage', 'lab_document_usage', 'lab_test_snapshots'
+         ) ORDER BY table_name`,
+    );
+    expect(result.rows.map((row) => row.table_name)).toEqual([
+      'capa_actions',
+      'capas',
+      'findings',
+      'inspection_report_results',
+      'inspection_report_snapshots',
+      'inspection_reports',
+      'inspection_template_points',
+      'inspection_template_sections',
+      'inspection_template_versions',
+      'inspection_templates',
+      'lab_document_usage',
+      'lab_equipment_usage',
+      'lab_measurements',
+      'lab_samples',
+      'lab_test_snapshots',
+      'lab_test_template_parameters',
+      'lab_test_template_sections',
+      'lab_test_template_versions',
+      'lab_test_templates',
+      'lab_tests',
+      'ncrs',
+      'rcas',
+      'receiving_items',
+      'task_assignments',
+      'task_checklist_items',
+      'task_comments',
+      'task_dependencies',
+      'tasks',
+    ]);
+  });
+
+  it('rejects invalid controlled states, quantities, retest links, and typed values', async () => {
+    const user = await pool!.query(
+      `INSERT INTO qc.users (login_identity, display_name, password_hash)
+       VALUES ('domain-constraint-user', 'Domain Constraint User', 'hash') RETURNING id`,
+    );
+    const userId = user.rows[0].id as string;
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.receiving_items
+          (doc_no, item_code, description, lot, qty, receiving_date, created_by)
+         VALUES ('DOC-1', 'ITEM-1', 'Item', 'LOT-1', 0, CURRENT_DATE, $1)`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.tasks (task_no, title, priority, state, created_by)
+         VALUES ('TASK-1', 'Task', 'NORMAL', 'UNKNOWN', $1)`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.lab_tests
+          (lab_test_no, template_version_id, state, retest_sequence, author_id, created_by)
+         VALUES ('LAB-1', uuidv7(), 'DRAFT', 1, $1, $1)`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: '23503' });
+  });
 });
