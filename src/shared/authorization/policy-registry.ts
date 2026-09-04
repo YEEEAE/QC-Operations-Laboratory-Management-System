@@ -39,6 +39,11 @@ const policies: readonly AuthorizationPolicy[] = [
   { permission: 'PERM-ADM-PERMISSION-VIEW', action: 'VIEW', entityType: 'PERMISSION', states: ['ACTIVE'] },
   { permission: 'PERM-ADM-PERMISSION-ASSIGN', action: 'ASSIGN', entityType: 'ROLE', states: ['ACTIVE'] },
   { permission: 'PERM-ADM-SCOPE-ASSIGN', action: 'ASSIGN', entityType: 'USER', states: ['ACTIVE', 'INACTIVE', 'DISABLED'] },
+  { permission: 'PERM-RPT-VIEW', action: 'VIEW', entityType: 'REPORT', states: ['ACTIVE'] },
+  { permission: 'PERM-RPT-RUN', action: 'RUN', entityType: 'REPORT', states: ['ACTIVE'] },
+  { permission: 'PERM-RPT-EXPORT', action: 'EXPORT', entityType: 'REPORT', states: ['ACTIVE'] },
+  { permission: 'PERM-RPT-EXPORT-CSV', action: 'EXPORT', entityType: 'REPORT', states: ['ACTIVE'] },
+  { permission: 'PERM-RPT-EXPORT-XLSX', action: 'EXPORT', entityType: 'REPORT', states: ['ACTIVE'] },
 ];
 export function getAuthorizationPolicy(
   permission: PermissionCode,

@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-018: Report registry, scoped exports, and report pages
+
+### تم التنفيذ
+- أُنشئ Report Registry allowlist يحتوي فقط على `quarantine-aging` الموثق كاسم route مثال، مع contract ثابت للأعمدة ومصدر `QUARANTINE_RECEIVING`؛ لا توجد أسماء جداول أو SQL قادمة من العميل.
+- أُنشئ `RunReportUseCase` يتحقق من `PERM-RPT-VIEW` و`PERM-RPT-RUN`، يثبت report code من registry، ويتحقق من date filters server-side.
+- أُنشئ Postgres query ثابت لـ`qc.receiving_items` يمرر `actor.id` داخل predicate `created_by` ويطبق نفس filters للعرض والتصدير.
+- أُنشئ CSV/XLSX exporters من نفس canonical dataset مع prefix apostrophe للخلايا التي تبدأ بـ`=`, `+`, `-`, `@`؛ XLSX يولد artifact داخل الاستجابة ولا ينشئ public temporary file.
+- أُنشئ `reports.exportReport` كـAstro Action POST-only منطقيًا، مع إعادة تفويض `PERM-RPT-EXPORT` وصلاحية format-specific، وأُضيفت صفحات `/reports` و`/reports/[reportCode]` SSR مع unknown code = 404.
+- أُضيفت permission/policy entries لـReporting، وسُجل `PERM-RPT-EXPORT` ضمن approved seed codes لتطابق متطلب التصدير الصريح.
+
+### الملفات المتأثرة
+- `src/modules/reporting/{domain,application,ports,infrastructure}/`
+- `src/actions/{index,reports}.ts`
+- `src/pages/reports/{index,[reportCode]}.astro`
+- `src/shared/authorization/{permissions,policy-registry}.ts`
+- `db/seeds/common.ts`
+- `tests/unit/reporting/export-safety.test.ts`
+- `tests/integration/reporting/{reports,export-report}.test.ts`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- `pnpm exec vitest run tests/unit/reporting/... tests/integration/reporting/...` ⚠️ محجوب: `vitest` غير موجود في `node_modules`.
+- `pnpm exec tsc --noEmit` ⚠️ محجوب باعتمادات غير مثبتة (`astro`, `kysely`, `pg`, `vitest`, Node types)؛ لم يعد يظهر syntax error في ملفات reporting.
+- `pnpm lint` ⚠️ محجوب: `eslint` غير موجود، والبيئة Node `22.23.1` بدل القيد `24.20+`.
+- `pnpm build` ⚠️ محجوب: `astro` غير موجود.
+- `node scripts/architecture/check-route-files.mjs` ⚠️ يفشل بسبب صفحات canonical كثيرة سابقة غير موجودة؛ routes الخاصة بالتقارير موجودة ولم تظهر ضمن النواقص.
+- Playwright وPostgreSQL integration الفعليان لم يُشغّلا بسبب الاعتمادات/الخدمات غير المتاحة.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات registry/query/use case/export/action/pages والاختبارات مكتوبة مع عزل actor وformula-injection defense و404 للـallowlist؛ إثبات runtime/build/Playwright/PostgreSQL ينتظر بيئة الاعتمادات المعتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- تعريف التقرير التشغيلي التفصيلي غير موجود في الوثائق؛ تم الالتزام بكود route المثال الموثق وdataset receiving ثابت بدون اختراع KPI أو قاعدة علمية.
+- تغييرات `IMPLEMENTATION-MASTER-PLAN-MERGED.md` السابقة وغير المرتبطة بقيت بدون تعديل.
+
 ## [2026-09-04] — MASTER-017: Dashboard + Search + Notifications + Audit UI
 
 ### تم التنفيذ

@@ -1,0 +1,14 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { ReportRegistry } from '../../modules/reporting/application/report-registry.js';
+import { authorize } from '../../shared/authorization/authorize.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Freports');
+const registry = new ReportRegistry();
+const reports = registry.list().filter((report) => authorize({ actor, permission: report.viewPermission, action: 'VIEW', entity: { type: 'REPORT', id: report.code, state: 'ACTIVE', ownerId: actor.id, domain: 'REPORTING' }, scope: { domain: 'REPORTING' }, currentVersion: 1, expectedVersion: 1, businessCondition: true }).allowed);
+---
+<AppLayout title="Reports · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><p class="eyebrow">REPORT REGISTRY</p><h1>Reports</h1><p class="lede">Canonical reports available in your authorized scope.</p></section>
+  {reports.length ? <div class="report-grid">{reports.map((report) => <article class="report-card"><p class="eyebrow">{report.code}</p><h2><a href={`/reports/${report.code}`}>{report.title}</a></h2><p>{report.description}</p><a class="open" href={`/reports/${report.code}`}>Open report <span aria-hidden="true">→</span></a></article>)}</div> : <p class="empty">No reports are available for your current permissions and scope.</p>}
+</AppLayout>
+<style>.page-head{margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.report-card p,.empty{color:var(--text-muted);font-size:.86rem}.report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--space-5)}.report-card{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:.5rem 0;font-size:1.1rem}h2 a,.open{color:var(--color-accent-primary-hover)}.open{display:inline-block;margin-top:var(--space-4);font-size:.85rem}</style>
