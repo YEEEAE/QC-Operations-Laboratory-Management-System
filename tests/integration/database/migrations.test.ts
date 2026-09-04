@@ -44,9 +44,10 @@ describe('database migration engine', () => {
       '0012',
       '0013',
       '0014',
+      '0015',
     ]);
     const ledger = await pool!.query('SELECT version, name, checksum FROM qc.schema_migrations');
-    expect(ledger.rows).toHaveLength(14);
+    expect(ledger.rows).toHaveLength(15);
     expect(ledger.rows[0].checksum).toBe(
       createHash('sha256')
         .update((await loadMigrations())[0].sql)
@@ -71,7 +72,7 @@ describe('database migration engine', () => {
     expect(second.pending).toEqual([]);
     expect(
       (await pool!.query('SELECT count(*)::int AS count FROM qc.schema_migrations')).rows[0].count,
-    ).toBe(14);
+    ).toBe(15);
   });
 
   it('supports the current upgrade path as a no-op after the latest migration', async () => {

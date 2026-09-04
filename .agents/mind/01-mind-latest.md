@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-009: concurrency + central authorization + SoD + audit + outbox
+
+### تم التنفيذ
+- أُضيفت optimistic-concurrency primitives في `src/shared/concurrency/version.ts` لرفض النسخة القديمة بـ`CONFLICT_STALE_VERSION` واحتساب النسخة التالية.
+- أُضيفت idempotency service/repositories مع fingerprint SHA-256، replay بدون إعادة mutation، ورفض إعادة استخدام المفتاح مع command مختلف؛ وأُضيفت migration `0015` وجدول durable idempotency.
+- أُنشئت authorization layer مركزية تجمع actor/account state/explicit permission/entity/state/scope/ownership/SoD/version/business condition، مع default-deny وبدون role hierarchy أو Admin bypass؛ أكواد permissions من canonical seed.
+- أُنشئت SoD default تمنع self-review/self-approval/self-release/self-sign، مع policy registry لا يسمح إلا بسياسة معرفة صراحة.
+- أُنشئت audit service/repository append-only contract مع حقول actor/action/reason/correlation ورفض payload keys الحساسة؛ وأُنشئت outbox enqueue/claim/processed/retry وworker بمعاملة claim و`SKIP LOCKED`.
+- أُضيفت اختبارات authorization/SoD/idempotency/audit/outbox، وتحديث اختبارات migration لتتوقع 15 migration.
+
+### الملفات المتأثرة
+- `src/shared/{concurrency,authorization,idempotency,audit,outbox}/`
+- `src/shared/database/db-types.ts`
+- `db/migrations/0015_idempotency_records.sql`
+- `scripts/workers/outbox.ts`
+- `tests/unit/shared/{authorization-types,authorize,sod}.test.ts`
+- `tests/integration/shared/{idempotency,audit,outbox}.test.ts`
+- `tests/integration/database/{migrations,upgrade-path}.test.ts`
+
+### التحقق
+- `pnpm exec vitest run ...` للـauthorization/SoD/shared integration: 6 files / 12 tests ✅
+- `pnpm test:unit`: 8 files / 21 tests ✅
+- `pnpm exec tsc --noEmit`: ✅ على Node 22 مع تحذير engine؛ المشروع يطلب Node 24.20+
+- `pnpm lint` ✅
+- `pnpm build` ✅
+- Prettier للملفات المتأثرة + `node scripts/architecture/check-boundaries.mjs` + `git diff --check` ✅
+- `pnpm test:integration`: ⚠️ 5 suites PostgreSQL فشلت قبل الاختبارات لأن Docker/container runtime غير متاح؛ لا يوجد إثبات PG فعلي هنا.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات concurrency/idempotency/authorization/SoD/audit/outbox والاختبارات المحلية الأساسية منفذة ومتحققة، لكن real PostgreSQL concurrent/atomicity/privilege verification محجوب ببيئة التشغيل.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل Testcontainers على PostgreSQL 18 فعلياً للتحقق من migration `0015`، replay/conflict عبر PG، claim المتوازي، rollback/atomic commit، وبقاء التاريخ.
+- لا توجد قيم علمية أو صلاحيات release/approval غير معتمدة مخترعة؛ السياسات غير المعرفة تبقى DENY.
+
 ## [2026-09-04] — Commit ودفع تغييرات MASTER-008
 
 ### تم التنفيذ

@@ -69,12 +69,23 @@ export interface OutboxEventsTable {
   dedupe_key: string | null;
 }
 
+export interface IdempotencyRecordsTable {
+  id: Generated<string>;
+  key: string;
+  request_fingerprint: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  response_payload: unknown | null;
+  created_at: Generated<Date>;
+  completed_at: Date | null;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
   sessions: SessionsTable;
   audit_events: AuditEventsTable;
   outbox_events: OutboxEventsTable;
+  idempotency_records: IdempotencyRecordsTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;
