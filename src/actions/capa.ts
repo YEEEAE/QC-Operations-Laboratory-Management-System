@@ -1,0 +1,1 @@
+import{defineAction,ActionError}from'astro:actions';import{z}from'astro:schema';export const capa={create:defineAction({accept:'json',input:z.object({ncrId:z.string().uuid()}),handler:()=>{throw new ActionError('FORBIDDEN','CAPA creation requires an approved source/RCA relation.');}})};

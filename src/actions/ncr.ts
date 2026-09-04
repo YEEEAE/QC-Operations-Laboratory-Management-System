@@ -1,0 +1,1 @@
+import{defineAction,ActionError}from'astro:actions';import{z}from'astro:schema';export const ncr={create:defineAction({accept:'json',input:z.object({findingId:z.string().uuid()}),handler:()=>{throw new ActionError('FORBIDDEN','Direct NCR creation is policy-dependent and remains denied.');}})};

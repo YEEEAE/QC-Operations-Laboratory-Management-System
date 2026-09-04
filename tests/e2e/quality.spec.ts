@@ -1,0 +1,1 @@
+import{test,expect}from'@playwright/test';test.describe('Quality protected routes',()=>{test('quality routes require authentication',async({page})=>{const response=await page.goto('/quality');expect(response?.status()).toBeGreaterThanOrEqual(3);expect(page.url()).toContain('/login');});});

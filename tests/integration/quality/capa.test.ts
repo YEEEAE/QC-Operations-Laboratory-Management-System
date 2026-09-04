@@ -1,0 +1,1 @@
+import{describe,it,expect}from'vitest';import{transitionCapa}from'../../../src/modules/quality/capa/domain/capa.js';describe('CAPA',()=>{it('never closes directly and requires completed actions',()=>{const c:any={state:'READY_FOR_CLOSURE',actions:[],version:1n};expect(()=>transitionCapa(c,'CLOSE',new Date())).toThrow();});});

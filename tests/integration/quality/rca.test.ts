@@ -1,0 +1,1 @@
+import{describe,it,expect}from'vitest';import{transitionRca}from'../../../src/modules/quality/rca/domain/rca.js';describe('RCA',()=>{it('requires analysis and root cause before submit',()=>expect(()=>transitionRca({id:'1',ncrId:'n',state:'IN_PROGRESS',createdBy:'u',createdAt:new Date(),updatedAt:new Date(),version:1n},'SUBMIT',new Date())).toThrow());});

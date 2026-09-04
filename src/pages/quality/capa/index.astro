@@ -1,0 +1,4 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fquality%2Fcapa');
+---
+<AppLayout title="CAPA · Quality" locale="en" direction="ltr"><h1>CAPA</h1><p class="lede">Corrective and preventive actions are scoped to authorized NCR relations.</p><p class="notice">Closure authority and effectiveness policy are unresolved; closure is denied by default.</p></AppLayout><style>.lede{color:var(--text-muted)}.notice{padding:1rem;background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}</style>

@@ -141,6 +141,11 @@ export interface TasksTable {
   state: string; due_at: Date | null; current_assignee_id: string | null; completed_at: Date | null;
   created_by: string; created_at: Generated<Date>; updated_by: string | null; updated_at: Generated<Date>; version: Generated<bigint>;
 }
+export interface FindingsTable { id: Generated<string>; finding_no:string; title:string; description:string; state:string; severity:string|null; source_context:unknown|null; owner_id:string|null; opened_at:Date|null; closed_at:Date|null; created_by:string; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface NcrsTable { id:Generated<string>; ncr_no:string; title:string; description:string; state:string; finding_id:string|null; affected_item_code:string|null; affected_lot:string|null; owner_id:string|null; opened_at:Date|null; closed_at:Date|null; created_by:string; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface RcasTable { id:Generated<string>; rca_no:string|null; ncr_id:string; state:string; method:string|null; analysis:string|null; root_cause:string|null; submitted_at:Date|null; approved_at:Date|null; created_by:string; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface CapasTable { id:Generated<string>; capa_no:string; ncr_id:string|null; state:string; title:string; description:string; owner_id:string|null; target_date:string|null; verification_required:boolean; effectiveness_required:boolean; closed_at:Date|null; created_by:string; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface CapaActionsTable { id:Generated<string>; capa_id:string; sequence_no:number; description:string; owner_id:string; due_at:Date|null; state:string; completed_at:Date|null; completed_by:string|null; verification_state:string|null; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
 export interface TaskAssignmentsTable { id: Generated<string>; task_id: string; assignee_id: string; assigned_by: string; assigned_at: Generated<Date>; unassigned_at: Date | null; reason: string | null; }
 export interface TaskChecklistItemsTable { id: Generated<string>; task_id: string; label: string; required: boolean; position: number; completed: boolean; completed_by: string | null; completed_at: Date | null; version: Generated<bigint>; }
 export interface TaskCommentsTable { id: Generated<string>; task_id: string; author_id: string; body: string; created_at: Generated<Date>; edited_at: Date | null; }
@@ -167,6 +172,7 @@ export interface DatabaseSchema {
   task_checklist_items: TaskChecklistItemsTable;
   task_comments: TaskCommentsTable;
   task_dependencies: TaskDependenciesTable;
+  findings: FindingsTable; ncrs: NcrsTable; rcas: RcasTable; capas: CapasTable; capa_actions: CapaActionsTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

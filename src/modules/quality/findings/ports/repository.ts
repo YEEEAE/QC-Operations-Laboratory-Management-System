@@ -1,0 +1,2 @@
+import type { ActorContext } from '../../../../shared/authorization/types.js'; import type { Finding, FindingAction } from '../domain/finding.js';
+export interface FindingRepository { create(i:{finding:Finding;actor:ActorContext;requestId:string}):Promise<Finding>; get(id:string,actor:ActorContext):Promise<Finding|undefined>; list(i:{actor:ActorContext;state?:Finding['state']}):Promise<readonly Finding[]>; transition(i:{id:string;expectedVersion:bigint;actor:ActorContext;action:FindingAction;reason?:string;requestId:string}):Promise<Finding>; }

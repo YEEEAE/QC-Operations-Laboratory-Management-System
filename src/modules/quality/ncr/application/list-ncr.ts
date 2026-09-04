@@ -1,0 +1,1 @@
+import type{ActorContext}from'../../../../shared/authorization/types.js';import type{NcrRepository}from'../ports/repository.js';export class ListNcrUseCase{constructor(private repo:NcrRepository){}execute(i:{actor:ActorContext;state?:any}){return this.repo.list(i);}}

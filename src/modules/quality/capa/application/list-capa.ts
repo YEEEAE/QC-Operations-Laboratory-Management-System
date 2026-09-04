@@ -1,0 +1,1 @@
+import type{ActorContext}from'../../../../shared/authorization/types.js';import type{CapaRepository}from'../ports/repository.js';export class ListCapaUseCase{constructor(private repo:CapaRepository){}execute(i:{actor:ActorContext;state?:any}){return this.repo.list(i);}}

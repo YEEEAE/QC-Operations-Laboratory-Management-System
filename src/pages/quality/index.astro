@@ -1,0 +1,7 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fquality');
+---
+<AppLayout title="Quality · QC Operations" locale="en" direction="ltr"><section class="page-head"><p class="eyebrow">T3 QUALITY CONTROL</p><h1>Quality</h1><p class="lede">Authorized quality records and controlled workflow progression.</p></section><nav class="cards" aria-label="Quality areas"><a href="/quality/findings">Findings</a><a href="/quality/ncr">NCR</a><a href="/quality/rca">RCA</a><a href="/quality/capa">CAPA</a></nav></AppLayout>
+<style>.page-head{margin-bottom:2rem}.eyebrow,.lede{color:var(--text-muted)}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}.cards a{padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);color:var(--color-accent-primary-hover);font-weight:700;text-decoration:none}</style>

@@ -1,0 +1,4 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fquality%2Fncr');
+---
+<AppLayout title="NCR · Quality" locale="en" direction="ltr"><p class="eyebrow">QUALITY / NON-CONFORMANCE</p><h1>NCR</h1><p class="lede">Non-conformance records are available within your authorized scope.</p><p class="notice">Direct creation is not enabled until the approved NCR creation policy is available.</p></AppLayout><style>.eyebrow,.lede{color:var(--text-muted)}.notice{padding:1rem;background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}</style>

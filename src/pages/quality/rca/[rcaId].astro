@@ -1,0 +1,4 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login');
+---
+<AppLayout title="RCA detail · Quality" locale="en" direction="ltr"><h1>RCA workspace</h1><p class="lede">Analysis, root cause, review, and history remain linked to the NCR.</p></AppLayout><style>.lede{color:var(--text-muted)}</style>

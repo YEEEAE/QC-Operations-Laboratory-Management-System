@@ -1,5 +1,39 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-020: Quality Finding → NCR → RCA → CAPA baseline
+
+### تم التنفيذ
+- أُنشئت Quality domain models لـFinding وNCR وRCA وCAPA مع الحالات والانتقالات الأساسية المعتمدة، ورفض الانتقالات غير المسموحة، الأسباب الإلزامية، وعدم السماح بإغلاق NCR/CAPA بدون شروط الإغلاق المعتمدة.
+- أُضيفت source context للـFinding عبر migration forward-only `0017`، مع إبقاء المصدر مملوكًا لدومينه وعدم تنفيذ cross-domain mutation؛ NCR يقبل فقط relation إلى Finding.
+- أُنشئت repository ports وPostgreSQL adapters وuse cases للإنشاء/القراءة/القائمة/الانتقال والتعديل حيث يسمح النموذج، مع UUID/owner-or-creator scoping وoptimistic version predicates.
+- أُضيفت Quality overview read model، وAstro Actions لـFinding/NCR/RCA/CAPA؛ direct NCR/CAPA creation غير الموثق بقي DENY، وإغلاق السجلات الحساسة بقي محكومًا بالسياسة/الصلاحية.
+- أُضيفت صفحات Quality المعتمدة للـoverview وFinding وNCR وRCA وCAPA، مع إظهار source/history/capability context بدون SQL أو business rules داخل Delivery.
+- أُضيفت اختبارات domain مركزة وQuality authorization/E2E smoke تغطي transition/source/closure/authentication negative controls.
+
+### الملفات المتأثرة
+- `src/modules/quality/`
+- `src/actions/{index,findings,ncr,rca,capa}.ts`
+- `src/pages/quality/`
+- `src/shared/{authorization/policy-registry,database/db-types}.ts`
+- `db/migrations/0017_quality_source_context.sql`
+- `tests/integration/quality/`, `tests/e2e/quality.spec.ts`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- Quality route presence scan ✅؛ `check-route-files.mjs` ما زال يفشل فقط على routes canonical قديمة خارج Quality.
+- static scan للـDelivery من SQL/raw DB/browser storage/Admin bypass ✅
+- `pnpm exec vitest run tests/integration/quality --passWithNoTests` ⚠️ محجوب: Vitest غير موجود في `node_modules`.
+- PostgreSQL integration، Astro build/typecheck، وPlaywright لم تُشغّل بسبب الاعتمادات/الخدمات غير المتاحة في البيئة الحالية.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** Quality baseline والحدود والاختبارات المصدرية أُضيفت محليًا، لكن runtime verification الكامل، audit/outbox transaction proof، وإثبات الإغلاق التشغيلي ينتظر تثبيت الاعتمادات واعتماد سياسات الإغلاق/الإنشاء غير المحسومة.
+
+### ملاحظات / مشاكل مفتوحة
+- `BR-QUAL-010` و`BR-QUAL-033` وسياسة closure authority ما زالت غير معتمدة؛ direct NCR/CAPA creation وclosure/effectiveness تبقى DENY/POLICY-DEPENDENT.
+- يجب تشغيل migration/adapter tests على PostgreSQL المعتمد قبل اعتماد production behavior؛ لا يوجد commit أو push.
+
 ## [2026-09-05] — MASTER-019: Tasks domain, persistence, use cases, Actions, and workspaces
 
 ### تم التنفيذ

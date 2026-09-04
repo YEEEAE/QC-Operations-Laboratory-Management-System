@@ -45,7 +45,7 @@ describe('database migration engine', () => {
       '0013',
       '0014',
       '0015',
-      '0016',
+      '0017',
     ]);
     const ledger = await pool!.query('SELECT version, name, checksum FROM qc.schema_migrations');
     expect(ledger.rows).toHaveLength(16);

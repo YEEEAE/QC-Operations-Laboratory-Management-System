@@ -1,0 +1,5 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fquality%2Ffindings%2Fnew');
+---
+<AppLayout title="Create Finding · Quality" locale="en" direction="ltr"><h1>Create Finding</h1><form method="post" data-action="findings.create"><label>Finding ID<input name="findingNo" required /></label><label>Title<input name="title" required /></label><label>Description<textarea name="description" required></textarea></label><label>Severity (if approved)<input name="severity" /></label><button type="submit">Save Draft</button></form></AppLayout>
+<style>form{display:grid;gap:1rem;max-width:42rem}label{display:grid;gap:.35rem}input,textarea{padding:.7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle)}button{width:max-content;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}</style>

@@ -1,0 +1,1 @@
+import type { ActorContext } from '../../../../shared/authorization/types.js'; import type { FindingRepository } from '../ports/repository.js'; export class ListFindingsUseCase {constructor(private repo:FindingRepository){} execute(i:{actor:ActorContext;state?:any}){return this.repo.list(i);}}

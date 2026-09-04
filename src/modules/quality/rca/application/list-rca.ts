@@ -1,0 +1,1 @@
+import type{ActorContext}from'../../../../shared/authorization/types.js';import type{RcaRepository}from'../ports/repository.js';export class ListRcaUseCase{constructor(private repo:RcaRepository){}execute(i:{actor:ActorContext;ncrId?:string}){return this.repo.list(i);}}
