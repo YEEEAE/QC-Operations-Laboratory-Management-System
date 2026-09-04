@@ -1,5 +1,45 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-022: Quarantine review/release/read models/workspaces
+
+### تم التنفيذ
+- أُضيفت use cases منفصلة لـReview وReturn وApprove وRelease وHold، مع صلاحيات مزدوجة حيث يلزم، وفحص SoD والحالة والنسخة والنطاق قبل الانتقال.
+- بقي اعتماد النتيجة الرسمية وrelease authority محكومًا بـapproved policy/source؛ default policy للـApprove وRelease هو DENY، و`PASS` لا يغيّر `releaseSystem` تلقائيًا.
+- دُعمت انتقالات Receiving إلى `RELEASED` بشكل صريح، مع حفظ `release_system/released_at/released_by`، وتسجيل Audit وOutbox داخل transaction للإنشاء والانتقالات.
+- دُعمت Inspection transitions للمراجعة/الإرجاع/الاعتماد والاستئناف من `RETURNED`، مع snapshot submission، ومنع `finalResult` أو point result القادم من العميل أثناء حفظ Draft.
+- أُضيفت read models scoped لـQuarantine overview وadmin templates/state distribution، مع فصل metrics للـPASS غير المُحرر عن المُحرر.
+- أُضيفت Astro Actions وصفحات Quarantine المعتمدة للـdashboard وreceiving وinspection execution/review وadmin، مع منع `/quarantine/inspections/new` وإظهار controlled states كـread-only.
+- أُضيفت اختبارات integration مركزة للمراجعة/SoD/الاعتماد/الإرجاع، release/FAIL/stale، read models، وauthorization matrix، واختبار E2E لحدود الدخول والمسارات.
+
+### الملفات المتأثرة
+- `src/modules/quarantine/inspection/application/{review-inspection,approve-inspection,return-inspection,resume-inspection}.ts`
+- `src/modules/quarantine/receiving/{application/{hold-receiving,release-receiving,transition-receiving}.ts,infrastructure/postgres-repository.ts,domain/{receiving-item,receiving-state}.ts}`
+- `src/modules/quarantine/{application/{dependencies,get-quarantine-overview,get-quarantine-admin}.ts,infrastructure/postgres-quarantine-read-model.ts}`
+- `src/modules/quarantine/inspection/infrastructure/postgres-repository.ts`
+- `src/actions/{index,quarantine}.ts`
+- `src/pages/quarantine/`
+- `src/shared/authorization/policy-registry.ts`
+- `tests/integration/quarantine/`, `tests/e2e/quarantine.spec.ts`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- فحص TypeScript المفلتر على ملفات MASTER-022 لا يطلع أخطاء جديدة ✅؛ الفحص الكامل ما زال يتأثر باعتمادات Astro/Vitest الناقصة وأخطاء سابقة خارج النطاق.
+- `pnpm exec vitest run tests/integration/quarantine --passWithNoTests` ⚠️ محجوب: `vitest` غير موجود في `node_modules`.
+- `pnpm lint` ⚠️ محجوب: `eslint` غير موجود، مع Node `v22.22.3` بينما المشروع يطلب `>=24.20.0 <25`.
+- `pnpm build` ⚠️ محجوب: `astro` غير موجود.
+- `node scripts/architecture/check-route-files.mjs` ⚠️ يفشل بسبب routes ناقصة لـDomains أخرى؛ مسارات Quarantine المطلوبة لا تظهر ضمن القائمة الناقصة.
+- فحص static للـDelivery لا يحتوي raw SQL أو استيراد infrastructure بعد فصل dependency composition ✅؛ لا PostgreSQL/Playwright runtime متاح.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** أُنجزت طبقات review/release/read models/pages/actions والضوابط الأمنية محليًا، لكن الاعتماد الرسمي العلمي/السياسي وe-signature غير موفّر فبقيت العمليات الحساسة DENY، كما تعذر إثبات runtime بسبب البيئة.
+
+### ملاحظات / مشاكل مفتوحة
+- انتقال `START_INSPECTION` الحالي ما زال انتقال Receiving فقط؛ إنشاء/link Inspection Report داخل transaction يحتاج orchestrator ومصدر numbering/template approved قبل اعتباره مكتملًا.
+- شاشة التنفيذ الحالية لا تعرض نقاط template الفعلية ولا تسمح بإدخال observations كاملة؛ لا يجوز تحويل هذا النقص إلى نتيجة رسمية أو ادعاء جاهزية.
+- لا يوجد commit أو push، وتم الحفاظ على تعديل المستخدم السابق في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+
 ## [2026-09-05] — MASTER-021: Quarantine Receiving + Inspection execution baseline
 
 ### تم التنفيذ

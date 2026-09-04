@@ -7,3 +7,4 @@ export { findings } from './findings.js';
 export { ncr } from './ncr.js';
 export { rca } from './rca.js';
 export { capa } from './capa.js';
+export { quarantine } from './quarantine.js';
