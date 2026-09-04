@@ -5,7 +5,7 @@
 ## Route Manifest & Navigation Contract — v1.0
 
 **Document Path:** `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
-**Status:** FOUNDATION — DRAFT FOR APPROVAL
+**Status:** APPROVAL
 **Product:** QC Operations & Laboratory Management System
 **Framework:** Astro — Server-rendered / On-demand
 **Routing Model:** Astro File-Based Routing
