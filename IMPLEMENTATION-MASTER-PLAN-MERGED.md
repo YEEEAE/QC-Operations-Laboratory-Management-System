@@ -79,7 +79,6 @@
 
 ```text
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -143,7 +142,6 @@ PROMPT ID: MASTER-001
 TITLE: Root project + package.json + Render baseline
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -310,7 +308,6 @@ PROMPT ID: MASTER-002
 TITLE: Foundation normalization + architecture folders + canonical routes
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -445,7 +442,6 @@ PROMPT ID: MASTER-003
 TITLE: Testing harness + CI baseline
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -565,7 +561,6 @@ PROMPT ID: MASTER-004
 TITLE: Runtime config + IDs/time + errors + validation
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -713,7 +708,6 @@ PROMPT ID: MASTER-005
 TITLE: PostgreSQL runtime + migration engine + core qc schema + migration verification
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -840,7 +834,6 @@ PROMPT ID: MASTER-006
 TITLE: Identity/AuthZ/Audit/Outbox/Files shared schemas
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -940,7 +933,6 @@ PROMPT ID: MASTER-007
 TITLE: Tasks + Quality + Quarantine + Laboratory schemas
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1043,7 +1035,6 @@ PROMPT ID: MASTER-008
 TITLE: Assets + Documents + Approvals + Change Requests + Backup metadata + seeds
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1180,7 +1171,6 @@ PROMPT ID: MASTER-009
 TITLE: Concurrency + central authorization + SoD + Audit + Outbox
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1342,7 +1332,6 @@ PROMPT ID: MASTER-010
 TITLE: Notifications + Files/Evidence + Object Storage + Search
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1495,7 +1484,6 @@ PROMPT ID: MASTER-011
 TITLE: Logging + OpenTelemetry + health + security HTTP helpers + i18n
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1651,7 +1639,6 @@ PROMPT ID: MASTER-012
 TITLE: Identity domain + repositories + password/session + login/logout
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1794,7 +1781,6 @@ PROMPT ID: MASTER-013
 TITLE: Account/admin-user use cases + Actions + login/account pages + middleware
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -1939,7 +1925,6 @@ PROMPT ID: MASTER-014
 TITLE: Roles/permissions/scopes repository + use cases + Actions
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -2075,7 +2060,6 @@ PROMPT ID: MASTER-015
 TITLE: Design tokens + layouts + primitives + forms
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -2235,7 +2219,6 @@ PROMPT ID: MASTER-016
 TITLE: Tables + shell/navigation + dialogs/stale UX + E-Sign + charts + root/error pages
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -2402,7 +2385,6 @@ PROMPT ID: MASTER-017
 TITLE: Dashboard + Search + Notifications + Audit UI
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -2533,7 +2515,6 @@ PROMPT ID: MASTER-018
 TITLE: Report registry + CSV/XLSX export + report pages
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -2679,7 +2660,6 @@ PROMPT ID: MASTER-019
 TITLE: Tasks end-to-end implementation
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -2882,7 +2862,6 @@ PROMPT ID: MASTER-020
 TITLE: Quality: Finding + NCR + RCA + CAPA
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -3087,7 +3066,6 @@ PROMPT ID: MASTER-021
 TITLE: Quarantine: Receiving + Inspection execution
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -3244,7 +3222,6 @@ PROMPT ID: MASTER-022
 TITLE: Quarantine: Review + Release + dashboards/pages + E2E
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -3425,7 +3402,6 @@ PROMPT ID: MASTER-023
 TITLE: Laboratory complete implementation
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -3631,7 +3607,6 @@ PROMPT ID: MASTER-024
 TITLE: Assets: Equipment + Calibration + Maintenance
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -3822,7 +3797,6 @@ PROMPT ID: MASTER-025
 TITLE: Controlled Documents complete implementation
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -3991,7 +3965,6 @@ PROMPT ID: MASTER-026
 TITLE: Approvals + E-Signatures
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4139,7 +4112,6 @@ PROMPT ID: MASTER-027
 TITLE: Change Requests
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4259,7 +4231,6 @@ PROMPT ID: MASTER-028
 TITLE: Admin users + roles + permissions + scopes pages
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4378,7 +4349,6 @@ PROMPT ID: MASTER-029
 TITLE: System Health + Backup/Restore catalog/orchestration/UI
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4520,7 +4490,6 @@ PROMPT ID: MASTER-030
 TITLE: AI Advisory boundary + UI + security tests
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4642,7 +4611,6 @@ PROMPT ID: MASTER-031
 TITLE: Production security + rate limiting + observability wiring
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4756,7 +4724,6 @@ PROMPT ID: MASTER-032
 TITLE: Concurrency/idempotency stress + full authorization/IDOR matrix
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4850,7 +4817,6 @@ PROMPT ID: MASTER-033
 TITLE: Critical workflow E2E + files/reports security
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -4952,7 +4918,6 @@ PROMPT ID: MASTER-034
 TITLE: Accessibility + failure UX + performance baseline
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -5069,7 +5034,6 @@ PROMPT ID: MASTER-035
 TITLE: Release identity + full CI + developer/operator docs
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -5179,7 +5143,6 @@ PROMPT ID: MASTER-036
 TITLE: Recovery verification tooling + restore-drill runbook
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -5275,7 +5238,6 @@ PROMPT ID: MASTER-037
 TITLE: UAT actors/scenarios/data + evidence collector
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -5380,7 +5342,6 @@ PROMPT ID: MASTER-038
 TITLE: Production readiness checker + release evidence record
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -5480,7 +5441,6 @@ PROMPT ID: MASTER-039
 TITLE: Provider-aware Go-Live runbook and Render deployment gate
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.
@@ -5573,7 +5533,6 @@ PROMPT ID: MASTER-040
 TITLE: Traceability closure + final Production Readiness assessment
 
 REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
-EXECUTION MODE: Execute this prompt only. Do not start the next prompt.
 
 BEFORE WORK:
 1. Read `.agents/mind/01-mind-latest.md` completely.

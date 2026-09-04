@@ -10,6 +10,29 @@
 > **Database:** PostgreSQL
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
+## [2026-09-04] — إزالة قيد "Execute this prompt only" من خطة التنفيذ المدمجة
+
+### تم التنفيذ
+- حذف سطر `EXECUTION MODE: Execute this prompt only. Do not start the next prompt.` من جميع مواضعه في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+- المواضع المحذوفة: قالب القواعد الثابتة (القسم 3) + الـ40 برومبت MASTER = 41 موضعًا.
+- لم يتغير أي محتوى آخر في الملف (لا عناوين، ولا متطلبات، ولا verification).
+
+### الملفات المتأثرة
+- `IMPLEMENTATION-MASTER-PLAN-MERGED.md`
+
+### التحقق
+- `grep -c "EXECUTION MODE: Execute this prompt only"` → `0` ✅
+- `wc -l` → 5668 (كان 5709؛ الفرق 41 سطرًا محذوفًا بالضبط) ✅
+- `git diff --check` ✅ و`git diff --stat` → 41 deletions فقط ✅
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** البرومبتز أصبحت خالية من قيد التوقف بعد كل برومبت؛ باقي محتوى الخطة سليم 100%.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد.
+
+
 
 ## [2026-09-04] — MASTER-001: Astro + Render baseline
 
