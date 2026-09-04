@@ -2,7 +2,7 @@
 
 # QC Operations & Laboratory Management System
 
-## Route Manifest & Navigation Contract — v1.0 Draft for Approval
+## Route Manifest & Navigation Contract — v1.0
 
 **Document Path:** `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
 **Status:** FOUNDATION — DRAFT FOR APPROVAL
