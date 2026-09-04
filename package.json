@@ -21,8 +21,9 @@
     "test:integration": "vitest run tests/integration --passWithNoTests",
     "test:e2e": "playwright test --pass-with-no-tests",
     "test:coverage": "vitest run --coverage",
-    "db:migrate": "tsx scripts/db-migrate.ts",
-    "db:migrate:check": "tsx scripts/db-migrate.ts --check"
+    "db:migrate": "tsx scripts/db/migrate.ts",
+    "db:migrate:status": "tsx scripts/db/migration-status.ts",
+    "db:migrate:check": "tsx scripts/db/check-migration-integrity.ts"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",

@@ -1,0 +1,41 @@
+export const ERROR_CODES = [
+  'AUTH_REQUIRED',
+  'AUTH_SESSION_EXPIRED',
+  'AUTH_REAUTH_REQUIRED',
+  'AUTHZ_DENIED',
+  'AUTHZ_SCOPE_DENIED',
+  'AUTHZ_SOD_VIOLATION',
+  'AUTHZ_PERMISSION_MISSING',
+  'VALIDATION_FAILED',
+  'VALIDATION_INVALID_UUID',
+  'VALIDATION_INVALID_DATE',
+  'VALIDATION_INVALID_QUERY',
+  'DOMAIN_INVALID_TRANSITION',
+  'DOMAIN_SIGNATURE_REQUIRED',
+  'CONFLICT_STALE_VERSION',
+  'CONFLICT_DUPLICATE_COMMAND',
+  'RESOURCE_NOT_FOUND',
+  'RESOURCE_ALREADY_EXISTS',
+  'SYSTEM_INTERNAL',
+  'SYSTEM_DATABASE_UNAVAILABLE',
+  'SYSTEM_CONFIGURATION_INVALID',
+] as const;
+export type ErrorCode = (typeof ERROR_CODES)[number];
+export type ErrorCategory =
+  'AUTHENTICATION' | 'AUTHORIZATION' | 'VALIDATION' | 'DOMAIN' | 'CONFLICT' | 'RESOURCE' | 'SYSTEM';
+export type Retryability =
+  | 'NEVER'
+  | 'AFTER_USER_CHANGE'
+  | 'AFTER_REFRESH'
+  | 'AFTER_REAUTH'
+  | 'AFTER_DELAY'
+  | 'INTERNAL_RETRY_ONLY'
+  | 'UNKNOWN';
+
+export function categoryForCode(code: ErrorCode): ErrorCategory {
+  return code.startsWith('AUTHZ_')
+    ? 'AUTHORIZATION'
+    : code.startsWith('AUTH_')
+      ? 'AUTHENTICATION'
+      : (code.split('_')[0] as ErrorCategory);
+}

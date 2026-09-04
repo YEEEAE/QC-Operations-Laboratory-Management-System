@@ -11,6 +11,99 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — MASTER-005: PostgreSQL runtime + migration engine + core schema
+
+### تم التنفيذ
+- أُنشئت حدود runtime مشتركة لـ`pg.Pool` وKysely وtransaction helper، مع `UTC` و`search_path=qc,pg_catalog` وإغلاق pool صريح وترجمة أخطاء PostgreSQL إلى `AppError`.
+- أُنشئ migration runner صريح يقرأ migrations SQL بترتيب ثابت، يحسب SHA-256، يسجل ledger في `qc.schema_migrations`، ويستخدم PostgreSQL advisory lock لمنع التشغيل المتوازي.
+- أُنشئت `0001_core_schema.sql` لبنية `qc` فقط: ledger، users، sessions، audit_events، outbox_events؛ بدون جداول domain أو RLS، ومع UUIDv7 native وقيود FK/CHECK/UNIQUE وسلوك تاريخي محافظ.
+- أُضيفت أدوار PostgreSQL primitive منفصلة `qc_migrator` و`qc_app_runtime`، مع منع runtime من DDL وCREATE على `public` و`qc`، ومنح أقل صلاحيات لازمة للجداول الأساسية.
+- أُضيفت اختبارات migrations/constraints/upgrade path، وREADME يثبت immutability وforward-only policy، وحُدّثت scripts `db:migrate` و`db:migrate:status` و`db:migrate:check` لمساراتها الجديدة.
+
+### الملفات المتأثرة
+- `src/shared/database/{db-types,pool,database,transaction}.ts`
+- `scripts/db/{migrate,migration-status,check-migration-integrity}.ts`
+- `db/migrations/{README.md,0001_core_schema.sql}`
+- `tests/integration/database/{migrations,constraints,upgrade-path}.test.ts`
+- `package.json`, `vitest.config.ts`
+
+### التحقق
+- TypeScript compile للملفات الجديدة مع `--ignoreConfig` ✅
+- `pnpm lint` ✅
+- `pnpm format:check` ✅
+- `git diff --check` ✅
+- `pnpm test:unit` → 4 files / 13 tests ✅
+- `pnpm test:integration -- database` ⚠️ فشل لأن Docker/container runtime غير متاح؛ PostgreSQL 18 لم تُشغّل فعليًا في هذه البيئة.
+- `pnpm db:migrate:check` ⚠️ وصل للسكريبت وفشل آمنًا بـ`errors.system_configuration_invalid` لغياب `DATABASE_URL`؛ لم تُعرض credentials.
+- `pnpm typecheck` ⚠️ بقيت أخطاء سابقة خارج ملفات المهمة في `src/middleware.ts` و`src/pages/api/health/ready.ts` مرتبطة بـ`tsconfig`/Astro types.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقة runtime وmigration/core schema والاختبارات مكتوبة ومتحققة static/unit، لكن إثبات PostgreSQL 18 الفعلي وfresh/upgrade/privilege runtime verification محجوبان بغياب Docker و`DATABASE_URL`، ولا يوجد claim بجاهزية الإنتاج.
+
+### ملاحظات / مشاكل مفتوحة
+- لا توجد قيم علمية أو سياسات release/approval جديدة، ولا جداول domain أُنشئت.
+- يلزم تشغيل اختبارات database على PostgreSQL 18 فعلية، ثم معالجة أخطاء typecheck السابقة في نطاق منفصل قبل claim شامل.
+
+## [2026-09-04] — MASTER-004: runtime config + IDs/time + errors + validation
+
+### تم التنفيذ
+- أُنشئت طبقة server-only typed config في `src/config/` تفرق بين `DATABASE_URL` و`SESSION_SECRET` كإعدادات حرجة للإنتاج، وإعدادات observability/version الاختيارية، مع أخطاء startup redacted.
+- أُضيف UUIDv7 تقني مولّد على الخادم، وClock يعتمد وقت الخادم، وتحويل عرض آمن إلى `Asia/Riyadh`، وpagination bounded بحد أقصى تقني 100.
+- أُنشئت عائلات AppError canonical (`AUTH/AUTHZ/VALIDATION/DOMAIN/CONFLICT/RESOURCE/SYSTEM`) مع mapping آمن إلى Action errors وRFC 9457 Problem Details؛ `CONFLICT_STALE_VERSION` يرجع 409 وdatabase unavailable يرجع 503.
+- أُضيفت schemas/parsers للـUUID والتاريخ والتصفح/query، مع رفض UUID غير الصحيح قبل أي lookup، وstructured field errors.
+- أُضيف request context وmiddleware يولدان/يحافظان على `requestId` ويربطان `traceId` و`spanId`، بدون أخذ actor أو permission أو final state من العميل.
+- أُضيف `safeReturnTo` يقبل local relative paths فقط ويمنع open redirect، مع اختبارات unit وintegration مركزة.
+
+### الملفات المتأثرة
+- `src/config/{constants,env,runtime}.ts`
+- `src/shared/{id,time,pagination,errors,validation,http}/`
+- `src/middleware.ts`, `src/env.d.ts`
+- `tests/unit/shared/`, `tests/integration/http/`
+
+### التحقق
+- TDD: اختبار pagination فشل أولًا مع السالب ثم نجح بعد تطبيق bounded normalization ✅
+- `pnpm test:unit` → 4 files / 13 tests ✅
+- `pnpm exec vitest run tests/integration/http/middleware.test.ts` → 1 test ✅
+- `pnpm typecheck` → 0 errors/warnings/hints ✅
+- `pnpm lint` ✅
+- `pnpm format:check` ✅
+- `pnpm build` ✅
+- `git diff --check` وDelivery/raw-SQL/secret scans ✅
+- `pnpm test:integration` ⚠️ اختبار PostgreSQL السابق لم يبدأ لأن Docker/container runtime غير متاح محليًا؛ اختبار HTTP integration نفسه نجح.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** foundation المطلوب لـruntime/config/IDs/time/errors/validation/request context منفذ ومتحقق محليًا؛ تحقق PostgreSQL container الكامل يبقى محجوبًا بسبب بيئة Docker، والتوافق المحلي مع Node 24 غير متاح (المحلي Node 22.22.3).
+
+### ملاحظات / مشاكل مفتوحة
+- ما زالت auth/session repository الفعلية وauthorization داخل use cases خارج نطاق MASTER-004؛ middleware لا يمنح صلاحية ولا ينفذ business rules.
+- لا توجد قيم علمية أو سياسات release/approval جديدة في هذا التغيير.
+
+## [2026-09-04] — إصلاح فشل Deploy على Render (port binding)
+
+### تم التنفيذ
+- شخص السبب الجذري: `@astrojs/node` standalone كان يربط السيرفر على localhost فقط (`[::1]`)، وRender يطلب المنفذ على `0.0.0.0` → "No open ports detected" → Deploy Timed Out.
+- تحقق تجريبيًا أن `host` option داخل `node({...})` يتجاهله الـ adapter (يقرأ `config.server.host` فقط)، بينما `HOST` env يعمل ويُنتج binding على `*:port`.
+- أضيف `HOST=0.0.0.0` كـ env var في `render.yaml` كحل رسمي.
+
+### الملفات المتأثرة
+- `render.yaml`
+
+### التحقق
+- `pnpm build` ✅
+- `pnpm typecheck` ✅ (0 errors/warnings)
+- تشغيل `PORT=4321 HOST=0.0.0.0 node dist/server/entry.mjs` → `lsof` يظهر `*:4321 LISTEN` (كل الواجهات) ✅
+- بدون `HOST` → `[::1]` فقط (أعيد إنتاج مشكلة Render محليًا) ✅
+
+### النتيجة
+- **الحالة:** نجح (محليًا)
+- **مختصر:** الإصلاح عبارة عن env var واحد في render.yaml؛ الـ deploy الفعلي على Render يحتاج المستخدم يعمل redeploy بعد commit.
+
+### ملاحظات / مشاكل مفتوحة
+- إذا خدمة Render غير مربوطة بـ Blueprint، لازم المستخدم يضيف `HOST=0.0.0.0` يدويًا في Environment Variables من الداشبورد أيضًا.
+
+
 ## [2026-09-04] — MASTER-003: Testing harness + CI baseline
 
 ### تم التنفيذ
