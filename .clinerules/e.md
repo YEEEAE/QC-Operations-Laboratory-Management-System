@@ -20,7 +20,6 @@ Before every task:
 3. Read the relevant approved documents under `Documents/`.
 4. Inspect current repository reality before trusting any historical claim.
 5. Inspect `.agents/skills/` and use the relevant skill when one exists.
-6.  تكلم معي دائما بلغة عربية وبلهجه عاميه سعوديه
 
 The previous BRIGHTAI / `apps/qc-task-manager` history is **not** authoritative for this repository.
 

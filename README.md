@@ -22,6 +22,22 @@
 
 ---
 
+# Technology Baseline
+
+الأساس التقني المعتمد للنظام:
+
+```text
+Web Framework:      Astro — server output (server-rendered / on-demand)
+Runtime Adapter:    Node adapter — يدعم on-demand rendering وActions وSessions
+Database:           PostgreSQL — من اليوم الأول
+Architecture:       Modular Monolith — مع Domain boundaries واضحة
+Authorization:      Server-side — Default Deny
+```
+
+> **ملاحظة معمارية:** البناء الافتراضي للتطبيق هو **server output**؛ Static-only Astro لا يناسب هذا النظام لأنه يعتمد على Authentication وserver-side authorization وPostgreSQL وcontrolled mutations. صفحات/UI/Astro Actions هي Delivery Layer فقط، وBusiness Logic يعيش داخل Modules مستقلة عن الـFramework.
+
+---
+
 # الأقسام الرئيسية
 
 ## 1. Dashboard

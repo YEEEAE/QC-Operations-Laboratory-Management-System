@@ -1,835 +1,274 @@
-# AGENTS.md — BRIGHTAI (دستور المشروع)
+# AGENTS.md — QC Operations & Laboratory Management System
 
-> **الإصدار:** 4.0
-> **تاريخ التحديث:** 2026-08-11
-> **الحالة:** ساري المفعول — يُطبَّق على كل مهمة بدون استثناء
-> **المشروع:** [BRIGHTAI] (GitHubYEEEAE/BRIGHTAI
-) — منصة سعودية للذكاء الاصطناعي والأتمتة
-> **الموقع:**https://brightai.site
-
----
-
-### بروتوكول القاعدة صفر
-
-1. **اقرأ `01-mind-latest.md` كاملًا قبل أي مهمة** — مو بس أول سطور، كاملًا. إذا المهمة تمس تاريخ أقدم، اقرأ القسم المناسب (02 أو 03) منها
-2. **طابِق الأرقام** — إذا العقل يقول "النسخة المنطوقة v2.7.77"، لا تفترض غيرها
-3. **إذا فيه تعارض بين الأقسام** — القسم الأحدث بالتاريخ يكسب (01 > 02 > 03 > brain.md > أي ملف ثاني حتى هذا الملف)
-4. **بعد كل مهمة** — أضف سجلًا جديدًا **داخل`01-mind-latest.md`** (راجع قسم "تحديث الـ mind"). السجل **مو مجرد سطر أو عنوان**؛ لازم يحتوي ملخصًا قصيرًا بنقاط يوضح وش تم تنفيذه فعليًا، الملفات المتأثرة، التحقق، والنتيجة. ممنوع تحديث 02 أو 03 أو brain.md — الأرشيف للقراءة فقط
-5. **إذا كبر القسم 1** عن حده المعقول (~500 سطر أو 150KB): انقل أقدم سجلاته لأعلى القسم 2، وأعد الترقيم — القرار هذا يُوثّق كسجل داخل القسم نفسه
+> **Version:** 1.0
+> **Updated:** 2026-09-04
+> **Status:** ACTIVE — applies to every task in this repository
+> **Repository:** `YEEEAE/QC-Operations-Laboratory-Management-System`
+> **Product:** QC Operations & Laboratory Management System
+> **Framework:** Astro (server-rendered / on-demand)
+> **Database:** PostgreSQL
+> **Architecture:** Modular Monolith
 
 ---
 
+## 0. Source of Truth
 
-## ⚠️ القاعدة صفر — اقرأ العقل قبل أي شي
+Before every task:
 
-**قبل ما تبدأ أي مهمة (حتى لو تافهة): لازم تقرأ العقل كاملًا.**
+1. Read `.agents/mind/01-mind-latest.md` completely.
+2. Read root `AGENTS.md`.
+3. Read the relevant approved documents under `Documents/`.
+4. Inspect current repository reality before trusting any historical claim.
+5. Inspect `.agents/skills/` and use the relevant skill when one exists.
+6.  تكلم معي دائما بلغة عربية وبلهجه عاميه سعوديه
 
-عقل المشروع مقسوم إلى ثلاثة أقسام في `.agents/mind/` — مو ملف واحد ضخم:
+The previous BRIGHTAI / `apps/qc-task-manager` history is **not** authoritative for this repository.
 
-القسم
-الملف
-الدور
-متى تقرأه
-1 — الأحدث
-`.agents/mind/01-mind-latest.md`
-السجل الحي: آخر المهام والقرارات والأرقام
-**قبل كل مهمة، كاملًا — إلزامي**
-2 — الأوسط
-`.agents/mind/02-mind-mid.md`
-أرشيف الوسط
-عند الحاجة فقط (سياق تاريخي لمهمة تمس هالفترة)
-3 — الأقدم
-`.agents/mind/03-mind-earliest.md`
-أرشيف الأقدم
-عند الحاجة فقط (سياق تاريخي لمهمة تمس هالفترة)
+Current authority order:
 
-العقل فيه:
-- آخر الأرقام والإحصائيات الفعلية
-- آخر القرارات المعمارية وأسبابها
-- آخر المشاكل المفتوحة والمحلولة
-- الـ ledger الكامل (سجل التغييرات)
-- آخر نسخة منطوقة (deployed version)
-
-أي مهمة بدون قراءة القسم 1 أولًا = تنفّذ وأنت أعمى عن الواقع الفعلي للمشروع.
-
-> **ملاحظة:** `.agents/brain.md` هو النسخة المجمّعة التاريخية (snapshot v2.7.99 وقت التقسيم) — مرجع للبحث الكامل فقط، **ما يتحدث ولا يُعتبر مصدر الحقيقة**.
-استخدم دائما ما تريد من المهارات /BRIGHTAI/.agents/skills
-
-### بروتوكول القاعدة صفر
-
-1. **اقرأ `01-mind-latest.md` كاملًا قبل أي مهمة** — مو بس أول سطور، كاملًا. إذا المهمة تمس تاريخ أقدم، اقرأ القسم المناسب (02 أو 03) منها
-2. **طابِق الأرقام** — إذا العقل يقول "النسخة المنطوقة v2.7.77"، لا تفترض غيرها
-3. **إذا فيه تعارض بين الأقسام** — القسم الأحدث بالتاريخ يكسب (01 > 02 > 03 > brain.md > أي ملف ثاني حتى هذا الملف)
-4. **بعد كل مهمة** — أضف سجلًا جديدًا **بأعلى `01-mind-latest.md`** (راجع قسم "تحديث الـ mind"). السجل **مو مجرد سطر أو عنوان**؛ لازم يحتوي ملخصًا قصيرًا بنقاط يوضح وش تم تنفيذه فعليًا، الملفات المتأثرة، التحقق، والنتيجة. ممنوع تحديث 02 أو 03 أو brain.md — الأرشيف للقراءة فقط
-5. **إذا كبر القسم 1** عن حده المعقول (~500 سطر أو 150KB): انقل أقدم سجلاته لأعلى القسم 2، وأعد الترقيم — القرار هذا يُوثّق كسجل داخل القسم نفسه
-
----
-
-## 🗣️ القاعدة الأولى — اللغة: سعودي عامي دائمًا
-
-**تتكلم مع المستخدم بالعربي السعودي العامي في كل الأحوال — حتى لو كلمك بالإنجليزي.**
-
-### التفاصيل
-
-- **الردود للمستخدم:** سعودي عامي أبيض — واضح، مباشر، بدون تكلّف
-- ✅ "أبشر، خلصت المهمة وحدّثت الـ brain"
-- ✅ "تمام، الصفحة هذي ما هي قابلة للفهرسة — بصلّحها الحين"
-- ❌ "I have completed the task" (ممنوع حتى لو السؤال إنجليزي)
-- ❌ عربي فصحى متكلّف: "لقد قمتُ بإنجاز المَهمّة بنجاحٍ تامّ"
-- **إذا المستخدم كتب إنجليزي بالكامل:** ردّ عليه سعودي عامي، وتقدر تضيف ترجمة إنجليزية مختصرة بين قوسين إذا الموضوع تقني ويحتاج دقة
-- **الكود والتعليقات التقنية داخل الملفات:** إنجليزي (معيار عالمي) — إلا إذا الملف نفسه عربي بطبيعته (مثل هذا الملف والـ brain)
-- **رسائل الـ commit:** إنجليزي تقني مختصر (Conventional Commits)
-- **المحتوى المنشور على الموقع:** عربي فصيح مبسّط (الجمهور سعودي) + إنجليزي للصفحات ثنائية اللغة
-
-### أمثلة سريعة
-
-المستخدم قال
-ترد
-"fix the header bug"
-"أبشر، بشوف مشكلة الهيدر الحين وأصلّحها"
-"what's the LCP score?"
-"الـ LCP الحالي حوالي 1368ms — ضمن الميزانية، بس فيه مجال تحسين بـ ~50ms"
-"صلّح القائمة بالجوال"
-"تمام، بفحص القائمة على مقاسات الجوال وأصلّحها"
-
----
-
-## 🚫 القاعدة الثانية — ممنوع الدفع نهائيًا (NO PUSH — EVER)
-
-**ما تدفع أي تغييرات للريبو نهائيًا. صفر. أبدًا. مهما كان السبب.**
-
-### الممنوعات المطلقة
-
-- ❌ `git push` — **ممنوع نهائيًا** بأي شكل من الأشكال
-- ❌ `git push --force` — أخطر، ممنوع مرتين
-- ❌ إنشاء branch جديد ودفعه — ممنوع
-- ❌ تفعيل GitHub Actions أو workflows تدفع تلقائيًا — ممنوع
-- ❌ استخدام أي أداة/توكن/سكربت يدفع للريبو — ممنوع
-- ❌ `git commit` بدون طلب صريح من المستخدم — المستخدم هو من يلتزم (commits) بنفسه
-
-### المسموح
-
-- ✅ تعديل الملفات محليًا (working tree)
-- ✅ `git status` / `git diff` / `git log` — قراءة فقط
-- ✅ `git stash` مؤقتًا إذا احتجت تبديل سياق (مع إخبار المستخدم)
-- ✅ اقتراح رسالة commit جاهزة — **المستخدم ينفّذها بنفسه**
-
-### ليش هالقاعدة موجودة؟
-
-الريبو فيه تاريخ حساس (force-push سابق، أسرار تسربت وانحذفت، إعادة هيكلة كبيرة). أي دفع غير محسوب ممكن:
-- يعيد نشر أسرار قديمة من التاريخ
-- يكسر الـ deployment الحالي
-- يتجاوز مراجعة المستخدم اليدوية
-
-**القاعدة: تشتغل محليًا، تعرض الشغل، والمستخدم يقرر متى وكيف ينشر.**
-
-### إذا المستخدم طلب منك تدفع
-
-حتى لو طلب صراحة، **أكّد عليه مرة ثانية** قبل التنفيذ:
-> "متأكد تبي أدفع التغييرات؟ القاعدة الافتراضية إني ما أدفع نهائيًا. إذا وافقت، نفّذها بنفسك بهالأمر: `git push origin main` — أو أكّد لي وأنا أساعدك خطوة بخطوة."
-
----
-
-## 🧠 القاعدة الثالثة — تحديث الـ mind بعد كل مهمة
-
-**أي مهمة تخلص = تحديث `.agents/mind/01-mind-latest.md` قبل ما تقول "خلصت".**
-
-التحديث يكون **بأعلى الملف** كسجل جديد، لكن **مو مجرد إضافة سطر فوق**. كل سجل لازم يعطي أي وكيل يقرأ العقل لاحقًا صورة سريعة ودقيقة عن وش صار بدون ما يفتح diff أو يعيد تحليل المهمة.
-
-### وش تحدّث بالضبط
-
-1. **عنوان المهمة + التاريخ** — سطر واضح يعرّف وش كانت المهمة.
-2. **وش تم تنفيذه** — **3 إلى 7 نقاط قصيرة** تصف التغييرات الفعلية، مو النية أو الخطة.
-3. **الملفات المتأثرة** — اذكر المسارات المهمة فقط، بدون حشو.
-4. **الأرقام** — إذا تغيّر رقم (عدد صفحات، نسخة، حجم bundle، نتيجة Lighthouse) سجّل قبل/بعد إذا متوفر.
-5. **القرارات** — أي قرار معماري جديد + **السبب** باختصار.
-6. **المشاكل** — وش انحل، وش بقي مفتوح، وأي مشكلة جديدة ظهرت.
-7. **التحقق** — build / lint / typecheck / tests / فحص يدوي، مع حالة كل واحد.
-8. **النتيجة النهائية** — نجح / جزئي / فشل + السبب إذا مو ناجح بالكامل.
-9. **النسخة** — إذا التغيير يستحق، حدّث آخر نسخة منطوقة داخل `01-mind-latest.md`.
-
-### الصيغة الإلزامية لسجل المهمة
-
-```md
-## [2026-08-27] — وصف المهمة باختصار
-
-### تم التنفيذ
-- عدّلت ...
-- أضفت ...
-- أصلحت ...
-
-### الملفات المتأثرة
-- `path/to/file1`
-- `path/to/file2`
-
-### التحقق
-- `pnpm build` ✅
-- `pnpm test` ✅ / لم يُشغّل: السبب
-- فحص يدوي ✅
-
-### النتيجة
-- **الحالة:** نجح / جزئي / فشل
-- **مختصر:** جملة أو جملتين فقط عن النتيجة الفعلية.
-
-### ملاحظات / مشاكل مفتوحة
-- لا يوجد.
-```
-
-**قاعدة مهمة:** لا تكتب خطة التنفيذ داخل العقل وكأنها إنجاز. سجّل **وش صار فعليًا بعد التنفيذ** فقط. وإذا ما تغيّر قسم معيّن، احذفه من السجل بدل ما تعبيه بكلام فارغ.
-
-### الـ ledger المختصر
-
-إذا فيه جدول ledger داخل `01-mind-latest.md`، حدّثه أيضًا بسطر مختصر بعد إضافة سجل المهمة المنظم:
-
-```
-| 2026-08-27 | وصف المهمة باختصار | الملفات: path/to/file1, path/to/file2 | النتيجة: نجح/فشل/جزئي | ملاحظات |
+```text
+Current repository / database / runtime reality
+        ↓
+Approved controlled company/QC sources
+        ↓
+Documents/SYSTEM-INVARIANTS.md
+        ↓
+Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md
+        ↓
+Documents/DOMAIN-MAP.md
+        ↓
+Documents/BUSINESS-RULES.md
+        ↓
+Documents/ROLE-MATRIX.md
+        ↓
+Documents/PERMISSION-MATRIX.md
+        ↓
+Documents/STATE-MACHINES.md
+        ↓
+Documents/DATA-MODEL.md
+        ↓
+Documents/DATA-DICTIONARY.md
+        ↓
+Documents/REQUIREMENTS-TRACEABILITY.md
+        ↓
+Implementation
 ```
 
 ---
 
-## 🏗️ هوية المشروع والبنية المعمارية
+## 1. Core Project Rules
 
-### وش هو BRIGHTAI؟
-
-منصة سعودية متكاملة للذكاء الاصطناعي والأتمتة:
-- **الموقع العام:** https://brightai.site — صفحات تعريفية، خدمات، مدونة، أدوات مجانية
-- **الجمهور:** السوق السعودي أولًا — الشركات الصغيرة والمتوسطة، رواد الأعمال، الجهات الحكومية
-- **اللغة:** عربي أولًا (RTL)، مع دعم إنجليزي للصفحات المختارة
-- **الرؤية:** أن نكون المرجع الأول بالسعودية في أتمتة الأعمال بالذكاء الاصطناعي
-
-### البنية الفعلية (Monorepo — pnpm workspaces)
-
-```
-BRIGHTAI/
-├── .agents/ # 🧠 دماغ المشروع
-│ ├── mind/ # العقل الحي — اقرأ 01-mind-latest.md أولًا (القاعدة صفر)
-│ │ ├── 01-mind-latest.md # مصدر الحقيقة الحالي — قراءة كاملة قبل كل مهمة
-│ │ ├── 02-mind-mid.md # أرشيف أوسط — عند الحاجة
-│ │ └── 03-mind-earliest.md # أرشيف أقدم — عند الحاجة
-│ ├── brain.md # snapshot تاريخي — مرجع فقط، لا يُحدّث
-│ ├── AGENTS.md # هذا الملف — الدستور
-│ ├── skills/ # 67 مهارة جاهزة (SEO, GEO, UI, أمان...)
-│ ├── types/ # تعريفات TypeScript للوكلاء
-│ └── plugins/ # إعدادات الإضافات
-│
-├── src/ # 🌐 الموقع الرئيسي (Astro static)
-│ ├── pages/ # الصفحات — كل صفحة لازم تكون قابلة للفهرسة
-│ ├── layouts/ # BaseLayout + KernelLayout
-│ ├── components/ # المكونات المشتركة
-│ ├── styles/ # critical.css + الأنماط العامة
-│ └── content/ # المحتوى (MD/MDX)
-│
-├── apps/
-│ ├── dashboard/ # 📊 لوحة التحكم (Next.js + Sentry + Vitest)
-│ └── qc-task-manager/ # ✅ إدارة مهام الجودة (Astro SSR + Tailwind)
-│
-├── packages/
-│ ├── config/ # ⚙️ إعدادات مشتركة
-│ ├── db/ # 🗄️ طبقة قاعدة البيانات
-│ ├── firewall-detectors/ # 🛡️ كاشفات الجدار الناري
-│ └── lead-queue/ # 📬 طابور العملاء المحتملين
-│
-├── kernel/ # 🧩 منطق الـ backend الأساسي + اختباراته
-├── frontend/ # 🖥️ واجهة Express backend
-├── scripts/ # 🔧 سكربتات البناء والتحقق (qa/, security-headers...)
-├── public/ # 📁 الأصول الثابتة (robots.txt, sitemap, images...)
-└── .github/workflows/ # ⚙️ CI/CD — للقراءة فقط، ما تفعّل شي بدون إذن
-```
-
-### التقنيات الأساسية
-
-الطبقة
-التقنية
-الموقع الرئيسي
-Astro (static prerender) + `@astrojs/sitemap` + `@astrojs/node`
-لوحة التحكم
-Next.js + TypeScript + Sentry + Vitest
-إدارة المهام
-Astro SSR + Tailwind CSS
-إدارة الحزم
-pnpm workspaces
-الاستضافة
-(راجع الـ brain للوضع الحالي)
-الأمان
-CSP صارم + security headers مُحقَقة بسكربتات
-
-### قواعد البنية
-
-1. **لا تنقل ملفات بين المجلدات الكبيرة** (`apps/`, `packages/`, `kernel/`) بدون سبب موثّق في الـ brain
-2. **أي package جديد** لازم ينضاف لـ `pnpm-workspace.yaml` ويُوثّق في الـ brain
-3. **الكود المشترك** يروح لـ `packages/` — ما يتكرر بين التطبيقات
-4. **قبل ما تضيف dependency جديد** — تأكد ما فيه بديل موجود، ووثّق السبب في الـ brain
+- Astro is the official web framework.
+- Protected operational features use server/on-demand rendering.
+- PostgreSQL is the official database.
+- Architecture is a Modular Monolith.
+- Business Rules live in Domain/Application layers, not Astro pages/components/actions.
+- Default authorization is DENY.
+- Role is not Permission.
+- Admin is not a universal business approver.
+- Controlled records cannot be silently rewritten.
+- VOID/SUPERSEDED preserve history.
+- Scientific values must come from approved controlled sources.
+- AI is advisory only and cannot approve/reject/release/sign or set official PASS/FAIL.
+- Critical operations are transactional and idempotent where applicable.
+- Concurrent edits must never silently overwrite.
+- No PASS/100%/readiness claim without current evidence.
 
 ---
 
-## 🔍 القاعدة الرابعة — SEO سعودي + محركات البحث الذكية (GEO)
+## 2. Canonical Request Flow
 
-**هدفك الدائم: صفحات BRIGHTAI تتصدّر نتائج البحث في السعودية — على Google التقليدي وعلى محركات البحث الذكية (ChatGPT, Perplexity, Gemini, Copilot, Claude).**
-
-### 4.1 SEO سعودي — الأساسيات
-
-#### الكلمات المفتاحية السعودية
-
-- **فكّر بعقلية الباحث السعودي:** يبحث بالعربي غالبًا، وأحيانًا إنجليزي، وأحيانًا خليط ("أفضل شركة ذكاء اصطناعي بالرياض" / "AI automation Saudi Arabia")
-- **استهدف المصطلحات المحلية:**
-- المدن: الرياض، جدة، الدمام، الخبر، مكة، المدينة
-- المصطلحات: "أتمتة"، "ذكاء اصطناعي"، "شات بوت"، "تحول رقمي"، "رؤية 2030"
-- الصيغ العامية في المحتوى التسويقي: "وش هو"، "كيف تسوي"، "أفضل طريقة"
-- **الكلمات طويلة الذيل (long-tail):** "كيف أسوي شات بوت لمتجري الإلكتروني بالسعودية" أفضل من "شات بوت"
-
-#### البيانات المنظمة (Structured Data)
-
-كل صفحة **لازم** تحتوي JSON-LD مناسب:
-
-```json
-{
-"@context": "https://schema.org",
-"@type": "Organization",
-"name": "BRIGHTAI",
-"url": "https://brightai.site",
-"logo": "https://brightai.site/images/logo.png",
-"address": {
-"@type": "PostalAddress",
-"addressCountry": "SA"
-},
-"areaServed": {
-"@type": "Country",
-"name": "Saudi Arabia"
-}
-}
+```text
+Astro Page / Client Island
+        ↓
+Astro Action / API Endpoint
+        ↓
+Authenticated Request Context
+        ↓
+Application Use Case
+        ↓
+Authorization
+        ↓
+Domain Rules / State Machine
+        ↓
+Transaction
+        ↓
+Repository
+        ↓
+PostgreSQL
+        ↓
+Audit / Outbox / Notifications
 ```
 
-**أنواع Schema المطلوبة حسب الصفحة:**
-
-نوع الصفحة
-Schema المطلوب
-الرئيسية
-`Organization` + `WebSite` (مع `SearchAction`)
-صفحات الخدمات
-`Service` + `FAQPage` (إذا فيه أسئلة)
-المقالات
-`Article` / `BlogPosting` (مع `author`, `datePublished`, `dateModified`)
-صفحات التواصل
-`LocalBusiness` / `ContactPage`
-الأسئلة الشائعة
-`FAQPage`
-الأدوات المجانية
-`WebApplication` + `SoftwareApplication`
-مسارات التنقل
-`BreadcrumbList` — **إلزامي في كل صفحة داخلية**
-
-#### العلامات الوصفية (Meta Tags) — إلزامية لكل صفحة
-
-```html
-**قواعد صارمة:**
-- `og:locale` = `ar_SA` للصفحات العربية، `en_US` للإنجليزية
-- `hreflang` إلزامي إذا الصفحة لها نسخة ثنائية اللغة:
-```html
-#### المحتوى السعودي
-
-- **اللغة:** عربي فصيح مبسّط بلمسة سعودية — مو فصحى جامدة ولا عامية مفرطة
-- **الأمثلة والسياق:** استخدم أمثلة من السوق السعودي (متاجر سلة وزد، مدى، STC Pay، رؤية 2030، منشآت، الزكاة والضريبة والجمارك ZATCA)
-- **العملة:** ريال سعودي (ر.س / SAR)
-- **التوقيت:** Asia/Riyadh (GMT+3)
-- **الأرقام:** تقدر تستخدم الأرقام الإنجليزية (123) — الأسهل للقراءة والأكثر شيوعًا بالسعودية
-
-### 4.2 GEO — التحسين لمحركات البحث الذكية (Generative Engine Optimization)
-
-**محركات الذكاء الاصطناعي (ChatGPT, Perplexity, Gemini, Copilot, Claude) صارت مصدر زيارات حقيقي. لازم المحتوى يكون "قابل للاقتباس" منها.**
-
-#### مبادئ GEO الأساسية
-
-1. **إجابات مباشرة في أول فقرة:**
-- كل صفحة/مقال يبدأ بإجابة مباشرة عن السؤال الرئيسي في 40-60 كلمة
-- محركات الذكاء تقتبس الفقرات المباشرة أكثر من المقدمات الطويلة
-- ❌ "في عالم اليوم المتسارع، أصبح الذكاء الاصطناعي..."
-- ✅ "الأتمتة بالذكاء الاصطناعي هي استخدام نماذج AI لتنفيذ مهام متكررة بدون تدخل بشري، وتوفّر للشركات السعودية حتى 40% من تكاليف التشغيل."
-
-2. **بنية سؤال-جواب واضحة:**
-- استخدم عناوين H2/H3 على شكل أسئلة حقيقية يطرحها الناس
-- "كم تكلفة الشات بوت بالسعودية؟" ثم جواب مباشر تحته
-- هذا يطابق طريقة استعلامات المستخدمين لمحركات الذكاء
-
-3. **حقائق قابلة للتحقق + أرقام محددة:**
-- محركات الذكاء تفضّل المحتوى اللي فيه أرقام وإحصائيات ومصادر
-- "وفق دراسة X، 67% من الشركات السعودية..." أقوى من "كثير من الشركات..."
-- اذكر المصدر وتاريخه
-
-4. **كيانات واضحة (Entity Clarity):**
-- عرّف الكيانات بوضوح: "BRIGHTAI هي منصة سعودية متخصصة في..."
-- استخدم أسماء كاملة أول مرة ثم الاختصار: "هيئة الاتصالات والفضاء والتقنية (CST)"
-- `sameAs` في Schema يربط الكيان بحساباته الرسمية
-
-5. **محتوى شامل يغطي الموضوع بالكامل (Topical Authority):**
-- مقال واحد عميق (2000+ كلمة) أفضل من 5 مقالات سطحية
-- غطِّ: التعريف، الفوائد، الخطوات، التكاليف، الأخطاء الشائعة، الأسئلة الشائعة
-- اربط المقالات ببعض (internal linking) بشكل منطقي
-
-6. **E-E-A-T (الخبرة، التجربة، الموثوقية، الثقة):**
-- اذكر اسم الكاتب/الخبير وخبرته
-- أضف تاريخ النشر وتاريخ آخر تحديث
-- اعرض شهادات العملاء ودراسات الحالة الحقيقية
-- صفحة "من نحن" قوية مع فريق العمل
-
-#### ملفات الذكاء الاصطناعي
-
-- **`robots.txt`:** اسمح لزواحف الذكاء الاصطناعي (GPTBot, ClaudeBot, PerplexityBot, Google-Extended) — إلا إذا قرار الـ brain يقول غير كذا
-- **`llms.txt`:** إذا موجود في `public/`، حدّثه مع كل تغيير كبير — ملخص منظم للموقع يقرأه وكلاء الذكاء الاصطناعي
-- **sitemap.xml:** محدّث دائمًا، يشمل كل الصفحات القابلة للفهرسة
-
-### 4.3 قابلية الفهرسة — كل صفحة لازم تكون قابلة للفهرسة
-
-**قاعدة صارمة: أي صفحة عامة في الموقع لازم تكون قابلة للفهرسة. إذا اكتشفت صفحة غير قابلة للفهرسة — تغيّرها مهما كانت.**
-
-#### قائمة فحص الفهرسة (لكل صفحة)
-
-- [ ] **HTML ثابت (prerendered):** المحتوى الأساسي موجود في HTML الأولي — مو معتمد على JavaScript
-- Astro static يحل هذا تلقائيًا — **ممنوع** تحويل صفحة عامة لـ client-side rendering
-- المحتوى المهم (العناوين، الفقرات، القوائم) لازم يظهر في "View Source" بدون تشغيل JS
-- [ ] **`robots` meta يسمح بالفهرسة:** `index, follow` — ممنوع `noindex` على صفحة عامة
-- [ ] **canonical صحيح:** يشير للصفحة نفسها (self-referencing) أو للنسخة الأساسية
-- [ ] **موجودة في sitemap.xml**
-- [ ] **لها روابط داخلية:** صفحة يتيمة (orphan) = صفحة ميتة — كل صفحة لازم يوصل لها رابط من صفحة ثانية
-- [ ] **حالة HTTP 200:** ممنوع صفحات عامة ترجع 404/500/redirect chains
-- [ ] **سرعة تحميل مقبولة:** LCP < 2.5s (راجع قسم الأداء)
-- [ ] **متوافقة مع الجوال:** Google يفهرس mobile-first
-
-#### الصفحات المستثناة من الفهرسة (الوحيدة المسموح لها `noindex`)
-
-- صفحات الإدارة ولوحات التحكم (`apps/dashboard`)
-- صفحات "شكرًا" بعد إرسال النموذج (thank-you pages)
-- صفحات النتائج الداخلية للبحث (إذا وُجدت)
-- نسخ تجريبية/معاينة
-
-**أي صفحة ثانية لازم تكون `index, follow` — بدون استثناء.**
-
-#### إصلاح صفحة غير قابلة للفهرسة
-
-إذا لقيت صفحة عامة غير قابلة للفهرسة:
-1. **شخّص السبب:** noindex؟ محتوى JS-only؟ canonical خاطئ؟ خارج الـ sitemap؟
-2. **صلّح السبب الجذري** — مو حل مؤقت
-3. **وثّق في الـ brain:** وش كانت المشكلة وكيف انحلت
-4. **تحقق:** بعد الإصلاح، تأكد الصفحة ترجع 200 + محتواها في HTML + موجودة بالـ sitemap
-
----
-
-## 🎨 القاعدة الخامسة — UI/UX ممتاز للكمبيوتر والجوال
-
-**التصميم لازم يكون ممتاز على الشاشتين — الجوال أولًا (أغلب الزوار السعوديين من الجوال)، والكمبيوتر بنفس الجودة.**
-
-### 5.1 مبادئ التصميم الأساسية
-
-#### Mobile-First إجباري
-
-- **ابدأ التصميم من الجوال (360px) ثم توسّع** — مو العكس
-- **نقاط التوقف (Breakpoints) القياسية:**
-- `360px` — جوال صغير (الأساس)
-- `768px` — تابلت
-- `1024px` — لابتوب
-- `1440px` — شاشات كبيرة
-- **اختبر على الأقل:** 360px (جوال) + 1440px (كمبيوتر) قبل ما تسلّم أي تغيير
-
-#### RTL أولًا
-
-- الموقع عربي — **الاتجاه RTL هو الافتراضي**
-- استخدم الخصائص المنطقية في CSS بدل الاتجاهية:
-- ✅ `margin-inline-start` بدل `margin-left`
-- ✅ `padding-inline-end` بدل `padding-right`
-- ✅ `inset-inline-start` بدل `left`
-- الأيقونات الاتجاهية (أسهم، chevrons) لازم تنعكس في RTL
-- الأرقام والإيميلات والروابط تبقى LTR داخل النص العربي (`dir="ltr"` أو `unicode-bidi: isolate`)
-
-#### الخطوط
-
-- **العربي:** خط واضح ومقروء (IBM Plex Sans Arabic / Tajawal / Cairo — راجع الـ brain للخط المعتمد حاليًا)
-- **الإنجليزي/الأرقام:** خط متناسق مع العربي
-- **أحجام الخطوط:**
-- النص الأساسي: 16px على الأقل (18px أفضل للعربي)
-- العناوين: تدرج واضح (H1 > H2 > H3) بنسبة ~1.25-1.333
-- **ممنوع** نص أصغر من 14px للمحتوى الأساسي
-- **ارتفاع السطر:** 1.6-1.8 للعربي (العربي يحتاج مساحة رأسية أكثر من الإنجليزي)
-- **تحميل الخطوط:** `font-display: swap` + preload للخط الأساسي — ممنوع FOIT
-
-#### الألوان والتباين
-
-- **التباين إلزامي (WCAG AA):**
-- نص عادي: 4.5:1 على الأقل
-- نص كبير (18px+ أو 14px bold): 3:1 على الأقل
-- عناصر تفاعلية وحدود: 3:1
-- **الوضع الداكن/الفاتح:** إذا الموقع يدعمهم، اختبر الاثنين — ممنوع نص يختفي في وضع معين
-- **لا تعتمد على اللون وحده** لنقل المعلومة (مثل: خطأ أحمر بدون أيقونة أو نص)
-
-### 5.2 تجربة الاستخدام (UX)
-
-#### التنقل
-
-- **القائمة الرئيسية:** واضحة، قليلة العناصر (5-7 كحد أقصى)، تعمل باللمس والماوس
-- **قائمة الجوال (Hamburger):**
-- زر واضح 44×44px على الأقل (منطقة لمس كافية)
-- تفتح وتنغلق بسلاسة، وتنغلق بزر Escape وبالنقر خارجها
-- `aria-expanded` و `aria-controls` صحيحة
-- **Breadcrumbs:** في كل صفحة داخلية — تساعد المستخدم ومحركات البحث
-- **روابط "تخطَّ إلى المحتوى" (Skip links):** أول عنصر قابل للتركيز في الصفحة
-
-#### النماذج (Forms)
-
-- **Labels واضحة** لكل حقل — ممنوع placeholder بدل label
-- **رسائل الخطأ:** بالعربي، واضحة، تقول وش المشكلة وكيف تصلّحها
-- ❌ "خطأ في الإدخال"
-- ✅ "رقم الجوال لازم يبدأ بـ 05 ويكون 10 أرقام"
-- **التنسيقات السعودية:**
-- الجوال: `05XXXXXXXX` — تحقق من الصيغة السعودية
-- input types صحيحة: `type="tel"` للجوال، `type="email"` للإيميل، `inputmode="numeric"` للأرقام
-- **التحقق:** client-side + server-side — ممنوع الاعتماد على واحد بس
-- **حالة الإرسال:** زر يتحول لـ "جاري الإرسال..." ويتعطّل — ممنوع إرسال مزدوج
-
-#### الأزرار والعناصر التفاعلية
-
-- **منطقة اللمس:** 44×44px كحد أدنى على الجوال
-- **حالات واضحة:** hover, focus, active, disabled — كلها لازم تكون مرئية
-- **Focus visible:** ممنوع `outline: none` بدون بديل — مستخدمي لوحة المفاتيح لازم يشوفون وين هم
-- **النص على الأزرار:** فعل واضح — ✅ "اطلب استشارة مجانية" ❌ "إرسال"
-
-#### الصفحات الفارغة وحالات الخطأ
-
-- **404:** صفحة عربية ودودة فيها روابط للصفحات الرئيسية + بحث إذا متوفر
-- **500:** رسالة اعتذار + طريقة تواصل
-- **حالات فارغة (empty states):** "ما فيه مقالات بعد" + زر إجراء بدل صفحة بيضاء
-
-### 5.3 الأداء (Core Web Vitals)
-
-**الأداء جزء من SEO وتجربة المستخدم — مو رفاهية.**
-
-#### الميزانيات الإلزامية
-
-المقياس
-الهدف
-الحد الأقصى
-LCP (أكبر عنصر مرئي)
-< 2.0s
-2.5s
-INP (استجابة التفاعل)
-< 200ms
-500ms
-CLS (استقرار التخطيط)
-< 0.05
-0.1
-حجم الصفحة الكلي
-< 1.5MB
-2MB
-JavaScript
-< 200KB مضغوط
-300KB
-CSS
-< 50KB مضغوط
-100KB
-
-#### قواعد الأداء الصارمة
-
-1. **الصور:**
-- صيغ حديثة: WebP/AVIF مع fallback
-- `width` و `height` إلزامية (تمنع CLS)
-- `loading="lazy"` للصور تحت الشاشة الأولى
-- `fetchpriority="high"` لصورة LCP فقط
-- ممنوع صورة أكبر من 200KB بدون سبب موثّق
-2. **JavaScript:**
-- Astro islands: ممنوع `client:load` إلا للضرورة — استخدم `client:visible` أو `client:idle`
-- ممنوع مكتبات ضخمة لمهمة بسيطة (ممنوع jQuery نهائيًا)
-3. **CSS:**
-- critical.css يُحمَّل أولًا (render-blocking مقبول للحرج)
-- ممنوع `@import` داخل CSS
-4. **الخطوط:** preload + `font-display: swap` + subset إذا أمكن
-5. **الطرف الثالث (Third-party):**
-- كل سكربت خارجي لازم يكون `defer` أو `async` وله مبرر موثّق
-- ممنوع إضافة سكربت تتبع جديد بدون توثيق في الـ brain
-
-#### قياس الأداء
-
-- **قبل وبعد** أي تغيير يمس الأداء: قِس ووثّق الأرقام في الـ brain
-- الأدوات: Lighthouse, PageSpeed Insights, WebPageTest
-- اختبر على **جوال متوسط + شبكة 4G** — مو بس لابتوب سريع
-
-### 5.4 إمكانية الوصول (Accessibility — a11y)
-
-**الموقع لازم يكون صالح للجميع — بما فيهم ذوي الإعاقة. هذا معيار عالمي ومتطلب قانوني في كثير من الأسواق.**
-
-#### الأساسيات الإلزامية (WCAG 2.2 AA)
-
-- [ ] **HTML دلالي:** استخدم `
-
-**عنوان H1 واحد**
-
-**نص بديل (alt)**
-
-**التنقل بلوحة المفاتيح:**
-
-**Focus visible**
-
-**ARIA صحيح:**
-
-**التباين:**
-
-**الحركة:**
-
-**اللغة:**
-
-#### اختبار الوصول
-
-- فحص تلقائي: axe / Lighthouse accessibility (هدف: 100)
-- فحص يدوي: تنقّل بالكيبورد كاملًا + جرّب قارئ شاشة (NVDA/VoiceOver) على الصفحات المهمة
-
----
-
-## ⚙️ القاعدة السادسة — سير العمل (Workflow)
-
-### 6.1 دورة كل مهمة
-
-```
-1. اقرأ `.agents/mind/01-mind-latest.md` كاملًا ← القاعدة صفر
-2. افهم المطلوب وحدّد نطاقه
-3. خطّط: وش الملفات المتأثرة؟ وش المخاطر؟
-4. نفّذ محليًا
-5. تحقق: build + lint + tests + فحص يدوي
-6. حدّث `01-mind-latest.md` (سجل منظم + نقاط التنفيذ + ledger + أرقام + قرارات)
-7. اعرض النتيجة على المستخدم بالسعودي العامي
-8. المستخدم يلتزم (commit) وينشر بنفسه ← القاعدة الثانية
+Forbidden:
+
+```text
+UI → Database
+Astro Component → SQL
+Client Island → Database
+Route → cross-domain table mutation
 ```
 
-### 6.2 أوامر التحقق قبل التسليم
+---
 
-```bash
-# البناء — لازم ينجح بدون أخطاء
-pnpm build
+## 3. Foundation Roles
 
-# الفحص الثابت
-pnpm lint # إذا موجود
-pnpm typecheck # إذا موجود (tsc --noEmit)
+- Employee
+- Supervisor
+- Manager
+- Admin
 
-# الاختبارات
-pnpm test # إذا موجود
+Authorization considers:
 
-# سكربتات الجودة الخاصة بالمشروع (راجع scripts/qa/)
-node scripts/qa/verify-csp-no-unsafe-inline.mjs # مثال — راجع الـ brain للقائمة الكاملة
+```text
+Actor + Account State + Permission + Scope + Entity + State + SoD + Version + Business Rule
 ```
 
-**قاعدة:** إذا فشل أي تحقق — **ما تسلّم**. صلّح السبب الجذري أو اشرح للمستخدم ليش فشل ووش الخيارات.
-
-### 6.3 قواعد Git
-
-- ✅ **مسموح:** `git status`, `git diff`, `git log`, `git stash` (مؤقت)
-- ❌ **ممنوع:** `git push` (القاعدة الثانية)، `git commit` بدون طلب صريح، `git reset --hard` على شغل المستخدم، إنشاء branches
-- **اقتراح رسائل commit:** استخدم Conventional Commits:
-```
-feat(seo): add FAQPage schema to service pages
-fix(a11y): add aria-expanded to mobile menu
-perf(images): convert hero images to AVIF
-docs(brain): update ledger for task X
-```
-
-### 6.4 التعامل مع الملفات الحساسة
-
-- **ممنوع** تعديل `.env*` أو أي ملف أسرار — إذا احتجت قيمة، اسأل المستخدم
-- **ممنوع** كتابة أي secret في الكود أو التعليقات أو الـ brain — حتى لو "مؤقتًا"
-- **ممنوع** تعديل `.github/workflows/` بدون إذن صريح
-- **ممنوع** حذف ملفات بدون تأكيد المستخدم — حتى لو تبدو مهملة
+Sensitive undefined behavior defaults to DENY.
 
 ---
 
-## 🛡️ القاعدة السابعة — الأمان
+## 4. Domain Integrity
 
-### 7.1 رأس الأمان (Security Headers)
+Follow `Documents/DOMAIN-MAP.md`.
 
-- المشروع يستخدم CSP صارم عبر `scripts/security-headers.mjs` وحقن meta في `astro.config.mjs`
-- **ممنوع** إضافة `'unsafe-inline'` لـ `script-src` أو `style-src` بدون توثيق السبب في الـ brain
-- **ممنوع** إضافة `unsafe-eval` نهائيًا
-- أي سكربت/ستايل inline جديد لازم يتوافق مع CSP الحالي — تحقق بسكربت `verify-csp-no-unsafe-inline.mjs`
-
-### 7.2 قواعد الكود الآمن
-
-- **مدخلات المستخدم:** عقّم كل شي — ممنوع `innerHTML` مع بيانات مستخدم (XSS)
-- **روابط خارجية:** `rel="noopener noreferrer"` مع `target="_blank"`
-- **API keys:** في متغيرات البيئة فقط — ممنوع في الكود أو الـ client-side
-- **التبعيات:** قبل إضافة package جديد، تحقق من شهرته وصيانته — ووثّق القرار في الـ brain
+- One business fact has one owner.
+- Cross-domain writes go through the owning Domain.
+- Reporting/Search/Dashboard do not own source business truth.
+- Shared modules do not absorb Domain rules.
 
 ---
 
-## 🧪 القاعدة الثامنة — الاختبارات
+## 5. Controlled Data Integrity
 
-### 8.1 متى تكتب اختبارات؟
+Follow `Documents/STATE-MACHINES.md`, `DATA-MODEL.md`, and `DATA-DICTIONARY.md`.
 
-- **منطق جديد** في `packages/` أو `kernel/` — اختبار إلزامي
-- **إصلاح bug** — أضف اختبار يمنع رجوعه (regression test)
-- **مكونات UI حرجة** (نماذج، تنقل، checkout) — اختبار سلوكي
-
-### 8.2 أنواع الاختبارات في المشروع
-
-النوع
-الأداة
-المكان
-Unit
-Vitest
-`apps/dashboard/tests/`, `kernel/tests/`
-Component
-Vitest + Testing Library
-بجانب المكونات
-E2E
-(راجع الـ brain للأداة المعتمدة)
-—
-QA scripts
-Node scripts
-`scripts/qa/`
-
-### 8.3 قواعد
-
-- **ممنوع** تعطيل اختبار فاشل (`skip`/`todo`) بدون توثيق السبب في الـ brain
-- **ممنوع** تعديل اختبار عشان يعدّي بدون فهم ليش كان فاشل
-- الاختبارات لازم تكون **حتمية** (deterministic) — ممنوع اعتماد على توقيت أو شبكة
+- Unknown transition = DENY.
+- Client sends action intent, not authoritative final state.
+- Current business truth is normalized.
+- Historical controlled truth is snapshotted/versioned.
+- No destructive cascade through controlled history.
+- Approved/Signed/Closed/Void/Superseded records are not ordinary editable drafts.
 
 ---
 
-## 🧩 القاعدة التاسعة — استخدم المهارات (Skills)
+## 6. Quarantine / Laboratory Critical Rules
 
-**المشروع فيه 67 مهارة جاهزة في `.agents/skills/` — استخدمها بدل ما تعيد اختراع العجلة.**
+Quarantine keeps separate:
 
-### كيف تستخدمها
-
-1. **قبل أي مهمة متخصصة** (SEO, GEO, UI, أمان, أداء...) — افحص `.agents/skills/` للمهارة المناسبة
-2. **اقرأ ملف المهارة** `SKILL.md` كاملًا قبل التنفيذ
-3. **اتبع تعليماتها** — هي مكتوبة من واقع المشروع وتتفوق على المعرفة العامة
-4. **إذا المهارة قديمة أو خاطئة** — حدّثها ووثّق في الـ brain
-
-### أمثلة على المهارات المتوقعة
-
-- مهارات SEO/GEO — للتحسين لمحركات البحث التقليدية والذكية
-- مهارات UI/UX — للتصميم والمكونات
-- مهارات الأمان — CSP, headers, sanitization
-- مهارات الأداء — صور، خطوط، bundles
-- مهارات المحتوى — كتابة المقالات والصفحات
-
-**القاعدة:** إذا فيه مهارة للموضوع وما استخدمتها = تقصير. إذا ما فيه مهارة وسوّيت شي قابل للتكرار = اقترح إنشاء مهارة جديدة.
-
----
-
-## 📝 القاعدة العاشرة — التوثيق والتواصل
-
-### 10.1 أسلوب الرد على المستخدم
-
-- **سعودي عامي دائمًا** (القاعدة الأولى)
-- **مختصر ومباشر:** وش سوّيت، وش النتيجة، وش الخطوة الجاية
-- **بدون حشو:** ممنوع "أتمنى أن يكون هذا مفيدًا" وعبارات المجاملة الفارغة
-- **الأرقام أولًا:** إذا فيه قياس (LCP, حجم, عدد صفحات) — اذكره
-- **إذا فيه مشكلة:** قلها بصراحة مع الحل المقترح — ممنوع التجميل
-
-### 10.2 صيغة تقرير إنجاز المهمة
-
-```
-✅ خلصت: [وصف المهمة بسطر]
-
-وش تغيّر:
-- [ملف/مكوّن 1]: [وش صار]
-- [ملف/مكوّن 2]: [وش صار]
-
-الأرقام: [أي قياسات قبل/بعد]
-
-التحقق: [build ✅ / tests ✅ / فحص يدوي ✅]
-
-الـ brain: محدّث ✅
-
-الخطوة الجاية: [إذا فيه — وإلا "جاهز للمراجعة، والـ commit عليك"]
+```text
+Receiving Workflow State
+Inspection Result
+Release System State
 ```
 
-### 10.3 متى تسأل المستخدم؟
+`PASS` does not automatically mean release.
 
-اسأل **قبل** التنفيذ إذا:
-- المهمة تغيّر بنية المشروع (نقل مجلدات، حذف packages)
-- المهمة تضيف dependency جديدة كبيرة
-- فيه أكثر من طريقة صحيحة والفرق بينها جوهري
-- المهمة تمس الأمان أو الأسرار
-- الطلب غامض والتخمين ممكن يضر
+Laboratory must preserve raw measurements and exact controlled context used at execution/approval time.
 
-**غير كذا: نفّذ مباشرة** — المستخدم يبغى شغل، مو أسئلة.
+Never invent scientific limits, formulas, precision, rounding, sampling, calibration intervals, or retest policy.
 
 ---
 
-## 🚫 ملخص الممنوعات المطلقة
+## 7. Audit / E-Signature
 
-#
-الممنوع
-السبب
-1
-`git push` بأي شكل
-القاعدة الثانية — المستخدم ينشر بنفسه
-2
-بدء مهمة بدون قراءة `01-mind-latest.md`
-القاعدة صفر — العمى ممنوع
-3
-الرد بغير السعودي العامي
-القاعدة الأولى — حتى لو السؤال إنجليزي
-4
-صفحة عامة بـ `noindex`
-القاعدة الرابعة — كل شي قابل للفهرسة
-5
-محتوى عام يعتمد على JS للعرض
-الفهرسة + الأداء
-6
-`unsafe-inline`/`unsafe-eval` في CSP بدون توثيق
-الأمان
-7
-أسرار في الكود أو الـ brain
-الأمان
-8
-`commit` بدون طلب صريح
-المستخدم يلتزم بنفسه
-9
-حذف ملفات بدون تأكيد
-حماية شغل المستخدم
-10
-تسليم بدون تحديث الـ mind
-القاعدة الثالثة
-11
-`outline: none` بدون بديل focus
-الوصول
-12
-صور بدون `width`/`height`
-CLS
-13
-تخطي مهارة موجودة في `.agents/skills/`
-القاعدة التاسعة
-14
-تعديل `.github/workflows/` بدون إذن
-حماية CI/CD
-15
-تجميل المشاكل أو إخفاء الفشل
-الصراحة أساس الثقة
+Audit is separate from application logs and must survive business record state changes.
 
-# 
+E-Signature:
 
-المهارات المتاحة (Skills)
+```text
+Meaning → Reauthentication → Reauthorization → State/Version/SoD Check → Evidence → Controlled Transition
+```
 
-قبل تنفيذ أي مهمة، تحقق إن كانت مرتبطة بمهارة أدناه.إذا وجدت تطابقاً، اقرأ ملف المهارة كاملاً أولاً ثم طبّقه.
-
-كتابة الاختبارات — قواعد pytest ومعايير التغطية → BRIGHTAI/.agents/skills
-قاعدة البيانات — أعراف الـ migrations والاستعلامات → BRIGHTAI/.agents/skills
-كتابة التوثيق — أسلوب الـ docs المطلوب → BRIGHTAI/.agents/skills
----
-
-## 📋 قائمة التحقق النهائية (قبل قول "خلصت")
-
-- [ ] قرأت `.agents/mind/01-mind-latest.md` كاملًا قبل البدء
-- [ ] البناء ينجح (`pnpm build`) بدون أخطاء
-- [ ] الاختبارات تعدّي (إذا موجودة/متأثرة)
-- [ ] الفحص اليدوي تم (جوال 360px + كمبيوتر 1440px)
-- [ ] SEO: title/description/canonical/schema صحيحة للصفحات المتأثرة
-- [ ] الفهرسة: الصفحات العامة `index, follow` + في الـ sitemap
-- [ ] الوصول: تباين ✅ focus ✅ alt ✅ keyboard ✅
-- [ ] الأداء: ضمن الميزانيات أو محسّن عن قبل
-- [ ] الأمان: ما كسرت CSP، ما أضفت أسرار
-- [ ] الـ mind محدّث في `01-mind-latest.md`: سجل منظم + نقاط ما تم تنفيذه + ledger + أرقام + قرارات
-- [ ] **ما دفعت شي للريبو** — والـ commit على المستخدم
-- [ ] ردّيت على المستخدم بالسعودي العامي
+Never store passwords as signature evidence.
 
 ---
 
-> **هذا الملف دستور حي.** إذا تغيّر الواقع (بنية، أدوات، قرارات) — حدّث الملف ووثّق التغيير في `01-mind-latest.md`. التعارض بين هذا الملف والعقل؟ **`01-mind-latest.md` يكسب** لأنه مصدر الحقيقة الأحدث — ثم حدّث هذا الملف ليطابقه.
+## 8. Verification
 
-**— نهاية الدستور —**
+Before claiming success, run the verification appropriate to the task.
+
+Possible evidence:
+
+- repository diff/current files
+- lint/typecheck
+- unit tests
+- integration tests
+- PostgreSQL/migration tests
+- permission/negative tests
+- concurrency/idempotency tests
+- Astro build
+- E2E
+- accessibility checks
+
+A file existing does not prove behavior works.
+A test existing does not prove it ran.
+A build passing does not prove complete requirements coverage.
+
+---
+
+## 9. Git Safety
+
+- No push unless explicitly requested.
+- No commit unless explicitly requested.
+- No destructive reset of user work.
+- No deleting files without approval.
+- No secrets in code/mind/docs.
+- No casual CI/CD changes.
+
+Note: GitHub connector write actions create commits directly on the target branch. Use them only when the user explicitly requested repository modification.
+
+---
+
+## 10. Skills
+
+`.agents/skills/` هو سجل المهارات المحلي للمشروع، ومتاح للاستخدام في كل مهمة.
+
+قبل تنفيذ أي مهمة:
+
+1. افحص المهارات الموجودة تحت `.agents/skills/` وحدد المهارة أو المهارات المطابقة للمهمة.
+2. إذا وُجدت مهارة مطابقة، اقرأ ملف `SKILL.md` الخاص بها كاملًا قبل اتخاذ أي إجراء.
+3. طبّق تعليمات المهارة واتبع فقط المراجع/الملفات الإضافية التي تطلبها المهارة أو تحتاجها المهمة.
+4. إذا انطبقت عدة مهارات، استخدم أقل مجموعة تغطي المهمة واذكر ترتيب استخدامها.
+5. إذا لم توجد مهارة مناسبة، اذكر ذلك باختصار ولا تدّعِ استخدام مهارة لم تُقرأ.
+
+تعليمات المهارة لا تتجاوز تعليمات المستخدم أو وثائق Foundation أو قواعد هذا الملف. لا تُطبّق مهارة قديمة إذا تعارضت مع هذه المصادر؛ وثّق التعارض وأوقف الجزء المتعارض إلى أن يُحسم.
+
+Do not blindly apply a legacy skill that conflicts with the current Foundation documents.
+
+---
+
+## 11. Project Mind
+
+Current live project mind:
+
+```text
+.agents/mind/01-mind-latest.md
+```
+
+Do not recreate `.agents/brain.md` as a source of truth.
+Do not create `02/03` archives until rotation is actually needed.
+
+After completed repository work, update the live mind with actual changes, files, verification, outcome, and remaining gaps.
+
+---
+
+## 12. Completion Checklist
+
+- [ ] Current mind read.
+- [ ] Relevant Foundation documents read.
+- [ ] Current repo reality inspected.
+- [ ] Applicable skill used.
+- [ ] Domain boundaries preserved.
+- [ ] Server-side authorization preserved.
+- [ ] State machine respected.
+- [ ] No scientific/policy values invented.
+- [ ] Controlled history preserved.
+- [ ] Fresh verification executed.
+- [ ] Limitations reported accurately.
+- [ ] Mind updated.
+- [ ] No unsupported readiness/100% claim.
+
+---
+
+> **Business Rules First. Evidence Before Assertion. Code Serves the Controlled Process.**

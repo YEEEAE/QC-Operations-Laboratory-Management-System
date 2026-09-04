@@ -175,10 +175,10 @@ UPDATE status = 'APPROVED'
 
 ## SM-GEN-002 — State Changes Through Application Use Cases
 
-المسار:
+المسار (Delivery Layer = Astro):
 
 ```text
-UI / API
+Astro Page / Astro Action / API Endpoint
    ↓
 Application Use Case
    ↓

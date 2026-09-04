@@ -421,8 +421,20 @@ quarantine/
 
 # 14. المسار الصحيح لأي عملية
 
+## التثبيت التقني
+
+> **Astro هو الـWeb Framework الرسمي للنظام.**
+
+- البناء الافتراضي للتطبيق هو **server output** مع **server rendering / on-demand rendering** باستخدام **Node adapter**.
+- Static-only Astro لا يناسب هذا النظام لأنه يعتمد على Authentication وserver-side authorization وPostgreSQL وcontrolled mutations.
+- Node adapter يدعم on-demand rendering وAstro Actions وSessions.
+
+## المسار
+
 ```text
-UI
+Astro Page / UI Component / Client Island
+ ↓
+Astro Action / API Endpoint
  ↓
 Application Use Case
  ↓
@@ -442,7 +454,7 @@ Audit / Notifications
 ممنوع:
 
 ```text
-React Component → Database
+Astro Component / UI Component / Client Island → Database
 ```
 
 وممنوع:

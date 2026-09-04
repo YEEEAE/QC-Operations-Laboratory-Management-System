@@ -20,6 +20,7 @@ Before every task:
 3. Read the relevant approved documents under `Documents/`.
 4. Inspect current repository reality before trusting any historical claim.
 5. Inspect `.agents/skills/` and use the relevant skill when one exists.
+6.  تكلم معي دائما بلغة عربية وبلهجه عاميه سعوديه
 
 The previous BRIGHTAI / `apps/qc-task-manager` history is **not** authoritative for this repository.
 
@@ -221,7 +222,17 @@ Note: GitHub connector write actions create commits directly on the target branc
 
 ## 10. Skills
 
-Use `.agents/skills/` when relevant.
+`.agents/skills/` هو سجل المهارات المحلي للمشروع، ومتاح للاستخدام في كل مهمة.
+
+قبل تنفيذ أي مهمة:
+
+1. افحص المهارات الموجودة تحت `.agents/skills/` وحدد المهارة أو المهارات المطابقة للمهمة.
+2. إذا وُجدت مهارة مطابقة، اقرأ ملف `SKILL.md` الخاص بها كاملًا قبل اتخاذ أي إجراء.
+3. طبّق تعليمات المهارة واتبع فقط المراجع/الملفات الإضافية التي تطلبها المهارة أو تحتاجها المهمة.
+4. إذا انطبقت عدة مهارات، استخدم أقل مجموعة تغطي المهمة واذكر ترتيب استخدامها.
+5. إذا لم توجد مهارة مناسبة، اذكر ذلك باختصار ولا تدّعِ استخدام مهارة لم تُقرأ.
+
+تعليمات المهارة لا تتجاوز تعليمات المستخدم أو وثائق Foundation أو قواعد هذا الملف. لا تُطبّق مهارة قديمة إذا تعارضت مع هذه المصادر؛ وثّق التعارض وأوقف الجزء المتعارض إلى أن يُحسم.
 
 Do not blindly apply a legacy skill that conflicts with the current Foundation documents.
 

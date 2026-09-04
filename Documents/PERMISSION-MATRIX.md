@@ -83,6 +83,18 @@ DENY
 
 ---
 
+## Astro Delivery Layer — Middleware vs. Endpoint Authorization
+
+إطار العمل الرسمي هو **Astro (server-rendered / on-demand)**. ويُثبَّت ما يلي:
+
+- Astro middleware **يجوز له فقط** إثبات (establish) الـsession/user context داخل `locals` — مثل identity وaccount state — كتسهيل للطبقة العليا.
+- **middleware لا يُعتبر authorization نهائيًا.**
+- كل Astro Action وAPI endpoint **يعيد authorization بنفسه** داخل الـhandler عبر الـUse Case / Authorization layer.
+- السبب: Astro Actions متاحة كـ**public endpoints** بطبيعتها، ويجب أن يكون الـauthorization داخل الـhandler نفسه، وليس الاعتماد على middleware أو إخفاء UI.
+- هذا يتوافق مع Default Deny في القسم 3: أي endpoint جديد يبدأ DENY حتى يُربط بـpermission رسمية تُفحص داخل الـhandler.
+
+---
+
 # 3. Default Deny
 
 القاعدة العليا:

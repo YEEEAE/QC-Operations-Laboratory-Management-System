@@ -56,6 +56,21 @@ Shared Security / Audit / Files / Notifications Infrastructure
 
 وجود قاعدة بيانات واحدة لا يعني أن أي Module يستطيع الكتابة في جداول Module آخر.
 
+## Delivery Layer
+
+إطار العمل الرسمي هو **Astro (server-rendered / on-demand)**. ويُثبَّت ما يلي:
+
+```text
+src/pages/        → Delivery Layer فقط
+src/actions/      → Delivery Layer فقط
+src/middleware.ts → Delivery Layer فقط
+src/modules/      → مالك الـBusiness Logic (Domain / Application layers)
+```
+
+- `src/pages/` و`src/actions/` و`src/middleware.ts` هي **Delivery Layer فقط**؛ لا تحتوي Business Rules.
+- `src/modules/` يبقى مالك الـBusiness Logic وأي قاعدة عمل تنتهي فيه بغض النظر عن نقطة الدخول.
+- Astro Actions/API endpoints تصل عبر الـUse Cases المملوكة للـModules، ولا تتخطاها للوصول إلى قاعدة البيانات أو جداول Domain آخر.
+
 ---
 
 # 3. Core Principle

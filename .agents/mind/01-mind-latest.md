@@ -11,6 +11,20 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — تثبيت بروتوكول استخدام مهارات المشروع
+
+### تم التنفيذ
+- توحيد تعليمات `AGENTS.md` و`.agents/AGENTS.md` و`.claude/AGENTS.md` و`.clinerules/e.md` لإلزام فحص `.agents/skills/` قبل كل مهمة.
+- تثبيت قراءة `SKILL.md` كاملًا للمهارة المطابقة قبل تنفيذ الإجراء، واتباع المراجع المطلوبة، وذكر عدم وجود مهارة مناسبة عند الحاجة.
+
+### التحقق
+- فحص تطابق قسم Skills في ملفات تعليمات الوكلاء الأربعة.
+- فحص `git diff --check` بعد التعديل.
+
+### النتيجة والقيود
+- أصبحت مهارات المشروع موثقة كمسار استخدام دائم ضمن تعليمات المستودع.
+- لا يضمن ذلك تطبيق مهارة غير مرتبطة بالمهمة؛ الاختيار يظل حسب موضوع المهمة وتعارضات وثائق Foundation.
+
 ---
 
 # 1. Purpose
@@ -396,6 +410,45 @@ Recommended next areas:
 
 # 17. Current Ledger
 
+## [2026-09-04] — تثبيت Astro كإطار رسمي في Foundation documents
+
+### تم التنفيذ
+- `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md`: أُضيف تثبيت Astro كـWeb Framework رسمي مع server output + Node adapter (on-demand rendering / Actions / Sessions)، واستُبدل مثال `React Component → Database` بـ`Astro Component / UI Component / Client Island → Database`، وحُدّث مسار القسم 14 ليبدأ بـ`Astro Page / UI Component / Client Island → Astro Action / API Endpoint`.
+- `Documents/DOMAIN-MAP.md`: أُضيف قسم Delivery Layer في §2 يثبت أن `src/pages/` و`src/actions/` و`src/middleware.ts` هي Delivery Layer فقط و`src/modules/` مالك الـBusiness Logic.
+- `Documents/PERMISSION-MATRIX.md`: أُضيف قسم فرعي بعد §2 يثبت أن middleware يثبت session/user context في locals فقط، وكل Action/API endpoint يعيد authorization بنفسه (Astro Actions public endpoints).
+- `Documents/STATE-MACHINES.md`: حُدّث SM-GEN-002 من `UI / API` إلى `Astro Page / Astro Action / API Endpoint` بدون أي تغيير على State Machines.
+- `README.md`: أُضيف قسم Technology Baseline (Astro + server rendering + Node adapter + PostgreSQL + Modular Monolith + Default Deny) مع ملاحظة أن static-only لا يناسب النظام.
+- `DATA-MODEL.md` و`DATA-DICTIONARY.md`: لم تُغيَّر — PostgreSQL/UUID/snapshots/transactions مستقلة عن الـFramework.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+- `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md`
+- `Documents/DOMAIN-MAP.md`
+- `Documents/PERMISSION-MATRIX.md`
+- `Documents/STATE-MACHINES.md`
+- `README.md`
+
+### التحقق
+- فحوص `rg` أكدت وجود النصوص الجديدة في الوثائق المطلوبة ✅
+- `rg -F "UI / API" Documents/STATE-MACHINES.md` → لا نتائج ✅
+- `rg -F "React Component" Documents README.md` → لا نتائج ✅
+- `git diff --quiet -- Documents/DATA-MODEL.md Documents/DATA-DICTIONARY.md` → لم يتغير الملفان ✅
+- `git diff --check` على الملفات المتأثرة → نظيف ✅
+- لم يُشغّل build أو tests لأن التغيير توثيقي فقط.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** تثبيت Astro server-rendered كـFoundation في الوثائق المعتمدة بدون تغيير أي Business Rule أو State Machine.
+
+### القيود / المتبقي
+- هذا تحديث Foundation توثيقي؛ لم يُنشأ بعد تطبيق Astro أو Node adapter أو PostgreSQL runtime.
+- تغييرات `AGENTS.md` و`.claude/AGENTS.md` و`.clinerules/` موجودة في working tree خارج نطاق هذه المهمة ولم تُعدَّل.
+
+---
+
+
+# 18. Earlier Ledger
+
 ## [2026-09-04] — Reset project mind for new QC system
 
 ### تم التنفيذ
@@ -419,7 +472,7 @@ Recommended next areas:
 
 ---
 
-# 18. Mind Maintenance
+# 19. Mind Maintenance
 
 هذا الملف هو mind الوحيد حاليًا.
 
