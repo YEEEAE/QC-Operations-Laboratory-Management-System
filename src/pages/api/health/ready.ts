@@ -1,7 +1,5 @@
 import type { APIRoute } from 'astro';
+import { PostgresReadinessProbe } from '../../../shared/health/postgres-readiness-probe.js';
+import { createReadinessResponse } from '../../../shared/health/readiness.js';
 
-export const GET: APIRoute = () =>
-  new Response(JSON.stringify({ status: 'healthy' }), {
-    status: 200,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  });
+export const GET: APIRoute = () => createReadinessResponse(new PostgresReadinessProbe());

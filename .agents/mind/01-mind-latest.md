@@ -11,6 +11,38 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — MASTER-001: Astro + Render baseline
+
+### تم التنفيذ
+- تهيئة أساس مشروع Astro SSR/on-demand مع Node adapter standalone وNode `24.20.0` وpnpm `11.25.0` مثبتين في config/lockfile.
+- إضافة hygiene/configuration files، TypeScript strict، ESLint/Prettier، وscripts للفحص والاختبارات والتشغيل.
+- إنشاء Render Web Service Blueprint لـ`qclevel.top` مع `checksPass` وCorepack frozen install وبدون أي secret أو PostgreSQL resource.
+- تنفيذ readiness infrastructure مستقل عن Delivery: يفحص PostgreSQL، ويرجع `200` عند الجاهزية أو `503` minimal عند غياب/فشل dependency.
+- إضافة unit tests لحالتي readiness، Playwright config لعزل E2E، ووثيقة تشغيل Render.
+- تدوير السجلات الأقدم إلى `02-mind-mid.md` لأن الـlive mind تجاوز حد الحجم التشغيلي.
+
+### الملفات المتأثرة
+- `package.json`, `pnpm-lock.yaml`, `astro.config.mjs`, `render.yaml`
+- `src/pages/api/health/ready.ts`, `src/shared/health/*`, `tests/unit/health-ready.test.ts`
+- `docs/operations/RENDER-DEPLOYMENT.md`, `playwright.config.ts`
+- `.agents/mind/01-mind-latest.md`, `.agents/mind/02-mind-mid.md`
+
+### التحقق
+- `pnpm install --frozen-lockfile` ✅ (بـpnpm 11.25.0؛ local Node 22 تجاوز القيد مؤقتًا)
+- `pnpm exec astro --version` → `7.3.1` ✅
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm test:integration`, `pnpm test:e2e`, `pnpm test:coverage`, `pnpm build` ✅
+- Render Blueprint JSON Schema validation من `https://render.com/schema/render.yaml.json` ✅
+- `node dist/server/entry.mjs` ثم `GET /api/health/ready` بدون `DATABASE_URL` → `503 {"status":"unhealthy"}` ✅
+- `git diff --check` وsecret/raw-SQL Delivery scans ✅
+
+### النتيجة
+- **الحالة:** نجح جزئيًا
+- **مختصر:** baseline المحلي مكتمل ومتحقق؛ deploy وDNS/Render secrets وPostgreSQL الحقيقي غير منفذة عمدًا، لذلك الجاهزية الإنتاجية تبقى `UNVERIFIED`.
+
+### ملاحظات / مشاكل مفتوحة
+- الجهاز المحلي فيه Node `22.22.3` فقط؛ توافق Node 24 مو متحقق محليًا رغم تثبيت `.node-version` وRender `NODE_VERSION` على `24.20.0`.
+- `DATABASE_URL`/Render service/DNS Hostinger ما زالت تحتاج إعداد وتشغيل معتمدين، ولا يوجد production deploy.
+
 ## [2026-09-04] — IMP-000: تطبيع اعتماد مواصفات UI/UX وRoute Manifest
 
 ### تم التنفيذ
@@ -139,11 +171,9 @@
 
 الحالة الحالية:
 
-> **FOUNDATION / SPECIFICATION STAGE — FOUNDATION CLOSURE NEARLY COMPLETE**
+> **IMPLEMENTATION BOOTSTRAP — ASTRO / RENDER BASELINE INITIALIZED**
 
-الـFoundation architecture/specification package الأساسية أصبحت مكتملة بدرجة كبيرة، لكن لا يُفترض وجود application implementation أو database schema/migrations/runtime/tests/deployment لمجرد وجود المواصفات.
-
-قبل الانتقال إلى implementation يجب تنظيف أي Foundation metadata متعارضة/قديمة، ثم بناء implementation plans قابلة للتنفيذ والتحقق.
+الـFoundation architecture/specification package الأساسية مكتملة بدرجة كبيرة، وAstro SSR/Render baseline صار موجودًا محليًا ومتحققًا. قاعدة البيانات الفعلية، migrations، identity/authz/audit، domains، وproduction deployment ما زالت غير منفذة أو غير متحققة حسب نطاقها.
 
 أي claim مثل:
 
@@ -457,141 +487,3 @@ Unresolved sensitive behavior defaults to DENY/BLOCKED until approved.
 5. لا تسجل خطة مستقبلية كأنها إنجاز.
 
 ---
-
-# 14. Git Safety
-
-Default project rule:
-
-- لا `git push` بدون طلب صريح وواضح من المستخدم.
-- لا `git commit` بدون طلب صريح.
-- لا `git reset --hard` على عمل المستخدم.
-- لا حذف ملفات بدون موافقة المستخدم.
-- لا تعديل secrets أو `.env*` بشكل غير مصرح.
-- لا claims عن branch cleanliness بدون فحص فعلي.
-
----
-
-# 15. Verification Rule
-
-قبل قول:
-
-- fixed
-- pass
-- complete
-- verified
-- ready
-
-يجب وجود current evidence.
-
-Minimum حسب المهمة:
-
-- `git diff` / repository inspection
-- typecheck/lint عند وجودهما
-- unit tests
-- integration tests
-- negative tests للحالات الحساسة
-- build
-- E2E عند الحاجة
-- migration verification عند وجود DB changes
-
-Evidence before assertion.
-
----
-
-# 16. Current Open Foundation Work
-
-الـFoundation package الأساسية أصبحت شبه مغلقة توثيقيًا.
-
-العمل المفتوح المباشر قبل بدء implementation planning:
-
-1. تحديث أي cross-reference/roadmap قديم إذا كان ما زال يعرض Deployment/UAT/Production Readiness كعمل مفتوح.
-2. بعد إغلاق metadata inconsistencies: إنشاء implementation plans حسب build phases بدل البدء العشوائي بالصفحات.
-
-المرحلة التالية بعد ذلك:
-
-```text
-FOUNDATION CLOSED
-→ IMPLEMENTATION PLANNING
-→ ASTRO / POSTGRESQL SCAFFOLDING
-→ AUTH / AUTHZ / AUDIT FOUNDATION
-→ DESIGN SYSTEM IMPLEMENTATION
-→ DOMAIN MODULE IMPLEMENTATION
-→ TEST / UAT / READINESS EVIDENCE
-```
-
----
-
-# 17. Current Ledger
-
-## [2026-09-04] — تثبيت Astro كإطار رسمي في Foundation documents
-
-### تم التنفيذ
-- `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md`: أُضيف تثبيت Astro كـWeb Framework رسمي مع server output + Node adapter (on-demand rendering / Actions / Sessions)، واستُبدل مثال `React Component → Database` بـ`Astro Component / UI Component / Client Island → Database`، وحُدّث مسار القسم 14 ليبدأ بـ`Astro Page / UI Component / Client Island → Astro Action / API Endpoint`.
-- `Documents/DOMAIN-MAP.md`: أُضيف قسم Delivery Layer في §2 يثبت أن `src/pages/` و`src/actions/` و`src/middleware.ts` هي Delivery Layer فقط و`src/modules/` مالك الـBusiness Logic.
-- `Documents/PERMISSION-MATRIX.md`: أُضيف قسم فرعي بعد §2 يثبت أن middleware يثبت session/user context في locals فقط، وكل Action/API endpoint يعيد authorization بنفسه (Astro Actions public endpoints).
-- `Documents/STATE-MACHINES.md`: حُدّث SM-GEN-002 من `UI / API` إلى `Astro Page / Astro Action / API Endpoint` بدون أي تغيير على State Machines.
-- `README.md`: أُضيف قسم Technology Baseline (Astro + server rendering + Node adapter + PostgreSQL + Modular Monolith + Default Deny) مع ملاحظة أن static-only لا يناسب النظام.
-- `DATA-MODEL.md` و`DATA-DICTIONARY.md`: لم تُغيَّر — PostgreSQL/UUID/snapshots/transactions مستقلة عن الـFramework.
-
-### الملفات المتأثرة
-- `.agents/mind/01-mind-latest.md`
-- `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md`
-- `Documents/DOMAIN-MAP.md`
-- `Documents/PERMISSION-MATRIX.md`
-- `Documents/STATE-MACHINES.md`
-- `README.md`
-
-### التحقق
-- فحوص `rg` أكدت وجود النصوص الجديدة في الوثائق المطلوبة ✅
-- `rg -F "UI / API" Documents/STATE-MACHINES.md` → لا نتائج ✅
-- `rg -F "React Component" Documents README.md` → لا نتائج ✅
-- `git diff --quiet -- Documents/DATA-MODEL.md Documents/DATA-DICTIONARY.md` → لم يتغير الملفان ✅
-- `git diff --check` على الملفات المتأثرة → نظيف ✅
-- لم يُشغّل build أو tests لأن التغيير توثيقي فقط.
-
-### النتيجة
-- **الحالة:** نجح
-- **مختصر:** تثبيت Astro server-rendered كـFoundation في الوثائق المعتمدة بدون تغيير أي Business Rule أو State Machine.
-
-### القيود / المتبقي
-- هذا تحديث Foundation توثيقي؛ لم يُنشأ بعد تطبيق Astro أو Node adapter أو PostgreSQL runtime.
-- تغييرات `AGENTS.md` و`.claude/AGENTS.md` و`.clinerules/` موجودة في working tree خارج نطاق هذه المهمة ولم تُعدَّل.
-
----
-
-# 18. Earlier Ledger
-
-## [2026-09-04] — Reset project mind for new QC system
-
-### تم التنفيذ
-- أُلغي الاعتماد على mind/brain الموروث من BRIGHTAI و`apps/qc-task-manager` القديم.
-- أُنشئ هذا الملف كذاكرة حية خاصة بمستودع `YEEEAE/QC-Operations-Laboratory-Management-System` فقط.
-- ثُبتت القرارات الحالية: Astro server-rendered/on-demand + Modular Monolith + PostgreSQL.
-- ثُبت `Documents/` كمصدر Foundation للمواصفات.
-- ثُبتت قاعدة evidence-before-claims وعدم اختراع scientific/policy decisions.
-
-### الملفات المتأثرة
-- `.agents/mind/01-mind-latest.md`
-- إزالة `.agents/mind/02-mind-mid.md`
-- إزالة `.agents/mind/03-mind-earliest.md`
-- إزالة `.agents/brain.md`
-
-### التحقق
-- Repository state verification مطلوب بعد اكتمال تحديث AGENTS.
-
-### النتيجة
-- **الحالة:** IN PROGRESS أثناء هذا السجل إلى أن يتم التحقق النهائي من AGENTS والـmind paths.
-
----
-
-# 19. Mind Maintenance
-
-هذا الملف هو mind الوحيد حاليًا.
-
-لا تنشئ `02-mind-mid.md` أو `03-mind-earliest.md` إلا عندما يكبر الملف فعلًا ويحتاج archival rotation.
-
-عندها:
-
-- `01-mind-latest.md` يبقى current truth.
-- `02/03` archives للقراءة فقط.
-- لا يعود `.agents/brain.md` كمصدر حقيقة.

@@ -9,7 +9,7 @@ Configuration baseline only. Creating or syncing the Render Blueprint is not a p
 - Service type: Render Web Service (`type: web`), using Astro SSR with `@astrojs/node` standalone output.
 - Build: Corepack invokes the exact pinned pnpm version and runs a frozen install followed by `pnpm build`.
 - Start: `node dist/server/entry.mjs` (verified against the local Astro build output).
-- Readiness: `/api/health/ready` returns a minimal 2xx response and does not expose dependency or secret details.
+- Readiness: `/api/health/ready` returns `200` only when PostgreSQL is configured and reachable; it returns a minimal `503` otherwise and never exposes dependency or secret details.
 - Auto-deploy: `checksPass`, subject to the linked Render/Git integration supporting CI check gating.
 
 ## Domain and DNS

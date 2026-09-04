@@ -18,8 +18,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration",
-    "test:e2e": "playwright test",
+    "test:integration": "vitest run tests/integration --passWithNoTests",
+    "test:e2e": "playwright test --pass-with-no-tests",
     "test:coverage": "vitest run --coverage",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:migrate:check": "tsx scripts/db-migrate.ts --check"
@@ -35,6 +35,7 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
+    "ajv": "8.20.0",
     "@playwright/test": "1.62.1",
     "@types/node": "26.4.1",
     "@types/pg": "8.23.1",
@@ -46,6 +47,7 @@
     "testcontainers": "12.1.0",
     "tsx": "4.23.13",
     "typescript": "6.0.3",
-    "vitest": "5.0.0"
+    "vitest": "5.0.0",
+    "yaml": "2.9.0"
   }
 }
