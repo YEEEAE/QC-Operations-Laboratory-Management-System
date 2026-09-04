@@ -83,4 +83,80 @@ describe('core PostgreSQL constraints and privileges', () => {
     expect(session.rows[0].search_path).toContain('qc');
     expect(session.rows[0].search_path).toContain('pg_catalog');
   });
+
+  it('persists the approved identity, authorization, file, and notification primitives', async () => {
+    const tables = await pool!.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'qc'
+         AND table_name IN (
+           'password_reset_requests', 'roles', 'permissions', 'role_permissions', 'user_roles',
+           'files', 'evidence_links', 'notifications', 'notification_deliveries'
+         )
+       ORDER BY table_name`,
+    );
+    expect(tables.rows.map((row) => row.table_name)).toEqual([
+      'evidence_links',
+      'files',
+      'notification_deliveries',
+      'notifications',
+      'password_reset_requests',
+      'permissions',
+      'role_permissions',
+      'roles',
+      'user_roles',
+    ]);
+  });
+
+  it('rejects invalid reset, file, evidence, and notification rows', async () => {
+    const user = await pool!.query(
+      `INSERT INTO qc.users (login_identity, display_name, password_hash)
+       VALUES ('constraint-user', 'Constraint User', 'hash') RETURNING id`,
+    );
+    const userId = user.rows[0].id as string;
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.password_reset_requests (user_id, request_method, expires_at)
+         VALUES ($1, 'ADMIN', CURRENT_TIMESTAMP)`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.files
+          (original_filename, storage_key, storage_provider, mime_type, size_bytes, sha256, state, uploaded_by)
+         VALUES ('report.pdf', 'opaque/report-1', 'OBJECT_STORAGE', 'application/pdf', -1,
+                 'not-a-sha', 'ACTIVE', $1)`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+
+    const file = await pool!.query(
+      `INSERT INTO qc.files
+        (original_filename, storage_key, storage_provider, mime_type, size_bytes, sha256, state, uploaded_by)
+       VALUES ('report.pdf', 'opaque/report-2', 'OBJECT_STORAGE', 'application/pdf', 12,
+               repeat('a', 64), 'ACTIVE', $1) RETURNING id`,
+      [userId],
+    );
+    const fileId = file.rows[0].id as string;
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.evidence_links
+          (file_id, subject_type, subject_id, linked_by, removed_at)
+         VALUES ($1, 'USER', $2, $2, NULL)`,
+        [fileId, userId],
+      ),
+    ).resolves.toBeDefined();
+
+    await expect(
+      pool!.query(
+        `INSERT INTO qc.notifications
+          (recipient_user_id, notification_type, severity, title, message, subject_type)
+         VALUES ($1, 'TASK_ASSIGNED', 'INFO', 'Task', 'Assigned', 'TASK')`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+  });
 });

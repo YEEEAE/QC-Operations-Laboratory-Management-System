@@ -11,6 +11,42 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — MASTER-006: shared identity/authz/audit/outbox/files schemas
+
+### تم التنفيذ
+- أُضيفت `password_reset_requests` مع `token_hash` فقط، وقيود انتهاء الطلب ومرجع المستخدم بدون تخزين reset token plaintext.
+- أُضيفت جداول `roles` و`permissions` و`role_permissions` و`user_roles` مع UUIDs، قيود uniqueness/FK/version/range، وزُرعت الأدوار الأساسية الأربعة فقط (`EMPLOYEE`, `SUPERVISOR`, `MANAGER`, `ADMIN`) بدون role hierarchy أو Admin bypass.
+- أُضيفت `0004` لفهارس audit/outbox المعتمدة؛ audit وoutbox الأساسيان موجودان من `0001` بصلاحيات runtime محدودة وبدون cascade هدّام.
+- أُضيفت `files` و`evidence_links` و`notifications` و`notification_deliveries` ببيانات metadata/hash/storage refs، مع إبقاء binary خارج PostgreSQL وقيود hash/size/removal/dedupe/subject pairs.
+- لم يُنشأ `idempotent_commands` ولا scope tables لأن المواصفات تصنفها صراحة `DO NOT MIGRATE`/UNCONFIRMED إلى أن تعتمد استراتيجية API ونموذج التنظيم؛ تم توثيق ذلك داخل migration `0004` بدل اختراع policy.
+- أُضيفت اختبارات وجود الجداول وinvalid-row constraints، وحُدّثت اختبارات ledger/upgrade path لتتوقع migrations `0001` إلى `0005`.
+
+### الملفات المتأثرة
+- `db/migrations/0002_identity.sql`
+- `db/migrations/0003_authorization.sql`
+- `db/migrations/0004_audit_outbox_idempotency.sql`
+- `db/migrations/0005_files_notifications.sql`
+- `tests/integration/database/{migrations,constraints,upgrade-path}.test.ts`
+
+### التحقق
+- `pnpm format:check` ✅
+- `pnpm lint` ✅
+- `pnpm test:unit` → 4 files / 13 tests ✅
+- `pnpm build` ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- `pnpm exec vitest run tests/integration/database --passWithNoTests` ⚠️ تعذر runtime لأن Docker/container runtime غير متاح؛ fresh migration وupgrade وPostgreSQL constraint tests لم تُنفذ فعليًا.
+- `pnpm typecheck` ⚠️ أخطاء سابقة خارج نطاق schema في `src/middleware.ts` و`src/pages/api/health/ready.ts`.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** migrations والاختبارات المطلوبة مكتوبة ومراجعة static، مع الحفاظ على حدود الصلاحيات والتاريخ؛ إثبات PostgreSQL runtime الفعلي واستراتيجية idempotency ما زالا محجوبين/غير معتمدين.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل PostgreSQL 18 فعليًا لإثبات fresh/upgrade/invalid-row constraints.
+- يلزم اعتماد API command/idempotency policy قبل إنشاء جدول idempotency.
+- لا توجد قيم علمية أو سياسات release/approval أو retention جديدة في هذا التغيير.
+
 ## [2026-09-04] — MASTER-005: PostgreSQL runtime + migration engine + core schema
 
 ### تم التنفيذ
