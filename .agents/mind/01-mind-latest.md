@@ -11,6 +11,39 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — MASTER-003: Testing harness + CI baseline
+
+### تم التنفيذ
+- أُنشئ `vitest.config.ts` لفصل مسارات unit/integration وتشغيلها في Node مع timeouts مناسبة لحاويات الاختبار، وأُنشئ setup يعيد mocks/env stubs بعد كل test.
+- أُنشئ helper لحاوية `postgres:18-alpine` عبر `@testcontainers/postgresql` وبـdatabase/username/password خاصة بالاختبار فقط؛ ما يكتب `DATABASE_URL` ولا يستخدم أي credential إنتاجي.
+- أُنشئ PostgreSQL 18 integration smoke ينفذ `SELECT version()` على حاوية disposable ويتحقق من الإصدار، ويفشل صراحة إذا غاب container runtime بدل skip صامت.
+- حُدّث Playwright لفصل E2E مع artifacts محتجزة عند الفشل فقط، وأُنشئ GitHub Actions verification CI بصلاحية `contents: read` فقط وبدون deploy job.
+- CI يشغّل frozen install، format/lint/typecheck، architecture boundaries، unit/integration، migration check مشروط إلى أن يوجد runner، build، وPlaywright E2E؛ ويفعّل Chromium في CI ويرفع artifacts الفشل فقط.
+
+### الملفات المتأثرة
+- `vitest.config.ts`, `playwright.config.ts`, `package.json`, `pnpm-lock.yaml`
+- `tests/setup/unit.ts`, `tests/helpers/{test-env,postgres-container}.ts`
+- `tests/integration/postgres-container.smoke.test.ts`
+- `.github/workflows/ci.yml`
+
+### التحقق
+- TDD: smoke test فشل أولًا بسبب helper غير موجود، ثم وصل لـTestcontainers بعد التنفيذ ✅
+- `pnpm install --frozen-lockfile` ✅
+- `pnpm test:unit` → 2 files / 5 tests ✅
+- `pnpm exec playwright --version` → `1.62.1` ✅
+- `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm build` ✅
+- YAML parse لـ`.github/workflows/ci.yml` ✅
+- `node scripts/architecture/check-boundaries.mjs` و`git diff --check` ✅
+- `pnpm test:integration` ⚠️ فشل محليًا لأن Docker/container runtime غير متاح؛ PostgreSQL 18 smoke لم يُتحقق runtime محليًا بعد.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** Test/CI harness موجود ومقفل بدون production credentials أو deployment، لكن إثبات PostgreSQL 18 الحقيقي محليًا محجوب إلى أن يتاح Docker runtime؛ CI سيشغله على GitHub runner الداعم للحاويات.
+
+### ملاحظات / مشاكل مفتوحة
+- `scripts/db-migrate.ts` غير موجود حاليًا؛ CI يسجل migration check كـdeferred ولا يدعي وجود migration verification.
+- Node المحلي `22.22.3` بينما config يطلب Node `24.20.0`؛ CI يثبت Node `24.20.0` لكن التحقق المحلي عليه ما زال غير متاح.
+
 ## [2026-09-04] — MASTER-002: routing foundation + architecture boundary checks
 
 ### تم التنفيذ

@@ -35,18 +35,19 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
-    "ajv": "8.20.0",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.1",
+    "@testcontainers/postgresql": "12.1.0",
     "@types/node": "26.4.1",
     "@types/pg": "8.23.1",
-    "@eslint/js": "10.0.1",
-    "typescript-eslint": "8.69.0",
     "@vitest/coverage-v8": "5.0.0",
+    "ajv": "8.20.0",
     "eslint": "10.10.0",
     "prettier": "3.9.6",
     "testcontainers": "12.1.0",
     "tsx": "4.23.13",
     "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
     "vitest": "5.0.0",
     "yaml": "2.9.0"
   }
