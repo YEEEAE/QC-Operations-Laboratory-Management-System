@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Sitemap Review"
+  short_description: "Validate sitemap structure or plan cleaner architecture."
+  default_prompt: "Use $seo-sitemap to review this sitemap and return the recommendations in Arabic."

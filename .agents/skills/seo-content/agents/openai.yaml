@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Content Review"
+  short_description: "Review content quality, E-E-A-T, and Arabic clarity."
+  default_prompt: "Use $seo-content to review this content and return the recommendations in Arabic."

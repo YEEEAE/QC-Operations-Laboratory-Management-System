@@ -1,0 +1,4 @@
+interface:
+  display_name: "Internal Links Guardian"
+  short_description: "Audits and safely repairs internal references"
+  default_prompt: "Use $internal-links-guardian to scan BrightAI for broken internal links, fix safe path issues, and return an internal links scan report."

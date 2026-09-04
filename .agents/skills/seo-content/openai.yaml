@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO GEO Analysis"
+  short_description: "Evaluate AI-search visibility across crawlers and answers."
+  default_prompt: "Use $seo-geo to evaluate AI-search visibility and explain the result in Arabic."

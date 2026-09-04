@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design MD"
+  short_description: "Builds a reusable DESIGN.md from Stitch screens"
+  default_prompt: "Use $design-md to analyze the target Stitch project and generate a semantic DESIGN.md for BrightAI-aligned UI work."

@@ -1,0 +1,100 @@
+---
+name: seo-page
+description: >
+  Perform deep single-page SEO analysis for a specific URL or landing page,
+  covering titles, meta descriptions, headings, internal links, schema, images,
+  content quality, keyword targeting, and page-level technical issues. Use when
+  the user wants one page reviewed in detail instead of a full-site audit.
+  Trigger on "analyze this page", "check page SEO", "review this URL",
+  "landing page audit", تحليل الصفحة, فحص صفحة, مراجعة رابط, أو تحسين صفحة
+  واحدة.
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - WebFetch
+---
+
+# Single Page Analysis
+
+## BrightAI Output Rules
+
+For BrightAI tasks:
+- Write the page analysis, issues, and recommendations in Arabic
+- Keep meta tag names, schema keys, URLs, and code snippets in English
+- Assume BrightAI pages are often Arabic-first, mixed-language, and schema-heavy, so judge clarity and intent with that context
+
+## What to Analyze
+
+### On-Page SEO
+- Title tag: 50-60 characters, includes primary keyword, unique
+- Meta description: 150-160 characters, compelling, includes keyword
+- H1: exactly one, matches page intent, includes keyword
+- H2-H6: logical hierarchy (no skipped levels), descriptive
+- URL: short, descriptive, hyphenated, no parameters
+- Internal links: sufficient, relevant anchor text, no orphan pages
+- External links: to authoritative sources, reasonable count
+
+### Content Quality
+- Word count vs page type minimums (see `seo/references/quality-gates.md`)
+- Readability: Flesch Reading Ease score, grade level
+- Keyword density: natural (1-3%), semantic variations present
+- E-E-A-T signals: author bio, credentials, first-hand experience markers
+- Content freshness: publication date, last updated date
+- For Arabic pages, treat readability as a qualitative review of clarity, flow, and natural phrasing rather than depending on English readability formulas
+
+### Technical Elements
+- Canonical tag: present, self-referencing or correct
+- Meta robots: index/follow unless intentionally blocked
+- Open Graph: og:title, og:description, og:image, og:url
+- Twitter Card: twitter:card, twitter:title, twitter:description
+- Hreflang: if multi-language, correct implementation
+
+### Schema Markup
+- Detect all types (JSON-LD preferred)
+- Validate required properties
+- Identify missing opportunities
+- NEVER recommend HowTo (deprecated) or FAQ (restricted to gov/health)
+
+### Images
+- Alt text: present, descriptive, includes keywords where natural
+- File size: flag >200KB (warning), >500KB (critical)
+- Format: recommend WebP/AVIF over JPEG/PNG
+- Dimensions: width/height set for CLS prevention
+- Lazy loading: loading="lazy" on below-fold images
+
+### Core Web Vitals (reference only, not measurable from HTML alone)
+- Flag potential LCP issues (huge hero images, render-blocking resources)
+- Flag potential INP issues (heavy JS, no async/defer)
+- Flag potential CLS issues (missing image dimensions, injected content)
+
+## Output
+
+### Page Score Card
+```
+Overall Score: XX/100
+
+On-Page SEO:     XX/100  ████████░░
+Content Quality: XX/100  ██████████
+Technical:       XX/100  ███████░░░
+Schema:          XX/100  █████░░░░░
+Images:          XX/100  ████████░░
+```
+
+### Issues Found
+Organized by priority: Critical -> High -> Medium -> Low
+
+### Recommendations
+Specific, actionable improvements with expected impact
+
+### Schema Suggestions
+Ready-to-use JSON-LD code for detected opportunities
+
+## Error Handling
+
+| Scenario | Action |
+|----------|--------|
+| URL unreachable (DNS failure, connection refused) | Report the error clearly. Do not guess page content. Suggest the user verify the URL and try again. |
+| Page requires authentication (401/403) | Report that the page is behind authentication. Suggest the user provide the rendered HTML directly or a publicly accessible URL. |
+| JavaScript-rendered content (empty body in HTML) | Note that key content may be rendered client-side. Analyze the available HTML and flag that results may be incomplete. Suggest using a browser-rendered snapshot if available. |

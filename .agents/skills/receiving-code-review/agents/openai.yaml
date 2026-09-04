@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiving Code Review"
+  short_description: "Handle code review feedback with rigor."
+  default_prompt: "Use $receiving-code-review to address this code review feedback."

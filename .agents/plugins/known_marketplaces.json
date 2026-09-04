@@ -1,0 +1,50 @@
+{
+  "caveman": {
+    "source": {
+      "source": "github",
+      "repo": "JuliusBrussee/caveman"
+    },
+    "installLocation": "/Users/yzydalshmry/.claude/plugins/marketplaces/caveman",
+    "lastUpdated": "2026-05-26T22:15:56.902Z"
+  },
+  "karpathy-skills": {
+    "source": {
+      "source": "github",
+      "repo": "forrestchang/andrej-karpathy-skills"
+    },
+    "installLocation": "/Users/yzydalshmry/.claude/plugins/marketplaces/karpathy-skills",
+    "lastUpdated": "2026-06-09T20:16:21.423Z"
+  },
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    },
+    "installLocation": "/Users/yzydalshmry/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-07-31T15:53:17.029Z"
+  },
+  "humanizer": {
+    "source": {
+      "source": "github",
+      "repo": "blader/humanizer"
+    },
+    "installLocation": "/Users/yzydalshmry/.claude/plugins/marketplaces/humanizer",
+    "lastUpdated": "2026-07-29T23:16:27.497Z"
+  },
+  "marketingskills": {
+    "source": {
+      "source": "github",
+      "repo": "coreyhaines31/marketingskills"
+    },
+    "installLocation": "/Users/yzydalshmry/.claude/plugins/marketplaces/marketingskills",
+    "lastUpdated": "2026-07-29T23:17:46.872Z"
+  },
+  "ecc": {
+    "source": {
+      "source": "git",
+      "url": "https://github.com/affaan-m/ECC.git"
+    },
+    "installLocation": "/Users/yzydalshmry/.claude/plugins/marketplaces/ecc",
+    "lastUpdated": "2026-07-29T23:31:13.799Z"
+  }
+}

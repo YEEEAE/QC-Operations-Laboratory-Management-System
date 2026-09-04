@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Orchestrator"
+  short_description: "Full-spectrum SEO analysis for BrightAI websites."
+  default_prompt: "Use $seo to analyze this website and return the findings in Arabic for BrightAI."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Strategy Plan"
+  short_description: "Build an SEO roadmap for Saudi enterprise websites."
+  default_prompt: "Use $seo-plan to build an SEO plan for this project and write it in Arabic."

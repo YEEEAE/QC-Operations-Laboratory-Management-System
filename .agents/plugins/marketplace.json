@@ -1,0 +1,132 @@
+{
+  "name": "brightai-local",
+  "interface": {
+    "displayName": "BrightAI Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "andrej-karpathy-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/andrej-karpathy-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Coding"
+    }
+  ],
+  "skills": [
+    {
+      "name": "awesome-design-md",
+      "path": ".agents/skills/awesome-design-md",
+      "category": "Design"
+    },
+    {
+      "name": "design-md",
+      "path": ".agents/skills/design-md",
+      "category": "Design"
+    },
+    {
+      "name": "frontend-design",
+      "path": ".agents/skills/frontend-design",
+      "category": "Design"
+    },
+    {
+      "name": "google-indexing-seo-guardian",
+      "path": ".agents/skills/google-indexing-seo-guardian",
+      "category": "SEO"
+    },
+    {
+      "name": "intelligent-content-reviewer-validator",
+      "path": ".agents/skills/intelligent-content-reviewer-validator",
+      "category": "Content"
+    },
+    {
+      "name": "internal-links-guardian",
+      "path": ".agents/skills/internal-links-guardian",
+      "category": "Integrity"
+    },
+    {
+      "name": "karpathy-guidelines",
+      "path": ".agents/skills/karpathy-guidelines",
+      "category": "Coding"
+    },
+    {
+      "name": "render-deploy",
+      "path": ".agents/skills/render-deploy",
+      "category": "Deployment"
+    },
+    {
+      "name": "rtl-ui-guardian",
+      "path": ".agents/skills/rtl-ui-guardian",
+      "category": "Design"
+    },
+    {
+      "name": "seo",
+      "path": ".agents/skills/seo",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-audit",
+      "path": ".agents/skills/seo-audit",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-content",
+      "path": ".agents/skills/seo-content",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-geo",
+      "path": ".agents/skills/seo-geo",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-hreflang",
+      "path": ".agents/skills/seo-hreflang",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-images",
+      "path": ".agents/skills/seo-images",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-local",
+      "path": ".agents/skills/seo-local",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-page",
+      "path": ".agents/skills/seo-page",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-plan",
+      "path": ".agents/skills/seo-plan",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-schema",
+      "path": ".agents/skills/seo-schema",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-sitemap",
+      "path": ".agents/skills/seo-sitemap",
+      "category": "SEO"
+    },
+    {
+      "name": "seo-technical",
+      "path": ".agents/skills/seo-technical",
+      "category": "SEO"
+    },
+    {
+      "name": "vercel-react-best-practices",
+      "path": ".agents/skills/vercel-react-best-practices",
+      "category": "Coding"
+    }
+  ]
+}

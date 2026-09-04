@@ -1,0 +1,26 @@
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+ANTHROPIC_BASE_URL = "https://api.tokenrouter.com"
+ANTHROPIC_AUTH_TOKEN = "REDACTED_COMPROMISED_KEY"
+ANTHROPIC_MODEL = "moonshotai/kimi-k3-free"
+ANTHROPIC_DEFAULT_SONNET_MODEL = "moonshotai/kimi-k3-free"
+ANTHROPIC_DEFAULT_OPUS_MODEL = "moonshotai/kimi-k3-free"
+ANTHROPIC_DEFAULT_HAIKU_MODEL = "moonshotai/kimi-k3-free"
+
+[mcp_servers.caveman-shrink]
+command = "npx"
+args = [
+    "-y",
+    "caveman-shrink",
+]
+
+# Official DataForSEO MCP server. Credentials must be supplied in the
+# parent environment as DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD.
+[mcp_servers.dataforseo]
+command = "npx"
+args = [
+    "-y",
+    "dataforseo-mcp-server@latest",
+]

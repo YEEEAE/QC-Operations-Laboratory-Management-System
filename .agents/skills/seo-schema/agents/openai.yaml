@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Schema Review"
+  short_description: "Validate and generate Schema.org markup for site pages."
+  default_prompt: "Use $seo-schema to review this page structured data and report in Arabic."

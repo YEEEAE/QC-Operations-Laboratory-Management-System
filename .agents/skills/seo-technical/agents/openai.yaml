@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Technical Audit"
+  short_description: "Check crawlability, indexing, CWV, rendering, and headers."
+  default_prompt: "Use $seo-technical to audit this site technically and explain the result in Arabic."

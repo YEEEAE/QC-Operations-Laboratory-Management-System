@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing Skills"
+  short_description: "Create and improve reusable agent skills."
+  default_prompt: "Use $writing-skills to create or improve this agent skill."

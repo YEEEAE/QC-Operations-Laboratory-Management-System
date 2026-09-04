@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Site Audit"
+  short_description: "Audit the full site and prioritize SEO fixes clearly."
+  default_prompt: "Use $seo-audit to audit this website and deliver the full report in Arabic."

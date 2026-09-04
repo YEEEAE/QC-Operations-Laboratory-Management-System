@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Page Analysis"
+  short_description: "Analyze one page for SEO issues, schema, and intent fit."
+  default_prompt: "Use $seo-page to analyze this page and explain the findings in Arabic."

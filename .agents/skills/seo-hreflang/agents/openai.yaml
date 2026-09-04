@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Hreflang Audit"
+  short_description: "Validate Arabic-English page pairs and hreflang tags."
+  default_prompt: "Use $seo-hreflang to audit these language variants and report the fixes in Arabic."

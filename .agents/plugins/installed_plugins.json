@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "plugins": {
+    "caveman@caveman": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/caveman/caveman/655b7d9c5431",
+        "version": "655b7d9c5431",
+        "installedAt": "2026-05-26T22:15:57.121Z",
+        "lastUpdated": "2026-05-26T22:15:57.121Z",
+        "gitCommitSha": "655b7d9c5431f822264b7732e9901c5578ac84cf"
+      }
+    ],
+    "andrej-karpathy-skills@karpathy-skills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/karpathy-skills/andrej-karpathy-skills/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-06-09T20:17:25.886Z",
+        "lastUpdated": "2026-06-09T20:17:25.886Z",
+        "gitCommitSha": "2c606141936f1eeef17fa3043a72095b4765b9c2"
+      }
+    ],
+    "claude-code-setup@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-07-17T22:58:39.626Z",
+        "lastUpdated": "2026-07-17T22:58:39.626Z",
+        "gitCommitSha": "2476d52abc961e2544c1b663f0541171aef2d3e1"
+      }
+    ],
+    "superpowers@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/claude-plugins-official/superpowers/6.2.0",
+        "version": "6.2.0",
+        "installedAt": "2026-07-29T23:07:01.268Z",
+        "lastUpdated": "2026-07-29T23:07:01.268Z",
+        "gitCommitSha": "44c9b2d6e889982ac18c27d05a19fefe335194e1"
+      }
+    ],
+    "humanizer@humanizer": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/humanizer/humanizer/2.9.1",
+        "version": "2.9.1",
+        "installedAt": "2026-07-29T23:16:40.159Z",
+        "lastUpdated": "2026-07-29T23:16:40.159Z",
+        "gitCommitSha": "523374dee72d67c7b2b5f858ea0094ffda49c3ac"
+      }
+    ],
+    "marketing-skills@marketingskills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/marketingskills/marketing-skills/2.10.0",
+        "version": "2.10.0",
+        "installedAt": "2026-07-29T23:17:59.449Z",
+        "lastUpdated": "2026-07-29T23:17:59.449Z",
+        "gitCommitSha": "7868cb9251fad80a73d26e488a5ad5f6c4a9f335"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
+        "version": "unknown",
+        "installedAt": "2026-07-29T23:23:21.689Z",
+        "lastUpdated": "2026-07-31T15:53:17.058Z"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
+        "version": "unknown",
+        "installedAt": "2026-07-29T23:24:47.118Z",
+        "lastUpdated": "2026-07-31T15:53:17.058Z"
+      }
+    ],
+    "context7@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/claude-plugins-official/context7/unknown",
+        "version": "unknown",
+        "installedAt": "2026-07-29T23:25:45.760Z",
+        "lastUpdated": "2026-07-31T15:53:17.057Z"
+      }
+    ],
+    "ecc@ecc": [
+      {
+        "scope": "user",
+        "installPath": "/Users/yzydalshmry/.claude/plugins/cache/ecc/ecc/2.1.0",
+        "version": "2.1.0",
+        "installedAt": "2026-07-29T23:30:58.336Z",
+        "lastUpdated": "2026-07-29T23:30:58.336Z",
+        "gitCommitSha": "e4e4163101f162881e628f300a9ca4e6a940bcea"
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Local Audit"
+  short_description: "Review Saudi local signals, GBP, citations, and NAP."
+  default_prompt: "Use $seo-local to review this business local presence and report in Arabic."

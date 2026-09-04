@@ -1,0 +1,4 @@
+interface:
+  display_name: "Google Indexing Guardian"
+  short_description: "Audits HTML indexing, SEO, and Google Analytics"
+  default_prompt: "Use $google-indexing-seo-guardian to review HTML files, fix indexing issues, and verify Google Analytics placement."

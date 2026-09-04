@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using Superpowers"
+  short_description: "Select and invoke relevant workflow skills."
+  default_prompt: "Use $using-superpowers to choose the right skill workflow for this task."

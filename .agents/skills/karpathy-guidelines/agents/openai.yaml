@@ -1,0 +1,4 @@
+interface:
+  display_name: "Karpathy Guidelines"
+  short_description: "Apply disciplined coding behavior and minimal, verifiable changes."
+  default_prompt: "Use $karpathy-guidelines to handle this coding task with explicit assumptions, simple changes, and verifiable success criteria."

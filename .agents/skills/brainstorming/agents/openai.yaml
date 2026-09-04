@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brainstorming"
+  short_description: "Explore ideas and requirements before building."
+  default_prompt: "Use $brainstorming to shape this idea before implementation."

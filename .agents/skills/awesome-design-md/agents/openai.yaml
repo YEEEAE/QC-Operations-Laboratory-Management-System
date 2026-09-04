@@ -1,0 +1,4 @@
+interface:
+  display_name: "Awesome DESIGN.md"
+  short_description: "Fetch, compare, and apply curated DESIGN.md references from 69+ brand design systems"
+  default_prompt: "Use $awesome-design-md to choose, compare, and apply a curated DESIGN.md design reference for my project."
