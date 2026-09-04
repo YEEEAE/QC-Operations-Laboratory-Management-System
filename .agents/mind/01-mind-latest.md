@@ -11,6 +11,36 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — اعتماد Backup & Recovery Foundation Baseline
+
+### تم التنفيذ
+- إنشاء `Documents/BACKUP-RECOVERY-PLAN.md` كوثيقة Foundation معتمدة، بدون Draft status.
+- اعتماد Layered Recovery Architecture تشمل PostgreSQL physical base backups + continuous WAL archiving + PITR، مع logical export كطبقة ثانوية وprovider snapshots كطبقة إضافية عند توفرها.
+- إدخال Object Storage / Evidence binaries ضمن recovery scope وربط الاستعادة بـSHA-256 والـmetadata/business linkage.
+- اعتماد Recovery Manifest يربط backup set بـPostgreSQL version context وWAL coverage وobject recovery context وGit SHA/migration context وrestore-verification status.
+- تثبيت أن Backup Job Success لا يساوي Restore Verified، وأن telemetry لا تستبدل controlled recovery evidence.
+- اعتماد isolated restore كافتراضي للـdrills، واعتبار Production Restore عملية high-risk controlled operation.
+- تثبيت أن Admin لا يملك Production Restore Authority تلقائيًا، وأن major disaster/database recovery يبطل sessions الحالية افتراضيًا قبل reopening.
+- تثبيت أن exact RPO/RTO والretention/cadence/authority/provider topology تبقى POLICY/DEPLOYMENT-DEPENDENT ولا يتم اختراعها.
+
+### الملفات المتأثرة
+- `Documents/BACKUP-RECOVERY-PLAN.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- تم إنشاء الوثيقة على `main` بالـcommit `c90e77bc7eb50c17f23158e3f00f720c9b7b8175`.
+- تمت إعادة قراءة `Documents/BACKUP-RECOVERY-PLAN.md` من `main` بعد الإنشاء.
+- Blob SHA المتحقق للوثيقة: `6b71c9189ecd3ae18bcdb9ccf737ea2e561afe6f`.
+- الـStatus المتحقق داخل الملف: `FOUNDATION — APPROVED BACKUP & RECOVERY BASELINE`.
+- لم تُشغّل application tests/build لأن المهمة توثيق Foundation فقط ولا يوجد claim بأن backup implementation أو runtime recovery جاهز.
+
+### النتيجة والقيود
+- الوثيقة نفسها مثبتة كـFoundation baseline معتمدة.
+- هذا لا يثبت أن backup/PITR/object recovery/restore drills مطبقة أو operationally verified؛ `RISK-028` يبقى residual risk غير متحقق حتى يوجد implementation + restore evidence.
+- Exact RPO/RTO والretention والcadence والrestore approval/reopen authority والprovider choices ما زالت قرارات مفتوحة.
+
+---
+
 ## [2026-09-04] — تثبيت بروتوكول استخدام مهارات المشروع
 
 ### تم التنفيذ
@@ -81,7 +111,17 @@
 - `Documents/STATE-MACHINES.md`
 - `Documents/DATA-MODEL.md`
 - `Documents/DATA-DICTIONARY.md`
-- `Documents/REQUIREMENTS-TRACEABILITY.md` عند إضافتها للمستودع
+- `Documents/REQUIREMENTS-TRACEABILITY.md`
+- `Documents/ARCHITECTURE-SPECIFICATION.md`
+- `Documents/SECURITY-ARCHITECTURE.md`
+- `Documents/DATABASE-ARCHITECTURE.md`
+- `Documents/ERROR-ARCHITECTURE.md`
+- `Documents/TESTING-STRATEGY.md`
+- `Documents/RISK-REGISTER.md`
+- `Documents/OBSERVABILITY-ARCHITECTURE.md`
+- `Documents/BACKUP-RECOVERY-PLAN.md`
+
+`Documents/ROUTE-MANIFEST-SPECIFICATION.md` موجود حاليًا لكنه لا يدخل قائمة الـapproved canonical baseline إلا بعد إزالة Draft status واعتماده صراحة.
 
 الوثائق تصف الـFoundation. الكود يجب أن يطابقها، وليس العكس.
 
@@ -393,18 +433,17 @@ Evidence before assertion.
 
 # 16. Current Open Foundation Work
 
-المرحلة التالية بعد Foundation documents هي تحويل المواصفات إلى Architecture/Implementation specifications قبل بناء الصفحات عشوائيًا.
+الحالة الحالية ما زالت Foundation / Specification، ولم يبدأ إثبات runtime implementation بمجرد اعتماد الوثائق.
 
 Recommended next areas:
 
-- Astro + PostgreSQL Architecture Specification
-- Security Architecture
-- Database Architecture / migration strategy
-- Error Architecture
-- Route Manifest specification
-- Test Manifest specification
-- Risk Register
-- implementation plans حسب build phases
+- اعتماد/إغلاق `ROUTE-MANIFEST-SPECIFICATION.md` إذا تقرر تثبيته كbaseline.
+- `DESIGN-SYSTEM.md`.
+- `UI-UX-SPECIFICATION.md`.
+- Deployment Architecture.
+- UAT Acceptance Plan.
+- Production Readiness Checklist.
+- Implementation plans حسب build phases بعد إغلاق المواصفات المطلوبة.
 
 ---
 
@@ -445,7 +484,6 @@ Recommended next areas:
 - تغييرات `AGENTS.md` و`.claude/AGENTS.md` و`.clinerules/` موجودة في working tree خارج نطاق هذه المهمة ولم تُعدَّل.
 
 ---
-
 
 # 18. Earlier Ledger
 
