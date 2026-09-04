@@ -5,7 +5,7 @@
 ## Route Manifest & Navigation Contract — v1.0
 
 **Document Path:** `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
-**Status:** APPROVAL
+**Status:** FOUNDATION — APPROVED ROUTE MANIFEST SPECIFICATION BASELINE
 **Product:** QC Operations & Laboratory Management System
 **Framework:** Astro — Server-rendered / On-demand
 **Routing Model:** Astro File-Based Routing
@@ -3480,7 +3480,7 @@ Decision:
 Use domain-oriented browser routes without an /app prefix.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-002
@@ -3490,7 +3490,7 @@ Decision:
 Astro file-based routing is the delivery routing model.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-003
@@ -3500,7 +3500,7 @@ Decision:
 Protected operational pages use server/on-demand rendering.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-004
@@ -3510,7 +3510,7 @@ Decision:
 GET routes never perform controlled mutations.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-005
@@ -3520,7 +3520,7 @@ Decision:
 Controlled mutations use Astro Actions or explicit APIs that invoke Application Use Cases.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-006
@@ -3530,7 +3530,7 @@ Decision:
 Canonical record routes use technical UUID identifiers.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-007
@@ -3540,7 +3540,7 @@ Decision:
 Human-readable business IDs remain display/search/reference identifiers.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-008
@@ -3550,7 +3550,7 @@ Decision:
 Route params and URLs are never authorization evidence.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-009
@@ -3560,7 +3560,7 @@ Decision:
 Unauthenticated browser access redirects to /login with sanitized local returnTo where useful.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-010
@@ -3570,7 +3570,7 @@ Decision:
 IDOR-sensitive unauthorized record access may map to safe 404.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-011
@@ -3580,7 +3580,7 @@ Decision:
 Review and execution workspaces use explicit nested routes such as /review and /execute.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-012
@@ -3590,7 +3590,7 @@ Decision:
 E-Signature is a controlled ceremony, not a standalone GET mutation route.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-013
@@ -3600,7 +3600,7 @@ Decision:
 List filters should be represented in validated URL query parameters where practical.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-014
@@ -3610,7 +3610,7 @@ Decision:
 Dashboard cards and notifications navigate to records/filtered work queues and never execute controlled actions.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-015
@@ -3620,7 +3620,7 @@ Decision:
 Every protected operational Astro page must have a manifest entry and route-access tests.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-016
@@ -3630,7 +3630,7 @@ Decision:
 Machine health endpoints and System Health UI are separate routes/capabilities.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-017
@@ -3640,7 +3640,7 @@ Decision:
 Internal operational routes are not public SEO/indexable pages.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## ROUTE-DEC-018
@@ -3650,7 +3650,7 @@ Decision:
 Astro reserved namespaces _astro, _actions and _server_islands are never used for application route naming.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ---
@@ -3929,5 +3929,5 @@ Route Coverage:
 Every protected route must be registered and tested
 
 Approval Status:
-DRAFT FOR USER REVIEW
+FOUNDATION — APPROVED ROUTE MANIFEST SPECIFICATION BASELINE
 ```

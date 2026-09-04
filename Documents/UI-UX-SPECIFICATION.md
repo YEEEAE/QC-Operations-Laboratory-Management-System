@@ -2,10 +2,10 @@
 
 # QC Operations & Laboratory Management System
 
-## Complete UI / UX Specification — v1.0 Draft for Approval
+## Complete UI / UX Specification — v1.0
 
 **Document Path:** `Documents/UI-UX-SPECIFICATION.md`
-**Status:** APPROVAL
+**Status:** FOUNDATION — APPROVED UI/UX SPECIFICATION BASELINE
 **Product:** QC Operations & Laboratory Management System
 **Design System:** Unified Dark Enterprise QC Control Room
 **Primary Experience:** Desktop operational application with responsive tablet/mobile support
@@ -4687,7 +4687,7 @@ Decision:
 Use the approved unified dark QC visual language on all operational pages.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-002
@@ -4697,7 +4697,7 @@ Decision:
 Dashboard is an operational command center, not a generic analytics dashboard.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-003
@@ -4707,7 +4707,7 @@ Decision:
 Dashboard is role-aware and scope-aware.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-004
@@ -4717,7 +4717,7 @@ Decision:
 No controlled approval or release occurs directly from Dashboard cards.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-005
@@ -4727,7 +4727,7 @@ Decision:
 PASS and RELEASED remain separate visually, textually and behaviorally.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-006
@@ -4737,7 +4737,7 @@ Decision:
 Every controlled record prominently shows current state and version.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-007
@@ -4747,7 +4747,7 @@ Decision:
 Stale-version conflicts are blocking review/reload experiences, not generic errors.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-008
@@ -4757,7 +4757,7 @@ Decision:
 WCAG 2.2 AA is the UI accessibility target.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-009
@@ -4767,7 +4767,7 @@ Decision:
 Native HTML is preferred; WAI-ARIA patterns are used for complex widgets when required.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-010
@@ -4777,7 +4777,7 @@ Decision:
 Critical forms support keyboard-oriented operation.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-011
@@ -4787,7 +4787,7 @@ Decision:
 Laboratory execution gets a dedicated high-density workspace rather than a generic form.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-012
@@ -4797,7 +4797,7 @@ Decision:
 Approval workflows use a dedicated review workspace.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-013
@@ -4807,7 +4807,7 @@ Decision:
 E-Signature is a separate ceremony displaying meaning, subject and exact version.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-014
@@ -4817,7 +4817,7 @@ Decision:
 Controlled records lose normal edit UX after controlled states.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-015
@@ -4827,7 +4827,7 @@ Decision:
 Reports, charts and exports derive from the same authorized canonical dataset.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-016
@@ -4837,7 +4837,7 @@ Decision:
 Mobile retains the same information authority but changes information priority and layout.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-017
@@ -4847,7 +4847,7 @@ Decision:
 Complex Lab data entry is desktop/tablet optimized while mobile remains usable for appropriate review/context operations.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-018
@@ -4857,7 +4857,7 @@ Decision:
 AI is visually and functionally identified as advisory.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-019
@@ -4867,7 +4867,7 @@ Decision:
 Global Search returns only records already authorized for the actor.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ## UX-020
@@ -4877,7 +4877,7 @@ Decision:
 Page templates are families only; domain pages may add/remove/reorder sections according to approved business workflow.
 
 Status:
-PROPOSED FOR APPROVAL
+APPROVED
 ```
 
 ---
@@ -5101,7 +5101,7 @@ Document:
 Documents/UI-UX-SPECIFICATION.md
 
 Version:
-1.0 Draft
+1.0
 
 Design:
 Unified Dark Enterprise QC Control Room
@@ -5153,5 +5153,5 @@ Implementation Status:
 UNVERIFIED
 
 Document Approval Status:
-DRAFT FOR USER REVIEW
+FOUNDATION — APPROVED UI/UX SPECIFICATION BASELINE
 ```

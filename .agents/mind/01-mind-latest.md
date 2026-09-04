@@ -11,6 +11,33 @@
 > **Operational timezone:** `Asia/Riyadh`
 > **Last reset:** 2026-09-04
 
+## [2026-09-04] — IMP-000: تطبيع اعتماد مواصفات UI/UX وRoute Manifest
+
+### تم التنفيذ
+- تحديث عنوان وحالة ونسخة `Documents/UI-UX-SPECIFICATION.md` إلى Foundation baseline معتمد.
+- تحديث حالة ونسخة metadata النهائية في `Documents/ROUTE-MANIFEST-SPECIFICATION.md` إلى Foundation baseline معتمد.
+- تحويل حالات سجلات قرارات UX وRoute من حالة الاعتماد المقترحة إلى `APPROVED` بدون تغيير متطلبات UI أو routes أو business behavior.
+- إضافة الوثيقتين إلى قائمة `Canonical Foundation Documents` وإزالة ملاحظة أنهما ما زالتا Draft.
+
+### الملفات المتأثرة
+- `Documents/UI-UX-SPECIFICATION.md`
+- `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- إعادة قراءة أول 30 سطرًا من الوثيقتين ✅
+- فحص عبارات حالة المسودة/الاعتماد القديمة بلا نتائج ✅
+- التحقق من قائمة `Canonical Foundation Documents` ✅
+- `git diff --check` ✅
+- لم تُشغّل application tests/build لأن التغيير metadata توثيقي فقط ولا يغيّر runtime behavior.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** أصبحت مواصفات UI/UX وRoute Manifest ممثلة كـFoundation APPROVED baselines، مع بقاء تغييرات working tree غير المرتبطة كما هي.
+
+### ملاحظات / مشاكل مفتوحة
+- لا توجد قرارات سياسة أو علمية جديدة؛ حالة التنفيذ الفعلي للصفحات والـroutes ما زالت `UNVERIFIED` حسب المواصفات.
+
 ## [2026-09-04] — اعتماد Deployment + UAT + Production Readiness Foundation Closure Package
 
 ### تم التنفيذ
@@ -41,7 +68,7 @@
 - حزمة Deployment/UAT/Production Readiness أصبحت Foundation baselines معتمدة.
 - لا يعني ذلك أن deployment pipeline أو UAT execution أو production readiness evidence موجودة فعليًا؛ implementation/runtime status يبقى UNVERIFIED حتى يوجد code + environment + current evidence.
 - Exact hosting/provider، CI/CD tooling، production release authority، RPO/RTO، retention، HA topology، deployment mode، وapproval ceremonies ما زالت POLICY/DEPLOYMENT-DEPENDENT حيث نصت الوثائق على ذلك.
-- `Documents/UI-UX-SPECIFICATION.md` و`Documents/ROUTE-MANIFEST-SPECIFICATION.md` تم اعتمادهما من المستخدم من ناحية المحتوى، لكن الـmetadata الحالي داخل الملفين ما زال يحمل `DRAFT FOR APPROVAL` ويحتاج normalization منفصل قبل إدخالهما في قائمة الـapproved canonical baseline داخل هذا الـMind.
+- `Documents/UI-UX-SPECIFICATION.md` و`Documents/ROUTE-MANIFEST-SPECIFICATION.md` كان محتواهما معتمدًا من المستخدم، وتم لاحقًا تطبيع metadata إلى APPROVED وإدخالهما في قائمة الـcanonical baseline بهذا الـMind.
 
 ---
 
@@ -160,9 +187,6 @@
 - `Documents/DEPLOYMENT-ARCHITECTURE.md`
 - `Documents/UAT-ACCEPTANCE-PLAN.md`
 - `Documents/PRODUCTION-READINESS-CHECKLIST.md`
-
-الوثائق التالية موجودة ومحتواها معتمد من المستخدم، لكن الـmetadata داخل الملف نفسه ما زال `DRAFT FOR APPROVAL` ويجب تطبيعه قبل اعتبار الملف canonical APPROVED baseline هنا:
-
 - `Documents/UI-UX-SPECIFICATION.md`
 - `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
 
@@ -480,10 +504,8 @@ Evidence before assertion.
 
 العمل المفتوح المباشر قبل بدء implementation planning:
 
-1. تطبيع `Documents/UI-UX-SPECIFICATION.md` من `DRAFT FOR APPROVAL` إلى approved status المتوافق مع اعتماد المستخدم.
-2. تطبيع `Documents/ROUTE-MANIFEST-SPECIFICATION.md` من `DRAFT FOR APPROVAL` إلى approved status المتوافق مع اعتماد المستخدم.
-3. تحديث أي cross-reference/roadmap قديم إذا كان ما زال يعرض Deployment/UAT/Production Readiness كعمل مفتوح.
-4. بعد إغلاق metadata inconsistencies: إنشاء implementation plans حسب build phases بدل البدء العشوائي بالصفحات.
+1. تحديث أي cross-reference/roadmap قديم إذا كان ما زال يعرض Deployment/UAT/Production Readiness كعمل مفتوح.
+2. بعد إغلاق metadata inconsistencies: إنشاء implementation plans حسب build phases بدل البدء العشوائي بالصفحات.
 
 المرحلة التالية بعد ذلك:
 
