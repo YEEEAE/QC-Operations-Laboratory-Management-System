@@ -1,0 +1,5 @@
+import { AppError } from '../../../shared/errors/app-error.js';
+import { authorize } from '../../../shared/authorization/authorize.js';
+import type { ActorContext, ScopeKind } from '../../../shared/authorization/types.js';
+import type { AuthorizationRepository } from '../ports/authorization-repository.js';
+export class ManageUserScopesUseCase { constructor(private readonly repository: AuthorizationRepository) {} async execute(input: { actor: ActorContext; userId: string; scopes: readonly { kind: ScopeKind; value?: string }[]; requestId: string; reason?: string }) { if (input.userId === input.actor.id) throw new AppError('AUTHZ_SOD_VIOLATION', { userSafe: true }); authorize({ actor: input.actor, permission: 'PERM-ADM-SCOPE-ASSIGN', action: 'ASSIGN', entity: { type: 'USER', id: input.userId, state: 'ACTIVE' }, scope: {}, currentVersion: 1, expectedVersion: 1, businessCondition: true }, { throwOnDeny: true }); return this.repository.replaceUserScopes({ ...input, actorId: input.actor.id }); } }

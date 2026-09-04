@@ -119,10 +119,11 @@ export interface NotificationsTable {
   created_at: Generated<Date>;
   read_at: Date | null;
 }
-export interface RolesTable { id: string; code: string; active: boolean; }
-export interface PermissionsTable { id: string; code: string; active: boolean; }
-export interface RolePermissionsTable { role_id: string; permission_id: string; }
+export interface RolesTable { id: string; code: string; name: string; description: string | null; is_system_role: boolean; active: boolean; created_at: Generated<Date>; updated_at: Generated<Date>; version: Generated<bigint>; }
+export interface PermissionsTable { id: string; code: string; domain: string; action: string; description: string | null; risk_level: string; active: boolean; created_at: Generated<Date>; updated_at: Generated<Date>; }
+export interface RolePermissionsTable { role_id: string; permission_id: string; granted_at: Generated<Date>; granted_by: string | null; }
 export interface UserRolesTable { id: string; user_id: string; role_id: string; revoked_at: Date | null; }
+export interface UserScopesTable { id: Generated<string>; user_id: string; scope_kind: string; scope_value: string | null; assigned_by: string; assigned_at: Generated<Date>; revoked_at: Date | null; revoked_by: string | null; reason: string | null; }
 
 export interface NotificationDeliveriesTable {
   id: Generated<string>;
@@ -150,6 +151,7 @@ export interface DatabaseSchema {
   permissions: PermissionsTable;
   role_permissions: RolePermissionsTable;
   user_roles: UserRolesTable;
+  user_scopes: UserScopesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

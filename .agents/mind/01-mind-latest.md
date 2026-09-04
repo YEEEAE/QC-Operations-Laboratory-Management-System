@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-014: Authorization administration repository, use cases, scopes, and Actions
+
+### تم التنفيذ
+- أُنشئت واجهة `AuthorizationRepository` وPostgreSQL implementation لقراءة الأدوار والصلاحيات، وتحديث grants الخاصة بالدور، وإدارة user scopes.
+- أُضيفت migration `0016_authorization_scopes.sql` لتخزين scopes الصريحة؛ الإلغاء يحفظ التاريخ ولا يحذف assignment السابق.
+- أُنشئت use cases لعرض الأدوار، عرض role، عرض permissions، تحديث role permissions، وإدارة user scopes مع authorization server-side ورفض self-grant.
+- أُضيفت سياسات `PERM-ADM-*` إلى policy registry وأُضيفت Astro Actions رفيعة مربوطة بالـuse cases، بدون actor/target-state موثوق من العميل.
+- تحديث role permissions يتم بمعاملة واحدة تشمل version check وgrant replacement وaudit؛ Actions تنشئ audit repository PostgreSQL لضمان atomicity مع mutation.
+- أُضيفت اختبارات مركزة لـAdmin بدون permission، stale version، self-scope grant، canonical permission، cross-scope isolation، وعقود admin policies.
+
+### الملفات المتأثرة
+- `db/migrations/0016_authorization_scopes.sql`
+- `src/modules/administration/{ports, infrastructure, application}/`
+- `src/actions/{admin,index}.ts`
+- `src/shared/{authorization/policy-registry,database/db-types}.ts`
+- `tests/integration/{administration,actions/admin-actions.test.ts}`
+- `tests/integration/database/migrations.test.ts`
+- `tests/integration/database/upgrade-path.test.ts`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- forbidden-pattern scan للصلاحيات الوهمية وraw SQL في Delivery و`ON DELETE CASCADE` ✅
+- `pnpm lint` ⚠️ محجوب: `eslint` غير موجود في `node_modules`، مع Node 22 بدل Node 24.20+
+- Vitest tests ⚠️ محجوبة: executable `vitest` غير موجود في `node_modules`.
+- PostgreSQL integration/atomicity الفعلية ⚠️ لم تُشغّل؛ تحتاج الاعتمادات وcontainer runtime.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** نطاق MASTER-014 مكتوب محليًا مع حدود authorization وDelivery صحيحة، لكن لا يوجد إثبات runtime للـTypeScript/Vitest/PostgreSQL بسبب بيئة الاعتمادات الحالية.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل `pnpm install --frozen-lockfile` على Node 24.20+ ثم تشغيل lint وVitest وPostgreSQL integration.
+- migration `0016` إضافة لازمة لأن repository الحالي لم يكن يملك storage رسميًا لـuser scopes.
+
 ## [2026-09-04] — MASTER-013: Account/admin-user use cases + Actions + login/account pages + middleware
 
 ### تم التنفيذ

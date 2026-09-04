@@ -34,6 +34,6 @@ describe('supported migration upgrade path', () => {
     expect(after.rows).toEqual(before.rows);
     expect(
       (await pool!.query('SELECT count(*)::int AS count FROM qc.schema_migrations')).rows[0].count,
-    ).toBe(15);
+    ).toBe(16);
   });
 });
