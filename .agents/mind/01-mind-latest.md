@@ -1,5 +1,39 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-04] — MASTER-016: tables, shell/navigation, feedback, e-signature UI, charts, and root/error pages
+
+### تم التنفيذ
+- أُنشئت مكونات DataTable وTableToolbar وFilterBar وPagination وSortHeader وEmptyTableState بجداول HTML أصلية، caption، `scope` عبر SortHeader، وفرز/ترقيم ممثلين في query parameters للعرض فقط.
+- أُنشئت navigation registry ومكونات Sidebar وTopbar وBreadcrumbs وScopeIndicator وUserMenu؛ الرؤية تعتمد على capability list فقط، مع sidebar قابلة للطي وإبقاء التفويض server-side.
+- أُنشئت حالات Empty/Error/Loading/Stale، وConfirmDialog وToastRegion مع رسائل استرجاع واضحة؛ stale يحظر overwrite ولا يعرض خيارًا لتجاوز النسخة.
+- أُنشئت ESignatureDialog لعرض معنى الفعل والكيان والنسخة والمستخدم، وإرسال secret لإعادة التحقق دون تخزينه في evidence، مع فصل ceremony عن approval route.
+- أُنشئت Chart/KpiCard/Legend وchart-client؛ الرسم الحالي SVG خفيف وله بديل جدولي accessible، ولا يعتمد على بيانات غير مصرح بها أو مكتبة خارجية غير مثبتة.
+- أُنشئت `/` للـredirect حسب session، وصفحتا 404 و500 الآمنتان، ووُصلت AppLayout بـSidebar/Topbar الافتراضيين واستُوردت global styles من BaseLayout.
+
+### الملفات المتأثرة
+- `src/ui/components/data/`
+- `src/ui/components/feedback/`
+- `src/ui/components/governance/ESignatureDialog.astro`
+- `src/ui/{shell,navigation,client,charts}/`
+- `src/ui/layouts/{AppLayout,BaseLayout}.astro`
+- `src/pages/{index,404,500}.astro`
+- `tests/unit/ui/master-016.test.ts`
+
+### التحقق
+- `node scripts/architecture/check-boundaries.mjs` ✅
+- `git diff --check` ✅
+- forbidden-pattern scan للـUI (SQL/DB imports، web storage، `innerHTML`، `javascript:`) ✅؛ ظهر فقط import readiness موجودًا سابقًا خارج نطاق UI في `src/pages/api/health/ready.ts`.
+- `pnpm test:unit` ⚠️ محجوب: executable `vitest` غير موجود وNode الحالي 22.22.3 بدل Node 24.20+.
+- `pnpm build` ⚠️ محجوب: executable `astro` غير موجود وNode الحالي 22.22.3 بدل Node 24.20+.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقة UI المطلوبة وroot/error wiring مكتوبة محليًا مع حدود Delivery صحيحة؛ إثبات Astro compile واختبارات runtime/accessibility ينتظر تثبيت الاعتمادات وتشغيل Node المعتمد.
+
+### ملاحظات / مشاكل مفتوحة
+- لم تُضف مكتبة ECharts لأن dependency غير مثبتة في المشروع ولم يوجد provider/قرار معتمد؛ Chart الحالي SVG accessible، ويحتاج قرارًا واعتمادًا مثبتًا إذا كان ECharts إلزاميًا.
+- لم تُنفذ use cases أو mutations جديدة؛ حوار التوقيع واجهة ceremony فقط كما تتطلب المواصفات.
+
 ## [2026-09-04] — MASTER-015: Design tokens, layouts, UI primitives, and QC forms
 
 ### تم التنفيذ

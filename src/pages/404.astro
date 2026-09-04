@@ -1,0 +1,5 @@
+---
+import BaseLayout from '../ui/layouts/BaseLayout.astro';
+---
+<BaseLayout title="Page not found"><main class="error-page"><p class="eyebrow">404 · Route not found</p><h1>We could not find that page</h1><p>The address may be outdated or you may not have access to the requested record.</p><div><a href={Astro.locals.user ? '/dashboard' : '/login'}>Continue safely</a><a href="/dashboard">Go back</a></div></main></BaseLayout>
+<style>.error-page{min-height:70vh;display:grid;place-content:center;gap:12px;width:min(560px,calc(100% - 32px));margin:auto}.eyebrow{color:var(--color-accent-primary);font:600 11px var(--font-mono)}h1{margin:0;color:var(--text-primary);font-size:clamp(28px,5vw,46px)}p{margin:0;color:var(--text-secondary);line-height:1.6}.error-page div{display:flex;gap:16px;margin-top:12px}.error-page a{color:var(--color-accent-primary-hover);font-size:13px}</style>

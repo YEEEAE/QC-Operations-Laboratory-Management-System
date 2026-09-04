@@ -1,0 +1,30 @@
+---
+import { visibleNavigation } from '../navigation/navigation';
+interface Props { capabilities?: string[]; activePath?: string; collapsed?: boolean; }
+const { capabilities = [], activePath = Astro.url.pathname, collapsed = false } = Astro.props;
+const groups = visibleNavigation(capabilities);
+---
+<nav class="sidebar" data-collapsed={collapsed} aria-label="Primary navigation">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">QC</span><span class="brand-name">QC Operations</span></div>
+  <button class="collapse-button" type="button" data-sidebar-toggle aria-label="Collapse navigation" aria-expanded={!collapsed}>‹</button>
+  <div class="nav-groups">
+    {groups.map(group => <section class="nav-group" aria-labelledby={`nav-${group.id}`}>
+      <h2 id={`nav-${group.id}`}>{group.label}</h2>
+      <ul>{group.items.map(item => <li><a class:list={['nav-link', { active: activePath === item.href || activePath.startsWith(`${item.href}/`) }]} href={item.href} title={item.label}><span class="nav-icon" aria-hidden="true">{item.icon}</span><span class="nav-label">{item.label}</span></a></li>)}</ul>
+    </section>)}
+  </div>
+</nav>
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
+  const sidebar = toggle?.closest<HTMLElement>('.sidebar');
+  toggle?.addEventListener('click', () => {
+    if (!sidebar || !toggle) return;
+    const collapsed = sidebar.dataset.collapsed === 'true';
+    sidebar.dataset.collapsed = String(!collapsed);
+    toggle.setAttribute('aria-expanded', String(collapsed));
+    toggle.setAttribute('aria-label', collapsed ? 'Collapse navigation' : 'Expand navigation');
+  });
+</script>
+<style>
+  .sidebar{position:sticky;top:0;min-height:100vh;padding:var(--space-5) var(--space-3);background:var(--color-sidebar);border-inline-end:1px solid var(--color-border-subtle)} .brand{display:flex;align-items:center;gap:10px;padding:0 var(--space-2) var(--space-6);font-weight:700;color:var(--text-primary)} .brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--color-accent-primary);color:var(--color-text-inverse);font-size:11px;letter-spacing:.06em}.brand-name{white-space:nowrap}.collapse-button{position:absolute;inset-block-start:19px;inset-inline-end:10px;border:0;background:transparent;color:var(--text-muted);font-size:22px;cursor:pointer}.nav-group{margin-block-end:var(--space-5)} .nav-group h2{margin:0 10px 7px;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.12em}.nav-group ul{list-style:none;margin:0;padding:0}.nav-group a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--text-secondary);text-decoration:none;font-size:13px}.nav-group a:hover,.nav-group a:focus-visible{background:var(--color-surface-hover);color:var(--text-primary)}.nav-group a.active{background:var(--color-surface-selected);color:var(--text-primary);box-shadow:inset 3px 0 var(--color-accent-primary)}.nav-icon{display:grid;place-items:center;width:20px;font-size:14px}.sidebar[data-collapsed=true]{width:70px}.sidebar[data-collapsed=true] .brand-name,.sidebar[data-collapsed=true] .nav-label,.sidebar[data-collapsed=true] .nav-group h2{display:none}.sidebar[data-collapsed=true] .brand{justify-content:center}.sidebar[data-collapsed=true] .nav-group a{justify-content:center}.sidebar[data-collapsed=true] .collapse-button{transform:rotate(180deg)} @media(max-width:760px){.sidebar{position:relative;min-height:auto}.nav-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}.collapse-button{display:none}}
+</style>

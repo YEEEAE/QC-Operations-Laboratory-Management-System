@@ -1,0 +1,5 @@
+---
+interface Props { action?: string; }
+const { action = 'Apply filters' } = Astro.props;
+---
+<form class="filters" method="get"><slot /><button type="submit">{action}</button></form><style>.filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-3);width:100%}.filters :global(label){display:grid;gap:5px;color:var(--text-muted);font-size:11px}.filters :global(input),.filters :global(select){min-width:130px;padding:8px 10px;border:1px solid var(--border-default);border-radius:7px;background:var(--surface-panel);color:var(--text-primary);font:inherit;font-size:12px}.filters button{padding:8px 12px;border:1px solid var(--color-accent-primary);border-radius:7px;background:transparent;color:var(--color-accent-primary-hover);font:inherit;font-size:12px;font-weight:600;cursor:pointer}</style>

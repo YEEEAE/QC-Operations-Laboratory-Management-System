@@ -1,0 +1,19 @@
+---
+interface Props { id?: string; actionMeaning: string; subjectType: string; subjectId: string; subjectVersion: string | number; currentUser: string; reasonRequired?: boolean; actionUrl?: string; }
+const { id = 'e-signature-dialog', actionMeaning, subjectType, subjectId, subjectVersion, currentUser, reasonRequired = false, actionUrl } = Astro.props;
+---
+<dialog id={id} class="esign" aria-labelledby={`${id}-title`} data-dialog>
+  <form method="post" action={actionUrl} data-e-signature-form>
+    <h2 id={`${id}-title`}>Confirm with electronic signature</h2>
+    <p class="meaning">{actionMeaning}</p>
+    <dl><dt>Subject</dt><dd>{subjectType} · {subjectId}</dd><dt>Version</dt><dd>{subjectVersion}</dd><dt>Signing as</dt><dd>{currentUser}</dd></dl>
+    <p class="note">Reauthentication is verified by the server. Your secret is never stored as signature evidence.</p>
+    <label for={`${id}-secret`}>Re-enter password</label><input id={`${id}-secret`} name="reauthenticationSecret" type="password" autocomplete="current-password" required />
+    <input type="hidden" name="subjectType" value={subjectType} /><input type="hidden" name="subjectId" value={subjectId} /><input type="hidden" name="subjectVersion" value={subjectVersion} />
+    {reasonRequired && <label for={`${id}-reason`}>Reason <span aria-hidden="true">*</span><textarea id={`${id}-reason`} name="reason" required rows="3"></textarea></label>}
+    <div class="actions"><button type="button" value="cancel" formmethod="dialog">Cancel</button><button class="primary" type="submit" disabled={!actionUrl}>Submit signature</button></div>
+  </form>
+</dialog>
+<style>
+  .esign{width:min(480px,calc(100% - 32px));padding:0;border:1px solid var(--border-default);border-radius:var(--radius-lg);background:var(--surface-popover);color:var(--text-primary);box-shadow:var(--shadow-3)}.esign::backdrop{background:rgb(0 0 0 / 72%)}.esign form{padding:var(--space-6)}.esign h2{margin:0;font-size:17px}.meaning{margin:14px 0;padding:12px;border-inline-start:3px solid var(--color-accent-primary);background:var(--color-surface-selected);font-size:13px;line-height:1.6}.esign dl{display:grid;grid-template-columns:100px 1fr;gap:7px;font-size:12px}.esign dt{color:var(--text-muted)}.esign dd{margin:0;font-weight:600}.note{color:var(--text-muted);font-size:11px;line-height:1.5}.esign label{display:grid;gap:6px;margin-top:14px;color:var(--text-secondary);font-size:12px}.esign input,.esign textarea{padding:9px;border:1px solid var(--border-default);border-radius:6px;background:var(--surface-panel);color:var(--text-primary);font:inherit}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}.actions button{padding:8px 12px;border:1px solid var(--border-default);border-radius:6px;background:transparent;color:var(--text-secondary);font:inherit;cursor:pointer}.actions .primary{border-color:var(--color-accent-primary);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}
+</style>

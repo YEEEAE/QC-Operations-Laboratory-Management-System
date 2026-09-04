@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; }
 const { title = 'QC Operations & Laboratory Management System', locale = 'en', direction = locale.startsWith('ar') ? 'rtl' : 'ltr', density = 'standard' } = Astro.props;
 ---

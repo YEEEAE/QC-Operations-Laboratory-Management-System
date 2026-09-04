@@ -1,0 +1,5 @@
+---
+interface Props { title?: string; description?: string; clearHref?: string; }
+const { title = 'No records match the selected filters', description = 'Try clearing a filter or changing your search.', clearHref } = Astro.props;
+---
+<div class="empty"><span class="empty-icon" aria-hidden="true">⌕</span><h3>{title}</h3><p>{description}</p>{clearHref && <a href={clearHref}>Clear filters</a>}</div><style>.empty{padding:var(--space-12) var(--space-5);text-align:center}.empty-icon{display:grid;place-items:center;width:40px;height:40px;margin:0 auto var(--space-3);border-radius:50%;background:var(--color-surface-selected);color:var(--color-accent-primary);font-size:20px}.empty h3{margin:0;color:var(--text-primary);font-size:15px}.empty p{margin:8px auto 0;max-width:380px;color:var(--text-muted);font-size:12px}.empty a{display:inline-block;margin-top:var(--space-4);color:var(--color-accent-primary-hover);font-size:12px}</style>

@@ -1,0 +1,6 @@
+---
+interface Props { label?: string; detail?: string; }
+const { label = 'My operational scope', detail = 'Current scope' } = Astro.props;
+---
+<div class="scope" aria-label={`Operational scope: ${label}`}><span class="scope-dot" aria-hidden="true"></span><span><small>{detail}</small><strong>{label}</strong></span></div>
+<style>.scope{display:flex;align-items:center;gap:8px;color:var(--text-primary);font-size:12px}.scope-dot{width:8px;height:8px;border-radius:50%;background:var(--color-accent-primary);box-shadow:0 0 0 4px var(--color-accent-primary-muted)}.scope span:last-child{display:grid;gap:2px}.scope small{color:var(--text-muted);font-size:10px}.scope strong{font-weight:600}</style>

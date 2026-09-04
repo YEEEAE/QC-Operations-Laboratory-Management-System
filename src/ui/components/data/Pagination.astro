@@ -1,0 +1,6 @@
+---
+interface Props { page?: number; totalPages?: number; baseUrl?: string; }
+const { page = 1, totalPages = 1, baseUrl = Astro.url.pathname } = Astro.props;
+const link = (next: number) => `${baseUrl}?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), page: String(next) })}`;
+---
+<nav class="pagination" aria-label="Pagination"><span>Page {page} of {totalPages}</span><div><a class:list={['page-link', { disabled: page <= 1 }]} aria-disabled={page <= 1} href={page > 1 ? link(page - 1) : undefined}>Previous</a><a class:list={['page-link', { disabled: page >= totalPages }]} aria-disabled={page >= totalPages} href={page < totalPages ? link(page + 1) : undefined}>Next</a></div></nav><style>.pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:var(--space-4) var(--space-5);color:var(--text-muted);font-size:12px}.pagination div{display:flex;gap:8px}.pagination a{padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;color:var(--text-secondary);text-decoration:none}.pagination a:not(.disabled):hover{border-color:var(--color-accent-primary);color:var(--text-primary)}.pagination a.disabled{pointer-events:none;opacity:.45}</style>

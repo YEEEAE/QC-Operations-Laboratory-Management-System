@@ -1,0 +1,6 @@
+---
+interface Item { label: string; color: string; }
+interface Props { items: Item[]; }
+const { items } = Astro.props;
+---
+<ul class="legend" aria-label="Chart legend">{items.map(item => <li><span style={`--legend-color:${item.color}`} aria-hidden="true"></span>{item.label}</li>)}</ul><style>.legend{display:flex;flex-wrap:wrap;gap:12px;list-style:none;margin:12px 0 0;padding:0;color:var(--text-secondary);font-size:11px}.legend li{display:flex;align-items:center;gap:5px}.legend span{width:8px;height:8px;border-radius:2px;background:var(--legend-color)}</style>

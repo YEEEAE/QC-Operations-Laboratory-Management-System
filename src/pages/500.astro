@@ -1,0 +1,6 @@
+---
+import BaseLayout from '../ui/layouts/BaseLayout.astro';
+const requestId = Astro.locals.requestContext?.requestId;
+---
+<BaseLayout title="Service unavailable"><main class="error-page"><p class="eyebrow">500 · Request could not be completed</p><h1>Something interrupted this request</h1><p>No controlled action was confirmed. Try again, and contact support if the issue continues.</p>{requestId && <p class="reference">Reference: <code>{requestId}</code></p>}<div><a href="/dashboard">Try again</a><a href="/dashboard">Go to dashboard</a></div></main></BaseLayout>
+<style>.error-page{min-height:70vh;display:grid;align-content:center;gap:12px;width:min(560px,calc(100% - 32px));margin:auto}.eyebrow{color:var(--status-danger);font:600 11px var(--font-mono)}h1{margin:0;color:var(--text-primary);font-size:clamp(28px,5vw,46px)}.error-page p{margin:0;color:var(--text-secondary);line-height:1.6}.reference{font-size:12px}.reference code{color:var(--text-primary);font-family:var(--font-mono)}.error-page div{display:flex;gap:16px;margin-top:12px}.error-page a{color:var(--color-accent-primary-hover);font-size:13px}</style>

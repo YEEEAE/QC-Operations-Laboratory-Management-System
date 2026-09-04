@@ -1,0 +1,7 @@
+---
+interface Props { label: string; sort: string; current?: string; direction?: 'asc' | 'desc'; }
+const { label, sort, current, direction = 'asc' } = Astro.props;
+const nextDirection = current === sort && direction === 'asc' ? 'desc' : 'asc';
+const params = new URLSearchParams(Astro.url.searchParams); params.set('sort', sort); params.set('direction', nextDirection); params.set('page', '1');
+---
+<th scope="col" aria-sort={current === sort ? direction === 'asc' ? 'ascending' : 'descending' : 'none'}><a href={`${Astro.url.pathname}?${params.toString()}`}>{label}<span aria-hidden="true">{current === sort ? direction === 'asc' ? ' ↑' : ' ↓' : ' ↕'}</span></a></th><style>th a{color:inherit;text-decoration:none}th a:hover{color:var(--color-accent-primary-hover)}</style>

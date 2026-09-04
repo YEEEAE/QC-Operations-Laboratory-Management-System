@@ -1,0 +1,5 @@
+---
+interface Props { label?: string; rows?: number; }
+const { label = 'Loading operational data', rows = 4 } = Astro.props;
+---
+<section class="loading" aria-busy="true" aria-label={label}><span class="visually-hidden">{label}</span>{Array.from({ length: rows }).map(() => <span class="line"></span>)}</section><style>.loading{display:grid;gap:10px;padding:var(--space-6);background:var(--surface-panel);border-radius:var(--radius-lg)}.line{height:14px;border-radius:5px;background:linear-gradient(90deg,var(--color-surface-2),var(--color-surface-hover),var(--color-surface-2));background-size:200% 100%;animation:sheen 1.2s linear infinite}.line:nth-child(2){width:75%}.line:nth-child(3){width:90%}.line:nth-child(4){width:55%}@keyframes sheen{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){.line{animation:none}}.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}</style>

@@ -1,14 +1,16 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import Sidebar from '../shell/Sidebar.astro';
+import Topbar from '../shell/Topbar.astro';
 interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; }
 const props = Astro.props;
 ---
 <BaseLayout {...props}>
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <div class="app-shell">
-    <aside class="app-sidebar" aria-label="Primary navigation"><slot name="sidebar" /></aside>
+    <aside class="app-sidebar" aria-label="Primary navigation"><slot name="sidebar"><Sidebar /></slot></aside>
     <div class="app-workspace">
-      <header class="app-topbar"><slot name="topbar" /></header>
+      <header class="app-topbar"><slot name="topbar"><Topbar /></slot></header>
       <main id="main-content" class="app-main"><slot /></main>
     </div>
   </div>
