@@ -1,5 +1,43 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-026: Approvals + E-Signatures
+
+### تم التنفيذ
+- أُنشئت Approvals domain/ports/PostgreSQL repository مع حالات Work Item وقرارات append-only، optimistic version، idempotency، وقراءة scoped لـMy Approvals.
+- أُضيفت orchestration use cases للقائمة والتفاصيل والقرار، مع إعادة فحص assignment/scope/permission/state/version/SoD ثم استدعاء owning-domain transition بدل تغيير الحالة من Approvals.
+- أُنشئت E-Signatures evidence primitive وrepository/use case يطبق معنى الإجراء، إعادة التحقق، إعادة التفويض، وربط actor/action/version/snapshot/request؛ لا يُحفظ السر داخل الدليل.
+- أُضيفت transaction wiring لـAudit وOutbox وsignature persistence بعد نجاح transition، مع منع القرار إذا كانت سياسة التوقيع المطلوبة غير معتمدة أو transition غير معروف.
+- أُضيفت Astro Action وصفحتا `/approvals` و`/approvals/[approvalId]`؛ التوقيع جزء من ceremony القرار ولا توجد route مستقلة للتوقيع، والـDelivery لا يحتوي SQL أو business rules.
+- أُضيفت اختبارات repository/orchestration/e-signature وE2E boundary، مع سياسات authorization للـapproval work/case وcontrolled subject signatures.
+
+### الملفات المتأثرة
+- `src/modules/approvals/`
+- `src/modules/e-signatures/`
+- `src/actions/approvals.ts`, `src/actions/index.ts`
+- `src/pages/approvals/`
+- `src/shared/authorization/policy-registry.ts`
+- `src/shared/database/db-types.ts`
+- `tests/integration/approvals/`, `tests/integration/e-signatures/`, `tests/e2e/approvals.spec.ts`
+
+### التحقق
+- اختبارات Approvals وE-Signatures: `3 files / 10 tests` ✅.
+- TypeScript scoped للموديولات والاختبارات ✅؛ الفحص العام ما زال يتأثر بـAstro virtual modules وأخطاء foundation قديمة خارج النطاق.
+- ESLint وPrettier للنطاق ✅.
+- `node scripts/architecture/check-boundaries.mjs` ✅.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- E2E ⚠️ محجوب: Chromium executable غير مثبت في Playwright cache.
+- Unit suite ⚠️ `12 files / 33 tests` مرّت، و`tests/unit/ui/master-016.test.ts` يفشل بسبب imports ناقصة خارج النطاق.
+- `git diff --check` ⚠️ يلتقط trailing whitespace موجودًا مسبقًا في `IMPLEMENTATION-MASTER-PLAN-MERGED.md` فقط؛ فحص diff للنطاق الجديد نظيف.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** بنية Approvals وE-Signatures والضوابط والاختبارات المصدرية والبناء مكتملة محليًا، لكن runtime E2E ينتظر Chromium، وسياسة التوقيع الافتراضية تبقى DENY إلى أن يُمرر provider/policy معتمد.
+
+### ملاحظات / مشاكل مفتوحة
+- PostgreSQL/Testcontainers runtime الكامل لم يُثبت في هذه البيئة؛ repository adapter مربوط بالجداول canonical الموجودة في migration `0012_approvals_esignatures.sql`.
+- `subjectContext` الحالي يركّب queue context للـDocument Version وLab Test وInspection Report وCalibration Record فقط؛ بقية الأنواع canonical تُستبعد من queue إلى أن يتوفر read provider مملوك لها.
+- لا commit أو push، وتم الحفاظ على تعديل المستخدم السابق في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+
 ## [2026-09-05] — MASTER-025: Controlled Documents implementation
 
 ### تم التنفيذ

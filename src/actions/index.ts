@@ -11,3 +11,4 @@ export { quarantine } from './quarantine.js';
 export { laboratory } from './laboratory.js';
 export { assets } from './assets.js';
 export { documents } from './documents.js';
+export { approvals } from './approvals.js';

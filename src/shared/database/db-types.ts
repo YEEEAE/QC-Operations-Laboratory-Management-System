@@ -174,6 +174,61 @@ export interface DocumentIdentitiesTable { id: Generated<string>; document_no: s
 export interface DocumentVersionsTable { id: Generated<string>; document_id: string; revision: string; state: string; effective_at: Date | null; approved_at: Date | null; approved_by: string | null; superseded_at: Date | null; archived_at: Date | null; voided_at: Date | null; void_reason: string | null; change_summary: string | null; content_hash: string | null; created_by: string; created_at: Generated<Date>; version: Generated<bigint>; }
 export interface DocumentVersionFilesTable { id: Generated<string>; document_version_id: string; file_id: string; file_role: string; linked_at: Generated<Date>; linked_by: string; }
 
+
+export interface ApprovalCasesTable {
+  id: Generated<string>;
+  subject_type: string;
+  subject_id: string;
+  subject_version: bigint;
+  workflow_type: string;
+  state: string;
+  requested_by: string;
+  requested_at: Generated<Date>;
+  completed_at: Date | null;
+  created_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+export interface ApprovalWorkItemsTable {
+  id: Generated<string>;
+  approval_case_id: string;
+  step_no: number;
+  work_type: string;
+  assigned_user_id: string | null;
+  assigned_role_requirement: string | null;
+  state: string;
+  assigned_at: Date | null;
+  started_at: Date | null;
+  completed_at: Date | null;
+  version: Generated<bigint>;
+}
+export interface ApprovalDecisionsTable {
+  id: Generated<string>;
+  approval_case_id: string;
+  work_item_id: string | null;
+  actor_id: string;
+  decision: string;
+  subject_version: bigint;
+  reason: string | null;
+  comments: string | null;
+  signature_id: string | null;
+  decided_at: Generated<Date>;
+  request_id: string;
+}
+export interface ElectronicSignaturesTable {
+  id: Generated<string>;
+  actor_id: string;
+  subject_type: string;
+  subject_id: string;
+  subject_version: bigint;
+  action: string;
+  meaning: string;
+  signed_at: Generated<Date>;
+  snapshot_hash: string;
+  reason: string | null;
+  reauth_method: string;
+  request_id: string;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -200,6 +255,10 @@ export interface DatabaseSchema {
   findings: FindingsTable; ncrs: NcrsTable; rcas: RcasTable; capas: CapasTable; capa_actions: CapaActionsTable;
   equipment: EquipmentTable; calibration_records: CalibrationRecordsTable; maintenance_records: MaintenanceRecordsTable;
   document_identities: DocumentIdentitiesTable; document_versions: DocumentVersionsTable; document_version_files: DocumentVersionFilesTable;
+  approval_cases: ApprovalCasesTable;
+  approval_work_items: ApprovalWorkItemsTable;
+  approval_decisions: ApprovalDecisionsTable;
+  electronic_signatures: ElectronicSignaturesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;
