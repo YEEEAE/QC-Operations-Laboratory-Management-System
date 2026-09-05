@@ -149,6 +149,15 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'APPROVAL_CASE',
     states: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'RETURNED', 'CANCELLED', 'EXPIRED'],
   },
+  { permission: 'PERM-CHG-VIEW', action: 'VIEW', entityType: 'CHANGE_REQUEST', states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'APPLYING', 'APPLIED', 'APPLICATION_FAILED', 'CANCELLED'] },
+  { permission: 'PERM-CHG-CREATE', action: 'CREATE', entityType: 'CHANGE_REQUEST', states: ['DRAFT'] },
+  { permission: 'PERM-CHG-EDIT-DRAFT', action: 'RESUME', entityType: 'CHANGE_REQUEST', states: ['RETURNED'] },
+  { permission: 'PERM-CHG-SUBMIT', action: 'SUBMIT', entityType: 'CHANGE_REQUEST', states: ['DRAFT'] },
+  { permission: 'PERM-CHG-REVIEW', action: 'REVIEW', entityType: 'CHANGE_REQUEST', states: ['SUBMITTED'] },
+  { permission: 'PERM-CHG-RETURN', action: 'RETURN', entityType: 'CHANGE_REQUEST', states: ['UNDER_REVIEW'] },
+  { permission: 'PERM-CHG-APPROVE', action: 'APPROVE', entityType: 'CHANGE_REQUEST', states: ['UNDER_REVIEW'] },
+  { permission: 'PERM-CHG-REJECT', action: 'REJECT', entityType: 'CHANGE_REQUEST', states: ['UNDER_REVIEW'] },
+  { permission: 'PERM-CHG-CANCEL', action: 'CANCEL', entityType: 'CHANGE_REQUEST', states: ['DRAFT', 'RETURNED'] },
   ...([
     'INSPECTION_REPORT',
     'LAB_TEST',
@@ -160,6 +169,12 @@ const policies: readonly AuthorizationPolicy[] = [
     'NCR',
     'FINDING',
   ].flatMap((entityType) => [
+    {
+      permission: 'PERM-APR-REVIEW',
+      action: 'REVIEW',
+      entityType,
+      states: ['SUBMITTED', 'UNDER_REVIEW', 'IN_REVIEW'],
+    },
     {
       permission: 'PERM-ESIG-SIGN',
       action: 'SIGN',

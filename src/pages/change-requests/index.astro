@@ -1,0 +1,27 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import StatusBadge from '../../ui/components/StatusBadge.astro';
+import { changeRequestsReadDependencies } from '../../modules/change-requests/application/dependencies.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fchange-requests');
+const validStates = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'APPLYING', 'APPLIED', 'APPLICATION_FAILED', 'CANCELLED'] as const;
+const requestedState = Astro.url.searchParams.get('state');
+const state = validStates.find((value) => value === requestedState);
+const targetType = Astro.url.searchParams.get('targetType')?.trim().slice(0, 100) || undefined;
+const requests = await changeRequestsReadDependencies().list.execute({ actor, filter: { ...(state ? { state } : {}), ...(targetType ? { targetType } : {}) } }).catch(() => []);
+const canCreate = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-CHG-CREATE');
+---
+<AppLayout title="Change Requests · QC Operations" locale="en" direction="ltr">
+  <section class="page-head">
+    <div><p class="eyebrow">GOV-CHG-001 · CONTROLLED CHANGE REGISTER</p><h1>Change Requests</h1><p class="lede">Proposed changes are versioned, reviewed, and audited. Approval does not rewrite the target record automatically.</p></div>
+    {canCreate && <a class="button" href="/change-requests/new">New change request</a>}
+  </section>
+  <form class="filters" method="get" aria-label="Change request filters">
+    <label for="targetType">Target type<input id="targetType" name="targetType" value={targetType ?? ''} maxlength="100" /></label>
+    <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{value}</option>)}</select></label>
+    <button type="submit">Filter</button>
+  </form>
+  {requests.length ? <div class="table-wrap"><table><caption>Change requests in your authorized scope</caption><thead><tr><th scope="col">Change no.</th><th scope="col">Target</th><th scope="col">State</th><th scope="col">Target version</th><th scope="col">Request version</th><th scope="col">Updated</th></tr></thead><tbody>{requests.map(({ changeRequest }) => <tr><th scope="row"><a href={`/change-requests/${changeRequest.id}`}>{changeRequest.changeNo}</a></th><td>{changeRequest.targetType}<small>{changeRequest.targetId}</small></td><td><StatusBadge status={changeRequest.state === 'UNDER_REVIEW' || changeRequest.state === 'SUBMITTED' ? 'REVIEW' : changeRequest.state === 'REJECTED' || changeRequest.state === 'CANCELLED' ? 'REJECTED' : changeRequest.state === 'APPROVED' || changeRequest.state === 'APPLIED' ? 'APPROVED' : 'DRAFT'} label={changeRequest.state} /></td><td>{changeRequest.targetVersion.toString()}</td><td>{changeRequest.version.toString()}</td><td>{changeRequest.updatedAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No change requests found</h2><p>Requests outside your authorized scope are intentionally excluded.</p></section>}
+</AppLayout>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5)}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:920px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}small{display:block;margin-top:.25rem;color:var(--text-muted);font-weight:400;font-size:.7rem}.empty{padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}@media(max-width:650px){.page-head,.filters{display:grid}.filters button{width:max-content}}</style>

@@ -1,5 +1,47 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-027: Change Requests
+
+### تم التنفيذ
+- أُنشئ Change Request domain/port/PostgreSQL adapter بعقد lifecycle صريح من DRAFT إلى APPLIED/REJECTED/CANCELLED، ورفض transitions غير المعلنة وtarget-state الحر.
+- أُضيفت create/get/list/transition use cases مع authorization مركزي، scope، expected-version، SoD، replay protection، ورفض أفعال APPLY الداخلية من مسار المستخدم.
+- أُضيفت معاملات PostgreSQL مع optimistic locking، `FOR UPDATE`، Audit وOutbox correlation عبر `requestId`، وحفظ target snapshot/field changes/history/application attempts بدون كتابة مباشرة على Domain الهدف.
+- أُضيفت Astro Actions وصفحات SSR لمسارات `/change-requests` و`/new` و`/[changeRequestId]` و`/review`؛ GET للقراءة فقط، وواجهة المراجعة تعرض السياق والتأثير المقترح ولا توحي بأن APPROVED يعني RELEASED أو أنه يغيّر السجل الهدف تلقائيًا.
+- رُبط CHANGE_REQUEST مع Approval orchestration وsubject context، وأُضيفت سياسات `PERM-CHG-*` مع اشتراط زوج `PERM-CHG-APPROVE` + `PERM-APR-APPROVE` للقرار.
+- أُضيفت اختبارات lifecycle/permissions/scope/version/SoD/replay وauthorization matrix وE2E governance boundary.
+
+### الملفات المتأثرة
+- `src/modules/change-requests/`
+- `src/modules/approvals/application/dependencies.ts`
+- `src/modules/approvals/infrastructure/postgres-repository.ts`
+- `src/actions/change-requests.ts`, `src/actions/index.ts`
+- `src/pages/change-requests/`
+- `src/shared/authorization/policy-registry.ts`
+- `src/shared/database/db-types.ts`
+- `tests/integration/change-requests/change-requests.test.ts`
+- `tests/integration/approvals/authorization-matrix.test.ts`
+- `tests/e2e/governance.spec.ts`
+
+### التحقق
+- `node node_modules/vitest/vitest.mjs run tests/integration/approvals tests/integration/e-signatures tests/integration/change-requests --passWithNoTests` ✅ — 5 files / 19 tests.
+- فحص ESLint scoped للملفات الجديدة والمتأثرة ✅.
+- `node scripts/architecture/check-boundaries.mjs` ✅.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- `git diff --check` ✅.
+- E2E governance ⚠️ بدأ فعليًا لكنه محجوب: Playwright Chromium executable غير مثبت محليًا؛ أمر `pnpm test:e2e` نفسه لا يجد binary، والتشغيل المباشر فشل بسبب cache المتصفح.
+- `astro check` العام ⚠️ غير صالح كإشارة نظيفة: يحتوي أخطاء foundation/virtual Astro modules كثيرة خارج النطاق، مع أخطاء typing معروفة في Actions الحالية؛ build وESLint scoped نجحا.
+- PostgreSQL/Testcontainers runtime الكامل ⚠️ لم يُشغّل لعدم توفر provider/runtime database في البيئة.
+- محاولة `tests/integration` العامة ⚠️ أظهرت تعثرات مستقلة سابقة في `tasks/use-cases` و`reporting/reports` و`quarantine/inspection-execution`، بينما اختبارات database/container بقيت skipped؛ لم تُنسب للـCR.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات Change Requests والربط مع approvals والضوابط والاختبارات المركزة والبناء أُنجزت محليًا. بقي تحقق E2E/قاعدة البيانات الفعلي محجوبًا ببيئة التشغيل، وسياسة E-Signature/مزود التطبيق الداخلي تبقى policy/provider-dependent ولا تم اختراع قيم لها.
+
+### ملاحظات / مشاكل مفتوحة
+- `PERM-CHG-APPLY` غير مكشوف في Astro Action للمستخدم؛ التطبيق الفعلي بعد APPROVED يحتاج owning-domain application service/system principal مع إعادة التحقق من target version/state/business rules.
+- مسار CR المباشر يعيد فحص صلاحيات المجال وgeneric approval وSoD/version؛ أما signature ceremony فتظل عبر Approval use case عندما تعتمدها السياسة، والسياسة الافتراضية غير المعتمدة لا تُتجاوز.
+- لا commit أو push، وتم الحفاظ على تعديل المستخدم السابق في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+
 ## [2026-09-05] — MASTER-026: Approvals + E-Signatures
 
 ### تم التنفيذ

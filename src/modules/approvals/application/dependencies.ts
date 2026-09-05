@@ -12,6 +12,7 @@ import { DecideApprovalUseCase, type SubjectTransition } from './decide-approval
 import { documentsActionDependencies } from '../../documents/application/dependencies.js';
 import { laboratoryActionDependencies } from '../../laboratory/application/dependencies.js';
 import { quarantineActionDependencies } from '../../quarantine/application/dependencies.js';
+import { changeRequestsActionDependencies } from '../../change-requests/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 
 const blocked = async (): Promise<never> => {
@@ -22,6 +23,7 @@ function transitionDependencies() {
   const documents = documentsActionDependencies();
   const laboratory = laboratoryActionDependencies();
   const quarantine = quarantineActionDependencies();
+  const changeRequests = changeRequestsActionDependencies();
   const documentsTransition: SubjectTransition = {
     execute: async (input) => {
       if (input.action !== 'APPROVE') return blocked();
@@ -70,10 +72,25 @@ function transitionDependencies() {
       return blocked();
     },
   };
+  const changeRequestTransition: SubjectTransition = {
+    execute: async (input) => {
+      if (!['APPROVE', 'REJECT', 'RETURN'].includes(input.action)) return blocked();
+      const result = await changeRequests.transition.execute({
+        actor: input.actor,
+        id: input.subjectId,
+        expectedVersion: input.expectedVersion,
+        action: input.action,
+        reason: input.reason,
+        requestId: input.requestId,
+      });
+      return { subjectId: result.changeRequest.id, version: result.changeRequest.version, state: result.changeRequest.state };
+    },
+  };
   return {
     DOCUMENT_VERSION: documentsTransition,
     LAB_TEST: labTransition,
     INSPECTION_REPORT: inspectionTransition,
+    CHANGE_REQUEST: changeRequestTransition,
   };
 }
 

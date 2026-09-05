@@ -174,6 +174,49 @@ export interface DocumentIdentitiesTable { id: Generated<string>; document_no: s
 export interface DocumentVersionsTable { id: Generated<string>; document_id: string; revision: string; state: string; effective_at: Date | null; approved_at: Date | null; approved_by: string | null; superseded_at: Date | null; archived_at: Date | null; voided_at: Date | null; void_reason: string | null; change_summary: string | null; content_hash: string | null; created_by: string; created_at: Generated<Date>; version: Generated<bigint>; }
 export interface DocumentVersionFilesTable { id: Generated<string>; document_version_id: string; file_id: string; file_role: string; linked_at: Generated<Date>; linked_by: string; }
 
+export interface ChangeRequestsTable {
+  id: Generated<string>;
+  change_no: string;
+  target_type: string;
+  target_id: string;
+  target_version: bigint;
+  state: string;
+  reason: string;
+  target_snapshot: unknown;
+  target_snapshot_hash: string | null;
+  requested_by: string;
+  submitted_at: Date | null;
+  approved_at: Date | null;
+  rejected_at: Date | null;
+  applied_at: Date | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+
+export interface ChangeRequestChangesTable {
+  id: Generated<string>;
+  change_request_id: string;
+  field_path: string;
+  current_value: unknown | null;
+  proposed_value: unknown | null;
+  data_type: string;
+  position: number;
+}
+
+export interface ChangeApplicationAttemptsTable {
+  id: Generated<string>;
+  change_request_id: string;
+  attempt_no: number;
+  started_at: Date;
+  finished_at: Date | null;
+  result: string;
+  target_version_before: bigint | null;
+  target_version_after: bigint | null;
+  error_code: string | null;
+  request_id: string;
+}
+
 
 export interface ApprovalCasesTable {
   id: Generated<string>;
@@ -255,6 +298,9 @@ export interface DatabaseSchema {
   findings: FindingsTable; ncrs: NcrsTable; rcas: RcasTable; capas: CapasTable; capa_actions: CapaActionsTable;
   equipment: EquipmentTable; calibration_records: CalibrationRecordsTable; maintenance_records: MaintenanceRecordsTable;
   document_identities: DocumentIdentitiesTable; document_versions: DocumentVersionsTable; document_version_files: DocumentVersionFilesTable;
+  change_requests: ChangeRequestsTable;
+  change_request_changes: ChangeRequestChangesTable;
+  change_application_attempts: ChangeApplicationAttemptsTable;
   approval_cases: ApprovalCasesTable;
   approval_work_items: ApprovalWorkItemsTable;
   approval_decisions: ApprovalDecisionsTable;

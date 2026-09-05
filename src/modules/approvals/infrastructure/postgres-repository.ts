@@ -464,6 +464,32 @@ export class PostgresApprovalRepository implements ApprovalRepository {
             }
           : undefined;
       }
+      case 'CHANGE_REQUEST': {
+        const row = await this.database
+          .selectFrom('change_requests')
+          .selectAll()
+          .where('id', '=', subjectId)
+          .executeTakeFirst();
+        return row
+          ? {
+              subjectType,
+              subjectId,
+              state: row.state,
+              version: BigInt(row.version),
+              authorId: row.requested_by,
+              snapshotHash: row.target_snapshot_hash ?? undefined,
+              domain: 'CHANGE_REQUESTS',
+              reviewContext: {
+                changeNo: row.change_no,
+                targetType: row.target_type,
+                targetId: row.target_id,
+                targetVersion: BigInt(row.target_version).toString(),
+                reason: row.reason,
+                targetSnapshot: row.target_snapshot,
+              },
+            }
+          : undefined;
+      }
       default:
         return undefined;
     }
