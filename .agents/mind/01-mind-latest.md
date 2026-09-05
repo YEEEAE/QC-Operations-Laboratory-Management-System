@@ -1,5 +1,121 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-032: Concurrency/idempotency stress + authorization/IDOR matrix
+
+### تم التنفيذ
+- أُنشئ `tests/integration/concurrency/controlled-mutations.test.ts` (5 اختبارات) على PostgreSQL حقيقي (Testcontainers postgres:18-alpine): سباقان متوازيان على نفس النسخة لكل عملية Tier-1 — Receiving Release، Inspection Approval، Laboratory Approval، Document Version Approval (حاجز `FOR UPDATE`)، وتحديث صلاحيات Role — مع إثباتات قاعدة بيانات: نسخة واحدة فقط تنجح والأخرى `CONFLICT_STALE_VERSION`، الصف النهائي بالنسخة المتوقعة، صف audit واحد، صف outbox واحد بـdedupe_key، ورفض replay الـinspection دون evidence إضافية.
+- أُنشئ `tests/integration/concurrency/idempotency.test.ts` (6 اختبارات) على PostgreSQL حقيقي: حسم الـreserve الفريد تحت 8 محاولات متوازية، replay يرجع الاستجابة المخزنة دون إعادة التنفيذ، رفض fingerprint مختلف بـ`CONFLICT_DUPLICATE_COMMAND`، مسار FAILED، وتنفيذ controlled release مغلّف بـ`executeIdempotently` فعليًا مرة واحدة (audit/outbox نسخة واحدة) عند السباق والإعادة، وتوقيع E-Signature مرة واحدة عند replay بنفس المفتاح.
+- أُنشئ `tests/e2e/authorization-matrix.spec.ts` (6 اختبارات Playwright) مبني على route registry: كل مسار محمي مسجل (39+) يرفض غير المصادق (redirect login أو ≥400 بدون أي leak)، استبدال UUID على كل مسارات التفاصيل بلا تسريب بيانات، استدعاء مباشر لـ12 action حساسة عبر RPC `/_actions/` وعبر `?_action=` بلا جلسة (≥400)، حاجز الـmiddleware 303 على POST لمسار محمي، ومسارات reports/search/dashboard.
+- **إصلاحات عيوب حقيقية كشفتها الاختبارات (TDD):** (1) `JSON.stringify` الخام كان يرمي TypeError مع bigint في `PostgresIdempotencyRepository.complete` و`fingerprint` — أُنشئ `src/shared/json/stable-stringify.ts` (`stableJson`) واستُخدم في idempotency وaudit وoutbox payload؛ (2) `PostgresLabRepository.persist` كان يخزن snapshot بكائنات تحتوي bigint فيفشل إنشاء أي lab test على PG حقيقي — صار يخزن عبر `stableJson`؛ (3) `PostgresLabRepository.get` كان يقرأ `template_snapshot.context` ثم يستخدم `ctx.test`/`ctx.context` (خطأ مستوى خاطئ) فيرجع سياقًا فارغًا — صُحح لقراءة `{test, context}` الصحيحة، وُسمي `dataType`/`criteria` بشكل صحيح.
+- `tests/helpers/postgres-container.ts`: دعم `QC_TEST_DATABASE_URL` كـoverride لبيئة PG خارجية قابلة للرمي (بدون container runtime)؛ سلوك Testcontainers الافتراضي في CI بدون تغيير.
+
+### الملفات المتأثرة
+- `tests/integration/concurrency/{controlled-mutations,idempotency}.test.ts` (جديد)
+- `tests/e2e/authorization-matrix.spec.ts` (جديد)
+- `src/shared/json/stable-stringify.ts` (جديد)، `src/shared/idempotency/{idempotency-service,postgres-idempotency-repository}.ts`، `src/shared/audit/postgres-audit-repository.ts`، `src/shared/outbox/postgres-outbox-repository.ts`
+- `src/modules/laboratory/infrastructure/postgres-repository.ts`
+- `tests/helpers/postgres-container.ts`
+
+### التحقق
+- TDD: اختبارات concurrency فشلت أولًا كاشفة 3 عيوب ثم نجحت — `tests/integration/concurrency`: 11/11 ✅ على PostgreSQL 16.9 محلي قابل للرمي (uuidv7 stand-in) ×4 تشغيلات متتالية بلا flakiness.
+- `tests/integration/concurrency + laboratory + shared`: 12 files / 34 tests ✅.
+- Playwright `tests/e2e/authorization-matrix.spec.ts`: **6/6 ✅** ضد build إنتاجي (`astro build` + `node dist/server/entry.mjs`) مع DATABASE_URL محلي. Chromium ثُبت أخيرًا محليًا (chromium-headless-shell v1234) — حاجز E2E السابق انحل.
+- `tsc --noEmit` صفر أخطاء في كل ملفات النطاق ✅؛ ESLint scoped ✅؛ Prettier ✅؛ `check-boundaries.mjs` ✅؛ `git diff --check` ✅.
+- Vitest الكلي: 221 passed / 3 failed (المعروفة سابقًا: tasks/use-cases، reporting/reports، quarantine/inspection-execution) / 26 skipped؛ ملفات فاشلة = 9 suites PostgreSQL تفشل عند بدء الحاوية (لا Docker محليًا، منها 2 جديدتان تعملان مع `QC_TEST_DATABASE_URL`).
+- E2E suite كامل: 26 passed + فشلان سابقان ظهرا لأول مرة بتشغيلهما الفعلي (approvals `/sign`، documents `/effective`): المساران يرجعان 404 "Page not found" وهو السلوك الآمن الصحيح، لكن الـspecs القديمة تطابق URL مع `/404` وهو لا يتغير — خارج نطاق ملفات هذا البرومبت.
+
+### النتيجة
+- **الحالة:** نجح (مع اكتشافات)
+- **مختصر:** إجهاد التوازي/الidempotency لعمليات Tier-1 الخمس ومصفوفة رفض التفويض/IDOR منفذة ومتحققة على PostgreSQL حقيقي وbuild إنتاجي، مع إصلاح 3 عيوب جوهرية كانت ستبطل lab persistence وidempotent replay وقراءة الـlab snapshots. إثبات PostgreSQL 18 الرسمي يبقى لـCI بحاويات.
+
+### ملاحظات / مشاكل مفتوحة (اكتشافات جوهرية)
+- **اكتشاف حرج — Astro Actions غير قابلة للاستدعاء:** Astro 7 يتوقع تصدير `server` واحدًا من `src/actions/index.ts` (الـRPC يحل الاسم بعد استبعاد البادئة). الوضع الحالي يصدّر namespaces متعددة (`server`, `quarantine`, `documents`, ...) فيفشل `getAction` بـ`ActionNotFoundError` 404 لكل الـactions — بما فيها `server.login` نفسه (الاسم المولد `server.login` لا يُحل). النتيجة: كل سير العمل المراقَب عبر UI/RPC معطل فعليًا في HTTP surface رغم نجاح اختبارات الـuse-case. الإصلاح = تجميع كل الـactions تحت `server` واحد بأسماء فريدة — إعادة هيكلة خارج نطاق ملفات هذا البرومبت، تحتاج مهمة مستقلة.
+- المسار العميق للمصفوفة (wrong scope/SoD/disabled account عبر جلسة مصادقة E2E) يبقى محجوبًا بغياب harness مصادقة E2E؛ مغطى جزئيًا بمصفوفات الـuse-case الموجودة (`quarantine/documents/approvals/administration` authorization-matrix tests).
+- تعديلات متزامنة غير من هذا البرومبت موجودة في الشجرة (middleware.ts، README، render.yaml، clean-page-path...) — تُركت كما هي، والـcommit على المستخدم.
+
+## [2026-09-05] — تشخيص Render Static Site وNot Found
+
+### تم التنفيذ
+- طابقت بيانات المستخدم: الخدمة `srv-dadfq7pt0dsc738e0tp0` Static Site، بينما Astro مضبوط server مع Node standalone ويحتاج Web Service.
+- فحصت الدومين حيًا: HTTP 404 مع Not Found وrndr-id من Render؛ الطلب يصل إلى Render، دون إثبات صحة كل إعدادات DNS.
+- صححت دليل التشغيل إلى Cloudflare حسب إفادة المستخدم بدل Hostinger ووثقت إنشاء Web Service وإعداداته ونقل الدومين.
+- وثقت أن canonical redirect يعيد رابط Render للدومين القديم قبل النقل، وأن 308 لا يثبت جاهزية PostgreSQL.
+
+### الملفات المتأثرة
+- `docs/operations/RENDER-DEPLOYMENT.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- GET HTTPS حي ✅ — أعاد 404 وأكد العرض المبلغ عنه.
+- مطابقة Astro/Render/env مع وثائق Render الرسمية ✅.
+- `git diff --check` للوثائق ✅ قبل إضافة هذا السجل.
+- build/tests لم تُشغّل: تعديل توثيقي فقط.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** اختلاف نوع الاستضافة مشخص وخطوات الإصلاح موثقة؛ لم يحصل تعديل خارجي أو commit أو push.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم خدمة Web Service جديدة وhostname الفعلي وإعداد متغيراتها وPostgreSQL ثم نقل الدومين والتحقق النهائي.
+
+## [2026-09-05] — Canonical clean URLs for Astro page files
+
+### تم التنفيذ
+- أضفت `cleanAstroPagePath` لتحويل الروابط التي تكشف امتداد المصدر `.astro` إلى public routes نظيفة.
+- أضفت دعم `index.astro` بحيث يتحول مثلًا `/dashboard/index.astro` إلى `/dashboard` و`/index.astro` إلى `/`.
+- ربطت التحويل في middleware الإنتاجي مع redirect الدومين الأساسي، فينتج رابط `https://qclevel.top` نظيفًا مع الحفاظ على query string.
+- أبقيت dynamic segments كمسارات نظيفة مثل `/tasks/:taskId` و`/documents/:documentId/versions/:versionId/review`؛ الأقواس مصدر Astro وليست جزءًا من الرابط الفعلي.
+- أكدت أن صفحات `src/pages` الحالية تُخدم عبر Astro SSR ولا تحتاج إدراجًا يدويًا في `render.yaml`.
+
+### الملفات المتأثرة
+- `src/shared/routing/clean-page-path.ts`
+- `src/middleware.ts`
+- `tests/unit/routing/clean-page-path.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `tests/unit/routing/clean-page-path.test.ts` + `tests/unit/routing-registry.test.ts` ✅ — 6/6
+- `node node_modules/astro/bin/astro.mjs build` ✅
+- `git diff --check` ✅
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** كل طلب ينتهي بـ`.astro` في الإنتاج يعاد توجيهه إلى مساره العام النظيف، مع استمرار route registry الحالي كمرجع للمسارات canonical.
+
+### ملاحظات / مشاكل مفتوحة
+- Render لا يدعم `headers/routes` لخدمة Web SSR؛ الـheaders والredirectات تنفذ عبر middleware، بينما DNS/ربط الدومين يتم من لوحة Render وDNS provider.
+
+## [2026-09-05] — Render canonical domain, SSR routes, headers, and redirects
+
+### تم التنفيذ
+- صححت `render.yaml` من `startCommand: .` إلى `node dist/server/entry.mjs` المتوافق مع Astro Node standalone.
+- ضبطت build command على Corepack مع `pnpm install --frozen-lockfile` و`pnpm run build`، مع تثبيت `SERVICE_VERSION` وإضافة متغيرات rate-limit السرية المطلوبة للإنتاج.
+- ثبتُّ `qclevel.top` كالدومين الأساسي، وأبقيت Render subdomain مفعّلًا مؤقتًا حتى يمر عبر redirect للتأكد من canonical host بدل 404.
+- أضفت redirect إنتاجي 308 من `www` وRender hostname وأي host غير أساسي إلى `https://qclevel.top` مع الحفاظ على path وquery، بدون استخدام Host لبناء وجهة موثوقة.
+- وثّقت Service ID المقدم `srv-dadfq7pt0dsc738e0tp0` في baseline التشغيل، وأوضحت أن صفحات `src/pages` تُخدم تلقائيًا عبر Astro SSR ولا تحتاج page allowlist في Render.
+
+### الملفات المتأثرة
+- `render.yaml`
+- `src/middleware.ts`
+- `docs/operations/RENDER-DEPLOYMENT.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- YAML parse + assertions للدومين والـentrypoint ✅
+- `node node_modules/astro/bin/astro.mjs build` ✅
+- `tests/unit/shared/security-headers.test.ts` ✅ — 5/5
+- `git diff --check` ✅
+- ESLint/Prettier scoped ⚠️ لم يُشغّل: executables غير موجودة في `node_modules/.bin` و`pnpm exec` لم يجدها.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** إعداد Render ومسار التشغيل والدومين الأساسي والredirect والأمان محدثة محليًا ونجح build واختبار headers؛ فحص lint/Prettier ينتظر اكتمال أدوات dependencies.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم من لوحة Render إضافة/التحقق من `qclevel.top` ثم ضبط DNS عند Hostinger؛ Render يضيف `www.qclevel.top` ويربطه بالـroot حسب إعداد الدومين.
+- يلزم إدخال قيم `DATABASE_URL` و`SESSION_SECRET` وrate-limit وOTEL السرية في Render؛ لا توجد قيم سرية داخل الريبو.
+- `IMPLEMENTATION-MASTER-PLAN-MERGED.md` تعديل سابق للمستخدم وتم الحفاظ عليه بدون لمس.
+
 ## [2026-09-05] — MASTER-031: Production security + rate limiting + observability wiring
 
 ### تم التنفيذ

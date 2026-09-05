@@ -1,6 +1,7 @@
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../database/db-types';
 import { uuidv7 } from '../id/uuid';
+import { stableJson } from '../json/stable-stringify';
 import type { IdempotencyRecord, IdempotencyRepository } from './idempotency-repository';
 
 export class PostgresIdempotencyRepository implements IdempotencyRepository {
@@ -39,7 +40,7 @@ export class PostgresIdempotencyRepository implements IdempotencyRepository {
       .updateTable('idempotency_records')
       .set({
         status: 'COMPLETED',
-        response_payload: JSON.stringify(response),
+        response_payload: stableJson(response),
         completed_at: new Date(),
       })
       .where('key', '=', key)

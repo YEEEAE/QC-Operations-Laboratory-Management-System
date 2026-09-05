@@ -2,11 +2,15 @@ services:
   - type: web
     name: qc-operations-laboratory-management-system
     runtime: node
-    buildCommand: pnpm install --frozen-lockfile; pnpm run build
-    startCommand: .
+    # Astro SSR serves every file-based route under src/pages through the
+    # standalone Node entrypoint; Render does not need a page allowlist.
+    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm run build
+    startCommand: node dist/server/entry.mjs
     autoDeployTrigger: checksPass
     domains:
       - qclevel.top
+    # Keep the Render hostname reachable so the application can issue the
+    # canonical-host redirect until DNS/TLS verification is complete.
     renderSubdomainPolicy: enabled
     healthCheckPath: /api/health/ready
     envVars:
@@ -16,9 +20,15 @@ services:
         value: 0.0.0.0
       - key: NODE_ENV
         value: production
+      - key: SERVICE_VERSION
+        value: 0.1.0
       - key: DATABASE_URL
         sync: false
       - key: SESSION_SECRET
+        sync: false
+      - key: RATE_LIMIT_LOGIN_MAX
+        sync: false
+      - key: RATE_LIMIT_LOGIN_WINDOW_SECONDS
         sync: false
       - key: OTEL_EXPORTER_OTLP_ENDPOINT
         sync: false

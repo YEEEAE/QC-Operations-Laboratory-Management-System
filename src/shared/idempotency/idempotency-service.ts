@@ -1,9 +1,12 @@
 import { createHash } from 'node:crypto';
 import { AppError } from '../errors/app-error';
+import { stableJson } from '../json/stable-stringify';
 import type { IdempotencyRepository } from './idempotency-repository';
 
+export { stableJson };
+
 export function fingerprint(value: unknown): string {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  return createHash('sha256').update(stableJson(value)).digest('hex');
 }
 
 export async function executeIdempotently<T>(

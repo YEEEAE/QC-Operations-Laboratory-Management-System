@@ -1,5 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../database/db-types';
+import { stableJson } from '../json/stable-stringify';
 import { uuidv7 } from '../id/uuid';
 import type { AuditEventInput } from './audit-event';
 import type { AuditRepository } from './audit-repository';
@@ -21,7 +22,7 @@ export class PostgresAuditRepository implements AuditRepository {
         reason: event.reason ?? null,
         request_id: event.requestId,
         signature_id: event.signatureId ?? null,
-        payload: event.payload ? JSON.stringify(event.payload) : null,
+        payload: event.payload ? stableJson(event.payload) : null,
       })
       .execute();
   }

@@ -1,5 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../database/db-types';
+import { stableJson } from '../json/stable-stringify';
 import { uuidv7 } from '../id/uuid';
 import type { OutboxEvent, OutboxEventInput } from './outbox-event';
 import type { OutboxRepository } from './outbox-repository';
@@ -13,7 +14,7 @@ export class PostgresOutboxRepository implements OutboxRepository {
         event_type: event.eventType,
         aggregate_type: event.aggregateType,
         aggregate_id: event.aggregateId,
-        payload: JSON.stringify(event.payload),
+        payload: stableJson(event.payload),
         dedupe_key: event.dedupeKey ?? null,
       })
       .onConflict((oc) => oc.column('dedupe_key').doNothing())

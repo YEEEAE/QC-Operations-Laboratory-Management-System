@@ -18,6 +18,7 @@ import {
   runWithCorrelation,
 } from './shared/observability/telemetry';
 import { createRequestLogger } from './shared/observability/logger';
+import { cleanAstroPagePath } from './shared/routing/clean-page-path';
 import { getServerEnv } from './config/env';
 import { PROBLEM_CONTENT_TYPE } from './config/constants';
 
@@ -45,6 +46,19 @@ export const onRequest = defineMiddleware(
     locals.requestContext = createRequestContext(request);
     const requestContext = locals.requestContext;
     const env = getServerEnv();
+
+    // qclevel.top is the only production origin. Render's custom-domain
+    // pairing handles www, while this fixed destination also canonicalizes
+    // the Render hostname and any unexpected host without trusting Host data.
+    const cleanPagePath = cleanAstroPagePath(url.pathname);
+    if (env.NODE_ENV === 'production' && (url.hostname !== 'qclevel.top' || cleanPagePath)) {
+      const canonicalUrl = new URL(url);
+      canonicalUrl.protocol = 'https:';
+      canonicalUrl.hostname = 'qclevel.top';
+      canonicalUrl.port = '';
+      if (cleanPagePath) canonicalUrl.pathname = cleanPagePath;
+      return applySecurityHeaders(redirect(canonicalUrl.toString(), 308), env.NODE_ENV);
+    }
 
     const token = cookies.get('__Host-qc_session')?.value;
     if (token) {
