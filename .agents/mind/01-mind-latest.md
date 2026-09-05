@@ -1,5 +1,77 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-031: Production security + rate limiting + observability wiring
+
+### تم التنفيذ
+- أُنشئت طبقة observability داخلية vendor-neutral في `src/shared/observability/`: abstraction للـtracer/meter (OTel API-compatible) مع no-op افتراضي بحيث فشل الـexporter لا يُسقط أي عملية، `withSpan` + `runWithCorrelation` عبر AsyncLocalStorage يربطان requestId→traceId→spanId عبر HTTP→DB→outbox→files، حارس cardinality قائم على allowlist (يحجب requestId/userId/traceId/email...) ويحد القيم بـ128 حرفًا، وتطبيع route templates (`/tasks/<uuid>` → `/tasks/:id`).
+- أُنشئ logger هيكلي JSON (pino) مع redaction إلزامي لـpassword/token/secret/cookie/authorization وربط correlation، وسقوط الـlog sink لا يكسر الطلب.
+- أُنشئت إمكانية rate limiting (SECURITY §33/§141/§142): `RateLimiter` نافذة ثابتة مع fail-closed عند فشل الـstore، `InMemoryRateLimitStore`، `PostgresRateLimitStore` بـupsert ذرّي، port `RateLimitStore`، والعتبات كلها config-driven من env (`RATE_LIMIT_LOGIN_MAX`/`RATE_LIMIT_LOGIN_WINDOW_SECONDS`) — لا أرقام مخترعة. middleware يحمي POST `/login` ويعيد 429 problem+json مع retry-after وrequestId؛ عدم ضبط العتبات في production = FAIL_CLOSED + الـenv validation صار يطلب المفتاحين في production.
+- middleware طوّر: security headers (CSP baseline §76 كامل بدون unsafe-inline/unsafe-eval في production، X-Content-Type-Options، X-Frame-Options DENY، Referrer-Policy، Permissions-Policy، COOP/CORP، HSTS production-only)، وHTTP metrics/log بعدد الطلبات بـroute template مطبّع وstatus class. استثناء `unsafe-inline` موثّق للتطوير فقط (HMR لـAstro).
+- رُبط telemetry بالطبقات: Kysely plugin في `database.ts` (spans/counters بـstatement kind فقط بلا SQL/parameters، وعدّاد أخطاء عبر log hook)، `outbox/worker.ts` (spans + outcome counters بلا payloads)، `file-service.ts` (upload/download counters بلا filenames أو subject ids).
+- astro.config: `inlineStylesheets: 'never'` (لتوافق CSP الصارم) و`sourcemap: false` (§196 policy-dependent). كوكي الجلسة موحّد عبر `session-cookie.ts` (__Host- مع Secure دائمًا/HttpOnly/SameSite=Strict/Path=/ بلا Domain) واستُخدم في `actions/auth.ts`.
+- توقعات اختبار المايجريشن صُحّحت لـ18 migration مع إضافة `0018_rate_limit_windows.sql` (لاحظت أن التوقع السابق كان يستثني 0016 بالخطأ).
+
+### الملفات المتأثرة
+- `src/shared/security/{rate-limit,rate-limit-store,postgres-rate-limit-store,security-headers,session-cookie}.ts`
+- `src/shared/observability/{telemetry,logger,db-telemetry}.ts`
+- `src/middleware.ts`, `astro.config.mjs`, `src/actions/auth.ts`, `src/config/{env,constants}.ts`
+- `src/shared/database/{database,db-types}.ts`, `src/shared/outbox/worker.ts`, `src/shared/files/file-service.ts`
+- `db/migrations/0018_rate_limit_windows.sql`
+- `tests/integration/security/rate-limit.test.ts`, `tests/integration/observability/correlation.test.ts`, `tests/unit/shared/security-headers.test.ts`, `tests/e2e/security-headers.spec.ts`, `tests/integration/database/{migrations,upgrade-path}.test.ts`
+
+### التحقق
+- TDD: اختبارات observability فشلت أولًا (موديول غير موجود) ثم نجحت 16/16 ✅؛ rate limit: 8/8 in-memory/config ✅ (نافذة، انتهاء، concurrency، عزل، fail-closed، parsing).
+- `tests/integration/observability` + `tests/unit/shared` + `tests/integration/http`: 7 files / 35 tests ✅.
+- Playwright `tests/e2e/security-headers.spec.ts`: **5/5 ✅ فعليًا** (شُغّل سيرفر dev محليًا — CSP baseline، HSTS production-only، لا wildcard CORS، رفض cross-origin POST 403، لا stack traces على 404).
+- تحقق حي للـrate limit: سيرفر بعتبات اختبار (2/60s) → POST,POST=200,200 ثم 429 `application/problem+json` مع `retry-after` وrequestId ✅.
+- `node node_modules/astro/bin/astro.mjs build` ✅، `check-boundaries.mjs` ✅، `git diff --check` ✅، ESLint scoped ✅، Prettier ✅، tsc scoped: صفر أخطاء في ملفات النطاق.
+- Full vitest: 218 passed — الإخفاقات كلها معروفة: 6 suites PostgreSQL (لا Docker)، master-016 (سابق)، و3 اختبارات موثقة سابقًا (reports/toThrowErrorMatchingObject، tasks/use-cases، quarantine/inspection-execution).
+
+### النتيجة
+- **الحالة:** نجح (جزئي التحقق)
+- **مختصر:** ضوابط الأمان الإنتاجية، rate limiting config-driven مع fail-closed، وobservability مترابط على HTTP/DB/outbox/files منفذة ومتحققة محليًا + E2E فعلي. إثبات PostgreSQL runtime للـstore الدائم يبقى محجوبًا بغياب Docker.
+
+### ملاحظات / مشاكل مفتوحة
+- عتبات rate limit للعمليات الأخرى عالية الخطورة (E-Signature reauth، AI، heavy search، report generation، file uploads) تبقى POLICY-DEPENDENT: الإمكانية جاهزة (`HIGH_RISK_POST_ROUTES` + limiter) لكن لم تُربط لعناصر إضافية بدون عتبات معتمدة، ولم تُخترع أرقام.
+- قيم HSTS max-age (31536000) وPermissions-Policy technical choices موثقة، ليست سياسات علمية.
+- PostgresRateLimitStore يحتاج تشغيل على PostgreSQL 18 فعلي (migration 0018 + concurrency) في CI/بيئة معتمدة.
+
+## [2026-09-05] — MASTER-030: AI Advisory boundary + UI + security tests
+
+### تم التنفيذ
+- أُنشئ موديول ai-advisory بطبقات Domain/Ports/Infrastructure/Application كاملة: عقد `AiProvider` بلا SDK ولا credentials، وadapter افتراضي `DisabledAiProvider` يعيد `NOT_CONFIGURED` دائمًا، ودالة `parseProviderAdvisory` في الـDomain ترفض أي structured output فيه مفاتيح authority (approve/reject/release/sign/pass/fail/decision/permission/role...) بأي عمق وتحدّ طول النص بـ20k.
+- أُنشئ `GetAdvisoryUseCase` يعيد التفويض server-side مرتين (`PERM-AI-USE` + إذن الوضع `PERM-AI-SUMMARIZE/SUGGEST/DRAFT` على كيان `AI_ADVISORY`)، يرفض النصوص/السياق الحاملين secret-like material قبل أي provider call، يحدّ السؤال بـ4000 حرف والسياق بـ10 مقاطع، ويعيد `AVAILABLE/UNAVAILABLE/REFUSED` مع رسائل ثابتة فقط — فشل أو غياب الـprovider لا يرمي خطأ أبدًا ولا يكشف تفاصيل infrastructure، ولا يُسجّل أي prompt/response في أي log.
+- أُضيفت Astro Action `aiAdvisory.requestAdvisory` (POST/json فقط) تربط الـactor من context وتعيد view نظيفًا بلا أي حقل authority، وصفحة `/ai-advisory` (UI-AI-001) بهيدر «Suggestions and analysis only — not an approval authority»، label بارز على كل استجابة AI، حقل سياق مُصرّح به يدويًا فقط، وأزرار استجابة Copy/Use as Draft محلية فقط — لا يوجد أي زر controlled action من ناتج AI، وصفحة بدون `PERM-AI-USE` تعرض رفضًا بدون بيانات.
+- أُضيفت سياسات `AI_ADVISORY` إلى policy-registry (default deny للبقية)، والمسار `/ai-advisory` (RT-AI-001 required) أصبح مغطى بملف فعلي في check-route-files.
+- كُتبت الاختبارات بالـTDD: unit suite (14 اختبارًا: validation، رفض authority encoding، disabled adapter، degradation، injection كسؤال لا يمنح صلاحية، حدود الحجم) + integration security suite (9 اختبارات: تقليل البيانات الواصل للـprovider، لا سياق خفي، injection لا يغيّر authz، رفض الأسرار قبل الـprovider، رفض المخرجات Authoritative، outage منعزل بلا تفاصيل، فحص عدم وجود console/logger في الموديول والـAction).
+
+### الملفات المتأثرة
+- `src/modules/ai-advisory/{domain/advisory-response.ts,ports/ai-provider.ts,infrastructure/disabled-ai-provider.ts,application/get-advisory.ts}`
+- `src/actions/{ai-advisory.ts,index.ts}`
+- `src/pages/ai-advisory.astro`
+- `src/shared/authorization/policy-registry.ts`
+- `tests/unit/ai-advisory/advisory.test.ts`, `tests/integration/ai-advisory/security.test.ts`, `tests/e2e/ai-advisory.spec.ts`
+
+### التحقق
+- TDD: اختبار الـunit فشل أولًا (موديول غير موجود) ثم نجح ✅ — `tests/unit/ai-advisory` + `tests/integration/ai-advisory`: 2 files / 23 tests ✅.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- `node scripts/architecture/check-boundaries.mjs` ✅ و`git diff --check` ✅.
+- `check-route-files.mjs`: مسار `/ai-advisory` لم يعد يظهر ضمن الناقص ✅.
+- ESLint scoped للنطاق ✅؛ tsc scoped (--ignoreConfig) على ملفات الموديول: صفر أخطاء في ملفات ai-advisory (أخطاء foundation سابقة في `src/shared/authorization/authorize.ts` بامتدادات ناقصة خارج النطاق).
+- Suites المجاورة بعد تغيير policy-registry: `system + approvals + change-requests + e-signatures` → 8 files / 46 tests ✅؛ unit suite الكلي 47 passed مع فشل مسبق وحيد موثق في `tests/unit/ui/master-016.test.ts` (خارج النطاق).
+- Playwright E2E `tests/e2e/ai-advisory.spec.ts` ⚠️ محجوب: Chromium executable غير مثبت في Playwright cache (نفس الحاجز الموثق من MASTER-024/025/027).
+- static scans: لا raw SQL في Delivery، لا secrets، لا Admin bypass، لا أزرار authority في صفحة AI ✅.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** حد الـAI Advisory advisory-only منفذ بالكامل: الموديول يبدأ معطّلًا وبلا أي provider أو credential، المخرجات الـauthoritative تُرفض في الـDomain، الـauthz server-side مرتين ولا يمكن للـprompt injection تغييرها، وفشل الـAI يبقي الـcore سليمًا بلا أي log للمحتوى. الـE2E runtime يبقى محجوبًا بغياب Chromium.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد أي provider حقيقي: الربط المستقبلي يكون بحقن adapter خلف `AiProvider` port فقط، وسياسة retention للـprompt/output (SEC §163) تبقى POLICY-DEPENDENT ولم تُخترع.
+- السياق المرسل للـAI حاليًا هو المقاطع المُصرّح بها يدويًا فقط؛ ربط السياق بقراءة سجلات مصرح بها يحتاج read provider مملوك لكل Domain لاحقًا.
+- لم يُضف عنصر للـsidebar (خارج قائمة الملفات في النطاق)؛ الصفحة محمية ومسجلها في route registry.
+- لا commit أو push، وتم الحفاظ على تعديل المستخدم السابق في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+
 ## [2026-09-05] — MASTER-029: System Health + Backup/Restore catalog/orchestration/UI
 
 ### تم التنفيذ

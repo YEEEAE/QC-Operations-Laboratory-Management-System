@@ -14,3 +14,4 @@ export { documents } from './documents.js';
 export { approvals } from './approvals.js';
 export { changeRequests } from './change-requests.js';
 export { system } from './system.js';
+export { aiAdvisory } from './ai-advisory.js';

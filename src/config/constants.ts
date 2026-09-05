@@ -14,6 +14,8 @@ export const ENV_KEYS = {
   serviceVersion: 'SERVICE_VERSION',
   otelEndpoint: 'OTEL_EXPORTER_OTLP_ENDPOINT',
   otelHeaders: 'OTEL_EXPORTER_OTLP_HEADERS',
+  rateLimitLoginMax: 'RATE_LIMIT_LOGIN_MAX',
+  rateLimitLoginWindowSeconds: 'RATE_LIMIT_LOGIN_WINDOW_SECONDS',
 } as const;
 
 export const CRITICAL_ENV_KEYS = [ENV_KEYS.databaseUrl, ENV_KEYS.sessionSecret] as const;
@@ -21,4 +23,6 @@ export const OPTIONAL_ENV_KEYS = [
   ENV_KEYS.serviceVersion,
   ENV_KEYS.otelEndpoint,
   ENV_KEYS.otelHeaders,
+  ENV_KEYS.rateLimitLoginMax,
+  ENV_KEYS.rateLimitLoginWindowSeconds,
 ] as const;

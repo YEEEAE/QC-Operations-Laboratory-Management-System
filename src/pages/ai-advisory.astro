@@ -1,0 +1,131 @@
+---
+import AppLayout from '../ui/layouts/AppLayout.astro';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const canUse = actor.permissions.some((grant) => grant.code === 'PERM-AI-USE' && grant.active !== false);
+const canSummarize = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUMMARIZE' && grant.active !== false);
+const canSuggest = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUGGEST' && grant.active !== false);
+const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT' && grant.active !== false);
+---
+<AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">UI-AI-001 · ADVISORY ONLY</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
+  {canUse ? (
+    <>
+      <section class="notice" role="note"><strong>Advisory boundary</strong><span>AI output can summarize, suggest questions, and draft text. It can never approve, reject, release, sign, or set an official PASS/FAIL, and it never replaces server-side authorization. Response actions are limited to copying text or using it as your own draft.</span></section>
+      <section class="panel">
+        <h2>Request advisory</h2>
+        <form class="form" data-advisory-request>
+          <label>Output type
+            <select name="mode">
+              {canSummarize && <option value="SUMMARIZE">Summarize</option>}
+              {canSuggest && <option value="SUGGEST">Suggest questions</option>}
+              {canDraft && <option value="DRAFT">Draft text</option>}
+            </select>
+          </label>
+          <label>Question / prompt<textarea name="question" required maxlength="4000" placeholder="What do you want analyzed?"></textarea></label>
+          <fieldset class="context"><legend>Authorized context (optional, minimized)</legend>
+            <p class="muted">Only explicitly authorized excerpts you provide here are sent. No hidden or global context is used, and records you are not authorized to see must never be pasted here.</p>
+            <label>Source label<input name="contextLabel" maxlength="120" placeholder="e.g. Receiving item summary" /></label>
+            <label>Authorized excerpt<textarea name="contextContent" maxlength="4000"></textarea></label>
+          </fieldset>
+          <div class="actions"><button type="submit">Request advisory</button></div>
+          <p role="status" data-result aria-live="polite"></p>
+        </form>
+      </section>
+      <section class="panel response-panel" data-response-panel hidden>
+        <h2>AI response</h2>
+        <p class="advisory-label" data-advisory-label>AI-generated advisory content — suggestions and analysis only, not an approval authority.</p>
+        <p class="status" data-status></p>
+        <div class="advisory-text" data-advisory-text></div>
+        <div class="actions">
+          <button type="button" data-copy disabled>Copy</button>
+          <button type="button" data-use-draft disabled>Use as Draft</button>
+        </div>
+        <p class="muted">No controlled action can be triggered from an AI response. Any official decision must go through the normal authorized workflow.</p>
+      </section>
+    </>
+  ) : (
+    <p class="empty">You are not authorized to use AI advisory.</p>
+  )}
+</AppLayout>
+{canUse && (
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('[data-advisory-request]');
+  const panel = document.querySelector<HTMLElement>('[data-response-panel]');
+  const statusEl = document.querySelector<HTMLElement>('[data-status]');
+  const textEl = document.querySelector<HTMLElement>('[data-advisory-text]');
+  const labelEl = document.querySelector<HTMLElement>('[data-advisory-label]');
+  const resultEl = document.querySelector<HTMLElement>('[data-result]');
+  const copyButton = document.querySelector<HTMLButtonElement>('[data-copy]');
+  const draftButton = document.querySelector<HTMLButtonElement>('[data-use-draft]');
+  let advisoryText = '';
+  const resetButtons = () => {
+    if (copyButton) copyButton.disabled = true;
+    if (draftButton) draftButton.disabled = true;
+  };
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form || !resultEl) return;
+    resultEl.textContent = 'Requesting advisory…';
+    resetButtons();
+    const data = new FormData(form);
+    const contextLabel = String(data.get('contextLabel') || '').trim();
+    const contextContent = String(data.get('contextContent') || '').trim();
+    const response = await actions.aiAdvisory.requestAdvisory({
+      mode: String(data.get('mode')) as 'SUMMARIZE' | 'SUGGEST' | 'DRAFT',
+      question: String(data.get('question') || ''),
+      context:
+        contextLabel && contextContent
+          ? [{ label: contextLabel, content: contextContent }]
+          : [],
+    });
+    if (panel) panel.hidden = false;
+    if (statusEl && textEl && labelEl) {
+      if (response.error) {
+        statusEl.textContent = 'Advisory unavailable.';
+        textEl.textContent = '';
+        labelEl.textContent = 'AI advisory is optional: core QC workflows are unaffected.';
+        resetButtons();
+      } else if (response.data) {
+        statusEl.textContent = response.data.message;
+        advisoryText = response.data.advisory?.text ?? '';
+        textEl.textContent = advisoryText;
+        labelEl.textContent = response.data.advisoryNotice;
+        if (advisoryText) {
+          if (copyButton) copyButton.disabled = false;
+          if (draftButton) draftButton.disabled = false;
+        }
+      }
+    }
+    if (resultEl) resultEl.textContent = '';
+  });
+  copyButton?.addEventListener('click', async () => {
+    if (advisoryText) await navigator.clipboard.writeText(advisoryText);
+  });
+  draftButton?.addEventListener('click', () => {
+    const questionField = form?.querySelector<HTMLTextAreaElement>('textarea[name="question"]');
+    if (questionField && advisoryText) questionField.value = advisoryText;
+  });
+</script>
+)}
+<style>
+.page-head{margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}h1{margin:.25rem 0}.lede,.muted,.empty{color:var(--text-muted)}
+.notice,.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--color-accent-primary)}
+.notice span{color:var(--text-muted);font-size:.85rem}
+.panel h2{margin-top:0;font-size:1rem}
+.form{display:grid;gap:var(--space-4);max-width:720px}
+.form label{display:grid;gap:.4rem;font-size:.85rem}
+.form input,.form select,.form textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
+.form textarea{min-height:6rem}
+fieldset.context{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);display:grid;gap:var(--space-3);margin:0}
+fieldset.context legend{font-size:.8rem;font-weight:700;padding:0 .4rem}
+.actions{display:flex;gap:var(--space-3);align-items:center}
+button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border-radius:var(--radius-md);font-weight:700}
+button:disabled{opacity:.5}
+.advisory-label{font-size:.75rem;font-weight:700;letter-spacing:.06em;color:var(--status-warning);border:1px solid var(--status-warning);border-radius:var(--radius-sm);padding:.45rem .6rem;display:inline-block}
+.status{color:var(--text-muted);font-size:.85rem}
+.advisory-text{white-space:pre-wrap;font-size:.88rem;line-height:1.6;border:1px dashed var(--color-border-strong);border-radius:var(--radius-md);padding:var(--space-4)}
+</style>

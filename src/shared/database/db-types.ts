@@ -306,6 +306,15 @@ export interface RestoreRunsTable {
   request_id: string;
 }
 
+export interface RateLimitWindowsTable {
+  policy_name: string;
+  bucket_key: string;
+  window_started_at: Date;
+  window_ended_at: Date;
+  request_count: number;
+  updated_at: Date;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -341,6 +350,7 @@ export interface DatabaseSchema {
   electronic_signatures: ElectronicSignaturesTable;
   backup_runs: BackupRunsTable;
   restore_runs: RestoreRunsTable;
+  rate_limit_windows: RateLimitWindowsTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

@@ -8,6 +8,8 @@ const envSchema = z.object({
   SERVICE_VERSION: z.string().trim().min(1).default('0.1.0'),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().trim().min(1).optional(),
+  RATE_LIMIT_LOGIN_MAX: z.string().regex(/^\d+$/).optional(),
+  RATE_LIMIT_LOGIN_WINDOW_SECONDS: z.string().regex(/^\d+$/).optional(),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;
@@ -34,6 +36,10 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
         ? [
             !result.data.DATABASE_URL ? ENV_KEYS.databaseUrl : '',
             !result.data.SESSION_SECRET ? ENV_KEYS.sessionSecret : '',
+            // SECURITY-ARCHITECTURE §142: no unlimited-abuse exposure on login.
+            !(result.data.RATE_LIMIT_LOGIN_MAX && result.data.RATE_LIMIT_LOGIN_WINDOW_SECONDS)
+              ? `${ENV_KEYS.rateLimitLoginMax} + ${ENV_KEYS.rateLimitLoginWindowSeconds}`
+              : '',
           ].filter(Boolean)
         : [];
     if (missing.length === 0) return result.data;

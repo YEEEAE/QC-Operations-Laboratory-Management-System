@@ -163,6 +163,16 @@ const policies: readonly AuthorizationPolicy[] = [
   { permission: 'PERM-BKP-RESTORE-PRODUCTION', action: 'REQUEST_RESTORE', entityType: 'BACKUP_RESTORE', states: ['CREATED', 'VERIFIED'] },
   { permission: 'PERM-HLTH-VIEW', action: 'VIEW', entityType: 'SYSTEM_HEALTH', states: ['ACTIVE'] },
   ...([
+    { permission: 'PERM-AI-USE', action: 'USE' },
+    { permission: 'PERM-AI-SUMMARIZE', action: 'SUMMARIZE' },
+    { permission: 'PERM-AI-SUGGEST', action: 'SUGGEST' },
+    { permission: 'PERM-AI-DRAFT', action: 'DRAFT' },
+  ].map((policy) => ({
+    ...policy,
+    entityType: 'AI_ADVISORY',
+    states: ['ACTIVE'],
+  }))),
+  ...([
     'INSPECTION_REPORT',
     'LAB_TEST',
     'DOCUMENT_VERSION',

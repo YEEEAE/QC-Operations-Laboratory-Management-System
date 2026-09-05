@@ -1,11 +1,21 @@
 import { Kysely, PostgresDialect } from 'kysely';
 
 import { AppError } from '../errors/app-error.js';
+import { createTelemetryQueryPlugin } from '../observability/db-telemetry.js';
+import { recordCounter } from '../observability/telemetry.js';
 import type { DatabaseSchema } from './db-types.js';
 import { getPool } from './pool.js';
 
 export function createDatabase(): Kysely<DatabaseSchema> {
-  return new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: getPool() }) });
+  return new Kysely<DatabaseSchema>({
+    dialect: new PostgresDialect({ pool: getPool() }),
+    plugins: [createTelemetryQueryPlugin()],
+    log: (event) => {
+      if (event.level === 'error') {
+        recordCounter('qc_db_queries_total', 1, { dependency: 'postgres', outcome: 'error' });
+      }
+    },
+  });
 }
 
 let sharedDatabase: Kysely<DatabaseSchema> | undefined;

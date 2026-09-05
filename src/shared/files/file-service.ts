@@ -1,5 +1,6 @@
 import { AppError } from '../errors/app-error';
 import { uuidv7 } from '../id/uuid';
+import { withSpan, recordCounter } from '../observability/telemetry';
 import type { EvidenceLink, FileRecord, FileUploadInput } from './file-record';
 import type { FileRepository } from './file-repository';
 import type { ObjectStore } from './object-store';
@@ -12,6 +13,11 @@ export type FileAccessAuthorizer = (input: {
   subjectId: string;
 }) => Promise<void>;
 
+/**
+ * File/evidence service with bounded telemetry (OBSERVABILITY-ARCHITECTURE
+ * §42/§43): operation/outcome counters only — never filenames, subject ids,
+ * or content details.
+ */
 export class FileService {
   constructor(
     private readonly repository: FileRepository,
@@ -20,6 +26,37 @@ export class FileService {
   ) {}
 
   async upload(input: FileUploadInput): Promise<{ file: FileRecord; evidence: EvidenceLink }> {
+    return withSpan(
+      'file.upload',
+      async (span) => {
+        try {
+          const result = await this.uploadInner(input);
+          recordCounter('qc_file_operations_total', 1, {
+            domain: 'files',
+            operation: 'upload',
+            outcome: 'success',
+          });
+          return result;
+        } catch (error) {
+          recordCounter('qc_file_operations_total', 1, {
+            domain: 'files',
+            operation: 'upload',
+            outcome: 'error',
+          });
+          span.setAttribute(
+            'error_family',
+            error instanceof AppError ? error.code : 'INTERNAL_ERROR',
+          );
+          throw error;
+        }
+      },
+      { domain: 'files', operation: 'upload' },
+    );
+  }
+
+  private async uploadInner(
+    input: FileUploadInput,
+  ): Promise<{ file: FileRecord; evidence: EvidenceLink }> {
     await this.authorizeAccess({
       action: 'UPLOAD',
       actorId: input.uploadedBy,
@@ -59,6 +96,38 @@ export class FileService {
   }
 
   async download(
+    actorId: string,
+    link: EvidenceLink,
+  ): Promise<{ file: FileRecord; object: { bytes: Uint8Array; contentType: string } }> {
+    return withSpan(
+      'file.download',
+      async (span) => {
+        try {
+          const result = await this.downloadInner(actorId, link);
+          recordCounter('qc_file_operations_total', 1, {
+            domain: 'files',
+            operation: 'download',
+            outcome: 'success',
+          });
+          return result;
+        } catch (error) {
+          recordCounter('qc_file_operations_total', 1, {
+            domain: 'files',
+            operation: 'download',
+            outcome: 'error',
+          });
+          span.setAttribute(
+            'error_family',
+            error instanceof AppError ? error.code : 'INTERNAL_ERROR',
+          );
+          throw error;
+        }
+      },
+      { domain: 'files', operation: 'download' },
+    );
+  }
+
+  private async downloadInner(
     actorId: string,
     link: EvidenceLink,
   ): Promise<{ file: FileRecord; object: { bytes: Uint8Array; contentType: string } }> {
