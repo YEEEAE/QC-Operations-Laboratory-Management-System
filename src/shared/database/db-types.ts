@@ -167,6 +167,9 @@ export interface LabMeasurementsTable { id:Generated<string>; lab_test_id:string
 export interface LabTestSnapshotsTable { id:Generated<string>; lab_test_id:string; snapshot_version:number; snapshot_stage:string; template_snapshot:unknown; source_snapshot:unknown|null; equipment_snapshot:unknown|null; calibration_snapshot:unknown|null; document_snapshot:unknown|null; criteria_snapshot:unknown|null; sample_context_snapshot:unknown|null; created_at:Generated<Date>; snapshot_hash:string; }
 export interface LabEquipmentUsageTable { id:Generated<string>; lab_test_id:string; equipment_id:string; calibration_record_id:string|null; usage_role:string|null; used_at:Date|null; equipment_snapshot:unknown; calibration_snapshot:unknown|null; created_at:Generated<Date>; }
 export interface LabDocumentUsageTable { id:Generated<string>; lab_test_id:string; document_version_id:string; usage_type:string; document_snapshot:unknown|null; created_at:Generated<Date>; }
+export interface EquipmentTable { id:Generated<string>; equipment_no:string; name:string; manufacturer:string|null; model:string|null; serial_no:string|null; location:string|null; state:string; current_calibration_id:string|null; commissioned_at:Date|null; decommissioned_at:Date|null; created_at:Generated<Date>; created_by:string; updated_at:Generated<Date>; updated_by:string|null; version:Generated<bigint>; }
+export interface CalibrationRecordsTable { id:Generated<string>; calibration_no:string; equipment_id:string; state:string; calibration_date:string; due_date:string|null; provider:string|null; certificate_no:string|null; result:string|null; approved_at:Date|null; approved_by:string|null; became_current_at:Date|null; superseded_at:Date|null; voided_at:Date|null; void_reason:string|null; created_at:Generated<Date>; created_by:string; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface MaintenanceRecordsTable { id:Generated<string>; maintenance_no:string; equipment_id:string; state:string; maintenance_type:string|null; description:string; planned_at:Date|null; started_at:Date|null; completed_at:Date|null; performed_by:string|null; provider:string|null; result:string|null; created_by:string; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
 
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
@@ -192,6 +195,7 @@ export interface DatabaseSchema {
   receiving_items: ReceivingItemsTable; inspection_templates: InspectionTemplatesTable; inspection_template_versions: InspectionTemplateVersionsTable; inspection_template_sections: InspectionTemplateSectionsTable; inspection_template_points: InspectionTemplatePointsTable; inspection_reports: InspectionReportsTable; inspection_report_results: InspectionReportResultsTable; inspection_report_snapshots: InspectionReportSnapshotsTable;
   lab_test_templates: LabTestTemplatesTable; lab_test_template_versions: LabTestTemplateVersionsTable; lab_test_template_parameters: LabTestTemplateParametersTable; lab_tests: LabTestsTable; lab_samples: LabSamplesTable; lab_measurements: LabMeasurementsTable; lab_test_snapshots: LabTestSnapshotsTable; lab_equipment_usage:LabEquipmentUsageTable; lab_document_usage:LabDocumentUsageTable;
   findings: FindingsTable; ncrs: NcrsTable; rcas: RcasTable; capas: CapasTable; capa_actions: CapaActionsTable;
+  equipment: EquipmentTable; calibration_records: CalibrationRecordsTable; maintenance_records: MaintenanceRecordsTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

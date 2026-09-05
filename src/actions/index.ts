@@ -9,3 +9,4 @@ export { rca } from './rca.js';
 export { capa } from './capa.js';
 export { quarantine } from './quarantine.js';
 export { laboratory } from './laboratory.js';
+export { assets } from './assets.js';

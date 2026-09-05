@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-024: Assets equipment, calibration, maintenance, and laboratory eligibility
+
+### تم التنفيذ
+- أُنشئت طبقات Equipment وCalibration وMaintenance من Domain/Ports إلى PostgreSQL repositories وuse cases، مع UUID/business IDs، حالات صريحة، optimistic version، وفصل السجلات التاريخية.
+- أُضيفت صلاحيات Assets إلى `policy-registry`، مع server-side authorization وscope وSoD للمعايرة ورفض المسارات غير المعرّفة افتراضيًا.
+- أُضيفت audit/outbox wiring للإنشاء والانتقالات، وربطت بداية Maintenance بتحديث Equipment إلى `UNDER_MAINTENANCE` داخل transaction؛ الإكمال لا يثبت calibration ولا يعيد availability تلقائيًا.
+- أُضيفت Assets-owned eligibility provider وربطت بـLaboratory submit؛ السياق غير الصالح أو snapshot الناقص أو calibration `OVERDUE` يوقف الاستخدام، وdue/overdue/current policy غير المعتمدة لا تُخترع.
+- أُضيفت صفحات `/assets` وEquipment/Calibration/Maintenance lists/details والإنشاء المشروط، مع عرض الحالة والنسخة والتاريخ والروابط المرتبطة، وبدون SQL أو business rules داخل Delivery.
+- أُضيفت اختبارات integration مركزة لثبات Equipment والنسخة والتاريخ، lifecycle المعايرة وSoD والسياسة غير المحسومة، Maintenance، eligibility، authorization، واختبار E2E للمسارات.
+
+### الملفات المتأثرة
+- `src/modules/assets/`
+- `src/modules/laboratory/application/dependencies.ts`
+- `src/shared/authorization/policy-registry.ts`
+- `src/shared/database/db-types.ts`
+- `src/actions/assets.ts`, `src/actions/index.ts`
+- `src/pages/assets/`
+- `tests/integration/assets/`, `tests/e2e/assets.spec.ts`
+
+### التحقق
+- `node node_modules/vitest/dist/cli.js run tests/integration/assets --passWithNoTests` ✅ — 5 files / 12 tests.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- `pnpm exec tsc --noEmit` scoped to Assets ✅؛ لم تظهر أخطاء في ملفات Assets، مع بقاء أخطاء foundation قديمة خارج النطاق عند الفحص الكامل.
+- `node node_modules/astro/bin/astro.mjs check` scoped to Assets ✅؛ الفحص الكامل ما زال يحمل أخطاء Astro/foundation سابقة.
+- `node scripts/architecture/check-boundaries.mjs` ✅ و`git diff --check` ✅.
+- `node scripts/architecture/check-route-files.mjs` ⚠️ ما زال يذكر routes canonical ناقصة خارج Assets؛ لم يذكر أي route من Assets.
+- `node node_modules/playwright/cli.js test tests/e2e/assets.spec.ts` ⚠️ محجوب: Chromium executable غير مثبت في Playwright cache؛ سيرفر Astro المحلي اشتغل مؤقتًا ثم أُوقف.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** نطاق Assets مكتوب ومتحقق بالاختبارات المركزة وbuild والحدود، مع الحفاظ على history وauthorization وpolicy-deny؛ إثبات Playwright/PostgreSQL runtime الكامل ينتظر browser/container والبيئة المعتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- `MAKE_CURRENT` و`MARK_DUE` و`MARK_OVERDUE` ومسارات VOID الحساسة غير المعرفة تبقى DENY حتى اعتماد authority/policy المقابلة.
+- لا يوجد commit أو push، وتم الحفاظ على تعديل المستخدم السابق في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+
 ## [2026-09-05] — MASTER-022: Quarantine review/release/read models/workspaces
 
 ### تم التنفيذ
