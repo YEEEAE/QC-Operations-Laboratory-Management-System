@@ -1,5 +1,84 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — البحث عن بيانات الأدمن ومخطط قاعدة البيانات
+
+### تم التنفيذ
+- فحصت bootstrap ودليل التشغيل: `yazeed` مثال، وكلمة المرور متغير بيئة بلا قيمة افتراضية.
+- طابقت الصورة: المعروض `public` بينما جداول التطبيق تحت `qc` ومنها `qc.users`.
+- تحققت من غياب إعدادات `.env` ومتغيرات اتصال القاعدة وbootstrap محليًا؛ لم أتصل بـRender أو أنشئ حسابًا.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md` فقط.
+
+### التحقق
+- قراءة الكود وmigrations ودليل التشغيل وفحص وجود إعدادات البيئة بدون أسرار ✅.
+- build/tests لم تُشغّل: تشخيص فقط بلا تغيير كود.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** حُدد مصدر اسم المثال وآلية تعيين كلمة المرور؛ وجود الحساب الفعلي في Render غير متحقق ويلزم فحص `qc.users`.
+
+## [2026-09-05] — QC-BOOTSTRAP-INITIAL-ADMIN-001: secure one-time initial administrator
+
+### تم التنفيذ
+- أضفت الأمر الصريح `pnpm bootstrap:admin` وسكربت bootstrap ما يعمل مع build/start/migration، ويتحقق من متغيرات البيئة ومن اكتمال migrations قبل أي كتابة.
+- أضفت `BootstrapInitialAdminUseCase` بمعاملة PostgreSQL واحدة وقفل transaction-advisory لكل identity: إنشاء user ACTIVE، إسناد role `ADMIN` الرسمي، وإسناد `GLOBAL` في `user_scopes` فقط؛ الإعادة لنفس identity ترجع بدون تعديل password/roles/scopes.
+- استُخدم `Argon2idPasswordHasher` الحالي، وأضيفت حزمة `argon2` الناقصة التي كان يعتمد عليها adapter الموجود؛ لا توجد كلمة مرور حقيقية في الكود أو الوثائق أو Render.
+- لم أضف grants أو bypass: seed الحالي لا يحوي role-permission mappings، والنتيجة تبلغ المشغّل أن grants ما زالت تحتاج إعدادًا معتمدًا.
+- أضفت audit events آمنة داخل نفس المعاملة، وحدّثت `.env.example` و`render.yaml` بأسماء Render-managed secrets فقط، وكتبت إجراء التشغيل والإزالة في `docs/operations/INITIAL-ADMIN-BOOTSTRAP.md`.
+- أضفت اختبارات config وPostgreSQL تغطي الإنشاء، hash، ADMIN/GLOBAL، الإعادة، login الصحيح/الخاطئ، والحساب المعطل.
+
+### الملفات المتأثرة
+- `scripts/bootstrap/create-initial-admin.ts`, `src/modules/identity/application/bootstrap-initial-admin.ts`
+- `src/shared/database/db-types.ts`, `package.json`, `pnpm-lock.yaml`, `.env.example`, `render.yaml`
+- `tests/unit/bootstrap/bootstrap-config.test.ts`, `tests/integration/bootstrap/initial-admin.test.ts`
+- `docs/operations/INITIAL-ADMIN-BOOTSTRAP.md`
+
+### التحقق
+- `CI=true pnpm exec vitest run tests/unit/bootstrap/bootstrap-config.test.ts` ✅ — 6/6.
+- Bootstrap integration ⚠️ لم يبدأ: لا يوجد Docker/Testcontainers runtime ولا `QC_TEST_DATABASE_URL` disposable.
+- `git diff --check` ✅؛ secret/bypass search ✅ (ظهور `yazeed` محصور في test/doc المقصود، ولا يوجد bypass في source).
+- `pnpm typecheck` و`pnpm lint` ❌ بسبب أخطاء baseline كثيرة خارج نطاق bootstrap (Astro Actions/واجهة وquality tests)؛ ملفات bootstrap الجديدة ليست ضمن الأخطاء.
+- تشغيل الأمر نفسه بلا متغيرات لم يتم اعتماده من sandbox لأنّه قد يكتب على قاعدة غير محددة؛ لم يُشغّل ضد أي قاعدة حقيقية.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** آلية bootstrap الآمنة موجودة محليًا مع اختبار config ناجح؛ إثبات معاملة PostgreSQL وlogin end-to-end ينتظر قاعدة disposable معتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- حزمة `argon2` احتاجت approve-builds محليًا لتشغيل binary؛ بيئة production يجب أن تسمح بتثبيت dependency وفق supply-chain policy المعتمدة.
+- `BOOTSTRAP_ADMIN_DISPLAY_NAME` إلزامي لأن schema الحالي يفرض `users.display_name NOT NULL`؛ هذا ليس افتراضًا للبيانات الشخصية.
+
+## [2026-09-05] — MASTER-033: Critical workflow E2E + files/reports security
+
+### تم التنفيذ
+- أُنشئ `tests/e2e/critical-workflows.spec.ts` لاختبار حماية نقاط الدخول، فصل Receiving/Inspection/Release، سياق Laboratory المجمد، مسار Quality، حفظ تاريخ Document Versions، وعدم تسريب السجلات عند تبديل UUID.
+- أُنشئ `tests/e2e/files-reports.spec.ts` لاختبار رفض وصول الملفات والتقارير غير المصادق، رفض تنزيل evidence خارج النطاق، كشف hash mismatch، تطابق عدد صفوف شاشة التقرير مع export، وتعطيل formula injection في CSV.
+- ربطت السيناريوهات الإيجابية باختبار متصفح + server + PostgreSQL عبر `QC_E2E_*` و`QC_TEST_DATABASE_URL` فقط؛ بدون fixture معتمد تُعمل skip بدل اختراع حسابات أو صلاحيات أو بيانات علمية.
+- أضفت assertions صريحة على عدم تسريب password/session/token/storage metadata، وعلى أن PASS لا يساوي RELEASED وأن audit history موجود لسياق المختبر.
+
+### الملفات المتأثرة
+- `tests/e2e/critical-workflows.spec.ts`
+- `tests/e2e/files-reports.spec.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- Build server الموجود `dist/server/entry.mjs` شُغّل محليًا ✅
+- Playwright suite الجديدة: **2 passed / 9 skipped من 11** ✅؛ الاختباران المنفذان فعليًا هما حماية المحتوى والتقارير/الملفات غير المصادق عليها، والـskips بسبب غياب `QC_E2E_*` fixtures.
+- TypeScript transpile/syntax للملفين ✅
+- `git diff --check` ✅
+- raw SQL scan داخل `src/pages/**`, `src/actions/**`, `src/middleware.ts` بلا نتائج ✅
+- `tsc --noEmit` ❌ بسبب أخطاء baseline خارج الملفات الجديدة (Astro typings/dependencies وأخطاء actions/authorization موثقة سابقًا).
+- Prettier ❌ غير متوفر في `node_modules/.bin`.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** ملفات E2E المطلوبة أُنشئت واختبارات الرفض الأمني نجحت فعليًا؛ إثباتات workflow الإيجابية وPostgreSQL export/file fixtures ما زالت تحتاج بيئة fixtures معتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- Chromium احتاج تشغيلًا خارج sandbox؛ بعد السماح البيئي نجحت الاختبارات المنفذة.
+- مشكلة Astro Actions المعروفة من MASTER-032 ما زالت خارج نطاق هذا البرومبت، لذلك لا يوجد claim بأن المسارات الإيجابية عبر RPC متحققة في runtime الحالي.
+
 ## [2026-09-05] — MASTER-032: Concurrency/idempotency stress + authorization/IDOR matrix
 
 ### تم التنفيذ

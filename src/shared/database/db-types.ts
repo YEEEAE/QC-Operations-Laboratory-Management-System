@@ -122,7 +122,18 @@ export interface NotificationsTable {
 export interface RolesTable { id: string; code: string; name: string; description: string | null; is_system_role: boolean; active: boolean; created_at: Generated<Date>; updated_at: Generated<Date>; version: Generated<bigint>; }
 export interface PermissionsTable { id: string; code: string; domain: string; action: string; description: string | null; risk_level: string; active: boolean; created_at: Generated<Date>; updated_at: Generated<Date>; }
 export interface RolePermissionsTable { role_id: string; permission_id: string; granted_at: Generated<Date>; granted_by: string | null; }
-export interface UserRolesTable { id: string; user_id: string; role_id: string; revoked_at: Date | null; }
+export interface UserRolesTable {
+  id: Generated<string>;
+  user_id: string;
+  role_id: string;
+  valid_from: Date | null;
+  valid_until: Date | null;
+  assigned_by: string;
+  assigned_at: Generated<Date>;
+  revoked_at: Date | null;
+  revoked_by: string | null;
+  reason: string | null;
+}
 export interface UserScopesTable { id: Generated<string>; user_id: string; scope_kind: string; scope_value: string | null; assigned_by: string; assigned_at: Generated<Date>; revoked_at: Date | null; revoked_by: string | null; reason: string | null; }
 
 export interface NotificationDeliveriesTable {

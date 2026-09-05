@@ -23,12 +23,14 @@
     "test:coverage": "vitest run --coverage",
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:migrate:status": "tsx scripts/db/migration-status.ts",
-    "db:migrate:check": "tsx scripts/db/check-migration-integrity.ts"
+    "db:migrate:check": "tsx scripts/db/check-migration-integrity.ts",
+    "bootstrap:admin": "tsx scripts/bootstrap/create-initial-admin.ts"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",
     "@astrojs/node": "11.1.5",
     "@opentelemetry/api": "1.9.1",
+    "argon2": "0.44.0",
     "astro": "7.3.1",
     "kysely": "0.29.5",
     "pg": "8.23.0",

@@ -34,3 +34,13 @@ services:
         sync: false
       - key: OTEL_EXPORTER_OTLP_HEADERS
         sync: false
+      # One-time operator inputs only. Add values in Render, run the explicit
+      # command, then remove them; no plaintext values belong in this file.
+      - key: BOOTSTRAP_ADMIN_IDENTITY
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ADMIN_DISPLAY_NAME
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
