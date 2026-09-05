@@ -15,7 +15,7 @@ export const navigationGroups: NavigationGroup[] = [
   { id: 'assets', label: 'Assets', items: [{ id: 'equipment', label: 'Equipment', href: '/assets/equipment', icon: '▦', capability: 'PERM-EQUIP-VIEW' }, { id: 'calibrations', label: 'Calibration', href: '/assets/calibrations', icon: '⌁', capability: 'PERM-CAL-VIEW' }, { id: 'maintenance', label: 'Maintenance', href: '/assets/maintenance', icon: '⚙', capability: 'PERM-MAINT-VIEW' }] },
   { id: 'governance', label: 'Governance', items: [{ id: 'approvals', label: 'My approvals', href: '/approvals', icon: '◉', capability: 'PERM-APR-VIEW-OWN' }, { id: 'changes', label: 'Change requests', href: '/change-requests', icon: '⇄', capability: 'PERM-CR-VIEW' }] },
   { id: 'insights', label: 'Insights', items: [{ id: 'reports', label: 'Reports', href: '/reports', icon: '▥', capability: 'PERM-RPT-VIEW' }] },
-  { id: 'system', label: 'System', items: [{ id: 'administration', label: 'Administration', href: '/administration', icon: '⚙', capability: 'PERM-ADM-VIEW' }, { id: 'health', label: 'System health', href: '/system/health', icon: '♥', capability: 'PERM-SYS-HEALTH-VIEW' }] },
+  { id: 'system', label: 'System', items: [{ id: 'administration', label: 'Administration', href: '/administration', icon: '⚙', capability: 'PERM-ADM-VIEW' }, { id: 'health', label: 'System health', href: '/system/health', icon: '♥', capability: 'PERM-HLTH-VIEW' }, { id: 'backups', label: 'Backups', href: '/system/backups', icon: '⛁', capability: 'PERM-BKP-VIEW' }] },
 ];
 
 export function visibleNavigation(capabilities: readonly string[] = []) {

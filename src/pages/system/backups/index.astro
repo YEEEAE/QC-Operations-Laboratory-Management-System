@@ -1,0 +1,21 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { backupCatalogReadDependencies } from '../../../modules/backup-recovery/application/dependencies.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+let backups;
+try {
+  backups = await backupCatalogReadDependencies().list.execute({ actor, filter: { limit: 50 } });
+} catch {
+  return Astro.redirect('/404');
+}
+const jobLabel = (state: string) => (state === 'CREATED' || state === 'VERIFIED' ? 'SUCCEEDED' : state);
+const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+---
+<AppLayout title="Backups · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">UI-BKP-001 · BACKUP CATALOG</p><h1>Backups</h1><p class="lede">Recovery catalog of recorded backup sets. A backup job result is never merged with restore verification: a job marked SUCCEEDED is not RESTORE VERIFIED (BKP-001). Restore verification per backup set is shown on its detail page.</p></div></section>
+  {backups.length ? <div class="table-wrap"><table><caption>Backup sets in the controlled recovery catalog</caption><thead><tr><th scope="col">Backup</th><th scope="col">Backup job result</th><th scope="col">Artifact verified</th><th scope="col">Schema version</th><th scope="col">Requested (Asia/Riyadh)</th></tr></thead><tbody>{backups.map((item) => <tr><th scope="row"><a href={`/system/backups/${item.id}`}>{item.id}</a></th><td><span class={`pill ${item.state === 'CREATED' || item.state === 'VERIFIED' ? 'ok' : item.state === 'FAILED' ? 'bad' : 'unknown'}`}>{jobLabel(item.state)}</span></td><td>{item.state === 'VERIFIED' ? 'YES' : 'NO'}</td><td>{item.databaseSchemaVersion ?? '—'}</td><td>{riyadh(item.requestedAt)}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No backup sets are recorded</h2><p>The recovery catalog is empty. This is shown as an unknown posture, never as a healthy state. No backup job provider is approved or configured in this baseline.</p></section>}
+  <section class="notice" role="note"><strong>Restore requests</strong><span>Restore intents are recorded from a backup's detail page through an explicit POST action with reason and confirmation. GET pages never restore. Production restore remains DENY until the recovery authority and e-signature policy are approved.</span></section>
+</AppLayout>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}table{width:100%;min-width:860px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.pill{padding:.2rem .55rem;border-radius:999px;font-size:.7rem;font-weight:700;white-space:nowrap}.pill.ok{color:var(--status-success);border:1px solid var(--status-success)}.pill.bad{color:var(--status-error);border:1px solid var(--status-error)}.pill.neutral,.pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}.notice,.empty{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.empty{text-align:center;padding:var(--space-8);border-style:dashed}</style>

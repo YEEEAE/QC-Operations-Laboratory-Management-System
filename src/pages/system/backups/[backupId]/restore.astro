@@ -1,0 +1,101 @@
+---
+import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import { backupCatalogReadDependencies } from '../../../../modules/backup-recovery/application/dependencies.js';
+import { isUuid } from '../../../../shared/id/uuid.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const backupId = Astro.params.backupId ?? '';
+if (!isUuid(backupId)) return Astro.redirect('/404');
+let detail;
+try {
+  detail = await backupCatalogReadDependencies().get.execute({ actor, backupId });
+} catch {
+  return Astro.redirect('/404');
+}
+if (!detail) return Astro.redirect('/404');
+const { backup, restoreVerification, restorable } = detail;
+const permission = (code: string) => actor.permissions.some((item) => item.active !== false && item.code === code);
+const canRequestDrill = permission('PERM-BKP-RESTORE-DRILL');
+const canRequestProduction = permission('PERM-BKP-RESTORE-PRODUCTION');
+const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const verificationLabel =
+  restoreVerification === 'VERIFIED'
+    ? 'RESTORE VERIFIED'
+    : restoreVerification === 'VERIFICATION_FAILED'
+      ? 'RESTORE VERIFICATION FAILED'
+      : restoreVerification === 'VERIFYING'
+        ? 'RESTORE VERIFYING'
+        : 'RESTORE NOT VERIFIED';
+const productionBlocked = true; // Production restore authority/e-signature (RD-020, BKP-DD-014/016) unresolved: DENY.
+---
+<AppLayout title={`Restore ${backup.id} · QC Operations`} locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">UI-RST-001 · RESTORE INTENT BOUNDARY</p><h1>Restore request</h1><p class="lede">This page records a controlled restore intent. It never executes a restore: no recovery provider, production authority, or e-signature ceremony is approved in this baseline, so every recorded request stays PLANNED.</p></div><a href={`/system/backups/${backup.id}`}>Back to backup</a></section>
+  <section class="panel"><h2>Backup and recovery context</h2><dl>
+    <div><dt>Backup set ID</dt><dd><code>{backup.id}</code></dd></div>
+    <div><dt>Backup job state</dt><dd>{backup.state} — job execution result only, never restore evidence (BKP-001)</dd></div>
+    <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'YES' : 'NO'}</dd></div>
+    <div><dt>Backup requested at</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh (UTC internally)</dd></div>
+    <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{verificationLabel}</dd></div>
+    <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>
+    <div><dt>Application version / Git SHA binding</dt><dd>NOT RECORDED in catalog</dd></div>
+    <div><dt>Known gaps</dt><dd>{restoreVerification !== 'VERIFIED' ? 'No verified restore exists for this backup set' : 'None recorded'}</dd></div>
+    <div><dt>Display timezone</dt><dd>Asia/Riyadh — all recovery timestamps are shown with explicit timezone to prevent target ambiguity</dd></div>
+  </dl></section>
+  {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Only backup sets whose artifact exists (CREATED or VERIFIED) can be selected as a recovery set candidate. This backup set is {backup.state}.</p></section>}
+  {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
+  {restorable && (canRequestDrill || canRequestProduction) && (
+    <form class="decision" data-backup-id={backup.id}>
+      <label for="restoreType">Restore type
+        <select id="restoreType" name="restoreType">
+          {canRequestDrill && <option value="DRILL">DRILL — isolated non-production target</option>}
+          <option value="PRODUCTION" disabled={productionBlocked}>PRODUCTION — DENY UNTIL APPROVED (RD-020)</option>
+        </select>
+      </label>
+      <label for="targetEnvironment">Target environment (canonical: local · test · staging · production)
+        <select id="targetEnvironment" name="targetEnvironment">
+          <option value="test">test</option>
+          <option value="local">local</option>
+          <option value="staging">staging</option>
+          <option value="production" disabled>production — isolated drill targets only</option>
+        </select>
+      </label>
+      <label for="reason">Reason (required, recorded as recovery evidence)
+        <textarea id="reason" name="reason" rows="3" required minlength="3" maxlength="2000"></textarea>
+      </label>
+      <label class="confirm" for="confirmRestore"><input id="confirmRestore" name="confirmRestore" type="checkbox" required /> I understand this records a restore intent only, that no restore is executed by this system, and that the backup job state is not restore evidence.</label>
+      <button type="submit">Record restore request</button>
+      <p class="muted">The server re-checks permission, scope, environment, backup state, and policy. This form is a presentation hint, not the authorization boundary.</p>
+    </form>
+  )}
+</AppLayout>
+<script>
+  // @ts-expect-error Astro generates the action client module during the build.
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('.decision');
+  if (form) {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (button) button.disabled = true;
+      const data = new FormData(form);
+      try {
+        const result = await actions.system.requestRestore({
+          backupId: String(form.dataset.backupId),
+          restoreType: String(data.get('restoreType') ?? 'DRILL') as 'DRILL' | 'PRODUCTION',
+          targetEnvironment: String(data.get('targetEnvironment') ?? 'test') as 'local' | 'test' | 'staging' | 'production',
+          reason: String(data.get('reason') ?? ''),
+          confirmRestore: data.get('confirmRestore') === 'on',
+        });
+        if (result.error) {
+          window.alert('The restore request was not recorded. Review the requirements and try again.');
+          return;
+        }
+        window.location.href = `/system/backups/${String(form.dataset.backupId)}`;
+      } finally {
+        if (button) button.disabled = false;
+      }
+    });
+  }
+</script>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head a{color:var(--color-accent-primary-hover)}.panel,.decision,.denied{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.panel h2,.denied h2{margin-top:0;font-size:1rem}dl{display:grid;gap:var(--space-3);margin:0}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;max-width:55%;overflow-wrap:anywhere}.good{color:var(--status-success)}.warn{color:var(--status-warning)}code{overflow-wrap:anywhere;font-size:.72rem}.denied{border-inline-start:3px solid var(--status-error)}.decision{display:grid;gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}select,textarea{width:100%;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.confirm{display:flex;gap:.6rem;align-items:start;line-height:1.5}.confirm input{margin-top:.2rem}button{justify-self:start;min-height:var(--control-height);padding:.65rem 1.2rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}button:disabled{opacity:.6}@media(max-width:650px){.page-head{display:grid}dl div{display:grid;gap:.2rem}dd{text-align:start;max-width:none}}</style>

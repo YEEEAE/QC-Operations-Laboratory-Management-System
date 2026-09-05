@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-029: System Health + Backup/Restore catalog/orchestration/UI
+
+### تم التنفيذ
+- أُنشئ System Health application use case مع probes معزولة ومُنقّحة (application/database/storage/outbox/ai-provider) تعيد الحالة المعتمدة HEALTHY/DEGRADED/UNAVAILABLE/UNKNOWN بدون أي raw infrastructure errors أو secrets، وآلية AI DEGRADED لا تُسقط core READY، وPostgreSQL UNAVAILABLE يجعل core NOT READY.
+- أُنشئ موديول backup-recovery كاملًا (domain/ports/infrastructure/application) فوق جداول `qc.backup_runs`/`qc.restore_runs` الموجودة في migration 0014، مع فصل صريح بين نتيجة backup job (CREATED/VERIFIED) وrestore verification المشتق فقط من restore runs الفعلية، وview آمن لا يخرج storage_reference أو checksum خارج طبقة infrastructure.
+- أُنشئ restore intent boundary: `validate-restore-request` (سبب إلزامي + تأكيد صريح + بيئات canonical local/test/staging/production + DRILL ممنوع يستهدف production)، و`request-restore` يفحص صلاحية RESTORE حسب النوع (PERM-BKP-RESTORE-DRILL / PERM-BKP-RESTORE-PRODUCTION) مع scope GLOBAL، ويسجل الطلب بحالة PLANNED فقط مع replay idempotency وAudit/Outbox داخل transaction — ولا يوجد أي orchestrator مزيف أو تنفيذ فعلي، وproduction restore DENY لأن سلطته/e-signature غير معتمدة (RD-020، BKP-DD-014/016).
+- أُضيفت `system.requestRestore` كـ Astro Action (POST فقط، لا restore عبر GET)، وصفحات `/system/health` و`/system/backups` و`/system/backups/[backupId]` و`/system/backups/[backupId]/restore` تعرض السياق (backup/environment/timezone Asia/Riyadh/schema version/verification/gaps) وتفصل صراحة بين Job SUCCEEDED وRESTORE NOT VERIFIED.
+- أُضيفت سياسات `PERM-BKP-VIEW`/`PERM-BKP-RESTORE-DRILL`/`PERM-BKP-RESTORE-PRODUCTION`/`PERM-HLTH-VIEW` إلى policy-registry (Admin بدون permission صريح = DENY)، وأُضيفت جداول backup/restore إلى db-types، وصُحّح كود الـ nav للـ health إلى `PERM-HLTH-VIEW` (كان `PERM-SYS-HEALTH-VIEW` غير canonical) وأُضيف عنصر Backups بـ`PERM-BKP-VIEW`.
+
+### الملفات المتأثرة
+- `src/modules/system-health/{ports/health-probes.ts,application/{get-system-health,dependencies}.ts,infrastructure/postgres-health-probes.ts}`
+- `src/modules/backup-recovery/{domain/backup-record.ts,ports/{repository,recovery-orchestrator}.ts,infrastructure/postgres-repository.ts,application/{list-backups,get-backup,validate-restore-request,request-restore,dependencies}.ts}`
+- `src/actions/{system,index}.ts`, `src/pages/system/`, `src/ui/navigation/navigation.ts`
+- `src/shared/authorization/policy-registry.ts`, `src/shared/database/db-types.ts`
+- `tests/integration/system/{system-health,backup-catalog,restore-authorization}.test.ts`
+
+### التحقق
+- TDD: الاختبارات الثلاثة كُتبت أولًا وفشلت (modules غير موجودة) ثم نجحت ✅ — `27 tests / 3 files` في `tests/integration/system`.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- `node scripts/architecture/check-boundaries.mjs` ✅ و`git diff --check` ✅.
+- tsc --noEmit مفلتر على ملفات النطاق ✅ (صفر أخطاء)؛ الفحص العام يحتفظ بأخطاء foundation قديمة خارج النطاق.
+- ESLint scoped للملفات الجديدة والمتأثرة ✅.
+- static scans: لا raw SQL في Delivery، لا Admin bypass، لا secrets ✅.
+- `tests/unit/ui/master-016.test.ts` ⚠️ يفشل مسبقًا (imports ناقصة خارج النطاق، موثق من MASTER-026).
+- PostgreSQL/Testcontainers runtime ⚠️ لم يُشغّل لعدم توفر container runtime في البيئة.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** طبقات system health وbackup catalog وrestore intent boundary والصفحات والاختبارات والبناء أُنجزت محليًا؛ الـrestore يبقى intent-only بحالة PLANNED لأن لا provider ولا سلطه production معتمدة، والـposture يعرض backup job منفصلًا عن restore verification بدون أي ادعاء جاهزية استعادة.
+
+### ملاحظات / مشاكل مفتوحة
+- `RecoveryOrchestrator` port عقد فقط بلا أي implementation (عمدًا) — التنفيذ الفعلي يحتاج provider معتمد + drill evidence قبل أي claim.
+- Storage/AI probes تعيد UNKNOWN لأن provider topology وAI integration غير معتمدين؛ لا قيم RPO/RTO/retention أو صلاحية production restore مخترعة.
+- لا commit أو push، وتم الحفاظ على تعديل المستخدم السابق في `IMPLEMENTATION-MASTER-PLAN-MERGED.md`.
+
 ## [2026-09-05] — MASTER-027: Change Requests
 
 ### تم التنفيذ

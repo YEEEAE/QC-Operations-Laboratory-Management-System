@@ -158,6 +158,10 @@ const policies: readonly AuthorizationPolicy[] = [
   { permission: 'PERM-CHG-APPROVE', action: 'APPROVE', entityType: 'CHANGE_REQUEST', states: ['UNDER_REVIEW'] },
   { permission: 'PERM-CHG-REJECT', action: 'REJECT', entityType: 'CHANGE_REQUEST', states: ['UNDER_REVIEW'] },
   { permission: 'PERM-CHG-CANCEL', action: 'CANCEL', entityType: 'CHANGE_REQUEST', states: ['DRAFT', 'RETURNED'] },
+  { permission: 'PERM-BKP-VIEW', action: 'VIEW', entityType: 'BACKUP_RUN', states: ['REQUESTED', 'RUNNING', 'CREATED', 'VERIFYING', 'VERIFIED', 'FAILED', 'EXPIRED', 'DELETED'] },
+  { permission: 'PERM-BKP-RESTORE-DRILL', action: 'REQUEST_RESTORE', entityType: 'BACKUP_RESTORE', states: ['CREATED', 'VERIFIED'] },
+  { permission: 'PERM-BKP-RESTORE-PRODUCTION', action: 'REQUEST_RESTORE', entityType: 'BACKUP_RESTORE', states: ['CREATED', 'VERIFIED'] },
+  { permission: 'PERM-HLTH-VIEW', action: 'VIEW', entityType: 'SYSTEM_HEALTH', states: ['ACTIVE'] },
   ...([
     'INSPECTION_REPORT',
     'LAB_TEST',

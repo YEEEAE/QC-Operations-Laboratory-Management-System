@@ -1,0 +1,60 @@
+---
+import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import { backupCatalogReadDependencies } from '../../../../modules/backup-recovery/application/dependencies.js';
+import { isUuid } from '../../../../shared/id/uuid.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const backupId = Astro.params.backupId ?? '';
+if (!isUuid(backupId)) return Astro.redirect('/404');
+let detail;
+try {
+  detail = await backupCatalogReadDependencies().get.execute({ actor, backupId });
+} catch {
+  return Astro.redirect('/404');
+}
+if (!detail) return Astro.redirect('/404');
+const { backup, restoreRuns, restoreVerification, restorable } = detail;
+const canRequestDrill = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-RESTORE-DRILL');
+const jobLabel = backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'SUCCEEDED' : backup.state;
+const restoreLabel =
+  restoreVerification === 'VERIFIED'
+    ? 'RESTORE VERIFIED'
+    : restoreVerification === 'VERIFICATION_FAILED'
+      ? 'RESTORE VERIFICATION FAILED'
+      : restoreVerification === 'VERIFYING'
+        ? 'RESTORE VERIFYING'
+        : 'RESTORE NOT VERIFIED';
+const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const knownGaps = [
+  ...(backup.checksum ? [] : ['Integrity checksum is not recorded for this backup set.']),
+  ...(backup.state === 'CREATED' ? ['Backup artifact has not completed verification.'] : []),
+  ...(restoreVerification !== 'VERIFIED' ? ['No verified restore exists for this backup set.'] : []),
+  ...(backup.databaseSchemaVersion ? [] : ['Migration/schema context is not recorded for this backup set.']),
+];
+---
+<AppLayout title={`Backup ${backup.id} · QC Operations`} locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">UI-BKP-001 · RECOVERY CATALOG RECORD</p><h1>Backup set</h1><p class="lede">Metadata only: this page never exposes storage references or provider paths, and it never restores.</p></div><div class="head-actions"><span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {jobLabel}</span><span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>{restorable && canRequestDrill && <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>}</div></section>
+  <div class="grid">
+    <section class="panel"><h2>Backup metadata</h2><dl>
+      <div><dt>Backup set ID</dt><dd><code>{backup.id}</code></dd></div>
+      <div><dt>Backup job state</dt><dd>{backup.state} (execution result only)</dd></div>
+      <div><dt>Artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'YES' : 'NO'}</dd></div>
+      <div><dt>Requested</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh</dd></div>
+      {backup.artifactCreatedAt && <div><dt>Artifact created</dt><dd>{riyadh(backup.artifactCreatedAt)} · Asia/Riyadh</dd></div>}
+      {backup.verifiedAt && <div><dt>Artifact verified at</dt><dd>{riyadh(backup.verifiedAt)} · Asia/Riyadh</dd></div>}
+      {backup.sizeBytes !== undefined && <div><dt>Size</dt><dd>{backup.sizeBytes.toString()} bytes</dd></div>}
+      <div><dt>Integrity checksum</dt><dd>{backup.checksum ? 'RECORDED (value withheld)' : 'NOT RECORDED'}</dd></div>
+      <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>
+      {backup.errorCode && <div><dt>Job error code</dt><dd>{backup.errorCode}</dd></div>}
+    </dl></section>
+    <section class="panel"><h2>Restore verification</h2><p class="muted">Backup job success is not restore evidence (BKP-001). Verification status is derived only from recorded restore operations for this backup set.</p><dl>
+      <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{restoreLabel}</dd></div>
+      <div><dt>Recorded restore operations</dt><dd>{restoreRuns.length}</dd></div>
+    </dl>
+    {restoreRuns.length ? <div class="table-wrap"><table><caption>Restore operations recorded for this backup set</caption><thead><tr><th scope="col">Operation</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Target environment</th><th scope="col">Requested</th></tr></thead><tbody>{restoreRuns.map((run) => <tr><th scope="row"><code>{run.id}</code></th><td>{run.restoreType}</td><td>{run.state}</td><td>{run.targetEnvironment}</td><td>{riyadh(run.requestedAt)}</td></tr>)}</tbody></table></div> : <p class="muted">No restore operations are recorded for this backup set.</p>}</section>
+  </div>
+  <section class="panel"><h2>Known gaps</h2>{knownGaps.length ? <ul class="gaps">{knownGaps.map((gap) => <li>{gap}</li>)}</ul> : <p class="muted">No catalog-level gaps are recorded for this backup set. Catalog completeness is not restore evidence.</p>}</section>
+  <section class="notice" role="note"><strong>Restore boundary</strong><span>Restore intent is recorded through an explicit POST action with server-side authorization, required reason, and confirmation. A recorded request stays PLANNED: no restore provider or production authority is approved in this baseline, so nothing is executed and nothing is claimed verified.</span></section>
+</AppLayout>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.head-actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}.head-actions a{color:var(--color-accent-primary-hover)}.button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:#fff!important;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.pill{padding:.3rem .65rem;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap}.pill.ok{color:var(--status-success);border:1px solid var(--status-success)}.pill.bad{color:var(--status-error);border:1px solid var(--status-error)}.pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5);margin-bottom:var(--space-5)}.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.panel h2{margin-top:0;font-size:1rem}dl{display:grid;gap:var(--space-3);margin:0}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;overflow-wrap:anywhere}.good{color:var(--status-success)}.warn{color:var(--status-warning)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted);font-size:.8rem}th,td{padding:.6rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.78rem}th{font-weight:700}code{overflow-wrap:anywhere;font-size:.72rem}.gaps{display:grid;gap:.4rem;padding-inline-start:1.1rem;font-size:.85rem}.notice{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-inline-start:3px solid var(--status-warning);border-radius:var(--radius-lg);background:var(--surface-panel);display:grid;gap:.35rem}.notice span{color:var(--text-muted);font-size:.85rem}@media(max-width:700px){.page-head,.grid{display:grid}dl div{display:grid;gap:.2rem}dd{text-align:start}}</style>

@@ -1,0 +1,45 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { systemHealthReadDependencies } from '../../modules/system-health/application/dependencies.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+let view;
+try {
+  view = await systemHealthReadDependencies().health.health.execute({ actor });
+} catch {
+  return Astro.redirect('/404');
+}
+const canSeeBackupPosture = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-VIEW');
+const statusLabel = (status: string) =>
+  status === 'HEALTHY' ? 'HEALTHY' : status === 'DEGRADED' ? 'DEGRADED' : status === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'UNKNOWN';
+const coreBanner = view.coreStatus === 'READY'
+  ? { class: 'ok', title: 'Core system: READY', note: 'Critical dependencies required to serve core QC workflows are healthy. Optional capability degradation is listed separately.' }
+  : { class: 'bad', title: 'Core system: NOT READY', note: 'A critical dependency required to serve core QC workflows is not healthy. This is a sanitized operational view, not a machine readiness endpoint.' };
+const generatedAt = view.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const backup = view.backupPosture;
+const restoreLabel = backup
+  ? backup.restoreVerification === 'VERIFIED'
+    ? 'RESTORE VERIFIED'
+    : backup.restoreVerification === 'VERIFICATION_FAILED'
+      ? 'RESTORE VERIFICATION FAILED'
+      : backup.restoreVerification === 'VERIFYING'
+        ? 'RESTORE VERIFYING'
+        : backup.restoreVerification === 'UNKNOWN'
+          ? 'RESTORE VERIFICATION UNKNOWN'
+          : 'RESTORE NOT VERIFIED'
+  : '';
+---
+<AppLayout title="System health · QC Operations" locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">UI-SYS-001 · SANITIZED OPERATIONAL VIEW</p><h1>System health</h1><p class="lede">Status is derived from live server-side checks. Raw infrastructure errors, credentials, and endpoints are intentionally never shown. Machine readiness remains separate at /api/health/ready.</p></div><span class={`banner ${coreBanner.class}`}>{coreBanner.title}</span></section>
+  <section class="notice" role="note"><strong>Reading this view</strong><span>{coreBanner.note} Generated {generatedAt} (Asia/Riyadh).</span></section>
+  <section class="panel"><h2>Dependencies</h2><div class="table-wrap"><table><caption>Sanitized dependency status per approved health vocabulary</caption><thead><tr><th scope="col">Dependency</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead><tbody>{view.checks.map((item) => <tr><th scope="row">{item.dependency}</th><td><span class={`pill ${item.status === 'HEALTHY' ? 'ok' : item.status === 'DEGRADED' ? 'warn' : item.status === 'UNAVAILABLE' ? 'bad' : 'unknown'}`}>{statusLabel(item.status)}</span></td><td>{item.detail ?? '—'}</td></tr>)}</tbody></table></div><p class="muted">The AI advisory capability is optional: {view.aiCapability === 'DEGRADED' ? 'it is currently degraded while the core system remains READY.' : view.aiCapability === 'HEALTHY' ? 'it is available.' : 'its status is unknown and it never gates core readiness.'}</p></section>
+  {canSeeBackupPosture && backup && (
+    <section class="panel"><h2>Backup &amp; recovery posture</h2><p class="muted">Backup job success never equals a verified restore (BKP-001). These are separate facts and are never merged into a single green badge.</p>
+      <dl><div><dt>Last backup job state</dt><dd>{backup.lastBackupJobState ?? 'NO CATALOG DATA'}</dd></div><div><dt>Backup artifact verified</dt><dd>{backup.artifactVerified ? 'YES' : 'NO'}</dd></div><div><dt>Restore verification</dt><dd class={backup.restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{restoreLabel}</dd></div><div><dt>Posture status</dt><dd>{statusLabel(backup.postureStatus)}</dd></div></dl>
+      {backup.knownGaps.length > 0 && <div><h3>Known gaps</h3><ul class="gaps">{backup.knownGaps.map((gap) => <li><code>{gap}</code></li>)}</ul></div>}
+      <p class="muted">Backup catalog: <a href="/system/backups">/system/backups</a></p>
+    </section>
+  )}
+</AppLayout>
+<style>.pill{padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700}.pill.ok{color:var(--status-success);border:1px solid var(--status-success)}.pill.warn{color:var(--status-warning);border:1px solid var(--status-warning)}.pill.bad{color:var(--status-error);border:1px solid var(--status-error)}.pill.unknown{color:var(--text-muted);border:1px solid var(--color-border-strong)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.banner{padding:.45rem .8rem;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap}.banner.ok{border:1px solid var(--status-success);color:var(--status-success)}.banner.bad{border:1px solid var(--status-error);color:var(--status-error)}.notice,.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2{margin-top:0;font-size:1rem}.panel h3{font-size:.85rem;margin-bottom:.35rem}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.82rem}th{font-weight:700}dl{display:grid;gap:var(--space-3);margin:0 0 var(--space-4)}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;font-weight:700}.good{color:var(--status-success)}.warn{color:var(--status-warning)}.gaps{display:flex;gap:.5rem;flex-wrap:wrap;list-style:none;padding:0}code{padding:.2rem .45rem;background:var(--surface-raised);border-radius:var(--radius-sm);font-size:.72rem}.panel a{color:var(--color-accent-primary-hover)}</style>

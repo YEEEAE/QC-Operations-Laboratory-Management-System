@@ -272,6 +272,40 @@ export interface ElectronicSignaturesTable {
   request_id: string;
 }
 
+export interface BackupRunsTable {
+  id: Generated<string>;
+  state: string;
+  requested_by: string | null;
+  requested_at: Generated<Date>;
+  started_at: Date | null;
+  artifact_created_at: Date | null;
+  verified_at: Date | null;
+  completed_at: Date | null;
+  storage_reference: string | null;
+  size_bytes: number | bigint | null;
+  checksum: string | null;
+  database_schema_version: string | null;
+  error_code: string | null;
+  request_id: string;
+}
+
+export interface RestoreRunsTable {
+  id: Generated<string>;
+  backup_run_id: string;
+  restore_type: string;
+  state: string;
+  requested_by: string | null;
+  authorized_by: string | null;
+  requested_at: Generated<Date>;
+  started_at: Date | null;
+  verified_at: Date | null;
+  completed_at: Date | null;
+  target_environment: string;
+  error_code: string | null;
+  evidence: unknown | null;
+  request_id: string;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -305,6 +339,8 @@ export interface DatabaseSchema {
   approval_work_items: ApprovalWorkItemsTable;
   approval_decisions: ApprovalDecisionsTable;
   electronic_signatures: ElectronicSignaturesTable;
+  backup_runs: BackupRunsTable;
+  restore_runs: RestoreRunsTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;
