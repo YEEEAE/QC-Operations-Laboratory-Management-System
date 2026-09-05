@@ -1,0 +1,12 @@
+import { describe, expect, it } from 'vitest';
+import type { ActorContext } from '../../../src/shared/authorization/types';
+import { SaveMeasurementsUseCase } from '../../../src/modules/laboratory/application/save-measurements';
+import type { LabRepository } from '../../../src/modules/laboratory/ports/repository';
+import type { LabTest } from '../../../src/modules/laboratory/domain/lab-test';
+
+const actor: ActorContext = { id:'00000000-0000-7000-8000-000000000001', accountState:'ACTIVE', roles:[], permissions:[
+  {code:'PERM-LAB-VIEW',scopes:['OWN']},{code:'PERM-LAB-EDIT-DRAFT',scopes:['OWN']},{code:'PERM-LAB-ENTER-MEASUREMENT',scopes:['OWN']},
+]};
+const test: LabTest = { id:'00000000-0000-7000-8000-000000000002',labTestNo:'TEST-ONLY-001',state:'DRAFT',scientificResult:null,authorId:actor.id,createdBy:actor.id,version:1n,context:{templateVersionId:'template',versionNo:'fixture',methodReference:'fixture-method',sourceReference:'fixture-source',contentHash:'fixture-hash',requirementsReference:'fixture-source',source:{},documents:[],equipment:[],parameters:[{id:'parameter',code:'p',label:'P',dataType:'NUMERIC',unit:'u',required:true,sourceReference:'fixture-source',criteria:{fixture:true}}]},samples:[{id:'sample',identifier:'sample-1'}],measurements:[],originalTestId:null,retestSequence:0,retestReason:null,createdAt:'2026-01-01T00:00:00.000Z',updatedAt:'2026-01-01T00:00:00.000Z',submittedAt:null,reviewStartedAt:null,approvedAt:null };
+class MemoryRepository implements LabRepository { value=test; async get(){return this.value;} async list(){return [this.value];} async create(){return this.value;} async history(){return [];} async save(_previous:LabTest,next:LabTest){this.value=next;return next;} }
+describe('laboratory draft measurement entry',()=>{it('preserves raw decimal text and rejects a stale version',async()=>{const repository=new MemoryRepository();const useCase=new SaveMeasurementsUseCase(repository,()=>new Date('2026-01-02T00:00:00.000Z'));const result=await useCase.execute({actor,id:test.id,expectedVersion:1n,samples:test.samples,measurements:[{sampleId:'sample',parameterId:'parameter',raw:'9007199254740993.0000000001',unit:'u'}],requestId:'test'});expect(result.measurements[0]?.raw).toBe('9007199254740993.0000000001');await expect(useCase.execute({actor,id:test.id,expectedVersion:1n,samples:test.samples,measurements:[],requestId:'stale'})).rejects.toMatchObject({code:'CONFLICT_STALE_VERSION'});});});

@@ -6,6 +6,18 @@ export interface AuthorizationPolicy {
   states: readonly string[];
 }
 const policies: readonly AuthorizationPolicy[] = [
+  ...(['DRAFT','SUBMITTED','UNDER_REVIEW','RETURNED','APPROVED','REJECTED','VOID'].flatMap((state) => [{ permission:'PERM-LAB-VIEW', action:'VIEW', entityType:'LAB_TEST', states:[state] }])) as unknown as AuthorizationPolicy[],
+  { permission:'PERM-LAB-CREATE', action:'CREATE', entityType:'LAB_TEST', states:['DRAFT'] },
+  { permission:'PERM-LAB-EDIT-DRAFT', action:'SAVE', entityType:'LAB_TEST', states:['DRAFT'] },
+  { permission:'PERM-LAB-ENTER-SAMPLE', action:'SAVE', entityType:'LAB_TEST', states:['DRAFT'] },
+  { permission:'PERM-LAB-ENTER-MEASUREMENT', action:'SAVE', entityType:'LAB_TEST', states:['DRAFT'] },
+  { permission:'PERM-LAB-SUBMIT', action:'SUBMIT', entityType:'LAB_TEST', states:['DRAFT'] },
+  { permission:'PERM-LAB-REVIEW', action:'REVIEW', entityType:'LAB_TEST', states:['SUBMITTED'] },
+  { permission:'PERM-APR-REVIEW', action:'REVIEW', entityType:'LAB_TEST', states:['SUBMITTED'] },
+  { permission:'PERM-LAB-RETURN', action:'RETURN', entityType:'LAB_TEST', states:['SUBMITTED','UNDER_REVIEW'] },
+  { permission:'PERM-LAB-EDIT-DRAFT', action:'RESUME', entityType:'LAB_TEST', states:['RETURNED'] },
+  { permission:'PERM-LAB-APPROVE', action:'APPROVE', entityType:'LAB_TEST', states:['UNDER_REVIEW'] },
+  { permission:'PERM-APR-APPROVE', action:'APPROVE', entityType:'LAB_TEST', states:['UNDER_REVIEW'] },
   ...(['FINDING','NCR','RCA','CAPA'].flatMap((entityType) => [{ permission: `PERM-${entityType === 'FINDING' ? 'FIND' : entityType}-VIEW`, action: 'VIEW', entityType, states: ['DRAFT','OPEN','UNDER_REVIEW','UNDER_INVESTIGATION','RCA_IN_PROGRESS','CAPA_IN_PROGRESS','IN_PROGRESS','SUBMITTED','APPROVED','RETURNED','AWAITING_VERIFICATION','EFFECTIVENESS_REVIEW','READY_FOR_CLOSURE','CLOSED','VOID'] }])) as AuthorizationPolicy[],
   { permission: 'PERM-FIND-CREATE', action: 'CREATE', entityType: 'FINDING', states: ['DRAFT'] }, { permission: 'PERM-FIND-EDIT', action: 'EDIT', entityType: 'FINDING', states: ['DRAFT','OPEN'] }, { permission: 'PERM-FIND-REVIEW', action: 'SUBMIT_REVIEW', entityType: 'FINDING', states: ['OPEN'] }, { permission: 'PERM-FIND-REVIEW', action: 'RETURN', entityType: 'FINDING', states: ['UNDER_REVIEW'] }, { permission: 'PERM-FIND-CLOSE', action: 'CLOSE', entityType: 'FINDING', states: ['UNDER_REVIEW'] }, { permission: 'PERM-FIND-VOID', action: 'VOID', entityType: 'FINDING', states: ['DRAFT','OPEN','UNDER_REVIEW'] },
   { permission: 'PERM-NCR-CREATE', action: 'CREATE', entityType: 'NCR', states: ['DRAFT'] }, { permission: 'PERM-NCR-EDIT', action: 'START_INVESTIGATION', entityType: 'NCR', states: ['OPEN'] }, { permission: 'PERM-NCR-EDIT', action: 'START_RCA', entityType: 'NCR', states: ['UNDER_INVESTIGATION'] }, { permission: 'PERM-NCR-EDIT', action: 'MOVE_TO_CAPA', entityType: 'NCR', states: ['RCA_IN_PROGRESS'] }, { permission: 'PERM-NCR-EDIT', action: 'READY_FOR_CLOSURE', entityType: 'NCR', states: ['CAPA_IN_PROGRESS'] }, { permission: 'PERM-NCR-CLOSE', action: 'CLOSE', entityType: 'NCR', states: ['READY_FOR_CLOSURE'] },
