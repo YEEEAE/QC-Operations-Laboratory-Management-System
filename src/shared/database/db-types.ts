@@ -170,6 +170,9 @@ export interface LabDocumentUsageTable { id:Generated<string>; lab_test_id:strin
 export interface EquipmentTable { id:Generated<string>; equipment_no:string; name:string; manufacturer:string|null; model:string|null; serial_no:string|null; location:string|null; state:string; current_calibration_id:string|null; commissioned_at:Date|null; decommissioned_at:Date|null; created_at:Generated<Date>; created_by:string; updated_at:Generated<Date>; updated_by:string|null; version:Generated<bigint>; }
 export interface CalibrationRecordsTable { id:Generated<string>; calibration_no:string; equipment_id:string; state:string; calibration_date:string; due_date:string|null; provider:string|null; certificate_no:string|null; result:string|null; approved_at:Date|null; approved_by:string|null; became_current_at:Date|null; superseded_at:Date|null; voided_at:Date|null; void_reason:string|null; created_at:Generated<Date>; created_by:string; updated_at:Generated<Date>; version:Generated<bigint>; }
 export interface MaintenanceRecordsTable { id:Generated<string>; maintenance_no:string; equipment_id:string; state:string; maintenance_type:string|null; description:string; planned_at:Date|null; started_at:Date|null; completed_at:Date|null; performed_by:string|null; provider:string|null; result:string|null; created_by:string; created_at:Generated<Date>; updated_at:Generated<Date>; version:Generated<bigint>; }
+export interface DocumentIdentitiesTable { id: Generated<string>; document_no: string; document_type: string; title: string; owner_id: string | null; active: boolean; created_by: string; created_at: Generated<Date>; updated_at: Generated<Date>; version: Generated<bigint>; }
+export interface DocumentVersionsTable { id: Generated<string>; document_id: string; revision: string; state: string; effective_at: Date | null; approved_at: Date | null; approved_by: string | null; superseded_at: Date | null; archived_at: Date | null; voided_at: Date | null; void_reason: string | null; change_summary: string | null; content_hash: string | null; created_by: string; created_at: Generated<Date>; version: Generated<bigint>; }
+export interface DocumentVersionFilesTable { id: Generated<string>; document_version_id: string; file_id: string; file_role: string; linked_at: Generated<Date>; linked_by: string; }
 
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
@@ -196,6 +199,7 @@ export interface DatabaseSchema {
   lab_test_templates: LabTestTemplatesTable; lab_test_template_versions: LabTestTemplateVersionsTable; lab_test_template_parameters: LabTestTemplateParametersTable; lab_tests: LabTestsTable; lab_samples: LabSamplesTable; lab_measurements: LabMeasurementsTable; lab_test_snapshots: LabTestSnapshotsTable; lab_equipment_usage:LabEquipmentUsageTable; lab_document_usage:LabDocumentUsageTable;
   findings: FindingsTable; ncrs: NcrsTable; rcas: RcasTable; capas: CapasTable; capa_actions: CapaActionsTable;
   equipment: EquipmentTable; calibration_records: CalibrationRecordsTable; maintenance_records: MaintenanceRecordsTable;
+  document_identities: DocumentIdentitiesTable; document_versions: DocumentVersionsTable; document_version_files: DocumentVersionFilesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

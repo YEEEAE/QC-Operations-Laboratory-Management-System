@@ -10,3 +10,4 @@ export { capa } from './capa.js';
 export { quarantine } from './quarantine.js';
 export { laboratory } from './laboratory.js';
 export { assets } from './assets.js';
+export { documents } from './documents.js';

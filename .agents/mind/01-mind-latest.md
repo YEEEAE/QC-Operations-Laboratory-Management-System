@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-05] — MASTER-025: Controlled Documents implementation
+
+### تم التنفيذ
+- أُنشئت Controlled Documents domain models تفصل `DocumentIdentity` عن `DocumentVersion`، مع حالات lifecycle صريحة، revision metadata، content hash، ونسخة optimistic concurrency.
+- أُضيفت repository port وPostgreSQL adapter للجداول الموجودة في migration `0011_documents.sql`، مع transaction، `FOR UPDATE` في supersession، audit/outbox، وحفظ `document_version_files` عبر file IDs وFK إلى Files capability.
+- أُضيفت use cases للإنشاء، إنشاء Draft، تعديل Draft فقط، submit، review مسجل كأثر دائم، approve بصلاحيات الوثيقة وApproval infrastructure وSoD، وsupersede transactional محكوم بسياسة effective-date غير المعتمدة.
+- أُضيفت سياسات authorization للهوية والإصدار، مع default deny، scope، expected version، ومنع self-review/self-approval؛ لا توجد mutation route لـ`/effective`.
+- أُضيفت Actions وصفحات SSR للمكتبة، الهوية، الإصدار، محرر Draft، وت workspace المراجعة؛ الصفحة تعرض effective version من read model وتبقي approved/superseded history للقراءة فقط.
+- أُضيفت اختبارات مركزة للهوية/الإصدار، Draft editing، approved-edit denial، dual approval/SoD، stale/transition validation، وحفظ superseded history، مع E2E boundary coverage.
+
+### الملفات المتأثرة
+- `src/modules/documents/`
+- `src/shared/authorization/policy-registry.ts`
+- `src/shared/database/db-types.ts`
+- `src/actions/{documents,index}.ts`
+- `src/pages/documents/`
+- `tests/integration/documents/`, `tests/e2e/documents.spec.ts`
+
+### التحقق
+- `node node_modules/vitest/vitest.mjs run tests/integration/documents --passWithNoTests` ✅ — 4 files / 9 tests.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- `node scripts/architecture/check-boundaries.mjs` ✅.
+- `git diff --check` ✅.
+- TypeScript filtered check للنطاق ✅؛ الفحص الكامل ما زال يحتوي أخطاء foundation/dependencies قديمة خارج النطاق.
+- `node node_modules/playwright/cli.js test tests/e2e/documents.spec.ts` ⚠️ محجوب: Chromium executable غير مثبت في Playwright cache.
+- `node scripts/architecture/check-route-files.mjs` ⚠️ ما زال يفشل بسبب routes canonical ناقصة خارج Documents؛ مسارات Documents المطلوبة موجودة.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** Controlled Documents layers والضوابط والاختبارات المصدرية أُضيفت محليًا ونجحت اختبارات التكامل وbuild والحدود، لكن E2E runtime ينتظر Chromium، وeffective-date/approval authority وسياسة binary upload provider ما زالت غير معتمدة؛ لا commit أو push.
+
+### ملاحظات / مشاكل مفتوحة
+- `APPROVED → EFFECTIVE` وsupersession public execution بقيت DENY افتراضيًا إلى أن تعتمد effective-date policy؛ لا تم اختراع تاريخ نفاذ.
+- Binary content يبقى عبر shared Files capability؛ تنفيذ هذا النطاق يربط file IDs ولا يكتب object storage مباشرة، ولا يوجد provider/endpoint جديد غير معتمد.
+
 ## [2026-09-05] — MASTER-024: Assets equipment, calibration, maintenance, and laboratory eligibility
 
 ### تم التنفيذ

@@ -102,6 +102,17 @@ const policies: readonly AuthorizationPolicy[] = [
   { permission: 'PERM-MNT-EDIT', action: 'START', entityType: 'MAINTENANCE_RECORD', states: ['PLANNED'] },
   { permission: 'PERM-MNT-EDIT', action: 'CANCEL', entityType: 'MAINTENANCE_RECORD', states: ['DRAFT','PLANNED'] },
   { permission: 'PERM-MNT-COMPLETE', action: 'COMPLETE', entityType: 'MAINTENANCE_RECORD', states: ['IN_PROGRESS'] },
+  { permission: 'PERM-DOC-VIEW', action: 'VIEW', entityType: 'DOCUMENT_IDENTITY', states: ['CATALOG_ONLY'] },
+  { permission: 'PERM-DOC-CREATE', action: 'CREATE', entityType: 'DOCUMENT_IDENTITY', states: ['CATALOG_ONLY'] },
+  ...(['CATALOG_ONLY','DRAFT','IN_REVIEW','RETURNED','APPROVED','EFFECTIVE','SUPERSEDED','ARCHIVED','VOID'].flatMap((state) => [{ permission: 'PERM-DOC-VIEW', action: 'VIEW', entityType: 'DOCUMENT_VERSION', states: [state] }, { permission: 'PERM-DOC-DOWNLOAD', action: 'DOWNLOAD', entityType: 'DOCUMENT_VERSION', states: [state] }])) as unknown as AuthorizationPolicy[],
+  { permission: 'PERM-DOC-EDIT-DRAFT', action: 'EDIT', entityType: 'DOCUMENT_VERSION', states: ['DRAFT'] },
+  { permission: 'PERM-DOC-SUBMIT', action: 'SUBMIT', entityType: 'DOCUMENT_VERSION', states: ['DRAFT'] },
+  { permission: 'PERM-DOC-REVIEW', action: 'REVIEW', entityType: 'DOCUMENT_VERSION', states: ['IN_REVIEW'] },
+  { permission: 'PERM-APR-REVIEW', action: 'REVIEW', entityType: 'DOCUMENT_VERSION', states: ['IN_REVIEW'] },
+  { permission: 'PERM-DOC-APPROVE', action: 'APPROVE', entityType: 'DOCUMENT_VERSION', states: ['IN_REVIEW'] },
+  { permission: 'PERM-APR-APPROVE', action: 'APPROVE', entityType: 'DOCUMENT_VERSION', states: ['IN_REVIEW'] },
+  { permission: 'PERM-DOC-REVISE', action: 'REVISE', entityType: 'DOCUMENT_IDENTITY', states: ['APPROVED','EFFECTIVE','SUPERSEDED'] },
+  { permission: 'PERM-DOC-SUPERSEDE', action: 'SUPERSEDE', entityType: 'DOCUMENT_VERSION', states: ['EFFECTIVE','APPROVED'] },
 ];
 export function getAuthorizationPolicy(
   permission: PermissionCode,
