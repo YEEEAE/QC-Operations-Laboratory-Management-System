@@ -1,0 +1,569 @@
+# IMPLEMENTATION-MASTER-PLAN-MERGED.md
+
+# QC Operations & Laboratory Management System
+## Progressive Merged Implementation Prompts — Empty Repository → Go-Live
+
+**Repository:** `YEEEAE/QC-Operations-Laboratory-Management-System`  
+**Starting Reality:** Foundation documents only; no application package/runtime implementation  
+**Prompt Count:** 40 merged execution prompts  
+**Previous Plan Coverage:** all 151 original tasks are mapped exactly once into this merged plan  
+**Production Web Hosting:** Render Web Service  
+**Production Domain:** `qclevel.top`  
+**DNS:** Hostinger  
+
+> هذه النسخة مرتبة عمدًا من الملفات الأساسية أولًا: package/Render/Astro/config/paths/testing، ثم DB/Auth/Core/UI، ثم Domains، ثم Hardening/UAT/Go-Live. لا تبدأ Domain قبل إنهاء الأساس الذي يعتمد عليه.
+
+
+
+
+
+---
+
+# MASTER-036 — Recovery verification tooling + restore-drill runbook
+
+**Phase:** Recovery  
+**Merged from:** `IMP-223`
+
+## Files in scope
+
+- Create: scripts/recovery/verify-recovery-manifest.ts
+- Create: scripts/recovery/validate-restored-database.ts
+- Create: scripts/recovery/validate-restored-files.ts
+- Create: docs/operations/RESTORE-DRILL-RUNBOOK.md
+
+## Required specs
+
+- `Documents/BACKUP-RECOVERY-PLAN.md`
+- `Documents/DATABASE-ARCHITECTURE.md`
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
+
+## Copy-ready Codex prompt
+
+```text
+PROMPT ID: MASTER-036
+TITLE: Recovery verification tooling + restore-drill runbook
+
+REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
+
+BEFORE WORK:
+1. Read `.agents/mind/01-mind-latest.md` completely.
+2. Read root `AGENTS.md` completely.
+3. Read all REQUIRED SPECS listed below.
+4. Inspect current repository reality; never assume the previous prompt succeeded unless current files/tests prove it.
+5. Inspect `.agents/skills/`; read the full matching `SKILL.md` if a relevant local skill exists.
+6. Use TDD for behavior changes and verification-before-completion.
+7. Preserve: Astro Page/Client → Action/API → Authenticated Context → Application Use Case → Authorization → Domain/State Rules → Transaction → Repository → PostgreSQL → Audit/Outbox/Notifications.
+8. `src/pages/**`, `src/actions/**`, `src/middleware.ts` are Delivery only: no raw SQL/business rules.
+9. Default authorization DENY. Role ≠ Permission. Admin is not universal business authority.
+10. Never invent scientific/policy values, approval/release authority, RPO/RTO, retention, calibration/retest rules, or other deferred decisions.
+11. PASS ≠ RELEASED. No silent overwrite. Controlled history is preserved.
+12. AI is advisory only.
+13. No PASS/READY/100% claim without fresh evidence.
+14. No push, merge, commit, deletion or production deployment unless explicitly authorized in this execution session.
+
+REQUIRED SPECS:
+- Documents/BACKUP-RECOVERY-PLAN.md
+- Documents/DATABASE-ARCHITECTURE.md
+- Documents/PRODUCTION-READINESS-CHECKLIST.md
+
+FILES / PATHS IN SCOPE:
+- Create: scripts/recovery/verify-recovery-manifest.ts
+- Create: scripts/recovery/validate-restored-database.ts
+- Create: scripts/recovery/validate-restored-files.ts
+- Create: docs/operations/RESTORE-DRILL-RUNBOOK.md
+
+MISSION:
+1. Provider-neutral post-restore validation tooling.
+
+NON-NEGOTIABLE REQUIREMENTS:
+1. Do not fake physical backup/WAL provider implementation.
+2. Validate migration ledger/core relations/history/file object/hash/app context.
+3. Isolated drill default.
+4. Backup Created != Restore Verified.
+
+EXECUTION ORDER INSIDE THIS PROMPT:
+1. Inspect the in-scope files and current repository tree.
+2. Create/modify foundational/configuration files before files that import them.
+3. For behavior, write focused failing tests first.
+4. Implement from lowest layer upward: Domain/Shared primitive → Repository/Infrastructure → Application Use Case → Action/API → Page/UI.
+5. Never create a UI/action that points to a not-yet-existing authoritative use case.
+6. Run focused verification after each coherent sub-part.
+7. Run the combined verification listed below.
+8. Inspect `git diff` + `git diff --check` and search for secrets, raw SQL in Delivery, Admin bypasses, arbitrary target-state handling, and invented policy/science.
+9. Update Project Mind only with work actually implemented and verified.
+10. STOP. Do not continue to the next MASTER prompt.
+
+VERIFICATION:
+- disposable restored fixture validation
+- provider PITR remains blocked until hosting choice
+
+FINAL RESPONSE:
+- What was created/changed
+- Exact paths
+- Tests/commands actually run + results
+- Security/authorization/state/concurrency evidence relevant to this prompt
+- Anything BLOCKED by missing approved policy/provider/scientific data
+- Suggested commit message only; do not commit unless explicitly authorized
+```
+
+---
+
+# MASTER-037 — UAT actors/scenarios/data + evidence collector
+
+**Phase:** UAT  
+**Merged from:** `IMP-230`, `IMP-231`
+
+## Files in scope
+
+- Create: tests/uat/README.md
+- Create: tests/uat/actors.ts
+- Create: tests/uat/scenarios.ts
+- Create: scripts/uat/seed-uat.ts
+- Create: scripts/uat/run-uat.ts
+- Create: scripts/uat/collect-evidence.ts
+- Create: tests/uat/acceptance.test.ts
+- Create: evidence/uat/.gitkeep
+- Create: evidence/uat/README.md
+
+## Required specs
+
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+- `Documents/ROLE-MATRIX.md`
+- `Documents/PERMISSION-MATRIX.md`
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
+
+## Copy-ready Codex prompt
+
+```text
+PROMPT ID: MASTER-037
+TITLE: UAT actors/scenarios/data + evidence collector
+
+REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
+
+BEFORE WORK:
+1. Read `.agents/mind/01-mind-latest.md` completely.
+2. Read root `AGENTS.md` completely.
+3. Read all REQUIRED SPECS listed below.
+4. Inspect current repository reality; never assume the previous prompt succeeded unless current files/tests prove it.
+5. Inspect `.agents/skills/`; read the full matching `SKILL.md` if a relevant local skill exists.
+6. Use TDD for behavior changes and verification-before-completion.
+7. Preserve: Astro Page/Client → Action/API → Authenticated Context → Application Use Case → Authorization → Domain/State Rules → Transaction → Repository → PostgreSQL → Audit/Outbox/Notifications.
+8. `src/pages/**`, `src/actions/**`, `src/middleware.ts` are Delivery only: no raw SQL/business rules.
+9. Default authorization DENY. Role ≠ Permission. Admin is not universal business authority.
+10. Never invent scientific/policy values, approval/release authority, RPO/RTO, retention, calibration/retest rules, or other deferred decisions.
+11. PASS ≠ RELEASED. No silent overwrite. Controlled history is preserved.
+12. AI is advisory only.
+13. No PASS/READY/100% claim without fresh evidence.
+14. No push, merge, commit, deletion or production deployment unless explicitly authorized in this execution session.
+
+REQUIRED SPECS:
+- Documents/UAT-ACCEPTANCE-PLAN.md
+- Documents/ROLE-MATRIX.md
+- Documents/PERMISSION-MATRIX.md
+- Documents/PRODUCTION-READINESS-CHECKLIST.md
+
+FILES / PATHS IN SCOPE:
+- Create: tests/uat/README.md
+- Create: tests/uat/actors.ts
+- Create: tests/uat/scenarios.ts
+- Create: scripts/uat/seed-uat.ts
+- Create: scripts/uat/run-uat.ts
+- Create: scripts/uat/collect-evidence.ts
+- Create: tests/uat/acceptance.test.ts
+- Create: evidence/uat/.gitkeep
+- Create: evidence/uat/README.md
+
+MISSION:
+1. Materialize release-bound UAT matrix.
+2. Create UAT runner/evidence schema; never pre-fill PASS.
+
+NON-NEGOTIABLE REQUIREMENTS:
+1. Explicit grants/scopes only.
+2. Role × Domain × Workflow × State × Permission × positive/negative × evidence.
+3. No invented scientific data.
+4. Statuses only approved vocabulary.
+5. Every PASS links actual evidence.
+6. Code change invalidates affected evidence.
+7. No sensitive artifacts indiscriminately committed.
+
+EXECUTION ORDER INSIDE THIS PROMPT:
+1. Inspect the in-scope files and current repository tree.
+2. Create/modify foundational/configuration files before files that import them.
+3. For behavior, write focused failing tests first.
+4. Implement from lowest layer upward: Domain/Shared primitive → Repository/Infrastructure → Application Use Case → Action/API → Page/UI.
+5. Never create a UI/action that points to a not-yet-existing authoritative use case.
+6. Run focused verification after each coherent sub-part.
+7. Run the combined verification listed below.
+8. Inspect `git diff` + `git diff --check` and search for secrets, raw SQL in Delivery, Admin bypasses, arbitrary target-state handling, and invented policy/science.
+9. Update Project Mind only with work actually implemented and verified.
+10. STOP. Do not continue to the next MASTER prompt.
+
+VERIFICATION:
+- seed isolated UAT DB
+- unique/required scenario coverage
+- run against staging when exists; otherwise release status NOT_EXECUTED
+
+FINAL RESPONSE:
+- What was created/changed
+- Exact paths
+- Tests/commands actually run + results
+- Security/authorization/state/concurrency evidence relevant to this prompt
+- Anything BLOCKED by missing approved policy/provider/scientific data
+- Suggested commit message only; do not commit unless explicitly authorized
+```
+
+---
+
+# MASTER-038 — Production readiness checker + release evidence record
+
+**Phase:** Readiness  
+**Merged from:** `IMP-232`, `IMP-233`
+
+## Files in scope
+
+- Create: scripts/readiness/check-production-readiness.ts
+- Create: evidence/readiness/.gitkeep
+- Create: evidence/readiness/README.md
+- Create: scripts/readiness/generate-release-record.ts
+- Create: evidence/releases/.gitkeep
+- Create: evidence/releases/README.md
+
+## Required specs
+
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
+- `Documents/RISK-REGISTER.md`
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+- `Documents/BACKUP-RECOVERY-PLAN.md`
+- `Documents/DEPLOYMENT-ARCHITECTURE.md`
+
+## Copy-ready Codex prompt
+
+```text
+PROMPT ID: MASTER-038
+TITLE: Production readiness checker + release evidence record
+
+REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
+
+BEFORE WORK:
+1. Read `.agents/mind/01-mind-latest.md` completely.
+2. Read root `AGENTS.md` completely.
+3. Read all REQUIRED SPECS listed below.
+4. Inspect current repository reality; never assume the previous prompt succeeded unless current files/tests prove it.
+5. Inspect `.agents/skills/`; read the full matching `SKILL.md` if a relevant local skill exists.
+6. Use TDD for behavior changes and verification-before-completion.
+7. Preserve: Astro Page/Client → Action/API → Authenticated Context → Application Use Case → Authorization → Domain/State Rules → Transaction → Repository → PostgreSQL → Audit/Outbox/Notifications.
+8. `src/pages/**`, `src/actions/**`, `src/middleware.ts` are Delivery only: no raw SQL/business rules.
+9. Default authorization DENY. Role ≠ Permission. Admin is not universal business authority.
+10. Never invent scientific/policy values, approval/release authority, RPO/RTO, retention, calibration/retest rules, or other deferred decisions.
+11. PASS ≠ RELEASED. No silent overwrite. Controlled history is preserved.
+12. AI is advisory only.
+13. No PASS/READY/100% claim without fresh evidence.
+14. No push, merge, commit, deletion or production deployment unless explicitly authorized in this execution session.
+
+REQUIRED SPECS:
+- Documents/PRODUCTION-READINESS-CHECKLIST.md
+- Documents/RISK-REGISTER.md
+- Documents/UAT-ACCEPTANCE-PLAN.md
+- Documents/BACKUP-RECOVERY-PLAN.md
+- Documents/DEPLOYMENT-ARCHITECTURE.md
+
+FILES / PATHS IN SCOPE:
+- Create: scripts/readiness/check-production-readiness.ts
+- Create: evidence/readiness/.gitkeep
+- Create: evidence/readiness/README.md
+- Create: scripts/readiness/generate-release-record.ts
+- Create: evidence/releases/.gitkeep
+- Create: evidence/releases/README.md
+
+MISSION:
+1. Machine-assisted Go/No-Go aggregation without percentages.
+2. Generate exact release evidence record.
+
+NON-NEGOTIABLE REQUIREMENTS:
+1. Critical FAIL/UNVERIFIED => NO-GO.
+2. Required UAT FAIL/NOT_EXECUTED => NO-GO.
+3. Residual CRITICAL => NO-GO; VERY HIGH blocked by default.
+4. Required restore evidence missing => NO-GO.
+5. Artifact/Git SHA/migration mismatch => NO-GO.
+6. Script cannot be final human authority.
+7. Release/Git/Build/Migration/CI/UAT/security/restore/open risks/limitations/Go-NoGo fields.
+8. Do not auto-fill decision authority or GO.
+9. No secrets.
+
+EXECUTION ORDER INSIDE THIS PROMPT:
+1. Inspect the in-scope files and current repository tree.
+2. Create/modify foundational/configuration files before files that import them.
+3. For behavior, write focused failing tests first.
+4. Implement from lowest layer upward: Domain/Shared primitive → Repository/Infrastructure → Application Use Case → Action/API → Page/UI.
+5. Never create a UI/action that points to a not-yet-existing authoritative use case.
+6. Run focused verification after each coherent sub-part.
+7. Run the combined verification listed below.
+8. Inspect `git diff` + `git diff --check` and search for secrets, raw SQL in Delivery, Admin bypasses, arbitrary target-state handling, and invented policy/science.
+9. Update Project Mind only with work actually implemented and verified.
+10. STOP. Do not continue to the next MASTER prompt.
+
+VERIFICATION:
+- unit every blocking rule
+- no readiness percentage
+- schema/unit
+- sample TEST/UNVERIFIED record only
+
+FINAL RESPONSE:
+- What was created/changed
+- Exact paths
+- Tests/commands actually run + results
+- Security/authorization/state/concurrency evidence relevant to this prompt
+- Anything BLOCKED by missing approved policy/provider/scientific data
+- Suggested commit message only; do not commit unless explicitly authorized
+```
+
+---
+
+# MASTER-039 — Provider-aware Go-Live runbook and Render deployment gate
+
+**Phase:** Go-Live  
+**Merged from:** `IMP-234`
+
+## Files in scope
+
+- Create: docs/operations/GO-LIVE-RUNBOOK.md
+
+## Required specs
+
+- `Documents/DEPLOYMENT-ARCHITECTURE.md`
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
+- `Documents/BACKUP-RECOVERY-PLAN.md`
+
+## Copy-ready Codex prompt
+
+```text
+PROMPT ID: MASTER-039
+TITLE: Provider-aware Go-Live runbook and Render deployment gate
+
+REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
+
+BEFORE WORK:
+1. Read `.agents/mind/01-mind-latest.md` completely.
+2. Read root `AGENTS.md` completely.
+3. Read all REQUIRED SPECS listed below.
+4. Inspect current repository reality; never assume the previous prompt succeeded unless current files/tests prove it.
+5. Inspect `.agents/skills/`; read the full matching `SKILL.md` if a relevant local skill exists.
+6. Use TDD for behavior changes and verification-before-completion.
+7. Preserve: Astro Page/Client → Action/API → Authenticated Context → Application Use Case → Authorization → Domain/State Rules → Transaction → Repository → PostgreSQL → Audit/Outbox/Notifications.
+8. `src/pages/**`, `src/actions/**`, `src/middleware.ts` are Delivery only: no raw SQL/business rules.
+9. Default authorization DENY. Role ≠ Permission. Admin is not universal business authority.
+10. Never invent scientific/policy values, approval/release authority, RPO/RTO, retention, calibration/retest rules, or other deferred decisions.
+11. PASS ≠ RELEASED. No silent overwrite. Controlled history is preserved.
+12. AI is advisory only.
+13. No PASS/READY/100% claim without fresh evidence.
+14. No push, merge, commit, deletion or production deployment unless explicitly authorized in this execution session.
+
+REQUIRED SPECS:
+- Documents/DEPLOYMENT-ARCHITECTURE.md
+- Documents/UAT-ACCEPTANCE-PLAN.md
+- Documents/PRODUCTION-READINESS-CHECKLIST.md
+- Documents/BACKUP-RECOVERY-PLAN.md
+
+FILES / PATHS IN SCOPE:
+- Create: docs/operations/GO-LIVE-RUNBOOK.md
+
+MISSION:
+1. Write provider-aware Go-Live runbook only after provider decisions + real staging evidence.
+
+NON-NEGOTIABLE REQUIREMENTS:
+1. This prompt must use the already selected Render Web Service + qclevel.top baseline.
+2. Before actual production deploy, verify exact Render service hostname, Hostinger DNS, TLS, health-check behavior, exact release Git SHA/build ID/migration head, and Go/No-Go evidence.
+3. Actual production deployment still requires explicit user authorization in that execution session.
+4. If provider/evidence absent, mark Go-Live BLOCKED; do not invent commands.
+5. Approved release→migration→deploy→health/readiness→post-deploy→monitoring→release evidence.
+6. No dirty production deployment.
+7. Actual deployment requires explicit user authorization.
+
+EXECUTION ORDER INSIDE THIS PROMPT:
+1. Inspect the in-scope files and current repository tree.
+2. Create/modify foundational/configuration files before files that import them.
+3. For behavior, write focused failing tests first.
+4. Implement from lowest layer upward: Domain/Shared primitive → Repository/Infrastructure → Application Use Case → Action/API → Page/UI.
+5. Never create a UI/action that points to a not-yet-existing authoritative use case.
+6. Run focused verification after each coherent sub-part.
+7. Run the combined verification listed below.
+8. Inspect `git diff` + `git diff --check` and search for secrets, raw SQL in Delivery, Admin bypasses, arbitrary target-state handling, and invented policy/science.
+9. Update Project Mind only with work actually implemented and verified.
+10. STOP. Do not continue to the next MASTER prompt.
+
+VERIFICATION:
+- dry-run non-destructive commands
+- confirm exact release IDs
+
+FINAL RESPONSE:
+- What was created/changed
+- Exact paths
+- Tests/commands actually run + results
+- Security/authorization/state/concurrency evidence relevant to this prompt
+- Anything BLOCKED by missing approved policy/provider/scientific data
+- Suggested commit message only; do not commit unless explicitly authorized
+```
+
+---
+
+# MASTER-040 — Traceability closure + final Production Readiness assessment
+
+**Phase:** Closure  
+**Merged from:** `IMP-240`, `IMP-241`
+
+## Files in scope
+
+- Modify: Documents/REQUIREMENTS-TRACEABILITY.md
+- Modify: .agents/mind/01-mind-latest.md
+- Create: docs/verification/IMPLEMENTATION-EVIDENCE-INDEX.md
+- No new code unless defects are found; use approved checklist and evidence outputs
+
+## Required specs
+
+- `Documents/REQUIREMENTS-TRACEABILITY.md`
+- `Documents/TESTING-STRATEGY.md`
+- `Documents/RISK-REGISTER.md`
+- `Documents/PRODUCTION-READINESS-CHECKLIST.md`
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+
+## Copy-ready Codex prompt
+
+```text
+PROMPT ID: MASTER-040
+TITLE: Traceability closure + final Production Readiness assessment
+
+REPOSITORY: YEEEAE/QC-Operations-Laboratory-Management-System
+
+BEFORE WORK:
+1. Read `.agents/mind/01-mind-latest.md` completely.
+2. Read root `AGENTS.md` completely.
+3. Read all REQUIRED SPECS listed below.
+4. Inspect current repository reality; never assume the previous prompt succeeded unless current files/tests prove it.
+5. Inspect `.agents/skills/`; read the full matching `SKILL.md` if a relevant local skill exists.
+6. Use TDD for behavior changes and verification-before-completion.
+7. Preserve: Astro Page/Client → Action/API → Authenticated Context → Application Use Case → Authorization → Domain/State Rules → Transaction → Repository → PostgreSQL → Audit/Outbox/Notifications.
+8. `src/pages/**`, `src/actions/**`, `src/middleware.ts` are Delivery only: no raw SQL/business rules.
+9. Default authorization DENY. Role ≠ Permission. Admin is not universal business authority.
+10. Never invent scientific/policy values, approval/release authority, RPO/RTO, retention, calibration/retest rules, or other deferred decisions.
+11. PASS ≠ RELEASED. No silent overwrite. Controlled history is preserved.
+12. AI is advisory only.
+13. No PASS/READY/100% claim without fresh evidence.
+14. No push, merge, commit, deletion or production deployment unless explicitly authorized in this execution session.
+
+REQUIRED SPECS:
+- Documents/REQUIREMENTS-TRACEABILITY.md
+- Documents/TESTING-STRATEGY.md
+- Documents/RISK-REGISTER.md
+- Documents/PRODUCTION-READINESS-CHECKLIST.md
+- Documents/UAT-ACCEPTANCE-PLAN.md
+
+FILES / PATHS IN SCOPE:
+- Modify: Documents/REQUIREMENTS-TRACEABILITY.md
+- Modify: .agents/mind/01-mind-latest.md
+- Create: docs/verification/IMPLEMENTATION-EVIDENCE-INDEX.md
+- No new code unless defects are found; use approved checklist and evidence outputs
+
+MISSION:
+1. Close implementation traceability only from current executed evidence.
+2. Perform final Go/No-Go for exact release; any fix creates a new candidate and may invalidate evidence.
+
+NON-NEGOTIABLE REQUIREMENTS:
+1. Requirement→Rule→Permission→State→Data→Implementation→Tests→E2E/UAT→Evidence→PASS/FAIL.
+2. Unexecuted tests never PASS.
+3. Residual risks remain unverified until proven.
+4. Mind reflects actual code/runtime, not plan.
+5. No unsupported 100%.
+6. No percentage overrides blocker.
+7. Human/policy authority owns final decision.
+8. Any required critical UNVERIFIED => NO-GO.
+
+EXECUTION ORDER INSIDE THIS PROMPT:
+1. Inspect the in-scope files and current repository tree.
+2. Create/modify foundational/configuration files before files that import them.
+3. For behavior, write focused failing tests first.
+4. Implement from lowest layer upward: Domain/Shared primitive → Repository/Infrastructure → Application Use Case → Action/API → Page/UI.
+5. Never create a UI/action that points to a not-yet-existing authoritative use case.
+6. Run focused verification after each coherent sub-part.
+7. Run the combined verification listed below.
+8. Inspect `git diff` + `git diff --check` and search for secrets, raw SQL in Delivery, Admin bypasses, arbitrary target-state handling, and invented policy/science.
+9. Update Project Mind only with work actually implemented and verified.
+10. STOP. Do not continue to the next MASTER prompt.
+
+VERIFICATION:
+- full lint/type/unit/integration/E2E/build
+- fresh+upgrade migrations
+- architecture check
+- evidence consistency
+- record release/evidence refs
+- if GO not proven report NO-GO blockers
+
+FINAL RESPONSE:
+- What was created/changed
+- Exact paths
+- Tests/commands actually run + results
+- Security/authorization/state/concurrency evidence relevant to this prompt
+- Anything BLOCKED by missing approved policy/provider/scientific data
+- Suggested commit message only; do not commit unless explicitly authorized
+```
+
+---
+
+# 4. No-Skip Checklist
+
+- [ ] `MASTER-001` — Root project + package.json + Render baseline
+- [ ] `MASTER-002` — Foundation normalization + architecture folders + canonical routes
+- [ ] `MASTER-003` — Testing harness + CI baseline
+- [ ] `MASTER-004` — Runtime config + IDs/time + errors + validation
+- [ ] `MASTER-005` — PostgreSQL runtime + migration engine + core qc schema + migration verification
+- [ ] `MASTER-006` — Identity/AuthZ/Audit/Outbox/Files shared schemas
+- [ ] `MASTER-007` — Tasks + Quality + Quarantine + Laboratory schemas
+- [ ] `MASTER-008` — Assets + Documents + Approvals + Change Requests + Backup metadata + seeds
+- [ ] `MASTER-009` — Concurrency + central authorization + SoD + Audit + Outbox
+- [ ] `MASTER-010` — Notifications + Files/Evidence + Object Storage + Search
+- [ ] `MASTER-011` — Logging + OpenTelemetry + health + security HTTP helpers + i18n
+- [ ] `MASTER-012` — Identity domain + repositories + password/session + login/logout
+- [ ] `MASTER-013` — Account/admin-user use cases + Actions + login/account pages + middleware
+- [ ] `MASTER-014` — Roles/permissions/scopes repository + use cases + Actions
+- [ ] `MASTER-015` — Design tokens + layouts + primitives + forms
+- [ ] `MASTER-016` — Tables + shell/navigation + dialogs/stale UX + E-Sign + charts + root/error pages
+- [ ] `MASTER-017` — Dashboard + Search + Notifications + Audit UI
+- [ ] `MASTER-018` — Report registry + CSV/XLSX export + report pages
+- [ ] `MASTER-019` — Tasks end-to-end implementation
+- [ ] `MASTER-020` — Quality: Finding + NCR + RCA + CAPA
+- [ ] `MASTER-021` — Quarantine: Receiving + Inspection execution
+- [ ] `MASTER-022` — Quarantine: Review + Release + dashboards/pages + E2E
+- [ ] `MASTER-023` — Laboratory complete implementation
+- [ ] `MASTER-024` — Assets: Equipment + Calibration + Maintenance
+- [ ] `MASTER-025` — Controlled Documents complete implementation
+- [ ] `MASTER-026` — Approvals + E-Signatures
+- [ ] `MASTER-027` — Change Requests
+- [ ] `MASTER-028` — Admin users + roles + permissions + scopes pages
+- [ ] `MASTER-029` — System Health + Backup/Restore catalog/orchestration/UI
+- [ ] `MASTER-030` — AI Advisory boundary + UI + security tests
+- [ ] `MASTER-031` — Production security + rate limiting + observability wiring
+- [ ] `MASTER-032` — Concurrency/idempotency stress + full authorization/IDOR matrix
+- [ ] `MASTER-033` — Critical workflow E2E + files/reports security
+- [ ] `MASTER-034` — Accessibility + failure UX + performance baseline
+- [ ] `MASTER-035` — Release identity + full CI + developer/operator docs
+- [ ] `MASTER-036` — Recovery verification tooling + restore-drill runbook
+- [ ] `MASTER-037` — UAT actors/scenarios/data + evidence collector
+- [ ] `MASTER-038` — Production readiness checker + release evidence record
+- [ ] `MASTER-039` — Provider-aware Go-Live runbook and Render deployment gate
+- [ ] `MASTER-040` — Traceability closure + final Production Readiness assessment
+
+---
+
+# 5. Coverage / Merge Verification
+
+- Original tasks covered: **151/151**.
+- New merged prompts: **40**.
+- Every original Task ID appears in exactly one merged prompt.
+- `render.yaml`, `package.json`, Node/pnpm/Astro/TypeScript/environment setup are deliberately in `MASTER-001`.
+- Canonical paths/routing architecture is deliberately in `MASTER-002`, while functional `.astro` pages are created later with the Domain that owns their behavior.
+- Testing/CI is `MASTER-003`, before database/business implementation.
+- Deferred provider/scientific/policy decisions remain gated and are never silently invented.
+
+# 6. Recommended execution cadence
+
+نفّذ برومبت واحد في كل مرة. بعد ما ينجح ويكون عنده evidence فعلية، انتقل للي بعده. إذا ظهر قرار Policy/Scientific/Provider غير محسوم، Codex يوقف ويبلّغك بدل ما يخترع قرار.

@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — MASTER-035: Release identity + full CI + developer/operator docs
+
+### تم التنفيذ
+- أضفت primitive release identity في `src/config/release.ts` يربط `releaseId` بشكل deterministic مع Git SHA الدقيق، build ID، application/service version، migration head/checksum، وartifact checksum، ويرفض evidence الإنتاجي من working tree dirty/unknown.
+- أضفت `scripts/release/release-id.mjs` لإنشاء evidence بعد build و`scripts/release/verify-release.mjs` لإعادة حساب الهوية والتحقق من mismatch بدل قبول metadata غير موثوقة.
+- ربطت `RuntimeConfig` باسم الخدمة و`service.version` آمن، وأضافت اختبارات release مركزة تشمل deterministic metadata، dirty production، mismatch، وغياب الأسرار من public fields.
+- وسّعت `.github/workflows/ci.yml` إلى frozen install ثم formatting/lint/type/architecture/unit/integration/migration/concurrency/security/build/release evidence/E2E، مع artifact evidence وبدون deployment job أو production secrets.
+- أضفت أوامر package parity وكتبت أدلة التطوير والتشغيل الفعلية، مع فصل deployment عن rollback/forward-fix وعن backup/disaster recovery، وربط incident correlation بـrequestId/trace بدل اعتبار logs Audit.
+
+### الملفات المتأثرة
+- `.github/workflows/ci.yml`, `package.json`
+- `src/config/release.ts`, `src/config/runtime.ts`
+- `scripts/release/release-id.mjs`, `scripts/release/verify-release.mjs`
+- `tests/unit/release/release-id.test.ts`
+- `docs/development/LOCAL-DEVELOPMENT.md`, `docs/development/TESTING.md`
+- `docs/operations/RELEASE-RUNBOOK.md`, `docs/operations/INCIDENT-QUICK-REFERENCE.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/release/release-id.test.ts` ✅ — 7/7.
+- `pnpm build` ✅ — Astro server build ناجح، و`serviceVersion` موجود في output المبني.
+- `pnpm test:architecture` ✅، و`node --check` لسكريبتات release ✅، وYAML workflow validation ✅، و`git diff --check` ✅.
+- Prettier وESLint للملفات الداخلة في المهمة ✅؛ الفحص الكامل ما زال يفشل من baseline موجود في 238 ملف تنسيق و102 lint error خارج النطاق.
+- `pnpm typecheck` ❌ — 342 baseline errors خارج ملفات release/config؛ `pnpm test:unit` ❌ — 16 ملف نجح وملفا UI/Argon2 فشلا من baseline.
+- `pnpm test:integration`, `pnpm test:migrations`, `pnpm test:concurrency`, وDB-backed security ❌/UNVERIFIED — لا يوجد Docker/Testcontainers runtime محليًا، مع 25 اختبار security غير المرتبط بالـPostgreSQL نجحت قبل تعثر suite rate-limit.
+- `pnpm test:e2e` ❌/UNVERIFIED محليًا — 57 اختبارًا حاولت الاتصال، لكن sandbox منع اتصال Playwright بالخادم المحلي بـ`EPERM`; CI workflow يشغّل الخادم المبني قبل E2E.
+- Release CLI parity ✅ — إنشاء ثم verify لنفس build/artifact نجح؛ production dirty رفض، وenvironment mismatch رفض؛ فحص الأسرار في الملفات الجديدة بلا نتائج.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** release identity وCI evidence والوثائق أُضيفت وتحققت على المسارات القابلة للتشغيل محليًا، لكن نجاح CI/قاعدة البيانات/E2E والإنتاج ما زال غير مثبت بسبب baseline ومكونات التشغيل المحلية.
+
+### ملاحظات / مشاكل مفتوحة
+- Node المحلي `22.22.3` بينما engine المعتمد `>=24.20.0 <25`؛ يجب إعادة تشغيل البوابات على Node 24.20.x.
+- Production/UAT/deployment/restore/provider evidence لم تُشغّل، ولا توجد قيم approved جديدة للعلم أو السياسة أو RPO/RTO أو retention أو calibration/retest.
+- لم يتغير application version؛ release schema الحالي `1`، ولا يوجد commit أو push أو deployment.
+
 ## [2026-09-07] — MASTER-034: Accessibility + failure UX + performance baseline
 
 ### تم التنفيذ
