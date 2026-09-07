@@ -1,8 +1,7 @@
+/// <reference path="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
 
 interface ImportMetaEnv {
-  readonly PROD: boolean;
-  readonly NODE_ENV: 'development' | 'test' | 'production';
   readonly DATABASE_URL?: string;
   readonly SESSION_SECRET?: string;
   readonly SERVICE_VERSION?: string;

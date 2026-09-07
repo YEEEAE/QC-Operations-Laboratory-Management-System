@@ -8,6 +8,7 @@
  */
 import type {
   AiProvider,
+  AiAdvisoryRequest,
   AiProviderAvailability,
 } from '../ports/ai-provider.js';
 
@@ -16,7 +17,7 @@ export class DisabledAiProvider implements AiProvider {
     return { available: false, reason: 'NOT_CONFIGURED' };
   }
 
-  async complete(): Promise<unknown> {
+  async complete(_request: AiAdvisoryRequest): Promise<unknown> {
     throw new Error('AI advisory provider is not configured.');
   }
 }

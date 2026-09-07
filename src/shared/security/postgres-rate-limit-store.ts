@@ -28,8 +28,7 @@ export class PostgresRateLimitStore implements RateLimitStore {
       })
       .onConflict((oc) =>
         oc.columns(['policy_name', 'bucket_key', 'window_started_at']).doUpdateSet({
-          // unqualified column resolves to the existing row inside DO UPDATE
-          request_count: sql`request_count + 1`,
+          request_count: sql`rate_limit_windows.request_count + 1`,
           updated_at: new Date(),
         }),
       )

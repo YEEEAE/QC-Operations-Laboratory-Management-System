@@ -13,7 +13,7 @@ import { UpdateRolePermissionsUseCase } from '../modules/administration/applicat
 import { ManageUserScopesUseCase } from '../modules/administration/application/manage-user-scopes.js';
 
 const repo = () => { const database = getDatabase(); return new PostgresAuthorizationRepository(database, new PostgresAuditRepository(database)); };
-const withErrors = async <T>(work: () => Promise<T>, requestId?: string): Promise<T> => { try { return await work(); } catch (error) { const mapped = toActionError(error, requestId); throw new ActionError('BAD_REQUEST', mapped.error.messageKey); } };
+const withErrors = async <T>(work: () => Promise<T>, requestId?: string): Promise<T> => { try { return await work(); } catch (error) { const mapped = toActionError(error, requestId); throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey }); } };
 const requireActor = (actor: unknown) => { if (!actor) throw new AppError('AUTH_REQUIRED', { userSafe: true }); };
 
 const listRoles = defineAction({ accept: 'json', handler: (_input, context) => withErrors(async () => { requireActor(context.locals.actor); return new ListRolesUseCase(repo()).execute({ actor: context.locals.actor! }); }, context.locals.requestContext?.requestId) });

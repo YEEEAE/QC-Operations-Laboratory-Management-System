@@ -4,7 +4,86 @@ import { SubmitInspectionUseCase } from '../../../src/modules/quarantine/inspect
 import type { InspectionRepository } from '../../../src/modules/quarantine/inspection/ports/repository.js';
 import type { Inspection } from '../../../src/modules/quarantine/inspection/domain/inspection.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
-const actor:ActorContext={id:'01900000-0000-7000-8000-000000000001',accountState:'ACTIVE',roles:['EMPLOYEE'],permissions:[{code:'PERM-INSP-CREATE',scopes:['OWN']},{code:'PERM-INSP-SUBMIT',scopes:['OWN']}]};
-function repo(){let x:Inspection|undefined;return {async create(i:any){x=i.inspection;return x},async get(){return x},async list(){return x?[x]:[]},async saveDraft(){return x!},async transition(i:any){x={...x!,state:'SUBMITTED',version:x!.version+1n};return x}} as InspectionRepository;}
-const receiving={receivingId:'01900000-0000-7000-8000-000000000002',receivingNo:'RCV-1',docNo:'DOC-1',itemCode:'ITEM-1',description:'Material',lot:'LOT-1',qty:'2',receivingDate:new Date()};const template={templateId:'01900000-0000-7000-8000-000000000003',templateVersionId:'01900000-0000-7000-8000-000000000004',versionNo:'1',templateSnapshot:{templateVersionId:'x'},approved:true};
-describe('inspection execution',()=>{it('originates from receiving and approved template, then snapshots on submit path',async()=>{const r=repo();const x=await new StartInspectionUseCase(r,()=>new Date()).execute({actor,inspectionNo:'INSP-1',receiving,template,requestId:'req'});expect(x.state).toBe('DRAFT');expect(x.receiving.receivingId).toBe(receiving.receivingId);expect(x.template.templateVersionId).toBe(template.templateVersionId);await expect(new SubmitInspectionUseCase(r).execute({actor,id:x.id,expectedVersion:1n,requestId:'req'})).rejects.toThrow();});it('rejects draft template without inventing criteria',async()=>{const r=repo();await expect(new StartInspectionUseCase(r).execute({actor,inspectionNo:'INSP-2',receiving,template:{...template,approved:false},requestId:'req'})).rejects.toThrow();});});
+const actor: ActorContext = {
+  id: '01900000-0000-7000-8000-000000000001',
+  accountState: 'ACTIVE',
+  roles: ['EMPLOYEE'],
+  permissions: [
+    { code: 'PERM-INSP-CREATE', scopes: ['OWN'] },
+    { code: 'PERM-INSP-SUBMIT', scopes: ['OWN'] },
+  ],
+};
+function repo() {
+  let x: Inspection | undefined;
+  return {
+    async create(input: { inspection: Inspection }) {
+      x = input.inspection;
+      return x;
+    },
+    async get() {
+      return x;
+    },
+    async list() {
+      return x ? [x] : [];
+    },
+    async saveDraft() {
+      return x!;
+    },
+    async transition() {
+      x = { ...x!, state: 'SUBMITTED', version: x!.version + 1n };
+      return x;
+    },
+  } as InspectionRepository;
+}
+const receiving = {
+  receivingId: '01900000-0000-7000-8000-000000000002',
+  receivingNo: 'RCV-1',
+  docNo: 'DOC-1',
+  itemCode: 'ITEM-1',
+  description: 'Material',
+  lot: 'LOT-1',
+  qty: '2',
+  receivingDate: new Date(),
+};
+const template = {
+  templateId: '01900000-0000-7000-8000-000000000003',
+  templateVersionId: '01900000-0000-7000-8000-000000000004',
+  versionNo: '1',
+  templateSnapshot: { templateVersionId: 'x' },
+  approved: true,
+};
+describe('inspection execution', () => {
+  it('originates from receiving and approved template, then snapshots on submit path', async () => {
+    const r = repo();
+    const x = await new StartInspectionUseCase(r, () => new Date()).execute({
+      actor,
+      inspectionNo: 'INSP-1',
+      receiving,
+      template,
+      requestId: 'req',
+    });
+    expect(x.state).toBe('DRAFT');
+    expect(x.receiving.receivingId).toBe(receiving.receivingId);
+    expect(x.template.templateVersionId).toBe(template.templateVersionId);
+    await expect(
+      new SubmitInspectionUseCase(r).execute({
+        actor,
+        id: x.id,
+        expectedVersion: 1n,
+        requestId: 'req',
+      }),
+    ).rejects.toThrow();
+  });
+  it('rejects draft template without inventing criteria', () => {
+    const r = repo();
+    expect(() =>
+      new StartInspectionUseCase(r).execute({
+        actor,
+        inspectionNo: 'INSP-2',
+        receiving,
+        template: { ...template, approved: false },
+        requestId: 'req',
+      }),
+    ).toThrow();
+  });
+});

@@ -30,7 +30,7 @@ const login = defineAction({
       return { ok: true, redirectTo: safeReturnTo(input.returnTo) };
     } catch (error) {
       const mapped = toActionError(error, context.locals.requestContext?.requestId);
-      throw new ActionError('BAD_REQUEST', mapped.error.messageKey);
+      throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
     }
   },
 });
@@ -52,7 +52,7 @@ const logout = defineAction({
       return { ok: true, redirectTo: '/login' };
     } catch (error) {
       const mapped = toActionError(error, context.locals.requestContext?.requestId);
-      throw new ActionError('BAD_REQUEST', mapped.error.messageKey);
+      throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
     }
   },
 });

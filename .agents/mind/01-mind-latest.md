@@ -1,5 +1,190 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — Production Readiness: Astro 4 API alignment (partial) + gates BLOCKED, no production write
+
+### تم التنفيذ
+- ثبت Node `24.20.0` وpnpm `11.25.0` لكل البوابات، وفحصت واقع git عند HEAD `dd7a544` مع working tree فيه rollback Astro 4 وremediation سابق بدون commit/push.
+- شخصت typecheck منهجيًا: baseline `377` خطأ، والسبب الجذري الأول غياب `extends: astro/tsconfigs/strict` فكانت virtual modules `astro:actions`/`astro:middleware` بدون أنواع (35 خطأ 2305 + cascade implicit-any).
+- أصلحت `tsconfig.json` بإضافة `extends: astro/tsconfigs/strict`، وأزلت إعادة تعريف `PROD`/`NODE_ENV` المتعارضة من `src/env.d.ts`.
+- طابقت `ActionError` مع Astro 4 (`new ActionError({ code, message })`) في 9 ملفات actions بدل الصيغة الثنائية، وصلحت `DisabledAiProvider.complete` لتطابق interface `AiProvider` بقبول request.
+- أعدت القياس: `377` → `242` → `230` → `229` خطأ؛ `2305` و`7031` و`2687` و`2554` صارت صفر.
+
+### الملفات المتأثرة
+- `tsconfig.json`
+- `src/env.d.ts`
+- `src/actions/{account,admin,auth,reports,tasks,findings,ncr,capa,rca}.ts`
+- `src/modules/ai-advisory/infrastructure/disabled-ai-provider.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm build` ✅ — exit 0 على Node 24.
+- `pnpm test:architecture` ✅ — boundary check passed.
+- Focused Vitest `tests/unit/ai-advisory/advisory.test.ts` + `tests/unit/health-live.test.ts` ✅ — 2 files / 15 tests passed.
+- `git diff --check` ✅ — نظيف.
+- `git check-ignore -v .env` ✅ — ignored، و`git ls-files .env` فارغ؛ فحص diff للأسرار ✅ — بلا credential literal.
+- `pnpm typecheck` ❌ — exit 1، المجموع `229` (منها `2339: 126` لأسماء Actions المنقسمة، `2322: 13`، `7006: 12`، `2304: 12`، `Chart.astro CSS: 22`، `6385 deprecation: 25`).
+- `DATABASE_URL` في البيئة: MISSING؛ مفاتيح `.env` الحالية provider dump فقط (Hostname/Database/.../PSQL_Command) بدون canonical `DATABASE_URL`.
+- `pnpm db:migrate` و`db:seed:foundation` وpreflight إنتاجي لم تُشغّل — إيقاف إلزامي.
+
+### النتيجة
+- **الحالة:** محجوب / جزئي
+- **مختصر:** إصلاحات API صغيرة وثابتة قللت الأخطاء بـ148 ونجح build والفحوص المركزة، لكن typecheck العام ما زال FAIL بسبب معمارية Actions المنقسمة وأخطاء صفحات، وTask 007/008 غير مثبتين، ولا يوجد credential مدور — لذلك تهيئة Render محجوبة ولم يحدث أي production write.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم مهمة مستقلة لتوحيد `src/actions/index.ts` تحت `server` واحد بأسماء فريدة وتحديث ~23 صفحة تستخدم `actions.<namespace>`، مع معالجة تعارضات `create/transition/submit/review/approve/updateDraft`؛ بدونه تبقى 126 خطأ `2339` وكسر RPC وقت التشغيل للأكشنات غير auth.
+- تبقى أخطاء صفحات `2322/2304/7006` و`Chart.astro` (`1005/1381`) وdeprecations `6385` تحتاج معالجة منفصلة جراحية.
+- يلزم تدوير credential في Render وتوفير `DATABASE_URL` خارجي مدور عبر secret mechanism قبل أي Task 008 حقيقي؛ لا تُستخدم قيم `.env` الحالية للإنتاج.
+- RENDER PRODUCTION WRITE GATE = BLOCKED، وPRODUCTION TARGET = NOT CONFIRMED، وPRODUCTION INITIALIZATION = BLOCKED.
+
+## [2026-09-07] — Astro dependency compatibility rollback
+
+### تم التنفيذ
+- رجّعت `astro` من `7.3.1` إلى `4.16.19` لأنه أقرب لواجهات الكود الحالية المستخدمة في Actions/Middleware.
+- رجّعت `@astrojs/node` من `11.1.5` إلى `8.3.4` بما يطابق Astro 4.
+- أعدت توليد `pnpm-lock.yaml` وثبّتُّ dependencies عبر `pnpm install --frozen-lockfile` بدون عرض أسرار.
+- أبقيت تحديث `src/env.d.ts` الذي ولّده Astro لإشارة أنواع `.astro`، وأزلت تعديل `sharp` الجانبي من `pnpm-workspace.yaml`.
+
+### الملفات المتأثرة
+- `package.json`
+- `pnpm-lock.yaml`
+- `src/env.d.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- Astro version ✅ — `4.16.19`
+- Node adapter version ✅ — `8.3.4`
+- `node node_modules/astro/astro.js build` ✅ — server build اكتمل.
+- `pnpm test:architecture` ✅
+- Prettier check للملفات المتأثرة ✅
+- `git diff --check` ✅
+- focused Vitest: **5 files / 19 tests passed** ✅؛ ملفا PostgreSQL فشلا لأن Testcontainers لم يجد container runtime في هذه الجولة، مع teardown error تابع لعدم تهيئة الاتصال.
+- `astro check` ❌ — ما زالت أخطاء type/API كثيرة؛ downgrade وحده لم يثبت توافق typecheck الكامل.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** تم تثبيت baseline Astro 4 المقصود مع Node adapter المتوافق ونجح build، لكن typecheck الكامل ما زال محجوبًا بأخطاء API/typing قائمة، لذلك لا يُعلن التوافق الكامل.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد اتصال أو كتابة على Render، ولا migrations أو Foundation seed في الإنتاج؛ بوابات Task 007/008 ما زالت شرطًا مستقلًا.
+
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-009: local release-gate remediation
+
+### تم التنفيذ
+- أضفت route مستقلًا لـ`GET /api/health/live` يرجع `200` و`{"status":"healthy"}` بدون فحص PostgreSQL، وفشل اختبار regression أولًا لغياب route ثم نجح بعد الإضافة.
+- صححت upsert الخاص بـPostgreSQL rate limiting بتحديد `rate_limit_windows.request_count` داخل `ON CONFLICT`؛ كان التعبير غير المحدد يفشل في PostgreSQL 18 بـ`42702 ambiguous column`.
+- أصلحت عزل وتوقعات اختبارات integration القديمة: test pool للـrate limit يرحّل schema قبل الاستعمال، فحص `PUBLIC CREATE` يقيس ACL العام بدل امتياز مالك قاعدة الاختبار، وassertions تقيس constraint/order الصحيحين.
+- صححت اختبارات Tasks/Reporting/Inspection لتقيس permission/matcher/throw semantics الحقيقية، ونسقت الملفات المتأثرة.
+- ثبتُّ Node `24.20.0` وpnpm `11.25.0` محليًا لتشغيل البوابات المعتمدة؛ لم يُستخدم Render أو credential إنتاجي.
+
+### الملفات المتأثرة
+- `src/pages/api/health/live.ts`
+- `src/shared/security/postgres-rate-limit-store.ts`
+- `tests/unit/health-live.test.ts`
+- `tests/integration/{database/constraints,security/rate-limit,tasks/use-cases,reporting/reports,quarantine/inspection-execution}.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- HTTP live endpoint من production build ✅ — `200 {"status":"healthy"}`.
+- focused Node 24 + PostgreSQL 18 integration: **7 files / 27 tests passed** ✅.
+- `pnpm test:architecture` ✅، `pnpm build` ✅، scoped ESLint/Prettier و`git diff --check` ✅.
+- `pnpm typecheck` ❌ — **343 errors**؛ الجذر الحالي dependency/API mismatch واسع: lockfile يثبت `astro@7.3.1` لكن التطبيق يستخدم exports غير موجودة في هذا الإصدار مثل `defineAction`/`ActionError` و`defineMiddleware`، إضافةً إلى baseline typings خارج نطاق remediation.
+- full `pnpm test:integration` شُغّل مع Docker/Testcontainers لكن runner لم يعرض final summary في هذه البيئة؛ لا يُستنتج منه PASS. الفشل المتقطع الأول في concurrency مرّ عند التشغيل المعزول **5/5**.
+
+### النتيجة
+- **الحالة:** جزئي / محجوب
+- **مختصر:** أصلحت blocker liveness وbug PostgreSQL فعليًا وثبتت المسارات المتأثرة، لكن Task 007 لا يمكن إعلانه PASS مع typecheck العام الفاشل وبدون evidence كامل ثابت للـintegration/E2E. Task 008 وتهيئة Render ما زالت محجوبة لعدم وجود `DATABASE_URL` مدوّر/معتمد في البيئة.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم قرار controlled لتوافق Astro 7/codebase أو استعادة dependency baseline متوافق؛ لا يتم تعديل مئات ملفات Actions/Middleware عشوائيًا.
+- بعد إغلاق typecheck وتشغيل full integration وE2E بنجاح، يعاد Task 007. بعدها فقط يلزم توفير اعتماد Render خارجي مدوّر عبر secret mechanism وإعادة Task 008 قبل أي `db:migrate` إنتاجي.
+
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-009: production initialization blocked by unmet gates
+
+### تم التنفيذ
+- قرأت سجل الـmind الحالي كاملًا، وراجعت تعليمات المستودع ووثائق تشغيل Render ذات الصلة.
+- تحققت من أدلة Task 007 وTask 008 الحالية قبل أي اتصال أو كتابة إنتاجية.
+- ثبت أن آخر evidence لـTask 008 يقول `PRODUCTION TARGET: NOT CONFIRMED` و`PRODUCTION WRITE ALLOWED NEXT = NO`.
+- ثبت أن آخر evidence لـTask 007 يقول إن بوابة Render production write كانت محجوبة بسبب فشل `/api/health/live` وبوابات جودة أخرى.
+- أوقفت المهمة قبل `pnpm db:migrate`؛ لم تُقرأ أو تُطبع أي أسرار، ولم تُنفذ migrations أو seed أو SQL mutation.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- مراجعة preconditions من آخر mind evidence ✅ — الشروط غير مستوفاة.
+- فحص git status ✅ — التغيير الوحيد هو سجل الـmind الحالي.
+- `pnpm db:migrate` لم يُشغّل — إيقاف إلزامي قبل أي production write.
+- Foundation seed/check لم يُشغّل — ممنوع قبل نجاح migration verification.
+
+### النتيجة
+- **الحالة:** محجوب
+- **مختصر:** لم تبدأ تهيئة قاعدة Render لأن Task 007 وTask 008 غير مثبتين كناجحين في المصدر الأحدث؛ قاعدة البيانات بقيت بدون تغيير.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم إعادة إكمال Task 007 وتوثيق `RENDER PRODUCTION WRITE GATE: PASS`، ثم إعادة Task 008 على Render الحقيقي وتوثيق `PRODUCTION TARGET: CONFIRMED` و`PRODUCTION WRITE ALLOWED NEXT: YES` قبل إعادة هذه المهمة.
+
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-008: Render PostgreSQL read-only target preflight
+
+### تم التنفيذ
+- التزمت بوضع production read-only؛ لم تُنفذ أي أوامر `CREATE` أو `ALTER` أو `DROP` أو DML أو صلاحيات، ولم يتم أي migration أو seed أو bootstrap.
+- تحققت من وجود إعداد اتصال canonical بدون عرض أي قيمة سرية؛ الإعداد غير موجود في البيئة أو ملف `.env` المقروء بالـallowlist.
+- شغّلت `pnpm db:preflight` canonical، لكنه توقف قبل تشغيل preflight بسبب `Corepack EPERM` في cache المحلي.
+- شغّلت نفس سكربت preflight مباشرة عبر Node كتحقق بديل؛ رجع `DATABASE PREFLIGHT CONFIGURATION ERROR` لأن إعداد الاتصال غير موجود، لذلك لم يحدث اتصال بقاعدة Render.
+- أبقيت النتيجة غير مؤكدة ولم أستنتج هوية قاعدة أو نسخة PostgreSQL أو TLS أو جداول أو migration counts بدون دليل اتصال حالي.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- فحص إعداد الاتصال الآمن بدون طباعة قيم: غائب ✅
+- `pnpm db:preflight` ❌ — Corepack `EPERM` قبل تنفيذ السكربت
+- preflight المباشر عبر `node --import ... scripts/db/preflight.ts` ❌ — إعداد الاتصال مفقود، بدون اتصال
+- فحص read-only: لم تُنفذ أي كتابة أو migration أو SQL mutation ✅
+
+### النتيجة
+- **الحالة:** محجوب / غير مؤكد
+- **مختصر:** لا يمكن تأكيد Render PostgreSQL الحقيقي من هذا الجهاز؛ بوابة تدوير الاعتماد وبيانات الاتصال الخارجي غير متاحة، لذلك Production Write Allowed Next = NO.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم توفير اعتماد Render خارجي مدوّر عبر secret mechanism المعتمد ثم إعادة تشغيل `pnpm db:preflight` بعد إصلاح صلاحية Corepack المحلية.
+- Tasks 001–007 وRender production write gate لا تعتبر مكتملة بناءً على هذا التشغيل؛ آخر evidence في الـmind يذكر أن gate 007 كان محجوبًا.
+
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-007: disposable PostgreSQL 18 production-like release gate
+
+### تم التنفيذ
+- شغّلت حاوية PostgreSQL 18.6 disposable محلية مع TLS مؤقت، بدون production credentials أو production connection/write، ونفذت preflight بعد إنشاء schema بنجاح.
+- نفذت التسلسل canonical: migrations (`0001`–`0018`)، migration status/integrity، Foundation seed/check، initial-admin bootstrap/check، ثم repeat migration وFoundation seed/check؛ التكرار أعاد migrations بلا applied وFoundation counts ثابتة.
+- أثبتت critical database state: 60 جدولًا في `qc`، `schema_migrations=18`، `users=1`، `sessions=1`، `roles=4`، `permissions=198`، `role_permissions=164`، `user_roles=1`، `user_scopes=1`، `audit_events=3`.
+- اختبرت authentication عبر `LoginUseCase`: كلمة مرور خاطئة مرفوضة والصحيحة مقبولة وتصدر session؛ واختبرت server-side ADMIN authorization لصلاحية `PERM-IDN-MANAGE-USERS` وقراءة الأدوار read-only، ونجحت (`4` أدوار).
+- شغّلت نفس production build محليًا، وتحقق readiness بـ`200 healthy`، بينما `/api/health/live` غير موجود ويرجع `404`، وهو blocker صريح مقابل route contract المطلوب.
+- التقطت counts قبل/بعد restart وبقيت schema/auth counts ثابتة؛ أوقفت السيرفر وحذفت حاوية PostgreSQL disposable بعد الاختبار.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- PostgreSQL 18.6 disposable + TLS local ✅
+- `db:preflight` بعد schema ✅ — 18 applied / 0 pending
+- `db:migrate` ✅ — 18 applied أول مرة، ثم `applied=[]`, `pending=[]`
+- `db:migrate:status` وintegrity ✅
+- `db:seed:foundation` وcheck ✅ — 4 roles / 198 permissions / 164 grants
+- `bootstrap:admin` وcheck ✅ — user active، ADMIN، GLOBAL، effective authorization، audit presence
+- restart invariance ✅ — critical counts ثابتة قبل/بعد
+- `pnpm typecheck` ❌ — Corepack EPERM على Node `22.22.3`; direct `astro check` فيه baseline type errors
+- `pnpm lint` / `pnpm format:check` ❌ — Corepack EPERM؛ direct ESLint **88 errors** وPrettier **235 files**
+- `pnpm test` / `pnpm test:integration` ❌ — direct Vitest full: **270 passed / 8 failed**؛ integration: failures في constraints/rate-limit/concurrency/reports/tasks/inspection
+- `pnpm build` ✅ بالبديل المباشر `astro build`
+- E2E ❌ — **10 passed / 47 failed**؛ Playwright Chromium غير مثبت، وظهر أيضًا `ERR_MODULE_NOT_FOUND` من build chunks أثناء HTTP action paths
+
+### النتيجة
+- **الحالة:** محجوب
+- **مختصر:** rehearsal أثبت مسار PostgreSQL/Foundation/bootstrap والتكرار والـrestart على قاعدة disposable، لكن release gate لا يمر بسبب `/api/health/live` المفقود، quality-gate failures، ومشاكل E2E/runtime artifact؛ لم يتم الانتقال إلى Render.
+
+### ملاحظات / مشاكل مفتوحة
+- إضافة/تثبيت عقد `/api/health/live` مطلوبة قبل إعادة gate.
+- يلزم إصلاح أخطاء typecheck/lint/format والـ8 اختبارات الفاشلة، ومعالجة Playwright browser و`dist` chunk loading قبل إعادة E2E.
+- لا يوجد production write ولا commit ولا push.
+
 ## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-006: hardened one-time initial administrator bootstrap
 
 ### تم التنفيذ

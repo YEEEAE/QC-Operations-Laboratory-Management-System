@@ -52,7 +52,7 @@ describe('core PostgreSQL constraints and privileges', () => {
     );
     await expect(pool!.query('DELETE FROM qc.users WHERE id = $1', [userId])).rejects.toMatchObject(
       {
-        code: '23503',
+        code: '23001',
       },
     );
     expect(
@@ -68,13 +68,22 @@ describe('core PostgreSQL constraints and privileges', () => {
   it('does not provision custom database roles and keeps public schema create revoked', async () => {
     const result = await pool!.query(`
       SELECT count(*)::int AS custom_role_count,
-             has_schema_privilege(current_user, 'public', 'CREATE') AS can_create_public
+             NOT EXISTS (
+               SELECT 1
+               FROM pg_namespace namespace
+               CROSS JOIN LATERAL aclexplode(
+                 COALESCE(namespace.nspacl, acldefault('n', namespace.nspowner))
+               ) AS privilege
+               WHERE namespace.nspname = 'public'
+                 AND privilege.grantee = 0
+                 AND privilege.privilege_type = 'CREATE'
+             ) AS public_create_revoked
       FROM pg_roles
       WHERE rolname IN ('qc_migrator', 'qc_app_runtime')
     `);
     expect(result.rows[0]).toMatchObject({
       custom_role_count: 0,
-      can_create_public: false,
+      public_create_revoked: true,
     });
     const session = await pool!.query('SHOW search_path');
     expect(session.rows[0].search_path).toContain('qc');
@@ -181,9 +190,9 @@ describe('core PostgreSQL constraints and privileges', () => {
       'approval_decisions',
       'approval_work_items',
       'backup_runs',
+      'calibration_records',
       'capa_actions',
       'capas',
-      'calibration_records',
       'change_application_attempts',
       'change_request_changes',
       'change_requests',
@@ -233,8 +242,8 @@ describe('core PostgreSQL constraints and privileges', () => {
     await expect(
       pool!.query(
         `INSERT INTO qc.receiving_items
-          (doc_no, item_code, description, lot, qty, receiving_date, created_by)
-         VALUES ('DOC-1', 'ITEM-1', 'Item', 'LOT-1', 0, CURRENT_DATE, $1)`,
+          (receiving_no, doc_no, item_code, description, lot, qty, receiving_date, created_by)
+         VALUES ('RCV-CONSTRAINT-1', 'DOC-1', 'ITEM-1', 'Item', 'LOT-1', 0, CURRENT_DATE, $1)`,
         [userId],
       ),
     ).rejects.toMatchObject({ code: '23514' });
@@ -251,7 +260,7 @@ describe('core PostgreSQL constraints and privileges', () => {
       pool!.query(
         `INSERT INTO qc.lab_tests
           (lab_test_no, template_version_id, state, retest_sequence, author_id, created_by)
-         VALUES ('LAB-1', uuidv7(), 'DRAFT', 1, $1, $1)`,
+         VALUES ('LAB-1', uuidv7(), 'DRAFT', 0, $1, $1)`,
         [userId],
       ),
     ).rejects.toMatchObject({ code: '23503' });

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { Kysely, PostgresDialect } from 'kysely';
 import {
   InMemoryRateLimitStore,
   parseRateLimitPolicy,
@@ -11,6 +12,7 @@ import { PostgresRateLimitStore } from '../../../src/shared/security/postgres-ra
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container';
 import { getTestDatabaseUrl } from '../../helpers/test-env';
 import { createPool } from '../../../src/shared/database/pool';
+import { migrate } from '../../../scripts/db/migrate';
 
 /** Test thresholds only — production thresholds are policy/config-dependent. */
 const TEST_POLICY: RateLimitPolicy = { name: 'LOGIN', maxRequests: 3, windowSeconds: 60 };
@@ -146,21 +148,24 @@ describe('rate limit policy configuration', () => {
 
 describe('postgres rate limit store', () => {
   let pool: ReturnType<typeof createPool>;
-  let databaseUrl: string;
+  let database: Kysely<import('../../../src/shared/database/db-types.js').DatabaseSchema>;
 
   beforeAll(async () => {
-    databaseUrl = getTestDatabaseUrl(await startPostgresContainer());
-    pool = createPool({ connectionString: databaseUrl, max: 4 });
+    pool = createPool({
+      connectionString: getTestDatabaseUrl(await startPostgresContainer()),
+      max: 4,
+    });
+    await migrate({ pool });
+    database = new Kysely({ dialect: new PostgresDialect({ pool }) });
   });
 
   afterAll(async () => {
-    await pool.end();
+    await database.destroy();
     await stopPostgresContainer();
   });
 
   it('increments atomically inside a fixed window and starts a new window after expiry', async () => {
-    const { createDatabase } = await import('../../../src/shared/database/database');
-    const store = new PostgresRateLimitStore(createDatabase());
+    const store = new PostgresRateLimitStore(database);
     const windowStart = 1_700_000_000_000;
     const first = await store.increment('LOGIN', 'ip-1', windowStart, windowStart + 60_000);
     expect(first.count).toBe(1);
