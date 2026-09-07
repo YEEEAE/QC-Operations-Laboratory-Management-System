@@ -70,10 +70,17 @@ export class BootstrapInitialAdminUseCase {
 
       const adminRole = await transaction
         .selectFrom('roles')
-        .select(['id', 'active'])
+        .select(['id', 'active', 'is_system_role'])
         .where('code', '=', 'ADMIN')
         .executeTakeFirst();
-      if (!adminRole?.active) {
+      const existing = await transaction
+        .selectFrom('users')
+        .select('id')
+        .where('login_identity', '=', config.identity)
+        .executeTakeFirst();
+      if (existing) return { status: 'ALREADY_EXISTS' };
+
+      if (!adminRole?.active || !adminRole.is_system_role) {
         throw new BootstrapConfigurationError(
           'BOOTSTRAP BLOCKED: canonical ADMIN role is missing or inactive. Run the approved Foundation seed.',
         );
@@ -87,21 +94,15 @@ export class BootstrapInitialAdminUseCase {
         .where('permissions.active', '=', true)
         .execute();
       const actualAdminGrants = new Set(adminGrants.map((grant) => grant.code));
-      const missingAdminGrants = FOUNDATION_ROLE_PERMISSIONS.ADMIN.filter(
-        (permission) => !actualAdminGrants.has(permission),
-      );
-      if (missingAdminGrants.length > 0) {
+      const expectedAdminGrants = new Set(FOUNDATION_ROLE_PERMISSIONS.ADMIN);
+      const grantsMatchExactly =
+        actualAdminGrants.size === expectedAdminGrants.size &&
+        [...expectedAdminGrants].every((permission) => actualAdminGrants.has(permission));
+      if (!grantsMatchExactly) {
         throw new BootstrapConfigurationError(
           'BOOTSTRAP BLOCKED: canonical ADMIN authorization is incomplete. Run the approved Foundation seed and foundation check.',
         );
       }
-
-      const existing = await transaction
-        .selectFrom('users')
-        .select('id')
-        .where('login_identity', '=', config.identity)
-        .executeTakeFirst();
-      if (existing) return { status: 'ALREADY_EXISTS' };
 
       const passwordHash = await this.passwords.hash(config.password);
       const userId = uuidv7();

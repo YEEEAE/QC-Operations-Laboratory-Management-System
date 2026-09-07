@@ -12,6 +12,11 @@ import type { DatabaseSchema } from '../../src/shared/database/db-types.js';
 import { Argon2idPasswordHasher } from '../../src/modules/identity/security/argon2-password-hasher.js';
 import { loadMigrations, verifyMigrationIntegrity } from '../db/migrate.js';
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
+import {
+  assertFoundationAuthorizationReady,
+  inspectFoundationData,
+} from '../../db/seeds/common.js';
+import { redactBootstrapErrorMessage } from '../../src/modules/identity/application/bootstrap-admin-check.js';
 
 import '../db/load-local-env.js';
 
@@ -45,6 +50,7 @@ export async function runBootstrap(environment = process.env): Promise<void> {
   const database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) });
   try {
     await assertMigrationsApplied(pool);
+    assertFoundationAuthorizationReady(await inspectFoundationData(pool));
     const result = await new BootstrapInitialAdminUseCase(
       database,
       new Argon2idPasswordHasher(),
@@ -64,8 +70,7 @@ export async function runBootstrap(environment = process.env): Promise<void> {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   runBootstrap().catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : 'Bootstrap failed.';
-    console.error(message);
+    console.error(redactBootstrapErrorMessage(error, process.env));
     process.exitCode = 1;
   });
 }

@@ -3,7 +3,11 @@ import { randomBytes } from 'node:crypto';
 import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { BootstrapInitialAdminUseCase } from '../../../src/modules/identity/application/bootstrap-initial-admin.js';
+import {
+  BootstrapConfigurationError,
+  BootstrapInitialAdminUseCase,
+} from '../../../src/modules/identity/application/bootstrap-initial-admin.js';
+import { checkBootstrapAdmin } from '../../../src/modules/identity/application/bootstrap-admin-check.js';
 import { LoginUseCase } from '../../../src/modules/identity/application/login.js';
 import { SessionService } from '../../../src/modules/identity/application/session-service.js';
 import { PostgresSessionRepository } from '../../../src/modules/identity/infrastructure/postgres-session-repository.js';
@@ -16,6 +20,8 @@ import { migrate } from '../../../scripts/db/migrate.js';
 import { FOUNDATION_ROLE_PERMISSIONS, seedFoundationData } from '../../../db/seeds/common.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
+import { authorize } from '../../../src/shared/authorization/authorize.js';
+import { resolveActor } from '../../../src/modules/identity/application/identity-dependencies.js';
 
 const password = randomBytes(32).toString('base64url');
 const config = {
@@ -43,8 +49,35 @@ describe('initial administrator bootstrap', () => {
 
   afterAll(async () => {
     await database?.destroy();
-    await pool?.end();
     await stopPostgresContainer();
+  });
+
+  it('fails closed before account creation when canonical ADMIN authorization is incomplete', async () => {
+    const adminPermission = await database
+      .selectFrom('role_permissions')
+      .innerJoin('roles', 'roles.id', 'role_permissions.role_id')
+      .innerJoin('permissions', 'permissions.id', 'role_permissions.permission_id')
+      .select(['role_permissions.role_id', 'role_permissions.permission_id'])
+      .where('roles.code', '=', 'ADMIN')
+      .executeTakeFirstOrThrow();
+    await database
+      .deleteFrom('role_permissions')
+      .where('role_id', '=', adminPermission.role_id)
+      .where('permission_id', '=', adminPermission.permission_id)
+      .execute();
+
+    const blockedConfig = { ...config, identity: `${config.identity}-blocked` };
+    await expect(
+      new BootstrapInitialAdminUseCase(database, passwords).execute(blockedConfig),
+    ).rejects.toBeInstanceOf(BootstrapConfigurationError);
+    await expect(
+      database
+        .selectFrom('users')
+        .select('id')
+        .where('login_identity', '=', blockedConfig.identity)
+        .executeTakeFirst(),
+    ).resolves.toBeUndefined();
+    await seedFoundationData(pool);
   });
 
   it('creates one ACTIVE account with canonical ADMIN and GLOBAL relationships and effective grants', async () => {
@@ -117,6 +150,38 @@ describe('initial administrator bootstrap', () => {
         .where('user_id', '=', first!.id)
         .execute(),
     ).toHaveLength(1);
+  });
+
+  it('reports safe bootstrap status and permits an ADMIN-protected action through effective GLOBAL authorization', async () => {
+    const report = await checkBootstrapAdmin(database, config.identity);
+    expect(report).toEqual({
+      userExists: true,
+      accountActive: true,
+      adminRole: true,
+      globalScope: true,
+      effectiveAdminAuthorization: true,
+      bootstrapAuditPresence: true,
+    });
+
+    const actor = await resolveActor(
+      database,
+      (await users.findByLoginIdentity(config.identity))!.id,
+    );
+    expect(
+      actor?.permissions.find((permission) => permission.code === 'PERM-IDN-MANAGE-USERS')?.scopes,
+    ).toEqual(['GLOBAL']);
+    expect(
+      authorize({
+        actor: actor!,
+        permission: 'PERM-IDN-MANAGE-USERS',
+        action: 'MANAGE',
+        entity: { type: 'USER', id: 'target-user', state: 'ACTIVE' },
+        scope: {},
+        currentVersion: 1n,
+        expectedVersion: 1n,
+        businessCondition: true,
+      }).allowed,
+    ).toBe(true);
   });
 
   it('uses the existing Login use case and denies wrong passwords and disabled accounts', async () => {

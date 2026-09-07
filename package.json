@@ -33,7 +33,8 @@
     "db:preflight": "tsx scripts/db/preflight.ts",
     "db:seed:foundation": "tsx scripts/db/seed-foundation.ts",
     "db:seed:foundation:check": "tsx scripts/db/check-foundation-seed.ts",
-    "bootstrap:admin": "tsx scripts/bootstrap/create-initial-admin.ts"
+    "bootstrap:admin": "tsx scripts/bootstrap/create-initial-admin.ts",
+    "bootstrap:admin:check": "tsx scripts/bootstrap/check-initial-admin.ts"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",

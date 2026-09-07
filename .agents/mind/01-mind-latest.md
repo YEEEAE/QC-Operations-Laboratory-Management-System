@@ -1,5 +1,49 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-006: hardened one-time initial administrator bootstrap
+
+### تم التنفيذ
+- أضفت الأمر read-only `pnpm bootstrap:admin:check`؛ مخرجاته محصورة في وجود المستخدم، نشاط الحساب، ADMIN role، GLOBAL scope، effective ADMIN authorization، وbootstrap audit presence، بدون password/password_hash/session token/DATABASE_URL.
+- جعلت `bootstrap:admin` يشترط اكتمال migrations ونجاح canonical Foundation authorization check قبل إنشاء الحساب، مع exact ADMIN grant set وADMIN system role active.
+- أبقيت العملية explicit operator-only وcreate-only؛ identity موجودة مسبقًا ترجع `ALREADY_EXISTS` بدون reset password أو تغيير role/scope/account، والـbootstrap لا يوجد له استدعاء من build/migration/seed/startup/Render deploy.
+- صححت authorization resolver ليقرأ `user_scopes` الفعلية بدل منح كل actor `OWN + GLOBAL` ضمنيًا، وربطت check باختبار server-side فعلي لـ`PERM-IDN-MANAGE-USERS` عبر GLOBAL scope.
+- ثبّتُّ redaction لأخطاء bootstrap/check بحيث لا تطبع bootstrap password أو DATABASE_URL، وحدّثت runbook، وصححت اختبار Argon2id القديم ليختبر hash/verify الحقيقي بدل توقع dependency مفقودة.
+
+### الملفات المتأثرة
+- `scripts/bootstrap/create-initial-admin.ts`
+- `scripts/bootstrap/check-initial-admin.ts`
+- `src/modules/identity/application/bootstrap-initial-admin.ts`
+- `src/modules/identity/application/bootstrap-admin-check.ts`
+- `src/modules/identity/application/identity-dependencies.ts`
+- `tests/integration/bootstrap/initial-admin.test.ts`
+- `tests/unit/bootstrap/bootstrap-check.test.ts`
+- `tests/unit/identity/password-hasher.test.ts`
+- `docs/operations/INITIAL-ADMIN-BOOTSTRAP.md`
+- `package.json`
+
+### التحقق
+- PostgreSQL 18 disposable focused proof: **5/5 tests passed**؛ شمل migration/seed precondition، atomic fail-closed بدون partial user، create، exact ADMIN role/GLOBAL scope/audit، repeat existing behavior، Argon2id hash، login الصحيح والخاطئ، disabled-account denial، safe check، وADMIN-protected authorization ✅
+- Focused bootstrap/password/config/check suites: **4 files / 14 tests passed** ✅
+- `node scripts/architecture/check-boundaries.mjs` ✅، `astro build` ✅، scoped ESLint ✅، scoped Prettier ✅، `git diff --check` ✅
+- `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:integration` لم تبدأ عبر pnpm بسبب Corepack EPERM على Node المحلي `22.22.3`؛ direct equivalents سُجلت كما يلي: full Astro check baseline errors، full ESLint baseline **88 errors**، full Vitest **241 passed / 4 failed / 33 skipped**، وfull integration فيه failures baseline متعددة مع suites PostgreSQL التي احتاجت disposable runtime.
+- Full integration شُغّل أيضًا عبر Vitest مع Docker escalation؛ bootstrap suite نجحت، بينما بقيت failures مستقلة في Tasks/Rate Limit/Concurrency/Constraints/Reports/Inspection.
+- smoke تشغيل `bootstrap:admin:check` ببيئة وهمية أعاد connection error operator-safe بدون password أو DATABASE_URL، ولم يُستخدم أي production credential أو production database.
+
+### النتيجة
+- **الحالة:** نجح نطاق bootstrap والتحقق disposable؛ بوابات المشروع العامة **جزئية** بسبب baseline/بيئة Node 22/Corepack، وليست blocker في الكود المعدل.
+- **ADMIN BOOTSTRAP:** PASS — explicit only، create-only، preconditions، check command.
+- **ATOMICITY:** PASS — rollback/no partial account في disposable PostgreSQL 18.
+- **PASSWORD SECURITY:** PASS — canonical Argon2id، لا plaintext/log/output/error leakage في المسار المعدل.
+- **ROLE:** PASS — canonical active ADMIN role.
+- **GLOBAL SCOPE:** PASS — persisted GLOBAL scope ويقرأه resolver فعليًا.
+- **EFFECTIVE AUTHORIZATION:** PASS — server-side `authorize` ينجح فقط مع canonical grants + GLOBAL scope.
+- **AUTHENTICATION:** PASS — LoginUseCase يقبل السر الصحيح ويرفض الخاطئ/الحساب المعطل.
+- **PRODUCTION DB UNCHANGED:** PASS — لا production connection/write أو Render action.
+
+### ملاحظات / مشاكل مفتوحة
+- يجب تشغيل full quality gates في بيئة Node `24.20.0` مع Corepack/dependencies صحيحة، ومعالجة baseline failures المستقلة قبل إعلان repository-wide PASS.
+- لم يُنفذ production bootstrap؛ القيم الحقيقية وهوية `yazeed` في production ما زالت تتطلب تشغيل operator صريح بعد Foundation check.
+
 ## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-005: canonical production-safe authorization Foundation
 
 ### تم التنفيذ

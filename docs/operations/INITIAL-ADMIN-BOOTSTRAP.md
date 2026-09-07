@@ -30,6 +30,16 @@ This is an explicit, one-time production operation. It never runs during build, 
 5. Sign in at `https://qclevel.top/login` with identity `yazeed` and the configured password. Verify authentication first and authorization separately.
 6. Immediately remove `BOOTSTRAP_ADMIN_PASSWORD` from Render. Remove `BOOTSTRAP_ADMIN_IDENTITY`, `BOOTSTRAP_ADMIN_DISPLAY_NAME`, and optional email as well unless there is an approved reason to retain them.
 
+## Safe verification
+
+After the one-time command, run the read-only check with the same identity:
+
+```sh
+BOOTSTRAP_ADMIN_IDENTITY=yazeed pnpm bootstrap:admin:check
+```
+
+The check prints only whether the user exists, the account is active, the `ADMIN` role and `GLOBAL` scope are present, effective `ADMIN` authorization passes, and all bootstrap audit events are present. It never prints a password, password hash, session token, or `DATABASE_URL`.
+
 If the identity already exists, the command prints `Bootstrap admin already exists. No changes were made.` It never changes passwords, activation state, roles, scopes, or permissions on an existing account. Use the approved password-management workflow for later changes.
 
 The command fails closed when migrations are pending, the canonical `ADMIN` role is missing/inactive, the database is unreachable, or required bootstrap values are invalid. All user, role, scope, and audit writes are one transaction, so a failed assignment rolls back the entire bootstrap.
