@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-003: canonical `.env` loading and PostgreSQL TLS gate
+
+### تم التنفيذ
+- راجعت حالة 001/002 الحالية: `DATABASE_URL` هو عقد التطبيق، و`.env` غير tracked لكنه ما زال Render provider dump يحتوي credential قديمًا compromised؛ لم تُطبع أي قيمة ولم تُستخدم قاعدة إنتاج.
+- أضفت parser محليًا allowlisted وغير shell-based لأوامر `tsx`، مع أولوية المتغيرات المصدّرة من البيئة، وربطته بكل أوامر DB وبـbootstrap؛ حقول `Hostname`/`Password`/روابط Render العرضية تُتجاهل.
+- وحّدت إعداد اتصال PostgreSQL للـruntime/preflight/bootstrap/readiness: `sslmode` الصريح يُحترم، و`sslmode=disable` مرفوض، وغياب `sslmode` يفعّل certificate verification عبر `rejectUnauthorized=true`.
+- أضفت اختبارات parsing وTLS وredaction، وحدثت runbook بخطوة تدوير credential الصريحة: Render Dashboard → PostgreSQL → Credentials → credential جديد → تحديث `DATABASE_URL` بأمان → تحديث الخدمة → preflight → إلغاء القديم.
+- أبقيت `.env` provider dump مؤقتًا بدل حذف credential الوحيد قبل تأكيد توفر credential مدور؛ لا يجوز تشغيل production writes أو migrations قبل التدوير.
+
+### الملفات المتأثرة
+- `scripts/db/load-local-env.ts`
+- `scripts/db/{migrate,preflight,migration-status,check-migration-integrity}.ts`
+- `scripts/bootstrap/create-initial-admin.ts`
+- `src/shared/database/pool.ts`, `src/shared/health/postgres-readiness-probe.ts`
+- `tests/unit/database/preflight.test.ts`
+- `docs/operations/RENDER-DATABASE-CONNECTION.md`
+- `docs/operations/RENDER-POSTGRES-RECOVERY-AUDIT.md`
+
+### التحقق
+- `node node_modules/vitest/vitest.mjs run tests/unit/database/preflight.test.ts tests/unit/shared/validation.test.ts tests/unit/bootstrap/bootstrap-config.test.ts` ✅ — 18/18.
+- ESLint scoped للملفات المتأثرة ✅؛ TypeScript scoped لم يُظهر أخطاء في النطاق.
+- `node node_modules/astro/bin/astro.mjs build` ✅.
+- `pnpm --version` ❌ — Node المحلي `22.22.3` وCorepack احتاج تنزيل pnpm `11.25.0` من الشبكة المحجوبة؛ البدائل المباشرة شُغّلت.
+- full typecheck ❌ وfull lint ❌ وfull Vitest جزئيًا (`238 passed / 4 failed / 29 skipped`، و10 PostgreSQL suites محجوبة لغياب container runtime) بسبب baseline موثق خارج النطاق.
+- `git check-ignore -v .env` ✅؛ `git ls-files .env` بلا نتيجة؛ `git diff --check` ❌ بسبب trailing whitespace موجود مسبقًا في تعديل المستخدم `audit/prompt2.md`، وليس في ملفات هذه المهمة.
+- فحص tracked/diff secret patterns أظهر أمثلة واختبارات وحقولًا توثيقية فقط؛ لم يظهر credential literal في tracked content أو diff، والقيم لم تُعرض.
+
+### النتيجة
+- **الحالة:** جزئي / BLOCKED
+- **مختصر:** عقد البيئة والتحميل الآمن وسياسة TLS صارت deterministic ومختبرة، لكن تدوير credential الحالي وتنظيف `.env` والتحقق من Render/PostgreSQL الحقيقي لم يتم؛ لذلك Production writes = NO.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تنفيذ تدوير credential يدويًا في Render، ثم استبدال provider dump بملف `.env` ignored يحتوي `DATABASE_URL` المدور فقط، وبعدها تشغيل preflight read-only بصمت.
+- لا تُشغّل `pnpm db:migrate` أو `bootstrap:admin` أو أي production write قبل اكتمال بوابة التدوير والصلاحيات والتأكد من topology.
+
 ## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-003: local Render credential handling audit and safe preflight gate
 
 ### تم التنفيذ

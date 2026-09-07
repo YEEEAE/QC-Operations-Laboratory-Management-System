@@ -2,7 +2,12 @@ import { Client } from 'pg';
 import { fileURLToPath } from 'node:url';
 
 import { loadMigrations } from './migrate.js';
-import { DatabaseConfigurationError, validateDatabaseUrl } from '../../src/shared/database/pool.js';
+import {
+  DatabaseConfigurationError,
+  getDatabaseConnectionConfig,
+} from '../../src/shared/database/pool.js';
+
+import './load-local-env.js';
 
 export interface DatabasePreflightReport {
   connectivity: 'PASS' | 'FAIL';
@@ -30,8 +35,7 @@ export function classifyPreflightError(error: unknown): 'CONFIGURATION' | 'DATAB
 export async function runDatabasePreflight(
   databaseUrl = process.env.DATABASE_URL,
 ): Promise<DatabasePreflightReport> {
-  const connectionString = validateDatabaseUrl(databaseUrl);
-  const client = new Client({ connectionString });
+  const client = new Client(getDatabaseConnectionConfig(databaseUrl));
   const migrations = await loadMigrations();
 
   try {

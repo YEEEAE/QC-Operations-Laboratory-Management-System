@@ -2,6 +2,8 @@ import { fileURLToPath } from 'node:url';
 
 import { formatMigrationError, migrate } from './migrate.js';
 
+import './load-local-env.js';
+
 export async function migrationStatus(): Promise<void> {
   const result = await migrate({ check: true });
   console.log(JSON.stringify({ mode: 'check', ...result }));

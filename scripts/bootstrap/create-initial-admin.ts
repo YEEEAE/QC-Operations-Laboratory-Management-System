@@ -11,6 +11,9 @@ import {
 import type { DatabaseSchema } from '../../src/shared/database/db-types.js';
 import { Argon2idPasswordHasher } from '../../src/modules/identity/security/argon2-password-hasher.js';
 import { loadMigrations, verifyMigrationIntegrity } from '../db/migrate.js';
+import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
+
+import '../db/load-local-env.js';
 
 async function assertMigrationsApplied(pool: Pool): Promise<void> {
   const client = await pool.connect();
@@ -35,7 +38,7 @@ async function assertMigrationsApplied(pool: Pool): Promise<void> {
 export async function runBootstrap(environment = process.env): Promise<void> {
   const config = parseBootstrapAdminConfig(environment);
   const pool = new Pool({
-    connectionString: config.databaseUrl,
+    ...getDatabaseConnectionConfig(config.databaseUrl),
     application_name: 'qc-initial-admin-bootstrap',
     options: '-c timezone=UTC -c search_path=qc,pg_catalog',
   });

@@ -3,6 +3,25 @@
 This document is an operator workflow, not permission to run production migrations. Do not run
 `pnpm db:migrate` against production until the approved migration gate is open.
 
+## Credential rotation gate
+
+The credential currently present in the local Render export is compromised. Before any production
+connection, migration, bootstrap, or write operation:
+
+1. Open the Render Dashboard.
+2. Open the PostgreSQL database and its **Credentials** page.
+3. Create a new default credential.
+4. Update the local `DATABASE_URL` securely with the new **External Database URL**; do not put it in
+   this document, Git, shell history, or chat.
+5. Later update connected Render services with the new **Internal Database URL** where private
+   networking is supported.
+6. Verify the new credential with the read-only preflight workflow below.
+7. Revoke or delete the old credential.
+
+Do not delete the existing local provider export until the operator has confirmed that the newly
+rotated credential is available. After that confirmation, remove the export and retain only the
+canonical `DATABASE_URL` entry in the ignored local `.env` file.
+
 ## Connection model
 
 - **Local Mac:** use the Render **External Database URL** with TLS required by the provider.
@@ -12,17 +31,18 @@ This document is an operator workflow, not permission to run production migratio
 
 ## Local `.env` handling
 
-The application does not load `.env` for the `tsx` database or bootstrap commands. The scripts read
-`process.env` only; there is no `dotenv` or equivalent loader in their command path. A Render connection
-information export containing keys such as `Hostname`, `Database`, `Username`, `Password`,
-`Internal_Database_URL`, `External_Database_URL`, or `PSQL_Command` is therefore not an application
-configuration file and must not be sourced.
+The standalone database and bootstrap commands load only an ignored local `.env` file through the
+repository's allowlisted, non-shell parser. Explicit environment variables win. A Render connection
+information export containing keys such as `Hostname`, `Database`, `Username`,
+`Password`, `Internal_Database_URL`, `External_Database_URL`, or `PSQL_Command` is not an application
+configuration file and is ignored; it must not be sourced.
 
 Keep `.env.example` as the tracked names-only reference. Put the web service's current Internal Database
-URL in Render's managed `DATABASE_URL` variable. For a local preflight, enter the current External
-Database URL privately through the workflow below. Do not copy provider-display fields into `DATABASE_URL`,
-commit them, or retain a local provider credential dump as an archive. Remove an existing local dump only
-after confirming the active rotated credential is available from Render.
+URL in Render's managed `DATABASE_URL` variable. For a local preflight, the ignored `.env` may contain
+only the current External Database URL as canonical `DATABASE_URL`, or the URL may be entered privately
+through the workflow below. Do not copy provider-display fields into `DATABASE_URL`, commit them, or
+retain a local provider credential dump as an archive. Remove an existing local dump only after confirming
+the active rotated credential is available from Render.
 
 ## Secure local zsh workflow
 

@@ -1,5 +1,6 @@
 import { Client } from 'pg';
 import type { ReadinessProbe } from './readiness.js';
+import { getDatabaseConnectionConfig } from '../database/pool.js';
 
 export class PostgresReadinessProbe implements ReadinessProbe {
   async isReady(): Promise<boolean> {
@@ -9,7 +10,12 @@ export class PostgresReadinessProbe implements ReadinessProbe {
       return false;
     }
 
-    const client = new Client({ connectionString });
+    let client: Client;
+    try {
+      client = new Client(getDatabaseConnectionConfig(connectionString));
+    } catch {
+      return false;
+    }
 
     try {
       await client.connect();

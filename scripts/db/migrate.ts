@@ -8,6 +8,8 @@ import { InvalidEnvironmentError } from '../../src/config/env.js';
 import { getPool } from '../../src/shared/database/pool.js';
 import { DatabaseConfigurationError } from '../../src/shared/database/pool.js';
 
+import './load-local-env.js';
+
 export interface MigrationFile {
   version: string;
   name: string;

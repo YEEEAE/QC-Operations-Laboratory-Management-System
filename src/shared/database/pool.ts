@@ -20,6 +20,26 @@ export class DatabaseConfigurationError extends Error {
   }
 }
 
+export function getDatabaseConnectionConfig(value: string | undefined): PoolConfig {
+  const connectionString = validateDatabaseUrl(value);
+  const url = new URL(connectionString);
+  const sslMode = url.searchParams.get('sslmode')?.toLowerCase();
+
+  if (sslMode === 'disable') {
+    throw new DatabaseConfigurationError(
+      'DATABASE_URL must use TLS for network database connections; sslmode=disable is not allowed.',
+    );
+  }
+
+  // Preserve provider-supplied sslmode semantics. Adding an ssl object alongside
+  // sslmode can make node-postgres override connection-string TLS settings.
+  if (sslMode) return { connectionString };
+
+  // No sslmode means the URL is incomplete for the canonical runtime path.
+  // Node's default CA store verifies the provider certificate.
+  return { connectionString, ssl: { rejectUnauthorized: true } };
+}
+
 export function validateDatabaseUrl(value: string | undefined): string {
   if (!value?.trim()) {
     throw new DatabaseConfigurationError(
@@ -58,7 +78,7 @@ export function getPool(): Pool {
 
   const databaseUrl = validateDatabaseUrl(getRuntimeConfig().databaseUrl);
 
-  sharedPool = createPool({ connectionString: databaseUrl });
+  sharedPool = createPool(getDatabaseConnectionConfig(databaseUrl));
   sharedPool.on('error', (error) => {
     // Pool clients report errors asynchronously; do not leak driver details.
     void databaseError(error);

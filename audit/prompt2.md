@@ -1,9 +1,10 @@
 
+
 ---
 
-# PROMPT 003 — تصحيح وضع `.env` + بوابة الاتصال الآمنة
+# PROMPT 003 — Secret Rotation + `.env` Normalization
 
-هذا جديد ومهم بسبب الملف اللي رفعتَه.
+هذا الجديد أهم تغيير عن الخطة السابقة. نفذه قبل أي كتابة حقيقية على Render.
 
 ```text
 @Superpowers
@@ -14,40 +15,64 @@ MODEL:
 GPT-5.6 Luna
 
 MODE:
-LOCAL SECURITY REMEDIATION
-+ PRODUCTION READ-ONLY PREFLIGHT
+LOCAL IMPLEMENTATION
++ SECURITY REMEDIATION
++ CONFIGURATION NORMALIZATION
++ PRODUCTION WRITE BLOCKED
 
 REPOSITORY:
 YEEEAE/QC-Operations-Laboratory-Management-System
 
-MISSION:
-Correct the current local Render PostgreSQL credential/environment handling and establish a safe, verified READ-ONLY connection gate before any production database write is allowed.
+IMPORTANT CONTEXT:
 
-IMPORTANT CURRENT VERIFIED CONTEXT:
-
-Tasks already completed:
+Tasks already executed:
 
 QC-RENDER-POSTGRES-RECOVERY-001
 QC-RENDER-POSTGRES-RECOVERY-002
 
-Do NOT redo them blindly.
+DO NOT redo them blindly.
 
-The repository now contains:
+FIRST:
+Read the actual current working tree and all reports/files produced by those tasks.
 
-- Node 24.20.0 as canonical runtime
-- pnpm 11.25.0
-- pnpm db:preflight
-- docs/operations/RENDER-DATABASE-CONNECTION.md
-- DATABASE_URL validation
-- improved environment validation
+Run:
 
-Inspect current working tree first because local changes may be newer than GitHub.
+pwd
+git status --short
+git diff --stat
+git diff
+git rev-parse HEAD
+node --version
+pnpm --version
 
-CRITICAL NEW CONTEXT:
+Find and read:
 
-The local `.env` file currently appears to be a Render connection-information dump rather than the application's canonical environment format.
+docs/operations/RENDER-POSTGRES-RECOVERY-AUDIT.md
+docs/operations/RENDER-DATABASE-CONNECTION.md
 
-It contains key names corresponding to concepts such as:
+or their actual equivalents if task 001/002 used different filenames.
+
+Inspect CURRENT versions of:
+
+package.json
+.env
+.env.example
+.gitignore
+render.yaml
+src/config/env.*
+src/config/runtime.*
+src/shared/database/pool.*
+scripts/db/*
+
+Do not assume repository state from old prompts.
+
+════════════════════════════════════════════
+KNOWN NEW INFORMATION
+════════════════════════════════════════════
+
+A local `.env` file now contains Render PostgreSQL connection information.
+
+It currently uses concepts/keys equivalent to:
 
 Hostname
 Database
@@ -57,247 +82,245 @@ Internal_Database_URL
 External_Database_URL
 PSQL_Command
 
-DO NOT PRINT THEIR VALUES.
+IMPORTANT:
 
-The application itself expects DATABASE_URL rather than these Render-display field names.
+The actual credential has already been exposed outside the secret manager.
 
-The `.env` file therefore MUST NOT be assumed to automatically configure:
+Treat the CURRENT Render database credential as COMPROMISED.
 
-pnpm db:migrate
-pnpm db:preflight
-bootstrap commands
+NEVER:
 
-Also do not assume tsx CLI scripts automatically load `.env`.
+- print the password
+- print any full database URL
+- print PSQL_Command containing a password
+- echo DATABASE_URL
+- include secrets in git diff
+- include secrets in docs
+- include secrets in tests
+- commit `.env`
+- copy the old credential into other files
 
-════════════════════════════════════════════════════════════
-SECURITY RULES
-════════════════════════════════════════════════════════════
+Redact all values in output.
 
-Never:
+════════════════════════════════════════════
+MISSION
+════════════════════════════════════════════
 
-- cat .env
-- print .env contents
-- echo database URLs
-- print password
-- print PSQL command
-- put DATABASE_URL in a CLI argument
-- put secrets into git
-- put secrets into documentation
-- expose values in test output
+Normalize secret handling and make DATABASE_URL the canonical application/migration interface.
 
-Inspect ONLY environment variable names/structure.
-
-Before using the real Render credential:
-
-The operator previously exposed a PostgreSQL credential.
-
-Require explicit confirmation that the active credential has been rotated.
-
-If credential rotation has NOT been confirmed:
-
-STOP all Render connection attempts.
-
-Do not use the previously exposed credential.
-
-════════════════════════════════════════════════════════════
-PHASE 1 — CURRENT REALITY
-════════════════════════════════════════════════════════════
+1. Verify `.env` and `.env.*` are ignored by Git.
 
 Run:
 
-git status --short
-git diff --stat
-node --version
-pnpm --version
-git check-ignore -v .env || true
-git ls-files --error-unmatch .env 2>/dev/null || true
+git check-ignore -v .env
+git ls-files .env
 
-Confirm:
+Expected:
+.env must NOT be tracked.
 
-- .env is ignored
-- .env is NOT tracked
-- no secret-containing env file is staged
+If tracked:
+STOP and remediate safely before continuing.
 
-Inspect only the KEY NAMES in `.env`.
+2. Search git tracked content and current diff for secret leaks.
 
-Do this programmatically without printing values.
+Search patterns:
 
-Report:
+postgresql://
+postgres://
+PGPASSWORD=
+DATABASE_URL=
+Password=
+Internal_Database_URL=
+External_Database_URL=
+PSQL_Command=
 
-KEY NAME | EXPECTED BY APPLICATION? | CLASSIFICATION
+Do not output secret values.
 
-Do not show values.
+Only report:
+path + secret type + redacted status.
 
-════════════════════════════════════════════════════════════
-PHASE 2 — DETERMINE ACTUAL ENV LOADING
-════════════════════════════════════════════════════════════
+3. Determine the canonical environment contract from CURRENT code.
 
-Inspect:
+The application/migration system should normally consume:
 
-package.json
-scripts/db/preflight.ts
-scripts/db/migrate.ts
-scripts/bootstrap/create-initial-admin.ts
-src/config/env.ts
-src/config/runtime.ts
-src/shared/database/pool.ts
-Astro/Vite configuration
+DATABASE_URL
 
-Determine conclusively whether command-line scripts automatically load `.env`.
+Do not create parallel runtime contracts such as:
 
-Do not guess.
-
-If they rely only on process.env, state it explicitly.
-
-════════════════════════════════════════════════════════════
-PHASE 3 — LOCAL SECRET STRATEGY
-════════════════════════════════════════════════════════════
-
-Do NOT solve this by committing connection details.
-
-Prefer the existing secure shell workflow in:
-
-docs/operations/RENDER-DATABASE-CONNECTION.md
-
-The intended architecture should be:
-
-LOCAL MAC:
-Render External Database URL
-→ entered privately
-→ exported as DATABASE_URL only for the command/session
-→ unset immediately afterward
-
-RENDER WEB SERVICE:
-Render Internal Database URL
-→ stored in Render environment
-→ DATABASE_URL
-
-Do not rely on:
-
-External_Database_URL
-Internal_Database_URL
 Password
 Hostname
+Internal_Database_URL
+External_Database_URL
+PSQL_Command
 
-as application environment variable names.
+unless repository architecture explicitly requires them.
 
-They are provider-display concepts, not canonical application config.
+4. Normalize local `.env`.
 
-════════════════════════════════════════════════════════════
-PHASE 4 — HANDLE CURRENT .env FILE
-════════════════════════════════════════════════════════════
+The goal is NOT to store five copies of the credential.
 
-Determine the safest treatment of the current secret-bearing `.env`.
+Prefer one canonical local secret:
 
-It should NOT be used as a Render credential archive.
+DATABASE_URL=<local external Render URL>
 
-Preferred final state:
+plus only other application environment variables genuinely required locally.
 
-- `.env.example` remains tracked and contains variable names only.
-- actual production DB secrets remain in Render or temporary shell environment.
-- local plaintext provider credential dumps are removed when no longer required.
+Do NOT write an actual secret into:
+.env.example
+render.yaml
+tracked source
+documentation
 
-DO NOT delete the current `.env` without first confirming the operator has access to the active Render credential through Render itself.
+5. Local vs Render connection model
 
-Do not copy the secrets anywhere else.
+LOCAL MAC:
+DATABASE_URL must represent the Render EXTERNAL PostgreSQL URL.
 
-════════════════════════════════════════════════════════════
-PHASE 5 — READ-ONLY RENDER PREFLIGHT
-════════════════════════════════════════════════════════════
+RENDER WEB SERVICE:
+DATABASE_URL must represent the Render INTERNAL PostgreSQL URL when service/database topology supports private networking.
 
-ONLY IF credential rotation is confirmed:
+Do not make the app switch based on custom variable names.
 
-Use the approved silent-input workflow.
+6. TLS
 
-Do not source the current `.env`.
+Render external PostgreSQL connectivity must use TLS.
 
-Run:
+Inspect how node-postgres `pg` currently receives SSL configuration.
+
+Do not blindly duplicate SSL configuration if DATABASE_URL already carries sslmode.
+
+Implement/test a deterministic external connection strategy.
+
+Do not weaken certificate behavior without explaining why.
+
+7. `.env` loading
+
+Determine whether:
 
 pnpm db:preflight
+pnpm db:migrate
+pnpm db:migrate:status
+pnpm db:migrate:check
 
-against the Render EXTERNAL database URL using temporary DATABASE_URL.
+actually load `.env`.
 
-This is READ ONLY.
+Do NOT assume Astro/Vite `.env` loading applies to standalone `tsx` scripts.
 
-Verify safe metadata:
+If standalone scripts currently require manually exporting variables:
+choose and implement one canonical safe mechanism.
 
-- connectivity
-- PostgreSQL version
-- current database
-- current database user
-- qc schema existence
-- qc.users existence
-- qc.schema_migrations existence
-- applied migrations
-- pending migrations
-- safe privilege capabilities
+Requirements:
 
-Expected historical evidence:
+- deterministic
+- works on Node 24.20.0
+- does not log secrets
+- documented
+- testable
+- same behavior for all DB operator commands
 
-qc.users previously returned NULL.
+Avoid unsafe shell parsing of arbitrary passwords.
 
-Do not assume it is still NULL; re-check.
+8. Credential rotation gate
 
-Do not modify the database.
+Because the old Render DB credential is compromised:
 
-════════════════════════════════════════════════════════════
-STOP CONDITIONS
-════════════════════════════════════════════════════════════
+DO NOT run production mutations yet.
 
-STOP if:
+Update the runbook with an explicit operator step:
 
-- credential rotation is not confirmed
-- database identity is unexpected
-- database name is unexpected
-- PostgreSQL connection fails
-- `.env` is tracked
-- secret appears staged/committed
-- preflight unexpectedly shows application migrations already applied
-- any secret is accidentally printed
+Render Dashboard
+→ PostgreSQL database
+→ Credentials
+→ create a new default credential
+→ update local DATABASE_URL securely
+→ later update connected Render services
+→ verify new credential
+→ revoke/delete old credential
 
-════════════════════════════════════════════════════════════
-VERIFICATION
-════════════════════════════════════════════════════════════
+Do not attempt to put the new password in documentation.
 
-Run relevant tests for changes made.
+9. Remove unnecessary local secret duplication.
 
-At minimum if code changed:
+The local `.env` should not retain plaintext variants such as:
+
+Password=...
+PSQL_Command=PGPASSWORD=...
+Internal_Database_URL=...
+External_Database_URL=...
+
+if DATABASE_URL alone is the canonical required interface.
+
+Be careful:
+do not destroy the only usable credential before the operator completes rotation.
+
+If manual operator action is required:
+STOP and clearly state it.
+
+════════════════════════════════════════════
+TESTS
+════════════════════════════════════════════
+
+Run all relevant non-production tests.
+
+At minimum:
 
 pnpm typecheck
 pnpm lint
 pnpm test
 
-Do NOT run db:migrate.
+Test environment parsing without exposing values.
 
-Do NOT seed.
+Verify:
 
-Do NOT bootstrap admin.
+git status --short
+git diff --check
 
-════════════════════════════════════════════════════════════
+Verify no secret is present in tracked diff.
+
+════════════════════════════════════════════
+STOP CONDITIONS
+════════════════════════════════════════════
+
+STOP if:
+
+- .env is tracked
+- a real DB credential exists in tracked content
+- current credential rotation has not been completed before production write
+- DATABASE_URL behavior is ambiguous
+- TLS behavior cannot be established safely
+
+DO NOT migrate production in this task.
+
+════════════════════════════════════════════
 FINAL RESPONSE
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
 
 Return:
 
-ENV FILE SAFETY: PASS/FAIL
-ACTIVE CREDENTIAL ROTATED: CONFIRMED/NOT CONFIRMED
-DATABASE PREFLIGHT: PASS/FAIL/NOT RUN
-DATABASE: <safe database name only>
-POSTGRESQL: <version only>
-QC SCHEMA: EXISTS/MISSING
-QC.USERS: EXISTS/MISSING
-MIGRATIONS APPLIED: n
-MIGRATIONS PENDING: n
-PRODUCTION WRITE GATE: OPEN/BLOCKED
+CURRENT 001/002 STATE:
+ENV CONTRACT:
+LOCAL DB URL MODE:
+RENDER DB URL MODE:
+TLS:
+.env TRACKED: YES/NO
+SECRET LEAKS IN TRACKED FILES: YES/NO
+CREDENTIAL ROTATION REQUIRED: YES
+PRODUCTION WRITES ALLOWED: NO
 
-Never print secrets.
+FILES CHANGED
+TESTS RUN
+REMAINING MANUAL ACTION
+
+Never display any credential.
 ```
+
+بعد ما يخلصه، **نفّذ تدوير credential في Render يدويًا**. لا تحذف القديم إلا بعد ما صار الجديد شغال عندك؛ Render نفسه يدعم هالآلية. 
 
 ---
 
-# PROMPT 004 — إصلاح Migration Architecture لـ Render PostgreSQL
+# PROMPT 004 — Render-Compatible Migration Architecture
 
-هذا يحل أخطر نقطة تقنية عندك الآن.
+هذا بديل البرومبت القديم `003` لكن الآن يخليه يعتمد على نتائج 001–003.
 
 ```text
 @Superpowers
@@ -310,229 +333,207 @@ GPT-5.6 Luna
 MODE:
 LOCAL IMPLEMENTATION
 + DISPOSABLE DATABASE TESTING
++ NO PRODUCTION WRITE
 
 MISSION:
-Make the complete migration architecture deterministically compatible with a fresh managed Render PostgreSQL 18 database without requiring unsupported superuser or cluster-level privileges.
+Prove and, where necessary, repair the migration architecture so an EMPTY managed Render PostgreSQL 18 database can be migrated safely without PostgreSQL superuser privileges.
 
-DO NOT TOUCH THE REAL RENDER DATABASE.
+PREVIOUS COMPLETED TASKS:
 
-Continue from completed tasks 001-003.
+001 reality audit
+002 runtime/environment/database tooling
+003 secret/env normalization
 
-First inspect current working tree and preserve all valid changes already made.
+FIRST:
+Read their actual outputs and current working tree.
 
-════════════════════════════════════════════════════════════
-KNOWN RISK
-════════════════════════════════════════════════════════════
+Do not trust old prompt assumptions.
 
-Historically db/migrations/0001_core_schema.sql contained operations such as:
+════════════════════════════════════════════
+CRITICAL CURRENT AREA
+════════════════════════════════════════════
 
-CREATE ROLE qc_migrator
-CREATE ROLE qc_app_runtime
+Inspect every migration, especially:
 
-ALTER SCHEMA ... OWNER TO qc_migrator
-ALTER TABLE ... OWNER TO qc_migrator
+db/migrations/0001_core_schema.sql
 
-GRANT ... TO qc_app_runtime
-
-This may conflict with managed PostgreSQL privileges.
-
-Additionally, changing ownership away from the actual Render migration credential could potentially interfere with later migrations.
-
-Do not assume either behavior.
-
-Prove it.
-
-════════════════════════════════════════════════════════════
-PHASE 1 — MIGRATION FORENSICS
-════════════════════════════════════════════════════════════
-
-Inspect ALL:
-
-db/migrations/*.sql
-scripts/db/migrate.ts
-scripts/db/check-migration-integrity.ts
-scripts/db/migration-status.ts
-scripts/db/preflight.ts
-database integration tests
-database docs
-
-Build:
-
-MIGRATION
-OPERATION
-PRIVILEGE REQUIRED
-MANAGED POSTGRES RISK
-DEPENDENCIES
-
-Pay special attention to:
+Pay particular attention to:
 
 CREATE ROLE
 ALTER ROLE
-OWNER TO
+ALTER SCHEMA ... OWNER
+ALTER TABLE ... OWNER
 GRANT
 REVOKE
-CREATE EXTENSION
-ALTER DATABASE
-search_path
 uuidv7()
-schema ownership
-sequence ownership
+search_path
+extensions
+schema creation
 
-════════════════════════════════════════════════════════════
-PHASE 2 — MIGRATION IMMUTABILITY
-════════════════════════════════════════════════════════════
+The Render-managed connection credential must not depend on unsupported superuser-only behavior.
 
-Determine whether existing migration files are already considered immutable.
+════════════════════════════════════════════
+MISSION REQUIREMENTS
+════════════════════════════════════════════
 
-The migration system stores checksums.
+1. Determine exactly what privileges migration 0001 requires.
 
-Do NOT blindly modify historical migrations.
+2. Determine what happens when:
 
-Determine whether:
+qc_operations_user
+(or a newly rotated Render-managed PostgreSQL user)
 
-A. migrations have never been applied anywhere important
+runs the migration.
 
-OR
-
-B. migration checksum compatibility must be preserved
-
-Design the safest solution based on evidence.
-
-Never:
-
-- edit qc.schema_migrations manually
-- bypass checksum verification
-- mark migrations manually applied
-
-════════════════════════════════════════════════════════════
-PHASE 3 — MANAGED POSTGRES DESIGN
-════════════════════════════════════════════════════════════
-
-A fresh Render database must work with the provider-managed credential.
-
-Required properties:
-
-- no PostgreSQL superuser required
-- no CREATEROLE requirement unless explicitly provisioned
-- migration executor retains ability to apply every later migration
-- application can use qc schema
-- runtime permissions are deterministic
-- ownership model is explicit
-- security model is documented
-
-If separate:
+3. Establish whether changing ownership to:
 
 qc_migrator
 qc_app_runtime
 
-cannot be provisioned using normal Render DB credentials:
+could prevent the Render credential from applying later migrations.
 
-make that architecture optional or replace it with a managed-service-compatible model.
+4. Determine whether custom PostgreSQL roles are actually required for the current application architecture.
 
-Do not preserve architecture that cannot actually deploy merely because it looks theoretically stricter.
+Do NOT preserve complexity merely because it exists.
 
-At the same time, do not silently weaken security.
+Do NOT remove security boundaries merely to make tests pass.
 
-Document the trust model.
+5. Migration history integrity
 
-════════════════════════════════════════════════════════════
-PHASE 4 — DISPOSABLE POSTGRESQL 18 TEST
-════════════════════════════════════════════════════════════
+Inspect:
 
-Use PostgreSQL 18.
+scripts/db/migrate.*
+scripts/db/check-migration-integrity.*
+qc.schema_migrations logic
 
-Use Testcontainers/Docker if supported.
+Do not rewrite historical migrations blindly.
 
-Most importantly:
+If migrations have already been applied anywhere and checksum immutability matters:
+design a safe compatibility path.
 
-test using a NON-SUPERUSER deployment identity whose capabilities approximate a managed PostgreSQL application credential.
+If evidence confirms production DB is genuinely fresh and no authoritative applied migration ledger exists:
+still preserve a clean reproducible migration history.
 
-Do not only test as postgres superuser.
+6. Managed PostgreSQL deployment mode
 
-Prove:
+Design explicit support for:
 
-EMPTY DATABASE
-→ migration runner
-→ ALL migrations applied
-→ expected qc schema/tables exist
+MODE A:
+single Render-managed credential performs migrations + runtime
 
-Then:
+and, only if architecture actually requires:
 
-run migration again
-→ zero new migrations
+MODE B:
+separate migrator/runtime DB identities provisioned externally
 
-Then:
+Fresh Render deployment MUST NOT require unsupported `CREATE ROLE` privilege unless Render explicitly supports and project design intentionally requires it.
 
+7. Verify ownership/grants end state.
+
+After migration, the actual runtime credential must be able to perform every SQL operation required by the application.
+
+8. Fresh PostgreSQL 18 test
+
+Use a disposable PostgreSQL 18 environment.
+
+Prefer Testcontainers if repository already supports it.
+
+Start from COMPLETELY EMPTY DB.
+
+Run equivalent of:
+
+pnpm db:preflight
+pnpm db:migrate
+pnpm db:migrate:status
 pnpm db:migrate:check
-→ PASS
+pnpm db:migrate
 
-Then test:
+The final repeat migration must apply zero new migrations.
 
-migration checksum mismatch
-→ detected
+Verify all migration versions.
 
-failed migration
-→ transaction rolled back correctly
-
-concurrent migration attempt
-→ protected by advisory migration lock
-
-════════════════════════════════════════════════════════════
-REQUIRED CORE OBJECTS
-════════════════════════════════════════════════════════════
-
-At minimum verify:
+Verify critical objects exist:
 
 qc.schema_migrations
 qc.users
 qc.sessions
-qc.audit_events
 qc.roles
 qc.permissions
 qc.role_permissions
 qc.user_roles
 qc.user_scopes
+qc.audit_events
 
-and every other table expected from all migrations.
+plus all expected domain tables.
 
-════════════════════════════════════════════════════════════
-TESTS
-════════════════════════════════════════════════════════════
+9. Failure testing
+
+Prove:
+
+- failed migration rolls back
+- failed migration is NOT inserted into schema_migrations
+- checksum mismatch is rejected
+- migration rerun is safe
+- concurrency lock behavior remains valid
+
+10. Managed-privilege simulation
+
+Do not test only as PostgreSQL superuser.
+
+Create/use a restricted test DB principal representative of a managed credential and prove migrations succeed under the intended privilege model.
+
+════════════════════════════════════════════
+SECURITY
+════════════════════════════════════════════
+
+Do not use the actual production Render database.
+
+Do not use actual production secrets.
+
+Do not lower security globally to pass tests.
+
+════════════════════════════════════════════
+QUALITY GATES
+════════════════════════════════════════════
 
 Run:
 
 pnpm typecheck
 pnpm lint
+pnpm format:check
 pnpm test
-pnpm test:migrations
 pnpm test:integration
+pnpm db:migrate:check
 
-No real Render writes.
+as applicable to disposable DB only.
 
-════════════════════════════════════════════════════════════
-COMPLETION CRITERIA
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+COMPLETION
+════════════════════════════════════════════
 
-Do not state Render-compatible unless:
+Do not claim RENDER COMPATIBLE unless an EMPTY PostgreSQL 18 database successfully migrates using the intended managed-user privilege model.
 
-1. a fresh PostgreSQL 18 database passes
-2. non-superuser deployment identity passes
-3. all migrations apply
-4. migration rerun is idempotent
-5. checksum validation passes
-6. ownership/privilege model is documented
-
-Final:
+Final response:
 
 MIGRATION ARCHITECTURE: PASS/FAIL
-MANAGED POSTGRES COMPATIBILITY: PASS/FAIL
-MIGRATIONS VERIFIED: n/n
-PRODUCTION MIGRATION GATE: OPEN/BLOCKED
+POSTGRES 18 FRESH DB: PASS/FAIL
+MANAGED USER PRIVILEGES: PASS/FAIL
+IDEMPOTENCY: PASS/FAIL
+ROLLBACK: PASS/FAIL
+CHECKSUM INTEGRITY: PASS/FAIL
+
+FILES CHANGED
+EVIDENCE
+REMAINING BLOCKERS
+
+PRODUCTION DB MUST REMAIN UNCHANGED.
 ```
 
 ---
 
-# PROMPT 005 — Foundation Roles + Permissions + RBAC
+# PROMPT 005 — Production Foundation / RBAC
+
+هذا ما زال ضروري جدًا؛ لأنه يحل مشكلة `ADMIN` بدون صلاحيات.
 
 ```text
 @Superpowers
@@ -544,178 +545,171 @@ GPT-5.6 Luna
 
 MODE:
 LOCAL IMPLEMENTATION
-+ AUTHORIZATION TESTING
++ AUTHORIZATION HARDENING
++ DISPOSABLE DB TEST
++ NO PRODUCTION WRITE
 
 MISSION:
-Create a deterministic production-safe Foundation authorization process for roles, permissions and role grants.
+Create and verify the canonical production-safe Foundation authorization bootstrap.
 
-DO NOT TOUCH REAL RENDER PRODUCTION.
+Read current repository state after tasks 001–004.
 
-Current architecture includes canonical roles such as:
+Inspect:
+
+db/seeds/*
+db/migrations/*authorization*
+src/modules/authorization/**
+src/modules/identity/**
+permission matrix documentation
+role matrix documentation
+tests
+package.json
+
+════════════════════════════════════════════
+PROBLEM TO SOLVE
+════════════════════════════════════════════
+
+A database having:
+
+qc.roles(code='ADMIN')
+
+does NOT automatically mean the administrator has effective permissions.
+
+We need a deterministic:
+
+migrations
+→ foundation authorization
+→ admin bootstrap
+
+production path.
+
+════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════
+
+Create a canonical command such as:
+
+pnpm db:seed:foundation
+
+and read-only verification:
+
+pnpm db:seed:foundation:check
+
+Use actual project naming if a better canonical pattern already exists.
+
+Foundation must configure canonical:
 
 EMPLOYEE
 SUPERVISOR
 MANAGER
 ADMIN
 
-and canonical permission codes.
+and all approved permissions.
 
-The critical question is not whether ADMIN exists.
+Configure role_permissions according to the repository's authoritative approved permission matrix.
 
-The question is:
+DO NOT invent a security policy.
 
-Does ADMIN have the correct effective authorization?
+If no authoritative ADMIN permission matrix exists:
+STOP and identify the exact policy gap rather than arbitrarily granting everything.
 
-════════════════════════════════════════════════════════════
-INSPECT
-════════════════════════════════════════════════════════════
-
-db/seeds/*
-db/migrations/*
-authorization modules
-permission resolver
-role resolver
-middleware/guards
-security architecture docs
-permission matrices
-role matrices
-tests
-
-Search complete repository for:
-
-role_permissions
-APPROVED_PERMISSION_CODES
-FOUNDATION_ROLE_CODES
-ADMIN
-PERM-
-permission matrix
-authorization matrix
-
-════════════════════════════════════════════════════════════
-REQUIREMENTS
-════════════════════════════════════════════════════════════
-
-Implement a canonical production-safe command:
-
-pnpm db:seed:foundation
-
-and a read-only verification command:
-
-pnpm db:seed:foundation:check
-
-Names may differ only if repository conventions clearly require it.
-
-Foundation seed must be:
+Foundation execution must be:
 
 - deterministic
-- idempotent
 - transactional
-- repeatable
-- non-destructive
+- idempotent
 - production-safe
-- incapable of inserting dev/test users
+- non-destructive
+- safe to execute repeatedly
+- free from development/test users
 
-Seed:
+Never require:
 
-canonical roles
-canonical permissions
-canonical role-permission relationships
+QC_SEED_ALLOW_NON_PRODUCTION=true
 
-════════════════════════════════════════════════════════════
-NO INVENTED SECURITY POLICY
-════════════════════════════════════════════════════════════
+for the dedicated production Foundation command.
 
-Find the approved authorization matrix from repository evidence.
+Keep dev/test seeds separately guarded.
 
-Do NOT invent arbitrary permissions for roles.
+════════════════════════════════════════════
+DRIFT VALIDATION
+════════════════════════════════════════════
 
-If no authoritative role-permission matrix exists:
-
-STOP and report that as an authorization architecture blocker.
-
-If ADMIN is canonically intended to receive all approved permissions:
-
-implement that deterministically.
-
-Otherwise follow the actual policy.
-
-════════════════════════════════════════════════════════════
-DRIFT DETECTION
-════════════════════════════════════════════════════════════
-
-Foundation check should detect:
+Foundation check must detect:
 
 missing role
 inactive required role
 missing permission
-unknown/deprecated permission
-missing required grant
-forbidden grant
-duplicate/drift conditions where applicable
+unexpected/deprecated permission if forbidden
+missing expected role_permission
+forbidden role_permission
+duplicate/impossible state
 
-Return non-zero on invalid foundation state.
+Return nonzero when canonical authorization is incomplete.
 
-════════════════════════════════════════════════════════════
-BOOTSTRAP INTEGRATION
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+ADMIN BOOTSTRAP RELATIONSHIP
+════════════════════════════════════════════
 
-Initial admin bootstrap must eventually require a valid authorization foundation.
+The initial administrator bootstrap must not consider:
 
-It must not produce:
+"ADMIN role exists"
 
-ACTIVE USER
-+
-ADMIN LABEL
-+
-ZERO EFFECTIVE ADMIN PERMISSIONS
+sufficient.
 
-as a successful production outcome.
+It must be able to verify canonical ADMIN authorization readiness.
 
-════════════════════════════════════════════════════════════
-DISPOSABLE DB TEST
-════════════════════════════════════════════════════════════
+Do not create a nominal administrator with zero effective permissions.
 
-Prove:
+════════════════════════════════════════════
+DISPOSABLE DB PROOF
+════════════════════════════════════════════
 
-fresh DB
-→ migrations
-→ foundation seed
-→ foundation check PASS
+PostgreSQL 18 empty DB:
 
-Then run seed again:
+migrate
+→ foundation
+→ foundation check
+→ foundation again
+→ foundation check
 
-→ no duplicates
-→ same final state
-→ foundation check PASS
+Prove same result after repeated run.
 
-Report exact non-sensitive counts:
+Report:
 
-roles
-permissions
-role_permissions
+role count
+permission count
+role_permission count
 
-════════════════════════════════════════════════════════════
-VERIFY
-════════════════════════════════════════════════════════════
+Do not use fake expected counts.
+Derive them from canonical source.
+
+════════════════════════════════════════════
+QUALITY GATES
+════════════════════════════════════════════
+
+Run:
 
 pnpm typecheck
 pnpm lint
+pnpm format:check
 pnpm test
 pnpm test:integration
 
 Final:
 
-FOUNDATION SEED: PASS/FAIL
-FOUNDATION CHECK: PASS/FAIL
-ROLES: n
-PERMISSIONS: n
-ROLE GRANTS: n
-AUTHORIZATION GATE: OPEN/BLOCKED
+FOUNDATION: PASS/FAIL
+ROLE MATRIX: PASS/FAIL
+PERMISSION MATRIX: PASS/FAIL
+IDEMPOTENCY: PASS/FAIL
+DRIFT CHECK: PASS/FAIL
+
+PRODUCTION DB UNCHANGED.
 ```
 
 ---
 
-# PROMPT 006 — تقوية Initial Admin + اختبار Login كامل محليًا
+# PROMPT 006 — Harden Initial Admin Bootstrap
 
 ```text
 @Superpowers
@@ -727,185 +721,171 @@ GPT-5.6 Luna
 
 MODE:
 LOCAL IMPLEMENTATION
-+ DISPOSABLE END-TO-END TEST
++ DISPOSABLE DB TEST
++ NO PRODUCTION WRITE
 
 MISSION:
-Harden the initial administrator bootstrap and prove that a fresh database can produce a real functioning administrator — not merely a row named ADMIN.
+Harden and fully verify the one-time initial administrator bootstrap.
 
-DO NOT TOUCH REAL RENDER PRODUCTION.
-
-Target future production identity:
+Target production login identity:
 
 yazeed
 
-DO NOT hardcode its password.
+Do not hardcode its password.
 
-════════════════════════════════════════════════════════════
-INSPECT
-════════════════════════════════════════════════════════════
+Read actual outputs from tasks 001–005.
 
-scripts/bootstrap/create-initial-admin.ts
-src/modules/identity/application/bootstrap-initial-admin.ts
+Inspect:
+
+scripts/bootstrap/create-initial-admin.*
+src/modules/identity/application/bootstrap-initial-admin.*
 password hasher
-login/authentication
-session handling
-authorization
+authentication service
+authorization resolver
 audit repository
 user_roles
 user_scopes
-foundation verification
+sessions
+tests
 
-════════════════════════════════════════════════════════════
-BOOTSTRAP CONTRACT
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+REQUIREMENTS
+════════════════════════════════════════════
 
-Inputs:
+Bootstrap remains an explicit operator-only command.
+
+It must NEVER run automatically during:
+
+build
+migration
+foundation seed
+server startup
+Render deploy
+
+Required inputs:
 
 DATABASE_URL
 BOOTSTRAP_ADMIN_IDENTITY
 BOOTSTRAP_ADMIN_PASSWORD
 BOOTSTRAP_ADMIN_DISPLAY_NAME
 
-optional:
+Optional email only if current schema supports/needs it.
 
-BOOTSTRAP_ADMIN_EMAIL
+Password must:
 
-Never log secrets.
+- use canonical Argon2id implementation
+- never be logged
+- never appear in errors
+- never appear in command output
+- never be committed
+- never be stored plaintext
 
-Password must use canonical Argon2id implementation.
+Successful bootstrap transaction must create/verify:
 
-Successful creation must atomically establish:
+qc.users
+ADMIN user role
+GLOBAL user scope
+audit events
 
-USER
-+
-ACTIVE account
-+
-ADMIN role
-+
-GLOBAL scope
-+
-valid effective ADMIN authorization
-+
-audit trail
+The complete operation must be atomic.
 
-If any part fails:
+════════════════════════════════════════════
+AUTHORIZATION PRECONDITION
+════════════════════════════════════════════
 
-ROLL BACK ALL bootstrap writes.
+Before creating the account:
 
-════════════════════════════════════════════════════════════
-FOUNDATION REQUIREMENT
-════════════════════════════════════════════════════════════
+db migrations must be complete
+Foundation check must PASS
+ADMIN role must be active
+canonical ADMIN authorization must be complete
 
-Bootstrap MUST fail closed if:
+If any fail:
+bootstrap must fail closed BEFORE leaving a partial account.
 
-- migrations pending
-- ADMIN role missing/inactive
-- Foundation authorization invalid
-- required ADMIN grants incomplete
-
-Do not merely print:
-
-"authorization grants still require configuration"
-
-and call bootstrap successful in production.
-
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
 CHECK COMMAND
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
 
-Implement:
+Implement a safe:
 
 pnpm bootstrap:admin:check
 
-or equivalent.
+or canonical equivalent.
 
-Read only.
+It should report only:
 
-Report:
+user exists
+account active
+ADMIN role
+GLOBAL scope
+effective ADMIN authorization
+bootstrap audit presence
 
-USER EXISTS
-ACTIVE
-ADMIN ROLE
-GLOBAL SCOPE
-AUTHORIZATION COMPLETE
-AUDIT EVIDENCE
-
-Never print:
+Never output:
 
 password_hash
 password
-sessions
-tokens
+session token
+DATABASE_URL
 
-════════════════════════════════════════════════════════════
-IDEMPOTENCY
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+EXISTING USER
+════════════════════════════════════════════
 
 If identity already exists:
 
-- never overwrite password
-- never silently add/remove grants
-- never silently change account state
-- return clear result
+do not reset password
+do not silently grant access
+do not mutate account unexpectedly
 
-════════════════════════════════════════════════════════════
-FULL DISPOSABLE TEST
-════════════════════════════════════════════════════════════
+Return a clear state.
 
-Create disposable PostgreSQL 18.
+════════════════════════════════════════════
+DISPOSABLE POSTGRES 18 PROOF
+════════════════════════════════════════════
 
-Perform:
+Empty DB:
 
-EMPTY
-→ migrations
-→ foundation seed
-→ foundation check
-→ bootstrap admin using TEST-ONLY secret
+migrate
+→ foundation
+→ bootstrap initial admin using TEST-ONLY secret
 → bootstrap check
+→ authenticate
+→ perform an ADMIN-protected authorization test
+→ bootstrap same identity again
 
-Then prove actual authentication:
+Verify idempotent/existing behavior.
 
-correct test password → succeeds
-incorrect password → fails
+════════════════════════════════════════════
+QUALITY
+════════════════════════════════════════════
 
-Then prove authorization:
-
-anonymous protected request → denied
-authenticated ordinary user → appropriately denied
-bootstrap ADMIN → allowed on an ADMIN-protected operation
-
-Then bootstrap same identity again:
-
-→ no duplicate
-→ no password overwrite
-→ no authorization corruption
-
-════════════════════════════════════════════════════════════
-VERIFY
-════════════════════════════════════════════════════════════
+Run all related tests and:
 
 pnpm typecheck
 pnpm lint
 pnpm test
 pnpm test:integration
-pnpm test:security
 
 Final:
 
-BOOTSTRAP: PASS/FAIL
-AUTHENTICATION: PASS/FAIL
-ADMIN ROLE: PASS/FAIL
+ADMIN BOOTSTRAP: PASS/FAIL
+ATOMICITY: PASS/FAIL
+PASSWORD SECURITY: PASS/FAIL
+ROLE: PASS/FAIL
 GLOBAL SCOPE: PASS/FAIL
-AUTHORIZATION: PASS/FAIL
-AUDIT: PASS/FAIL
-PRODUCTION ADMIN GATE: OPEN/BLOCKED
+EFFECTIVE AUTHORIZATION: PASS/FAIL
+AUTHENTICATION: PASS/FAIL
+
+PRODUCTION DB UNCHANGED.
 ```
 
 ---
 
-# PROMPT 007 — التنفيذ الحقيقي للـ Migrations على Render
+# PROMPT 007 — Full Empty-Database Dress Rehearsal
 
-هنا أول برومبت يسمح بكتابة فعلية على قاعدة Render.
+هذا جديد ومهم قبل لمس Render فعليًا.
 
 ```text
 @Superpowers
@@ -916,159 +896,124 @@ MODEL:
 GPT-5.6 Luna
 
 MODE:
-PRODUCTION READ-ONLY PREFLIGHT
-→ CONDITIONAL PRODUCTION WRITE
+LOCAL TEST / RELEASE GATE
+NO PRODUCTION WRITE
 
 MISSION:
-Safely initialize the actual Render PostgreSQL database after all local migration/foundation/bootstrap gates have passed.
+Perform a complete production-like dress rehearsal from a completely empty PostgreSQL 18 database.
 
-THIS TASK MAY WRITE TO PRODUCTION.
+Do NOT change production.
 
-Do not proceed unless tasks 003-006 are PASS.
+Use the repository AS IT EXISTS after tasks 001–006.
 
-════════════════════════════════════════════════════════════
-SECRET HANDLING
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+STARTING STATE
+════════════════════════════════════════════
 
-The current local `.env` previously contained provider-exported database credentials.
+Create a disposable PostgreSQL 18 database with no application schema/data.
 
-DO NOT:
+Use no production credentials.
 
-source .env
-cat .env
-print it
-use PSQL_Command from it
-echo any DB URL
-pass DB URL directly as a command-line argument
+════════════════════════════════════════════
+EXECUTION
+════════════════════════════════════════════
 
-Use the approved secure temporary DATABASE_URL workflow from:
+Run the real canonical operator sequence:
 
-docs/operations/RENDER-DATABASE-CONNECTION.md
+1. database preflight
+2. migrations
+3. migration status/check
+4. Foundation seed
+5. Foundation check
+6. initial admin bootstrap using test-only credentials
+7. admin check
+8. application start in production-like configuration
+9. authentication test
+10. authorization test
+11. health/live
+12. health/ready
 
-Use the Render EXTERNAL Database URL for local Mac access.
+Verify login failure using incorrect password.
 
-Require confirmation that previously exposed credentials have been rotated.
+Verify anonymous requests cannot access protected resources.
 
-If not confirmed:
+Verify admin can access at least one genuinely ADMIN-protected operation.
 
-STOP.
+Verify restart does not mutate schema/auth data.
 
-════════════════════════════════════════════════════════════
-RUNTIME GATE
-════════════════════════════════════════════════════════════
+Run migration/seed again:
 
-Verify:
+migrations → no-op
+foundation → idempotent
 
-node --version
-pnpm --version
+════════════════════════════════════════════
+DATA VERIFICATION
+════════════════════════════════════════════
 
-Required canonical runtime:
+Verify critical:
 
-Node 24.20.0
-pnpm 11.25.0
+schema_migrations
+users
+sessions
+roles
+permissions
+role_permissions
+user_roles
+user_scopes
+audit_events
 
-Check:
+and domain schemas/tables created by all migrations.
 
-git status --short
+════════════════════════════════════════════
+NO SHORTCUTS
+════════════════════════════════════════════
 
-Know exactly what code is executing.
+Do not:
 
-════════════════════════════════════════════════════════════
-READ-ONLY PREFLIGHT
-════════════════════════════════════════════════════════════
+manually INSERT schema_migrations
+disable auth
+grant superuser to make tests pass
+skip Foundation
+mock database for this end-to-end gate
+reuse production secrets
 
-Run:
-
-pnpm db:preflight
-
-Confirm:
-
-PostgreSQL major version 18
-expected database = qc_operations
-expected database user
-connection PASS
-
-Capture only safe metadata.
-
-Do not expose hostname if not needed.
-
-If qc.users or migration ledger exists unexpectedly relative to expected state:
-
-STOP and investigate before writing.
-
-════════════════════════════════════════════════════════════
-PRE-WRITE METADATA SNAPSHOT
-════════════════════════════════════════════════════════════
-
-Record non-sensitive metadata only:
-
-- qc schema existence
-- application tables currently present
-- schema_migrations existence
-- migration count
-
-Do not dump production rows.
-
-════════════════════════════════════════════════════════════
-MIGRATION
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+FULL QUALITY GATES
+════════════════════════════════════════════
 
 Run:
 
-pnpm db:migrate
+pnpm typecheck
+pnpm lint
+pnpm format:check
+pnpm test
+pnpm test:integration
+pnpm build
 
-If any migration fails:
+Run e2e if available.
 
-STOP.
+════════════════════════════════════════════
+FINAL VERDICT
+════════════════════════════════════════════
 
-Never:
+Exactly:
 
-- edit qc.schema_migrations
-- mark a failed migration complete
-- bypass checksum validation
-- retry randomly
-- manually create application tables to get past the runner
+RENDER PRODUCTION WRITE GATE: PASS
 
-Use systematic-debugging.
+or:
 
-If successful:
+RENDER PRODUCTION WRITE GATE: BLOCKED
 
-pnpm db:migrate:status
-pnpm db:migrate:check
-pnpm db:preflight
+If BLOCKED, list exact failures.
 
-Verify all repository migrations are applied and zero are pending.
-
-════════════════════════════════════════════════════════════
-DO NOT YET
-════════════════════════════════════════════════════════════
-
-Do not create yazeed yet.
-
-Do not create arbitrary users.
-
-Do not manually insert roles.
-
-════════════════════════════════════════════════════════════
-FINAL
-════════════════════════════════════════════════════════════
-
-DATABASE CONNECTION: PASS/FAIL
-POSTGRESQL: 18/OTHER
-DATABASE IDENTITY: PASS/FAIL
-MIGRATIONS: n/n
-PENDING: n
-QC.USERS: EXISTS/MISSING
-FOUNDATION: NOT EXECUTED
-ADMIN: NOT CREATED
-PRODUCTION MIGRATION GATE: PASS/FAIL
-
-No secrets.
+Do not continue to real Render.
 ```
 
 ---
 
-# PROMPT 008 — Foundation + إنشاء yazeed فعليًا على Render
+# PROMPT 008 — Real Render Read-Only Preflight
+
+هنا **لا Migration للحين**. أول نتأكد من القاعدة والـcredential الجديد.
 
 ```text
 @Superpowers
@@ -1079,149 +1024,132 @@ MODEL:
 GPT-5.6 Luna
 
 MODE:
-PRODUCTION WRITE
-+ AUTHENTICATION VERIFICATION
+PRODUCTION READ-ONLY
 
 MISSION:
-Configure the canonical production authorization foundation and create the real initial administrator account yazeed.
+Verify the real Render PostgreSQL target before any production schema mutation.
 
-Only continue after RECOVERY-007 PASS.
+PRECONDITIONS:
 
-════════════════════════════════════════════════════════════
-FIRST — READ-ONLY CHECKS
-════════════════════════════════════════════════════════════
+Tasks 001–007 must be verified complete.
+RENDER PRODUCTION WRITE GATE must be PASS.
 
-Using secure temporary DATABASE_URL:
+The old compromised credential must have been rotated.
 
-pnpm db:preflight
-pnpm db:migrate:check
-pnpm db:seed:foundation:check
+Do not trust environment values merely because they exist.
 
-If foundation check reports missing because it has not yet been seeded:
-that may be expected.
+════════════════════════════════════════════
+SECURITY
+════════════════════════════════════════════
 
-If migrations are invalid/pending:
+Never print:
 
-STOP.
+DATABASE_URL
+password
+connection string
+PGPASSWORD
 
-════════════════════════════════════════════════════════════
-FOUNDATION
-════════════════════════════════════════════════════════════
+Never:
+
+echo $DATABASE_URL
+env | grep DATABASE
+printenv DATABASE_URL
+
+Use safe commands/tools that consume the value without displaying it.
+
+════════════════════════════════════════════
+TARGET EXPECTATION
+════════════════════════════════════════════
+
+Expected non-secret identity:
+
+Database:
+qc_operations
+
+PostgreSQL:
+18.x
+
+This Mac must use Render EXTERNAL connectivity.
+
+Internal Render hostname must NOT be used from local Mac.
+
+TLS must be active for external connectivity.
+
+════════════════════════════════════════════
+READ-ONLY PREFLIGHT
+════════════════════════════════════════════
 
 Run canonical:
 
-pnpm db:seed:foundation
+pnpm db:preflight
 
-Then:
+Verify safely:
 
-pnpm db:seed:foundation:check
+connectivity
+server PostgreSQL version
+database name
+current DB username
+TLS state where programmatically available
+qc schema existence
+qc.schema_migrations existence
+qc.users existence
+migration ledger count
+pending migration count
+existing application table count
 
-Require PASS.
+Run read-only SQL metadata inspection if needed.
 
-Do not manually edit roles or permission tables.
+NO:
+CREATE
+ALTER
+DROP
+INSERT
+UPDATE
+DELETE
+GRANT
+REVOKE
 
-════════════════════════════════════════════════════════════
-INITIAL ADMIN
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+UNEXPECTED STATE
+════════════════════════════════════════════
 
-Identity:
+If any application tables/data unexpectedly exist:
 
-yazeed
+STOP.
 
-Display name:
+Do not migrate until state is understood.
 
-Yazeed
+If current evidence remains:
 
-The operator chooses the password.
+qc.users missing
+and no migrations applied
 
-DO NOT request the password in Codex chat.
+report database as apparently fresh, but substantiate with metadata.
 
-Collect it privately through silent terminal input.
-
-Do NOT:
-
-- write password to .env
-- save it in shell history
-- echo it
-- print it
-- log hash
-
-Temporarily establish canonical bootstrap environment variables.
-
-Run:
-
-pnpm bootstrap:admin
-
-Then immediately:
-
-pnpm bootstrap:admin:check
-
-════════════════════════════════════════════════════════════
-DATABASE VERIFICATION
-════════════════════════════════════════════════════════════
-
-Read-only verify:
-
-exactly one yazeed user
-ACTIVE
-password hash populated
-ADMIN role active and assigned
-GLOBAL scope active
-foundation authorization complete
-expected bootstrap audit events
-
-Never print password_hash.
-
-════════════════════════════════════════════════════════════
-AUTH TEST
-════════════════════════════════════════════════════════════
-
-Verify actual application authentication.
-
-Prove:
-
-valid yazeed credentials → login succeeds
-invalid password → fails
-anonymous protected access → fails
-ADMIN-only operation → succeeds for yazeed
-
-Do not expose credentials in request logs.
-
-════════════════════════════════════════════════════════════
-CLEANUP
-════════════════════════════════════════════════════════════
-
-Unset temporary:
-
-DATABASE_URL
-BOOTSTRAP_ADMIN_PASSWORD
-BOOTSTRAP_ADMIN_IDENTITY
-BOOTSTRAP_ADMIN_DISPLAY_NAME
-BOOTSTRAP_ADMIN_EMAIL
-
-where they were temporarily defined locally.
-
-Do not delete Render DB configuration.
-
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
 FINAL
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
 
-FOUNDATION: PASS/FAIL
-ADMIN USER: PASS/FAIL
-ACCOUNT STATE: PASS/FAIL
-ADMIN ROLE: PASS/FAIL
-GLOBAL SCOPE: PASS/FAIL
-AUTHORIZATION: PASS/FAIL
-AUTHENTICATION: PASS/FAIL
-AUDIT: PASS/FAIL
+PRODUCTION TARGET: CONFIRMED / NOT CONFIRMED
+DATABASE: qc_operations / MISMATCH
+POSTGRES VERSION: <non-secret>
+TLS: PASS/FAIL
+qc SCHEMA: EXISTS/MISSING
+MIGRATIONS APPLIED: <count>
+MIGRATIONS PENDING: <count>
+qc.users: EXISTS/MISSING
+UNEXPECTED DATA: YES/NO
 
-Do not claim success unless all PASS.
+PRODUCTION WRITE ALLOWED NEXT: YES/NO
+
+Do not perform any write.
 ```
 
 ---
 
-# PROMPT 009 — ربط Render Web Service بالإنتاج
+# PROMPT 009 — Real Render Migration + Foundation
+
+الآن فقط يبدأ الكتابة الفعلية.
 
 ```text
 @Superpowers
@@ -1232,150 +1160,134 @@ MODEL:
 GPT-5.6 Luna
 
 MODE:
-PRODUCTION CONFIGURATION
-+ DEPLOYMENT VERIFICATION
+PRODUCTION WRITE
+CONTROLLED DATABASE INITIALIZATION
 
 MISSION:
-Finalize the Render Web Service production configuration after database initialization and admin creation.
+Initialize the confirmed Render PostgreSQL database using the repository's verified canonical migration and Foundation workflow.
 
-Do not expose secrets.
+PRECONDITIONS:
 
-════════════════════════════════════════════════════════════
-DATABASE CONNECTION MODEL
-════════════════════════════════════════════════════════════
+Task 007:
+RENDER PRODUCTION WRITE GATE = PASS
 
-LOCAL MAC:
-External Database URL
+Task 008:
+PRODUCTION TARGET = CONFIRMED
+PRODUCTION WRITE ALLOWED NEXT = YES
 
-RENDER WEB SERVICE:
-Internal Database URL when Render private networking/topology permits it.
+If either is not true:
+STOP.
 
-The application's variable name is:
+════════════════════════════════════════════
+SECURITY
+════════════════════════════════════════════
 
-DATABASE_URL
+Never print DATABASE_URL or credentials.
 
-Do NOT configure application variables named:
+Never:
 
-Hostname
-Database
-Username
-Password
-Internal_Database_URL
-External_Database_URL
-PSQL_Command
+edit schema_migrations manually
+mark failed migration as applied
+disable checksum verification
+delete database objects to get a green result
+skip a failed migration
+use old compromised credential
 
-Those are provider connection details, not canonical app config.
+════════════════════════════════════════════
+PRE-WRITE EVIDENCE
+════════════════════════════════════════════
 
-════════════════════════════════════════════════════════════
-PRODUCTION ENVIRONMENT
-════════════════════════════════════════════════════════════
+Capture non-sensitive metadata only:
 
-Audit exact current requirements from src/config/env.ts and render.yaml.
+database
+Postgres version
+current schema list
+application table count
+migration state
 
-At minimum validate:
-
-NODE_VERSION
-NODE_ENV
-SERVICE_VERSION
-DATABASE_URL
-SESSION_SECRET
-RATE_LIMIT_LOGIN_MAX
-RATE_LIMIT_LOGIN_WINDOW_SECONDS
-
-and optional observability config if used.
-
-Never commit secret values.
-
-Generate secure SESSION_SECRET if missing through approved secret handling.
-
-Do not reuse:
-
-database password
-admin password
-any previously exposed credential
-
-as SESSION_SECRET.
-
-════════════════════════════════════════════════════════════
-IMPORTANT ARCHITECTURAL RULE
-════════════════════════════════════════════════════════════
-
-Application startup must NOT automatically:
-
-run migrations
-run foundation seed
-bootstrap admin
-
-Those remain explicit operator-controlled procedures.
-
-════════════════════════════════════════════════════════════
-HEALTH
-════════════════════════════════════════════════════════════
-
-Verify:
-
-health/live endpoint
-health/ready endpoint
-
-or canonical current equivalents.
-
-Readiness should correctly validate required production dependencies without leaking details.
-
-════════════════════════════════════════════════════════════
-BUILD / TEST
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+MIGRATION
+════════════════════════════════════════════
 
 Run:
 
-pnpm typecheck
-pnpm lint
-pnpm format:check
-pnpm test
-pnpm test:integration
-pnpm test:security
-pnpm build
+pnpm db:migrate
 
-Run e2e if valid production-like environment exists.
+If ANY error occurs:
 
-════════════════════════════════════════════════════════════
-RENDER FREE DATABASE LIFECYCLE
-════════════════════════════════════════════════════════════
+STOP immediately.
 
-The Render screenshots previously showed this PostgreSQL instance as a FREE database with an expiration/deletion warning.
+Use systematic-debugging.
 
-Explicitly verify current plan/lifecycle with the operator/provider state.
+Do not proceed to Foundation.
 
-A database scheduled for automatic deletion must NOT be considered acceptable long-lived production storage.
+After success:
 
-If expiration/deletion remains active:
+pnpm db:migrate:status
+pnpm db:migrate:check
+pnpm db:preflight
 
-mark:
+Require:
+all repository migrations applied
+zero pending
+checksum validation PASS
 
-PRODUCTION DURABILITY: BLOCKED
+Verify critical tables.
 
-even if application connectivity works.
+════════════════════════════════════════════
+FOUNDATION
+════════════════════════════════════════════
 
-Do not silently call the deployment production-ready.
+Only after migration verification PASS:
 
-════════════════════════════════════════════════════════════
+pnpm db:seed:foundation
+
+then:
+
+pnpm db:seed:foundation:check
+
+Require PASS.
+
+Verify expected role/permission/grant counts using canonical repository definitions.
+
+Do not create yazeed yet.
+
+════════════════════════════════════════════
+RERUN SAFETY
+════════════════════════════════════════════
+
+Run migration check again.
+
+Do not rerun destructive commands.
+
+Foundation may be rerun only if designed/tested idempotent.
+
+════════════════════════════════════════════
 FINAL
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
 
-WEB SERVICE DATABASE CONFIG: PASS/FAIL
-INTERNAL DB CONNECTIVITY: PASS/FAIL
-SESSION CONFIG: PASS/FAIL
-RATE LIMIT CONFIG: PASS/FAIL
-HEALTH LIVE: PASS/FAIL
-HEALTH READY: PASS/FAIL
-BUILD: PASS/FAIL
-PRODUCTION DURABILITY: PASS/BLOCKED
+DATABASE: PASS/FAIL
+MIGRATIONS: <applied>/<expected>
+PENDING: 0/<nonzero>
+CHECKSUMS: PASS/FAIL
+FOUNDATION: PASS/FAIL
+ROLES: PASS/FAIL
+PERMISSIONS: PASS/FAIL
+ROLE GRANTS: PASS/FAIL
+qc.users TABLE: PASS/FAIL
+
+ADMIN USER CREATED: NO
+
+If anything fails:
+PRODUCTION INITIALIZATION: BLOCKED
+
+Otherwise:
+PRODUCTION INITIALIZATION: PASS
 ```
 
 ---
 
-# PROMPT 010 — Security Closure
-
-هذا الآن يتضمن `.env` الجديد بشكل صريح.
+# PROMPT 010 — Create Real `yazeed` Admin
 
 ```text
 @Superpowers
@@ -1386,343 +1298,241 @@ MODEL:
 GPT-5.6 Luna
 
 MODE:
-SECURITY CLOSURE
+PRODUCTION WRITE
+ONE-TIME INITIAL ADMIN BOOTSTRAP
 
 MISSION:
-Close all database credential, local secret, Render exposure and bootstrap security risks created or discovered during recovery.
+Create and verify the real initial administrator.
 
-════════════════════════════════════════════════════════════
-DATABASE CREDENTIAL
-════════════════════════════════════════════════════════════
+Identity:
 
-A PostgreSQL credential was previously exposed.
+yazeed
 
-Require evidence/operator confirmation that the active DB credential is rotated.
+Display name:
 
-Never print old or new values.
+Yazeed
 
-If the old credential remains active:
+Do not hardcode the production password.
 
-SECURITY CLOSURE FAILS.
+════════════════════════════════════════════
+PRECONDITIONS
+════════════════════════════════════════════
 
-════════════════════════════════════════════════════════════
-LOCAL .env
-════════════════════════════════════════════════════════════
+Require:
 
-The previous local `.env` contained provider connection details including plaintext credential material.
+pnpm db:migrate:check → PASS
+pnpm db:seed:foundation:check → PASS
+pnpm db:preflight → PASS
 
-Verify:
+If not:
+STOP.
 
-git check-ignore -v .env
-git ls-files --error-unmatch .env
+════════════════════════════════════════════
+PASSWORD SECURITY
+════════════════════════════════════════════
 
-It must remain untracked.
+Do not ask me to paste the password into Codex chat.
 
-After production recovery is complete and operator confirms active credentials are safely available in Render:
+Do not use:
 
-remove unnecessary plaintext Render credential dumps from local project storage.
+BOOTSTRAP_ADMIN_PASSWORD='secret' pnpm ...
 
-Do not replace them with another plaintext copy.
+because this can enter shell history/process inspection depending on method.
 
-Keep:
+Use the repository's documented private secret-input workflow.
 
-.env.example
+Password must only reach the bootstrap process via a safe mechanism.
 
-as variable names/template only.
+Never print it.
 
-Do not delete user secrets before confirming recoverability.
+════════════════════════════════════════════
+BOOTSTRAP
+════════════════════════════════════════════
 
-════════════════════════════════════════════════════════════
-SECRET SCAN
-════════════════════════════════════════════════════════════
+Set securely:
 
-Scan:
+BOOTSTRAP_ADMIN_IDENTITY=yazeed
+BOOTSTRAP_ADMIN_DISPLAY_NAME=Yazeed
+BOOTSTRAP_ADMIN_PASSWORD=<PRIVATE>
 
-tracked files
-git diff
-staged diff
-documentation
-logs
-generated reports
-config files
-
-for:
-
-postgresql://
-postgres://
-DATABASE_URL values
-passwords
-tokens
-SESSION_SECRET
-authorization headers
-
-Never print discovered secret values.
-
-Report redacted location only.
-
-════════════════════════════════════════════════════════════
-BOOTSTRAP CLEANUP
-════════════════════════════════════════════════════════════
-
-After successful yazeed creation:
-
-BOOTSTRAP_ADMIN_PASSWORD must not remain configured.
-
-Determine whether other bootstrap variables should also be removed:
-
-BOOTSTRAP_ADMIN_IDENTITY
-BOOTSTRAP_ADMIN_DISPLAY_NAME
-BOOTSTRAP_ADMIN_EMAIL
-
-Remove from production environment when no longer operationally required.
-
-Do not remove variables from render.yaml definitions merely because their values are absent unless architecture requires it.
-
-════════════════════════════════════════════════════════════
-POSTGRESQL NETWORK EXPOSURE
-════════════════════════════════════════════════════════════
-
-Previous screenshot showed inbound PostgreSQL access:
-
-0.0.0.0/0
-everywhere
-
-Review current Render configuration.
-
-After local database work is complete:
-
-apply/recommend least-privilege inbound restrictions.
-
-If direct Mac DB administration is not required:
-external DB access should be disabled/restricted as far as provider supports.
-
-If it is required:
-limit access to approved IP/CIDR.
-
-Do not claim this was changed if you cannot modify Render dashboard.
-
-════════════════════════════════════════════════════════════
-APPLICATION SECURITY
-════════════════════════════════════════════════════════════
-
-Verify logs/errors cannot expose:
-
-DATABASE_URL
-password
-password_hash
-session token
-cookies
-Authorization headers
-bootstrap secrets
-
-Verify SESSION_SECRET is independent and strong.
-
-════════════════════════════════════════════════════════════
-VERIFY
-════════════════════════════════════════════════════════════
+Optional email only if explicitly supplied.
 
 Run:
 
-pnpm test:security
-pnpm lint
-pnpm typecheck
-pnpm test
+pnpm bootstrap:admin
 
-Generate/update:
+Then:
 
-docs/operations/POSTGRES-SECURITY-CLOSURE.md
+pnpm bootstrap:admin:check
 
-Final controls:
+════════════════════════════════════════════
+DATABASE VERIFICATION
+════════════════════════════════════════════
 
-DB CREDENTIAL ROTATED: PASS/FAIL
-LOCAL SECRET FILE SAFETY: PASS/FAIL
-GIT SECRET SCAN: PASS/FAIL
-BOOTSTRAP SECRET CLEANUP: PASS/FAIL
-DB NETWORK EXPOSURE: PASS/FAIL/BLOCKED-BY-OPERATOR
-LOG REDACTION: PASS/FAIL
-SESSION SECRET ISOLATION: PASS/FAIL
+Read-only verify:
 
-SECURITY CLOSED: YES/NO
+exactly one yazeed user
+ACTIVE account
+nonempty password_hash without displaying it
+ADMIN role
+role active
+role not revoked
+GLOBAL scope
+scope not revoked
+effective canonical ADMIN permissions
+expected bootstrap audit events
+
+════════════════════════════════════════════
+AUTHENTICATION
+════════════════════════════════════════════
+
+Test through the actual authentication implementation.
+
+Valid production secret:
+login succeeds.
+
+Invalid password:
+login fails.
+
+Verify a real ADMIN-protected authorization path succeeds.
+
+Anonymous access must fail.
+
+════════════════════════════════════════════
+POST-BOOTSTRAP
+════════════════════════════════════════════
+
+Unset local bootstrap secret variables where practical.
+
+Do not retain production admin password in `.env`.
+
+Identify one-time Render bootstrap variables that should NOT remain configured.
+
+════════════════════════════════════════════
+FINAL
+════════════════════════════════════════════
+
+ADMIN USER: PASS/FAIL
+ACCOUNT STATE: PASS/FAIL
+PASSWORD HASHING: PASS/FAIL
+ADMIN ROLE: PASS/FAIL
+GLOBAL SCOPE: PASS/FAIL
+EFFECTIVE AUTHORIZATION: PASS/FAIL
+AUTHENTICATION: PASS/FAIL
+AUDIT: PASS/FAIL
+
+Only if all PASS:
+
+INITIAL ADMIN READY
 ```
 
 ---
 
-# PROMPT 011 — Final Independent Closure
+# PROMPT 011 — Render Web Service Production Connection
+
+هنا الـInternal URL يصير مهم.
 
 ```text
 @Superpowers
 
-TASK ID: QC-RENDER-POSTGRES-FINAL-CLOSURE-011
+TASK ID: QC-RENDER-POSTGRES-RECOVERY-011
 
 MODEL:
 GPT-5.6 Luna
 
 MODE:
-FINAL INDEPENDENT VERIFICATION
+PRODUCTION CONFIGURATION
++ LOCAL VERIFICATION
 
 MISSION:
-Independently re-audit the complete recovery from CURRENT REALITY.
+Complete the Render Web Service production database/environment configuration.
 
-Do not trust PASS statements from tasks 001-010.
+The production database and initial admin should already be verified.
 
-Re-run evidence.
+════════════════════════════════════════════
+CONNECTION MODEL
+════════════════════════════════════════════
 
-════════════════════════════════════════════════════════════
-A — TOOLCHAIN
-════════════════════════════════════════════════════════════
+LOCAL MAC:
+External Render PostgreSQL connection.
+
+RENDER WEB SERVICE:
+Use Render INTERNAL database connection through DATABASE_URL when Web Service and PostgreSQL database support same-region private networking.
+
+Do NOT copy:
+
+Internal_Database_URL
+
+as a second application contract.
+
+The application should continue consuming canonical:
+
+DATABASE_URL
+
+Do not hardcode host/user/password/database in source.
+
+════════════════════════════════════════════
+VERIFY RENDER CONFIG CONTRACT
+════════════════════════════════════════════
+
+Audit:
+
+render.yaml
+src/config/env.*
+Astro adapter/config
+server startup
+health endpoints
+cookie/session config
+rate limiter
+
+Production required env must be derived from CURRENT source.
+
+At minimum inspect need for:
+
+NODE_VERSION
+NODE_ENV
+DATABASE_URL
+SESSION_SECRET
+SERVICE_VERSION
+RATE_LIMIT_LOGIN_MAX
+RATE_LIMIT_LOGIN_WINDOW_SECONDS
+
+and observability variables if used.
+
+Do not commit secret values.
+
+════════════════════════════════════════════
+SECURITY
+════════════════════════════════════════════
+
+Production Web Service must NOT use the old compromised DB credential.
+
+Production Web Service must NOT automatically run:
+
+migrations
+Foundation seed
+admin bootstrap
+
+during startup or deploy.
+
+Keep DB lifecycle operations explicit.
+
+════════════════════════════════════════════
+HEALTH
+════════════════════════════════════════════
 
 Verify canonical:
 
-Node 24.20.0
-pnpm 11.25.0
+liveness
+readiness
 
-════════════════════════════════════════════════════════════
-B — LOCAL SECRETS
-════════════════════════════════════════════════════════════
+Readiness must reflect actual required production dependencies safely.
 
-Verify:
+No secrets in responses.
 
-.env not tracked
-no production credential committed
-no provider credential dump required for normal operation
-DATABASE_URL handling follows approved secret workflow
-
-Never print secrets.
-
-════════════════════════════════════════════════════════════
-C — DATABASE
-════════════════════════════════════════════════════════════
-
-Using approved secure connection method:
-
-pnpm db:preflight
-
-Verify:
-
-expected Render database
-PostgreSQL supported
-qc exists
-connectivity PASS
-
-════════════════════════════════════════════════════════════
-D — MIGRATIONS
-════════════════════════════════════════════════════════════
-
-Verify:
-
-every migration file accounted for
-every required migration applied
-zero pending
-checksums valid
-migration runner idempotent
-managed-Postgres compatibility proven
-
-════════════════════════════════════════════════════════════
-E — DATABASE OBJECTS
-════════════════════════════════════════════════════════════
-
-Verify every expected application table.
-
-At minimum:
-
-qc.schema_migrations
-qc.users
-qc.sessions
-qc.roles
-qc.permissions
-qc.role_permissions
-qc.user_roles
-qc.user_scopes
-qc.audit_events
-
-and all domain tables from all migrations.
-
-════════════════════════════════════════════════════════════
-F — FOUNDATION
-════════════════════════════════════════════════════════════
-
-Run canonical read-only foundation verification.
-
-Verify:
-
-roles
-permissions
-role grants
-no policy drift
-
-════════════════════════════════════════════════════════════
-G — YAZEED ADMIN
-════════════════════════════════════════════════════════════
-
-Without exposing sensitive fields:
-
-exactly one yazeed
-ACTIVE
-ADMIN role
-GLOBAL scope
-complete effective authorization
-bootstrap audit trail
-
-════════════════════════════════════════════════════════════
-H — AUTHENTICATION
-════════════════════════════════════════════════════════════
-
-Prove:
-
-valid login works
-invalid login fails
-anonymous access blocked
-session works
-ADMIN authorization works
-rate limiting works
-
-Do not expose credentials.
-
-════════════════════════════════════════════════════════════
-I — RENDER WEB SERVICE
-════════════════════════════════════════════════════════════
-
-Verify:
-
-production environment configuration
-internal DB connection where appropriate
-SESSION_SECRET
-rate limits
-health/live
-health/ready
-build/start
-canonical host
-
-════════════════════════════════════════════════════════════
-J — DATABASE DURABILITY
-════════════════════════════════════════════════════════════
-
-Verify current Render PostgreSQL lifecycle/plan.
-
-If database is still scheduled for automatic deletion/expiration:
-
-PRODUCTION DATABASE READY = FALSE
-
-regardless of all functional tests.
-
-This is a hard operational blocker for durable production use.
-
-════════════════════════════════════════════════════════════
-K — SECURITY
-════════════════════════════════════════════════════════════
-
-Verify:
-
-previously exposed DB credential rotated
-no plaintext credentials committed
-bootstrap password removed
-external database exposure restricted appropriately
-logs clean
-SESSION_SECRET independent
-
-════════════════════════════════════════════════════════════
-L — FULL QUALITY GATES
-════════════════════════════════════════════════════════════
+════════════════════════════════════════════
+QUALITY
+════════════════════════════════════════════
 
 Run:
 
@@ -1730,32 +1540,217 @@ pnpm typecheck
 pnpm lint
 pnpm format:check
 pnpm test
-pnpm test:migrations
 pnpm test:integration
-pnpm test:security
 pnpm build
 
-Run e2e where valid.
+Then provide exact Render environment configuration instructions WITHOUT values.
 
-════════════════════════════════════════════════════════════
-FINAL REPORT
-════════════════════════════════════════════════════════════
+Classify each variable:
 
-Create:
+PUBLIC/NON-SECRET
+SECRET
+RENDER INTERNAL DATABASE REFERENCE
+OPTIONAL
+
+Final:
+
+RENDER CONFIG: PASS/FAIL
+INTERNAL DB MODEL: PASS/FAIL
+BUILD: PASS/FAIL
+HEALTH CONFIG: PASS/FAIL
+AUTH CONFIG: PASS/FAIL
+```
+
+---
+
+# PROMPT 012 — Security Closure + Final Independent Audit
+
+هذا الأخير يجمع إغلاق credential القديم، `0.0.0.0/0`، وكل التحقق النهائي.
+
+```text
+@Superpowers
+
+TASK ID: QC-RENDER-POSTGRES-FINAL-CLOSURE-012
+
+MODEL:
+GPT-5.6 Luna
+
+MODE:
+SECURITY CLOSURE
++ FINAL INDEPENDENT VERIFICATION
+
+MISSION:
+Independently re-verify the entire Render PostgreSQL recovery and close all known security risks.
+
+DO NOT trust completion claims from tasks 001–011.
+
+Current reality only.
+
+════════════════════════════════════════════
+A — CREDENTIAL ROTATION
+════════════════════════════════════════════
+
+Verify through safe operator evidence that:
+
+- replacement Render PostgreSQL credential is active
+- application/local approved access uses replacement credential
+- previously exposed credential no longer has login access
+
+Never display either credential.
+
+If the old credential remains active:
+
+FINAL STATUS MUST BE BLOCKED.
+
+════════════════════════════════════════════
+B — LOCAL SECRET HYGIENE
+════════════════════════════════════════════
+
+Verify:
+
+.env ignored by git
+.env not tracked
+only canonical necessary secrets retained
+no PSQL_Command containing plaintext password
+no duplicate Password variable unless application genuinely needs it
+no plaintext secret in docs/source/tests/diff
+
+Never print `.env`.
+
+Use redacted scanning.
+
+════════════════════════════════════════════
+C — RENDER INBOUND ACCESS
+════════════════════════════════════════════
+
+Review current PostgreSQL external inbound rules.
+
+Known prior state included:
+
+0.0.0.0/0
+
+If broad external access remains:
+
+evaluate whether local external DB administration is still required.
+
+Preferred final state:
+
+Render Web Service uses INTERNAL connection.
+
+External access:
+restricted to approved operator IP/CIDR
+or disabled when not required.
+
+Do not make a networking change without ensuring it will not lock out a required approved workflow.
+
+════════════════════════════════════════════
+D — DATABASE
+════════════════════════════════════════════
+
+Verify read-only:
+
+all migrations applied
+zero pending
+checksums valid
+Foundation check PASS
+
+Critical tables exist.
+
+No unexpected partial migration state.
+
+════════════════════════════════════════════
+E — ADMIN
+════════════════════════════════════════════
+
+Verify yazeed:
+
+exactly one account
+ACTIVE
+ADMIN role
+GLOBAL scope
+effective canonical ADMIN permissions
+
+Do not display hashes/secrets.
+
+════════════════════════════════════════════
+F — AUTHENTICATION / AUTHORIZATION
+════════════════════════════════════════════
+
+Verify:
+
+valid login succeeds
+invalid login fails
+anonymous protected access fails
+admin protected operation succeeds
+sessions work
+secure production cookies
+rate limiting configured
+
+════════════════════════════════════════════
+G — RENDER SERVICE
+════════════════════════════════════════════
+
+Verify:
+
+Node canonical version
+NODE_ENV=production
+internal DATABASE_URL model
+SESSION_SECRET configured
+rate-limit configuration
+build/start command
+health readiness
+
+Never show secret env values.
+
+════════════════════════════════════════════
+H — QUALITY GATES
+════════════════════════════════════════════
+
+Run:
+
+pnpm typecheck
+pnpm lint
+pnpm format:check
+pnpm test
+pnpm test:integration
+pnpm build
+
+Run e2e if repository provides production-safe e2e coverage.
+
+════════════════════════════════════════════
+I — FINAL REPORT
+════════════════════════════════════════════
+
+Create/update:
 
 docs/operations/POSTGRES-RENDER-FINAL-CLOSURE.md
 
-Evidence matrix:
+Do NOT put credentials in it.
+
+Evidence table:
 
 CONTROL
 EXPECTED
 ACTUAL
-COMMAND/EVIDENCE
+EVIDENCE
 STATUS
 
-Never use fake percentages.
+Cover:
 
-Final verdict EXACTLY:
+runtime
+secret handling
+credential rotation
+migration
+foundation
+admin
+authentication
+authorization
+Render DB connection
+health
+inbound DB exposure
+tests
+
+Final verdict must be exactly:
 
 PRODUCTION DATABASE READY
 
@@ -1763,8 +1758,39 @@ or
 
 PRODUCTION DATABASE NOT READY
 
-If NOT READY:
-list exact blockers in dependency order.
+No percentages.
 
-Do not weaken criteria merely because most components pass.
+No assumptions.
+
+No fake PASS.
+```
+
+## الترتيب الجديد
+
+صار المسار الأفضل:
+
+```text
+001 ✅ Reality Audit
+      ↓
+002 ✅ Runtime / Env / Preflight
+      ↓
+003 🔴 Normalize .env + Rotate exposed credential
+      ↓
+004 Migration architecture / Render privileges
+      ↓
+005 Foundation RBAC
+      ↓
+006 Admin bootstrap
+      ↓
+007 Full disposable PostgreSQL 18 rehearsal
+      ↓
+008 Real Render READ-ONLY preflight
+      ↓
+009 Real Render migrations + Foundation
+      ↓
+010 Create real yazeed admin
+      ↓
+011 Connect Render Web Service using Internal DATABASE_URL
+      ↓
+012 Security + Final closure
 ```

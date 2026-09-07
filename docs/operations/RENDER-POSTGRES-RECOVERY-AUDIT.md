@@ -88,7 +88,7 @@ The repository has no tracked `.env` file. `.env.example` contains names/placeho
    - `RATE_LIMIT_LOGIN_MAX`
    - `RATE_LIMIT_LOGIN_WINDOW_SECONDS`
 
-   The deployment also sets `NODE_ENV=production`, `NODE_VERSION=24.20.0`, `HOST=0.0.0.0`, and `SERVICE_VERSION`; OTEL endpoint/headers are optional according to the parser. The one-time bootstrap command additionally requires the four bootstrap variables above. `DATABASE_URL` must be the Render **internal** URL for the production Web Service when the database and service share a region. Local Mac migration must use the Render **external** URL over TLS, supplied only through a secure environment mechanism. The source does not enforce TLS explicitly in `pg.Client`/`pg.Pool`; it relies on the URL/driver configuration, so this needs an explicit operational and code-level verification.
+   The deployment also sets `NODE_ENV=production`, `NODE_VERSION=24.20.0`, `HOST=0.0.0.0`, and `SERVICE_VERSION`; OTEL endpoint/headers are optional according to the parser. The one-time bootstrap command additionally requires the four bootstrap variables above. `DATABASE_URL` must be the Render **internal** URL for the production Web Service when the database and service share a region. Local Mac migration must use the Render **external** URL over TLS, supplied only through a secure environment mechanism. The canonical runtime/preflight connection helper rejects `sslmode=disable`, preserves an explicit provider `sslmode`, and enables certificate verification when no `sslmode` is present.
 
 10. **Are production role/permission foundation data currently reproducible?**
 
@@ -288,4 +288,3 @@ Required production values are named in `render.yaml`, but repository evidence d
 - Current tracked-file and full reachable-history scans for PostgreSQL URLs and database credential assignments were performed with values suppressed. No production-looking PostgreSQL URL or database credential assignment was found outside tests/examples/docs/skills. Test fixtures and placeholders remain intentionally present in test/example files.
 - Full PostgreSQL migration/bootstrap runtime was **not run**: no production credential was used, local Node is not the required version, no disposable PostgreSQL 18 runtime was available, and the local `tsx` IPC launch was blocked by sandbox `EPERM`.
 - No Render API/database query, migration, seed, bootstrap, commit, or push was performed.
-

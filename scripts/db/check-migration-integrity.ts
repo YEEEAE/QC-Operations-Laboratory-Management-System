@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { getPool } from '../../src/shared/database/pool.js';
 import { loadMigrations, verifyMigrationIntegrity } from './migrate.js';
 
+import './load-local-env.js';
+
 export async function checkMigrationIntegrity(): Promise<void> {
   const pool = getPool();
   const client = await pool.connect();
