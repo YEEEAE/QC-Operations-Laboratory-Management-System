@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — MASTER-034: Accessibility + failure UX + performance baseline
+
+### تم التنفيذ
+- أضفت تغطية Playwright لـ WCAG 2.2 AA باستخدام `@axe-core/playwright`، مسار keyboard يدوي، focus واضح، جداول/رسوم بملخصات نصية، حالات status غير معتمدة على اللون فقط، وreduced-motion؛ الاختبارات المحمية تُعمل skip فقط عند غياب fixture مصادقة معتمد.
+- أضفت responsive coverage لمقاسات 320/375/768/1024/1280/1440، portrait/landscape، RTL/LTR، و200% zoom، وأصلحت login فعليًا بإضافة landmark/labels وcontrols بحد أدنى 48px وresponsive shell.
+- أضفت اختبارات failure/recovery لـ404 و500 مع request reference بدون stack، readiness dependency failure، IDOR-shaped unauthenticated requests، واختبارات stale-version وAI degradation المربوطة بfixtures؛ لم يُخترع commit truth أو authority عند فشل outbox/notification.
+- أضفت `tests/performance/smoke.mjs` لقياس status/bytes/TTFB/total p50/p95 مع release/artifact/environment identity، ودوّنت baseline الفعلي بدون threshold أو SLO مخترع.
+- فحصت query shapes ووثقت وجود قوائم غير محدودة وN+1 قائم في laboratory/inspection/tasks وdocument version files؛ لم أعدلها لغياب pagination contract وPostgreSQL dataset معتمد.
+
+### الملفات المتأثرة
+- `tests/e2e/accessibility.spec.ts`, `tests/e2e/responsive.spec.ts`, `tests/e2e/error-recovery.spec.ts`
+- `tests/performance/smoke.mjs`, `docs/verification/PERFORMANCE-BASELINE.md`
+- `src/pages/login.astro`, `package.json`, `pnpm-lock.yaml`
+
+### التحقق
+- `pnpm build` ✅ — Astro server build ناجح.
+- Playwright scope: `14 passed / 4 skipped` ✅ — axe، keyboard، responsive، 200% zoom، 404/500/readiness/IDOR؛ الـskips بسبب غياب `QC_E2E_LOGIN_IDENTITY` و`QC_E2E_PASSWORD` وfixture stale task.
+- `node tests/performance/smoke.mjs` ✅ — 1 warmup و5 samples؛ `/login` total p50/p95 = `1.138/2.451ms`، 404 = `1.294/1.926ms`، readiness = `0.713/0.747ms`، ورجوع readiness بـ503 موثق كفشل dependency متوقع.
+- `prettier --check` ✅، ESLint للملفات الجديدة ✅، `check-boundaries.mjs` ✅، `git diff --check` ✅، وفحص secrets/raw SQL في Delivery بلا نتائج.
+- اختبارات التكامل المرتبطة بالـdegradation والـobservability: `outbox.test.ts` و`ai-advisory/security.test.ts` و`system-health.test.ts` = `19/19` ✅؛ تثبت retry عند فشل provider وAI optional degradation وhealth vocabulary بدون تسريب.
+- `pnpm typecheck` ❌ — 342 baseline errors خارج نطاق MASTER-034، منها Astro Actions typings وmiddleware وملفات UI/اختبارات قديمة؛ `pnpm test:unit` ❌ — 15 suites نجحت و2 فشلت لأسباب baseline (UI imports وArgon2 expectation).
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** تغطية accessibility/responsive/failure والـbaseline موجودة ومتحققة على المسارات العامة، لكن readiness/performance غير مثبتة إنتاجيًا، والمسارات المحمية وstale/AI تحتاج fixtures معتمدة، وquery-shape issues الحالية مفتوحة.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد approved performance SLO أو threshold؛ القيم المسجلة observational فقط، والقياس تم على Node `22.22.3` بينما engine يطلب Node `24.20.x`.
+- لا توجد قاعدة PostgreSQL disposable أو dataset معتمد في التشغيل؛ لا يزال إثبات mutation committed مع notification provider فعلي، وquery count/N+1 runtime trace، محجوبًا بغياب fixture/provider.
+
 ## [2026-09-05] — البحث عن بيانات الأدمن ومخطط قاعدة البيانات
 
 ### تم التنفيذ

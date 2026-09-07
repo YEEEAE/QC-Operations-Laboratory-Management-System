@@ -1,4 +1,5 @@
 ---
+import '../ui/styles/global.css';
 import { actions } from 'astro:actions';
 const returnTo = Astro.url.searchParams.get('returnTo') ?? '/dashboard';
 const error = Astro.url.searchParams.get('error');
@@ -7,12 +8,13 @@ const error = Astro.url.searchParams.get('error');
 <html lang="en" dir="ltr">
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>Sign in · QC Operations</title></head>
   <body>
-    <main>
+    <main id="main-content" class="login-shell">
+      <section class="login-panel" aria-labelledby="login-title">
       <p>QC Operations &amp; Laboratory Management System</p>
-      <h1>Sign in</h1>
+      <h1 id="login-title">Sign in</h1>
       <p>Secure operational access</p>
       {error && <p id="form-error" role="alert">Sign-in could not be completed. Check your credentials and try again.</p>}
-      <form method="POST" action={actions.server.login} aria-describedby={error ? 'form-error' : undefined}>
+      <form class="login-form" method="POST" action={actions.server.login} aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
         <label for="loginIdentity">Login identity</label>
         <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="username" required autofocus />
@@ -20,6 +22,20 @@ const error = Astro.url.searchParams.get('error');
         <input id="password" name="password" type="password" autocomplete="current-password" required />
         <button type="submit">Sign in</button>
       </form>
+      </section>
     </main>
   </body>
 </html>
+<style>
+  .login-shell { min-height: 100vh; display: grid; place-items: center; padding: var(--space-6); background: var(--surface-page); }
+  .login-panel { width: min(100%, 440px); padding: var(--space-8); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); }
+  .login-panel > p:first-child { margin: 0 0 var(--space-6); color: var(--color-accent-primary-hover); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
+  .login-panel h1 { margin: 0; font-size: clamp(1.75rem, 5vw, 2.25rem); }
+  .login-panel h1 + p { margin: var(--space-2) 0 var(--space-6); color: var(--text-secondary); }
+  #form-error { padding: var(--space-3); border: 1px solid var(--status-danger); border-radius: var(--radius-sm); color: var(--status-danger); background: var(--status-danger-bg); }
+  .login-form { display: grid; gap: var(--space-3); }
+  .login-form label { font-weight: 600; }
+  .login-form input:not([type="hidden"]) { width: 100%; min-height: 48px; padding-inline: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-page); }
+  .login-form button { min-height: 48px; margin-top: var(--space-2); padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--color-text-inverse); font-weight: 700; cursor: pointer; }
+  @media (max-width: 520px) { .login-shell { padding: var(--space-4); } .login-panel { padding: var(--space-5); } }
+</style>
