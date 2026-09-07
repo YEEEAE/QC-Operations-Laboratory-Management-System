@@ -1,1 +1,7 @@
-import { describe, expect, it } from 'vitest'; import { transitionInspection } from '../../../src/modules/quarantine/inspection/domain/inspection-state.js'; describe('inspection repository contract inputs',()=>{it('keeps lifecycle result-independent',()=>{expect(transitionInspection('DRAFT','SUBMIT')).toBe('SUBMITTED');});});
+import { describe, expect, it } from 'vitest';
+import { transitionInspection } from '../../../src/modules/quarantine/inspection/domain/inspection-state.js';
+describe('inspection repository contract inputs', () => {
+  it('keeps lifecycle result-independent', () => {
+    expect(transitionInspection('DRAFT', 'SUBMIT')).toBe('SUBMITTED');
+  });
+});

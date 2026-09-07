@@ -4,7 +4,7 @@ import { quarantineReadDependencies } from '../../../modules/quarantine/applicat
 import { AppError } from '../../../shared/errors/app-error.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
-let admin: Awaited<ReturnType<typeof quarantineReadDependencies>['admin']['execute']> | undefined;
+let admin: Awaited<ReturnType<ReturnType<typeof quarantineReadDependencies>['admin']['execute']>> | undefined;
 let denied = false;
 try { admin = await quarantineReadDependencies().admin.execute({ actor }); } catch (error) { denied = error instanceof AppError && error.category === 'AUTHORIZATION'; }
 ---

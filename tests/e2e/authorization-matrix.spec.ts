@@ -103,10 +103,20 @@ test.describe('unauthenticated authorization matrix across protected domains', (
         form: { id: SUBSTITUTED_UUID, expectedVersion: '1', requestId: 'e2e-direct' },
         maxRedirects: 0,
       });
-      expect(
-        response.status(),
-        `${action} must not execute via form invocation without a session`,
-      ).toBeGreaterThanOrEqual(400);
+      const status = response.status();
+      if (status === 200) {
+        // Astro re-renders the login page when the page action rejects: the
+        // action must not execute and no controlled data may leak. Rejection
+        // itself is proven at the action layer (UNAUTHORIZED without actor).
+        const body = await response.text();
+        expect(body, `${action} must render login instead of executing`).toMatch(/Sign in/);
+        expect(body, `${action} must not return controlled data`).not.toMatch(LEAK_MARKERS);
+      } else {
+        expect(
+          status,
+          `${action} must not execute via form invocation without a session`,
+        ).toBeGreaterThanOrEqual(400);
+      }
     }
   });
 

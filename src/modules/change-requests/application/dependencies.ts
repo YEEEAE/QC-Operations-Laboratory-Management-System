@@ -9,7 +9,10 @@ import { TransitionChangeRequestUseCase } from './transition-change-request.js';
 
 export function changeRequestsReadDependencies() {
   const repository = new PostgresChangeRequestRepository(getDatabase());
-  return { get: new GetChangeRequestUseCase(repository), list: new ListChangeRequestsUseCase(repository) };
+  return {
+    get: new GetChangeRequestUseCase(repository),
+    list: new ListChangeRequestsUseCase(repository),
+  };
 }
 
 export function changeRequestsActionDependencies() {

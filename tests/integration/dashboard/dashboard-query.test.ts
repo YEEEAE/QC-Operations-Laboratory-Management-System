@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { GetDashboardUseCase, type DashboardReadModel } from '../../../src/modules/dashboard/application/get-dashboard';
+import {
+  GetDashboardUseCase,
+  type DashboardReadModel,
+} from '../../../src/modules/dashboard/application/get-dashboard';
 import type { DashboardQuery } from '../../../src/modules/dashboard/ports/dashboard-query';
 import type { ActorContext } from '../../../src/shared/authorization/types';
 
-const actor = (id: string, permission: 'PERM-DASH-VIEW' | 'PERM-DASH-MANAGEMENT' = 'PERM-DASH-VIEW'): ActorContext => ({
+const actor = (
+  id: string,
+  permission: 'PERM-DASH-VIEW' | 'PERM-DASH-MANAGEMENT' = 'PERM-DASH-VIEW',
+): ActorContext => ({
   id,
   accountState: 'ACTIVE',
   roles: [],
@@ -17,7 +23,15 @@ class MemoryDashboardQuery implements DashboardQuery {
     return {
       generatedAt: new Date('2026-09-04T08:00:00Z'),
       scopeLabel: actorContext.id === 'u1' ? 'Site A' : 'Site B',
-      metrics: [{ key: 'pending-review', label: 'Pending review', value: actorContext.id === 'u1' ? 2 : 7, definition: 'Authorized pending review items.', href: '/approvals' }],
+      metrics: [
+        {
+          key: 'pending-review',
+          label: 'Pending review',
+          value: actorContext.id === 'u1' ? 2 : 7,
+          definition: 'Authorized pending review items.',
+          href: '/approvals',
+        },
+      ],
       attention: [],
       activity: [],
     };
@@ -37,6 +51,8 @@ describe('role and scope-aware dashboard', () => {
     const query = new MemoryDashboardQuery();
     const useCase = new GetDashboardUseCase(query);
     await expect(useCase.execute(actor('u2'))).resolves.toMatchObject({ scopeLabel: 'Site B' });
-    await expect(useCase.execute({ ...actor('u1'), permissions: [] })).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    await expect(useCase.execute({ ...actor('u1'), permissions: [] })).rejects.toMatchObject({
+      code: 'AUTHZ_PERMISSION_MISSING',
+    });
   });
 });

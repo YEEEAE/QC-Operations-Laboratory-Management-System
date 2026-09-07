@@ -1,1 +1,54 @@
-import{defineAction,ActionError}from'astro:actions';import{z}from'astro:schema';import{getDatabase}from'../shared/database/database.js';import{PostgresFindingRepository}from'../modules/quality/findings/infrastructure/postgres-repository.js';import{CreateFindingUseCase}from'../modules/quality/findings/application/create-finding.js';import{TransitionFindingUseCase}from'../modules/quality/findings/application/transition-finding.js';import{AppError}from'../shared/errors/app-error.js';export const findings={create:defineAction({accept:'json',input:z.object({findingNo:z.string(),title:z.string(),description:z.string(),severity:z.string().optional()}),handler:async(i,c)=>{if(!c.locals.actor)throw new ActionError({ code: 'UNAUTHORIZED', message: 'Authentication required' });try{return await new CreateFindingUseCase(new PostgresFindingRepository(getDatabase())).execute({...i,actor:c.locals.actor,requestId:c.locals.requestContext?.requestId??'unknown'});}catch(e){throw new ActionError({ code: 'BAD_REQUEST', message: e instanceof AppError?e.message:'Unable to create finding' });}}}),transition:defineAction({accept:'json',input:z.object({id:z.string().uuid(),expectedVersion:z.coerce.bigint(),action:z.enum(['OPEN','SUBMIT_REVIEW','RETURN','CLOSE','VOID']),reason:z.string().optional()}),handler:async(i,c)=>{if(!c.locals.actor)throw new ActionError({ code: 'UNAUTHORIZED', message: 'Authentication required' });return new TransitionFindingUseCase(new PostgresFindingRepository(getDatabase())).execute({...i,actor:c.locals.actor,requestId:c.locals.requestContext?.requestId??'unknown'});}})};
+import { defineAction, ActionError } from 'astro:actions';
+import { z } from 'astro:schema';
+import { getDatabase } from '../shared/database/database.js';
+import { PostgresFindingRepository } from '../modules/quality/findings/infrastructure/postgres-repository.js';
+import { CreateFindingUseCase } from '../modules/quality/findings/application/create-finding.js';
+import { TransitionFindingUseCase } from '../modules/quality/findings/application/transition-finding.js';
+import { AppError } from '../shared/errors/app-error.js';
+export const findings = {
+  create: defineAction({
+    accept: 'json',
+    input: z.object({
+      findingNo: z.string(),
+      title: z.string(),
+      description: z.string(),
+      severity: z.string().optional(),
+    }),
+    handler: async (i, c) => {
+      if (!c.locals.actor)
+        throw new ActionError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
+      try {
+        return await new CreateFindingUseCase(new PostgresFindingRepository(getDatabase())).execute(
+          {
+            ...i,
+            actor: c.locals.actor,
+            requestId: c.locals.requestContext?.requestId ?? 'unknown',
+          },
+        );
+      } catch (e) {
+        throw new ActionError({
+          code: 'BAD_REQUEST',
+          message: e instanceof AppError ? e.message : 'Unable to create finding',
+        });
+      }
+    },
+  }),
+  transition: defineAction({
+    accept: 'json',
+    input: z.object({
+      id: z.string().uuid(),
+      expectedVersion: z.coerce.bigint(),
+      action: z.enum(['OPEN', 'SUBMIT_REVIEW', 'RETURN', 'CLOSE', 'VOID']),
+      reason: z.string().optional(),
+    }),
+    handler: async (i, c) => {
+      if (!c.locals.actor)
+        throw new ActionError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
+      return new TransitionFindingUseCase(new PostgresFindingRepository(getDatabase())).execute({
+        ...i,
+        actor: c.locals.actor,
+        requestId: c.locals.requestContext?.requestId ?? 'unknown',
+      });
+    },
+  }),
+};

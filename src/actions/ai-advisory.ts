@@ -25,9 +25,7 @@ const run = async <T>(work: () => Promise<T>): Promise<T> => {
           : appError.category === 'AUTHORIZATION'
             ? 'FORBIDDEN'
             : 'BAD_REQUEST',
-      message: appError.userSafe
-        ? appError.message
-        : 'Unable to process the advisory request.',
+      message: appError.userSafe ? appError.message : 'Unable to process the advisory request.',
     });
   }
 };

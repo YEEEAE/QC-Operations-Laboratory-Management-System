@@ -1,17 +1,47 @@
-export { server } from './auth.js';
-export { account } from './account.js';
-export { admin } from './admin.js';
-export { reports } from './reports.js';
-export { tasks } from './tasks.js';
-export { findings } from './findings.js';
-export { ncr } from './ncr.js';
-export { rca } from './rca.js';
-export { capa } from './capa.js';
-export { quarantine } from './quarantine.js';
-export { laboratory } from './laboratory.js';
-export { assets } from './assets.js';
-export { documents } from './documents.js';
-export { approvals } from './approvals.js';
-export { changeRequests } from './change-requests.js';
-export { system } from './system.js';
-export { aiAdvisory } from './ai-advisory.js';
+import { server as authActions } from './auth.js';
+import { account } from './account.js';
+import { admin } from './admin.js';
+import { reports } from './reports.js';
+import { tasks } from './tasks.js';
+import { findings } from './findings.js';
+import { ncr } from './ncr.js';
+import { rca } from './rca.js';
+import { capa } from './capa.js';
+import { quarantine } from './quarantine.js';
+import { laboratory } from './laboratory.js';
+import { assets } from './assets.js';
+import { documents } from './documents.js';
+import { approvals } from './approvals.js';
+import { changeRequests } from './change-requests.js';
+import { system } from './system.js';
+import { aiAdvisory } from './ai-advisory.js';
+
+// Astro actions contract (verified against installed astro@4.16.19):
+// - `src/actions` must export a single `server` object
+//   (vitePluginUserActions re-exports `{ server }` from this module).
+// - Nested namespaces are supported at runtime AND in types:
+//   client proxy `toActionProxy` recurses for nested paths
+//   (templates/actions.mjs), and server `getAction` traverses
+//   dot-separated paths (`/_actions/quarantine.reviewInspection`).
+// This module is an aggregation point only: domain action
+// definitions stay in their own files; no business rules live here.
+export const server = {
+  login: authActions.login,
+  logout: authActions.logout,
+  account,
+  admin,
+  reports,
+  tasks,
+  findings,
+  ncr,
+  rca,
+  capa,
+  quarantine,
+  laboratory,
+  assets,
+  documents,
+  approvals,
+  changeRequests,
+  system,
+  aiAdvisory,
+};

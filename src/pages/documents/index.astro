@@ -5,7 +5,7 @@ const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fdocuments');
 const search = Astro.url.searchParams.get('q')?.slice(0, 200) || undefined;
 const documentType = Astro.url.searchParams.get('type')?.slice(0, 80) || undefined;
-let documents: Awaited<ReturnType<typeof documentsReadDependencies>['list']['execute']> = [];
+let documents: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['list']['execute']>> = [];
 try { documents = await documentsReadDependencies().list.execute({ actor, filter: { search, documentType } }); } catch { /* render a safe empty state */ }
 const canCreate = actor.permissions.some((permission) => permission.code === 'PERM-DOC-CREATE' && permission.active !== false);
 ---

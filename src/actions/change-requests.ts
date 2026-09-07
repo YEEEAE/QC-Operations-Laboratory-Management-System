@@ -7,15 +7,26 @@ const requireActor = (context: { locals: App.Locals }) => {
   if (!context.locals.actor) throw new AppError('AUTH_REQUIRED', { userSafe: true });
   return context.locals.actor;
 };
-const requestId = (context: { locals: App.Locals }) => context.locals.requestContext?.requestId ?? 'unknown';
+const requestId = (context: { locals: App.Locals }) =>
+  context.locals.requestContext?.requestId ?? 'unknown';
 const run = async <T>(work: () => Promise<T>): Promise<T> => {
   try {
     return await work();
   } catch (error) {
-    const appError = error instanceof AppError ? error : new AppError('SYSTEM_INTERNAL', { userSafe: false, cause: error });
+    const appError =
+      error instanceof AppError
+        ? error
+        : new AppError('SYSTEM_INTERNAL', { userSafe: false, cause: error });
     throw new ActionError({
-      code: appError.category === 'AUTHENTICATION' ? 'UNAUTHORIZED' : appError.category === 'AUTHORIZATION' ? 'FORBIDDEN' : 'BAD_REQUEST',
-      message: appError.userSafe ? appError.message : 'Unable to complete the controlled change request action.',
+      code:
+        appError.category === 'AUTHENTICATION'
+          ? 'UNAUTHORIZED'
+          : appError.category === 'AUTHORIZATION'
+            ? 'FORBIDDEN'
+            : 'BAD_REQUEST',
+      message: appError.userSafe
+        ? appError.message
+        : 'Unable to complete the controlled change request action.',
     });
   }
 };
@@ -41,7 +52,22 @@ const create = defineAction({
     changes: z.array(change).min(1),
   }),
   handler: (input, context) =>
-    run(() => changeRequestsActionDependencies().create.execute({ ...input, actor: requireActor(context), requestId: requestId(context) })),
+    run(() =>
+      changeRequestsActionDependencies().create.execute({
+        ...input,
+        // Materialize optional change fields into the required domain shape.
+        // Reading an optional `unknown` yields `unknown`; spreading would
+        // preserve optionality and violate the use-case contract.
+        changes: input.changes.map((item) => ({
+          fieldPath: item.fieldPath,
+          currentValue: item.currentValue,
+          proposedValue: item.proposedValue,
+          dataType: item.dataType,
+        })),
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
 });
 
 const transition = defineAction({
@@ -53,7 +79,13 @@ const transition = defineAction({
     reason: z.string().trim().optional(),
   }),
   handler: (input, context) =>
-    run(() => changeRequestsActionDependencies().transition.execute({ ...input, actor: requireActor(context), requestId: requestId(context) })),
+    run(() =>
+      changeRequestsActionDependencies().transition.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
 });
 
 export const changeRequests = { create, transition };

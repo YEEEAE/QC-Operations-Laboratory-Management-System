@@ -1,1 +1,29 @@
-import { authorize } from '../../../../shared/authorization/authorize.js';import type { ActorContext } from '../../../../shared/authorization/types.js';import type { InspectionRepository } from '../ports/repository.js';import type { Inspection } from '../domain/inspection.js';export class ListInspectionsUseCase{constructor(private readonly repo:InspectionRepository){}execute(i:{actor:ActorContext;assignedTo?:string;state?:Inspection['state']}){authorize({actor:i.actor,permission:'PERM-INSP-VIEW',action:'VIEW',entity:{type:'INSPECTION_REPORT',id:'list',state:i.state??'DRAFT',authorId:i.actor.id,executorId:i.actor.id},scope:{ownerId:i.actor.id},currentVersion:1,expectedVersion:1,businessCondition:true},{throwOnDeny:true});return this.repo.list(i);}}
+import { authorize } from '../../../../shared/authorization/authorize.js';
+import type { ActorContext } from '../../../../shared/authorization/types.js';
+import type { InspectionRepository } from '../ports/repository.js';
+import type { Inspection } from '../domain/inspection.js';
+export class ListInspectionsUseCase {
+  constructor(private readonly repo: InspectionRepository) {}
+  execute(i: { actor: ActorContext; assignedTo?: string; state?: Inspection['state'] }) {
+    authorize(
+      {
+        actor: i.actor,
+        permission: 'PERM-INSP-VIEW',
+        action: 'VIEW',
+        entity: {
+          type: 'INSPECTION_REPORT',
+          id: 'list',
+          state: i.state ?? 'DRAFT',
+          authorId: i.actor.id,
+          executorId: i.actor.id,
+        },
+        scope: { ownerId: i.actor.id },
+        currentVersion: 1,
+        expectedVersion: 1,
+        businessCondition: true,
+      },
+      { throwOnDeny: true },
+    );
+    return this.repo.list(i);
+  }
+}

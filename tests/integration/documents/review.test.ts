@@ -22,7 +22,7 @@ function repository(initial: DocumentVersion): DocumentRepository {
   const document: DocumentIdentity = { id: initial.documentId, documentNo: 'WI-REVIEW', documentType: 'WI', title: 'Reviewable instruction', active: true, createdBy: authorId, createdAt: new Date('2026-01-01T00:00:00Z'), updatedAt: new Date('2026-01-01T00:00:00Z'), version: 1n };
   return {
     async createDocument() { throw new Error('not used'); }, async getDocument() { return document; }, async listDocuments() { return []; },
-    async createVersion() { throw new Error('not used'); }, async getVersion() { return version; }, async listVersions() { return [version]; }, async updateDraft() { throw new Error('not used'); }, async recordReview(input) { version = { ...version, version: version.version + 1n }; return version; },
+    async createVersion() { throw new Error('not used'); }, async getVersion() { return version; }, async listVersions() { return [version]; }, async updateDraft() { throw new Error('not used'); }, async recordReview() { version = { ...version, version: version.version + 1n }; return version; },
     async transition(input) { version = { ...version, state: input.toState, version: version.version + 1n, approvedBy: input.toState === 'APPROVED' ? input.actor.id : version.approvedBy, approvedAt: input.toState === 'APPROVED' ? new Date() : version.approvedAt }; return version; },
     async supersede() { throw new Error('not used'); },
   };

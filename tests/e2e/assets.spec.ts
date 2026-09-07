@@ -7,7 +7,9 @@ test.describe('Assets workspace route boundaries', () => {
   });
 
   test('does not expose an unregistered contextual creation route', async ({ page }) => {
-    const response = await page.goto('/assets/equipment/00000000-0000-7000-8000-000000000001/calibrations/new');
+    const response = await page.goto(
+      '/assets/equipment/00000000-0000-7000-8000-000000000001/calibrations/new',
+    );
     expect(response?.status()).toBeGreaterThanOrEqual(300);
   });
 });

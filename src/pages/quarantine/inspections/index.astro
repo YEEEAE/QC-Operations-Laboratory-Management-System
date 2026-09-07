@@ -6,7 +6,7 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Finspections')
 const states = ['DRAFT','SUBMITTED','UNDER_REVIEW','RETURNED','APPROVED','REJECTED','VOID'] as const;
 const requested = Astro.url.searchParams.get('state');
 const state = states.find((value) => value === requested);
-let inspections: Awaited<ReturnType<typeof inspectionReadDependencies>['list']['execute']> = [];
+let inspections: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['list']['execute']>> = [];
 try { inspections = await inspectionReadDependencies().list.execute({ actor, state }); } catch { /* safe empty state */ }
 ---
 <AppLayout title="Inspections · Quarantine" locale="en" direction="ltr">

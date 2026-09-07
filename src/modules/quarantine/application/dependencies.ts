@@ -24,7 +24,10 @@ import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox
 
 export function quarantineReadDependencies() {
   const reader = new PostgresQuarantineReadModel(getDatabase());
-  return { overview: new GetQuarantineOverviewUseCase(reader), admin: new GetQuarantineAdminUseCase(reader) };
+  return {
+    overview: new GetQuarantineOverviewUseCase(reader),
+    admin: new GetQuarantineAdminUseCase(reader),
+  };
 }
 export function receivingReadDependencies() {
   const repository = new PostgresReceivingRepository(getDatabase());
@@ -32,7 +35,10 @@ export function receivingReadDependencies() {
 }
 export function inspectionReadDependencies() {
   const repository = new PostgresInspectionRepository(getDatabase());
-  return { get: new GetInspectionUseCase(repository), list: new ListInspectionsUseCase(repository) };
+  return {
+    get: new GetInspectionUseCase(repository),
+    list: new ListInspectionsUseCase(repository),
+  };
 }
 
 export function quarantineActionDependencies() {

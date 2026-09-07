@@ -10,7 +10,12 @@ function cell(value: unknown): string {
 }
 export function toCsv(rows: readonly ReportRow[], columns: readonly ReportColumn[]): string {
   const header = columns.map((column) => cell(column.label)).join(',');
-  return [header, ...rows.map((row) => columns.map((column) => cell(row[column.key])).join(','))].join('\r\n') + '\r\n';
+  return (
+    [header, ...rows.map((row) => columns.map((column) => cell(row[column.key])).join(','))].join(
+      '\r\n',
+    ) + '\r\n'
+  );
 }
-export function csvBytes(rows: readonly ReportRow[], columns: readonly ReportColumn[]): Buffer { return Buffer.from(toCsv(rows, columns), 'utf8'); }
-
+export function csvBytes(rows: readonly ReportRow[], columns: readonly ReportColumn[]): Buffer {
+  return Buffer.from(toCsv(rows, columns), 'utf8');
+}

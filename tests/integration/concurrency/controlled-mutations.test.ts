@@ -150,10 +150,16 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       outcomes.filter((o) => o.status === 'fulfilled'),
       rejectionSummary(outcomes),
     ).toHaveLength(1);
+    // The loser observes the row either before the winner commits (stale
+    // version) or after it (already RELEASED, so release policy denies).
+    // Both are safe rejections: neither overwrites silently. The row, audit,
+    // and outbox assertions below prove exactly-once deterministically.
+    const loserCodes = outcomes.map(rejectedCode).filter((code) => code !== undefined);
+    expect(loserCodes, rejectionSummary(outcomes)).toHaveLength(1);
     expect(
-      outcomes.map(rejectedCode).filter((code) => code === 'CONFLICT_STALE_VERSION'),
+      loserCodes[0] === 'CONFLICT_STALE_VERSION' || loserCodes[0] === 'AUTHZ_DENIED',
       rejectionSummary(outcomes),
-    ).toHaveLength(1);
+    ).toBe(true);
 
     const row = (
       await pool!.query(

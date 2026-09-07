@@ -21,11 +21,40 @@ export interface ChangeRequestListFilter {
 }
 
 export interface ChangeRequestRepository {
-  create(input: { aggregate: ChangeRequestAggregate; actor: ActorContext; requestId: string }): Promise<ChangeRequestAggregate>;
+  create(input: {
+    aggregate: ChangeRequestAggregate;
+    actor: ActorContext;
+    requestId: string;
+  }): Promise<ChangeRequestAggregate>;
   get(input: { id: string; actor: ActorContext }): Promise<ChangeRequestAggregate | undefined>;
-  list(input: { actor: ActorContext; filter?: ChangeRequestListFilter }): Promise<readonly ChangeRequestAggregate[]>;
-  findTransitionByRequestId(input: { id: string; requestId: string }): Promise<{ action: ChangeRequestAction; expectedVersion: bigint } | undefined>;
-  updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; reason: string; requestId: string; now: Date }): Promise<ChangeRequestAggregate>;
-  transition(input: { id: string; expectedVersion: bigint; action: ChangeRequestAction; reason?: string; actor: ActorContext; requestId: string; now: Date }): Promise<ChangeRequestAggregate>;
-  recordApplicationAttempt(input: { attempt: ChangeRequestApplicationAttempt; actorId: string; requestId: string }): Promise<ChangeRequestAggregate>;
+  list(input: {
+    actor: ActorContext;
+    filter?: ChangeRequestListFilter;
+  }): Promise<readonly ChangeRequestAggregate[]>;
+  findTransitionByRequestId(input: {
+    id: string;
+    requestId: string;
+  }): Promise<{ action: ChangeRequestAction; expectedVersion: bigint } | undefined>;
+  updateDraft(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    reason: string;
+    requestId: string;
+    now: Date;
+  }): Promise<ChangeRequestAggregate>;
+  transition(input: {
+    id: string;
+    expectedVersion: bigint;
+    action: ChangeRequestAction;
+    reason?: string;
+    actor: ActorContext;
+    requestId: string;
+    now: Date;
+  }): Promise<ChangeRequestAggregate>;
+  recordApplicationAttempt(input: {
+    attempt: ChangeRequestApplicationAttempt;
+    actorId: string;
+    requestId: string;
+  }): Promise<ChangeRequestAggregate>;
 }

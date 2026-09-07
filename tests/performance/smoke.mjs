@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import process from 'node:process';
 
+/* global URL, fetch, console */
+// Node.js runtime globals used by this performance probe (no DOM involved).
+
 const baseUrl = process.env.QC_PERF_BASE_URL ?? 'http://127.0.0.1:4321';
 const paths = (
   process.env.QC_PERF_PATHS ?? '/login,/definitely-not-a-page-master034,/api/health/ready'

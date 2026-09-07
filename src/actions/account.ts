@@ -5,9 +5,25 @@ import { identityDependencies } from '../modules/identity/application/identity-d
 import { ChangePasswordUseCase } from '../modules/identity/application/change-password.js';
 import { AppError } from '../shared/errors/app-error.js';
 
-const changePassword = defineAction({ accept: 'form', input: z.object({ currentPassword: z.string(), newPassword: z.string() }), handler: async (input, context) => {
-  try { if (!context.locals.actor) throw new AppError('AUTH_REQUIRED', { userSafe: true }); const deps = identityDependencies(); await new ChangePasswordUseCase(deps.users, deps.passwords, deps.sessionService).execute({ actor: context.locals.actor, currentPassword: input.currentPassword, newPassword: input.newPassword, requestId: context.locals.requestContext.requestId }); return { ok: true }; }
-  catch (error) { const mapped = toActionError(error, context.locals.requestContext?.requestId); throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey }); }
-}});
+const changePassword = defineAction({
+  accept: 'form',
+  input: z.object({ currentPassword: z.string(), newPassword: z.string() }),
+  handler: async (input, context) => {
+    try {
+      if (!context.locals.actor) throw new AppError('AUTH_REQUIRED', { userSafe: true });
+      const deps = identityDependencies();
+      await new ChangePasswordUseCase(deps.users, deps.passwords, deps.sessionService).execute({
+        actor: context.locals.actor,
+        currentPassword: input.currentPassword,
+        newPassword: input.newPassword,
+        requestId: context.locals.requestContext.requestId,
+      });
+      return { ok: true };
+    } catch (error) {
+      const mapped = toActionError(error, context.locals.requestContext?.requestId);
+      throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
+    }
+  },
+});
 
 export const account = { changePassword };

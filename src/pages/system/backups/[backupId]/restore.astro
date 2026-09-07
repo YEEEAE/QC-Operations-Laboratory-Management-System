@@ -70,7 +70,6 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
   )}
 </AppLayout>
 <script>
-  // @ts-expect-error Astro generates the action client module during the build.
   import { actions } from 'astro:actions';
   const form = document.querySelector<HTMLFormElement>('.decision');
   if (form) {
@@ -80,12 +79,16 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
       if (button) button.disabled = true;
       const data = new FormData(form);
       try {
+        if (data.get('confirmRestore') !== 'on') {
+          window.alert('Confirmation is required to record a restore intent.');
+          return;
+        }
         const result = await actions.system.requestRestore({
           backupId: String(form.dataset.backupId),
           restoreType: String(data.get('restoreType') ?? 'DRILL') as 'DRILL' | 'PRODUCTION',
           targetEnvironment: String(data.get('targetEnvironment') ?? 'test') as 'local' | 'test' | 'staging' | 'production',
           reason: String(data.get('reason') ?? ''),
-          confirmRestore: data.get('confirmRestore') === 'on',
+          confirmRestore: true,
         });
         if (result.error) {
           window.alert('The restore request was not recorded. Review the requirements and try again.');

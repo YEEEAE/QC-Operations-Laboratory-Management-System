@@ -6,7 +6,10 @@ import { createChangeRequest, type ChangeRequestChange } from '../domain/change-
 import type { ChangeRequestAggregate, ChangeRequestRepository } from '../ports/repository.js';
 
 export class CreateChangeRequestUseCase {
-  constructor(private readonly repository: ChangeRequestRepository, private readonly now = () => new Date()) {}
+  constructor(
+    private readonly repository: ChangeRequestRepository,
+    private readonly now = () => new Date(),
+  ) {}
 
   execute(input: {
     actor: ActorContext;
@@ -26,7 +29,13 @@ export class CreateChangeRequestUseCase {
         actor: input.actor,
         permission: 'PERM-CHG-CREATE',
         action: 'CREATE',
-        entity: { type: 'CHANGE_REQUEST', id: 'new', state: 'DRAFT', ownerId: input.actor.id, authorId: input.actor.id },
+        entity: {
+          type: 'CHANGE_REQUEST',
+          id: 'new',
+          state: 'DRAFT',
+          ownerId: input.actor.id,
+          authorId: input.actor.id,
+        },
         scope: { ownerId: input.actor.id },
         currentVersion: 1n,
         expectedVersion: 1n,
@@ -49,7 +58,11 @@ export class CreateChangeRequestUseCase {
     });
     const aggregate: ChangeRequestAggregate = {
       changeRequest: request,
-      changes: input.changes.map((change, index) => ({ ...change, id: uuidv7(), position: index + 1 })),
+      changes: input.changes.map((change, index) => ({
+        ...change,
+        id: uuidv7(),
+        position: index + 1,
+      })),
       history: [],
       applicationAttempts: [],
     };

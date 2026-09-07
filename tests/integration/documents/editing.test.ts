@@ -32,7 +32,7 @@ function repository(): DocumentRepository & { documents: DocumentIdentity[]; ver
       state.versions.splice(state.versions.indexOf(current), 1, updated);
       return updated;
     },
-    async recordReview(input) { throw new Error('not used'); },
+    async recordReview() { throw new Error('not used'); },
     async transition(input) {
       const current = state.versions.find((item) => item.id === input.id)!;
       const updated = { ...current, state: input.toState, version: current.version + 1n } as DocumentVersion;

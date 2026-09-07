@@ -7,12 +7,16 @@ test.describe('Controlled Documents workflow boundaries', () => {
   });
 
   test('does not expose an effective mutation route', async ({ page }) => {
-    await page.goto('/documents/00000000-0000-7000-8000-000000000001/effective');
-    await expect(page).toHaveURL(/\/login/);
+    // No such route exists: the middleware only bounces statuses < 400 to
+    // login, while unknown paths correctly stay 404 without rendering.
+    const response = await page.goto('/documents/00000000-0000-7000-8000-000000000001/effective');
+    expect(response?.status()).toBe(404);
   });
 
   test('keeps version and review routes behind authentication', async ({ page }) => {
-    await page.goto('/documents/00000000-0000-7000-8000-000000000001/versions/00000000-0000-7000-8000-000000000002/review');
+    await page.goto(
+      '/documents/00000000-0000-7000-8000-000000000001/versions/00000000-0000-7000-8000-000000000002/review',
+    );
     await expect(page).toHaveURL(/\/login/);
   });
 });

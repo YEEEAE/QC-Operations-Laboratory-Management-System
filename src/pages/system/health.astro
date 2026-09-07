@@ -4,12 +4,13 @@ import { systemHealthReadDependencies } from '../../modules/system-health/applic
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-let view;
+let view: Awaited<ReturnType<ReturnType<typeof systemHealthReadDependencies>['health']['execute']>> | undefined;
 try {
-  view = await systemHealthReadDependencies().health.health.execute({ actor });
+  view = await systemHealthReadDependencies().health.execute({ actor });
 } catch {
   return Astro.redirect('/404');
 }
+if (!view) return Astro.redirect('/404');
 const canSeeBackupPosture = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-VIEW');
 const statusLabel = (status: string) =>
   status === 'HEALTHY' ? 'HEALTHY' : status === 'DEGRADED' ? 'DEGRADED' : status === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'UNKNOWN';

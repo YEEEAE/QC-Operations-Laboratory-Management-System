@@ -11,7 +11,9 @@ test.describe('AI advisory boundary', () => {
     expect(response?.request().method()).toBe('GET');
   });
 
-  test('unauthenticated visitors never see advisory content or an authority trigger', async ({ page }) => {
+  test('unauthenticated visitors never see advisory content or an authority trigger', async ({
+    page,
+  }) => {
     await page.goto('/ai-advisory');
     await expect(page).toHaveURL(/\/login/);
     const content = await page.content();

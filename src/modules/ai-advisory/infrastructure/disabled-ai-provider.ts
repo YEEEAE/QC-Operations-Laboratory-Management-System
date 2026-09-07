@@ -17,7 +17,10 @@ export class DisabledAiProvider implements AiProvider {
     return { available: false, reason: 'NOT_CONFIGURED' };
   }
 
-  async complete(_request: AiAdvisoryRequest): Promise<unknown> {
+  async complete(request: AiAdvisoryRequest): Promise<unknown> {
+    // The disabled provider never reads the request; it always reports
+    // NOT_CONFIGURED. The parameter exists to satisfy the AiProvider contract.
+    void request;
     throw new Error('AI advisory provider is not configured.');
   }
 }

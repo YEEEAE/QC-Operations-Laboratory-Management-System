@@ -4,7 +4,7 @@ import StatusBadge from '../../../../ui/components/StatusBadge.astro';
 import { inspectionReadDependencies } from '../../../../modules/quarantine/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-let inspection: Awaited<ReturnType<typeof inspectionReadDependencies>['get']['execute']> | undefined;
+let inspection: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['get']['execute']>> | undefined;
 try { inspection = await inspectionReadDependencies().get.execute({ actor, id: Astro.params.inspectionId ?? '' }); } catch { return Astro.redirect('/404'); }
 if (!inspection) return Astro.redirect('/404');
 const canReview = actor.permissions.some((permission) => permission.code === 'PERM-INSP-REVIEW' && permission.active !== false) && actor.permissions.some((permission) => permission.code === 'PERM-APR-REVIEW' && permission.active !== false);

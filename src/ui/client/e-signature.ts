@@ -1,2 +1,10 @@
-export function initESignatureForms(root: ParentNode = document) { root.querySelectorAll<HTMLFormElement>('[data-e-signature-form]').forEach(form => form.addEventListener('submit', () => { const input = form.elements.namedItem('reauthenticationSecret') as HTMLInputElement | null; if (input) input.value = input.value; })); }
-if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', () => initESignatureForms());
+export function initESignatureForms(root: ParentNode = document) {
+  root.querySelectorAll<HTMLFormElement>('[data-e-signature-form]').forEach((form) =>
+    form.addEventListener('submit', () => {
+      // Reauthentication secret travels with the form natively; no client-side
+      // mutation is allowed here.
+    }),
+  );
+}
+if (typeof document !== 'undefined')
+  document.addEventListener('DOMContentLoaded', () => initESignatureForms());

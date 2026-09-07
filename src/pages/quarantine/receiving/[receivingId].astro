@@ -4,7 +4,7 @@ import StatusBadge from '../../../ui/components/StatusBadge.astro';
 import { receivingReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-let item: Awaited<ReturnType<typeof receivingReadDependencies>['get']['execute']> | undefined;
+let item: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['get']['execute']>> | undefined;
 try { item = await receivingReadDependencies().get.execute({ actor, id: Astro.params.receivingId ?? '' }); } catch { return Astro.redirect('/404'); }
 if (!item) return Astro.redirect('/404');
 const canHold = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-HOLD');

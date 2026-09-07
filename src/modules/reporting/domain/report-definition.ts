@@ -1,7 +1,13 @@
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
 
-export interface ReportColumn { readonly key: string; readonly label: string; }
-export interface ReportFilters { readonly from?: string; readonly to?: string; }
+export interface ReportColumn {
+  readonly key: string;
+  readonly label: string;
+}
+export interface ReportFilters {
+  readonly from?: string;
+  readonly to?: string;
+}
 export interface ReportDefinition {
   readonly code: string;
   readonly title: string;
@@ -24,10 +30,16 @@ export const QUARANTINE_AGING_REPORT: ReportDefinition = {
   exportPermission: 'PERM-RPT-EXPORT',
   exportPermissions: { CSV: 'PERM-RPT-EXPORT-CSV', XLSX: 'PERM-RPT-EXPORT-XLSX' },
   columns: [
-    { key: 'receivingNo', label: 'Receiving number' }, { key: 'docNo', label: 'Document number' },
-    { key: 'itemCode', label: 'Item code' }, { key: 'description', label: 'Description' },
-    { key: 'lot', label: 'Lot' }, { key: 'qty', label: 'Quantity' }, { key: 'receivingDate', label: 'Receiving date' },
-    { key: 'expiryDate', label: 'Expiry date' }, { key: 'workflowState', label: 'Workflow state' },
-    { key: 'inspectionResult', label: 'Inspection result' }, { key: 'releaseSystem', label: 'Release system state' },
+    { key: 'receivingNo', label: 'Receiving number' },
+    { key: 'docNo', label: 'Document number' },
+    { key: 'itemCode', label: 'Item code' },
+    { key: 'description', label: 'Description' },
+    { key: 'lot', label: 'Lot' },
+    { key: 'qty', label: 'Quantity' },
+    { key: 'receivingDate', label: 'Receiving date' },
+    { key: 'expiryDate', label: 'Expiry date' },
+    { key: 'workflowState', label: 'Workflow state' },
+    { key: 'inspectionResult', label: 'Inspection result' },
+    { key: 'releaseSystem', label: 'Release system state' },
   ],
 };

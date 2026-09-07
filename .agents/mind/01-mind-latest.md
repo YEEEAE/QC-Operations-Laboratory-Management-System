@@ -1,5 +1,61 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-READINESS-REMEDIATION-010: Actions unification + zero typecheck + full local gates + disposable PG rehearsal
+
+### تم التنفيذ
+- وحّدت `src/actions/index.ts` تحت `export const server` واحد مع إبقاء 16 namespace متداخلة (مدعومة من Astro 4.16.19: `toActionProxy` + `getAction` traversal + أنواع `server`)، وحدّثت 3 استخدامات `actions.server.*` إلى `actions.login/logout`؛ أثبت العقد باختبار TDD (أحمر 5/5 قبل، أخضر بعده).
+- أغلقت typecheck من `197` إلى `0` (exit 0): إصلاح 8 صفحات بنمط `Awaited<ReturnType<...>>` الناقص، حذف 12 توجيه ts-expect-error زائد، إصلاح Chart.astro (سطر frontmatter مضغوط كان يكسر parsing الملف كاملًا)، و Houdini متفرقة (unions، readonly، عناصر مفقودة).
+- أغلقت lint من `86` إلى `0` وformat من `232` ملف إلى `0` (prettier --write تنسيق فقط؛ لا .astro)؛ أضفت vitest aliases لـ`astro:actions`/`astro:schema` على runtime الخادم الحقيقي.
+- كشفت وأصلحت 3 bugs حقيقية كانت مخفية بـ`any`: تعبير `db.fn('coalesce',1)` مكسور في findings-transition (أُزيل ليتطابق مع siblings)، وعدّ rcas بـ`owner_id` غير موجود (42703) فُصل لاستعلام خاص، واختبار تزامن متقطع وُثّق سباقه (stale-vs-post-commit) بدل إخفائه.
+- شغّلت كل البوابات على Node 24.20.0: test ‏286/286، integration ‏207/207، build ناجح (أُعيد بعد آخر تعديل)، e2e ‏44 نجح/0 فشل/13 تخطي مشروط بـfixture، والـHTTP من الـartifact: live ‏200 وlogin ‏200 و`_actions/*` ‏400 تحقق مقابل ‏404 وهمي.
+- نفّذت بروفة Task 007 على PostgreSQL 18.6 مؤقتة بـTLS: migrate ‏18/18، status/integrity/preflight PASS، seed ‏4 أدوار/198 صلاحية/164 منح + check، bootstrap-admin + check (ADMIN/GLOBAL/effective/audit)، rerun آمن، readiness ‏200 من الـbuild.
+
+### الملفات المتأثرة
+- `src/actions/index.ts` + `src/pages/login.astro` + `src/pages/account.astro` + `src/ui/shell/UserMenu.astro`
+- `src/actions/change-requests.ts` + `src/actions/quarantine.ts`
+- 8 صفحات quarantine/documents + `src/pages/system/health.astro` + `src/pages/tasks/*` + `src/pages/change-requests/*/review.astro` + `src/pages/system/backups/*/restore.astro`
+- `src/ui/charts/Chart.astro` + `src/shared/authorization/policy-registry.ts` + `src/shared/database/*` (قراءة فقط)
+- `src/modules/quality/{capa,findings,ncr,rca}/*` + `src/modules/quality/infrastructure/postgres-quality-overview.ts` + `src/modules/laboratory/*` + `src/modules/identity/application/create-user.ts` + `src/modules/{ai-advisory,documents}`
+- `tests/integration/actions/server-contract.test.ts` (جديد) + `tests/integration/concurrency/controlled-mutations.test.ts` + `tests/e2e/{documents,approvals,authorization-matrix}.spec.ts` + إصلاحات `any` في ~12 ملف اختبار
+- `vitest.config.ts` + تنسيق prettier لملفات كثيرة + `tests/performance/smoke.mjs` + `src/env.d.ts` + `src/ui/client/e-signature.ts`
+
+### التحقق
+- `pnpm install --frozen-lockfile` ✅ و`pnpm typecheck` ✅ exit 0 و`pnpm lint` ✅ exit 0 و`pnpm format:check` ✅ و`pnpm test:architecture` ✅ و`git diff --check` ✅
+- `pnpm test` ✅ ‏88 ملف / 286 نجح و`pnpm test:integration` ✅ ‏67 ملف / 207 نجح و`pnpm build` ✅ و`pnpm test:e2e` ✅ ‏44 نجح / 0 فشل / 13 تخطي (fixture-gated)
+- اختبار العقد: أحمر 5/5 على العقد القديم، أخضر 5/5 بعده ✅
+- بروفة disposable: ‏60 جدولًا، users=1، audit=3، rerun آمن ✅
+- فحص الأسرار في الـdiff ✅ نظيف؛ لا production write ولا commit ولا push
+
+### النتيجة
+- **الحالة:** نجح محليًا بالكامل
+- **مختصر:** كل البوابات المحلية خضراء والـrehearsal مكتمل على قاعدة مؤقتة؛ العائق الوحيد المتبقي خارجي: لا يوجد اتصال Render مدوّر معتمد، فلا انتقال للإنتاج.
+
+### ملاحظات / مشاكل مفتوحة
+- إصلاحا findings-version وrcas-owner_id يغيّران سلوكًا كان مكسورًا (رمي/خطأ) إلى سلوك الـsiblings؛ يستحقان مراجعة دومين قبل أي إنتاج.
+- `DATABASE_URL` الإنتاجي ما زال غائبًا؛ Task 008 يحتاج اتصالًا مدوّرًا عبر secret mechanism المعتمد.
+- RENDER PRODUCTION WRITE GATE = BLOCKED وPRODUCTION TARGET = NOT CONFIRMED.
+- PRODUCTION WRITES PERFORMED = NO وPRODUCTION ADMIN USER CREATED = NO.
+
+## [2026-09-08] — مراجعة prompt2 والبيئة قبل recovery 010
+
+### تم التنفيذ
+- راجعت برومبتات 003–012 وسجل النتائج وrunbooks والكود باستخدام verification-before-completion.
+- فحصت `.env` بحجب القيم: حقول provider السبعة موجودة، و`DATABASE_URL` غائب بالملف وبيئة العملية؛ الملف ignored وغير tracked وصلاحياته `644`. التدوير غير متحقق.
+- رصدت side-effect imports لملف تحميل البيئة الذي يصدّر دالة فقط دون تنفيذ تلقائي، وحساب pending بفرق العدد وغياب TLS evidence من preflight.
+- راجعت تجميع Actions الحالي تحت server واحد دون ادعاء نجاح typecheck أو RPC، وأوصيت ببوابة 009A ومراجعة هوية الإصدار ودليل الاستعادة قبل الإغلاق.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md` فقط؛ البرومبت والبيئة والكود لم تتغير ضمن المراجعة.
+
+### التحقق
+- قراءة الملفات وفحص أسماء إعدادات البيئة وGit tracking ✅.
+- Render والتدوير والمigrations الإنتاجية: NOT VERIFIED؛ لا اتصال أو كتابة إنتاجية.
+- build/tests لم تُشغّل: الطلب مراجعة برومبتات.
+
+### النتيجة
+- **الحالة:** نجحت المراجعة؛ نجاح Task 009 غير مثبت بالأدلة المحلية المتاحة.
+- **مختصر:** يلزم ربط تقدم البرومبتات بنتائج موثقة ومعالجة فجوات التحميل وpreflight قبل متابعة إنشاء الأدمن.
+
 ## [2026-09-07] — Production Readiness: Astro 4 API alignment (partial) + gates BLOCKED, no production write
 
 ### تم التنفيذ

@@ -27,7 +27,8 @@ const actor = (codes: readonly string[]): ActorContext => ({
   })),
 });
 
-const aiActor = () => actor(['PERM-AI-USE', 'PERM-AI-SUMMARIZE', 'PERM-AI-SUGGEST', 'PERM-AI-DRAFT']);
+const aiActor = () =>
+  actor(['PERM-AI-USE', 'PERM-AI-SUMMARIZE', 'PERM-AI-SUGGEST', 'PERM-AI-DRAFT']);
 
 const fakeProvider = (
   availability: AiProviderAvailability = { available: true },
@@ -48,9 +49,9 @@ describe('advisory domain — structured output validation', () => {
   });
 
   it('rejects a response that encodes an authoritative decision', () => {
-    expect(() =>
-      parseProviderAdvisory({ text: 'done', decision: 'APPROVE' }),
-    ).toThrow(AdvisoryAuthorityViolationError);
+    expect(() => parseProviderAdvisory({ text: 'done', decision: 'APPROVE' })).toThrow(
+      AdvisoryAuthorityViolationError,
+    );
     expect(() => parseProviderAdvisory({ text: 'done', result: { pass: true } })).toThrow(
       AdvisoryAuthorityViolationError,
     );
@@ -79,7 +80,9 @@ describe('disabled adapter (default, no SDK, no credentials)', () => {
       available: false,
       reason: 'NOT_CONFIGURED',
     });
-    await expect(provider.complete({ mode: 'SUMMARIZE', question: 'q', context: [] })).rejects.toThrow();
+    await expect(
+      provider.complete({ mode: 'SUMMARIZE', question: 'q', context: [] }),
+    ).rejects.toThrow();
   });
 });
 
@@ -117,7 +120,9 @@ describe('GetAdvisoryUseCase — advisory boundary', () => {
   });
 
   it('refuses provider output that attempts authoritative encoding', async () => {
-    const useCase = new GetAdvisoryUseCase(fakeProvider(undefined, { text: 'x', decision: 'RELEASE' }));
+    const useCase = new GetAdvisoryUseCase(
+      fakeProvider(undefined, { text: 'x', decision: 'RELEASE' }),
+    );
     const result = await useCase.execute({
       actor: aiActor(),
       mode: 'SUMMARIZE',

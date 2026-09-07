@@ -1,1 +1,28 @@
-import{describe,it,expect}from'vitest';import{authorize}from'../../../src/shared/authorization/authorize.js';describe('Quality authorization matrix',()=>{it('denies undefined closure policy',()=>{const actor:any={id:'u',accountState:'ACTIVE',roles:['Supervisor'],permissions:[{code:'PERM-NCR-CLOSE',scopes:['OWN']}]};expect(()=>authorize({actor,permission:'PERM-NCR-CLOSE',action:'CLOSE',entity:{type:'NCR',id:'n',state:'READY_FOR_CLOSURE',ownerId:'u'},scope:{ownerId:'u'},currentVersion:1n,expectedVersion:1n,businessCondition:false},{throwOnDeny:true})).toThrow();});});
+import { describe, it, expect } from 'vitest';
+import { authorize } from '../../../src/shared/authorization/authorize.js';
+import type { ActorContext } from '../../../src/shared/authorization/types.js';
+describe('Quality authorization matrix', () => {
+  it('denies undefined closure policy', () => {
+    const actor: ActorContext = {
+      id: 'u',
+      accountState: 'ACTIVE',
+      roles: ['Supervisor'],
+      permissions: [{ code: 'PERM-NCR-CLOSE', scopes: ['OWN'] }],
+    };
+    expect(() =>
+      authorize(
+        {
+          actor,
+          permission: 'PERM-NCR-CLOSE',
+          action: 'CLOSE',
+          entity: { type: 'NCR', id: 'n', state: 'READY_FOR_CLOSURE', ownerId: 'u' },
+          scope: { ownerId: 'u' },
+          currentVersion: 1n,
+          expectedVersion: 1n,
+          businessCondition: false,
+        },
+        { throwOnDeny: true },
+      ),
+    ).toThrow();
+  });
+});

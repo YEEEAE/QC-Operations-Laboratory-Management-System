@@ -83,7 +83,11 @@ function transitionDependencies() {
         reason: input.reason,
         requestId: input.requestId,
       });
-      return { subjectId: result.changeRequest.id, version: result.changeRequest.version, state: result.changeRequest.state };
+      return {
+        subjectId: result.changeRequest.id,
+        version: result.changeRequest.version,
+        state: result.changeRequest.state,
+      };
     },
   };
   return {

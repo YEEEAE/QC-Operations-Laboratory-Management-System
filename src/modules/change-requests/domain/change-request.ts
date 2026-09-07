@@ -27,7 +27,10 @@ export const CHANGE_REQUEST_ACTIONS = [
   'APPLICATION_FAILED',
 ] as const;
 export type ChangeRequestAction = (typeof CHANGE_REQUEST_ACTIONS)[number];
-export type UserChangeRequestAction = Exclude<ChangeRequestAction, 'START_APPLY' | 'APPLY_SUCCESS' | 'APPLICATION_FAILED'>;
+export type UserChangeRequestAction = Exclude<
+  ChangeRequestAction,
+  'START_APPLY' | 'APPLY_SUCCESS' | 'APPLICATION_FAILED'
+>;
 
 export interface ChangeRequestChange {
   id: string;
@@ -78,10 +81,19 @@ export interface ChangeRequestTransitionInput {
 }
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const reasonRequired = new Set<ChangeRequestAction>(['RETURN', 'REJECT', 'CANCEL', 'APPLICATION_FAILED']);
+const reasonRequired = new Set<ChangeRequestAction>([
+  'RETURN',
+  'REJECT',
+  'CANCEL',
+  'APPLICATION_FAILED',
+]);
 
 function assertNonEmpty(value: string, field: string): void {
-  if (!value.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true, fieldErrors: { [field]: ['required'] } });
+  if (!value.trim())
+    throw new AppError('VALIDATION_FAILED', {
+      userSafe: true,
+      fieldErrors: { [field]: ['required'] },
+    });
 }
 
 export function createChangeRequest(
@@ -92,7 +104,11 @@ export function createChangeRequest(
   assertNonEmpty(input.reason, 'reason');
   if (!uuidPattern.test(input.id) || !uuidPattern.test(input.targetId) || input.targetVersion <= 0n)
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
-  if (!input.targetSnapshot || typeof input.targetSnapshot !== 'object' || Array.isArray(input.targetSnapshot))
+  if (
+    !input.targetSnapshot ||
+    typeof input.targetSnapshot !== 'object' ||
+    Array.isArray(input.targetSnapshot)
+  )
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   return {
     ...input,
@@ -106,7 +122,9 @@ export function createChangeRequest(
   };
 }
 
-const transitions: Readonly<Record<ChangeRequestState, Partial<Record<ChangeRequestAction, ChangeRequestState>>>> = {
+const transitions: Readonly<
+  Record<ChangeRequestState, Partial<Record<ChangeRequestAction, ChangeRequestState>>>
+> = {
   DRAFT: { SUBMIT: 'SUBMITTED', CANCEL: 'CANCELLED' },
   SUBMITTED: { START_REVIEW: 'UNDER_REVIEW' },
   UNDER_REVIEW: { RETURN: 'RETURNED', APPROVE: 'APPROVED', REJECT: 'REJECTED' },
@@ -139,11 +157,23 @@ export function transitionChangeRequest(
   return next;
 }
 
-export function assertUserChangeRequestAction(action: string): asserts action is UserChangeRequestAction {
-  if (!(CHANGE_REQUEST_ACTIONS as readonly string[]).includes(action) || ['START_APPLY', 'APPLY_SUCCESS', 'APPLICATION_FAILED'].includes(action))
+export function assertUserChangeRequestAction(
+  action: string,
+): asserts action is UserChangeRequestAction {
+  if (
+    !(CHANGE_REQUEST_ACTIONS as readonly string[]).includes(action) ||
+    ['START_APPLY', 'APPLY_SUCCESS', 'APPLICATION_FAILED'].includes(action)
+  )
     throw new AppError('AUTHZ_PERMISSION_MISSING', { userSafe: true });
 }
 
 export function isControlledChangeRequestState(state: ChangeRequestState): boolean {
-  return ['APPROVED', 'APPLYING', 'APPLIED', 'APPLICATION_FAILED', 'REJECTED', 'CANCELLED'].includes(state);
+  return [
+    'APPROVED',
+    'APPLYING',
+    'APPLIED',
+    'APPLICATION_FAILED',
+    'REJECTED',
+    'CANCELLED',
+  ].includes(state);
 }

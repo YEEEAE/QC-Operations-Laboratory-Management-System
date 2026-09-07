@@ -20,7 +20,10 @@ async function signIn(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/dashboard/);
 }
 
-async function dbQuery<T extends Record<string, unknown>>(sql: string, values: unknown[] = []): Promise<T[]> {
+async function dbQuery<T extends Record<string, unknown>>(
+  sql: string,
+  values: unknown[] = [],
+): Promise<T[]> {
   const connectionString = configuredFixture('QC_TEST_DATABASE_URL');
   const pool = new Pool({ connectionString });
   try {
@@ -31,7 +34,9 @@ async function dbQuery<T extends Record<string, unknown>>(sql: string, values: u
 }
 
 test.describe('critical controlled workflows', () => {
-  test('protected workflow entry points require authentication and reveal no controlled state', async ({ page }) => {
+  test('protected workflow entry points require authentication and reveal no controlled state', async ({
+    page,
+  }) => {
     for (const path of [
       '/quarantine/receiving',
       '/quarantine/inspections',
@@ -47,7 +52,9 @@ test.describe('critical controlled workflows', () => {
     }
   });
 
-  test('receiving, inspection, and release remain distinct server-controlled facts', async ({ page }) => {
+  test('receiving, inspection, and release remain distinct server-controlled facts', async ({
+    page,
+  }) => {
     await signIn(page);
     const receivingId = configuredFixture('QC_E2E_RECEIVING_ID');
     await page.goto(`/quarantine/receiving/${receivingId}`);
@@ -61,20 +68,28 @@ test.describe('critical controlled workflows', () => {
       expect(result).not.toMatch(/PASS[\s\S]*RELEASED/);
     }
 
-    const rows = await dbQuery<{ workflow_state: string; inspection_result: string; release_system: boolean }>(
+    const rows = await dbQuery<{
+      workflow_state: string;
+      inspection_result: string;
+      release_system: boolean;
+    }>(
       'select workflow_state, inspection_result, release_system from qc.receiving_items where id = $1',
       [receivingId],
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toEqual(expect.objectContaining({
-      workflow_state: expect.any(String),
-      inspection_result: expect.any(String),
-      release_system: expect.any(Boolean),
-    }));
+    expect(rows[0]).toEqual(
+      expect.objectContaining({
+        workflow_state: expect.any(String),
+        inspection_result: expect.any(String),
+        release_system: expect.any(Boolean),
+      }),
+    );
     if (rows[0].inspection_result === 'PASS') expect(rows[0].release_system).toBe(false);
   });
 
-  test('laboratory execute and review expose approved fixture context and preserve audit evidence', async ({ page }) => {
+  test('laboratory execute and review expose approved fixture context and preserve audit evidence', async ({
+    page,
+  }) => {
     await signIn(page);
     const labTestId = configuredFixture('QC_E2E_LAB_TEST_ID');
     await page.goto(`/laboratory/tests/${labTestId}/execute`);
@@ -91,7 +106,9 @@ test.describe('critical controlled workflows', () => {
     expect(labRows[0].template_snapshot).toBeTruthy();
     await page.goto(`/laboratory/tests/${labTestId}/review`);
     await expect(page.getByRole('heading', { name: 'Laboratory review' })).toBeVisible();
-    await expect(page.getByText(/Review and approval require server-side permissions/)).toBeVisible();
+    await expect(
+      page.getByText(/Review and approval require server-side permissions/),
+    ).toBeVisible();
 
     const audits = await dbQuery<{ count: string }>(
       "select count(*)::text as count from qc.audit_events where subject_type = 'LAB_TEST' and subject_id = $1",
@@ -100,15 +117,21 @@ test.describe('critical controlled workflows', () => {
     expect(Number(audits[0]?.count ?? 0)).toBeGreaterThan(0);
   });
 
-  test('quality route stays bounded by its approved workflow instead of inventing RCA/CAPA authority', async ({ page }) => {
+  test('quality route stays bounded by its approved workflow instead of inventing RCA/CAPA authority', async ({
+    page,
+  }) => {
     await signIn(page);
     const path = configuredFixture('QC_E2E_QUALITY_PATH');
     const response = await page.goto(path);
     expect(response?.status() ?? 0).toBeLessThan(400);
-    await expect(page.locator('body')).not.toContainText(/AI.*approved|automatic.*closure|admin override/i);
+    await expect(page.locator('body')).not.toContainText(
+      /AI.*approved|automatic.*closure|admin override/i,
+    );
   });
 
-  test('document version review and supersede preserve the prior controlled version', async ({ page }) => {
+  test('document version review and supersede preserve the prior controlled version', async ({
+    page,
+  }) => {
     await signIn(page);
     const documentId = configuredFixture('QC_E2E_DOCUMENT_ID');
     const versionId = configuredFixture('QC_E2E_DOCUMENT_VERSION_ID');

@@ -2,7 +2,12 @@ import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
 import type { DatabaseSchema } from '../database/db-types.js';
 import type { ActorContext } from '../authorization/types.js';
-import type { AuditEventView, AuditQuery, AuditQueryFilter, AuditQueryResult } from './audit-query.js';
+import type {
+  AuditEventView,
+  AuditQuery,
+  AuditQueryFilter,
+  AuditQueryResult,
+} from './audit-query.js';
 
 export class PostgresAuditQuery implements AuditQuery {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}

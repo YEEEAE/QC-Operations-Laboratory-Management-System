@@ -13,5 +13,7 @@ export interface User {
 }
 
 export function isSharedAccount(user: User): boolean {
-  return /^shared([._-]|$)/i.test(user.loginIdentity) || /^generic([._-]|$)/i.test(user.loginIdentity);
+  return (
+    /^shared([._-]|$)/i.test(user.loginIdentity) || /^generic([._-]|$)/i.test(user.loginIdentity)
+  );
 }

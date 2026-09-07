@@ -9,12 +9,87 @@ import { UpdateDraftTaskUseCase } from '../modules/tasks/application/update-draf
 import { TransitionTaskUseCase } from '../modules/tasks/application/transition.js';
 import { PostgresAuditRepository } from '../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../shared/outbox/postgres-outbox-repository.js';
-const repo = () => { const database = getDatabase(); return new PostgresTaskRepository(database, new PostgresAuditRepository(database), new PostgresOutboxRepository(database)); };
+const repo = () => {
+  const database = getDatabase();
+  return new PostgresTaskRepository(
+    database,
+    new PostgresAuditRepository(database),
+    new PostgresOutboxRepository(database),
+  );
+};
 type ActionContext = { locals: App.Locals };
 const requestId = (context: ActionContext) => context.locals.requestContext?.requestId ?? 'unknown';
-const actor = (context: ActionContext) => { if (!context.locals.actor) throw new AppError('AUTH_REQUIRED', { userSafe: true }); return context.locals.actor; };
-const run = async <T>(work: () => Promise<T>, context: ActionContext): Promise<T> => { try { return await work(); } catch (error) { const mapped = toActionError(error, requestId(context)); throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey }); } };
-const createTask = defineAction({ accept: 'json', input: z.object({ taskNo: z.string(), title: z.string(), description: z.string().optional(), priority: z.string(), dueAt: z.coerce.date().optional(), currentAssigneeId: z.string().uuid().optional() }), handler: (input, context) => run(() => new CreateTaskUseCase(repo()).execute({ ...input, actor: actor(context), requestId: requestId(context) }), context) });
-const updateDraft = defineAction({ accept: 'json', input: z.object({ taskId: z.string().uuid(), expectedVersion: z.coerce.bigint(), title: z.string(), description: z.string().optional(), priority: z.string(), dueAt: z.coerce.date().optional() }), handler: (input, context) => run(() => new UpdateDraftTaskUseCase(repo()).execute({ ...input, actor: actor(context), requestId: requestId(context) }), context) });
-const transition = defineAction({ accept: 'json', input: z.object({ taskId: z.string().uuid(), expectedVersion: z.coerce.bigint(), action: z.enum(['ACTIVATE', 'START', 'HOLD', 'RESUME', 'COMPLETE', 'CANCEL', 'REOPEN']), reason: z.string().optional() }), handler: (input, context) => run(() => new TransitionTaskUseCase(repo()).execute({ ...input, actor: actor(context), requestId: requestId(context) }), context) });
+const actor = (context: ActionContext) => {
+  if (!context.locals.actor) throw new AppError('AUTH_REQUIRED', { userSafe: true });
+  return context.locals.actor;
+};
+const run = async <T>(work: () => Promise<T>, context: ActionContext): Promise<T> => {
+  try {
+    return await work();
+  } catch (error) {
+    const mapped = toActionError(error, requestId(context));
+    throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
+  }
+};
+const createTask = defineAction({
+  accept: 'json',
+  input: z.object({
+    taskNo: z.string(),
+    title: z.string(),
+    description: z.string().optional(),
+    priority: z.string(),
+    dueAt: z.coerce.date().optional(),
+    currentAssigneeId: z.string().uuid().optional(),
+  }),
+  handler: (input, context) =>
+    run(
+      () =>
+        new CreateTaskUseCase(repo()).execute({
+          ...input,
+          actor: actor(context),
+          requestId: requestId(context),
+        }),
+      context,
+    ),
+});
+const updateDraft = defineAction({
+  accept: 'json',
+  input: z.object({
+    taskId: z.string().uuid(),
+    expectedVersion: z.coerce.bigint(),
+    title: z.string(),
+    description: z.string().optional(),
+    priority: z.string(),
+    dueAt: z.coerce.date().optional(),
+  }),
+  handler: (input, context) =>
+    run(
+      () =>
+        new UpdateDraftTaskUseCase(repo()).execute({
+          ...input,
+          actor: actor(context),
+          requestId: requestId(context),
+        }),
+      context,
+    ),
+});
+const transition = defineAction({
+  accept: 'json',
+  input: z.object({
+    taskId: z.string().uuid(),
+    expectedVersion: z.coerce.bigint(),
+    action: z.enum(['ACTIVATE', 'START', 'HOLD', 'RESUME', 'COMPLETE', 'CANCEL', 'REOPEN']),
+    reason: z.string().optional(),
+  }),
+  handler: (input, context) =>
+    run(
+      () =>
+        new TransitionTaskUseCase(repo()).execute({
+          ...input,
+          actor: actor(context),
+          requestId: requestId(context),
+        }),
+      context,
+    ),
+});
 export const tasks = { createTask, updateDraft, transition };

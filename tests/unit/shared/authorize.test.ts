@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { authorize } from '../../../src/shared/authorization/authorize';
-import { AppError } from '../../../src/shared/errors/app-error';
 
 const base = {
   actor: {
@@ -52,7 +51,7 @@ describe('central authorization', () => {
 
   it('throws the canonical stale-version error when required by the caller', () => {
     expect(() => authorize({ ...base, expectedVersion: 2 }, { throwOnDeny: true })).toThrowError(
-      expect.objectContaining<AppError>({ code: 'CONFLICT_STALE_VERSION' }),
+      expect.objectContaining({ code: 'CONFLICT_STALE_VERSION' }),
     );
   });
 });

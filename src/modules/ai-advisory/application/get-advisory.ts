@@ -88,7 +88,11 @@ function authorizeAdvisory(actor: ActorContext, mode: AdvisoryMode): void {
 }
 
 function validateInput(question: string, context: readonly AdvisoryContextSegment[]): void {
-  if (typeof question !== 'string' || question.trim().length === 0 || question.length > MAX_ADVISORY_QUESTION_LENGTH) {
+  if (
+    typeof question !== 'string' ||
+    question.trim().length === 0 ||
+    question.length > MAX_ADVISORY_QUESTION_LENGTH
+  ) {
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   }
   if (context.length > MAX_ADVISORY_CONTEXT_SEGMENTS) {
@@ -108,7 +112,10 @@ function validateInput(question: string, context: readonly AdvisoryContextSegmen
   }
 }
 
-function refuseSecretLikeMaterial(question: string, context: readonly AdvisoryContextSegment[]): void {
+function refuseSecretLikeMaterial(
+  question: string,
+  context: readonly AdvisoryContextSegment[],
+): void {
   if (SECRET_LIKE_PATTERN.test(question)) {
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   }
@@ -137,7 +144,11 @@ export class GetAdvisoryUseCase {
       availability = { available: false as const, reason: 'UNAVAILABLE' as const };
     }
     if (!availability.available) {
-      return { status: 'UNAVAILABLE', message: ADVISORY_UNAVAILABLE_NOTICE, advisoryNotice: ADVISORY_NOTICE };
+      return {
+        status: 'UNAVAILABLE',
+        message: ADVISORY_UNAVAILABLE_NOTICE,
+        advisoryNotice: ADVISORY_NOTICE,
+      };
     }
 
     let raw: unknown;
@@ -148,14 +159,22 @@ export class GetAdvisoryUseCase {
         context: input.context,
       });
     } catch {
-      return { status: 'UNAVAILABLE', message: ADVISORY_UNAVAILABLE_NOTICE, advisoryNotice: ADVISORY_NOTICE };
+      return {
+        status: 'UNAVAILABLE',
+        message: ADVISORY_UNAVAILABLE_NOTICE,
+        advisoryNotice: ADVISORY_NOTICE,
+      };
     }
 
     let advisoryText: string;
     try {
       advisoryText = parseProviderAdvisory(raw).text;
     } catch {
-      return { status: 'REFUSED', message: ADVISORY_REFUSAL_NOTICE, advisoryNotice: ADVISORY_NOTICE };
+      return {
+        status: 'REFUSED',
+        message: ADVISORY_REFUSAL_NOTICE,
+        advisoryNotice: ADVISORY_NOTICE,
+      };
     }
 
     return {

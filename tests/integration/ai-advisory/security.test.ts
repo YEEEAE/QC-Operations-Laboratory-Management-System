@@ -40,7 +40,8 @@ const recordingProvider = (
   availability: async () => options.availability ?? { available: true },
   complete: async (request) => {
     calls.push(request);
-    if (options.failComplete) throw new Error('provider outage: connection refused (internal host redacted)');
+    if (options.failComplete)
+      throw new Error('provider outage: connection refused (internal host redacted)');
     return options.output ?? { text: 'Deterministic advisory text for testing.' };
   },
 });
@@ -130,7 +131,10 @@ describe('AI advisory security suite — deterministic fake provider', () => {
   it('authoritative provider output is rejected as authority: REFUSED, no text leaked, no decision fields', async () => {
     const calls: AiAdvisoryRequest[] = [];
     const useCase = new GetAdvisoryUseCase(
-      recordingProvider({ output: { text: 'officially approved', decision: 'APPROVE', release: true } }, calls),
+      recordingProvider(
+        { output: { text: 'officially approved', decision: 'APPROVE', release: true } },
+        calls,
+      ),
     );
     const result = await useCase.execute({
       actor: actor(allAiPermissions),

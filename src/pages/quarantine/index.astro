@@ -5,7 +5,7 @@ import { quarantineReadDependencies } from '../../modules/quarantine/application
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine');
-let overview: Awaited<ReturnType<GetQuarantineOverviewUseCase['execute']>> = { generatedAt: new Date(), scopeLabel: 'Authorized scope', metrics: [], attention: [], distributions: [] };
+let overview: Awaited<ReturnType<ReturnType<typeof quarantineReadDependencies>['overview']['execute']>> = { generatedAt: new Date(), scopeLabel: 'Authorized scope', metrics: [], attention: [], distributions: [] };
 try { overview = await quarantineReadDependencies().overview.execute({ actor }); } catch { /* safe empty state when the read provider is unavailable */ }
 ---
 <AppLayout title="Quarantine · QC Operations" locale="en" direction="ltr">

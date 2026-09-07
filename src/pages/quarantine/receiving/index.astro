@@ -6,7 +6,7 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving');
 const states = ['PENDING','READY_FOR_INSPECTION','UNDER_INSPECTION','INSPECTION_COMPLETE','RELEASE_PENDING','RELEASED','HOLD','EXPIRED','CANCELLED'] as const;
 const requested = Astro.url.searchParams.get('state');
 const state = states.find((value) => value === requested);
-let items: Awaited<ReturnType<typeof receivingReadDependencies>['list']['execute']> = [];
+let items: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['list']['execute']>> = [];
 try { items = await receivingReadDependencies().list.execute({ actor, state }); } catch { /* safe empty state */ }
 ---
 <AppLayout title="Receiving Items · Quarantine" locale="en" direction="ltr">

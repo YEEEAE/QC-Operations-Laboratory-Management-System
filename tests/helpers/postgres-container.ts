@@ -17,7 +17,6 @@ export async function startPostgresContainer(): Promise<StartedPostgreSqlContain
     return { getConnectionUri: () => externalDatabaseUrl } as StartedPostgreSqlContainer;
   }
 
-
   postgresContainer ??= await new PostgreSqlContainer(POSTGRES_18_IMAGE)
     .withDatabase('qc_test')
     .withUsername('test')

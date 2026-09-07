@@ -1,1 +1,17 @@
-import{defineAction,ActionError}from'astro:actions';import{z}from'astro:schema';export const rca={transition:defineAction({accept:'json',input:z.object({id:z.string().uuid(),action:z.enum(['START','SUBMIT','RETURN','APPROVE','VOID'])}),handler:()=>{throw new ActionError({ code: 'FORBIDDEN', message: 'RCA action requires an approved Quality workflow.' });}})};
+import { defineAction, ActionError } from 'astro:actions';
+import { z } from 'astro:schema';
+export const rca = {
+  transition: defineAction({
+    accept: 'json',
+    input: z.object({
+      id: z.string().uuid(),
+      action: z.enum(['START', 'SUBMIT', 'RETURN', 'APPROVE', 'VOID']),
+    }),
+    handler: () => {
+      throw new ActionError({
+        code: 'FORBIDDEN',
+        message: 'RCA action requires an approved Quality workflow.',
+      });
+    },
+  }),
+};

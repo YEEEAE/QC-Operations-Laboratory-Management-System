@@ -15,23 +15,63 @@ const genericPermission: Record<UserChangeRequestAction | 'VIEW', PermissionCode
 };
 
 function entity(request: ChangeRequest): EntityContext {
-  return { type: 'CHANGE_REQUEST', id: request.id, state: request.state, ownerId: request.requestedBy, authorId: request.requestedBy, domain: 'CHANGE_REQUESTS' };
+  return {
+    type: 'CHANGE_REQUEST',
+    id: request.id,
+    state: request.state,
+    ownerId: request.requestedBy,
+    authorId: request.requestedBy,
+    domain: 'CHANGE_REQUESTS',
+  };
 }
 
 export function authorizeChangeRequestView(request: ChangeRequest, actor: ActorContext): void {
   const hasWorkflowAccess = actor.permissions.some(
     (permission) =>
       permission.active !== false &&
-      [...['PERM-CHG-REVIEW', 'PERM-CHG-RETURN', 'PERM-CHG-APPROVE', 'PERM-CHG-REJECT'], 'PERM-CHG-VIEW'].includes(permission.code) &&
+      [
+        ...['PERM-CHG-REVIEW', 'PERM-CHG-RETURN', 'PERM-CHG-APPROVE', 'PERM-CHG-REJECT'],
+        'PERM-CHG-VIEW',
+      ].includes(permission.code) &&
       permission.scopes.some((scope) => scope === 'GLOBAL' || scope === 'DOMAIN'),
   );
-  authorize({ actor, permission: genericPermission.VIEW, action: 'VIEW', entity: entity(request), scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' }, currentVersion: request.version, expectedVersion: request.version, businessCondition: actor.id === request.requestedBy || hasWorkflowAccess }, { throwOnDeny: true });
+  authorize(
+    {
+      actor,
+      permission: genericPermission.VIEW,
+      action: 'VIEW',
+      entity: entity(request),
+      scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' },
+      currentVersion: request.version,
+      expectedVersion: request.version,
+      businessCondition: actor.id === request.requestedBy || hasWorkflowAccess,
+    },
+    { throwOnDeny: true },
+  );
 }
 
-export function authorizeChangeRequestAction(request: ChangeRequest, actor: ActorContext, action: UserChangeRequestAction, expectedVersion: bigint): void {
+export function authorizeChangeRequestAction(
+  request: ChangeRequest,
+  actor: ActorContext,
+  action: UserChangeRequestAction,
+  expectedVersion: bigint,
+): void {
   const permission = genericPermission[action];
   authorizeChangeRequestView(request, actor);
-  authorize({ actor, permission, action: action === 'START_REVIEW' ? 'REVIEW' : action, entity: entity(request), scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' }, currentVersion: request.version, expectedVersion, sod: { actorId: actor.id, authorId: request.requestedBy }, businessCondition: true }, { throwOnDeny: true });
+  authorize(
+    {
+      actor,
+      permission,
+      action: action === 'START_REVIEW' ? 'REVIEW' : action,
+      entity: entity(request),
+      scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' },
+      currentVersion: request.version,
+      expectedVersion,
+      sod: { actorId: actor.id, authorId: request.requestedBy },
+      businessCondition: true,
+    },
+    { throwOnDeny: true },
+  );
   const approvalPermission =
     action === 'APPROVE'
       ? 'PERM-APR-APPROVE'
@@ -43,6 +83,19 @@ export function authorizeChangeRequestAction(request: ChangeRequest, actor: Acto
             ? 'PERM-APR-REVIEW'
             : undefined;
   if (approvalPermission) {
-    authorize({ actor, permission: approvalPermission, action: action === 'START_REVIEW' ? 'REVIEW' : action, entity: entity(request), scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' }, currentVersion: request.version, expectedVersion, sod: { actorId: actor.id, authorId: request.requestedBy }, businessCondition: true }, { throwOnDeny: true });
+    authorize(
+      {
+        actor,
+        permission: approvalPermission,
+        action: action === 'START_REVIEW' ? 'REVIEW' : action,
+        entity: entity(request),
+        scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' },
+        currentVersion: request.version,
+        expectedVersion,
+        sod: { actorId: actor.id, authorId: request.requestedBy },
+        businessCondition: true,
+      },
+      { throwOnDeny: true },
+    );
   }
 }

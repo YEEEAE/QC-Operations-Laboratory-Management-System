@@ -11,7 +11,14 @@ describe('identity domain invariants', () => {
   });
   it('rejects revoked and expired sessions', () => {
     const now = new Date('2026-01-01T00:00:00Z');
-    const base = { id: 's', userId: 'u', tokenHash: 'h', createdAt: now, expiresAt: new Date('2026-01-01T01:00:00Z'), version: 1n };
+    const base = {
+      id: 's',
+      userId: 'u',
+      tokenHash: 'h',
+      createdAt: now,
+      expiresAt: new Date('2026-01-01T01:00:00Z'),
+      version: 1n,
+    };
     expect(isSessionUsable(base, now)).toBe(true);
     expect(isSessionUsable({ ...base, expiresAt: now }, now)).toBe(false);
     expect(isSessionUsable({ ...base, revokedAt: now }, now)).toBe(false);

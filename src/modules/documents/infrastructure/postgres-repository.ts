@@ -2,7 +2,6 @@ import type { Kysely, Transaction } from 'kysely';
 import type { DatabaseRow, DatabaseSchema } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
 import { AppError } from '../../../shared/errors/app-error.js';
-import { uuidv7 } from '../../../shared/id/uuid.js';
 import { actorHasScope } from '../../../shared/authorization/scope-evaluator.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditRepository } from '../../../shared/audit/audit-repository.js';

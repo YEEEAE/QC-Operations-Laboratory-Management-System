@@ -14,7 +14,7 @@ const error = Astro.url.searchParams.get('error');
       <h1 id="login-title">Sign in</h1>
       <p>Secure operational access</p>
       {error && <p id="form-error" role="alert">Sign-in could not be completed. Check your credentials and try again.</p>}
-      <form class="login-form" method="POST" action={actions.server.login} aria-describedby={error ? 'form-error' : undefined}>
+      <form class="login-form" method="POST" action={actions.login} aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
         <label for="loginIdentity">Login identity</label>
         <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="username" required autofocus />
