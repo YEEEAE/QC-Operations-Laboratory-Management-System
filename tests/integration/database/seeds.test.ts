@@ -3,6 +3,7 @@ import { createPool } from '../../../src/shared/database/pool.js';
 import { migrate } from '../../../scripts/db/migrate.js';
 import {
   assertNonProductionSeedEnvironment,
+  getFoundationAuthorizationCounts,
   seedFoundationData,
 } from '../../../db/seeds/common.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
@@ -30,14 +31,15 @@ describe('non-production foundation seeds', () => {
       QC_SEED_ALLOW_NON_PRODUCTION: 'true',
     });
     await seedFoundationData(pool!);
+    const firstCounts = await readFoundationCounts();
     await seedFoundationData(pool!);
-    expect(
-      (await pool!.query('SELECT count(*)::int AS count FROM qc.roles WHERE is_system_role'))
-        .rows[0].count,
-    ).toBe(4);
-    expect(
-      (await pool!.query('SELECT count(*)::int AS count FROM qc.permissions')).rows[0].count,
-    ).toBeGreaterThan(0);
+    const secondCounts = await readFoundationCounts();
+    expect(secondCounts).toEqual(firstCounts);
+    expect(firstCounts).toEqual({
+      roleCount: getFoundationAuthorizationCounts().roleCount,
+      permissionCount: getFoundationAuthorizationCounts().permissionCount,
+      rolePermissionCount: getFoundationAuthorizationCounts().rolePermissionCount,
+    });
     expect(() =>
       assertNonProductionSeedEnvironment('test', {
         NODE_ENV: 'production',
@@ -45,4 +47,19 @@ describe('non-production foundation seeds', () => {
       }),
     ).toThrow();
   });
+
+  async function readFoundationCounts() {
+    const [roles, permissions, rolePermissions] = await Promise.all([
+      pool!.query<{ count: number }>(
+        'SELECT count(*)::int AS count FROM qc.roles WHERE is_system_role',
+      ),
+      pool!.query<{ count: number }>('SELECT count(*)::int AS count FROM qc.permissions'),
+      pool!.query<{ count: number }>('SELECT count(*)::int AS count FROM qc.role_permissions'),
+    ]);
+    return {
+      roleCount: roles.rows[0].count,
+      permissionCount: permissions.rows[0].count,
+      rolePermissionCount: rolePermissions.rows[0].count,
+    };
+  }
 });

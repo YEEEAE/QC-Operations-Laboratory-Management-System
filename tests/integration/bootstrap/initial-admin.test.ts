@@ -13,7 +13,7 @@ import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import { systemClock } from '../../../src/shared/time/clock.js';
 import { migrate } from '../../../scripts/db/migrate.js';
-import { seedFoundationData } from '../../../db/seeds/common.js';
+import { FOUNDATION_ROLE_PERMISSIONS, seedFoundationData } from '../../../db/seeds/common.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
@@ -24,6 +24,7 @@ const config = {
   password,
   displayName: 'Bootstrap Test Administrator',
 };
+const getExpectedAdminGrantCount = () => FOUNDATION_ROLE_PERMISSIONS.ADMIN.length;
 
 describe('initial administrator bootstrap', () => {
   let pool: ReturnType<typeof createPool>;
@@ -46,11 +47,11 @@ describe('initial administrator bootstrap', () => {
     await stopPostgresContainer();
   });
 
-  it('creates one ACTIVE account with canonical ADMIN and GLOBAL relationships, without grants', async () => {
+  it('creates one ACTIVE account with canonical ADMIN and GLOBAL relationships and effective grants', async () => {
     const bootstrap = new BootstrapInitialAdminUseCase(database, passwords);
     expect(await bootstrap.execute(config)).toEqual({
       status: 'CREATED',
-      authorizationGrantsConfigured: false,
+      authorizationGrantsConfigured: true,
     });
 
     const user = await users.findByLoginIdentity(config.identity);
@@ -78,7 +79,14 @@ describe('initial administrator bootstrap', () => {
         .where('revoked_at', 'is', null)
         .execute(),
     ).toEqual([{ scope_kind: 'GLOBAL', scope_value: null }]);
-    expect(await database.selectFrom('role_permissions').selectAll().execute()).toHaveLength(0);
+    expect(
+      await database
+        .selectFrom('role_permissions')
+        .innerJoin('roles', 'roles.id', 'role_permissions.role_id')
+        .where('roles.code', '=', 'ADMIN')
+        .selectAll('role_permissions')
+        .execute(),
+    ).toHaveLength(getExpectedAdminGrantCount());
     expect(
       await database
         .selectFrom('audit_events')

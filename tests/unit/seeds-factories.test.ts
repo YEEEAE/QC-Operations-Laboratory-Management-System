@@ -1,8 +1,44 @@
 import { describe, expect, it } from 'vitest';
-import { assertNonProductionSeedEnvironment, stableSeedUuid } from '../../db/seeds/common.js';
+import {
+  APPROVED_PERMISSION_CODES,
+  assertNonProductionSeedEnvironment,
+  FOUNDATION_ROLE_CODES,
+  FOUNDATION_ROLE_PERMISSIONS,
+  getFoundationAuthorizationCounts,
+  stableSeedUuid,
+} from '../../db/seeds/common.js';
 import { receivingFactory, taskFactory, userFactory } from '../helpers/factories.js';
 
 describe('non-production seeds and deterministic factories', () => {
+  it('defines a closed, explicit-ALLOW authorization foundation', () => {
+    expect(FOUNDATION_ROLE_CODES).toEqual(['EMPLOYEE', 'SUPERVISOR', 'MANAGER', 'ADMIN']);
+    expect(Object.keys(FOUNDATION_ROLE_PERMISSIONS).sort()).toEqual(
+      [...FOUNDATION_ROLE_CODES].sort(),
+    );
+
+    for (const permissions of Object.values(FOUNDATION_ROLE_PERMISSIONS)) {
+      for (const permission of permissions) {
+        expect(APPROVED_PERMISSION_CODES).toContain(permission);
+      }
+    }
+
+    expect(FOUNDATION_ROLE_PERMISSIONS.ADMIN).toEqual(
+      expect.arrayContaining([
+        'PERM-IDN-MANAGE-USERS',
+        'PERM-ADM-PERMISSION-ASSIGN',
+        'PERM-ADM-SECURITY-CONFIG',
+        'PERM-HLTH-DATABASE',
+        'PERM-BKP-RESTORE-DRILL',
+      ]),
+    );
+    expect(FOUNDATION_ROLE_PERMISSIONS.ADMIN).not.toContain('PERM-QUAR-RELEASE');
+    expect(getFoundationAuthorizationCounts()).toEqual({
+      roleCount: 4,
+      permissionCount: APPROVED_PERMISSION_CODES.length,
+      rolePermissionCount: expect.any(Number),
+    });
+  });
+
   it('requires an explicit environment guard and rejects production', () => {
     expect(() =>
       assertNonProductionSeedEnvironment('development', {

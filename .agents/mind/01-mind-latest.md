@@ -1,5 +1,48 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-005: canonical production-safe authorization Foundation
+
+### تم التنفيذ
+- أضفت مصدرًا canonical لأدوار Foundation الأربعة (`EMPLOYEE`, `SUPERVISOR`, `MANAGER`, `ADMIN`) وربطت `role_permissions` فقط بقرارات `ALLOW` الصريحة في `Documents/PERMISSION-MATRIX.md`؛ صلاحيات `POLICY` و`CONDITIONAL` و`DENY` بقيت بلا grant.
+- وسّعت seed المعاملة الحالية لتصبح deterministic/idempotent للأدوار والصلاحيات وrole-permissions، بدون users أو credentials أو حذف grants موجودة.
+- أضفت `pnpm db:seed:foundation` و`pnpm db:seed:foundation:check`؛ check read-only ويكشف missing/inactive/unexpected roles/permissions، missing/forbidden/duplicate grants، وnon-system canonical roles.
+- حدّثت initial-admin bootstrap ليرفض إنشاء أو إعادة استخدام administrator إذا كانت canonical ADMIN authorization ناقصة، بدل اعتبار وجود دور ADMIN كافيًا.
+- حدّثت اختبارات seeds/bootstrap لتتحقق من effective grants وتساوي counts بعد التشغيل المتكرر، ووثقت التسلسل التشغيلي الإنتاجي.
+
+### الملفات المتأثرة
+- `db/seeds/common.ts`
+- `scripts/db/seed-foundation.ts`
+- `scripts/db/check-foundation-seed.ts`
+- `src/modules/identity/application/bootstrap-initial-admin.ts`
+- `tests/unit/seeds-factories.test.ts`
+- `tests/integration/database/seeds.test.ts`
+- `tests/integration/bootstrap/initial-admin.test.ts`
+- `docs/operations/INITIAL-ADMIN-BOOTSTRAP.md`
+- `package.json`
+
+### الأرقام والقرارات
+- المصدر canonical الحالي يعطي: **4 roles، 198 permissions، 164 explicit role-permission grants**.
+- لم تُمنح صلاحيات business لـADMIN بشكل شامل؛ مصفوفة الصلاحيات نفسها تترك release/approval/void/production restore وغيرها `POLICY` أو `DENY UNTIL APPROVED`.
+
+### التحقق
+- TDD: اختبار المصدر فشل قبل تعريف grants ثم نجح بعد التنفيذ — **2 files / 9 tests** ✅.
+- Scoped ESLint ✅، scoped Prettier ✅، `node scripts/architecture/check-boundaries.mjs` ✅، `astro build` ✅.
+- `pnpm typecheck` و`pnpm lint` و`pnpm format:check` و`pnpm test` و`pnpm test:integration` شُغّلت كما طلبت لكنها محجوبة/فاشلة بسبب Corepack EPERM على Node `22.22.3`, baseline formatting/type/test failures، وغياب Docker/Testcontainers runtime.
+- PostgreSQL 18 disposable sequence لم تُثبت: Docker socket غير متاح، ولم تُستخدم قاعدة production أو credentials أو أي production write.
+
+### النتيجة
+- **الحالة:** جزئي — كود Foundation وdrift/bootstrap gates مكتوب ومتحقق static/unit/build، لكن IDENTITY/DB runtime evidence وfull gates غير مكتملة بسبب البيئة.
+- **FOUNDATION:** UNVERIFIED runtime
+- **ROLE MATRIX:** جزئيًا مطابق للـALLOW الصريح؛ policy-dependent grants غير ممنوحة
+- **PERMISSION MATRIX:** PASS للمصدر المغلق، مع بقاء قرارات POLICY خارج النطاق
+- **IDEMPOTENCY:** static/unit PASS؛ PostgreSQL runtime UNVERIFIED
+- **DRIFT CHECK:** implementation PASS by inspection; DB execution UNVERIFIED
+- **PRODUCTION DB UNCHANGED:** PASS — لم يتم أي اتصال أو كتابة إنتاجية
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل Docker/Testcontainers على `postgres:18-alpine` ثم تنفيذ migrate → foundation → check → foundation → check وتسجيل counts الفعلية.
+- full quality gates تحتاج Node `24.20.0` وCorepack/dependencies سليمة؛ failures القائمة ليست منطقًا جديدًا في هذه المهمة إلا إذا ظهر خلاف ذلك عند تشغيل البيئة المعتمدة.
+
 ## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-004: تشغيل Docker وإثبات PostgreSQL 18
 
 ### تم التنفيذ

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
+import { FOUNDATION_ROLE_PERMISSIONS } from '../../../../db/seeds/common.js';
 import type { PasswordHasher } from '../security/password-hasher.js';
 
 const bootstrapEnvSchema = z.object({
@@ -67,13 +68,6 @@ export class BootstrapInitialAdminUseCase {
         transaction,
       );
 
-      const existing = await transaction
-        .selectFrom('users')
-        .select('id')
-        .where('login_identity', '=', config.identity)
-        .executeTakeFirst();
-      if (existing) return { status: 'ALREADY_EXISTS' };
-
       const adminRole = await transaction
         .selectFrom('roles')
         .select(['id', 'active'])
@@ -84,6 +78,30 @@ export class BootstrapInitialAdminUseCase {
           'BOOTSTRAP BLOCKED: canonical ADMIN role is missing or inactive. Run the approved Foundation seed.',
         );
       }
+
+      const adminGrants = await transaction
+        .selectFrom('role_permissions')
+        .innerJoin('permissions', 'permissions.id', 'role_permissions.permission_id')
+        .select('permissions.code')
+        .where('role_permissions.role_id', '=', adminRole.id)
+        .where('permissions.active', '=', true)
+        .execute();
+      const actualAdminGrants = new Set(adminGrants.map((grant) => grant.code));
+      const missingAdminGrants = FOUNDATION_ROLE_PERMISSIONS.ADMIN.filter(
+        (permission) => !actualAdminGrants.has(permission),
+      );
+      if (missingAdminGrants.length > 0) {
+        throw new BootstrapConfigurationError(
+          'BOOTSTRAP BLOCKED: canonical ADMIN authorization is incomplete. Run the approved Foundation seed and foundation check.',
+        );
+      }
+
+      const existing = await transaction
+        .selectFrom('users')
+        .select('id')
+        .where('login_identity', '=', config.identity)
+        .executeTakeFirst();
+      if (existing) return { status: 'ALREADY_EXISTS' };
 
       const passwordHash = await this.passwords.hash(config.password);
       const userId = uuidv7();
@@ -153,12 +171,7 @@ export class BootstrapInitialAdminUseCase {
         requestId: 'bootstrap-initial-admin',
       });
 
-      const grants = await transaction
-        .selectFrom('role_permissions')
-        .select('permission_id')
-        .where('role_id', '=', adminRole.id)
-        .execute();
-      return { status: 'CREATED', authorizationGrantsConfigured: grants.length > 0 };
+      return { status: 'CREATED', authorizationGrantsConfigured: true };
     });
   }
 }

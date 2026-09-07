@@ -2,7 +2,14 @@
 
 This is an explicit, one-time production operation. It never runs during build, deploy, migration, or application startup.
 
-1. Confirm the deployed Web Service is using the intended release, all migrations are complete, and the approved Foundation role/permission seed has completed.
+1. Confirm the deployed Web Service is using the intended release, all migrations are complete, then run the production-safe Foundation commands from the approved operator environment:
+
+   ```sh
+   pnpm db:seed:foundation
+   pnpm db:seed:foundation:check
+   ```
+
+   The check must pass before creating the initial administrator. These commands do not create users and do not require `QC_SEED_ALLOW_NON_PRODUCTION=true`.
 2. In Render Environment Variables, add the following values securely. Do not put these values in `render.yaml` or Git.
 
    ```text
@@ -19,7 +26,7 @@ This is an explicit, one-time production operation. It never runs during build, 
    pnpm bootstrap:admin
    ```
 
-4. The safe successful result is `Initial administrator created successfully.` If no approved role-permission grants exist yet, the command also says that grants still require approved configuration. It does not invent or grant permissions.
+4. The safe successful result is `Initial administrator created successfully.` The bootstrap command fails closed if canonical ADMIN authorization is incomplete; it never invents or grants permissions.
 5. Sign in at `https://qclevel.top/login` with identity `yazeed` and the configured password. Verify authentication first and authorization separately.
 6. Immediately remove `BOOTSTRAP_ADMIN_PASSWORD` from Render. Remove `BOOTSTRAP_ADMIN_IDENTITY`, `BOOTSTRAP_ADMIN_DISPLAY_NAME`, and optional email as well unless there is an approved reason to retain them.
 
