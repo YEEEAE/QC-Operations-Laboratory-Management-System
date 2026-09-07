@@ -1,5 +1,33 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-003: local Render credential handling audit and safe preflight gate
+
+### تم التنفيذ
+- تحققت من واقع `.env` بدون طباعة القيم: الملف ignored وغير tracked، وأسماءه هي `Hostname` و`Database` و`Username` و`Password` وحقول Render العرضية، ولا يطابق أي منها `DATABASE_URL` الذي يتوقعه التطبيق.
+- تحققت أن أوامر `tsx` في database/bootstrap تعتمد على `process.env` فقط، ولا تستخدم `dotenv` أو تحميلًا تلقائيًا لـ`.env`.
+- حدّثت runbook ليمنع sourcing لملف Render dump، ويثبت أن `.env.example` هو المرجع المتعقب للأسماء فقط، وأن الأسرار تبقى في Render أو shell مؤقت.
+- عدّلت workflow الـzsh ليشغل preflight داخل subshell ويزيل `DATABASE_URL` بعد التنفيذ، مع انتهاء البيئة المؤقتة تلقائيًا عند المقاطعة.
+- لم أحذف `.env` لأن الوصول إلى credential مدور من Render لم يتأكد، ولم أستخدم credential حقيقي أو أتصل بـRender.
+
+### الملفات المتأثرة
+- `docs/operations/RENDER-DATABASE-CONNECTION.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `./node_modules/.bin/vitest run tests/unit/database/preflight.test.ts tests/unit/shared/validation.test.ts` ✅ — 10/10.
+- Prettier للـrunbook ✅؛ `git diff --check` ✅.
+- فحص tracking/staging ✅ — `.env` غير tracked، والتغيير المرحلي الموجود `.env.example` names-only؛ لا يوجد secret env file staged.
+- `pnpm db:preflight` لم يُشغّل: تدوير credential غير مؤكد، التزامًا بقاعدة إيقاف الاتصالات الإنتاجية.
+- `pnpm db:migrate` و`bootstrap:admin` لم يُشغّلا.
+
+### النتيجة
+- **الحالة:** جزئي / BLOCKED
+- **مختصر:** مسار التعامل المحلي الآمن موثق ومصحح، لكن production read-only preflight لم يُنفذ لأن active credential rotation غير مؤكدة.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تأكيد أن credential السابق تم تدويره وأن credential الحالي متاح من Render؛ بعدها فقط يُنفذ preflight الخارجي بصمت وفق runbook.
+- لا توجد أرقام قاعدة بيانات أو PostgreSQL أو migrations يمكن الإبلاغ عنها قبل preflight فعلي.
+
 ## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-002: deterministic PostgreSQL environment and preflight handling
 
 ### تم التنفيذ
