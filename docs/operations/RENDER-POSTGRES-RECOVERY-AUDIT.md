@@ -7,9 +7,17 @@
 
 ## Audit result
 
-**AUDIT RESULT: BLOCKED**
+**AUDIT RESULT: SUPERSEDED BY QC-RENDER-POSTGRES-RECOVERY-004**
 
-The repository does not currently provide a deterministic, documented, and provider-compatible path from an empty Render PostgreSQL database to a working admin account with effective authorization. The database state supplied for this audit (`to_regclass('qc.users')` returned `NULL`) is consistent with an uninitialized application database, but it was not independently queried during this audit because no database credential was used.
+The prior audit found no deterministic provider-compatible path. It must not be used as current proof after the migration changes below.
+
+## Current migration architecture decision
+
+- **MODE A is supported:** one Render-managed `DATABASE_URL` credential performs explicit migrations and application runtime work.
+- The current application architecture does not require custom PostgreSQL roles. `qc_migrator` and `qc_app_runtime` are not created, selected, or required.
+- Current migration files preserve the `qc`/`pg_catalog` search-path boundary and public-schema hardening, while leaving schema/table ownership with the managed database principal.
+- **MODE B is not required or implemented:** a separately provisioned migrator/runtime identity pair would be a different externally administered topology and cannot be inferred or created by this application.
+- The migration runner accepts only the exact old checksums for ledger compatibility. A legacy database with pending migrations is blocked when ownership is not held by the current principal, requiring provider-admin remediation rather than a silent ownership transfer.
 
 ## Frozen reality
 

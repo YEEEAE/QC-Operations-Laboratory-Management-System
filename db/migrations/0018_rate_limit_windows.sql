@@ -16,6 +16,3 @@ CREATE TABLE qc.rate_limit_windows (
 );
 
 CREATE INDEX idx_rate_limit_windows__expiry ON qc.rate_limit_windows (window_ended_at);
-
-ALTER TABLE qc.rate_limit_windows OWNER TO qc_migrator;
-GRANT SELECT, INSERT, UPDATE, DELETE ON qc.rate_limit_windows TO qc_app_runtime;

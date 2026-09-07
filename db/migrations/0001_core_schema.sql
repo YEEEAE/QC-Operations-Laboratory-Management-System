@@ -3,17 +3,6 @@ CREATE SCHEMA IF NOT EXISTS qc;
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON SCHEMA qc FROM PUBLIC;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'qc_migrator') THEN
-    CREATE ROLE qc_migrator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'qc_app_runtime') THEN
-    CREATE ROLE qc_app_runtime NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
-  END IF;
-END
-$$;
-
 CREATE TABLE qc.schema_migrations (
   version TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -98,17 +87,3 @@ CREATE INDEX idx_sessions__active_expiry ON qc.sessions (expires_at) WHERE revok
 CREATE INDEX idx_audit_events__request_id ON qc.audit_events (request_id);
 CREATE INDEX idx_audit_events__subject ON qc.audit_events (subject_type, subject_id);
 CREATE INDEX idx_outbox_events__available ON qc.outbox_events (available_at) WHERE processed_at IS NULL;
-
-ALTER SCHEMA qc OWNER TO qc_migrator;
-ALTER TABLE qc.schema_migrations OWNER TO qc_migrator;
-ALTER TABLE qc.users OWNER TO qc_migrator;
-ALTER TABLE qc.sessions OWNER TO qc_migrator;
-ALTER TABLE qc.audit_events OWNER TO qc_migrator;
-ALTER TABLE qc.outbox_events OWNER TO qc_migrator;
-
-GRANT USAGE ON SCHEMA qc TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.users TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.sessions TO qc_app_runtime;
-GRANT SELECT, INSERT ON qc.audit_events TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.outbox_events TO qc_app_runtime;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA qc TO qc_app_runtime;

@@ -16,5 +16,3 @@ CREATE TABLE qc.user_scopes (
 );
 CREATE UNIQUE INDEX uq_user_scopes__active ON qc.user_scopes (user_id, scope_kind, COALESCE(scope_value, '')) WHERE revoked_at IS NULL;
 CREATE INDEX idx_user_scopes__user_id ON qc.user_scopes (user_id);
-ALTER TABLE qc.user_scopes OWNER TO qc_migrator;
-GRANT SELECT, INSERT, UPDATE ON qc.user_scopes TO qc_app_runtime;

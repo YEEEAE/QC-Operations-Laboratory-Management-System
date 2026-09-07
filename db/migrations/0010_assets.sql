@@ -80,9 +80,3 @@ CREATE INDEX idx_calibration_records__equipment_id ON qc.calibration_records (eq
 CREATE INDEX idx_calibration_records__state ON qc.calibration_records (state);
 CREATE INDEX idx_maintenance_records__equipment_id ON qc.maintenance_records (equipment_id);
 CREATE INDEX idx_maintenance_records__state ON qc.maintenance_records (state);
-
-ALTER TABLE qc.equipment OWNER TO qc_migrator;
-ALTER TABLE qc.calibration_records OWNER TO qc_migrator;
-ALTER TABLE qc.maintenance_records OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.equipment, qc.calibration_records, qc.maintenance_records TO qc_app_runtime;

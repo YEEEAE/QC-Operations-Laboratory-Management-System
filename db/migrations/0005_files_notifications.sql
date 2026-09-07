@@ -74,13 +74,3 @@ CREATE INDEX idx_notifications__recipient_unread
   WHERE read_at IS NULL;
 CREATE INDEX idx_notification_deliveries__notification_id
   ON qc.notification_deliveries (notification_id);
-
-ALTER TABLE qc.files OWNER TO qc_migrator;
-ALTER TABLE qc.evidence_links OWNER TO qc_migrator;
-ALTER TABLE qc.notifications OWNER TO qc_migrator;
-ALTER TABLE qc.notification_deliveries OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.files TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.evidence_links TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.notifications TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.notification_deliveries TO qc_app_runtime;

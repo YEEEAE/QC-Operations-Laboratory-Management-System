@@ -79,11 +79,3 @@ CREATE INDEX idx_task_checklist_items__task_id ON qc.task_checklist_items (task_
 CREATE INDEX idx_task_comments__task_id ON qc.task_comments (task_id);
 CREATE INDEX idx_task_dependencies__task_id ON qc.task_dependencies (task_id);
 CREATE INDEX idx_task_dependencies__depends_on_task_id ON qc.task_dependencies (depends_on_task_id);
-
-ALTER TABLE qc.tasks OWNER TO qc_migrator;
-ALTER TABLE qc.task_assignments OWNER TO qc_migrator;
-ALTER TABLE qc.task_checklist_items OWNER TO qc_migrator;
-ALTER TABLE qc.task_comments OWNER TO qc_migrator;
-ALTER TABLE qc.task_dependencies OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.tasks, qc.task_assignments, qc.task_checklist_items, qc.task_comments, qc.task_dependencies TO qc_app_runtime;

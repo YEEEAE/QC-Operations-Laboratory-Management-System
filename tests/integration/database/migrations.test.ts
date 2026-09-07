@@ -84,4 +84,29 @@ describe('database migration engine', () => {
     expect(applied.pending).toEqual([]);
     expect(check.pending).toEqual([]);
   });
+
+  it('rolls back a failed migration and does not write its ledger row', async () => {
+    const migrations = await loadMigrations();
+    const failed = {
+      version: '9998',
+      name: '9998_failure_probe',
+      path: 'test-only',
+      sql: `CREATE TABLE qc.__migration_failure_probe (id integer);
+             SELECT 1 / 0;`,
+      checksum: 'f'.repeat(64),
+    };
+
+    await expect(migrate({ pool, migrations: [...migrations, failed] })).rejects.toThrow();
+    expect(
+      (await pool!.query("SELECT to_regclass('qc.__migration_failure_probe') AS name")).rows[0]
+        .name,
+    ).toBeNull();
+    expect(
+      (
+        await pool!.query(
+          "SELECT count(*)::int AS count FROM qc.schema_migrations WHERE version = '9998'",
+        )
+      ).rows[0].count,
+    ).toBe(0);
+  });
 });

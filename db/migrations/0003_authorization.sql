@@ -73,13 +73,3 @@ VALUES
   ('SUPERVISOR', 'Supervisor', TRUE),
   ('MANAGER', 'Manager', TRUE),
   ('ADMIN', 'Admin', TRUE);
-
-ALTER TABLE qc.roles OWNER TO qc_migrator;
-ALTER TABLE qc.permissions OWNER TO qc_migrator;
-ALTER TABLE qc.role_permissions OWNER TO qc_migrator;
-ALTER TABLE qc.user_roles OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.roles TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.permissions TO qc_app_runtime;
-GRANT SELECT, INSERT, DELETE ON qc.role_permissions TO qc_app_runtime;
-GRANT SELECT, INSERT, UPDATE ON qc.user_roles TO qc_app_runtime;

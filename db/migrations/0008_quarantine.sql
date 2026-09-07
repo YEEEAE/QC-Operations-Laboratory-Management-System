@@ -162,15 +162,3 @@ CREATE INDEX idx_inspection_reports__receiving_item_id ON qc.inspection_reports 
 CREATE INDEX idx_inspection_reports__state ON qc.inspection_reports (state);
 CREATE INDEX idx_inspection_report_results__inspection_report_id ON qc.inspection_report_results (inspection_report_id);
 CREATE INDEX idx_inspection_report_snapshots__inspection_report_id ON qc.inspection_report_snapshots (inspection_report_id);
-
-ALTER TABLE qc.receiving_items OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_templates OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_template_versions OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_template_sections OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_template_points OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_reports OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_report_results OWNER TO qc_migrator;
-ALTER TABLE qc.inspection_report_snapshots OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.receiving_items, qc.inspection_templates, qc.inspection_template_versions, qc.inspection_template_sections, qc.inspection_template_points, qc.inspection_reports, qc.inspection_report_results TO qc_app_runtime;
-GRANT SELECT, INSERT ON qc.inspection_report_snapshots TO qc_app_runtime;

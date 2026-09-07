@@ -190,17 +190,3 @@ CREATE INDEX idx_lab_equipment_usage__equipment_id ON qc.lab_equipment_usage (eq
 CREATE INDEX idx_lab_document_usage__lab_test_id ON qc.lab_document_usage (lab_test_id);
 CREATE INDEX idx_lab_document_usage__document_version_id ON qc.lab_document_usage (document_version_id);
 CREATE INDEX idx_lab_test_snapshots__lab_test_id ON qc.lab_test_snapshots (lab_test_id);
-
-ALTER TABLE qc.lab_test_templates OWNER TO qc_migrator;
-ALTER TABLE qc.lab_test_template_versions OWNER TO qc_migrator;
-ALTER TABLE qc.lab_test_template_sections OWNER TO qc_migrator;
-ALTER TABLE qc.lab_test_template_parameters OWNER TO qc_migrator;
-ALTER TABLE qc.lab_tests OWNER TO qc_migrator;
-ALTER TABLE qc.lab_samples OWNER TO qc_migrator;
-ALTER TABLE qc.lab_measurements OWNER TO qc_migrator;
-ALTER TABLE qc.lab_equipment_usage OWNER TO qc_migrator;
-ALTER TABLE qc.lab_document_usage OWNER TO qc_migrator;
-ALTER TABLE qc.lab_test_snapshots OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.lab_test_templates, qc.lab_test_template_versions, qc.lab_test_template_sections, qc.lab_test_template_parameters, qc.lab_tests, qc.lab_samples, qc.lab_measurements, qc.lab_equipment_usage, qc.lab_document_usage TO qc_app_runtime;
-GRANT SELECT, INSERT ON qc.lab_test_snapshots TO qc_app_runtime;

@@ -42,8 +42,3 @@ CREATE INDEX idx_backup_runs__request_id ON qc.backup_runs (request_id);
 CREATE INDEX idx_restore_runs__backup_run_id ON qc.restore_runs (backup_run_id);
 CREATE INDEX idx_restore_runs__state ON qc.restore_runs (state);
 CREATE INDEX idx_restore_runs__request_id ON qc.restore_runs (request_id);
-
-ALTER TABLE qc.backup_runs OWNER TO qc_migrator;
-ALTER TABLE qc.restore_runs OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.backup_runs, qc.restore_runs TO qc_app_runtime;

@@ -72,11 +72,3 @@ CREATE INDEX idx_approval_decisions__approval_case_id ON qc.approval_decisions (
 CREATE INDEX idx_approval_decisions__request_id ON qc.approval_decisions (request_id);
 CREATE INDEX idx_electronic_signatures__subject ON qc.electronic_signatures (subject_type, subject_id);
 CREATE INDEX idx_electronic_signatures__request_id ON qc.electronic_signatures (request_id);
-
-ALTER TABLE qc.approval_cases OWNER TO qc_migrator;
-ALTER TABLE qc.approval_work_items OWNER TO qc_migrator;
-ALTER TABLE qc.approval_decisions OWNER TO qc_migrator;
-ALTER TABLE qc.electronic_signatures OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.approval_cases, qc.approval_work_items TO qc_app_runtime;
-GRANT SELECT, INSERT ON qc.approval_decisions, qc.electronic_signatures TO qc_app_runtime;

@@ -111,11 +111,3 @@ CREATE INDEX idx_capas__ncr_id ON qc.capas (ncr_id);
 CREATE INDEX idx_capas__owner_id ON qc.capas (owner_id);
 CREATE INDEX idx_capa_actions__capa_id ON qc.capa_actions (capa_id);
 CREATE INDEX idx_capa_actions__owner_id ON qc.capa_actions (owner_id);
-
-ALTER TABLE qc.findings OWNER TO qc_migrator;
-ALTER TABLE qc.ncrs OWNER TO qc_migrator;
-ALTER TABLE qc.rcas OWNER TO qc_migrator;
-ALTER TABLE qc.capas OWNER TO qc_migrator;
-ALTER TABLE qc.capa_actions OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.findings, qc.ncrs, qc.rcas, qc.capas, qc.capa_actions TO qc_app_runtime;

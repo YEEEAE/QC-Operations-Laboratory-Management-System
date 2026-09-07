@@ -65,18 +65,15 @@ describe('core PostgreSQL constraints and privileges', () => {
     ).toBe(1);
   });
 
-  it('does not grant runtime role DDL or public schema create privileges', async () => {
+  it('does not provision custom database roles and keeps public schema create revoked', async () => {
     const result = await pool!.query(`
-      SELECT r.rolname, r.rolsuper, r.rolcreatedb, r.rolcreaterole,
-             has_schema_privilege(r.rolname, 'qc', 'CREATE') AS can_create_qc,
-             has_schema_privilege(r.rolname, 'public', 'CREATE') AS can_create_public
-      FROM pg_roles r WHERE r.rolname = 'qc_app_runtime'
+      SELECT count(*)::int AS custom_role_count,
+             has_schema_privilege(current_user, 'public', 'CREATE') AS can_create_public
+      FROM pg_roles
+      WHERE rolname IN ('qc_migrator', 'qc_app_runtime')
     `);
     expect(result.rows[0]).toMatchObject({
-      rolsuper: false,
-      rolcreatedb: false,
-      rolcreaterole: false,
-      can_create_qc: false,
+      custom_role_count: 0,
       can_create_public: false,
     });
     const session = await pool!.query('SHOW search_path');

@@ -52,10 +52,3 @@ CREATE INDEX idx_change_requests__requested_by ON qc.change_requests (requested_
 CREATE INDEX idx_change_request_changes__change_request_id ON qc.change_request_changes (change_request_id);
 CREATE INDEX idx_change_application_attempts__change_request_id ON qc.change_application_attempts (change_request_id);
 CREATE INDEX idx_change_application_attempts__request_id ON qc.change_application_attempts (request_id);
-
-ALTER TABLE qc.change_requests OWNER TO qc_migrator;
-ALTER TABLE qc.change_request_changes OWNER TO qc_migrator;
-ALTER TABLE qc.change_application_attempts OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.change_requests TO qc_app_runtime;
-GRANT SELECT, INSERT ON qc.change_request_changes, qc.change_application_attempts TO qc_app_runtime;

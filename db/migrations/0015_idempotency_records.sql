@@ -9,6 +9,3 @@ CREATE TABLE qc.idempotency_records (
   CONSTRAINT uq_idempotency_records__key UNIQUE (key),
   CONSTRAINT ck_idempotency_records__completed_pair CHECK ((status = 'COMPLETED') = (completed_at IS NOT NULL))
 );
-
-ALTER TABLE qc.idempotency_records OWNER TO qc_migrator;
-GRANT SELECT, INSERT, UPDATE ON qc.idempotency_records TO qc_app_runtime;

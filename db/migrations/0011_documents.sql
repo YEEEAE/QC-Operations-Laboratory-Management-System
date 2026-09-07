@@ -59,10 +59,3 @@ CREATE INDEX idx_document_versions__document_id ON qc.document_versions (documen
 CREATE INDEX idx_document_versions__state ON qc.document_versions (state);
 CREATE INDEX idx_document_version_files__document_version_id ON qc.document_version_files (document_version_id);
 CREATE INDEX idx_document_version_files__file_id ON qc.document_version_files (file_id);
-
-ALTER TABLE qc.document_identities OWNER TO qc_migrator;
-ALTER TABLE qc.document_versions OWNER TO qc_migrator;
-ALTER TABLE qc.document_version_files OWNER TO qc_migrator;
-
-GRANT SELECT, INSERT, UPDATE ON qc.document_identities, qc.document_versions TO qc_app_runtime;
-GRANT SELECT, INSERT ON qc.document_version_files TO qc_app_runtime;

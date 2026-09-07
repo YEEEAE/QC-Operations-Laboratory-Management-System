@@ -1,5 +1,72 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-004: تشغيل Docker وإثبات PostgreSQL 18
+
+### تم التنفيذ
+- شغّلت Docker Desktop محليًا بعد اكتشاف أن CLI كان خارج PATH، ثم استخدمت Testcontainers مع `postgres:18-alpine` وقاعدة مؤقتة.
+- نجحت اختبارات migration/managed-user كاملة: **2 files / 6 tests passed**.
+- ثبت الاختبار أن credential غير superuser وغير CREATEROLE يرحّل قاعدة فارغة، يملك كل كائنات `qc`، ينفذ DML runtime، وتكون إعادة migration بلا تطبيقات جديدة.
+- ثبتت اختبارات rollback (لا probe table ولا ledger row بعد الفشل)، checksum mismatch، upgrade no-op، وadvisory-lock concurrency.
+- حدّثت assertion القديم الذي كان يفترض وجود `qc_app_runtime` ليتحقق من عدم إنشاء الأدوار المخصصة مع بقاء `public CREATE` ممنوعًا.
+- أعاد build النهائي النجاح، وبقيت حاويات الاختبار disposable ولم تُستخدم قاعدة Render أو production.
+
+### الملفات المتأثرة
+- `scripts/db/migrate.ts`
+- `tests/integration/database/constraints.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `NODE_ENV=test vitest run tests/integration/database/migrations.test.ts tests/integration/database/managed-privileges.test.ts` ✅ — 6/6.
+- `vitest run tests/integration/database` سابقًا: 11/15؛ أربع failures في constraints baseline/expectations، منها assertion الأدوار الذي تم تحديثه الآن.
+- `node_modules/.bin/astro build` ✅.
+- Scoped Prettier وESLint و`git diff --check` ✅.
+- CLI sequence المباشر لم يُعتمد على الحاوية لأن TLS المحلي غير مفعّل؛ connection helper يرفض plaintext عمدًا، بينما Testcontainers integration نجحت عبر pool الاختبار.
+
+### النتيجة
+- **الحالة:** جزئي — migration architecture وmanaged PostgreSQL 18 evidence نجحا؛ full repository gates ليست نظيفة.
+- **مختصر:** صار عندنا دليل فعلي على PostgreSQL 18 وcredential مُدار محدود الصلاحيات، لكن لا يوجد claim بأن كل suite أو الإنتاج جاهز.
+
+### ملاحظات / مشاكل مفتوحة
+- بقيت ثلاث failures قديمة في `constraints.test.ts` تحتاج معالجة منفصلة: PostgreSQL error-code expectation، ترتيب expected tables، وبيانات receiving test غير المكتملة.
+- `pnpm` gates وfull typecheck/lint/format ما زالت متأثرة ببيئة Node 22 وbaseline repository errors؛ لم تُستخدم لتبرير نجاح migration.
+
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-004: إصلاح نموذج صلاحيات migrations لـRender والتحقق المحدود
+
+### تم التنفيذ
+- أزلت من migrations `0001` و`0002` و`0003` و`0005`–`0016` و`0018` إنشاء/تحويل أدوار PostgreSQL ومنح الصلاحيات لـ`qc_migrator`/`qc_app_runtime`؛ أبقيت `REVOKE` لعزل `public` و`qc`.
+- ثبّتُّ MODE A: credential واحد من Render يملك `qc` والكائنات ويخدم migration runner وruntime؛ لا يحتاج `SUPERUSER` أو `CREATEROLE` أو `ALTER OWNER` أو `SET ROLE`. MODE B غير مطلوب في المعمارية الحالية.
+- أضفت فحصًا صريحًا لصلاحية `CREATE` على قاعدة البيانات وschema `qc`، وفحص ownership يمنع pending migrations على قاعدة legacy ذات ملكية خارج `current_user` بدل نقل الملكية بصمت.
+- أضفت compatibility allowlist للـSHA-256 القديمة الدقيقة للمigrations المتأثرة، بحيث لا يُرفض ledger legacy الصحيح ولا يُقبل checksum معدل عشوائيًا؛ migration files الجديدة تسجل checksums الحالية.
+- أضفت اختبار rollback لا يكتب صفًا فاشلًا في `qc.schema_migrations`، واختبار managed principal ينشئ قاعدة/credential غير superuser وغير CREATEROLE عندما يتوفر Testcontainers.
+- وثقت الصلاحيات المطلوبة وتسلسل التشغيل والقيود في `docs/operations/RENDER-MIGRATION-RUNBOOK.md` وحدّثت audit السابق ليشير لقرار المعمارية الحالي.
+
+### الملفات المتأثرة
+- `db/migrations/0001_core_schema.sql`، و`db/migrations/0002_identity.sql`، `0003_authorization.sql`، `0005`–`0016`، `0018_rate_limit_windows.sql`
+- `scripts/db/migrate.ts`
+- `tests/integration/database/migrations.test.ts`
+- `tests/integration/database/managed-privileges.test.ts`
+- `db/migrations/README.md`
+- `docs/operations/RENDER-MIGRATION-RUNBOOK.md`
+- `docs/operations/RENDER-POSTGRES-RECOVERY-AUDIT.md`
+
+### التحقق
+- فحص SQL الممنوع (`CREATE ROLE`/`OWNER TO`/منح `qc_app_runtime`) ✅ — لا نتائج داخل migrations.
+- `node_modules/.bin/prettier --check` للنطاق ✅، وESLint للنطاق ✅، و`git diff --check` ✅.
+- اختبارات unit المرتبطة (`tests/unit/database` و`tests/unit/shared/validation.test.ts`) ✅ — 12/12.
+- `node_modules/.bin/astro build` ✅.
+- `tests/integration/database/migrations.test.ts` و`managed-privileges.test.ts` ❌/UNVERIFIED — Testcontainers اختار `postgres:18-alpine` لكنه توقف قبل التشغيل بسبب عدم وجود Docker/container runtime؛ 6 اختبارات صارت skipped.
+- full `typecheck` ❌ بسبب baseline Astro/actions/dependency errors خارج المهمة؛ full lint ❌ بـ88 baseline errors؛ full format ❌ بـ238 ملف baseline. لا يوجد نجاح زائف من هذه البوابات.
+- لم تُستخدم قاعدة Render أو أي secret إنتاجي، ولم تُشغّل migration على production.
+
+### النتيجة
+- **الحالة:** جزئي / BLOCKED للتحقق البيئي.
+- **مختصر:** تم إصلاح التصميم الثابت ومسار compatibility، لكن لا يمكن إعلان Render-compatible أو PASS لـPostgreSQL 18/managed-user/rollback/checksum/concurrency حتى يعمل disposable PostgreSQL 18 فعليًا.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل نفس suite على PostgreSQL 18 disposable مع Docker/Testcontainers، ثم تشغيل `db:preflight` و`db:migrate` و`db:migrate:status` و`db:migrate:check` وrepeat migration وتوثيق counts/objects/ownership.
+- compatibility للـlegacy لا يصلح DB legacy ذات pending migrations تلقائيًا؛ يلزم provider-admin remediation أو fresh database controlled.
+- migration head بقي `0018`؛ checksums الحالية للمigrations المعدلة تغيّرت، والـlegacy hashes محفوظة في runner للتوافق المحدود.
+
 ## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-003: canonical `.env` loading and PostgreSQL TLS gate
 
 ### تم التنفيذ

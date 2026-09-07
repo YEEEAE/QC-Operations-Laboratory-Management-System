@@ -21,6 +21,3 @@ CREATE INDEX idx_password_reset_requests__user_id
 CREATE INDEX idx_password_reset_requests__active_expiry
   ON qc.password_reset_requests (expires_at)
   WHERE used_at IS NULL AND revoked_at IS NULL;
-
-ALTER TABLE qc.password_reset_requests OWNER TO qc_migrator;
-GRANT SELECT, INSERT, UPDATE ON qc.password_reset_requests TO qc_app_runtime;
