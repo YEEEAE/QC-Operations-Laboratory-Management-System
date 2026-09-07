@@ -7,11 +7,8 @@ import {
 } from './modules/identity/application/identity-dependencies.js';
 import { ResolveSessionUseCase } from './modules/identity/application/resolve-session.js';
 import { applySecurityHeaders } from './shared/security/security-headers';
-import {
-  InMemoryRateLimitStore,
-  RateLimiter,
-  resolveHighRiskRateLimitPolicy,
-} from './shared/security/rate-limit';
+import { RateLimiter, resolveHighRiskRateLimitPolicy } from './shared/security/rate-limit';
+import { PostgresRateLimitStore } from './shared/security/postgres-rate-limit-store';
 import {
   normalizeRouteTemplate,
   recordCounter,
@@ -27,7 +24,13 @@ const publicPaths = new Set(['/login']);
 // Fixed-window limiter for high-risk POST routes; thresholds are config-driven
 // (SECURITY-ARCHITECTURE §33/§141). This is abuse protection only — never
 // authorization.
-const highRiskRateLimiter = new RateLimiter(new InMemoryRateLimitStore());
+// Login abuse counters must be shared by all Web Service instances. The
+// PostgreSQL store is scoped to the canonical application database and fails
+// closed if the dependency is unavailable.
+let highRiskRateLimiter: RateLimiter | undefined;
+function getHighRiskRateLimiter(): RateLimiter {
+  return (highRiskRateLimiter ??= new RateLimiter(new PostgresRateLimitStore(getDatabase())));
+}
 const requestLogger = createRequestLogger();
 
 function rateLimitedResponse(requestId: string, retryAfterSeconds: number): Response {
@@ -51,7 +54,13 @@ export const onRequest = defineMiddleware(
     // pairing handles www, while this fixed destination also canonicalizes
     // the Render hostname and any unexpected host without trusting Host data.
     const cleanPagePath = cleanAstroPagePath(url.pathname);
-    if (env.NODE_ENV === 'production' && (url.hostname !== 'qclevel.top' || cleanPagePath)) {
+    const isMachineHealthEndpoint =
+      url.pathname === '/api/health/live' || url.pathname === '/api/health/ready';
+    if (
+      env.NODE_ENV === 'production' &&
+      !isMachineHealthEndpoint &&
+      (url.hostname !== 'qclevel.top' || cleanPagePath)
+    ) {
       const canonicalUrl = new URL(url);
       canonicalUrl.protocol = 'https:';
       canonicalUrl.hostname = 'qclevel.top';
@@ -92,7 +101,7 @@ export const onRequest = defineMiddleware(
       );
       response = rateLimitedResponse(requestContext.requestId, 60);
     } else if (rateLimitResolution) {
-      const decision = await highRiskRateLimiter.check(
+      const decision = await getHighRiskRateLimiter().check(
         rateLimitResolution,
         clientAddress ?? 'unknown',
       );

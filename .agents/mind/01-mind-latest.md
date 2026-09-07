@@ -1,5 +1,155 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-RENDER-POSTGRES-RECOVERY-011: Render production database/environment contract
+
+### تم التنفيذ
+- حدّثت `render.yaml` ليعتمد Web Service على `DATABASE_URL` فقط، وأزلت متغيرات bootstrap ذات الاستخدام الواحد من عقد الخدمة.
+- أبقيت build/start صريحين بدون migrations أو Foundation seed أو admin bootstrap تلقائيًا.
+- بدّلت rate limiter الخاص بتسجيل الدخول إلى مخزن PostgreSQL مشترك بين نسخ Web Service، مع تهيئة lazy حتى لا يقرأ قاعدة البيانات أثناء build.
+- استثنيت مساري liveness/readiness من canonical-host redirect حتى يقدر Render يفحصهما على hostname الخدمة، مع بقاء health responses مختصرة وآمنة.
+- جعلت readiness يتحقق من عقد البيئة المفسّر حاليًا ومن اتصال PostgreSQL عبر `SELECT 1`، بدون عرض connection details.
+- أضفت اختبار عقد Render يتحقق من `DATABASE_URL` وhealth path وغياب bootstrap variables وعدم وجود lifecycle commands في build.
+
+### الملفات المتأثرة
+- `render.yaml`
+- `src/middleware.ts`
+- `src/shared/health/postgres-readiness-probe.ts`
+- `tests/unit/render-config.test.ts`
+
+### التحقق
+- `pnpm typecheck` ✅ من ناحية الكود عبر `astro check` على Node المضمّن `24.19.0`؛ 0 errors و25 hints deprecated قائمة سابقًا.
+- `pnpm lint` ✅ عبر ESLint المباشر.
+- `pnpm format:check` ✅ عبر Prettier المباشر.
+- `pnpm build` ✅ عبر Astro المباشر؛ لا migrations/seed/bootstrap أثناء build.
+- `pnpm test` / `pnpm test:integration` ⚠️ assertions العاملة PASS، لكن 11 suite فشلت لأن Docker/Testcontainers غير متاح في البيئة؛ لا فشل assertion متعلق بالتعديل.
+- Artifact smoke ✅ liveness `200 healthy` وreadiness `503 unhealthy` عند قاعدة غير متاحة؛ لا أسرار في الاستجابات.
+- `git diff --check` ✅ وفحص literals الحساسة في الملفات المتأثرة ✅؛ لم تُنفذ production writes أو commit أو push.
+
+### النتيجة
+- **الحالة:** جزئي — الكود والعقد المحليان ناجحان، والتحقق الفعلي من إعدادات Render Dashboard/الاتصال الداخلي لم يُنفذ من هذه الجلسة.
+- **مختصر:** عقد Render صار يستخدم `DATABASE_URL` canonical، والـrate limiting والـhealth semantics مناسبة للإنتاج؛ يلزم تطبيق القيم السرية يدويًا في Render وتشغيل اختبارات PostgreSQL في بيئة فيها Docker أو قاعدة اختبار معتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- runtime المضمّن أقل من العقد الدقيق للمشروع (`24.19.0` بدل `>=24.20.0`، وpnpm `11.19.0` بدل `11.25.0`)؛ Render يجب أن يستخدم `NODE_VERSION=24.20.0` ونسخة pnpm المحددة من `packageManager`.
+- `OTEL_EXPORTER_OTLP_ENDPOINT` و`OTEL_EXPORTER_OTLP_HEADERS` اختياريان لكن يجب ضبطهما معًا أو تركهما معًا فارغين.
+- في Render: حط `DATABASE_URL` على Internal Database URL للـWeb Service فقط، و`SESSION_SECRET`، وعتبات rate limit، و`SERVICE_VERSION`؛ لا تضف `Internal_Database_URL` كمتغير جديد ولا تعيد متغيرات bootstrap بعد نجاح initial admin.
+
+## [2026-09-08] — QC-RENDER-POSTGRES-RECOVERY-010: Initial admin bootstrap and authentication PASS
+
+### تم التنفيذ
+- تحققت من بوابات الإنتاج الثلاث على Render: migration integrity، foundation authorization، وdatabase preflight؛ كلها PASS على PostgreSQL `18.6` مع `18/18` migrations وpending `0`.
+- أنشأت المستخدم الأول `yazeed` باسم عرض `Yazeed` عبر `pnpm bootstrap:admin` بإدخال كلمة مرور مخفي؛ لم تُطبع كلمة المرور ولم تُحفظ في `.env`.
+- نفذت read-only verification دقيقة: عدد المستخدمين المطابقين `1`، الحساب ACTIVE، `password_hash` غير فارغ، ADMIN role active وغير revoked، وGLOBAL scope غير revoked.
+- تحققت من الصلاحيات canonical الفعالة: `198` permission، `164` role grants، وeffective ADMIN authorization PASS.
+- اختبرت authentication implementation فعليًا: login الصحيح نجح، كلمة المرور الخاطئة انرفضت، مسار authorization المحمي نجح، anonymous انرفض، وجلسة الاختبار أُلغيت بعد التحقق.
+- تحققت من وجود أحداث bootstrap الثلاثة المتوقعة في audit.
+- تأكدت أن متغيرات bootstrap السرية مؤقتة على مستوى العملية فقط، ولا توجد في البيئة الحالية أو `.env`.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm db:migrate:check` ✅ — `18` migrations سليمة.
+- `pnpm db:seed:foundation:check` ✅ — `4` أدوار، `198` صلاحية، `164` منح.
+- `pnpm db:preflight` ✅ — connectivity/capabilities PASS، pending `0`.
+- `pnpm bootstrap:admin` ✅ — administrator created successfully.
+- `pnpm bootstrap:admin:check` ✅ — identity/account/role/scope/effective authorization/audit PASS.
+- Read-only SQL verification ✅ — exact user/hash/role/scope/audit checks كلها `true`.
+- Authentication verification ✅ — valid login، invalid password rejection، protected authorization، anonymous denial.
+- فحص بقاء الأسرار محليًا ✅ — لا `DATABASE_URL` أو `BOOTSTRAP_ADMIN_*` في environment أو `.env`.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** الأدمن الأول الحقيقي جاهز ومتحقق من الحساب والـArgon2id hash والصلاحيات والنطاق والتدقيق والمصادقة؛ `INITIAL ADMIN READY`.
+
+### ملاحظات / مشاكل مفتوحة
+- متغيرات Render ذات الاستخدام الواحد التي لا ينبغي إبقاؤها: `BOOTSTRAP_ADMIN_PASSWORD`، `BOOTSTRAP_ADMIN_IDENTITY`، `BOOTSTRAP_ADMIN_DISPLAY_NAME`، و`BOOTSTRAP_ADMIN_EMAIL` إن وُجد؛ تُحذف بعد نجاح bootstrap.
+- رابط اتصال قاعدة البيانات احتوى credential إنتاجي ضمن سياق المهمة؛ يفضّل تدوير credential قاعدة البيانات عبر Render بعد انتهاء الاستعادة التشغيلية.
+
+## [2026-09-08] — QC-RENDER-POSTGRES-RECOVERY-010: Initial admin created; authentication verification interrupted
+
+### تم التنفيذ
+- شغّلت بوابات الإنتاج المطلوبة على Render باستخدام Node `24.20.0`: migration integrity، foundation authorization، وdatabase preflight؛ كلها PASS.
+- أكدت حالة قاعدة البيانات: PostgreSQL `18.6`، قاعدة `qc_operations`، migrations `18/18`، pending `0`، وFoundation `4` أدوار / `198` صلاحية / `164` منح.
+- أنشأت المستخدم الأول `yazeed` باسم عرض `Yazeed` عبر `pnpm bootstrap:admin` باستخدام إدخال كلمة مرور مخفي؛ كلمة المرور لم تُطبع ولم تُحفظ في `.env`.
+- شغّلت `pnpm bootstrap:admin:check` ونجح: المستخدم موجود، الحساب ACTIVE، ADMIN role، GLOBAL scope، effective authorization، وثلاثة bootstrap audit actions موجودة.
+- بدأت تجهيز اختبار authentication الصحيح والخاطئ ومسار authorization المحمي، لكن أداة `tsx -e` فشلت قبل التنفيذ بسبب `top-level await` ثم أُوقفت الجولة من المستخدم؛ لم يُثبت login الفعلي.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+- `scripts/db/seed-foundation.ts` و`tests/unit/db/` — تعديلات محلية سابقة موجودة قبل هذه المهمة ولم أعدّلها ضمن bootstrap.
+
+### التحقق
+- `pnpm db:migrate:check` ✅ — `18` migrations سليمة.
+- `pnpm db:seed:foundation:check` ✅ — `Roles: 4`, `Permissions: 198`, `Role permissions: 164`.
+- `pnpm db:preflight` ✅ — connectivity/capabilities PASS، pending `0`.
+- `pnpm bootstrap:admin` ✅ — `Initial administrator created successfully.`
+- `pnpm bootstrap:admin:check` ✅ — identity/account/role/scope/effective authorization/audit PASS.
+- Authentication valid/invalid + protected HTTP path ⏸️ — لم يكتمل بعد إيقاف الجولة؛ لا يُستنتج منه PASS.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** تم إنشاء الأدمن الحقيقي والتحقق من حالته وصلاحياته وسجل bootstrap، لكن لا يمكن إعلان `INITIAL ADMIN READY` قبل إكمال اختبار authentication المطلوب.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم إعادة تشغيل اختبار login الصحيح والخاطئ، والتحقق من مسار ADMIN المحمي ورفض anonymous، ثم توثيق النتائج.
+- متغيرات bootstrap السرية كانت مؤقتة داخل العملية ولم تُحفظ في `.env`; يلزم مراجعة إعدادات Render ذات الصلة بعد إكمال التحقق.
+
+## [2026-09-08] — QC-RENDER-POSTGRES-RECOVERY-009: Render migration PASS، Foundation BLOCKED
+
+### تم التنفيذ
+- تحققت قراءةً فقط من هدف Render المقدم: قاعدة `qc_operations`، المستخدم `qc_operations_user`، PostgreSQL `18.6`، وTLS/DNS ناجحان بدون طباعة رابط الاتصال أو بيانات الاعتماد.
+- سجل PRE-WRITE evidence أن `qc` غير موجود، جداول التطبيق `0`، و`schema_migrations` غير موجود قبل الكتابة.
+- نفذت `pnpm db:migrate` canonical وطبقت migrations من `0001` إلى `0018` بدون pending.
+- نجحت `db:migrate:status` و`db:migrate:check` و`db:preflight`: `18` مطبقة، pending `0`، integrity/checksum `ok`، و`qc.users` وledger موجودان.
+- نفذت `pnpm db:seed:foundation`؛ رجع الأمر exit 0 لكنه لم يخرج رسالة النجاح ولم يكتب permissions/grants.
+- أوقفـت المسار بعد فشل `db:seed:foundation:check`؛ لم يُنشأ أي مستخدم، ولم يُشغّل bootstrap أو أي إعادة seed.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- PRE-WRITE read-only evidence ✅ — PostgreSQL 18.6، `qc` غير موجود، tables `0`، migrations `0`.
+- `pnpm db:migrate` ✅ — `18/18` applied.
+- `pnpm db:migrate:status` ✅ — pending `0`.
+- `pnpm db:migrate:check` ✅ — `status=ok`, migrations `18`.
+- `pnpm db:preflight` ✅ — connectivity/read-only capabilities PASS.
+- `pnpm db:seed:foundation` ⚠️ — exit 0 بلا رسالة نجاح؛ ثبتت القراءة النهائية أنه no-op.
+- `pnpm db:seed:foundation:check` ❌ — Roles `4`، Permissions `0`، Role permissions `0`، drift detected.
+- Final read-only counts ✅ — migrations `18`، application tables `60`، users `0`.
+
+### النتيجة
+- **الحالة:** محجوب
+- **مختصر:** تم تهيئة migrations على قاعدة Render الصحيحة، لكن Foundation لم يُطبق وcheck فشل؛ لذلك `PRODUCTION INITIALIZATION: BLOCKED` و`ADMIN USER CREATED: NO`.
+
+### ملاحظات / مشاكل مفتوحة
+- السبب الجذري المرصود: entrypoint لأمر Foundation seed رجع بنجاح دون تنفيذ/رسالة نجاح، بينما check كشف أن permissions/grants غير موجودة؛ يحتاج إصلاحًا ومراجعة واختبارًا منفصلًا قبل إعادة تشغيل seed.
+- الحالة الحالية في قاعدة Render: roles `4`، permissions `0`، role grants `0`، users `0`، migrations `18`، application tables `60`.
+- تحذير بيئة متكرر: Node الحالي `22.22.3` والمطلوب `>=24.20.0 <25`؛ لم يمنع migration لكنه يجب معالجته قبل إعادة التشغيل المعتمد.
+
+## [2026-09-08] — جعل PROMPT 009 مستقلًا عن البرومبتات السابقة
+
+### تم التنفيذ
+- عدّلت قسم `PRECONDITIONS` في PROMPT 009 لإلغاء الاعتماد الإلزامي على Task 007 وTask 008.
+- وضّحت أن PROMPT 009 يبدأ كمسار مستقل، ويقرأ هوية قاعدة البيانات وحالة migrations مباشرة قبل الكتابة.
+- أبقيت إيقاف المهمة إذا تعذر التعرف الآمن على الهدف أو ظهرت حالة غير متوقعة، حفاظًا على بوابة الكتابة الإنتاجية.
+
+### الملفات المتأثرة
+- `audit/prompt2.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- مراجعة diff الخاص بـPROMPT 009 ✅
+- `git diff --check` ✅
+- لم تُشغّل اختبارات التطبيق؛ التغيير توثيقي في ملف التدقيق فقط.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** صار PROMPT 009 قابلًا للتنفيذ بشكل مستقل بدون تحقق مسبق من 007 و008، مع بقاء فحص الحالة الحالية قبل أي mutation.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد.
+
 ## [2026-09-08] — QC-READINESS-REMEDIATION-010: Actions unification + zero typecheck + full local gates + disposable PG rehearsal
 
 ### تم التنفيذ

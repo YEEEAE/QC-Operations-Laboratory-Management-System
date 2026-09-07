@@ -1168,15 +1168,12 @@ Initialize the confirmed Render PostgreSQL database using the repository's verif
 
 PRECONDITIONS:
 
-Task 007:
-RENDER PRODUCTION WRITE GATE = PASS
+This prompt is standalone. Do not require, replay, or validate Task 007 or
+Task 008 before starting this workflow. Inspect the current database target
+and migration state directly in the PRE-WRITE EVIDENCE step below.
 
-Task 008:
-PRODUCTION TARGET = CONFIRMED
-PRODUCTION WRITE ALLOWED NEXT = YES
-
-If either is not true:
-STOP.
+If the current target cannot be identified safely, or the live database state
+is unexpected, STOP before any write.
 
 ════════════════════════════════════════════
 SECURITY
