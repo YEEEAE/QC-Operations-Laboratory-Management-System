@@ -1,5 +1,62 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-002: deterministic PostgreSQL environment and preflight handling
+
+### تم التنفيذ
+- ثبّتُّ عقد بيئة الإنتاج في parser: `DATABASE_URL` يجب أن يكون PostgreSQL URL، و`SERVICE_VERSION` صار مطلوبًا في production، وrate-limit variables مطلوبة كزوج، وOTEL variables اختيارية لكن يجب أن تأتي معًا إذا استُخدمت.
+- أضفت `pnpm db:preflight` عبر `scripts/db/preflight.ts`: اتصال read-only، PostgreSQL/database/user metadata، وجود `qc` و`qc.users` و`qc.schema_migrations`، applied/pending counts، وcapability checks بدون تعديل schema أو طباعة URL/كلمة مرور.
+- فصلت أخطاء `DATABASE_URL` missing/malformed عن أخطاء PostgreSQL/network في preflight وmigration CLI، مع رسائل operator-safe لا تعرض driver credentials.
+- أضفت توثيق Render External URL للماك وInternal URL للخدمة عند صلاحية topology، وworkflow zsh يستخدم `read -rs` داخل function ثم يمسح المتغير بعد preflight؛ حدّثت `.env.example` وتعريف Astro env.
+- ثبّتُّ command sequence للمطورين على Node `24.20.0` وpnpm `11.25.0` بدون تخفيف engine أو إضافة secrets، مع بقاء `package.json` و`.node-version` و`render.yaml` وCI متطابقة.
+- أضفت اختبارات environment/preflight redaction، ونجحت الاختبارات المركزة، بينما لم تُنفذ production migrations.
+
+### الملفات المتأثرة
+- `src/config/env.ts`, `src/env.d.ts`, `src/shared/database/pool.ts`
+- `scripts/db/preflight.ts`, `scripts/db/migrate.ts`, `scripts/db/migration-status.ts`, `package.json`
+- `.env.example`, `docs/development/LOCAL-DEVELOPMENT.md`
+- `docs/operations/RENDER-DEPLOYMENT.md`, `docs/operations/RENDER-DATABASE-CONNECTION.md`
+- `tests/unit/shared/validation.test.ts`, `tests/unit/database/preflight.test.ts`
+
+### التحقق
+- `./node_modules/.bin/vitest run tests/unit/shared/validation.test.ts tests/unit/database/preflight.test.ts` ✅ — 10/10.
+- Prettier وESLint للملفات المتغيرة ✅؛ `git diff --check` ✅.
+- CLI smoke باستخدام `tsx` خارج sandbox ✅: missing/malformed config وlocalhost network failures صُنفت منفصلة، والقيم الحساسة لم تظهر.
+- `pnpm typecheck`, `pnpm lint`, `pnpm test` ❌ قبل التنفيذ بسبب Node المحلي `22.22.3` وCorepack `EPERM` عند cache خارج المسار المسموح؛ البدائل المباشرة أكدت baseline: Astro check `342` errors، full ESLint `89` errors، full Vitest `70` files passed / 4 failed / 29 skipped مع PostgreSQL container runtime غير متاح.
+- لم تُشغّل migrations أو preflight على PostgreSQL فعلي، ولم تُستخدم production credentials.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** مسار environment/connection/preflight الآمن موثق ومطبق ومتحقق باختبارات مركزة، لكن full repository gates وreal PostgreSQL evidence ما زالت محجوبة ببيئة Node/container الحالية؛ لا يوجد production migration أو commit أو push.
+
+### ملاحظات / مشاكل مفتوحة
+- يجب تشغيل `nvm install 24.20.0` ثم إعادة تثبيت/تشغيل pnpm gates على Node 24، وتوفير disposable PostgreSQL 18 لإثبات نجاح preflight/migrations integration.
+- baseline failures خارج نطاق هذه المهمة ما زالت مفتوحة، وRender production topology/credentials لم تُتحقق فعليًا.
+
+## [2026-09-07] — QC-RENDER-POSTGRES-RECOVERY-001: Reality-first Render PostgreSQL recovery audit
+
+### تم التنفيذ
+- جمّدت واقع المستودع عند الفرع `main` والـHEAD `9056ef422684a9bc6e8c25029d7ecfaecec92468` مع working tree نظيف، ودوّنت Node المحلي `22.22.3` مقابل Node المطلوب `24.20.0` وتعثر pnpm بسبب Corepack `EPERM` خارج المسار المسموح.
+- راجعت مسار migrations والـseeds والـbootstrap والـlogin والـauthorization والـreadiness وRender configuration، وحددت أن `qc.users` تُنشأ في `0001`، و`ADMIN` في `0003`، لكن permission rows و`role_permissions` لا تملك مسار production reproducible مكتمل.
+- أثبتت من المصدر أن `0001` يفترض `CREATE ROLE` و`ALTER OWNER` و`GRANT` على PostgreSQL المُدار، وأن `DATABASE_URL` واحد مستخدم للمهاجر/runtime بدون إثبات صلاحيات Render الفعلية أو فصل least-privilege.
+- أنشأت تقرير التدقيق `docs/operations/RENDER-POSTGRES-RECOVERY-AUDIT.md` مع إجابات الأسئلة الـ15، blockers، مخاطر checksum/TLS/search_path، فجوات authz/Render، خطة remediation، الاختبارات وترتيب التنفيذ الإنتاجي.
+- أجريت فحصًا حاليًا وتاريخيًا للـPostgreSQL URLs/credential assignments مع حجب القيم؛ لم يظهر secret إنتاجي واضح خارج الاختبارات والأمثلة والوثائق والمهارات، ولم أستخدم أو أطبع أي credential.
+
+### الملفات المتأثرة
+- `docs/operations/RENDER-POSTGRES-RECOVERY-AUDIT.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- targeted Vitest: `tests/unit/bootstrap/bootstrap-config.test.ts` + `tests/unit/shared/validation.test.ts` ✅ — 13/13.
+- `git diff --check` ✅ قبل إنشاء سجل الـmind.
+- PostgreSQL 18/Render migration/bootstrap runtime لم يُشغّل: بدون credential، بدون disposable PG runtime، ومع حاجز Node/tsx sandbox الموثق.
+
+### النتيجة
+- **الحالة:** BLOCKED
+- **مختصر:** لا يوجد حاليًا مسار deterministic موثق ومتوافق مع Render من قاعدة فارغة إلى admin authenticated + authorized؛ السبب الأساسي غياب production foundation grants وعدم إثبات نموذج الصلاحيات/المستخدمين مع Render.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تدوير credential المكشوف، اعتماد migration/runtime role model، إضافة production-safe permission/grant foundation path، إثبات TLS والصلاحيات، ثم اختبار login عبر HTTP وauthorized reads قبل أي Production Go.
+
 ## [2026-09-07] — MASTER-035: Release identity + full CI + developer/operator docs
 
 ### تم التنفيذ

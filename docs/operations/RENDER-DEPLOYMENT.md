@@ -40,6 +40,14 @@ The Render `onrender.com` subdomain remains enabled until the custom domain is v
 
 `DATABASE_URL`, `SESSION_SECRET`, and OpenTelemetry configuration are declared as Render-managed secret values (`sync: false`). No secret values belong in this repository or in the Blueprint.
 
+## PostgreSQL connection model
+
+- **Local Mac:** use the Render **External Database URL**. Require TLS as provided by the Render PostgreSQL connection settings. Enter it through a secret prompt; never paste it into a shell command, source file, log, or commit.
+- **Render Web Service:** use the Render **Internal Database URL** when the service and database topology/region permit it. Keep it in Render Environment Variables. Do not hardcode or infer an `onrender.com` or database hostname in this repository.
+
+The exact operator workflow, read-only validation, and safe error handling are documented in
+`docs/operations/RENDER-DATABASE-CONNECTION.md`.
+
 ## Explicitly not done
 
 - No Render service was created or deployed.

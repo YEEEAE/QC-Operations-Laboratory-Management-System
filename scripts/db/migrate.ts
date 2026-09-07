@@ -4,7 +4,9 @@ import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Pool, PoolClient } from 'pg';
 
+import { InvalidEnvironmentError } from '../../src/config/env.js';
 import { getPool } from '../../src/shared/database/pool.js';
+import { DatabaseConfigurationError } from '../../src/shared/database/pool.js';
 
 export interface MigrationFile {
   version: string;
@@ -141,6 +143,13 @@ export async function migrate(
   });
 }
 
+export function formatMigrationError(error: unknown): string {
+  if (error instanceof DatabaseConfigurationError || error instanceof InvalidEnvironmentError) {
+    return `MIGRATION CONFIGURATION ERROR: ${error.message}`;
+  }
+  return 'MIGRATION DATABASE/NETWORK ERROR: PostgreSQL could not be reached or the migration failed. Credentials and connection details were not printed.';
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
   migrate({ check })
@@ -148,7 +157,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.log(JSON.stringify({ mode: check ? 'check' : 'migrate', ...result }));
     })
     .catch((error: unknown) => {
-      console.error(error instanceof Error ? error.message : 'Migration failed.');
+      console.error(formatMigrationError(error));
       process.exitCode = 1;
     });
 }

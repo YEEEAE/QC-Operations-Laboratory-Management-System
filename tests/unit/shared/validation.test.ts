@@ -70,6 +70,27 @@ describe('shared validation and technical primitives', () => {
     );
   });
 
+  it('requires the production runtime contract and validates PostgreSQL URL shape', () => {
+    const production = {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://operator@example.invalid/qc',
+      SESSION_SECRET: 'a'.repeat(32),
+      SERVICE_VERSION: '0.1.0',
+      RATE_LIMIT_LOGIN_MAX: '5',
+      RATE_LIMIT_LOGIN_WINDOW_SECONDS: '60',
+    };
+    expect(parseServerEnv(production)).toMatchObject({ NODE_ENV: 'production' });
+    expect(() =>
+      parseServerEnv({ ...production, DATABASE_URL: 'https://example.invalid/qc' }),
+    ).toThrow(InvalidEnvironmentError);
+    expect(() => parseServerEnv({ ...production, SERVICE_VERSION: undefined })).toThrow(
+      /SERVICE_VERSION/,
+    );
+    expect(() =>
+      parseServerEnv({ ...production, OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otel.example' }),
+    ).toThrow(/OTEL_EXPORTER_OTLP/);
+  });
+
   it('preserves safe request correlation without trusting actor data', () => {
     const context = createRequestContext(
       new Request('https://example.test/tasks', {

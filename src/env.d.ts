@@ -5,6 +5,9 @@ interface ImportMetaEnv {
   readonly NODE_ENV: 'development' | 'test' | 'production';
   readonly DATABASE_URL?: string;
   readonly SESSION_SECRET?: string;
+  readonly SERVICE_VERSION?: string;
+  readonly RATE_LIMIT_LOGIN_MAX?: string;
+  readonly RATE_LIMIT_LOGIN_WINDOW_SECONDS?: string;
   readonly OTEL_EXPORTER_OTLP_ENDPOINT?: string;
   readonly OTEL_EXPORTER_OTLP_HEADERS?: string;
 }

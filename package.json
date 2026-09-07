@@ -30,6 +30,7 @@
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:migrate:status": "tsx scripts/db/migration-status.ts",
     "db:migrate:check": "tsx scripts/db/check-migration-integrity.ts",
+    "db:preflight": "tsx scripts/db/preflight.ts",
     "bootstrap:admin": "tsx scripts/bootstrap/create-initial-admin.ts"
   },
   "dependencies": {

@@ -16,9 +16,15 @@ Do not use production databases, credentials, object storage, or telemetry secre
 ## First setup
 
 ```bash
+nvm install 24.20.0
+nvm use 24.20.0
 corepack enable
+corepack prepare pnpm@11.25.0 --activate
 pnpm install --frozen-lockfile
 ```
+
+The repository canonical runtime is Node.js `24.20.0` and pnpm `11.25.0`. Do not downgrade
+Node to satisfy an older local installation.
 
 The frozen install must fail if `pnpm-lock.yaml` and `package.json` disagree. Do not “fix” the lockfile during a normal verification run.
 

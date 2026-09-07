@@ -13,6 +13,36 @@ function databaseError(cause: unknown): AppError {
   });
 }
 
+export class DatabaseConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DatabaseConfigurationError';
+  }
+}
+
+export function validateDatabaseUrl(value: string | undefined): string {
+  if (!value?.trim()) {
+    throw new DatabaseConfigurationError(
+      'DATABASE_URL is required. Set it through the approved secret mechanism; the value is never printed.',
+    );
+  }
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'postgres:' && url.protocol !== 'postgresql:') {
+      throw new Error('unsupported protocol');
+    }
+    if (!url.hostname || !url.pathname || url.pathname === '/') {
+      throw new Error('missing database name');
+    }
+    return value;
+  } catch {
+    throw new DatabaseConfigurationError(
+      'DATABASE_URL is malformed. Provide a valid postgres:// or postgresql:// URL through the approved secret mechanism; the value is never printed.',
+    );
+  }
+}
+
 export function createPool(config: PoolConfig): Pool {
   return new Pool({
     ...config,
@@ -26,10 +56,7 @@ export function createPool(config: PoolConfig): Pool {
 export function getPool(): Pool {
   if (sharedPool) return sharedPool;
 
-  const databaseUrl = getRuntimeConfig().databaseUrl;
-  if (!databaseUrl) {
-    throw new AppError('SYSTEM_CONFIGURATION_INVALID', { userSafe: false });
-  }
+  const databaseUrl = validateDatabaseUrl(getRuntimeConfig().databaseUrl);
 
   sharedPool = createPool({ connectionString: databaseUrl });
   sharedPool.on('error', (error) => {

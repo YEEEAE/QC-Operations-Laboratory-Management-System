@@ -3,7 +3,18 @@ import { ENV_KEYS } from './constants';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  DATABASE_URL: z.string().trim().pipe(z.url()).optional(),
+  DATABASE_URL: z
+    .string()
+    .trim()
+    .refine((value) => {
+      try {
+        const protocol = new URL(value).protocol;
+        return protocol === 'postgres:' || protocol === 'postgresql:';
+      } catch {
+        return false;
+      }
+    }, 'must be a PostgreSQL URL')
+    .optional(),
   SESSION_SECRET: z.string().min(32).optional(),
   SERVICE_VERSION: z.string().trim().min(1).default('0.1.0'),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
@@ -36,12 +47,19 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
         ? [
             !result.data.DATABASE_URL ? ENV_KEYS.databaseUrl : '',
             !result.data.SESSION_SECRET ? ENV_KEYS.sessionSecret : '',
+            !input.SERVICE_VERSION?.trim() ? ENV_KEYS.serviceVersion : '',
             // SECURITY-ARCHITECTURE §142: no unlimited-abuse exposure on login.
             !(result.data.RATE_LIMIT_LOGIN_MAX && result.data.RATE_LIMIT_LOGIN_WINDOW_SECONDS)
               ? `${ENV_KEYS.rateLimitLoginMax} + ${ENV_KEYS.rateLimitLoginWindowSeconds}`
               : '',
           ].filter(Boolean)
         : [];
+    if (
+      (result.data.OTEL_EXPORTER_OTLP_ENDPOINT && !result.data.OTEL_EXPORTER_OTLP_HEADERS) ||
+      (!result.data.OTEL_EXPORTER_OTLP_ENDPOINT && result.data.OTEL_EXPORTER_OTLP_HEADERS)
+    ) {
+      throw new InvalidEnvironmentError([], [ENV_KEYS.otelEndpoint, ENV_KEYS.otelHeaders]);
+    }
     if (missing.length === 0) return result.data;
     throw new InvalidEnvironmentError(missing, []);
   }
