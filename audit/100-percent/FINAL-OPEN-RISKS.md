@@ -45,3 +45,23 @@ These are open risks, not claims that the underlying implementation is absent. S
 
 - R-003 narrowed to static-closure: source `rg` scan and the fixed guard now agree — ZERO unapproved direct Delivery → DB/infrastructure imports (evidence C-07–C-11 in `FINAL-EVIDENCE-INDEX.md`). Composition moved to 11 narrow per-capability application factories; guard detects the exact violation patterns and has 5/5 regression tests. R-003 cannot be marked fully CLOSED until a container-capable CI run executes the DB-backed suites (integration/migration/concurrency/security) and E2E against this refactored HEAD, because behavior preservation is currently proven statically (typecheck/unit/build/guard) rather than against live PostgreSQL.
 - Domains 11, 27, 34, 39 remain at their current FAIL status in `FINAL-100-DOMAIN-AUDIT.md`: no score is raised without the CI runtime evidence required above. No other risk ID changes in this task; R-001, R-002, R-004–R-010 remain OPEN as previously recorded.
+
+## QC-100-CLOSURE-07 status delta (HEAD `06b14cf`, 2026-09-08)
+
+- R-006 NARROWED (not closed): a real isolated logical restore drill now exists for this HEAD — `pg_dump` artifact (`202909` bytes, SHA-256 recorded) + `pg_restore` into a disposable target (`2s`) with ledger/history/file/app/session evidence (C-27–C-28 in `FINAL-EVIDENCE-INDEX.md`, full record `audit/100-percent/RESTORE-DRILL-RESULT.md`). What remains OPEN under this ID is the provider half: Render physical restore, WAL archiving, PITR, cross-region/immutable copy, object-store provider, approved RPO/RTO, HTTP-level authorization proof, and independent review are all still `BLOCKED`/`UNVERIFIED` — recorded as fact, not claimed. The recovery checklist therefore still reports `RESTORE_NOT_VERIFIED` overall by design.
+- No other risk ID changes in this task; R-001 (production applied-state half), R-002 (authenticated half),
+  R-003 (needs container-capable CI behavior proof), R-004, R-005, R-007–R-010 remain OPEN as previously recorded.
+
+## QC-100-CLOSURE-08 status delta (HEAD `06b14cf`, 2026-09-08)
+
+- R-007 remains OPEN (narrowed, not closed): all 37 policy-dependent decisions are now traced in
+  `audit/100-percent/CONTROLLED-POLICY-DECISION-REGISTER.md` (PD-01–PD-37, each OPEN with its required
+  QC/QMS/business approver), and the six critical gates have executable fail-closed proof
+  (`tests/unit/policy/controlled-policy-fail-closed.test.ts` 10/10, evidence C-29–C-30). Nothing was invented:
+  no limit, threshold, authority, retention rule, RPO/RTO, or master-data change was added; defaults deny
+  (release/approval/retest/evaluate/supersede) or absent (auto-delete, escalation, RPO/RTO claims). R-007 closes
+  only when approved controlled sources arrive per PD item with bound implementation + green positive/negative
+  tests on the exact HEAD.
+- No other risk ID changes in this task; R-001 (production applied-state half), R-002 (authenticated half),
+  R-003 (needs container-capable CI behavior proof), R-004, R-005, R-006 (provider half), R-008–R-010 remain
+  OPEN as previously recorded.

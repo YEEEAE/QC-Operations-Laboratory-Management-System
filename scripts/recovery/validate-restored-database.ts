@@ -25,6 +25,11 @@ export async function validateRestoredDatabase(
   const historyRelations: string[] = [];
   try {
     await client.connect();
+    // Mirror the application runtime pool (pool.ts createPool options):
+    // search_path=qc,pg_catalog. Without this, current_schema() reports
+    // `public` on a correctly restored database and the schema gate fails
+    // even though every qualified qc.* relation is present.
+    await client.query('SET search_path TO qc, pg_catalog');
     await client.query('BEGIN');
     await client.query('SET TRANSACTION READ ONLY');
     const version = await client.query<{ version: string }>('SELECT version() AS version');
@@ -49,21 +54,22 @@ export async function validateRestoredDatabase(
     )
       failures.push('migration ledger mismatch');
     for (const relation of manifest.database.coreRelations) {
-      const result = await client.query<{ relation: string | null }>(
-        'SELECT to_regclass($1)::text AS relation',
+      // Existence (not display form) is the contract: to_regclass renders
+      // search_path-relative names (e.g. `users` when qc is in the path),
+      // so comparing display text to the qualified name is path-sensitive.
+      const result = await client.query<{ exists: boolean }>(
+        'SELECT to_regclass($1) IS NOT NULL AS exists',
         [relation],
       );
-      if (result.rows[0]?.relation !== relation)
-        failures.push(`missing core relation: ${relation}`);
+      if (result.rows[0]?.exists !== true) failures.push(`missing core relation: ${relation}`);
       else coreRelations.push(relation);
     }
     for (const relation of manifest.database.historyRelations) {
-      const result = await client.query<{ relation: string | null }>(
-        'SELECT to_regclass($1)::text AS relation',
+      const result = await client.query<{ exists: boolean }>(
+        'SELECT to_regclass($1) IS NOT NULL AS exists',
         [relation],
       );
-      if (result.rows[0]?.relation !== relation)
-        failures.push(`missing history relation: ${relation}`);
+      if (result.rows[0]?.exists !== true) failures.push(`missing history relation: ${relation}`);
       else historyRelations.push(relation);
     }
     if (ledger.rows.at(-1)?.version !== manifest.appContext.migrationHead)

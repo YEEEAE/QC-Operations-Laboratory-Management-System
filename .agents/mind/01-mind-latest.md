@@ -1,5 +1,65 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-08: Controlled Policy Decision Register + Fail-Closed Proof (R-007 stays OPEN)
+
+### تم التنفيذ
+- أنشأت `audit/100-percent/CONTROLLED-POLICY-DECISION-REGISTER.md` يوثق PD-01–PD-37 (حدود علمية، criteria، طرق فحص، precision/rounding، retest، release/approval/SoD، effective-date، retention/archival، RPO/RTO، escalation، master data، AI، e-signature، audit integrity) — كل بند OPEN مع سلوكه الحالي file:line والمُعتمِد المطلوب، بدون اختراع أي قيمة.
+- طبقت TDD لاختبار fail-closed: `tests/unit/policy/controlled-policy-fail-closed.test.ts` بدأ RED (1 failed / 9 passed بسبب test-double يرجع الأصل بدل المُنشأ) ثم GREEN بعد إصلاح الـdouble — يثبت DENY الافتراضي لاعتماد المختبر/retest/release/اعتماد الفحص/supersede/التقييم العلمي وحفظ الخام كنص دقيق.
+- تحققت من عدم وجود حذف تلقائي (لا cron/purge؛ كل `deleteFrom` داخل معاملات المسودات فقط) ولا escalation تلقائي ولا RPO/RTO مخترعة، وسجلت ذلك في PD-24/PD-26–PD-29.
+- حدثت `FINAL-EVIDENCE-INDEX.md` (C-29/C-30) و`FINAL-OPEN-RISKS.md` (دلتا R-007: مضيّق بدون إغلاق)؛ R-007 يُغلق فقط بمصادر معتمدة + تنفيذ + اختبارات سالبة/موجبة على نفس الـHEAD.
+
+### الملفات المتأثرة
+- `audit/100-percent/CONTROLLED-POLICY-DECISION-REGISTER.md` (جديد)
+- `tests/unit/policy/controlled-policy-fail-closed.test.ts` (جديد، 10 اختبارات)
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md` (C-29 وC-30)
+- `audit/100-percent/FINAL-OPEN-RISKS.md` (دلتا R-007)
+
+### التحقق
+- الاختبار الجديد أول تشغيل RED ثم ✅ 10/10 بعد إصلاح الـdouble (التنفيذ كان fail-closed أصلًا)
+- `pnpm format:check` ✅، `pnpm lint` ✅ exit 0، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة)
+- `pnpm test:unit` ✅ — 31 ملفًا / 127 اختبارًا (117 سابقة + 10 جديدة)
+- `pnpm test:architecture` ✅، `git diff --check` ✅، ومسح الأسرار على الملفات الجديدة صفر قيم ✅
+- Node ‏`v22.22.3`‏ خارج العقد `>=24.20.0 <25` — النتائج محلية فقط؛ HEAD ‏`06b14cf`‏ على ‏`main`‏ (أُعيد حسابه طازجًا)
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** كل قرارات السياسة المعلقة صارت متتبعة بدليل fail-closed تنفيذي لست بوابات حرجة، لكن R-007 يبقى مفتوحًا: لا بند يُغلق بدون مصدر معتمد فعلي من QC/QMS.
+
+### ملاحظات / مشاكل مفتوحة
+- R-001 (شق الإنتاج)، R-002 (النصف المصادق)، R-003 (إثبات CI)، R-004، R-005، R-006 (شق المزود)، R-008–R-010 تبقى OPEN.
+- لا commit أو push أو deploy أو production mutation؛ ملفات المهمة السابقة ما زالت في الـworking tree بانتظار commit المستخدم.
+
+## [2026-09-08] — QC-100-CLOSURE-07: Isolated Logical Restore Drill (real backup+restore, provider/PITR stay BLOCKED)
+
+### تم التنفيذ
+- نفذت drill استعادة معزولة حقيقية بدون أي لمس للإنتاج: حاويتا `postgres:18-alpine` disposable (مصدر `:55434` وهدف `:55435`، TLS مؤقت، حُذفتا بعد المهمة)، ترحيل المصدر 18/18 + بذرة foundation + dataset تمثيلي (مستخدمَين، task، receiving بـHOLD/HOLD/unreleased، سلسلة approval وتوقيع، حدثَي audit، جلسة، ملفَّين + evidence link).
+- أخذت نسخة `pg_dump -Fc` فعلية (202909 بايت، SHA-256 مسجل، 1s) واستعدتها بـ`pg_restore --clean` على الهدف المعزول (2s، PG 18.6=18.6)؛ وأقلع الإصدار نفسه `rel-2c958fe7b53b3047` ضد الهدف (`/live 200` و`/ready 200 healthy`).
+- أصلحت عيبين حقيقيين في `validate-restored-database.ts` كشفهما الـdrill (RED→GREEN على الهدف المستعاد): محاكاة `search_path` الـruntime + فحص الوجود بدل مقارنة نص العرض؛ بدون إضعاف auth/CSP/RBAC.
+- سجلت قدرات المزود بصدق: لا database/backup في `render.yaml` ولا Render API → ‏PITR/WAL/cross-region ‏`BLOCKED` غير مدّعاة، وRPO/RTO ‏POLICY-DEPENDENT‏ (قياس فقط بدون مقارنة).
+- أنشأت `RESTORE-DRILL-RESULT.md` (الحالة `PARTIAL`: النطاق المنطقي `VERIFIED`، الجاهزية الكاملة مرفوضة حتى دليل المزود) وضيّقت R-006 بدون إغلاق زائف.
+
+### الملفات المتأثرة
+- `audit/100-percent/RESTORE-DRILL-RESULT.md` (جديد)
+- `scripts/recovery/validate-restored-database.ts`
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md` (C-27 وC-28)
+- `audit/100-percent/FINAL-OPEN-RISKS.md` (دلتا R-006)
+
+### التحقق
+- فاليديتور حي على الهدف المستعاد ✅ — DB ‏PASS‏ (ليدجر 18/18 + 11 core + 4 history) وملفات ‏PASS‏ (2/2 SHA-256)؛ والسالبية تفشل بأمان ✅ (ناقص/tamper → ‏FAIL‏ exit 1)
+- فحوصات موسعة 11/11 ✅ — تطابق 15 جدولًا، فصل HOLD، سلسلة approval، audit IDs، ربط الملفات، 122 FK بصفر يتيم، قراءات حرجة، إبطال الجلسات 1→0، ومراجعة أسرار صفر
+- `pnpm format:check` ✅، `pnpm lint` ✅، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة)
+- `pnpm test:unit` ✅ — 30 ملفًا / 117 اختبارًا؛ recovery الموجه ✅ 6/6؛ `pnpm test:architecture` ✅
+- `pnpm build` ✅، `git diff --check` ✅، ومسح الأسرار على الـdiff صفر ✅
+- Node ‏`v24.20.0`‏ + pnpm ‏`11.25.0`‏ داخل العقد؛ HEAD ‏`06b14cf`‏ على ‏`main`‏ والشجرة فيها ملفات المهمة فقط
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** الاستعادة المنطقية المعزولة مثبتة بدليل حقيقي على نفس الـHEAD، لكن R-006 يبقى مفتوحًا (مضيّق): بوابات Render/PITR/WAL/RPO/RTO والمراجعة المستقلة ما زالت BLOCKED.
+
+### ملاحظات / مشاكل مفتوحة
+- R-001 (شق الإنتاج)، R-002 (النصف المصادق)، R-003 (إثبات CI)، R-004، R-005، R-007–R-010 تبقى OPEN.
+- لا commit أو push أو deploy أو production mutation؛ الحاويات والشهادات المؤقتة أُتلفت.
+
 ## [2026-09-08] — QC-100-CLOSURE-06: UAT, Usability and Human Factors Evidence Closure (kit only, no participants)
 
 ### تم التنفيذ
