@@ -181,8 +181,8 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     const templateVersionId = '01900000-0000-7000-8000-00000000b012';
     const reportId = '01900000-0000-7000-8000-00000000b013';
     await pool!.query(
-      `INSERT INTO qc.receiving_items (id, receiving_no, doc_no, item_code, description, lot, qty, receiving_date, created_by, updated_by)
-       VALUES ($1, 'RCV-CM-002', 'DOC-CM-002', 'ITEM-CM-002', 'Inspection concurrency item', 'LOT-CM-002', 1, '2026-01-05', $2, $2)`,
+      `INSERT INTO qc.receiving_items (id, receiving_no, doc_no, item_code, description, lot, qty, receiving_date, workflow_state, inspection_result, release_system, created_by, updated_by)
+       VALUES ($1, 'RCV-CM-002', 'DOC-CM-002', 'ITEM-CM-002', 'Inspection concurrency item', 'LOT-CM-002', 1, '2026-01-05', 'UNDER_INSPECTION', 'IN_PROGRESS', false, $2, $2)`,
       [receivingId, AUTHOR_ID],
     );
     await pool!.query(
@@ -261,6 +261,66 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     expect(await countAudit(reportId, 'APPROVE')).toBe(1);
     expect(await countOutbox(`inspection:${reportId}:v4`)).toBe(1);
+  });
+
+  it('does not overwrite a receiving item placed on HOLD while its inspection approval is pending', async () => {
+    const receivingId = '01900000-0000-7000-8000-00000000b014';
+    const templateId = '01900000-0000-7000-8000-00000000b015';
+    const templateVersionId = '01900000-0000-7000-8000-00000000b016';
+    const reportId = '01900000-0000-7000-8000-00000000b017';
+    await pool!.query(
+      `INSERT INTO qc.receiving_items (id, receiving_no, doc_no, item_code, description, lot, qty, receiving_date, workflow_state, inspection_result, release_system, created_by, updated_by, version)
+       VALUES ($1, 'RCV-CM-003', 'DOC-CM-003', 'ITEM-CM-003', 'Held inspection item', 'LOT-CM-003', 1, '2026-01-05', 'HOLD', 'HOLD', false, $2, $2, 4)`,
+      [receivingId, AUTHOR_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_templates (id, template_code, name, active, created_by) VALUES ($1, 'TPL-CM-002', 'Held-item template', true, $2)`,
+      [templateId, AUTHOR_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_template_versions (id, template_id, version_no, state, created_by) VALUES ($1, $2, 'v1', 'APPROVED', $3)`,
+      [templateVersionId, templateId, AUTHOR_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_reports (id, inspection_no, receiving_item_id, template_version_id, state, final_result, author_id, created_by, version)
+       VALUES ($1, 'INSP-CM-002', $2, $3, 'UNDER_REVIEW', 'PASS', $4, $4, 3)`,
+      [reportId, receivingId, templateVersionId, AUTHOR_ID],
+    );
+    const repository = new PostgresInspectionRepository(
+      db,
+      new PostgresAuditRepository(db),
+      new PostgresOutboxRepository(db),
+    );
+
+    await expect(
+      new ApproveInspectionUseCase(repository, { canApprove: () => true }).execute({
+        actor: approver(),
+        id: reportId,
+        expectedVersion: 3n,
+        requestId: 'cm-insp-held',
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+
+    const receiving = (
+      await pool!.query(
+        'SELECT workflow_state, inspection_result, release_system, version FROM qc.receiving_items WHERE id = $1',
+        [receivingId],
+      )
+    ).rows[0];
+    expect(receiving).toMatchObject({
+      workflow_state: 'HOLD',
+      inspection_result: 'HOLD',
+      release_system: false,
+      version: '4',
+    });
+    const inspection = (
+      await pool!.query('SELECT state, version FROM qc.inspection_reports WHERE id = $1', [
+        reportId,
+      ])
+    ).rows[0];
+    expect(inspection).toMatchObject({ state: 'UNDER_REVIEW', version: '3' });
+    expect(await countAudit(reportId, 'APPROVE')).toBe(0);
+    expect(await countOutbox('inspection:' + reportId + ':v4')).toBe(0);
   });
 
   it('executes exactly one of two concurrent laboratory approvals on the same version', async () => {

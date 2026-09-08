@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-05: Controlled QC workflow evidence and held-receiving concurrency guard
+
+### تم التنفيذ
+- أنشأت سجل أدلة QC-100-05 يربط تدفقات Tasks وQuality وQuarantine وLaboratory وAssets وDocuments وApprovals/E-Signatures وChange Requests بمسار permission/scope/state/use case/repository/audit/outbox/UI/tests، مع تمييز ما هو code-backed وما يزال runtime-unverified.
+- شددت transaction اعتماد تقرير الفحص: تحديث الاستلام المرتبط صار مشروطًا بحالة `UNDER_INSPECTION` ويزيد نسخة الاستلام؛ إذا انتقل الاستلام إلى `HOLD` يفشل الاعتماد بـ`CONFLICT_STALE_VERSION` ويتراجع التقرير والتدقيق والـoutbox معًا.
+- عدلت fixture اعتماد الفحص السليم ليبدأ من `UNDER_INSPECTION` بدل حالة افتراضية لا تمثل workflow واقعيًا.
+- أضفت اختبار PostgreSQL concurrency يحفظ `HOLD` ونتيجة `HOLD` وversion كما هي، ويتحقق من عدم إنشاء audit/outbox عند تعارض اعتماد الفحص.
+- لم أضف policy إطلاق/اعتماد أو retest مخترعة: dependencies الحالية تبقى default-deny، وسجل التدقيق يسمي ذلك blocker صريحًا.
+
+### الملفات المتأثرة
+- `audit/100-percent/05-QC-WORKFLOW-EVIDENCE.md`
+- `src/modules/quarantine/inspection/infrastructure/postgres-repository.ts`
+- `tests/integration/concurrency/controlled-mutations.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 errors، 25 hints deprecated موجودة مسبقًا؛ Node المحلي `22.22.3` أقل من عقد المشروع `>=24.20.0 <25`.
+- `pnpm lint` ✅.
+- `pnpm test:unit` ✅ — 25 ملفات / 92 اختبارًا.
+- اختبارات QC المركزة ✅ — 7 ملفات / 28 اختبارًا (quarantine release/review، laboratory boundaries، documents، approvals، e-signatures، change requests).
+- `pnpm format:check` ✅، `pnpm test:architecture` ✅، `pnpm build` ✅؛ بقي warning معروف `Writable` غير مستخدم في `src/shared/observability/logger.ts`.
+- `pnpm vitest run tests/integration/concurrency/controlled-mutations.test.ts` ❌/UNVERIFIED — كل الاختبارات skipped لأن Testcontainers لم يجد container runtime؛ لا توجد نتيجة PostgreSQL فعلية لاختبار HOLD race الجديد.
+- `git diff --check` ✅.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** انغلقت فجوة overwrite في مسار اعتماد الفحص على مستوى الكود واختبار التكامل، وصار سجل الأدلة يحدد المسارات والفجوات بوضوح؛ لا يوجد claim بأن كل تدفقات QC مغلقة قبل تشغيل PostgreSQL 18 وتثبيت policy authority.
+
+### ملاحظات / مشاكل مفتوحة
+- لا توجد Action عامة حاليًا لمساري inspection `REJECT` أو `VOID`؛ لذلك end-to-end rejected-inspection غير مغلق.
+- Release وinspection approval وretest تظل default-deny حتى تعتمد policy/authority controlled؛ لا يجوز اختراعها لتجاوز البوابات.
+- تحتاج أدلة PostgreSQL 18/Testcontainers للـtransaction/audit/outbox/concurrency، ولا commit أو push أو deploy.
+
 ## [2026-09-08] — QC-100-04: PostgreSQL integrity, concurrency and governance evidence
 
 ### تم التنفيذ

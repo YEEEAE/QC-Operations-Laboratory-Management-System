@@ -1,4 +1,4 @@
-import type { Kysely, Transaction } from 'kysely';
+import { sql, type Kysely, type Transaction } from 'kysely';
 import type { DatabaseSchema, DatabaseRow } from '../../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../../shared/database/database.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
@@ -275,17 +275,25 @@ export class PostgresInspectionRepository implements InspectionRepository {
             .where('id', '=', i.id)
             .execute();
         }
-        if (i.action === 'APPROVE' && old.finalResult)
-          await tx
+        if (i.action === 'APPROVE' && old.finalResult) {
+          const receiving = await tx
             .updateTable('receiving_items')
             .set({
               workflow_state: 'INSPECTION_COMPLETE',
               inspection_result: old.finalResult,
               updated_by: i.actor.id,
               updated_at: now,
+              version: sql<bigint>`version + 1`,
             })
             .where('id', '=', old.receiving.receivingId)
-            .execute();
+            // A receiving item can be put on HOLD independently while an
+            // inspection is in review. Approval must never resurrect or
+            // overwrite that controlled state.
+            .where('workflow_state', '=', 'UNDER_INSPECTION')
+            .returning('id')
+            .executeTakeFirst();
+          if (!receiving) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        }
         await this.auditFor(tx)?.append({
           actorType: 'USER',
           actorId: i.actor.id,
