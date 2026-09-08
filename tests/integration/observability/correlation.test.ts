@@ -438,7 +438,7 @@ describe('file telemetry', () => {
     const input: FileUploadInput = {
       originalFilename: 'confidential-report.pdf',
       mimeType: 'application/pdf',
-      bytes: new Uint8Array([1, 2, 3, 4]),
+      bytes: new TextEncoder().encode('%PDF-1.7\\ntelemetry fixture'),
       subjectType: 'TASK',
       subjectId: 't-1',
       uploadedBy: 'u-1',

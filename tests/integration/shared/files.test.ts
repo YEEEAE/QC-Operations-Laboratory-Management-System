@@ -33,6 +33,39 @@ class MemoryStore implements ObjectStore {
 }
 
 describe('files and evidence', () => {
+  it('rejects unsafe names, executable content, and declared type mismatches', async () => {
+    const repository = new MemoryFiles();
+    const store = new MemoryStore();
+    const service = new FileService(repository, store, async () => undefined);
+    const upload = (overrides: Partial<Parameters<FileService['upload']>[0]> = {}) =>
+      service.upload({
+        originalFilename: 'evidence.pdf',
+        mimeType: 'application/pdf',
+        bytes: new TextEncoder().encode('%PDF-1.7\ncontrolled evidence'),
+        uploadedBy: 'u1',
+        subjectType: 'LAB_TEST',
+        subjectId: 'test-1',
+        ...overrides,
+      });
+
+    await expect(upload({ originalFilename: '../evidence.pdf' })).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    await expect(upload({ originalFilename: 'evidence.exe' })).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    await expect(
+      upload({ bytes: new Uint8Array([0x4d, 0x5a]), mimeType: 'text/plain' }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    await expect(upload({ bytes: new TextEncoder().encode('not a PDF') })).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    expect(repository.files.size).toBe(0);
+    expect(store.objects.size).toBe(0);
+  });
+
   it('hashes actual bytes and rejects a tampered object', async () => {
     const repository = new MemoryFiles();
     const store = new MemoryStore();

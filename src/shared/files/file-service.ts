@@ -6,6 +6,47 @@ import type { FileRepository } from './file-repository';
 import type { ObjectStore } from './object-store';
 import { sha256 } from './sha256';
 
+const EXECUTABLE_FILENAME_EXTENSION =
+  /\.(?:ade|adp|app|bat|cmd|com|cpl|exe|gadget|hta|inf|ins|isp|jar|jse|lib|lnk|mde|msc|msi|msp|mst|pif|ps1|reg|scr|sct|sh|sys|vb|vbe|vbs|wsc|wsf|wsh)$/i;
+const MIME_TYPE =
+  /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*(?:;\s*charset=[a-z0-9._-]+)?$/i;
+
+function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
+  return signature.every((value, index) => bytes[index] === value);
+}
+
+function assertSafeFileUpload(input: FileUploadInput): void {
+  const filename = input.originalFilename.trim();
+  if (
+    !filename ||
+    filename === '.' ||
+    filename === '..' ||
+    /[\\/\0\r\n]/.test(filename) ||
+    EXECUTABLE_FILENAME_EXTENSION.test(filename) ||
+    !MIME_TYPE.test(input.mimeType)
+  ) {
+    throw new AppError('VALIDATION_FAILED');
+  }
+
+  // Reject executable binaries regardless of their client-declared MIME.
+  if (startsWith(input.bytes, [0x4d, 0x5a])) throw new AppError('VALIDATION_FAILED');
+
+  // Validate a client-declared type whenever that format has an unambiguous
+  // signature. The approved allowlist and maximum size remain policy-dependent.
+  const expectedSignature =
+    input.mimeType === 'application/pdf'
+      ? [0x25, 0x50, 0x44, 0x46, 0x2d]
+      : input.mimeType === 'image/png'
+        ? [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+        : input.mimeType === 'image/jpeg'
+          ? [0xff, 0xd8, 0xff]
+          : input.mimeType === 'image/gif'
+            ? [0x47, 0x49, 0x46, 0x38]
+            : undefined;
+  if (expectedSignature && !startsWith(input.bytes, expectedSignature))
+    throw new AppError('VALIDATION_FAILED');
+}
+
 export type FileAccessAuthorizer = (input: {
   action: 'UPLOAD' | 'VIEW' | 'DOWNLOAD';
   actorId: string;
@@ -63,8 +104,7 @@ export class FileService {
       subjectType: input.subjectType,
       subjectId: input.subjectId,
     });
-    if (!input.originalFilename.trim() || input.bytes.byteLength < 0)
-      throw new AppError('VALIDATION_FAILED');
+    assertSafeFileUpload(input);
     const digest = sha256(input.bytes);
     const fileId = uuidv7();
     const storageKey = `files/${fileId}`;

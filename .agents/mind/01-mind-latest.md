@@ -1,5 +1,37 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-06: Evidence, file, reporting and notification integrity
+
+### تم التنفيذ
+- أضفت تحقق رفع دفاعي قبل التخزين: يمنع أسماء المسارات/control characters وامتدادات الملفات التنفيذية وPE binary المقنّع، ويتحقق من صيغة MIME وتوقيع PDF/PNG/JPEG/GIF عندما يكون MIME معلنًا من هذه الأنواع.
+- حافظت على الصلاحية قبل الوصول، opaque storage key، private object storage، SHA-256 وفحصه عند التنزيل؛ ولم أضف size limit أو MIME allowlist أو retention/scanning policy مخترعة لأنها موثقة كـUNCONFIRMED.
+- أضفت اختبار TDD سلبيًا يثبت رفض path traversal، التنفيذيات، محتوى MZ، وPDF MIME mismatch قبل كتابة object أو metadata، وعدلت fixture telemetry ليحمل PDF صحيحًا.
+- أنشأت سجل أدلة QC-100-06 يفصل code/test-backed عن UNVERIFIED في audit/files/reports/notifications ويحدد فجوات contract audit وorphan cleanup وPDF/print وسياسات الملفات.
+
+### الملفات المتأثرة
+- `src/shared/files/file-service.ts`
+- `tests/integration/shared/files.test.ts`
+- `tests/integration/observability/correlation.test.ts`
+- `audit/100-percent/06-EVIDENCE-AUDIT-FILES-REPORTING-NOTIFICATIONS.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- focused files/reporting/observability ✅ — 4 ملفات / 27 اختبارًا.
+- `pnpm test:architecture` ✅.
+- `pnpm lint` ✅.
+- `pnpm typecheck` ✅ — 0 errors؛ تظهر hints deprecated سابقة، وNode المحلي `22.22.3` خارج العقد `>=24.20.0 <25`.
+- `pnpm test:security` ❌/UNVERIFIED — 26 passed و1 skipped، وPostgreSQL suite لم يبدأ لأن Testcontainers لا يجد container runtime.
+- `pnpm db:migrate:status` ❌/UNVERIFIED — `tsx` IPC pipe محجوب بـ`EPERM` قبل فحص قاعدة البيانات؛ وحالة GitHub CI غير قابلة للقراءة بسبب عدم الوصول إلى `api.github.com`.
+- `git diff --check` ✅.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** تحسن دفاع مسار الملفات وأدلة CSV/XLSX/notifications موجودة، لكن لا يوجد إثبات runtime لمعاملات PostgreSQL ولا سياسة معتمدة لحجم/MIME/scan/retention، ولا claim لإغلاق المجالات المستهدفة.
+
+### ملاحظات / مشاكل مفتوحة
+- عقد `audit_events` لا يفرض context للصلاحية/scope/version لكل controlled mutation، وحماية append-only على مستوى DB تحتاج دليل PostgreSQL.
+- لا توجد object-store delete/orphan-cleanup contract، وPDF/print/large export/RTL-date-time coverage غير مثبتة.
+
 ## [2026-09-08] — QC-100-05: Controlled QC workflow evidence and held-receiving concurrency guard
 
 ### تم التنفيذ
