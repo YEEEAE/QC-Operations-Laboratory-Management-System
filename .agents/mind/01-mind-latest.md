@@ -1,5 +1,74 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — استثناء yazeed كمالك نظام بصلاحيات كاملة
+
+### تم التنفيذ
+- أضفت أمرًا تشغيليًا idempotent ينشئ دورًا غير نظامي وحصريًا باسم `SYSTEM_OWNER`، ويمنحه كل permissions النشطة ثم يربطه بالحساب المحدد عبر `SYSTEM_OWNER_LOGIN_IDENTITY` مع نطاق `GLOBAL`.
+- جعلت الأمر يرفض تعيين الدور لحساب ثانٍ إذا كان له مالك نشط، ويتحقق من وجود الحساب وأن حالته `ACTIVE`، ويسجل المنح في `audit_events` مع عدد الصلاحيات المضافة.
+- أبقيت قرار الصلاحية المركزي وفحوصات الحالة/الإصدار/SoD فعالة؛ الاستثناء يمنح كل permissions والصفحات لكنه لا يغير التاريخ ولا يسمح بتجاوز state machine أو اعتماد المستخدم لسجله عند منع ذلك.
+- عدلت فحص Foundation حتى يسمح بأدوار مخصصة غير نظامية بدون اعتبار grants الخاصة بها drift في الأدوار النظامية الأربعة.
+- أضفت AI Advisory وQuarantine Administration للقائمة، واختبارًا يثبت أن مجموعة كل permissions تعرض كل روابط التنقل المنفذة.
+
+### الملفات المتأثرة
+- `scripts/access/grant-system-owner.ts`
+- `package.json`
+- `scripts/db/load-local-env.ts`
+- `db/seeds/common.ts`
+- `src/ui/navigation/navigation.ts`
+- `tests/unit/access/grant-system-owner.test.ts`
+- `tests/integration/identity/system-owner-access.test.ts`
+- `tests/unit/ui/navigation-permissions.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 errors، 26 hints سابقة.
+- `pnpm lint` ✅
+- `pnpm format:check` ✅
+- `pnpm test:unit` ✅ — 33 ملفًا / 133 اختبارًا.
+- `pnpm build` ✅ — تحذيرات bundle السابقة فقط.
+- اختبار PostgreSQL للاستثناء أُضيف لكنه لم يعمل محليًا: Testcontainers محجوب لعدم وجود container runtime؛ حالتا الاختبار skipped بعد فشل setup.
+- `git diff --check` ✅
+
+### النتيجة
+- **الحالة:** نجح محليًا للكود والاختبارات غير المعتمدة على DB؛ تفعيل الإنتاج معلق.
+- **مختصر:** أصبح هناك مسار صريح وحصري يمنح yazeed كل permissions والصفحات عبر `SYSTEM_OWNER`. يلزم نشر النسخة ثم تشغيل الأمر على قاعدة الإنتاج حتى يصبح الحساب فعليًا كامل الصلاحيات.
+
+### ملاحظات / مشاكل مفتوحة
+- لم يُنفذ الأمر على قاعدة الإنتاج، ولا deploy أو commit أو push.
+- التحقق التكاملي الفعلي للـSQL يحتاج PostgreSQL 18 disposable أو بيئة اختبار مع `QC_TEST_DATABASE_URL` قبل ادعاء نجاح runtime الكامل.
+
+## [2026-09-09] — إصلاح ظهور قائمة yazeed وربطها بالصلاحيات القانونية
+
+### تم التنفيذ
+- صححت قائمة التنقل لتستخدم رموز الصلاحيات canonical بدل الرموز القديمة أو غير الموجودة (`PERM-TASK-VIEW`, `PERM-QUAR-VIEW`, `PERM-EQP-VIEW`, `PERM-MNT-VIEW`, `PERM-APR-VIEW-ASSIGNED`, `PERM-CHG-VIEW`).
+- دعمت عنصر Dashboard بأحد صلاحياته الثلاث (`VIEW` أو `MANAGEMENT` أو `ADMIN`) بدل ربطه بصلاحية واحدة فقط.
+- استبدلت رابط `/administration` غير الموجود بصفحة التدقيق الفعلية، وأضفت روابط الصفحات الموجودة التي يملك Admin سماحها الصريح: المستندات، التنبيهات، البحث، والحساب.
+- أضفت `PERM-DASH-ADMIN` إلى grants دور `ADMIN` لأنها `ALLOW` صريحة في مصفوفة الصلاحيات؛ لم أضف صلاحيات `POLICY` أو `DENY` مثل الإفراج والاعتماد والتوقيع.
+- أضفت اختبار سلامة للقائمة يثبت أن كل capability canonical وكل href يشير إلى صفحة موجودة، وأن ADMIN يرى الصفحات المسموحة له فقط.
+
+### الملفات المتأثرة
+- `src/ui/navigation/navigation.ts`
+- `db/seeds/common.ts`
+- `tests/unit/ui/master-016.test.ts`
+- `tests/unit/ui/navigation-permissions.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm typecheck` ✅ — لا أخطاء، مع تحذيرين deprecated سابقين في Zod.
+- `pnpm lint` ✅
+- `pnpm format:check` ✅
+- `pnpm test:unit` ✅ — 32 ملفًا / 130 اختبارًا.
+- `pnpm build` ✅ — نفس تحذيرات bundle السابقة فقط.
+- `git diff --check` ✅
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** النسخة المحلية تعرض لـAdmin Dashboard والصفحات ذات السماح الصريح وتمنع الروابط الوهمية. يلزم نشر التغييرات وتشغيل `pnpm db:seed:foundation` على قاعدة الإنتاج حتى تصل إضافة `PERM-DASH-ADMIN` للحساب الحالي.
+
+### ملاحظات / مشاكل مفتوحة
+- الأقسام التشغيلية التي لا يملك Admin لها `ALLOW` صريحًا في Foundation ستبقى مخفية/مرفوضة حتى اعتماد سياسة ومنح permission/scopes مناسبة؛ لا يجوز فتحها تلقائيًا عبر Admin bypass.
+- لم يُنفذ deploy أو تعديل مباشر لقاعدة الإنتاج، ولا commit أو push.
+
 ## [2026-09-08] — إصلاح 500 تسجيل الدخول في SSR: تعارض Zod 3 وZod 4
 
 ### تم التنفيذ

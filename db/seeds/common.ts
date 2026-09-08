@@ -348,6 +348,7 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
   ADMIN: [
     'PERM-IDN-VIEW-SELF',
     'PERM-IDN-CHANGE-OWN-PASSWORD',
+    'PERM-DASH-ADMIN',
     'PERM-IDN-MANAGE-USERS',
     'PERM-IDN-ACTIVATE',
     'PERM-IDN-DEACTIVATE',
@@ -421,8 +422,9 @@ export async function inspectFoundationData(pool: Pool): Promise<FoundationDrift
     pool.query<{ code: string; active: boolean }>(
       'SELECT code, active FROM qc.permissions ORDER BY code',
     ),
-    pool.query<{ role_code: string; permission_code: string }>(
-      `SELECT role.code AS role_code, permission.code AS permission_code
+    pool.query<{ role_code: string; permission_code: string; is_system_role: boolean }>(
+      `SELECT role.code AS role_code, permission.code AS permission_code,
+              role.is_system_role AS is_system_role
        FROM qc.role_permissions grant_row
        JOIN qc.roles role ON role.id = grant_row.role_id
        JOIN qc.permissions permission ON permission.id = grant_row.permission_id
@@ -471,7 +473,7 @@ export async function inspectFoundationData(pool: Pool): Promise<FoundationDrift
     if (actualGrants.has(key))
       issues.push(`duplicate role_permission: ${grant.role_code}/${grant.permission_code}`);
     actualGrants.add(key);
-    if (!expectedGrants.has(key)) {
+    if (grant.is_system_role && !expectedGrants.has(key)) {
       issues.push(`forbidden role_permission: ${grant.role_code}/${grant.permission_code}`);
     }
   }

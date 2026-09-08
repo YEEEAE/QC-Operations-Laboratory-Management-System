@@ -14,6 +14,7 @@ const LOCAL_ENV_KEYS = new Set([
   'BOOTSTRAP_ADMIN_PASSWORD',
   'BOOTSTRAP_ADMIN_DISPLAY_NAME',
   'BOOTSTRAP_ADMIN_EMAIL',
+  'SYSTEM_OWNER_LOGIN_IDENTITY',
 ]);
 
 function parseValue(value: string): string {

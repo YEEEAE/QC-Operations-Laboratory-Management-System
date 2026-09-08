@@ -8,7 +8,7 @@ import { serializeChartQuery } from '../../../src/ui/charts/chart-client';
 
 describe('MASTER-016 UI contracts', () => {
   it('renders only capability-visible navigation groups without granting access', () => {
-    const visible = visibleNavigation(['PERM-DASH-VIEW', 'PERM-APR-VIEW-OWN']);
+    const visible = visibleNavigation(['PERM-DASH-VIEW', 'PERM-APR-VIEW-ASSIGNED']);
     expect(
       visible.flatMap((group: NavigationGroup) => group.items.map((item) => item.href)),
     ).toEqual(['/dashboard', '/approvals']);

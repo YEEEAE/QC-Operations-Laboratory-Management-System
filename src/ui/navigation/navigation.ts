@@ -1,9 +1,11 @@
+import type { PermissionCode } from '../../shared/authorization/permissions';
+
 export interface NavigationItem {
   id: string;
   label: string;
   href: string;
   icon: string;
-  capability?: string;
+  capability?: PermissionCode | readonly PermissionCode[];
 }
 export interface NavigationGroup {
   id: string;
@@ -21,7 +23,7 @@ export const navigationGroups: NavigationGroup[] = [
         label: 'Dashboard',
         href: '/dashboard',
         icon: '⌂',
-        capability: 'PERM-DASH-VIEW',
+        capability: ['PERM-DASH-VIEW', 'PERM-DASH-MANAGEMENT', 'PERM-DASH-ADMIN'],
       },
     ],
   },
@@ -29,7 +31,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'work',
     label: 'Work',
     items: [
-      { id: 'tasks', label: 'Tasks', href: '/tasks', icon: '✓', capability: 'PERM-TASK-VIEW-OWN' },
+      { id: 'tasks', label: 'Tasks', href: '/tasks', icon: '✓', capability: 'PERM-TASK-VIEW' },
     ],
   },
   {
@@ -64,7 +66,7 @@ export const navigationGroups: NavigationGroup[] = [
         label: 'Receiving items',
         href: '/quarantine/receiving',
         icon: '↳',
-        capability: 'PERM-REC-VIEW',
+        capability: 'PERM-QUAR-VIEW',
       },
       {
         id: 'inspections',
@@ -72,6 +74,13 @@ export const navigationGroups: NavigationGroup[] = [
         href: '/quarantine/inspections',
         icon: '▣',
         capability: 'PERM-INSP-VIEW',
+      },
+      {
+        id: 'quarantine-administration',
+        label: 'Quarantine administration',
+        href: '/quarantine/admin',
+        icon: '⚙',
+        capability: 'PERM-ADM-TEMPLATES',
       },
     ],
   },
@@ -97,7 +106,7 @@ export const navigationGroups: NavigationGroup[] = [
         label: 'Equipment',
         href: '/assets/equipment',
         icon: '▦',
-        capability: 'PERM-EQUIP-VIEW',
+        capability: 'PERM-EQP-VIEW',
       },
       {
         id: 'calibrations',
@@ -111,7 +120,7 @@ export const navigationGroups: NavigationGroup[] = [
         label: 'Maintenance',
         href: '/assets/maintenance',
         icon: '⚙',
-        capability: 'PERM-MAINT-VIEW',
+        capability: 'PERM-MNT-VIEW',
       },
     ],
   },
@@ -124,14 +133,14 @@ export const navigationGroups: NavigationGroup[] = [
         label: 'My approvals',
         href: '/approvals',
         icon: '◉',
-        capability: 'PERM-APR-VIEW-OWN',
+        capability: 'PERM-APR-VIEW-ASSIGNED',
       },
       {
         id: 'changes',
         label: 'Change requests',
         href: '/change-requests',
         icon: '⇄',
-        capability: 'PERM-CR-VIEW',
+        capability: 'PERM-CHG-VIEW',
       },
     ],
   },
@@ -140,6 +149,19 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'Insights',
     items: [
       { id: 'reports', label: 'Reports', href: '/reports', icon: '▥', capability: 'PERM-RPT-VIEW' },
+      {
+        id: 'ai-advisory',
+        label: 'AI advisory',
+        href: '/ai-advisory',
+        icon: '✦',
+        capability: [
+          'PERM-AI-USE',
+          'PERM-AI-SUMMARIZE',
+          'PERM-AI-SUGGEST',
+          'PERM-AI-DRAFT',
+          'PERM-AI-ADMIN',
+        ],
+      },
     ],
   },
   {
@@ -147,11 +169,11 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'System',
     items: [
       {
-        id: 'administration',
-        label: 'Administration',
-        href: '/administration',
-        icon: '⚙',
-        capability: 'PERM-ADM-VIEW',
+        id: 'audit',
+        label: 'Audit history',
+        href: '/audit',
+        icon: '⌘',
+        capability: 'PERM-ADM-AUDIT-VIEW',
       },
       {
         id: 'health',
@@ -167,6 +189,34 @@ export const navigationGroups: NavigationGroup[] = [
         icon: '⛁',
         capability: 'PERM-BKP-VIEW',
       },
+      {
+        id: 'documents',
+        label: 'Controlled documents',
+        href: '/documents',
+        icon: '▤',
+        capability: 'PERM-DOC-VIEW',
+      },
+      {
+        id: 'notifications',
+        label: 'Notifications',
+        href: '/notifications',
+        icon: '●',
+        capability: 'PERM-NOT-VIEW-OWN',
+      },
+      {
+        id: 'search',
+        label: 'Search',
+        href: '/search',
+        icon: '⌕',
+        capability: 'PERM-SRCH-USE',
+      },
+      {
+        id: 'account',
+        label: 'Account',
+        href: '/account',
+        icon: '◎',
+        capability: 'PERM-IDN-VIEW-SELF',
+      },
     ],
   },
 ];
@@ -176,7 +226,11 @@ export function visibleNavigation(capabilities: readonly string[] = []) {
   return navigationGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.capability || allowed.has(item.capability)),
+      items: group.items.filter((item) => {
+        if (!item.capability) return true;
+        const required = Array.isArray(item.capability) ? item.capability : [item.capability];
+        return required.some((permission) => allowed.has(permission));
+      }),
     }))
     .filter((group) => group.items.length > 0);
 }
