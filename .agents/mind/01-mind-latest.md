@@ -1,5 +1,45 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-09: خلفية dotLottie محلية ثابتة ونظام حركة آمن
+
+### تم التنفيذ
+- نقلت `background.lottie` من جذر الريبو إلى `public/assets/background.lottie` كمصدر التشغيل الوحيد، وأضفت `dotlottie-player.wasm` محليًا تحت نفس الحد العام.
+- ثبّتُّ `@lottiefiles/dotlottie-web@0.80.0` بقفل integrity في `pnpm-lock.yaml`، وعيّنت صراحةً مسار WASM المحلي لمنع fallback CDN الذي تحمله الحزمة.
+- أضفت `SystemBackground` لكل الصفحات عبر `BaseLayout`: fixed، غير تفاعلي، `aria-hidden`، تحت المحتوى، مع overlay للقراءة وcanvas يغطي الشاشة بلا distortion.
+- جعلت المشغّل يبدأ مؤجلًا بعد 180ms، يخفض DPR إلى 1.5، يوقف عند إخفاء المستند، يدمر نفسه عند `prefers-reduced-motion` أو `pagehide`، ويُخفى في الطباعة.
+- وحّدت `/login` مع `AuthLayout` بعد أن كشف E2E أنه كان يتجاوز `BaseLayout`؛ صار login يأخذ الخلفية وطبقة المحتوى نفسها بدون تغيير Action أو authorization.
+- أبقيت الأسطح الحساسة واضحة: shell/sidebar/topbar/auth لها طبقات شبه opaque، والـpanels/tables/dialogs تستمر على tokens سطح opaque؛ لم يتغير أي لون أو دلالة state للـPASS/RELEASED.
+
+### الملفات المتأثرة
+- `public/assets/background.lottie`
+- `public/assets/dotlottie-player.wasm`
+- `src/ui/components/SystemBackground.astro`
+- `src/ui/layouts/BaseLayout.astro`
+- `src/ui/layouts/AppLayout.astro`
+- `src/ui/layouts/AuthLayout.astro`
+- `src/pages/login.astro`
+- `src/ui/styles/global.css`
+- `tests/unit/ui/system-background.test.ts`
+- `tests/e2e/system-background.spec.ts`
+- `package.json`
+- `pnpm-lock.yaml`
+
+### التحقق
+- `node_modules/.bin/vitest run tests/unit/ui/system-background.test.ts tests/unit/shared/security-headers.test.ts` ✅ — ملفان / 11 اختبارًا.
+- `node_modules/.bin/astro check` ✅ — 0 errors و25 hints deprecation موجودة سابقًا.
+- `node_modules/.bin/astro build` ✅ — الملفات المحلية ظهرت في `dist/client/assets/`؛ warning سابق فقط عن `Writable` غير مستخدم.
+- Playwright محلي للـlogin والخلفية/الشبكة/reduced-motion/print وأحجام 1440×900 و1920×1080 و768×1024 و390×844 RTL ✅ — 6 passed.
+- `git diff --check` ✅؛ scan للمسارات المعدلة لم يجد secrets أو TODO/FIXME أو SQL/state assignment.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** الخلفية المحلية تعمل على login وBaseLayout مع CSP self-hosted مثبت بالاختبارات، لكن readability الفعلية للـDashboard والصفحات الحرجة المحمية ما زالت تحتاج fixture دخول E2E مستقلة؛ لا يوجد claim بإغلاق المجالات أو readiness كاملة.
+
+### ملاحظات / مشاكل مفتوحة
+- Node المحلي `22.23.1` خارج عقد المشروع `>=24.20.0 <25`، وأوامر `pnpm` المغلفة تعيد محاولة install وتفشل عند `ERR_PNPM_IGNORED_BUILDS`؛ شُغّلت الأدوات الثنائية المحلية مباشرة.
+- bundle `dotLottie` client الجديد حجمه 62.83kB (14.33kB gzip) والـassets العامة تضيف 1.1MB `.lottie` و1.2MB WASM؛ لم تتوفر baseline أو memory/CPU profiler قبل التغيير، لذا القياس المقارن غير مثبت.
+- E2E Dashboard/الصفحات المحمية وvisual QA اليدوي للـtables/dialogs/status chips يحتاجان fixture دخول معتمد؛ لا يجوز استنتاجهما من login فقط.
+
 ## [2026-09-08] — QC-100-08: WCAG 2.2 AA, RTL, keyboard and human-factors evidence slice
 
 ### تم التنفيذ

@@ -40,6 +40,7 @@
   "dependencies": {
     "@astrojs/check": "0.9.10",
     "@astrojs/node": "8.3.4",
+    "@lottiefiles/dotlottie-web": "0.80.0",
     "@opentelemetry/api": "1.9.1",
     "argon2": "0.44.0",
     "astro": "4.16.19",

@@ -1,0 +1,132 @@
+---
+// Decorative-only: the runtime and animation are both bundled or served from this origin.
+---
+<div class="system-background" data-system-background aria-hidden="true" data-motion="pending">
+  <canvas data-system-background-canvas></canvas>
+</div>
+
+<style>
+  .system-background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--color-canvas-deep);
+  }
+
+  .system-background::after {
+    position: absolute;
+    inset: 0;
+    background: rgb(16 19 16 / 72%);
+    content: '';
+  }
+
+  .system-background canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0.32;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .system-background canvas { display: none; }
+  }
+
+  @media print {
+    .system-background { display: none; }
+  }
+</style>
+
+<script>
+  import { DotLottie } from '@lottiefiles/dotlottie-web';
+
+  DotLottie.setWasmUrl('/assets/dotlottie-player.wasm');
+
+  const root = document.querySelector<HTMLElement>('[data-system-background]');
+  const canvas = root?.querySelector<HTMLCanvasElement>('[data-system-background-canvas]');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let dotLottie: DotLottie | undefined;
+  let idleHandle: number | undefined;
+
+  const cancelScheduledStart = () => {
+    if (idleHandle === undefined) return;
+    window.clearTimeout(idleHandle);
+    idleHandle = undefined;
+  };
+
+  const destroyRenderer = () => {
+    cancelScheduledStart();
+    dotLottie?.destroy();
+    dotLottie = undefined;
+  };
+
+  const start = () => {
+    idleHandle = undefined;
+    if (!root || !canvas || reducedMotion.matches || document.hidden || dotLottie) return;
+
+    dotLottie = new DotLottie({
+      canvas,
+      src: '/assets/background.lottie',
+      autoplay: true,
+      loop: true,
+      speed: 0.35,
+      layout: { fit: 'cover', align: [0.5, 0.5] },
+      renderConfig: {
+        autoResize: true,
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+        freezeOnOffscreen: true,
+      },
+    });
+    root.dataset.motion = 'running';
+  };
+
+  const scheduleStart = () => {
+    if (!root || reducedMotion.matches || document.hidden || dotLottie || idleHandle !== undefined) return;
+    root.dataset.motion = 'pending';
+    idleHandle = window.setTimeout(start, 180);
+  };
+
+  const onVisibilityChange = () => {
+    if (document.hidden) {
+      dotLottie?.pause();
+      if (root) root.dataset.motion = 'paused';
+      return;
+    }
+    if (dotLottie) {
+      dotLottie.play();
+      if (root) root.dataset.motion = 'running';
+      return;
+    }
+    scheduleStart();
+  };
+
+  const onMotionPreferenceChange = () => {
+    if (reducedMotion.matches) {
+      destroyRenderer();
+      if (root) root.dataset.motion = 'reduced';
+      return;
+    }
+    scheduleStart();
+  };
+
+  if (reducedMotion.matches) {
+    if (root) root.dataset.motion = 'reduced';
+  } else {
+    scheduleStart();
+  }
+
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  reducedMotion.addEventListener('change', onMotionPreferenceChange);
+  window.addEventListener(
+    'pagehide',
+    () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      reducedMotion.removeEventListener('change', onMotionPreferenceChange);
+      destroyRenderer();
+    },
+    { once: true },
+  );
+</script>

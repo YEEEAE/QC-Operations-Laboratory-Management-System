@@ -14,6 +14,9 @@ importers:
       '@astrojs/node':
         specifier: 8.3.4
         version: 8.3.4(astro@4.16.19(@types/node@26.4.1)(lightningcss@1.33.0)(rollup@4.63.1)(typescript@6.0.3))
+      '@lottiefiles/dotlottie-web':
+        specifier: 0.80.0
+        version: 0.80.0
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
@@ -780,6 +783,10 @@ packages:
 
   '@kwsites/file-exists@1.1.1':
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
+
+  '@lottiefiles/dotlottie-web@0.80.0':
+    resolution: {integrity: sha512-M00APgOJfP6xPZ3kAzZAUNATxluFiMU0wD3asp6HQSXDX8qLzSDh/Jmqbo0H7+WcqfpQkN8WYBu3aOzm2y/b4g==}
+    engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -4198,6 +4205,8 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+
+  '@lottiefiles/dotlottie-web@0.80.0': {}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true

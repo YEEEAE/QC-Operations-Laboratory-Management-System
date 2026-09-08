@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import SystemBackground from '../components/SystemBackground.astro';
 interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; }
 const { title = 'QC Operations & Laboratory Management System', locale = 'en', direction = locale.startsWith('ar') ? 'rtl' : 'ltr', density = 'standard' } = Astro.props;
 ---
@@ -10,5 +11,8 @@ const { title = 'QC Operations & Laboratory Management System', locale = 'en', d
     <meta name="viewport" content="width=device-width" />
     <title>{title}</title>
   </head>
-  <body><slot /></body>
+  <body>
+    <SystemBackground />
+    <div class="system-content"><slot /></div>
+  </body>
 </html>

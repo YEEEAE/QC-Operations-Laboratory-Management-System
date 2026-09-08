@@ -31,6 +31,19 @@ body {
   line-height: 1.5;
   text-align: start;
 }
+.system-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+@media print {
+  html,
+  body,
+  .system-content {
+    background: #fff !important;
+    color: #111 !important;
+  }
+}
 body,
 button,
 input,

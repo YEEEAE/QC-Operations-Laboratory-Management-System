@@ -1,6 +1,7 @@
 ---
 import '../ui/styles/global.css';
 import { actions } from 'astro:actions';
+import AuthLayout from '../ui/layouts/AuthLayout.astro';
 const returnTo = Astro.url.searchParams.get('returnTo') ?? '/dashboard';
 const error = Astro.url.searchParams.get('error');
 const isArabic = Astro.url.searchParams.get('locale') === 'ar';
@@ -24,12 +25,8 @@ const copy = isArabic
       submit: 'Sign in',
     };
 ---
-<!doctype html>
-<html lang={isArabic ? 'ar' : 'en'} dir={isArabic ? 'rtl' : 'ltr'}>
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>Sign in · QC Operations</title></head>
-  <body>
-    <main id="main-content" class="login-shell">
-      <section class="login-panel" aria-labelledby="login-title">
+<AuthLayout title="Sign in · QC Operations" locale={isArabic ? 'ar' : 'en'} direction={isArabic ? 'rtl' : 'ltr'}>
+  <section class="login-panel" aria-labelledby="login-title">
       <p>{copy.application}</p>
       <h1 id="login-title">{copy.title}</h1>
       <p>{copy.description}</p>
@@ -42,12 +39,9 @@ const copy = isArabic
         <input id="password" name="password" type="password" autocomplete="current-password" required />
         <button type="submit">{copy.submit}</button>
       </form>
-      </section>
-    </main>
-  </body>
-</html>
+  </section>
+</AuthLayout>
 <style>
-  .login-shell { min-height: 100vh; display: grid; place-items: center; padding: var(--space-6); background: var(--surface-page); }
   .login-panel { width: min(100%, 440px); padding: var(--space-8); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); }
   .login-panel > p:first-child { margin: 0 0 var(--space-6); color: var(--color-accent-primary-hover); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
   .login-panel h1 { margin: 0; font-size: clamp(1.75rem, 5vw, 2.25rem); }
@@ -57,5 +51,5 @@ const copy = isArabic
   .login-form label { font-weight: 600; }
   .login-form input:not([type="hidden"]) { width: 100%; min-height: 48px; padding-inline: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-page); }
   .login-form button { min-height: 48px; margin-top: var(--space-2); padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--color-text-inverse); font-weight: 700; cursor: pointer; }
-  @media (max-width: 520px) { .login-shell { padding: var(--space-4); } .login-panel { padding: var(--space-5); } }
+  @media (max-width: 520px) { .login-panel { padding: var(--space-5); } }
 </style>
