@@ -99,3 +99,28 @@ No evidence in this index is a substitute for live PostgreSQL, browser, CI, UAT,
   `format:check` ✅, `lint` ✅ exit 0, `typecheck` ✅ 0 errors / 25 pre-existing hints, `test:unit` ✅
   `31 files / 127 tests` (117 prior + 10 new), `test:architecture` ✅, `git diff --check` ✅. No commit, push,
   deploy, or production mutation.
+
+## QC-100-CLOSURE-09 — AI runtime verification for HEAD `a5ca2b0` (2026-09-08)
+
+- C-31: Fresh focused AI run on the exact HEAD (`a5ca2b0`, clean tree):
+  `pnpm exec vitest run tests/unit/ai-advisory/advisory.test.ts
+  tests/integration/ai-advisory/evals.test.ts
+  tests/integration/ai-advisory/security.test.ts` → `3 files / 39 tests passed`
+  (38 prior + 1 new `rate-limited` case). New case added via TDD alongside its
+  `rate-limited` fake-provider branch in `evals.test.ts`: provider reports
+  available then the completion fails 429-style → use case returns fixed
+  `UNAVAILABLE` (GREEN on first run — the catch-all degrade path pre-existed;
+  the test locks the 429 path). Dataset grows `14 → 15` cases; the kinds-set
+  assertion is unchanged (`provider-unavailable` already covered).
+- C-32: Scope + invariant record
+  `audit/100-percent/QC-100-CLOSURE-09-AI-RUNTIME-STATEMENT.md`: live provider
+  NOT APPLICABLE to this release (no contract, no SDK, no credentials, no
+  `process.env` in the AI module/action — scan zero matches; secret scan zero
+  hits); `DisabledAiProvider` preserved; 7 critical invariants mapped to
+  file:line; all 14 required threat dimensions mapped to exact tests; HITL
+  labeling and copy/draft-only reviewer path verified; observability posture
+  (no prompt logging per §22, §46 counters intentionally unwired while
+  disabled, retention POLICY-DEPENDENT per §163). R-008 NARROWED, stays OPEN
+  for the provider half pending a business-approved contract + reviewer UAT
+  per PD-31. No commit, push, deploy, or production mutation. Local Node
+  `v22.22.3` is outside the `>=24.20.0 <25` contract — results are local-only.

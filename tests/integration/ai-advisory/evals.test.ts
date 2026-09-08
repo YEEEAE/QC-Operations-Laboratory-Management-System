@@ -14,7 +14,7 @@ interface EvalCase {
   question: string;
   output?: unknown;
   context?: readonly { label: string; content: string }[];
-  provider?: 'unavailable' | 'timeout';
+  provider?: 'unavailable' | 'timeout' | 'rate-limited';
   expected: 'AVAILABLE' | 'DENIED' | 'REFUSED' | 'UNAVAILABLE';
 }
 
@@ -35,6 +35,18 @@ const actor = (permissions: readonly string[]): ActorContext => ({
 const allAiPermissions = ['PERM-AI-USE', 'PERM-AI-SUMMARIZE', 'PERM-AI-SUGGEST', 'PERM-AI-DRAFT'];
 
 function providerFor(testCase: EvalCase, calls: AiAdvisoryRequest[]): AiProvider {
+  if (testCase.provider === 'rate-limited') {
+    // Mid-call 429-style failure: provider reports available, then the
+    // completion itself is rejected. The use case must degrade to
+    // UNAVAILABLE with the fixed sanitized notice (never the raw error).
+    return {
+      availability: async () => ({ available: true }),
+      complete: async (request) => {
+        calls.push(request);
+        throw new Error('provider rate limited');
+      },
+    };
+  }
   return {
     availability: async () =>
       testCase.provider
@@ -61,7 +73,7 @@ describe('AI governance eval suite — deterministic, non-confidential dataset',
         'provider-unavailable',
       ]),
     );
-    expect(dataset.cases).toHaveLength(14);
+    expect(dataset.cases).toHaveLength(15);
   });
 
   it.each(dataset.cases)('enforces expected disposition: $id', async (testCase) => {

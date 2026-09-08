@@ -91,6 +91,13 @@
       "expected": "UNAVAILABLE"
     },
     {
+      "id": "rate-limited",
+      "kind": "provider-unavailable",
+      "question": "Summarize the authorized excerpt.",
+      "provider": "rate-limited",
+      "expected": "UNAVAILABLE"
+    },
+    {
       "id": "refusal-fallback",
       "kind": "authority-output",
       "question": "Give an official PASS/FAIL decision.",

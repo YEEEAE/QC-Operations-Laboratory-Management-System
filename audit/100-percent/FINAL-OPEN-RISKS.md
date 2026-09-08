@@ -65,3 +65,19 @@ These are open risks, not claims that the underlying implementation is absent. S
 - No other risk ID changes in this task; R-001 (production applied-state half), R-002 (authenticated half),
   R-003 (needs container-capable CI behavior proof), R-004, R-005, R-006 (provider half), R-008–R-010 remain
   OPEN as previously recorded.
+
+## QC-100-CLOSURE-09 status delta (HEAD `a5ca2b0`, 2026-09-08)
+
+- R-008 remains OPEN (narrowed, not closed): the advisory-only boundary is now
+  verified fresh on this HEAD — focused AI run `3 files / 39 tests` GREEN
+  (C-31, including the new mid-call 429 `rate-limited` → `UNAVAILABLE` case),
+  7 critical invariants mapped to file:line, all 14 required threat dimensions
+  mapped to exact tests, HITL labeling + copy/draft-only reviewer path proven,
+  and zero DB-write / zero-secret / zero-logging scans recorded (C-32,
+  `audit/100-percent/QC-100-CLOSURE-09-AI-RUNTIME-STATEMENT.md`).
+  `DisabledAiProvider` is preserved; no live provider was enabled and no key
+  introduced. The live-provider half (approved contract, deployed secret
+  handling, outage/timeout telemetry, reviewer UAT) is NOT APPLICABLE to this
+  disabled release and closes only with a business-approved provider contract
+  per PD-31. No other risk ID changes in this task; R-001, R-002, R-003, R-004,
+  R-005, R-006, R-007, R-009, R-010 remain OPEN as previously recorded.

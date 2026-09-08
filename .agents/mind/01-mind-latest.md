@@ -1,5 +1,37 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-09: AI Advisory Runtime Verification, 429 Case + Scope Statement (R-008 stays OPEN)
+
+### تم التنفيذ
+- أعدت حساب الـHEAD طازجًا (`a5ca2b0` على `main`، شجرة نظيفة) بدل إعادة استخدام SHA التقارير القديمة، وثبتُّ أن `a5ca2b0` مجرد commit لشغل CLOSURE-07/08 السابق.
+- شغلت حزمة AI المركزة طازجة قبل التغيير: `3 ملفات / 38 اختبارًا` كلها خضراء على نفس الـHEAD.
+- أضفت حالة `rate-limited` الحتمية عبر TDD (فرع fake-provider متاح-ثم-429 + حالة dataset → `UNAVAILABLE` معقّم): خضراء من أول تشغيل لأن مسار التدهور catch-all كان موجودًا — الاختبار يثبّت مسار 429 لا يخترع سلوكًا؛ الـdataset صار 15 حالة.
+- أنشأت `QC-100-CLOSURE-09-AI-RUNTIME-STATEMENT.md`: المزود الحي NOT APPLICABLE لهذا الإصدار (لا عقد/SDK/أسرار/`process.env` — مسح صفر)، `DisabledAiProvider` محفوظ، 7 ثوابت حرجة مربوطة بـfile:line، تغطية الأبعاد الـ14 المطلوبة، مسار HITL (توسيم + نسخ/مسودة فقط)، ووضع المراقبة (لا تسجيل prompts، عدّادات §46 متروكة عمدًا بلا مزود).
+- حدثت `FINAL-EVIDENCE-INDEX.md` (C-31/C-32) و`FINAL-OPEN-RISKS.md` (دلتا R-008: مضيّق بدون إغلاق).
+
+### الملفات المتأثرة
+- `audit/100-percent/QC-100-CLOSURE-09-AI-RUNTIME-STATEMENT.md` (جديد)
+- `audit/100-percent/ai-evals/deterministic-eval-dataset.json` (14 → 15 حالة)
+- `tests/integration/ai-advisory/evals.test.ts` (فرع `rate-limited` + عدّ 15)
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md` (C-31 وC-32)
+- `audit/100-percent/FINAL-OPEN-RISKS.md` (دلتا R-008)
+
+### التحقق
+- حزمة AI المركزة ✅ — 3 ملفات / 39 اختبارًا (38 سابقة + 1 جديدة)
+- `pnpm format:check` ✅، `pnpm lint` ✅ exit 0، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة)
+- `pnpm test:unit` ✅ — 31 ملفًا / 127 اختبارًا (بدون تغيير: evals تكاملية)
+- `pnpm test:architecture` ✅، `git diff --check` ✅، ومسح الأسرار/DB-writes على مسار AI صفر ✅
+- Node ‏`v22.22.3`‏ خارج العقد `>=24.20.0 <25` — النتائج محلية فقط؛ `pnpm build` لم يُشغّل (لا تغيير في `src/`)
+- مهارات: `verification-before-completion` و`using-superpowers` مقروءة ومطبقة؛ لا توجد مهارة محلية باسم systematic-debugging/TDD فطُبق انضباطهما يدويًا
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** حدّ الـadvisory والتدهور والـHITL مثبتة طازجة على `a5ca2b0` مع حالة 429 جديدة، لكن R-008 يبقى مفتوحًا: النصف الحي (عقد مزود + UAT مراجعين) يحتاج اعتماد مالك العمل per PD-31.
+
+### ملاحظات / مشاكل مفتوحة
+- R-001 (شق الإنتاج)، R-002 (النصف المصادق)، R-003 (إثبات CI)، R-004، R-005، R-006 (شق المزود)، R-007، R-009، R-010 تبقى OPEN.
+- لا commit أو push أو deploy أو production mutation؛ ملفات المهمة في الـworking tree بانتظار commit المستخدم.
+
 ## [2026-09-08] — QC-100-CLOSURE-08: Controlled Policy Decision Register + Fail-Closed Proof (R-007 stays OPEN)
 
 ### تم التنفيذ
