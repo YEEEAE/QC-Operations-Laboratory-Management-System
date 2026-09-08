@@ -30,6 +30,7 @@
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:migrate:status": "tsx scripts/db/migration-status.ts",
     "db:migrate:check": "tsx scripts/db/check-migration-integrity.ts",
+    "db:schema:check": "tsx scripts/db/check-schema-integrity.ts",
     "db:preflight": "tsx scripts/db/preflight.ts",
     "db:seed:foundation": "tsx scripts/db/seed-foundation.ts",
     "db:seed:foundation:check": "tsx scripts/db/check-foundation-seed.ts",

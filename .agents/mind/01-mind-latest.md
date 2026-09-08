@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-04: PostgreSQL integrity, concurrency and governance evidence
+
+### تم التنفيذ
+- أضفت suite تكامل PostgreSQL مستقلة تفحص fresh migration ledger، no-op upgrade، checksum verification، schema-to-migration table drift، TIMESTAMPTZ، lineage/version fields، critical indexes، وعدم وجود destructive FK cascades.
+- أضفت orphan-record detection ديناميكيًا لكل foreign key أحادي العمود، مع تحقق فعلي من بقاء النتيجة صفرًا على قاعدة الاختبار.
+- أضفت اختبار concurrency لإدخال نفس `task_no` مرتين بالتوازي، بحيث ينجح إدخال واحد فقط وتحمي قاعدة البيانات business-number uniqueness.
+- أضفت أمرًا read-only باسم `pnpm db:schema:check` لفحص migration/schema drift وtimestamp/lineage وcascade/orphan contracts على PostgreSQL configured، بدون تعديل البيانات.
+- لم أعدل أي migration تاريخي أو أضع policy علمية/تشغيلية جديدة؛ بقيت حدود controlled history وdefault-deny كما هي.
+
+### الملفات المتأثرة
+- `tests/integration/database/integrity-governance.test.ts`
+- `scripts/db/check-schema-integrity.ts`
+- `package.json`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `vitest run tests/unit` ✅ — 25 ملفًا / 92 اختبارًا.
+- `astro check` ✅ — 0 errors، 0 warnings، 25 hints deprecated موجودة في ملفات سابقة.
+- `eslint .` ✅.
+- `astro build` ✅ — build server/client ناجح، مع warning import غير مستخدم معروف في `src/shared/observability/logger.ts`.
+- TypeScript filtered للملفات الجديدة ✅.
+- `check-boundaries.mjs` ✅.
+- `git diff --check` ✅.
+- PostgreSQL integrity suite ❌/UNVERIFIED — 7 اختبارات لم تبدأ لأن Docker daemon غير متاح (`Could not find a working container runtime strategy`).
+- `pnpm db:schema:check` لم يصل للسكريبت بسبب `tsx` IPC `EPERM` في Node المحلي 22، ولم تُستخدم قاعدة أو credentials إنتاجية.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** أضيفت بوابات وأدلة قاعدة البيانات المطلوبة وصارت قابلة للتشغيل على PostgreSQL 18 disposable/CI، لكن لا يمكن تسجيل runtime PASS لهذه الأدلة في البيئة الحالية قبل تشغيل Docker أو قاعدة اختبار خارجية معتمدة.
+
+### ملاحظات / مشاكل مفتوحة
+- Fresh/upgrade/orphan/lineage/concurrency/least-privilege evidence ما زال يحتاج تشغيلًا فعليًا على PostgreSQL 18؛ وجود الاختبارات لا يساوي نجاحها.
+- deadlock retry وambiguous-commit behavior ما زالا غير مثبتين كسياسة تنفيذية؛ لم يتم اختراع retry أو recovery semantics.
+- لا commit ولا push ولا deploy.
+
 ## [2026-09-08] — QC-100-03: AppSec, IAM, Authorization and Privacy hardening
 
 ### تم التنفيذ
