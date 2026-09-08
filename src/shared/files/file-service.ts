@@ -127,6 +127,20 @@ export class FileService {
     );
   }
 
+  /**
+   * Resolve the evidence link from the repository before authorizing and
+   * reading the object. Callers must provide an opaque link id, never a
+   * client-shaped subject/file pair, to prevent object substitution.
+   */
+  async downloadByEvidenceId(
+    actorId: string,
+    evidenceId: string,
+  ): Promise<{ file: FileRecord; object: { bytes: Uint8Array; contentType: string } }> {
+    const link = await this.repository.findEvidence(evidenceId);
+    if (!link || link.removedAt) throw new AppError('RESOURCE_NOT_FOUND');
+    return this.download(actorId, link);
+  }
+
   private async downloadInner(
     actorId: string,
     link: EvidenceLink,

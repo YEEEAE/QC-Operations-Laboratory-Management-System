@@ -1,5 +1,43 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-03: AppSec, IAM, Authorization and Privacy hardening
+
+### تم التنفيذ
+- ثبّتُّ عقدة كوكي الجلسة `__Host-qc_session`: مولّد الكوكي وكوكي الإلغاء يضيفان `Secure` دائمًا، حتى لو حاول caller تمرير `false`.
+- أضفت اختبارات سلبية للجلسات المنتهية والملغاة وحساب disabled، ولـ Admin بدون permission صريحة، ولـ IDOR عبر استبدال كائن خارج النطاق، ولـ cookie downgrade.
+- أضفت `downloadByEvidenceId` الذي يحل رابط الدليل canonical من المستودع قبل التفويض والقراءة، ويرفض الروابط المحذوفة/المفقودة.
+- أنشأت `SECURITY-ATTACK-MATRIX.md` مع فصل واضح بين VERIFIED وPARTIAL وUNVERIFIED، وتغطية target domains: 3, 5, 6, 21, 24, 27, 36, 70, 71, 72, 79, 81.
+
+### الملفات المتأثرة
+- `src/modules/identity/application/session-service.ts`
+- `src/shared/files/file-service.ts`
+- `tests/unit/identity/session-service.test.ts`
+- `tests/unit/shared/security-headers.test.ts`
+- `tests/unit/shared/authorize.test.ts`
+- `tests/integration/shared/files.test.ts`
+- `audit/100-percent/SECURITY-ATTACK-MATRIX.md`
+
+### التحقق
+- `pnpm typecheck` ✅؛ 0 errors، مع تحذيرين deprecated معروفين وNode engine warning.
+- `pnpm lint` ✅.
+- `pnpm format:check` ✅.
+- `pnpm test:unit` ✅؛ 25 ملفًا و92 اختبارًا.
+- focused security tests ✅؛ 6 ملفات و21 اختبارًا.
+- `pnpm build` ✅؛ ظهر warning import غير مستخدم معروف في `src/shared/observability/logger.ts`.
+- `pnpm test:architecture` ✅.
+- `pnpm test:security` جزئي؛ 26 اختبارًا نجحت و1 skipped، لكن PostgreSQL Testcontainers فشل لعدم وجود container runtime.
+- `pnpm db:migrate:status` لم يثبت الحالة؛ `tsx` مُنع من فتح IPC pipe بـ`EPERM` في بيئة التشغيل.
+- `git diff --check` ✅؛ لا commit أو push أو deploy.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** تم إغلاق ثغرة cookie downgrade وإضافة أدلة سلبية مستقلة للـIAM/authorization/IDOR/session، لكن إغلاق AppSec الكامل غير مثبت؛ ما زالت تغطية المتصفح وPostgreSQL وfile delivery الفعلي وsecret scanning runtime غير مكتملة.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد claim بنسبة 100% أو READY أو production closure.
+- `downloadByEvidenceId` capability آمنة لكنها غير مربوطة حاليًا بـpublic file Action/route؛ لذلك مصفوفة الهجوم تسجل private object disclosure كـPARTIAL.
+- يلزم تشغيل security/integration/E2E على بيئة فيها PostgreSQL container وChromium، ثم إضافة أدلة CI/secret scanner مرتبطة بالـHEAD الحالي.
+
 ## [2026-09-08] — QC-100-02: تشديد بوابات التحقق وربط أدلة CI بالـGit SHA
 
 ### تم التنفيذ

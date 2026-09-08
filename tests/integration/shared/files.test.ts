@@ -80,4 +80,27 @@ describe('files and evidence', () => {
     expect(repository.files.size).toBe(0);
     expect(calls).toBe(1);
   });
+
+  it('resolves the canonical evidence link before download to resist link substitution', async () => {
+    const repository = new MemoryFiles();
+    const store = new MemoryStore();
+    const service = new FileService(repository, store, async ({ subjectId }) => {
+      if (subjectId !== 'subject-1') throw new Error('denied');
+    });
+    const uploaded = await service.upload({
+      originalFilename: 'private.txt',
+      mimeType: 'text/plain',
+      bytes: new TextEncoder().encode('private'),
+      uploadedBy: 'u1',
+      subjectType: 'LAB_TEST',
+      subjectId: 'subject-1',
+    });
+
+    await expect(service.downloadByEvidenceId('u1', uploaded.evidence.id)).resolves.toMatchObject({
+      file: { id: uploaded.file.id },
+    });
+    await expect(service.downloadByEvidenceId('u1', 'missing-evidence')).rejects.toMatchObject({
+      code: 'RESOURCE_NOT_FOUND',
+    });
+  });
 });

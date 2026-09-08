@@ -7,6 +7,10 @@ import {
   SESSION_COOKIE_NAME,
   sessionCookieOptions,
 } from '../../../src/shared/security/session-cookie';
+import {
+  expiredCookie,
+  sessionCookie,
+} from '../../../src/modules/identity/application/session-service';
 
 describe('security headers baseline (SECURITY-ARCHITECTURE §74–§78)', () => {
   it('emits the approved CSP baseline in production without unsafe-inline/eval', () => {
@@ -54,5 +58,10 @@ describe('session cookie contract (SECURITY-ARCHITECTURE §12)', () => {
     expect(options.secure).toBe(true);
     expect(options.httpOnly).toBe(true);
     expect(options.sameSite).toBe('strict');
+  });
+
+  it('never emits a host-prefixed session cookie without Secure', () => {
+    expect(sessionCookie('opaque-token', false)).toContain('; Secure');
+    expect(expiredCookie(false)).toContain('; Secure');
   });
 });

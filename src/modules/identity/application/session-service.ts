@@ -11,14 +11,15 @@ export const SESSION_COOKIE_NAME = '__Host-qc_session';
 export function hashSessionToken(token: string): string {
   return createHash('sha256').update(token, 'utf8').digest('hex');
 }
-export function sessionCookie(
-  token: string,
-  secure = process.env.NODE_ENV === 'production',
-): string {
-  return `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict${secure ? '; Secure' : ''}`;
+export function sessionCookie(token: string, secure = true): string {
+  // The __Host- prefix is invalid without Secure. Keep the legacy parameter
+  // for callers during the migration, but never allow it to weaken the cookie.
+  void secure;
+  return `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Secure`;
 }
-export function expiredCookie(secure = process.env.NODE_ENV === 'production'): string {
-  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict${secure ? '; Secure' : ''}; Max-Age=0`;
+export function expiredCookie(secure = true): string {
+  void secure;
+  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=0`;
 }
 
 export class SessionService {

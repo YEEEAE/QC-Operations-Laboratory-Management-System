@@ -54,4 +54,22 @@ describe('central authorization', () => {
       expect.objectContaining({ code: 'CONFLICT_STALE_VERSION' }),
     );
   });
+
+  it('denies an Admin role without the explicit permission', () => {
+    expect(
+      authorize({
+        ...base,
+        actor: { ...base.actor, roles: ['ADMIN'], permissions: [] },
+      }),
+    ).toMatchObject({ allowed: false, code: 'AUTHZ_PERMISSION_MISSING' });
+  });
+
+  it('denies an object substitution outside the actor scope', () => {
+    expect(
+      authorize({
+        ...base,
+        entity: { ...base.entity, domain: 'QUALITY', id: 'other-domain-record' },
+      }),
+    ).toMatchObject({ allowed: false, code: 'AUTHZ_SCOPE_DENIED' });
+  });
 });
