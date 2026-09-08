@@ -1,5 +1,34 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-AUTH-LOGIN-REDIRECT-RATE-LIMIT-001: Login redirect and rate-limit diagnosis (partial / production blocked)
+
+### تم التنفيذ
+- جمّدت الواقع على `1ea19f6` (main، شجرة نظيفة قبل التعديل) وثبّتُّ Node `24.20.0` محليًا؛ لا commit/push/deploy أو production mutation.
+- تحققت قراءة فقط من الإنتاج: `GET /login` يرجع 200 ونموذج Astro الحقيقي يرسل `POST /login?_astroAction=login`؛ `/live` 200 لكن `/ready` 503 مع requestId، لذلك readiness الخاصة بقاعدة البيانات غير متاحة.
+- أثبتت جذري UX: middleware كان يقطع POST قبل Astro Action ويرجع raw `429 problem+json`، ونجاح Action يعيد `redirectTo` لا تستهلكه صفحة login.
+- فرّقت قرار RateLimiter إلى `ALLOWED`/`THROTTLED`/`STORE_UNAVAILABLE` مع fail-closed ثابت، ونقلت limiter الحقيقي إلى Action حتى تعود أخطاء المتصفح لصفحة login؛ أضفت redirect آمن 303 بعد نجاح نتيجة Action ونسخ عربية/إنجليزية للـthrottle/unavailable.
+- أنشأت دليل إغلاق صريح يفصل المثبت من المشتبه: 503 الجاهزية متسق مع تعطل store لكنه لا يثبت سبب PostgreSQL المحدد بدون read-only operator access.
+
+### الملفات المتأثرة
+- `src/actions/auth.ts`
+- `src/middleware.ts`
+- `src/pages/login.astro`
+- `src/shared/security/rate-limit.ts`
+- `tests/integration/security/rate-limit.test.ts`
+- `audit/100-percent/LOGIN-AUTH-REDIRECT-RATE-LIMIT-CLOSURE.md`
+
+### التحقق
+- TDD: RED للـoutcome الجديد ثم focused GREEN ‏7/7 ✅
+- `pnpm typecheck` ✅ (0 errors)، `pnpm lint` ✅، `pnpm format:check` ✅، `pnpm test:architecture` ✅، `pnpm test:unit` ✅ (31/127)، `pnpm build` ✅
+- `pnpm test:security` ❌: 43 passed و1 skipped لكن PostgreSQL 18 Testcontainers لم يبدأ لغياب container runtime؛ E2E وDB integration وproduction login غير منفذة، ولا تعامل كنجاح.
+
+### النتيجة
+- **الحالة:** جزئي / محجوب.
+- **مختصر:** أصل مشكلة JSON الخام والتحويل غير الحتمي مغطى محليًا، لكن إثبات store/identity/config/proxy والإنتاج منتهيًا يحتاج اعتماد Render read-only وPostgreSQL 18/Playwright وdeploy مراقب.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يجوز اعتبار 503 readiness سبب limiter النهائي دون فحص read-only؛ لا `admin` ولا `yazeed` تم التحقق منهما ولا توجد قيم production threshold مطبوعة أو مخترعة.
+
 ## [2026-09-08] — QC-100-CLOSURE-10: Independent Final 100-Domain Closure Re-Audit (NOT YET 100/100, mean 50.30)
 
 ### تم التنفيذ

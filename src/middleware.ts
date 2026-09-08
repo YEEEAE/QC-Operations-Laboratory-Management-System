@@ -194,12 +194,18 @@ export const onRequest = defineMiddleware(
 
     let response: Response;
 
-    const rateLimitResolution = resolveHighRiskRateLimitPolicy(
-      url.pathname,
-      request.method,
-      process.env,
-      env.NODE_ENV,
-    );
+    // Astro form Actions are executed after user middleware. Login's limiter
+    // therefore lives inside `actions.login`, where Astro can redirect normal
+    // browser failures back into the login page rather than exposing a raw
+    // problem document. Direct Action/API calls are covered by that same
+    // handler; no browser form path bypasses the limiter.
+    const isLoginActionPost =
+      url.pathname === '/login' &&
+      request.method === 'POST' &&
+      url.searchParams.get('_astroAction') === 'login';
+    const rateLimitResolution = isLoginActionPost
+      ? undefined
+      : resolveHighRiskRateLimitPolicy(url.pathname, request.method, process.env, env.NODE_ENV);
     if (rateLimitResolution === 'FAIL_CLOSED') {
       // Production without configured thresholds: fail closed (§142).
       requestLogger.warn(

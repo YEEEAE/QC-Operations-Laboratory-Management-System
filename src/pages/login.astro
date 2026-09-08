@@ -1,9 +1,12 @@
 ---
 import '../ui/styles/global.css';
 import { actions } from 'astro:actions';
+import { safeReturnTo } from '../shared/http/safe-return-to.js';
 import AuthLayout from '../ui/layouts/AuthLayout.astro';
 const returnTo = Astro.url.searchParams.get('returnTo') ?? '/dashboard';
-const error = Astro.url.searchParams.get('error');
+const actionResult = Astro.getActionResult(actions.login);
+if (actionResult?.data?.ok) return Astro.redirect(safeReturnTo(actionResult.data.redirectTo), 303);
+const error = Astro.url.searchParams.get('error') ?? actionResult?.error?.message;
 const isArabic = Astro.url.searchParams.get('locale') === 'ar';
 const copy = isArabic
   ? {
@@ -11,6 +14,8 @@ const copy = isArabic
       title: 'تسجيل الدخول',
       description: 'وصول تشغيلي آمن',
       error: 'تعذر إكمال تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
+      throttled: 'محاولات تسجيل الدخول كثيرة. حاول مرة أخرى لاحقًا.',
+      unavailable: 'تسجيل الدخول غير متاح مؤقتًا. حاول مرة أخرى بعد قليل.',
       identity: 'معرّف الدخول',
       password: 'كلمة المرور',
       submit: 'تسجيل الدخول',
@@ -20,6 +25,8 @@ const copy = isArabic
       title: 'Sign in',
       description: 'Secure operational access',
       error: 'Sign-in could not be completed. Check your credentials and try again.',
+      throttled: 'Too many sign-in attempts. Please try again later.',
+      unavailable: 'Sign-in is temporarily unavailable. Please try again shortly.',
       identity: 'Login identity',
       password: 'Password',
       submit: 'Sign in',
@@ -30,7 +37,7 @@ const copy = isArabic
       <p>{copy.application}</p>
       <h1 id="login-title">{copy.title}</h1>
       <p>{copy.description}</p>
-      {error && <p id="form-error" role="alert">{copy.error}</p>}
+      {error && <p id="form-error" role="alert">{error === 'AUTH_RATE_LIMITED' ? copy.throttled : error === 'AUTH_RATE_LIMIT_STORE_UNAVAILABLE' ? copy.unavailable : copy.error}</p>}
       <form class="login-form" method="POST" action={actions.login} aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
         <label for="loginIdentity">{copy.identity}</label>

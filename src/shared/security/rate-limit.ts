@@ -15,6 +15,7 @@ export interface RateLimitPolicy {
 }
 
 export interface RateLimitDecision {
+  outcome: 'ALLOWED' | 'THROTTLED' | 'STORE_UNAVAILABLE';
   allowed: boolean;
   limit: number;
   remaining: number;
@@ -74,6 +75,7 @@ export class RateLimiter {
       count = window.count;
     } catch {
       return {
+        outcome: 'STORE_UNAVAILABLE',
         allowed: false,
         limit: policy.maxRequests,
         remaining: 0,
@@ -82,6 +84,7 @@ export class RateLimiter {
     }
     const allowed = count <= policy.maxRequests;
     return {
+      outcome: allowed ? 'ALLOWED' : 'THROTTLED',
       allowed,
       limit: policy.maxRequests,
       remaining: Math.max(0, policy.maxRequests - count),

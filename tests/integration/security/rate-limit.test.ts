@@ -75,7 +75,17 @@ describe('rate limiter (test thresholds)', () => {
     const limiter = new RateLimiter(failingStore);
     const decision = await limiter.check(TEST_POLICY, 'ip-1');
     expect(decision.allowed).toBe(false);
+    expect(decision.outcome).toBe('STORE_UNAVAILABLE');
     expect(decision.retryAfterSeconds).toBe(TEST_POLICY.windowSeconds);
+  });
+
+  it('distinguishes an exceeded threshold from a rate-limit store outage', async () => {
+    const limiter = new RateLimiter(new InMemoryRateLimitStore());
+    for (let attempt = 0; attempt < TEST_POLICY.maxRequests; attempt += 1) {
+      await limiter.check(TEST_POLICY, 'ip-1');
+    }
+
+    expect((await limiter.check(TEST_POLICY, 'ip-1')).outcome).toBe('THROTTLED');
   });
 });
 
