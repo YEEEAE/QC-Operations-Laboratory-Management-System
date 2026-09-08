@@ -1,5 +1,6 @@
 import { Writable } from 'node:stream';
 import pino, { type Logger } from 'pino';
+import { SERVICE_NAME, getServiceVersion } from '../../config/release.js';
 
 /**
  * Structured JSON application logging (OBSERVABILITY-ARCHITECTURE §15).
@@ -49,6 +50,11 @@ export function createRequestLogger(
   const base = pino(
     {
       level: process.env.LOG_LEVEL ?? 'info',
+      base: {
+        service_name: SERVICE_NAME,
+        service_version: getServiceVersion(process.env, '0.1.0'),
+        environment: process.env.NODE_ENV ?? 'development',
+      },
       redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
       formatters: {
         level(label) {

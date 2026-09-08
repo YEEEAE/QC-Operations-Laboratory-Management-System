@@ -9,6 +9,7 @@ import {
   setTelemetryProviders,
   withSpan,
   recordCounter,
+  recordHistogram,
   type TelemetryAttributes,
   type TelemetrySpan,
 } from '../../../src/shared/observability/telemetry';
@@ -81,6 +82,14 @@ class RecordingMeter {
       increment: (delta = 1, attributes: TelemetryAttributes = {}) => {
         if (this.failOnIncrement) throw new Error('metrics backend down');
         this.counters.push({ name, delta, attributes: safeMetricAttributes(attributes) });
+      },
+    };
+  }
+
+  createHistogram(name: string) {
+    return {
+      record: (value: number, attributes: TelemetryAttributes = {}) => {
+        this.counters.push({ name, delta: value, attributes: safeMetricAttributes(attributes) });
       },
     };
   }
@@ -302,6 +311,9 @@ describe('structured logging has no secret leakage', () => {
     expect(entry['requestId']).toBe('req_9');
     expect(entry['traceId']).toBe('trace_9');
     expect(entry['spanId']).toBe('span_9');
+    expect(entry['service_name']).toBe('qc-operations-laboratory-management-system');
+    expect(entry['service_version']).toBeTruthy();
+    expect(entry['environment']).toBeTruthy();
     expect(JSON.stringify(entry)).not.toContain('hunter2');
     expect(JSON.stringify(entry)).not.toContain('session-token-value');
   });
@@ -320,6 +332,41 @@ describe('structured logging has no secret leakage', () => {
 describe('no-op meter baseline', () => {
   it('exposes counters that never throw without a backend', () => {
     expect(() => getTelemetryMeter().createCounter('qc_any_total').increment()).not.toThrow();
+  });
+});
+
+describe('latency metrics', () => {
+  afterEach(() => resetTelemetryProviders());
+
+  it('records bounded, non-negative latency without request or record identifiers', () => {
+    const meter = new RecordingMeter();
+    setTelemetryProviders(undefined, meter);
+
+    recordHistogram('qc_http_server_duration_ms', 12.5, {
+      route_template: '/tasks/:id',
+      http_method: 'POST',
+      status_class: '2xx',
+      requestId: 'req_sensitive',
+      userId: 'u-sensitive',
+    });
+
+    expect(meter.counters).toContainEqual({
+      name: 'qc_http_server_duration_ms',
+      delta: 12.5,
+      attributes: {
+        route_template: '/tasks/:id',
+        http_method: 'POST',
+        status_class: '2xx',
+      },
+    });
+  });
+
+  it('drops invalid latency values', () => {
+    const meter = new RecordingMeter();
+    setTelemetryProviders(undefined, meter);
+    recordHistogram('qc_db_query_duration_ms', Number.NaN, { dependency: 'postgres' });
+    recordHistogram('qc_db_query_duration_ms', -1, { dependency: 'postgres' });
+    expect(meter.counters).toEqual([]);
   });
 });
 

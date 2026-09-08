@@ -12,6 +12,7 @@ import { PostgresRateLimitStore } from './shared/security/postgres-rate-limit-st
 import {
   normalizeRouteTemplate,
   recordCounter,
+  recordHistogram,
   runWithCorrelation,
 } from './shared/observability/telemetry';
 import { createRequestLogger } from './shared/observability/logger';
@@ -46,6 +47,7 @@ function rateLimitedResponse(requestId: string, retryAfterSeconds: number): Resp
 
 export const onRequest = defineMiddleware(
   async ({ request, url, locals, cookies, redirect, clientAddress }, next) => {
+    const startedAt = process.hrtime.bigint();
     locals.requestContext = createRequestContext(request);
     const requestContext = locals.requestContext;
     const env = getServerEnv();
@@ -153,13 +155,20 @@ export const onRequest = defineMiddleware(
     }
     if (url.pathname === '/login' && locals.user) response = redirect('/dashboard', 303);
 
-    const startMs = Date.now();
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
     const routeTemplate = normalizeRouteTemplate(url.pathname);
     const statusClass = `${Math.floor(response.status / 100)}xx`;
     recordCounter('qc_http_requests_total', 1, {
       route_template: routeTemplate,
       http_method: request.method,
       status_class: statusClass,
+      environment: env.NODE_ENV,
+    });
+    recordHistogram('qc_http_server_duration_ms', durationMs, {
+      route_template: routeTemplate,
+      http_method: request.method,
+      status_class: statusClass,
+      environment: env.NODE_ENV,
     });
     requestLogger.info(
       {
@@ -167,7 +176,7 @@ export const onRequest = defineMiddleware(
         route_template: routeTemplate,
         http_method: request.method,
         status_class: statusClass,
-        duration_ms: Date.now() - startMs,
+        duration_ms: durationMs,
       },
       'request completed',
     );

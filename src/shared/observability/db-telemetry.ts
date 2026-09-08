@@ -6,7 +6,7 @@ import type {
   RootOperationNode,
   UnknownRow,
 } from 'kysely';
-import { withSpan, recordCounter } from './telemetry.js';
+import { withSpan, recordCounter, recordHistogram } from './telemetry.js';
 
 /**
  * Kysely plugin that emits bounded spans/counters for database queries.
@@ -16,19 +16,23 @@ import { withSpan, recordCounter } from './telemetry.js';
  * `log` hook in database.ts because transformResult only runs on success.
  */
 
-const statementKinds = new WeakMap<object, string>();
+const queryMetadata = new WeakMap<object, { statementKind: string; startedAt: bigint }>();
 
 export function createTelemetryQueryPlugin(): KyselyPlugin {
   return {
     transformQuery(args: PluginTransformQueryArgs): RootOperationNode {
-      statementKinds.set(
-        args.queryId,
-        typeof args.node.kind === 'string' ? args.node.kind : 'UnknownNode',
-      );
+      queryMetadata.set(args.queryId, {
+        statementKind: typeof args.node.kind === 'string' ? args.node.kind : 'UnknownNode',
+        startedAt: process.hrtime.bigint(),
+      });
       return args.node;
     },
     async transformResult(args: PluginTransformResultArgs): Promise<QueryResult<UnknownRow>> {
-      const statementKind = statementKinds.get(args.queryId) ?? 'UnknownNode';
+      const metadata = queryMetadata.get(args.queryId);
+      const statementKind = metadata?.statementKind ?? 'UnknownNode';
+      const durationMs = metadata
+        ? Number(process.hrtime.bigint() - metadata.startedAt) / 1_000_000
+        : undefined;
       await withSpan('postgres.query', async () => undefined, {
         dependency: 'postgres',
         statement_kind: statementKind,
@@ -38,6 +42,13 @@ export function createTelemetryQueryPlugin(): KyselyPlugin {
         statement_kind: statementKind,
         outcome: 'success',
       });
+      if (durationMs !== undefined) {
+        recordHistogram('qc_db_query_duration_ms', durationMs, {
+          dependency: 'postgres',
+          statement_kind: statementKind,
+          outcome: 'success',
+        });
+      }
       return args.result;
     },
   };

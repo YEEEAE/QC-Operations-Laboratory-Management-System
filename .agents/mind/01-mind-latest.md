@@ -1,5 +1,37 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-10: Performance, resilience and observability evidence slice
+
+### تم التنفيذ
+- أصلحت قياس زمن HTTP في الـmiddleware: صار يبدأ قبل معالجة الطلب كاملة بدل بدء المؤقت بعد اكتمالها، وأضفت histogram آمن `qc_http_server_duration_ms` بعلامات route/method/status/environment محدودة.
+- أضفت primitive histogram يتحقق من القيم السالبة وغير الصالحة ولا يسمح لفشل الـexporter بإيقاف العملية المتحكم بها، وربطت عليه `qc_db_query_duration_ms` بدون SQL أو bind parameters أو identifiers.
+- أضفت service name/version/environment إلى structured logs مع بقاء request/trace/span correlation وredaction، وغطيتها باختبارات منع تسريب الحقول الحساسة.
+- أضفت load runner قابل للتكرار للـlogin/dashboard/lists/search/receiving/laboratory/approvals/reports؛ profiles التي تكتب مقفلة افتراضيًا ولا تشتغل إلا بتأكيد صريح وبيئة disposable.
+- أنشأت baseline/resilience/observability records صادقة: ما فيها SLO أو capacity أو production claim غير مقاس، وتحدد raw evidence المطلوب لإغلاق الفجوات.
+
+### الملفات المتأثرة
+- `src/middleware.ts`
+- `src/shared/observability/{telemetry,db-telemetry,logger}.ts`
+- `tests/integration/observability/correlation.test.ts`
+- `tests/performance/load-profiles.mjs`
+- `audit/100-percent/{PERFORMANCE-BASELINE,RESILIENCE-MATRIX,OBSERVABILITY-EVIDENCE}.md`
+
+### التحقق
+- `pnpm exec vitest run tests/integration/observability/correlation.test.ts tests/unit/health-live.test.ts tests/unit/health-ready.test.ts` ✅ — 3 ملفات / 21 اختبارًا.
+- `pnpm exec eslint ...` و`pnpm exec prettier --check ...` ✅.
+- `pnpm typecheck` ✅ — 0 errors و25 hints deprecation موجودة؛ Node المحلي `22.22.3` خارج العقد `>=24.20.0 <25`.
+- `pnpm test:architecture` ✅ — لا مخالفات Delivery → database/domain/business-rule.
+- `pnpm db:migrate:status` ❌/UNVERIFIED — `DATABASE_URL` غير متوفر، ولم تُطبع أي قيمة سرية؛ migration head المصدر `0018_rate_limit_windows` فقط.
+- `git diff --check` ✅؛ المصدر scan وجد TODO واحدًا موثقًا في `audit/100-percent/02-GAP-REGISTER.md` ولا SQL داخل `src/pages` أو `src/actions` في الفحص المنفذ.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** القياس صار قابلاً للرصد محليًا وبلا تسريب أو تأثير على العملية المتحكم بها، لكن benchmark ممثل، PostgreSQL runtime، exporter/alert delivery وCI الحالي ما زالت غير مثبتة.
+
+### ملاحظات / مشاكل مفتوحة
+- ما فيه `DATABASE_URL` أو fixture مصرح للـload/write profiles؛ لذلك لا يوجد baseline مقاس ولا ادعاء capacity أو readiness.
+- حالة CI البعيدة غير متاحة من بيئة المهمة؛ تبقى UNVERIFIED إلى أن تُلتقط من مزود CI مع SHA نفسه.
+
 ## [2026-09-08] — QC-100-09: خلفية dotLottie محلية ثابتة ونظام حركة آمن
 
 ### تم التنفيذ

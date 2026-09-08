@@ -37,8 +37,13 @@ export interface TelemetryCounter {
   increment(delta?: number, attributes?: TelemetryAttributes): void;
 }
 
+export interface TelemetryHistogram {
+  record(value: number, attributes?: TelemetryAttributes): void;
+}
+
 export interface TelemetryMeter {
   createCounter(name: string): TelemetryCounter;
+  createHistogram?(name: string): TelemetryHistogram;
 }
 
 function hex(bytes: number): string {
@@ -120,6 +125,20 @@ export function safeMetricAttributes(
 export function recordCounter(name: string, delta = 1, attributes?: TelemetryAttributes): void {
   try {
     activeMeter.createCounter(name).increment(delta, safeMetricAttributes(attributes));
+  } catch {
+    // telemetry failure must not propagate (§73)
+  }
+}
+
+/** Records elapsed milliseconds only; exporters remain non-authoritative. */
+export function recordHistogram(
+  name: string,
+  value: number,
+  attributes?: TelemetryAttributes,
+): void {
+  if (!Number.isFinite(value) || value < 0) return;
+  try {
+    activeMeter.createHistogram?.(name).record(value, safeMetricAttributes(attributes));
   } catch {
     // telemetry failure must not propagate (§73)
   }
