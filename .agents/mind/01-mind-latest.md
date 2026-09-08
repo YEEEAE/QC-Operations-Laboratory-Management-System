@@ -1,5 +1,32 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — تفعيل SYSTEM_OWNER لحساب yazeed على إنتاج Render
+
+### تم التنفيذ
+- تحققت من أن الإصدار `507d670` الذي يحتوي أمر `access:grant-system-owner` منشور حيًا على Render.
+- بسبب عدم توفر Shell في خطة Render المجانية، عدلت Start Command إلى تشغيل منح `SYSTEM_OWNER` لحساب `yazeed` قبل تشغيل Astro؛ استخدمت فصلًا يحافظ على تشغيل الخدمة إذا تعذر المنح في إقلاع لاحق.
+- وافق المستخدم مباشرة قبل حفظ تغيير إعداد الإنتاج، وحفظ Render الإعداد وبدأ deploy بسبب `Start command updated`.
+- ثبت نجاح المنح من التطبيق الحي بظهور حدث `GRANT_SYSTEM_OWNER_ACCESS` وسبب `User-approved exclusive full-system access` في Recent Activity.
+- تحققت من ظهور كل مجموعات القائمة وفتحت فعليًا Quarantine Administration وLaboratory Tests وQuality Findings وAssets Equipment؛ الصفحات لم تعرض منع صلاحية وظهرت روابط الإنشاء في Lab وEquipment.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+- إعداد Render الخارجي: Start Command لخدمة `QC-Operations-Laboratory-Management-System`.
+
+### التحقق
+- Render deploy `dep-dag84aek1f9s738dmfag` بدأ على commit `507d670` بسبب تحديث Start Command ✅
+- Dashboard الإنتاجي أظهر مجموعات Overview/Work/Quality/Quarantine/Laboratory/Assets/Governance/Insights/System ✅
+- حدث التدقيق `GRANT_SYSTEM_OWNER_ACCESS` ظاهر في Dashboard ✅
+- `/quarantine/admin` ✅، `/laboratory/tests` ✅، `/quality/findings` ✅، `/assets/equipment` ✅
+
+### النتيجة
+- **الحالة:** نجح.
+- **مختصر:** حساب yazeed يملك الآن `SYSTEM_OWNER` وكل الصلاحيات النشطة بنطاق GLOBAL، والصفحات الأربع التي كانت مفقودة أصبحت ظاهرة وقابلة للفتح على الإنتاج.
+
+### ملاحظات / مشاكل مفتوحة
+- Start Command سيعيد محاولة المنح idempotently عند كل تشغيل ثم يبدأ السيرفر؛ فشل محاولة مستقبلية لا يمنع تشغيل الموقع.
+- لم أنفذ commit أو push محليًا في هذه المهمة.
+
 ## [2026-09-09] — استثناء yazeed كمالك نظام بصلاحيات كاملة
 
 ### تم التنفيذ
