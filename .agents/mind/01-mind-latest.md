@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-07: Enterprise QC UX, UI and Design System closure slice
+
+### تم التنفيذ
+- وحّدت طبقة التطبيق التي تستعمل `AppLayout`: صار الـsidebar فعليًا قابلًا للطي على سطح المكتب، محفوظًا محليًا لتفضيل المستخدم، ويتحول إلى navigation drawer قابل للفتح/الإغلاق على الجوال مع `Escape` وإرجاع focus للزر.
+- أضفت breadcrumbs مشتقة من مسار الصفحة، ومررت capabilities النشطة فقط للـnavigation؛ هذا يحسن wayfinding بدون اعتبار الظهور UI كصلاحية أو تجاوز authorization السيرفري.
+- أضفت shortcut `Ctrl/Cmd + K` ينقل لبحث السجلات المصرح بها، مع تسمية وصول صريحة، وأبقيت badges التنبيهات/الموافقات مقتصرة على العداد المعطى من read model (لا تعرض أي نتائج أو موافقات مفترضة).
+- أضفت اختبار unit لعقود shell: context من route، navigation capability-aware، mobile navigation، persistence، وsearch keyboard contract.
+- فحصت inventory: 68 صفحة Astro؛ 62 تستخدم `AppLayout` وتأخذ التحسين العالمي، والست المتبقية هي login / account / landing / laboratory landing / 404 / 500 وتحتاج review عائلي منفصل بدل افتراض أنها صارت مطابقة تلقائيًا.
+
+### الملفات المتأثرة
+- `src/ui/layouts/AppLayout.astro`
+- `src/ui/shell/Topbar.astro`
+- `src/ui/shell/Sidebar.astro`
+- `src/ui/navigation/navigation.ts`
+- `tests/unit/ui/app-shell.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- focused UI contracts ✅ — ملفان / 5 اختبارات.
+- `pnpm test:unit` ✅ — 26 ملفًا / 95 اختبارًا.
+- `pnpm typecheck` ✅ — 0 errors، 25 hints deprecated موجودة مسبقًا.
+- `pnpm lint` ✅.
+- `pnpm build` ✅ — بقي warning موجود مسبقًا عن `Writable` غير مستخدم في `src/shared/observability/logger.ts`.
+- `git diff --check` ✅.
+- E2E/browser وPostgreSQL runtime لم يشغلا في هالمهمة؛ لا يوجد دليل تفاعل فعلي على browser أو قاعدة بيانات.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** تحسن shell الموحد لـ62 صفحة تشغيلية بدون تغيير صلاحيات أو state rules، لكن إغلاق UX لكل الصفحات والـbrowser/accessibility evidence ما زال غير مثبت.
+
+### ملاحظات / مشاكل مفتوحة
+- ما زالت صفحات Delivery محددة تستورد database/infrastructure مباشرة (منها dashboard/findings/search/notifications/reports/audit)؛ هذا مخالف لمسار Delivery المقصود ويحتاج refactor منفصل صغير ومدعوم باختبارات.
+- صفحات record/form كثيرة ما زالت تستخدم styles محلية ومكونات table/status غير موحدة؛ كذلك column visibility، saved filters، print/PDF، offline/degraded runtime، وautosave لا تملك policy أو evidence شامل.
+- ملف الـmind تجاوز الحد العملي (2673 سطرًا / 235KB قبل هذا السجل) ويحتاج rotation منظم إلى `02-mind-mid.md` بمهمة توثيق مخصصة؛ لم أنقل سجلات تاريخية هنا حتى ما أغيّر أرشيفًا ضخمًا ضمن slice واجهات.
+
 ## [2026-09-08] — QC-100-06: Evidence, file, reporting and notification integrity
 
 ### تم التنفيذ

@@ -180,3 +180,14 @@ export function visibleNavigation(capabilities: readonly string[] = []) {
     }))
     .filter((group) => group.items.length > 0);
 }
+
+export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?: string }> {
+  const matched = navigationGroups
+    .flatMap((group) => group.items)
+    .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    .sort((left, right) => right.href.length - left.href.length)[0];
+
+  if (!matched) return [];
+  const isRecordWorkspace = pathname !== matched.href;
+  return [{ label: matched.label, href: isRecordWorkspace ? matched.href : undefined }];
+}
