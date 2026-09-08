@@ -13,6 +13,12 @@ export default defineConfig({
     inlineStylesheets: 'never',
   },
   vite: {
+    ssr: {
+      // Astro 4 Actions require its own Zod 3 constructors. Externalizing
+      // bare `zod` imports makes the standalone bundle resolve app Zod 4
+      // instead, crashing form parsing on missing ZodEffects/ZodPipeline.
+      noExternal: ['zod'],
+    },
     build: {
       // §196: production source-map exposure is POLICY-DEPENDENT; stay off
       // until an approved policy exists.
