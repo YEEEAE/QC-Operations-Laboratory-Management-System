@@ -8,6 +8,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+.ci-results/
 
 # Environment files (keep .env.example tracked)
 .env
@@ -24,4 +25,3 @@ test-results/
 Thumbs.db
 .idea/
 .vscode/
-

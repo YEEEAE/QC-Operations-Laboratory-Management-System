@@ -24,6 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Assert exact release checkout
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
       - name: Enable Corepack
         run: corepack enable
 
@@ -83,6 +88,7 @@ jobs:
           pnpm run release:verify --
           --environment ci
           --build-id "github-${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
+          --expected-git-sha "$GITHUB_SHA"
           --artifact dist/server/entry.mjs
 
       - name: Install Playwright Chromium
@@ -111,6 +117,16 @@ jobs:
           name: release-candidate-evidence
           path: dist/release-identity.json
           if-no-files-found: error
+
+      - name: Upload machine-readable verification evidence
+        if: always() && hashFiles('.ci-results/**', 'playwright-report/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-results-${{ github.sha }}
+          path: |
+            .ci-results/
+            playwright-report/
+          if-no-files-found: ignore
 
       - name: Upload Playwright failure artifacts
         if: failure() && hashFiles('playwright-report/**', 'test-results/**') != ''

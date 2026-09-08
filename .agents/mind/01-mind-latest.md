@@ -1,5 +1,45 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-02: تشديد بوابات التحقق وربط أدلة CI بالـGit SHA
+
+### تم التنفيذ
+- أزلت `--passWithNoTests` و`--pass-with-no-tests` من بوابات التكامل والترحيلات والتزامن والأمن وE2E، بحيث يفشل المسار إذا غابت الاختبارات أو فشل setup بدل نجاح صامت.
+- أضفت تقارير Vitest JSON لكل suite حرجة، وتقرير Playwright JSON في CI، ورفع أدلة التحقق machine-readable باسم مرتبط بـ`github.sha`.
+- أضفت assertion مبكرًا يثبت أن checkout يطابق `github.sha`، ووسّعت release verification لقبول `--expected-git-sha` والتحقق منه ضد هوية الإصدار.
+- أصلحت teardown في PostgreSQL rate-limit fixture ليكون آمنًا عند فشل التهيئة، ومنعت أداة manifest schema من إخراج `PASS` مضلل؛ مخرجاتها الآن `SCHEMA_VALIDATED_ONLY`.
+- تحققت من أن أحدث GitHub Actions `Verification CI #42` على `56cba0b` لم يبدأ بسبب قفل الحساب لمشكلة billing، وليس بسبب فشل application.
+
+### الملفات المتأثرة
+- `.github/workflows/ci.yml`
+- `package.json`
+- `playwright.config.ts`
+- `scripts/release/release-id.mjs`
+- `scripts/release/verify-release.mjs`
+- `scripts/recovery/verify-recovery-manifest.ts`
+- `tests/integration/security/rate-limit.test.ts`
+- `.gitignore`
+
+### التحقق
+- `pnpm install --frozen-lockfile` ✅؛ ظهر تحذير Node لأن المحلي `22.22.3` والعقد يتطلب `>=24.20.0 <25`.
+- `pnpm format:check` ✅، `pnpm lint` ✅، `pnpm typecheck` ✅ بـ0 errors و25 hints، `pnpm test:architecture` ✅.
+- `pnpm test:unit` ✅؛ 24 ملفًا و88 اختبارًا.
+- `pnpm test:integration` ❌؛ 11 suites فشلت بسبب عدم وجود container runtime، مع 56 suite نجحت و34 test skipped وJSON report تم توليده.
+- `pnpm test:migrations` ❌؛ 5 suites فشلت بسبب container runtime، و15 test skipped.
+- `pnpm test:concurrency` ❌؛ 2 suites فشلت بسبب container runtime، و11 test skipped.
+- `pnpm test:security` ❌؛ 1 PostgreSQL suite فشلت بسبب container runtime، و25 test نجحت و1 skipped.
+- `pnpm build` ✅؛ بقي warning import غير مستخدم لـ`Writable`.
+- `pnpm test:e2e` ❌؛ 57/57 فشلوا بسبب قيود Chromium/localhost في بيئة macOS الحالية، وليس دليلًا على سلوك التطبيق.
+- release identity/verify ✅ محليًا؛ Git SHA `56cba0b5373341fda9f6bea15664dd1093ac01df`، migration head `0018_rate_limit_windows`، checksum `8c77a34b3368a156e96368363081ba82fdd8fd9fb4035ae26d8f0d0e9f2b0822`.
+- `git diff --check` ✅، وفحص bypass flags ✅ بدون نتائج.
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** صارت بوابات CI أدق وتنتج أدلة قابلة للقراءة ومربوطة بالـSHA، لكن ما فيه fresh green run للـHEAD الحالي بسبب billing في GitHub وغياب container/Chromium runtime محليًا.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم إعادة تشغيل CI بعد معالجة billing، مع PostgreSQL 18 Testcontainers وPlaywright Chromium عاملين؛ لا يوجد claim بأن CI أو E2E أو migration/concurrency evidence مغلق.
+- لا يوجد commit أو push أو deploy.
+
 ## [2026-09-08] — QC-100-01: Independent 100-domain reality audit baseline
 
 ### تم التنفيذ

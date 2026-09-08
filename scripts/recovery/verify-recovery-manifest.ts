@@ -162,7 +162,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       .then((manifest) =>
         console.log(
           JSON.stringify({
-            status: 'PASS',
+            status: 'SCHEMA_VALIDATED_ONLY',
             backupSetId: manifest.backupSetId,
             restoreVerificationStatus: manifest.restoreVerificationStatus,
           }),

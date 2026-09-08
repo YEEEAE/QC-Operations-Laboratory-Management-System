@@ -170,6 +170,7 @@ export function parseArguments(args) {
     '--service-version',
     '--migration-head',
     '--input',
+    '--expected-git-sha',
   ]);
   const unknown = args.filter((arg) => arg.startsWith('--') && !known.has(arg));
   if (unknown.length) throw new Error(`Unknown option: ${unknown[0]}`);
@@ -182,6 +183,7 @@ export function parseArguments(args) {
     serviceVersion: valueAfter(args, '--service-version'),
     migrationHead: valueAfter(args, '--migration-head'),
     input: valueAfter(args, '--input'),
+    expectedGitSha: valueAfter(args, '--expected-git-sha'),
   };
 }
 

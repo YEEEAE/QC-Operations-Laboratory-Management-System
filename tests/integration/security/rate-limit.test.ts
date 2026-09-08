@@ -160,7 +160,8 @@ describe('postgres rate limit store', () => {
   });
 
   afterAll(async () => {
-    await database.destroy();
+    await database?.destroy();
+    await pool?.end();
     await stopPostgresContainer();
   });
 

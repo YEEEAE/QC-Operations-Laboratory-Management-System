@@ -31,6 +31,13 @@ export async function verifyReleaseEvidence(metadata, options = {}) {
     options.env,
   );
 
+  const expectedGitSha = options.expectedGitSha ?? options.env?.GITHUB_SHA;
+  if (expectedGitSha && metadata.gitSha !== expectedGitSha.toLowerCase()) {
+    throw new Error(
+      `Release evidence Git SHA is not bound to the expected checkout: expected ${expectedGitSha}, actual ${metadata.gitSha}.`,
+    );
+  }
+
   const fields = [
     'schemaVersion',
     'serviceName',
