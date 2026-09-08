@@ -1,0 +1,1 @@
+session_id,release_sha,environment,participant_role,task_id,start_time,end_time,time_on_task_seconds,task_success,error_count,backtracking_count,failed_navigation_count,form_correction_count,assistance,wrong_action_attempts,confidence_1_to_5,seq_1_to_7,observations,severity,participant_comments,scenario_status,task_accept_reject

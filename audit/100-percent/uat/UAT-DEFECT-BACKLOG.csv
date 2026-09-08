@@ -1,0 +1,1 @@
+defect_id,session_id,task_id,role,severity,title,observed_evidence,expected_business_outcome,actual_business_outcome,request_id_or_ref,reproducible,software_defect,owner,status,retest_session_id,retest_outcome,notes

@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-06: UAT, Usability and Human Factors Evidence Closure (kit only, no participants)
+
+### تم التنفيذ
+- بنيت UAT kit تنفيذي (`QC-100-CLOSURE-06-UAT-KIT.md`): 7 شخصيات (P-EMP/P-INSP/P-LAB/P-SUP/P-MGR/P-ADM/P-AUD بدون بيانات دخول مخترعة)، 14 سيناريو وظيفي (T-UAT-01–14: دخول، عمل مسند، استلام، HOLD، PASS≠RELEASED، مختبر، Finding/NCR/CAPA، اعتماد+SoD، WI/SOP، معايرة، تقارير، تدقيق) بخطوات facilitator مربوطة بمسارات `src/pages/**` الحقيقية، 6 سيناريوهات سلبية Tier-1 (N-UAT-01–06)، و4 سيناريوهات وصولية (A-UAT-01–04: كيبورد/RTL/زوم/تقليل حركة).
+- طبقت TDD للفاليديتور: `tests/unit/uat/uat-record-validator.test.ts` فشل RED (6/6، ملف غير موجود) ثم `audit/100-percent/uat/validate-uat-records.mjs` قلبها GREEN (6/6) — يتحقق من الهيدر والـenums وترتيب الوقت وتثبيت الـSHA، والملف الفاضي يرجع `UAT EXECUTION REQUIRED` بصفر جلسات بدل التلفيق.
+- تركت كل قوالب الأدلة فاضية عمدًا: `UAT-SESSION-RECORD.csv` (هيدر فقط)، `UAT-DEFECT-BACKLOG.csv` (هيدر فقط)، `UAT-COVERAGE-MATRIX.csv` (24 سيناريو كلها `NOT EXECUTED`)؛ التشغيل الحي للفاليديتور أكد `sessions=0`.
+- وثقت C-24–C-26 في `FINAL-EVIDENCE-INDEX.md` ودلتا R-005 في `FINAL-OPEN-RISKS.md` (يبقى OPEN)؛ رجعت حذفًا غير مرتبط في `audit/prompt4.md` بـ`git checkout`.
+
+### الملفات المتأثرة
+- `audit/100-percent/QC-100-CLOSURE-06-UAT-KIT.md`
+- `audit/100-percent/uat/validate-uat-records.mjs`
+- `audit/100-percent/uat/UAT-SESSION-RECORD.csv`
+- `audit/100-percent/uat/UAT-DEFECT-BACKLOG.csv`
+- `audit/100-percent/uat/UAT-COVERAGE-MATRIX.csv`
+- `tests/unit/uat/uat-record-validator.test.ts`
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md`
+- `audit/100-percent/FINAL-OPEN-RISKS.md`
+
+### التحقق
+- validator حي على القالب ✅ — `UAT EXECUTION REQUIRED / sessions=0` exit 0
+- `pnpm test:unit` ✅ — 30 ملفًا / 117 اختبارًا (111 سابقة + 6 جديدة)
+- `pnpm test:architecture` ✅، `pnpm format:check` ✅، `pnpm lint` ✅، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة)
+- `git diff --check` ✅
+- Node `v24.20.0` + pnpm `11.25.0` داخل العقد؛ HEAD `1d0ef75` على `main`
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** الـkit والأدوات جاهزة ومختبرة، لكن R-005 يبقى مفتوحًا: صفر جلسات مشاركين، ولا إغلاق بدون نتايج بشرية حقيقية وقبول ACCEPTED على نفس الـrelease candidate.
+
+### ملاحظات / مشاكل مفتوحة
+- R-001 (شق restore)، R-002 (النصف المصادق)، R-003 (إثبات CI)، R-004، R-006–R-010 تبقى OPEN.
+- لا commit أو push أو deploy أو production mutation.
+
 ## [2026-09-08] — QC-100-CLOSURE-05: Render Production Runtime and Provider Evidence Closure
 
 ### تم التنفيذ
