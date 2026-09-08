@@ -24,10 +24,13 @@ async function expectNoAxeViolations(page: Page, surface: string): Promise<void>
   expect(result.violations, `${surface} has WCAG 2.2 AA violations`).toEqual([]);
 }
 
-async function assertKeyboardOrder(page: Page): Promise<void> {
-  const identity = page.getByLabel('Login identity');
-  const credential = page.getByLabel('Password');
-  const submit = page.getByRole('button', { name: 'Sign in' });
+async function assertKeyboardOrder(
+  page: Page,
+  labels = { identity: 'Login identity', password: 'Password', submit: 'Sign in' },
+): Promise<void> {
+  const identity = page.getByLabel(labels.identity);
+  const credential = page.getByLabel(labels.password);
+  const submit = page.getByRole('button', { name: labels.submit });
 
   await identity.focus();
   await expect(identity).toBeFocused();
@@ -76,6 +79,26 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     await expect(page.getByLabel('Password')).toHaveAttribute('autocomplete', 'current-password');
     await expectNoAxeViolations(page, 'English login');
     await assertKeyboardOrder(page);
+  });
+
+  test('Arabic RTL login has localized accessible names and no axe violations', async ({
+    page,
+  }) => {
+    await page.goto('/login?locale=ar');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.getByRole('heading', { name: 'تسجيل الدخول' })).toBeVisible();
+    await expect(page.getByLabel('معرّف الدخول')).toHaveAttribute('autocomplete', 'username');
+    await expect(page.getByLabel('كلمة المرور')).toHaveAttribute(
+      'autocomplete',
+      'current-password',
+    );
+    await expectNoAxeViolations(page, 'Arabic RTL login');
+    await assertKeyboardOrder(page, {
+      identity: 'معرّف الدخول',
+      password: 'كلمة المرور',
+      submit: 'تسجيل الدخول',
+    });
   });
 
   test('safe 404 surface has a heading, recovery links, and no axe violations', async ({

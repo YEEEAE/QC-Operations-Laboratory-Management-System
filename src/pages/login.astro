@@ -3,24 +3,44 @@ import '../ui/styles/global.css';
 import { actions } from 'astro:actions';
 const returnTo = Astro.url.searchParams.get('returnTo') ?? '/dashboard';
 const error = Astro.url.searchParams.get('error');
+const isArabic = Astro.url.searchParams.get('locale') === 'ar';
+const copy = isArabic
+  ? {
+      application: 'نظام عمليات الجودة وإدارة المختبر',
+      title: 'تسجيل الدخول',
+      description: 'وصول تشغيلي آمن',
+      error: 'تعذر إكمال تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
+      identity: 'معرّف الدخول',
+      password: 'كلمة المرور',
+      submit: 'تسجيل الدخول',
+    }
+  : {
+      application: 'QC Operations & Laboratory Management System',
+      title: 'Sign in',
+      description: 'Secure operational access',
+      error: 'Sign-in could not be completed. Check your credentials and try again.',
+      identity: 'Login identity',
+      password: 'Password',
+      submit: 'Sign in',
+    };
 ---
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang={isArabic ? 'ar' : 'en'} dir={isArabic ? 'rtl' : 'ltr'}>
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>Sign in · QC Operations</title></head>
   <body>
     <main id="main-content" class="login-shell">
       <section class="login-panel" aria-labelledby="login-title">
-      <p>QC Operations &amp; Laboratory Management System</p>
-      <h1 id="login-title">Sign in</h1>
-      <p>Secure operational access</p>
-      {error && <p id="form-error" role="alert">Sign-in could not be completed. Check your credentials and try again.</p>}
+      <p>{copy.application}</p>
+      <h1 id="login-title">{copy.title}</h1>
+      <p>{copy.description}</p>
+      {error && <p id="form-error" role="alert">{copy.error}</p>}
       <form class="login-form" method="POST" action={actions.login} aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
-        <label for="loginIdentity">Login identity</label>
+        <label for="loginIdentity">{copy.identity}</label>
         <input id="loginIdentity" name="loginIdentity" type="text" autocomplete="username" required autofocus />
-        <label for="password">Password</label>
+        <label for="password">{copy.password}</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required />
-        <button type="submit">Sign in</button>
+        <button type="submit">{copy.submit}</button>
       </form>
       </section>
     </main>

@@ -30,4 +30,11 @@ describe('enterprise application shell contracts', () => {
     expect(topbar).toContain('Search authorized records');
     expect(topbar).not.toContain('All pending approvals');
   });
+
+  it('moves dialog focus to its first usable control and restores it to the opener', () => {
+    const dialogClient = readUi('client/dialog.ts');
+    expect(dialogClient).toContain("dialog.querySelector<HTMLElement>('[autofocus]");
+    expect(dialogClient).toContain("'button:not([disabled]), [href], input:not([disabled])");
+    expect(dialogClient).toContain("dialog.addEventListener('close', () => opener?.focus())");
+  });
 });

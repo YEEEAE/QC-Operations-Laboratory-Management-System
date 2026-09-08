@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-08: WCAG 2.2 AA, RTL, keyboard and human-factors evidence slice
+
+### تم التنفيذ
+- أضفت مسار دخول عربي محدود بـ`/login?locale=ar` يحدد `lang=ar` و`dir=rtl` ويترجم عنوان ونصوص وأسماء الحقول ورسالة الخطأ، مع بقاء نفس Action ومبدأ عدم كشف صلاحيات من الـUI.
+- أضفت Playwright فعليًا للـlogin بالإنجليزي LTR والعربي RTL: Axe WCAG 2.2 AA، labels/autocomplete، ترتيب Tab، وfocus الظاهر؛ ووسّعت reflow إلى 400% لهاتين الحالتين بدون overflow أفقي.
+- حسّنت `initDialogs` بحيث ينقل focus بشكل حتمي لأول عنصر مفعّل داخل dialog بعد الفتح (يفضّل `[autofocus]`) ويرجعه للزر الفاتح عند الإغلاق؛ اختبرته بعقد unit.
+- أنشأت `ACCESSIBILITY-EVIDENCE.md` بسجل Master Header ونتائج أوامر فعلية وقائمة manual/AT/Human Factors غير منفذة بدل اعتبارها ناجحة.
+- ما ادعيت تغطية عربية أو WCAG كاملة للـworkflows المحمية: اختبارات accessibility الكاملة نفذت 3 وskipped 2 لأن fixture دخول معتمد ما توفر.
+
+### الملفات المتأثرة
+- `src/pages/login.astro`
+- `src/ui/client/dialog.ts`
+- `tests/e2e/accessibility.spec.ts`
+- `tests/e2e/responsive.spec.ts`
+- `tests/unit/ui/app-shell.test.ts`
+- `audit/100-percent/ACCESSIBILITY-EVIDENCE.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm test:unit -- tests/unit/ui/app-shell.test.ts` ✅ — 26 ملفًا / 96 اختبارًا.
+- `pnpm typecheck` ✅ — 0 errors و25 deprecation hints سابقة.
+- Playwright login/Axe Arabic+English ✅ — اختباران.
+- Playwright 400% reflow Arabic+English ✅ — اختبار واحد.
+- ملف accessibility كامل: 3 passed و2 skipped لغياب `QC_E2E_LOGIN_IDENTITY` و`QC_E2E_PASSWORD`.
+- `pnpm lint` ✅، `pnpm format:check` ✅، `pnpm build` ✅ مع warning `Writable` سابق، و`git diff --check` ✅.
+- `pnpm db:migrate:status` ❌/UNVERIFIED: `tsx` IPC pipe محجوب بـ`EPERM`؛ remote CI كذلك UNVERIFIED لأن `api.github.com` غير متاح.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** صار فيه browser evidence حقيقي للـlogin بالعربي والإنجليزي و400% reflow، وتحسن عقد focus للـdialog، لكن accessibility/RTL/Human Factors للـcritical authenticated workflows والـAT/manual UAT ما زال غير مثبت.
+
+### ملاحظات / مشاكل مفتوحة
+- Node المحلي `22.22.3` خارج العقد `>=24.20.0 <25`، لذلك النتائج المحلية لا تكفي كبوابة بيئة معتمدة.
+- يلزم توفير fixture دخول E2E غير سري وتوثيق browser/OS/AT ونتائج keyboard/modal/zoom/touch لكل Dashboard وReceiving وInspection وLaboratory وNCR/CAPA وApproval وDocuments وEquipment/Calibration وReports.
+- ملف الـmind ما زال فوق الحد العملي؛ rotation منظم للسجلات القديمة يحتاج مهمة توثيق مستقلة حتى لا ينكسر ترتيب الأرشيف.
+
 ## [2026-09-08] — QC-100-07: Enterprise QC UX, UI and Design System closure slice
 
 ### تم التنفيذ
