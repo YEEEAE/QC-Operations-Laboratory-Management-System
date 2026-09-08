@@ -18,6 +18,14 @@ import { createRequestLogger } from './shared/observability/logger';
 import { cleanAstroPagePath } from './shared/routing/clean-page-path';
 import { getServerEnv } from './config/env';
 import { PROBLEM_CONTENT_TYPE } from './config/constants';
+import {
+  degradedConfigurationResponse,
+  headerEnvironmentForHealth,
+  liveHealthResponse,
+  unavailableHealthResponse,
+} from './shared/http/health-gates.js';
+
+export { headerEnvironmentForHealth, liveHealthResponse, unavailableHealthResponse };
 
 const publicPaths = new Set(['/login']);
 
@@ -48,14 +56,116 @@ export const onRequest = defineMiddleware(
     const startedAt = process.hrtime.bigint();
     locals.requestContext = createRequestContext(request);
     const requestContext = locals.requestContext;
-    const env = getServerEnv();
+    const headerEnv = headerEnvironmentForHealth();
+    const isLiveEndpoint = url.pathname === '/api/health/live';
+    const isReadyEndpoint = url.pathname === '/api/health/ready';
+    const isMachineHealthEndpoint = isLiveEndpoint || isReadyEndpoint;
+
+    // DEPLOYMENT-ARCHITECTURE §29: liveness is process-alive and must stay
+    // dependency-free. It bypasses production env validation so Render can
+    // detect a live process even when DATABASE_URL/session/rate-limit secrets
+    // are missing or invalid. No authorization or business state is exposed.
+    if (isLiveEndpoint) {
+      const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+      const routeTemplate = normalizeRouteTemplate(url.pathname);
+      recordCounter('qc_http_requests_total', 1, {
+        route_template: routeTemplate,
+        http_method: request.method,
+        status_class: '2xx',
+        environment: headerEnv,
+      });
+      recordHistogram('qc_http_server_duration_ms', durationMs, {
+        route_template: routeTemplate,
+        http_method: request.method,
+        status_class: '2xx',
+        environment: headerEnv,
+      });
+      requestLogger.info(
+        {
+          event: 'http.request',
+          route_template: routeTemplate,
+          http_method: request.method,
+          status_class: '2xx',
+          duration_ms: durationMs,
+        },
+        'request completed',
+      );
+      return liveHealthResponse(headerEnv, requestContext.requestId);
+    }
+
+    let env: ReturnType<typeof getServerEnv>;
+    try {
+      env = getServerEnv();
+    } catch {
+      // Fail closed with redacted JSON + security headers instead of an
+      // unhandled Astro 500 page without headers/requestId. Never print values.
+      const routeTemplate = normalizeRouteTemplate(url.pathname);
+      requestLogger.warn(
+        {
+          event: 'config.invalid_environment',
+          route_template: routeTemplate,
+        },
+        'invalid server environment configuration',
+      );
+      if (isReadyEndpoint) return unavailableHealthResponse(headerEnv, requestContext.requestId);
+      return degradedConfigurationResponse(requestContext.requestId, headerEnv);
+    }
+    if (isReadyEndpoint) {
+      // Readiness keeps its JSON 200/503 contract via the route probe; the
+      // middleware only adds headers/observability and never upgrades 503.
+      try {
+        const response = await runWithCorrelation(
+          {
+            requestId: requestContext.requestId,
+            traceId: requestContext.traceId,
+            spanId: requestContext.spanId,
+          },
+          () => next(),
+        );
+        const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+        const routeTemplate = normalizeRouteTemplate(url.pathname);
+        const statusClass = `${Math.floor(response.status / 100)}xx`;
+        recordCounter('qc_http_requests_total', 1, {
+          route_template: routeTemplate,
+          http_method: request.method,
+          status_class: statusClass,
+          environment: env.NODE_ENV,
+        });
+        recordHistogram('qc_http_server_duration_ms', durationMs, {
+          route_template: routeTemplate,
+          http_method: request.method,
+          status_class: statusClass,
+          environment: env.NODE_ENV,
+        });
+        requestLogger.info(
+          {
+            event: 'http.request',
+            route_template: routeTemplate,
+            http_method: request.method,
+            status_class: statusClass,
+            duration_ms: durationMs,
+          },
+          'request completed',
+        );
+        const withRequestId = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: (() => {
+            const merged = new Headers(response.headers);
+            merged.set('x-request-id', requestContext.requestId);
+            return merged;
+          })(),
+        });
+        return applySecurityHeaders(withRequestId, env.NODE_ENV);
+      } catch {
+        return unavailableHealthResponse(env.NODE_ENV, requestContext.requestId);
+      }
+    }
 
     // qclevel.top is the only production origin. Render's custom-domain
     // pairing handles www, while this fixed destination also canonicalizes
     // the Render hostname and any unexpected host without trusting Host data.
     const cleanPagePath = cleanAstroPagePath(url.pathname);
-    const isMachineHealthEndpoint =
-      url.pathname === '/api/health/live' || url.pathname === '/api/health/ready';
     if (
       env.NODE_ENV === 'production' &&
       !isMachineHealthEndpoint &&

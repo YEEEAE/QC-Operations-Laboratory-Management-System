@@ -31,6 +31,11 @@
 
 These are open risks, not claims that the underlying implementation is absent. Static implementation and focused tests can reduce risk without closing runtime or policy evidence gates.
 
+## QC-100-CLOSURE-05 status delta (base HEAD `4384c76`, 2026-09-08)
+
+- PROD-05-A recorded as CRITICAL and OPEN: deployed `qclevel.top` returns `500` HTML (no security headers, no `x-request-id`, no JSON contract) on `/`, `/login`, `/api/health/live`, `/api/health/ready` at probe time. Local code fix (health-gates + reordered middleware, `3/3` new tests GREEN, full `test:unit 29/111` GREEN) is UNDEPLOYED and closes nothing in production. Needs operator secret verification + controlled redeploy + §30 post-deploy verification. Deployed SHA/version/build/Node/logs remain BLOCKED (no Render API access); DB private/internal topology proof remains BLOCKED; external telemetry exporter stays OPTIONAL-per-architecture (not invented). No risk CLOSED in this task.
+- No other risk ID changes in this task; R-001 (restore half), R-002 (authenticated half), R-003 (needs container-capable CI behavior proof), R-004, R-005–R-010 remain OPEN as previously recorded.
+
 ## QC-100-CLOSURE-02 status delta (HEAD `1927aeb`, 2026-09-08)
 
 - R-003 narrowed to static-closure: source `rg` scan and the fixed guard now agree — ZERO unapproved direct Delivery → DB/infrastructure imports (evidence C-07–C-11 in `FINAL-EVIDENCE-INDEX.md`). Composition moved to 11 narrow per-capability application factories; guard detects the exact violation patterns and has 5/5 regression tests. R-003 cannot be marked fully CLOSED until a container-capable CI run executes the DB-backed suites (integration/migration/concurrency/security) and E2E against this refactored HEAD, because behavior preservation is currently proven statically (typecheck/unit/build/guard) rather than against live PostgreSQL.

@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-05: Render Production Runtime and Provider Evidence Closure
+
+### تم التنفيذ
+- فحصت الإنتاج قراءة فقط: qclevel.top يرجع 500 HTML على / و/login و/api/health/live و/api/health/ready بدون security headers ولا x-request-id ولا JSON، مع redirect صحيح http→https وتنقيح أخطاء سليم بدون تسريب.
+- شخصت الجذر: middleware كان ينادي getServerEnv قبل تجاوز الصحة فيرمي InvalidEnvironmentError ويسقط كل الطلبات حتى live؛ أعدت الترتيب عبر health-gates.ts النقي (live يتجاوز التحقق، ready يتدهور لـ503 JSON، غيرها 503 problem+json مغلق الفشل) بدون إضعاف auth/CSP/RBAC/TLS.
+- أضفت اختبار TDD middleware-health (RED→GREEN 3/3) وثبت عقد render.yaml (لا migrate/seed/bootstrap تلقائي، لا BOOTSTRAP_ADMIN_*، healthCheckPath ready) وسجلت أدلة PROD-05-A الحرجة بدون إغلاق زائف.
+
+### الملفات المتأثرة
+- `src/shared/http/health-gates.ts`
+- `src/middleware.ts`
+- `tests/unit/http/middleware-health.test.ts`
+- `audit/100-percent/QC-100-CLOSURE-05-RENDER-RUNTIME-EVIDENCE.md`
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md`
+- `audit/100-percent/FINAL-OPEN-RISKS.md`
+
+### التحقق
+- focused health/render/release/security/correlation/system-health ✅ — 6 ملفات / 46 اختبارًا
+- `pnpm test:unit` ✅ — 29 ملفًا / 111 اختبارًا (108 سابقة + 3 جديدة)
+- `pnpm test:architecture` ✅، `pnpm format:check` ✅، `pnpm lint` ✅، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة)
+- `pnpm build` ✅، `git diff --check` ✅
+- إنتاج حي: FAIL — كل الأسطح 500؛ Node محلي v22.22.3 خارج العقد فالنتائج محلية فقط
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** عيب liveness/readiness الكودي مثبت ومصلح محليًا باختبارات خضراء، لكن الإنتاج المنشور ما زال DOWN (PROD-05-A) ويحتاج تحقق مشغل وإعادة نشر مضبوطة قبل أي قبول.
+
+### ملاحظات / مشاكل مفتوحة
+- Deployed SHA/version/build/Node/logs وDB private/internal وtelemetry exporter: BLOCKED بدون Render API — لم تُدعَ.
+- R-004/R-009/R-001-restore/R-002-auth/R-006/R-008 تبقى OPEN؛ لا commit أو push أو deploy أو production mutation.
+
 ## [2026-09-08] — QC-100-CLOSURE-04: Browser E2E, Accessibility, Visual and Lottie Runtime Closure
 
 ### تم التنفيذ
