@@ -1,3 +1,4 @@
+/* global console: readonly */
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import process from 'node:process';

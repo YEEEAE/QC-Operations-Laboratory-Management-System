@@ -13,4 +13,10 @@
 | R-009 | Runtime version mismatch remains | Node `v22.22.3` vs package contract `>=24.20.0 <25` | reproducibility, CI parity, DevEx | execute using Node `24.20.0` and record output |
 | R-010 | Historical scorecard is not a closure certificate | prior scorecard itself lists 5 FAIL and 90 UNVERIFIED | all domains | fresh row-level evidence on exact HEAD |
 
+## QC-100-CLOSURE-01 status delta (HEAD `f9c8eb9`, 2026-09-08)
+
+- R-004 stays OPEN: exact-HEAD Verification CI run `34187138555` is `completed/failure` with zero executed steps; the check-run annotation proves the job never started because the GitHub account is locked for billing. This is an external account blocker, not a source failure, and no source edit can clear it. Closure needs the operator to resolve billing, push (or re-run), then attach the fresh successful run for the new SHA.
+- R-009 narrowed but stays OPEN: Node `v24.20.0` + pnpm `11.25.0` execution is now evidenced for install/format/lint/typecheck/architecture/tech-debt/unit/build/release-identity/release-verify on exact HEAD (see C-02–C-06 in `FINAL-EVIDENCE-INDEX.md`). It cannot close until DB-backed suites (integration/migration/concurrency/security) and E2E execute on Node 24 in an environment with container runtime + Playwright browsers — i.e. a green remote CI run.
+- Fixed in this task (toolchain only, no app behavior change): `pnpm-workspace.yaml` sharp-builds placeholder → explicit `false`; `check-tech-debt.mjs` file-scoped `console` global. Both were hard CI-gate failures independent of billing.
+
 These are open risks, not claims that the underlying implementation is absent. Static implementation and focused tests can reduce risk without closing runtime or policy evidence gates.

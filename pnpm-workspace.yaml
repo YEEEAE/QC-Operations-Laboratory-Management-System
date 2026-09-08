@@ -3,6 +3,7 @@ allowBuilds:
   cpu-features: true
   esbuild: true
   protobufjs: true
+  sharp: false
   ssh2: true
 minimumReleaseAgeExclude:
   - '@eslint/plugin-kit@0.7.3'

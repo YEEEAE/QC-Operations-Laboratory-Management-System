@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-01: GitHub Actions pre-step failure + Node runtime parity
+
+### تم التنفيذ
+- شخصت سبب فشل Verification CI: الـVerify job يخلص بـ3 ثواني وصفر steps لأن حساب GitHub مقفل بسبب billing (annotation رسمي)، وتأكد نفس السبب على 4 runs متتالية بما فيها HEAD الحالي؛ الـworkflow سليم والـactions كلها v4.
+- أصلحت placeholder في `pnpm-workspace.yaml` (`sharp: set this to true or false` → `false`) كان يكسر كل `pnpm install`/script بخطأ `ERR_PNPM_IGNORED_BUILDS`؛ القرار deny صريح بدون إضعاف أمني.
+- أصلحت lint في `scripts/release/check-tech-debt.mjs` بإضافة `/* global console: readonly */` على مستوى الملف فقط بدون تغيير قواعد عامة.
+- شغلت مرآة CI محلية على Node `v24.20.0` + pnpm `11.25.0` للـHEAD `f9c8eb9`: format/lint/typecheck/architecture/tech-debt/unit/build/release-identity/release-verify كلها خضراء.
+- حدثت `FINAL-EVIDENCE-INDEX.md` و`FINAL-OPEN-RISKS.md` بالأدلة الجديدة؛ أبقيت R-004 وR-009 مفتوحة بأسباب موثقة.
+
+### الملفات المتأثرة
+- `pnpm-workspace.yaml`
+- `scripts/release/check-tech-debt.mjs`
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md`
+- `audit/100-percent/FINAL-OPEN-RISKS.md`
+
+### التحقق
+- `pnpm install --frozen-lockfile` ✅ exit 0 على Node 24.20.0.
+- `pnpm format:check` ✅، `pnpm lint` ✅، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة).
+- `pnpm test:architecture` ✅، `release:tech-debt:check` ✅ (6 items).
+- `pnpm test:unit` ✅ — 103/103.
+- `pnpm test:integration` ⚠️ — 57 ملف / 192 اختبار ناجح، 12 ملف فشل setup لغياب container runtime (صفر assertion failures).
+- `pnpm test:migrations` / `test:concurrency` ⚠️ — نفس سبب الـcontainer؛ `test:security` ✅ جزئي (41 passed، ملف واحد container-blocked).
+- `pnpm build` ✅، `release:identity` + `release:verify` ✅ على نفس الـSHA.
+- `git diff --check` ✅؛ Remote CI للـHEAD الحالي: completed/failure بصفر steps (billing lock خارجي).
+- E2E لم يُشغّل محليًا: لا يوجد Playwright browsers على المضيف.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** السبب الحقيقي لفشل CI قبل الخطوات صار مثبتًا (billing lock خارجي لا يُصلح بالكود)، والـtoolchain المحلي صار يعمل على Node 24، لكن R-004 وR-009 يبقيان مفتوحين حتى run أخضر جديد بعد حل الفوترة.
+
+### ملاحظات / مشاكل مفتوحة
+- المشغّل لازم يحل billing في GitHub ثم يدفع/يعيد التشغيل ويلتقط الـrun الجديد للـSHA الجديد — ممنوع عليّ الدفع.
+- DB suites وE2E تحتاج CI أخضر (container runtime + Chromium) على Node 24.
+- ملف `audit/prompt4.md` غير متتبع وموجود قبل المهمة؛ لم ألمسه.
+
 ## [2026-09-08] — QC-100-13: Final evidence closure audit for AI, UX research, UAT and 100 domains
 
 ### تم التنفيذ
