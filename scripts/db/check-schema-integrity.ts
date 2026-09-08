@@ -5,6 +5,12 @@ import { loadMigrations, verifyMigrationIntegrity } from './migrate.js';
 
 import './load-local-env.js';
 
+// Canonical actor-lineage column per table. DATA-DICTIONARY/DATA-MODEL define
+// `requested_by` (not `created_by`) as the actor lineage for change_requests.
+const lineageActorColumns: Record<string, string> = {
+  change_requests: 'requested_by',
+};
+
 const lineageTables = [
   'users',
   'tasks',
@@ -80,10 +86,11 @@ export async function checkSchemaIntegrity(): Promise<{
            )
            OR NOT EXISTS (
              SELECT 1 FROM information_schema.columns c
-             WHERE c.table_schema = t.table_schema AND c.table_name = t.table_name AND c.column_name = 'created_by'
+             WHERE c.table_schema = t.table_schema AND c.table_name = t.table_name
+               AND c.column_name = COALESCE($2::jsonb ->> t.table_name, 'created_by')
            )
          )`,
-      [lineageTables],
+      [lineageTables, JSON.stringify(lineageActorColumns)],
     );
     if (missingLineage.rowCount !== 0) {
       throw new Error(`Lineage contract failed for ${missingLineage.rowCount} tables.`);

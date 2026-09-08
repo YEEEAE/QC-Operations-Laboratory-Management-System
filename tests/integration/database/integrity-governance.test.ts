@@ -27,6 +27,12 @@ const LINEAGE_TABLES = [
   'change_requests',
 ] as const;
 
+// Canonical actor-lineage column per table. DATA-DICTIONARY/DATA-MODEL define
+// `requested_by` (not `created_by`) as the actor lineage for change_requests.
+const LINEAGE_ACTOR_COLUMNS: Record<string, string> = {
+  change_requests: 'requested_by',
+};
+
 const BUSINESS_NUMBER_COLUMNS = [
   ['tasks', 'task_no'],
   ['findings', 'finding_no'],
@@ -142,7 +148,7 @@ describe('PostgreSQL integrity, governance, and drift contracts', () => {
         )
       ).rows.map(({ column_name }) => column_name);
       expect(columns, `${table} lineage columns`).toEqual(
-        expect.arrayContaining(['created_at', 'created_by']),
+        expect.arrayContaining(['created_at', LINEAGE_ACTOR_COLUMNS[table] ?? 'created_by']),
       );
       expect(columns, `${table} optimistic version`).toContain('version');
     }

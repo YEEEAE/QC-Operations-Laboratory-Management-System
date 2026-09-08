@@ -63,7 +63,9 @@ export async function runDatabasePreflight(
         to_regnamespace('qc') IS NOT NULL AS qc_exists,
         to_regclass('qc.users') IS NOT NULL AS users_exists,
         to_regclass('qc.schema_migrations') IS NOT NULL AS migrations_exists,
-        has_schema_privilege(current_user, 'qc', 'USAGE') AS schema_usage,
+        CASE WHEN to_regnamespace('qc') IS NOT NULL
+          THEN has_schema_privilege(current_user, 'qc', 'USAGE')
+          ELSE NULL END AS schema_usage,
         CASE WHEN to_regclass('qc.users') IS NOT NULL
           THEN has_table_privilege(current_user, 'qc.users', 'SELECT')
           ELSE false END AS users_select,

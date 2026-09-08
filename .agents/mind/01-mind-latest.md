@@ -1,5 +1,37 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-03: PostgreSQL Runtime, Migration, Integrity and Authorization Closure
+
+### تم التنفيذ
+- شغلت Docker Desktop محليًا (كان طافيًا) فصارت Testcontainers على `postgres:18-alpine` متاحة، وجهزت قاعدة مؤقتة PostgreSQL `18.6` للـ`db:*` scripts ثم دمرتها بعد المهمة؛ بدون أي لمس لقاعدة إنتاج وبدون طباعة أسرار.
+- أصلحت `db:preflight` التي كانت تفشل `3F000 schema qc does not exist` على قاعدة فاضية (حماية `has_schema_privilege` بـ`CASE` ترجع `NULL`)، ثم سجلت Phase A كاملة: preflight PASS، ترحيل 18/18 بدون معلق، checksums سليمة، schema check (60 جدول/0 يتيم)، بذرة `4/198/164` idempotent، وإعادة الترحيل no-op.
+- صححت عقد النسب لجدول `change_requests` في `check-schema-integrity.ts` و`integrity-governance.test.ts` من `created_by` إلى `requested_by` حسب DATA-DICTIONARY §53 وDATA-MODEL §109، وأصلحت teardown مزدوج `pool.end()` وعزلة هوية rate-limit في `rate-limit.test.ts` بعد فشل مثبت (`expected 6 to be 1` من تلوث قاعدة مشتركة).
+- سجلت Phase B على PostgreSQL 18 حقيقية: migrations 22/22، concurrency 12/12، security 42/42 (مرتين)، integration 69 ملف/234 اختبار بدون فشل؛ وحدثت `FINAL-EVIDENCE-INDEX.md` (C-13 إلى C-17) و`FINAL-OPEN-RISKS.md` (تضييق R-001) بدون إغلاق زائف.
+
+### الملفات المتأثرة
+- `scripts/db/preflight.ts`
+- `scripts/db/check-schema-integrity.ts`
+- `tests/integration/database/integrity-governance.test.ts`
+- `tests/integration/security/rate-limit.test.ts`
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md`
+- `audit/100-percent/FINAL-OPEN-RISKS.md`
+
+### التحقق
+- `pnpm format:check` ✅، `pnpm lint` ✅ (0 errors)، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة).
+- `pnpm test:unit` ✅ — 28 ملفًا / 108 اختبارات.
+- `pnpm test:migrations` ✅ 22/22، `test:concurrency` ✅ 12/12، `test:security` ✅ 42/42 (مرتين)، `test:integration` ✅ 69/69 ملفًا / 234 ناجح / 1 skipped.
+- `pnpm test:architecture` ✅، `pnpm build` ✅، `git diff --check` ✅.
+- Node `v24.20.0` + pnpm `11.25.0` داخل العقد؛ HEAD `3f92569` على `main` والشجرة فيها ملفات المهمة فقط.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** كل أدلة PostgreSQL runtime للـHEAD الحالي صارت مثبتة محليًا على PG18 (ترحيل/نزاهة/تفويض سلبي/تزامن/idempotency/audit)، لكن R-001 تضيّق فقط (بقى شق restore لـR-006) وR-004 البعيد ما زال ينتظر CI أخضر بعد billing.
+
+### ملاحظات / مشاكل مفتوحة
+- Remote CI للـHEAD الحالي ما زال `completed/failure` بصفر steps (billing lock خارجي)؛ R-004 مفتوح.
+- E2E/UAT/restore drill/provider evidence خارج نطاق هذه المهمة وما زالت مفتوحة (R-002/R-005/R-006/R-008).
+- لا يوجد commit أو push أو deploy أو production mutation.
+
 ## [2026-09-08] — QC-100-CLOSURE-02: Delivery Layer / Database Boundary Enforcement
 
 ### تم التنفيذ

@@ -161,21 +161,25 @@ describe('postgres rate limit store', () => {
 
   afterAll(async () => {
     await database?.destroy();
-    await pool?.end();
+    await pool?.end().catch(() => undefined);
     await stopPostgresContainer();
   });
 
   it('increments atomically inside a fixed window and starts a new window after expiry', async () => {
     const store = new PostgresRateLimitStore(database);
+    // Unique bucket per run: the shared disposable cluster is reused across
+    // files and runs, so a fixed identity would observe leftover window counts.
+    const identity = `ip-1-${process.hrtime.bigint()}`;
+    const otherIdentity = `ip-2-${process.hrtime.bigint()}`;
     const windowStart = 1_700_000_000_000;
-    const first = await store.increment('LOGIN', 'ip-1', windowStart, windowStart + 60_000);
+    const first = await store.increment('LOGIN', identity, windowStart, windowStart + 60_000);
     expect(first.count).toBe(1);
-    const second = await store.increment('LOGIN', 'ip-1', windowStart, windowStart + 60_000);
+    const second = await store.increment('LOGIN', identity, windowStart, windowStart + 60_000);
     expect(second.count).toBe(2);
     const concurrent = await Promise.all([
-      store.increment('LOGIN', 'ip-1', windowStart, windowStart + 60_000),
-      store.increment('LOGIN', 'ip-1', windowStart, windowStart + 60_000),
-      store.increment('LOGIN', 'ip-2', windowStart, windowStart + 60_000),
+      store.increment('LOGIN', identity, windowStart, windowStart + 60_000),
+      store.increment('LOGIN', identity, windowStart, windowStart + 60_000),
+      store.increment('LOGIN', otherIdentity, windowStart, windowStart + 60_000),
     ]);
     expect(concurrent.map((r) => r.count).sort()).toEqual([1, 3, 4]);
   });

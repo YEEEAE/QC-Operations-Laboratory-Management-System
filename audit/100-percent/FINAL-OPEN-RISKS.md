@@ -19,6 +19,11 @@
 - R-009 narrowed but stays OPEN: Node `v24.20.0` + pnpm `11.25.0` execution is now evidenced for install/format/lint/typecheck/architecture/tech-debt/unit/build/release-identity/release-verify on exact HEAD (see C-02–C-06 in `FINAL-EVIDENCE-INDEX.md`). It cannot close until DB-backed suites (integration/migration/concurrency/security) and E2E execute on Node 24 in an environment with container runtime + Playwright browsers — i.e. a green remote CI run.
 - Fixed in this task (toolchain only, no app behavior change): `pnpm-workspace.yaml` sharp-builds placeholder → explicit `false`; `check-tech-debt.mjs` file-scoped `console` global. Both were hard CI-gate failures independent of billing.
 
+## QC-100-CLOSURE-03 status delta (HEAD `3f92569`, 2026-09-08)
+
+- R-001 NARROWED (not closed): migration, constraint, transaction, negative-authorization, concurrency, idempotency, and audit/outbox evidence is now current for this HEAD — 18/18 migrations applied with zero pending and repeat no-op, `tableCount 60 / orphanCount 0`, foundation seed `4/198/164` idempotent, and DB-backed suites green on PostgreSQL 18 (`test:migrations` 22/22, `test:concurrency` 12/12, `test:security` 42/42 twice, `test:integration` 234 passed / 0 failed / 1 skipped) — see C-13–C-17 in `FINAL-EVIDENCE-INDEX.md`. What remains under this ID is the restore-drill half of its required evidence ("and restore tests against named PostgreSQL"), which still belongs to R-006, plus the fact that applied-state evidence covers disposable databases, not a production target. R-009 is additionally narrowed for the DB-backed path (Node `24.20.0` execution now evidenced for all DB suites); full R-009 closure still needs the remote CI run (R-004).
+- No other risk ID changes in this task; R-002, R-003 (needs container-capable CI behavior proof of the CLOSURE-02 refactor), R-004–R-010 remain OPEN as previously recorded, except as narrowed above.
+
 These are open risks, not claims that the underlying implementation is absent. Static implementation and focused tests can reduce risk without closing runtime or policy evidence gates.
 
 ## QC-100-CLOSURE-02 status delta (HEAD `1927aeb`, 2026-09-08)
