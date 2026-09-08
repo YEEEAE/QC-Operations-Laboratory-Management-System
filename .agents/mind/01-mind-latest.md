@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-12: Production delivery, release governance and Secure SDLC evidence gate
+
+### تم التنفيذ
+- أضفت `RELEASE-GATE.md` ببوابة Go/No-Go تربط القرار بهوية الإصدار الدقيقة: release ID وGit SHA وbuild/artifact hash وmigration head وUAT/change evidence، وترفض الأدلة العامة مثل “update site”.
+- أضفت `ENVIRONMENT-MATRIX.md` للفصل الصريح بين LOCAL/DEVELOPMENT وTEST/CI وSTAGING/UAT وPRODUCTION، مع حدود البيانات والأسرار والهجرات والـpromotion invariants.
+- أضفت `TECH-DEBT-REGISTER.md` كسجل قابل للتتبع لـP0/P1 debt، مع exit evidence وحالة صادقة؛ سجّلت فيه غياب provider/UAT/DB/production evidence بدل إغلاقها افتراضيًا.
+- أضفت `scripts/release/check-tech-debt.mjs` وأمر `pnpm release:tech-debt:check` وربطته بـCI؛ checker يرفض الأعمدة المتغيرة، IDs المكررة، الحالات غير المعروفة، والصفوف الناقصة، ولا يغلق debt تلقائيًا.
+- حافظت على release identity الحالية والـRender/CI contracts كما هي، ولم أضف deploy أو migration أو seed أو bootstrap أو production mutation.
+
+### الملفات المتأثرة
+- `audit/100-percent/RELEASE-GATE.md`
+- `audit/100-percent/ENVIRONMENT-MATRIX.md`
+- `audit/100-percent/TECH-DEBT-REGISTER.md`
+- `scripts/release/check-tech-debt.mjs`
+- `package.json`
+- `.github/workflows/ci.yml`
+
+### التحقق
+- `node scripts/release/check-tech-debt.mjs` ✅ — 6 سجلات.
+- `prettier --check` على كل الملفات المعدلة ✅.
+- اختبارات release/render المركزة ✅ — 2 ملفات / 10 اختبارات.
+- `node scripts/architecture/check-boundaries.mjs` ✅.
+- `git diff --check` ✅.
+- CI البعيد، dependency vulnerability/SBOM/provenance، Staging/UAT، PostgreSQL runtime، production deployment/smoke والـrollback ما زالت UNVERIFIED؛ لم تُنفذ من بيئة المهمة.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** صار عندنا release gate وenvironment matrix وtechnical-debt automation قابلة للتشغيل ومربوطة بالـCI، لكن QC-100-12 لا يُغلق ولا يتحول إلى GO بدون أدلة provider/CI/UAT/DB/production الحالية.
+
+### ملاحظات / مشاكل مفتوحة
+- Current source migration head هو `0018_rate_limit_windows`، بينما applied database head غير مثبت.
+- Node المحلي خارج عقد المشروع حسب سجلات المهمة السابقة؛ نتائج التحقق المحلية لا تستبدل CI تحت Node `24.20.0`.
+
 ## [2026-09-08] — QC-100-11: Backup, recovery, restore verification and continuity evidence slice
 
 ### تم التنفيذ

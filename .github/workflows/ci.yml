@@ -58,6 +58,9 @@ jobs:
       - name: Architecture boundaries
         run: pnpm test:architecture
 
+      - name: Technical debt register contract
+        run: pnpm release:tech-debt:check
+
       - name: Unit tests
         run: pnpm test:unit
 

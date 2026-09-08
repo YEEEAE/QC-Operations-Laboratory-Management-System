@@ -27,6 +27,7 @@
     "test:coverage": "vitest run --coverage",
     "release:identity": "node scripts/release/release-id.mjs",
     "release:verify": "node scripts/release/verify-release.mjs --input dist/release-identity.json",
+    "release:tech-debt:check": "node scripts/release/check-tech-debt.mjs",
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:migrate:status": "tsx scripts/db/migration-status.ts",
     "db:migrate:check": "tsx scripts/db/check-migration-integrity.ts",
