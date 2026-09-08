@@ -1,5 +1,44 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-13: Final evidence closure audit for AI, UX research, UAT and 100 domains
+
+### تم التنفيذ
+- أضفت dataset حتمي غير سري من 14 حالة AI يغطي حدود QC limits والسياسات/WI-SOP والتوصيات الخطرة وطلبات السجلات غير المصرح بها وprompt injection وتسريب النطاق والمدخلات السرية وmalformed output/outage/timeout/refusal/user override/human confirmation.
+- أضفت `tests/integration/ai-advisory/evals.test.ts` يمرر الحالات عبر `GetAdvisoryUseCase` الحقيقي، ويتحقق من `DENIED/REFUSED/UNAVAILABLE/AVAILABLE` ومن عدم وصول الحالات المرفوضة إلى provider.
+- أضفت حزمة usability قابلة للتنفيذ فيها 7 أدوار و11 مهمة حرجة ومقاييس task success/time/errors/backtracking/navigation/form correction/assistance/confidence، ووسمت النتائج `UNVERIFIED` لعدم وجود مشاركين منفذين.
+- أضفت re-audit مستقل للـ100 domain وفهرس أدلة ومخاطر مفتوحة وقرار إنتاج مربوط بالـHEAD الحالي؛ لم أرفع أي domain بسبب غياب أدلة runtime/UAT/CI/restore.
+- سجلت الواقع الحالي: `main`، HEAD `ca8d1bdc49d84cb447c88ed12d380a38ff3940e9`، Node `v22.22.3` خارج العقد `>=24.20.0 <25`، pnpm `11.25.0`، migration source head `0018_rate_limit_windows.sql`، والـworking tree كان نظيفًا قبل المهمة.
+
+### الملفات المتأثرة
+- `audit/100-percent/ai-evals/deterministic-eval-dataset.json`
+- `tests/integration/ai-advisory/evals.test.ts`
+- `audit/100-percent/USABILITY-STUDY-PACKAGE.md`
+- `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md`
+- `audit/100-percent/FINAL-EVIDENCE-INDEX.md`
+- `audit/100-percent/FINAL-OPEN-RISKS.md`
+- `audit/100-percent/FINAL-PRODUCTION-DECISION.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- focused AI suite ✅ — 3 files / 38 tests passed.
+- `pnpm test:unit` ✅ — 27 files / 103 tests passed.
+- `pnpm typecheck` ✅ — 0 errors، 25 hints.
+- `pnpm build` ✅ — Astro server build completed؛ warning سابق عن `Writable` غير مستخدم.
+- `pnpm format:check` ✅ — بعد تنسيق ملفات المهمة.
+- `pnpm lint` ❌ — existing `scripts/release/check-tech-debt.mjs:48` يستخدم `console` بدون تعريف ESLint.
+- `pnpm test` ❌ — 84 files passed، 12 PostgreSQL/Testcontainers suites failed لغياب container runtime، 295 passed و42 skipped.
+- `pnpm test:architecture` ✅ — guard exit 0، مع بقاء scan مستقل يثبت مخالفات Delivery موثقة في `R-003`.
+- `git diff --check` ✅؛ GitHub API/remote CI ❌/UNVERIFIED من هذا المضيف.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** AI governance صار له eval suite حتمي ناجح وحزمة usability/UAT صار لها بروتوكول تنفيذي، لكن القرار الدقيق يبقى `NOT YET 100/100` بمتوسط baseline `49.35/100` بسبب أدلة التشغيل والـUAT والـCI والـrestore والسياسات المفتوحة.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد claim عن participant results أو PostgreSQL applied migrations أو remote CI أو production/provider evidence.
+- `pnpm lint` ما زال يفشل في ملف release checker موجود قبل هذه المهمة؛ لم أضعف القاعدة بإخفاء الخطأ.
+- لا يوجد commit أو push أو deploy أو production mutation.
+
 ## [2026-09-08] — QC-100-12: Production delivery, release governance and Secure SDLC evidence gate
 
 ### تم التنفيذ
