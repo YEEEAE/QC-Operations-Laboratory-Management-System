@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-AUTH-LOGIN-500-002: إصلاح انهيار Astro Action في مسار الدخول
+
+### تم التنفيذ
+- أعدت إنتاج 500 محليًا على طلب Astro الحقيقي `POST /login?_astroAction=login`؛ الـpayload الداخلي كشف الخطأ `Right-hand side of 'instanceof' is not an object` بدل خطأ بيانات دخول آمن.
+- ثبتّ السبب الجذري في `src/actions/auth.ts`: شرط `error instanceof ActionError` يعتمد على runtime constructor غير موثوق بعد SSR bundling في Astro 4، فكان مسار معالجة الخطأ نفسه ينهار.
+- أضفت فحصًا structural آمنًا لـAstro Action errors في `src/shared/errors/action-error.ts`، واستبدلت شرط `instanceof` في login فقط بدون تعطيل المصادقة أو الصلاحيات.
+- أضفت regression contract يثبت قبول شكل Astro Action error ورفض Error عادي أو payload ناقص.
+- اختبرت POST ثم GET المتبوع محليًا مع قاعدة غير متاحة: النتيجة صارت رجوعًا لصفحة الدخول بحالة `400` ورسالة عامة، وسجل الخادم كتب `auth.login.failure` مع `requestId`؛ لم يعد fallback 500 يظهر.
+
+### الملفات المتأثرة
+- `src/actions/auth.ts`
+- `src/shared/errors/action-error.ts`
+- `tests/integration/actions/auth-actions.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 أخطاء، 26 hints deprecated/legacy.
+- `pnpm lint` ✅.
+- `pnpm format:check` ✅.
+- `pnpm test:unit` ✅ — 31 ملفًا / 127 اختبارًا.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — مع warning سابق عن `Writable` غير مستخدم.
+- اختبارات auth المركزة ✅ — 3 ملفات / 4 اختبارات.
+- فحص HTTP محلي Astro dev ✅ — `GET /login` 200، POST الفاشل 302، والطلب المتبوع رجع login بحالة 400 بدون صفحة 500.
+- جهزت PostgreSQL 18 disposable مع TLS مؤقت، طبقت migrations `18/18` وFoundation seed وأنشأت حساب `login-e2e` مؤقتًا؛ الحاوية والشهادة حُذفتا بعد الاختبار.
+- شغلت رحلة متصفح كاملة على نفس قاعدة الاختبار: دخول خاطئ برسالة آمنة، دخول صحيح إلى Dashboard، refresh مع بقاء الجلسة، صفحة محمية، logout، رفض الوصول بعد logout، ومنع `returnTo` الخارجي؛ النتيجة `LOGIN_E2E_PASS`.
+
+### النتيجة
+- **الحالة:** نجح محليًا.
+- **مختصر:** أُصلح السبب الجذري لمسار 500، وثبتت رحلة الدخول الكاملة محليًا على PostgreSQL 18 disposable مع بقاء الحماية والتحويل الداخلي والـlogout سليمة.
+
+### ملاحظات / مشاكل مفتوحة
+- Node المحلي `22.23.1` خارج عقد المشروع `>=24.20.0 <25`؛ build/typecheck مرّا لكن الدليل محلي فقط.
+- لم يُختبر deploy الإنتاج أو request reference المقدم على production؛ يلزم نشر الإصلاح عبر مسار النشر المعتمد ثم إعادة smoke test هناك.
+- لا commit أو push أو deploy أو production mutation.
+
 ## [2026-09-08] — QC-AUTH-LOGIN-REDIRECT-RATE-LIMIT-001: Login redirect and rate-limit diagnosis (partial / production blocked)
 
 ### تم التنفيذ

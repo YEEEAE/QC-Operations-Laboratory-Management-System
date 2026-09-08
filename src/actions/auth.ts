@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { safeReturnTo } from '../shared/http/safe-return-to.js';
-import { toActionError } from '../shared/errors/action-error.js';
+import { isAstroActionError, toActionError } from '../shared/errors/action-error.js';
 import { identityDependencies } from '../modules/identity/application/identity-dependencies.js';
 import { LoginUseCase } from '../modules/identity/application/login.js';
 import { LogoutUseCase } from '../modules/identity/application/logout.js';
@@ -81,7 +81,7 @@ const login = defineAction({
       );
       return { ok: true, redirectTo: safeReturnTo(input.returnTo) };
     } catch (error) {
-      if (error instanceof ActionError) throw error;
+      if (isAstroActionError(error)) throw error;
       const mapped = toActionError(error, context.locals.requestContext?.requestId);
       requestLogger.warn(
         { event: 'auth.login.failure', requestId: context.locals.requestContext?.requestId },
