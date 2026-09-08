@@ -20,3 +20,8 @@
 - Fixed in this task (toolchain only, no app behavior change): `pnpm-workspace.yaml` sharp-builds placeholder → explicit `false`; `check-tech-debt.mjs` file-scoped `console` global. Both were hard CI-gate failures independent of billing.
 
 These are open risks, not claims that the underlying implementation is absent. Static implementation and focused tests can reduce risk without closing runtime or policy evidence gates.
+
+## QC-100-CLOSURE-02 status delta (HEAD `1927aeb`, 2026-09-08)
+
+- R-003 narrowed to static-closure: source `rg` scan and the fixed guard now agree — ZERO unapproved direct Delivery → DB/infrastructure imports (evidence C-07–C-11 in `FINAL-EVIDENCE-INDEX.md`). Composition moved to 11 narrow per-capability application factories; guard detects the exact violation patterns and has 5/5 regression tests. R-003 cannot be marked fully CLOSED until a container-capable CI run executes the DB-backed suites (integration/migration/concurrency/security) and E2E against this refactored HEAD, because behavior preservation is currently proven statically (typecheck/unit/build/guard) rather than against live PostgreSQL.
+- Domains 11, 27, 34, 39 remain at their current FAIL status in `FINAL-100-DOMAIN-AUDIT.md`: no score is raised without the CI runtime evidence required above. No other risk ID changes in this task; R-001, R-002, R-004–R-010 remain OPEN as previously recorded.

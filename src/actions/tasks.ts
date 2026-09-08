@@ -1,22 +1,9 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
-import { getDatabase } from '../shared/database/database.js';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
-import { PostgresTaskRepository } from '../modules/tasks/infrastructure/postgres-repository.js';
-import { CreateTaskUseCase } from '../modules/tasks/application/create.js';
-import { UpdateDraftTaskUseCase } from '../modules/tasks/application/update-draft.js';
-import { TransitionTaskUseCase } from '../modules/tasks/application/transition.js';
-import { PostgresAuditRepository } from '../shared/audit/postgres-audit-repository.js';
-import { PostgresOutboxRepository } from '../shared/outbox/postgres-outbox-repository.js';
-const repo = () => {
-  const database = getDatabase();
-  return new PostgresTaskRepository(
-    database,
-    new PostgresAuditRepository(database),
-    new PostgresOutboxRepository(database),
-  );
-};
+import { tasksActionDependencies } from '../modules/tasks/application/dependencies.js';
+const repo = () => tasksActionDependencies();
 type ActionContext = { locals: App.Locals };
 const requestId = (context: ActionContext) => context.locals.requestContext?.requestId ?? 'unknown';
 const actor = (context: ActionContext) => {
@@ -44,7 +31,7 @@ const createTask = defineAction({
   handler: (input, context) =>
     run(
       () =>
-        new CreateTaskUseCase(repo()).execute({
+        repo().create.execute({
           ...input,
           actor: actor(context),
           requestId: requestId(context),
@@ -65,7 +52,7 @@ const updateDraft = defineAction({
   handler: (input, context) =>
     run(
       () =>
-        new UpdateDraftTaskUseCase(repo()).execute({
+        repo().updateDraft.execute({
           ...input,
           actor: actor(context),
           requestId: requestId(context),
@@ -84,7 +71,7 @@ const transition = defineAction({
   handler: (input, context) =>
     run(
       () =>
-        new TransitionTaskUseCase(repo()).execute({
+        repo().transition.execute({
           ...input,
           actor: actor(context),
           requestId: requestId(context),

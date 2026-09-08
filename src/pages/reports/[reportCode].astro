@@ -1,17 +1,15 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
-import { ReportRegistry } from '../../modules/reporting/application/report-registry.js';
 import { RunReportUseCase } from '../../modules/reporting/application/run-report.js';
-import { PostgresReportQuery } from '../../modules/reporting/infrastructure/postgres-report-query.js';
-import { getDatabase } from '../../shared/database/database.js';
+import { reportingDependencies } from '../../modules/reporting/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const code = Astro.params.reportCode ?? '';
-const registry = new ReportRegistry();
+const { registry } = reportingDependencies();
 const fallbackDefinition = registry.list()[0]!;
 let definition = fallbackDefinition;
 let report: Awaited<ReturnType<RunReportUseCase['execute']>> = { definition, columns: [], rows: [] };
-try { definition = registry.get(code); report = await new RunReportUseCase(registry, new PostgresReportQuery(getDatabase())).execute(actor, code, { from: Astro.url.searchParams.get('from') ?? undefined, to: Astro.url.searchParams.get('to') ?? undefined }); } catch (error) { if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'RESOURCE_NOT_FOUND') Astro.response.status = 404; else throw error; }
+try { definition = registry.get(code); report = await reportingDependencies().run.execute(actor, code, { from: Astro.url.searchParams.get('from') ?? undefined, to: Astro.url.searchParams.get('to') ?? undefined }); } catch (error) { if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'RESOURCE_NOT_FOUND') Astro.response.status = 404; else throw error; }
 ---
 <AppLayout title={`${definition?.title ?? 'Report'} · QC Operations`} locale="en" direction="ltr">
   {Astro.response.status === 404 ? <section class="empty"><h1>Report not found</h1><p>This report code is not registered.</p><a href="/reports">Back to reports</a></section> : <><section class="page-head"><div><p class="eyebrow">{definition.code}</p><h1>{definition.title}</h1><p>{definition.description}</p></div><a href="/reports">All reports</a></section><section class="toolbar"><span>{report.rows.length} authorized rows</span><span>Filters are applied on the server.</span></section><div class="table-scroll"><table><caption class="visually-hidden">{definition.title}</caption><thead><tr>{report.columns.map((column) => <th scope="col">{column.label}</th>)}</tr></thead><tbody>{report.rows.map((row) => <tr>{report.columns.map((column) => <td>{row[column.key] === null ? '' : String(row[column.key])}</td>)}</tr>)}</tbody></table></div></>}

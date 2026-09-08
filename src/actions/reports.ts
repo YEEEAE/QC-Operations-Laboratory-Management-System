@@ -1,11 +1,8 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
-import { getDatabase } from '../shared/database/database.js';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
-import { ReportRegistry } from '../modules/reporting/application/report-registry.js';
-import { ExportReportUseCase } from '../modules/reporting/application/export-report.js';
-import { PostgresReportQuery } from '../modules/reporting/infrastructure/postgres-report-query.js';
+import { reportingDependencies } from '../modules/reporting/application/dependencies.js';
 
 const input = z.object({
   reportCode: z.string(),
@@ -20,10 +17,12 @@ const exportReport = defineAction({
     try {
       const actor = context.locals.actor;
       if (!actor) throw new AppError('AUTH_REQUIRED', { userSafe: true });
-      const result = await new ExportReportUseCase(
-        new ReportRegistry(),
-        new PostgresReportQuery(getDatabase()),
-      ).execute(actor, value.reportCode, value.format, { from: value.from, to: value.to });
+      const result = await reportingDependencies().exportReport.execute(
+        actor,
+        value.reportCode,
+        value.format,
+        { from: value.from, to: value.to },
+      );
       return {
         ok: true,
         filename: result.filename,

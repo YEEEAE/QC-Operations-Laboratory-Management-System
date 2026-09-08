@@ -1,10 +1,10 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
-import { ReportRegistry } from '../../modules/reporting/application/report-registry.js';
+import { reportingDependencies } from '../../modules/reporting/application/dependencies.js';
 import { authorize } from '../../shared/authorization/authorize.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Freports');
-const registry = new ReportRegistry();
+const registry = reportingDependencies().registry;
 const reports = registry.list().filter((report) => authorize({ actor, permission: report.viewPermission, action: 'VIEW', entity: { type: 'REPORT', id: report.code, state: 'ACTIVE', ownerId: actor.id, domain: 'REPORTING' }, scope: { domain: 'REPORTING' }, currentVersion: 1, expectedVersion: 1, businessCondition: true }).allowed);
 ---
 <AppLayout title="Reports · QC Operations" locale="en" direction="ltr">

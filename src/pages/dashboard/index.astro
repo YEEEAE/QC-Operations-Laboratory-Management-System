@@ -2,14 +2,13 @@
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import KpiCard from '../../ui/charts/KpiCard.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
-import { getDatabase } from '../../shared/database/database.js';
-import { PostgresDashboardQuery } from '../../modules/dashboard/infrastructure/postgres-dashboard-query.js';
+import { dashboardDependencies } from '../../modules/dashboard/application/dependencies.js';
 import { GetDashboardUseCase } from '../../modules/dashboard/application/get-dashboard.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fdashboard');
 let dashboard = { generatedAt: new Date(), scopeLabel: 'Authorized operational scope', metrics: [], attention: [], activity: [] } as Awaited<ReturnType<GetDashboardUseCase['execute']>>;
-try { dashboard = await new GetDashboardUseCase(new PostgresDashboardQuery(getDatabase())).execute(actor); } catch { /* render a safe empty state when the read provider is unavailable */ }
+try { dashboard = await dashboardDependencies().get.execute(actor); } catch { /* render a safe empty state when the read provider is unavailable */ }
 ---
 <AppLayout title="Dashboard · QC Operations" locale="en" direction="ltr">
   <Fragment slot="topbar"><div class="topline"><span>QC Operational Command Center</span><span class="scope">{dashboard.scopeLabel}</span></div></Fragment>

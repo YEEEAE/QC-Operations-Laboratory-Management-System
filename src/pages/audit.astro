@@ -1,12 +1,11 @@
 ---
 import AppLayout from '../ui/layouts/AppLayout.astro';
-import { getDatabase } from '../shared/database/database.js';
 import { AuditQueryService } from '../shared/audit/audit-query.js';
-import { PostgresAuditQuery } from '../shared/audit/postgres-audit-query.js';
+import { auditQueryDependencies } from '../shared/audit/audit-dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Faudit');
 let result = { events: [], total: 0 } as Awaited<ReturnType<AuditQueryService['list']>>;
-try { result = await new AuditQueryService(new PostgresAuditQuery(getDatabase())).list(actor, { subjectType: Astro.url.searchParams.get('subjectType') ?? undefined, subjectId: Astro.url.searchParams.get('subjectId') ?? undefined }); } catch { result = { events: [], total: 0 }; }
+try { result = await auditQueryDependencies().list.list(actor, { subjectType: Astro.url.searchParams.get('subjectType') ?? undefined, subjectId: Astro.url.searchParams.get('subjectId') ?? undefined }); } catch { result = { events: [], total: 0 }; }
 ---
 <AppLayout title="Audit · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">GOVERNANCE</p><h1>Audit history</h1><p>Read-only history for authorized audit viewers. Record routes may compose this by subject.</p></div><span>{result.total} events</span></section>

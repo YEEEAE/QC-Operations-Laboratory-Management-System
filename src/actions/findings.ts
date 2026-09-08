@@ -1,9 +1,6 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
-import { getDatabase } from '../shared/database/database.js';
-import { PostgresFindingRepository } from '../modules/quality/findings/infrastructure/postgres-repository.js';
-import { CreateFindingUseCase } from '../modules/quality/findings/application/create-finding.js';
-import { TransitionFindingUseCase } from '../modules/quality/findings/application/transition-finding.js';
+import { findingsActionDependencies } from '../modules/quality/findings/application/dependencies.js';
 import { AppError } from '../shared/errors/app-error.js';
 export const findings = {
   create: defineAction({
@@ -18,13 +15,11 @@ export const findings = {
       if (!c.locals.actor)
         throw new ActionError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
       try {
-        return await new CreateFindingUseCase(new PostgresFindingRepository(getDatabase())).execute(
-          {
-            ...i,
-            actor: c.locals.actor,
-            requestId: c.locals.requestContext?.requestId ?? 'unknown',
-          },
-        );
+        return await findingsActionDependencies().create.execute({
+          ...i,
+          actor: c.locals.actor,
+          requestId: c.locals.requestContext?.requestId ?? 'unknown',
+        });
       } catch (e) {
         throw new ActionError({
           code: 'BAD_REQUEST',
@@ -44,7 +39,7 @@ export const findings = {
     handler: async (i, c) => {
       if (!c.locals.actor)
         throw new ActionError({ code: 'UNAUTHORIZED', message: 'Authentication required' });
-      return new TransitionFindingUseCase(new PostgresFindingRepository(getDatabase())).execute({
+      return findingsActionDependencies().transition.execute({
         ...i,
         actor: c.locals.actor,
         requestId: c.locals.requestContext?.requestId ?? 'unknown',

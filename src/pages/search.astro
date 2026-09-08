@@ -1,8 +1,6 @@
 ---
 import AppLayout from '../ui/layouts/AppLayout.astro';
-import { getDatabase } from '../shared/database/database.js';
-import { PostgresSearch } from '../shared/search/postgres-search.js';
-import { SearchService } from '../shared/search/search-service.js';
+import { searchDependencies } from '../shared/search/search-dependencies.js';
 import type { SearchResult } from '../shared/search/search-result.js';
 
 const actor = Astro.locals.actor;
@@ -11,7 +9,7 @@ const rawQuery = Astro.url.searchParams.get('q') ?? '';
 const q = rawQuery.length <= 200 && !rawQuery.includes('\0') ? rawQuery.trim() : '';
 let results: SearchResult[] = [];
 if (q && actor.permissions.some((grant) => grant.code === 'PERM-SRCH-USE' && grant.active !== false)) {
-  try { results = await new SearchService(new PostgresSearch(getDatabase()), async (actorId) => { if (actorId !== actor.id) throw new Error('unauthorized'); }).search({ actorId: actor.id, q }); } catch { results = []; }
+  try { results = await searchDependencies(async (actorId) => { if (actorId !== actor.id) throw new Error('unauthorized'); }).search.search({ actorId: actor.id, q }); } catch { results = []; }
 }
 const destination = (result: SearchResult) => ({ TASK: `/tasks/${result.entityId}`, RECEIVING_ITEM: `/quarantine/receiving/${result.entityId}`, INSPECTION_REPORT: `/quarantine/inspections/${result.entityId}`, LAB_TEST: `/laboratory/tests/${result.entityId}`, FINDING: `/quality/findings/${result.entityId}`, NCR: `/quality/ncr/${result.entityId}`, CAPA: `/quality/capa/${result.entityId}`, EQUIPMENT: `/assets/equipment/${result.entityId}`, DOCUMENT: `/documents/${result.entityId}`, CHANGE_REQUEST: `/change-requests/${result.entityId}` } as Record<string, string>)[result.entityType] ?? '/dashboard';
 ---

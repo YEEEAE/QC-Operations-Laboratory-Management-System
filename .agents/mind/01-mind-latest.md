@@ -1,5 +1,43 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-CLOSURE-02: Delivery Layer / Database Boundary Enforcement
+
+### تم التنفيذ
+- شخصت الجذر: حارس `check-boundaries.mjs` القديم كان يشترط quote بعد `database|db|kysely|pg` فما مسك `shared/database/database.js`، وما كان عنده أي pattern لـ`getDatabase` أو `/infrastructure/` أو `Postgres*`؛ فحص `rg` مستقل لقى 12 ملف delivery فيها `getDatabase()` مع `Postgres*` مباشرة (4 actions و7 pages والميدلوير) بجانب `ready.ts` و`ai-advisory.ts`.
+- بنيت 11 مصنع تركيب ضيق بدون god-service: وسعت `tasksActionDependencies`، وأنشأت `administration` و`findings` و`reporting` و`dashboard` و`aiAdvisory` dependencies، بجانب `notification` و`search` و`auditQuery` و`rateLimit` (singleton محفوظ) و`readiness`؛ كل delivery صار يستهلك `*Dependencies()` فقط مع نفس wiring للـaudit/outbox والـactor/requestId.
+- أصلحت الحارس ليمسك `getDatabase` وأي database import بأي suffix وkysely/pg و`Kysely/DatabaseSchema/new Pool|Client` و`/infrastructure` و`Postgres*` و`new *Repository` وكائنات الترانزكشن، مع دعم `QC_ARCH_DELIVERY_ROOTS` للاختبارات وallowlist فارغة موثقة بدون استثناءات مخفية.
+- أضفت `tests/unit/architecture/boundary-guard.test.ts` بخمس حالات: يفشل على الصفحة→`getDatabase` والأكشن→pg/Kysely والـUI→repository والدليفري→infrastructure، وينجح على التركيب المعتمد.
+- حدثت `FINAL-EVIDENCE-INDEX.md` (C-07 إلى C-12) و`FINAL-OPEN-RISKS.md` (دلتا R-003) بدون رفع أي domain score؛ أبقيت domains 11/27/34/39 على FAIL حتى دليل CI runtime.
+
+### الملفات المتأثرة
+- `scripts/architecture/check-boundaries.mjs`
+- `tests/unit/architecture/boundary-guard.test.ts`
+- `src/actions/{tasks,admin,findings,reports,ai-advisory}.ts`
+- `src/middleware.ts`
+- `src/pages/{dashboard/index,notifications,search,audit}.astro`
+- `src/pages/reports/{[reportCode],index}.astro`
+- `src/pages/quality/findings/{index,[findingId]}.astro`
+- `src/pages/api/health/ready.ts`
+- `src/modules/{tasks/application/dependencies,administration/application/dependencies,quality/findings/application/dependencies,reporting/application/dependencies,dashboard/application/dependencies,ai-advisory/application/dependencies}.ts`
+- `src/shared/{notifications/notification-dependencies,search/search-dependencies,audit/audit-dependencies,security/rate-limit-dependencies,health/health-dependencies}.ts`
+- `audit/100-percent/{FINAL-EVIDENCE-INDEX,FINAL-OPEN-RISKS}.md`
+
+### التحقق
+- `pnpm format:check` ✅، `pnpm lint` ✅ (exit 0)، `pnpm typecheck` ✅ (0 errors، 25 hints سابقة).
+- `pnpm test:architecture` ✅، والـscan المستقل صفر مخالفات (`RG_EXIT:1`).
+- `pnpm test:unit` ✅ — 28 ملفًا / 108 اختبارات (103 سابقة + 5 جديدة).
+- `pnpm build` ✅ (Astro server/client)، و`git diff --check` ✅.
+- `server-contract` integration: 4 passed / 1 skipped، والفشل على مستوى الملف container-only (`Could not find a working container runtime strategy`) بدون assertion failures.
+- Node المحلي `v22.22.3` خارج العقد `>=24.20.0 <25`؛ النتائج محلية فقط وليست CI parity.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** الـscan والحارس صارا متفقين على صفر استيراد مباشر، والتركيب صار عبر مصانع معتمدة بدون god-service، لكن R-003 يبقى static-closure فقط حتى CI حاوية يثبت السلوك على PostgreSQL حي.
+
+### ملاحظات / مشاكل مفتوحة
+- `audit/prompt4.md` ظهر فيه حذف 244 سطرًا غير مرتبط بالمهمة؛ رجعته بـ`git checkout` والـstatus النهائي فيه ملفات المهمة فقط.
+- R-001 وR-002 وR-004 حتى R-010 تبقى OPEN كما هي؛ لا يوجد commit أو push أو deploy أو production mutation.
+
 ## [2026-09-08] — QC-100-CLOSURE-01: GitHub Actions pre-step failure + Node runtime parity
 
 ### تم التنفيذ

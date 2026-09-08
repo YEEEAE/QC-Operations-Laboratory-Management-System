@@ -1,13 +1,12 @@
 ---
 import AppLayout from '../ui/layouts/AppLayout.astro';
-import { getDatabase } from '../shared/database/database.js';
 import { NotificationService } from '../shared/notifications/notification-service.js';
-import { PostgresNotificationRepository } from '../shared/notifications/postgres-notification-repository.js';
+import { notificationDependencies } from '../shared/notifications/notification-dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fnotifications');
 let notifications = [] as Awaited<ReturnType<NotificationService['listOwn']>>;
 const unreadOnly = Astro.url.searchParams.get('unread') === '1';
-try { notifications = await new NotificationService(new PostgresNotificationRepository(getDatabase())).listOwn(actor, unreadOnly); } catch { notifications = []; }
+try { notifications = await notificationDependencies().listOwn.listOwn(actor, unreadOnly); } catch { notifications = []; }
 const destination = (type?: string, id?: string) => id && type ? ({ TASK: `/tasks/${id}`, INSPECTION_REPORT: `/quarantine/inspections/${id}`, LAB_TEST: `/laboratory/tests/${id}`, NCR: `/quality/ncr/${id}`, CAPA: `/quality/capa/${id}`, DOCUMENT: `/documents/${id}`, CHANGE_REQUEST: `/change-requests/${id}` } as Record<string, string>)[type] ?? '/notifications' : '/notifications';
 ---
 <AppLayout title="Notifications · QC Operations" locale="en" direction="ltr">

@@ -1,7 +1,6 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
-import { DisabledAiProvider } from '../modules/ai-advisory/infrastructure/disabled-ai-provider.js';
-import { GetAdvisoryUseCase } from '../modules/ai-advisory/application/get-advisory.js';
+import { aiAdvisoryDependencies } from '../modules/ai-advisory/application/dependencies.js';
 import { AppError } from '../shared/errors/app-error.js';
 
 const requireActor = (context: { locals: App.Locals }) => {
@@ -56,7 +55,7 @@ const requestAdvisory = defineAction({
   }),
   handler: (input, context) =>
     run(async () => {
-      const useCase = new GetAdvisoryUseCase(new DisabledAiProvider());
+      const useCase = aiAdvisoryDependencies().requestAdvisory;
       const result = await useCase.execute({
         actor: requireActor(context),
         mode: input.mode,

@@ -1,14 +1,13 @@
 import { defineMiddleware } from 'astro:middleware';
 import { createRequestContext } from './shared/http/request-context';
-import { getDatabase } from './shared/database/database.js';
 import {
   identityDependencies,
   resolveActor,
 } from './modules/identity/application/identity-dependencies.js';
 import { ResolveSessionUseCase } from './modules/identity/application/resolve-session.js';
 import { applySecurityHeaders } from './shared/security/security-headers';
-import { RateLimiter, resolveHighRiskRateLimitPolicy } from './shared/security/rate-limit';
-import { PostgresRateLimitStore } from './shared/security/postgres-rate-limit-store';
+import { resolveHighRiskRateLimitPolicy } from './shared/security/rate-limit';
+import { rateLimitDependencies } from './shared/security/rate-limit-dependencies.js';
 import {
   normalizeRouteTemplate,
   recordCounter,
@@ -28,9 +27,8 @@ const publicPaths = new Set(['/login']);
 // Login abuse counters must be shared by all Web Service instances. The
 // PostgreSQL store is scoped to the canonical application database and fails
 // closed if the dependency is unavailable.
-let highRiskRateLimiter: RateLimiter | undefined;
-function getHighRiskRateLimiter(): RateLimiter {
-  return (highRiskRateLimiter ??= new RateLimiter(new PostgresRateLimitStore(getDatabase())));
+function getHighRiskRateLimiter() {
+  return rateLimitDependencies();
 }
 const requestLogger = createRequestLogger();
 
@@ -74,7 +72,7 @@ export const onRequest = defineMiddleware(
     const token = cookies.get('__Host-qc_session')?.value;
     if (token) {
       try {
-        const deps = identityDependencies(getDatabase());
+        const deps = identityDependencies();
         const resolved = await new ResolveSessionUseCase(deps.sessionService).execute(token);
         locals.user = resolved.user;
         locals.actor = await resolveActor(deps.database, resolved.user.id);

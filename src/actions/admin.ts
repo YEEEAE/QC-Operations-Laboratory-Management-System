@@ -3,19 +3,9 @@ import { z } from 'astro:schema';
 import { isPermissionCode } from '../shared/authorization/permissions.js';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
-import { getDatabase } from '../shared/database/database.js';
-import { PostgresAuthorizationRepository } from '../modules/administration/infrastructure/postgres-authorization-repository.js';
-import { PostgresAuditRepository } from '../shared/audit/postgres-audit-repository.js';
-import { ListRolesUseCase } from '../modules/administration/application/list-roles.js';
-import { GetRoleUseCase } from '../modules/administration/application/get-role.js';
-import { ListPermissionsUseCase } from '../modules/administration/application/list-permissions.js';
-import { UpdateRolePermissionsUseCase } from '../modules/administration/application/update-role-permissions.js';
-import { ManageUserScopesUseCase } from '../modules/administration/application/manage-user-scopes.js';
+import { administrationDependencies } from '../modules/administration/application/dependencies.js';
 
-const repo = () => {
-  const database = getDatabase();
-  return new PostgresAuthorizationRepository(database, new PostgresAuditRepository(database));
-};
+const repo = () => administrationDependencies();
 const withErrors = async <T>(work: () => Promise<T>, requestId?: string): Promise<T> => {
   try {
     return await work();
@@ -33,7 +23,7 @@ const listRoles = defineAction({
   handler: (_input, context) =>
     withErrors(async () => {
       requireActor(context.locals.actor);
-      return new ListRolesUseCase(repo()).execute({ actor: context.locals.actor! });
+      return repo().listRoles.execute({ actor: context.locals.actor! });
     }, context.locals.requestContext?.requestId),
 });
 const getRole = defineAction({
@@ -42,7 +32,7 @@ const getRole = defineAction({
   handler: (input, context) =>
     withErrors(async () => {
       requireActor(context.locals.actor);
-      return new GetRoleUseCase(repo()).execute({
+      return repo().getRole.execute({
         actor: context.locals.actor!,
         roleId: input.roleId,
       });
@@ -53,7 +43,7 @@ const listPermissions = defineAction({
   handler: (_input, context) =>
     withErrors(async () => {
       requireActor(context.locals.actor);
-      return new ListPermissionsUseCase(repo()).execute({ actor: context.locals.actor! });
+      return repo().listPermissions.execute({ actor: context.locals.actor! });
     }, context.locals.requestContext?.requestId),
 });
 const updateRolePermissions = defineAction({
@@ -68,7 +58,7 @@ const updateRolePermissions = defineAction({
       requireActor(context.locals.actor);
       if (input.permissionCodes.some((code) => !isPermissionCode(code)))
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
-      return new UpdateRolePermissionsUseCase(repo()).execute({
+      return repo().updateRolePermissions.execute({
         actor: context.locals.actor!,
         roleId: input.roleId,
         permissionCodes: input.permissionCodes as never,
@@ -92,7 +82,7 @@ const manageUserScopes = defineAction({
   handler: (input, context) =>
     withErrors(async () => {
       requireActor(context.locals.actor);
-      return new ManageUserScopesUseCase(repo()).execute({
+      return repo().manageUserScopes.execute({
         actor: context.locals.actor!,
         userId: input.userId,
         scopes: input.scopes,

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { PostgresReadinessProbe } from '../../../shared/health/postgres-readiness-probe.js';
-import { createReadinessResponse } from '../../../shared/health/readiness.js';
+import { readinessDependencies } from '../../../shared/health/health-dependencies.js';
 
-export const GET: APIRoute = () => createReadinessResponse(new PostgresReadinessProbe());
+export const GET: APIRoute = () =>
+  readinessDependencies().createResponse(readinessDependencies().probe);
