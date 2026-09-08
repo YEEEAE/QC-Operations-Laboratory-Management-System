@@ -81,9 +81,30 @@ pnpm exec tsx scripts/recovery/validate-restored-files.ts \
 
 هذه الخطوة ليست تنفيذًا تلقائيًا داخل validator؛ يجب ألا تُسجل `RESTORE VERIFIED` إلا بعد اكتمالها.
 
+### 6. Run the provider-aware safe checklist
+
+لجمع نتائج الفحوصات الآلية وبوابات المشغّل في تقرير واحد، شغّل:
+
+```bash
+pnpm recovery:checklist -- \
+  --manifest /secure/recovery/manifest.json \
+  --database-url "$QC_RECOVERY_DATABASE_URL" \
+  --object-root /secure/isolated-object-root
+```
+
+الأمر يدعم سياق Render الحالي فقط، ويجري فحوصات قراءة فقط للـmanifest والهدف
+المعزول والـobjects إذا زُوّد بالمسارات. بوابة physical/provider restore،
+توافق التطبيق، authorization، sessions، ومراجعة الأسرار تظهر `BLOCKED` إلى أن
+يرفق المشغّل دليلها الخارجي. لا ينفذ الأمر Render API أو restore أو migrations
+ولا يغيّر أي سجل.
+
 ## Evidence record
 
 سجّل Recovery Evidence Record منفصلًا عن logs، يتضمن Recovery ID، backup set، target، timestamps، release/Git SHA، migration result، object result، app/security/business results، gaps، ونتيجة drill. لا تعدّل manifest التاريخي لتجميل النتيجة؛ أرفق نتيجة validation أو أنشئ evidence record جديدًا وفق الصلاحية المعتمدة.
+
+استخدم [`audit/100-percent/DR-EVIDENCE-MATRIX.md`](../../audit/100-percent/DR-EVIDENCE-MATRIX.md)
+للتغطية، و[`audit/100-percent/RESTORE-DRILL-EVIDENCE-TEMPLATE.md`](../../audit/100-percent/RESTORE-DRILL-EVIDENCE-TEMPLATE.md)
+كسجل مستقل لكل drill.
 
 النتيجة المسموحة:
 

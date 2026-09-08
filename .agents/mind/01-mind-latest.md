@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-08] — QC-100-11: Backup, recovery, restore verification and continuity evidence slice
+
+### تم التنفيذ
+- أضفت checklist تنفيذية آمنة وموجهة لسياق Render تجمع فحص manifest، وفحص PostgreSQL قراءة فقط، وفحص object metadata/size/SHA-256، وتُبقي physical restore وبوابات التطبيق والصلاحيات والجلسات والأسرار BLOCKED بدون دليل خارجي.
+- أضفت أمر `pnpm recovery:checklist` وربطته بالـrunbook، بدون Render API أو backup/restore/WAL/PITR أو migrations أو أي كتابة على الهدف.
+- جعلت أمر checklist يرجع non-zero عند أي بوابة غير `PASS` حتى لا يُفسر `BLOCKED/UNVERIFIED` كنجاح آلي.
+- أضفت مصفوفة DR تربط الأدلة المطلوبة بالـdomains 9 و14 و20 و82 و83، وتفصل بوضوح بين backup created وrestore verified.
+- أضفت قالب Restore Drill Evidence Record بإجراء Render تشغيلي صريح وحقول provider reference وledger/schema/audit/files/app/security/session/cleanup.
+- أضفت اختبارات تمنع claim الاستعادة عند غياب دليل provider، وتثبت أن نجاح file hash وحده لا يغلق restore proof.
+
+### الملفات المتأثرة
+- `scripts/recovery/run-recovery-checklist.ts`
+- `tests/unit/recovery/recovery-tooling.test.ts`
+- `docs/operations/RESTORE-DRILL-RUNBOOK.md`
+- `audit/100-percent/DR-EVIDENCE-MATRIX.md`
+- `audit/100-percent/RESTORE-DRILL-EVIDENCE-TEMPLATE.md`
+- `package.json`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/recovery/recovery-tooling.test.ts` ✅ — 6/6.
+- `pnpm test:unit` ✅ — 27 files / 103 tests.
+- `pnpm lint` ✅.
+- `pnpm typecheck` ✅ — 0 errors، 25 hints deprecation.
+- `pnpm build` ✅.
+- `pnpm exec prettier --check ...` ✅.
+- `git diff --check` ✅.
+- GitHub CI status UNVERIFIED — `gh run list` تعذر بسبب فشل الاتصال بـGitHub.
+
+### النتيجة
+- **الحالة:** جزئي — tooling والـevidence contracts أُضيفت وتحققت محليًا، لكن لا يوجد isolated Render restore فعلي أو provider/PITR/WAL/RPO/RTO evidence، لذلك domains DR المستهدفة لا تُغلق.
+- **مختصر:** الفرق بين backup creation وrestore verification صار ممثلًا ومقيدًا آليًا؛ الإغلاق الحقيقي ما زال يحتاج تنفيذ مشغّل معتمد وتسجيل Restore Evidence Record.
+
+### ملاحظات / مشاكل مفتوحة
+- PostgreSQL restore/object target وapplication compatibility وauthorization/session/secret checks غير منفذة في بيئة المهمة.
+- Node المحلي `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`؛ نتائج التحقق المحلي لا تستبدل CI/Render evidence.
+
 ## [2026-09-08] — QC-100-10: Performance, resilience and observability evidence slice
 
 ### تم التنفيذ

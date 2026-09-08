@@ -9,6 +9,7 @@ import {
   type RecoveryManifest,
 } from '../../../scripts/recovery/verify-recovery-manifest.js';
 import { validateRestoredFiles } from '../../../scripts/recovery/validate-restored-files.js';
+import { runRecoveryChecklist } from '../../../scripts/recovery/run-recovery-checklist.js';
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 
@@ -80,5 +81,41 @@ describe('restored file validation', () => {
     );
     expect(mismatch.status).toBe('FAIL');
     expect(mismatch.failures[0]).toMatch(/hash/i);
+  });
+});
+
+describe('provider-aware recovery checklist', () => {
+  it('keeps provider restore and manual application gates blocked without external evidence', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'qc-recovery-checklist-'));
+    const manifestPath = join(root, 'manifest.json');
+    await writeFile(manifestPath, JSON.stringify(manifest()));
+
+    const result = await runRecoveryChecklist({ manifestPath });
+
+    expect(result.overall).toBe('RESTORE_NOT_VERIFIED');
+    expect(result.items.find((item) => item.id === 'manifest-schema')?.status).toBe('PASS');
+    expect(result.items.find((item) => item.id === 'render-physical-restore')?.status).toBe(
+      'BLOCKED',
+    );
+    expect(result.items.find((item) => item.id === 'restored-database')?.status).toBe('BLOCKED');
+    expect(result.items.find((item) => item.id === 'authorization-enforcement')?.status).toBe(
+      'BLOCKED',
+    );
+  });
+
+  it('runs file validation when an isolated object root is supplied but still cannot claim restore proof', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'qc-recovery-checklist-files-'));
+    await mkdir(join(root, 'evidence'), { recursive: true });
+    await writeFile(join(root, 'evidence/report.txt'), 'restored evidence');
+    const manifestPath = join(root, 'manifest.json');
+    await writeFile(manifestPath, JSON.stringify(manifest()));
+
+    const result = await runRecoveryChecklist({ manifestPath, objectRoot: root });
+
+    expect(result.overall).toBe('RESTORE_NOT_VERIFIED');
+    expect(result.items.find((item) => item.id === 'restored-file-objects')).toMatchObject({
+      status: 'PASS',
+    });
+    expect(result.nextAction).toMatch(/Do not mark RESTORE VERIFIED/i);
   });
 });
