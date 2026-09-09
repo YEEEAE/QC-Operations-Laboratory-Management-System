@@ -1,27 +1,26 @@
-import { Client } from 'pg';
-import { parseServerEnv } from '../../config/env.js';
 import type { ReadinessProbe } from './readiness.js';
-import { getDatabaseConnectionConfig } from '../database/pool.js';
+import {
+  checkCanonicalDatabaseReadiness,
+  resolveCanonicalDatabaseUrl,
+  type CanonicalDatabaseReadinessCheck,
+} from './canonical-database-readiness.js';
 
+/**
+ * Machine readiness probe. Delegates to the canonical database readiness
+ * check so `/api/health/ready` observes the same database reachability and
+ * TLS configuration as the authenticated System Health view. Output stays a
+ * bare boolean; HTTP mapping and sanitization live in `createReadinessResponse`.
+ */
 export class PostgresReadinessProbe implements ReadinessProbe {
-  async isReady(): Promise<boolean> {
-    let client: Client;
-    try {
-      const env = parseServerEnv(process.env);
-      if (!env.DATABASE_URL) return false;
-      client = new Client(getDatabaseConnectionConfig(env.DATABASE_URL));
-    } catch {
-      return false;
-    }
+  constructor(
+    private readonly check: CanonicalDatabaseReadinessCheck = checkCanonicalDatabaseReadiness,
+  ) {}
 
+  async isReady(): Promise<boolean> {
     try {
-      await client.connect();
-      await client.query('SELECT 1');
-      return true;
+      return await this.check(resolveCanonicalDatabaseUrl());
     } catch {
       return false;
-    } finally {
-      await client.end().catch(() => undefined);
     }
   }
 }

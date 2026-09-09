@@ -1,10 +1,18 @@
-import { Client } from 'pg';
 import type { Kysely } from 'kysely';
+import {
+  checkCanonicalDatabaseReadiness,
+  resolveCanonicalDatabaseUrl,
+  type CanonicalDatabaseReadinessCheck,
+} from '../../../shared/health/canonical-database-readiness.js';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { DependencyHealth, SystemHealthProbes } from '../ports/health-probes.js';
 
 /**
  * Server-side dependency probes for the authenticated system health view.
+ *
+ * The database probe delegates to the canonical database readiness check, so
+ * the System Health page observes the same database reachability and TLS
+ * configuration as `/api/health/ready`.
  *
  * Every probe is failure-isolated and sanitized: a thrown dependency error is
  * converted into a fixed UNAVAILABLE status without any exception text, so no
@@ -13,7 +21,10 @@ import type { DependencyHealth, SystemHealthProbes } from '../ports/health-probe
  */
 export class PostgresSystemHealthProbes implements SystemHealthProbes {
   /** @param outboxDatabase database handle used only for the outbox backlog probe */
-  constructor(private readonly outboxDatabase?: Kysely<DatabaseSchema>) {}
+  constructor(
+    private readonly outboxDatabase?: Kysely<DatabaseSchema>,
+    private readonly databaseReadiness: CanonicalDatabaseReadinessCheck = checkCanonicalDatabaseReadiness,
+  ) {}
 
   application(): DependencyHealth {
     return { dependency: 'application', status: 'HEALTHY', checkedAt: new Date() };
@@ -21,17 +32,15 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
 
   async database(): Promise<DependencyHealth> {
     const checkedAt = new Date();
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) return { dependency: 'database', status: 'UNAVAILABLE', checkedAt };
-    const client = new Client({ connectionString });
     try {
-      await client.connect();
-      await client.query('SELECT 1');
-      return { dependency: 'database', status: 'HEALTHY', checkedAt };
+      const reachable = await this.databaseReadiness(resolveCanonicalDatabaseUrl());
+      return {
+        dependency: 'database',
+        status: reachable ? 'HEALTHY' : 'UNAVAILABLE',
+        checkedAt,
+      };
     } catch {
       return { dependency: 'database', status: 'UNAVAILABLE', checkedAt };
-    } finally {
-      await client.end().catch(() => undefined);
     }
   }
 

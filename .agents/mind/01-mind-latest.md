@@ -1,5 +1,39 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — إصلاح F-01: توحيد فحص جاهزية قاعدة البيانات بين System Health وready
+
+### تم التنفيذ
+- أنشأت فحصًا معياريًا واحدًا `checkCanonicalDatabaseReadiness` يستخدم نفس إعداد TLS المعتمد (`getDatabaseConnectionConfig`: رفض `sslmode=disable`، حفظ `sslmode` المزود، و`rejectUnauthorized: true` عند غيابه).
+- وصّلت `PostgresReadinessProbe` (مسار `/api/health/ready`) و`PostgresSystemHealthProbes.database` (صفحة `/system/health`) على نفس الفحص ونفس مصدر `DATABASE_URL` عبر `resolveCanonicalDatabaseUrl`، مع إبقاء المخرجات منقّحة (boolean → حالات ثابتة فقط).
+- أضفت اختبار unit للاتفاق (صحي/غير متاح/3 أخطاء إعدادية + حفظ TLS) واختبار integration يمرر `readinessDependencies` الحقيقية و`GetSystemHealthUseCase` مع `PostgresSystemHealthProbes` الحقيقية لنفس النتائج الثلاث مع إثبات عدم تسريب أسرار/مضيفين.
+- لم أضعف TLS ولم أكشف تفاصيل اتصال؛ حالات الخطأ تنهار إلى `false`/`UNAVAILABLE`/`503` بدون نص استثناء.
+
+### الملفات المتأثرة
+- `src/shared/health/canonical-database-readiness.ts` (جديد)
+- `src/shared/health/postgres-readiness-probe.ts`
+- `src/modules/system-health/infrastructure/postgres-health-probes.ts`
+- `tests/unit/health/canonical-readiness-agreement.test.ts` (جديد)
+- `tests/integration/health/health-agreement.test.ts` (جديد)
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 errors (26 hints سابقة)
+- `pnpm lint` ✅
+- `pnpm test:unit` ✅ — 34 ملفًا / 139 اختبارًا
+- `pnpm vitest` للصحة (unit+integration+system+http) ✅ — 6 ملفات / 32 اختبارًا
+- `pnpm test:architecture` ✅ — لا مخالفات Delivery
+- `prettier --check` للملفات الملموسة ✅ و`git diff --check` ✅
+- `pnpm build` ✅
+- دخان إنتاجي على `dist/server/entry.mjs`: بدون `DATABASE_URL` (live 200 / ready 503) ومع `DATABASE_URL` غير قابل للوصول (ready 503 منقّح + security headers + x-request-id، وlive 200) ✅
+- Node `v24.20.0` داخل العقد؛ Docker غير متاح لذا اختبارات الحاويات خارج النطاق ولم تُشغّل.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** الواجهتان تستهلكان الآن نفس فحص الجاهزية وإعداد TLS، وتتفقان في الحالات الثلاث مع مخرجات منقّحة مثبتة بالاختبارات والدخان الإنتاجي.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- بقية مشاكل التدقيق (F-02 حتى F-12) خارج نطاق هذه المهمة ولم تُلمس.
+
 ## [2026-09-09] — توسيع وصول Administration لـAdmin وyazeed
 
 ### تم التنفيذ
