@@ -30,7 +30,7 @@ class MemoryAuditQuery implements AuditQuery {
   last?: { actorId: string; filter: AuditQueryFilter };
   async list(actorContext: ActorContext, filter: AuditQueryFilter): Promise<AuditQueryResult> {
     this.last = { actorId: actorContext.id, filter };
-    return { events: [event], total: 1 };
+    return { events: [event], total: 1, limit: 50, offset: 0 };
   }
 }
 

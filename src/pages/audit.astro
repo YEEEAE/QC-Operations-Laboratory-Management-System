@@ -4,12 +4,54 @@ import { AuditQueryService } from '../shared/audit/audit-query.js';
 import { auditQueryDependencies } from '../shared/audit/audit-dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Faudit');
-let result = { events: [], total: 0 } as Awaited<ReturnType<AuditQueryService['list']>>;
-try { result = await auditQueryDependencies().list.list(actor, { subjectType: Astro.url.searchParams.get('subjectType') ?? undefined, subjectId: Astro.url.searchParams.get('subjectId') ?? undefined }); } catch { result = { events: [], total: 0 }; }
+const params = Astro.url.searchParams;
+const parseDate = (value: string | null): Date | undefined => {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+const parseCount = (value: string | null): number | undefined => {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+const filter = {
+  subjectType: params.get('subjectType') ?? undefined,
+  subjectId: params.get('subjectId') ?? undefined,
+  actorId: params.get('actorId') ?? undefined,
+  action: params.get('action') ?? undefined,
+  from: parseDate(params.get('from')),
+  to: parseDate(params.get('to')),
+  limit: parseCount(params.get('limit')),
+  offset: parseCount(params.get('offset')),
+};
+let result = { events: [], total: 0, limit: 50, offset: 0 } as Awaited<ReturnType<AuditQueryService['list']>>;
+// Existence-leakage protection: a denied query renders the same empty state as
+// "no matching events" — the page never distinguishes the two.
+try { result = await auditQueryDependencies().list.list(actor, filter); } catch { result = { events: [], total: 0, limit: 50, offset: 0 }; }
+const pageHref = (offset: number): string => {
+  const next = new URLSearchParams();
+  for (const [key, value] of params) if (key !== 'offset') next.set(key, value);
+  next.set('offset', String(Math.max(0, offset)));
+  return `/audit?${next.toString()}`;
+};
+const hasPrev = result.offset > 0;
+const hasNext = result.offset + result.events.length < result.total;
+const activeFilters = [
+  filter.subjectType ? `subject ${filter.subjectType}` : null,
+  filter.subjectId ? `id ${filter.subjectId}` : null,
+  filter.actorId ? `actor ${filter.actorId}` : null,
+  filter.action ? `action ${filter.action}` : null,
+  filter.from ? `from ${filter.from.toISOString()}` : null,
+  filter.to ? `to ${filter.to.toISOString()}` : null,
+].filter((part): part is string => part !== null);
 ---
 <AppLayout title="Audit · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">GOVERNANCE</p><h1>Audit history</h1><p>Read-only history for authorized audit viewers. Record routes may compose this by subject.</p></div><span>{result.total} events</span></section>
+  <form class="filters" method="get" action="/audit"><div><label for="f-subjectType">Subject type</label><input id="f-subjectType" name="subjectType" type="text" maxlength="200" value={params.get('subjectType') ?? ''} /></div><div><label for="f-subjectId">Subject id</label><input id="f-subjectId" name="subjectId" type="text" maxlength="200" value={params.get('subjectId') ?? ''} /></div><div><label for="f-actorId">Actor id</label><input id="f-actorId" name="actorId" type="text" maxlength="200" value={params.get('actorId') ?? ''} /></div><div><label for="f-action">Action</label><input id="f-action" name="action" type="text" maxlength="200" value={params.get('action') ?? ''} /></div><div><label for="f-from">From</label><input id="f-from" name="from" type="datetime-local" value={params.get('from') ?? ''} /></div><div><label for="f-to">To</label><input id="f-to" name="to" type="datetime-local" value={params.get('to') ?? ''} /></div><div><label for="f-limit">Page size</label><input id="f-limit" name="limit" type="number" min="1" max="100" value={params.get('limit') ?? '50'} /></div><div class="filters-actions"><button class="button primary" type="submit">Apply filters</button><a class="button secondary" href="/audit">Clear</a></div></form>
+  {activeFilters.length ? <p class="filter-note">Active filters: {activeFilters.join(' · ')}. The list shows only events the account is authorized to view.</p> : <p class="filter-note">Showing the latest authorized events. Pages hold at most {result.limit} events.</p>}
   {result.events.length ? <div class="table-wrap"><table><caption>Authorized audit events</caption><thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">Subject</th><th scope="col">Transition</th><th scope="col">Request</th></tr></thead><tbody>{result.events.map((event) => <tr><td><time datetime={event.occurredAt.toISOString()}>{event.occurredAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></td><td>{event.action}</td><td>{event.subjectType} · {event.subjectId}</td><td>{event.oldState ?? '—'} → {event.newState ?? '—'}</td><td>{event.requestId}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No authorized audit events</h2><p>The query returned no events, or the account does not hold the explicit audit-view permission.</p></section>}
+  {result.total > 0 && <nav class="pager" aria-label="Audit pages"><span>Showing {result.events.length} of {result.total} events</span><span class="pager-links">{hasPrev ? <a href={pageHref(result.offset - result.limit)}>Previous</a> : <span aria-hidden="true">Previous</span>}{hasNext ? <a href={pageHref(result.offset + result.limit)}>Next</a> : <span aria-hidden="true">Next</span>}</span></nav>}
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p,.page-head>span{color:var(--text-muted);font-size:.85rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.table-wrap{overflow-x:auto;margin-top:var(--space-6);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:700px;border-collapse:collapse}caption{padding:var(--space-4);text-align:start;color:var(--text-primary);font-weight:700}th,td{padding:var(--space-3) var(--space-4);border-block-start:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{color:var(--text-primary);background:var(--surface-raised);font-size:.72rem}.empty{margin-top:var(--space-6);padding:var(--space-10);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}@media(max-width:650px){.page-head{display:grid}}
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p,.page-head>span{color:var(--text-muted);font-size:.85rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--space-3);margin-top:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.filters label{display:block;margin-bottom:4px;color:var(--text-primary);font-size:.72rem;font-weight:700}.filters input{width:100%;max-inline-size:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-default);border-radius:var(--radius-md);font-size:.8rem}.filters-actions{display:flex;gap:var(--space-3);align-items:end}.filter-note{margin-top:var(--space-4);color:var(--text-muted);font-size:.8rem}.table-wrap{overflow-x:auto;margin-top:var(--space-6);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:700px;border-collapse:collapse}caption{padding:var(--space-4);text-align:start;color:var(--text-primary);font-weight:700}th,td{padding:var(--space-3) var(--space-4);border-block-start:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{color:var(--text-primary);background:var(--surface-raised);font-size:.72rem}.empty{margin-top:var(--space-6);padding:var(--space-10);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}.pager{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-top:var(--space-4);color:var(--text-muted);font-size:.8rem}.pager-links{display:flex;gap:var(--space-4)}.pager-links a{color:var(--color-accent-primary-hover)}@media(max-width:650px){.page-head{display:grid}.pager{flex-direction:column;align-items:flex-start}}
 </style>

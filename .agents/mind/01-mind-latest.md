@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — إصلاح F-07: توحيد استعلام التدقيق بين Dashboard و/audit
+
+### تم التنفيذ
+- تتبعت شروط السطحين: الـ dashboard يتفوض بـ DASH permission ونشاطه مقيد بحدث الفاعل نفسه (`actor_id = actor.id`)، بينما `/audit` يتطلب `PERM-ADM-AUDIT-VIEW` الصريح — ووثقت أن أي تباين خارج هذا مقصود سياسةً لا انحرافًا.
+- وسعت العقد المعتمد في `audit-query.ts`: تطبيع الفلاتر (`limit` 1..100 و`offset` ≥0 وقص النصوص وتحقق التواريخ)، و`total` = العدد الكامل المطابق لا طول الصفحة، وترتيب ثابت (`occurred_at DESC, event_no DESC`)، و`mapAuditRowToView` كمسار allowlist الوحيد (بلا `payload` بنيويًا).
+- أصلحت `PostgresAuditQuery`: كانت ترد صفوف snake_case خامًا بلا mapping (سبب كسر العرض) و`total` = طول الصفحة وبلا offset — صارت query-builder بنفس الشروط للـ COUNT والصفحة، بأعمدة آمنة صريحة وmapping معتمد، ولا تختار `payload` أبدًا.
+- وحّدت نشاط الـ dashboard على نفس الـ mapper والترتيب والإسقاط الآمن بدل SQL اليدوي (`COALESCE(reason, action)` صار `reason ?? action` بعد الـ mapping).
+- أعطيت صفحة `/audit` فلاتر كاملة (subject/actor/action/from/to/limit) وترقيم Prev/Next مع echo للفلاتر، مع بقاء الرفض والفراغ بنفس حالة empty (حماية existence-leakage).
+- أضفت `tests/integration/shared/audit-dashboard-parity.test.ts` (9 اختبارات): نفس الفاعل يرى نفس الحدث المؤهل على السطحين، عزل own-scope، رفض بلا صلاحية (حتى Admin وحده) بنفس الكود مع/بدون بيانات، ترقيم وtotal، فلاتر الأبعاد الستة، ثبات الترتيب عند تساوي الوقت، وإثبات عدم تسريب `payload`/الأسرار، وتمرير الفاعل عبر `GetDashboardUseCase`.
+
+### الملفات المتأثرة
+- `src/shared/audit/audit-query.ts` (العقد المعتمد)
+- `src/shared/audit/postgres-audit-query.ts` (COUNT + صفحة + mapping)
+- `src/modules/dashboard/infrastructure/postgres-dashboard-query.ts` (توحيد النشاط)
+- `src/pages/audit.astro` (فلاتر + ترقيم)
+- `tests/integration/shared/audit-query.test.ts` (تحديث fake للعقد)
+- `tests/integration/shared/audit-dashboard-parity.test.ts` (جديد)
+
+### التحقق
+- RED→GREEN: بدون الإصلاح 7/9 تفشل، ومعه 9/9 ✅
+- `pnpm exec astro check` ✅ — 0 errors
+- `pnpm lint` ✅ و`pnpm test:architecture` ✅
+- `pnpm test:unit` ✅ — 238 اختبارًا (بلا تغيير)
+- `tests/integration/shared + dashboard` ✅ — 10 ملفات / 28 اختبارًا
+- `pnpm build` ✅
+- دخان إنتاجي: `/audit` و`/audit?...filters` و`/dashboard` بلا جلسة ترد `303 → /login` (لا 404/500 ولا تسريب) ✅
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** السطحان يقرآن الآن نفس العقد المعتمد بترتيب وmapping وترقيم موحد، وحدث GRANT المؤهل يظهر متطابقًا عليهما لنفس الفاعل المخوّل، مع بقاء حماية عدم التسريب وبلا payload/أسرار.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- الإثبات المصادق الحي (دخول yazeed ورؤية GRANT على السطحين في الإنتاج) يحتاج بيئة disposable ولم يُنفذ هنا.
+- تباين مقصود موثق: فاعل بـ DASH فقط يرى نشاطه الخاص في الـ dashboard لكن `/audit` ترفضه — سياسة لا خلل.
+
 ## [2026-09-09] — إصلاح F-12: واجهة إنجليزية فقط + مفردات sentence-case موحدة
 
 ### تم التنفيذ
