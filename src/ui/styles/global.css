@@ -18,18 +18,74 @@
   box-sizing: border-box;
 }
 html {
-  min-width: 320px;
   background: var(--surface-page);
 }
 body {
   margin: 0;
-  min-width: 320px;
   background: var(--surface-page);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.5;
   text-align: start;
+}
+/* F-03 reflow guard: no global minimum width may force page-level
+   horizontal scrolling at 320px. Grids and flex containers below rely on
+   min-width: 0 / min-inline-size: 0 so tracks can shrink to the viewport. */
+html,
+body {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+}
+.system-content,
+.app-workspace,
+.app-main,
+.page-container,
+main {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+}
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  max-inline-size: 100%;
+}
+pre,
+code {
+  overflow-wrap: anywhere;
+}
+/* Fieldsets default to min-inline-size: min-content, which alone can push a
+   320px form grid past the viewport. */
+fieldset {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+}
+input,
+select,
+textarea,
+button {
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+}
+/* Contained scroll regions (data tables) own their overflow so the page
+   itself never scrolls horizontally. */
+.table-wrap,
+.table-scroll {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overflow-inline: auto;
 }
 .system-content {
   position: relative;

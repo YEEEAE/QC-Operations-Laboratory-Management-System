@@ -122,7 +122,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
 .form textarea{min-height:6rem}
 fieldset.context{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);display:grid;gap:var(--space-3);margin:0}
 fieldset.context legend{font-size:.8rem;font-weight:700;padding:0 .4rem}
-.actions{display:flex;gap:var(--space-3);align-items:center}
+.actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
 button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border-radius:var(--radius-md);font-weight:700}
 button:disabled{opacity:.5}
 .advisory-label{font-size:.75rem;font-weight:700;letter-spacing:.06em;color:var(--status-warning);border:1px solid var(--status-warning);border-radius:var(--radius-sm);padding:.45rem .6rem;display:inline-block}

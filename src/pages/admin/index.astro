@@ -138,7 +138,7 @@ const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
     gap: var(--space-5);
   }
   .panel,

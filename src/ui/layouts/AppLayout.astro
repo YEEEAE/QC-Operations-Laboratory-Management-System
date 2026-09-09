@@ -24,18 +24,22 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 <style>
   .app-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(220px, 264px) minmax(0, 1fr); background: rgb(20 23 20 / 94%); transition: grid-template-columns var(--motion-standard) ease; }
   .app-shell[data-sidebar-collapsed='true'] { grid-template-columns: 70px minmax(0, 1fr); }
-  .app-sidebar { background: rgb(17 20 17 / 97%); border-inline-end: 1px solid var(--color-border-subtle); }
-  .app-workspace { min-width: 0; display: flex; flex-direction: column; }
+  .app-sidebar { background: rgb(17 20 17 / 97%); border-inline-end: 1px solid var(--color-border-subtle); min-width: 0; min-inline-size: 0; }
+  .app-workspace { min-width: 0; min-inline-size: 0; max-inline-size: 100%; display: flex; flex-direction: column; }
   .app-topbar { min-height: 64px; display: flex; align-items: center; padding: var(--space-3) var(--space-6); background: rgb(27 31 27 / 97%); border-block-end: 1px solid var(--color-border-subtle); }
-  .app-main { width: min(100% - 2 * var(--space-6), 1600px); margin-inline: auto; flex: 1; padding-block: var(--space-8); }
-  @media (max-width: 760px) { .app-shell,.app-shell[data-sidebar-collapsed='true'] { display:block; } .app-sidebar { position:fixed; z-index:20; inset:0 auto 0 0; width:min(86vw,320px); transform:translateX(-105%); transition:transform var(--motion-standard) ease; box-shadow:var(--shadow-3); } [dir='rtl'] .app-sidebar { inset:0 0 0 auto; transform:translateX(105%); } .app-shell[data-mobile-nav-open='true'] .app-sidebar { transform:translateX(0); } .app-main { width: min(100% - 2 * var(--space-4), 1600px); padding-block: var(--space-6); } .app-topbar { padding-inline: var(--space-4); } }
+  .app-main { width: min(100% - 2 * var(--space-6), 1600px); max-inline-size: 100%; margin-inline: auto; flex: 1; padding-block: var(--space-8); overflow-wrap: anywhere; }
+  @media (max-width: 760px) { .app-shell,.app-shell[data-sidebar-collapsed='true'] { display:block; } .app-sidebar { position:fixed; z-index:20; inset-block:0; inset-inline-start:0; inset-inline-end:auto; inline-size:min(86vw,20rem); max-inline-size:calc(100vw - 3rem); visibility:hidden; transform:translateX(-105%); transition:transform var(--motion-standard) ease, visibility var(--motion-standard); box-shadow:var(--shadow-3); } [dir='rtl'] .app-sidebar { transform:translateX(105%); } .app-shell[data-mobile-nav-open='true'] .app-sidebar { transform:translateX(0); visibility:visible; } .app-main { width: min(100% - 2 * var(--space-4), 1600px); padding-block: var(--space-6); } .app-topbar { padding-inline: var(--space-4); } }
+  @media (prefers-reduced-motion: reduce) { .app-shell,.app-sidebar { transition:none; } }
 </style>
 <script>
   const shell = document.querySelector<HTMLElement>('[data-app-shell]');
+  const sidebarPanel = document.querySelector<HTMLElement>('[data-sidebar-panel]');
   const sidebar = document.querySelector<HTMLElement>('[data-sidebar-panel] .sidebar');
   const collapse = document.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
   const navigationToggle = document.querySelector<HTMLButtonElement>('[data-navigation-toggle]');
   const storageKey = 'qc-sidebar-collapsed';
+  const mobileQuery = window.matchMedia('(max-width: 760px)');
+  const isMobileDrawer = () => mobileQuery.matches;
 
   const setCollapsed = (collapsed: boolean) => {
     if (!shell || !sidebar || !collapse) return;
@@ -46,16 +50,49 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     localStorage.setItem('qc-sidebar-collapsed', String(collapsed));
   };
 
+  const firstDrawerLink = () =>
+    sidebarPanel?.querySelector<HTMLElement>('a[href], button:not([disabled])');
+
+  const setMobileNav = (open: boolean, options: { focusPanel?: boolean } = {}) => {
+    if (!shell || !sidebarPanel) return;
+    shell.dataset.mobileNavOpen = String(open);
+    navigationToggle?.setAttribute('aria-expanded', String(open));
+    if (!isMobileDrawer()) {
+      sidebarPanel.removeAttribute('inert');
+      return;
+    }
+    if (open) {
+      sidebarPanel.removeAttribute('inert');
+      if (options.focusPanel) firstDrawerLink()?.focus();
+    } else {
+      if (sidebarPanel.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement | null)?.blur?.();
+      }
+      sidebarPanel.setAttribute('inert', '');
+    }
+  };
+
   if (localStorage.getItem(storageKey) === 'true') setCollapsed(true);
+  // A closed mobile drawer must never keep keyboard focus: park it inert.
+  if (isMobileDrawer() && shell?.dataset.mobileNavOpen !== 'true') {
+    sidebarPanel?.setAttribute('inert', '');
+  }
+  mobileQuery.addEventListener?.('change', (event) => {
+    if (!shell || !sidebarPanel) return;
+    if (event.matches && shell.dataset.mobileNavOpen !== 'true') {
+      sidebarPanel.setAttribute('inert', '');
+    } else {
+      sidebarPanel.removeAttribute('inert');
+    }
+  });
   collapse?.addEventListener('click', () => setCollapsed(sidebar?.dataset.collapsed !== 'true'));
   navigationToggle?.addEventListener('click', () => {
     if (!shell) return;
     const open = shell.dataset.mobileNavOpen === 'true';
-    shell.dataset.mobileNavOpen = String(!open);
-    navigationToggle.setAttribute('aria-expanded', String(!open));
+    setMobileNav(!open, { focusPanel: !open });
   });
   sidebar?.addEventListener('click', (event) => {
-    if ((event.target as Element).closest('a') && shell) shell.dataset.mobileNavOpen = 'false';
+    if ((event.target as Element).closest('a') && shell) setMobileNav(false);
   });
   document.addEventListener('keydown', (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
@@ -63,7 +100,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
       window.location.assign('/search');
     }
     if (event.key === 'Escape' && shell?.dataset.mobileNavOpen === 'true') {
-      shell.dataset.mobileNavOpen = 'false';
+      setMobileNav(false);
       navigationToggle?.focus();
     }
   });

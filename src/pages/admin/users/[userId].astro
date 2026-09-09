@@ -305,7 +305,7 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
     gap: var(--space-5);
   }
   .panel,
@@ -406,6 +406,8 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
   .scopes li {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
     padding: 0.6rem 0;
     border-top: 1px solid var(--color-border-subtle);
     font-size: 0.82rem;

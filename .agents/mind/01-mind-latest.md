@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — إصلاح F-03: إغلاق التمدد الأفقي عند 320px و200% زوم (LTR/RTL)
+
+### تم التنفيذ
+- أزلت `min-width:320px` العام عن `html`/`body` في `global.css` واستبدلته بحراسة reflow: `min-width/min-inline-size:0` على الصفحة والحاويات، وتصفير `min-inline-size` للـ`fieldset`، وتقييد الوسائط والحقول بـ`max-inline-size:100%`، مع إبقاء التمرير الأفقي محصورًا داخل `.table-wrap`/`.table-scroll` — كلها بتوكنز التصميم القائمة وCSS منطقي فقط.
+- قوّيت درج الجوال في `AppLayout.astro`: إزاحة وتموضع منطقي (`inset-inline-start` + `[dir='rtl']`)، وإخفاء `visibility` عند الإغلاق، وركن `inert` للوحة المغلقة على الجوال فقط، ونقل focus لأول رابط عند الفتح، وإبقاء Escape-to-close مع إرجاع focus للزر، ومزامنة `aria-expanded` — مع احترام `prefers-reduced-motion`.
+- صلّحت `Sidebar.astro`: مؤشر العنصر النشط معكوس في RTL، وشبكة الدرج عمود واحد تحت 380px، وقص `brand-name`/`nav-label` بـellipsis بدل الدفع الأفقي.
+- وحّدت المسارات الثابتة: `minmax(320px/280px,1fr)` في صفحات الإدارة صارت `minmax(min(100%,17.5rem),1fr)`، وأضفت fallback جوال (`page-head/grid/dl/actions`) لصفحات System Health والتدقيق والتنبيهات والملاحظات والنسخ الاحتياطية والمختبر والمهام والاستشارات — بما فيها `banner` قابل للالتفاف وتكديس `dl`.
+- أضفت `tests/unit/ui/reflow-320.test.ts` (7 حراس ثابتين) و`tests/e2e/reflow-320.spec.ts` (22 اختبارًا: 320px و200% زوم باتجاهين للوحة المعلومات والقوائم والفورمات الطويلة والجداول وصحة النظام، مع إثبات عدم قصّ الضوابط الحرجة وسلوك الدرج).
+
+### الملفات المتأثرة
+- `src/ui/styles/global.css`، `src/ui/layouts/AppLayout.astro`، `src/ui/shell/Sidebar.astro`
+- `src/pages/system/health.astro` + 11 صفحة (admin ×3، audit، notifications، findings list/new، backups/index، lab index/new، tasks/new، ai-advisory)
+- `tests/unit/ui/reflow-320.test.ts` (جديد)، `tests/e2e/reflow-320.spec.ts` (جديد)
+
+### التحقق
+- RED→GREEN للحراس: مع CSS القديم يفشل اختباران، ومع الجديد 7/7 ✅
+- `pnpm test:unit` ✅ — 40 ملفًا / 219 اختبارًا (كانت 39/212)
+- `pnpm exec astro check` ✅ — 0 errors، و`pnpm lint` ✅، و`pnpm test:architecture` ✅، و`pnpm build` ✅
+- Playwright على البناء الإنتاجي: العامة 4/4 ✅ (دخول EN/AR عند 320px و200%)، و`responsive.spec` القائم أخضر ✅، والمصادقة 18 تُتخطى gated (لا fixture ولا Docker — نفس عرف الريبو)
+- دخان إنتاجي: الأسطح الخمس المستهدفة ترد `303 → /login` بلا جلسة (لا 404/500) ✅
+
+### النتيجة
+- **الحالة:** نجح جزئيًا (الكود والحراسة العامة خضراء؛ الإثبات المصادق على المتصفح يحتاج fixture)
+- **مختصر:** التمدد الأفقي على مستوى الصفحة مغلق بالتوكنز القائمة مع درج ميسّر، والحراسة الآلية تمنع الانتكاس، لكن تشغيل الـ18 اختبارًا المصادق يحتاج بيئة disposable بصلاحيات مناسبة (وصحة النظام تحتاج مالك SYSTEM_OWNER).
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- `var(--status-success/error)` مستخدم في 5 صفحات (health/backups/admin) لكنه غير معرّف في `tokens.css` — خارج نطاق F-03 ويحتاج مهمة توكنز مستقلة.
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية.
+
 ## [2026-09-09] — إصلاح F-04 وF-05: POST baseline لكل فورمات الإنشاء التسعة
 
 ### تم التنفيذ
