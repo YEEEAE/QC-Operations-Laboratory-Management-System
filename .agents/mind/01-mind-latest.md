@@ -1,6 +1,34 @@
 # QC Operations & Laboratory Management System — Project Mind
 
-## [2026-09-09] — برومبت خلفية الدخول وتثبيت الإنجليزية في تقرير التدقيق
+## [2026-09-09] — دمج خلفية QC ثلاثية الأبعاد في صفحة /login فقط
+
+### تم التنفيذ
+- نسخت المكوّن المورّد كما هو إلى `src/ui/components/QCLogin3DBackground.astro` (مطابق byte-for-byte للأصل) والموديل إلى `public/assets/qc-medical-hero.glb` (يُخدم على `/assets/qc-medical-hero.glb`)، وثبتّ `three@0.185.1` عبر `pnpm add three` ليُحزم محليًا عبر Astro/Vite (مقطع `hoisted.BTW2StZB.js` بحجم 617KB مرتبط بمسار `/login` فقط في الـ manifest).
+- ركّبت الخلفية في `src/pages/login.astro` فقط (لا وجود لها في أي layout) مع `systemBackground={false}` و`transparent` حتى لا تتحمل الصفحة خلفيتين ولا يغطي AuthLayout المشهد؛ النموذج فوق الخلفية بـ `position:relative; z-index:1` والـ canvas لا يعترض المؤشر (`pointer-events:none`) والمحتوى الزخرفي مخفي عن التقنيات المساعدة (`aria-hidden` + `role=presentation` على الـ canvas).
+- أضفت opt-out في `BaseLayout` (`systemBackground` الافتراضي `true`) ومررته `AuthLayout` مع صنف `is-transparent`؛ باقي الصفحات تستخدم الافتراضي بلا تغيير، والمصادقة والتحقق والتحويلات ونصوص الإنجليزية LTR لم تُمس.
+- أبقيت سلوك المكوّن المورّد: `prefers-reduced-motion` وfallback CSS عند غياب WebGL/فشل GLB وresponsive (portrait/tablet/desktop) وتنظيف الـ renderer والـ listeners عبر `astro:before-swap` و`pagehide`.
+
+### الملفات المتأثرة
+- `src/ui/components/QCLogin3DBackground.astro` (جديد — نسخة المورّد)
+- `public/assets/qc-medical-hero.glb` (جديد — نسخة الموديل)
+- `src/pages/login.astro` (التركيب + رفع النموذج)
+- `src/ui/layouts/BaseLayout.astro` و`src/ui/layouts/AuthLayout.astro` (opt-out فقط، بلا تركيب للخلفية)
+- `package.json` و`pnpm-lock.yaml` (`three 0.185.1`)
+
+### التحقق
+- `pnpm exec astro check` ✅ (0 أخطاء) و`pnpm build` ✅ والموديل يُخدم `200 model/gltf-binary` ✅.
+- `tests/unit/ui` ✅ (92/92) و`test:architecture` ✅ وESLint على الملفات (ملفات astro خارج تغطية الكونفق — قائم مسبقًا) وprettier لا يparse أي astro في الريبو (قائم مسبقًا).
+- سيرفر البناء: `/login` يعرض `data-qc-3d-background` مع الموديل ولا `data-system-background`، و`/dashboard` و`/audit` بلا جلسة `303 → /login`، وPOST فارغ يرد `AstroActionInputError/400` ثم يعرض `Sign-in could not be completed` بلا crash.
+- متصفح headless حقيقي (desktop ‏1440×900 وmobile ‏390×844 لاحقًا ب800×600): canvas بملء الشاشة و`pointer-events:none` والنموذج ظاهر وقابل للتعبئة والإرسال (alert ظهر، صفر crash)، وبعد الانتقال لصفحة 404: صفر عناصر QC وصفر canvases، ومقطع chunks الصفحات الأخرى (dashboard/index/audit/account/404) خالٍ من أي إشارة للموديل أو الحزمة.
+- ملاحظات قائمة مسبقًا (ليست من هذا التغيير): خطأ `/favicon.ico` (لا ملف favicon) وفشل WASM الخاص بـ dotlottie/SystemBackground على صفحة 404 بسبب CSP — الكودان لم يُمسّا.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** خلفية الدخول ثلاثية الأبعاد تعمل على `/login` فقط (desktop وmobile) مع بقاء المصادقة والعزل والتنظيف، وبلا commit أو push.
+
+### ملاحظات / مشاكل مفتوحة
+- نجاح الدخول ببيانات صحيحة (303) لم يُجرّب حيًا (يحتاج DB ببيانات) — مغطى بـ e2e الحالي في CI، ومنطق الـ action لم يُمس.
+- التحقق البصري الحركي الكامل (جودة المشهد/الـ parallax) يحتاج GPU حقيقيًا — SwiftShader البرمجي ثقيل مع هذه الخامة لكنه أكمل التهيئة بلا أخطاء صفحة.
 
 ### تم التنفيذ
 - أضفت Prompt 9 بالإنجليزي لدمج حزمة `public/assets/astro` كخلفية لصفحة `/login` فقط، مع المسارات الفعلية للمكوّن والموديل.
