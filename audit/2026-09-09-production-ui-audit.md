@@ -1,132 +1,231 @@
 # تدقيق واجهة الإنتاج وتدفقات العمل — qclevel.top
 
-**التاريخ:** 2026-09-09  
-**الحساب:** `yazeed` (`SYSTEM_OWNER`)  
-**النمط:** جولة فحص للبيئة الإنتاجية للقراءة فقط؛ ما تم إنشاء أو تعديل أو اعتماد أو إفراج أو استعادة أو حذف أي سجل أعمال.  
-**الحكم:** **محجوب — النتيجة الإجمالية 68%**
+آخر تحديث للقرارات والبرومبتات: 2026-09-10 (Asia/Riyadh)
 
-## النطاق والأدلة
+المستودع: `YEEEAE/QC-Operations-Laboratory-Management-System`
 
-- تم تسجيل الدخول بنجاح عبر `/login` والتأكد من ظهور مجموعات التنقل التسع.
-- تم فتح وجهات التنقل **25/25** الظاهرة للحساب.
-- تم فتح مسارات الإنشاء **9/9** المكتشفة من صفحات القوائم الحالية.
-- تم فحص حقول النماذج وتسمياتها وأزرارها وحالات الفراغ وعناوين الصفحات والعناوين الرئيسية ووجهات المسارات والأسماء الميسّرة.
-- تم اختبار صفحات ممثلة بعرض 320 بكسل: لوحة المعلومات والمهام وإنشاء الاستلام وإنشاء طلب التغيير وصحة النظام.
-- تم قياس تباين نص لوحة المعلومات المرسوم؛ ولم تُرصد عينة نص عادي أقل من نسبة WCAG AA ‏4.5:1.
-- تمت مطابقة واجهة الإنتاج مع بيان المسارات المعتمد والتنفيذ الحالي في `src/pages`.
-- تم التحقق خارجيًا: `/api/health/live` = HTTP 200 `healthy`؛ و`/api/health/ready` = HTTP 200 `healthy`.
+الفرع: `main`
 
-تعذر اختبار مساحات التفاصيل والمراجعة والتنفيذ والاستعادة الديناميكية لأن الإنتاج ما فيه سجلات أعمال أو مجموعات نسخ احتياطية مقابلة. ولم تُرسل أي تغييرات مضبوطة عمدًا.
+HEAD الذي تمت مراجعة مصدره: `2adb7871a285711e87a24a3b83dd3848b795d64a`
 
-**قرار لغة المنتج:** واجهة النظام إنجليزية فقط (`en`/`ltr`). عدم وجود العربية أو مبدّل لغة أو RTL متطلب مقصود، وليس مشكلة تدقيق.
+المتصفح: Google Chrome — جولة إنتاج مصادق عليها بالحساب المصرح
 
-## منهج احتساب النتيجة
+المنهج: `better-interface` مع Accessibility وLayout وWriting وTypography وColors وUI
 
-| المجال | الوزن | النتيجة | الناتج الموزون |
-| --- | ---: | ---: | ---: |
-| إمكانية الوصول للمسارات والتنقل | 20% | 96% | 19.2 |
-| اكتمال الإنشاء وتدفقات العمل | 25% | 64% | 16.0 |
-| الاعتمادية والأخطاء والواقع التشغيلي | 20% | 55% | 11.0 |
-| أسس الإتاحة ولوحة المفاتيح | 15% | 82% | 12.3 |
-| التجاوب مع المقاسات | 10% | 55% | 5.5 |
-| اللغة والاتساق والصقل | 10% | 42% | 4.2 |
-| **الإجمالي** | **100%** |  | **68.2% ← 68%** |
+النطاق: Login وApp Shell/Navigation وDashboard وSystem Health وAudit وChange Requests، مع فحص المصدر والاختبارات للحالات التي تعذر تشغيلها حيًا.
 
-النسبة درجة تدقيق وليست إعلان جاهزية للإنتاج. أي مشكلة **عالية** غير محلولة تبقي الحكم «محجوب» مهما كان المتوسط.
+## الزبدة التنفيذية
 
-## تغطية مسارات الإنشاء
+تم إلغاء رقم **88%** السابق لأنه كان تقديرًا موزونًا ذاتيًا، وليس نسبة يمكن إعادة حسابها من عدّاد واضح. البديل ثلاث نسب منفصلة وقابلة لإعادة الحساب:
 
-| المجال | مدخل الإنشاء | النتيجة |
+| المقياس | الحساب | النتيجة | ماذا يعني |
+| --- | ---: | ---: | --- |
+| إغلاق البنود المعروفة | 8 مغلقة ÷ 15 إجماليًا | **53.3%** | تقدم معالجة Findings، وليس جودة المنتج كلها |
+| تغطية الجولة الحية | 6 منفذة ÷ 12 مخططة | **50.0%** | مقدار ما فُحص حيًا في Chrome |
+| النجاح ضمن المنفذ حيًا | 5 ناجحة ÷ 6 منفذة | **83.3%** | لا يشمل البنود غير المتحققة |
+| النجاح الحي المحافظ | 5 ناجحة ÷ 12 مخططة | **41.7%** | يعامل `Not verified` كغير مكتمل |
+
+هذه الأرقام **ليست Production Readiness score**. بلوغ 100% هنا يتطلب إغلاق **15/15** Findings وإكمال **12/12** بنود تحقق حي بنجاح على نفس build المنشور.
+
+**الحكم الحالي:** `Needs changes / Pending complete live verification`.
+
+> تحديث 2026-09-10: تم اعتماد قرارات P-01 إلى P-07 كمدخلات تنفيذ، لكن لم يُنفذ منها كود في هذا التحديث بناءً على توجيه المالك. اعتماد القرار لا يغلق Finding ولا يرفع أي نسبة؛ الإغلاق يحتاج تنفيذًا واختبارات ودليلًا حيًا على نفس build المنشور.
+
+## 0) القرارات المعتمدة التي يجب أن تلتزم بها البرومبتات
+
+| القرار | السياسة المعتمدة | أثره على النسبة الآن |
 | --- | --- | --- |
-| المهام | `/tasks/new` | موجود |
-| الملاحظات | `/quality/findings/new` | موجود |
-| الاستلام | `/quarantine/receiving/new` | موجود |
-| المختبر | `/laboratory/tests/new` | موجود |
-| المعدات | `/assets/equipment/new` | موجود |
-| المعايرة | `/assets/calibrations/new` | موجود |
-| الصيانة | `/assets/maintenance/new` | موجود |
-| طلبات التغيير | `/change-requests/new` | موجود |
-| الوثائق المضبوطة | `/documents/new` | موجود |
-| المستخدمون | `/admin/users/new` | **مفقود** |
-| NCR | تم حجب الإنشاء المباشر عمدًا إلى حين اعتماد السياسة | غير معروض بشكل صحيح |
-| RCA | إنشاء سياقي من NCR | غير معروض عالميًا بشكل صحيح |
-| CAPA | تم حجب الإنشاء المباشر عمدًا إلى حين اعتماد السياسة | غير معروض بشكل صحيح |
-| الفحوصات | تُنشأ من تدفق الاستلام؛ ما فيه `/new` عام | غير معروضة بشكل صحيح |
+| P-01 | استخدام `Cloudflare R2 Standard` كخيار التخزين الأسهل والمتوفر والمجاني ضمن حدوده؛ لا يُعامل وحده كنسخ PostgreSQL أو PITR | لا تغيير |
+| P-02 | نسخ يومي، احتفاظ 30 يومًا، تجربة استعادة شهرية، `RPO=24h` و`RTO=4h` | لا تغيير |
+| P-03 | استعادة/إعادة فتح الإنتاج لـ`yazeed` فقط، مع إعادة تحقق وتوقيع إلكتروني وAudit | لا تغيير |
+| P-04 | إغلاق NCR وCAPA بواسطة `Supervisor` فقط. إغلاق CAPA **لا يشترط** اكتمال كل الإجراءات ولا `effectivenessVerified=true` | لا تغيير |
+| P-05 | اعتماد inspection/lab/release/retest/void/document بواسطة `Supervisor` أو `Manager` أو `yazeed`؛ Admin وحده ليس جهة اعتماد | لا تغيير |
+| P-06 | كل المستخدمين ينشئون القوالب؛ Employee ينشئ `DRAFT`، وSupervisor/Manager/yazeed ينشئون `APPROVED` بتوقيع؛ لهم Review/Approve/Stop/Void/Supersede مع استثناء SoD الخاص بالقوالب وحفظ التاريخ | لا تغيير |
+| P-07 | اعتماد Production Release النهائي بواسطة `Manager OR yazeed` بتوقيع واحد بعد اكتمال كل البوابات والأدلة | لا تغيير |
 
-## المشاكل مرتبة حسب الأولوية
+لطلب تغيير `DOCUMENT_VERSION`، الحقول المسموحة فقط هي: `revision` و`changeSummary` و`contentHash`. أي حقل آخر يجب رفضه خادميًا.
 
-| المعرّف | الخطورة | المشكلة والدليل | الحل المتكامل |
-| --- | --- | --- | --- |
-| F-01 | **HIGH** | **صحة النظام تناقض نقطة الجاهزية الفعلية.** الصفحة الموثقة عرضت `Core system: NOT READY` و`database UNAVAILABLE`، بينما نقطتا النظام أعادتا HTTP 200 بحالة سليمة. فحص الواجهة يفتح `pg.Client` جديدًا من `DATABASE_URL` (`src/modules/system-health/infrastructure/postgres-health-probes.ts:22`) بدل إعادة استخدام فحص قاعدة البيانات وTLS المهيأ والمعتمد. | خلِّ العرضين يستهلكان عقد فحص جاهزية مشتركًا بنفس إعداد TLS ودلالات المهلة. أضف اختبار انحدار يثبت تطابق حالة قاعدة البيانات في الواجهة مع `/api/health/ready` لنفس نتيجة الاعتمادية، مع إبقاء التفاصيل منقّحة. |
-| F-02 | **HIGH** | **الإدارة مفقودة لدور Admin والحساب `yazeed`.** البيان المعتمد يحدد `/admin` والمستخدمين والمستخدم الجديد والأدوار والصلاحيات والنطاقات، لكن ما فيه أي منها داخل `src/pages`، والتنقل بلا مدخل Administration (`src/ui/navigation/navigation.ts:16`). هذا يوقف إضافة المستخدمين وإدارة الوصول، ومنها زر **Create user** المتوقع. | نفّذ المسارات `/admin` و`/admin/users` و`/admin/users/new` و`/admin/users/[id]` و`/admin/roles` و`/admin/roles/[id]` و`/admin/permissions` و`/admin/scopes`، واسمح بها فقط لدور `Admin` والحساب `yazeed` مع صلاحيات صريحة واستعلامات خادمية محددة النطاق وإصدارات تفاؤلية وتدقيق واختبارات رفض. أضف مجموعة/مدخل Administration للجهات المصرح لها، مع إبقاء صحة النظام حصرية على `yazeed`. |
-| F-03 | **HIGH** | **مقاس 320 بكسل يسبب تمريرًا أفقيًا في كل الصفحات الممثلة المختبرة.** دليل المتصفح أظهر أن `scrollWidth` أكبر من العرض الفعلي في لوحة المعلومات والمهام وإنشاء الاستلام وإنشاء طلب التغيير وصحة النظام. يفرض `html` و`body` حدًا أدنى ثابتًا `min-width:320px` (`src/ui/styles/global.css:21,26`)، كما يضيف الغلاف هوامش للجوال ودرجًا ثابتًا (`src/ui/layouts/AppLayout.astro:27`). | أزل الحد الأدنى العام الثابت، واستخدم `min-width:0` لعناصر الشبكات والمرن، وأبقِ الدرج خارج الشاشة بالكامل بقواعد inset/translate منطقية. أضف تأكيدات Playwright عند 320 بكسل وتكبير 200% بأن `scrollWidth <= clientWidth` وأن كل الإجراءات الأساسية قابلة للوصول. |
-| F-04 | **HIGH** | **عدة تدفقات إنشاء تفشل بلا رسالة استعادة مفيدة.** نماذج المعدات والمعايرة والصيانة والوثائق تضبط فقط `aria-invalid=true` على النموذج كاملًا عند رجوع خطأ من Action (`src/pages/assets/equipment/new.astro:9`، `src/pages/assets/calibrations/new.astro:7`، `src/pages/assets/maintenance/new.astro:7`، `src/pages/documents/new.astro:12`). ما فيه خطأ ظاهر يوضح وش فشل أو وش المطلوب إصلاحه. | أضف ملخصًا ثابتًا بـ`role="alert"`، واربط أخطاء التحقق بجانب الحقول مع `aria-invalid` و`aria-describedby`، وركّز أول حقل غير صالح، واحتفظ بالقيم المدخلة، واعرض مسار إعادة المحاولة لأخطاء الاعتمادية. اختبر نتائج الإدخال غير الصالح وغير المصرح والتعارض وتعذر الاعتمادية. |
-| F-05 | **HIGH** | **معظم نماذج الإنشاء تعتمد بالكامل على JavaScript في العميل وتستخدم GET افتراضيًا.** المهام والمختبر والمعدات والمعايرة والصيانة وطلبات التغيير والوثائق لا تحدد `method="post"`؛ وإذا تعطل سكربت العميل أو مُنع، يتحول الإرسال إلى تنقل بسلسلة استعلام ولا يعمل إجراء الإنشاء. وقد تتضمن بيانات طلب التغيير لقطة هدف وقيمًا مقترحة. | استخدم إجراءات POST حقيقية وبدائيات التحسين التدريجي في Astro كأساس. يسمح لـJavaScript بتحسين حالة الانتظار وإعادة التوجيه، لكن لا يكون مسار التغيير الوحيد. تأكد أن حمولات الأعمال الحساسة لا تدخل عناوين URL. أضف تغطية E2E بلا JavaScript لكل مسار إنشاء من Tier-2. |
-| F-06 | **MEDIUM** | **نماذج الإنشاء تطلب معرّفات داخلية خامًا وقيم رموز غير مضبوطة.** أمثلة ذلك UUID لقالب المختبر والمعدات وهدف طلب التغيير ونوعه ونوع البيانات، وإدخال أرقام المهام والملاحظات والاستلام والمعدات يدويًا. هذا يجعل العمل اليومي معرضًا للخطأ ويكشف مفاهيم التنفيذ للمشغلين. | استبدل إدخال UUID/الرموز الخام بقوائم بحث مرتبطة بالخادم ومصرح بها وروابط إنشاء سياقية. ولّد معرّفات الأعمال على الخادم من قواعد ترقيم معتمدة. استخدم قوائم مضبوطة للتعدادات، واحتفظ بالـUUID فقط كمعرّف مخفي بعد الاختيار. |
-| F-07 | **MEDIUM** | **واجهتا التدقيق غير متطابقتين.** عرضت «النشاط الأخير» في لوحة المعلومات `GRANT_SYSTEM_OWNER_ACCESS`، بينما عرض `/audit` عدد `0 events` لنفس مالك النظام المسجل. | تتبع شروط استعلام لوحة المعلومات والتدقيق ومرشحات الصلاحيات/النطاقات وافتراضات الترقيم. عرّف خدمة استعلام تدقيق معتمدة وموحدة، واختبر نفس الممثل/البيانات عبر الواجهتين، واعرض شرحًا واضحًا للمرشح إذا كان الاختلاف مقصودًا. |
-| F-09 | **MEDIUM** | **إنشاء الملاحظات والمختبر يفتقد التنقل بالإلغاء/الرجوع.** المساران `/quality/findings/new` و`/laboratory/tests/new` يعرضان إجراء الإرسال فقط، بخلاف صفحات الإنشاء السبع الأخرى. | أضف زر `Cancel` ثانويًا ثابتًا وتنقلًا سياقيًا `Back to …`، واحفظ سياق الرجوع الآمن للقائمة، وخَلِّ الإجراء الأساسي مميزًا بصريًا. |
-| F-10 | **MEDIUM** | **إدارة الحجر قراءة فقط ومساحة Administration الأوسع غير موجودة.** يقدر المشغلون يشوفون سياق القالب المعتمد، لكن ما يقدرون يدخلون تدفق إدارة مضبوط حتى مع صلاحيات المالك الصريحة. | افصل عرض المراجع للقراءة فقط عن إدارة القوالب/الإصدارات المضبوطة. أضف مسارات الإنشاء/الإصدار/المراجعة فقط عند وجود سياسات معتمدة، مع دورة مسودة/إصدار وفصل مهام وتوقيع إلكتروني عند الحاجة ودليل تدقيق. خلِّ الاعتمادات غير المعرفة مرفوضة. |
-| F-11 | **MEDIUM** | **فجوات القدرة التشغيلية ظاهرة:** تخزين الكائنات `UNKNOWN`، وفهرس النسخ الاحتياطية فارغ بلا مزود، ومزود الذكاء الاصطناعي غير معروف/غير مهيأ، وسياسات إغلاق NCR/CAPA ما زالت غير محسومة. | تعامل معها كعوائق نشر/سياسة متتبعة، مو مجرد تحذيرات شكلية. هيّئ المزودين المعتمدين، وأنتج دليل اختبار الاستعادة، وخذ قرارات السياسة المضبوطة قبل تفعيل الأزرار الحساسة. لا تحول التحذيرات إلى أخضر بلا دليل وقت التشغيل. |
-| F-12 | **LOW** | **مفردات الإجراءات وحالة الأحرف غير متسقة.** أمثلة: `Create Task` و`Create receiving item` و`New document` و`Save Draft` و`Save controlled draft` و`Create draft`. | اعتمد مفردات موحدة بحالة جملة: `Create task` و`Save draft` و`Create receiving item` و`Create document`. احجز `Submit` و`Approve` و`Release` و`Make effective` للانتقالات المضبوطة الخاصة بها. |
+## 1) طريقة الحساب
 
-## وش اللي اشتغل بشكل جيد
+### 1.1 إغلاق Findings
 
-- نجح تسجيل الدخول، وأظهر فلتر الصلاحيات على الخادم كل مجموعات التنقل المنفذة حاليًا.
-- كل وجهات التنقل الأساسية الـ25 ظهرت بدون 404/500 أثناء الجولة.
-- كل صفحات الإنشاء التسع المنفذة حاليًا كانت متاحة لـ`yazeed`.
-- كل عنصر نموذج تم فحصه له تسمية ظاهرة؛ وعناصر الغلاف ذات الأيقونة فقط لها أسماء ميسّرة.
-- توجد وصلة تخطي ومعلم رئيسي واحد وCSS للتركيز الظاهر وعناصر أصلية وارتفاع تحكم لا يقل عن 40 بكسل وCSS لتقليل الحركة.
-- اجتاز تباين النص المأخوذ من لوحة المعلومات حد WCAG AA ‏4.5:1.
-- ما زال PASS وReleased منفصلين بصريًا ومفهوميًا.
-- الإجراءات المضبوطة الحساسة مثل إنشاء NCR/CAPA المباشر وإنشاء الفحص العام والاستعادة غير معروضة بلا سياسة/سياق معتمد.
+- المقام: 15 Finding مؤهلًا للحساب في هذه النسخة.
+- المغلق: F-01 وF-02 وF-03 وF-04 وF-05 وF-07 وF-09 وF-12 = **8**.
+- المفتوح: F-06 وF-10 وF-11 وBI-01 وBI-02 وBI-03 وBI-04 = **7**.
+- الحساب: `8 ÷ 15 × 100 = 53.3%`.
+- F-08 غير داخل المقام لأنه سُحب/قُبل كقرار منتج، وليس Finding مفتوحًا أو مغلقًا.
 
-## ترتيب التنفيذ
+### 1.2 التحقق الحي
 
-1. **P0 — صحة البيانات والوصول:** F-01 وF-02 وF-07.
-2. **P0 — إكمال المهام والسلامة:** F-04 وF-05.
-3. **P1 — التشغيل المتجاوب:** F-03.
-4. **P1 — كفاءة المشغل:** F-06 وF-09.
-5. **P1/P2 — اتساق الواجهة الإنجليزية:** F-12.
-6. **مسار السياسة والنشر:** F-10 وF-11؛ إبقاء السلوك الحساس غير المعرّف مرفوضًا إلى أن يُعتمد.
+- المقام: 12 سيناريو إنتاج محددًا في §4.
+- `PASS = 5`، و`FAIL = 1`، و`NOT VERIFIED = 6`.
+- التغطية: `(PASS + FAIL) ÷ 12 = 50.0%`.
+- نجاح المنفذ: `PASS ÷ (PASS + FAIL) = 83.3%`.
+- النجاح المحافظ: `PASS ÷ 12 = 41.7%`.
 
-## البرومبتات التنفيذية
+لا يتم دمج النسبتين في متوسط واحد؛ الأولى تقيس إغلاق العمل والثانية تقيس تغطية الأدلة. دمجهما يخفي `Not verified`.
 
-### Prompt 1 — Unify health truth
+## 2) Scope and coverage — better-interface
 
-> Fix F-01 from `audit/2026-09-09-production-ui-audit.md`. Make the authenticated System Health page and `/api/health/ready` consume the same canonical database readiness probe and TLS configuration. Preserve sanitized output. Add unit and integration tests proving both surfaces agree for healthy, unavailable, and configuration-error cases. Run typecheck, lint, unit/integration tests, build, and a production-like HTTP smoke test. Do not weaken TLS or expose connection details.
+| المجال | الأدلة المفحوصة | النتيجة |
+| --- | --- | --- |
+| Accessibility | Chrome accessibility tree لـLogin/Dashboard/Health/Audit/Change Request، و`AppLayout.astro`، و`reflow-320.spec.ts` | BI-01 مفتوح؛ mobile focus containment غير متحقق حيًا |
+| Layout | Chrome desktop، app shell، form grids، contained table source/tests | لا HIGH مؤكد على desktop؛ 320px و200% حيًا `Not verified` |
+| Writing | Dashboard وHealth وAudit وChange Request حيًا | BI-03 MEDIUM وBI-04 LOW |
+| Typography | Login وDashboard بصريًا في Chrome، tokens/source | لا blocker مؤكد؛ القياس الشامل لم يُنفذ |
+| Colors | semantic tokens والحالات المرئية | لا فشل مؤكد؛ contrast measurement الشامل `Not verified` |
+| UI | Navigation icons وaction patterns وLogin 3D | BI-02 MEDIUM؛ الخلفية تعمل بصريًا على Login desktop |
 
-### Prompt 2 — Build Administration and Create User
+## 3) Findings الحالية
 
-> Implement F-02 as a controlled Administration workspace matching `Documents/ROUTE-MANIFEST-SPECIFICATION.md`: `/admin`, `/admin/users`, `/admin/users/new`, `/admin/users/[userId]`, `/admin/roles`, `/admin/roles/[roleId]`, `/admin/permissions`, and `/admin/scopes`. Add permission-aware navigation. Reuse existing administration/identity application use cases; do not put SQL or business rules in Astro pages. Enforce default deny, scope, version, self-grant protection, audit, and session invalidation rules. Add positive and negative route/action tests, including Admin-role-without-permission denial and SYSTEM_OWNER visibility. No commit or push.
+ما فيه HIGH جديد مؤكد في الجولة الحالية.
 
-### Prompt 3 — Make every create form resilient and accessible
+| ID | Severity | Domain | الدليل الحالي | المطلوب للإغلاق |
+| --- | --- | --- | --- | --- |
+| F-06 / BI-03 | MEDIUM | Writing / Flow | الإنتاج يعرض `Target version identifier` و`Target snapshot (JSON)` و`Field path` و`Data type`. المصدر: `src/pages/change-requests/new.astro:27` و`:81` | contextual authorized selector، snapshot/version خادمي، ومحرر structured بأسماء بشرية؛ بلا اختراع سياسة QC |
+| F-10 | MEDIUM | Operational UI | `/quarantine/admin` ما زال read-only وفق المصدر، ولا lifecycle mutation معتمد كامل | اعتماد authority/policy ثم create/revise/approve/retire مع audit/concurrency |
+| F-11 | MEDIUM | Operational truth | Chrome على `/system/health`: `storage=UNKNOWN`، `ai-provider=UNKNOWN`، `NO CATALOG DATA`، `RESTORE NOT VERIFIED` | provider evidence + verified artifact + isolated restore + قرارات سياسة معتمدة |
+| BI-01 | MEDIUM | Accessibility | `src/ui/layouts/AppLayout.astro:56` يجعل sidebar inert عند الإغلاق، لكنه لا يعزل `.app-workspace` عند فتح mobile drawer | عطّل focus/scroll للخلفية، contain focus، Escape وfocus return؛ تحقق حي عند 320px |
+| BI-02 | MEDIUM | UI | `src/ui/navigation/navigation.ts:16` يستخدم Unicode/حروفًا متعددة، و`src/ui/shell/Sidebar.astro:13` يرسمها كنص | icon set محلي SVG واحد، `currentColor`، viewBox/stroke/size موحد، `aria-hidden=true` |
+| BI-04 | LOW | Writing | Chrome و`src/pages/dashboard/index.astro` يعرضان “authorized read model” للمستخدم | نص مباشر يشرح عدم توفر trend data بلا مصطلح معماري داخلي |
 
-> Fix F-04 and F-05 across Tasks, Laboratory, Equipment, Calibration, Maintenance, Change Requests, Documents, Findings, and Receiving. Give every mutation form a real POST baseline, preserve Astro Actions and server-side reauthorization, and make JavaScript enhancement optional. Add visible error summaries, field errors, focus management, pending state, retained values, conflict/dependency recovery, and safe redirects. Ensure no business payload enters the URL. Add no-JS and JavaScript E2E tests for validation failure and successful creation using disposable data. No production records.
+F-06 وBI-03 سبب جذري واحد، لذلك يعالجان كحزمة تنفيذية واحدة، لكنهما باقيان معرفين للتتبع مع التقرير السابق.
 
-### Prompt 4 — Close the 320px/200% responsive blocker
+## 4) سجل الجولة الحية الحالية في Chrome
 
-> Fix F-03 using the existing design tokens and logical CSS. Remove the global minimum-width overflow, harden the shell/drawer and form grids, and verify Dashboard, list pages, long create forms, tables, and System Health at 320px width and 200% zoom in the product's English-only LTR interface. Add automated assertions that no critical control is clipped and no page-level horizontal overflow exists. Preserve accessible focus, Escape-to-close, and focus return for the mobile drawer.
+| # | السيناريو | الحالة | الدليل |
+| ---: | --- | --- | --- |
+| C-01 | Login وأسماء الحقول والمصادقة إلى Dashboard | PASS | Chrome accessibility tree + وصول `/dashboard` |
+| C-02 | Navigation وAdministration/System للحساب المصرح | PASS | Chrome tree يعرض Administration/Users/Roles/Permissions/Scopes |
+| C-03 | Dashboard وKPI/attention/activity بدون خطأ | PASS | `/dashboard`؛ 4 KPI وحدث Audit ظاهر |
+| C-04 | System Health يعرض الواقع بدون false-green | PASS | core READY مع storage/AI UNKNOWN وrestore غير متحقق |
+| C-05 | Audit history والفلاتر والترقيم | PASS | `/audit`؛ 4 أحداث وفلاتر وpage size |
+| C-06 | Change Request يخفي تفاصيل التخزين عن المشغل | FAIL | `/change-requests/new` يعرض JSON/identifier/field path/data type |
+| C-07 | 320px reflow | NOT VERIFIED | الجلسة المصادق عليها لم توفر resize موثقًا |
+| C-08 | 200% zoom بلا overflow/clipping | NOT VERIFIED | spec موجود ولم يُنفذ حيًا هنا |
+| C-09 | mobile drawer focus containment/background inert | NOT VERIFIED | المصدر يؤكد gap؛ يحتاج runtime بعد الإصلاح |
+| C-10 | create-form recovery/retained values/no-JS | NOT VERIFIED | لا mutation إنتاجي، والاختبارات لم تُشغّل طازجًا |
+| C-11 | production deployment identity يطابق HEAD | NOT VERIFIED | لا release/SHA identity مثبتة في الواجهة الحالية |
+| C-12 | negative authorization بحساب غير مخول | NOT VERIFIED | الجولة استخدمت حساب مالك واحدًا |
 
-### Prompt 5 — Replace raw IDs with authorized selectors
+## 5) المثبت وغير المثبت
 
-> Fix F-06 and F-09. Replace raw template/equipment/target UUID fields with authorized searchable selectors or contextual create routes. Replace free-text enumerations with controlled options, and generate business identifiers server-side only from approved numbering sources. Add consistent Cancel/back controls and safe list return context. Do not invent numbering, scientific, calibration, approval, or retest policy. Add authorization, empty/loading/error, keyboard, and stale-selection tests.
+### مثبت حيًا
 
-### Prompt 6 — English-only UX vocabulary pass
+- Login 3D يظهر خلف النموذج، والنموذج واضح وقابل للتفاعل على desktop.
+- المصادقة تعمل والحساب يصل إلى Dashboard.
+- Administration routes موجودة في navigation للحساب المصرح.
+- Dashboard وAudit متاحان، وحدث `GRANT_SYSTEM_OWNER_ACCESS` ظهر في السطحين.
+- System Health صريح: core readiness لا يخفي غياب storage/AI/backup/restore evidence.
+- نموذج Change Request في الإنتاج يطابق الفجوة التقنية؛ ليست استنتاجًا من المصدر فقط.
 
-> Fix F-12 across the English-only product interface. Keep the application language fixed to English with `lang="en"` and `dir="ltr"`; do not add Arabic copy, RTL support, locale switching, translation files, or bilingual UI. Standardize sentence-case action vocabulary without changing controlled action semantics. Use clear, consistent English for navigation, buttons, forms, errors, empty states, and confirmation dialogs. Verify representative dashboards, lists, forms, errors, and dialogs at desktop and mobile widths. Preserve controlled scientific terminology exactly as approved.
+### غير مثبت في هذه الجولة
 
-### Prompt 7 — Resolve audit inconsistency
+- أن production يشغل HEAD `2adb787...` نفسه.
+- 320px و200% zoom على الجلسة المصادق عليها.
+- focus containment للـmobile drawer.
+- contrast ratios الشاملة لكل rendered pair.
+- create/error/no-JS flows؛ لم نرسل mutation للإنتاج.
+- authorization denial بحسابات Member/Admin غير المالك.
+- الاختبارات المحلية الجديدة؛ تشغيل `pnpm` لم يكتمل، فلا توجد نتيجة طازجة تُحتسب PASS.
 
-> Fix F-07 by tracing Dashboard Recent Activity and `/audit` through their authorization/scope predicates. Consolidate on one canonical audit-query contract where appropriate, preserve existence-leakage protections, and add a regression fixture where the same actor sees the same qualifying event on both surfaces. Add pagination/filter tests and prove no raw payload or secret is exposed.
+## 6) حالة Findings السابقة
 
-### Prompt 8 — Operational closure package
+| ID | الحالة | أساس الحكم |
+| --- | --- | --- |
+| F-01 | CLOSED IN SOURCE؛ live view confirmed | canonical DB readiness ظاهر وdatabase HEALTHY |
+| F-02 | CLOSED + LIVE CONFIRMED FOR OWNER | Administration ظاهرة للحساب المصرح؛ negative roles غير متحققة |
+| F-03 | CLOSED IN SOURCE؛ LIVE RECHECK PENDING | source/tests تعالج overflow؛ المقاسات حيًا لم تكتمل |
+| F-04 | CLOSED IN SOURCE؛ LIVE RECHECK PENDING | summaries/inline errors/retained values موجودة؛ لا mutation إنتاجي |
+| F-05 | CLOSED IN SOURCE؛ FRESH RUN PENDING | POST baseline والاختبار موجودان؛ لا تشغيل طازج |
+| F-06 | OPEN | technical Change Request fields مؤكدة حيًا |
+| F-07 | CLOSED + PARTIAL LIVE CONFIRMATION | نفس حدث Audit ظهر في Dashboard وAudit؛ negative scope غير مكتمل |
+| F-09 | CLOSED IN SOURCE | Back/Cancel/safe return context موجودة |
+| F-10 | OPEN / POLICY-GATED | lifecycle الإدارة غير مكتمل |
+| F-11 | OPEN + LIVE CONFIRMED | storage/AI/backup/restore gaps ظاهرة حيًا |
+| F-12 | CLOSED / ACCEPTED | الواجهة English-only وsentence case في الأسطح المفحوصة |
 
-> Address F-10 and F-11 as a controlled policy/deployment package. Inventory storage, backup/restore, AI provider, quarantine template management, NCR/CAPA closure, and approval authorities. Separate implementation gaps from policy decisions. Keep undefined sensitive actions DENY. Produce current provider evidence, backup artifact integrity, isolated restore verification, and UAT evidence before changing any readiness status. Do not claim 100% or production ready from documentation alone.
+## 7) برومبتات تنفيذية للوصول إلى 100% قابل للإثبات
 
-### Prompt 9 — Login-only 3D background
+تنفيذ البرومبت لا يرفع النسبة تلقائيًا؛ الرفع يحصل بعد اجتياز معايير القبول.
 
-> Integrate the supplied background package at `public/assets/astro` exclusively into the `/login` page. Read its README and inspect `public/assets/astro/src/components/QCLogin3DBackground.astro` and `public/assets/astro/public/assets/qc-medical-hero.glb` before implementation. Reuse the supplied component and GLB model; place the executable Astro component under the application's `src` tree and configure a valid public URL for the model. Use the project's pnpm workflow for any required Three.js dependency and bundle it locally through Astro/Vite. Mount and load this background only on `/login`, never in a shared layout or on authenticated pages. Preserve the existing login form, authentication behavior, validation, redirects, and English-only LTR interface. Keep the form readable and interactive above the decorative background; prevent the canvas from intercepting pointer or keyboard input and hide decorative content from assistive technology. Preserve reduced-motion support, a lightweight fallback for unavailable WebGL or failed model loading, responsive behavior, and renderer/event-listener cleanup when leaving the page. Verify the background on desktop and mobile, verify login success and failure behavior, and confirm that other pages neither display the background nor load its model or initialize its renderer, including after navigation away from login. Run relevant checks and report the results. No commit or push.
+### Prompt 1 — Close BI-01: mobile drawer accessibility
 
-## الحكم النهائي
+```text
+Implement BI-01 from audit/2026-09-09-production-ui-audit.md. In src/ui/layouts/AppLayout.astro, make the open mobile navigation drawer isolate the background from keyboard and assistive-technology interaction. Reuse the existing native inert approach: while open at the mobile breakpoint, make .app-workspace inert, prevent background scrolling, keep focus inside the drawer, let Escape close it, and restore focus to the navigation toggle. When closed or leaving the breakpoint, remove every temporary inert/scroll-lock state. Do not alter server authorization or navigation visibility. Add tests for Tab/Shift+Tab containment, Escape, focus return, breakpoint changes, and reduced motion. Run relevant UI tests, Playwright accessibility/reflow, typecheck, lint, architecture checks, and build. Report exact results; no commit, push, deploy, or production mutation.
+```
 
-غلاف الإنتاج قابل للوصول بدرجة واسعة وعنده أساس جيد للعمليات المضبوطة، لكنه **غير مكتمل تشغيليًا**. نتيجة صحة النظام الخاطئة، وغياب مساحة Administration/Create User، ومسارات الإنشاء الهشة المعتمدة على العميل فقط، والأخطاء بلا استعادة، والتمرير في الجوال؛ كلها تمنع الإصدار. درجة التدقيق الإجمالية: **68% — محجوب**.
+### Prompt 2 — Close F-06 / BI-03: contextual Change Request flow
+
+```text
+Replace the technical operator inputs in /change-requests/new with an authorized contextual workflow. The operator must select an allowed controlled document/version using a server-side authorized read model; targetId, targetVersion, targetSnapshot, currentValue, and data type must be resolved and captured server-side from the selected current version inside a transaction with an expected-version/lock check. For target type DOCUMENT_VERSION, allow exactly these change fields: revision, changeSummary, contentHash. Reject every other field server-side with a safe validation error; never trust a client-supplied field path, data type, version, hash, or snapshot. Render human labels and a structured value editor, while keeping storage identifiers and raw JSON out of the operator UI. Preserve immutable snapshots and optimistic concurrency. Keep the no-JavaScript POST baseline and Astro Action enhancement, reauthorize on the server, retain values on recoverable failure, and reject stale or unauthorized targets. Add unit allowlist tests for all three allowed fields and at least one denied field, integration tests proving server-derived snapshots, authorization-negative and concurrency tests, plus no-JS, JS, keyboard, and 320px E2E. Close only when Chrome no longer exposes raw UUID/JSON/storage-model fields.
+```
+
+### Prompt 3 — Close F-10: quarantine template administration
+
+```text
+Implement F-10 using the approved P-06 policy. Every active user may create a template. Employee creation must produce DRAFT and Employee must never review, approve, stop, void, or supersede. Supervisor, Manager, and yazeed may create a template only through reauthentication and E-Signature, producing APPROVED immediately; these three authorities may review/approve an Employee DRAFT and may approve their own template. Reviewer may also be approver: this is an explicit template-only exception to the general SoD rule. Stop/Void/Supersede is limited to the same three authorities and requires a mandatory reason, reauthentication, and E-Signature. Approved content must never be directly edited or deleted; replacement is a new revision followed by Supersede. Implement through Application use cases and Domain state machines, never direct UI/database writes. Require expected versions, reject stale writes, and atomically persist immutable audit and outbox evidence. Build /quarantine/admin list/create/review/approve/stop/void/supersede states with explicit disabled reasons. Add role/scope negative tests for Employee and Admin-only actors, positive tests for all three authorities, template-specific SoD tests, PostgreSQL concurrency/idempotency tests, audit/e-signature assertions, and critical E2E. Do not mark F-10 closed until every lifecycle action passes on the release candidate.
+```
+
+### Prompt 4 — Close F-11: operational evidence
+
+```text
+Close F-11 without false-green behavior. Use Cloudflare R2 Standard for private backup-artifact storage through its S3-compatible API, but do not describe R2 itself as PostgreSQL backup, WAL archive, or PITR. Configure credentials and bucket outside source control. Implement a daily PostgreSQL backup job, retain artifacts for 30 days, record immutable catalog identity and SHA-256 verification, and run an isolated restore drill every month. The approved targets are RPO 24 hours and RTO 4 hours; display measured values separately from targets. Production restore/reopen authorization belongs only to yazeed/SYSTEM_OWNER and must require reauthentication, E-Signature, exact artifact/build identity, reason, request ID, version check, and immutable audit. Admin, Supervisor, and Manager alone must be denied. Keep AI optional and advisory-only, and keep core readiness separate from optional dependencies. Expose sanitized evidence without credentials, endpoints, or raw errors. Add adapter, integration, scheduler-retention, authorization-negative, audit, corruption/hash-failure, and isolated-restore tests. Close only when a verified artifact and successful isolated restore exist for the same deployed release.
+```
+
+### Prompt 5 — Close BI-02 and BI-04: icons and copy
+
+```text
+Replace Unicode navigation glyphs with one local SVG icon system using one viewBox, currentColor, and consistent size/stroke weight. Keep visible labels and mark decorative icons aria-hidden. Replace user-facing backend terminology such as “authorized read model” with direct operational copy preserving authorization meaning. Add a static contract test preventing placeholder glyphs and banned backend terms. Verify collapsed/expanded navigation, hover/focus, 320px, 200% zoom, forced colors, and Chrome states.
+```
+
+### Prompt 6 — Complete live verification
+
+```text
+Run a read-only production UI verification against the exact deployed release identity in Google Chrome. Use separate authorized fixtures for SYSTEM_OWNER, Admin, and an active member without sensitive permissions. Execute C-01 through C-12 from the audit. Cover desktop, 320px, 200% zoom, keyboard-only navigation, mobile drawer containment, visible focus, measured contrast, create-form validation without committing records, Dashboard/Audit parity, and negative authorization. Do not submit destructive, approval, release, restore, or business mutations in production. Attach timestamped evidence. Mark blocked items NOT VERIFIED, never PASS.
+```
+
+### Prompt 7 — Recalculate and gate 100%
+
+```text
+Recalculate strictly from fixed denominators. Findings closure is closed findings divided by 15. Live verification coverage is executed C-items divided by 12. Conservative live pass is passed C-items divided by 12. Do not average these measures. A 100% claim is allowed only when all 15 findings are CLOSED with current evidence, all 12 live checks PASS on the same deployed release identity, no HIGH or MEDIUM remains, and required policy decisions are approved. Otherwise report the exact numerator, denominator, percentage, failures, and NOT VERIFIED items.
+```
+
+### Prompt 8 — Implement P-04 CAPA close exactly as approved
+
+```text
+Implement the approved P-04 CAPA closure rule without importing the old unapproved prerequisites. Only an actor with the Supervisor role, explicit PERM-CAPA-CLOSE permission, valid scope, active account, matching expected version, and an eligible non-terminal CAPA may close it. Do not require all CAPA actions to be complete and do not require effectivenessVerified/effectivenessAccepted=true for CLOSE. Still require a non-empty closure reason, successful reauthentication, E-Signature with explicit CLOSE meaning, request ID/idempotency protection, exact pre-transition snapshot/version, and immutable audit evidence in the same transaction. Employee, Manager, Admin-only, and yazeed without Supervisor authority must be denied for this specific action. CLOSED and VOID records remain terminal and cannot be closed again. Update the state-machine and permission documents, domain/application path, repository transaction, UI confirmation ceremony, and tests. Add positive tests proving a Supervisor can close with incomplete actions and effectivenessVerified=false, plus negative role, missing permission, stale version, missing reason, failed reauthentication, missing signature, duplicate request, and terminal-state tests. Do not weaken ACTIONS_COMPLETE or effectiveness-review rules for their own transitions; this exception applies only to CLOSE.
+```
+
+### Prompt 9 — Implement P-05 controlled approval authorities
+
+```text
+Implement the approved P-05 authority matrix for inspection approval, laboratory approval, receiving/material release, retest authorization, controlled VOID, and controlled-document approval. Each action may be performed by Supervisor, Manager, or yazeed/SYSTEM_OWNER only when the actor also has the explicit permission, valid scope, eligible state, matching version, and required business evidence. Admin alone is never approval authority. Preserve the general SoD rule except for the separately documented template lifecycle exception. Require reason, reauthentication, and E-Signature wherever the controlled transition policy requires them, and atomically persist audit/outbox evidence. Add a table-driven authorization suite covering allow and deny outcomes for Employee, Supervisor, Manager, Admin-only, yazeed, and multi-role Admin+Manager actors across every listed operation; include stale-version, out-of-scope, wrong-state, missing-evidence, and replay tests.
+```
+
+### Prompt 10 — Implement P-07 production release approval
+
+```text
+Implement a fail-closed production release-governance workflow. Final approval authority is Manager OR yazeed/SYSTEM_OWNER; one authorized signer is sufficient and Admin alone is denied. Approval must be impossible unless CI, security verification, database/migration verification, critical E2E, UAT acceptance, required signatures, no unresolved CRITICAL risks, and residual-risk handling all PASS for the exact same release candidate. LOW, MEDIUM, and HIGH residual risks may be accepted by Manager or yazeed with evidence; CRITICAL risk blocks a normal release. Require reauthentication and E-Signature, exact Git SHA, release-candidate ID, build identity, UAT evidence, residual-risk snapshot, timestamp, request ID, expected version, and immutable audit. Store RELEASE_APPROVED with approved_by, authority, release_id, git_sha, build_id, uat_status, residual_risk_status, signature_evidence_id, and approved_at atomically. Add table-driven gate tests, authority-negative tests, build-identity mismatch, stale/replay/concurrency tests, signature failure tests, and a critical E2E. Do not expose an enabled approval action until every gate is server-verified.
+```
+
+## 8) ترتيب التنفيذ
+
+1. Prompt 1 وPrompt 2 وPrompt 5 لإغلاق فجوات الواجهة المباشرة.
+2. Prompt 8 ثم Prompt 9 لتطبيق صلاحيات الجودة والاعتمادات المعتمدة.
+3. Prompt 3 لتطبيق دورة حياة القوالب كاملة.
+4. Prompt 4 لتجهيز النسخ والاستعادة والأدلة التشغيلية.
+5. Prompt 10 لبناء بوابة اعتماد الإصدار النهائي.
+6. Prompt 6 لإعادة التحقق الحي على release identity مثبتة.
+7. Prompt 7 للحساب النهائي ومنع ادعاء 100% بدون أدلة كاملة.
+
+## 9) الحكم النهائي
+
+`better-interface verdict: Needs changes`.
+
+- لا يوجد HIGH مؤكد في النطاق المفحوص.
+- **إغلاق Findings: 53.3% (8/15).**
+- **تغطية الجولة الحية: 50.0% (6/12).**
+- **النجاح ضمن المنفذ: 83.3% (5/6).**
+- **النجاح المحافظ: 41.7% (5/12).**
+- لا توجد مطالبة Production Ready أو 100% في هذه النسخة.

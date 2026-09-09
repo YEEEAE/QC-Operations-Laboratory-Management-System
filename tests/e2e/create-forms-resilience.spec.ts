@@ -7,7 +7,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
  *   `page.request`): exercises the real POST baseline. No Astro Action JSON,
  *   no client script involved.
  * - JS mode: progressive-enhancement path (pending state, inline errors,
- *   client redirect) with native validation disabled so the server path is
+ *   client redirect) with native validation disabled so the serve r path is
  *   exercised through the enhancement.
  * - Every successful creation uses disposable `E2E-…` identifiers and asserts
  *   the redirect carries only the new record id — never business payload.
