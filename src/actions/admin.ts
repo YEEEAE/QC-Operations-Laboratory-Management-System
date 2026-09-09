@@ -4,8 +4,10 @@ import { isPermissionCode } from '../shared/authorization/permissions.js';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
 import { administrationDependencies } from '../modules/administration/application/dependencies.js';
+import { identityAdminActionDependencies } from '../modules/identity/application/admin-dependencies.js';
 
 const repo = () => administrationDependencies();
+const identity = () => identityAdminActionDependencies();
 const withErrors = async <T>(work: () => Promise<T>, requestId?: string): Promise<T> => {
   try {
     return await work();
@@ -97,4 +99,75 @@ export const admin = {
   listPermissions,
   updateRolePermissions,
   manageUserScopes,
+  createUser: defineAction({
+    accept: 'json',
+    input: z.object({
+      loginIdentity: z.string().min(1).max(200),
+      displayName: z.string().min(1).max(200),
+      email: z.string().email().max(320).optional(),
+      temporaryPassword: z.string().min(1).max(512),
+    }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        return identity().createUser.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+      }, context.locals.requestContext?.requestId),
+  }),
+  updateUser: defineAction({
+    accept: 'json',
+    input: z.object({
+      userId: z.string().uuid(),
+      displayName: z.string().min(1).max(200),
+      email: z.string().email().max(320).optional(),
+      expectedVersion: z.coerce.bigint(),
+    }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        const { toSafeUserView } =
+          await import('../modules/identity/application/safe-user-view.js');
+        const updated = await identity().updateUser.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return toSafeUserView(updated);
+      }, context.locals.requestContext?.requestId),
+  }),
+  disableUser: defineAction({
+    accept: 'json',
+    input: z.object({ userId: z.string().uuid(), expectedVersion: z.coerce.bigint() }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        await identity().disableUser.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return { ok: true };
+      }, context.locals.requestContext?.requestId),
+  }),
+  resetPassword: defineAction({
+    accept: 'json',
+    input: z.object({
+      userId: z.string().uuid(),
+      temporaryPassword: z.string().min(1).max(512),
+      expectedVersion: z.coerce.bigint(),
+    }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        await identity().resetPassword.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return { ok: true };
+      }, context.locals.requestContext?.requestId),
+  }),
 };

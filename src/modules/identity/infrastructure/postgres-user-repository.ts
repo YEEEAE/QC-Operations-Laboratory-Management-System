@@ -28,6 +28,15 @@ export class PostgresUserRepository implements UserRepository {
     const r = await this.db.selectFrom('users').selectAll().where('id', '=', id).executeTakeFirst();
     return r ? map(r) : undefined;
   }
+  async listUsers() {
+    const rows = await this.db
+      .selectFrom('users')
+      .selectAll()
+      .orderBy('login_identity')
+      .limit(500)
+      .execute();
+    return rows.map(map);
+  }
   async recordSuccessfulLogin(id: string, at: Date) {
     await this.db
       .updateTable('users')

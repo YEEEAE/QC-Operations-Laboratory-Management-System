@@ -1,0 +1,307 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
+import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { AppError } from '../../../shared/errors/app-error.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const roleId = Astro.params.roleId ?? '';
+
+type RoleView = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['getRole']['execute']>>;
+type GrantList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listRolePermissions']['execute']>>;
+type PermissionList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listPermissions']['execute']>>;
+
+let role: RoleView | undefined;
+let grants: GrantList | undefined;
+let catalog: PermissionList | undefined;
+let catalogRestricted = false;
+let denied = false;
+try {
+  role = await administrationDependencies().getRole.execute({ actor, roleId });
+} catch (error) {
+  if (error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND') {
+    return Astro.redirect('/404');
+  }
+  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
+  if (!denied) throw error;
+}
+if (role) {
+  try {
+    grants = await administrationDependencies().listRolePermissions.execute({ actor, roleId });
+  } catch (error) {
+    catalogRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
+    if (!catalogRestricted) throw error;
+  }
+  try {
+    catalog = await administrationDependencies().listPermissions.execute({ actor });
+  } catch (error) {
+    catalogRestricted = catalogRestricted || (error instanceof AppError && error.category === 'AUTHORIZATION');
+    if (!(error instanceof AppError && error.category === 'AUTHORIZATION')) throw error;
+  }
+}
+
+const granted = new Set((grants ?? []).map(String));
+const canAssign = canAccessAdminRoute(actor, 'roleDetail') && (role?.active ?? false);
+const version = role?.version.toString() ?? '0';
+---
+
+<AppLayout title="Role detail · Administration" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-ROLE-001 · CONTROLLED ADMINISTRATION</p>
+      <h1>{role?.name ?? 'Role detail'}</h1>
+      <p class="lede">
+        {role ? `${role.code} · ${role.active ? 'Active' : 'Inactive'} · Version ${version}` : ''}
+      </p>
+    </div>
+    <a href="/admin/roles">Back to Roles</a>
+  </section>
+  {
+    denied || !role ? (
+      <section class="denied" role="alert">
+        <h2>Role detail is not available</h2>
+        <p>
+          Reading this role requires an explicit role-administration permission grant. Role
+          membership alone does not authorize this view.
+        </p>
+      </section>
+    ) : (
+      <div class="grid">
+        <section class="panel">
+          <p class="eyebrow">ROLE</p>
+          <h2>Configuration</h2>
+          <dl>
+            <div>
+              <dt>Code</dt>
+              <dd>{role.code}</dd>
+            </div>
+            <div>
+              <dt>System role</dt>
+              <dd>{role.isSystemRole ? 'YES' : 'NO'}</dd>
+            </div>
+            <div>
+              <dt>Description</dt>
+              <dd>{role.description ?? '—'}</dd>
+            </div>
+          </dl>
+          {!role.active && (
+            <p class="note">
+              This role is inactive. Permission grants cannot change until it is reactivated
+              through the approved workflow.
+            </p>
+          )}
+        </section>
+        <section class="panel">
+          <p class="eyebrow">PERMISSION GRANTS</p>
+          <h2>Canonical grants</h2>
+          {catalogRestricted || !catalog ? (
+            <p class="note">
+              The permission catalog requires the explicit permission-view grant. Your current
+              grants do not include it.
+            </p>
+          ) : canAssign ? (
+            <form class="form" data-admin-role-permissions data-role={role.id} data-version={version}>
+              <p class="note">
+                Replacing grants is a high-risk, audited mutation. The current version is
+                required; stale versions are rejected without overwriting.
+              </p>
+              <div class="grants">
+                {catalog.map((permission) => (
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      name="permission"
+                      value={permission.code}
+                      checked={granted.has(permission.code)}
+                    />
+                    <span>
+                      <strong>{permission.code}</strong>
+                      <small>
+                        {permission.domain} · {permission.action} · {permission.riskLevel}
+                      </small>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div class="actions">
+                <button type="submit">Replace grants</button>
+              </div>
+              <p role="status" data-result />
+            </form>
+          ) : (
+            <div>
+              {grants?.length ? (
+                <ul class="grants-read">
+                  {grants.map((code) => (
+                    <li>
+                      <code>{code}</code>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="note">No active grants on this role.</p>
+              )}
+              <p class="note">
+                Changing grants requires the explicit permission-assignment grant on an active
+                role.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
+    )
+  }
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('[data-admin-role-permissions]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const permissionCodes = data.getAll('permission').map(String);
+    const result = await actions.admin.updateRolePermissions({
+      roleId: form.dataset.role ?? '',
+      permissionCodes,
+      expectedVersion: BigInt(form.dataset.version ?? '0'),
+    });
+    const output = form.querySelector('[data-result]');
+    if (result.error) {
+      if (output) output.textContent = 'Unable to replace grants. Refresh and try again if authorized.';
+    } else location.reload();
+  });
+</script>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: start;
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--space-5);
+  }
+  .panel,
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .denied {
+    border-inline-start: 3px solid var(--status-warning);
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+  }
+  dl {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-4) 0 0;
+  }
+  dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 0.55rem;
+  }
+  dt {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  dd {
+    margin: 0;
+    text-align: end;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .note {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .form {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+  .grants {
+    display: grid;
+    gap: var(--space-2);
+    max-height: 480px;
+    overflow-y: auto;
+  }
+  .check {
+    display: flex;
+    gap: 0.6rem;
+    align-items: start;
+    font-size: 0.82rem;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .check small {
+    display: block;
+    color: var(--text-muted);
+  }
+  .grants-read {
+    list-style: none;
+    margin: var(--space-4) 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .grants-read code {
+    padding: 0.2rem 0.45rem;
+    background: var(--surface-page);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+  }
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  button {
+    border: 0;
+    padding: 0.65rem 1rem;
+    background: var(--color-accent-primary);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 760px) {
+    .page-head,
+    .grid {
+      display: grid;
+    }
+  }
+</style>

@@ -165,6 +165,47 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
+    id: 'administration',
+    label: 'Administration',
+    items: [
+      {
+        id: 'admin',
+        label: 'Administration',
+        href: '/admin',
+        icon: '⚙',
+        capability: ['PERM-ADM-USERS', 'PERM-ADM-ROLES', 'PERM-ADM-PERMISSIONS', 'PERM-ADM-SCOPES'],
+      },
+      {
+        id: 'admin-users',
+        label: 'Users',
+        href: '/admin/users',
+        icon: '◍',
+        capability: ['PERM-ADM-USERS', 'PERM-IDN-MANAGE-USERS'],
+      },
+      {
+        id: 'admin-roles',
+        label: 'Roles',
+        href: '/admin/roles',
+        icon: '◈',
+        capability: ['PERM-ADM-ROLES', 'PERM-ADM-ROLE-VIEW'],
+      },
+      {
+        id: 'admin-permissions',
+        label: 'Permissions',
+        href: '/admin/permissions',
+        icon: '☰',
+        capability: ['PERM-ADM-PERMISSIONS', 'PERM-ADM-PERMISSION-VIEW'],
+      },
+      {
+        id: 'admin-scopes',
+        label: 'Scopes',
+        href: '/admin/scopes',
+        icon: '◎',
+        capability: ['PERM-ADM-SCOPES', 'PERM-ADM-SCOPE-ASSIGN'],
+      },
+    ],
+  },
+  {
     id: 'system',
     label: 'System',
     items: [

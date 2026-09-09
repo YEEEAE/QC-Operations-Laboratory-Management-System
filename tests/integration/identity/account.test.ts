@@ -20,6 +20,7 @@ class Users implements UserRepository {
   value = { ...user };
   findByLoginIdentity = async () => this.value;
   findById = async () => this.value;
+  listUsers = async () => [this.value];
   recordSuccessfulLogin = async () => {};
   create = async () => this.value;
   updateProfile = async () => this.value;

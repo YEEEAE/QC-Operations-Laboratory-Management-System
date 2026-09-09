@@ -1,0 +1,139 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
+import { AppError } from '../../../shared/errors/app-error.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+type PermissionList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listPermissions']['execute']>>;
+let permissions: PermissionList | undefined;
+let denied = false;
+try {
+  permissions = await administrationDependencies().listPermissions.execute({ actor });
+} catch (error) {
+  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
+  if (!denied) throw error;
+}
+---
+
+<AppLayout title="Permissions · Administration" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-PERM-001 · CONTROLLED ADMINISTRATION</p>
+      <h1>Permissions</h1>
+      <p class="lede">
+        Read-only catalog of active canonical permissions. Grants change only through roles —
+        there is no direct permission mutation here.
+      </p>
+    </div>
+    <a href="/admin">Back to Administration</a>
+  </section>
+  {
+    denied || !permissions ? (
+      <section class="denied" role="alert">
+        <h2>Permission catalog is not available</h2>
+        <p>
+          Reading permissions requires an explicit permission-view grant. Role membership alone
+          does not authorize this view.
+        </p>
+      </section>
+    ) : permissions.length ? (
+      <div class="table-wrap">
+        <table>
+          <caption>Active canonical permissions</caption>
+          <thead>
+            <tr>
+              <th scope="col">Code</th>
+              <th scope="col">Domain</th>
+              <th scope="col">Action</th>
+              <th scope="col">Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            {permissions.map((permission) => (
+              <tr>
+                <th scope="row">
+                  <code>{permission.code}</code>
+                </th>
+                <td>{permission.domain}</td>
+                <td>{permission.action}</td>
+                <td>{permission.riskLevel}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="empty">No active permissions are cataloged.</p>
+    )
+  }
+</AppLayout>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: start;
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede,
+  .empty {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-lg);
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface-panel);
+  }
+  caption {
+    text-align: start;
+    padding: var(--space-4);
+    color: var(--text-muted);
+  }
+  th,
+  td {
+    padding: 0.75rem;
+    text-align: start;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  th {
+    font-weight: 700;
+  }
+  code {
+    font-size: 0.78rem;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 600px) {
+    .page-head {
+      display: grid;
+    }
+  }
+</style>

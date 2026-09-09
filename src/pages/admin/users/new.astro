@@ -1,0 +1,156 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const canCreate = canAccessAdminRoute(actor, 'usersNew');
+---
+
+<AppLayout title="Create user · Administration" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-USR-001 · CONTROLLED ADMINISTRATION</p>
+      <h1>Create user</h1>
+      <p class="lede">
+        New members start ACTIVE with a temporary password they must change at first sign-in.
+        Creation is audited.
+      </p>
+    </div>
+    <a href="/admin/users">Back to Users</a>
+  </section>
+  {
+    canCreate ? (
+      <form class="form" data-admin-create-user>
+        <label>
+          Login identity
+          <input name="loginIdentity" required maxlength="200" autocomplete="off" />
+        </label>
+        <label>
+          Display name
+          <input name="displayName" required maxlength="200" autocomplete="off" />
+        </label>
+        <label>
+          Email (optional)
+          <input name="email" type="email" maxlength="320" autocomplete="off" />
+        </label>
+        <label>
+          Temporary password
+          <input name="temporaryPassword" type="password" required autocomplete="new-password" />
+        </label>
+        <div class="actions">
+          <button type="submit">Create user</button>
+          <a href="/admin/users">Cancel</a>
+        </div>
+        <p role="status" data-result />
+      </form>
+    ) : (
+      <section class="denied" role="alert">
+        <h2>User creation is not available</h2>
+        <p>
+          Creating members requires the explicit user-management permission. Role membership
+          alone does not authorize this action.
+        </p>
+      </section>
+    )
+  }
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('[data-admin-create-user]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const email = String(data.get('email') || '').trim();
+    const result = await actions.admin.createUser({
+      loginIdentity: String(data.get('loginIdentity')),
+      displayName: String(data.get('displayName')),
+      ...(email ? { email } : {}),
+      temporaryPassword: String(data.get('temporaryPassword')),
+    });
+    const output = form.querySelector('[data-result]');
+    if (result.error) {
+      if (output) output.textContent = 'Unable to create this user.';
+    } else if (result.data) {
+      window.location.href = `/admin/users/${result.data.id}`;
+    }
+  });
+</script>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: start;
+    margin-bottom: var(--space-6);
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .lede {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .form {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 720px;
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-lg);
+    max-width: 720px;
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+  input {
+    font: inherit;
+    padding: 0.7rem;
+    background: var(--surface-page);
+    color: inherit;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  button {
+    border: 0;
+    padding: 0.7rem 1rem;
+    background: var(--color-accent-primary);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 600px) {
+    .page-head {
+      display: grid;
+    }
+  }
+</style>

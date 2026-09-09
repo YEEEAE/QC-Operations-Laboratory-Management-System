@@ -1,0 +1,436 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
+import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
+import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { AppError } from '../../../shared/errors/app-error.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const userId = Astro.params.userId ?? '';
+const isSelf = actor.id === userId;
+const scopeSection = Astro.url.searchParams.get('section') === 'scopes';
+
+type UserView = Awaited<ReturnType<ReturnType<typeof identityAdminReadDependencies>['getUser']['execute']>>;
+type ScopeList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listUserScopes']['execute']>>;
+
+let user: UserView | undefined;
+let scopes: ScopeList | undefined;
+let scopesRestricted = false;
+let denied = false;
+try {
+  user = await identityAdminReadDependencies().getUser.execute({ actor, userId });
+} catch (error) {
+  if (error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND') {
+    return Astro.redirect('/404');
+  }
+  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
+  if (!denied) throw error;
+}
+if (user && !isSelf) {
+  try {
+    scopes = await administrationDependencies().listUserScopes.execute({ actor, userId });
+  } catch (error) {
+    scopesRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
+    if (!scopesRestricted) throw error;
+  }
+}
+
+const canManage = canAccessAdminRoute(actor, 'users');
+const canManageScopes = canAccessAdminRoute(actor, 'scopes');
+const version = user?.version.toString() ?? '0';
+const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL'] as const;
+---
+
+<AppLayout title="User detail · Administration" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-USR-002 · CONTROLLED ADMINISTRATION</p>
+      <h1>{user?.displayName ?? 'User detail'}</h1>
+      <p class="lede">
+        {user ? `${user.loginIdentity} · ${user.accountState} · Version ${version}` : ''}
+      </p>
+    </div>
+    <a href="/admin/users">Back to Users</a>
+  </section>
+  {
+    denied || !user ? (
+      <section class="denied" role="alert">
+        <h2>User detail is not available</h2>
+        <p>
+          Reading this member requires an explicit user-administration permission grant. Role
+          membership alone does not authorize this view.
+        </p>
+      </section>
+    ) : (
+      <div class="grid">
+        <section class="panel">
+          <p class="eyebrow">ACCOUNT</p>
+          <h2>Profile</h2>
+          <dl>
+            <div>
+              <dt>Login identity</dt>
+              <dd>{user.loginIdentity}</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd>{user.email ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>State</dt>
+              <dd>{user.accountState}</dd>
+            </div>
+            <div>
+              <dt>Must change password</dt>
+              <dd>{user.mustChangePassword ? 'YES' : 'NO'}</dd>
+            </div>
+            <div>
+              <dt>Last login</dt>
+              <dd>{user.lastLoginAt?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? '—'}</dd>
+            </div>
+          </dl>
+          {canManage && !isSelf ? (
+            <form class="form" data-admin-update-user data-version={version}>
+              <label>
+                Display name
+                <input name="displayName" required maxlength="200" value={user.displayName} />
+              </label>
+              <label>
+                Email (optional)
+                <input name="email" type="email" maxlength="320" value={user.email ?? ''} />
+              </label>
+              <div class="actions">
+                <button type="submit">Save profile</button>
+              </div>
+              <p role="status" data-result />
+            </form>
+          ) : (
+            isSelf && (
+              <p class="note">This is your own account. Profile edits here are disabled.</p>
+            )
+          )}
+        </section>
+        <section class="panel" id="security">
+          <p class="eyebrow">ACCOUNT SECURITY</p>
+          <h2>Disable and password reset</h2>
+          {isSelf ? (
+            <p class="note">
+              Self-disable and self password-reset through administration are always blocked.
+              Disabling a member revokes every session immediately and is audited.
+            </p>
+          ) : canManage ? (
+            <div class="stack">
+              <form class="form" data-admin-reset-password data-user={user.id} data-version={version}>
+                <label>
+                  Temporary password
+                  <input name="temporaryPassword" type="password" required autocomplete="new-password" />
+                </label>
+                <p class="note">
+                  Resetting revokes every session for this member immediately and is audited.
+                </p>
+                <div class="actions">
+                  <button type="submit">Reset password</button>
+                </div>
+                <p role="status" data-result />
+              </form>
+              <form class="form" data-admin-disable-user data-user={user.id} data-version={version}>
+                <p class="note">
+                  Disabling sets the account to DISABLED, revokes every session immediately, and
+                  is audited. The current version is required.
+                </p>
+                <div class="actions">
+                  <button type="submit" class="danger">
+                    Disable account
+                  </button>
+                </div>
+                <p role="status" data-result />
+              </form>
+            </div>
+          ) : (
+            <p class="note">You are not authorized to change this member's security state.</p>
+          )}
+        </section>
+        <section class="panel" id="scopes">
+          <p class="eyebrow">UI-ADM-SCOPE-001</p>
+          <h2>Scopes {scopeSection && <span class="flag">(requested section)</span>}</h2>
+          {isSelf ? (
+            <p class="note">
+              Scope changes on your own account are always blocked, even with explicit permission.
+            </p>
+          ) : scopesRestricted || !canManageScopes ? (
+            <p class="note">
+              Scope management requires the explicit scope-assignment permission. Your current
+              grants do not include it.
+            </p>
+          ) : (
+            <div>
+              <h3>Current scopes</h3>
+              {scopes?.length ? (
+                <ul class="scopes">
+                  {scopes.map((scope) => (
+                    <li>
+                      <span>{scope.kind}</span>
+                      <strong>{scope.value ?? '—'}</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="note">No active scopes are assigned to this member.</p>
+              )}
+              <form class="form" data-admin-replace-scopes data-user={user.id}>
+                <h3>Replace scopes</h3>
+                {scopeKinds.map((kind) => (
+                  <div class="scope-row">
+                    <label class="check">
+                      <input
+                        type="checkbox"
+                        name={`scope-${kind}`}
+                        checked={scopes?.some((scope) => scope.kind === kind)}
+                      />
+                      {kind}
+                    </label>
+                    <input
+                      name={`scope-value-${kind}`}
+                      placeholder="Value (optional)"
+                      maxlength="200"
+                      value={scopes?.find((scope) => scope.kind === kind)?.value ?? ''}
+                    />
+                  </div>
+                ))}
+                <label>
+                  Reason (optional)
+                  <input name="reason" maxlength="500" />
+                </label>
+                <div class="actions">
+                  <button type="submit">Replace scopes</button>
+                </div>
+                <p role="status" data-result />
+              </form>
+            </div>
+          )}
+        </section>
+      </div>
+    )
+  }
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  const userId = location.pathname.split('/').pop() ?? '';
+  const setStatus = (form: HTMLFormElement, message: string) => {
+    const output = form.querySelector('[data-result]');
+    if (output) output.textContent = message;
+  };
+
+  const updateForm = document.querySelector<HTMLFormElement>('[data-admin-update-user]');
+  updateForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(updateForm);
+    const email = String(data.get('email') || '').trim();
+    const result = await actions.admin.updateUser({
+      userId,
+      displayName: String(data.get('displayName')),
+      ...(email ? { email } : {}),
+      expectedVersion: BigInt(updateForm.dataset.version ?? '0'),
+    });
+    if (result.error) setStatus(updateForm, 'Unable to save this profile. Refresh and try again if authorized.');
+    else location.reload();
+  });
+
+  const resetForm = document.querySelector<HTMLFormElement>('[data-admin-reset-password]');
+  resetForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(resetForm);
+    const result = await actions.admin.resetPassword({
+      userId,
+      temporaryPassword: String(data.get('temporaryPassword')),
+      expectedVersion: BigInt(resetForm.dataset.version ?? '0'),
+    });
+    if (result.error) setStatus(resetForm, 'Unable to reset this password. Refresh and try again if authorized.');
+    else location.reload();
+  });
+
+  const disableForm = document.querySelector<HTMLFormElement>('[data-admin-disable-user]');
+  disableForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const result = await actions.admin.disableUser({
+      userId,
+      expectedVersion: BigInt(disableForm.dataset.version ?? '0'),
+    });
+    if (result.error) setStatus(disableForm, 'Unable to disable this account. Refresh and try again if authorized.');
+    else location.reload();
+  });
+
+  const scopesForm = document.querySelector<HTMLFormElement>('[data-admin-replace-scopes]');
+  scopesForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(scopesForm);
+    const kinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL'] as const;
+    const scopes = kinds
+      .filter((kind) => data.get(`scope-${kind}`) === 'on')
+      .map((kind) => {
+        const value = String(data.get(`scope-value-${kind}`) || '').trim();
+        return value ? { kind, value } : { kind };
+      });
+    const reason = String(data.get('reason') || '').trim();
+    const result = await actions.admin.manageUserScopes({
+      userId,
+      scopes,
+      ...(reason ? { reason } : {}),
+    });
+    if (result.error) setStatus(scopesForm, 'Unable to replace scopes. Refresh and try again if authorized.');
+    else location.reload();
+  });
+</script>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: start;
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-5);
+  }
+  .panel,
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .denied {
+    border-inline-start: 3px solid var(--status-warning);
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+  }
+  h3 {
+    font-size: 0.85rem;
+  }
+  .flag {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  dl {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-4) 0;
+  }
+  dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 0.55rem;
+  }
+  dt {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  dd {
+    margin: 0;
+    text-align: end;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .form {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+  .stack {
+    display: grid;
+    gap: var(--space-5);
+  }
+  label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+  input {
+    font: inherit;
+    padding: 0.65rem;
+    background: var(--surface-page);
+    color: inherit;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .note {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  button {
+    border: 0;
+    padding: 0.65rem 1rem;
+    background: var(--color-accent-primary);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+  }
+  button.danger {
+    background: var(--status-error);
+  }
+  .scopes {
+    list-style: none;
+    margin: var(--space-3) 0;
+    padding: 0;
+  }
+  .scopes li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--color-border-subtle);
+    font-size: 0.82rem;
+  }
+  .scope-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-direction: row;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 600px) {
+    .page-head {
+      display: grid;
+    }
+    .scope-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

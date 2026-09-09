@@ -1,0 +1,185 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import {
+  canAccessAdminRoute,
+  hasAdminGrant,
+} from '../../shared/authorization/admin-workspace.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const allowed = canAccessAdminRoute(actor, 'admin');
+const canUsers = canAccessAdminRoute(actor, 'users');
+const canCreateUser = canAccessAdminRoute(actor, 'usersNew');
+const canRoles = canAccessAdminRoute(actor, 'roles');
+const canPermissions = canAccessAdminRoute(actor, 'permissions');
+const canScopes = canAccessAdminRoute(actor, 'scopes');
+const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
+---
+
+<AppLayout title="Administration · QC Operations" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-001 · CONTROLLED ADMINISTRATION</p>
+      <h1>Administration</h1>
+      <p class="lede">
+        Member, role, permission, and scope administration. Every change requires explicit
+        permission, scope, version, and audit — the Admin role alone is never authority.
+      </p>
+    </div>
+  </section>
+  {
+    !allowed ? (
+      <section class="denied" role="alert">
+        <h2>Administration is not available</h2>
+        <p>
+          This workspace requires an explicit administration permission grant. Role membership
+          alone does not authorize member or permission changes.
+        </p>
+      </section>
+    ) : (
+      <div class="grid">
+        <section class="panel">
+          <p class="eyebrow">UI-ADM-USR-001</p>
+          <h2>Users</h2>
+          <p>Create, inspect, update, disable, and reset member accounts within your authority.</p>
+          {canUsers ? (
+            <div class="links">
+              <a class="button" href="/admin/users">
+                Open users
+              </a>
+              {canCreateUser && (
+                <a class="button secondary" href="/admin/users/new">
+                  Create user
+                </a>
+              )}
+            </div>
+          ) : (
+            <p class="empty">You are not authorized for user administration.</p>
+          )}
+        </section>
+        <section class="panel">
+          <p class="eyebrow">UI-ADM-ROLE-001</p>
+          <h2>Roles</h2>
+          <p>Inspect roles and manage their canonical permission grants with version checks.</p>
+          {canRoles ? (
+            <div class="links">
+              <a class="button" href="/admin/roles">
+                Open roles
+              </a>
+            </div>
+          ) : (
+            <p class="empty">You are not authorized for role administration.</p>
+          )}
+        </section>
+        <section class="panel">
+          <p class="eyebrow">UI-ADM-PERM-001</p>
+          <h2>Permissions</h2>
+          <p>Read-only catalog of canonical permissions. Grants change only through roles.</p>
+          {canPermissions ? (
+            <div class="links">
+              <a class="button" href="/admin/permissions">
+                Open permissions
+              </a>
+            </div>
+          ) : (
+            <p class="empty">You are not authorized to view permissions.</p>
+          )}
+        </section>
+        <section class="panel">
+          <p class="eyebrow">UI-ADM-SCOPE-001</p>
+          <h2>Scopes</h2>
+          <p>
+            Manage member authorization scopes. Self-grants are always blocked and audited.
+          </p>
+          {canScopes ? (
+            <div class="links">
+              <a class="button" href="/admin/scopes">
+                Open scopes
+              </a>
+            </div>
+          ) : (
+            <p class="empty">You are not authorized for scope administration.</p>
+          )}
+        </section>
+        {canAudit && (
+          <section class="panel">
+            <p class="eyebrow">AUDIT</p>
+            <h2>Audit history</h2>
+            <p>Administration changes are recorded as audit events and survive record changes.</p>
+            <div class="links">
+              <a class="button secondary" href="/audit">
+                Open audit
+              </a>
+            </div>
+          </section>
+        )}
+      </div>
+    )
+  }
+</AppLayout>
+<style>
+  .page-head {
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede,
+  .empty {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-5);
+  }
+  .panel,
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .denied {
+    border-inline-start: 3px solid var(--status-warning);
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+  }
+  .panel p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  .links {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-top: var(--space-4);
+  }
+  .button {
+    border: 1px solid var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: #fff;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .button.secondary {
+    background: transparent;
+    color: var(--color-accent-primary-hover);
+  }
+</style>

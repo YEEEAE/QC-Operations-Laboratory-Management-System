@@ -67,6 +67,17 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
         .execute()
     ).map(permission);
   }
+  async listRolePermissions(roleId: string) {
+    const rows = await this.db
+      .selectFrom('role_permissions')
+      .innerJoin('permissions', 'permissions.id', 'role_permissions.permission_id')
+      .select(['permissions.code as code'])
+      .where('role_permissions.role_id', '=', roleId)
+      .where('permissions.active', '=', true)
+      .orderBy('permissions.code')
+      .execute();
+    return rows.map((row) => row.code as PermissionCode);
+  }
   async listUserScopes(userId: string) {
     return (
       await this.db

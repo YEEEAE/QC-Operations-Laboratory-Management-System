@@ -1,0 +1,216 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const allowed = canAccessAdminRoute(actor, 'scopes');
+---
+
+<AppLayout title="Scopes · Administration" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-SCOPE-001 · CONTROLLED ADMINISTRATION</p>
+      <h1>Scopes</h1>
+      <p class="lede">
+        Authorization scopes bound to explicit permission grants. Scope replacement is audited,
+        and self-grants are always blocked.
+      </p>
+    </div>
+    <a href="/admin">Back to Administration</a>
+  </section>
+  {
+    !allowed ? (
+      <section class="denied" role="alert">
+        <h2>Scope management is not available</h2>
+        <p>
+          Managing scopes requires the explicit scope-assignment permission. Role membership
+          alone does not authorize this workspace.
+        </p>
+      </section>
+    ) : (
+      <div class="grid">
+        <section class="panel">
+          <p class="eyebrow">SCOPE KINDS</p>
+          <h2>Canonical vocabulary</h2>
+          <ul class="kinds">
+            <li>
+              <strong>OWN</strong>
+              <span>Records owned by the member</span>
+            </li>
+            <li>
+              <strong>ASSIGNED</strong>
+              <span>Records formally assigned to the member</span>
+            </li>
+            <li>
+              <strong>TEAM</strong>
+              <span>Records of the member's team</span>
+            </li>
+            <li>
+              <strong>DEPARTMENT</strong>
+              <span>Records of the member's department</span>
+            </li>
+            <li>
+              <strong>SITE</strong>
+              <span>Records of an operational site</span>
+            </li>
+            <li>
+              <strong>DOMAIN</strong>
+              <span>Wide visibility inside one domain only</span>
+            </li>
+            <li>
+              <strong>GLOBAL</strong>
+              <span>System-wide visibility for this grant</span>
+            </li>
+          </ul>
+          <p class="note">
+            Scope alone never authorizes an action. Every mutation still requires the matching
+            explicit permission plus entity, state, SoD, version, and business rule.
+          </p>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">MEMBER SCOPES</p>
+          <h2>Open a member</h2>
+          <p class="note">
+            Scope replacement happens on the member detail workspace so the current scopes,
+            account state, and version are always visible together.
+          </p>
+          <form class="form" data-admin-scope-lookup>
+            <label>
+              Member ID (UUID)
+              <input name="userId" required minlength="36" maxlength="36" autocomplete="off" />
+            </label>
+            <div class="actions">
+              <button type="submit">Open scopes</button>
+              <a href="/admin/users">Browse users</a>
+            </div>
+            <p role="status" data-result />
+          </form>
+        </section>
+      </div>
+    )
+  }
+</AppLayout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-admin-scope-lookup]');
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const userId = String(data.get('userId') || '').trim();
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const output = form.querySelector('[data-result]');
+    if (!uuid.test(userId)) {
+      if (output) output.textContent = 'Enter a valid member UUID.';
+      return;
+    }
+    window.location.href = `/admin/users/${userId}?section=scopes`;
+  });
+</script>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: start;
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-5);
+  }
+  .panel,
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .denied {
+    border-inline-start: 3px solid var(--status-warning);
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+  }
+  .kinds {
+    list-style: none;
+    margin: var(--space-4) 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+  .kinds li {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    font-size: 0.82rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  .kinds span {
+    color: var(--text-muted);
+  }
+  .note {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .form {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+  label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+  input {
+    font: inherit;
+    padding: 0.65rem;
+    background: var(--surface-page);
+    color: inherit;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  button {
+    border: 0;
+    padding: 0.65rem 1rem;
+    background: var(--color-accent-primary);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 600px) {
+    .page-head {
+      display: grid;
+    }
+  }
+</style>

@@ -33,6 +33,7 @@ export interface AuthorizationRepository {
   listRoles(): Promise<readonly RoleRecord[]>;
   getRole(roleId: string): Promise<RoleRecord | undefined>;
   listPermissions(): Promise<readonly PermissionRecord[]>;
+  listRolePermissions(roleId: string): Promise<readonly PermissionCode[]>;
   replaceRolePermissions(input: {
     roleId: string;
     permissionCodes: readonly PermissionCode[];

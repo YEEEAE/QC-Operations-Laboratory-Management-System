@@ -1,0 +1,157 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
+import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { AppError } from '../../../shared/errors/app-error.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const canCreate = canAccessAdminRoute(actor, 'usersNew');
+
+type UserList = Awaited<ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['execute']>>;
+let users: UserList | undefined;
+let denied = false;
+try {
+  users = await identityAdminReadDependencies().listUsers.execute({ actor });
+} catch (error) {
+  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
+  if (!denied) throw error;
+}
+---
+
+<AppLayout title="Users · Administration" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-ADM-USR-001 · CONTROLLED ADMINISTRATION</p>
+      <h1>Users</h1>
+      <p class="lede">Member accounts under your explicit administration authority.</p>
+    </div>
+    <div class="head-links">
+      {canCreate && (
+        <a class="button" href="/admin/users/new">
+          Create user
+        </a>
+      )}
+      <a href="/admin">Back to Administration</a>
+    </div>
+  </section>
+  {
+    denied || !users ? (
+      <section class="denied" role="alert">
+        <h2>User administration is not available</h2>
+        <p>
+          Listing members requires an explicit user-administration permission grant. Role
+          membership alone does not authorize this view.
+        </p>
+      </section>
+    ) : users.length ? (
+      <div class="table-wrap">
+        <table>
+          <caption>Authorized member accounts</caption>
+          <thead>
+            <tr>
+              <th scope="col">Login identity</th>
+              <th scope="col">Display name</th>
+              <th scope="col">State</th>
+              <th scope="col">Version</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr>
+                <th scope="row">
+                  <a href={`/admin/users/${user.id}`}>{user.loginIdentity}</a>
+                </th>
+                <td>{user.displayName}</td>
+                <td>{user.accountState}</td>
+                <td>{user.version.toString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="empty">No member accounts are visible under your authorized scope.</p>
+    )
+  }
+</AppLayout>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: start;
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede,
+  .empty {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .head-links {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  .button {
+    border: 1px solid var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: #fff;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .denied {
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-lg);
+  }
+  .denied p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+  }
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface-panel);
+  }
+  caption {
+    text-align: start;
+    padding: var(--space-4);
+    color: var(--text-muted);
+  }
+  th,
+  td {
+    padding: 0.75rem;
+    text-align: start;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  th {
+    font-weight: 700;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 600px) {
+    .page-head {
+      display: grid;
+    }
+  }
+</style>

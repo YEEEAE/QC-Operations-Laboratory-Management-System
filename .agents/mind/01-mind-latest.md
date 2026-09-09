@@ -1,5 +1,39 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — تنفيذ F-02: مساحة Administration المضبوطة (/admin × 8 مسارات)
+
+### تم التنفيذ
+- بنيت صفحات `/admin` الثمانية حسب Route Manifest (§68–72): index/users/users-new/user-detail/roles/role-detail/permissions/scopes، كلها server-rendered بلا SQL أو business rules، وتستدعي use cases عبر `*Dependencies()` فقط.
+- أضفت حارس `canAccessAdminRoute` (default deny: ACTIVE + منح صريح، الدور وحده لا يكفي) ومجموعة تنقل Administration بصلاحيات canonical فقط.
+- أضفت use cases قراءة جديدة بنفس عقد التفويض القائم: `ListUsers`/`GetUser` (إسقاط hash دائمًا)، `ListUserScopes`، `ListRolePermissions`، مع `listUsers`/`listRolePermissions` في المنافذ وتطبيقات Postgres.
+- وسّعت `actions/admin` بأربع mutations تعيد استخدام use cases الهوية مع audit: create/update/disable/reset (تعطيل/تصفير يبطل كل الجلسات، وحظر ذاتي عبر SoD/businessCondition، ونسخة مطلوبة لكل كتابة).
+- أصلحت تسريبًا محتملًا: `updateUser` كان يرجع `passwordHash` كاملًا — الـ action الآن يرد `SafeUserView` فقط.
+
+### الملفات المتأثرة
+- `src/pages/admin/**` (8 صفحات جديدة)، `src/ui/navigation/navigation.ts`
+- `src/shared/authorization/admin-workspace.ts` (جديد)
+- `src/modules/identity/application/{safe-user-view,list-users,get-user,admin-dependencies}.ts` + منفذ/تطبيق `listUsers`
+- `src/modules/administration/application/{list-user-scopes,list-role-permissions}.ts` + منفذ/تطبيق `listRolePermissions` + `dependencies.ts`
+- `src/actions/admin.ts` (4 actions جديدة)
+- `tests/unit/admin/{admin-workspace-guard,identity-admin,administration-read}.test.ts` + `tests/unit/ui/navigation-admin.test.ts` (جديدة)
+- `tests/unit/identity/session-service.test.ts` و`tests/integration/identity/account.test.ts` (إضافة `listUsers` للـ fakes فقط)
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 errors على Node `v24.20.0` داخل العقد
+- `pnpm lint` ✅ و`pnpm test:architecture` ✅ (صفر مخالفات Delivery)
+- `pnpm test:unit` ✅ — 38 ملفًا / 167 اختبارًا (كانت 34/139: +4 ملفات/+28 اختبارًا)
+- `prettier --check` ✅ و`git diff --check` ✅ و`pnpm build` ✅
+- دخان إنتاجي على `dist/server/entry.mjs` بدون `DATABASE_URL`: المسارات الستة الثابتة ترد `303 → /login?returnTo=...` (لا 404/500 للمجهول) ✅
+- اختبارات التكامل المعتمدة على PostgreSQL/Vitest-container لم تُشغّل: لا Docker runtime محليًا (خارج النطاق).
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** مساحة الإدارة الثمانية تعمل بإنكار افتراضي ومنح صريح، مع رفض Admin-بلا-صلاحية وظهور SYSTEM_OWNER مثبتًا بالاختبارات، وكل الكتابات مدققة ومبنية على النسخة مع إبطال الجلسات.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- سلوك المصادق عليه (granted/denied panels) مغطى على مستوى use-case والحارس والتنقل؛ إثبات runtime حي بحساب حقيقي يحتاج بيئة PostgreSQL ولم يُنفذ هنا.
+
 ## [2026-09-09] — إصلاح F-01: توحيد فحص جاهزية قاعدة البيانات بين System Health وready
 
 ### تم التنفيذ

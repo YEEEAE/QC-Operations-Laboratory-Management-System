@@ -23,6 +23,9 @@ class MemoryUsers implements UserRepository {
   async findById() {
     return this.user;
   }
+  async listUsers() {
+    return [this.user];
+  }
   async recordSuccessfulLogin() {}
   async create() {
     return this.user;
