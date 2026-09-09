@@ -209,6 +209,53 @@ Implement the approved P-05 authority matrix for inspection approval, laboratory
 Implement a fail-closed production release-governance workflow. Final approval authority is Manager OR yazeed/SYSTEM_OWNER; one authorized signer is sufficient and Admin alone is denied. Approval must be impossible unless CI, security verification, database/migration verification, critical E2E, UAT acceptance, required signatures, no unresolved CRITICAL risks, and residual-risk handling all PASS for the exact same release candidate. LOW, MEDIUM, and HIGH residual risks may be accepted by Manager or yazeed with evidence; CRITICAL risk blocks a normal release. Require reauthentication and E-Signature, exact Git SHA, release-candidate ID, build identity, UAT evidence, residual-risk snapshot, timestamp, request ID, expected version, and immutable audit. Store RELEASE_APPROVED with approved_by, authority, release_id, git_sha, build_id, uat_status, residual_risk_status, signature_evidence_id, and approved_at atomically. Add table-driven gate tests, authority-negative tests, build-identity mismatch, stale/replay/concurrency tests, signature failure tests, and a critical E2E. Do not expose an enabled approval action until every gate is server-verified.
 ```
 
+### Prompt 11 — Revalidate all 15 Findings on one release candidate
+
+```text
+Create a fixed 15-item closure ledger for F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-09, F-10, F-11, F-12, BI-01, BI-02, BI-03, and BI-04. Bind the ledger to one release-candidate ID, exact Git SHA, build ID, environment, and deployment timestamp. Re-run the acceptance criteria for every item, including the eight currently marked closed; do not carry old PASS evidence forward when it belongs to another SHA or build. For each item record status CLOSED or OPEN, automated test command/result, live evidence reference, reviewer, timestamp, and any limitation. Treat missing, stale, mismatched, or source-only evidence as OPEN. The finding-closure metric may become 100.0% only when the ledger contains 15 CLOSED entries out of 15 for the same deployed build, with no unresolved HIGH or MEDIUM finding.
+```
+
+### Prompt 12 — Establish deployed build identity before live scoring
+
+```text
+Expose a sanitized authenticated build-identity surface and health payload containing exact Git SHA, immutable build ID, release-candidate ID, deployment timestamp, and environment name. Generate these values in CI/build time; never accept them from the browser and never expose credentials. Make production verification fail closed when any value is absent or differs from the evidence package. Add unit and integration tests for missing/mismatched identity and a Chrome assertion that the visible/API identity equals the release ledger. Record the identity once at the start and once at the end of the live run to detect deployment changes. C-11 passes only when both samples and the tested source SHA are identical.
+```
+
+### Prompt 13 — Provision safe role fixtures for authorization verification
+
+```text
+Provision controlled non-production or production-safe verification accounts/fixtures for SYSTEM_OWNER yazeed, Supervisor, Manager, Admin-only, Employee/member, and an active user without sensitive permissions. Grant only the minimum documented permissions and scopes; do not reuse shared credentials or place secrets in source, logs, screenshots, or the audit report. Seed identifiable disposable records for read-only and validation scenarios and define cleanup/expiry. Produce an expected-access matrix for every route and action used by C-01 through C-12. Verify positive access and server-side negative denial, including direct URL and forged request attempts. This prompt supplies the missing evidence for C-12 and the negative portions of F-02, F-07, F-10, P-04, P-05, P-06, and P-07.
+```
+
+### Prompt 14 — Execute and evidence C-01 through C-06
+
+```text
+In Google Chrome, execute C-01 through C-06 against the exact build identity established by Prompt 12. C-01: authenticate and verify labels, errors, and redirect to Dashboard. C-02: verify navigation visibility and direct-route authorization against the role matrix. C-03: verify Dashboard KPI, attention, activity, empty/error states, and no raw exception. C-04: verify System Health reports database/storage/AI/backup/restore truth without false-green. C-05: verify Audit filters, pagination, scope, timestamps, and Dashboard/Audit event parity. C-06: verify Change Request presents an authorized document/version selector and only revision, changeSummary, and contentHash, with no raw UUID, snapshot JSON, field path, or client-authoritative data type. Capture timestamped screenshots/accessibility snapshots and request/response assertions without recording secrets or submitting destructive business mutations. Mark each item PASS or FAIL; blocked or incomplete means NOT VERIFIED, never PASS.
+```
+
+### Prompt 15 — Execute and evidence C-07 through C-12
+
+```text
+In the same Google Chrome session and on the unchanged build identity, execute C-07 through C-12. C-07: verify 320px reflow with no two-dimensional page scroll, clipping, or unreachable action. C-08: verify 200% zoom at the required desktop viewport with no loss of content/function. C-09: keyboard-test the mobile drawer for background inertness, scroll lock, Tab/Shift+Tab containment, Escape, and focus return. C-10: test recoverable validation in JavaScript and no-JavaScript modes using disposable/non-committing fixtures, proving retained values and safe errors. C-11: compare start/end deployed SHA, build ID, release-candidate ID, environment, and timestamp to Prompt 12. C-12: use the least-privileged fixture from Prompt 13 to verify hidden controls plus server-side denial for direct navigation and forged requests. Include visible-focus, forced-colors, reduced-motion, accessibility-tree, and measured contrast evidence where applicable. A single failed, blocked, changed-build, or undocumented check prevents 12/12 and therefore prevents every live metric from reaching 100%.
+```
+
+### Prompt 16 — Produce the final evidence ledger and calculate all four metrics
+
+```text
+After Prompts 1-5 and 8-15 are complete, assemble one immutable evidence package for the exact deployed release. Include the 15-item Finding ledger, the 12-item Chrome ledger, test commands and exit codes, CI/security/migration/E2E/UAT results, deployment identity, role-fixture matrix, backup artifact hash, restore-drill result, timestamps, and reviewer/signature references. Deduplicate F-06/BI-03 evidence but keep both denominator entries independently evaluated. Calculate: finding closure = CLOSED/15; live coverage = (PASS+FAIL)/12; live executed success = PASS/(PASS+FAIL); conservative live success = PASS/12. To report all four as 100.0%, require CLOSED=15, PASS=12, FAIL=0, NOT VERIFIED=0, one unchanged build identity, and no unresolved HIGH/MEDIUM/CRITICAL issue. If any condition fails, publish the actual fractions and list every blocker; never round a non-100 result up to 100.
+```
+
+## 7.1) تغطية البرومبتات للمقاييس الأربعة
+
+| المقياس المستهدف | البرومبتات اللازمة | شرط 100% |
+| --- | --- | --- |
+| إغلاق البنود المعروفة | 1–5، 8–11، 16 | `15/15 CLOSED` على نفس الإصدار |
+| تغطية الجولة الحية | 12–15، 16 | `12/12 EXECUTED` بلا `NOT VERIFIED` |
+| النجاح ضمن المنفذ حيًا | 12–16 | `12 PASS / 12 EXECUTED` و`0 FAIL` |
+| النجاح الحي المحافظ | 12–16 | `12 PASS / 12 PLANNED` و`0 NOT VERIFIED` |
+
+البرومبتات تغطي الآن مسار الوصول إلى 100% لكل مقياس، لكنها ما تضمن النتيجة مسبقًا: أي فشل حقيقي لازم يبقى ظاهرًا ويمنع ادعاء 100% إلى أن يُصلح ويُعاد التحقق منه على نفس build.
+
 ## 8) ترتيب التنفيذ
 
 1. Prompt 1 وPrompt 2 وPrompt 5 لإغلاق فجوات الواجهة المباشرة.
@@ -216,8 +263,10 @@ Implement a fail-closed production release-governance workflow. Final approval a
 3. Prompt 3 لتطبيق دورة حياة القوالب كاملة.
 4. Prompt 4 لتجهيز النسخ والاستعادة والأدلة التشغيلية.
 5. Prompt 10 لبناء بوابة اعتماد الإصدار النهائي.
-6. Prompt 6 لإعادة التحقق الحي على release identity مثبتة.
-7. Prompt 7 للحساب النهائي ومنع ادعاء 100% بدون أدلة كاملة.
+6. Prompt 11 لإعادة إثبات إغلاق كل البنود الـ15 على release candidate واحد.
+7. Prompt 12 ثم Prompt 13 لإثبات هوية النشر وتجهيز حسابات التحقق الآمنة.
+8. Prompt 14 ثم Prompt 15 لتنفيذ C-01 إلى C-12 بالكامل في Chrome.
+9. Prompt 16 للحزمة النهائية وحساب المقاييس الأربعة، مع Prompt 6 وPrompt 7 كضابطين عامين لمنع الادعاء غير المدعوم.
 
 ## 9) الحكم النهائي
 
