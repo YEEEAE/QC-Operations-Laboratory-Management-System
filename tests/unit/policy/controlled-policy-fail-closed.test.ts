@@ -105,6 +105,9 @@ const matchingSources: ControlledLabSources = {
   async resolve(templateVersionId: string) {
     return { ...labTest().context, templateVersionId };
   },
+  async listApprovedTemplates() {
+    return [];
+  },
   async validateExecution() {},
   async evaluate(test: LabTest) {
     return {
@@ -117,6 +120,9 @@ const matchingSources: ControlledLabSources = {
 
 const explodingSources: ControlledLabSources = {
   async resolve() {
+    throw new Error('must not be called when policy denies');
+  },
+  async listApprovedTemplates(): Promise<never> {
     throw new Error('must not be called when policy denies');
   },
   async validateExecution() {

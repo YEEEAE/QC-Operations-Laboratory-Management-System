@@ -9,19 +9,57 @@ import {
   toFormFailure,
   type FormFailure,
 } from '../../../ui/forms/mutation-post.js';
+import {
+  resolvePreselectedId,
+  safeListHref,
+  toSelectOptions,
+} from '../../../ui/forms/entity-select.js';
+import { laboratoryReadDependencies } from '../../../modules/laboratory/application/dependencies.js';
 
 const actor=Astro.locals.actor;
 if(!actor)return Astro.redirect('/login?returnTo=%2Flaboratory%2Ftests%2Fnew');
 const allowed=actor.permissions.some(p=>p.code==='PERM-LAB-CREATE'&&p.active!==false);
 
 const LIST_HREF = '/laboratory/tests';
+// Safe list return context (F-09): Cancel/back preserve a benign list filter
+// when the operator arrived with one; anything else falls back to the list.
+const returnHref = safeListHref(Astro.url.searchParams.get('returnTo'), LIST_HREF);
 const REQUIRED_FIELDS = [
-  { name: 'templateVersionId', label: 'Controlled template version ID' },
+  { name: 'templateVersionId', label: 'Approved template' },
   { name: 'labTestNo', label: 'Approved laboratory test number' },
 ] as const;
 
-let values = { templateVersionId: '', labTestNo: '' };
+// Authorized selector source (F-06): approved controlled template versions
+// only, loaded server-side through the application use case (which
+// reauthorizes). The UUID travels only as the selected option value; the
+// operator always sees the human-readable method reference + version.
+let templateOptions: { value: string; label: string }[] = [];
+let selectorError = false;
+if (allowed) {
+  try {
+    const approved = await laboratoryReadDependencies().listApprovedTemplates.execute({ actor });
+    templateOptions = toSelectOptions(
+      approved.map((item) => ({ id: item.id, label: `${item.methodReference} · ${item.versionNo}` })),
+    );
+  } catch {
+    // Fail closed into an error state below: the form stays submittable so
+    // entries are preserved, and the server still verifies the template on
+    // submit. No unauthorized template detail is disclosed.
+    selectorError = true;
+  }
+}
+
+// Contextual preselection (e.g. `?templateVersionId=…` from a controlled
+// workspace): honored only when still authorized, otherwise surfaced as a
+// stale-selection warning that requires an explicit operator choice.
+const preselected = resolvePreselectedId(
+  Astro.url.searchParams.get('templateVersionId'),
+  templateOptions,
+);
+
+let values = { templateVersionId: preselected.id, labTestNo: '' };
 let failure: FormFailure | null = null;
+let staleSelection = preselected.stale;
 
 // POST baseline (F-05): without JavaScript the form performs a real POST to
 // this page. The same Astro Action — with the same server-side
@@ -34,6 +72,12 @@ if (Astro.request.method === 'POST' && allowed) {
     templateVersionId: field(formData, 'templateVersionId'),
     labTestNo: field(formData, 'labTestNo'),
   };
+  // A posted id outside the authorized selector list is never trusted: the
+  // server re-verifies the template, and the operator gets a dependency
+  // recovery pointing back at the authorized list.
+  staleSelection = values.templateVersionId
+    ? !templateOptions.some((option) => option.value === values.templateVersionId)
+    : false;
   try {
     const data = await Astro.callAction(actions.laboratory.create, {
       templateVersionId: values.templateVersionId,
@@ -64,6 +108,6 @@ const describedBy = (name: keyof typeof values): string | undefined =>
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="Create laboratory test">{allowed?<form method="post" data-lab-create><h1>Create laboratory test</h1><p><a href="/laboratory/tests">Back to laboratory tests</a></p>{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="laboratory tests" />}<label for="templateVersionId">Controlled template version ID<input id="templateVersionId" name="templateVersionId" required value={values.templateVersionId} aria-invalid={invalid('templateVersionId')} aria-describedby={describedBy('templateVersionId')} /></label>{failure?.fieldErrors.templateVersionId && <p class="field-error" id="templateVersionId-error">{failure.fieldErrors.templateVersionId}</p>}<label for="labTestNo">Approved laboratory test number<input id="labTestNo" name="labTestNo" required value={values.labTestNo} aria-invalid={invalid('labTestNo')} aria-describedby={describedBy('labTestNo')} /></label>{failure?.fieldErrors.labTestNo && <p class="field-error" id="labTestNo-error">{failure.fieldErrors.labTestNo}</p>}<div class="actions"><button data-submit>Save controlled draft</button><a href="/laboratory/tests">Cancel</a></div><p data-result role="status"></p></form>:<p>You are not authorized to create laboratory tests.</p>}</AppLayout>
-<script>import {actions} from 'astro:actions';const form=document.querySelector<HTMLFormElement>('form[data-lab-create]');form?.addEventListener('submit',async event=>{event.preventDefault();const target=event.currentTarget as HTMLFormElement;const data=new FormData(target);const submit=target.querySelector<HTMLButtonElement>('[data-submit]');const output=target.querySelector<HTMLElement>('[data-result]');if(submit)submit.disabled=true;target.setAttribute('aria-busy','true');if(output)output.textContent='Saving…';try{const result=await actions.laboratory.create({templateVersionId:String(data.get('templateVersionId')),labTestNo:String(data.get('labTestNo'))});if(result.data&&typeof result.data.id==='string'){location.href='/laboratory/tests/'+result.data.id;return;}if(output)output.textContent='The controlled source is unavailable or this action is not authorized. Review the fields and try again.';const firstInvalid=target.querySelector<HTMLElement>('input:invalid');(firstInvalid??output)?.focus?.();}catch{if(output)output.textContent='The service is temporarily unavailable. Your entries are kept — try again.';}finally{if(submit)submit.disabled=false;target.removeAttribute('aria-busy');}});</script>
-<style>form{display:grid;gap:1rem;max-width:40rem}label{display:grid;gap:.4rem}input,button{padding:.7rem;font:inherit}input[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}button{background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}button[disabled]{opacity:.6}.actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}.actions a{color:var(--color-accent-primary-hover)}</style>
+<AppLayout title="Create laboratory test">{allowed?<form method="post" data-lab-create><h1>Create laboratory test</h1><p><a href={returnHref}>Back to laboratory tests</a></p>{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={returnHref} listLabel="laboratory tests" />}<label for="templateVersionId">Approved template<span id="templateVersionId-help">Choose from approved controlled templates in your authorized scope. The technical version identifier is kept automatically after selection.</span><select id="templateVersionId" name="templateVersionId" required aria-invalid={invalid('templateVersionId')} aria-describedby={failure?.fieldErrors.templateVersionId ? 'templateVersionId-error templateVersionId-help' : 'templateVersionId-help'}><option value="">Select an approved template…</option>{templateOptions.map((option)=><option value={option.value} selected={option.value===values.templateVersionId}>{option.label}</option>)}</select></label>{staleSelection && <p class="field-warning" role="status">The previously linked template is no longer available in your authorized scope. Choose an approved template explicitly.</p>}{selectorError && <p class="field-warning" role="status">The approved template list is temporarily unavailable. Your entries are kept — you can try again, or return to the list.</p>}{!selectorError && templateOptions.length===0 && <p class="field-warning" role="status">No approved templates are available in your authorized scope. A new test cannot be started until a controlled template is approved — template administration remains policy-controlled.</p>}{failure?.fieldErrors.templateVersionId && <p class="field-error" id="templateVersionId-error">{failure.fieldErrors.templateVersionId}</p>}<label for="labTestNo">Approved laboratory test number<span id="labTestNo-help">Use the test number from your approved source. Numbers are validated on the server; the technical record identifier is generated server-side.</span><input id="labTestNo" name="labTestNo" required value={values.labTestNo} aria-invalid={invalid('labTestNo')} aria-describedby={failure?.fieldErrors.labTestNo ? 'labTestNo-error labTestNo-help' : 'labTestNo-help'} /></label>{failure?.fieldErrors.labTestNo && <p class="field-error" id="labTestNo-error">{failure.fieldErrors.labTestNo}</p>}<div class="actions"><a href={returnHref}>Cancel</a><button data-submit>Save controlled draft</button></div><p data-result role="status"></p></form>:<p>You are not authorized to create laboratory tests.</p>}</AppLayout>
+<script>import {actions} from 'astro:actions';const form=document.querySelector<HTMLFormElement>('form[data-lab-create]');form?.addEventListener('submit',async event=>{event.preventDefault();const target=event.currentTarget as HTMLFormElement;const data=new FormData(target);const submit=target.querySelector<HTMLButtonElement>('[data-submit]');const output=target.querySelector<HTMLElement>('[data-result]');if(submit)submit.disabled=true;target.setAttribute('aria-busy','true');if(output)output.textContent='Saving…';try{const result=await actions.laboratory.create({templateVersionId:String(data.get('templateVersionId')),labTestNo:String(data.get('labTestNo'))});if(result.data&&typeof result.data.id==='string'){location.href='/laboratory/tests/'+result.data.id;return;}if(output)output.textContent='The controlled source is unavailable or this action is not authorized. Review the fields and try again.';const firstInvalid=target.querySelector<HTMLElement>('select:invalid,input:invalid');(firstInvalid??output)?.focus?.();}catch{if(output)output.textContent='The service is temporarily unavailable. Your entries are kept — try again.';}finally{if(submit)submit.disabled=false;target.removeAttribute('aria-busy');}});</script>
+<style>form{display:grid;gap:1rem;max-width:40rem}label{display:grid;gap:.4rem}label span{color:var(--text-muted);font-size:.8rem}input,select,button{padding:.7rem;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.field-warning{margin:0;padding:.7rem;border-inline-start:3px solid var(--status-warning);background:var(--surface-panel);font-size:.85rem}button{background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}button[disabled]{opacity:.6}.actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}.actions a{color:var(--color-accent-primary-hover)}</style>

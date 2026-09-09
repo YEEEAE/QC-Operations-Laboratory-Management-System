@@ -6,6 +6,7 @@ import { PostgresControlledLabSources } from '../infrastructure/postgres-control
 import { assetsEligibilityDependencies } from '../../assets/application/dependencies.js';
 import { CreateLabTestUseCase } from './create-lab-test.js';
 import { GetLabTestUseCase } from './get-lab-test.js';
+import { ListApprovedLabTemplatesUseCase } from './list-approved-templates.js';
 import { ListLabTestsUseCase } from './list-lab-tests.js';
 import { SaveMeasurementsUseCase } from './save-measurements.js';
 import { SubmitLabTestUseCase } from './submit-lab-test.js';
@@ -16,7 +17,12 @@ import { ApproveLabTestUseCase } from './approve-lab-test.js';
 import { CreateRetestUseCase } from './create-retest.js';
 export function laboratoryReadDependencies() {
   const repository = new PostgresLabRepository(getDatabase());
-  return { get: new GetLabTestUseCase(repository), list: new ListLabTestsUseCase(repository) };
+  const sources = new PostgresControlledLabSources(getDatabase());
+  return {
+    get: new GetLabTestUseCase(repository),
+    list: new ListLabTestsUseCase(repository),
+    listApprovedTemplates: new ListApprovedLabTemplatesUseCase(sources),
+  };
 }
 export function laboratoryActionDependencies() {
   const db = getDatabase();

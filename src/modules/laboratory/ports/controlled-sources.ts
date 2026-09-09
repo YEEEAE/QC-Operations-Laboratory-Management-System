@@ -8,9 +8,26 @@ export interface AssetsEligibility {
     context: ControlledContext;
   }): Promise<void>;
 }
+/**
+ * Selector-facing projection of an approved lab template version. Only the
+ * display fields needed to choose a template are exposed; acceptance
+ * criteria stay behind `resolve()` and are never listed here.
+ */
+export interface ApprovedLabTemplateOption {
+  id: string;
+  versionNo: string;
+  methodReference: string;
+}
 /** An approved provider validates exact documents, criteria, evidence, environment and sample requirements. */
 export interface ControlledLabSources {
   resolve(templateVersionId: string, actor: ActorContext): Promise<ControlledContext>;
+  /**
+   * Read-only selector source: approved template versions only. The label
+   * carries the human-readable method reference + version number; the value
+   * stays the technical version id. Never exposes drafts or retired
+   * versions, and never invents scientific content.
+   */
+  listApprovedTemplates(): Promise<readonly ApprovedLabTemplateOption[]>;
   validateExecution(test: LabTest, actor: ActorContext): Promise<void>;
   evaluate(
     test: LabTest,

@@ -1,12 +1,36 @@
 import type { Kysely } from 'kysely';
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
-import type { ControlledLabSources } from '../ports/controlled-sources.js';
+import type {
+  ApprovedLabTemplateOption,
+  ControlledLabSources,
+} from '../ports/controlled-sources.js';
 import type { ControlledContext } from '../domain/lab-test.js';
 
 /** Reads only approved controlled definitions. It deliberately does not calculate official outcomes. */
 export class PostgresControlledLabSources implements ControlledLabSources {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
+  async listApprovedTemplates(): Promise<readonly ApprovedLabTemplateOption[]> {
+    const rows = await this.database
+      .selectFrom('lab_test_template_versions')
+      .select(['id', 'version_no', 'method_reference'])
+      .where('state', '=', 'APPROVED')
+      .orderBy('method_reference')
+      .orderBy('version_no')
+      .limit(200)
+      .execute();
+    // Only fully-specified approved versions are selectable: a template
+    // without a method reference cannot be identified by an operator, and
+    // content-hash completeness is still enforced by `resolve()` at create
+    // time. No scientific values are invented or exposed here.
+    return rows
+      .filter((row) => Boolean(row.method_reference?.trim()))
+      .map((row) => ({
+        id: row.id,
+        versionNo: row.version_no,
+        methodReference: (row.method_reference as string).trim(),
+      }));
+  }
   async resolve(templateVersionId: string): Promise<ControlledContext> {
     const version = await this.database
       .selectFrom('lab_test_template_versions')

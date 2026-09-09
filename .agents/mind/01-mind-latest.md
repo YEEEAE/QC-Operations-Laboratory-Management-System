@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — إصلاح F-06 وF-09: selectors مصرح بها بدل UUID الخام + مفردات مضبوطة + Cancel/back آمنة
+
+### تم التنفيذ
+- استبدلت حقول UUID الخام بـ selectors خادمية مصرح بها: قائمة معدات (`PERM-EQP-VIEW`) في `calibrations/new` و`maintenance/new`، وقائمة قوالب معتمدة جديدة (`PERM-LAB-CREATE` عبر `ListApprovedLabTemplatesUseCase`) في `laboratory/tests/new` — والـ UUID يبقى قيمة مخفية بعد الاختيار فقط.
+- أضفت `listApprovedTemplates` لمنفذ `ControlledLabSources` وتطبيقه في Postgres (حالة APPROVED فقط، حد 200، بلا قيم علمية) مع use case يفوّض بنفس شرط الإنشاء.
+- قيّدت `targetType` في `change-requests/new` بقائمة `DOCUMENT_VERSION` (المدعوم الوحيد في approvals) مع رابط سياقي لمكتبة الوثائق، و`documentType` بقيم `DOCUMENT_TYPES` عبر مفردات طبقة التطبيق (بلا استيراد domain في الصفحات).
+- أبقيت أرقام الأعمال يدوية من مصدر معتمد (لا سياسة ترقيم معتمدة: DD-08/BD-13 مفتوحة — الاختراع ممنوع) مع توضيح موحد، وأثبتّ أن الـ UUIDs التقنية تُولّد خادميًا فقط (`uuidv7` في use cases).
+- وحّدت Cancel/back مع `safeListHref` يمنع open-redirect (خمس صفحات)، ورتّبت Cancel قبل الإرسال في `tasks/new`، وأضفت روابط إنشاء سياقية من صفحة المعدات (`Record calibration/maintenance` مع `?equipmentId=`).
+- أضفت `entity-select.ts` (خيارات/ Stale-selection/return آمن) و`tests/unit/ui/entity-select.test.ts` (14 اختبارًا: تفويض، فراغ/خطأ، كيبورد، stale، عقود الصفحات).
+
+### الملفات المتأثرة
+- `src/ui/forms/entity-select.ts` (جديد)، `src/modules/laboratory/application/list-approved-templates.ts` (جديد)
+- `src/modules/documents/application/document-vocabulary.ts` + `src/modules/change-requests/application/change-target-vocabulary.ts` (جديدة)
+- `src/modules/laboratory/{ports/controlled-sources, infrastructure/postgres-controlled-sources, application/dependencies}.ts`
+- `src/pages/{laboratory/tests, assets/{calibrations,maintenance}, change-requests, documents, tasks, quality/findings, quarantine/receiving, assets/equipment}/new.astro` + `assets/equipment/[equipmentId].astro`
+- `tests/unit/ui/entity-select.test.ts` (جديد)، `tests/unit/policy/controlled-policy-fail-closed.test.ts`، `tests/integration/concurrency/controlled-mutations.test.ts` (إضافة العضو الجديد للـ fakes)
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 errors
+- `pnpm lint` ✅، و`pnpm test:architecture` ✅ (بعد نقل المفردات لطبقة التطبيق)
+- `pnpm test:unit` ✅ — 41 ملفًا / 233 اختبارًا (كانت 40/212)
+- `pnpm build` ✅
+- دخان preview محلي: التسع صفحات ترد `503` موحد `config.invalid_environment` بلا env (نفس السلوك للمعدلة وغير المعدلة — لا كسر routes ولا 404/500 من الكود) ✅
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** حقول القالب/المعدات/الهدف صارت selectors مصرح بها أو مسارات سياقية، والتعدادات المدعومة بقوائم مضبوطة من مصادر الكود القائمة، مع Cancel/back آمنة وتغطية اختبارية — وبدون اختراع ترقيم أو سياسات علمية.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- توليد أرقام الأعمال خادميًا معلّق على سياسة ترقيم معتمدة (DD-008/BD-13) — الأرقام ما زالت يدوية من مصدر معتمد.
+- `priority/severity/maintenanceType/dataType` بقيت نصًا حرًا (لا مصدر مضبوط في الدومين) — التقييد يحتاج سياسة معتمدة.
+- `targetId` لطلب التغيير ما زال إدخال UUID يدويًا مع رابط سياقي (لا قائمة إصدارات معتمدة عبر الدومينات) — الإثبات المصادق الكامل يحتاج DB disposable.
+- ملف `ه.html` غير متتبع ومو من شغلي — تُرك كما هو.
+
 ## [2026-09-09] — إصلاح F-03: إغلاق التمدد الأفقي عند 320px و200% زوم (LTR/RTL)
 
 ### تم التنفيذ

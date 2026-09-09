@@ -392,6 +392,7 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       repository,
       {
         resolve: async () => context,
+        listApprovedTemplates: async () => [],
         validateExecution: async () => {},
         evaluate: async () => ({
           result: 'PASS',
