@@ -1,6 +1,69 @@
 ---
-import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Flaboratory%2Ftests%2Fnew');const allowed=actor.permissions.some(p=>p.code==='PERM-LAB-CREATE'&&p.active!==false);
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  detailHref,
+  extractDetailId,
+  field,
+  toFormFailure,
+  type FormFailure,
+} from '../../../ui/forms/mutation-post.js';
+
+const actor=Astro.locals.actor;
+if(!actor)return Astro.redirect('/login?returnTo=%2Flaboratory%2Ftests%2Fnew');
+const allowed=actor.permissions.some(p=>p.code==='PERM-LAB-CREATE'&&p.active!==false);
+
+const LIST_HREF = '/laboratory/tests';
+const REQUIRED_FIELDS = [
+  { name: 'templateVersionId', label: 'Controlled template version ID' },
+  { name: 'labTestNo', label: 'Approved laboratory test number' },
+] as const;
+
+let values = { templateVersionId: '', labTestNo: '' };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action — with the same server-side
+// reauthorization — runs via Astro.callAction. No business payload enters
+// the URL: input travels in the POST body, success redirects (303) to the
+// new record only.
+if (Astro.request.method === 'POST' && allowed) {
+  const formData = await Astro.request.formData();
+  values = {
+    templateVersionId: field(formData, 'templateVersionId'),
+    labTestNo: field(formData, 'labTestNo'),
+  };
+  try {
+    const data = await Astro.callAction(actions.laboratory.create, {
+      templateVersionId: values.templateVersionId,
+      labTestNo: values.labTestNo,
+    });
+    const id = extractDetailId(data);
+    if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
+    failure = {
+      kind: 'unknown',
+      summary: 'The laboratory test was received but no record reference came back.',
+      recovery: 'Check the laboratory register before trying again to avoid a duplicate.',
+      fieldErrors: {},
+      firstInvalidField: null,
+    };
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Laboratory test',
+      requiredFields: REQUIRED_FIELDS,
+      values,
+      listHref: LIST_HREF,
+      listLabel: 'laboratory tests',
+    });
+  }
+}
+
+const describedBy = (name: keyof typeof values): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: keyof typeof values): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="Create laboratory test">{allowed?<form data-lab-create><h1>Create laboratory test</h1><label>Controlled template version ID<input name="templateVersionId" required /></label><label>Approved laboratory test number<input name="labTestNo" required /></label><button>Save controlled draft</button><p data-result role="status"></p></form>:<p>You are not authorized to create laboratory tests.</p>}</AppLayout>
-<script>import {actions} from 'astro:actions';document.querySelector('form[data-lab-create]')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget as HTMLFormElement;const data=new FormData(form);const result=await actions.laboratory.create({templateVersionId:String(data.get('templateVersionId')),labTestNo:String(data.get('labTestNo'))});if(result.data)location.href='/laboratory/tests/'+result.data.id;else form.querySelector('[data-result]')!.textContent='The controlled source is unavailable or this action is not authorized.';});</script>
-<style>form{display:grid;gap:1rem;max-width:40rem}label{display:grid;gap:.4rem}input,button{padding:.7rem;font:inherit}button{background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}</style>
+<AppLayout title="Create laboratory test">{allowed?<form method="post" data-lab-create><h1>Create laboratory test</h1><p><a href="/laboratory/tests">Back to laboratory tests</a></p>{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="laboratory tests" />}<label for="templateVersionId">Controlled template version ID<input id="templateVersionId" name="templateVersionId" required value={values.templateVersionId} aria-invalid={invalid('templateVersionId')} aria-describedby={describedBy('templateVersionId')} /></label>{failure?.fieldErrors.templateVersionId && <p class="field-error" id="templateVersionId-error">{failure.fieldErrors.templateVersionId}</p>}<label for="labTestNo">Approved laboratory test number<input id="labTestNo" name="labTestNo" required value={values.labTestNo} aria-invalid={invalid('labTestNo')} aria-describedby={describedBy('labTestNo')} /></label>{failure?.fieldErrors.labTestNo && <p class="field-error" id="labTestNo-error">{failure.fieldErrors.labTestNo}</p>}<div class="actions"><button data-submit>Save controlled draft</button><a href="/laboratory/tests">Cancel</a></div><p data-result role="status"></p></form>:<p>You are not authorized to create laboratory tests.</p>}</AppLayout>
+<script>import {actions} from 'astro:actions';const form=document.querySelector<HTMLFormElement>('form[data-lab-create]');form?.addEventListener('submit',async event=>{event.preventDefault();const target=event.currentTarget as HTMLFormElement;const data=new FormData(target);const submit=target.querySelector<HTMLButtonElement>('[data-submit]');const output=target.querySelector<HTMLElement>('[data-result]');if(submit)submit.disabled=true;target.setAttribute('aria-busy','true');if(output)output.textContent='Saving…';try{const result=await actions.laboratory.create({templateVersionId:String(data.get('templateVersionId')),labTestNo:String(data.get('labTestNo'))});if(result.data&&typeof result.data.id==='string'){location.href='/laboratory/tests/'+result.data.id;return;}if(output)output.textContent='The controlled source is unavailable or this action is not authorized. Review the fields and try again.';const firstInvalid=target.querySelector<HTMLElement>('input:invalid');(firstInvalid??output)?.focus?.();}catch{if(output)output.textContent='The service is temporarily unavailable. Your entries are kept — try again.';}finally{if(submit)submit.disabled=false;target.removeAttribute('aria-busy');}});</script>
+<style>form{display:grid;gap:1rem;max-width:40rem}label{display:grid;gap:.4rem}input,button{padding:.7rem;font:inherit}input[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}button{background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}button[disabled]{opacity:.6}.actions{display:flex;gap:1rem;align-items:center}.actions a{color:var(--color-accent-primary-hover)}</style>

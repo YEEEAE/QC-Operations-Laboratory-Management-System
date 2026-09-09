@@ -1,17 +1,115 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  detailHref,
+  extractDetailId,
+  field,
+  optionalField,
+  parseBigintField,
+  parseJsonField,
+  parseJsonValue,
+  toFormFailure,
+  type FormFailure,
+} from '../../ui/forms/mutation-post.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fchange-requests%2Fnew');
 const canCreate = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-CHG-CREATE');
+
+const LIST_HREF = '/change-requests';
+const REQUIRED_FIELDS = [
+  { name: 'changeNo', label: 'Change number' },
+  { name: 'targetType', label: 'Target type' },
+  { name: 'targetId', label: 'Target ID' },
+  { name: 'targetVersion', label: 'Target version' },
+  { name: 'reason', label: 'Reason' },
+  { name: 'targetSnapshot', label: 'Target snapshot (JSON)' },
+  { name: 'fieldPath', label: 'Field path' },
+  { name: 'dataType', label: 'Data type' },
+] as const;
+
+let values = { changeNo: '', targetType: '', targetId: '', targetVersion: '', reason: '', targetSnapshot: '{}', fieldPath: '', dataType: '', currentValue: '', proposedValue: '' };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action — with the same server-side
+// reauthorization — runs via Astro.callAction. Flat operator fields are
+// shaped into the Action's nested input here (transport shaping only; all
+// business validation stays in the use case). No business payload enters
+// the URL: input travels in the POST body, success redirects (303) to the
+// new record only.
+if (Astro.request.method === 'POST' && canCreate) {
+  const formData = await Astro.request.formData();
+  values = {
+    changeNo: field(formData, 'changeNo'),
+    targetType: field(formData, 'targetType'),
+    targetId: field(formData, 'targetId'),
+    targetVersion: field(formData, 'targetVersion'),
+    reason: field(formData, 'reason'),
+    targetSnapshot: String(formData.get('targetSnapshot') ?? '{}'),
+    fieldPath: field(formData, 'fieldPath'),
+    dataType: field(formData, 'dataType'),
+    currentValue: String(formData.get('currentValue') ?? ''),
+    proposedValue: String(formData.get('proposedValue') ?? ''),
+  };
+  const fail = (error: unknown): void => {
+    failure = toFormFailure(error, {
+      entity: 'Change request',
+      requiredFields: REQUIRED_FIELDS,
+      values,
+      listHref: LIST_HREF,
+      listLabel: 'register',
+    });
+  };
+  try {
+    const data = await Astro.callAction(actions.changeRequests.create, {
+      changeNo: values.changeNo,
+      targetType: values.targetType,
+      targetId: values.targetId,
+      targetVersion: parseBigintField(values.targetVersion, 'targetVersion'),
+      reason: values.reason,
+      targetSnapshot: parseJsonField(values.targetSnapshot, 'targetSnapshot'),
+      targetSnapshotHash: optionalField(formData, 'targetSnapshotHash'),
+      changes: [
+        {
+          fieldPath: values.fieldPath,
+          currentValue: parseJsonValue(values.currentValue),
+          proposedValue: parseJsonValue(values.proposedValue),
+          dataType: values.dataType,
+        },
+      ],
+    });
+    const id = extractDetailId(data);
+    if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
+    failure = {
+      kind: 'unknown',
+      summary: 'The change request was received but no record reference came back.',
+      recovery: 'Check the register before trying again to avoid a duplicate.',
+      fieldErrors: {},
+      firstInvalidField: null,
+    };
+  } catch (error) {
+    fail(error);
+  }
+}
+
+const describedBy = (name: keyof typeof values): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: keyof typeof values): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
+const fieldError = (name: keyof typeof values): string | null =>
+  failure?.fieldErrors[name] ?? null;
 ---
 <AppLayout title="New Change Request · QC Operations" locale="en" direction="ltr">
   <section class="head"><div><p class="eyebrow">GOV-CHG-002 · DRAFT ONLY</p><h1>New change request</h1><p>This records a proposed change and its target snapshot. It does not apply, approve, or release the target.</p></div><a href="/change-requests">Back to register</a></section>
-  {canCreate ? <form class="form" data-action="change-requests.create"><fieldset><legend>Request context</legend><div class="fields"><label for="changeNo">Change number<input id="changeNo" name="changeNo" required /></label><label for="targetType">Target type<input id="targetType" name="targetType" placeholder="DOCUMENT_VERSION" required /></label><label for="targetId">Target ID<input id="targetId" name="targetId" type="text" required aria-describedby="targetId-help" /><small id="targetId-help">Use the UUID of the controlled target record.</small></label><label for="targetVersion">Target version<input id="targetVersion" name="targetVersion" type="number" min="1" step="1" required /></label><label class="wide" for="reason">Reason<textarea id="reason" name="reason" rows="3" required></textarea></label><label class="wide" for="targetSnapshot">Target snapshot (JSON)<textarea id="targetSnapshot" name="targetSnapshot" rows="6" required aria-describedby="snapshot-help">{`{}`}</textarea><small id="snapshot-help">Paste the approved current context captured for review; no scientific limits or policy values are inferred here.</small></label></div></fieldset><fieldset><legend>Proposed field change</legend><div class="fields"><label for="fieldPath">Field path<input id="fieldPath" name="fieldPath" placeholder="metadata.owner" required /></label><label for="dataType">Data type<input id="dataType" name="dataType" placeholder="string" required /></label><label for="currentValue">Current value<textarea id="currentValue" name="currentValue" rows="3"></textarea></label><label for="proposedValue">Proposed value<textarea id="proposedValue" name="proposedValue" rows="3"></textarea></label></div></fieldset><p class="error" data-error role="alert" hidden>Unable to create the change request. Check the fields and try again.</p><div class="actions"><a href="/change-requests">Cancel</a><button type="submit">Create draft</button></div></form> : <section class="denied" role="alert"><h2>Creation unavailable</h2><p>Your account does not have the explicit change-request create permission.</p></section>}
+  {canCreate ? <form class="form" method="post" data-action="change-requests.create">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="register" />}<fieldset><legend>Request context</legend><div class="fields"><div><label for="changeNo">Change number<input id="changeNo" name="changeNo" required value={values.changeNo} aria-invalid={invalid('changeNo')} aria-describedby={describedBy('changeNo')} /></label>{fieldError('changeNo') && <p class="field-error" id="changeNo-error">{fieldError('changeNo')}</p>}</div><div><label for="targetType">Target type<input id="targetType" name="targetType" placeholder="DOCUMENT_VERSION" required value={values.targetType} aria-invalid={invalid('targetType')} aria-describedby={describedBy('targetType')} /></label>{fieldError('targetType') && <p class="field-error" id="targetType-error">{fieldError('targetType')}</p>}</div><div><label for="targetId">Target ID<input id="targetId" name="targetId" type="text" required value={values.targetId} aria-invalid={invalid('targetId')} aria-describedby={failure?.fieldErrors.targetId ? 'targetId-error targetId-help' : 'targetId-help'} /><small id="targetId-help">Use the UUID of the controlled target record.</small></label>{fieldError('targetId') && <p class="field-error" id="targetId-error">{fieldError('targetId')}</p>}</div><div><label for="targetVersion">Target version<input id="targetVersion" name="targetVersion" type="number" min="1" step="1" required value={values.targetVersion} aria-invalid={invalid('targetVersion')} aria-describedby={describedBy('targetVersion')} /></label>{fieldError('targetVersion') && <p class="field-error" id="targetVersion-error">{fieldError('targetVersion')}</p>}</div><div class="wide"><label for="reason">Reason<textarea id="reason" name="reason" rows="3" required aria-invalid={invalid('reason')} aria-describedby={describedBy('reason')}>{values.reason}</textarea></label>{fieldError('reason') && <p class="field-error" id="reason-error">{fieldError('reason')}</p>}</div><div class="wide"><label for="targetSnapshot">Target snapshot (JSON)<textarea id="targetSnapshot" name="targetSnapshot" rows="6" required aria-invalid={invalid('targetSnapshot')} aria-describedby={failure?.fieldErrors.targetSnapshot ? 'targetSnapshot-error snapshot-help' : 'snapshot-help'}>{values.targetSnapshot}</textarea><small id="snapshot-help">Paste the approved current context captured for review; no scientific limits or policy values are inferred here.</small></label>{fieldError('targetSnapshot') && <p class="field-error" id="targetSnapshot-error">{fieldError('targetSnapshot')}</p>}</div></div></fieldset><fieldset><legend>Proposed field change</legend><div class="fields"><div><label for="fieldPath">Field path<input id="fieldPath" name="fieldPath" placeholder="metadata.owner" required value={values.fieldPath} aria-invalid={invalid('fieldPath')} aria-describedby={describedBy('fieldPath')} /></label>{fieldError('fieldPath') && <p class="field-error" id="fieldPath-error">{fieldError('fieldPath')}</p>}</div><div><label for="dataType">Data type<input id="dataType" name="dataType" placeholder="string" required value={values.dataType} aria-invalid={invalid('dataType')} aria-describedby={describedBy('dataType')} /></label>{fieldError('dataType') && <p class="field-error" id="dataType-error">{fieldError('dataType')}</p>}</div><div><label for="currentValue">Current value<textarea id="currentValue" name="currentValue" rows="3">{values.currentValue}</textarea></label></div><div><label for="proposedValue">Proposed value<textarea id="proposedValue" name="proposedValue" rows="3">{values.proposedValue}</textarea></label></div></div></fieldset><p role="status" data-result></p><div class="actions"><a href="/change-requests">Cancel</a><button type="submit" data-submit>Create draft</button></div></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Change Request create permission.</p></section>}
 </AppLayout>
 <script>
 import { actions } from 'astro:actions';
 const form = document.querySelector<HTMLFormElement>('[data-action="change-requests.create"]');
-const parse = (value: FormDataEntryValue | null) => { const text = String(value ?? '').trim(); return text ? JSON.parse(text) : undefined; };
-form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const error = form.querySelector<HTMLElement>('[data-error]'); try { const result = await actions.changeRequests.create({ changeNo: String(data.get('changeNo')), targetType: String(data.get('targetType')), targetId: String(data.get('targetId')), targetVersion: BigInt(String(data.get('targetVersion'))), reason: String(data.get('reason')), targetSnapshot: parse(data.get('targetSnapshot')) ?? {}, changes: [{ fieldPath: String(data.get('fieldPath')), currentValue: parse(data.get('currentValue')), proposedValue: parse(data.get('proposedValue')), dataType: String(data.get('dataType')) }] }); if (result.data) window.location.href = `/change-requests/${result.data.changeRequest.id}`; else if (error) error.hidden = false; } catch { if (error) error.hidden = false; } });
+const parse = (value: FormDataEntryValue | null) => { const text = String(value ?? '').trim(); if (!text) return undefined; try { return JSON.parse(text); } catch { return text; } };
+form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const submit = form.querySelector<HTMLButtonElement>('[data-submit]'); const output = form.querySelector<HTMLElement>('[data-result]'); if (submit) submit.disabled = true; form.setAttribute('aria-busy', 'true'); if (output) output.textContent = 'Saving…'; try { const targetVersion = BigInt(String(data.get('targetVersion'))); const snapshotText = String(data.get('targetSnapshot')); const result = await actions.changeRequests.create({ changeNo: String(data.get('changeNo')), targetType: String(data.get('targetType')), targetId: String(data.get('targetId')), targetVersion, reason: String(data.get('reason')), targetSnapshot: snapshotText ? JSON.parse(snapshotText) : {}, changes: [{ fieldPath: String(data.get('fieldPath')), currentValue: parse(data.get('currentValue')), proposedValue: parse(data.get('proposedValue')), dataType: String(data.get('dataType')) }] }); const record = result.data?.changeRequest as unknown as { id?: unknown } | undefined; if (record && typeof record.id === 'string') { window.location.href = `/change-requests/${record.id}`; return; } if (output) output.textContent = 'Unable to create the change request. Check the fields and try again.'; const firstInvalid = form.querySelector<HTMLElement>('input:invalid,textarea:invalid'); (firstInvalid ?? output)?.focus?.(); } catch { if (output) output.textContent = 'The change request could not be created. Check the snapshot JSON and identifiers, then try again.'; output?.focus?.(); } finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); } });
 </script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p,.error,small{color:var(--text-muted);font-size:.85rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:980px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}label.wide{grid-column:1/-1}input,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}.error{margin:0;padding:.75rem;border-inline-start:3px solid var(--status-danger);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}label.wide{grid-column:auto}.actions{justify-content:stretch;display:grid}}</style>
+<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p,.error,small{color:var(--text-muted);font-size:.85rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:980px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}label{display:grid;gap:.4rem}div.wide{grid-column:1/-1}input,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}div.wide{grid-column:auto}.actions{justify-content:stretch;display:grid}}</style>

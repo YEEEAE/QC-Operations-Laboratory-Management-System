@@ -34,7 +34,15 @@ describe('navigation permission and route integrity', () => {
       expect(links).toContain(href);
     }
     expect(links).not.toContain('/laboratory/tests');
-    expect(visibleNavigation([])).toEqual([]);
+    expect(
+      visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href)),
+    ).toEqual(['/tasks']);
+  });
+
+  it('shows Tasks to every authenticated member without granting task actions', () => {
+    const links = visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href));
+    expect(links).toContain('/tasks');
+    expect(navigationGroups.find((group) => group.id === 'work')?.items[0]?.capability).toBeUndefined();
   });
 
   it('supports each canonical dashboard permission independently', () => {

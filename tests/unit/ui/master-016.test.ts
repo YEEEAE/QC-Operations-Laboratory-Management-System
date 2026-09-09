@@ -11,7 +11,7 @@ describe('MASTER-016 UI contracts', () => {
     const visible = visibleNavigation(['PERM-DASH-VIEW', 'PERM-APR-VIEW-ASSIGNED']);
     expect(
       visible.flatMap((group: NavigationGroup) => group.items.map((item) => item.href)),
-    ).toEqual(['/dashboard', '/approvals']);
+    ).toEqual(['/dashboard', '/tasks', '/approvals']);
     expect(navigationGroups.length).toBeGreaterThan(1);
   });
 

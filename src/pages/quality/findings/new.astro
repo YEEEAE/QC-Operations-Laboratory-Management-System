@@ -1,5 +1,76 @@
 ---
-import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fquality%2Ffindings%2Fnew');
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  detailHref,
+  extractDetailId,
+  field,
+  optionalField,
+  toFormFailure,
+  type FormFailure,
+} from '../../../ui/forms/mutation-post.js';
+
+const actor=Astro.locals.actor;
+if(!actor)return Astro.redirect('/login?returnTo=%2Fquality%2Ffindings%2Fnew');
+
+const LIST_HREF = '/quality/findings';
+const REQUIRED_FIELDS = [
+  { name: 'findingNo', label: 'Finding ID' },
+  { name: 'title', label: 'Title' },
+  { name: 'description', label: 'Description' },
+] as const;
+
+let values = { findingNo: '', title: '', description: '', severity: '' };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action — with the same server-side
+// reauthorization — runs via Astro.callAction. No business payload enters
+// the URL: input travels in the POST body, success redirects (303) to the
+// new record only.
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  values = {
+    findingNo: field(formData, 'findingNo'),
+    title: field(formData, 'title'),
+    description: field(formData, 'description'),
+    severity: field(formData, 'severity'),
+  };
+  try {
+    const data = await Astro.callAction(actions.findings.create, {
+      findingNo: values.findingNo,
+      title: values.title,
+      description: values.description,
+      severity: optionalField(formData, 'severity'),
+    });
+    const id = extractDetailId(data);
+    if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
+    failure = {
+      kind: 'unknown',
+      summary: 'The finding was received but no record reference came back.',
+      recovery: 'Check the findings register before trying again to avoid a duplicate.',
+      fieldErrors: {},
+      firstInvalidField: null,
+    };
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Quality finding',
+      requiredFields: REQUIRED_FIELDS,
+      values,
+      listHref: LIST_HREF,
+      listLabel: 'findings',
+    });
+  }
+}
+
+const describedBy = (name: keyof typeof values): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: keyof typeof values): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="Create Finding · Quality" locale="en" direction="ltr"><h1>Create Finding</h1><form method="post" data-action="findings.create"><label>Finding ID<input name="findingNo" required /></label><label>Title<input name="title" required /></label><label>Description<textarea name="description" required></textarea></label><label>Severity (if approved)<input name="severity" /></label><button type="submit">Save Draft</button></form></AppLayout>
-<style>form{display:grid;gap:1rem;max-width:42rem}label{display:grid;gap:.35rem}input,textarea{padding:.7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle)}button{width:max-content;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}</style>
+<AppLayout title="Create Finding · Quality" locale="en" direction="ltr"><h1>Create Finding</h1><p><a href="/quality/findings">Back to findings</a></p><form method="post" data-action="findings.create">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="findings" />}<label for="findingNo">Finding ID<input id="findingNo" name="findingNo" required value={values.findingNo} aria-invalid={invalid('findingNo')} aria-describedby={describedBy('findingNo')} /></label>{failure?.fieldErrors.findingNo && <p class="field-error" id="findingNo-error">{failure.fieldErrors.findingNo}</p>}<label for="title">Title<input id="title" name="title" required value={values.title} aria-invalid={invalid('title')} aria-describedby={describedBy('title')} /></label>{failure?.fieldErrors.title && <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>}<label for="description">Description<textarea id="description" name="description" required aria-invalid={invalid('description')} aria-describedby={describedBy('description')}>{values.description}</textarea></label>{failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}<label for="severity">Severity (if approved)<input id="severity" name="severity" value={values.severity} /></label><div class="actions"><button type="submit" data-submit>Save Draft</button><a href="/quality/findings">Cancel</a></div><p role="status" data-result></p></form></AppLayout>
+<script>
+import { actions } from 'astro:actions'; const form=document.querySelector<HTMLFormElement>('[data-action="findings.create"]'); form?.addEventListener('submit',async(event)=>{event.preventDefault();const data=new FormData(form);const submit=form.querySelector<HTMLButtonElement>('[data-submit]');const output=form.querySelector<HTMLElement>('[data-result]');if(submit)submit.disabled=true;form.setAttribute('aria-busy','true');if(output)output.textContent='Saving…';try{const result=await actions.findings.create({findingNo:String(data.get('findingNo')),title:String(data.get('title')),description:String(data.get('description')),severity:String(data.get('severity')||'')||undefined});if(result.data){const record=result.data as unknown as {id?:unknown};if(typeof record.id==='string'){window.location.href=`/quality/findings/${record.id}`;return;}}if(output)output.textContent='Unable to create this finding. Review the fields and try again.';const firstInvalid=form.querySelector<HTMLElement>('input:invalid,textarea:invalid');(firstInvalid??output)?.focus?.();}catch{if(output)output.textContent='The service is temporarily unavailable. Your entries are kept — try again.';}finally{if(submit)submit.disabled=false;form.removeAttribute('aria-busy');}});
+</script>
+<style>form{display:grid;gap:1rem;max-width:42rem}label{display:grid;gap:.35rem}input,textarea{padding:.7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle)}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;gap:1rem;align-items:center}button{width:max-content;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border:0;border-radius:var(--radius-md)}button[disabled]{opacity:.6}a{color:var(--color-accent-primary-hover)}</style>

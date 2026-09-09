@@ -1,5 +1,67 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — إصلاح F-04 وF-05: POST baseline لكل فورمات الإنشاء التسعة
+
+### تم التنفيذ
+- أعطيت كل فورم إنشاء (`tasks/laboratory/equipment/calibrations/maintenance/change-requests/documents/findings/receiving`) مسار POST حقيقي: الفورم `method="post"` ينشر على نفس الصفحة، والـ frontmatter ينادي نفس Astro Action عبر `Astro.callAction` بنفس `actor` وإعادة التفويض الخادمية — بدون SQL أو business rules في الصفحات.
+- أضفت مساعد عرض مشترك `src/ui/forms/mutation-post.ts` (نقل فقط + نسخ أخطاء آمنة، تصنيف هيكلي بلا `instanceof`) ومكوّن `FormErrorSummary.astro` (`role="alert"` + `autofocus` + رابط رجوع آمن للقائمة).
+- كل فورم صار فيه: ملخص خطأ مرئي، أخطاء بجانب الحقول مع `aria-invalid`/`aria-describedby`، إدارة focus (خادميًا بالـ autofocus وJS بأول حقل غير صالح)، حالة انتظار (تعطيل الزر + `aria-busy` + `role="status"`)، قيم محفوظة بعد الفشل، واسترداد تعارض/تبعية/عدم توفر بنسخ مخصصة لكل نوع.
+- النجاح يعيد توجيه `303` للسجل الجديد بالـ id فقط (مفحوص uuid) — لا حمولة أعمال في الـ URL. سكربتات JS بقيت تحسينًا اختياريًا فقط (`preventDefault` + نفس الأكشنات JSON).
+- أضفت `tests/unit/ui/mutation-post.test.ts` (مساعد + عقود التسع صفحات) و`tests/e2e/create-forms-resilience.spec.ts` (فشل تحقق + نجاح إنشاء، no-JS وJS، ببيانات `E2E-…` disposable وحراسة fixture تمنع الإنتاج).
+- أضفت زر Cancel/رجوع لفورم الملاحظات والمختبر (كانت بلا تنقل رجوع) كجزء من الاسترداد.
+
+### الملفات المتأثرة
+- `src/pages/{tasks, laboratory/tests, assets/{equipment,calibrations,maintenance}, change-requests, documents, quality/findings, quarantine/receiving}/new.astro`
+- `src/ui/forms/mutation-post.ts` (جديد)، `src/ui/components/FormErrorSummary.astro` (جديد)
+- `tests/unit/ui/mutation-post.test.ts` (جديد)، `tests/e2e/create-forms-resilience.spec.ts` (جديد)
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 errors (قبل إضافات المستخدم الأخيرة على ملفات أخرى لم تُلمس)
+- `pnpm test:unit` ✅ — 39 ملفًا / 212 اختبارًا (منها 44 الجديدة)
+- `pnpm test:architecture` ✅ — لا مخالفات Delivery
+- `pnpm build` ✅
+- دخان إنتاجي على `dist/server/entry.mjs`: التسع صفحات GET وPOST بلا جلسة ترد `303 → /login` (لا 404/500) ✅
+- E2E الجديد مُدرج في Playwright (103 اختبارًا بالإجمال) لكنه gated: يُتخطى بدون `QC_E2E_LOGIN_IDENTITY/PASSWORD` ولم يُشغّل هنا (لا DB/fixture) — والمعمل يحتاج `QC_E2E_LAB_TEMPLATE_VERSION_ID` للنجاح
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — تحذير معتاد، النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** الفورمات التسعة تعمل الآن بلا JavaScript عبر POST حقيقي مع أخطاء مرئية وقيم محفوظة واسترداد، وJS تحسين اختياري، مع تغطية unit وعقود وE2E gated.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy. ملفات المستخدم الأخرى (tasks module/index/detail/navigation/mind) لم تُلمس.
+- تشغيل E2E المصادق يحتاج بيئة disposable مع fixture + DB ثم مراجعة أن السجلات `E2E-…` عُزلت.
+
+## [2026-09-09] — إظهار صفحة Tasks وبياناتها لكل الأعضاء النشطين
+
+### تم التنفيذ
+- أزلت شرط `PERM-TASK-VIEW` من عنصر Tasks في القائمة، وصار الرابط يظهر لكل عضو مصادق عليه داخل غلاف التطبيق.
+- عدّلت قراءة قائمة المهام وتفاصيل المهمة لتسمح لكل حساب `ACTIVE` بقراءة كل سجلات المهام، بما يطابق قرار الرؤية التشغيلية العامة.
+- أبقيت الحسابات غير النشطة مرفوضة، وأبقيت إنشاء المهام وتغييرات الحالة مربوطة بصلاحياتها الصريحة.
+- أخفيت زر **Create Task** وأزرار انتقال الحالة عن العضو الذي لا يملك صلاحية الإجراء المطلوبة.
+- أضفت تحققًا وحدويًا يثبت ظهور `/tasks` حتى بدون منح إجراءات المهام.
+
+### الملفات المتأثرة
+- `src/ui/navigation/navigation.ts`
+- `src/pages/tasks/index.astro`
+- `src/pages/tasks/[taskId].astro`
+- `src/modules/tasks/application/list.ts`
+- `src/modules/tasks/application/get.ts`
+- `src/modules/tasks/infrastructure/postgres-repository.ts`
+- `tests/unit/ui/navigation-permissions.test.ts`
+- `tests/unit/ui/master-016.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- اختبارات التنقل والغلاف ومصفوفة صلاحيات المهام: **18/18 نجحت** ✅
+- ESLint للملفات TypeScript المتأثرة: بلا أخطاء ✅؛ ملفات Astro ظهرت كـignored حسب إعداد ESLint الحالي.
+- `git diff --check` ✅
+- `pnpm typecheck` جزئي: خطأ المهمة الذي ظهر أولًا تم إصلاحه؛ بقي خطأ غير متعلق بالمهمة في `src/pages/assets/maintenance/new.astro` بسبب مسار استيراد `FormErrorSummary.astro` غير موجود.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** صفحة Tasks وبياناتها صارت ظاهرة لكل الأعضاء النشطين، بينما الإنشاء والتعديل وتغييرات الحالة ما زالت محكومة بالصلاحيات.
+
 ## [2026-09-09] — تنفيذ F-02: مساحة Administration المضبوطة (/admin × 8 مسارات)
 
 ### تم التنفيذ

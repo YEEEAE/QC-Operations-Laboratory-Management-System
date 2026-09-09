@@ -1,18 +1,100 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  detailHref,
+  extractDetailId,
+  field,
+  toFormFailure,
+  type FormFailure,
+} from '../../../ui/forms/mutation-post.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving%2Fnew');
 const canCreate = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-CREATE');
+
+const LIST_HREF = '/quarantine/receiving';
+const REQUIRED_FIELDS = [
+  { name: 'receivingNo', label: 'Receiving ID' },
+  { name: 'docNo', label: 'Document number' },
+  { name: 'itemCode', label: 'Item code' },
+  { name: 'lot', label: 'Lot / batch' },
+  { name: 'description', label: 'Description' },
+  { name: 'qty', label: 'Quantity' },
+  { name: 'receivingDate', label: 'Receiving date' },
+] as const;
+
+let values = { receivingNo: '', docNo: '', itemCode: '', lot: '', description: '', qty: '', receivingDate: '', expiryDate: '' };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action — with the same server-side
+// reauthorization — runs via Astro.callAction. No business payload enters
+// the URL: input travels in the POST body, success redirects (303) to the
+// new record only.
+if (Astro.request.method === 'POST' && canCreate) {
+  const formData = await Astro.request.formData();
+  const receivingRaw = field(formData, 'receivingDate');
+  const expiryRaw = field(formData, 'expiryDate');
+  values = {
+    receivingNo: field(formData, 'receivingNo'),
+    docNo: field(formData, 'docNo'),
+    itemCode: field(formData, 'itemCode'),
+    lot: field(formData, 'lot'),
+    description: field(formData, 'description'),
+    qty: field(formData, 'qty'),
+    receivingDate: receivingRaw,
+    expiryDate: expiryRaw,
+  };
+  try {
+    const data = await Astro.callAction(actions.quarantine.createReceiving, {
+      receivingNo: values.receivingNo,
+      docNo: values.docNo,
+      itemCode: values.itemCode,
+      description: values.description,
+      lot: values.lot,
+      qty: values.qty,
+      // Always a Date instance for the required field: blank or malformed
+      // text becomes Invalid Date, which the Action input schema rejects
+      // as a validation failure (highlighted on the field).
+      receivingDate: new Date(receivingRaw),
+      ...(expiryRaw ? { expiryDate: new Date(expiryRaw) } : {}),
+    });
+    const id = extractDetailId(data);
+    if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
+    failure = {
+      kind: 'unknown',
+      summary: 'The receiving item was received but no record reference came back.',
+      recovery: 'Check the receiving register before trying again to avoid a duplicate.',
+      fieldErrors: {},
+      firstInvalidField: null,
+    };
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Receiving item',
+      requiredFields: REQUIRED_FIELDS,
+      values,
+      listHref: LIST_HREF,
+      listLabel: 'receiving register',
+    });
+  }
+}
+
+const describedBy = (name: keyof typeof values): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: keyof typeof values): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
 ---
 <AppLayout title="New Receiving Item · Quarantine" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">T3 CONTROLLED INTAKE</p><h1>Create receiving item</h1><p class="lede">Register the material identity. The server assigns the initial PENDING state.</p></div><a href="/quarantine/receiving">Back to register</a></section>
-  {canCreate ? <form class="form" method="post" data-action="quarantine.createReceiving"><fieldset><legend>Receiving identification</legend><div class="fields"><label>Receiving ID<input name="receivingNo" required /></label><label>Document number<input name="docNo" required /></label></div></fieldset><fieldset><legend>Item and lot</legend><div class="fields"><label>Item code<input name="itemCode" required /></label><label>Lot / batch<input name="lot" required /></label><label class="wide">Description<textarea name="description" required></textarea></label></div></fieldset><fieldset><legend>Quantity and context</legend><div class="fields"><label>Quantity<input name="qty" type="number" min="0" step="any" required /></label><label>Receiving date<input name="receivingDate" type="date" required /></label><label>Expiry date<input name="expiryDate" type="date" /></label></div></fieldset><div class="actions"><a class="secondary" href="/quarantine/receiving">Cancel</a><button type="submit">Create receiving item</button></div></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Quarantine create permission.</p></section>}
+  {canCreate ? <form class="form" method="post" data-action="quarantine.createReceiving">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="receiving register" />}<fieldset><legend>Receiving identification</legend><div class="fields"><div><label for="receivingNo">Receiving ID<input id="receivingNo" name="receivingNo" required value={values.receivingNo} aria-invalid={invalid('receivingNo')} aria-describedby={describedBy('receivingNo')} /></label>{failure?.fieldErrors.receivingNo && <p class="field-error" id="receivingNo-error">{failure.fieldErrors.receivingNo}</p>}</div><div><label for="docNo">Document number<input id="docNo" name="docNo" required value={values.docNo} aria-invalid={invalid('docNo')} aria-describedby={describedBy('docNo')} /></label>{failure?.fieldErrors.docNo && <p class="field-error" id="docNo-error">{failure.fieldErrors.docNo}</p>}</div></div></fieldset><fieldset><legend>Item and lot</legend><div class="fields"><div><label for="itemCode">Item code<input id="itemCode" name="itemCode" required value={values.itemCode} aria-invalid={invalid('itemCode')} aria-describedby={describedBy('itemCode')} /></label>{failure?.fieldErrors.itemCode && <p class="field-error" id="itemCode-error">{failure.fieldErrors.itemCode}</p>}</div><div><label for="lot">Lot / batch<input id="lot" name="lot" required value={values.lot} aria-invalid={invalid('lot')} aria-describedby={describedBy('lot')} /></label>{failure?.fieldErrors.lot && <p class="field-error" id="lot-error">{failure.fieldErrors.lot}</p>}</div><div class="wide"><label for="description">Description<textarea id="description" name="description" required aria-invalid={invalid('description')} aria-describedby={describedBy('description')}>{values.description}</textarea></label>{failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}</div></div></fieldset><fieldset><legend>Quantity and context</legend><div class="fields"><div><label for="qty">Quantity<input id="qty" name="qty" type="number" min="0" step="any" required value={values.qty} aria-invalid={invalid('qty')} aria-describedby={describedBy('qty')} /></label>{failure?.fieldErrors.qty && <p class="field-error" id="qty-error">{failure.fieldErrors.qty}</p>}</div><div><label for="receivingDate">Receiving date<input id="receivingDate" name="receivingDate" type="date" required value={values.receivingDate} aria-invalid={invalid('receivingDate')} aria-describedby={describedBy('receivingDate')} /></label>{failure?.fieldErrors.receivingDate && <p class="field-error" id="receivingDate-error">{failure.fieldErrors.receivingDate}</p>}</div><div><label for="expiryDate">Expiry date<input id="expiryDate" name="expiryDate" type="date" value={values.expiryDate} /></label></div></div></fieldset><div class="actions"><a class="secondary" href="/quarantine/receiving">Cancel</a><button type="submit" data-submit>Create receiving item</button></div><p role="status" data-result></p></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Quarantine create permission.</p></section>}
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
   const form = document.querySelector<HTMLFormElement>('[data-action="quarantine.createReceiving"]');
-  form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const result = await actions.quarantine.createReceiving({ receivingNo: String(data.get('receivingNo')), docNo: String(data.get('docNo')), itemCode: String(data.get('itemCode')), description: String(data.get('description')), lot: String(data.get('lot')), qty: String(data.get('qty')), receivingDate: new Date(String(data.get('receivingDate'))), expiryDate: data.get('expiryDate') ? new Date(String(data.get('expiryDate'))) : undefined }); if (result.data) window.location.href = `/quarantine/receiving/${result.data.id}`; else form.setAttribute('aria-invalid', 'true'); });
+  form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const submit = form.querySelector<HTMLButtonElement>('[data-submit]'); const output = form.querySelector<HTMLElement>('[data-result]'); if (submit) submit.disabled = true; form.setAttribute('aria-busy', 'true'); if (output) output.textContent = 'Saving…'; try { const result = await actions.quarantine.createReceiving({ receivingNo: String(data.get('receivingNo')), docNo: String(data.get('docNo')), itemCode: String(data.get('itemCode')), description: String(data.get('description')), lot: String(data.get('lot')), qty: String(data.get('qty')), receivingDate: new Date(String(data.get('receivingDate'))), expiryDate: data.get('expiryDate') ? new Date(String(data.get('expiryDate'))) : undefined }); if (result.data && typeof result.data.id === 'string') { window.location.href = `/quarantine/receiving/${result.data.id}`; return; } if (output) output.textContent = 'Unable to create this receiving item. Review the fields and try again.'; const firstInvalid = form.querySelector<HTMLElement>('input:invalid,textarea:invalid'); (firstInvalid ?? output)?.focus?.(); } catch { if (output) output.textContent = 'The service is temporarily unavailable. Your entries are kept — try again.'; } finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); } });
 </script>
 <style>
-  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.denied p{color:var(--text-muted);font-size:.85rem}.page-head a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{display:grid;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;color:var(--text-primary);font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.wide{grid-column:1/-1}input,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}textarea{min-height:7rem;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button{min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary)}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.page-head{display:grid}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.actions{justify-content:stretch;display:grid}}
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.denied p{color:var(--text-muted);font-size:.85rem}.page-head a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{display:grid;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;color:var(--text-primary);font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.wide{grid-column:1/-1}label{display:grid;gap:.4rem}input,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}textarea{min-height:7rem;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button{min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}button[disabled]{opacity:.6}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none;padding:.65rem 1rem;border:1px solid var(--border-default);border-radius:var(--radius-sm)}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.page-head{display:grid}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.actions{justify-content:stretch;display:grid}}
 </style>

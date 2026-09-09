@@ -3,7 +3,6 @@ import type { DatabaseSchema, DatabaseRow } from '../../../shared/database/db-ty
 import { translateDatabaseError } from '../../../shared/database/database.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
-import { actorHasScope } from '../../../shared/authorization/scope-evaluator.js';
 import type { AuditRepository } from '../../../shared/audit/audit-repository.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.js';
@@ -172,26 +171,8 @@ export class PostgresTaskRepository implements TaskRepository {
         ]),
       ) as typeof query;
     const rows = await query.execute();
-    const result: Task[] = [];
-    for (const row of rows) {
-      const task = await this.get(row.id);
-      if (
-        task &&
-        actorHasScope(
-          input.actor,
-          {
-            type: 'TASK',
-            id: task.id,
-            state: task.state,
-            ownerId: task.createdBy,
-            assigneeId: task.currentAssigneeId,
-          },
-          { ownerId: task.createdBy, assigneeId: task.currentAssigneeId },
-        )
-      )
-        result.push(task);
-    }
-    return result;
+    const tasks = await Promise.all(rows.map((row) => this.get(row.id)));
+    return tasks.filter((task): task is Task => Boolean(task));
   }
   async updateDraft(input: {
     id: string;

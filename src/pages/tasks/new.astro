@@ -1,10 +1,80 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  detailHref,
+  extractDetailId,
+  field,
+  toFormFailure,
+  type FormFailure,
+} from '../../ui/forms/mutation-post.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Ftasks%2Fnew');
-const canCreate = actor.permissions.some((grant) => grant.code === 'PERM-TASK-CREATE' && grant.active !== false);
+const canCreate = actor.permissions.some(
+  (grant) => grant.code === 'PERM-TASK-CREATE' && grant.active !== false,
+);
+
+const LIST_HREF = '/tasks';
+const REQUIRED_FIELDS = [
+  { name: 'taskNo', label: 'Task number' },
+  { name: 'title', label: 'Title' },
+  { name: 'priority', label: 'Priority' },
+] as const;
+
+let values = { taskNo: '', title: '', description: '', priority: 'UNSPECIFIED', dueAt: '' };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action — with the same server-side
+// reauthorization — runs via Astro.callAction. No business payload enters
+// the URL: input travels in the POST body, success redirects (303) to the
+// new record only.
+if (Astro.request.method === 'POST' && canCreate) {
+  const formData = await Astro.request.formData();
+  const dueRaw = field(formData, 'dueAt');
+  values = {
+    taskNo: field(formData, 'taskNo'),
+    title: field(formData, 'title'),
+    description: field(formData, 'description'),
+    priority: field(formData, 'priority') || 'UNSPECIFIED',
+    dueAt: dueRaw,
+  };
+  try {
+    const data = await Astro.callAction(actions.tasks.createTask, {
+      taskNo: values.taskNo,
+      title: values.title,
+      description: values.description || undefined,
+      priority: values.priority,
+      ...(dueRaw ? { dueAt: new Date(dueRaw) } : {}),
+    });
+    const id = extractDetailId(data);
+    if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
+    failure = {
+      kind: 'unknown',
+      summary: 'The task was received but no record reference came back.',
+      recovery: 'Check the task list before trying again to avoid a duplicate.',
+      fieldErrors: {},
+      firstInvalidField: null,
+    };
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Task',
+      requiredFields: REQUIRED_FIELDS,
+      values,
+      listHref: LIST_HREF,
+      listLabel: 'tasks',
+    });
+  }
+}
+
+const describedBy = (name: keyof typeof values): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: keyof typeof values): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="Create Task · QC Operations" locale="en" direction="ltr"><section class="page-head"><p class="eyebrow">T2 OPERATIONAL WORK QUEUE</p><h1>Create Task</h1><p class="lede">New tasks start as controlled drafts.</p></section>{canCreate ? <form class="form" data-task-create><label>Task number<input name="taskNo" required /></label><label>Title<input name="title" required /></label><label>Description<textarea name="description"></textarea></label><label>Priority<input name="priority" required value="UNSPECIFIED" /></label><label>Due date<input name="dueAt" type="datetime-local" /></label><div class="actions"><button type="submit">Save Draft</button><a href="/tasks">Cancel</a></div><p role="status" data-result></p></form> : <p class="empty">You are not authorized to create tasks.</p>}</AppLayout>
-<script>import { actions } from 'astro:actions'; const form=document.querySelector<HTMLFormElement>('[data-task-create]'); form?.addEventListener('submit',async(event)=>{event.preventDefault(); const data=new FormData(form); const result=await actions.tasks.createTask({taskNo:String(data.get('taskNo')),title:String(data.get('title')),description:String(data.get('description')||''),priority:String(data.get('priority')),dueAt:data.get('dueAt')?new Date(String(data.get('dueAt'))):undefined}); const output=form.querySelector('[data-result]'); if(result.error){if(output) output.textContent='Unable to save this task.';} else if(result.data){window.location.href='/tasks/'+result.data.id;}});</script>
-<style>.page-head{margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}h1{margin:.25rem 0}.lede,.empty{color:var(--text-muted)}.form{display:grid;gap:var(--space-4);max-width:720px;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}label{display:grid;gap:.4rem;font-size:.85rem}input,textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}textarea{min-height:8rem}.actions{display:flex;gap:var(--space-3);align-items:center}button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border-radius:var(--radius-md);font-weight:700}a{color:var(--color-accent-primary-hover)}
+<AppLayout title="Create Task · QC Operations" locale="en" direction="ltr"><section class="page-head"><p class="eyebrow">T2 OPERATIONAL WORK QUEUE</p><h1>Create Task</h1><p class="lede">New tasks start as controlled drafts.</p></section>{canCreate ? <form class="form" method="post" data-task-create><div class="actions-top"><a href="/tasks">Back to tasks</a></div>{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="tasks" />}<label for="taskNo">Task number<input id="taskNo" name="taskNo" required value={values.taskNo} aria-invalid={invalid('taskNo')} aria-describedby={describedBy('taskNo')} /></label>{failure?.fieldErrors.taskNo && <p class="field-error" id="taskNo-error">{failure.fieldErrors.taskNo}</p>}<label for="title">Title<input id="title" name="title" required value={values.title} aria-invalid={invalid('title')} aria-describedby={describedBy('title')} /></label>{failure?.fieldErrors.title && <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>}<label for="description">Description<textarea id="description" name="description" aria-invalid={invalid('description')} aria-describedby={describedBy('description')}>{values.description}</textarea></label>{failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}<label for="priority">Priority<input id="priority" name="priority" required value={values.priority} aria-invalid={invalid('priority')} aria-describedby={describedBy('priority')} /></label>{failure?.fieldErrors.priority && <p class="field-error" id="priority-error">{failure.fieldErrors.priority}</p>}<label for="dueAt">Due date<input id="dueAt" name="dueAt" type="datetime-local" value={values.dueAt} aria-invalid={invalid('dueAt')} aria-describedby={describedBy('dueAt')} /></label>{failure?.fieldErrors.dueAt && <p class="field-error" id="dueAt-error">{failure.fieldErrors.dueAt}</p>}<div class="actions"><button type="submit" data-submit>Save Draft</button><a href="/tasks">Cancel</a></div><p role="status" data-result></p></form> : <p class="empty">You are not authorized to create tasks.</p>}</AppLayout>
+<script>import { actions } from 'astro:actions'; const form=document.querySelector<HTMLFormElement>('[data-task-create]'); form?.addEventListener('submit',async(event)=>{event.preventDefault(); const data=new FormData(form); const submit=form.querySelector<HTMLButtonElement>('[data-submit]'); const output=form.querySelector<HTMLElement>('[data-result]'); if(submit)submit.disabled=true; form.setAttribute('aria-busy','true'); if(output)output.textContent='Saving…'; try{const due=data.get('dueAt')?new Date(String(data.get('dueAt'))):undefined; const result=await actions.tasks.createTask({taskNo:String(data.get('taskNo')),title:String(data.get('title')),description:String(data.get('description')||'')||undefined,priority:String(data.get('priority')),...(due?{dueAt:due}:{})}); if(result.data&&typeof result.data.id==='string'){window.location.href='/tasks/'+result.data.id;return;} if(output)output.textContent='Unable to save this task. Review the fields and try again.'; const firstInvalid=form.querySelector<HTMLElement>('input:invalid,textarea:invalid'); (firstInvalid??output)?.focus?.();}catch{ if(output)output.textContent='The service is temporarily unavailable. Your entries are kept — try again.';}finally{ if(submit)submit.disabled=false; form.removeAttribute('aria-busy');}});</script>
+<style>.page-head{margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}h1{margin:.25rem 0}.lede,.empty{color:var(--text-muted)}.form{display:grid;gap:var(--space-4);max-width:720px;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}label{display:grid;gap:.4rem;font-size:.85rem}input,textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}textarea{min-height:8rem}.actions,.actions-top{display:flex;gap:var(--space-3);align-items:center}button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border-radius:var(--radius-md);font-weight:700}button[disabled]{opacity:.6}a{color:var(--color-accent-primary-hover)}
 </style>

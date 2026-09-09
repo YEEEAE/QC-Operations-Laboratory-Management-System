@@ -1,9 +1,82 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  detailHref,
+  extractDetailId,
+  field,
+  optionalField,
+  toFormFailure,
+  type FormFailure,
+} from '../../../ui/forms/mutation-post.js';
+
 const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fassets%2Fmaintenance%2Fnew');const canCreate=actor.permissions.some((permission)=>permission.code==='PERM-MNT-CREATE');const equipmentId=Astro.url.searchParams.get('equipmentId')||'';
+
+const LIST_HREF = '/assets/maintenance';
+const REQUIRED_FIELDS = [
+  { name: 'maintenanceNo', label: 'Maintenance ID' },
+  { name: 'equipmentId', label: 'Equipment ID' },
+  { name: 'description', label: 'Description' },
+] as const;
+
+let values = { maintenanceNo: '', equipmentId, maintenanceType: '', plannedAt: '', description: '', performedBy: '', provider: '' };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action — with the same server-side
+// reauthorization — runs via Astro.callAction. No business payload enters
+// the URL: input travels in the POST body, success redirects (303) to the
+// new record only.
+if (Astro.request.method === 'POST' && canCreate) {
+  const formData = await Astro.request.formData();
+  const plannedRaw = field(formData, 'plannedAt');
+  values = {
+    maintenanceNo: field(formData, 'maintenanceNo'),
+    equipmentId: field(formData, 'equipmentId'),
+    maintenanceType: field(formData, 'maintenanceType'),
+    plannedAt: plannedRaw,
+    description: field(formData, 'description'),
+    performedBy: field(formData, 'performedBy'),
+    provider: field(formData, 'provider'),
+  };
+  try {
+    const data = await Astro.callAction(actions.assets.createMaintenance, {
+      maintenanceNo: values.maintenanceNo,
+      equipmentId: values.equipmentId,
+      maintenanceType: optionalField(formData, 'maintenanceType'),
+      description: values.description,
+      ...(plannedRaw ? { plannedAt: new Date(plannedRaw) } : {}),
+      performedBy: optionalField(formData, 'performedBy'),
+      provider: optionalField(formData, 'provider'),
+    });
+    const id = extractDetailId(data);
+    if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
+    failure = {
+      kind: 'unknown',
+      summary: 'The maintenance record was received but no record reference came back.',
+      recovery: 'Check the maintenance register before trying again to avoid a duplicate.',
+      fieldErrors: {},
+      firstInvalidField: null,
+    };
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Maintenance record',
+      requiredFields: REQUIRED_FIELDS,
+      values,
+      listHref: LIST_HREF,
+      listLabel: 'maintenance',
+    });
+  }
+}
+
+const describedBy = (name: keyof typeof values): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: keyof typeof values): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="New Maintenance · Assets" locale="en" direction="ltr"><section class="head"><div><p class="eyebrow">T3 CONTROLLED MAINTENANCE</p><h1>New maintenance record</h1><p>Maintenance is linked to equipment. Starting work may put equipment UNDER_MAINTENANCE; completion does not certify calibration.</p></div><a href="/assets/maintenance">Back to maintenance</a></section>{canCreate?<form class="form" data-action="assets.createMaintenance"><fieldset><legend>Maintenance identity</legend><div class="fields"><label>Maintenance ID<input name="maintenanceNo" required /></label><label>Equipment ID<input name="equipmentId" value={equipmentId} required /></label><label>Type<input name="maintenanceType" /></label><label>Scheduled date<input name="plannedAt" type="datetime-local" /></label><label class="wide">Description<textarea name="description" required></textarea></label><label>Performed by<input name="performedBy" /></label><label>Provider<input name="provider" /></label></div></fieldset><div class="actions"><a class="secondary" href="/assets/maintenance">Cancel</a><button type="submit">Create draft</button></div></form>:<section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Maintenance create permission.</p></section>}</AppLayout>
+<AppLayout title="New Maintenance · Assets" locale="en" direction="ltr"><section class="head"><div><p class="eyebrow">T3 CONTROLLED MAINTENANCE</p><h1>New maintenance record</h1><p>Maintenance is linked to equipment. Starting work may put equipment UNDER_MAINTENANCE; completion does not certify calibration.</p></div><a href="/assets/maintenance">Back to maintenance</a></section>{canCreate?<form class="form" method="post" data-action="assets.createMaintenance">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={LIST_HREF} listLabel="maintenance" />}<fieldset><legend>Maintenance identity</legend><div class="fields"><div><label for="maintenanceNo">Maintenance ID<input id="maintenanceNo" name="maintenanceNo" required value={values.maintenanceNo} aria-invalid={invalid('maintenanceNo')} aria-describedby={describedBy('maintenanceNo')} /></label>{failure?.fieldErrors.maintenanceNo && <p class="field-error" id="maintenanceNo-error">{failure.fieldErrors.maintenanceNo}</p>}</div><div><label for="equipmentId">Equipment ID<input id="equipmentId" name="equipmentId" value={values.equipmentId} required aria-invalid={invalid('equipmentId')} aria-describedby={describedBy('equipmentId')} /></label>{failure?.fieldErrors.equipmentId && <p class="field-error" id="equipmentId-error">{failure.fieldErrors.equipmentId}</p>}</div><div><label for="maintenanceType">Type<input id="maintenanceType" name="maintenanceType" value={values.maintenanceType} /></label></div><div><label for="plannedAt">Scheduled date<input id="plannedAt" name="plannedAt" type="datetime-local" value={values.plannedAt} /></label></div><div class="wide"><label for="description">Description<textarea id="description" name="description" required aria-invalid={invalid('description')} aria-describedby={describedBy('description')}>{values.description}</textarea></label>{failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}</div><div><label for="performedBy">Performed by<input id="performedBy" name="performedBy" value={values.performedBy} /></label></div><div><label for="provider">Provider<input id="provider" name="provider" value={values.provider} /></label></div></div></fieldset><div class="actions"><a class="secondary" href="/assets/maintenance">Cancel</a><button type="submit" data-submit>Create draft</button></div><p role="status" data-result></p></form>:<section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Maintenance create permission.</p></section>}</AppLayout>
 <script>
-import{actions}from'astro:actions';const form=document.querySelector<HTMLFormElement>('[data-action="assets.createMaintenance"]');form?.addEventListener('submit',async(event)=>{event.preventDefault();const data=new FormData(form);const planned=String(data.get('plannedAt')||'');const result=await actions.assets.createMaintenance({maintenanceNo:String(data.get('maintenanceNo')),equipmentId:String(data.get('equipmentId')),maintenanceType:String(data.get('maintenanceType')||'')||undefined,description:String(data.get('description')),plannedAt:planned?new Date(planned):undefined,performedBy:String(data.get('performedBy')||'')||undefined,provider:String(data.get('provider')||'')||undefined});if(result.data)window.location.href=`/assets/maintenance/${result.data.id}`;else form.setAttribute('aria-invalid','true');});</script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p{color:var(--text-muted);font-size:.85rem}.head a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.wide{grid-column:1/-1}input,textarea{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}textarea{min-height:6rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button,.secondary{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.actions{display:grid}}
+import{actions}from'astro:actions';const form=document.querySelector<HTMLFormElement>('[data-action="assets.createMaintenance"]');form?.addEventListener('submit',async(event)=>{event.preventDefault();const data=new FormData(form);const submit=form.querySelector<HTMLButtonElement>('[data-submit]');const output=form.querySelector<HTMLElement>('[data-result]');if(submit)submit.disabled=true;form.setAttribute('aria-busy','true');if(output)output.textContent='Saving…';try{const planned=String(data.get('plannedAt')||'');const result=await actions.assets.createMaintenance({maintenanceNo:String(data.get('maintenanceNo')),equipmentId:String(data.get('equipmentId')),maintenanceType:String(data.get('maintenanceType')||'')||undefined,description:String(data.get('description')),plannedAt:planned?new Date(planned):undefined,performedBy:String(data.get('performedBy')||'')||undefined,provider:String(data.get('provider')||'')||undefined});if(result.data&&typeof result.data.id==='string'){window.location.href=`/assets/maintenance/${result.data.id}`;return;}if(output)output.textContent='Unable to create this maintenance record. Review the fields and try again.';const firstInvalid=form.querySelector<HTMLElement>('input:invalid,textarea:invalid');(firstInvalid??output)?.focus?.();}catch{if(output)output.textContent='The service is temporarily unavailable. Your entries are kept — try again.';}finally{if(submit)submit.disabled=false;form.removeAttribute('aria-busy');}});</script>
+<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p{color:var(--text-muted);font-size:.85rem}.head a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.wide{grid-column:1/-1}input,textarea{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:.25rem 0 0;color:var(--status-danger);font-size:.8rem}textarea{min-height:6rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button,.secondary{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}.wide{grid-column:auto}.actions{display:grid}}
 </style>

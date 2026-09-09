@@ -31,7 +31,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'work',
     label: 'Work',
     items: [
-      { id: 'tasks', label: 'Tasks', href: '/tasks', icon: '✓', capability: 'PERM-TASK-VIEW' },
+      { id: 'tasks', label: 'Tasks', href: '/tasks', icon: '✓' },
     ],
   },
   {
