@@ -1,5 +1,37 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ BI-01: عزل خلفية درج الجوال في AppLayout
+
+### تم التنفيذ
+- في `AppLayout.astro`: الدرج المفتوح عند breakpoint الجوال يعزل `.app-workspace` بـ`inert` الأصلي ويقفل سكرول الخلفية (`body overflow:hidden`)، مع حبس Tab/Shift+Tab داخل الدرج والإغلاق بـEscape وإرجاع الفوكس لزر التنقل.
+- إغلاق الدرج أو مغادرة الـbreakpoint يشيل كل حالة مؤقتة (`inert` عن اللوحتين + فك قفل السكرول)؛ الفوكس عند الفتح يروح لأول رابط، وما فيه أي `smooth` يخالف تقليل الحركة.
+- frontmatter السيرفر والتنقل والصلاحيات ما انلمست — التغيير سكرِبت عميل فقط.
+- أضفت `tests/unit/ui/mobile-drawer-inert.test.ts` (8 حراس ثابتين) و`tests/e2e/mobile-drawer-inert.spec.ts` (5 سيناريوهات حية: عزل/سكرول/فوكس، Tab ذهابًا وإيابًا، Escape وإرجاع الفوكس، تغيير الـbreakpoint، تقليل الحركة).
+- أثبتّ السلوك على الـchunk المشحون فعليًا (`hoisted.DaTPGyGg.js`) عبر harness متصفح مؤقت: 9/9، ثم حذفته.
+
+### الملفات المتأثرة
+- `src/ui/layouts/AppLayout.astro`
+- `tests/unit/ui/mobile-drawer-inert.test.ts` (جديد)
+- `tests/e2e/mobile-drawer-inert.spec.ts` (جديد)
+
+### التحقق
+- `pnpm test:unit` ✅ — 43 ملفًا / 246 اختبارًا (كانت 238: +8 الجديدة)
+- `pnpm typecheck` ✅ — 0 errors (36 hints سابقة)
+- `pnpm lint` ✅ و`pnpm test:architecture` ✅ و`pnpm build` ✅ (تحذير chunk كبير سابق من خلفية الدخول)
+- Runtime harness على الكود المشحون ✅ — 9/9 (مؤقت ومحذوف)
+- Playwright على preview محلي: 1 passed / 25 skipped (gated بلا fixture) / 6 failed — الستة عامة (login/a11y/reflow) وأُثبتت pre-existing بتكرارها على baseline بدون تغييري (stash + rebuild + نفس الفشل)
+- `prettier --check` للملفين الجديدين ✅ و`git diff --check` ✅ (ملفات astro خارج تغطية prettier — قائم مسبقًا)
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح جزئيًا
+- **مختصر:** عزل الدرج مطبق ومغطى ومثبت سلوكيًا على البناء المحلي، لكن الإغلاق الحي للإيجاد (C-09 على الإنتاج) ما زال `NOT VERIFIED` — يحتاج fixture مصادقة وbuild منشور.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy أو production mutation؛ سيرفر الـpreview أُطفئ.
+- فشل الـ6 العامة مرتبط ببيئة headless مع خلفية الدخول ثلاثية الأبعاد (الفورم يرسم سليمًا لكن `focus()` و`boundingBox` يعلقان) — خارج نطاق BI-01 ويحتاج مهمة مستقلة.
+- اختبارات الدرج المصادقة الـ5 الجديدة ستعمل في CI مع توفر `QC_E2E_LOGIN_IDENTITY/PASSWORD`.
+
 ## [2026-09-10] — استكمال برومبتات الوصول المثبت إلى 100% في تدقيق الإنتاج
 
 ### تم التنفيذ

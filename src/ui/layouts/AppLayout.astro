@@ -15,7 +15,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <div class="app-shell" data-app-shell data-mobile-nav-open="false" data-sidebar-collapsed="false">
     <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation"><slot name="sidebar"><Sidebar capabilities={activeCapabilities} /></slot></aside>
-    <div class="app-workspace">
+    <div class="app-workspace" data-app-workspace>
       <header class="app-topbar"><slot name="topbar"><Topbar breadcrumbs={breadcrumbs} userName={actor?.id} scope="Authorized operational scope" /></slot></header>
       <main id="main-content" class="app-main"><slot /></main>
     </div>
@@ -34,12 +34,14 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 <script>
   const shell = document.querySelector<HTMLElement>('[data-app-shell]');
   const sidebarPanel = document.querySelector<HTMLElement>('[data-sidebar-panel]');
+  const workspace = document.querySelector<HTMLElement>('[data-app-workspace]');
   const sidebar = document.querySelector<HTMLElement>('[data-sidebar-panel] .sidebar');
   const collapse = document.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
   const navigationToggle = document.querySelector<HTMLButtonElement>('[data-navigation-toggle]');
   const storageKey = 'qc-sidebar-collapsed';
   const mobileQuery = window.matchMedia('(max-width: 760px)');
   const isMobileDrawer = () => mobileQuery.matches;
+  const isDrawerOpen = () => shell?.dataset.mobileNavOpen === 'true';
 
   const setCollapsed = (collapsed: boolean) => {
     if (!shell || !sidebar || !collapse) return;
@@ -51,45 +53,96 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   };
 
   const firstDrawerLink = () =>
-    sidebarPanel?.querySelector<HTMLElement>('a[href], button:not([disabled])');
+    sidebarPanel?.querySelector<HTMLElement>('a[href]') ??
+    sidebarPanel?.querySelector<HTMLElement>('button:not([disabled])');
 
-  const setMobileNav = (open: boolean, options: { focusPanel?: boolean } = {}) => {
+  const drawerFocusables = () => {
+    if (!sidebarPanel) return [];
+    const candidates = Array.from(
+      sidebarPanel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    return candidates.filter((element) => element.getClientRects().length > 0);
+  };
+
+  const lockBackgroundScroll = () => {
+    document.body.style.overflow = 'hidden';
+  };
+
+  const unlockBackgroundScroll = () => {
+    document.body.style.overflow = '';
+  };
+
+  const isolateBackground = () => {
+    workspace?.setAttribute('inert', '');
+    lockBackgroundScroll();
+  };
+
+  const releaseBackground = () => {
+    workspace?.removeAttribute('inert');
+    unlockBackgroundScroll();
+  };
+
+  const setMobileNav = (
+    open: boolean,
+    options: { focusPanel?: boolean; returnFocus?: boolean } = {},
+  ) => {
     if (!shell || !sidebarPanel) return;
     shell.dataset.mobileNavOpen = String(open);
     navigationToggle?.setAttribute('aria-expanded', String(open));
     if (!isMobileDrawer()) {
       sidebarPanel.removeAttribute('inert');
+      releaseBackground();
       return;
     }
     if (open) {
       sidebarPanel.removeAttribute('inert');
+      isolateBackground();
       if (options.focusPanel) firstDrawerLink()?.focus();
     } else {
-      if (sidebarPanel.contains(document.activeElement)) {
+      const focusInside = sidebarPanel.contains(document.activeElement);
+      if (focusInside) {
         (document.activeElement as HTMLElement | null)?.blur?.();
       }
       sidebarPanel.setAttribute('inert', '');
+      releaseBackground();
+      if (options.returnFocus || focusInside) navigationToggle?.focus();
     }
   };
 
   if (localStorage.getItem(storageKey) === 'true') setCollapsed(true);
   // A closed mobile drawer must never keep keyboard focus: park it inert.
-  if (isMobileDrawer() && shell?.dataset.mobileNavOpen !== 'true') {
+  // The workspace is only ever inert while the drawer is open at the mobile
+  // breakpoint; every other state releases all temporary isolation.
+  if (isMobileDrawer() && !isDrawerOpen()) {
     sidebarPanel?.setAttribute('inert', '');
+    releaseBackground();
   }
   mobileQuery.addEventListener?.('change', (event) => {
     if (!shell || !sidebarPanel) return;
-    if (event.matches && shell.dataset.mobileNavOpen !== 'true') {
-      sidebarPanel.setAttribute('inert', '');
+    if (event.matches) {
+      if (isDrawerOpen()) {
+        sidebarPanel.removeAttribute('inert');
+        isolateBackground();
+      } else {
+        sidebarPanel.setAttribute('inert', '');
+        releaseBackground();
+      }
     } else {
+      // Leaving the mobile breakpoint: drop every temporary drawer state.
       sidebarPanel.removeAttribute('inert');
+      releaseBackground();
     }
   });
   collapse?.addEventListener('click', () => setCollapsed(sidebar?.dataset.collapsed !== 'true'));
   navigationToggle?.addEventListener('click', () => {
     if (!shell) return;
-    const open = shell.dataset.mobileNavOpen === 'true';
-    setMobileNav(!open, { focusPanel: !open });
+    if (isDrawerOpen()) {
+      setMobileNav(false);
+    } else {
+      setMobileNav(true, { focusPanel: true });
+    }
   });
   sidebar?.addEventListener('click', (event) => {
     if ((event.target as Element).closest('a') && shell) setMobileNav(false);
@@ -99,9 +152,24 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
       event.preventDefault();
       window.location.assign('/search');
     }
-    if (event.key === 'Escape' && shell?.dataset.mobileNavOpen === 'true') {
-      setMobileNav(false);
-      navigationToggle?.focus();
+    if (event.key === 'Tab' && isDrawerOpen() && isMobileDrawer()) {
+      const focusables = drawerFocusables();
+      if (focusables.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    if (event.key === 'Escape' && isDrawerOpen() && isMobileDrawer()) {
+      setMobileNav(false, { returnFocus: true });
     }
   });
 </script>
