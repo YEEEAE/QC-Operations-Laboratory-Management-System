@@ -162,24 +162,40 @@ describe('selector and navigation contracts across the touched create forms (F-0
     expect(source).toContain('/assets/maintenance/new?equipmentId=');
   });
 
-  it('change-requests/new: controlled target vocabulary with a contextual lookup route', () => {
+  it('change-requests/new: authorized version selector with an allowlisted field editor', () => {
     const source = readPage('change-requests/new.astro');
-    expect(source).toContain('<select id="targetType"');
-    expect(source).toContain('change-target-vocabulary');
-    expect(source).toContain('CHANGE_TARGET_TYPES');
-    expect(source).not.toContain('placeholder="DOCUMENT_VERSION"');
-    expect(source).not.toMatch(/Use the UUID of the controlled target record/);
-    expect(source).toContain('href="/documents"');
-    expect(source).toContain('Find it in the document library');
-    // The single evidenced target type lives in the application vocabulary.
+    // The operator selects an authorized controlled version and one
+    // allowlisted field; everything authoritative resolves server-side.
+    expect(source).toContain('<select id="documentVersionId"');
+    expect(source).toContain('<select id="changeField"');
+    expect(source).toContain('listChangeTargets');
+    expect(source).toContain('no longer available in your authorized scope');
+    expect(source).toContain('createForDocumentVersion');
+    // No raw UUID/JSON/storage-model inputs reach the operator UI.
+    for (const raw of [
+      'name="targetSnapshot"',
+      'name="targetSnapshotHash"',
+      'name="fieldPath"',
+      'name="dataType"',
+      'name="targetId"',
+      'name="targetVersion"',
+      'name="currentValue"',
+      'name="targetType"',
+    ]) {
+      expect(source).not.toContain(raw);
+    }
+    expect(source).toContain('name="expectedDocumentVersion"');
+    // Exactly the three allowlisted fields live in the application vocabulary.
     const vocabulary = readFileSync(
       new URL(
-        '../../../src/modules/change-requests/application/change-target-vocabulary.ts',
+        '../../../src/modules/change-requests/application/document-version-change-fields.ts',
         import.meta.url,
       ),
       'utf8',
     );
-    expect(vocabulary).toContain('DOCUMENT_VERSION');
+    expect(vocabulary).toContain('revision');
+    expect(vocabulary).toContain('changeSummary');
+    expect(vocabulary).toContain('contentHash');
   });
 
   it('documents/new: controlled document-type vocabulary from the domain constant', () => {

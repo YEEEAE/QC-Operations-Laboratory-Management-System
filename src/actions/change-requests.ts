@@ -1,6 +1,7 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { changeRequestsActionDependencies } from '../modules/change-requests/application/dependencies.js';
+import { DOCUMENT_VERSION_CHANGE_FIELDS } from '../modules/change-requests/application/document-version-change-fields.js';
 import { AppError } from '../shared/errors/app-error.js';
 
 const requireActor = (context: { locals: App.Locals }) => {
@@ -70,6 +71,26 @@ const create = defineAction({
     ),
 });
 
+const createForDocumentVersion = defineAction({
+  accept: 'json',
+  input: z.object({
+    changeNo: z.string().trim().min(1),
+    reason: z.string().trim().min(1),
+    documentVersionId: id,
+    expectedDocumentVersion: z.coerce.bigint().positive(),
+    changeField: z.enum(DOCUMENT_VERSION_CHANGE_FIELDS),
+    proposedValue: z.string().trim().min(1),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      changeRequestsActionDependencies().createForDocumentVersion.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+
 const transition = defineAction({
   accept: 'json',
   input: z.object({
@@ -88,4 +109,4 @@ const transition = defineAction({
     ),
 });
 
-export const changeRequests = { create, transition };
+export const changeRequests = { create, createForDocumentVersion, transition };

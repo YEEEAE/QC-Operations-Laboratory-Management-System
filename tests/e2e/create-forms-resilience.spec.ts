@@ -22,6 +22,8 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
 const loginIdentity = process.env.QC_E2E_LOGIN_IDENTITY;
 const password = process.env.QC_E2E_PASSWORD;
 const LAB_TEMPLATE_VERSION_ID = process.env.QC_E2E_LAB_TEMPLATE_VERSION_ID;
+const DOCUMENT_VERSION_ID = process.env.QC_E2E_DOCUMENT_VERSION_ID;
+const DOCUMENT_VERSION_NO = process.env.QC_E2E_DOCUMENT_VERSION_NO;
 
 const UNKNOWN_UUID = '01900000-0000-7000-8000-000000000001';
 const DETAIL_ID = '[0-9a-fA-F-]{36}';
@@ -75,6 +77,7 @@ interface RouteSpec {
   retainedField: string;
   needsEquipment: boolean;
   needsLabTemplate: boolean;
+  needsDocumentVersion?: boolean;
   validForm: (tag: string, equipmentId: string) => Record<string, string>;
   detailPattern: RegExp;
 }
@@ -160,29 +163,22 @@ const ROUTES: RouteSpec[] = [
     path: '/change-requests/new',
     submitName: 'Create draft',
     invalidForm: {
-      changeNo: unique('E2E-CHG'),
-      targetType: 'EQUIPMENT',
-      targetId: UNKNOWN_UUID,
-      targetVersion: '1',
-      reason: 'E2E disposable change (malformed snapshot)',
-      targetSnapshot: '{oops',
-      fieldPath: 'location',
-      dataType: 'string',
-      proposedValue: 'E2E-BAY',
+      documentVersionId: '',
+      changeField: 'revision',
+      proposedValue: '',
+      reason: '',
     },
     retainedField: 'changeNo',
-    needsEquipment: true,
+    needsEquipment: false,
     needsLabTemplate: false,
-    validForm: (tag, equipmentId) => ({
+    needsDocumentVersion: true,
+    validForm: (tag) => ({
       changeNo: unique(`E2E-CHG-${tag}`),
-      targetType: 'EQUIPMENT',
-      targetId: equipmentId,
-      targetVersion: '1',
+      documentVersionId: DOCUMENT_VERSION_ID ?? UNKNOWN_UUID,
+      expectedDocumentVersion: DOCUMENT_VERSION_NO ?? '1',
+      changeField: 'revision',
+      proposedValue: `E2E-C-${tag}`,
       reason: `E2E disposable change ${tag}`,
-      targetSnapshot: '{}',
-      fieldPath: 'location',
-      dataType: 'string',
-      proposedValue: 'E2E-BAY',
     }),
     detailPattern: new RegExp(`/change-requests/(${DETAIL_ID})$`),
   },
@@ -264,6 +260,12 @@ test.describe('create-form resilience without JavaScript (POST baseline)', () =>
       if (route.needsLabTemplate && !LAB_TEMPLATE_VERSION_ID) {
         test.skip(true, 'QC_E2E_LAB_TEMPLATE_VERSION_ID is required for laboratory creation');
       }
+      if (route.needsDocumentVersion && (!DOCUMENT_VERSION_ID || !DOCUMENT_VERSION_NO)) {
+        test.skip(
+          true,
+          'QC_E2E_DOCUMENT_VERSION_ID and QC_E2E_DOCUMENT_VERSION_NO are required for change-request creation',
+        );
+      }
       const { page, cleanup } = await noJsPage(browser);
       try {
         const tag = Math.random().toString(36).slice(2, 6);
@@ -299,7 +301,10 @@ test.describe('create-form resilience with JavaScript (progressive enhancement)'
       const marker = unique('E2E-KEEP');
       const invalid = { ...route.invalidForm, [route.retainedField]: marker };
       for (const [name, value] of Object.entries(invalid)) {
-        await page.locator(`[name="${name}"]`).fill(value);
+        const target = page.locator(`[name="${name}"]`);
+        const tag = await target.evaluate((element) => element.tagName);
+        if (tag === 'SELECT') await target.selectOption(value || '');
+        else await target.fill(value);
       }
       await page.getByRole('button', { name: route.submitName, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`${route.path}$`));
@@ -320,13 +325,25 @@ test.describe('create-form resilience with JavaScript (progressive enhancement)'
       if (route.needsLabTemplate && !LAB_TEMPLATE_VERSION_ID) {
         test.skip(true, 'QC_E2E_LAB_TEMPLATE_VERSION_ID is required for laboratory creation');
       }
+      if (route.needsDocumentVersion && (!DOCUMENT_VERSION_ID || !DOCUMENT_VERSION_NO)) {
+        test.skip(
+          true,
+          'QC_E2E_DOCUMENT_VERSION_ID and QC_E2E_DOCUMENT_VERSION_NO are required for change-request creation',
+        );
+      }
       await signIn(page);
       const tag = Math.random().toString(36).slice(2, 6);
       const equipmentId = route.needsEquipment ? await createEquipment(page, tag) : '';
       const payload = route.validForm(tag, equipmentId);
       await page.goto(route.path);
       for (const [name, value] of Object.entries(payload)) {
-        await page.locator(`[name="${name}"]`).fill(value);
+        // The expected-version token is rendered server-side as a hidden
+        // input for the authorized selection; never drive it from the client.
+        if (name === 'expectedDocumentVersion') continue;
+        const target = page.locator(`[name="${name}"]`);
+        const tagName = await target.evaluate((element) => element.tagName);
+        if (tagName === 'SELECT') await target.selectOption(value);
+        else await target.fill(value);
       }
       await page.getByRole('button', { name: route.submitName, exact: true }).click();
       await expect(page).toHaveURL(route.detailPattern);

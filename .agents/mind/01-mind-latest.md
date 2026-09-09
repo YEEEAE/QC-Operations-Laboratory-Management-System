@@ -1,5 +1,44 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ Prompt 2: مسار سياقي مصرح به لإنشاء Change Request (DOCUMENT_VERSION)
+
+### تم التنفيذ
+- أضفت `document-version-change-fields.ts`: القائمة المسموحة `revision` و`changeSummary` و`contentHash` فقط، مع عناوين بشرية وأنواع `text`، ورفض أي حقل آخر بخطأ تحقق آمن.
+- أضفت منفذ `ChangeTargetSource` وتطبيقه `PostgresChangeTargetSource` (قائمة/تحميل بتفويض `PERM-DOC-VIEW` لكل هدف) وحالة استخدام `CreateDocumentVersionChangeRequestUseCase` التي تشتق `targetId/version/snapshot/currentValue/dataType` خادميًا فقط.
+- أضفت `createForDocumentVersion` في `PostgresChangeRequestRepository` (إعادة قراءة صف النسخة `FOR UPDATE` داخل نفس الترانزاكشن ورفض `CONFLICT_STALE_VERSION`) وفي Astro Action الجديد، مع تشديد المسار الخام القديم بنفس القائمة.
+- أعدت كتابة `change-requests/new.astro`: منتقي نسخ مصرح بتسميات بشرية + معاينة قيم حالية + منتقي حقل من 3 حقول + قيمة مقترحة، بلا أي `targetSnapshot/fieldPath/dataType/targetId/targetVersion/currentValue/targetType`، مع POST baseline وAction enhancement وقيم محفوظة وتحذير stale.
+- حدّثت اختبار `change-requests.test.ts` القديم من `title` إلى `revision` المسموح، وحدّثت عقد `entity-select.test.ts` ومسار `create-forms-resilience.spec.ts` (بوابة `QC_E2E_DOCUMENT_VERSION_ID/NO` للنجاح + دعم SELECT)، وأضفت `change-request-contextual.spec.ts` (فشل no-JS مزدوج + عقد عرض + كيبورد + 320px).
+
+### الملفات المتأثرة
+- `src/modules/change-requests/application/{document-version-change-fields,create-document-version-change-request}.ts` (جديدة)
+- `src/modules/change-requests/ports/change-target-source.ts` + `infrastructure/postgres-change-target-source.ts` (جديدة)
+- `src/modules/change-requests/{ports/repository,application/{create-change-request,dependencies},infrastructure/postgres-repository}.ts`
+- `src/actions/change-requests.ts` (+`createForDocumentVersion`)
+- `src/pages/change-requests/new.astro` (إعادة كتابة سياقية)
+- `tests/unit/change-requests/document-version-change-fields.test.ts` + `tests/integration/change-requests/document-version-change-request.test.ts` (جديدة)
+- `tests/integration/change-requests/change-requests.test.ts` + `tests/unit/ui/entity-select.test.ts` (تحديث)
+- `tests/e2e/change-request-contextual.spec.ts` (جديدة) + `tests/e2e/create-forms-resilience.spec.ts` (تحديث)
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 errors (بعد إصلاح cast واحد في سكربت الصفحة)
+- `pnpm test:unit` ✅ — 44 ملفًا / 252 اختبارًا (كانت 43/246: +6 وحدة allowlist و+تحديث عقد)
+- `tests/integration/change-requests` ✅ — 3 ملفات / 17 اختبارًا (5 سياقية جديدة)
+- `pnpm lint` ✅ و`pnpm test:architecture` ✅ و`pnpm build` ✅
+- دخان preview محلي: GET بلا جلسة `303 → /login`، وPOST بلا جلسة `403` مطابقة لصفحة tasks (سلوك CSRF الإطاري — لا انتكاس)
+- Playwright للمواصفة السياقية: 5 skipped (gated بلا fixture) ✅ وتحميل 41 اختبارًا للملفين بلا أخطاء بناء
+- `prettier --write` لثلاثة ملفات جديدة ✅ و`git diff --check` ✅
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** فورم Change Request صار سياقيًا مصرحًا بلا UUID/JSON ظاهرين، والقيم الحرجة تُشتق خادميًا مع فحص تزامن ذري، والقائمة المسموحة محروسة من المسارين الخام والسياقي.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- الإثبات الحي في Chrome (C-06) يحتاج fixture مصادقة + نسخة وثيقة حقيقية وbuild منشور — مغطى بـ E2E gated.
+- نجاح E2E العام لـ change-request يحتاج `QC_E2E_DOCUMENT_VERSION_ID/NO` في CI.
+- `change-target-vocabulary.ts` القديم (`CHANGE_TARGET_TYPES`) بقي للتوافق ولم يعد مستخدمًا في الصفحة.
+
 ## [2026-09-10] — تنفيذ BI-01: عزل خلفية درج الجوال في AppLayout
 
 ### تم التنفيذ

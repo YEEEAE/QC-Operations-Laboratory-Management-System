@@ -81,9 +81,9 @@ function draft(): ChangeRequestAggregate {
     changes: [
       {
         id: '01900000-0000-7000-8000-000000000106',
-        fieldPath: 'title',
-        currentValue: 'Original title',
-        proposedValue: 'Corrected title',
+        fieldPath: 'revision',
+        currentValue: '4',
+        proposedValue: '5',
         dataType: 'text',
         position: 1,
       },
@@ -110,6 +110,10 @@ function repository(
       return current;
     },
     async create(input) {
+      current = { ...input.aggregate };
+      return current;
+    },
+    async createForDocumentVersion(input) {
       current = { ...input.aggregate };
       return current;
     },
@@ -195,16 +199,16 @@ describe('change requests', () => {
       targetSnapshot: { title: 'Original title' },
       changes: [
         {
-          fieldPath: 'title',
-          currentValue: 'Original title',
-          proposedValue: 'Corrected title',
+          fieldPath: 'revision',
+          currentValue: '4',
+          proposedValue: '5',
           dataType: 'text',
         },
       ],
       requestId: 'create-1',
     });
     expect(created.changeRequest.state).toBe('DRAFT');
-    expect(repo.current.changes[0].fieldPath).toBe('title');
+    expect(repo.current.changes[0].fieldPath).toBe('revision');
   });
 
   it('requires current version, explicit permissions, and SoD for controlled review and approval', async () => {

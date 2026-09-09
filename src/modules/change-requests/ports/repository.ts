@@ -26,6 +26,13 @@ export interface ChangeRequestRepository {
     actor: ActorContext;
     requestId: string;
   }): Promise<ChangeRequestAggregate>;
+  createForDocumentVersion(input: {
+    aggregate: ChangeRequestAggregate;
+    actor: ActorContext;
+    requestId: string;
+    documentVersionId: string;
+    expectedDocumentVersion: bigint;
+  }): Promise<ChangeRequestAggregate>;
   get(input: { id: string; actor: ActorContext }): Promise<ChangeRequestAggregate | undefined>;
   list(input: {
     actor: ActorContext;

@@ -167,6 +167,92 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
     }
   }
 
+  async createForDocumentVersion(input: {
+    aggregate: ChangeRequestAggregate;
+    actor: ActorContext;
+    requestId: string;
+    documentVersionId: string;
+    expectedDocumentVersion: bigint;
+  }): Promise<ChangeRequestAggregate> {
+    try {
+      return await this.database.transaction().execute(async (tx) => {
+        // Expected-version/lock check inside the write transaction: the
+        // authoritative target row is re-read FOR UPDATE and the claimed
+        // version must still match. A concurrent edit/supersede therefore
+        // fails safely instead of being silently overwritten (BR-CHG-004).
+        const target = await tx
+          .selectFrom('document_versions')
+          .select(['id', 'version'])
+          .where('id', '=', input.documentVersionId)
+          .forUpdate()
+          .executeTakeFirst();
+        if (!target || BigInt(target.version) !== input.expectedDocumentVersion) {
+          throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        }
+        const request = input.aggregate.changeRequest;
+        const row = await tx
+          .insertInto('change_requests')
+          .values({
+            id: request.id,
+            change_no: request.changeNo,
+            target_type: request.targetType,
+            target_id: request.targetId,
+            target_version: request.targetVersion,
+            state: request.state,
+            reason: request.reason,
+            target_snapshot: JSON.stringify(request.targetSnapshot),
+            target_snapshot_hash: request.targetSnapshotHash ?? null,
+            requested_by: request.requestedBy,
+            submitted_at: null,
+            approved_at: null,
+            rejected_at: null,
+            applied_at: null,
+            created_at: request.createdAt,
+            updated_at: request.updatedAt,
+            version: request.version,
+          })
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        if (input.aggregate.changes.length)
+          await tx
+            .insertInto('change_request_changes')
+            .values(
+              input.aggregate.changes.map((change) => ({
+                id: change.id,
+                change_request_id: request.id,
+                field_path: change.fieldPath,
+                current_value:
+                  change.currentValue === undefined ? null : JSON.stringify(change.currentValue),
+                proposed_value:
+                  change.proposedValue === undefined ? null : JSON.stringify(change.proposedValue),
+                data_type: change.dataType,
+                position: change.position,
+              })),
+            )
+            .execute();
+        await this.auditFor(tx)?.append({
+          actorType: 'USER',
+          actorId: input.actor.id,
+          subjectType: 'CHANGE_REQUEST',
+          subjectId: request.id,
+          action: 'CREATE_CHANGE_REQUEST',
+          newState: 'DRAFT',
+          requestId: input.requestId,
+        });
+        await this.outboxFor(tx)?.enqueue({
+          eventType: 'CHANGE_REQUEST_CREATED',
+          aggregateType: 'CHANGE_REQUEST',
+          aggregateId: request.id,
+          payload: { changeNo: request.changeNo },
+          dedupeKey: `change-request-created:${request.id}`,
+        });
+        return this.loadAggregate(tx, requestMap(row));
+      });
+    } catch (error) {
+      throw error instanceof AppError ? error : translateDatabaseError(error);
+    }
+  }
+
   async get(input: {
     id: string;
     actor: ActorContext;

@@ -4,6 +4,7 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
 import { createChangeRequest, type ChangeRequestChange } from '../domain/change-request.js';
 import type { ChangeRequestAggregate, ChangeRequestRepository } from '../ports/repository.js';
+import { assertDocumentVersionChangeField } from './document-version-change-fields.js';
 
 export class CreateChangeRequestUseCase {
   constructor(
@@ -24,6 +25,12 @@ export class CreateChangeRequestUseCase {
     requestId: string;
   }): Promise<ChangeRequestAggregate> {
     if (!input.changes.length) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    // Defense in depth for the legacy raw path: DOCUMENT_VERSION targets accept
+    // only the allowlisted fields. The contextual workflow never reaches this
+    // branch with another field, but a direct API caller cannot bypass it.
+    if (input.targetType === 'DOCUMENT_VERSION') {
+      for (const change of input.changes) assertDocumentVersionChangeField(change.fieldPath);
+    }
     authorize(
       {
         actor: input.actor,

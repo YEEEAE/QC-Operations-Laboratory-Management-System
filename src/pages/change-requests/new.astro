@@ -6,15 +6,20 @@ import {
   detailHref,
   extractDetailId,
   field,
-  optionalField,
   parseBigintField,
-  parseJsonField,
-  parseJsonValue,
   toFormFailure,
   type FormFailure,
 } from '../../ui/forms/mutation-post.js';
-import { safeListHref } from '../../ui/forms/entity-select.js';
-import { CHANGE_TARGET_TYPES } from '../../modules/change-requests/application/change-target-vocabulary.js';
+import {
+  resolvePreselectedId,
+  safeListHref,
+  toSelectOptions,
+} from '../../ui/forms/entity-select.js';
+import { changeRequestTargetDependencies } from '../../modules/change-requests/application/dependencies.js';
+import {
+  DOCUMENT_VERSION_CHANGE_FIELDS,
+  DOCUMENT_VERSION_CHANGE_LABELS,
+} from '../../modules/change-requests/application/document-version-change-fields.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fchange-requests%2Fnew');
@@ -26,22 +31,73 @@ const LIST_HREF = '/change-requests';
 const returnHref = safeListHref(Astro.url.searchParams.get('returnTo'), LIST_HREF);
 const REQUIRED_FIELDS = [
   { name: 'changeNo', label: 'Change number' },
-  { name: 'targetType', label: 'Target type' },
-  { name: 'targetId', label: 'Target ID' },
-  { name: 'targetVersion', label: 'Target version' },
+  { name: 'documentVersionId', label: 'Controlled document version' },
+  { name: 'changeField', label: 'Change field' },
+  { name: 'proposedValue', label: 'Proposed value' },
   { name: 'reason', label: 'Reason' },
-  { name: 'targetSnapshot', label: 'Target snapshot (JSON)' },
-  { name: 'fieldPath', label: 'Field path' },
-  { name: 'dataType', label: 'Data type' },
 ] as const;
 
-let values = { changeNo: '', targetType: '', targetId: '', targetVersion: '', reason: '', targetSnapshot: '{}', fieldPath: '', dataType: '', currentValue: '', proposedValue: '' };
+// Authorized selector source: controlled document versions the actor may view
+// (PERM-DOC-VIEW, resolved server-side through the application read model).
+// The operator always sees human labels (document number · title · revision
+// · state); the technical version identifier travels only as the selected
+// option value and every authoritative field (target id/version, snapshot,
+// current value, data type) is re-resolved server-side on submit.
+let targetOptions: { value: string; label: string }[] = [];
+let targetVersions: Record<string, string> = {};
+let targetPreview: Record<string, { document: string; revision: string; state: string; changeSummary: string; contentHash: string }> = {};
+let selectorError = false;
+if (canCreate) {
+  try {
+    const targets = await changeRequestTargetDependencies().targets.listChangeTargets({ actor });
+    targetOptions = toSelectOptions(
+      targets.map((item) => ({
+        id: item.id,
+        label: `${item.documentNo} · ${item.title} · ${item.revision} (${item.state})`,
+      })),
+    );
+    for (const item of targets) {
+      targetVersions[item.id] = item.version.toString();
+      targetPreview[item.id] = {
+        document: `${item.documentNo} · ${item.title}`,
+        revision: item.revision,
+        state: item.state,
+        changeSummary: item.changeSummary ?? '—',
+        contentHash: item.contentHash ?? '—',
+      };
+    }
+  } catch {
+    // Fail closed into an error state below: the form stays submittable so
+    // entries are preserved, and the server still verifies the target on
+    // submit. No unauthorized target detail is disclosed.
+    selectorError = true;
+  }
+}
+
+// Contextual preselection (e.g. `?documentVersionId=…` from the document
+// workspace): honored only when still authorized, otherwise surfaced as a
+// stale-selection warning that requires an explicit operator choice.
+const preselected = resolvePreselectedId(
+  Astro.url.searchParams.get('documentVersionId'),
+  targetOptions,
+);
+
+let values = {
+  changeNo: '',
+  documentVersionId: preselected.id,
+  expectedDocumentVersion: preselected.id ? (targetVersions[preselected.id] ?? '') : '',
+  changeField: '',
+  proposedValue: '',
+  reason: '',
+};
 let failure: FormFailure | null = null;
+let staleSelection = preselected.stale;
 
 // POST baseline (F-05): without JavaScript the form performs a real POST to
-// this page. The same Astro Action — with the same server-side
-// reauthorization — runs via Astro.callAction. Flat operator fields are
-// shaped into the Action's nested input here (transport shaping only; all
+// this page. The same contextual Astro Action — with the same server-side
+// reauthorization and server-side resolution of target id/version, snapshot,
+// current value, and data type — runs via Astro.callAction. Flat operator
+// fields are shaped into the Action's input here (transport shaping only; all
 // business validation stays in the use case). No business payload enters
 // the URL: input travels in the POST body, success redirects (303) to the
 // new record only.
@@ -49,16 +105,18 @@ if (Astro.request.method === 'POST' && canCreate) {
   const formData = await Astro.request.formData();
   values = {
     changeNo: field(formData, 'changeNo'),
-    targetType: field(formData, 'targetType'),
-    targetId: field(formData, 'targetId'),
-    targetVersion: field(formData, 'targetVersion'),
-    reason: field(formData, 'reason'),
-    targetSnapshot: String(formData.get('targetSnapshot') ?? '{}'),
-    fieldPath: field(formData, 'fieldPath'),
-    dataType: field(formData, 'dataType'),
-    currentValue: String(formData.get('currentValue') ?? ''),
+    documentVersionId: field(formData, 'documentVersionId'),
+    expectedDocumentVersion: field(formData, 'expectedDocumentVersion'),
+    changeField: field(formData, 'changeField'),
     proposedValue: String(formData.get('proposedValue') ?? ''),
+    reason: field(formData, 'reason'),
   };
+  // A posted id outside the authorized selector list is never trusted: the
+  // server re-verifies the target, and the operator gets a dependency
+  // recovery pointing back at the authorized list.
+  staleSelection = values.documentVersionId
+    ? !targetOptions.some((option) => option.value === values.documentVersionId)
+    : false;
   const fail = (error: unknown): void => {
     failure = toFormFailure(error, {
       entity: 'Change request',
@@ -69,22 +127,13 @@ if (Astro.request.method === 'POST' && canCreate) {
     });
   };
   try {
-    const data = await Astro.callAction(actions.changeRequests.create, {
+    const data = await Astro.callAction(actions.changeRequests.createForDocumentVersion, {
       changeNo: values.changeNo,
-      targetType: values.targetType,
-      targetId: values.targetId,
-      targetVersion: parseBigintField(values.targetVersion, 'targetVersion'),
       reason: values.reason,
-      targetSnapshot: parseJsonField(values.targetSnapshot, 'targetSnapshot'),
-      targetSnapshotHash: optionalField(formData, 'targetSnapshotHash'),
-      changes: [
-        {
-          fieldPath: values.fieldPath,
-          currentValue: parseJsonValue(values.currentValue),
-          proposedValue: parseJsonValue(values.proposedValue),
-          dataType: values.dataType,
-        },
-      ],
+      documentVersionId: values.documentVersionId,
+      expectedDocumentVersion: parseBigintField(values.expectedDocumentVersion, 'documentVersionId'),
+      changeField: values.changeField as 'revision' | 'changeSummary' | 'contentHash',
+      proposedValue: values.proposedValue,
     });
     const id = extractDetailId(data);
     if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
@@ -100,21 +149,21 @@ if (Astro.request.method === 'POST' && canCreate) {
   }
 }
 
-const describedBy = (name: keyof typeof values): string | undefined =>
+const preview = values.documentVersionId ? targetPreview[values.documentVersionId] : undefined;
+const describedBy = (name: string): string | undefined =>
   failure?.fieldErrors[name] ? `${name}-error` : undefined;
-const invalid = (name: keyof typeof values): 'true' | undefined =>
+const invalid = (name: string): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
-const fieldError = (name: keyof typeof values): string | null =>
+const fieldError = (name: string): string | null =>
   failure?.fieldErrors[name] ?? null;
 ---
 <AppLayout title="New change request · QC Operations" locale="en" direction="ltr">
-  <section class="head"><div><p class="eyebrow">GOV-CHG-002 · DRAFT ONLY</p><h1>New change request</h1><p>This records a proposed change and its target snapshot. It does not apply, approve, or release the target.</p></div><a href={returnHref}>Back to register</a></section>
-  {canCreate ? <form class="form" method="post" data-action="change-requests.create">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={returnHref} listLabel="register" />}<fieldset><legend>Request context</legend><div class="fields"><div><label for="changeNo">Change number<span class="hint" id="changeNo-help">Use the change number from your approved source. The technical record identifier is generated server-side.</span><input id="changeNo" name="changeNo" required value={values.changeNo} aria-invalid={invalid('changeNo')} aria-describedby={failure?.fieldErrors.changeNo ? 'changeNo-error changeNo-help' : 'changeNo-help'} /></label>{fieldError('changeNo') && <p class="field-error" id="changeNo-error">{fieldError('changeNo')}</p>}</div><div><label for="targetType">Target record type<span class="hint" id="targetType-help">Only controlled document versions are supported as change targets in this baseline.</span><select id="targetType" name="targetType" required aria-invalid={invalid('targetType')} aria-describedby={failure?.fieldErrors.targetType ? 'targetType-error targetType-help' : 'targetType-help'}><option value="">Select target type…</option>{CHANGE_TARGET_TYPES.map((option)=><option value={option} selected={option===values.targetType}>{option}</option>)}</select></label>{fieldError('targetType') && <p class="field-error" id="targetType-error">{fieldError('targetType')}</p>}</div><div><label for="targetId">Target version identifier<span class="hint" id="targetId-help">Enter the controlled version identifier shown in the document workspace. <a href="/documents">Find it in the document library</a> — the technical identifier is kept automatically and never typed from memory.</span><input id="targetId" name="targetId" type="text" inputmode="text" autocomplete="off" required value={values.targetId} aria-invalid={invalid('targetId')} aria-describedby={failure?.fieldErrors.targetId ? 'targetId-error targetId-help' : 'targetId-help'} /></label>{fieldError('targetId') && <p class="field-error" id="targetId-error">{fieldError('targetId')}</p>}</div><div><label for="targetVersion">Target version<input id="targetVersion" name="targetVersion" type="number" min="1" step="1" required value={values.targetVersion} aria-invalid={invalid('targetVersion')} aria-describedby={describedBy('targetVersion')} /></label>{fieldError('targetVersion') && <p class="field-error" id="targetVersion-error">{fieldError('targetVersion')}</p>}</div><div class="wide"><label for="reason">Reason<textarea id="reason" name="reason" rows="3" required aria-invalid={invalid('reason')} aria-describedby={describedBy('reason')}>{values.reason}</textarea></label>{fieldError('reason') && <p class="field-error" id="reason-error">{fieldError('reason')}</p>}</div><div class="wide"><label for="targetSnapshot">Target snapshot (JSON)<textarea id="targetSnapshot" name="targetSnapshot" rows="6" required aria-invalid={invalid('targetSnapshot')} aria-describedby={failure?.fieldErrors.targetSnapshot ? 'targetSnapshot-error snapshot-help' : 'snapshot-help'}>{values.targetSnapshot}</textarea><small id="snapshot-help">Paste the approved current context captured for review; no scientific limits or policy values are inferred here.</small></label>{fieldError('targetSnapshot') && <p class="field-error" id="targetSnapshot-error">{fieldError('targetSnapshot')}</p>}</div></div></fieldset><fieldset><legend>Proposed field change</legend><div class="fields"><div><label for="fieldPath">Field path<input id="fieldPath" name="fieldPath" placeholder="metadata.owner" required value={values.fieldPath} aria-invalid={invalid('fieldPath')} aria-describedby={describedBy('fieldPath')} /></label>{fieldError('fieldPath') && <p class="field-error" id="fieldPath-error">{fieldError('fieldPath')}</p>}</div><div><label for="dataType">Data type<input id="dataType" name="dataType" placeholder="string" required value={values.dataType} aria-invalid={invalid('dataType')} aria-describedby={describedBy('dataType')} /></label>{fieldError('dataType') && <p class="field-error" id="dataType-error">{fieldError('dataType')}</p>}</div><div><label for="currentValue">Current value<textarea id="currentValue" name="currentValue" rows="3">{values.currentValue}</textarea></label></div><div><label for="proposedValue">Proposed value<textarea id="proposedValue" name="proposedValue" rows="3">{values.proposedValue}</textarea></label></div></div></fieldset><p role="status" data-result></p><div class="actions"><a href={returnHref}>Cancel</a><button type="submit" data-submit>Create draft</button></div></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Change Request create permission.</p></section>}
+  <section class="head"><div><p class="eyebrow">GOV-CHG-002 · DRAFT ONLY</p><h1>New change request</h1><p>This records a proposed change against a controlled document version. It does not apply, approve, or release the target.</p></div><a href={returnHref}>Back to register</a></section>
+  {canCreate ? <form class="form" method="post" data-action="change-requests.createForDocumentVersion">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref={returnHref} listLabel="register" />}<fieldset><legend>Request context</legend><div class="fields"><div><label for="changeNo">Change number<span class="hint" id="changeNo-help">Use the change number from your approved source. The technical record identifier is generated server-side.</span><input id="changeNo" name="changeNo" required value={values.changeNo} aria-invalid={invalid('changeNo')} aria-describedby={failure?.fieldErrors.changeNo ? 'changeNo-error changeNo-help' : 'changeNo-help'} /></label>{fieldError('changeNo') && <p class="field-error" id="changeNo-error">{fieldError('changeNo')}</p>}</div><div class="wide"><label for="reason">Reason<span class="hint" id="reason-help">Why this change is needed. Required for every change request.</span><textarea id="reason" name="reason" rows="3" required aria-invalid={invalid('reason')} aria-describedby={failure?.fieldErrors.reason ? 'reason-error reason-help' : 'reason-help'}>{values.reason}</textarea></label>{fieldError('reason') && <p class="field-error" id="reason-error">{fieldError('reason')}</p>}</div></div></fieldset><fieldset><legend>Controlled target</legend><p class="target-kind">Controlled document version <span class="hint">(the only supported change target in this baseline)</span></p><div class="fields"><div class="wide"><label for="documentVersionId">Controlled document version<span class="hint" id="documentVersionId-help">Choose from controlled document versions in your authorized scope. The target reference, version, snapshot, and current values are captured server-side after selection.</span><select id="documentVersionId" name="documentVersionId" required aria-invalid={invalid('documentVersionId')} aria-describedby={failure?.fieldErrors.documentVersionId ? 'documentVersionId-error documentVersionId-help' : 'documentVersionId-help'}><option value="">Select a controlled version…</option>{targetOptions.map((option)=><option value={option.value} selected={option.value===values.documentVersionId}>{option.label}</option>)}</select></label>{fieldError('documentVersionId') && <p class="field-error" id="documentVersionId-error">{fieldError('documentVersionId')}</p>}</div></div>{staleSelection && <p class="field-warning" role="status">The previously linked version is no longer available in your authorized scope. Choose a controlled version explicitly.</p>}{selectorError && <p class="field-warning" role="status">The controlled version list is temporarily unavailable. Your entries are kept — you can try again, or return to the register.</p>}{!selectorError && targetOptions.length===0 && <p class="field-warning" role="status">No controlled versions are available in your authorized scope. A new change request cannot be started until a version you may view exists.</p>}{preview && <dl class="preview" aria-label="Selected version current values"><div><dt>Document</dt><dd>{preview.document}</dd></div><div><dt>Revision</dt><dd>{preview.revision}</dd></div><div><dt>State</dt><dd>{preview.state}</dd></div><div><dt>Change summary</dt><dd>{preview.changeSummary}</dd></div><div><dt>Controlled content hash</dt><dd>{preview.contentHash}</dd></div></dl>}<input type="hidden" name="expectedDocumentVersion" value={values.documentVersionId ? (targetVersions[values.documentVersionId] ?? values.expectedDocumentVersion) : values.expectedDocumentVersion} /></fieldset><fieldset><legend>Proposed change</legend><div class="fields"><div><label for="changeField">Change field<span class="hint" id="changeField-help">Only the allowlisted document version fields can be proposed.</span><select id="changeField" name="changeField" required aria-invalid={invalid('changeField')} aria-describedby={failure?.fieldErrors.changeField ? 'changeField-error changeField-help' : 'changeField-help'}><option value="">Select a field…</option>{DOCUMENT_VERSION_CHANGE_FIELDS.map((option)=><option value={option} selected={option===values.changeField}>{DOCUMENT_VERSION_CHANGE_LABELS[option]}</option>)}</select></label>{fieldError('changeField') && <p class="field-error" id="changeField-error">{fieldError('changeField')}</p>}</div><div class="wide"><label for="proposedValue">Proposed value<span class="hint" id="proposedValue-help">The new value for the selected field. The current value is shown above and stored server-side.</span><textarea id="proposedValue" name="proposedValue" rows="3" required aria-invalid={invalid('proposedValue')} aria-describedby={failure?.fieldErrors.proposedValue ? 'proposedValue-error proposedValue-help' : 'proposedValue-help'}>{values.proposedValue}</textarea></label>{fieldError('proposedValue') && <p class="field-error" id="proposedValue-error">{fieldError('proposedValue')}</p>}</div></div></fieldset><p role="status" data-result></p><div class="actions"><a href={returnHref}>Cancel</a><button type="submit" data-submit>Create draft</button></div></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Change Request create permission.</p></section>}
 </AppLayout>
 <script>
 import { actions } from 'astro:actions';
-const form = document.querySelector<HTMLFormElement>('[data-action="change-requests.create"]');
-const parse = (value: FormDataEntryValue | null) => { const text = String(value ?? '').trim(); if (!text) return undefined; try { return JSON.parse(text); } catch { return text; } };
-form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const submit = form.querySelector<HTMLButtonElement>('[data-submit]'); const output = form.querySelector<HTMLElement>('[data-result]'); if (submit) submit.disabled = true; form.setAttribute('aria-busy', 'true'); if (output) output.textContent = 'Saving…'; try { const targetVersion = BigInt(String(data.get('targetVersion'))); const snapshotText = String(data.get('targetSnapshot')); const result = await actions.changeRequests.create({ changeNo: String(data.get('changeNo')), targetType: String(data.get('targetType')), targetId: String(data.get('targetId')), targetVersion, reason: String(data.get('reason')), targetSnapshot: snapshotText ? JSON.parse(snapshotText) : {}, changes: [{ fieldPath: String(data.get('fieldPath')), currentValue: parse(data.get('currentValue')), proposedValue: parse(data.get('proposedValue')), dataType: String(data.get('dataType')) }] }); const record = result.data?.changeRequest as unknown as { id?: unknown } | undefined; if (record && typeof record.id === 'string') { window.location.href = `/change-requests/${record.id}`; return; } if (output) output.textContent = 'Unable to create the change request. Check the fields and try again.'; const firstInvalid = form.querySelector<HTMLElement>('select:invalid,input:invalid,textarea:invalid'); (firstInvalid ?? output)?.focus?.(); } catch { if (output) output.textContent = 'The change request could not be created. Check the snapshot JSON and identifiers, then try again.'; output?.focus?.(); } finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); } });
+const form = document.querySelector<HTMLFormElement>('[data-action="change-requests.createForDocumentVersion"]');
+form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const submit = form.querySelector<HTMLButtonElement>('[data-submit]'); const output = form.querySelector<HTMLElement>('[data-result]'); if (submit) submit.disabled = true; form.setAttribute('aria-busy', 'true'); if (output) output.textContent = 'Saving…'; try { const result = await actions.changeRequests.createForDocumentVersion({ changeNo: String(data.get('changeNo')), reason: String(data.get('reason')), documentVersionId: String(data.get('documentVersionId')), expectedDocumentVersion: BigInt(String(data.get('expectedDocumentVersion'))), changeField: String(data.get('changeField')) as 'revision' | 'changeSummary' | 'contentHash', proposedValue: String(data.get('proposedValue')) }); const record = result.data?.changeRequest as unknown as { id?: unknown } | undefined; if (record && typeof record.id === 'string') { window.location.href = `/change-requests/${record.id}`; return; } if (output) output.textContent = 'Unable to create the change request. Check the fields and try again.'; const firstInvalid = form.querySelector<HTMLElement>('select:invalid,input:invalid,textarea:invalid'); (firstInvalid ?? output)?.focus?.(); } catch { if (output) output.textContent = 'The change request could not be created. The selected version may be stale or unavailable — reselect it and try again.'; output?.focus?.(); } finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); } });
 </script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p,.error,.hint{color:var(--text-muted);font-size:.85rem}.hint a{color:var(--color-accent-primary-hover)}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:980px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}label{display:grid;gap:.4rem}div.wide{grid-column:1/-1}input,select,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}div.wide{grid-column:auto}.actions{justify-content:stretch;display:grid}}</style>
+<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p,.error,.hint{color:var(--text-muted);font-size:.85rem}.hint a{color:var(--color-accent-primary-hover)}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:980px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.target-kind{margin:0 0 var(--space-3);font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}label{display:grid;gap:.4rem}div.wide{grid-column:1/-1}input,select,textarea{width:100%;min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.field-warning{margin:0 0 var(--space-3);padding:.7rem;border-inline-start:3px solid var(--status-warning);background:var(--surface-raised);font-size:.85rem}.preview{display:grid;gap:.5rem;margin:var(--space-3) 0 0;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);background:var(--surface-raised)}.preview div{display:grid;grid-template-columns:11rem minmax(0,1fr);gap:.75rem;font-size:.85rem}.preview dt{color:var(--text-muted)}.preview dd{margin:0;overflow-wrap:anywhere}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}div.wide{grid-column:auto}.preview div{grid-template-columns:1fr}.actions{justify-content:stretch;display:grid}}</style>
