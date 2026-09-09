@@ -6,6 +6,19 @@
 
 ---
 
+## 2026-09-09 Approved Visibility Amendment
+
+حسب `AUTHORIZATION-VISIBILITY-DECISION.md`:
+
+- Employee وSupervisor وManager وAdmin يشوفون كل صفحات التشغيل العادية.
+- كل الأدوار تقرأ كل السجلات التشغيلية العادية بـglobal read visibility.
+- هذا لا يعطي mutation/action permissions، ولا يكشف الأسرار أو بيانات أمن الهوية.
+- صحة النظام ليست من صلاحيات Admin العادي، وتبقى حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
+- إدارة الأعضاء/الأدوار/الصلاحيات/النطاقات متاحة لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، مع خضوع الأفعال الحساسة لصلاحياتها ونطاقها وفصل المهام وحالة السجل وإصداره.
+- أي وصف أقدم يخالف هذا الفصل يعتبر superseded.
+
+---
+
 # 1. Purpose
 
 هذه الوثيقة تحدد المعنى الرسمي للأدوار الأساسية داخل:
@@ -835,7 +848,7 @@ Management KPIs
 
 # Official Definition
 
-> **Admin is responsible for system administration, identity administration, configuration, security, technical health, and controlled administrative operations.**
+> **Admin is responsible for authorized non-exclusive system configuration and controlled administrative operations. Identity/member administration and technical System Health are reserved to SYSTEM_OWNER (`yazeed`).**
 
 ---
 
@@ -844,12 +857,8 @@ Management KPIs
 الغرض:
 
 ```text
-Manage users
-Manage account states
-Manage roles/permissions
 Manage system configuration
 Manage technical settings
-Monitor health
 Manage deployment-related configuration
 Support backups/restores
 Manage reference/configuration data where authorized
@@ -885,16 +894,9 @@ NCR closure
 قد تشمل:
 
 ```text
-User activation/deactivation
-Password reset
-Session revocation
-Role assignment
-Permission administration
 System configuration
 Security settings
 Environment visibility
-System health
-Migration visibility
 Backup administration
 Restore administration
 Storage visibility
@@ -904,9 +906,9 @@ Reference-data administration
 
 ---
 
-# 47. Admin User Management
+# 47. Owner-Exclusive User Management
 
-Admin قد يستطيع:
+Foundation Admin يملك إدارة الأعضاء ضمن الصلاحيات والنطاقات المعتمدة. أما صحة النظام فتظل حصرية على `SYSTEM_OWNER` المرتبط بـ`yazeed`:
 
 ```text
 Create user
@@ -1008,7 +1010,9 @@ Recovery Operations
 
 ---
 
-# 54. Admin System Health Dashboard
+# 54. SYSTEM_OWNER System Health Dashboard
+
+هذه الصفحة حصرية على `SYSTEM_OWNER` المرتبط بـ`yazeed`، ولا يكفي دور Admin لفتحها.
 
 يركز على:
 
@@ -1057,10 +1061,10 @@ Directly modify historical records through admin UI
 | Material Release           | Not default         | Policy-dependent   | Policy-dependent              | Not automatic                         |
 | Team oversight             | No                  | Primary            | Broader oversight             | No                                    |
 | Management oversight       | No                  | Limited            | Primary                       | Technical only                        |
-| Manage users               | No                  | No                 | No by default                 | Yes                                   |
-| Manage permissions         | No                  | No                 | No                            | Yes                                   |
+| Manage users               | No                  | No                 | No                            | No — SYSTEM_OWNER only                |
+| Manage permissions         | No                  | No                 | No                            | No — SYSTEM_OWNER only                |
 | System configuration       | No                  | No                 | Limited if separately granted | Primary                               |
-| System health              | No                  | Limited if granted | Management view possible      | Primary                               |
+| System health              | No                  | No                 | No                            | No — SYSTEM_OWNER only                |
 | Backup administration      | No                  | No                 | Visibility possible           | Primary                               |
 | Rewrite approved history   | No                  | No                 | No                            | No                                    |
 | Modify audit history       | No                  | No                 | No                            | No                                    |
@@ -1104,11 +1108,11 @@ POLICY
 | Approve Change Request               |       NO |     POLICY |  POLICY | POLICY |
 | View management reports              |       NO |     POLICY |     YES | POLICY |
 | Export controlled reports            |   POLICY |     POLICY |     YES | POLICY |
-| Manage users                         |       NO |         NO |      NO |    YES |
-| Assign roles                         |       NO |         NO |      NO |    YES |
-| Manage permissions                   |       NO |         NO |      NO |    YES |
+| Manage users                         |       NO |         NO |      NO |     NO |
+| Assign roles                         |       NO |         NO |      NO |     NO |
+| Manage permissions                   |       NO |         NO |      NO |     NO |
 | Configure system                     |       NO |         NO |      NO |    YES |
-| View System Health                   |       NO |     POLICY |  POLICY |    YES |
+| View System Health                   |       NO |         NO |      NO |     NO |
 | Perform backup operations            |       NO |         NO |      NO |    YES |
 | Perform production restore           |       NO |         NO |  POLICY | POLICY |
 | Rewrite approved record directly     |       NO |         NO |      NO |     NO |
@@ -1814,7 +1818,7 @@ Supervisor cannot review own report where SoD denies
 Manager can approve authorized record
 Manager cannot approve stale version
 
-Admin can manage user
+SYSTEM_OWNER yazeed can manage user
 Admin cannot rewrite approved Lab Test
 ```
 
@@ -1841,14 +1845,14 @@ Revoked permission
 
 UI يستخدم Role/Permissions لتحسين UX فقط.
 
-مثل:
+كل عضو `ACTIVE` ومصادق عليه يشاهد صفحات التشغيل العادية ويقرأ كل سجلاتها التشغيلية. لا تُخفى الصفحة أو السجلات بسبب Foundation role، لكن أفعالها تظل permission/state/policy-aware.
 
-Employee لا يحتاج مشاهدة:
+الاستثناء الحصري:
 
 ```text
-System Backup
-Permission Editor
-Security Configuration
+SYSTEM_OWNER yazeed only:
+  System Health
+  Member / Role / Permission / Scope Administration
 ```
 
 لكن Server authorization يبقى المرجع.

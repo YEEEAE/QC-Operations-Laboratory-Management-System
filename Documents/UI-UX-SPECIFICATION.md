@@ -13,6 +13,18 @@
 **Languages:** Arabic / English capable
 **Operational Timezone:** Asia/Riyadh
 **Authorization:** Server-side / Default Deny
+
+## 2026-09-09 Approved Navigation Visibility Amendment
+
+`AUTHORIZATION-VISIBILITY-DECISION.md` هو المرجع الحاكم لرؤية التنقل:
+
+- كل عضو نشط ومسجل دخوله يرى كل مجموعات وصفحات التشغيل العادية.
+- كل بيانات التشغيل العادية داخل الصفحات تكون مقروءة لكل عضو نشط على مستوى النظام.
+- الأسرار وبيانات أمن الهوية لا تدخل في القراءة العامة، والأزرار/actions تظل permission/state/policy-aware.
+- System Health تظهر فقط لـ`SYSTEM_OWNER` المرتبط بـ`yazeed`، بينما Member/Role/Permission/Scope Administration تظهر لدور `Admin` ولهذا الحساب، مع تطبيق صلاحيات الأفعال الحساسة بشكل مستقل.
+- Admin العادي لا يرى ولا يفتح المساحتين الحصريتين.
+
+---
 **UI Authority:** Presentation only — never Business Truth
 **Dashboard Direction:** QC Operational Command Center
 **Page Model:** Multiple domain-specific workspace families, not one copied template
@@ -246,8 +258,8 @@ AI Advisory
 Navigation visibility:
 
 ```text
-Permission-aware
-Scope-aware
+Universal for ordinary operational pages after authentication
+Owner-exclusive for System Health and Member Administration
 ```
 
 لكن:
@@ -1557,13 +1569,13 @@ Release-related attention where authorized
 Priority:
 
 ```text
-System Health
-Account issues
 Configuration governance
 Backup status
 ```
 
 Admin لا يحصل تلقائيًا على business KPIs خارج permission.
+
+`SYSTEM_OWNER` المرتبط بـ`yazeed` وحده يرى System Health وMember Administration.
 
 ---
 
@@ -3332,6 +3344,13 @@ Export errors do not change business data.
 
 # 129. ADMINISTRATION LANDING PAGE
 
+Access:
+
+```text
+Admin and SYSTEM_OWNER (yazeed)
+All other members: hidden + direct-route DENY
+```
+
 ## Template
 
 ```text
@@ -3488,7 +3507,7 @@ Backup status
 
 Public-style raw diagnostics not shown to ordinary users.
 
-Admin view may expose sanitized detail.
+Only the `SYSTEM_OWNER` (`yazeed`) view may expose sanitized detail. Foundation Admin does not receive this page.
 
 ---
 
@@ -3978,9 +3997,13 @@ Version 4 is now APPROVED.
 
 Three cases:
 
-## User cannot see capability at all
+## Ordinary operational page
 
-Navigation/action omitted.
+Navigation/page and all ordinary operational records are visible to every ACTIVE authenticated member. Secrets and identity-security data stay protected; actions stay permission/state/policy-aware.
+
+## Owner-exclusive capability
+
+System Health and Member/Role/Permission/Scope Administration are omitted and direct access is denied unless the actor is the exclusive `SYSTEM_OWNER` (`yazeed`).
 
 ## User can see context but cannot perform action
 

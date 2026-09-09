@@ -1,5 +1,113 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-09] — توسيع وصول Administration لـAdmin وyazeed
+
+### تم التنفيذ
+- عدّلت قرار F-02 بحيث تكون مساحات `/admin/*` متاحة لدور `Admin` وللحساب `yazeed` بصلاحيات صريحة.
+- أبقيت `/system/health` حصرية على `SYSTEM_OWNER` المرتبط بـ`yazeed`.
+- حدّثت مصفوفات الصلاحيات والأدوار وثوابت النظام وبيان المسارات ومواصفات الواجهة وقرار الرؤية.
+- حدّثت صياغة F-02 في تقرير التدقيق لتوضح الجهات المصرح لها وزر **Create user**.
+
+### الملفات المتأثرة
+- `audit/2026-09-09-production-ui-audit.md`
+- `Documents/AUTHORIZATION-VISIBILITY-DECISION.md`
+- `Documents/PERMISSION-MATRIX.md`
+- `Documents/ROLE-MATRIX.md`
+- `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
+- `Documents/SYSTEM-INVARIANTS.md`
+- `Documents/UI-UX-SPECIFICATION.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `rg` لمراجعة العبارات المتعارضة حول Admin و`yazeed` ✅
+- `git diff --check` ✅
+- لم تُشغّل اختبارات التطبيق أو build لأن التغيير توثيقي فقط.
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** Admin و`yazeed` صاروا مخولين لمساحة Administration، وصحة النظام بقيت مقصورة على `yazeed`.
+
+## [2026-09-09] — تعريب تقرير تدقيق واجهة الإنتاج
+
+### تم التنفيذ
+- عرّبت متن تقرير تدقيق واجهة الإنتاج وتدفقات العمل إلى العربية الواضحة، بما يشمل النطاق والأدلة والنتائج والمشاكل والحلول وترتيب التنفيذ والحكم النهائي.
+- أبقيت عناوين ونصوص البرومبتات التنفيذية الثمانية بالإنجليزي كما طلب المستخدم.
+- حافظت على المعرّفات التقنية والمسارات ونِسَب التدقيق والأكواد التشغيلية دون تغيير.
+
+### الملفات المتأثرة
+- `audit/2026-09-09-production-ui-audit.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- فحص يدوي لعناوين البرومبتات ونصوصها ✅
+- `git diff --check` ✅
+- لم تُشغّل اختبارات التطبيق أو build لأن التغيير توثيقي فقط ✅
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** التقرير الآن بالعربي مع إبقاء البرومبتات التنفيذية بالإنجليزي.
+
+## [2026-09-09] — اعتماد القراءة العامة وحصرية صحة النظام وإدارة الأعضاء
+
+### تم التنفيذ
+- اعتمدت قرارًا رسميًا بأن كل حساب `ACTIVE` ومصادق عليه يشوف كل صفحات التشغيل العادية ويقرأ كل السجلات التشغيلية على مستوى النظام.
+- فصلت القراءة العامة عن صلاحيات الأفعال؛ الإنشاء والتعديل والمراجعة والاعتماد والإفراج والتوقيع والإلغاء والاستعادة تبقى خاضعة للـpermission/state/scope/SoD/version/business rules.
+- حصرت `/system/health` و`/admin` وكل إدارة الأعضاء والأدوار والصلاحيات والنطاقات في `SYSTEM_OWNER` المرتبط بحساب `yazeed`؛ Foundation Admin العادي لا يكفي.
+- استثنيت كلمات المرور والـhashes والجلسات والأسرار وبيانات أمن الهوية والتشخيصات الخام من القراءة العامة.
+- حدّثت Permission Matrix وRole Matrix وUI/UX وRoute Manifest وSystem Invariants، وأضافت وثيقة قرار مستقلة مع سياق وبدائل وأثر وعقد تحقق.
+
+### الملفات المتأثرة
+- `Documents/AUTHORIZATION-VISIBILITY-DECISION.md`
+- `Documents/PERMISSION-MATRIX.md`
+- `Documents/ROLE-MATRIX.md`
+- `Documents/UI-UX-SPECIFICATION.md`
+- `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
+- `Documents/SYSTEM-INVARIANTS.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- فحص اتساق عبارات universal operational read وSYSTEM_OWNER exclusivity عبر الوثائق ✅
+- `git diff --check` ✅
+- لم تُشغّل اختبارات التطبيق أو build لأن المهمة توثيق قرار فقط ولم يتغير runtime أو seed.
+
+### النتيجة
+- **الحالة:** نجح توثيقيًا.
+- **مختصر:** أصبحت سياسة الوثائق واضحة: قراءة تشغيلية عامة لكل الأعضاء، مع بقاء الأفعال الحساسة مفوضة، وحصرية صحة النظام وإدارة الأعضاء لـ`yazeed`.
+
+### ملاحظات / مشاكل مفتوحة
+- التطبيق والـFoundation seed ما زالا يحتاجان مهمة تنفيذ منفصلة لتطبيق السياسة؛ هذه المهمة لم تغيّر الصلاحيات الفعلية في runtime أو الإنتاج.
+- لا commit أو push أو deploy.
+
+## [2026-09-09] — تدقيق إنتاجي شامل للواجهة والتدفقات بحساب yazeed
+
+### تم التنفيذ
+- دخلت إلى `qclevel.top` بحساب `yazeed` وراجعت 25/25 من وجهات القائمة الظاهرة و9/9 من مسارات الإنشاء المتاحة بدون إنشاء أو تعديل أي سجل إنتاجي.
+- قارنت الواجهة الحية مع Route Manifest والواقع الحالي للصفحات، وثبت غياب مساحة Administration ومسار/زر إنشاء المستخدم رغم صلاحيات SYSTEM_OWNER.
+- رصدت 12 فجوة مرتبة: 5 عالية، 6 متوسطة، و1 منخفضة؛ أبرزها تناقض System Health مع readiness الحية، الاعتماد الكامل على JavaScript في عدة نماذج إنشاء، رسائل أخطاء غير قابلة للاسترجاع، وتمدد أفقي على 320px.
+- تحققت أن `/api/health/live` و`/api/health/ready` يرجعان HTTP 200 و`healthy` بينما صفحة `/system/health` تعرض database UNAVAILABLE وCore NOT READY؛ السبب المرجح من الكود أن UI probe ينشئ `pg.Client` مستقلًا عن إعداد probe canonical/TLS.
+- كتبت تقريرًا كاملًا بدرجة موزونة 68% وحكم BLOCK، مع تغطية أزرار الإنشاء، الحلول، ترتيب التنفيذ، وثمانية برومبتات تنفيذية.
+
+### الملفات المتأثرة
+- `audit/2026-09-09-production-ui-audit.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- تسجيل الدخول الإنتاجي والوصول إلى Dashboard ✅
+- فتح 25/25 وجهة قائمة و9/9 صفحات إنشاء ظاهرة ✅
+- فحص 320px لخمس صفحات ممثلة ❌ — page-level horizontal overflow مرصود.
+- قياس contrast لعينة نصوص Dashboard ✅ — لا زوج نص عادي أقل من 4.5:1 في العينة.
+- `curl` لـlive/readiness ✅ — الاثنان HTTP 200 و`healthy`.
+- `git diff --check` ✅
+- لم تُشغّل application tests/build لأن المهمة تدقيق قراءة فقط وتغييرها توثيقي؛ لم يتغير كود التطبيق.
+
+### النتيجة
+- **الحالة:** نجح التدقيق، والمنتج محجوب تشغيليًا حسب نتيجة التدقيق.
+- **مختصر:** الوصول الأساسي قوي، لكن النتيجة الإجمالية 68% مع خمس مشكلات عالية تمنع اعتماد الواجهة كتجربة تشغيلية مكتملة.
+
+### ملاحظات / مشاكل مفتوحة
+- لم تُفحص workspaces الديناميكية للتفاصيل/review/execute/restore لعدم وجود سجلات إنتاجية أو backup sets، ولم تُنفذ أي controlled mutation.
+- لا commit أو push أو deploy.
+
 ## [2026-09-09] — تفعيل SYSTEM_OWNER لحساب yazeed على إنتاج Render
 
 ### تم التنفيذ
@@ -3042,6 +3150,7 @@
 ### الملفات المتأثرة
 - `Documents/UI-UX-SPECIFICATION.md`
 - `Documents/ROUTE-MANIFEST-SPECIFICATION.md`
+- `Documents/AUTHORIZATION-VISIBILITY-DECISION.md`
 - `.agents/mind/01-mind-latest.md`
 
 ### التحقق

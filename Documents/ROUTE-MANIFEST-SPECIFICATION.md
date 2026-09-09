@@ -13,6 +13,18 @@
 **Authorization:** Centralized Server-Side / Default Deny
 **Route Philosophy:** Domain-oriented, explicit, predictable, permission-aware
 **Canonical Record URL Identifier:** Technical UUID
+
+## 2026-09-09 Approved Route Visibility Amendment
+
+حسب `AUTHORIZATION-VISIBILITY-DECISION.md`:
+
+- كل protected ordinary operational route مرئي وقابل للفتح لكل حساب `ACTIVE` ومصادق عليه.
+- كل ordinary operational list/detail/search/report route يقرأ كل السجلات التشغيلية على مستوى النظام لكل عضو نشط.
+- هذا لا يشمل الأسرار أو بيانات أمن الهوية، ولا يعطي mutation permission؛ action authorization يبقى server-side.
+- `/system/health` حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
+- `/admin` وكل `/admin/*` متاحة لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، ولا يكفي وجود الدور وحده لتنفيذ إجراء حساس بلا permission/scope/SoD/state/version.
+
+---
 **Business ID:** Display/Search identifier — not route authority
 **Mutation Model:** Astro Actions / explicit API endpoints → Application Use Cases
 **Operational Timezone:** Asia/Riyadh
@@ -1604,6 +1616,13 @@ UI:
 UI-ADM-001
 ```
 
+Access:
+
+```text
+Admin and SYSTEM_OWNER (yazeed)
+All other authenticated roles: DENY
+```
+
 File:
 
 ```text
@@ -1723,6 +1742,13 @@ UI-SYS-001
 This is authenticated administrative UI.
 
 It is not the machine health endpoint.
+
+Access:
+
+```text
+SYSTEM_OWNER (yazeed) only
+All other authenticated roles, including Admin: DENY
+```
 
 ---
 

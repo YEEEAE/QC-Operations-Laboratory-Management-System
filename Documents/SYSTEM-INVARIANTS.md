@@ -1,3 +1,9 @@
+00A. Every ACTIVE authenticated member can see and open every ordinary operational page and read every ordinary operational record globally; secrets and identity-security data remain protected, and actions remain fully authorized.
+
+00B. System Health is exclusive to the sole `SYSTEM_OWNER` bound to `yazeed`. Member/Role/Permission/Scope Administration is available to `Admin` and that `SYSTEM_OWNER`; every sensitive action still requires explicit permission, scope, SoD, state, and version checks.
+
+00C. Page visibility never grants create, edit, review, approve, release, sign, void, restore, or administrative mutation authority.
+
 01. UI visibility is never authorization.
 
 02. Authorization is always enforced server-side.

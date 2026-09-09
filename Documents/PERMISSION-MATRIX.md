@@ -6,6 +6,25 @@
 
 ---
 
+## 2026-09-09 Approved Visibility Amendment
+
+المرجع الحاكم لرؤية الصفحات هو `AUTHORIZATION-VISIBILITY-DECISION.md`:
+
+- كل حساب `ACTIVE` ومصادق عليه يرى ويفتح كل صفحات التشغيل العادية، بصرف النظر عن Employee/Supervisor/Manager/Admin.
+- كل بيانات السجلات التشغيلية العادية تكون `VIEW/READ` على مستوى النظام لكل عضو نشط؛ الأسرار وبيانات أمن الهوية مستثناة.
+- كل mutation تعيد authorization الكامل، ولا ينتقل global read visibility إلى create/edit/review/approve/release/sign/void/restore.
+- `/system/health` حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`؛ أما `/admin` وكل `/admin/*` فتتاح لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، مع بقاء كل إجراء حساس خاضعًا لصلاحياته وقواعده.
+- Foundation role باسم `Admin` لا يمنح هاتين المساحتين تلقائيًا.
+- أي جدول قديم يقيّد **رؤية صفحة تشغيل عادية** حسب الدور يعتبر superseded بهذا التعديل؛ جداول أذونات الأفعال تبقى سارية.
+
+### Universal Operational Read Grant
+
+كل permission هدفها قراءة سجل/قائمة/تفصيل/بحث/تقرير تشغيلي عادي تعامل كـ`ALLOW` مع read scope `GLOBAL` لكل Employee وSupervisor وManager وAdmin وSYSTEM_OWNER.
+
+لا يشمل ذلك `PERM-HLTH-*` أو `PERM-ADM-USERS/ROLES/PERMISSIONS/SCOPES` أو الأسرار وحقول أمن الهوية.
+
+---
+
 # 1. Purpose
 
 هذه الوثيقة هي المرجع الرسمي للصلاحيات داخل:
@@ -513,15 +532,15 @@ PERM-IDN-REVOKE-SESSIONS
 
 ### Matrix
 
-| Permission           | Employee | Supervisor | Manager | Admin |
-| -------------------- | -------: | ---------: | ------: | ----: |
-| View own account     |    ALLOW |      ALLOW |   ALLOW | ALLOW |
-| Change own password  |    ALLOW |      ALLOW |   ALLOW | ALLOW |
-| Manage users         |     DENY |       DENY |    DENY | ALLOW |
-| Activate user        |     DENY |       DENY |    DENY | ALLOW |
-| Deactivate user      |     DENY |       DENY |    DENY | ALLOW |
-| Reset user password  |     DENY |       DENY |    DENY | ALLOW |
-| Revoke user sessions |     DENY |       DENY |    DENY | ALLOW |
+| Permission           | Employee | Supervisor | Manager | Admin | SYSTEM_OWNER (`yazeed`) |
+| -------------------- | -------: | ---------: | ------: | ----: | ----------------------: |
+| View own account     |    ALLOW |      ALLOW |   ALLOW | ALLOW |                   ALLOW |
+| Change own password  |    ALLOW |      ALLOW |   ALLOW | ALLOW |                   ALLOW |
+| Manage users         |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Activate user        |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Deactivate user      |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Reset user password  |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Revoke user sessions |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
 
 ---
 
@@ -1371,17 +1390,17 @@ PERM-ADM-AUDIT-VIEW
 
 # 74. Administration Matrix
 
-| Permission              | Employee | Supervisor | Manager |  Admin |
-| ----------------------- | -------: | ---------: | ------: | -----: |
-| Users                   |     DENY |       DENY |    DENY |  ALLOW |
-| Roles                   |     DENY |       DENY |    DENY |  ALLOW |
-| Permissions             |     DENY |       DENY |    DENY |  ALLOW |
-| Scopes                  |     DENY |       DENY |    DENY |  ALLOW |
-| Reference Data          |     DENY |     POLICY |  POLICY |  ALLOW |
-| System Config           |     DENY |       DENY |    DENY |  ALLOW |
-| Security Config         |     DENY |       DENY |    DENY |  ALLOW |
-| Template Administration |     DENY |     POLICY |  POLICY | POLICY |
-| View Admin Audit        |     DENY |       DENY |  POLICY |  ALLOW |
+| Permission              | Employee | Supervisor | Manager | Admin | SYSTEM_OWNER (`yazeed`) |
+| ----------------------- | -------: | ---------: | ------: | ----: | ----------------------: |
+| Users                   |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Roles                   |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Permissions             |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Scopes                  |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Reference Data          |     DENY |     POLICY |  POLICY | ALLOW |                   ALLOW |
+| System Config           |     DENY |       DENY |    DENY | ALLOW |                   ALLOW |
+| Security Config         |     DENY |       DENY |    DENY | ALLOW |                   ALLOW |
+| Template Administration |     DENY |     POLICY |  POLICY | POLICY |                  POLICY |
+| View Admin Audit        |     DENY |       DENY |  POLICY | ALLOW |                   ALLOW |
 
 ---
 
@@ -1399,15 +1418,15 @@ PERM-HLTH-AI
 
 Matrix:
 
-| Action                   | Employee | Supervisor | Manager | Admin |
-| ------------------------ | -------: | ---------: | ------: | ----: |
-| Basic application status |     DENY |     POLICY |  POLICY | ALLOW |
-| Detailed readiness       |     DENY |       DENY |  POLICY | ALLOW |
-| DB health                |     DENY |       DENY |    DENY | ALLOW |
-| Migration state          |     DENY |       DENY |    DENY | ALLOW |
-| Storage health           |     DENY |       DENY |    DENY | ALLOW |
-| Audit integrity health   |     DENY |       DENY |  POLICY | ALLOW |
-| AI provider health       |     DENY |       DENY |  POLICY | ALLOW |
+| Action                   | Employee | Supervisor | Manager | Admin | SYSTEM_OWNER (`yazeed`) |
+| ------------------------ | -------: | ---------: | ------: | ----: | ----------------------: |
+| Basic application status |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Detailed readiness       |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| DB health                |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Migration state          |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Storage health           |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| Audit integrity health   |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
+| AI provider health       |     DENY |       DENY |    DENY |  DENY |                   ALLOW |
 
 ---
 
