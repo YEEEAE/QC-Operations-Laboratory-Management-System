@@ -81,24 +81,20 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     await assertKeyboardOrder(page);
   });
 
-  test('Arabic RTL login has localized accessible names and no axe violations', async ({
+  test('Login ignores the locale parameter and stays English LTR (F-12 English-only)', async ({
     page,
   }) => {
     await page.goto('/login?locale=ar');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
-    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByRole('heading', { name: 'تسجيل الدخول' })).toBeVisible();
-    await expect(page.getByLabel('معرّف الدخول')).toHaveAttribute('autocomplete', 'username');
-    await expect(page.getByLabel('كلمة المرور')).toHaveAttribute(
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByLabel('Login identity')).toHaveAttribute('autocomplete', 'username');
+    await expect(page.getByLabel('Password')).toHaveAttribute(
       'autocomplete',
       'current-password',
     );
-    await expectNoAxeViolations(page, 'Arabic RTL login');
-    await assertKeyboardOrder(page, {
-      identity: 'معرّف الدخول',
-      password: 'كلمة المرور',
-      submit: 'تسجيل الدخول',
-    });
+    await expectNoAxeViolations(page, 'English-only login with locale param');
+    await assertKeyboardOrder(page);
   });
 
   test('safe 404 surface has a heading, recovery links, and no axe violations', async ({

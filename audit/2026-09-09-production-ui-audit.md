@@ -18,6 +18,8 @@
 
 تعذر اختبار مساحات التفاصيل والمراجعة والتنفيذ والاستعادة الديناميكية لأن الإنتاج ما فيه سجلات أعمال أو مجموعات نسخ احتياطية مقابلة. ولم تُرسل أي تغييرات مضبوطة عمدًا.
 
+**قرار لغة المنتج:** واجهة النظام إنجليزية فقط (`en`/`ltr`). عدم وجود العربية أو مبدّل لغة أو RTL متطلب مقصود، وليس مشكلة تدقيق.
+
 ## منهج احتساب النتيجة
 
 | المجال | الوزن | النتيجة | الناتج الموزون |
@@ -62,7 +64,6 @@
 | F-05 | **HIGH** | **معظم نماذج الإنشاء تعتمد بالكامل على JavaScript في العميل وتستخدم GET افتراضيًا.** المهام والمختبر والمعدات والمعايرة والصيانة وطلبات التغيير والوثائق لا تحدد `method="post"`؛ وإذا تعطل سكربت العميل أو مُنع، يتحول الإرسال إلى تنقل بسلسلة استعلام ولا يعمل إجراء الإنشاء. وقد تتضمن بيانات طلب التغيير لقطة هدف وقيمًا مقترحة. | استخدم إجراءات POST حقيقية وبدائيات التحسين التدريجي في Astro كأساس. يسمح لـJavaScript بتحسين حالة الانتظار وإعادة التوجيه، لكن لا يكون مسار التغيير الوحيد. تأكد أن حمولات الأعمال الحساسة لا تدخل عناوين URL. أضف تغطية E2E بلا JavaScript لكل مسار إنشاء من Tier-2. |
 | F-06 | **MEDIUM** | **نماذج الإنشاء تطلب معرّفات داخلية خامًا وقيم رموز غير مضبوطة.** أمثلة ذلك UUID لقالب المختبر والمعدات وهدف طلب التغيير ونوعه ونوع البيانات، وإدخال أرقام المهام والملاحظات والاستلام والمعدات يدويًا. هذا يجعل العمل اليومي معرضًا للخطأ ويكشف مفاهيم التنفيذ للمشغلين. | استبدل إدخال UUID/الرموز الخام بقوائم بحث مرتبطة بالخادم ومصرح بها وروابط إنشاء سياقية. ولّد معرّفات الأعمال على الخادم من قواعد ترقيم معتمدة. استخدم قوائم مضبوطة للتعدادات، واحتفظ بالـUUID فقط كمعرّف مخفي بعد الاختيار. |
 | F-07 | **MEDIUM** | **واجهتا التدقيق غير متطابقتين.** عرضت «النشاط الأخير» في لوحة المعلومات `GRANT_SYSTEM_OWNER_ACCESS`، بينما عرض `/audit` عدد `0 events` لنفس مالك النظام المسجل. | تتبع شروط استعلام لوحة المعلومات والتدقيق ومرشحات الصلاحيات/النطاقات وافتراضات الترقيم. عرّف خدمة استعلام تدقيق معتمدة وموحدة، واختبر نفس الممثل/البيانات عبر الواجهتين، واعرض شرحًا واضحًا للمرشح إذا كان الاختلاف مقصودًا. |
-| F-08 | **MEDIUM** | **التطبيق إنجليزي فقط ويفرض LTR في تجربة الإنتاج المدققة.** جذر الوثيقة كان `lang=en` و`dir=ltr`، والصفحات التشغيلية تمرر الإنجليزية/LTR صراحة رغم استهداف الجمهور السعودي. | أضف نصًا عربيًا معتمدًا ومبدّل لغة، واحفظ التفضيل على الخادم أو في مخزن آمن. استخدم `lang="ar"`/`dir="rtl"` وCSS منطقيًا و`<bdi>` للمعرّفات المختلطة، وشغّل اختبارات تطابق RTL/الإنجليزية. لا تترجم المصطلحات العلمية المضبوطة آليًا بلا اعتماد. |
 | F-09 | **MEDIUM** | **إنشاء الملاحظات والمختبر يفتقد التنقل بالإلغاء/الرجوع.** المساران `/quality/findings/new` و`/laboratory/tests/new` يعرضان إجراء الإرسال فقط، بخلاف صفحات الإنشاء السبع الأخرى. | أضف زر `Cancel` ثانويًا ثابتًا وتنقلًا سياقيًا `Back to …`، واحفظ سياق الرجوع الآمن للقائمة، وخَلِّ الإجراء الأساسي مميزًا بصريًا. |
 | F-10 | **MEDIUM** | **إدارة الحجر قراءة فقط ومساحة Administration الأوسع غير موجودة.** يقدر المشغلون يشوفون سياق القالب المعتمد، لكن ما يقدرون يدخلون تدفق إدارة مضبوط حتى مع صلاحيات المالك الصريحة. | افصل عرض المراجع للقراءة فقط عن إدارة القوالب/الإصدارات المضبوطة. أضف مسارات الإنشاء/الإصدار/المراجعة فقط عند وجود سياسات معتمدة، مع دورة مسودة/إصدار وفصل مهام وتوقيع إلكتروني عند الحاجة ودليل تدقيق. خلِّ الاعتمادات غير المعرفة مرفوضة. |
 | F-11 | **MEDIUM** | **فجوات القدرة التشغيلية ظاهرة:** تخزين الكائنات `UNKNOWN`، وفهرس النسخ الاحتياطية فارغ بلا مزود، ومزود الذكاء الاصطناعي غير معروف/غير مهيأ، وسياسات إغلاق NCR/CAPA ما زالت غير محسومة. | تعامل معها كعوائق نشر/سياسة متتبعة، مو مجرد تحذيرات شكلية. هيّئ المزودين المعتمدين، وأنتج دليل اختبار الاستعادة، وخذ قرارات السياسة المضبوطة قبل تفعيل الأزرار الحساسة. لا تحول التحذيرات إلى أخضر بلا دليل وقت التشغيل. |
@@ -85,7 +86,7 @@
 2. **P0 — إكمال المهام والسلامة:** F-04 وF-05.
 3. **P1 — التشغيل المتجاوب:** F-03.
 4. **P1 — كفاءة المشغل:** F-06 وF-09.
-5. **P1/P2 — التعريب والاتساق:** F-08 وF-12.
+5. **P1/P2 — اتساق الواجهة الإنجليزية:** F-12.
 6. **مسار السياسة والنشر:** F-10 وF-11؛ إبقاء السلوك الحساس غير المعرّف مرفوضًا إلى أن يُعتمد.
 
 ## البرومبتات التنفيذية
@@ -104,15 +105,15 @@
 
 ### Prompt 4 — Close the 320px/200% responsive blocker
 
-> Fix F-03 using the existing design tokens and logical CSS. Remove the global minimum-width overflow, harden the shell/drawer and form grids, and verify Dashboard, list pages, long create forms, tables, and System Health at 320px width and 200% zoom in both LTR and RTL. Add automated assertions that no critical control is clipped and no page-level horizontal overflow exists. Preserve accessible focus, Escape-to-close, and focus return for the mobile drawer.
+> Fix F-03 using the existing design tokens and logical CSS. Remove the global minimum-width overflow, harden the shell/drawer and form grids, and verify Dashboard, list pages, long create forms, tables, and System Health at 320px width and 200% zoom in the product's English-only LTR interface. Add automated assertions that no critical control is clipped and no page-level horizontal overflow exists. Preserve accessible focus, Escape-to-close, and focus return for the mobile drawer.
 
 ### Prompt 5 — Replace raw IDs with authorized selectors
 
 > Fix F-06 and F-09. Replace raw template/equipment/target UUID fields with authorized searchable selectors or contextual create routes. Replace free-text enumerations with controlled options, and generate business identifiers server-side only from approved numbering sources. Add consistent Cancel/back controls and safe list return context. Do not invent numbering, scientific, calibration, approval, or retest policy. Add authorization, empty/loading/error, keyboard, and stale-selection tests.
 
-### Prompt 6 — Arabic/RTL and UX vocabulary pass
+### Prompt 6 — English-only UX vocabulary pass
 
-> Fix F-08 and F-12 with an approved bilingual localization layer. Add Arabic and English UI copy, locale switching, correct `lang`/`dir`, logical layout rules, and bidi isolation for mixed IDs. Standardize sentence-case action vocabulary without changing controlled action semantics. Verify representative dashboards, lists, forms, errors, and confirmation dialogs in Arabic RTL and English LTR at desktop and mobile widths. Do not translate controlled scientific terminology without an approved source.
+> Fix F-12 across the English-only product interface. Keep the application language fixed to English with `lang="en"` and `dir="ltr"`; do not add Arabic copy, RTL support, locale switching, translation files, or bilingual UI. Standardize sentence-case action vocabulary without changing controlled action semantics. Use clear, consistent English for navigation, buttons, forms, errors, empty states, and confirmation dialogs. Verify representative dashboards, lists, forms, errors, and dialogs at desktop and mobile widths. Preserve controlled scientific terminology exactly as approved.
 
 ### Prompt 7 — Resolve audit inconsistency
 

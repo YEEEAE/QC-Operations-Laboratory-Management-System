@@ -7,32 +7,21 @@ const returnTo = Astro.url.searchParams.get('returnTo') ?? '/dashboard';
 const actionResult = Astro.getActionResult(actions.login);
 if (actionResult?.data?.ok) return Astro.redirect(safeReturnTo(actionResult.data.redirectTo), 303);
 const error = Astro.url.searchParams.get('error') ?? actionResult?.error?.message;
-const isArabic = Astro.url.searchParams.get('locale') === 'ar';
-const copy = isArabic
-  ? {
-      application: 'نظام عمليات الجودة وإدارة المختبر',
-      title: 'تسجيل الدخول',
-      description: 'وصول تشغيلي آمن',
-      error: 'تعذر إكمال تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
-      throttled: 'محاولات تسجيل الدخول كثيرة. حاول مرة أخرى لاحقًا.',
-      unavailable: 'تسجيل الدخول غير متاح مؤقتًا. حاول مرة أخرى بعد قليل.',
-      identity: 'معرّف الدخول',
-      password: 'كلمة المرور',
-      submit: 'تسجيل الدخول',
-    }
-  : {
-      application: 'QC Operations & Laboratory Management System',
-      title: 'Sign in',
-      description: 'Secure operational access',
-      error: 'Sign-in could not be completed. Check your credentials and try again.',
-      throttled: 'Too many sign-in attempts. Please try again later.',
-      unavailable: 'Sign-in is temporarily unavailable. Please try again shortly.',
-      identity: 'Login identity',
-      password: 'Password',
-      submit: 'Sign in',
-    };
+// F-12: English-only product interface. The locale query parameter is
+// ignored so the page always renders English with lang="en" dir="ltr".
+const copy = {
+  application: 'QC Operations & Laboratory Management System',
+  title: 'Sign in',
+  description: 'Secure operational access',
+  error: 'Sign-in could not be completed. Check your credentials and try again.',
+  throttled: 'Too many sign-in attempts. Please try again later.',
+  unavailable: 'Sign-in is temporarily unavailable. Please try again shortly.',
+  identity: 'Login identity',
+  password: 'Password',
+  submit: 'Sign in',
+};
 ---
-<AuthLayout title="Sign in · QC Operations" locale={isArabic ? 'ar' : 'en'} direction={isArabic ? 'rtl' : 'ltr'}>
+<AuthLayout title="Sign in · QC Operations" locale="en" direction="ltr">
   <section class="login-panel" aria-labelledby="login-title">
       <p>{copy.application}</p>
       <h1 id="login-title">{copy.title}</h1>

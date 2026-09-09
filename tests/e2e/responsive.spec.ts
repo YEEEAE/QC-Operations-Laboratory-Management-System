@@ -67,14 +67,14 @@ test.describe('responsive accessibility baseline', () => {
     }
   });
 
-  test('English LTR and Arabic RTL login reflow at 400% zoom without horizontal overflow', async ({
+  test('English-only login reflow at 400% zoom without horizontal overflow', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 
     for (const [path, heading, submit] of [
       ['/login', 'Sign in', 'Sign in'],
-      ['/login?locale=ar', 'تسجيل الدخول', 'تسجيل الدخول'],
+      ['/login?locale=ar', 'Sign in', 'Sign in'],
     ] as const) {
       await page.goto(path);
       await page.evaluate(() => {

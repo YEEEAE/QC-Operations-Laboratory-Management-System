@@ -82,7 +82,7 @@ interface RouteSpec {
 const ROUTES: RouteSpec[] = [
   {
     path: '/tasks/new',
-    submitName: 'Save Draft',
+    submitName: 'Save draft',
     invalidForm: {},
     retainedField: 'title',
     needsEquipment: false,
@@ -96,7 +96,7 @@ const ROUTES: RouteSpec[] = [
   },
   {
     path: '/laboratory/tests/new',
-    submitName: 'Save controlled draft',
+    submitName: 'Save draft',
     invalidForm: { templateVersionId: UNKNOWN_UUID, labTestNo: unique('E2E-LAB') },
     retainedField: 'labTestNo',
     needsEquipment: false,
@@ -188,7 +188,7 @@ const ROUTES: RouteSpec[] = [
   },
   {
     path: '/documents/new',
-    submitName: 'Create catalog entry',
+    submitName: 'Create document',
     invalidForm: {},
     retainedField: 'title',
     needsEquipment: false,
@@ -202,7 +202,7 @@ const ROUTES: RouteSpec[] = [
   },
   {
     path: '/quality/findings/new',
-    submitName: 'Save Draft',
+    submitName: 'Save draft',
     invalidForm: {},
     retainedField: 'title',
     needsEquipment: false,

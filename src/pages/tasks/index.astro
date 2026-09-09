@@ -13,7 +13,7 @@ const canCreate = actor.permissions.some(
 );
 ---
 <AppLayout title="Tasks · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">T2 OPERATIONAL WORK QUEUE</p><h1>Tasks</h1><p class="lede">View operational work. Actions remain limited to your explicit permissions.</p></div>{canCreate && <a class="button" href="/tasks/new">Create Task</a>}</section>
+  <section class="page-head"><div><p class="eyebrow">T2 OPERATIONAL WORK QUEUE</p><h1>Tasks</h1><p class="lede">View operational work. Actions remain limited to your explicit permissions.</p></div>{canCreate && <a class="button" href="/tasks/new">Create task</a>}</section>
   <form class="filters" method="get"><label>Search<input name="q" value={search ?? ''} maxlength="200" /></label><label>State<select name="state"><option value="">All states</option>{['DRAFT','OPEN','IN_PROGRESS','ON_HOLD','COMPLETED','CANCELLED'].map((value) => <option value={value} selected={state === value}>{value}</option>)}</select></label><button type="submit">Filter</button></form>
   {tasks.length ? <div class="table-wrap"><table><caption>Authorized tasks</caption><thead><tr><th scope="col">Task ID</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.priority}</td><td>{task.state}</td><td>{task.currentAssigneeId ?? 'Unassigned'}</td><td>{task.dueAt?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? '—'}</td></tr>)}</tbody></table></div> : <p class="empty">No tasks match your authorized scope and filters.</p>}
 </AppLayout>

@@ -1,6 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
-## [2026-09-09] — إصلاح F-06 وF-09: selectors مصرح بها بدل UUID الخام + مفردات مضبوطة + Cancel/back آمنة
+## [2026-09-09] — إصلاح F-12: واجهة إنجليزية فقط + مفردات sentence-case موحدة
+
+### تم التنفيذ
+- ثبتّ الواجهة على الإنجليزية فقط: أزلت فرع `?locale=ar` من `login.astro` فصارت دائمًا `lang="en" dir="ltr"` بنسخة إنجليزية ثابتة، بلا مبدّل لغة أو ملفات ترجمة أو واجهة ثنائية.
+- وحّدت مفردات الأفعال بحالة الجملة: `Create task` و`Create finding` و`Create document` و`Create receiving item` و`Save draft` و`Create draft version` و`Edit draft` و`Back to tasks/users/administration/roles`، مع عناوين `New equipment/calibration/maintenance/change request/revision` بحالة الجملة.
+- أبقيت دلالات الانتقالات المضبوطة كما هي: `Submit for review` و`Approve revision` و`Record review` و`Release item` و`PASS ≠ RELEASED` بلا إعادة تسمية، وحُفظت المصطلحات العلمية المعتمدة بلا تغيير.
+- حدّثت توقعات E2E لتثبيت القفل الإنجليزي (`?locale=ar` يرد إنجليزيًا LTR) وصححت `submitName` الثلاثة (`Save draft` و`Create document`)، وأضفت حارس `tests/unit/ui/action-vocabulary.test.ts` (5 اختبارات: قفل اللغة، غياب العربية/RTL، حظر Title Case، حضور المفردات، حفظ المضبوط).
+- أبقيت CSS المنطقي القائم (`[dir='rtl']` الخامل) بلا حذف حتى لا ينتكس F-03؛ الفحص الساكن يثبت أن لا صفحة تمرر `ar`/`rtl` وأن لا نسخة عربية في `src/pages`.
+
+### الملفات المتأثرة
+- `src/pages/login.astro` (قفل إنجليزي)
+- `src/pages/{tasks/index,new,[taskId],quality/findings/{index,new},documents/{index,new},documents/[documentId]/versions/{new,[versionId]/{edit,index}},assets/{equipment,calibrations,maintenance}/new,quarantine/receiving/new,change-requests/new,laboratory/tests/new,admin/{scopes,permissions,users,roles}/**}`
+- `src/ui/components/forms/FormActions.astro` (الافتراضي `Save draft`)
+- `tests/unit/ui/action-vocabulary.test.ts` (جديد)
+- `tests/e2e/{accessibility,responsive,reflow-320,system-background,create-forms-resilience}.spec.ts` (توقعات إنجليزية فقط)
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 errors
+- `pnpm lint` ✅ (exit 0)
+- `pnpm test:unit` ✅ — 238 اختبارًا (كانت 233: +5 الجديدة)
+- `pnpm test:architecture` ✅ — بلا مخالفات Delivery
+- `pnpm build` ✅
+- دخان preview محلي على `localhost`: `/login` و`/login?locale=ar` يردان `<html lang="en" dir="ltr">` بنسخة `Sign in` وصفر عربية ✅؛ الأسطح التمثيلية (dashboard/tasks/receiving/documents/lab/approvals) ترد `303 → /login` بلا جلسة (لا 404/500) ✅
+- Playwright المتصفح لم يُشغّل ضد سيرفر حي هنا (فشل `ERR_CONNECTION_REFUSED` المتوقع بدون preview على 4321) — التغطية عبر الحراس الساكنة والدخان الإنتاجي أعلاه
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح
+- **مختصر:** الواجهة الآن إنجليزية فقط بمفردات جملة موحدة ومحروسة آليًا، مع بقاء semantics المضبوطة والمصطلحات العلمية كما اعتُمدت.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- فرق `audit/2026-09-09-production-ui-audit.md` الظاهر في `git diff` ليس من هذه المهمة (قرار لغة المنتج + حذف F-08 سابقًا) — تُرك كما هو.
+- محتوى `Documents/UI-UX-SPECIFICATION.md` ما زال يذكر قدرة عربية/RTL (§13 و§42) و`Sign In` و`Create Task` Title Case — متروك كمصدر معتمد بلا تعديل؛ مهمة F-12 نفّذت تعليم المستخدم المباشر (إنجليزية فقط) وسُجّل التعارض هنا.
+- تحقّق مصادق عليه داخل المتصفح (dashboard/lists/forms/errors/dialogs بمقاسات desktop/mobile) يحتاج fixture دخول وبيئة disposable ولم يُنفذ هنا.
 
 ### تم التنفيذ
 - استبدلت حقول UUID الخام بـ selectors خادمية مصرح بها: قائمة معدات (`PERM-EQP-VIEW`) في `calibrations/new` و`maintenance/new`، وقائمة قوالب معتمدة جديدة (`PERM-LAB-CREATE` عبر `ListApprovedLabTemplatesUseCase`) في `laboratory/tests/new` — والـ UUID يبقى قيمة مخفية بعد الاختيار فقط.

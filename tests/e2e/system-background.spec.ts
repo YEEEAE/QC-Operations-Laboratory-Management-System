@@ -49,11 +49,11 @@ test.describe('self-hosted system background', () => {
     { name: 'desktop 1920 English', width: 1920, height: 1080, path: '/login', direction: 'ltr' },
     { name: 'tablet English', width: 768, height: 1024, path: '/login', direction: 'ltr' },
     {
-      name: 'mobile Arabic RTL',
+      name: 'mobile English (locale param stays English-only)',
       width: 390,
       height: 844,
       path: '/login?locale=ar',
-      direction: 'rtl',
+      direction: 'ltr',
     },
   ]) {
     test(`keeps the login surface readable at ${surface.name}`, async ({ page }) => {

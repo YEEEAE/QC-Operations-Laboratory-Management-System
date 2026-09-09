@@ -75,7 +75,7 @@ async function assertUnclipped(page: Page, target: Locator, name: string): Promi
 test.describe('F-03 public reflow at 320px and 200% zoom', () => {
   for (const [path, heading, submit, identityLabel, passwordLabel] of [
     ['/login', 'Sign in', 'Sign in', 'Login identity', 'Password'],
-    ['/login?locale=ar', 'تسجيل الدخول', 'تسجيل الدخول', 'معرّف الدخول', 'كلمة المرور'],
+    ['/login?locale=ar', 'Sign in', 'Sign in', 'Login identity', 'Password'],
   ] as const) {
     test(`public form reflows at 320px (${path})`, async ({ page }) => {
       await page.setViewportSize(MOBILE);
