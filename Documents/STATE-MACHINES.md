@@ -1177,7 +1177,8 @@ Effectiveness accepted
 ## TR-CAPA-006 — Close CAPA
 
 ```text
-READY_FOR_CLOSURE
+ DRAFT | OPEN | IN_PROGRESS | AWAITING_VERIFICATION |
+ EFFECTIVENESS_REVIEW | READY_FOR_CLOSURE
 →
 CLOSED
 ```
@@ -1191,8 +1192,15 @@ PERM-CAPA-CLOSE
 Policy:
 
 ```text
-DENY UNTIL APPROVED
+P-04 APPROVED EXCEPTION
 ```
+
+The close operation is restricted to an active `Supervisor` with explicit
+`PERM-CAPA-CLOSE` and an authorized scope. It requires a matching expected
+version, non-empty reason, reauthentication, explicit `CLOSE` E-Signature,
+exact pre-transition snapshot, immutable audit evidence, and replay-safe
+request ID. Incomplete CAPA actions and unaccepted effectiveness do not block
+this transition. `CLOSED` and `VOID` are terminal and cannot be closed again.
 
 ---
 

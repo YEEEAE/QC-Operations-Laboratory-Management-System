@@ -734,10 +734,15 @@ PERM-CAPA-VOID
 | Complete assigned CAPA action |       ALLOW |      ALLOW | CONDITIONAL |   DENY |
 | Verify action/effectiveness   |        DENY |     POLICY |      POLICY |   DENY |
 | Approve CAPA                  |        DENY |     POLICY |      POLICY |   DENY |
-| Close CAPA                    |        DENY |     POLICY |      POLICY |   DENY |
+| Close CAPA (P-04)             |        DENY |     ALLOW* |        DENY |   DENY |
 | Void                          |        DENY |     POLICY |      POLICY | POLICY |
 
 ---
+
+`*` Supervisor فقط، مع `PERM-CAPA-CLOSE` فعّال، نطاق صالح، حساب ACTIVE،
+نسخة مطابقة، سبب، إعادة تحقق، توقيع E-Signature بمعنى `CLOSE`، وطلب
+idempotent داخل معاملة واحدة. Admin أو Manager لا يكتسبان صلاحية الإغلاق
+بمجرد امتلاك صلاحيات واسعة أو permission منفردة.
 
 # 40. Quarantine / Receiving Permissions
 

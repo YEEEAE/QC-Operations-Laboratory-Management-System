@@ -1,4 +1,58 @@
 ---
-import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login');
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login');
+const capaId = Astro.params.capaId ?? '';
+const capaRead = capaReadDependencies();
+const capa = /^[0-9a-f-]{36}$/i.test(capaId) ? await capaRead.get.execute({ id: capaId, actor }).catch(() => undefined) : undefined;
+const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
 ---
-<AppLayout title="CAPA detail · Quality" locale="en" direction="ltr"><h1>CAPA detail</h1><p class="lede">Related NCR/RCA, action owners, evidence, verification, closure, and history belong to the server-authorized aggregate.</p></AppLayout><style>.lede{color:var(--text-muted)}</style>
+<AppLayout title="CAPA detail · Quality" locale="en" direction="ltr">
+  <main class="capa-shell">
+    <h1>CAPA detail</h1>
+    {capa ? <>
+      <p class="lede">{capa.capaNo} · State: {capa.state} · Version: {capa.version}</p>
+      <p class="lede">Related NCR/RCA, action owners, evidence, verification, closure, and history belong to the server-authorized aggregate.</p>
+      {canClose && <section aria-labelledby="close-heading" class="close-panel">
+        <h2 id="close-heading">Close CAPA</h2>
+        <p>Approved P-04 closure does not require incomplete actions or effectiveness acceptance to be complete.</p>
+        <form data-capa-close data-capa-id={capa.id} data-capa-version={capa.version.toString()}>
+          <label for="close-reason">Closure reason</label>
+          <textarea id="close-reason" name="reason" required maxlength="2000"></textarea>
+          <label for="close-reauth">Reauthentication</label>
+          <input id="close-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required />
+          <p class="signature-meaning">I close CAPA {capa.capaNo}, version {capa.version}.</p>
+          <button type="submit" data-submit>Close CAPA</button>
+          <output data-result role="status" tabindex="-1"></output>
+        </form>
+      </section>}
+    </> : <p class="lede">The CAPA is unavailable or you are not authorized to view it.</p>}
+  </main>
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('[data-capa-close]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const output = form.querySelector<HTMLOutputElement>('[data-result]');
+    const data = new FormData(form);
+    if (submit) submit.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    if (output) output.textContent = 'Checking authorization and controlled evidence…';
+    try {
+      const result = await actions.capa.close({ id: form.dataset.capaId ?? '', expectedVersion: BigInt(form.dataset.capaVersion ?? '0'), reason: String(data.get('reason') ?? ''), reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') });
+      if (!result.error) { window.location.reload(); return; }
+      if (output) output.textContent = 'The CAPA was not closed. Refresh the record and review the current state.';
+      output?.focus();
+    } catch { if (output) output.textContent = 'The CAPA could not be closed. Your reason was kept; try again if permitted.'; output?.focus(); }
+    finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); }
+  });
+</script>
+<style>
+  .capa-shell{max-width:60rem;margin:0 auto;padding:2rem 1rem}.lede{color:var(--text-muted)}
+  .close-panel{margin-top:2rem;padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  form{display:grid;gap:.75rem;max-width:38rem}textarea{min-height:7rem}button{width:max-content;padding:.7rem 1rem}.signature-meaning{font-weight:600}
+  output{min-height:1.5rem}
+</style>

@@ -1,5 +1,6 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Capa, CapaActionType } from '../domain/capa.js';
+import type { SignatureEvidence } from '../../../e-signatures/domain/signature-evidence.js';
 export interface CapaRepository {
   create(i: { capa: Capa; actor: ActorContext; requestId: string }): Promise<Capa>;
   get(id: string, actor: ActorContext): Promise<Capa | undefined>;
@@ -12,5 +13,13 @@ export interface CapaRepository {
     reason?: string;
     requestId: string;
     conditions?: { verified: boolean; effectivenessAccepted: boolean };
+  }): Promise<Capa>;
+  close(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    reason: string;
+    requestId: string;
+    signature: SignatureEvidence;
   }): Promise<Capa>;
 }

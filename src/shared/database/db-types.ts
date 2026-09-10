@@ -278,6 +278,14 @@ export interface CapaActionsTable {
   updated_at: Generated<Date>;
   version: Generated<bigint>;
 }
+export interface CapaCloseSnapshotsTable {
+  id: Generated<string>;
+  capa_id: string;
+  capa_version: bigint;
+  snapshot: unknown;
+  snapshot_hash: string;
+  created_at: Generated<Date>;
+}
 export interface TaskAssignmentsTable {
   id: Generated<string>;
   task_id: string;
@@ -876,6 +884,7 @@ export interface DatabaseSchema {
   rcas: RcasTable;
   capas: CapasTable;
   capa_actions: CapaActionsTable;
+  capa_close_snapshots: CapaCloseSnapshotsTable;
   equipment: EquipmentTable;
   calibration_records: CalibrationRecordsTable;
   maintenance_records: MaintenanceRecordsTable;

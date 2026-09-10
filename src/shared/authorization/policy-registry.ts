@@ -163,7 +163,14 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-CAPA-CLOSE',
     action: 'CLOSE',
     entityType: 'CAPA',
-    states: ['READY_FOR_CLOSURE'],
+    states: [
+      'DRAFT',
+      'OPEN',
+      'IN_PROGRESS',
+      'AWAITING_VERIFICATION',
+      'EFFECTIVENESS_REVIEW',
+      'READY_FOR_CLOSURE',
+    ],
   },
   {
     permission: 'PERM-TASK-VIEW',

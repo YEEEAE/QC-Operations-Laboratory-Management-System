@@ -897,11 +897,15 @@ Verification state
 
 ---
 
-## BR-QUAL-032 — CAPA Closure Requires Required Actions Complete
+## BR-QUAL-032 — CAPA Closure Uses Approved P-04 Exception
 
-**Status:** APPROVED
+**Status:** SUPERSEDED BY P-04
 
-لا يتم إغلاق CAPA إذا mandatory actions غير مكتملة.
+وفق استثناء P-04 المعتمد، يمكن لـSupervisor مخوّل صراحةً إغلاق CAPA حتى لو
+كانت mandatory actions غير مكتملة أو كانت `effectivenessVerified` و
+`effectivenessAccepted` غير صحيحتين. يبقى الإغلاق مشروطًا بالحالة والإصدار
+والنطاق وإعادة التحقق والتوقيع الإلكتروني والسبب والتدقيق والـidempotency.
+هذه القاعدة لا تغيّر متطلبات `ACTIONS_COMPLETE` أو مراجعة الفعالية نفسها.
 
 ---
 

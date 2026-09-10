@@ -49,6 +49,14 @@ export type CapaActionType =
   | 'READY_FOR_CLOSURE'
   | 'CLOSE'
   | 'VOID';
+export const CAPA_CLOSE_ELIGIBLE_STATES: readonly CapaState[] = [
+  'DRAFT',
+  'OPEN',
+  'IN_PROGRESS',
+  'AWAITING_VERIFICATION',
+  'EFFECTIVENESS_REVIEW',
+  'READY_FOR_CLOSURE',
+];
 export function createCapa(
   input: Omit<Capa, 'state' | 'version' | 'createdAt' | 'updatedAt' | 'actions'> & {
     now: Date;
@@ -76,7 +84,9 @@ export function transitionCapa(
       EFFECTIVENESS_REVIEW: 'READY_FOR_CLOSURE',
       AWAITING_VERIFICATION: 'READY_FOR_CLOSURE',
     },
-    CLOSE: { READY_FOR_CLOSURE: 'CLOSED' },
+    CLOSE: Object.fromEntries(CAPA_CLOSE_ELIGIBLE_STATES.map((state) => [state, 'CLOSED'])) as Partial<
+      Record<CapaState, CapaState>
+    >,
     VOID: { DRAFT: 'VOID', OPEN: 'VOID', IN_PROGRESS: 'VOID' },
   };
   const next = m[a][c.state];
@@ -86,9 +96,9 @@ export function transitionCapa(
     (['VOID'].includes(a) && !reason?.trim()) ||
     (a === 'ACTIONS_COMPLETE' && (incomplete || !conditions.verified)) ||
     (a === 'READY_FOR_CLOSURE' && !conditions.effectivenessAccepted) ||
-    a === 'CLOSE'
+    (a === 'CLOSE' && !reason?.trim())
   )
-    throw new AppError(a === 'CLOSE' ? 'AUTHZ_DENIED' : 'DOMAIN_INVALID_TRANSITION', {
+    throw new AppError(a === 'CLOSE' && !reason?.trim() ? 'VALIDATION_FAILED' : 'DOMAIN_INVALID_TRANSITION', {
       userSafe: true,
     });
   return {

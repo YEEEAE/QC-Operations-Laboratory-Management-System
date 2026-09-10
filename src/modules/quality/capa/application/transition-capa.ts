@@ -1,4 +1,5 @@
 import { authorize } from '../../../../shared/authorization/authorize.js';
+import { AppError } from '../../../../shared/errors/app-error.js';
 import { transitionCapa, type CapaActionType } from '../domain/capa.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { PermissionCode } from '../../../../shared/authorization/permissions.js';
@@ -26,6 +27,7 @@ export class TransitionCapaUseCase {
     requestId: string;
     conditions?: { verified: boolean; effectivenessAccepted: boolean };
   }) {
+    if (i.action === 'CLOSE') throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const c = await this.repo.get(i.id, i.actor);
     if (!c) throw new Error('not found');
     authorize(

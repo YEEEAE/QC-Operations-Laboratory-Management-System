@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ P-04 لإغلاق CAPA بمسار Supervisor مضبوط
+
+### تم التنفيذ
+- أضفت استثناء P-04 في حالة CAPA: Supervisor فقط مع `PERM-CAPA-CLOSE`، نطاق وصلاحية وحساب ACTIVE ونسخة مطابقة وسبب وإعادة تحقق وتوقيع `CLOSE`.
+- أبقيت متطلبات `ACTIONS_COMPLETE` ومراجعة الفعالية كما هي، ومنعت مسار `TransitionCapaUseCase` العام من تنفيذ `CLOSE` حتى لا يتجاوز مراسم التوقيع.
+- أضفت `CloseCapaUseCase` مع تحقق الدور/الصلاحية/الحالة/النسخة، reauthentication، snapshot hash، وتوقيع إلكتروني صريح.
+- أضفت معاملة PostgreSQL تحفظ snapshot قبل الإغلاق، وتحدّث CAPA، وتحفظ التوقيع وAudit وidempotency في وحدة واحدة، مع migration `0020_capa_close_evidence.sql`.
+- أضفت Astro Action وواجهة إغلاق قابلة للوصول تعرض الحالة والإصدار والسبب وإعادة التحقق وتمنع الإرسال المكرر، مع capability مشتقة خادميًا.
+- أضفت اختبارات domain وapplication للنجاح والرفض للأدوار والصلاحية والحساب غير النشط وإعادة التحقق والسبب، وحدّثت وثائق الحالة وقواعد العمل ومصفوفة الصلاحيات.
+
+### الملفات المتأثرة
+- `src/modules/quality/capa/{domain/capa.ts,application/{close-capa,dependencies}.ts,ports/repository.ts,infrastructure/postgres-repository.ts}`
+- `src/actions/capa.ts` و`src/pages/quality/capa/[capaId].astro`
+- `src/shared/{authorization/policy-registry.ts,database/db-types.ts}` و`db/migrations/0020_capa_close_evidence.sql`
+- `Documents/{STATE-MACHINES,BUSINESS-RULES,PERMISSION-MATRIX}.md`
+- `tests/unit/quality/capa-close.test.ts` و`tests/integration/quality/capa.test.ts`
+- `docs/superpowers/{specs/2026-09-10-p04-capa-close-design.md,plans/2026-09-10-p04-capa-close.md}`
+
+### التحقق
+- `pnpm test:unit` ✅ — 55 ملفًا / 290 اختبارًا.
+- اختبارات CAPA المركزة ✅ — 2 ملف / 9 اختبارات.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 56 hint legacy.
+- `pnpm typecheck` ✅ — 0 أخطاء، مع تحذير Node المحلي `v22.22.3` خارج عقد المشروع.
+- `pnpm lint` ✅.
+- `pnpm test:architecture` ✅ بعد نقل قراءة CAPA إلى application dependencies.
+- `pnpm build` ✅ — تحذيرات bundle السابقة فقط.
+- `git diff --check` ✅.
+- PostgreSQL integration/E2E حقيقي لم يُشغّل: لا توجد بيئة PostgreSQL disposable/fixture مؤكدة في هذه الجولة.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** مسار P-04 منفذ محليًا ومغطى باختبارات unit/domain/build وarchitecture، لكن إثبات PostgreSQL الفعلي وE2E المصادق لم يُنفذ، ولا يوجد commit أو push أو deploy.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل migration `0020` واختبار transaction/idempotency على PostgreSQL disposable قبل اعتبار المسار مثبتًا runtime.
+- يلزم E2E ببيانات Supervisor وCAPA حقيقية في بيئة اختبار؛ الواجهة والـAction موجودان لكن لم يُثبتا عبر متصفح مصادق.
+
 ## [2026-09-10] — تنفيذ الإصلاحات الأربعة لفجوات تحقق الإنتاج محليًا
 
 ### تم التنفيذ
