@@ -38,10 +38,22 @@ export interface PublicReleaseInfo {
   };
 }
 
+export interface ConfiguredReleaseIdentity {
+  status: 'VERIFIED' | 'UNVERIFIED';
+  releaseId?: string;
+  buildId?: string;
+  buildTimestamp?: string;
+  environment?: ReleaseEnvironment;
+  gitSha?: string;
+  migrationHead?: string;
+  serviceVersion?: string;
+}
+
 const SHA256 = /^[0-9a-f]{64}$/i;
 const GIT_SHA = /^[0-9a-f]{40}$/i;
 const MIGRATION_HEAD = /^\d{4}_[a-z0-9_]+$/;
 const SAFE_VALUE = /^[A-Za-z0-9][A-Za-z0-9._:+/@-]{0,127}$/;
+const RELEASE_ID = /^rel-[0-9a-f]{16}$/i;
 
 function assertSafeValue(name: string, value: string): void {
   if (!value || !SAFE_VALUE.test(value)) throw new Error(`Invalid ${name}.`);
@@ -152,6 +164,45 @@ export function getPublicReleaseInfo(identity: ReleaseIdentity): PublicReleaseIn
       migrationHead: identity.migrationHead,
       environment: identity.environment,
     },
+  };
+}
+
+export function getConfiguredReleaseIdentity(
+  environment: Record<string, string | undefined>,
+): ConfiguredReleaseIdentity {
+  const serviceVersion = environment.SERVICE_VERSION?.trim() || undefined;
+  const releaseId = environment.RELEASE_ID?.trim();
+  const buildId = environment.RELEASE_BUILD_ID?.trim();
+  const buildTimestamp = environment.RELEASE_BUILD_TIMESTAMP?.trim();
+  const releaseEnvironment = environment.RELEASE_ENVIRONMENT?.trim() as
+    ReleaseEnvironment | undefined;
+  const gitSha = environment.RELEASE_GIT_SHA?.trim().toLowerCase();
+  const migrationHead = environment.RELEASE_MIGRATION_HEAD?.trim();
+  const complete = Boolean(
+    releaseId &&
+    RELEASE_ID.test(releaseId) &&
+    buildId &&
+    SAFE_VALUE.test(buildId) &&
+    buildTimestamp &&
+    Number.isFinite(Date.parse(buildTimestamp)) &&
+    releaseEnvironment &&
+    RELEASE_ENVIRONMENTS.includes(releaseEnvironment) &&
+    gitSha &&
+    GIT_SHA.test(gitSha) &&
+    migrationHead &&
+    MIGRATION_HEAD.test(migrationHead),
+  );
+  return {
+    status: complete ? 'VERIFIED' : 'UNVERIFIED',
+    ...(releaseId && RELEASE_ID.test(releaseId) ? { releaseId } : {}),
+    ...(buildId && SAFE_VALUE.test(buildId) ? { buildId } : {}),
+    ...(buildTimestamp && Number.isFinite(Date.parse(buildTimestamp)) ? { buildTimestamp } : {}),
+    ...(releaseEnvironment && RELEASE_ENVIRONMENTS.includes(releaseEnvironment)
+      ? { environment: releaseEnvironment }
+      : {}),
+    ...(gitSha && GIT_SHA.test(gitSha) ? { gitSha } : {}),
+    ...(migrationHead && MIGRATION_HEAD.test(migrationHead) ? { migrationHead } : {}),
+    ...(serviceVersion && SAFE_VALUE.test(serviceVersion) ? { serviceVersion } : {}),
   };
 }
 

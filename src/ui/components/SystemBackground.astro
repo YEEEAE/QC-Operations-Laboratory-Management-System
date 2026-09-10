@@ -50,6 +50,7 @@
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let dotLottie: DotLottie | undefined;
   let idleHandle: number | undefined;
+  let rendererDisabled = false;
 
   const cancelScheduledStart = () => {
     if (idleHandle === undefined) return;
@@ -63,28 +64,54 @@
     dotLottie = undefined;
   };
 
-  const start = () => {
-    idleHandle = undefined;
-    if (!root || !canvas || reducedMotion.matches || document.hidden || dotLottie) return;
+  const fallback = () => {
+    rendererDisabled = true;
+    destroyRenderer();
+    if (root) root.dataset.motion = 'fallback';
+  };
 
-    dotLottie = new DotLottie({
-      canvas,
-      src: '/assets/background.lottie',
-      autoplay: true,
-      loop: true,
-      speed: 0.35,
-      layout: { fit: 'cover', align: [0.5, 0.5] },
-      renderConfig: {
-        autoResize: true,
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
-        freezeOnOffscreen: true,
-      },
-    });
-    root.dataset.motion = 'running';
+  const canCompileWasm = async () => {
+    if (typeof WebAssembly === 'undefined') return false;
+    try {
+      await WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const start = async () => {
+    idleHandle = undefined;
+    if (!root || !canvas || reducedMotion.matches || document.hidden || dotLottie || rendererDisabled) return;
+    if (!(await canCompileWasm())) {
+      fallback();
+      return;
+    }
+
+    try {
+      dotLottie = new DotLottie({
+        canvas,
+        src: '/assets/background.lottie',
+        autoplay: true,
+        loop: true,
+        speed: 0.35,
+        layout: { fit: 'cover', align: [0.5, 0.5] },
+        renderConfig: {
+          autoResize: true,
+          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+          freezeOnOffscreen: true,
+        },
+      });
+      dotLottie.addEventListener('loadError', fallback);
+      dotLottie.addEventListener('renderError', fallback);
+      root.dataset.motion = 'running';
+    } catch {
+      fallback();
+    }
   };
 
   const scheduleStart = () => {
-    if (!root || reducedMotion.matches || document.hidden || dotLottie || idleHandle !== undefined) return;
+    if (!root || reducedMotion.matches || document.hidden || dotLottie || rendererDisabled || idleHandle !== undefined) return;
     root.dataset.motion = 'pending';
     idleHandle = window.setTimeout(start, 180);
   };

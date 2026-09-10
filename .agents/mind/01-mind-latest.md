@@ -1,5 +1,135 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ الإصلاحات الأربعة لفجوات تحقق الإنتاج محليًا
+
+### تم التنفيذ
+- أضفت read model لهوية الإصدار في `System Health` مع تحقق fail-closed للقيم server-derived: release ID وbuild ID وtimestamp وenvironment وGit SHA وmigration head؛ الناقص/غير الصالح يظهر `UNVERIFIED`.
+- أضفت مفاتيح الهوية الاختيارية إلى `src/config/env.ts` و`.env.example` و`render.yaml`، بدون أسرار أو قبول قيم من المتصفح.
+- شددت Mobile Drawer trigger في `Topbar.astro` ليكون ظاهرًا عند `max-width:760px` وبحجم 40×40 مع focus ring، مع الحفاظ على منطق `inert` وscroll lock وTab/Escape/focus return في `AppLayout`.
+- أضفت `public/favicon.svg` وربطه من `BaseLayout.astro`.
+- أضفت فحص WebAssembly مسبقًا، وحالات `loadError`/`renderError`، وCSS fallback آمن لـdotLottie؛ لم أضف `unsafe-eval` ولم أعدّل CSP.
+- أضفت تصميم وخطة التنفيذ واختبارات release identity وfavicon/background/mobile contracts.
+
+### الملفات المتأثرة
+- `src/config/{constants.ts,env.ts,release.ts,runtime.ts}` و`render.yaml` و`.env.example`
+- `src/modules/system-health/application/{dependencies,get-system-health}.ts`
+- `src/pages/system/health.astro`
+- `src/ui/{components/SystemBackground.astro,layouts/BaseLayout.astro,shell/Topbar.astro}`
+- `public/favicon.svg`
+- `tests/unit/{system-health/release-identity.test.ts,ui/app-shell.test.ts,ui/system-background.test.ts}`
+- `docs/superpowers/{specs/2026-09-10-production-verification-gaps-design.md,plans/2026-09-10-production-verification-gaps.md}`
+- `audit/2026-09-09-production-ui-audit.md`
+
+### التحقق
+- `pnpm test:unit` ✅ — 54 ملفًا / 284 اختبارًا.
+- الاختبارات المركزة ✅ — 3 ملفات / 15 اختبارًا.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 56 hints legacy.
+- `pnpm typecheck` ✅ — 0 أخطاء، 56 hints legacy.
+- `pnpm lint` ✅ — مع تحذير Node المحلي خارج العقد `>=24.20.0 <25`.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — تحذيرات chunk login وThree.js/Zod قائمة، بلا failure.
+- `git diff --check` ✅.
+- `pnpm format:check` ❌ — 42 ملفًا قائمًا/أدلة Playwright غير منسقة؛ الملفات الجديدة TypeScript ذات الصلة نُسّقت بشكل منفصل.
+
+### النتيجة
+- **الحالة:** نجح محليًا / النشر غير منفذ.
+- **مختصر:** الإصلاحات الأربعة مضافة للكود ومحروسة بالاختبارات، لكن C-08/C-09/C-11 تحتاج نشرًا يدويًا ثم تحقق Chrome جديد، وC-12 يحتاج fixtures أدوار منفصلة.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- `RELEASE_*` لازم تتعبى في Render قبل اعتبار release identity موثقة؛ بدونها تظهر `UNVERIFIED` عمدًا.
+- `pnpm format:check` ما زال محجوبًا بملفات قديمة/أدلة Playwright غير منسقة خارج نطاق الإصلاح.
+
+## [2026-09-10] — استكمال تحقق Chrome الحي لبنود C-01 إلى C-12
+
+### تم التنفيذ
+- واصلت جلسة Google Chrome المصادق عليها على `https://qclevel.top` بدون أي production mutation.
+- أثبت حيًا أن `/change-requests/new` صار contextual: selector لنسخة الوثيقة وحقول `Revision reference` و`Change summary` و`Controlled content hash`، بدون UUID/JSON/field path/data type للمشغل؛ لذلك C-06 انتقل من FAIL إلى PASS.
+- أثبت حيًا أن Dashboard عند `320×720` لا يملك تمددًا أفقيًا: `documentElement.scrollWidth=320` و`body.scrollWidth=320`؛ لذلك C-07 PASS.
+- أعدت التحقق من Dashboard وSystem Health وAudit: C-01 إلى C-05 PASS، مع System Health صريح في فصل core readiness عن AI/backup/restore gaps.
+- أبقيت C-08 وC-09 وC-10 وC-11 وC-12 `NOT VERIFIED`: 200% zoom لم ينتج دليلًا موثوقًا، mobile drawer لا يظهر له زر فتح عند 320px، لم تُرسل mutations، release identity غير ظاهرة، ولا توجد fixtures منفصلة للأدوار.
+- وثقت فشل favicon وdotLottie WASM/CSP كفجوات مفتوحة بدون تعديل CSP أو الإنتاج.
+
+### الملفات المتأثرة
+- `audit/2026-09-09-production-ui-audit.md`
+- `.agents/mind/01-mind-latest.md`
+- أدلة Playwright غير المتتبعة داخل `.playwright-mcp/` وملفات `evidence-*.png` و`console-*.txt` و`*-text.txt` و`*-network.txt`
+
+### التحقق
+- Google Chrome live read-only ✅ — `/dashboard`, `/system/health`, `/api/health/ready`, `/change-requests/new`, `/audit`.
+- C-01..C-07 ✅ — 7 PASS في هذه الجولة/التراكم الحالي.
+- C-08..C-12 — لم تُثبت، وسُجلت `NOT VERIFIED` بدل false-green.
+- `/api/health/ready` ✅ — `{"status":"healthy"}` فقط، بدون release identity.
+- لا build/test محلي جديد — الجولة الحالية تحقق متصفح وتوثيق فقط.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** تم إغلاق C-06 وC-07 بالدليل الحي، لكن لا يزال التحقق الكامل 12/12 محجوبًا بسبب zoom، mobile drawer، fixtures، وdeployed release identity.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم fixture منفصل لـAdmin وعضو قليل الصلاحيات، ومسار واضح لهوية SHA/build/release المنشورة قبل C-11/C-12.
+- لازم معالجة mobile drawer على الإنتاج أو توفير نسخة منشورة تحتوي الإصلاح قبل إعادة C-09.
+- favicon/CSP dotLottie ما زالت مفتوحة وتحتاج قرار AppSec قبل أي تعديل.
+
+## [2026-09-10] — تشخيص أخطاء Console في جلسة Dashboard الحية
+
+### تم التنفيذ
+- راجعت رسائل Console من جلسة الموقع الحي بعد تسجيل الدخول، وميّزت رسائل الموقع الحي عن رسائل خادم التطوير المحلي المتبقية في نفس سجل المتصفح.
+- أثبتت أن `https://qclevel.top/favicon.ico` يرجع `404`.
+- أثبتت أن `dotlottie-player.wasm` يُحمّل من نفس الأصل، لكن CSP الحالية `default-src 'self'` تمنع `WebAssembly.instantiateStreaming` وbuffered fallback بسبب غياب السماح المطلوب، فيفشل تهيئة dotLottie.
+- لم أغيّر CSP أو أضيف `unsafe-eval`؛ القرار يحتاج مراجعة أمنية لأن توسيع CSP قد يضعف الحماية.
+
+### التحقق
+- Console الحي: favicon `404`، وWASM فشل في المسار الأساسي والـfallback، ثم `dotlottie-web Initialization failed`.
+- لا توجد production mutations أو تغييرات ملفات في هذه الجولة.
+
+### النتيجة
+- **الحالة:** تشخيص مكتمل، الإصلاح غير منفذ.
+- **مختصر:** الأخطاء ليست من نظام SVG؛ سببها favicon مفقود وCSP تمنع WASM الخاص بخلفية dotLottie.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم قرار صريح: تعطيل الخلفية عند CSP الصارمة، أو اعتماد CSP directive مناسب بعد مراجعة AppSec؛ لا نضيف `unsafe-eval` تلقائيًا.
+- يلزم إضافة favicon محلي إن كان مطلوبًا، مع اختبار response `200`.
+
+## [2026-09-10] — تحقق حي من نسخة الموقع باستخدام yazeed
+
+### تم التنفيذ
+- سجلت الدخول بنجاح إلى `https://qclevel.top/login` بحساب `yazeed` باستخدام كلمة المرور المقدمة عبر إدخال متصفح مباشر، بدون حفظها أو تسجيلها.
+- تحققت من Dashboard الحي: كل مجموعات التنقل ظاهرة، والأيقونات المحلية موجودة بدل glyphs، والنصوص الجديدة خالية من `read model` والرموز المحظورة.
+- تحققت من عقد SVG حيًا: `35` SVG مرئيًا، و`badIcons=0` لكل `viewBox/stroke/stroke-width/aria-hidden/focusable`.
+- اختبرت طي Sidebar على سطح المكتب؛ تغيّر الزر إلى `Expand navigation` واختفت روابط التنقل من العرض كما هو متوقع.
+
+### التحقق
+- تسجيل الدخول الحي ✅ — `/login` → `/dashboard`.
+- فحص DOM على Dashboard ✅ — `svgCount=35`، `badIcons=0`، المصطلحات المحظورة `false`، glyphs المحظورة `false`.
+- فحص الجوال عند `320×720` ⚠️ — لم يظهر زر `Open navigation` بعد تغيير viewport، و`scrollWidth` تجاوز viewport؛ لم أعدّل الإنتاج أو أنشئ أي سجل.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** نسخة الموقع الحية تحمل نظام SVG والنصوص الجديدة وتسجيل الدخول يعمل، لكن سلوك mobile drawer عند resize الحي يحتاج متابعة منفصلة قبل اعتباره مثبتًا.
+
+### ملاحظات / مشاكل مفتوحة
+- ظهرت 3 console errors و3 warnings في جلسة Dashboard؛ لم تُفحص تفاصيلها ضمن هذه الجولة.
+- لا توجد أي production mutations، ولا commit أو push أو deploy من هذه الجلسة.
+
+## [2026-09-10] — محاولة تشغيل اختبارات الأيقونات ببيانات yazeed
+
+### تم التنفيذ
+- شغّلت اختبار Playwright المصادق باستخدام بيانات الدخول المقدمة عبر متغيرات عملية مؤقتة فقط؛ لم تُحفظ كلمة المرور في الملفات أو السجل.
+- الخادم المحلي كان يعمل على `127.0.0.1:4321`، لكن تسجيل دخول `yazeed` رجع HTTP `400` وبقي على `/login` بدون session cookie.
+
+### التحقق
+- `pnpm exec playwright test tests/e2e/navigation-icons.spec.ts` مع fixture: **1 passed / 2 failed**؛ الفشلان بسبب عدم اكتمال تسجيل الدخول المحلي، وليس assertion على الأيقونات.
+- الفشل أعاد رسالة آمنة `Sign-in could not be completed` ولم يظهر أي secret أو stack trace.
+
+### النتيجة
+- **الحالة:** محجوب جزئيًا.
+- **مختصر:** بيانات الدخول لم تُقبل على البيئة المحلية الحالية؛ يلزم تحديد بيئة/قاعدة تحتوي الحساب أو التحقق من بيانات الدخول قبل إعادة تشغيل المسارات المصادق عليها.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يمكن استنتاج أن كلمة المرور خاطئة أو أن الإنتاج متاح؛ الاختبار الحالي محلي فقط.
+- لا commit أو push أو deploy.
+
 ## [2026-09-10] — توحيد أيقونات SVG المحلية وتنظيف النسخ التشغيلية
 
 ### تم التنفيذ

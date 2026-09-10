@@ -20,6 +20,8 @@ describe('enterprise application shell contracts', () => {
     expect(layout).toContain("localStorage.setItem('qc-sidebar-collapsed'");
     expect(topbar).toContain('data-navigation-toggle');
     expect(topbar).toContain('aria-controls="primary-navigation"');
+    expect(topbar).toContain('min-inline-size:40px');
+    expect(topbar).toContain('@media(max-width:760px)');
   });
 
   it('supports a keyboard search shortcut without exposing unauthorized results in the shell', () => {

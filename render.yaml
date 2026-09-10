@@ -22,6 +22,18 @@ services:
         value: production
       - key: SERVICE_VERSION
         value: 0.1.0
+      - key: RELEASE_ENVIRONMENT
+        value: production
+      - key: RELEASE_ID
+        sync: false
+      - key: RELEASE_BUILD_ID
+        sync: false
+      - key: RELEASE_BUILD_TIMESTAMP
+        sync: false
+      - key: RELEASE_GIT_SHA
+        sync: false
+      - key: RELEASE_MIGRATION_HEAD
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: SESSION_SECRET

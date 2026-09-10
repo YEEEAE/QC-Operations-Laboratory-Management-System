@@ -8,6 +8,7 @@ import {
 } from '../../backup-recovery/domain/backup-record.js';
 import type { BackupCatalogRepository } from '../../backup-recovery/ports/repository.js';
 import type { DependencyHealth, HealthStatus, SystemHealthProbes } from '../ports/health-probes.js';
+import type { ConfiguredReleaseIdentity } from '../../../config/release.js';
 
 export type CoreSystemStatus = 'READY' | 'NOT_READY';
 
@@ -32,6 +33,7 @@ export interface SystemHealthView {
   checks: readonly SystemHealthCheck[];
   backupPosture?: SystemHealthBackupPosture;
   generatedAt: Date;
+  release: ConfiguredReleaseIdentity;
 }
 
 interface ProbeGate {
@@ -61,6 +63,7 @@ export class GetSystemHealthUseCase {
   constructor(
     private readonly probes: SystemHealthProbes,
     private readonly catalog: BackupCatalogRepository,
+    private readonly release: ConfiguredReleaseIdentity = { status: 'UNVERIFIED' },
     private readonly now = () => new Date(),
   ) {}
 
@@ -120,6 +123,7 @@ export class GetSystemHealthUseCase {
       aiCapability: byStatus.get('ai-provider')?.status ?? 'UNKNOWN',
       checks,
       generatedAt,
+      release: this.release,
     };
 
     if (has('PERM-BKP-VIEW')) view.backupPosture = await this.backupPosture();

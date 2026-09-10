@@ -2,6 +2,58 @@
 
 آخر تحديث للقرارات والبرومبتات: 2026-09-10 (Asia/Riyadh)
 
+## ملحق تنفيذ الإصلاحات — 2026-09-10
+
+تم تنفيذ الإصلاحات محليًا فقط. لم يتم نشرها، لذلك لا تُحوّل نتائج الإنتاج السابقة إلى PASS تلقائيًا.
+
+- أضيفت هوية إصدار server-derived إلى System Health: `RELEASE_ID` و`RELEASE_BUILD_ID` و`RELEASE_BUILD_TIMESTAMP` و`RELEASE_ENVIRONMENT` و`RELEASE_GIT_SHA` و`RELEASE_MIGRATION_HEAD`. أي قيمة ناقصة/غير صالحة تظهر `UNVERIFIED`.
+- أضيفت متغيرات الهوية إلى `render.yaml` كإعدادات تشغيلية خارج المصدر؛ تعبئتها مطلوبة قبل إثبات C-11 على نسخة منشورة.
+- ثُبّت زر mobile navigation ليبقى ظاهرًا عند `max-width:760px` مع hit area ‏40×40 وfocus ring، مع إبقاء عقد `inert`/scroll lock/Tab/Escape/focus return الحالية.
+- أضيف `public/favicon.svg` وربطه من `BaseLayout`.
+- صار SystemBackground يفحص قدرة WebAssembly قبل تشغيل dotLottie، ويتحول إلى CSS fallback عند `loadError` أو `renderError` أو فشل WASM، بدون إضافة `unsafe-eval` أو تعديل CSP.
+- أضيفت اختبارات release identity وfavicon/fallback وعقد mobile shell.
+
+### تحقق الإصلاحات محليًا
+
+- `pnpm test:unit` ✅ — 54 ملفًا / 284 اختبارًا.
+- الاختبارات المركزة ✅ — 3 ملفات / 15 اختبارًا.
+- `pnpm typecheck` ✅ — 0 أخطاء، 56 hints legacy.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 56 hints legacy.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — تحذيرات قائمة عن chunk login وThree.js/Zod، بلا build failure.
+- `git diff --check` ✅.
+- `pnpm format:check` ❌ — يفشل بسبب 42 ملفًا قائمًا/أدلة Playwright غير منسقة؛ نُسّقت الملفات الجديدة TypeScript ذات الصلة فقط، ولم تُعدّل الملفات غير المتعلقة.
+
+### حدود الإثبات
+
+- الإنتاج ما زال على النسخة المنشورة القديمة حتى يتم النشر يدويًا؛ C-08/C-09/C-11 لا تُغلق حيًا من هذا التعديل المحلي.
+- C-12 ما زال يحتاج fixtures منفصلة لـAdmin وعضو محدود الصلاحيات.
+
+## ملحق تحقق حي — 2026-09-10 04:39 (Asia/Riyadh)
+
+هذه الجولة read-only في Google Chrome على الجلسة المصادق عليها الموجودة مسبقًا. لم تُرسل أي عملية إنشاء أو اعتماد أو إطلاق أو استعادة أو تعديل أعمال.
+
+| البند | الحالة الحالية | الدليل |
+| --- | --- | --- |
+| C-01 | PASS | الجلسة بقيت مصادقًا عليها ووصلت إلى `/dashboard` بعد التنقل المباشر. |
+| C-02 | PASS | `/system/health` فتح للحساب المصرح، وشجرة الوصول عرضت مجموعات Administration وSystem. |
+| C-03 | PASS | `/dashboard` عرض KPI والـempty states ونص الفصل بين PASS وReleased؛ لا raw exception ظاهر. |
+| C-04 | PASS | `/system/health` عرض `Core system: READY` مع فصل حالة AI الاختيارية و`RESTORE NOT VERIFIED`/فجوات النسخ بدل false-green. |
+| C-05 | PASS | `/audit` عرض 4 أحداث، فلاتر Subject/Actor/Action/From/To وpagination، وظهر حدث `GRANT_SYSTEM_OWNER_ACCESS`. |
+| C-06 | PASS | `/change-requests/new` يعرض selector مصرحًا لنسخة الوثيقة وحقولًا بشرية: Revision reference/Change summary/Controlled content hash؛ لا UUID/JSON/field path/data type للمشغل. |
+| C-07 | PASS | عند viewport `320×720` كان `documentElement.scrollWidth = 320` و`body.scrollWidth = 320`، بدون تمدد أفقي ثنائي الأبعاد. |
+| C-08 | NOT VERIFIED | محاولة Chrome zoom لم تنتج دليلًا موثوقًا على 200% (`visualViewport.scale=1`)؛ لا تُحتسب PASS. |
+| C-09 | NOT VERIFIED | عند `320px` اختفى زر فتح الـdrawer (`aria-label="Expand navigation"` موجود لكن hidden)، لذلك لم يمكن تنفيذ اختبار containment/escape حيًا. |
+| C-10 | NOT VERIFIED | لم تُرسل POST أو mutation إنتاجية؛ no-JS/recovery/retained-values تحتاج fixture غير منتج أو تشغيل الاختبارات المعتمدة. |
+| C-11 | NOT VERIFIED | `/api/health/ready` أعاد `{"status":"healthy"}` فقط، ولا توجد هوية deployed SHA/build/release ظاهرة للمقارنة مع HEAD المحلي. |
+| C-12 | NOT VERIFIED | الجولة بقيت بحساب واحد مصادق؛ لا fixture منفصل لـAdmin أو عضو قليل الصلاحيات. |
+
+### ملاحظات الجولة
+
+- Console الحي ما زال يسجل `favicon.ico` بـ404 وفشل dotLottie WASM بسبب CSP `default-src 'self'`؛ لم أوسّع CSP ولم أغيّر الإنتاج.
+- الأدلة الملتقطة لهذه الجولة: snapshots داخل `.playwright-mcp/` و`evidence-health.png` و`evidence-dashboard-320.png` و`evidence-change-request.png` و`evidence-audit.png`، مع ملفات console/text/network المرافقة.
+- النسب لا تُعاد حسابيًا إلى 100%: الحالة الحالية للجولة هي **7 PASS / 5 NOT VERIFIED / 0 FAIL** من 12، أي تغطية منفذة 58.3% ونجاح محافظ 58.3%، مع بقاء C-08 وC-09 وC-10 وC-11 وC-12 غير مثبتة.
+
 المستودع: `YEEEAE/QC-Operations-Laboratory-Management-System`
 
 الفرع: `main`
@@ -15,6 +67,8 @@ HEAD الذي تمت مراجعة مصدره: `2adb7871a285711e87a24a3b83dd3848b
 النطاق: Login وApp Shell/Navigation وDashboard وSystem Health وAudit وChange Requests، مع فحص المصدر والاختبارات للحالات التي تعذر تشغيلها حيًا.
 
 ## الزبدة التنفيذية
+
+> ملاحظة زمنية: جدول الأرقام التالي هو baseline قبل ملحق التحقق الحي أعلاه. الأرقام الأحدث للجولة الحالية موثقة في الملحق: **7/12 PASS، و5/12 NOT VERIFIED، و0 FAIL**. لم أغيّر Finding ledger أو أدّعي Production Readiness؛ لأن C-08 إلى C-12 ما زالت غير مثبتة.
 
 تم إلغاء رقم **88%** السابق لأنه كان تقديرًا موزونًا ذاتيًا، وليس نسبة يمكن إعادة حسابها من عدّاد واضح. البديل ثلاث نسب منفصلة وقابلة لإعادة الحساب:
 

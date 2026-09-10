@@ -1,0 +1,5 @@
+10. [GET] https://qclevel.top/assets/background.lottie => [200] 
+11. [GET] https://qclevel.top/assets/dotlottie-player.wasm => [200] 
+12. [GET] https://qclevel.top/assets/dotlottie-player.wasm => [200] 
+
+Note: 9 static requests not shown, run with "static" option to see them.

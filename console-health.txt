@@ -1,0 +1,10 @@
+Total messages: 7 (Errors: 4, Warnings: 3)
+
+[ERROR] Failed to load resource: the server responded with a status of 404 () @ https://qclevel.top/favicon.ico:0
+[WARNING] Primary WASM load failed from /assets/dotlottie-player.wasm: WebAssembly.instantiateStreaming(): Compiling or instantiating WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: "default-src 'self'". @ https://qclevel.top/_astro/hoisted.CjcWkmTz.js:0
+[WARNING] Retrying WASM load with buffered instantiation @ https://qclevel.top/_astro/hoisted.CjcWkmTz.js:0
+[WARNING] Buffered WASM load from /assets/dotlottie-player.wasm failed: WebAssembly.instantiate(): Compiling or instantiating WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: "default-src 'self'". @ https://qclevel.top/_astro/hoisted.CjcWkmTz.js:0
+[ERROR] Primary WASM URL failed: WebAssembly.instantiateStreaming(): Compiling or instantiating WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: "default-src 'self'". @ https://qclevel.top/_astro/hoisted.CjcWkmTz.js:0
+[ERROR] Buffered fallback failed: WebAssembly.instantiate(): Compiling or instantiating WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: "default-src 'self'". @ https://qclevel.top/_astro/hoisted.CjcWkmTz.js:0
+[ERROR] [dotlottie-web] Initialization failed: Error: WASM loading failed from all sources.
+    at https://qclevel.top/_astro/hoisted.CjcWkmTz.js:1:31302 @ https://qclevel.top/_astro/hoisted.CjcWkmTz.js:0

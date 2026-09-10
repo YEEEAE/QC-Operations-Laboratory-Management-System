@@ -1,0 +1,48 @@
+{
+  "url": "https://qclevel.top/change-requests/new",
+  "fields": [
+    {
+      "tag": "INPUT",
+      "name": "changeNo",
+      "type": null,
+      "label": null,
+      "value": ""
+    },
+    {
+      "tag": "TEXTAREA",
+      "name": "reason",
+      "type": null,
+      "label": null,
+      "value": null
+    },
+    {
+      "tag": "SELECT",
+      "name": "documentVersionId",
+      "type": null,
+      "label": null,
+      "value": null
+    },
+    {
+      "tag": "INPUT",
+      "name": "expectedDocumentVersion",
+      "type": "hidden",
+      "label": null,
+      "value": ""
+    },
+    {
+      "tag": "SELECT",
+      "name": "changeField",
+      "type": null,
+      "label": null,
+      "value": null
+    },
+    {
+      "tag": "TEXTAREA",
+      "name": "proposedValue",
+      "type": null,
+      "label": null,
+      "value": null
+    }
+  ],
+  "text": "Skip to main content\nQC\nHome\nChange requests\nCurrent scope\nAuthorized operational scope\nSearch\nCtrl K\n0\n0\nApprovals\n0\n01a07e39-b3d7-7357-b05b-1eb0d11b08fb\nAuthenticated user\n\nGOV-CHG-002 · DRAFT ONLY\n\nNew change request\n\nThis records a proposed change against a controlled document version. It does not apply, approve, or release the target.\n\nBack to register\nRequest context\nChange number\nUse the change number from your approved source. The technical record identifier is generated server-side.\nReason\nWhy this change is needed. Required for every change request.\nControlled target\n\nControlled document version (the only supported change target in this baseline)\n\nControlled document version\nChoose from controlled document versions in your authorized scope. The target reference, version, snapshot, and current values are captured server-side after selection.\nSelect a controlled version…\n\nNo controlled versions are available in your authorized scope. A new change request cannot be started until a version you may view exists.\n\nProposed change\nChange field\nOnly the allowlisted document version fields can be proposed.\nSelect a field…\nRevision reference\nChange summary\nControlled content hash\nProposed value\nThe new value for the selected field. The current value is shown above and stored server-side.\n\nCancel\nCreate draft"
+}
