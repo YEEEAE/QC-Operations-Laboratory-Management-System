@@ -1,0 +1,147 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { getReleaseApprovalPageModel } from '../../../modules/release-governance/application/capability.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fgovernance%2Freleases');
+const releaseId = Astro.params.releaseId ?? '';
+const { candidate, authorized, approvable } = await getReleaseApprovalPageModel({ actor, releaseId });
+---
+<AppLayout title="Production release approval · Governance" locale="en" direction="ltr">
+  <main class="release-shell">
+    <p class="eyebrow">GOVERNANCE</p>
+    <h1>Production release approval</h1>
+    {candidate ? (
+      <>
+        <p class="lede">Release {candidate.releaseId} · State: {candidate.state} · Version: {candidate.version.toString()}</p>
+        <dl class="identity">
+          <div><dt>Git SHA</dt><dd>{candidate.gitSha}</dd></div>
+          <div><dt>Build</dt><dd>{candidate.buildId}</dd></div>
+          <div><dt>Version</dt><dd>{candidate.applicationVersion}</dd></div>
+          <div><dt>Migration head</dt><dd>{candidate.migrationHead}</dd></div>
+          <div><dt>UAT cycle</dt><dd>{candidate.uatCycleId}</dd></div>
+        </dl>
+        {!authorized && <p role="alert" class="denied">Your account is not a release authority. Final approval requires Manager or yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}
+        {candidate.state !== 'PENDING' && <p role="status" class="denied">This release candidate is not pending approval.</p>}
+        {approvable && (
+          <section aria-labelledby="approve-heading" class="approve-panel">
+            <h2 id="approve-heading">Approve release</h2>
+            <p>Approval stays disabled until every gate is confirmed PASS for this exact release candidate. The server re-verifies all gates, identity, residual risks, authority, reauthentication, and signature before storing RELEASE_APPROVED.</p>
+            <form data-release-approve data-release-id={candidate.releaseId} data-release-version={candidate.version.toString()}>
+              <label for="rel-git">Exact Git SHA</label>
+              <input id="rel-git" name="gitSha" required minlength="40" maxlength="40" value={candidate.gitSha} />
+              <label for="rel-build">Build identity</label>
+              <input id="rel-build" name="buildId" required maxlength="128" value={candidate.buildId} />
+              <label for="rel-version">Expected application version</label>
+              <input id="rel-version" name="applicationVersion" required maxlength="128" value={candidate.applicationVersion} />
+              <label for="rel-migration">Expected migration head</label>
+              <input id="rel-migration" name="migrationHead" required maxlength="128" value={candidate.migrationHead} />
+              <label for="rel-uat-cycle">UAT cycle ID</label>
+              <input id="rel-uat-cycle" name="uatCycleId" required maxlength="128" value={candidate.uatCycleId} />
+              <label for="rel-uat">UAT status</label>
+              <input id="rel-uat" name="uatStatus" required maxlength="64" value="ACCEPTED" />
+              <label for="rel-risk">Residual-risk status</label>
+              <input id="rel-risk" name="residualRiskStatus" required maxlength="64" value="ACCEPTED" />
+              <fieldset>
+                <legend>Release gates (all must be PASS)</legend>
+                {['ci','security','database','e2e','uat','signatures','criticalRisks','residualRisk'].map((gate) => (
+                  <label class="gate"><input type="checkbox" name={`gate-${gate}`} data-gate /> {gate} PASS</label>
+                ))}
+              </fieldset>
+              <label for="rel-risks">Residual-risk snapshot (JSON array; LOW/MEDIUM/HIGH need Manager or SYSTEM_OWNER acceptance with evidence; CRITICAL blocks)</label>
+              <textarea id="rel-risks" name="risks" rows="4">[]</textarea>
+              <label for="rel-reauth">Reauthentication</label>
+              <input id="rel-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required />
+              <p class="signature-meaning">I approve production release {candidate.releaseId} at the exact Git SHA and build identity above.</p>
+              <button type="submit" data-submit disabled aria-disabled="true">Approve release</button>
+              <output data-result role="status" tabindex="-1"></output>
+            </form>
+          </section>
+        )}
+      </>
+    ) : (
+      <p class="lede">The release candidate is unavailable or you are not authorized to view it.</p>
+    )}
+  </main>
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('[data-release-approve]');
+  const submit = form?.querySelector<HTMLButtonElement>('[data-submit]');
+  const gates = form ? Array.from(form.querySelectorAll<HTMLInputElement>('[data-gate]')) : [];
+  const refresh = () => {
+    const allPass = gates.length === 8 && gates.every((gate) => gate.checked);
+    if (submit) {
+      submit.disabled = !allPass;
+      submit.setAttribute('aria-disabled', String(!allPass));
+    }
+  };
+  gates.forEach((gate) => gate.addEventListener('change', refresh));
+  refresh();
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const output = form.querySelector<HTMLOutputElement>('[data-result]');
+    const data = new FormData(form);
+    const gateStatus = (name: string) =>
+      form.querySelector<HTMLInputElement>(`[name="gate-${name}"]`)?.checked ? 'PASS' : 'FAIL';
+    let risks: unknown[] = [];
+    try {
+      const parsed: unknown = JSON.parse(String(data.get('risks') ?? '[]'));
+      if (Array.isArray(parsed)) risks = parsed;
+    } catch {
+      if (output) output.textContent = 'Residual-risk snapshot is not valid JSON.';
+      return;
+    }
+    if (submit) submit.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    if (output) output.textContent = 'Verifying release gates and signature…';
+    try {
+      const result = await actions.releaseGovernance.approveRelease({
+        releaseId: form.dataset.releaseId ?? '',
+        expectedVersion: BigInt(form.dataset.releaseVersion ?? '0'),
+        gitSha: String(data.get('gitSha') ?? ''),
+        buildId: String(data.get('buildId') ?? ''),
+        applicationVersion: String(data.get('applicationVersion') ?? ''),
+        migrationHead: String(data.get('migrationHead') ?? ''),
+        uatCycleId: String(data.get('uatCycleId') ?? ''),
+        uatStatus: String(data.get('uatStatus') ?? ''),
+        residualRiskStatus: String(data.get('residualRiskStatus') ?? ''),
+        gates: {
+          ci: gateStatus('ci'),
+          security: gateStatus('security'),
+          database: gateStatus('database'),
+          e2e: gateStatus('e2e'),
+          uat: gateStatus('uat'),
+          signatures: gateStatus('signatures'),
+          criticalRisks: gateStatus('criticalRisks'),
+          residualRisk: gateStatus('residualRisk'),
+        },
+        risks: risks as never,
+        reauthenticationSecret: String(data.get('reauthenticationSecret') ?? ''),
+      });
+      if (!result.error) {
+        window.location.reload();
+        return;
+      }
+      if (output) output.textContent = 'The release was not approved. Refresh the candidate and review the current gates.';
+      output?.focus();
+    } catch {
+      if (output) output.textContent = 'The release could not be approved. Refresh and try again if permitted.';
+      output?.focus();
+    } finally {
+      refresh();
+      form.removeAttribute('aria-busy');
+    }
+  });
+</script>
+<style>
+  .release-shell{max-width:62rem;margin:0 auto;padding:2rem 1rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede{color:var(--text-muted)}
+  .identity{display:grid;gap:.5rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));margin:1rem 0}
+  .identity div{padding:.75rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  .identity dt{font-size:.7rem;color:var(--text-muted)}.identity dd{margin:.25rem 0 0;overflow-wrap:anywhere}
+  .denied{padding:.75rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  .approve-panel{margin-top:1.5rem;padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  form{display:grid;gap:.6rem;max-width:40rem}fieldset{display:grid;gap:.4rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:.75rem}
+  .gate{display:flex;gap:.5rem;align-items:center}textarea{font-family:monospace}button{width:max-content;padding:.7rem 1rem}
+  button[disabled]{opacity:.5;cursor:not-allowed}.signature-meaning{font-weight:600}output{min-height:1.5rem}
+</style>

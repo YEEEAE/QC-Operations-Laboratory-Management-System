@@ -841,6 +841,39 @@ export interface RateLimitWindowsTable {
   updated_at: Date;
 }
 
+export interface ReleaseCandidatesTable {
+  id: Generated<string>;
+  git_sha: string;
+  build_id: string;
+  application_version: string;
+  migration_head: string;
+  uat_cycle_id: string;
+  uat_status: string;
+  residual_risk_status: string;
+  state: string;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+
+export interface ReleaseApprovalsTable {
+  id: Generated<string>;
+  release_id: string;
+  approved_by: string;
+  authority: string;
+  git_sha: string;
+  build_id: string;
+  application_version: string;
+  migration_head: string;
+  uat_status: string;
+  residual_risk_status: string;
+  gate_snapshot: unknown;
+  risk_snapshot: unknown;
+  signature_evidence_id: string;
+  approved_at: Generated<Date>;
+  request_id: string;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -902,6 +935,8 @@ export interface DatabaseSchema {
   restore_runs: RestoreRunsTable;
   recovery_evidence: RecoveryEvidenceTable;
   rate_limit_windows: RateLimitWindowsTable;
+  release_candidates: ReleaseCandidatesTable;
+  release_approvals: ReleaseApprovalsTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

@@ -34,6 +34,7 @@ export const APPROVAL_SUBJECT_TYPES = [
   'NCR',
   'FINDING',
   'INSPECTION_TEMPLATE_VERSION',
+  'RELEASE_CANDIDATE',
 ] as const;
 export type ApprovalSubjectType = (typeof APPROVAL_SUBJECT_TYPES)[number];
 

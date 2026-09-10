@@ -859,6 +859,7 @@ const policies: readonly AuthorizationPolicy[] = [
     'NCR',
     'FINDING',
     'INSPECTION_TEMPLATE_VERSION',
+    'RELEASE_CANDIDATE',
   ].flatMap((entityType) => [
     {
       permission: 'PERM-APR-REVIEW',
@@ -896,12 +897,13 @@ const policies: readonly AuthorizationPolicy[] = [
     'RCA',
     'NCR',
     'FINDING',
+    'RELEASE_CANDIDATE',
   ].flatMap((entityType) => [
     {
       permission: 'PERM-APR-APPROVE',
       action: 'APPROVE',
       entityType,
-      states: ['SUBMITTED', 'UNDER_REVIEW', 'IN_REVIEW', 'READY_FOR_CLOSURE'],
+      states: ['SUBMITTED', 'UNDER_REVIEW', 'IN_REVIEW', 'READY_FOR_CLOSURE', 'PENDING'],
     },
     {
       permission: 'PERM-APR-RETURN',

@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ حوكمة اعتماد إصدار الإنتاج (fail-closed, Manager أو yazeed)
+
+### تم التنفيذ
+- بنيت وحدة `src/modules/release-governance`: دومين البوابات الثمان (CI/security/database/E2E/UAT/signatures/criticalRisks/residualRisk) كلها لازم PASS لنفس المرشح، والسلطة النهائية Manager أو yazeed/SYSTEM_OWNER فقط (موقّع واحد يكفي، وAdmin وحده مرفوض).
+- طبقت قاعدة المخاطر المتبقية: LOW/MEDIUM/MODERATE/HIGH تحتاج قبولًا موثقًا بدليل من Manager أو SYSTEM_OWNER، وCRITICAL وVERY_HIGH يحجبان الإصدار العادي fail-closed.
+- بنيت `ApproveReleaseUseCase` بشهادة reauthentication وتوقيع `RELEASE_CANDIDATE` (مضاف لـ`APPROVAL_SUBJECT_TYPES` و`policy-registry` و`domainPrefix`)، وتحقق هوية البناء (releaseId/gitSha/buildId/version/migrationHead) لنفس المرشح، مع سياسة `PERM-APR-APPROVE` + فحص `PENDING`/النسخة.
+- أضفت migration `0021_release_governance.sql` (جدولا `release_candidates` و`release_approvals` مع FKs وقيود) ووسعت `db-types.ts`، والمعاملة الذرية تحفظ التوقيع والاعتماد (approved_by/authority/release_id/git_sha/build_id/uat_status/residual_risk_status/signature_evidence_id/approved_at) والـAudit وidempotency مع إعادة حساب snapshot hash داخل الترانزاكشن وحماية replay/stale/concurrent.
+- أضفت أكشن `releaseGovernance.approveRelease` وصفحة `/governance/releases/[releaseId]` بزر معطل افتراضيًا (`disabled` + `aria-disabled`) لا يُفعّل عميلًا إلا بتأكيد البوابات الثمان، والخادم يعيد التحقق من كل شيء قبل التخزين؛ و`getReleaseApprovalPageModel` بطبقة application لاحترام حدود المعمارية.
+
+### الملفات المتأثرة
+- `src/modules/release-governance/{domain/release-approval,ports/repository,application/{approve-release,capability,dependencies},infrastructure/postgres-repository}.ts`
+- `db/migrations/0021_release_governance.sql` و`src/shared/database/db-types.ts`
+- `src/modules/approvals/domain/approval.ts` و`src/modules/approvals/application/authorization.ts` و`src/shared/authorization/policy-registry.ts`
+- `src/actions/{release-governance,index}.ts` و`src/pages/governance/releases/[releaseId].astro`
+- `tests/unit/release-governance/release-approval.test.ts` (31 اختبارًا) و`tests/integration/release-governance/release-concurrency.test.ts` و`tests/e2e/release-governance.spec.ts`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/release-governance` ✅ — 31/31.
+- `pnpm test:unit` ✅ — 58 ملفًا / 331 اختبارًا (كانت 57/300).
+- `pnpm typecheck` ✅ — 0 أخطاء؛ `pnpm exec astro check` ✅ — 0 أخطاء.
+- `pnpm lint` ✅ و`pnpm test:architecture` ✅ (بعد نقل فحص السلطة لطبقة application).
+- `pnpm build` ✅ و`git diff --check` ✅.
+- Playwright ضد preview محلي ✅ — 2 passed (redirect + زر غير مفعّل بلا جلسة) / 1 skipped (gated يحتاج fixture مرشح PENDING).
+- PostgreSQL integration/concurrency الحقيقي لم يُشغّل: يحتاج Docker/QC_TEST_DATABASE_URL (gated مثل قوالب P-06).
+
+### النتيجة
+- **الحالة:** نجح محليًا / جزئي.
+- **مختصر:** حوكمة الإصدار المقفلة على الفشل منفذة ومحروسة بالاختبارات والبناء، لكن الإثبات الحي (PG transaction حقيقي + E2E مصادق على مرشح إصدار حقيقي + migration مطبق على قاعدة اختبار) ما زال مفتوحًا.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- VERY_HIGH يُحجب مثل CRITICAL (البرومبت ذكر LOW/MEDIUM/HIGH فقط؛ الاختيار fail-closed موثق في الدومين).
+- هوية الإصدار UUID لتوافق `electronic_signatures.subject_id`؛ المرشحات النصية غير-UUID تُرفض بـNOT_FOUND.
+- أدلة CI/UAT/E2E تُقدَّم كحزمة attestation في الأكشن ويتحقق منها الخادم (لا جلب تلقائي من أنظمة خارجية بعد).
+
 ## [2026-09-10] — تنفيذ P-05 authority matrix inline (دفعة أولى)
 
 ### تم التنفيذ
