@@ -1,5 +1,46 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تدقيق وكتابة UX للنصوص المنظمة
+
+### تم التنفيذ
+- أنشأت قاموسًا قابلًا لإعادة الاستخدام للنصوص والأفعال والحالات والحدود التنظيمية في `src/shared/copy/ux-vocabulary.ts`، مع إبقاء NCR/CAPA/PASS/RELEASED والمصطلحات المنظمة كما هي.
+- وحّدت الأفعال الحرجة إلى صيغ تشغيلية مثل `Submit for review` و`Record restore request` و`Sign and continue` بدل العبارات العامة.
+- حسّنت حالات عدم التوفر والـempty/error states بحيث لا تخلط provider failure مع empty/zero، وتعرض مسار تعافٍ واضحًا.
+- حسّنت تسمية التنقل ومرشحات سجل التدقيق، وأزلت تسريب `Subject type` و`Actor id` كعناوين تشغيلية لصالح `Record type` و`Record reference` و`Changed by`.
+- ثبّتُّ في AI Advisory حدًّا صريحًا أن الناتج استشاري فقط، وثبّتُّ في القاموس الفصل بين backup وrestore verification وبين PASS وrelease.
+- أنشأت تقرير التدقيق `audit/2026-09-10-ux-writing-audit.md` يغطي navigation/page copy/actions/states/errors/AI/System Health/Backup/Restore/Audit والحدود المتبقية.
+
+### الملفات المتأثرة
+- `src/shared/copy/ux-vocabulary.ts`
+- `src/ui/navigation/navigation.ts`
+- `src/ui/components/feedback/ProviderUnavailableState.astro`
+- `src/ui/components/feedback/ErrorState.astro`
+- `src/ui/components/forms/FormActions.astro`
+- `src/ui/components/forms/ErrorSummary.astro`
+- `src/ui/components/data/EmptyTableState.astro`
+- `src/ui/components/governance/ESignatureDialog.astro`
+- `src/pages/ai-advisory.astro`
+- `src/pages/audit.astro`
+- `audit/2026-09-10-ux-writing-audit.md`
+- `tests/unit/ui/action-vocabulary.test.ts`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/action-vocabulary.test.ts tests/unit/ui/icon-and-copy-contract.test.ts tests/unit/ui/navigation-permissions.test.ts tests/unit/ui/form-ux-contract.test.ts` ✅ — 4 ملفات / 20 اختبارًا.
+- `pnpm test:unit` ✅ — 68 ملفًا / 423 اختبارًا.
+- `pnpm test:architecture` ✅.
+- `pnpm exec astro check` ✅.
+- `pnpm build` ✅ — تحذيرات Node 22/chunk المعروفة فقط.
+- `git diff --check` ✅.
+- Browser/provider/outbox runtime ⚠️ لم يُثبت في هذه الجولة؛ لا fixture مصادق ولا تحقق حي من كل نصوص notifications المولدة من البيانات.
+
+### النتيجة
+- **الحالة:** جزئي ناجح محليًا / يحتاج live evidence.
+- **مختصر:** تم توحيد ورفع دقة النسخ في المكونات والأسطح الحساسة مع حفظ المعاني المنظمة، لكن لا يوجد claim بأن كل notification runtime تستخدم القاموس حتى تُفحص ببيانات مصادق عليها.
+
+### ملاحظات / مشاكل مفتوحة
+- ما صار commit أو push أو deploy.
+- ما زالت بعض الصفحات تحتوي نصوصًا محلية قديمة خارج المكونات والأسطح المعدلة، وتحتاج ترحيلًا تدريجيًا للقاموس مع اختبار browser مصادق.
+
 ## [2026-09-10] — إصلاح ملاحظات نماذج UX للبيانات المنظمة
 
 ### تم التنفيذ

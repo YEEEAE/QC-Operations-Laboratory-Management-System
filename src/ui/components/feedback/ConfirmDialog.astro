@@ -1,6 +1,6 @@
 ---
 interface Props { id?: string; title?: string; description?: string; subject?: string; intent?: string; reasonRequired?: boolean; }
-const { id = 'confirm-dialog', title = 'Confirm controlled action', description = 'Review the action before continuing.', subject, intent, reasonRequired = false } = Astro.props;
+const { id = 'confirm-dialog', title = 'Review controlled action', description = 'Check the record and action before continuing.', subject, intent, reasonRequired = false } = Astro.props;
 ---
 <dialog id={id} class="confirm-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} data-dialog>
   <form method="dialog">

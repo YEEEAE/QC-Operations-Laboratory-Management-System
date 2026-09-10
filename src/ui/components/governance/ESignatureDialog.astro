@@ -1,17 +1,18 @@
 ---
 interface Props { id?: string; actionMeaning: string; subjectType: string; subjectId: string; subjectVersion: string | number; currentUser: string; reasonRequired?: boolean; actionUrl?: string; }
+import { copy } from '../../../shared/copy/ux-vocabulary';
 const { id = 'e-signature-dialog', actionMeaning, subjectType, subjectId, subjectVersion, currentUser, reasonRequired = false, actionUrl } = Astro.props;
 ---
 <dialog id={id} class="esign" aria-labelledby={`${id}-title`} data-dialog>
   <form method="post" action={actionUrl} data-e-signature-form>
     <h2 id={`${id}-title`}>Confirm with electronic signature</h2>
     <p class="meaning">{actionMeaning}</p>
-    <dl><dt>Subject</dt><dd>{subjectType} · {subjectId}</dd><dt>Version</dt><dd>{subjectVersion}</dd><dt>Signing as</dt><dd>{currentUser}</dd></dl>
+    <dl><dt>{copy.labels.record}</dt><dd>{subjectType} · {subjectId}</dd><dt>{copy.labels.currentVersion}</dt><dd>{subjectVersion}</dd><dt>Signing as</dt><dd>{currentUser}</dd></dl>
     <p class="note">Reauthentication is verified by the server. Your secret is never stored as signature evidence.</p>
     <label for={`${id}-secret`}>Re-enter password</label><input id={`${id}-secret`} name="reauthenticationSecret" type="password" autocomplete="current-password" required />
     <input type="hidden" name="subjectType" value={subjectType} /><input type="hidden" name="subjectId" value={subjectId} /><input type="hidden" name="subjectVersion" value={subjectVersion} />
     {reasonRequired && <label for={`${id}-reason`}>Reason <span aria-hidden="true">*</span><textarea id={`${id}-reason`} name="reason" required rows="3"></textarea></label>}
-    <div class="actions"><button type="button" value="cancel" formmethod="dialog">Cancel</button><button class="primary" type="submit" disabled={!actionUrl}>Submit signature</button></div>
+    <div class="actions"><button type="button" value="cancel" formmethod="dialog">{copy.actions.cancel}</button><button class="primary" type="submit" disabled={!actionUrl}>{copy.actions.signAndContinue}</button></div>
   </form>
 </dialog>
 <style>

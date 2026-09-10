@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../ui/layouts/AppLayout.astro';
+import { copy } from '../shared/copy/ux-vocabulary';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -12,7 +13,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
   <section class="page-head"><div><p class="eyebrow">UI-AI-001 · ADVISORY ONLY</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
   {canUse ? (
     <>
-      <section class="notice" role="note"><strong>Advisory boundary</strong><span>AI output can summarize, suggest questions, and draft text. It can never approve, reject, release, sign, or set an official PASS/FAIL, and it never replaces server-side authorization. Response actions are limited to copying text or using it as your own draft.</span></section>
+      <section class="notice" role="note"><strong>Advisory boundary</strong><span>{copy.boundaries.aiNotAuthority} Response actions are limited to copying text or using it as your own draft.</span></section>
       <section class="panel">
         <h2>Request advisory</h2>
         <form class="form" data-advisory-request>
@@ -23,7 +24,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
               {canDraft && <option value="DRAFT">Draft text</option>}
             </select>
           </label>
-          <label>Question / prompt<textarea name="question" required maxlength="4000" placeholder="What do you want analyzed?"></textarea></label>
+          <label>Question for analysis<textarea name="question" required maxlength="4000" placeholder="What should the advisory review?"></textarea></label>
           <fieldset class="context"><legend>Authorized context (optional, minimized)</legend>
             <p class="muted">Only explicitly authorized excerpts you provide here are sent. No hidden or global context is used, and records you are not authorized to see must never be pasted here.</p>
             <label>Source label<input name="contextLabel" maxlength="120" placeholder="e.g. Receiving item summary" /></label>

@@ -1,5 +1,6 @@
 import type { PermissionCode } from '../../shared/authorization/permissions';
 import type { IconName } from '../components/icon';
+import { copy } from '../../shared/copy/ux-vocabulary';
 
 export interface NavigationItem {
   id: string;
@@ -107,7 +108,7 @@ export const navigationGroups: NavigationGroup[] = [
       },
       {
         id: 'calibrations',
-        label: 'Calibration',
+        label: 'Calibration records',
         href: '/assets/calibrations',
         icon: 'calibration',
       },
@@ -125,7 +126,7 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       {
         id: 'approvals',
-        label: 'My approvals',
+        label: 'My approval queue',
         href: '/approvals',
         icon: 'approvals',
       },
@@ -215,7 +216,7 @@ export const navigationGroups: NavigationGroup[] = [
       },
       {
         id: 'backups',
-        label: 'Backups',
+        label: copy.labels.backupAndRecovery,
         href: '/system/backups',
         icon: 'backups',
       },
@@ -239,7 +240,7 @@ export const navigationGroups: NavigationGroup[] = [
       },
       {
         id: 'account',
-        label: 'Account',
+        label: 'Account settings',
         href: '/account',
         icon: 'account',
       },
@@ -268,7 +269,7 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
     laboratory: { label: 'Laboratory', href: '/laboratory' },
     assets: { label: 'Assets', href: '/assets' },
     documents: { label: 'Controlled documents', href: '/documents' },
-    approvals: { label: 'My approvals', href: '/approvals' },
+    approvals: { label: 'My approval queue', href: '/approvals' },
     'change-requests': { label: 'Change requests', href: '/change-requests' },
     reports: { label: 'Reports', href: '/reports' },
     governance: { label: 'Governance' },

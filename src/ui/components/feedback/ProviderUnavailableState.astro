@@ -4,9 +4,10 @@ interface Props {
   description?: string;
   retryHref?: string;
 }
+import { copy } from '../../../shared/copy/ux-vocabulary';
 const {
-  title = 'Operational data is temporarily unavailable',
-  description = 'The data provider did not return a confirmed result. This is not an empty or zero state.',
+  title = copy.states.providerUnavailable,
+  description = copy.states.providerUnavailableDetail,
   retryHref = `${Astro.url.pathname}${Astro.url.search}`,
 } = Astro.props;
 ---
@@ -15,7 +16,7 @@ const {
   <div>
     <h2 id="provider-unavailable-title">{title}</h2>
     <p>{description}</p>
-    <a href={retryHref}>Try again</a>
+    <a href={retryHref}>{copy.actions.retry}</a>
   </div>
 </section>
 <style>

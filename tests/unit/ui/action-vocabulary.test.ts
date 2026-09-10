@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { copy } from '../../../src/shared/copy/ux-vocabulary';
 
 /**
  * F-12 English-only vocabulary guards: sentence-case action labels without
@@ -112,7 +113,8 @@ describe('F-12 English-only action vocabulary', () => {
     expect(labNew).toContain('Save draft');
     expect(labNew).toContain('locale="en"');
     const formActions = readRepo('src/ui/components/forms/FormActions.astro');
-    expect(formActions).toContain("draftLabel = 'Save draft'");
+    expect(formActions).toContain('draftLabel = copy.actions.saveDraft');
+    expect(copy.actions.submitForReview).toBe('Submit for review');
   });
 
   it('reserves controlled transitions without renaming their semantics', () => {
@@ -129,5 +131,12 @@ describe('F-12 English-only action vocabulary', () => {
     );
     expect(receivingDetail).toContain('Release item');
     expect(receivingDetail).toContain('PASS is recorded, but this item is not released');
+  });
+
+  it('keeps regulated state boundaries explicit in reusable copy', () => {
+    expect(copy.boundaries.backupNotRestoreProof).toContain('not proof');
+    expect(copy.boundaries.passNotRelease).toContain('does not release');
+    expect(copy.boundaries.aiNotAuthority).toContain('advisory only');
+    expect(copy.states.providerUnavailableDetail).toContain('not empty');
   });
 });

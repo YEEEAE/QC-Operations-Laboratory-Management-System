@@ -67,7 +67,7 @@ Production evidence
 | 11 | Interaction Design Deep Dive | ✅ |
 | 12 | Advanced Form Design Deep Dive | ✅ |
 | 13 | UX Writing & Microcopy Deep Dive | ✅ |
-| 14 | Accessibility & Ergonomics Deep Dive | ☐ |
+| 14 | Accessibility & Ergonomics Deep Dive | ✅ |
 | 15 | Dashboard & Data Visualization Design Deep Dive | ☐ |
 | 16 | Data-Driven Design & Product Analytics | ☐ |
 | 17 | Motion & Digital Art Direction Deep Dive | ☐ |
@@ -1544,7 +1544,8 @@ Do not rename regulated domain terms without evidence and document authority.
 
 # PROMPT 14 — Accessibility & Ergonomics Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Act as a WCAG 2.2 AA Accessibility Engineer and enterprise ergonomics specialist.
