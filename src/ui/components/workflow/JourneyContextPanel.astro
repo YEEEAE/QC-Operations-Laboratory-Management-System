@@ -1,0 +1,105 @@
+---
+interface RelatedLink {
+  label: string;
+  href: string;
+  detail?: string;
+}
+
+interface Props {
+  ownerDomain: string;
+  currentState: string;
+  nextAction?: string;
+  nextActionHref?: string;
+  nextOwner?: string;
+  whyUnavailable?: string;
+  waitingOn?: string;
+  waitingSince?: string;
+  expectedEvent?: string;
+  recoveryHref?: string;
+  recoveryLabel?: string;
+  controlledContext?: string;
+  evidenceSummary?: string;
+  lastAction?: string;
+  lastUpdated?: string;
+  auditHref?: string;
+  relatedLinks?: readonly RelatedLink[];
+}
+
+const {
+  ownerDomain,
+  currentState,
+  nextAction,
+  nextActionHref,
+  nextOwner,
+  whyUnavailable,
+  waitingOn,
+  waitingSince,
+  expectedEvent,
+  recoveryHref,
+  recoveryLabel = 'Open recovery path',
+  controlledContext,
+  evidenceSummary,
+  lastAction,
+  lastUpdated,
+  auditHref,
+  relatedLinks = [],
+} = Astro.props;
+---
+
+<section class="journey-panel" aria-labelledby="journey-context-title">
+  <div class="journey-heading">
+    <div>
+      <p class="eyebrow">SERVICE HANDOFF</p>
+      <h2 id="journey-context-title">Journey context</h2>
+    </div>
+    <span class="owner">Owner: {ownerDomain}</span>
+  </div>
+
+  <div class="journey-grid">
+    <section class="journey-block state-block" aria-labelledby="journey-state-title">
+      <h3 id="journey-state-title">Current state</h3>
+      <p class="state-value">{currentState}</p>
+      {lastAction ? <p class="muted">Last committed action: {lastAction}</p> : null}
+      {lastUpdated ? <p class="muted">Last updated: {lastUpdated}</p> : null}
+    </section>
+
+    <section class="journey-block" aria-labelledby="journey-next-title">
+      <h3 id="journey-next-title">Next action</h3>
+      {nextAction ? nextActionHref ? <a class="next-link" href={nextActionHref}>{nextAction}</a> : <p class="next-action">{nextAction}</p> : <p class="muted">No action is available from this workspace.</p>}
+      {nextOwner ? <p><span class="label">Next owner</span>{nextOwner}</p> : null}
+      {whyUnavailable ? <p class="reason"><span class="label">Why unavailable</span>{whyUnavailable}</p> : null}
+      {recoveryHref ? <a class="recovery-link" href={recoveryHref}>{recoveryLabel}</a> : null}
+    </section>
+
+    <section class="journey-block" aria-labelledby="journey-wait-title">
+      <h3 id="journey-wait-title">Waiting / dependency</h3>
+      {waitingOn ? <p><span class="label">Waiting on</span>{waitingOn}</p> : <p class="muted">Not waiting on another handoff.</p>}
+      {waitingSince ? <p><span class="label">Since</span>{waitingSince}</p> : null}
+      {expectedEvent ? <p><span class="label">Expected event</span>{expectedEvent}</p> : null}
+    </section>
+
+    <section class="journey-block" aria-labelledby="journey-evidence-title">
+      <h3 id="journey-evidence-title">Evidence and trace</h3>
+      {controlledContext ? <p><span class="label">Controlled context</span>{controlledContext}</p> : null}
+      {evidenceSummary ? <p><span class="label">Evidence</span>{evidenceSummary}</p> : null}
+      {auditHref ? <a class="recovery-link" href={auditHref}>View audit history for this record</a> : null}
+    </section>
+  </div>
+
+  {relatedLinks.length ? (
+    <div class="related" aria-labelledby="journey-related-title">
+      <h3 id="journey-related-title">Related workspaces</h3>
+      <ul>
+        {relatedLinks.map((link) => <li><a href={link.href}>{link.label}</a>{link.detail ? <span>{link.detail}</span> : null}</li>)}
+      </ul>
+    </div>
+  ) : null}
+</section>
+
+<style>
+  .journey-panel{margin:var(--space-5) 0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .journey-heading{display:flex;justify-content:space-between;gap:var(--space-4);align-items:flex-start;margin-bottom:var(--space-4)}
+  .eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.journey-heading h2{margin:.25rem 0 0;font-size:1.05rem}.owner{padding:.35rem .55rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);color:var(--text-secondary);font-size:.75rem;white-space:nowrap}
+  .journey-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}.journey-block{min-width:0;padding:var(--space-4);background:var(--surface-raised);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.journey-block h3,.related h3{margin:0 0 .65rem;font-size:.78rem}.journey-block p{margin:.45rem 0;font-size:.82rem;line-height:1.45}.state-value{font-weight:800;color:var(--text-primary)}.muted{color:var(--text-muted)}.label{display:block;color:var(--text-muted);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}.next-link,.recovery-link{display:inline-block;color:var(--color-accent-primary-hover);font-weight:700}.next-link{margin-bottom:.35rem}.reason{padding-inline-start:.6rem;border-inline-start:3px solid var(--status-warning)}.related{margin-top:var(--space-3);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle)}.related ul{display:flex;flex-wrap:wrap;gap:.55rem 1rem;padding:0;margin:0;list-style:none}.related li{display:flex;gap:.45rem;align-items:baseline;font-size:.8rem}.related li span{color:var(--text-muted)}
+  @media(max-width:900px){.journey-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.journey-panel{padding:var(--space-4)}.journey-heading{display:grid}.owner{width:max-content}.journey-grid{grid-template-columns:1fr}.related ul{display:grid}}
+</style>

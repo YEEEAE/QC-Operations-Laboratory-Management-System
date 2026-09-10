@@ -1,5 +1,106 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — إكمال ربط handoffs والـtimelines لكل المساحات المطلوبة
+
+### تم التنفيذ
+- أضفت `JourneyContextPanel` إلى Document Version detail ليعرض دورة Draft/Review/Approval/Effective/Supersession، والمالك التالي، والانتظار، وسبب الحجب، وسجل Audit.
+- أضفت `JourneyContextPanel` إلى Approval detail مع source-domain link آمن بعد التحقق من UUID، ووضحت أن Approval يسجل القرار بينما الـowning domain يطبق transition.
+- أضفت `JourneyContextPanel` إلى Change Request detail مع حالات `APPROVED` و`APPLYING` و`APPLICATION_FAILED`، ووضحت أن approval لا يضمن application success.
+- أضفت `HandoffTimeline` مشتركة تعرض طلب الاعتماد، الإسناد، بدء المراجعة، أحداث Audit، ومحاولات التطبيق، مع صف منفصل يوضح أن notification delivery ليست جزءًا من business completion.
+- ثبّتُّ الروابط record-level أو register fallback حسب البيانات المؤكدة، ومنعت الروابط غير الموثوقة من approval context عبر `isUuid`.
+- أضفت regression test لعقد handoff read-only، فصل timeline facts، وربط كل الأسطح المتبقية بالـaudit context.
+
+### الملفات المتأثرة
+- `src/ui/components/workflow/JourneyContextPanel.astro`
+- `src/ui/components/workflow/HandoffTimeline.astro`
+- `src/pages/documents/[documentId]/versions/[versionId]/index.astro`
+- `src/pages/approvals/[approvalId].astro`
+- `src/pages/change-requests/[changeRequestId]/index.astro`
+- `tests/unit/ui/journey-context-panel.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 أخطاء، 0 warnings، و62 hints قديمة.
+- `pnpm exec vitest run tests/unit/ui/journey-context-panel.test.ts tests/unit/ui/universal-shell.test.ts tests/unit/ui/form-ux-contract.test.ts tests/integration/approvals/repository.test.ts tests/integration/change-requests/change-requests.test.ts tests/integration/documents/repository.test.ts` ✅ — 5 ملفات / 23 اختبارًا.
+- `pnpm build` ✅ — server/client build اكتمل؛ تحذير Node `v22.22.3` خارج عقد المشروع وتحذير chunk Three.js المعروف بقيَا.
+- `git diff --check` ✅
+- Browser مصادق، POST/mutation، outbox delivery، وrole/scope/state matrix ❌ لم تُنفذ؛ لا claim live completion.
+
+### النتيجة
+- **الحالة:** نجح محليًا / جزئي ويحتاج live evidence.
+- **مختصر:** اكتمل ربط عقد handoff مع كل المساحات المطلوبة، وصارت الانتقالات والانتظار والمالك والأدلة أوضح، مع بقاء الملكية والتفويض والتاريخ المضبوط كما هي.
+
+### ملاحظات / مشاكل مفتوحة
+- notification delivery ما زالت غير مكشوفة من read model الحالي؛ timeline تعرض هذا كـNOT EXPOSED بدل اختراع status.
+- بعض source links لا يمكن توليدها بدون `documentId`/record context مؤكد، لذلك يعرض النظام register fallback ولا يخترع route.
+- يلزم تحقق browser مصادق واختبارات provider/stale/SoD وPOST الفعلية على بيئة non-production disposable.
+- لا commit أو push أو deploy.
+
+## [2026-09-10] — تنفيذ أولي لعقد handoff وJourney Context على الأسطح التشغيلية
+
+### تم التنفيذ
+- أضفت مكوّن `JourneyContextPanel` read-only يعرض domain owner، current state، next action، next owner، سبب عدم التوفر، waiting/dependency، expected event، controlled context، evidence، audit link، والـrelated workspaces.
+- ربطت المكوّن بصفحة Receiving detail، مع إبقاء `Receiving Workflow State` و`Inspection Result` و`Release System State` منفصلة وعدم تحويل PASS إلى Release.
+- ربطت Inspection Review بسجل Receiving الأصلي ومساحة التنفيذ وسجل Audit مع توضيح صلاحية المراجعة وسبب الحجب عند غيابها.
+- ربطت Laboratory Test detail بساحات التنفيذ/المراجعة وسجل Audit، وأبقيت retest policy-dependent والـmeasurements/raw controlled context واضحة.
+- ربطت Calibration detail بسجل Equipment وسجل Calibration وأضفت waiting/owner واضحين، مع إبقاء overdue منفصلًا عن Equipment availability وMaintenance.
+- حافظت على أن كل الروابط cross-domain references/read context فقط، وأن الأفعال الحساسة تستمر عبر الـUse Cases الحالية والتفويض الخادمي.
+
+### الملفات المتأثرة
+- `src/ui/components/workflow/JourneyContextPanel.astro`
+- `src/pages/quarantine/receiving/[receivingId].astro`
+- `src/pages/quarantine/inspections/[inspectionId]/review.astro`
+- `src/pages/laboratory/tests/[labTestId]/index.astro`
+- `src/pages/assets/calibrations/[calibrationId].astro`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 أخطاء، 0 warnings، و62 hints قديمة.
+- `pnpm exec vitest run tests/unit/ui/universal-shell.test.ts tests/unit/ui/form-ux-contract.test.ts` ✅ — ملفان / 13 اختبارًا.
+- `pnpm build` ✅ — server/client build اكتمل؛ تحذير Node `v22.22.3` خارج عقد المشروع وتحذير chunk Three.js المعروف بقيَا.
+- `git diff --check` ✅
+- Browser مصادق، POST/mutation، outbox delivery، وrole/scope/state matrix ❌ لم تُنفذ؛ لا claim live completion.
+
+### النتيجة
+- **الحالة:** نجح محليًا / جزئي ويحتاج live evidence.
+- **مختصر:** صار عقد handoff مرئيًا ومستخدمًا فعليًا على أربع مساحات تشغيلية، مع record-level links حيث تتوفر الهوية، وبدون كسر حدود Quarantine/Laboratory/Assets/Audit أو التفويض.
+
+### ملاحظات / مشاكل مفتوحة
+- باقي Document Version وApproval وChange Request تحتاج ربطًا بنفس العقد في دفعة لاحقة، مع مصدر فعلي للـtarget/source link والـapplication result.
+- ما زالت timeline الموحدة بين business transition وapproval/signature وaudit وnotification تحتاج read model/بيانات خادمية قبل تنفيذها.
+- لا commit أو push أو deploy.
+
+## [2026-09-10] — خرائط رحلات الخدمة التشغيلية وربط handoffs بين الدومينات
+
+### تم التنفيذ
+- أنشأت خرائط Service Design كاملة لرحلة Receiving → Quarantine → Inspection → Laboratory عند الحاجة → Finding/NCR عند الانطباق → Disposition/Approval → Release → Audit.
+- أنشأت خريطة Equipment → Calibration due → Warning/Assignment → Execution → Review → Status update، مع فصل Calibration عن Maintenance وعن Equipment availability.
+- أنشأت خريطة Controlled Document → Draft → Review → Approval → Effective → Change Request → Application → Supersession، مع حفظ النسخ التاريخية.
+- أضفت لكل مرحلة: Actor، Trigger، System touchpoint، Action، System response، Handoff، Wait state، Failure mode، Decision، Evidence، Completion، Next owner.
+- وثّقت broken handoffs والفجوات الحالية في record-level links، next action، waiting ownership، notification/outbox مقابل business completion، repeated entry، policy-dependent dead ends، وcontextual audit links.
+- صممت عقد `Next action / Waiting on / Next owner / Why unavailable / Evidence and trace` كـread model مركّب، بدون إنشاء master status أو نقل ملكية الـmutation بين الدومينات.
+- رتبت backlog من ستة تغييرات، وأبقيت قرارات Release/NCR/Calibration/Document Effective غير المؤكدة معلّمة policy-dependent أو source-dependent.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-service-design-journey-maps.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- قراءة `SYSTEM-INVARIANTS.md` و`DOMAIN-MAP.md` و`BUSINESS-RULES.md` و`STATE-MACHINES.md` و`ROLE-MATRIX.md` و`PERMISSION-MATRIX.md` و`DATA-MODEL.md` و`UI-UX-SPECIFICATION.md` و`ROUTE-MANIFEST-SPECIFICATION.md` ✅
+- `journey-map` و`ui-ux-pro-max` ✅ — طبقت خرائط persona/service journey وبحثت UX عن workflow feedback، loading/double-submit، keyboard navigation، breadcrumbs، deep links، وAstro no-JS/on-demand.
+- فحص وجود أقسام الرحلات والعقد والقيود بـ`rg` ✅ — 189 سطرًا، وثلاث خرائط وجميع حقول الرحلة مطلوبة.
+- `git diff --check` ✅
+- تحقق browser/authenticated وoutbox/notification delivery وPOST/approval/release/change application ❌ لم تُنفذ؛ الوثيقة تسجلها صراحة كـNOT VERIFIED.
+
+### النتيجة
+- **الحالة:** نجح كتدقيق Service Design / يحتاج تنفيذ وتحقيق حي.
+- **مختصر:** صار عند المشروع تصور خدمة end-to-end قابل للتنفيذ يوضح الملكية والانتظار والدليل والوجهة التالية، مع الحفاظ على حدود Quarantine/Laboratory/Quality/Approvals/Documents/Assets وAudit/Notifications.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تنفيذ عقد handoff والـrecord-level links في دفعة كودية مستقلة بعد اعتماد read-model contract.
+- يلزم اختبار حي بفيكستشر مصادق لكل role/scope مع فشل provider/stale/SoD، وعدم اعتبار provider-unavailable أو policy-blocked كـempty أو success.
+- لا commit أو push أو deploy.
+
 ## [2026-09-10] — تدقيق Motion Design وDigital Art Direction
 
 ### تم التنفيذ

@@ -1,0 +1,26 @@
+---
+interface TimelineEvent {
+  label: string;
+  detail: string;
+  kind?: 'business' | 'approval' | 'audit' | 'evidence';
+}
+
+interface Props {
+  events: readonly TimelineEvent[];
+  notificationStatus?: string;
+}
+
+const { events, notificationStatus = 'Notification delivery is not exposed by this read model.' } = Astro.props;
+---
+
+<section class="handoff-timeline" aria-labelledby="handoff-timeline-title">
+  <div class="timeline-head"><div><p class="eyebrow">HANDOFF EVIDENCE</p><h2 id="handoff-timeline-title">Operational timeline</h2></div><span>Facts stay separate</span></div>
+  <ol>
+    {events.map((event) => <li class={event.kind ?? 'business'}><span class="marker" aria-hidden="true"></span><div><strong>{event.label}</strong><p>{event.detail}</p></div></li>)}
+    <li class="notification"><span class="marker" aria-hidden="true"></span><div><strong>Notification delivery</strong><p>{notificationStatus}</p></div></li>
+  </ol>
+</section>
+
+<style>
+  .handoff-timeline{margin:var(--space-5) 0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.timeline-head{display:flex;justify-content:space-between;gap:var(--space-4);align-items:start}.timeline-head h2{margin:.25rem 0 0;font-size:1.05rem}.timeline-head>span{color:var(--text-muted);font-size:.75rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}ol{list-style:none;margin:var(--space-5) 0 0;padding:0;display:grid;gap:var(--space-3)}li{display:grid;grid-template-columns:12px 1fr;gap:var(--space-3);align-items:start;padding-inline-start:2px}li:not(:last-child){padding-bottom:var(--space-3);border-bottom:1px solid var(--color-border-subtle)}.marker{width:10px;height:10px;margin-top:.28rem;border:2px solid var(--color-accent-primary);border-radius:50%}.approval .marker{border-color:var(--status-review)}.audit .marker{border-color:var(--color-accent-primary)}.evidence .marker{border-color:var(--status-success)}.notification .marker{border-color:var(--status-warning)}strong{font-size:.82rem}p{margin:.25rem 0 0;color:var(--text-muted);font-size:.78rem;line-height:1.45}@media(max-width:560px){.handoff-timeline{padding:var(--space-4)}.timeline-head{display:grid}}
+</style>

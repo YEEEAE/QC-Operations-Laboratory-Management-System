@@ -3,6 +3,9 @@ import AppLayout from '../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
 import LoadingState from '../../ui/components/feedback/LoadingState.astro';
 import StaleVersionState from '../../ui/components/feedback/StaleVersionState.astro';
+import JourneyContextPanel from '../../ui/components/workflow/JourneyContextPanel.astro';
+import HandoffTimeline from '../../ui/components/workflow/HandoffTimeline.astro';
+import { isUuid } from '../../shared/id/uuid.js';
 import { approvalsReadDependencies } from '../../modules/approvals/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -22,10 +25,23 @@ const humanize = (key: string): string =>
     .replaceAll(/[_-]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 const contextLabel = (key: string): string => humanize(key);
+const contextUuid = (key: string): string | undefined => typeof context[key] === 'string' && isUuid(context[key]) ? context[key] : undefined;
+const subjectHref = contextUuid('documentId') ? `/documents/${contextUuid('documentId')}` : contextUuid('inspectionId') ? `/quarantine/inspections/${contextUuid('inspectionId')}` : contextUuid('labTestId') ? `/laboratory/tests/${contextUuid('labTestId')}` : contextUuid('calibrationId') ? `/assets/calibrations/${contextUuid('calibrationId')}` : undefined;
+const approvalActionable = approval.workItem.state === 'PENDING' || approval.workItem.state === 'IN_PROGRESS';
+const approvalNextAction = approvalActionable ? 'Submit controlled decision' : 'No approval action is available';
+const approvalNextOwner = approvalActionable ? (approval.workItem.assignedRoleRequirement ?? 'Assigned approver') : 'Owning domain';
+const approvalEvents = [
+  { label: 'Approval requested', detail: approval.approvalCase.requestedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'business' as const },
+  ...(approval.workItem.assignedAt ? [{ label: 'Approval work item assigned', detail: approval.workItem.assignedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'approval' as const }] : []),
+  ...(approval.workItem.startedAt ? [{ label: 'Review started', detail: approval.workItem.startedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'approval' as const }] : []),
+  { label: 'Source transition', detail: 'The owning domain applies the business transition after approval verification.', kind: 'business' as const },
+];
 ---
 <AppLayout title={`Approval · ${subjectLabel}`} locale="en" direction="ltr">
   <nav class="crumb"><a href="/approvals">My Approvals</a><span>/</span><span>{subjectLabel}</span></nav>
   <section class="head"><div><p class="eyebrow">UI-APR-002 · APPROVAL REVIEW WORKSPACE</p><h1>{subjectLabel}</h1><p>{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · Current version {approval.subject.version.toString()}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
+  <JourneyContextPanel ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? 'state: this approval work item is no longer actionable' : undefined} waitingOn={approvalActionable ? approvalNextOwner : 'Owning domain transition'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Source-domain transition or audit trace'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={`/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
+  <HandoffTimeline events={approvalEvents} />
   <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{humanize(approval.approvalCase.workflowType)}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requester</dt><dd>Recorded in the controlled audit trail</dd><dt>State</dt><dd>{humanize(approval.subject.state)}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ? 'Available in the controlled record' : 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{contextLabel(key)}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value).match(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i) ? 'Available in the controlled record' : String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
   <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required when returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit" data-submit>Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output></form></section>
   <div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div>
