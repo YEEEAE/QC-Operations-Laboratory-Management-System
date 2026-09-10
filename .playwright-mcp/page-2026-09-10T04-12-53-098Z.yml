@@ -1,0 +1,200 @@
+- generic [ref=f5e2]:
+  - link "Skip to main content" [ref=f5e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f5e4]:
+    - complementary "Primary navigation" [ref=f5e5]:
+      - navigation "Primary navigation" [ref=f5e6]:
+        - generic [aria-hidden] [ref=f5e8]: QC
+        - button "Expand navigation" [ref=f5e9] [cursor=pointer]
+        - generic [ref=f5e12]:
+          - region "Overview" [ref=f5e13]:
+            - list [ref=f5e14]:
+              - listitem [ref=f5e15]:
+                - link "Dashboard" [ref=f5e16] [cursor=pointer]:
+                  - /url: /dashboard
+          - region "Work" [ref=f5e23]:
+            - list [ref=f5e24]:
+              - listitem [ref=f5e25]:
+                - link "Tasks" [ref=f5e26] [cursor=pointer]:
+                  - /url: /tasks
+          - region "Quality" [ref=f5e30]:
+            - list [ref=f5e31]:
+              - listitem [ref=f5e32]:
+                - link "Findings" [ref=f5e33] [cursor=pointer]:
+                  - /url: /quality/findings
+              - listitem [ref=f5e37]:
+                - link "NCR" [ref=f5e38] [cursor=pointer]:
+                  - /url: /quality/ncr
+              - listitem [ref=f5e42]:
+                - link "RCA" [ref=f5e43] [cursor=pointer]:
+                  - /url: /quality/rca
+              - listitem [ref=f5e47]:
+                - link "CAPA" [ref=f5e48] [cursor=pointer]:
+                  - /url: /quality/capa
+          - region "Quarantine" [ref=f5e52]:
+            - list [ref=f5e53]:
+              - listitem [ref=f5e54]:
+                - link "Quarantine dashboard" [ref=f5e55] [cursor=pointer]:
+                  - /url: /quarantine
+              - listitem [ref=f5e60]:
+                - link "Receiving items" [ref=f5e61] [cursor=pointer]:
+                  - /url: /quarantine/receiving
+              - listitem [ref=f5e66]:
+                - link "Inspection reports" [ref=f5e67] [cursor=pointer]:
+                  - /url: /quarantine/inspections
+              - listitem [ref=f5e71]:
+                - link "Quarantine administration" [ref=f5e72] [cursor=pointer]:
+                  - /url: /quarantine/admin
+          - region "Laboratory" [ref=f5e76]:
+            - list [ref=f5e77]:
+              - listitem [ref=f5e78]:
+                - link "Laboratory tests" [ref=f5e79] [cursor=pointer]:
+                  - /url: /laboratory/tests
+          - region "Assets" [ref=f5e83]:
+            - list [ref=f5e84]:
+              - listitem [ref=f5e85]:
+                - link "Equipment" [ref=f5e86] [cursor=pointer]:
+                  - /url: /assets/equipment
+              - listitem [ref=f5e90]:
+                - link "Calibration" [ref=f5e91] [cursor=pointer]:
+                  - /url: /assets/calibrations
+              - listitem [ref=f5e96]:
+                - link "Maintenance" [ref=f5e97] [cursor=pointer]:
+                  - /url: /assets/maintenance
+          - region "Governance" [ref=f5e101]:
+            - list [ref=f5e102]:
+              - listitem [ref=f5e103]:
+                - link "My approvals" [ref=f5e104] [cursor=pointer]:
+                  - /url: /approvals
+              - listitem [ref=f5e108]:
+                - link "Change requests" [ref=f5e109] [cursor=pointer]:
+                  - /url: /change-requests
+          - region "Insights" [ref=f5e116]:
+            - list [ref=f5e117]:
+              - listitem [ref=f5e118]:
+                - link "Reports" [ref=f5e119] [cursor=pointer]:
+                  - /url: /reports
+              - listitem [ref=f5e123]:
+                - link "AI advisory" [ref=f5e124] [cursor=pointer]:
+                  - /url: /ai-advisory
+          - region "Administration" [ref=f5e128]:
+            - list [ref=f5e129]:
+              - listitem [ref=f5e130]:
+                - link "Administration" [ref=f5e131] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=f5e134]:
+                - link "Users" [ref=f5e135] [cursor=pointer]:
+                  - /url: /admin/users
+              - listitem [ref=f5e142]:
+                - link "Roles" [ref=f5e143] [cursor=pointer]:
+                  - /url: /admin/roles
+              - listitem [ref=f5e148]:
+                - link "Permissions" [ref=f5e149] [cursor=pointer]:
+                  - /url: /admin/permissions
+              - listitem [ref=f5e153]:
+                - link "Scopes" [ref=f5e154] [cursor=pointer]:
+                  - /url: /admin/scopes
+          - region "System" [ref=f5e160]:
+            - list [ref=f5e161]:
+              - listitem [ref=f5e162]:
+                - link "Audit history" [ref=f5e163] [cursor=pointer]:
+                  - /url: /audit
+              - listitem [ref=f5e168]:
+                - link "System health" [ref=f5e169] [cursor=pointer]:
+                  - /url: /system/health
+              - listitem [ref=f5e173]:
+                - link "Backups" [ref=f5e174] [cursor=pointer]:
+                  - /url: /system/backups
+              - listitem [ref=f5e179]:
+                - link "Controlled documents" [ref=f5e180] [cursor=pointer]:
+                  - /url: /documents
+              - listitem [ref=f5e185]:
+                - link "Notifications" [ref=f5e186] [cursor=pointer]:
+                  - /url: /notifications
+              - listitem [ref=f5e190]:
+                - link "Search" [ref=f5e191] [cursor=pointer]:
+                  - /url: /search
+              - listitem [ref=f5e196]:
+                - link "Account" [ref=f5e197] [cursor=pointer]:
+                  - /url: /account
+    - generic [ref=f5e202]:
+      - banner [ref=f5e203]:
+        - generic [ref=f5e204]:
+          - generic [ref=f5e205]:
+            - navigation "Breadcrumb" [ref=f5e206]:
+              - list [ref=f5e207]:
+                - listitem [ref=f5e208]:
+                  - link "Home" [ref=f5e209] [cursor=pointer]:
+                    - /url: /dashboard
+                - listitem [ref=f5e210]:
+                  - text: /
+                  - link "Change requests" [ref=f5e211] [cursor=pointer]:
+                    - /url: /change-requests
+            - 'generic "Operational scope: Authorized operational scope" [ref=f5e212]':
+              - generic [ref=f5e214]:
+                - generic [ref=f5e215]: Current scope
+                - strong [ref=f5e216]: Authorized operational scope
+          - generic [ref=f5e217]:
+            - link "Search authorized records (Control K)" [ref=f5e218] [cursor=pointer]:
+              - /url: /search
+              - generic [ref=f5e222]: Search
+              - generic [ref=f5e223]: Ctrl K
+            - link "0 unread notifications" [ref=f5e224] [cursor=pointer]:
+              - /url: /notifications
+              - generic "0 unread" [ref=f5e227]: "0"
+            - link "0 pending approvals" [ref=f5e228] [cursor=pointer]:
+              - /url: /approvals
+              - generic "0 pending" [ref=f5e231]: "0"
+              - generic [ref=f5e232]: Approvals
+            - group [ref=f5e233]:
+              - generic "01a07e39-b3d7-7357-b05b-1eb0d11b08fb Authenticated user" [ref=f5e234] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f5e235]: "0"
+                - generic [ref=f5e236]:
+                  - strong [ref=f5e237]: 01a07e39-b3d7-7357-b05b-1eb0d11b08fb
+                  - generic [ref=f5e238]: Authenticated user
+      - main [ref=f5e241]:
+        - generic [ref=f5e242]:
+          - generic [ref=f5e243]:
+            - paragraph [ref=f5e244]: GOV-CHG-002 · DRAFT ONLY
+            - heading "New change request" [level=1] [ref=f5e245]
+            - paragraph [ref=f5e246]: This records a proposed change against a controlled document version. It does not apply, approve, or release the target.
+          - link "Back to register" [ref=f5e247] [cursor=pointer]:
+            - /url: /change-requests
+        - generic [ref=f5e248]:
+          - group "Request context" [ref=f5e249]:
+            - generic [ref=f5e251]:
+              - generic [ref=f5e253]:
+                - text: Change number
+                - generic [ref=f5e254]: Use the change number from your approved source. The technical record identifier is generated server-side.
+                - textbox "Change number Use the change number from your approved source. The technical record identifier is generated server-side." [ref=f5e255]
+              - generic [ref=f5e257]:
+                - text: Reason
+                - generic [ref=f5e258]: Why this change is needed. Required for every change request.
+                - textbox "Reason Why this change is needed. Required for every change request." [ref=f5e259]
+          - group "Controlled target" [ref=f5e260]:
+            - paragraph [ref=f5e262]: Controlled document version (the only supported change target in this baseline)
+            - generic [ref=f5e265]:
+              - text: Controlled document version
+              - generic [ref=f5e266]: Choose from controlled document versions in your authorized scope. The target reference, version, snapshot, and current values are captured server-side after selection.
+              - combobox "Controlled document version Choose from controlled document versions in your authorized scope. The target reference, version, snapshot, and current values are captured server-side after selection." [ref=f5e267] [cursor=pointer]:
+                - option "Select a controlled version…" [selected]
+            - status [ref=f5e268]: No controlled versions are available in your authorized scope. A new change request cannot be started until a version you may view exists.
+          - group "Proposed change" [ref=f5e269]:
+            - generic [ref=f5e271]:
+              - generic [ref=f5e273]:
+                - text: Change field
+                - generic [ref=f5e274]: Only the allowlisted document version fields can be proposed.
+                - combobox "Change field Only the allowlisted document version fields can be proposed." [ref=f5e275] [cursor=pointer]:
+                  - option "Select a field…" [selected]
+                  - option "Revision reference"
+                  - option "Change summary"
+                  - option "Controlled content hash"
+              - generic [ref=f5e277]:
+                - text: Proposed value
+                - generic [ref=f5e278]: The new value for the selected field. The current value is shown above and stored server-side.
+                - textbox "Proposed value The new value for the selected field. The current value is shown above and stored server-side." [ref=f5e279]
+          - status
+          - generic [ref=f5e280]:
+            - link "Cancel" [ref=f5e281] [cursor=pointer]:
+              - /url: /change-requests
+            - button "Create draft" [ref=f5e282] [cursor=pointer]

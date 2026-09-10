@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ Prompt 14 (C-01..C-06) في Chrome: الكل NOT VERIFIED لبوابة الهوية
+
+### تم التنفيذ
+- ثبت عينة البداية والنهاية لهوية البناء عبر `GET /api/system/release-identity` في Chrome: كلتاهما `200 {"status":"UNVERIFIED","release":{}}` بلا releaseId/buildId/gitSha/timestamp/environment، وصفحة `/system/health` تعرض Release identity كلها `UNVERIFIED`؛ البوابة fail-closed تمنع أي PASS.
+- أعدت استخدام جلسة Playwright المصادقة الموجودة مسبقًا (بلا إدخال أو تسجيل secrets وبلا logout/login جديد): `/login` أعاد التوجيه إلى `/dashboard`، والتنقل يعرض Administration وSystem، وDashboard يعرض 4 KPI صفرية وحدث `GRANT_SYSTEM_OWNER_ACCESS` واحدًا بلا raw exception.
+- فحصت `/system/health`: ‏`Core system: READY` مع `database HEALTHY` وفصل `storage UNKNOWN` و`ai-provider UNKNOWN` و`NO CATALOG DATA` و`RESTORE NOT VERIFIED` بلا false-green ظاهريًا، لكنه غير محسوب PASS لغياب الهوية.
+- فحصت `/audit`: ‏4 أحداث مع فلاتر Subject/Actor/Action/From/To/Page size وترقيم `Showing 4 of 4` وحدث `GRANT_SYSTEM_OWNER_ACCESS` ظاهر في السطحين، وفحصت `/change-requests/new`: منتقي نسخة مصرح + 3 خيارات فقط (`Revision reference/Change summary/Controlled content hash`) بلا `targetSnapshot/Field path/Data type/targetId`؛ الـUUID الوحيد هو user header وليس target.
+- لم أرسل أي mutation إنتاجية (لا POST ولا approval/release/restore) والتقطت لقطات viewport مؤرخة داخل `.playwright-mcp/` مع snapshots و`fetch` assertions للـstatus/body.
+
+### الملفات المتأثرة
+- `.playwright-mcp/page-2026-09-10T04-1*.png/yml` (أدلة الجولة المؤرخة، غير متتبعة)
+- `.agents/mind/01-mind-latest.md` (هذا السجل)
+- بلا تعديل كود: `git diff --check` نظيف على HEAD `853532913a8fae67c0c13bf20572125653b0c65a`
+
+### التحقق
+- `fetch /api/health/live` ✅ — `200 {"status":"healthy"}`
+- `fetch /api/health/ready` ✅ — `200 {"status":"healthy"}` (آلات فقط، بلا هوية)
+- `fetch /api/system/release-identity` بداية ونهاية ❌ — `200 UNVERIFIED {}` (البوابة تفشل مغلقة)
+- Chrome snapshots/screenshots ✅ — dashboard/health/audit/change-request مؤرشفة
+- `git diff --check` ✅
+
+### النتيجة
+- **الحالة:** فشل مغلق / غير متحقق (fail-closed)
+- **مختصر:** C-01 وC-02 وC-03 وC-04 وC-05 وC-06 كلها `NOT VERIFIED` (‏0/6 PASS و0 FAIL) لأن هوية Prompt 12 غائبة على المنشور (`UNVERIFIED` ولا تطابق SHA المحلي) ولا توجد fixtures أدوار سالبة/موجبة ولا مصادقة جديدة مشهودة في هذه الجولة؛ الملاحظات السطحية الإيجابية لا تُحتسب PASS.
+
+### ملاحظات / مشاكل مفتوحة
+- الإنتاج يرد `200 UNVERIFIED` بدل `401 AUTH_REQUIRED` المسجل في `src/pages/api/system/release-identity.ts` — المنشور أقدم من كود Prompt 12 أو بلا `RELEASE_*` محقونة؛ يلزم نشر نفس SHA `8535329` مع تعبئة `RELEASE_*` ثم إعادة Prompt 14.
+- C-01 يحتاج مصادقة جديدة مشهودة (labels/errors/redirect) وC-02/C-12 يحتاجان fixture least-privileged واختبار direct-route/forged؛ لم تُستخدم أي credentials هنا.
+- لا commit أو push أو deploy أو production mutation.
+
 ## [2026-09-10] — تجهيز حسابات وفيكستشرز التحقق الآمنة ومصفوفة C-12 (Prompt 13)
 
 ### تم التنفيذ

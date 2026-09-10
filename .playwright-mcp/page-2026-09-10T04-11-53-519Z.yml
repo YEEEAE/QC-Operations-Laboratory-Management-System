@@ -1,0 +1,195 @@
+- generic [ref=f2e2]:
+  - link "Skip to main content" [ref=f2e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f2e4]:
+    - complementary "Primary navigation" [ref=f2e5]:
+      - navigation "Primary navigation" [ref=f2e6]:
+        - generic [aria-hidden] [ref=f2e8]: QC
+        - button "Expand navigation" [ref=f2e9] [cursor=pointer]
+        - generic [ref=f2e12]:
+          - region "Overview" [ref=f2e13]:
+            - list [ref=f2e14]:
+              - listitem [ref=f2e15]:
+                - link "Dashboard" [ref=f2e16] [cursor=pointer]:
+                  - /url: /dashboard
+          - region "Work" [ref=f2e23]:
+            - list [ref=f2e24]:
+              - listitem [ref=f2e25]:
+                - link "Tasks" [ref=f2e26] [cursor=pointer]:
+                  - /url: /tasks
+          - region "Quality" [ref=f2e30]:
+            - list [ref=f2e31]:
+              - listitem [ref=f2e32]:
+                - link "Findings" [ref=f2e33] [cursor=pointer]:
+                  - /url: /quality/findings
+              - listitem [ref=f2e37]:
+                - link "NCR" [ref=f2e38] [cursor=pointer]:
+                  - /url: /quality/ncr
+              - listitem [ref=f2e42]:
+                - link "RCA" [ref=f2e43] [cursor=pointer]:
+                  - /url: /quality/rca
+              - listitem [ref=f2e47]:
+                - link "CAPA" [ref=f2e48] [cursor=pointer]:
+                  - /url: /quality/capa
+          - region "Quarantine" [ref=f2e52]:
+            - list [ref=f2e53]:
+              - listitem [ref=f2e54]:
+                - link "Quarantine dashboard" [ref=f2e55] [cursor=pointer]:
+                  - /url: /quarantine
+              - listitem [ref=f2e60]:
+                - link "Receiving items" [ref=f2e61] [cursor=pointer]:
+                  - /url: /quarantine/receiving
+              - listitem [ref=f2e66]:
+                - link "Inspection reports" [ref=f2e67] [cursor=pointer]:
+                  - /url: /quarantine/inspections
+              - listitem [ref=f2e71]:
+                - link "Quarantine administration" [ref=f2e72] [cursor=pointer]:
+                  - /url: /quarantine/admin
+          - region "Laboratory" [ref=f2e76]:
+            - list [ref=f2e77]:
+              - listitem [ref=f2e78]:
+                - link "Laboratory tests" [ref=f2e79] [cursor=pointer]:
+                  - /url: /laboratory/tests
+          - region "Assets" [ref=f2e83]:
+            - list [ref=f2e84]:
+              - listitem [ref=f2e85]:
+                - link "Equipment" [ref=f2e86] [cursor=pointer]:
+                  - /url: /assets/equipment
+              - listitem [ref=f2e90]:
+                - link "Calibration" [ref=f2e91] [cursor=pointer]:
+                  - /url: /assets/calibrations
+              - listitem [ref=f2e96]:
+                - link "Maintenance" [ref=f2e97] [cursor=pointer]:
+                  - /url: /assets/maintenance
+          - region "Governance" [ref=f2e101]:
+            - list [ref=f2e102]:
+              - listitem [ref=f2e103]:
+                - link "My approvals" [ref=f2e104] [cursor=pointer]:
+                  - /url: /approvals
+              - listitem [ref=f2e108]:
+                - link "Change requests" [ref=f2e109] [cursor=pointer]:
+                  - /url: /change-requests
+          - region "Insights" [ref=f2e116]:
+            - list [ref=f2e117]:
+              - listitem [ref=f2e118]:
+                - link "Reports" [ref=f2e119] [cursor=pointer]:
+                  - /url: /reports
+              - listitem [ref=f2e123]:
+                - link "AI advisory" [ref=f2e124] [cursor=pointer]:
+                  - /url: /ai-advisory
+          - region "Administration" [ref=f2e128]:
+            - list [ref=f2e129]:
+              - listitem [ref=f2e130]:
+                - link "Administration" [ref=f2e131] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=f2e134]:
+                - link "Users" [ref=f2e135] [cursor=pointer]:
+                  - /url: /admin/users
+              - listitem [ref=f2e142]:
+                - link "Roles" [ref=f2e143] [cursor=pointer]:
+                  - /url: /admin/roles
+              - listitem [ref=f2e148]:
+                - link "Permissions" [ref=f2e149] [cursor=pointer]:
+                  - /url: /admin/permissions
+              - listitem [ref=f2e153]:
+                - link "Scopes" [ref=f2e154] [cursor=pointer]:
+                  - /url: /admin/scopes
+          - region "System" [ref=f2e160]:
+            - list [ref=f2e161]:
+              - listitem [ref=f2e162]:
+                - link "Audit history" [ref=f2e163] [cursor=pointer]:
+                  - /url: /audit
+              - listitem [ref=f2e168]:
+                - link "System health" [ref=f2e169] [cursor=pointer]:
+                  - /url: /system/health
+              - listitem [ref=f2e173]:
+                - link "Backups" [ref=f2e174] [cursor=pointer]:
+                  - /url: /system/backups
+              - listitem [ref=f2e179]:
+                - link "Controlled documents" [ref=f2e180] [cursor=pointer]:
+                  - /url: /documents
+              - listitem [ref=f2e185]:
+                - link "Notifications" [ref=f2e186] [cursor=pointer]:
+                  - /url: /notifications
+              - listitem [ref=f2e190]:
+                - link "Search" [ref=f2e191] [cursor=pointer]:
+                  - /url: /search
+              - listitem [ref=f2e196]:
+                - link "Account" [ref=f2e197] [cursor=pointer]:
+                  - /url: /account
+    - generic [ref=f2e202]:
+      - banner [ref=f2e203]:
+        - generic [ref=f2e204]:
+          - generic [ref=f2e205]: QC Operational Command Center
+          - generic [ref=f2e206]: Authorized operational scope
+      - main [ref=f2e207]:
+        - generic [ref=f2e208]:
+          - generic [ref=f2e209]:
+            - paragraph [ref=f2e210]: OVERVIEW
+            - heading "Dashboard" [level=1] [ref=f2e211]
+            - paragraph [ref=f2e212]: Authorized work that needs attention, in your current operational scope.
+          - time [ref=f2e213]: Snapshot 9/10/2026, 7:11:52 AM
+        - region "Operational key performance indicators" [ref=f2e214]:
+          - article [ref=f2e215]:
+            - generic [ref=f2e216]:
+              - text: Pending review
+              - generic "Authorized inspection and approval work awaiting action." [ref=f2e217]: i
+            - strong [ref=f2e218]: "0"
+            - generic [ref=f2e219]: Updated current snapshot
+            - link "View records" [ref=f2e220] [cursor=pointer]:
+              - /url: /approvals
+          - article [ref=f2e223]:
+            - generic [ref=f2e224]:
+              - text: HOLD items
+              - generic "Authorized receiving items whose inspection result is HOLD." [ref=f2e225]: i
+            - strong [ref=f2e226]: "0"
+            - generic [ref=f2e227]: Updated current snapshot
+            - link "View records" [ref=f2e228] [cursor=pointer]:
+              - /url: /quarantine/receiving?inspectionResult=HOLD
+          - article [ref=f2e231]:
+            - generic [ref=f2e232]:
+              - text: Inspection PASS
+              - generic "Authorized inspection reports with final scientific result PASS." [ref=f2e233]: i
+            - strong [ref=f2e234]: "0"
+            - generic [ref=f2e235]: Updated current snapshot
+            - link "View records" [ref=f2e236] [cursor=pointer]:
+              - /url: /quarantine/inspections
+          - article [ref=f2e239]:
+            - generic [ref=f2e240]:
+              - text: Released items
+              - generic "Authorized receiving items with release system state true; separate from PASS." [ref=f2e241]: i
+            - strong [ref=f2e242]: "0"
+            - generic [ref=f2e243]: Updated current snapshot
+            - link "View records" [ref=f2e244] [cursor=pointer]:
+              - /url: /quarantine/receiving?workflowState=RELEASED
+        - generic [ref=f2e247]:
+          - generic [ref=f2e248]:
+            - region [ref=f2e249]:
+              - generic [ref=f2e251]:
+                - paragraph [ref=f2e252]: TREND CONTEXT
+                - heading "Operational trend" [level=2] [ref=f2e253]
+              - paragraph [ref=f2e254]: No trend series is available for the records available to your account in this snapshot.
+            - region [ref=f2e255]:
+              - generic [ref=f2e256]:
+                - generic [ref=f2e257]:
+                  - paragraph [ref=f2e258]: ATTENTION REQUIRED
+                  - heading "Items needing a decision or follow-up" [level=2] [ref=f2e259]
+                - link "Open queue" [ref=f2e260] [cursor=pointer]:
+                  - /url: /approvals
+              - paragraph [ref=f2e261]: No attention items are available for the records in your account.
+          - complementary [ref=f2e262]:
+            - region [ref=f2e263]:
+              - generic [ref=f2e264]:
+                - generic [ref=f2e265]:
+                  - paragraph [ref=f2e266]: RECENT ACTIVITY
+                  - heading "Audit-aware timeline" [level=2] [ref=f2e267]
+                - link "History" [ref=f2e268] [cursor=pointer]:
+                  - /url: /audit
+              - list [ref=f2e269]:
+                - listitem [ref=f2e270]:
+                  - time [ref=f2e271]: 9/9/2026, 12:46:54 AM
+                  - strong [ref=f2e272]: GRANT_SYSTEM_OWNER_ACCESS
+                  - generic [ref=f2e273]: User-approved exclusive full-system access
+            - generic [ref=f2e274]:
+              - strong [ref=f2e275]: PASS and Released are separate
+              - paragraph [ref=f2e276]: A scientific PASS does not change the release system state. Follow the controlled workflow for release decisions.

@@ -1,0 +1,242 @@
+- generic [ref=f3e2]:
+  - link "Skip to main content" [ref=f3e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f3e4]:
+    - complementary "Primary navigation" [ref=f3e5]:
+      - navigation "Primary navigation" [ref=f3e6]:
+        - generic [aria-hidden] [ref=f3e8]: QC
+        - button "Expand navigation" [ref=f3e9] [cursor=pointer]
+        - generic [ref=f3e12]:
+          - region "Overview" [ref=f3e13]:
+            - list [ref=f3e14]:
+              - listitem [ref=f3e15]:
+                - link "Dashboard" [ref=f3e16] [cursor=pointer]:
+                  - /url: /dashboard
+          - region "Work" [ref=f3e23]:
+            - list [ref=f3e24]:
+              - listitem [ref=f3e25]:
+                - link "Tasks" [ref=f3e26] [cursor=pointer]:
+                  - /url: /tasks
+          - region "Quality" [ref=f3e30]:
+            - list [ref=f3e31]:
+              - listitem [ref=f3e32]:
+                - link "Findings" [ref=f3e33] [cursor=pointer]:
+                  - /url: /quality/findings
+              - listitem [ref=f3e37]:
+                - link "NCR" [ref=f3e38] [cursor=pointer]:
+                  - /url: /quality/ncr
+              - listitem [ref=f3e42]:
+                - link "RCA" [ref=f3e43] [cursor=pointer]:
+                  - /url: /quality/rca
+              - listitem [ref=f3e47]:
+                - link "CAPA" [ref=f3e48] [cursor=pointer]:
+                  - /url: /quality/capa
+          - region "Quarantine" [ref=f3e52]:
+            - list [ref=f3e53]:
+              - listitem [ref=f3e54]:
+                - link "Quarantine dashboard" [ref=f3e55] [cursor=pointer]:
+                  - /url: /quarantine
+              - listitem [ref=f3e60]:
+                - link "Receiving items" [ref=f3e61] [cursor=pointer]:
+                  - /url: /quarantine/receiving
+              - listitem [ref=f3e66]:
+                - link "Inspection reports" [ref=f3e67] [cursor=pointer]:
+                  - /url: /quarantine/inspections
+              - listitem [ref=f3e71]:
+                - link "Quarantine administration" [ref=f3e72] [cursor=pointer]:
+                  - /url: /quarantine/admin
+          - region "Laboratory" [ref=f3e76]:
+            - list [ref=f3e77]:
+              - listitem [ref=f3e78]:
+                - link "Laboratory tests" [ref=f3e79] [cursor=pointer]:
+                  - /url: /laboratory/tests
+          - region "Assets" [ref=f3e83]:
+            - list [ref=f3e84]:
+              - listitem [ref=f3e85]:
+                - link "Equipment" [ref=f3e86] [cursor=pointer]:
+                  - /url: /assets/equipment
+              - listitem [ref=f3e90]:
+                - link "Calibration" [ref=f3e91] [cursor=pointer]:
+                  - /url: /assets/calibrations
+              - listitem [ref=f3e96]:
+                - link "Maintenance" [ref=f3e97] [cursor=pointer]:
+                  - /url: /assets/maintenance
+          - region "Governance" [ref=f3e101]:
+            - list [ref=f3e102]:
+              - listitem [ref=f3e103]:
+                - link "My approvals" [ref=f3e104] [cursor=pointer]:
+                  - /url: /approvals
+              - listitem [ref=f3e108]:
+                - link "Change requests" [ref=f3e109] [cursor=pointer]:
+                  - /url: /change-requests
+          - region "Insights" [ref=f3e116]:
+            - list [ref=f3e117]:
+              - listitem [ref=f3e118]:
+                - link "Reports" [ref=f3e119] [cursor=pointer]:
+                  - /url: /reports
+              - listitem [ref=f3e123]:
+                - link "AI advisory" [ref=f3e124] [cursor=pointer]:
+                  - /url: /ai-advisory
+          - region "Administration" [ref=f3e128]:
+            - list [ref=f3e129]:
+              - listitem [ref=f3e130]:
+                - link "Administration" [ref=f3e131] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=f3e134]:
+                - link "Users" [ref=f3e135] [cursor=pointer]:
+                  - /url: /admin/users
+              - listitem [ref=f3e142]:
+                - link "Roles" [ref=f3e143] [cursor=pointer]:
+                  - /url: /admin/roles
+              - listitem [ref=f3e148]:
+                - link "Permissions" [ref=f3e149] [cursor=pointer]:
+                  - /url: /admin/permissions
+              - listitem [ref=f3e153]:
+                - link "Scopes" [ref=f3e154] [cursor=pointer]:
+                  - /url: /admin/scopes
+          - region "System" [ref=f3e160]:
+            - list [ref=f3e161]:
+              - listitem [ref=f3e162]:
+                - link "Audit history" [ref=f3e163] [cursor=pointer]:
+                  - /url: /audit
+              - listitem [ref=f3e168]:
+                - link "System health" [ref=f3e169] [cursor=pointer]:
+                  - /url: /system/health
+              - listitem [ref=f3e173]:
+                - link "Backups" [ref=f3e174] [cursor=pointer]:
+                  - /url: /system/backups
+              - listitem [ref=f3e179]:
+                - link "Controlled documents" [ref=f3e180] [cursor=pointer]:
+                  - /url: /documents
+              - listitem [ref=f3e185]:
+                - link "Notifications" [ref=f3e186] [cursor=pointer]:
+                  - /url: /notifications
+              - listitem [ref=f3e190]:
+                - link "Search" [ref=f3e191] [cursor=pointer]:
+                  - /url: /search
+              - listitem [ref=f3e196]:
+                - link "Account" [ref=f3e197] [cursor=pointer]:
+                  - /url: /account
+    - generic [ref=f3e202]:
+      - banner [ref=f3e203]:
+        - generic [ref=f3e204]:
+          - generic [ref=f3e205]:
+            - navigation "Breadcrumb" [ref=f3e206]:
+              - list [ref=f3e207]:
+                - listitem [ref=f3e208]:
+                  - link "Home" [ref=f3e209] [cursor=pointer]:
+                    - /url: /dashboard
+                - listitem [ref=f3e210]: /System health
+            - 'generic "Operational scope: Authorized operational scope" [ref=f3e211]':
+              - generic [ref=f3e213]:
+                - generic [ref=f3e214]: Current scope
+                - strong [ref=f3e215]: Authorized operational scope
+          - generic [ref=f3e216]:
+            - link "Search authorized records (Control K)" [ref=f3e217] [cursor=pointer]:
+              - /url: /search
+              - generic [ref=f3e221]: Search
+              - generic [ref=f3e222]: Ctrl K
+            - link "0 unread notifications" [ref=f3e223] [cursor=pointer]:
+              - /url: /notifications
+              - generic "0 unread" [ref=f3e226]: "0"
+            - link "0 pending approvals" [ref=f3e227] [cursor=pointer]:
+              - /url: /approvals
+              - generic "0 pending" [ref=f3e230]: "0"
+              - generic [ref=f3e231]: Approvals
+            - group [ref=f3e232]:
+              - generic "01a07e39-b3d7-7357-b05b-1eb0d11b08fb Authenticated user" [ref=f3e233] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f3e234]: "0"
+                - generic [ref=f3e235]:
+                  - strong [ref=f3e236]: 01a07e39-b3d7-7357-b05b-1eb0d11b08fb
+                  - generic [ref=f3e237]: Authenticated user
+      - main [ref=f3e240]:
+        - generic [ref=f3e241]:
+          - generic [ref=f3e242]:
+            - paragraph [ref=f3e243]: UI-SYS-001 · SANITIZED OPERATIONAL VIEW
+            - heading "System health" [level=1] [ref=f3e244]
+            - paragraph [ref=f3e245]: Status is derived from live server-side checks. Raw infrastructure errors, credentials, and endpoints are intentionally never shown. Machine readiness remains separate at /api/health/ready.
+          - generic [ref=f3e246]: "Core system: READY"
+        - note [ref=f3e247]:
+          - strong [ref=f3e248]: Reading this view
+          - generic [ref=f3e249]: Critical dependencies required to serve core QC workflows are healthy. Optional capability degradation is listed separately. Generated 9/10/2026, 7:12:14 AM (Asia/Riyadh).
+        - generic [ref=f3e250]:
+          - heading "Dependencies" [level=2] [ref=f3e251]
+          - table [ref=f3e253]:
+            - caption [ref=f3e254]: Sanitized dependency status per approved health vocabulary
+            - rowgroup [ref=f3e255]:
+              - row [ref=f3e256]:
+                - columnheader "Dependency" [ref=f3e257]
+                - columnheader "Status" [ref=f3e258]
+                - columnheader "Detail" [ref=f3e259]
+            - rowgroup [ref=f3e260]:
+              - row [ref=f3e261]:
+                - rowheader "application" [ref=f3e262]
+                - cell "HEALTHY" [ref=f3e263]
+                - cell "—" [ref=f3e264]
+              - row [ref=f3e265]:
+                - rowheader "database" [ref=f3e266]
+                - cell "HEALTHY" [ref=f3e267]
+                - cell "—" [ref=f3e268]
+              - row [ref=f3e269]:
+                - rowheader "storage" [ref=f3e270]
+                - cell "UNKNOWN" [ref=f3e271]
+                - cell "Not configured in this baseline." [ref=f3e272]
+              - row [ref=f3e273]:
+                - rowheader "outbox" [ref=f3e274]
+                - cell "HEALTHY" [ref=f3e275]
+                - 'cell "Pending messages: 0" [ref=f3e276]'
+              - row [ref=f3e277]:
+                - rowheader "ai-provider" [ref=f3e278]
+                - cell "UNKNOWN" [ref=f3e279]
+                - cell "AI advisory is not configured in this baseline." [ref=f3e280]
+          - paragraph [ref=f3e281]: "The AI advisory capability is optional: its status is unknown and it never gates core readiness."
+        - generic [ref=f3e282]:
+          - heading "Backup & recovery posture" [level=2] [ref=f3e283]
+          - paragraph [ref=f3e284]: Backup job success never equals a verified restore (BKP-001). These are separate facts and are never merged into a single green badge.
+          - generic [ref=f3e285]:
+            - generic [ref=f3e286]:
+              - term [ref=f3e287]: Last backup job state
+              - definition [ref=f3e288]: NO CATALOG DATA
+            - generic [ref=f3e289]:
+              - term [ref=f3e290]: Backup artifact verified
+              - definition [ref=f3e291]: "NO"
+            - generic [ref=f3e292]:
+              - term [ref=f3e293]: Restore verification
+              - definition [ref=f3e294]: RESTORE NOT VERIFIED
+            - generic [ref=f3e295]:
+              - term [ref=f3e296]: Posture status
+              - definition [ref=f3e297]: UNKNOWN
+          - generic [ref=f3e298]:
+            - heading "Known gaps" [level=3] [ref=f3e299]
+            - list [ref=f3e300]:
+              - listitem [ref=f3e301]:
+                - code [ref=f3e302]: NO_BACKUP_CATALOG_DATA
+          - paragraph [ref=f3e303]:
+            - text: "Backup catalog:"
+            - link "/system/backups" [ref=f3e304] [cursor=pointer]:
+              - /url: /system/backups
+        - region [ref=f3e305]:
+          - heading "Release identity" [level=2] [ref=f3e306]
+          - paragraph [ref=f3e307]: Server-derived build evidence. Missing or invalid identity stays UNVERIFIED and never becomes a readiness claim.
+          - generic [ref=f3e308]:
+            - generic [ref=f3e309]:
+              - term [ref=f3e310]: Verification
+              - definition [ref=f3e311]: UNVERIFIED
+            - generic [ref=f3e312]:
+              - term [ref=f3e313]: Release ID
+              - definition [ref=f3e314]: UNVERIFIED
+            - generic [ref=f3e315]:
+              - term [ref=f3e316]: Build ID
+              - definition [ref=f3e317]: UNVERIFIED
+            - generic [ref=f3e318]:
+              - term [ref=f3e319]: Build timestamp
+              - definition [ref=f3e320]: UNVERIFIED
+            - generic [ref=f3e321]:
+              - term [ref=f3e322]: Git SHA
+              - definition [ref=f3e323]: UNVERIFIED
+            - generic [ref=f3e324]:
+              - term [ref=f3e325]: Environment
+              - definition [ref=f3e326]: UNVERIFIED
+            - generic [ref=f3e327]:
+              - term [ref=f3e328]: Migration head
+              - definition [ref=f3e329]: UNVERIFIED
