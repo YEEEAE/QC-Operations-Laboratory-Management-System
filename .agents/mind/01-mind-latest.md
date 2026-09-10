@@ -1,5 +1,66 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — سطح هوية البناء المصادق وتحقق C-11 المقفل على الفشل (Prompt 12)
+
+### تم التنفيذ
+- أضفت متحققًا خالصًا `src/shared/release/deployed-identity.ts`: ‏`assertDeployedIdentitySample`‏ ترفض الناقص/المشوه، و‏`assertSameDeployedIdentity`‏ تشترط تطابق عينتي البداية والنهاية مع حزمة الأدلة (SHA غير حساس لحالة الأحرف، وأي غياب أو انحراف = رمي خطأ).
+- أضفت `GetReleaseIdentityUseCase` بنفس تفويض عرض الصحة (`PERM-HLTH-VIEW`) ومصنع `systemHealthReleaseIdentityDependencies`؛ القيمة تُحقن من `getRuntimeConfig().release` ولا تُقبل أي قيمة من المتصفح.
+- أضفت مسار `GET /api/system/release-identity`: ‏401‏ بلا جلسة، ‏403‏ بلا صلاحية صريحة، و‏200‏ بهوية معقمة (خمسة حقول + migration head فقط، بلا أسرار أو endpoints أو أخطاء خام)؛ وأضفت صف Build timestamp وسمات `data-release-field` لصفحة `/system/health` ليثبت Chrome التطابق.
+- أضفت اختبارات: وحدة للمتحقق (7) وuse case (4)، وتكامل للمسار (5: رفض/شكل/تجاهل حقن المتصفح/UNVERIFIED بلا تسريب)، ومواصفة Playwright بعينتي بداية/نهاية لكشف redeploy أثناء الجولة (غير المصادق يعمل، والمصادق gated).
+- أثبت حيًا على preview محلي أن المسار يرد ‏401‏ معقمًا بلا تسريب هوية، ومرر Playwright غير المصادق ✅؛ مهارة `astro-developer` المحلية تخص مستودع إطار Astro نفسه فلم تُطبق، وطبقت `verification-before-completion`.
+
+### الملفات المتأثرة
+- `src/shared/release/deployed-identity.ts` (جديد)
+- `src/modules/system-health/application/{get-release-identity.ts,dependencies.ts}`
+- `src/pages/api/system/release-identity.ts` (جديد)
+- `src/pages/system/health.astro` (صف timestamp + سمات الاختبار)
+- `tests/unit/release/deployed-identity.test.ts` و`tests/unit/system-health/get-release-identity.test.ts` و`tests/integration/http/release-identity.test.ts` و`tests/e2e/release-identity.spec.ts` (جديدة)
+
+### التحقق
+- `pnpm test:unit` ✅ — 60 ملفًا / 342 اختبارًا (كانت 58/331: +2 ملف وحدة ظاهرة هنا والبقية تكامل/E2E خارج العد)
+- `pnpm typecheck` ✅ — 0 أخطاء؛ `pnpm lint` ✅ بعد إصلاح خطأين من ملفاتي؛ `pnpm test:architecture` ✅؛ `pnpm build` ✅
+- Playwright حي ضد preview محلي ✅ — 1 passed (رفض 401 معقم) / 1 skipped-gated (المصادق يحتاج fixture وهوية ledger متوقعة)
+- `curl` حي: `/api/health/live` ‏200‏ و`/api/system/release-identity` ‏401‏ مع `requestId` وبلا هوية
+- Node المحلي `v22.22.3` خارج العقد — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح محليًا / جزئي
+- **مختصر:** آلية C-11 مكتملة ومحروسة (سطح مصادق + متحقق fail-closed + عينتا بداية/نهاية)، لكن C-11 نفسه يبقى `NOT VERIFIED` حتى نشر نفس SHA بهوية محقونة (wiring الـCI/Render اليدوي) وتنفيذ الجزء المصادق من المواصفة.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy؛ لم أغيّر `render.yaml` أو CI (التعبئة اليدوية لـ`RELEASE_*` في Render ما زالت شرطًا).
+- `/api/health/ready` بقي `{status}` فقط عمدًا (مسار آلات غير مصادق لفحص Render)؛ الهوية الكاملة على السطح المصادق الجديد وصفحة الصحة فقط.
+- سجل Prompt 11 السابق ما زال ‏0/15‏ — لا يُرحّل له أي PASS من هذه المهمة قبل دليل حي على نفس البناء المنشور.
+
+## [2026-09-10] — سجل إغلاق ثابت 15 بندًا على مرشح واحد (Prompt 11: كلها OPEN، ‏0.0%)
+
+### تم التنفيذ
+- ولّدت هوية إصدار محلية للسجل: `rel-256b4f57b9618cc0` على SHA ‏`94bf2763c94e…`‏ (build ‏`local-94bf2763c94e-ledger`‏، بيئة `local`‏، ‏`2026-09-10T03:37:56.560Z`‏، migration ‏`0021_release_governance`‏، working tree ‏`clean`‏).
+- أعدت تشغيل معايير القبول لكل البنود الـ15 على نفس SHA بدون ترحيل أي PASS قديم؛ الفحوص الطازجة: unit ‏19 ملفًا/138 اختبارًا ✅، integration ‏4 ملفات/28 ✅، typecheck ‏0 أخطاء ✅، architecture ✅، build ✅.
+- سجلت لكل بند الحالة والدليل الآلي والدليل الحي والمراجع والقيد في `audit/15-item-closure-ledger-rel-256b4f57b9618cc0.md`؛ الدليل الحي لنفس البناء مفقود (البناء محلي غير منشور، والإنتاج على بناء أقدم بلا هوية SHA ظاهرة، وE2E المصادق/التزامن الحقيقي gated).
+- عاملت كل دليل مفقود/قديم/متعارض/مصدري فقط كـOPEN حسب القاعدة، فصارت النتيجة ‏0/15 = 0.0%‏ مع ‏6 MEDIUM‏ غير محلولة، ومنعت ادعاء ‏100.0%‏.
+- طبقت مهارة `verification-before-completion`: لا ادعاء إغلاق بدون أمر تحقق طازج ومخرجات مقروءة.
+
+### الملفات المتأثرة
+- `audit/15-item-closure-ledger-rel-256b4f57b9618cc0.md` (جديد — السجل الثابت)
+- `dist/release-identity-ledger.json` (دليل بناء ignored، غير ملتزم)
+- `.agents/mind/01-mind-latest.md` (هذا السجل)
+
+### التحقق
+- `pnpm release:identity` ✅ — ‏`rel-256b4f57b9618cc0`‏ / SHA مطابق / ‏clean‏
+- وحدات مركزة ✅ — 19/138؛ تكامل مركز ✅ — 4/28
+- `pnpm typecheck` ✅ — 0 أخطاء؛ `pnpm test:architecture` ✅؛ `pnpm build` ✅
+- دليل حي لنفس البناء: مفقود لجميع البنود (لا نشر، لا Chrome run، لا artifact/restore حي) — مسجل OPEN بصدق
+- Node المحلي `v22.22.3` خارج العقد — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح (السجل منجز fail-closed)
+- **مختصر:** السجل الثابت مكتمل ومربوط بمرشح واحد، لكن الإغلاق ‏0/15‏ لأن الدليل الحي لنفس البناء غائب؛ أي PASS سابق لبناء آخر لم يُرحّل.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- الإغلاق المستقبلي يحتاج: نشر نفس SHA بهوية ظاهرة (Prompt 12)، fixtures أدوار (Prompt 13)، تنفيذ C-01..C-12 بلا تغيير البناء (Prompts 14–15)، ثم سجل جديد بنفس الهوية المنشورة.
+
 ## [2026-09-10] — تنفيذ حوكمة اعتماد إصدار الإنتاج (fail-closed, Manager أو yazeed)
 
 ### تم التنفيذ
