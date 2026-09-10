@@ -72,7 +72,7 @@ Production evidence
 | 16 | Data-Driven Design & Product Analytics | ✅ |
 | 17 | Motion & Digital Art Direction Deep Dive | ✅ |
 | 18 | Privacy & Security UX | ☐ |
-| 19 | Service Design & End-to-End QC Journeys | ☐ |
+| 19 | Service Design & End-to-End QC Journeys | ✅ |
 | 20 | UX Research & Heuristic Validation | ☐ |
 | 21 | Cross-System Consistency & Final Polish | ☐ |
 | 22 | Final Independent Closure & Production Evidence | ☐ |
@@ -1852,7 +1852,8 @@ Presentation must reinforce, not weaken, the security model.
 
 # PROMPT 19 — Service Design & End-to-End QC Journeys
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Act as a Service Designer for a medical-products Quality Control department.

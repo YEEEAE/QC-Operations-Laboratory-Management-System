@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تدقيق Motion Design وDigital Art Direction
+
+### تم التنفيذ
+- أنشأت تدقيقًا مركزًا يغطي system background وlogin Three.js وLottie والتنقل والـdrawer والأزرار والحالات والرسوم والتحميل والـfeedback وانتقالات الصفحات.
+- صنّفت كل سطح حسب Functional / Feedback / Orienting / State-transition / Decorative / Brand expression، وقررت إبقاء الحركة التشغيلية هادئة وفورية بدون status/chart/page choreography.
+- أثبتُّ من المصدر أن `SystemBackground` ثابت ولا يستخدم Lottie runtime، وأن `background.lottie` asset غير مربوط من `src` بحجم 1,197,133 bytes.
+- راجعت login Three.js: deferred init، reduced-motion bypass، hidden-tab pause، context-loss fallback، DPR caps، وdispose للموارد؛ وسجلت أن GLB حجمه 943,748 bytes.
+- سجلت finding عالي الأولوية: `AppLayout` يحرك `grid-template-columns` عند collapse، مع توصية future patch إلى instant state أو transform-based owner.
+- فصلت الأدلة المصدرية عن القياس الحي: CPU/GPU وLCP/INP/CLS/TTFB وroute-cycle ما زالت NOT VERIFIED لعدم توفر browser/server/fixture في هذه الجولة.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-motion-design-audit.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `python3 --version` ✅ — Python 3.13.0 متاح.
+- UI Pro Max UX search + Astro/Three.js stack searches ✅.
+- `pnpm exec vitest run tests/unit/ui/system-background.test.ts tests/unit/ui/mobile-drawer-inert.test.ts tests/unit/ui/design-system-maturity.test.ts` ✅ — 3 ملفات / 21 اختبارًا.
+- `git diff --check` ✅.
+- Browser CPU/GPU/Web Vitals وE2E live ✅/❌ — لم تُنفذ؛ لا browser tab أو server/fixture متاح.
+
+### النتيجة
+- **الحالة:** نجح كتدقيق مصدر / يحتاج live performance evidence.
+- **مختصر:** الحركة الحالية مناسبة لاتجاه QC الهادئ، والـlogin art منضبط طبيًا، مع debt واضح في layout transition وقياسات أداء حية مطلوبة قبل رفع fidelity.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- لا يُعاد Lottie إلى authenticated workspaces قبل قياس القيمة والأداء والتحقق من artifact deployment.
+- يلزم قرار تنفيذ مستقل لمعالجة collapse transition.
+
 ## [2026-09-10] — تنفيذ طبقة Product Analytics الخصوصية وربط قياس البحث
 
 ### تم التنفيذ
