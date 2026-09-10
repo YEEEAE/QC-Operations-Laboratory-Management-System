@@ -5,8 +5,12 @@ export interface DashboardMetric {
   key: string;
   label: string;
   value: number;
+  unit: 'records';
+  timeRange: 'current snapshot';
+  source: string;
   definition: string;
   href?: string;
+  drilldownLabel?: string;
   tone?: DashboardMetricTone;
 }
 export interface DashboardAttention {

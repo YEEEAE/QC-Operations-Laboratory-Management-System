@@ -69,7 +69,7 @@ Production evidence
 | 13 | UX Writing & Microcopy Deep Dive | ✅ |
 | 14 | Accessibility & Ergonomics Deep Dive | ✅ |
 | 15 | Dashboard & Data Visualization Design Deep Dive | ✅ |
-| 16 | Data-Driven Design & Product Analytics | ☐ |
+| 16 | Data-Driven Design & Product Analytics | ✅ |
 | 17 | Motion & Digital Art Direction Deep Dive | ☐ |
 | 18 | Privacy & Security UX | ☐ |
 | 19 | Service Design & End-to-End QC Journeys | ☐ |
@@ -1675,7 +1675,8 @@ Dashboard interactions should take users to useful operational context, not deco
 
 # PROMPT 16 — Data-Driven Design & Product Analytics
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Act as a Data-Driven Product Designer.

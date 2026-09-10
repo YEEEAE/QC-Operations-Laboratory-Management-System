@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — رفع Dashboard إلى decision surface صادق بالبيانات
+
+### تم التنفيذ
+- رفعت أولوية قسم القرار: صارت قائمة المتابعة الحالية NOW · DECISION QUEUE قبل قسم الاتجاه، وكل صف يذهب إلى سجل/طابور تشغيلي مفيد.
+- وسّعت عقد DashboardMetric server-side ليحمل الوحدة (records)، نافذة القياس (current snapshot)، المصدر، واسم وجهة drill-down لكل KPI.
+- حسّنت KpiCard لتعرض القيمة مع وحدتها ومصدرها ونافذة القياس وتعريفًا قابلًا للفتح بالكيبورد عبر details/summary.
+- منعت الخلط بين provider unavailable وempty: عند تعطل مزود القراءة تُحجب ادعاءات KPI/attention/activity، ويظهر سبب عدم التوفر بدل صفر أو empty مضلل.
+- أبقيت trend بلا chart لأن الباكند لا يزوّد time series معرّفة؛ أضفت بطاقة Data Coverage توضح المتوفر حاليًا وما لم يزوّده العقد بعد (overdue/calibration/lab workload/blocked reasons/trend).
+- أضفت تدقيقًا جدوليًا لكل KPI والـvisualization decision، بدون اختراع metrics أو scientific/policy values.
+
+### الملفات المتأثرة
+- src/modules/dashboard/ports/dashboard-query.ts
+- src/modules/dashboard/infrastructure/postgres-dashboard-query.ts
+- src/pages/dashboard/index.astro
+- src/ui/charts/KpiCard.astro
+- tests/integration/dashboard/dashboard-query.test.ts
+- tests/unit/ui/universal-shell.test.ts
+- audit/2026-09-10-dashboard-decision-surface-audit.md
+
+### التحقق
+- pnpm exec vitest run tests/unit/ui/universal-shell.test.ts tests/integration/dashboard/dashboard-query.test.ts ✅ — 2 ملف / 10 اختبارات.
+- pnpm test:unit ✅ — 69 ملفًا / 433 اختبارًا.
+- pnpm typecheck ✅ — 0 أخطاء؛ وpnpm exec astro check ✅ — 0 أخطاء، 62 hints قائمة.
+- pnpm build ✅ — server/client build اكتمل؛ تحذيرات Node 22 خارج العقد وحجم Three.js المعروفة بقيت.
+- git diff --check ✅.
+- تحقق متصفح مصادق/بيانات backend حية: لم يُنفّذ — لا session/fixture محلية مناسبة، ولا claim runtime كامل.
+
+### النتيجة
+- **الحالة:** نجح محليًا / يحتاج live evidence.
+- **مختصر:** الداشبورد صار أوضح كواجهة قرار، metadata والـdrill-down وحالات unavailable محروسة، والرسوم غير موجودة عمدًا حتى يوفّر الباكند سلسلة زمنية معرفة.
+
+### ملاحظات / مشاكل مفتوحة
+- ما زالت مؤشرات overdue/blocked/calibration risk/laboratory workload وtrend تحتاج read models خادمية مع تعريفات ونطاقات ووجهات معتمدة قبل إضافتها.
+- لا commit أو push أو deploy.
+
 ## [2026-09-10] — معالجة فجوات الوصول المؤكدة من تدقيق WCAG
 
 ### تم التنفيذ

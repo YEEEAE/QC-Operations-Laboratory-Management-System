@@ -44,6 +44,19 @@ describe('universal shell preservation', () => {
     expect(dashboard).not.toContain('locale="ar"');
   });
 
+  it('keeps dashboard metrics decision-ready and fail-closed', () => {
+    const dashboard = read('src/pages/dashboard/index.astro');
+    const query = read('src/modules/dashboard/ports/dashboard-query.ts');
+    expect(query).toContain("unit: 'records'");
+    expect(query).toContain("timeRange: 'current snapshot'");
+    expect(query).toContain('source: string');
+    expect(dashboard).toContain('Attention data is unavailable');
+    expect(dashboard).toContain('Activity data is unavailable');
+    expect(dashboard).toContain('No trend series is available');
+    expect(dashboard).toContain('Overdue due dates');
+    expect(dashboard).toContain('drilldownLabel={metric.drilldownLabel}');
+  });
+
   it('keeps every representative top-level group page on the universal shell', () => {
     const candidates = [
       'src/pages/dashboard/index.astro',
