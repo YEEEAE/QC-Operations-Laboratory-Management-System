@@ -20,11 +20,14 @@
 .form-field textarea {
   width: 100%;
   min-height: var(--control-height);
-  padding: var(--space-2) var(--control-padding);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--input-padding-inline);
+  background: var(--input-background);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
 }
+.form-field input:not([type='checkbox']):hover:not(:disabled),
+.form-field select:hover:not(:disabled),
+.form-field textarea:hover:not(:disabled) { border-color: var(--input-border-hover); }
 .form-field textarea {
   min-height: 8rem;
   resize: vertical;
@@ -32,11 +35,24 @@
 .form-field input[aria-invalid='true'],
 .form-field select[aria-invalid='true'],
 .form-field textarea[aria-invalid='true'] {
-  border-color: var(--status-danger);
+  border-color: var(--input-border-invalid);
+  box-shadow: 0 0 0 var(--focus-width) var(--status-danger-bg);
 }
 .form-field input:disabled,
 .form-field select:disabled,
 .form-field textarea:disabled {
   color: var(--color-text-disabled);
-  background: var(--color-surface-1);
+  background: var(--surface-disabled);
+}
+.form-field input[readonly],
+.form-field textarea[readonly] {
+  background: var(--input-readonly-background);
+  border-style: dashed;
+}
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.form-field textarea:focus-visible {
+  border-color: var(--border-focus);
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }

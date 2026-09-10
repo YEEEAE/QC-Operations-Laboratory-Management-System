@@ -4,16 +4,22 @@
   --control-padding: var(--space-3);
   --row-gap: var(--space-4);
   --panel-padding: var(--space-6);
+  --table-cell-padding-block: var(--space-3);
+  --table-cell-padding-inline: var(--space-4);
 }
 [data-density='comfortable'] {
   --control-height: 48px;
   --control-padding: var(--space-4);
   --row-gap: var(--space-5);
   --panel-padding: var(--space-8);
+  --table-cell-padding-block: var(--space-4);
+  --table-cell-padding-inline: var(--space-4);
 }
 [data-density='compact'] {
   --control-height: 32px;
   --control-padding: var(--space-2);
   --row-gap: var(--space-2);
   --panel-padding: var(--space-4);
+  --table-cell-padding-block: var(--space-2);
+  --table-cell-padding-inline: var(--space-3);
 }

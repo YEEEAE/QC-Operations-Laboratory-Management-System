@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
 
-  /* Approved primitive palette — DESIGN-SYSTEM.md v1.0 */
+  /* Approved primitive palette — DESIGN-SYSTEM.md v1.1 */
   --color-canvas: #141714;
   --color-canvas-deep: #101310;
   --color-sidebar: #111411;
@@ -37,6 +37,8 @@
   --status-review-bg: #222e3e;
   --status-neutral: #8a918a;
   --status-neutral-bg: #2b2f2b;
+  --status-stale: #d2a24b;
+  --status-stale-bg: #3b3020;
 
   /* Semantic aliases keep component CSS independent of raw primitives.
      Undefined-token guard: --status-success/--status-error are consumed by
@@ -54,6 +56,52 @@
   --text-muted: var(--color-text-muted);
   --focus-ring: var(--color-accent-primary-hover);
   --text-danger: var(--status-danger);
+  --text-on-accent: var(--color-text-inverse);
+  --surface-readonly: var(--color-surface-1);
+  --surface-disabled: var(--color-surface-2);
+  --surface-table-stripe: rgb(255 255 255 / 1.5%);
+  --border-focus: var(--color-accent-primary-hover);
+  --border-invalid: var(--status-danger);
+  --border-selected: var(--color-accent-primary);
+
+  /* Component contracts: components consume these aliases, not primitives. */
+  --button-radius: var(--radius-sm);
+  --button-gap: var(--space-2);
+  --button-padding-inline: var(--space-4);
+  --button-font-weight: 600;
+  --input-radius: var(--radius-sm);
+  --input-padding-inline: var(--control-padding);
+  --input-background: var(--surface-raised);
+  --input-border: var(--border-default);
+  --input-border-hover: var(--color-border-strong);
+  --input-border-invalid: var(--border-invalid);
+  --input-readonly-background: var(--surface-readonly);
+  --card-radius: var(--radius-lg);
+  --card-padding: var(--panel-padding);
+  --table-row-padding-block: var(--space-3);
+  --table-row-padding-inline: var(--space-4);
+  --table-header-background: var(--surface-raised);
+  --table-stripe-background: var(--surface-table-stripe);
+  --nav-item-radius: var(--radius-sm);
+  --nav-item-padding-block: var(--space-2);
+  --nav-item-padding-inline: var(--space-3);
+  --nav-item-gap: var(--space-3);
+
+  --font-size-xs: 0.6875rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.125rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-display: clamp(2rem, 3vw, 2.5rem);
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --numeric-figures: tabular-nums;
 
   --font-latin: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-arabic: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', Tahoma, sans-serif;
@@ -70,6 +118,7 @@
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
+  --space-20: 80px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -80,6 +129,14 @@
   --motion-fast: 150ms;
   --motion-standard: 200ms;
   --motion-slow: 220ms;
+  --motion-duration-fast: var(--motion-fast);
+  --motion-duration-standard: var(--motion-standard);
+  --motion-duration-slow: var(--motion-slow);
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --disabled-opacity: 0.55;
 }
 
 [dir='rtl'] {

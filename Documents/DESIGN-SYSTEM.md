@@ -1,10 +1,10 @@
 # DESIGN-SYSTEM.md
 
 # QC Operations & Laboratory Management System
-## Unified Dark Enterprise Design System — v1.0
+## Unified Dark Enterprise Design System — v1.1
 
 **Document Path:** `Documents/DESIGN-SYSTEM.md`  
-**Status:** FOUNDATION — APPROVED DESIGN SYSTEM BASELINE  
+**Status:** FOUNDATION — APPROVED DESIGN SYSTEM BASELINE / MATURITY CONTRACTS
 **Product:** QC Operations & Laboratory Management System  
 **Visual Direction:** Dark Enterprise QC Operations / Control Room  
 **Reference Intent:** Inspired by the operational-control-room logic of the previously approved OpsPulse-style direction, but adapted specifically to this QC/Laboratory product and never copied literally  

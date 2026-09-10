@@ -1,5 +1,43 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنضيج أساس نظام التصميم المؤسسي
+
+### تم التنفيذ
+- أضفت طبقة semantic وcomponent tokens فوق palette المعتمدة بدون تغيير الهوية أو دمج الحالات الدلالية.
+- أضفت عقود typography وspacing/density وfocus وmotion وdisabled وread-only وstale.
+- ربطت المكوّنات المشتركة للأزرار والحقول والجداول والبطاقات والرسوم والتنقل وStatusBadge بالعقود الجديدة، مع حالات hover/focus/active/disabled/loading/error حيث ينطبق.
+- وسّعت `StatusBadge` لتشمل `STALE` و`READ_ONLY` مع الحفاظ على PASS != RELEASED وAPPROVED != PASS وHOLD != FAILURE وDRAFT != REVIEW.
+- أنشأت تقرير inventory/debt رسمي واختبارات regression تمنع undefined tokens وعودة القيم المكررة في المكونات المشتركة.
+
+### الملفات المتأثرة
+- `src/ui/styles/tokens.css`
+- `src/ui/styles/density.css`
+- `src/ui/styles/motion.css`
+- `src/ui/components/forms/form-control.css`
+- `src/ui/components/{Button,IconButton,Card,StatusBadge}.astro`
+- `src/ui/components/data/DataTable.astro`
+- `src/ui/charts/{Chart,Legend}.astro`
+- `src/ui/shell/Sidebar.astro`
+- `Documents/DESIGN-SYSTEM.md`
+- `audit/2026-09-10-design-system-maturity.md`
+- `tests/unit/ui/design-system-maturity.test.ts`
+
+### التحقق
+- `pnpm exec vitest run ...` ✅ — 4 ملفات / 47 اختبار.
+- `pnpm typecheck` ✅ — 0 أخطاء، 62 hints موجودة مسبقًا؛ تحذير Node 22 مقابل عقد 24.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — مع تحذيرات Vite/الحجم المعروفة.
+- `git diff --check` ✅.
+
+### النتيجة
+- **الحالة:** نجح محليًا / debt موثق.
+- **مختصر:** صارت طبقة التصميم المشتركة أوضح وقابلة للتوسع، لكن ترحيل كل CSS المحلي وتعديل تباين semantic status يحتاج دفعات لاحقة وقرار مالك للألوان.
+
+### ملاحظات / مشاكل مفتوحة
+- ما صار commit أو push أو deploy.
+- Prettier ما قدر يستنتج parser لملفات Astro، وظهر warning تنسيق فقط لبعض CSS/TS؛ ما تم تشغيل rewrite تلقائي.
+- ما زالت 43 occurrence لـ`#fff` على مستوى `src`، وبعضها مشروع للـlogin/visual assets؛ تحتاج دفعات template-family.
+
 ## [2026-09-10] — إصلاح فجوات التفويض والرؤية في الواجهة
 
 ### تم التنفيذ

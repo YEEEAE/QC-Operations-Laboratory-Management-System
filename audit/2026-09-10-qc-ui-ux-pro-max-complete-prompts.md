@@ -941,7 +941,8 @@ JS + no-JS + slow response + double click + validation + stale + authorization +
 
 # PROMPT 5 — Data-Dense UX: Tables, Charts, Search, Notifications & Operational States
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Audit every data-heavy and decision-heavy surface as an enterprise QC workspace, not a generic admin template.
@@ -1162,7 +1163,8 @@ Change presentation around the policy.
 
 # PROMPT 9 — Design System Maturity Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Act as a Principal Design Systems Architect.

@@ -1,8 +1,8 @@
 ---
-type Status = 'PASS' | 'RELEASED' | 'APPROVED' | 'HOLD' | 'WARNING' | 'FAIL' | 'REJECTED' | 'REVIEW' | 'DRAFT' | 'VOID' | 'SUPERSEDED';
+type Status = 'PASS' | 'RELEASED' | 'APPROVED' | 'HOLD' | 'WARNING' | 'FAIL' | 'REJECTED' | 'REVIEW' | 'DRAFT' | 'VOID' | 'SUPERSEDED' | 'STALE' | 'READ_ONLY';
 interface Props { status: Status; label?: string; }
 const { status, label = status } = Astro.props;
-const tone = status === 'PASS' ? 'pass' : status === 'RELEASED' ? 'released' : ['APPROVED'].includes(status) ? 'approved' : ['HOLD', 'WARNING'].includes(status) ? 'warning' : ['FAIL', 'REJECTED', 'VOID'].includes(status) ? 'danger' : ['REVIEW'].includes(status) ? 'review' : 'neutral';
+const tone = status === 'PASS' ? 'pass' : status === 'RELEASED' ? 'released' : ['APPROVED'].includes(status) ? 'approved' : ['STALE'].includes(status) ? 'stale' : ['HOLD', 'WARNING'].includes(status) ? 'warning' : ['FAIL', 'REJECTED', 'VOID'].includes(status) ? 'danger' : ['REVIEW'].includes(status) ? 'review' : 'neutral';
 ---
 <span class:list={['status-badge', `status-badge--${tone}`]}><span class="status-mark" aria-hidden="true"></span><span>{label}</span></span>
 <style>
@@ -15,4 +15,5 @@ const tone = status === 'PASS' ? 'pass' : status === 'RELEASED' ? 'released' : [
   .status-badge--danger { color: var(--status-danger); background: var(--status-danger-bg); }
   .status-badge--review { color: var(--status-review); background: var(--status-review-bg); }
   .status-badge--neutral { color: var(--status-neutral); background: var(--status-neutral-bg); }
+  .status-badge--stale { color: var(--status-stale); background: var(--status-stale-bg); }
 </style>

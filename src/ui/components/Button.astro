@@ -6,15 +6,17 @@ const { type = 'button', variant = 'primary', disabled = false, loading = false,
   {loading ? <span class="button-spinner" aria-hidden="true"></span> : null}<slot />
 </button>
 <style>
-  .ui-button { min-height: var(--control-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding-inline: var(--control-padding); border: 1px solid transparent; border-radius: var(--radius-sm); font-weight: 600; text-align: center; }
-  .ui-button--primary { background: var(--color-accent-primary); color: var(--color-text-inverse); }
+  .ui-button { min-height: var(--control-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--button-gap); padding-inline: var(--button-padding-inline); border: 1px solid transparent; border-radius: var(--button-radius); font-weight: var(--button-font-weight); text-align: center; cursor: pointer; }
+  .ui-button--primary { background: var(--color-accent-primary); color: var(--text-on-accent); }
   .ui-button--secondary { background: var(--surface-raised); border-color: var(--border-default); color: var(--text-primary); }
   .ui-button--ghost { background: transparent; color: var(--color-accent-primary-hover); }
   .ui-button--danger { background: var(--status-danger-bg); border-color: var(--status-danger); color: var(--status-danger); }
   .ui-button--controlled { background: var(--status-review-bg); border-color: var(--status-review); color: var(--text-primary); }
   .ui-button:hover:not(:disabled) { background-color: var(--color-surface-hover); }
   .ui-button--primary:hover:not(:disabled) { background-color: var(--color-accent-primary-hover); }
-  .ui-button:disabled { background: var(--color-surface-2); border-color: var(--color-border-subtle); color: var(--color-text-disabled); }
+  .ui-button:active:not(:disabled) { transform: translateY(1px); }
+  .ui-button:focus-visible { outline: var(--focus-width) solid var(--focus-ring); outline-offset: var(--focus-offset); }
+  .ui-button:disabled { background: var(--surface-disabled); border-color: var(--color-border-subtle); color: var(--color-text-disabled); opacity: var(--disabled-opacity); cursor: not-allowed; }
   .button-spinner { width: 1em; height: 1em; border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: 50%; animation: spin 700ms linear infinite; }
   @keyframes spin { to { transform: rotate(1turn); } }
 </style>
