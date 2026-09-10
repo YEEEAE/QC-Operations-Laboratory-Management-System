@@ -10,8 +10,9 @@ interface Props {
   recovery?: string | null;
   listHref: string;
   listLabel: string;
+  errors?: Array<{ fieldId: string; message: string }>;
 }
-const { summary, recovery = null, listHref, listLabel } = Astro.props;
+const { summary, recovery = null, listHref, listLabel, errors = [] } = Astro.props;
 ---
 <section
   class="form-error"
@@ -23,6 +24,13 @@ const { summary, recovery = null, listHref, listLabel } = Astro.props;
 >
   <h2 id="form-error-title">There is a problem</h2>
   <p class="summary">{summary}</p>
+  {errors.length > 0 && (
+    <ul class="error-links">
+      {errors.map((item) => (
+        <li><a href={`#${item.fieldId}`}>{item.message}</a></li>
+      ))}
+    </ul>
+  )}
   {recovery && <p class="recovery">{recovery}</p>}
   <p class="back"><a href={listHref}>Back to {listLabel}</a></p>
 </section>
@@ -53,5 +61,12 @@ const { summary, recovery = null, listHref, listLabel } = Astro.props;
   }
   .form-error a {
     color: var(--color-accent-primary-hover);
+  }
+  .form-error .error-links {
+    margin: 0.5rem 0;
+    padding-inline-start: 1.1rem;
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.85rem;
   }
 </style>

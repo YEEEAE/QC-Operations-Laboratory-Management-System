@@ -156,7 +156,8 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
             <label>Source document (optional)<input name="sourceDocument" value={values.sourceDocument} /></label>
             <label>Password confirmation (required for Supervisor, Manager, yazeed)<input name="reauthenticationSecret" type="password" autocomplete="current-password" required={isAuthority} /></label>
             <p class="hint">{isAuthority ? 'Creates APPROVED immediately with E-Signature.' : 'Creates DRAFT. Approval requires an authorized reviewer.'}</p>
-            <div class="actions"><button type="submit">Create template</button></div>
+            <p class="hint" data-result role="status" aria-live="polite"></p>
+            <div class="actions"><button type="submit" data-submit>Create template</button></div>
           </form>
         )}
         <p class="note">Every action requires the expected version and rejects stale writes. Audit and outbox evidence persist atomically with each transition.</p>
@@ -170,8 +171,13 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const target = event.currentTarget as HTMLFormElement;
+    const submit = target.querySelector<HTMLButtonElement>('[data-submit]');
+    if (target.getAttribute('aria-busy') === 'true') return;
     const data = new FormData(target);
     const output = target.querySelector<HTMLElement>('[data-result]');
+    target.setAttribute('aria-busy', 'true');
+    if (submit) submit.disabled = true;
+    if (output) output.textContent = 'Creating template…';
     try {
       const result = await actions.quarantineTemplates.createTemplate({
         templateCode: String(data.get('templateCode') ?? ''),
@@ -187,6 +193,10 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       if (output) output.textContent = 'The action was not accepted. Review the fields and try again.';
     } catch {
       target.submit();
+      return;
+    } finally {
+      target.removeAttribute('aria-busy');
+      if (submit) submit.disabled = false;
     }
   });
 </script>

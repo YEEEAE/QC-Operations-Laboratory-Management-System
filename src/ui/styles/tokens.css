@@ -38,7 +38,12 @@
   --status-neutral: #8a918a;
   --status-neutral-bg: #2b2f2b;
 
-  /* Semantic aliases keep component CSS independent of raw primitives. */
+  /* Semantic aliases keep component CSS independent of raw primitives.
+     Undefined-token guard: --status-success/--status-error are consumed by
+     health/backup surfaces, so they must resolve to approved semantics.
+     PASS-mapped success keeps PASS != RELEASED (teal) intact. */
+  --status-success: var(--status-pass);
+  --status-error: var(--status-danger);
   --surface-page: var(--color-canvas);
   --surface-panel: var(--color-surface-1);
   --surface-raised: var(--color-surface-2);

@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تدقيق UI/UX Pro Max المستقل + معالجة P0 الآمنة (MASTER + Prompts 1–9 جزئيًا)
+
+### تم التنفيذ
+- جمّدت `main@9df61a2` (فرق src صفر عن `40c1711` المدقق سابقًا؛ الفرق مجرد نسخة `.agents/skills` + نقل audit) وشغّلت 7 بحوث Pro Max موجهة وطبقتها على desktop-first QC.
+- أصلحت `UXPM-01`: شلت `slot="topbar"` من الداشبورد ورجّعت الـUniversal Topbar مع نقل السياق لداخل الصفحة.
+- أصلحت `UXPM-02` جزئيًا: aliases لـ`--status-success/--status-error` + بدّلت `--space-7` غير المعرفة بـ`--space-8`؛ قيم التباين الست الفاشلة بقيت مفتوحة بقرار مالك.
+- أصلحت `UXPM-03` جزئيًا: شلت الصفر الكاذب من Topbar (شارة مشروطة بـnumber)؛ الربط بعدّادات خادم حقيقية ما زال مفتوحًا.
+- أصلحت `UXPM-04/05/06/08/10`: روابط أخطاء اختيارية في FormErrorSummary، وعقد إرسال quarantine (aria-busy+تعطيل+مخرج)، وتولتيب collapsed على hover/focus، وزر Show/Hide للباسورد، و`initial-scale=1`.
+- أضفت `tests/unit/ui/design-token-contract.test.ts` (7 اختبارات) لمنع الانحدار.
+
+### الملفات المتأثرة
+- `src/ui/styles/tokens.css` و`src/pages/dashboard/index.astro` و`src/ui/shell/{Topbar,Sidebar}.astro`
+- `src/ui/components/FormErrorSummary.astro` و`src/pages/quarantine/admin/index.astro`
+- `src/pages/login.astro` و`src/ui/layouts/BaseLayout.astro` و`src/pages/assets/index.astro`
+- `tests/unit/ui/design-token-contract.test.ts` (جديد)
+
+### التحقق
+- `pnpm test:unit` ✅ — 62 ملفًا / 355 اختبارًا (0 فشل)
+- عقد التوكنز الجديد ✅ — 7/7؛ UI المركزة ✅ — 5 ملفات / 27
+- `pnpm typecheck` ✅ — 0 أخطاء؛ `pnpm test:architecture` ✅؛ `pnpm build` ✅ (تحذير chunk قديم 617kB)
+- `pnpm lint` ❌ — 143 خطأ كلها في `.opencode/skills/*/scripts/*.cjs` قديمة؛ ملفاتي 0 أخطاء
+- `git diff --check` ✅؛ حي (متصفح/زوم/أدوار/no-JS حي/Web Vitals): NOT VERIFIED — لم تُشغّل هنا
+- Node المحلي `v22.22.3` خارج العقد — النتائج محلية
+
+### النتيجة
+- **الحالة:** جزئي (NEEDS CHANGES)
+- **مختصر:** 4/10 Pro Max مغلقة بالكامل و4/10 جزئية و2/10 مفتوحة؛ التباين الستي والعدّادات الحقيقية والتحقق الحي الكامل على نفس SHA المنشور ما زالت تمنع APPROVE.
+
+### ملاحظات / مشاكل مفتوحة
+- تباين `<4.5:1`: released/danger/review/neutral/muted-on-raised/danger-on-panel — يحتاج قرار مالك على تفتيح الباليت.
+- Topbar counts تحتاج use cases خادمية مرخصة؛ no-JS/at-scale/200% zoom حقيقي وأدوار حية وWeb Vitals: NOT VERIFIED.
+- لا commit/push/deploy/mutation إنتاجية.
+
 ## [2026-09-10] — تنفيذ Prompt 15 (C-07..C-12) بنفس جلسة Chrome وهوية بناء ثابتة: ‏0/6 PASS و1 FAIL
 
 ### تم التنفيذ
