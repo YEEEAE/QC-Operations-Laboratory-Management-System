@@ -57,9 +57,6 @@ const {
 
 <script>
   // @ts-nocheck -- procedural Three.js scene supports multiple Three.js revisions.
-  import * as THREE from 'three';
-  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
   type Cleanup = () => void;
   const w = window as typeof window & {
     __QC3DBackgroundRegistry?: WeakMap<HTMLElement, Cleanup>;
@@ -68,6 +65,7 @@ const {
   const registry = w.__QC3DBackgroundRegistry ??= new WeakMap<HTMLElement, Cleanup>();
 
   function createQCBackground(root: HTMLElement, modelUrl: string): Cleanup {
+    let THREE, GLTFLoader;
     const CONFIG = Object.freeze({
       bg: 0x03090e,
       teal: 0x78bfc2,
@@ -82,7 +80,7 @@ const {
     });
 
     let scene, camera, renderer, heroPivot, heroModel, inspectionGroup, scanStrip, scanLight, analysisTrace;
-    let envTexture = null, envTarget = null, raf = 0, destroyed = false, initialized = false, hidden = document.hidden, contextLost = false;
+    let envTexture = null, envTarget = null, raf = 0, destroyed = false, initialized = false, hidden = document.hidden, contextLost = false, initHandle = 0, initHandleIsIdle = false;
     let startTime = performance.now(), lastFrame = startTime;
     let pointer = {x:0,y:0, tx:0,ty:0};
     let reducedMotionQuery = null, reducedMotion = false;
@@ -100,8 +98,7 @@ const {
       g.fillStyle=grad; g.fillRect(0,0,c.width,c.height);
       const vg=g.createRadialGradient(360,205,12,360,205,215); vg.addColorStop(0,'rgba(255,255,255,.65)'); vg.addColorStop(.38,'rgba(145,196,198,.12)'); vg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=vg; g.fillRect(0,0,c.width,c.height);
       const tex = new THREE.CanvasTexture(c); tex.mapping = THREE.EquirectangularReflectionMapping;
-      if ('colorSpace' in tex && THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
-      else tex.encoding = THREE.sRGBEncoding;
+      if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
       const pmrem = new THREE.PMREMGenerator(renderer); pmrem.compileEquirectangularShader();
       envTarget = pmrem.fromEquirectangular(tex); tex.dispose(); pmrem.dispose();
       envTexture = envTarget.texture; scene.environment = envTexture;
@@ -267,20 +264,23 @@ const {
     }
     function destroy(){
       if(destroyed) return; destroyed=true; stopLoop(); listeners.splice(0).forEach(fn=>fn());
+      if(initHandle){ if(initHandleIsIdle && 'cancelIdleCallback' in window) window.cancelIdleCallback(initHandle); else clearTimeout(initHandle); initHandle=0; }
       if(scene) scene.traverse(disposeObject); if(envTarget) envTarget.dispose(); else if(envTexture) envTexture.dispose();
       if(renderer){ renderer.dispose(); const c=renderer.domElement; c && c.parentNode && c.parentNode.removeChild(c); }
       scene=camera=renderer=heroPivot=heroModel=inspectionGroup=scanStrip=scanLight=analysisTrace=null; envTexture=envTarget=null; initialized=false;
     }
 
     async function init(){
-      if(initialized) return; initialized=true; destroyed=false; hidden=document.hidden; contextLost=false; startTime=lastFrame=performance.now();
+      if(initialized || destroyed || hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      initialized=true; destroyed=false; contextLost=false; startTime=lastFrame=performance.now();
       try{
+        THREE = await import('three');
+        ({ GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js'));
         scene=new THREE.Scene(); camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.1,100);
         renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance',premultipliedAlpha:true});
         renderer.setClearColor(CONFIG.bg,0); renderer.setSize(innerWidth,innerHeight,false);
         renderer.setPixelRatio(Math.min(devicePixelRatio||1, innerWidth<700?CONFIG.dprMobile:CONFIG.dprDesktop));
-        if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace=THREE.SRGBColorSpace;
-        else renderer.outputEncoding=THREE.sRGBEncoding;
+        if ('outputColorSpace' in renderer) renderer.outputColorSpace=THREE.SRGBColorSpace;
         renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.92;
         renderer.domElement.setAttribute('aria-hidden','true'); renderer.domElement.setAttribute('role','presentation'); root.appendChild(renderer.domElement);
         on(renderer.domElement,'webglcontextlost',e=>{e.preventDefault();contextLost=true;stopLoop();setFallback(true);},{passive:false});
@@ -297,7 +297,15 @@ const {
       } catch(err){ setFallback(true); initialized=false; destroy(); }
     }
 
-    init();
+    function scheduleInit(){
+      if(destroyed || initialized || hidden) return;
+      if(matchMedia('(prefers-reduced-motion: reduce)').matches){ setFallback(true); return; }
+      const run = () => { initHandle=0; initHandleIsIdle=false; init(); };
+      if('requestIdleCallback' in window){ initHandleIsIdle=true; initHandle=window.requestIdleCallback(run,{timeout:1200}); }
+      else initHandle=window.setTimeout(run,250);
+    }
+
+    scheduleInit();
     return destroy;
   }
 

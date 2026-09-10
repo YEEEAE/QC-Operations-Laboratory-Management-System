@@ -59,9 +59,9 @@ Production evidence
 | 3 | Accessibility, Reflow, Zoom & Focus Closure | ✅ |
 | 4 | Forms, Validation, Error Recovery & Controlled Action UX | ✅ |
 | 5 | Data-Dense UX: Tables, Charts, Search, Notifications & States | ✅ |
-| 6 | Responsive Layout, Mobile Ergonomics & Information Density | ☐ |
-| 7 | Motion, Lottie, Three.js & Front-End Performance | ☐ |
-| 8 | Authorization-Aware UX, Roles & Controlled Workflow Clarity | ☐ |
+| 6 | Responsive Layout, Mobile Ergonomics & Information Density | ✅ |
+| 7 | Motion, Lottie, Three.js & Front-End Performance | ✅ |
+| 8 | Authorization-Aware UX, Roles & Controlled Workflow Clarity | ✅ |
 | 9 | Design System Maturity Deep Dive | ☐ |
 | 10 | Information Architecture & Permissions Deep Dive | ☐ |
 | 11 | Interaction Design Deep Dive | ☐ |
@@ -1110,7 +1110,7 @@ Do not remove the 3D design unless measurements or usability evidence justify it
 
 # PROMPT 8 — Authorization-Aware UX, Roles & Controlled Workflow Clarity
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
 
 ```text
 Validate that the interface reflects the approved authorization model without treating visibility as security.

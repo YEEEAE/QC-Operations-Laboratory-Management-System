@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('self-hosted system background', () => {
-  test('keeps the login content above a non-interactive local background without external requests', async ({
+test.describe('decorative motion boundaries', () => {
+  test('keeps login content above a non-interactive local Three.js background without external requests', async ({
     page,
   }) => {
     const externalRequests: string[] = [];
@@ -11,13 +11,14 @@ test.describe('self-hosted system background', () => {
     });
 
     await page.goto('/login');
-    await expect(page.locator('[data-system-background]')).toHaveAttribute('aria-hidden', 'true');
-    await expect(page.locator('[data-system-background]')).toHaveCSS('pointer-events', 'none');
-    await expect(page.locator('[data-system-background]')).toHaveCSS('position', 'fixed');
+    await expect(page.locator('[data-system-background]')).toHaveCount(0);
+    await expect(page.locator('[data-qc-3d-background]')).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('[data-qc-3d-background]')).toHaveCSS('pointer-events', 'none');
+    await expect(page.locator('[data-qc-3d-background]')).toHaveCSS('position', 'fixed');
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
 
     const layering = await page.evaluate(() => {
-      const background = document.querySelector<HTMLElement>('[data-system-background]');
+      const background = document.querySelector<HTMLElement>('[data-qc-3d-background]');
       const content = document.querySelector<HTMLElement>('.system-content');
       return {
         background: Number(getComputedStyle(background!).zIndex),
@@ -25,23 +26,20 @@ test.describe('self-hosted system background', () => {
       };
     });
     expect(layering.content).toBeGreaterThan(layering.background);
-    await expect(page.locator('[data-system-background] canvas')).toBeVisible();
+    await expect(page.locator('[data-qc-3d-background] canvas')).toBeVisible();
     expect(externalRequests).toEqual([]);
   });
 
-  test('does not initialize the renderer with reduced motion and excludes it from print', async ({
+  test('does not initialize Three.js with reduced motion and excludes it from print', async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/login');
-    await expect(page.locator('[data-system-background]')).toHaveAttribute(
-      'data-motion',
-      'reduced',
-    );
-    await expect(page.locator('[data-system-background] canvas')).toBeHidden();
+    await expect(page.locator('[data-qc-3d-background]')).toHaveClass(/fallback-only/);
+    await expect(page.locator('[data-qc-3d-background] canvas')).toHaveCount(0);
 
     await page.emulateMedia({ media: 'print' });
-    await expect(page.locator('[data-system-background]')).toBeHidden();
+    await expect(page.locator('[data-qc-3d-background]')).toBeHidden();
   });
 
   for (const surface of [

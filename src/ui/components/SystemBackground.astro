@@ -1,9 +1,9 @@
 ---
-// Decorative-only: the runtime and animation are both bundled or served from this origin.
+// Decorative-only static treatment for authenticated operational workspaces.
+// Motion is intentionally kept off this surface: it has no operational value
+// and would compete with long-lived forms, tables, and controlled decisions.
 ---
-<div class="system-background" data-system-background aria-hidden="true" data-motion="pending">
-  <canvas data-system-background-canvas></canvas>
-</div>
+<div class="system-background" data-system-background aria-hidden="true" data-motion="static"></div>
 
 <style>
   .system-background {
@@ -14,146 +14,33 @@
     height: 100vh;
     overflow: hidden;
     pointer-events: none;
-    background: var(--color-canvas-deep);
+    background:
+      radial-gradient(60% 75% at 18% 14%, rgb(109 158 103 / 8%), transparent 66%),
+      radial-gradient(55% 70% at 92% 86%, rgb(80 112 82 / 7%), transparent 72%),
+      var(--color-canvas-deep);
   }
 
+  .system-background::before,
   .system-background::after {
     position: absolute;
     inset: 0;
-    background: rgb(16 19 16 / 72%);
     content: '';
+    pointer-events: none;
   }
 
-  .system-background canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    opacity: 0.32;
+  .system-background::before {
+    opacity: 0.28;
+    background-image: linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .system-background canvas { display: none; }
+  .system-background::after {
+    background: rgb(16 19 16 / 72%);
   }
 
   @media print {
     .system-background { display: none; }
   }
 </style>
-
-<script>
-  import { DotLottie } from '@lottiefiles/dotlottie-web';
-
-  DotLottie.setWasmUrl('/assets/dotlottie-player.wasm');
-
-  const root = document.querySelector<HTMLElement>('[data-system-background]');
-  const canvas = root?.querySelector<HTMLCanvasElement>('[data-system-background-canvas]');
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  let dotLottie: DotLottie | undefined;
-  let idleHandle: number | undefined;
-  let rendererDisabled = false;
-
-  const cancelScheduledStart = () => {
-    if (idleHandle === undefined) return;
-    window.clearTimeout(idleHandle);
-    idleHandle = undefined;
-  };
-
-  const destroyRenderer = () => {
-    cancelScheduledStart();
-    dotLottie?.destroy();
-    dotLottie = undefined;
-  };
-
-  const fallback = () => {
-    rendererDisabled = true;
-    destroyRenderer();
-    if (root) root.dataset.motion = 'fallback';
-  };
-
-  const canCompileWasm = async () => {
-    if (typeof WebAssembly === 'undefined') return false;
-    try {
-      await WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const start = async () => {
-    idleHandle = undefined;
-    if (!root || !canvas || reducedMotion.matches || document.hidden || dotLottie || rendererDisabled) return;
-    if (!(await canCompileWasm())) {
-      fallback();
-      return;
-    }
-
-    try {
-      dotLottie = new DotLottie({
-        canvas,
-        src: '/assets/background.lottie',
-        autoplay: true,
-        loop: true,
-        speed: 0.35,
-        layout: { fit: 'cover', align: [0.5, 0.5] },
-        renderConfig: {
-          autoResize: true,
-          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
-          freezeOnOffscreen: true,
-        },
-      });
-      dotLottie.addEventListener('loadError', fallback);
-      dotLottie.addEventListener('renderError', fallback);
-      root.dataset.motion = 'running';
-    } catch {
-      fallback();
-    }
-  };
-
-  const scheduleStart = () => {
-    if (!root || reducedMotion.matches || document.hidden || dotLottie || rendererDisabled || idleHandle !== undefined) return;
-    root.dataset.motion = 'pending';
-    idleHandle = window.setTimeout(start, 180);
-  };
-
-  const onVisibilityChange = () => {
-    if (document.hidden) {
-      dotLottie?.pause();
-      if (root) root.dataset.motion = 'paused';
-      return;
-    }
-    if (dotLottie) {
-      dotLottie.play();
-      if (root) root.dataset.motion = 'running';
-      return;
-    }
-    scheduleStart();
-  };
-
-  const onMotionPreferenceChange = () => {
-    if (reducedMotion.matches) {
-      destroyRenderer();
-      if (root) root.dataset.motion = 'reduced';
-      return;
-    }
-    scheduleStart();
-  };
-
-  if (reducedMotion.matches) {
-    if (root) root.dataset.motion = 'reduced';
-  } else {
-    scheduleStart();
-  }
-
-  document.addEventListener('visibilitychange', onVisibilityChange);
-  reducedMotion.addEventListener('change', onMotionPreferenceChange);
-  window.addEventListener(
-    'pagehide',
-    () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      reducedMotion.removeEventListener('change', onMotionPreferenceChange);
-      destroyRenderer();
-    },
-    { once: true },
-  );
-</script>

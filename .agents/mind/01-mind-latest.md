@@ -1,5 +1,74 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — إصلاح motion والأداء وتقسيم Three.js في login
+
+### تم التنفيذ
+- استبدلت `SystemBackground` المتحرك بسطح CSS ثابت غير تفاعلي للصفحات التشغيلية؛ أزلت runtime Lottie/WASM من المسار، مع بقاء الخلفية الداكنة والـgrid الهادئ و`aria-hidden` وprint fallback.
+- أزلت dependency `@lottiefiles/dotlottie-web` من `package.json` و`pnpm-lock.yaml`، وثبّتُّ `three` من `^0.185.1` إلى `0.185.1` exact.
+- أخّرت تهيئة 3D login إلى `requestIdleCallback`/timeout fallback، ومنعت تهيئته مع `prefers-reduced-motion`، وأبقيت context loss/visibility/disposal/fallback القائمة.
+- حوّلت Three.js وGLTFLoader إلى dynamic imports بعد idle بدل تحميلهما ضمن chunk login الأولي.
+- حدّثت عقود unit/E2E لتعكس الحد الفاصل الجديد: CSS static للـworkspace وThree.js decorative للـlogin فقط، مع حراسة عدم وجود imports ثابتة أو animation runtime للخلفية التشغيلية.
+- أصلحت مسارات Three.js القديمة التي تشير إلى `sRGBEncoding` غير المصدّرة في الإصدار exact، واستخدمت `SRGBColorSpace` فقط.
+
+### الملفات المتأثرة
+- `src/ui/components/SystemBackground.astro`
+- `src/ui/components/QCLogin3DBackground.astro`
+- `package.json`
+- `pnpm-lock.yaml`
+- `tests/unit/ui/system-background.test.ts`
+- `tests/e2e/system-background.spec.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/system-background.test.ts` ✅ — 6 passed
+- `pnpm test:unit` ✅ — 65 files / 405 tests
+- `pnpm exec astro check` ✅ — 0 errors / 0 warnings / 62 hints قائمة مسبقًا
+- `pnpm build` ✅ — server/client build مكتمل؛ warning chunk Three.js المؤجل فقط، واختفى warning `sRGBEncoding`
+- bundle login قبل/بعد: `617.67KB` initial hoisted → `12.31KB` initial hoisted؛ chunks المؤجلة `three.module 734.44KB` و`GLTFLoader 45.61KB`
+- `git diff --check` ✅
+- preview smoke: الخادم بدأ على `4322` لكن `/login` رجع `503 config.invalid_environment` لغياب إعدادات PostgreSQL/البيئة؛ لم تُزوّر env ولم تُنفذ mutation ✅
+
+### النتيجة
+- **الحالة:** نجح محليًا / smoke runtime جزئي
+- **مختصر:** الحركة الزخرفية الثقيلة خرجت من authenticated workspaces، و3D login بقي محفوظًا لكن صار مؤجلًا وlazy وموقوفًا مع reduced motion، مع تثبيت Three.js وإزالة fallback API مكسور.
+
+### ملاحظات / مشاكل مفتوحة
+- TTFB الإنتاجي للجوال `1651ms` ما زال blocker خادميًا خارج نطاق هذا الإصلاح؛ يحتاج profiling للبنية/قاعدة البيانات على بيئة تشغيل صحيحة.
+- التحقق من GPU memory وcontext-loss على جهاز جوال حقيقي ما زال غير متوفر.
+- لا commit/push/deploy.
+
+## [2026-09-10] — تدقيق motion/performance للـSystemBackground وThree.js login على الإنتاج
+
+### تم التنفيذ
+- قرأت `SystemBackground.astro` و`QCLogin3DBackground.astro` و`package.json` وassets والـFoundation UI docs، وطبّقت بحوث `ui-ux-pro-max` الموجهة للـanimation/reduced-motion وThree.js lifecycle وAstro client performance.
+- فحصت الإنتاج بحساب `yazeed` قراءة فقط، ثم قست login وdashboard عبر Chrome DevTools على desktop و375px mobile.
+- وثّقت أن login يحمّل Three.js بحجم `161,885B` مضغوطًا / `617,409B` مفكوكًا، وGLB بحجم `943,748B`، مع canvas واحد pointer-inert وDPR فعلي 1.65 desktop و1.35 عند العينة tablet.
+- وثّقت أن dashboard لا يطلب `background.lottie` أو `dotlottie-player.wasm` في الجولة، وحالة `data-motion=fallback`؛ حجم الأصول المحلية المقصود `1.1M` Lottie + `1.2M` WASM، لذلك transfer الحي الفعلي لهما كان `0B` في العينة.
+- راجعت lifecycle: visibility pause، reduced-motion، fallback، context lost/restored، disposal، renderer واحد، وresponsive camera موجودة في مصدر Three.js؛ لم يُثبت فحص جهاز جوال حقيقي أو GPU memory.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+- بلا تعديل في `src/` أو `public/` أو `package.json`؛ التدقيق قراءة فقط.
+
+### التحقق
+- Chrome DevTools login desktop: LCP `353ms`، CLS `0.00`، TTFB `266ms`، FCP `356ms` ✅
+- Chrome DevTools dashboard desktop: LCP `774ms`، CLS `0.00`، TTFB `624ms` ✅
+- Chrome DevTools dashboard عند `375×812`: LCP `1836ms`، CLS `0.00`، TTFB `1651ms` ✅
+- `performance.getEntriesByType('longtask')`: لا long tasks مرصودة في عينة dashboard بعد الاستقرار ✅
+- 375px: `scrollWidth=375` و`clientWidth=375` بلا تمدد أفقي ✅
+- Lighthouse snapshot للـlogin: Accessibility `100` وBest Practices `100` ✅
+- Pro Max searches: `ux` animation/reduced-motion + `threejs` + `astro` ✅
+- `git status`: لا تغييرات مصدرية قبل سجل الـmind؛ لا commit/push/deploy/mutation إنتاجية ✅
+
+### النتيجة
+- **الحالة:** تدقيق مكتمل / تحسينات كودية غير منفذة
+- **مختصر:** التصميم الحالي محافظ على fallback آمن وواجهة login قابلة للعمل بدون WebGL، لكن لا يوجد claim أن الحركة حسّنت الأداء. الأولوية التالية: تفسير سبب fallback، pin exact لـThree.js إذا اعتمدت سياسة المستودع، وخفض TTFB على mobile قبل أي إزالة للـ3D.
+
+### ملاحظات / مشاكل مفتوحة
+- `package.json` يستخدم `three: ^0.185.1` وليس exact pin؛ يحتاج قرار سياسة dependencies.
+- `background.lottie` و`dotlottie-player.wasm` غير مطلوبين حيًا في الجولة بسبب fallback، فلا يجوز احتساب نقل 2.3MB كأداء فعلي حالي.
+- INP التفاعلي، CPU/GPU أثناء تشغيل form/table، context-loss على جهاز جوال حقيقي، وfield data/CrUX غير متوفرة في هذه الجولة.
+
 ## [2026-09-10] — Standardize complete mutation UX without weakening server controls (ui-ux-pro-max)
 
 ### تم التنفيذ
