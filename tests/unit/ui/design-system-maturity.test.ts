@@ -39,4 +39,12 @@ describe('QC design-system maturity contracts', () => {
     expect(table).toContain('var(--table-stripe-background)');
     expect(table).not.toContain('rgb(255 255 255 / 1.5%)');
   });
+
+  it('keeps compact density dense without dropping usable controls below the web floor', () => {
+    const density = read('src/ui/styles/density.css');
+    expect(density).toMatch(/\[data-density='compact'\][\s\S]*--control-height:\s*40px/);
+    const global = read('src/ui/styles/global.css');
+    expect(global).toContain('.table-wrap table');
+    expect(global).toContain('overflow-wrap: anywhere');
+  });
 });

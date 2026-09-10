@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تدقيق responsive والكثافة الكامل على route families مع assertions للـoverflow
+
+### تم التنفيذ
+- أضفت `responsive-density-audit.spec.ts` لتدقيق route families الفعلية: overview، quality، quarantine، laboratory، assets، documents/governance، وadvisory/system، مع شرط fixture مصادق حتى لا تتحول الصفحات الفارغة إلى false-green.
+- غطت اختبارات E2E المقاسات `320/375/414/768/1024/1440`، phone landscape، tablet landscape، اتجاهي LTR/RTL، 200% browser-scale، text-spacing overrides، والكثافات comfortable/standard/compact.
+- أضفت assertions على document/body overflow، bounding boxes للـmain/fieldsets/action bars/dialogs/drawer، احتواء table scroll، clipping للنصوص الأساسية، وإبقاء أزرار النماذج وstatus badges قابلة للرؤية.
+- عدّلت contract الـresponsive العام ليعطي flex/grid children `min-width:0` و`overflow-wrap:anywhere` مع إبقاء الجداول مالكة للـhorizontal scroll، ووسّعت reflow للـtopbar على الجوال.
+- رفعت `compact` density من `32px` إلى `40px`: الكثافة تقلل الفراغات وحشو الصفوف، لكنها ما تنزل control usability تحت الحد العام.
+- أضفت regression unit assertion لعقد compact density واحتواء الجداول، بدون تحويل الجداول المكتبية إلى cards.
+
+### الملفات المتأثرة
+- `tests/e2e/responsive-density-audit.spec.ts`
+- `tests/unit/ui/design-system-maturity.test.ts`
+- `src/ui/styles/density.css`
+- `src/ui/styles/global.css`
+- `src/ui/layouts/AppLayout.astro`
+- `src/ui/shell/Topbar.astro`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/design-system-maturity.test.ts tests/unit/ui/universal-shell.test.ts tests/unit/ui/mobile-drawer-inert.test.ts` ✅ — 3 ملفات / 22 اختبارًا.
+- `pnpm exec eslint tests/e2e/responsive-density-audit.spec.ts tests/unit/ui/design-system-maturity.test.ts` ✅.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 0 warnings، و62 hints موجودة مسبقًا؛ Node `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- `pnpm build` ✅ — server/client build مكتمل مع تحذيرات Vite المعروفة.
+- `git diff --check` ✅.
+- `pnpm exec playwright test tests/e2e/responsive-density-audit.spec.ts --reporter=line` ⚠️ — 14 حالة لم تصل للـassertions بسبب قيد Chromium headless المحلي `MachPortRendezvous ... Permission denied`؛ كذلك fixture المصادق `QC_E2E_LOGIN_IDENTITY/QC_E2E_PASSWORD` غير متوفر، لذلك لا يوجد evidence حي للمحتوى المصادق في هذه الجولة.
+- `pnpm lint` ⚠️ — فشل عام بسبب 143 خطأ قديم في `.opencode/skills/brand/**`؛ لا أخطاء من ملفات المهمة في lint المستهدف.
+- لم تُنفذ أي login أو POST أو mutation أو commit أو push أو deploy.
+
+### النتيجة
+- **الحالة:** جزئي / NEEDS LIVE EVIDENCE.
+- **مختصر:** عقود responsive والكثافة وقياسات E2E أضيفت محليًا مع build/unit evidence، لكن تشغيل المصفوفة على current authenticated content يحتاج بيئة Chromium/fixture مصادق قابلة للتشغيل.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم إعادة تشغيل `tests/e2e/responsive-density-audit.spec.ts` بقاعدة/fixture مصادق وChromium مسموح، ثم تسجيل نتائج كل route family والمقاس بدل اعتبار skipped أو provider-unavailable نجاحًا.
+- أخطاء lint داخل `.opencode/skills/brand` ما زالت خارج نطاق المهمة وتحتاج تنظيفًا منفصلًا.
+
 ## [2026-09-10] — تدقيق أسطح البيانات والقرارات كمحطة QC مؤسسية
 
 ### تم التنفيذ

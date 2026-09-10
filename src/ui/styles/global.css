@@ -92,6 +92,25 @@ button {
   overflow-x: auto;
   overflow-inline: auto;
 }
+/* Shared reflow contract for page families. Individual pages may choose a
+   grid at a narrower breakpoint, but never rely on flex children retaining
+   their intrinsic desktop width. */
+:where(.page-head, .head, .panel-head, .filters, .actions, .form-actions, .toolbar) {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+  flex-wrap: wrap;
+}
+:where(.page-head, .head, .panel-head, .filters, .actions, .form-actions, .toolbar) > * {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+}
+.table-wrap table,
+.table-scroll table {
+  max-width: none;
+}
 .system-content {
   position: relative;
   z-index: 1;
@@ -177,5 +196,18 @@ textarea:disabled {
 @media (max-width: 700px) {
   .page-container {
     width: min(100% - 2 * var(--space-4), 1600px);
+  }
+}
+
+@media (max-width: 760px) {
+  /* Text spacing overrides and long labels must reflow inside the workspace;
+     a table remains the only intentional horizontal scroll owner. */
+  :where(.page-head, .head, .panel-head, .filters, .actions, .form-actions, .toolbar) {
+    align-items: stretch;
+  }
+  :where(.page-head, .head, .panel-head, .filters, .actions, .form-actions, .toolbar) a,
+  :where(.page-head, .head, .panel-head, .filters, .actions, .form-actions, .toolbar) button {
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
   }
 }
