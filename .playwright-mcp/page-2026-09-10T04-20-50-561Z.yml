@@ -1,0 +1,61 @@
+- generic [ref=f2e2]:
+  - link "Skip to main content" [ref=f2e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f2e5]:
+    - banner [ref=f2e6]:
+      - generic [ref=f2e7]:
+        - generic [ref=f2e8]:
+          - button "Open navigation" [ref=f2e9] [cursor=pointer]
+          - navigation "Breadcrumb" [ref=f2e11]:
+            - list [ref=f2e12]:
+              - listitem [ref=f2e13]:
+                - link "Home" [ref=f2e14] [cursor=pointer]:
+                  - /url: /dashboard
+              - listitem [ref=f2e15]:
+                - text: /
+                - link "Tasks" [ref=f2e16] [cursor=pointer]:
+                  - /url: /tasks
+        - generic [ref=f2e17]:
+          - link "Search authorized records (Control K)" [ref=f2e18] [cursor=pointer]:
+            - /url: /search
+          - link "0 unread notifications" [ref=f2e21] [cursor=pointer]:
+            - /url: /notifications
+            - generic "0 unread" [ref=f2e23]: "0"
+          - link "0 pending approvals" [ref=f2e24] [cursor=pointer]:
+            - /url: /approvals
+            - generic "0 pending" [ref=f2e26]: "0"
+          - group [ref=f2e27]:
+            - generic "01a07e39-b3d7-7357-b05b-1eb0d11b08fb Authenticated user" [ref=f2e28] [cursor=pointer]:
+              - generic [aria-hidden] [ref=f2e29]: "0"
+              - generic [ref=f2e30]:
+                - strong [ref=f2e31]: 01a07e39-b3d7-7357-b05b-1eb0d11b08fb
+                - generic [ref=f2e32]: Authenticated user
+    - main [ref=f2e35]:
+      - generic [ref=f2e36]:
+        - paragraph [ref=f2e37]: T2 OPERATIONAL WORK QUEUE
+        - heading "Create task" [level=1] [ref=f2e38]
+        - paragraph [ref=f2e39]: New tasks start as controlled drafts.
+      - generic [ref=f2e40]:
+        - link "Back to tasks" [ref=f2e42] [cursor=pointer]:
+          - /url: /tasks
+        - generic [ref=f2e43]:
+          - text: Task number
+          - generic [ref=f2e44]: Use the task number from your approved source. The technical record identifier is generated server-side.
+          - textbox "Task number Use the task number from your approved source. The technical record identifier is generated server-side." [ref=f2e45]
+        - generic [ref=f2e46]:
+          - text: Title
+          - textbox "Title" [ref=f2e47]
+        - generic [ref=f2e48]:
+          - text: Description
+          - textbox "Description" [ref=f2e49]
+        - generic [ref=f2e50]:
+          - text: Priority
+          - textbox "Priority" [ref=f2e51]: UNSPECIFIED
+        - generic [ref=f2e52]:
+          - text: Due date
+          - textbox "Due date" [ref=f2e53]
+        - generic [ref=f2e54]:
+          - link "Cancel" [ref=f2e55] [cursor=pointer]:
+            - /url: /tasks
+          - button "Save draft" [ref=f2e56] [cursor=pointer]
+        - status

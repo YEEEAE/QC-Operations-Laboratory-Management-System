@@ -1,5 +1,39 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ Prompt 15 (C-07..C-12) بنفس جلسة Chrome وهوية بناء ثابتة: ‏0/6 PASS و1 FAIL
+
+### تم التنفيذ
+- ثبت عينة البداية `2026-09-10T04:18:51Z` والنهاية `2026-09-10T04:22:22Z` عبر `GET /api/system/release-identity` بنفس الجلسة: كلتاهما `200 {"status":"UNVERIFIED","release":{}}` بلا حقول، و`/api/health/live` ‏`healthy`‏؛ البناء ثابت داخل الجولة لكن البوابة fail-closed تمنع C-11 (لا يطابق HEAD المحلي `b8d3949ac9270ad0556779078b42739b1ff0b5d6` ولا حزمة Prompt 12).
+- فحصت C-07 عند `320×720` على `/dashboard`: ‏`docScrollWidth=320` و`bodyScrollWidth=320` بلا تمدد أفقي للصفحة، لكن زر التنقل `display:none/visibility:hidden/0×0` و30 رابطًا جانبيًا عند `x=-274` غير قابلة للوصول من هذه الصفحة؛ لذلك C-07 ‏NOT VERIFIED‏ (لا PASS مع action غير reachable).
+- فحصت C-08 بوكيلين (CSS `zoom:200%` عند 1280 وviewport مكافئ `640×400`): بلا `hOverflow` و0 عناصر مقصوصة في عينة الـmain، لكن `visualViewport.scale=1` والزوم الحقيقي للمتصفح غير قابل للضبط عبر Playwright؛ لذلك C-08 ‏NOT VERIFIED‏.
+- اختبرت C-09 بالكيبورد: على `/dashboard` الدرج لا يُفتح (الزر مخفي)؛ وعلى `/tasks/new` عند 320 الزر `Open navigation` ظهر وفتح الدرج (`aria-expanded=true` مع `.app-workspace[inert]` وقفل `body:hidden` ونقل الفوكس) ثم Tab هرّب الفوكس إلى `BODY` ورابط `Skip to main content` خارج الدرج (احتواء مكسور)، بينما Escape أغلق وأزال `inert`/القفل وأعاد الفوكس إلى `Open navigation`؛ لذلك C-09 ‏FAIL‏.
+- فحصت C-10 على `GET /tasks/new` قراءة فقط: نموذج `method=post` (baseline لـno-JS) مع `required` على `taskNo/title/priority` وبلا UUID خام، مع `Back/Cancel` الآمنة؛ لم أرسل أي POST إنتاجي فلا retained-values ولا safe-errors مثبتة؛ وC-10 ‏NOT VERIFIED‏.
+- فحصت C-12: كل `QC_VERIFY_*` الست + `QC_VERIFY_BASE_URL` ‏ABSENT‏ فلا فيكستشر `verify-least` ولا تزوير مسموح (ممنوع mutation)؛ الجلسة الحالية owner تفتح `/admin/users` و`/system/health` و`/audit` بـ200 فلا دليل حرمان؛ وC-12 ‏NOT VERIFIED‏.
+- جمعت a11y: فوكس مرئي `outline:solid 2px rgb(127,177,118)` مع `active=true`، وتباين عينة `h1/body` ‏`16.33:1`‏ (زوج واحد فقط لا مصفوفة كاملة)، و`prefers-reduced-motion=false` و`forced-colors=false` (بلا محاكاة forced-colors حية)، مع شجرة وصول فيها `Skip link/nav/headings`.
+
+### الملفات المتأثرة
+- `.playwright-mcp/page-2026-09-10T04-*.yml` (أدلة الجولة الجديدة، غير متتبعة)
+- `.agents/mind/01-mind-latest.md` (هذا السجل)
+- بلا تعديل كود: `git diff --check` نظيف و`git status` فيه فقط ملفات `.playwright-mcp/` غير المتتبعة على HEAD `b8d3949`
+
+### التحقق
+- `fetch /api/system/release-identity` بداية ونهاية ✅ — كلتاهما `200 UNVERIFIED {}` (البوابة تفشل مغلقة)
+- `fetch /api/health/live` ✅ — `healthy` (آلات فقط)
+- قياسات Chrome الحية ✅ — ‏320/reflow وzoom الوكيل وdrawer/inert/scroll/Tab/Escape/focus وform-baseline وcontrast/focus/media
+- `QC_VERIFY_*` غياب ✅ موثق — 7/7 ‏ABSENT‏
+- `git diff --check` ✅ — نظيف؛ بلا commit/push/deploy/mutation إنتاجية
+- مهارات: `verification-before-completion` و`responsive-accessibility` و`keyboard-navigation` ✅ مطبقة
+
+### النتيجة
+- **الحالة:** فشل مغلق / غير مكتمل (fail-closed)
+- **مختصر:** C-07 ‏NOT VERIFIED‏ وC-08 ‏NOT VERIFIED‏ وC-09 ‏FAIL‏ وC-10 ‏NOT VERIFIED‏ وC-11 ‏NOT VERIFIED‏ وC-12 ‏NOT VERIFIED‏ (‏0/6 PASS‏)؛ كسر واحد يمنع ‏12/12‏ ويمنع أي مقياس حي من بلوغ ‏100%‏.
+
+### ملاحظات / مشاكل مفتوحة
+- تناقض مسارات: زر الملاحة مخفي على `/dashboard` عند 320 لكنه ظاهر على `/tasks/new`؛ يلزم توحيد الـTopbar/Shell قبل إعادة C-07/C-09.
+- احتواء Tab مكسور: رابط `Skip to main content` يبقى focusable رغم `inert` على `.app-workspace`؛ يلزم نقل الـskip-link داخل الدرج أو عزله مع الخلفية.
+- الإنتاج يعرض `favicon.svg` في HTML (تحسّن) لكن ما زال بلا `RELEASE_*`؛ يلزم نشر نفس SHA `b8d3949` بهوية محقونة ثم إعادة Prompt 15.
+- C-10 يحتاج بيئة non-production بفيكستشر disposable لإثبات retained-values وno-JS؛ وC-12 يحتاج بذرة Prompt 13 على non-production ثم `verify:fixtures:clean`.
+
 ## [2026-09-10] — تنفيذ Prompt 14 (C-01..C-06) في Chrome: الكل NOT VERIFIED لبوابة الهوية
 
 ### تم التنفيذ
