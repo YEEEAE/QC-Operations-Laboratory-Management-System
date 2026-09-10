@@ -39,4 +39,22 @@ describe('enterprise application shell contracts', () => {
     expect(dialogClient).toContain("'button:not([disabled]), [href], input:not([disabled])");
     expect(dialogClient).toContain("dialog.addEventListener('close', () => opener?.focus())");
   });
+
+  it('keeps anchored focus visible below persistent UI', () => {
+    const global = readUi('styles/global.css');
+    expect(global).toContain('scroll-padding-top');
+    expect(global).toContain('scroll-margin-top');
+  });
+
+  it('focuses the validation summary with script enhancement while keeping no-JS anchor links', () => {
+    const summary = readUi('components/FormErrorSummary.astro');
+    expect(summary).toContain('data-error-summary');
+    expect(summary).toContain('tabindex="-1"');
+    expect(summary).toContain('role="alert"');
+    // The invalid `autofocus` section attribute was replaced by a progressive
+    // script; the word may remain in comments but must not remain as markup.
+    expect(summary).not.toContain('\n  autofocus');
+    expect(summary).toContain("querySelector<HTMLElement>('[data-error-summary]')");
+    expect(summary).toContain('.focus(');
+  });
 });

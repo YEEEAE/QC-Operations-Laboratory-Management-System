@@ -88,4 +88,21 @@ describe('BI-01 mobile drawer background isolation', () => {
     expect(source).toContain('routeBreadcrumbs(Astro.url.pathname)');
     expect(source).not.toContain('PERM-');
   });
+
+  it('keeps the skip link inside background isolation while the drawer is open', () => {
+    const source = layout();
+    expect(source).toContain('data-skip-link');
+    expect(source).toContain("skipLink?.setAttribute('inert', '')");
+    expect(source).toContain("skipLink?.removeAttribute('inert')");
+  });
+
+  it('exposes a visible mobile dismiss action that returns focus to the opener', () => {
+    const source = layout();
+    expect(source).toContain('data-drawer-close');
+    expect(source).toContain('setMobileNav(false, { returnFocus: true })');
+    const sidebar = readRepo('src/ui/shell/Sidebar.astro');
+    expect(sidebar).toContain('data-drawer-close');
+    expect(sidebar).toContain('aria-label="Close navigation"');
+    expect(sidebar).toContain('.drawer-close{display:grid}');
+  });
 });

@@ -12,7 +12,7 @@ const activeCapabilities = Array.isArray(actor?.permissions)
 const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 ---
 <BaseLayout {...props}>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a class="skip-link" href="#main-content" data-skip-link>Skip to main content</a>
   <div class="app-shell" data-app-shell data-mobile-nav-open="false" data-sidebar-collapsed="false">
     <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation"><slot name="sidebar"><Sidebar capabilities={activeCapabilities} /></slot></aside>
     <div class="app-workspace" data-app-workspace>
@@ -36,8 +36,10 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   const sidebarPanel = document.querySelector<HTMLElement>('[data-sidebar-panel]');
   const workspace = document.querySelector<HTMLElement>('[data-app-workspace]');
   const sidebar = document.querySelector<HTMLElement>('[data-sidebar-panel] .sidebar');
+  const skipLink = document.querySelector<HTMLElement>('[data-skip-link]');
   const collapse = document.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
   const navigationToggle = document.querySelector<HTMLButtonElement>('[data-navigation-toggle]');
+  const drawerClose = document.querySelector<HTMLButtonElement>('[data-drawer-close]');
   const storageKey = 'qc-sidebar-collapsed';
   const mobileQuery = window.matchMedia('(max-width: 760px)');
   const isMobileDrawer = () => mobileQuery.matches;
@@ -76,11 +78,15 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 
   const isolateBackground = () => {
     workspace?.setAttribute('inert', '');
+    // The skip link lives outside the workspace subtree. While the drawer is
+    // open it must not remain a keyboard escape hatch (C-09 FAIL).
+    skipLink?.setAttribute('inert', '');
     lockBackgroundScroll();
   };
 
   const releaseBackground = () => {
     workspace?.removeAttribute('inert');
+    skipLink?.removeAttribute('inert');
     unlockBackgroundScroll();
   };
 
@@ -136,6 +142,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     }
   });
   collapse?.addEventListener('click', () => setCollapsed(sidebar?.dataset.collapsed !== 'true'));
+  drawerClose?.addEventListener('click', () => setMobileNav(false, { returnFocus: true }));
   navigationToggle?.addEventListener('click', () => {
     if (!shell) return;
     if (isDrawerOpen()) {

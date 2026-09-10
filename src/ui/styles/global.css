@@ -19,6 +19,11 @@
 }
 html {
   background: var(--surface-page);
+  /* Focus-not-obscured (minimum): anchored targets and keyboard focus must
+     not hide under persistent UI. The app topbar is in normal flow, but the
+     mobile drawer is fixed and error-summary/field anchors need breathing
+     room in every viewport. */
+  scroll-padding-top: 76px;
 }
 body {
   margin: 0;
@@ -91,6 +96,10 @@ button {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+}
+/* Anchored validation targets keep a visible gap after browser scrolling. */
+[id] {
+  scroll-margin-top: 12px;
 }
 @media print {
   html,

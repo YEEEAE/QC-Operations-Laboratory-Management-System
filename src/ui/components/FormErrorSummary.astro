@@ -1,8 +1,9 @@
 ---
 /**
  * Visible, keyboard-focusable error summary for server-rendered mutation
- * forms (F-04). Rendered only after a failed POST so `autofocus` moves
- * keyboard and assistive-technology focus straight to the problem.
+ * forms (F-04). Rendered only after a failed POST; a small progressive
+ * script moves keyboard focus straight to the problem while no-JS keeps
+ * the top-level summary plus anchor links to each field.
  * Recovery always names a next step and links back to the safe list.
  */
 interface Props {
@@ -18,7 +19,6 @@ const { summary, recovery = null, listHref, listLabel, errors = [] } = Astro.pro
   class="form-error"
   role="alert"
   tabindex="-1"
-  autofocus
   data-error-summary
   aria-labelledby="form-error-title"
 >
@@ -34,6 +34,14 @@ const { summary, recovery = null, listHref, listLabel, errors = [] } = Astro.pro
   {recovery && <p class="recovery">{recovery}</p>}
   <p class="back"><a href={listHref}>Back to {listLabel}</a></p>
 </section>
+<script>
+  // Progressive enhancement only: server rendering already places the summary
+  // at the top of the form with anchor links to each field. When JavaScript is
+  // available, move keyboard focus to the summary after a failed POST so
+  // keyboard and screen-reader users find it immediately (no-JS still works).
+  const summary = document.querySelector<HTMLElement>('[data-error-summary]');
+  summary?.focus({ preventScroll: false });
+</script>
 <style>
   .form-error {
     padding: var(--space-5);

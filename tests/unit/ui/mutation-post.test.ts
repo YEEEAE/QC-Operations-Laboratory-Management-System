@@ -166,8 +166,12 @@ describe('shared error-summary component contract', () => {
 
   it('announces failures assertively and takes focus for keyboard users', () => {
     expect(component).toContain('role="alert"');
-    expect(component).toContain('autofocus');
     expect(component).toContain('tabindex="-1"');
+    expect(component).toContain('data-error-summary');
+    // Invalid `autofocus` on <section> was replaced by progressive script focus
+    // (no-JS keeps the visible summary plus anchor links).
+    expect(component).not.toContain('\n  autofocus');
+    expect(component).toContain(".focus(");
   });
 
   it('always names a recovery step with a safe list return', () => {
