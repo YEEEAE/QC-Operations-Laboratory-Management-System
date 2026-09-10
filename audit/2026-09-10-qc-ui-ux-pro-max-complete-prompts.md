@@ -1010,7 +1010,9 @@ Do not invent dashboards or metrics that the backend cannot support.
 
 # PROMPT 6 — Responsive Layout, Mobile Ergonomics & Information Density
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
+
 
 ```text
 Run a full responsive and density audit using current content, not synthetic empty pages only.

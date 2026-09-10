@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تدقيق أسطح البيانات والقرارات كمحطة QC مؤسسية
+
+### تم التنفيذ
+- جردت أسطح Dashboard وFindings/NCR/RCA/CAPA وReceiving/Inspection/Quarantine وLaboratory وEquipment/Calibration/Maintenance وDocuments وChange Requests وApprovals وReports وAudit وBackups وSearch وNotifications وAdmin registers من الكود الحالي.
+- أثبتُّ static أن `DataTable` و`SortHeader` و`LoadingState` و`StaleVersionState` غير مستخدمة فعليًا داخل `src`، وأن `Pagination` لا تظهر خارج تعريفها؛ لذلك أغلب القوائم بلا sort/pagination/loading/stale contract موحّد.
+- وثّقت false empty/false zero عند فشل مزوّد القراءة في Dashboard/Search/Notifications وعدة registers، مع بقاء التفويض server-side وعدم كشف unauthorized search results.
+- وثّقت فجوات اكتمال NCR/RCA/CAPA، وحقول القرار الناقصة في Laboratory/Findings، وفجوات filters/context في الجداول التشغيلية، مع تثبيت أن PASS منفصل عن RELEASED وBackup success منفصل عن Restore Verified.
+- راجعت قرارات الرسوم: لا chart مستخدم فعليًا؛ لم أختلق metrics أو series، وسجلت أن trend الفارغ صادق لكنه يترك Dashboard/Reports ناقصة إلى أن يدعمها backend.
+- أنشأت تقريرًا تنفيذيًا بمصفوفة حالة وأولويات remediation، بدون تعديل source implementation أو database أو runtime mutation.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-enterprise-qc-data-decision-surface-audit.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `python3` skill searches لـ enterprise tables / accessible charts / authorized search / notification live regions / Astro SSR ✅
+- `pnpm exec vitest run tests/unit/ui/design-system-maturity.test.ts tests/unit/ui/universal-shell.test.ts tests/unit/ui/navigation-permissions.test.ts tests/unit/ui/authorization-visibility-ui.test.ts` ✅ — 4 ملفات / 20 اختبارًا.
+- `git diff --check` ✅
+- Browser read-only: `https://qclevel.top/dashboard` أعاد `/login`؛ لا جلسة مصادقة، لذلك role/provider/stale live matrix غير مثبتة.
+- لا POST أو login أو mutation أو commit أو push أو deploy.
+
+### النتيجة
+- **الحالة:** جزئي / NEEDS CHANGES — لا claim readiness أو 100%.
+- **مختصر:** الدليل static يثبت أن البنية الدلالية الأساسية موجودة، لكن تجربة القوائم والحالات المؤسسية غير موحّدة، وأكبر blocker هو خلط provider unavailable مع empty/zero، ثم غياب sort/pagination/loading/stale على registers.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم read outcome typed يفرق loaded/empty/filtered-empty/unauthorized-empty/provider-unavailable قبل أي تحسين تجميلي.
+- يلزم server pagination + deterministic sort وتوصيل primitives المشتركة فعليًا، ثم إعادة تحقق مصادق لكل role/scope على release candidate واحد.
+- NCR/RCA/CAPA ما زالت landing/policy-blocked وليست registers تشغيلية كاملة؛ الرسوم لا تُضاف حتى يثبت backend dataset.
+
 ## [2026-09-10] — تنضيج أساس نظام التصميم المؤسسي
 
 ### تم التنفيذ

@@ -93,6 +93,7 @@ export class PostgresLabRepository implements LabRepository {
       .selectFrom('lab_tests')
       .select('id')
       .orderBy('updated_at', 'desc')
+      .orderBy('id', 'desc')
       .execute();
     const output: LabTest[] = [];
     for (const row of rows) {

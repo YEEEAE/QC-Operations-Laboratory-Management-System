@@ -81,7 +81,7 @@ export class PostgresDocumentRepository implements DocumentRepository {
   }
 
   async listDocuments(input: { actor: ActorContext; filter?: DocumentListFilter }): Promise<readonly DocumentIdentity[]> {
-    let query = this.database.selectFrom('document_identities').selectAll().orderBy('updated_at', 'desc');
+    let query = this.database.selectFrom('document_identities').selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
     if (input.filter?.documentType) query = query.where('document_type', '=', input.filter.documentType) as typeof query;
     if (input.filter?.search) query = query.where((eb) => eb.or([eb('document_no', 'ilike', `%${input.filter!.search}%`), eb('title', 'ilike', `%${input.filter!.search}%`)])) as typeof query;
     const rows = await query.execute();

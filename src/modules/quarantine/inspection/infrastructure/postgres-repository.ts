@@ -123,6 +123,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
       .selectFrom('inspection_reports')
       .select('id')
       .orderBy('updated_at', 'desc')
+      .orderBy('id', 'desc')
       .execute();
     const result: Inspection[] = [];
     for (const row of rows) {

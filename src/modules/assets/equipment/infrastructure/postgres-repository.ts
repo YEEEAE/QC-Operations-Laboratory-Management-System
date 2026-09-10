@@ -110,7 +110,7 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
     actor: ActorContext;
     filter?: EquipmentListFilter;
   }): Promise<readonly Equipment[]> {
-    let query = this.db.selectFrom('equipment').selectAll().orderBy('updated_at', 'desc');
+    let query = this.db.selectFrom('equipment').selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
     if (input.filter?.state) query = query.where('state', '=', input.filter.state) as typeof query;
     if (input.filter?.search) {
       const q = input.filter.search;

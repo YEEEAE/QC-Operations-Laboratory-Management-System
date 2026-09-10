@@ -61,7 +61,7 @@ export class PostgresFindingRepository implements FindingRepository {
       .selectAll()
       .where((eb) => eb.or([eb('owner_id', '=', i.actor.id), eb('created_by', '=', i.actor.id)]));
     if (i.state) q = q.where('state', '=', i.state);
-    return (await q.orderBy('updated_at', 'desc').execute()).map((r) => this.map(r));
+    return (await q.orderBy('updated_at', 'desc').orderBy('id', 'desc').execute()).map((r) => this.map(r));
   }
   async transition(i: Parameters<FindingRepository['transition']>[0]) {
     const next: Record<FindingAction, string> = {

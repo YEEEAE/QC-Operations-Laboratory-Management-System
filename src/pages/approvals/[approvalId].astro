@@ -1,6 +1,8 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
+import LoadingState from '../../ui/components/feedback/LoadingState.astro';
+import StaleVersionState from '../../ui/components/feedback/StaleVersionState.astro';
 import { approvalsReadDependencies } from '../../modules/approvals/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -14,6 +16,8 @@ const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? 
   <section class="head"><div><p class="eyebrow">UI-APR-002 · APPROVAL REVIEW WORKSPACE</p><h1>{subjectLabel}</h1><p>{approval.approvalCase.subjectType} · {approval.approvalCase.subjectId}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
   <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{approval.approvalCase.workflowType}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requested by</dt><dd>{approval.approvalCase.requestedBy}</dd><dt>State</dt><dd>{approval.subject.state}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ?? 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{key}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
   <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<textarea id="reason" name="reason" rows="4" maxlength="4000"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit">Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output></form></section>
+  <div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div>
+  <div data-stale-state hidden><StaleVersionState version={approval.subject.version.toString()} /></div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -25,6 +29,10 @@ const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? 
     const button = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
     const output = form.querySelector<HTMLOutputElement>('[data-result]');
     form.setAttribute('aria-busy', 'true');
+    const loading = form.closest('.decision')?.querySelector<HTMLElement>('[data-loading-state]');
+    const stale = form.closest('.decision')?.querySelector<HTMLElement>('[data-stale-state]');
+    if (loading) loading.hidden = false;
+    if (stale) stale.hidden = true;
     if (button) button.disabled = true;
     if (output) output.textContent = 'Checking authorization and controlled evidence…';
     try {
@@ -32,6 +40,7 @@ const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? 
       const result = await actions.approvals.decide({ approvalId: String(data.get('approvalId')), workItemId: String(data.get('workItemId')), subjectVersion: BigInt(String(data.get('subjectVersion'))), decision: String(data.get('decision')) as 'APPROVE' | 'RETURN' | 'REJECT', reason: String(data.get('reason') ?? '') || undefined, reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') || undefined });
       const outcome = classifyActionResult(result as unknown as { data?: { id?: string }; error?: unknown });
       if (outcome.state === 'SUCCESS') { window.location.href = '/approvals'; return; }
+      if (outcome.state === 'CONFLICT_STALE' && stale) stale.hidden = false;
       const copy: Record<string, string> = {
         VALIDATION_ERROR: 'The decision was not accepted. A reason is required for return/reject — review the fields and try again. Your entries are preserved.',
         CONFLICT_STALE: 'The record changed while you were reviewing it. Reload the current record and try again if permitted. Your reason was kept.',
@@ -42,7 +51,7 @@ const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? 
       if (output) { output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR; output.focus?.(); }
     } catch {
       if (output) { output.textContent = 'The service is temporarily unavailable. Your entries are preserved — try again if permitted.'; output.focus?.(); }
-    } finally { form.removeAttribute('aria-busy'); if (button) button.disabled = false; }
+    } finally { if (loading) loading.hidden = true; form.removeAttribute('aria-busy'); if (button) button.disabled = false; }
   });
 </script>
 <style>

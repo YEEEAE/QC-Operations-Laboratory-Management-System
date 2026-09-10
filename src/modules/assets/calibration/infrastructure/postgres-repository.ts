@@ -120,7 +120,7 @@ export class PostgresCalibrationRepository implements CalibrationRepository {
     actor: ActorContext;
     filter?: CalibrationListFilter;
   }): Promise<readonly CalibrationRecord[]> {
-    let query = this.db.selectFrom('calibration_records').selectAll().orderBy('updated_at', 'desc');
+    let query = this.db.selectFrom('calibration_records').selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
     if (input.filter?.state) query = query.where('state', '=', input.filter.state) as typeof query;
     if (input.filter?.equipmentId)
       query = query.where('equipment_id', '=', input.filter.equipmentId) as typeof query;

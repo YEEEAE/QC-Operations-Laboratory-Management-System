@@ -159,7 +159,7 @@ export class PostgresTaskRepository implements TaskRepository {
     return mapTask(row, checklist, Boolean(evidence));
   }
   async list(input: { actor: ActorContext; filter?: TaskListFilter }): Promise<readonly Task[]> {
-    let query = this.database.selectFrom('tasks').selectAll().orderBy('updated_at', 'desc');
+    let query = this.database.selectFrom('tasks').selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
     if (input.filter?.state) query = query.where('state', '=', input.filter.state) as typeof query;
     if (input.filter?.assigneeId)
       query = query.where('current_assignee_id', '=', input.filter.assigneeId) as typeof query;
