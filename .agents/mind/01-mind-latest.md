@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تجهيز حسابات وفيكستشرز التحقق الآمنة ومصفوفة C-12 (Prompt 13)
+
+### تم التنفيذ
+- أضفت `tests/fixtures/verification-personas.ts`: الشخصيات الست (yazeed غير مُدار + supervisor/manager/admin-only/employee/least بأقل صلاحيات موثقة) بلا أي secrets؛ كلمات المرور عبر `QC_VERIFY_*` فقط.
+- أضفت سكربتي `scripts/verification/seed-verification-fixtures.ts` و`cleanup-verification-fixtures.ts` بحراسة non-production ثلاثية ورفض الإنتاج ورفض لمس yazeed؛ الحسابات `verify-*` تنتهي بعد 24h والسجلات `VERIFY-*` قابلة للتنظيف مع حفظ التاريخ (DISABLE لا حذف).
+- أنتجت `audit/C12-expected-access-matrix.md`: مصفوفة كل routes/actions المستخدمة في C-01..C-12 (قراءة عامة + admin/health/audit + template/P-04/P-05/P-06/P-07 + forged URL/action).
+- أضفت اختبارات: وحدة للمصفوفة (6: ست شخصيات/انتهاء/أقل صلاحيات/Admin بلا approvals/طرق canonical/بادئة VERIFY) وتكامل للرفض الخادمي (7: موجب supervisor + سالب admin/least + SoD + stale + wrong-state + inactive) ومواصفة Playwright gated (قراءة least + تزوير approval بـadmin).
+- وسّعت `.env.example` بأسماء `QC_VERIFY_*` فقط و`package.json` بأمري `verify:fixtures:seed/clean`؛ بلا credentials في المصدر أو السجلات.
+
+### الملفات المتأثرة
+- `tests/fixtures/verification-personas.ts` (جديد)
+- `scripts/verification/{seed-verification-fixtures,cleanup-verification-fixtures}.ts` (جديدة)
+- `audit/C12-expected-access-matrix.md` (جديد)
+- `tests/unit/verification/expected-access-matrix.test.ts` و`tests/integration/verification/verification-access.test.ts` و`tests/e2e/verification-access.spec.ts` (جديدة)
+- `.env.example` و`package.json`
+
+### التحقق
+- `pnpm exec vitest run` للملفين الجديدين ✅ — 2 ملف / 14 اختبارًا
+- `pnpm test:unit` ✅ — 61 ملفًا / 348 اختبارًا (كانت 60/342: +1 ملف وحدة ظاهر هنا والبقية تكامل/E2E خارج العد)
+- `pnpm typecheck` ✅ — 0 أخطاء؛ `pnpm lint` ✅؛ `pnpm test:architecture` ✅؛ `pnpm build` ✅
+- Playwright للمواصفة الجديدة: list فقط ✅ — 2 tests (gated: تتخطى بلا `QC_VERIFY_*`)
+- `git diff --check` ✅
+- Node المحلي `v22.22.3` خارج العقد — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح محليًا / جزئي
+- **مختصر:** فيكستشرز Prompt 13 والمصفوفة والتحقق السالب/الموجب جاهزة ومحروسة، لكن C-12 نفسه يبقى `NOT VERIFIED` حتى تشغيل البذرة على بيئة non-production وتنفيذ المواصفة المصادقة على نفس هوية البناء المنشورة.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy؛ لم تُبذر أي قاعدة حقيقية هنا.
+- درفت معروف: `FOUNDATION_ROLE_PERMISSIONS.ADMIN` ما زال يحمل `PERM-HLTH-*` بينما الوثائق تحصر الصحة بـyazeed — المصفوفة تفرض DENY لـadmin-only على `/system/health` كسلوك متوقع، والتوحيد يحتاج قرارًا منفصلًا.
+- التشغيل المصادق يحتاج `QC_VERIFY_BASE_URL` + كلمات المرور الست في مدير الأسرار ثم `pnpm verify:fixtures:seed` فـ Playwright فـ `pnpm verify:fixtures:clean`.
+
 ## [2026-09-10] — سطح هوية البناء المصادق وتحقق C-11 المقفل على الفشل (Prompt 12)
 
 ### تم التنفيذ
