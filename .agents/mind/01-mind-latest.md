@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — استمرار تنفيذ F-11: تشغيل النسخ المحلي وتوثيق RPO/RTO
+
+### تم التنفيذ
+- أضفت أسماء إعدادات R2 الاختيارية إلى `src/config/constants.ts` و`src/config/env.ts` و`.env.example` بدون أسرار أو قيم فعلية.
+- أضفت `PostgresRecoveryEvidenceRepository` لحفظ أدلة الاستعادة بشكل append-only عبر PostgreSQL، مع قراءة الأدلة المرتبطة بنسخة محددة.
+- أضفت scripts محلية للنسخة اليومية وmonthly restore drill؛ النسخة اليومية fail-closed، وrestore drill يبقى blocked حتى توفير target معزول صريح.
+- أضفت runbook تشغيلي يثبت حدود R2، خطوات `pg_dump` والتحقق بالـSHA-256، retention، restore drill، وقاعدة إبقاء F-11 مفتوحًا حتى وجود artifact وrestore evidence حيّين.
+- أضفت واجهة Backups تعرض أهداف RPO=24 ساعة وRTO=4 ساعات وتفصلها بوضوح عن القياسات الفعلية.
+- أضفت اختبارات adapters وbackup job للتحقق من round-trip للبايتات، اكتمال R2 config، success بعد read-after-write، وfail-closed عند فشل التنفيذ.
+
+### الملفات المتأثرة
+- `src/config/{constants.ts,env.ts}` و`.env.example`
+- `src/modules/backup-recovery/infrastructure/postgres-recovery-evidence-repository.ts`
+- `scripts/recovery/{run-daily-backup.ts,run-monthly-restore-drill.ts}`
+- `docs/operations/F11-BACKUP-RECOVERY-RUNBOOK.md`
+- `src/pages/system/backups/index.astro`
+- `tests/unit/backup-recovery/{adapters.test.ts,backup-job.test.ts}`
+- `package.json`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/backup-recovery` ✅ — 6 ملفات / 12 اختبارًا.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 56 hints/warnings legacy.
+- `git diff --check` ✅
+- لم تُشغّل اختبارات PostgreSQL/integration أو إثبات R2/restore حي: لا توجد credentials أو target معزول، وNode المحلي `v22.22.3` خارج العقد `>=24.20.0 <25`.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** زادت تغطية التنفيذ المحلي والتوثيق والواجهة، لكن F-11 ما زال `OPEN / PARTIAL` لأن catalog wiring الكامل، restore drill المعزول، وartifact حي بنفس deployed release لم تُثبت بعد.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- `src/modules/backup-recovery/infrastructure/cloudflare-r2-artifact-store.ts` ما زال يحتاج list/retention provider wiring مكتملًا.
+- `run-daily-backup.ts` يرفع ويتحقق من artifact لكنه يحتاج ربطًا نهائيًا بـbackup catalog/evidence transaction قبل اعتباره job تشغيليًا مكتملًا.
+- تغيير `.opencode/opencode.json` السابق غير متعلق بالمهمة وتُرك كما هو.
+
 ## [2026-09-10] — تنفيذ Prompt 3 (F-10): دورة حياة قوالب الحجر بسياسة P-06
 
 ### تم التنفيذ

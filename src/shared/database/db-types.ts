@@ -765,6 +765,46 @@ export interface BackupRunsTable {
   database_schema_version: string | null;
   error_code: string | null;
   request_id: string;
+  artifact_type: string | null;
+  object_version: string | null;
+  git_sha: string | null;
+  build_id: string | null;
+  release_id: string | null;
+  migration_head: string | null;
+  postgres_version: string | null;
+  retention_expires_at: Date | null;
+  manifest_sha256: string | null;
+  known_gaps: unknown | null;
+}
+
+export interface RecoveryEvidenceTable {
+  id: Generated<string>;
+  backup_run_id: string;
+  restore_run_id: string | null;
+  evidence_version: bigint;
+  result: string;
+  source_environment: string;
+  target_environment: string;
+  requested_by: string | null;
+  authorized_by: string | null;
+  reason: string;
+  request_id: string;
+  git_sha: string | null;
+  build_id: string | null;
+  release_id: string | null;
+  migration_head: string | null;
+  postgres_version: string | null;
+  started_at: Date;
+  completed_at: Date | null;
+  measured_rpo_seconds: number | bigint | null;
+  measured_rto_seconds: number | bigint | null;
+  database_validation: string;
+  object_validation: string;
+  security_validation: string;
+  business_validation: string;
+  session_invalidation: string | null;
+  known_gaps: unknown;
+  created_at: Generated<Date>;
 }
 
 export interface RestoreRunsTable {
@@ -851,6 +891,7 @@ export interface DatabaseSchema {
   electronic_signatures: ElectronicSignaturesTable;
   backup_runs: BackupRunsTable;
   restore_runs: RestoreRunsTable;
+  recovery_evidence: RecoveryEvidenceTable;
   rate_limit_windows: RateLimitWindowsTable;
 }
 

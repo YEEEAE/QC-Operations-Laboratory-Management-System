@@ -21,6 +21,10 @@ const envSchema = z.object({
   OTEL_EXPORTER_OTLP_HEADERS: z.string().trim().min(1).optional(),
   RATE_LIMIT_LOGIN_MAX: z.string().regex(/^\d+$/).optional(),
   RATE_LIMIT_LOGIN_WINDOW_SECONDS: z.string().regex(/^\d+$/).optional(),
+  R2_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
+  R2_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
+  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  R2_BUCKET: z.string().trim().min(3).optional(),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;

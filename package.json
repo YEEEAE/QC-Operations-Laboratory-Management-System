@@ -34,6 +34,8 @@
     "db:schema:check": "tsx scripts/db/check-schema-integrity.ts",
     "db:preflight": "tsx scripts/db/preflight.ts",
     "recovery:checklist": "tsx scripts/recovery/run-recovery-checklist.ts",
+    "recovery:backup:daily": "tsx scripts/recovery/run-daily-backup.ts",
+    "recovery:restore:monthly": "tsx scripts/recovery/run-monthly-restore-drill.ts",
     "db:seed:foundation": "tsx scripts/db/seed-foundation.ts",
     "db:seed:foundation:check": "tsx scripts/db/check-foundation-seed.ts",
     "bootstrap:admin": "tsx scripts/bootstrap/create-initial-admin.ts",

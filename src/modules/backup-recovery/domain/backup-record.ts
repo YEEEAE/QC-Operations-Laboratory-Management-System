@@ -56,6 +56,16 @@ export interface BackupRun {
   completedAt?: Date;
   sizeBytes?: bigint;
   checksum?: string;
+  artifactType?: 'LOGICAL_EXPORT';
+  objectVersion?: string;
+  gitSha?: string;
+  buildId?: string;
+  releaseId?: string;
+  migrationHead?: string;
+  postgresVersion?: string;
+  retentionExpiresAt?: Date;
+  manifestSha256?: string;
+  knownGaps?: readonly string[];
   databaseSchemaVersion?: string;
   errorCode?: string;
   requestId: string;

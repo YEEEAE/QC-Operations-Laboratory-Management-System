@@ -55,7 +55,7 @@ describe('managed PostgreSQL migration principal', () => {
     if (!managedPool) return;
 
     const result = await migrate({ pool: managedPool });
-    expect(result.applied).toHaveLength(18);
+    expect(result.applied).toHaveLength(19);
     expect(
       (
         await managedPool.query(
@@ -76,7 +76,7 @@ describe('managed PostgreSQL migration principal', () => {
     expect(
       (await managedPool.query('SELECT count(*)::int AS count FROM qc.schema_migrations')).rows[0]
         .count,
-    ).toBe(18);
+    ).toBe(19);
     expect(
       (
         await managedPool.query(
