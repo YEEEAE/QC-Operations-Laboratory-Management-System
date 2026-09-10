@@ -1066,6 +1066,23 @@ ADMINISTRATIVE
 
 system administration.
 
+Template lifecycle workspace (P-06):
+
+```text
+/quarantine/admin/[templateId]
+```
+
+File:
+
+```text
+src/pages/quarantine/admin/[templateId].astro
+```
+
+Review, approve, stop, void, supersede, and revise actions with
+explicit disabled reasons. Server-rendered with POST baseline; all
+mutations reauthorize through Application use cases with expected
+versions.
+
 ---
 
 # 44. Laboratory Root

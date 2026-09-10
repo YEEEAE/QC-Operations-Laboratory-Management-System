@@ -8,6 +8,7 @@ import { ncr } from './ncr.js';
 import { rca } from './rca.js';
 import { capa } from './capa.js';
 import { quarantine } from './quarantine.js';
+import { quarantineTemplates } from './quarantine-templates.js';
 import { laboratory } from './laboratory.js';
 import { assets } from './assets.js';
 import { documents } from './documents.js';
@@ -37,6 +38,7 @@ export const server = {
   rca,
   capa,
   quarantine,
+  quarantineTemplates,
   laboratory,
   assets,
   documents,

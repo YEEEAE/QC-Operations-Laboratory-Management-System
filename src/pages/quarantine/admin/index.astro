@@ -1,17 +1,195 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
-import { quarantineReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { field, optionalField, toFormFailure, extractDetailId, type FormFailure } from '../../../ui/forms/mutation-post.js';
+import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
-let admin: Awaited<ReturnType<ReturnType<typeof quarantineReadDependencies>['admin']['execute']>> | undefined;
+
+const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
+const isAuthority =
+  actor.roles.includes('SUPERVISOR') || actor.roles.includes('MANAGER') || actor.roles.includes('SYSTEM_OWNER');
+
 let denied = false;
-try { admin = await quarantineReadDependencies().admin.execute({ actor }); } catch (error) { denied = error instanceof AppError && error.category === 'AUTHORIZATION'; }
+let templates: Awaited<ReturnType<ReturnType<typeof templateReadDependencies>['list']['execute']>> = [];
+try {
+  templates = await templateReadDependencies().list.execute({ actor });
+} catch (error) {
+  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
+}
+
+let values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '', reauthenticationSecret: '' };
+let failure: FormFailure | null = null;
+
+if (Astro.request.method === 'POST' && hasTemplatePermission) {
+  const formData = await Astro.request.formData();
+  values = {
+    templateCode: field(formData, 'templateCode'),
+    versionNo: field(formData, 'versionNo'),
+    name: field(formData, 'name'),
+    description: field(formData, 'description'),
+    contentHash: field(formData, 'contentHash'),
+    sourceDocument: field(formData, 'sourceDocument'),
+    reauthenticationSecret: field(formData, 'reauthenticationSecret'),
+  };
+  try {
+    const created = await templateActionDependencies().create.execute({
+      actor,
+      templateCode: values.templateCode,
+      versionNo: values.versionNo,
+      name: values.name,
+      ...(values.description ? { description: values.description } : {}),
+      ...(values.contentHash ? { contentHash: values.contentHash } : {}),
+      ...(values.sourceDocument ? { sourceDocument: values.sourceDocument } : {}),
+      ...(values.reauthenticationSecret ? { reauthenticationSecret: values.reauthenticationSecret } : {}),
+      requestId: Astro.locals.requestContext?.requestId ?? `admin-create-${Date.now()}`,
+    });
+    const id = extractDetailId(created);
+    if (id) return Astro.redirect(`/quarantine/admin/${id}`, 303);
+    templates = await templateReadDependencies().list.execute({ actor });
+    values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '', reauthenticationSecret: '' };
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Template',
+      requiredFields: [
+        { name: 'templateCode', label: 'Template code' },
+        { name: 'versionNo', label: 'Version number' },
+        { name: 'name', label: 'Template name' },
+        { name: 'reauthenticationSecret', label: 'Password confirmation' },
+      ],
+      values,
+      listHref: '/quarantine/admin',
+      listLabel: 'template administration',
+    });
+  }
+}
+
+function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | 'VOID' | 'SUPERSEDE' | 'REVISE'): string | null {
+  if (!hasTemplatePermission) return 'Missing the explicit template administration permission.';
+  if (action !== 'REVISE' && !isAuthority && (action === 'REVIEW' || action === 'APPROVE' || action === 'STOP' || action === 'VOID' || action === 'SUPERSEDE')) {
+    return 'Employee accounts cannot review, approve, stop, void, or supersede (P-06).';
+  }
+  switch (action) {
+    case 'REVIEW': return state === 'DRAFT' ? null : `Review is available only from DRAFT (current: ${state}).`;
+    case 'APPROVE': return state === 'DRAFT' || state === 'UNDER_REVIEW' ? null : `Approval is available only from DRAFT or UNDER_REVIEW (current: ${state}).`;
+    case 'STOP': return state === 'APPROVED' ? null : `Stop is available only from APPROVED (current: ${state}).`;
+    case 'VOID': return ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'].includes(state) ? null : `Void is unavailable from ${state}; history is preserved.`;
+    case 'SUPERSEDE': return state === 'APPROVED' || state === 'STOPPED' ? null : `Supersede is available only from APPROVED or STOPPED (current: ${state}).`;
+    case 'REVISE': return state === 'APPROVED' || state === 'STOPPED' ? null : `New revisions start from APPROVED or STOPPED (current: ${state}). Approved content is never edited in place.`;
+  }
+}
 ---
 <AppLayout title="Quarantine Administration · QC Operations" locale="en" direction="ltr">
-  <section class="head"><div><p class="eyebrow">CONTROLLED CONFIGURATION</p><h1>Quarantine administration</h1><p class="lede">Read-only operational configuration and approved reference context.</p></div><a href="/quarantine">Back to Quarantine</a></section>
-  {denied ? <section class="denied" role="alert"><h2>Administration is not available</h2><p>This area requires the explicit Quarantine administration permission. Admin role alone is not business authority.</p></section> : <div class="grid"><section class="panel"><div class="panel-head"><div><p class="eyebrow">APPROVED TEMPLATES</p><h2>Inspection template versions</h2></div></div>{admin?.templates.length ? <div class="table-wrap"><table><caption>Approved template context</caption><thead><tr><th scope="col">Code</th><th scope="col">Name</th><th scope="col">Active</th><th scope="col">Current approved version</th></tr></thead><tbody>{admin.templates.map((template) => <tr><th scope="row">{template.code}</th><td>{template.name}</td><td>{template.active ? 'Active' : 'Inactive'}</td><td>{template.currentVersion ?? 'No approved version'}</td></tr>)}</tbody></table></div> : <p class="empty">No approved inspection templates are available.</p>}</section><section class="panel"><p class="eyebrow">READ MODEL</p><h2>Receiving state distribution</h2>{admin?.receivingByState.length ? <ul class="states">{admin.receivingByState.map((row) => <li><span>{row.state}</span><strong>{row.value}</strong></li>)}</ul> : <p class="empty">No receiving state data is available.</p>}<p class="note">Configuration changes require a separate approved mutation workflow with permission, audit, and concurrency checks.</p></section></div>}
+  <section class="head">
+    <div>
+      <p class="eyebrow">CONTROLLED CONFIGURATION · P-06</p>
+      <h1>Quarantine administration</h1>
+      <p class="lede">Inspection template lifecycle: create, review, approve, stop, void, supersede. Approved content is never edited or deleted; replacement is a new revision followed by Supersede.</p>
+    </div>
+    <a href="/quarantine">Back to Quarantine</a>
+  </section>
+
+  {denied ? (
+    <section class="denied" role="alert">
+      <h2>Administration is not available</h2>
+      <p>This area requires the explicit Quarantine administration permission. Admin role alone is not business authority.</p>
+    </section>
+  ) : (
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head"><div><p class="eyebrow">TEMPLATE LIFECYCLE</p><h2>Inspection template versions</h2></div></div>
+        {!isAuthority && (
+          <p class="note" role="note">Employee accounts create DRAFT only and cannot review, approve, stop, void, or supersede (P-06). Supervisor, Manager, and yazeed (SYSTEM_OWNER) act with reauthentication and E-Signature.</p>
+        )}
+        {isAuthority && (
+          <p class="note" role="note">Authority creation produces APPROVED immediately and always requires password re-entry (E-Signature). Reviewer may also approve the same template: an explicit template-only exception to the general SoD rule.</p>
+        )}
+        {templates.length ? (
+          <div class="table-wrap"><table>
+            <caption>Template versions with lifecycle state</caption>
+            <thead><tr><th scope="col">Code</th><th scope="col">Version</th><th scope="col">State</th><th scope="col">Open</th></tr></thead>
+            <tbody>
+              {templates.map((t) => (
+                <tr>
+                  <th scope="row">{t.templateCode}</th>
+                  <td>{t.versionNo}</td>
+                  <td>{t.state} · v{t.version.toString()}</td>
+                  <td><a href={`/quarantine/admin/${t.id}`}>Open</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        ) : (
+          <p class="empty">No inspection template versions are available in your authorized scope.</p>
+        )}
+        <h3>Lifecycle availability</h3>
+        <ul class="states">
+          {templates.map((t) => (
+            <li>
+              <span>{t.templateCode} {t.versionNo} · {t.state}</span>
+              <small>
+                {(['REVIEW', 'APPROVE', 'STOP', 'VOID', 'SUPERSEDE', 'REVISE'] as const).map((a) => {
+                  const reason = disabledReason(t.state, a);
+                  return <span class={reason ? 'off' : 'on'}>{a}{reason ? ` — disabled: ${reason}` : ' — available'}</span>;
+                })}
+              </small>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="panel">
+        <p class="eyebrow">CREATE</p>
+        <h2>Create template</h2>
+        {!hasTemplatePermission ? (
+          <p class="empty">Creation requires the explicit template administration permission.</p>
+        ) : (
+          <form method="post" data-template-create>
+            {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref="/quarantine/admin" listLabel="template administration" />}
+            <label>Template code<input name="templateCode" required value={values.templateCode} /></label>
+            <label>Version number<input name="versionNo" required value={values.versionNo} /></label>
+            <label>Template name<input name="name" required value={values.name} /></label>
+            <label>Description<textarea name="description" rows="3">{values.description}</textarea></label>
+            <label>Content hash (optional)<input name="contentHash" value={values.contentHash} /></label>
+            <label>Source document (optional)<input name="sourceDocument" value={values.sourceDocument} /></label>
+            <label>Password confirmation (required for Supervisor, Manager, yazeed)<input name="reauthenticationSecret" type="password" autocomplete="current-password" required={isAuthority} /></label>
+            <p class="hint">{isAuthority ? 'Creates APPROVED immediately with E-Signature.' : 'Creates DRAFT. Approval requires an authorized reviewer.'}</p>
+            <div class="actions"><button type="submit">Create template</button></div>
+          </form>
+        )}
+        <p class="note">Every action requires the expected version and rejects stale writes. Audit and outbox evidence persist atomically with each transition.</p>
+      </section>
+    </div>
+  )}
 </AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('form[data-template-create]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const target = event.currentTarget as HTMLFormElement;
+    const data = new FormData(target);
+    const output = target.querySelector<HTMLElement>('[data-result]');
+    try {
+      const result = await actions.quarantineTemplates.createTemplate({
+        templateCode: String(data.get('templateCode') ?? ''),
+        versionNo: String(data.get('versionNo') ?? ''),
+        name: String(data.get('name') ?? ''),
+        description: String(data.get('description') ?? '') || undefined,
+        contentHash: String(data.get('contentHash') ?? '') || undefined,
+        sourceDocument: String(data.get('sourceDocument') ?? '') || undefined,
+        reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') || undefined,
+      });
+      const id = (result.data as { id?: string } | undefined)?.id;
+      if (id) { location.href = '/quarantine/admin/' + id; return; }
+      if (output) output.textContent = 'The action was not accepted. Review the fields and try again.';
+    } catch {
+      target.submit();
+    }
+  });
+</script>
 <style>
-  .head,.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5)}.head{margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty,.note,.denied p{color:var(--text-muted);font-size:.84rem}.head a{color:var(--color-accent-primary-hover)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel,.denied{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:.25rem 0 0;font-size:1rem}.table-wrap{overflow-x:auto;margin-top:var(--space-4)}table{width:100%;min-width:620px;border-collapse:collapse}caption{text-align:start;padding:.75rem 0;color:var(--text-muted);font-size:.8rem}th,td{padding:.75rem 0;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}.states{list-style:none;margin:var(--space-4) 0;padding:0}.states li{display:flex;justify-content:space-between;padding:.8rem 0;border-top:1px solid var(--color-border-subtle);font-size:.82rem}.note{margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.denied{border-inline-start:3px solid var(--status-warning)}@media(max-width:760px){.head,.grid{display:grid}.panel{padding:var(--space-4)}}
+  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty,.note,.denied p,.hint{color:var(--text-muted);font-size:.84rem}.head a{color:var(--color-accent-primary-hover)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel-head{display:flex;justify-content:space-between;align-items:flex-start}.table-wrap{overflow-x:auto;margin-top:var(--space-4)}table{width:100%;min-width:520px;border-collapse:collapse}caption{text-align:start;padding:.75rem 0;color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem 0;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}.states{list-style:none;margin:var(--space-4) 0;padding:0;display:grid;gap:.6rem}.states li{display:grid;gap:.3rem;font-size:.8rem}.states small{display:grid;gap:.2rem;color:var(--text-muted)}.on{color:var(--text-primary)}.off{color:var(--text-muted)}form{display:grid;gap:.7rem;margin-top:var(--space-4)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.actions{display:flex;justify-content:flex-end}button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}.note{margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:760px){.head,.grid{display:grid}}
 </style>

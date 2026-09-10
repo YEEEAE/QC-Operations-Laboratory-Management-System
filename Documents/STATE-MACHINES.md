@@ -4366,7 +4366,60 @@ What happens if one side effect fails?
 
 ---
 
-# 118. Document Status
+# 118. Inspection Template Version State Machine (P-06 — APPROVED 2026-09-10)
+
+## States
+
+```text
+DRAFT
+UNDER_REVIEW
+APPROVED
+STOPPED
+VOID
+SUPERSEDED
+```
+
+## Lifecycle
+
+```text
+DRAFT
+ ├────→ UNDER_REVIEW ──→ APPROVED ──→ STOPPED ──→ SUPERSEDED
+ │            │               │            │──→ VOID
+ │            │               ├──→ VOID    │
+ │            ├──→ VOID       └──→ SUPERSEDED
+ ├──→ APPROVED (authority direct approval with E-Signature)
+ └──→ VOID
+```
+
+`VOID` and `SUPERSEDED` are terminal and preserve history. Approved
+content is never edited or deleted in place; replacement is a new
+revision (`TR-TMPL-007`, always born `DRAFT`) followed by `SUPERSEDE`
+of the approved revision.
+
+## Transitions
+
+| ID | From | Action | To | Authority | Reason | E-Signature |
+| --- | --- | --- | --- | --- | --- | --- |
+| TR-TMPL-001 | New | CREATE | DRAFT (Employee) / APPROVED (authority) | Every active user with `PERM-ADM-TEMPLATES` | No | Authority path only |
+| TR-TMPL-002 | DRAFT | REVIEW | UNDER_REVIEW | Supervisor / Manager / yazeed | No | No |
+| TR-TMPL-003 | DRAFT / UNDER_REVIEW | APPROVE | APPROVED | Supervisor / Manager / yazeed | No | Required |
+| TR-TMPL-004 | APPROVED | STOP | STOPPED | Supervisor / Manager / yazeed | Required | Required |
+| TR-TMPL-005 | DRAFT / UNDER_REVIEW / APPROVED / STOPPED | VOID | VOID | Supervisor / Manager / yazeed | Required | Required |
+| TR-TMPL-006 | APPROVED / STOPPED | SUPERSEDE | SUPERSEDED | Supervisor / Manager / yazeed | Required | Required |
+| TR-TMPL-007 | APPROVED / STOPPED | REVISE | New DRAFT revision | Every active user with `PERM-ADM-TEMPLATES` | No | No |
+
+Employee must never review, approve, stop, void, or supersede.
+Admin alone is never template authority. Reviewer may also be
+approver: this is an explicit template-only exception to the general
+SoD rule (`AUTHOR ≠ APPROVER` stays in force for all other domains).
+Every mutation requires the expected version, rejects stale writes,
+and persists immutable audit plus outbox evidence atomically.
+Replays under the same request id return the current record without
+duplicate side effects.
+
+---
+
+# 119. Document Status
 
 ```text
 Document:

@@ -1,5 +1,43 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ Prompt 3 (F-10): دورة حياة قوالب الحجر بسياسة P-06
+
+### تم التنفيذ
+- بنيت وحدة `src/modules/quarantine/templates`: دومين (`template-state` بست حالات وTR-TMPL-001..007 + `template` + `template-policy` للسلطات الثلاث)، منفذ `TemplateRepository`، وتطبيق Postgres ذري (نسخة متوقعة/رفض stale + audit/outbox بنفس الترانزاكشن + إعادة idempotent بنفس requestId).
+- أضفت حالات استخدام: إنشاء (Employee→DRAFT بلا توقيع، والسلطات→APPROVED بتوقيع إلزامي)، review/approve (للسلطات فقط مع استثناء SoD الخاص بالقوالب)، stop/void/supersede (سبب إلزامي + reauth + توقيع)، وrevise (مراجعة DRAFT جديدة بدل التعديل المباشر).
+- وسّعت `policy-registry` بكيانات `INSPECTION_TEMPLATE_VERSION`، ومنحت `PERM-ADM-TEMPLATES` لـEmployee/Supervisor/Manager و`PERM-ESIG-SIGN` للسلطتين (Admin وحده مرفوض)، ومدّدت `APPROVAL_SUBJECT_TYPES` لنوع القالب.
+- بنيت أكشنات `quarantineTemplates` السبع وصفحتي `/quarantine/admin` (قائمة + إنشاء POST baseline + سجل الإتاحة بأسباب التعطيل) و`/quarantine/admin/[templateId]` (الخمسة أفعال + مراجعة جديدة).
+- وثّقت الدورة في `STATE-MACHINES.md` (§118) و`PERMISSION-MATRIX.md` (§151) و`ROUTE-MANIFEST-SPECIFICATION.md` (مسار التفاصيل).
+
+### الملفات المتأثرة
+- `src/modules/quarantine/templates/{domain,ports,infrastructure,application}/*` (جديدة)
+- `src/actions/quarantine-templates.ts` + `src/actions/index.ts`
+- `src/pages/quarantine/admin/{index,[templateId].astro}`
+- `src/shared/authorization/policy-registry.ts` + `db/seeds/common.ts`
+- `src/modules/approvals/{domain/approval,application/authorization}.ts`
+- `Documents/{STATE-MACHINES,PERMISSION-MATRIX,ROUTE-MANIFEST-SPECIFICATION}.md`
+- `tests/unit/quarantine/*` + `tests/integration/quarantine/template-{lifecycle,concurrency}.test.ts` + `tests/e2e/quarantine-templates.spec.ts`
+
+### التحقق
+- `pnpm exec astro check` ✅ — 0 errors (637 ملفًا)
+- `pnpm lint` ✅ exit 0 و`pnpm test:architecture` ✅
+- `pnpm test:unit` ✅ — 46 ملفًا / 263 اختبارًا (كانت 44/252: +11 وحدة قوالب)
+- `tests/integration/quarantine` ✅ — 26 passed / 2 skipped (منها 11 دورة حياة P-06)
+- `pnpm build` ✅ و`git diff --check` ✅
+- دخان preview: `/quarantine/admin` بلا جلسة `303 → /login` ✅
+- Playwright للمواصفة الجديدة: 2 passed / 1 skipped (gated بلا fixture) ✅
+- اختبار `template-concurrency` حقيقي PG: gated (يُتخطى بلا `QC_TEST_DATABASE_URL`/Docker)
+- Node المحلي `v22.22.3` خارج عقد `>=24.20.0` — النتائج محلية
+
+### النتيجة
+- **الحالة:** نجح (تنفيذيًا؛ الإغلاق الرسمي لـF-10 يحتاج fixture مصادقة وتمرير كل أفعال الدورة على مرشح الإصدار حسب البرومبت)
+- **مختصر:** دورة حياة القوالب كاملة بسياسة P-06 ومحروسة بالاختبارات السالبة/الموجبة وSoD والتزامن، لكن F-10 يبقى OPEN حتى دليل حي على نفس الـbuild المنشور.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- مجلد `.opencode/` غير متتبع ومو من شغلي — تُرك كما هو.
+- الإثبات الحي المصادق (C-12 وأفعال الدورة لكل سلطة) يحتاج fixtures وbuild منشور — مغطى بـE2E gated.
+
 ## [2026-09-10] — تنفيذ Prompt 2: مسار سياقي مصرح به لإنشاء Change Request (DOCUMENT_VERSION)
 
 ### تم التنفيذ

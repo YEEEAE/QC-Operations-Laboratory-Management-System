@@ -1,0 +1,152 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { field, toFormFailure, type FormFailure } from '../../../ui/forms/mutation-post.js';
+import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
+import { AppError } from '../../../shared/errors/app-error.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
+const { templateId } = Astro.params;
+if (!templateId) return Astro.redirect('/quarantine/admin');
+
+const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
+const isAuthority =
+  actor.roles.includes('SUPERVISOR') || actor.roles.includes('MANAGER') || actor.roles.includes('SYSTEM_OWNER');
+
+let template = await templateReadDependencies().get.execute({ actor, id: templateId }).catch(() => undefined);
+if (!template) return Astro.redirect('/quarantine/admin');
+
+let failure: FormFailure | null = null;
+let notice: string | null = null;
+
+function reasonFor(action: string): string | null {
+  switch (action) {
+    case 'REVIEW': return template!.state === 'DRAFT' ? null : `Review is available only from DRAFT (current: ${template!.state}).`;
+    case 'APPROVE': return template!.state === 'DRAFT' || template!.state === 'UNDER_REVIEW' ? null : `Approval is available only from DRAFT or UNDER_REVIEW (current: ${template!.state}).`;
+    case 'STOP': return template!.state === 'APPROVED' ? null : `Stop is available only from APPROVED (current: ${template!.state}).`;
+    case 'VOID': return ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'].includes(template!.state) ? null : `Void is unavailable from ${template!.state}; history is preserved.`;
+    case 'SUPERSEDE': return template!.state === 'APPROVED' || template!.state === 'STOPPED' ? null : `Supersede is available only from APPROVED or STOPPED (current: ${template!.state}).`;
+    case 'REVISE': return template!.state === 'APPROVED' || template!.state === 'STOPPED' ? null : `New revisions start from APPROVED or STOPPED (current: ${template!.state}).`;
+    default: return 'Unknown action.';
+  }
+}
+
+if (Astro.request.method === 'POST' && hasTemplatePermission) {
+  const formData = await Astro.request.formData();
+  const intent = field(formData, 'intent');
+  const expectedVersion = BigInt(field(formData, 'expectedVersion') || '0');
+  const reason = field(formData, 'reason');
+  const reauthenticationSecret = field(formData, 'reauthenticationSecret');
+  const requestId = Astro.locals.requestContext?.requestId ?? `admin-${intent}-${Date.now()}`;
+  try {
+    const deps = templateActionDependencies();
+    if (intent === 'review') await deps.review.execute({ actor, id: template.id, expectedVersion, requestId });
+    else if (intent === 'approve') await deps.approve.execute({ actor, id: template.id, expectedVersion, reauthenticationSecret, requestId });
+    else if (intent === 'stop') await deps.stop.execute({ actor, id: template.id, expectedVersion, reason, reauthenticationSecret, requestId });
+    else if (intent === 'void') await deps.void.execute({ actor, id: template.id, expectedVersion, reason, reauthenticationSecret, requestId });
+    else if (intent === 'supersede') await deps.supersede.execute({ actor, id: template.id, expectedVersion, reason, reauthenticationSecret, requestId });
+    else if (intent === 'revise')
+      await deps.revise.execute({
+        actor,
+        id: template.id,
+        expectedVersion,
+        versionNo: field(formData, 'versionNo'),
+        name: field(formData, 'name'),
+        description: field(formData, 'description') || undefined,
+        contentHash: field(formData, 'contentHash') || undefined,
+        sourceDocument: field(formData, 'sourceDocument') || undefined,
+        requestId,
+      });
+    else throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    const refreshed = await templateReadDependencies().get.execute({ actor, id: template.id });
+    if (refreshed) template = refreshed;
+    notice = `Action ${intent} completed.`;
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'Template',
+      requiredFields: [
+        { name: 'reason', label: 'Reason' },
+        { name: 'reauthenticationSecret', label: 'Password confirmation' },
+        { name: 'expectedVersion', label: 'Expected version' },
+      ],
+      values: { reason, reauthenticationSecret: '', expectedVersion: String(expectedVersion) },
+      listHref: '/quarantine/admin',
+      listLabel: 'template administration',
+    });
+  }
+}
+---
+<AppLayout title={`${template.templateCode} ${template.versionNo} · Quarantine Administration`} locale="en" direction="ltr">
+  <p class="crumb"><a href="/quarantine/admin">Quarantine administration</a> / {template.templateCode} {template.versionNo}</p>
+  <section class="head">
+    <div>
+      <p class="eyebrow">CONTROLLED TEMPLATE · {template.state}</p>
+      <h1>{template.templateCode} · {template.versionNo}</h1>
+      <p class="lede">{template.name} · version {template.version.toString()}</p>
+    </div>
+    <span class="state">{template.state}</span>
+  </section>
+
+  {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref="/quarantine/admin" listLabel="template administration" />}
+  {notice && <p class="notice" role="status">{notice}</p>}
+
+  <section class="layout">
+    <main>
+      <section class="panel">
+        <h2>Lifecycle actions</h2>
+        {!isAuthority && <p class="muted">Employee accounts cannot review, approve, stop, void, or supersede (P-06). Those actions require Supervisor, Manager, or yazeed with reauthentication and E-Signature.</p>}
+        <div class="actions">
+          {(['review', 'approve', 'stop', 'void', 'supersede'] as const).map((intent) => {
+            const reason = reasonFor(intent.toUpperCase());
+            const roleBlocked = !isAuthority ? 'Employee accounts cannot perform this action (P-06).' : null;
+            const disabled = reason ?? roleBlocked;
+            const needsSig = intent !== 'review';
+            return (
+              <form method="post">
+                <input type="hidden" name="intent" value={intent} />
+                <input type="hidden" name="expectedVersion" value={template.version.toString()} />
+                {(intent === 'stop' || intent === 'void' || intent === 'supersede') && (
+                  <label>Reason (required)<textarea name="reason" required disabled={Boolean(disabled)}></textarea></label>
+                )}
+                {needsSig && (
+                  <label>Password confirmation (required)<input name="reauthenticationSecret" type="password" autocomplete="current-password" required disabled={Boolean(disabled)} /></label>
+                )}
+                <button type="submit" disabled={Boolean(disabled)} title={disabled ?? `${intent} template ${template.versionNo}`}>{intent}</button>
+                {disabled && <p class="muted">Disabled: {disabled}</p>}
+              </form>
+            );
+          })}
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>New revision (approved content is never edited in place)</h2>
+        {reasonFor('REVISE') ? (
+          <p class="muted">Disabled: {reasonFor('REVISE')}</p>
+        ) : (
+          <form method="post" class="revise">
+            <input type="hidden" name="intent" value="revise" />
+            <input type="hidden" name="expectedVersion" value={template.version.toString()} />
+            <label>New version number<input name="versionNo" required /></label>
+            <label>Template name<input name="name" required value={template.name} /></label>
+            <label>Description<textarea name="description" rows="3"></textarea></label>
+            <label>Content hash<input name="contentHash" /></label>
+            <label>Source document<input name="sourceDocument" /></label>
+            <button type="submit">Create DRAFT revision</button>
+          </form>
+        )}
+        <p class="muted">Replacement is a new DRAFT revision of {template.versionNo} followed by Supersede of the approved revision.</p>
+      </section>
+    </main>
+    <aside>
+      <section class="panel">
+        <h2>Record context</h2>
+        <dl><div><dt>Code</dt><dd>{template.templateCode}</dd></div><div><dt>Version</dt><dd>{template.versionNo}</dd></div><div><dt>State</dt><dd>{template.state}</dd></div><div><dt>Record version</dt><dd>{template.version.toString()}</dd></div></dl>
+      </section>
+    </aside>
+  </section>
+</AppLayout>
+<style>
+  .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.notice{color:var(--text-muted);font-size:.84rem}.state{padding:.45rem .7rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--space-5)}main,aside{display:grid;gap:var(--space-5);align-content:start}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:0 0 var(--space-3);font-size:1rem}.actions{display:grid;gap:var(--space-4)}form{display:grid;gap:.6rem;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}button{min-height:var(--control-height);padding:.6rem .8rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}button[disabled]{opacity:.55}.revise{margin-top:var(--space-3)}dl{display:grid;gap:var(--space-3);margin:var(--space-4) 0 0}dt{color:var(--text-muted);font-size:.75rem}dd{margin:.25rem 0 0;font-weight:600}.notice{padding:.7rem;border-inline-start:3px solid var(--status-success);background:var(--surface-panel)}@media(max-width:820px){.layout{grid-template-columns:1fr}}
+</style>

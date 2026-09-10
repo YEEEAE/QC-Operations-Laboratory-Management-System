@@ -2795,7 +2795,34 @@ DENY
 
 ---
 
-# 151. Foundation Status
+# 151. Inspection Template Administration (P-06 — APPROVED 2026-09-10)
+
+`PERM-ADM-TEMPLATES` is granted to Employee, Supervisor, and Manager
+(plus `PERM-ESIG-SIGN` for Supervisor and Manager; `SYSTEM_OWNER`
+`yazeed` holds every active permission). Admin-only actors hold
+neither template permission and are denied every template mutation.
+
+| Action | Employee | Supervisor | Manager | Admin | SYSTEM_OWNER (`yazeed`) |
+| --- | --- | --- | --- | --- | --- |
+| Create (→ DRAFT, no signature) | ALLOW | — | — | DENY | — |
+| Create (→ APPROVED, reauth + E-Signature) | DENY | ALLOW | ALLOW | DENY | ALLOW |
+| Review DRAFT → UNDER_REVIEW | DENY | ALLOW | ALLOW | DENY | ALLOW |
+| Approve → APPROVED (reauth + E-Signature) | DENY | ALLOW | ALLOW | DENY | ALLOW |
+| Stop (reason + reauth + E-Signature) | DENY | ALLOW | ALLOW | DENY | ALLOW |
+| Void (reason + reauth + E-Signature) | DENY | ALLOW | ALLOW | DENY | ALLOW |
+| Supersede (reason + reauth + E-Signature) | DENY | ALLOW | ALLOW | DENY | ALLOW |
+| Revise (new DRAFT revision, never in-place edit) | ALLOW | ALLOW | ALLOW | DENY | ALLOW |
+
+Template-only SoD exception: reviewer may also approve the same
+template version, and an authority may approve their own template.
+The general `AUTHOR ≠ REVIEWER/APPROVER` default stays in force for
+every other domain. All template mutations require the expected
+version and valid scope/state, and persist audit plus outbox evidence
+atomically.
+
+---
+
+# 152. Foundation Status
 
 ```text
 Document:

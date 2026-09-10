@@ -404,6 +404,48 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'QUARANTINE_ADMIN',
     states: ['ACTIVE'],
   },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'CREATE',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['DRAFT'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'REVIEW',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['DRAFT'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'APPROVE',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['DRAFT', 'UNDER_REVIEW'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'STOP',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['APPROVED'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'VOID',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'SUPERSEDE',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['APPROVED', 'STOPPED'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'REVISE',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['APPROVED', 'STOPPED'],
+  },
   { permission: 'PERM-ADM-ROLE-VIEW', action: 'VIEW', entityType: 'ROLE', states: ['ACTIVE'] },
   { permission: 'PERM-ADM-ROLE-ASSIGN', action: 'ASSIGN', entityType: 'ROLE', states: ['ACTIVE'] },
   {
@@ -785,6 +827,7 @@ const policies: readonly AuthorizationPolicy[] = [
     'RCA',
     'NCR',
     'FINDING',
+    'INSPECTION_TEMPLATE_VERSION',
   ].flatMap((entityType) => [
     {
       permission: 'PERM-APR-REVIEW',
@@ -803,6 +846,7 @@ const policies: readonly AuthorizationPolicy[] = [
         'IN_REVIEW',
         'RETURNED',
         'APPROVED',
+        'STOPPED',
         'REJECTED',
         'OPEN',
         'IN_PROGRESS',

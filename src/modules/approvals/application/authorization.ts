@@ -14,6 +14,7 @@ const domainPrefix: Record<ApprovalRecord['approvalCase']['subjectType'], string
   RCA: 'RCA',
   NCR: 'NCR',
   FINDING: 'FIND',
+  INSPECTION_TEMPLATE_VERSION: 'ADM',
 };
 
 export function isAssignedToActor(record: ApprovalRecord, actor: ActorContext): boolean {
