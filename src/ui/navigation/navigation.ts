@@ -271,6 +271,7 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
     approvals: { label: 'My approvals', href: '/approvals' },
     'change-requests': { label: 'Change requests', href: '/change-requests' },
     reports: { label: 'Reports', href: '/reports' },
+    governance: { label: 'Governance' },
     admin: { label: 'Administration', href: '/admin' },
     system: { label: 'System' },
   };
@@ -293,7 +294,16 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
   }
 
   const leaf = segments.at(-1);
-  const suffix = leaf === 'new' ? 'New record' : leaf === 'review' ? 'Review' : leaf === 'execute' ? 'Execution' : undefined;
+  const suffix =
+    leaf === 'new'
+      ? 'New record'
+      : leaf === 'review'
+        ? 'Review'
+        : leaf === 'execute'
+          ? 'Execution'
+          : segments[0] === 'governance' && segments[1] === 'releases'
+            ? 'Release approval'
+            : undefined;
   if (suffix && crumbs.at(-1)?.label !== suffix) crumbs.push({ label: suffix });
   else if (matched && pathname !== matched.href && !suffix) crumbs.push({ label: 'Record detail' });
   return crumbs;

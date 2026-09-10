@@ -76,5 +76,9 @@ describe('navigation permission and route integrity', () => {
       { label: 'System', href: undefined },
       { label: 'System health', href: undefined },
     ]);
+    expect(routeBreadcrumbs('/governance/releases/rel-123')).toEqual([
+      { label: 'Governance', href: undefined },
+      { label: 'Release approval' },
+    ]);
   });
 });

@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — Principal interaction audit وتنضيج primitives المشتركة
+
+### تم التنفيذ
+- أنشأت `audit/2026-09-10-principal-interaction-audit.md` بمصفوفة تفاعلات تغطي click/keyboard/hover/focus/search/filter/select/submit/transition/approve/reject/release/void/restore/edit/cancel/drawer/modal/table/notifications وحالات النجاح والفشل والإلغاء والتعافي والـpermission/state dependency.
+- وثّقت فجوات الاستخدام الحالية: 31 صفحة فيها inline scripts، و26 نموذج mutation، وprimitives مشتركة (`ConfirmDialog`/`ESignatureDialog`/`DataTable`/`SortHeader`/`Pagination`/`ToastRegion`) غير موصولة فعليًا بالصفحات.
+- نضّجت `initDialogs` ليمنع duplicate enhancement، يدعم native Escape/cancel، يختار focus أولي آمن، ويرجع focus للـopener المتصل فقط بعد الإغلاق.
+- حسّنت `ConfirmDialog` بربط reason بالـlabel، عنوان قابل للتركيز، وزر close semantic قابل للكيبورد.
+- حسّنت `Pagination` بحيث disabled boundaries ليست روابط قابلة للتركيز/النقر، وأضفت rel/aria-label/page status؛ وحسّنت `SortHeader` ليعلن اتجاه الفرز القادم ويحافظ على control height المشتركة.
+- أضفت regression assertions لعقد dialog/pagination/sort بدون تغيير authorization أو state machine أو server mutation flow.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-principal-interaction-audit.md`
+- `src/ui/client/dialog.ts`
+- `src/ui/components/feedback/ConfirmDialog.astro`
+- `src/ui/components/data/Pagination.astro`
+- `src/ui/components/data/SortHeader.astro`
+- `tests/unit/ui/app-shell.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/app-shell.test.ts tests/unit/ui/design-system-maturity.test.ts tests/unit/ui/mutation-post.test.ts` ✅ — 3 ملفات / 61 اختبارًا.
+- `pnpm test:unit` ✅ — 67 ملفًا / 417 اختبارًا.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 0 warnings، و62 hints قائمة.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — تحذيرات Vite/chunk المعروفة، وNode `v22.22.3` خارج عقد المشروع.
+- `git diff --check` ✅.
+- Browser/local runtime ⚠️ NOT VERIFIED — تشغيل Astro المحلي فشل بسبب `listen EPERM` على `127.0.0.1:4321`؛ لا login ولا POST ولا mutation ولا production action نُفذت.
+
+### النتيجة
+- **الحالة:** نجح محليًا / PARTIAL live evidence.
+- **مختصر:** صار عند المشروع تدقيق تفاعلات قابل للتتبع وتحسينات فعلية في focus/cancel/disabled sort-pagination، مع إبقاء friction والتفويض/state rules حسب الأساس المعتمد. التوصيل الكامل لكل الصفحات والتحقق المصادق ما زال دفعة لاحقة.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم migration تدريجي من inline mutation handlers إلى `enhanceMutationForm`/adapters مشتركة، وربط primitives بالـroute families بعد اعتماد backend pagination/sort.
+- يلزم تشغيل مصفوفة browser مصادق عليها ببيانات disposable للتحقق من approve/reject/release/void/restore/stale/provider/unavailable.
+- لا commit أو push أو deploy.
+
 ## [2026-09-10] — تدقيق Information Architecture كامل وتحسينات wayfinding آمنة
 
 ### تم التنفيذ

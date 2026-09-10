@@ -65,7 +65,7 @@ Production evidence
 | 9 | Design System Maturity Deep Dive | ☐ |
 | 10 | Information Architecture & Permissions Deep Dive | ✅ |
 | 11 | Interaction Design Deep Dive | ✅ |
-| 12 | Advanced Form Design Deep Dive | ☐ |
+| 12 | Advanced Form Design Deep Dive | ✅ |
 | 13 | UX Writing & Microcopy Deep Dive | ☐ |
 | 14 | Accessibility & Ergonomics Deep Dive | ☐ |
 | 15 | Dashboard & Data Visualization Design Deep Dive | ☐ |
@@ -1398,7 +1398,7 @@ Implement shared interaction patterns instead of page-specific hacks.
 
 # PROMPT 12 — Advanced Form Design Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
 
 ```text
 Act as an expert in enterprise and regulated-data Form UX.

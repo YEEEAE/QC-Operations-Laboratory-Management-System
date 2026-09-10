@@ -37,7 +37,21 @@ describe('enterprise application shell contracts', () => {
     const dialogClient = readUi('client/dialog.ts');
     expect(dialogClient).toContain("dialog.querySelector<HTMLElement>('[autofocus]");
     expect(dialogClient).toContain("'button:not([disabled]), [href], input:not([disabled])");
-    expect(dialogClient).toContain("dialog.addEventListener('close', () => opener?.focus())");
+    expect(dialogClient).toContain("dialog.addEventListener('cancel'");
+    expect(dialogClient).toContain('previousOpener?.isConnected');
+    expect(dialogClient).toContain("dialog.dataset.dialogEnhanced === 'true'");
+  });
+
+  it('keeps shared confirmation and pagination controls keyboard-safe', () => {
+    const confirm = readUi('components/feedback/ConfirmDialog.astro');
+    const pagination = readUi('components/data/Pagination.astro');
+    const sortHeader = readUi('components/data/SortHeader.astro');
+    expect(confirm).toContain('data-dialog-close');
+    expect(confirm).toContain('data-dialog-title');
+    expect(confirm).toContain('for={`${id}-reason`}');
+    expect(pagination).toContain('aria-label={`Go to page ${page - 1}`}');
+    expect(pagination).toContain('<span class="page-link disabled"');
+    expect(sortHeader).toContain('aria-label={`Sort by ${label}');
   });
 
   it('keeps anchored focus visible below persistent UI', () => {
