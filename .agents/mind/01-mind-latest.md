@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — Standardize complete mutation UX without weakening server controls (ui-ux-pro-max)
+
+### تم التنفيذ
+- أضفت عقد التفاعل المشترك `src/ui/forms/mutation-interaction.ts` بالحالات الثمان: IDLE/SUBMITTING/SUCCESS/VALIDATION_ERROR/CONFLICT_STALE/AUTHORIZATION_CHANGED/DEPENDENCY_UNAVAILABLE/UNKNOWN_SAFE_ERROR، مع تعطيل زر الإرسال فقط أثناء SUBMITTING و`aria-busy` ونص تقدم ومنع الإرسال المكرر وحفظ المدخلات وتركيز الحالة ونسخ آمنة بدون stack/SQL/secrets.
+- وصّلت كل `FormErrorSummary` في صفحات الإنشاء التسع + قوالب الحجر بقائمة `errors` المرتبطة (`#fieldId`) مع بقاء الأخطاء Inline و`aria-describedby` صحيحة و`tabindex=-1` و`role=alert` وروابط no-JS.
+- صلّحت إنشاء قالب الحجر: حقول `id/for` و`aria-invalid/describedby` وأخطاء Inline و`fieldset/legend` و`details` للمراجع الاختيارية و`tabindex` على `[data-result]`، وحوّلت السكربت لاستخدام العقد المشترك مع بقاء POST الخادمي.
+- وحّدت أسطح القرارات/الانتقالات (استلام/فحص/مستندات/tasks/change-requests/approvals/CAPA/release/restore/admin users/roles/scopes) على نفس العقد: `aria-busy` و`data-submit` وحالة `role=status` قابلة للتركيز ونسخ مخصصة لكل حالة، وشلت `window.alert/prompt` نهائيًا.
+- أضفت Show/Hide للباسورد في `account.astro` (وكان موجودًا في `login.astro`): زر semantic بـ`aria-pressed/controls/label` مع بقاء `autocomplete` وبدون منع اللصق وبدون تسجيل القيمة.
+- وسّعت `tests/unit/ui/mutation-post.test.ts` بعقد العقد المشترك والتصنيف الستي وربط الأخطاء، وشغّلت `vitest` و`astro check` والحدود المعمارية.
+
+### الملفات المتأثرة
+- `src/ui/forms/mutation-interaction.ts` (جديد)
+- `src/pages/quarantine/admin/index.astro` (+fieldset/details/contract)
+- `src/pages/{tasks, laboratory/tests, assets/*, change-requests, documents, quality/findings, quarantine/receiving}/new.astro` (ربط errors)
+- `src/pages/{approvals, quality/capa, governance/releases, quarantine/*, documents/*, tasks, change-requests, admin/*, system/backups, account}.astro` (توحيد العقد)
+- `tests/unit/ui/mutation-post.test.ts` (عقد + تصنيف)
+
+### التحقق
+- `vitest tests/unit/ui/mutation-post.test.ts` ✅ — 49 passed
+- `vitest tests/unit/ui` ✅ — 164 passed (15 files)
+- `astro check` ✅ — 0 errors (704 files)
+- `architecture boundary check` ✅
+- `eslint` للملفات TS ✅ — `diff --check` ✅
+- Chrome DevTools حي (قراءة + تسجيل دخول yazeed): لوحة التحكم تعمل، و`/tasks/new` المنشور لا يزال يفتقد `[data-result]` — أي أن التحقق الحي يخص النسخة المنشورة القديمة لا الكود المحلي الجديد (لم يُنشر/يُبنى للإنتاج هنا).
+
+### النتيجة
+- **الحالة:** نجح محليًا / النشر غير منفذ
+- **مختصر:** العقد الموحد مطبق محليًا على كل أسطح الـmutation المطلوبة مع بقاء التفويض الخادمي وآلات الحالة والتزامن المتفائل والتدقيق وPOST الاحتياطي، لكن الدليل الحي الكامل (JS/no-JS/bطء/نقر مزدوج/stale/auth/dependency/success) يحتاج نشرًا ثم إعادة فحص Chrome على المرشح المنشور.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit/push/deploy — الكود محلي فقط (30 ملفًا معدلًا + ملف جديد).
+- التحقق الحي الكامل الثماني (JS + no-JS + slow + double-click + validation + stale + authorization + dependency + success) ما زال مفتوحًا على النسخة المنشورة بعد النشر.
+- `login.astro` كان فيه زر Show/Hide أصلًا — لم يُمس إلا `account.astro`.
+- مطلوب قرار مالك حول تباين الألوان المعروف قبل أي تغيير توكنز.
+
+
 ## [2026-09-10] — WCAG 2.2 AA closure pass: laboratory table scopes (read-only live evidence + one local presentation fix)
 
 ### تم التنفيذ

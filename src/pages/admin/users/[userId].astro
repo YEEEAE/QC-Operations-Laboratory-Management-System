@@ -90,19 +90,19 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
             </div>
           </dl>
           {canManage && !isSelf ? (
-            <form class="form" data-admin-update-user data-version={version}>
-              <label>
-                Display name
-                <input name="displayName" required maxlength="200" value={user.displayName} />
+            <form class="form" method="post" data-admin-update-user data-version={version}>
+              <label for="displayName">
+                Display name<span aria-hidden="true"> *</span>
+                <input id="displayName" name="displayName" required maxlength="200" value={user.displayName} />
               </label>
-              <label>
+              <label for="email">
                 Email (optional)
-                <input name="email" type="email" maxlength="320" value={user.email ?? ''} />
+                <input id="email" name="email" type="email" maxlength="320" autocomplete="email" value={user.email ?? ''} />
               </label>
               <div class="actions">
-                <button type="submit">Save profile</button>
+                <button type="submit" data-submit>Save profile</button>
               </div>
-              <p role="status" data-result />
+              <p role="status" data-result tabindex="-1" />
             </form>
           ) : (
             isSelf && (
@@ -120,30 +120,30 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
             </p>
           ) : canManage ? (
             <div class="stack">
-              <form class="form" data-admin-reset-password data-user={user.id} data-version={version}>
-                <label>
-                  Temporary password
-                  <input name="temporaryPassword" type="password" required autocomplete="new-password" />
+              <form class="form" method="post" data-admin-reset-password data-user={user.id} data-version={version}>
+                <label for="temporaryPassword">
+                  Temporary password<span aria-hidden="true"> *</span>
+                  <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" />
                 </label>
                 <p class="note">
                   Resetting revokes every session for this member immediately and is audited.
                 </p>
                 <div class="actions">
-                  <button type="submit">Reset password</button>
+                  <button type="submit" data-submit>Reset password</button>
                 </div>
-                <p role="status" data-result />
+                <p role="status" data-result tabindex="-1" />
               </form>
-              <form class="form" data-admin-disable-user data-user={user.id} data-version={version}>
+              <form class="form" method="post" data-admin-disable-user data-user={user.id} data-version={version}>
                 <p class="note">
                   Disabling sets the account to DISABLED, revokes every session immediately, and
                   is audited. The current version is required.
                 </p>
                 <div class="actions">
-                  <button type="submit" class="danger">
+                  <button type="submit" data-submit class="danger">
                     Disable account
                   </button>
                 </div>
-                <p role="status" data-result />
+                <p role="status" data-result tabindex="-1" />
               </form>
             </div>
           ) : (
@@ -177,7 +177,7 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
               ) : (
                 <p class="note">No active scopes are assigned to this member.</p>
               )}
-              <form class="form" data-admin-replace-scopes data-user={user.id}>
+              <form class="form" method="post" data-admin-replace-scopes data-user={user.id}>
                 <h3>Replace scopes</h3>
                 {scopeKinds.map((kind) => (
                   <div class="scope-row">
@@ -202,9 +202,9 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
                   <input name="reason" maxlength="500" />
                 </label>
                 <div class="actions">
-                  <button type="submit">Replace scopes</button>
+                  <button type="submit" data-submit>Replace scopes</button>
                 </div>
-                <p role="status" data-result />
+                <p role="status" data-result tabindex="-1" />
               </form>
             </div>
           )}
@@ -216,69 +216,55 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
 <script>
   import { actions } from 'astro:actions';
   const userId = location.pathname.split('/').pop() ?? '';
-  const setStatus = (form: HTMLFormElement, message: string) => {
-    const output = form.querySelector('[data-result]');
-    if (output) output.textContent = message;
+  const run = async (form: HTMLFormElement, label: string, call: () => Promise<{ error?: unknown }>) => {
+    if (form.getAttribute('aria-busy') === 'true') return;
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const output = form.querySelector<HTMLElement>('[data-result]');
+    form.setAttribute('aria-busy', 'true');
+    if (submit) submit.disabled = true;
+    if (output) output.textContent = label;
+    try {
+      const result = await call();
+      if (result.error) {
+        if (output) { output.textContent = 'The change was not applied. The member may have changed or your authorization may have changed — refresh and try again if authorized. Your entries are preserved.'; output.focus?.(); }
+      } else location.reload();
+    } catch {
+      if (output) { output.textContent = 'The service is temporarily unavailable. Nothing was changed — your entries are preserved.'; output.focus?.(); }
+    } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   };
-
   const updateForm = document.querySelector<HTMLFormElement>('[data-admin-update-user]');
-  updateForm?.addEventListener('submit', async (event) => {
+  updateForm?.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!updateForm) return;
     const data = new FormData(updateForm);
     const email = String(data.get('email') || '').trim();
-    const result = await actions.admin.updateUser({
-      userId,
-      displayName: String(data.get('displayName')),
-      ...(email ? { email } : {}),
-      expectedVersion: BigInt(updateForm.dataset.version ?? '0'),
-    });
-    if (result.error) setStatus(updateForm, 'Unable to save this profile. Refresh and try again if authorized.');
-    else location.reload();
+    void run(updateForm, 'Saving profile…', () => actions.admin.updateUser({ userId, displayName: String(data.get('displayName')), ...(email ? { email } : {}), expectedVersion: BigInt(updateForm.dataset.version ?? '0') }));
   });
-
   const resetForm = document.querySelector<HTMLFormElement>('[data-admin-reset-password]');
-  resetForm?.addEventListener('submit', async (event) => {
+  resetForm?.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!resetForm) return;
     const data = new FormData(resetForm);
-    const result = await actions.admin.resetPassword({
-      userId,
-      temporaryPassword: String(data.get('temporaryPassword')),
-      expectedVersion: BigInt(resetForm.dataset.version ?? '0'),
-    });
-    if (result.error) setStatus(resetForm, 'Unable to reset this password. Refresh and try again if authorized.');
-    else location.reload();
+    void run(resetForm, 'Resetting password…', () => actions.admin.resetPassword({ userId, temporaryPassword: String(data.get('temporaryPassword')), expectedVersion: BigInt(resetForm.dataset.version ?? '0') }));
   });
-
   const disableForm = document.querySelector<HTMLFormElement>('[data-admin-disable-user]');
-  disableForm?.addEventListener('submit', async (event) => {
+  disableForm?.addEventListener('submit', (event) => {
     event.preventDefault();
-    const result = await actions.admin.disableUser({
-      userId,
-      expectedVersion: BigInt(disableForm.dataset.version ?? '0'),
-    });
-    if (result.error) setStatus(disableForm, 'Unable to disable this account. Refresh and try again if authorized.');
-    else location.reload();
+    if (!disableForm) return;
+    void run(disableForm, 'Disabling account…', () => actions.admin.disableUser({ userId, expectedVersion: BigInt(disableForm.dataset.version ?? '0') }));
   });
-
   const scopesForm = document.querySelector<HTMLFormElement>('[data-admin-replace-scopes]');
-  scopesForm?.addEventListener('submit', async (event) => {
+  scopesForm?.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!scopesForm) return;
     const data = new FormData(scopesForm);
     const kinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL'] as const;
-    const scopes = kinds
-      .filter((kind) => data.get(`scope-${kind}`) === 'on')
-      .map((kind) => {
-        const value = String(data.get(`scope-value-${kind}`) || '').trim();
-        return value ? { kind, value } : { kind };
-      });
-    const reason = String(data.get('reason') || '').trim();
-    const result = await actions.admin.manageUserScopes({
-      userId,
-      scopes,
-      ...(reason ? { reason } : {}),
+    const scopes = kinds.filter((kind) => data.get(`scope-${kind}`) === 'on').map((kind) => {
+      const value = String(data.get(`scope-value-${kind}`) || '').trim();
+      return value ? { kind, value } : { kind };
     });
-    if (result.error) setStatus(scopesForm, 'Unable to replace scopes. Refresh and try again if authorized.');
-    else location.reload();
+    const reason = String(data.get('reason') || '').trim();
+    void run(scopesForm, 'Replacing scopes…', () => actions.admin.manageUserScopes({ userId, scopes, ...(reason ? { reason } : {}) }));
   });
 </script>
 <style>

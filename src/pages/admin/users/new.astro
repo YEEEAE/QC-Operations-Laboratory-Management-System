@@ -21,28 +21,28 @@ const canCreate = canAccessAdminRoute(actor, 'usersNew');
   </section>
   {
     canCreate ? (
-      <form class="form" data-admin-create-user>
-        <label>
-          Login identity
-          <input name="loginIdentity" required maxlength="200" autocomplete="off" />
+      <form class="form" method="post" action="/admin/users/new" data-admin-create-user>
+        <label for="loginIdentity">
+          Login identity<span aria-hidden="true"> *</span>
+          <input id="loginIdentity" name="loginIdentity" required maxlength="200" autocomplete="username" />
         </label>
-        <label>
-          Display name
-          <input name="displayName" required maxlength="200" autocomplete="off" />
+        <label for="displayName">
+          Display name<span aria-hidden="true"> *</span>
+          <input id="displayName" name="displayName" required maxlength="200" autocomplete="off" />
         </label>
-        <label>
+        <label for="email">
           Email (optional)
-          <input name="email" type="email" maxlength="320" autocomplete="off" />
+          <input id="email" name="email" type="email" maxlength="320" autocomplete="email" />
         </label>
-        <label>
-          Temporary password
-          <input name="temporaryPassword" type="password" required autocomplete="new-password" />
+        <label for="temporaryPassword">
+          Temporary password<span aria-hidden="true"> *</span>
+          <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" />
         </label>
         <div class="actions">
-          <button type="submit">Create user</button>
+          <button type="submit" data-submit>Create user</button>
           <a href="/admin/users">Cancel</a>
         </div>
-        <p role="status" data-result />
+        <p role="status" data-result tabindex="-1" />
       </form>
     ) : (
       <section class="denied" role="alert">
@@ -57,24 +57,34 @@ const canCreate = canAccessAdminRoute(actor, 'usersNew');
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
+  import { enhanceMutationForm } from '../../../ui/forms/mutation-interaction.js';
   const form = document.querySelector<HTMLFormElement>('[data-admin-create-user]');
-  form?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    const email = String(data.get('email') || '').trim();
-    const result = await actions.admin.createUser({
-      loginIdentity: String(data.get('loginIdentity')),
-      displayName: String(data.get('displayName')),
-      ...(email ? { email } : {}),
-      temporaryPassword: String(data.get('temporaryPassword')),
+  if (form) {
+    enhanceMutationForm({
+      form,
+      progressText: 'Creating user…',
+      copy: {
+        VALIDATION_ERROR: 'The user was not created. Review the highlighted fields and try again.',
+        CONFLICT_STALE: 'A member with the same login identity may already exist. Change the identity or check the list before trying again. Your other entries are preserved.',
+        AUTHORIZATION_CHANGED: 'Your authorization changed. Creating members needs the explicit user-management permission. Your entries are preserved.',
+        DEPENDENCY_UNAVAILABLE: 'A referenced record could not be found. Verify the entries and try again. Your entries are preserved.',
+        UNKNOWN_SAFE_ERROR: 'The user could not be created. Your entries are preserved — try again, or return to the list.',
+      },
+      invoke: (data) => {
+        const email = String(data.get('email') || '').trim();
+        return actions.admin.createUser({
+          loginIdentity: String(data.get('loginIdentity')),
+          displayName: String(data.get('displayName')),
+          ...(email ? { email } : {}),
+          temporaryPassword: String(data.get('temporaryPassword')),
+        }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>;
+      },
+      onSuccess: (outcome) => {
+        if (outcome.recordId) window.location.href = `/admin/users/${outcome.recordId}`;
+        else window.location.reload();
+      },
     });
-    const output = form.querySelector('[data-result]');
-    if (result.error) {
-      if (output) output.textContent = 'Unable to create this user.';
-    } else if (result.data) {
-      window.location.href = `/admin/users/${result.data.id}`;
-    }
-  });
+  }
 </script>
 <style>
   .page-head {

@@ -66,6 +66,19 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   }
 }
 
+function describedBy(name: keyof typeof values): string | undefined {
+  const parts: string[] = [];
+  if (failure?.fieldErrors[name]) parts.push(`${name}-error`);
+  if (name === 'templateCode') parts.push('templateCode-help');
+  if (name === 'versionNo') parts.push('versionNo-help');
+  if (name === 'name') parts.push('name-help');
+  if (name === 'reauthenticationSecret') parts.push('reauthenticationSecret-help');
+  return parts.length ? parts.join(' ') : undefined;
+}
+function invalid(name: keyof typeof values): 'true' | undefined {
+  return failure?.fieldErrors[name] ? 'true' : undefined;
+}
+
 function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | 'VOID' | 'SUPERSEDE' | 'REVISE'): string | null {
   if (!hasTemplatePermission) return 'Missing the explicit template administration permission.';
   if (action !== 'REVISE' && !isAuthority && (action === 'REVIEW' || action === 'APPROVE' || action === 'STOP' || action === 'VOID' || action === 'SUPERSEDE')) {
@@ -147,16 +160,26 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
           <p class="empty">Creation requires the explicit template administration permission.</p>
         ) : (
           <form method="post" data-template-create>
-            {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref="/quarantine/admin" listLabel="template administration" />}
-            <label>Template code<input name="templateCode" required value={values.templateCode} /></label>
-            <label>Version number<input name="versionNo" required value={values.versionNo} /></label>
-            <label>Template name<input name="name" required value={values.name} /></label>
-            <label>Description<textarea name="description" rows="3">{values.description}</textarea></label>
-            <label>Content hash (optional)<input name="contentHash" value={values.contentHash} /></label>
-            <label>Source document (optional)<input name="sourceDocument" value={values.sourceDocument} /></label>
-            <label>Password confirmation (required for Supervisor, Manager, yazeed)<input name="reauthenticationSecret" type="password" autocomplete="current-password" required={isAuthority} /></label>
+            {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
+            <fieldset><legend>Template identity <span class="req-note">All fields marked * are required</span></legend>
+            <label for="templateCode">Template code<span aria-hidden="true"> *</span><span class="hint" id="templateCode-help">Use the code from your approved source.</span><input id="templateCode" name="templateCode" required value={values.templateCode} aria-invalid={invalid('templateCode')} aria-describedby={describedBy('templateCode')} /></label>
+            {failure?.fieldErrors.templateCode && <p class="field-error" id="templateCode-error">{failure.fieldErrors.templateCode}</p>}
+            <label for="versionNo">Version number<span aria-hidden="true"> *</span><span class="hint" id="versionNo-help">New revisions use Supersede; approved content is never edited.</span><input id="versionNo" name="versionNo" required value={values.versionNo} aria-invalid={invalid('versionNo')} aria-describedby={describedBy('versionNo')} /></label>
+            {failure?.fieldErrors.versionNo && <p class="field-error" id="versionNo-error">{failure.fieldErrors.versionNo}</p>}
+            <label for="name">Template name<span aria-hidden="true"> *</span><span class="hint" id="name-help">Human-readable template title.</span><input id="name" name="name" required value={values.name} aria-invalid={invalid('name')} aria-describedby={describedBy('name')} /></label>
+            {failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}
+            <label for="templateDescription">Description<textarea id="templateDescription" name="description" rows="3">{values.description}</textarea></label>
+            </fieldset>
+            <details><summary>Optional controlled references</summary>
+            <label for="contentHash">Content hash (optional)<input id="contentHash" name="contentHash" value={values.contentHash} autocomplete="off" /></label>
+            <label for="sourceDocument">Source document (optional)<input id="sourceDocument" name="sourceDocument" value={values.sourceDocument} autocomplete="off" /></label>
+            </details>
+            <fieldset><legend>E-Signature</legend>
+            <label for="reauthenticationSecret">Password confirmation{isAuthority && <span aria-hidden="true"> *</span>}<span class="hint" id="reauthenticationSecret-help">Required for Supervisor, Manager, yazeed. Never stored as evidence.</span><input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" required={isAuthority} aria-invalid={invalid('reauthenticationSecret')} aria-describedby={describedBy('reauthenticationSecret')} /></label>
+            {failure?.fieldErrors.reauthenticationSecret && <p class="field-error" id="reauthenticationSecret-error">{failure.fieldErrors.reauthenticationSecret}</p>}
+            </fieldset>
             <p class="hint">{isAuthority ? 'Creates APPROVED immediately with E-Signature.' : 'Creates DRAFT. Approval requires an authorized reviewer.'}</p>
-            <p class="hint" data-result role="status" aria-live="polite"></p>
+            <p class="hint" data-result role="status" aria-live="polite" tabindex="-1"></p>
             <div class="actions"><button type="submit" data-submit>Create template</button></div>
           </form>
         )}
@@ -167,38 +190,35 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
+  import { enhanceMutationForm } from '../../../ui/forms/mutation-interaction.js';
   const form = document.querySelector<HTMLFormElement>('form[data-template-create]');
-  form?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const target = event.currentTarget as HTMLFormElement;
-    const submit = target.querySelector<HTMLButtonElement>('[data-submit]');
-    if (target.getAttribute('aria-busy') === 'true') return;
-    const data = new FormData(target);
-    const output = target.querySelector<HTMLElement>('[data-result]');
-    target.setAttribute('aria-busy', 'true');
-    if (submit) submit.disabled = true;
-    if (output) output.textContent = 'Creating template…';
-    try {
-      const result = await actions.quarantineTemplates.createTemplate({
-        templateCode: String(data.get('templateCode') ?? ''),
-        versionNo: String(data.get('versionNo') ?? ''),
-        name: String(data.get('name') ?? ''),
-        description: String(data.get('description') ?? '') || undefined,
-        contentHash: String(data.get('contentHash') ?? '') || undefined,
-        sourceDocument: String(data.get('sourceDocument') ?? '') || undefined,
-        reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') || undefined,
-      });
-      const id = (result.data as { id?: string } | undefined)?.id;
-      if (id) { location.href = '/quarantine/admin/' + id; return; }
-      if (output) output.textContent = 'The action was not accepted. Review the fields and try again.';
-    } catch {
-      target.submit();
-      return;
-    } finally {
-      target.removeAttribute('aria-busy');
-      if (submit) submit.disabled = false;
-    }
-  });
+  if (form) {
+    enhanceMutationForm({
+      form,
+      progressText: 'Creating template…',
+      copy: {
+        VALIDATION_ERROR: 'The template was not created. Review the highlighted fields and try again.',
+        CONFLICT_STALE: 'A template with the same code and version may already exist. Change the code or version, or check the list before trying again. Your other entries are preserved.',
+        AUTHORIZATION_CHANGED: 'Your authorization changed. This action needs the explicit template administration permission. Your entries are preserved.',
+        DEPENDENCY_UNAVAILABLE: 'A referenced record could not be found. Verify the source document and try again. Your entries are preserved.',
+        UNKNOWN_SAFE_ERROR: 'The template could not be created. Your entries are preserved — try again, or return to the list.',
+      },
+      invoke: (data) =>
+        actions.quarantineTemplates.createTemplate({
+          templateCode: String(data.get('templateCode') ?? ''),
+          versionNo: String(data.get('versionNo') ?? ''),
+          name: String(data.get('name') ?? ''),
+          description: String(data.get('description') ?? '') || undefined,
+          contentHash: String(data.get('contentHash') ?? '') || undefined,
+          sourceDocument: String(data.get('sourceDocument') ?? '') || undefined,
+          reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') || undefined,
+        }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>,
+      onSuccess: (outcome) => {
+        if (outcome.recordId) location.href = '/quarantine/admin/' + outcome.recordId;
+        else location.reload();
+      },
+    });
+  }
 </script>
 <style>
   .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty,.note,.denied p,.hint{color:var(--text-muted);font-size:.84rem}.head a{color:var(--color-accent-primary-hover)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel-head{display:flex;justify-content:space-between;align-items:flex-start}.table-wrap{overflow-x:auto;margin-top:var(--space-4)}table{width:100%;min-width:520px;border-collapse:collapse}caption{text-align:start;padding:.75rem 0;color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem 0;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}.states{list-style:none;margin:var(--space-4) 0;padding:0;display:grid;gap:.6rem}.states li{display:grid;gap:.3rem;font-size:.8rem}.states small{display:grid;gap:.2rem;color:var(--text-muted)}.on{color:var(--text-primary)}.off{color:var(--text-muted)}form{display:grid;gap:.7rem;margin-top:var(--space-4)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.actions{display:flex;justify-content:flex-end}button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}.note{margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:760px){.head,.grid{display:grid}}

@@ -88,7 +88,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     <span class="state">{template.state}</span>
   </section>
 
-  {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} listHref="/quarantine/admin" listLabel="template administration" />}
+  {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
   {notice && <p class="notice" role="status">{notice}</p>}
 
   <section class="layout">

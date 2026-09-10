@@ -171,12 +171,77 @@ describe('shared error-summary component contract', () => {
     // Invalid `autofocus` on <section> was replaced by progressive script focus
     // (no-JS keeps the visible summary plus anchor links).
     expect(component).not.toContain('\n  autofocus');
-    expect(component).toContain(".focus(");
+    expect(component).toContain('.focus(');
   });
 
   it('always names a recovery step with a safe list return', () => {
     expect(component).toContain('Back to');
     expect(component).toContain('listHref');
+  });
+
+  it('links each invalid field to its exact control and keeps inline errors', () => {
+    expect(component).toContain('errors?:');
+    expect(component).toContain('fieldId');
+    expect(component).toContain('href={`#${item.fieldId}`}');
+  });
+});
+
+describe('shared async mutation interaction contract (ui-ux-pro-max)', () => {
+  const contract = readFileSync(
+    new URL('../../../src/ui/forms/mutation-interaction.ts', import.meta.url),
+    'utf8',
+  );
+
+  it('exposes the eight canonical states without weakening server controls', () => {
+    for (const state of [
+      'IDLE',
+      'SUBMITTING',
+      'SUCCESS',
+      'VALIDATION_ERROR',
+      'CONFLICT_STALE',
+      'AUTHORIZATION_CHANGED',
+      'DEPENDENCY_UNAVAILABLE',
+      'UNKNOWN_SAFE_ERROR',
+    ]) {
+      expect(contract).toContain(state);
+    }
+    expect(contract).not.toMatch(/getDatabase|Kysely|Postgres|SELECT .* FROM/i);
+  });
+
+  it('disables only the triggering submit, exposes aria-busy, and guards duplicates', () => {
+    expect(contract).toContain('aria-busy');
+    expect(contract).toContain('[data-submit]');
+    expect(contract).toContain('mutationEnhanced');
+    expect(contract).toContain('progressText');
+    expect(contract).not.toMatch(/form\.reset|value\s*=\s*['"]{2}/);
+  });
+
+  it('preserves input, focuses status, and never leaks technical detail', () => {
+    expect(contract).toContain('[data-result]');
+    expect(contract).toContain('focus?.()');
+    expect(contract).toContain('UNKNOWN_SAFE_ERROR');
+    expect(contract).not.toMatch(/stack|node_modules|DATABASE_URL|select .* from/i);
+  });
+
+  it('classifies success, validation, stale, auth, dependency, and safe-unknown outcomes', async () => {
+    const { classifyActionResult } = await import('../../../src/ui/forms/mutation-interaction.js');
+    expect(
+      classifyActionResult({ data: { id: '01900000-0000-7000-8000-000000000001' } }).state,
+    ).toBe('SUCCESS');
+    expect(classifyActionResult({ data: { ok: true } }).state).toBe('SUCCESS');
+    expect(classifyActionResult({ error: { message: 'errors.validation_failed' } }).state).toBe(
+      'VALIDATION_ERROR',
+    );
+    expect(
+      classifyActionResult({ error: { message: 'errors.conflict_stale_version' } }).state,
+    ).toBe('CONFLICT_STALE');
+    expect(classifyActionResult({ error: { message: 'errors.authz_denied' } }).state).toBe(
+      'AUTHORIZATION_CHANGED',
+    );
+    expect(classifyActionResult({ error: { message: 'errors.resource_not_found' } }).state).toBe(
+      'DEPENDENCY_UNAVAILABLE',
+    );
+    expect(classifyActionResult({ error: { message: 'weird' } }).state).toBe('UNKNOWN_SAFE_ERROR');
   });
 });
 

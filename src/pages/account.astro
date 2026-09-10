@@ -6,13 +6,38 @@ const account = Astro.locals.actor ? await new GetAccountUseCase(identityDepende
 ---
 <!doctype html>
 <html lang="en" dir="ltr">
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>Account · QC Operations</title></head>
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Account · QC Operations</title><style>.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}button{min-height:44px}</style></head>
   <body>
     <main>
       <h1>Account</h1>
       {account && <><section aria-labelledby="account-info"><h2 id="account-info">Account information</h2><dl><dt>Login identity</dt><dd>{account.loginIdentity}</dd><dt>Display name</dt><dd>{account.displayName}</dd><dt>Email</dt><dd>{account.email ?? '—'}</dd><dt>State</dt><dd>{account.accountState}</dd></dl></section>
-      <section aria-labelledby="security"><h2 id="security">Password and security</h2><form method="POST" action={actions.account.changePassword}><label for="currentPassword">Current password</label><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required /><label for="newPassword">New password</label><input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required /><button type="submit">Change password</button></form></section>
+      <section aria-labelledby="security"><h2 id="security">Password and security</h2><form method="POST" action={actions.account.changePassword}><label for="currentPassword">Current password</label><div class="password-field"><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required /><button type="button" data-password-toggle aria-pressed="false" aria-controls="currentPassword" aria-label="Show password">Show</button></div><label for="newPassword">New password</label><div class="password-field"><input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required /><button type="button" data-password-toggle-new aria-pressed="false" aria-controls="newPassword" aria-label="Show password">Show</button></div><button type="submit" data-submit>Change password</button><p role="status" data-result tabindex="-1"></p></form></section>
       <form method="POST" action={actions.logout}><button type="submit">Sign out</button></form></>}
+    <script>
+      const wire = (selector: string, inputId: string) => {
+        const toggle = document.querySelector<HTMLButtonElement>(selector);
+        const input = document.getElementById(inputId) as HTMLInputElement | null;
+        toggle?.addEventListener('click', () => {
+          if (!input || !toggle) return;
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          toggle.setAttribute('aria-pressed', String(show));
+          toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+          toggle.textContent = show ? 'Hide' : 'Show';
+        });
+      };
+      wire('[data-password-toggle]', 'currentPassword');
+      wire('[data-password-toggle-new]', 'newPassword');
+      const form = document.querySelector<HTMLFormElement>('form[method="POST"]');
+      form?.addEventListener('submit', (event: Event) => {
+        if (form.getAttribute('aria-busy') === 'true') { event.preventDefault(); return; }
+        const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+        const output = form.querySelector<HTMLElement>('[data-result]');
+        form.setAttribute('aria-busy', 'true');
+        if (submit) submit.disabled = true;
+        if (output) output.textContent = 'Changing password…';
+      });
+    </script>
     </main>
   </body>
 </html>

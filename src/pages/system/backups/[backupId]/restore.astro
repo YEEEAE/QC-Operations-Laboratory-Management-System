@@ -45,7 +45,7 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
   {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Only backup sets whose artifact exists (CREATED or VERIFIED) can be selected as a recovery set candidate. This backup set is {backup.state}.</p></section>}
   {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
   {restorable && (canRequestDrill || canRequestProduction) && (
-    <form class="decision" data-backup-id={backup.id}>
+    <form class="decision" method="post" data-backup-id={backup.id}>
       <label for="restoreType">Restore type
         <select id="restoreType" name="restoreType">
           {canRequestDrill && <option value="DRILL">DRILL — isolated non-production target</option>}
@@ -64,40 +64,52 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
         <textarea id="reason" name="reason" rows="3" required minlength="3" maxlength="2000"></textarea>
       </label>
       <label class="confirm" for="confirmRestore"><input id="confirmRestore" name="confirmRestore" type="checkbox" required /> I understand this records a restore intent only, that no restore is executed by this system, and that the backup job state is not restore evidence.</label>
-      <button type="submit">Record restore request</button>
+      <button type="submit" data-submit>Record restore request</button>
       <p class="muted">The server re-checks permission, scope, environment, backup state, and policy. This form is a presentation hint, not the authorization boundary.</p>
     </form>
   )}
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
+  import { enhanceMutationForm } from '../../../../ui/forms/mutation-interaction.js';
   const form = document.querySelector<HTMLFormElement>('.decision');
   if (form) {
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-      if (button) button.disabled = true;
-      const data = new FormData(form);
-      try {
-        if (data.get('confirmRestore') !== 'on') {
-          window.alert('Confirmation is required to record a restore intent.');
-          return;
+    if (!form.querySelector('[data-result]')) {
+      const status = document.createElement('p');
+      status.setAttribute('data-result', '');
+      status.setAttribute('role', 'status');
+      status.setAttribute('tabindex', '-1');
+      status.className = 'muted';
+      form.appendChild(status);
+    }
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (submit && !submit.hasAttribute('data-submit')) submit.setAttribute('data-submit', '');
+    enhanceMutationForm({
+      form,
+      progressText: 'Recording restore intent…',
+      copy: {
+        VALIDATION_ERROR: 'The restore intent was not recorded. Confirmation and a valid reason are required — review the fields and try again.',
+        CONFLICT_STALE: 'This backup set changed while you were reviewing it. Refresh the backup detail and try again if still permitted.',
+        AUTHORIZATION_CHANGED: 'Your authorization changed. Recording a restore intent needs the explicit drill/production restore permission. Your reason was kept.',
+        DEPENDENCY_UNAVAILABLE: 'The backup set is no longer available as a recovery candidate. Refresh the backup detail before trying again.',
+        UNKNOWN_SAFE_ERROR: 'The restore intent was not recorded. Your reason was kept — try again, or return to the backup detail.',
+      },
+      invoke: (data) => {
+        const confirmed = data.get('confirmRestore') === 'on';
+        if (!confirmed) {
+          return Promise.resolve({
+            error: { message: 'errors.validation_failed' },
+          });
         }
-        const result = await actions.system.requestRestore({
+        return actions.system.requestRestore({
           backupId: String(form.dataset.backupId),
           restoreType: String(data.get('restoreType') ?? 'DRILL') as 'DRILL' | 'PRODUCTION',
           targetEnvironment: String(data.get('targetEnvironment') ?? 'test') as 'local' | 'test' | 'staging' | 'production',
           reason: String(data.get('reason') ?? ''),
           confirmRestore: true,
-        });
-        if (result.error) {
-          window.alert('The restore request was not recorded. Review the requirements and try again.');
-          return;
-        }
-        window.location.href = `/system/backups/${String(form.dataset.backupId)}`;
-      } finally {
-        if (button) button.disabled = false;
-      }
+        }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>;
+      },
+      onSuccess: () => { window.location.href = `/system/backups/${String(form.dataset.backupId)}`; },
     });
   }
 </script>

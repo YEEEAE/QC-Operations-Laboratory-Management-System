@@ -127,7 +127,7 @@ const version = role?.version.toString() ?? '0';
               <div class="actions">
                 <button type="submit">Replace grants</button>
               </div>
-              <p role="status" data-result />
+              <p role="status" data-result tabindex="-1" />
             </form>
           ) : (
             <div>
@@ -155,20 +155,36 @@ const version = role?.version.toString() ?? '0';
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
-  const form = document.querySelector<HTMLFormElement>('[data-admin-role-permissions]');
+  import { classifyActionResult } from '../../../ui/forms/mutation-interaction.js';
+  const form = document.querySelector<HTMLFormElement>('[data-role-grants]');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const data = new FormData(form);
-    const permissionCodes = data.getAll('permission').map(String);
-    const result = await actions.admin.updateRolePermissions({
-      roleId: form.dataset.role ?? '',
-      permissionCodes,
-      expectedVersion: BigInt(form.dataset.version ?? '0'),
-    });
-    const output = form.querySelector('[data-result]');
-    if (result.error) {
-      if (output) output.textContent = 'Unable to replace grants. Refresh and try again if authorized.';
-    } else location.reload();
+    if (!form || form.getAttribute('aria-busy') === 'true') return;
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    let output = form.querySelector<HTMLElement>('[data-result]');
+    if (!output) { output = document.createElement('p'); output.setAttribute('data-result',''); output.setAttribute('role','status'); output.setAttribute('tabindex','-1'); form.appendChild(output); }
+    form.setAttribute('aria-busy', 'true');
+    if (submit) submit.disabled = true;
+    output.textContent = 'Replacing grants…';
+    try {
+      const permissionCodes = [...form.querySelectorAll<HTMLInputElement>('input[name="permission"]')].filter((input) => input.checked).map((input) => String(input.value));
+      const result = await actions.admin.updateRolePermissions({ roleId: form.dataset.role ?? '', permissionCodes, expectedVersion: BigInt(form.dataset.version ?? '0') });
+      const outcome = classifyActionResult(result as unknown as { data?: { id?: string }; error?: unknown });
+      // updateRolePermissions returns grants (no id): SUCCESS means reload.
+      if (!result.error) { location.reload(); return; }
+      const copy: Record<string,string> = {
+        VALIDATION_ERROR: 'Grants were not replaced. Review the selected permissions and try again.',
+        CONFLICT_STALE: 'The role changed while you were editing it. Refresh the role detail and try again if still permitted.',
+        AUTHORIZATION_CHANGED: 'Your authorization changed. Replacing grants needs the explicit role-administration permission.',
+        DEPENDENCY_UNAVAILABLE: 'The role or permission catalog is no longer available. Refresh before trying again.',
+        UNKNOWN_SAFE_ERROR: 'Unable to replace grants. Refresh and try again if authorized.',
+      };
+      output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR;
+      output.focus?.();
+    } catch {
+      output.textContent = 'The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.';
+      output.focus?.();
+    } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   });
 </script>
 <style>

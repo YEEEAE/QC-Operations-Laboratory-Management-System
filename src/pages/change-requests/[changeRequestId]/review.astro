@@ -27,15 +27,29 @@ const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, i
   {!canStartReview && !canDecide && !canReturn && !canReject && <section class="denied" role="alert"><h2>Review unavailable</h2><p>Your account lacks the explicit capability and matching generic approval permission for this state, or the request is no longer actionable.</p></section>}
 </AppLayout>
 <script>
-import { actions } from 'astro:actions';
-const validTransitions = ['SUBMIT', 'START_REVIEW', 'RETURN', 'RESUME', 'APPROVE', 'REJECT', 'CANCEL'] as const;
-type ChangeRequestTransition = (typeof validTransitions)[number];
-const isTransition = (value: string): value is ChangeRequestTransition => (validTransitions as readonly string[]).includes(value);
-const transition = async (form: HTMLFormElement, action: ChangeRequestTransition, reason: string) => { const result = await actions.changeRequests.transition({ id: String(form.dataset.changeRequestId), action, expectedVersion: BigInt(form.dataset.changeRequestVersion ?? '0'), reason: reason || undefined }); if (result.data) window.location.href = `/change-requests/${result.data.changeRequest.id}`; };
-const startForm = document.querySelector<HTMLFormElement>('[data-action="start-review"]');
-const decisionForm = document.querySelector<HTMLFormElement>('[data-action="decision"]');
-const run = async (form: HTMLFormElement, action: string) => { if (!isTransition(action)) return; const button = form.querySelector<HTMLButtonElement>('button[type="submit"]'); if (button) button.disabled = true; try { await transition(form, action, String(new FormData(form).get('reason') ?? '')); } finally { if (button) button.disabled = false; } };
-if (startForm) startForm.addEventListener('submit', (event) => { event.preventDefault(); void run(startForm, 'START_REVIEW'); });
-if (decisionForm) decisionForm.addEventListener('submit', (event) => { event.preventDefault(); const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null; void run(decisionForm, submitter?.dataset.actionValue ?? ''); });
+  import { actions } from 'astro:actions';
+  const validTransitions = ['SUBMIT', 'START_REVIEW', 'RETURN', 'RESUME', 'APPROVE', 'REJECT', 'CANCEL'] as const;
+  type ChangeRequestTransition = (typeof validTransitions)[number];
+  const isTransition = (value: string): value is ChangeRequestTransition => (validTransitions as readonly string[]).includes(value);
+  const output = document.querySelector<HTMLElement>('[data-result]');
+  const transition = async (form: HTMLFormElement, action: ChangeRequestTransition, reason: string) => {
+    if (form.getAttribute('aria-busy') === 'true') return;
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
+    form.setAttribute('aria-busy', 'true');
+    if (submit) submit.disabled = true;
+    if (output) output.textContent = 'Applying the controlled decision…';
+    try {
+      const result = await actions.changeRequests.transition({ id: String(form.dataset.changeRequestId), action, expectedVersion: BigInt(form.dataset.changeRequestVersion ?? '0'), reason: reason || undefined });
+      if (result.data) { window.location.href = `/change-requests/${result.data.changeRequest.id}`; return; }
+      if (output) { output.textContent = 'The decision was not applied. The request may have changed or authorization may have changed — refresh and try again if permitted.'; output.focus?.(); }
+    } catch {
+      if (output) { output.textContent = 'The service is temporarily unavailable. Nothing was changed — your reason was kept.'; output.focus?.(); }
+    } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
+  };
+  const startForm = document.querySelector<HTMLFormElement>('[data-action="start-review"]');
+  const decisionForm = document.querySelector<HTMLFormElement>('[data-action="decision"]');
+  const run = async (form: HTMLFormElement, action: string) => { if (!isTransition(action)) return; await transition(form, action, String(new FormData(form).get('reason') ?? '')); };
+  if (startForm) { if (!startForm.querySelector('[data-submit]')) startForm.querySelector('button[type="submit"]')?.setAttribute('data-submit',''); startForm.setAttribute('method','post'); startForm.addEventListener('submit', (event) => { event.preventDefault(); void run(startForm, 'START_REVIEW'); }); }
+  if (decisionForm) { decisionForm.setAttribute('method','post'); decisionForm.addEventListener('submit', (event) => { event.preventDefault(); const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null; void run(decisionForm, submitter?.dataset.actionValue ?? ''); }); }
 </script>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head a{color:var(--color-accent-primary-hover)}.notice,.panel,.decision,.denied{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2,.denied h2{margin-top:0;font-size:1rem}.panel li{margin:.6rem 0}.decision{display:grid;gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}textarea{width:100%;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.actions button,.decision>button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.actions button:first-child{background:transparent;color:var(--color-accent-primary-hover)}.denied{border-inline-start:3px solid var(--status-warning)}code{overflow-wrap:anywhere}@media(max-width:650px){.page-head{display:grid}.actions{display:grid}}</style>
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head a{color:var(--color-accent-primary-hover)}.notice,.panel,.decision,.denied{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2,.denied h2{margin-top:0;font-size:1rem}.panel li{margin:.6rem 0}.action-status{margin:0 0 var(--space-3);color:var(--text-secondary);font-size:.85rem;min-height:1.25rem}.decision{display:grid;gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}textarea{width:100%;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.actions button,.decision>button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.actions button:first-child{background:transparent;color:var(--color-accent-primary-hover)}.denied{border-inline-start:3px solid var(--status-warning)}code{overflow-wrap:anywhere}@media(max-width:650px){.page-head{display:grid}.actions{display:grid}}</style>

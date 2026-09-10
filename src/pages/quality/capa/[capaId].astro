@@ -35,6 +35,7 @@ const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
   const form = document.querySelector<HTMLFormElement>('[data-capa-close]');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (form.getAttribute('aria-busy') === 'true') return;
     const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
     const output = form.querySelector<HTMLOutputElement>('[data-result]');
     const data = new FormData(form);
@@ -44,7 +45,7 @@ const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
     try {
       const result = await actions.capa.close({ id: form.dataset.capaId ?? '', expectedVersion: BigInt(form.dataset.capaVersion ?? '0'), reason: String(data.get('reason') ?? ''), reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') });
       if (!result.error) { window.location.reload(); return; }
-      if (output) output.textContent = 'The CAPA was not closed. Refresh the record and review the current state.';
+      if (output) output.textContent = 'The CAPA was not closed. The record may have changed, the e-signature may be invalid, or authorization may have changed — refresh the record and review the current state before trying again.';
       output?.focus();
     } catch { if (output) output.textContent = 'The CAPA could not be closed. Your reason was kept; try again if permitted.'; output?.focus(); }
     finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); }
