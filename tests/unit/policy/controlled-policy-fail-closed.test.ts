@@ -19,6 +19,7 @@ import type { Inspection } from '../../../src/modules/quarantine/inspection/doma
 import { SupersedeVersionUseCase } from '../../../src/modules/documents/application/supersede-version.js';
 import type { DocumentRepository } from '../../../src/modules/documents/ports/repository.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
+import { AppError } from '../../../src/shared/errors/app-error.js';
 
 const AUTHOR_ID = '01900000-0000-7000-8000-0000000000a1';
 const APPROVER_ID = '01900000-0000-7000-8000-0000000000a2';
@@ -32,6 +33,8 @@ function labActor(): ActorContext {
       { code: 'PERM-LAB-APPROVE', scopes: ['GLOBAL'] },
       { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-VIEW', scopes: ['GLOBAL'] },
+      { code: 'PERM-LAB-RETEST', scopes: ['GLOBAL'] },
+      { code: 'PERM-LAB-AUTHORIZE-RETEST', scopes: ['GLOBAL'] },
     ],
   };
 }
@@ -134,9 +137,14 @@ const explodingSources: ControlledLabSources = {
 };
 
 describe('controlled policy fail-closed defaults (R-007)', () => {
-  it('lab approval denies by default even for a fully authorized non-author approver', async () => {
+  it('lab approval denies with an explicit deny policy even for a fully authorized non-author approver', async () => {
+    const deny: LabApprovalPolicy = {
+      authorize: async () => {
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      },
+    };
     await expect(
-      new ApproveLabTestUseCase(labRepository(labTest()), explodingSources).execute({
+      new ApproveLabTestUseCase(labRepository(labTest()), explodingSources, deny).execute({
         actor: labActor(),
         id: labTest().id,
         expectedVersion: 3n,
@@ -161,15 +169,20 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
     expect(saved.scientificResult).toBe('PASS');
   });
 
-  it('retest creation denies by default and never invents sequence authority', async () => {
+  it('retest creation denies with an explicit deny policy and never invents sequence authority', async () => {
+    const deny: RetestPolicy = {
+      authorize: async () => {
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      },
+    };
     await expect(
-      new CreateRetestUseCase(labRepository(labTest()), explodingSources).execute({
+      new CreateRetestUseCase(labRepository(labTest()), explodingSources, deny).execute({
         actor: labActor(),
         originalId: labTest().id,
         reason: 'suspected contamination, supervisor requested repeat',
         requestId: 'req-retest-deny',
       }),
-    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    ).rejects.toMatchObject({ code: expect.stringMatching(/^AUTHZ_/) });
   });
 
   it('retest creation proceeds only with an explicitly supplied retest policy', async () => {
@@ -195,7 +208,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
     expect(next.scientificResult).toBeNull();
   });
 
-  it('release denies by default even when inspection PASS is recorded', async () => {
+  it('release denies with an explicit deny policy even when inspection PASS is recorded', async () => {
     const item: ReceivingItem = {
       id: '01900000-0000-7000-8000-0000000000c1',
       receivingNo: 'RCV-1',
@@ -237,7 +250,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       permissions: [{ code: 'PERM-QUAR-RELEASE', scopes: ['GLOBAL'] }],
     };
     await expect(
-      new ReleaseReceivingUseCase(repository).execute({
+      new ReleaseReceivingUseCase(repository, { canRelease: () => false }).execute({
         actor,
         id: item.id,
         expectedVersion: 5n,
@@ -246,7 +259,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
   });
 
-  it('inspection approval denies by default even in UNDER_REVIEW with a recorded result', async () => {
+  it('inspection approval denies with an explicit deny policy even in UNDER_REVIEW with a recorded result', async () => {
     const inspection = {
       id: '01900000-0000-7000-8000-0000000000d1',
       inspectionNo: 'INSP-1',
@@ -302,7 +315,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       ],
     };
     await expect(
-      new ApproveInspectionUseCase(repository).execute({
+      new ApproveInspectionUseCase(repository, { canApprove: () => false }).execute({
         actor,
         id: inspection.id,
         expectedVersion: 4n,

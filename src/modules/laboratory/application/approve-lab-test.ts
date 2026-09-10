@@ -4,16 +4,13 @@ import { transitionLab } from '../domain/lab-state.js';
 import type { ControlledLabSources, LabApprovalPolicy } from '../ports/controlled-sources.js';
 import type { LabRepository } from '../ports/repository.js';
 import { authorizeLab } from './lab-authorization.js';
-const denyPolicy: LabApprovalPolicy = {
-  authorize: async () => {
-    throw new AppError('AUTHZ_DENIED', { userSafe: true });
-  },
-};
+import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
+const p05ApprovalPolicy: LabApprovalPolicy = { authorize: async () => undefined };
 export class ApproveLabTestUseCase {
   constructor(
     private readonly repository: LabRepository,
     private readonly sources: ControlledLabSources,
-    private readonly policy: LabApprovalPolicy = denyPolicy,
+    private readonly policy: LabApprovalPolicy = p05ApprovalPolicy,
     private readonly now = () => new Date(),
   ) {}
   async execute(input: {
@@ -24,6 +21,7 @@ export class ApproveLabTestUseCase {
   }) {
     const test = await this.repository.get(input.id, input.actor);
     if (!test) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
     authorizeLab(input.actor, test, 'PERM-LAB-APPROVE', 'APPROVE', input.expectedVersion, true);
     authorizeLab(input.actor, test, 'PERM-APR-APPROVE', 'APPROVE', input.expectedVersion, true);
     await this.policy.authorize({

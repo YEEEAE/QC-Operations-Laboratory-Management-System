@@ -4,6 +4,7 @@ import { assertApprovalEvidence, type DocumentVersion } from '../domain/document
 import { transitionDocumentVersion } from '../domain/document-state.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { DocumentRepository } from '../ports/repository.js';
+import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
 
 export class ApproveVersionUseCase {
   constructor(private readonly repository: DocumentRepository, private readonly now = () => new Date()) {}
@@ -11,6 +12,7 @@ export class ApproveVersionUseCase {
   async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; requestId: string }) {
     const version = await this.repository.getVersion(input.versionId);
     if (!version) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const document = await this.repository.getDocument(version.documentId);
     if (!document) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     authorizeDocument({ actor: input.actor, permission: 'PERM-DOC-APPROVE', action: 'APPROVE', document, state: version.state, version, expectedVersion: input.expectedVersion });

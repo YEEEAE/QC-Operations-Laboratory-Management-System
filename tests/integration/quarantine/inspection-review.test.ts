@@ -107,7 +107,7 @@ describe('Quarantine inspection review and approval', () => {
       }),
     ).resolves.toMatchObject({ state: 'UNDER_REVIEW' });
   });
-  it('does not approve without an approved deterministic policy/source gate', async () => {
+  it('approves under the approved P-05 policy but still denies with an explicit deny policy', async () => {
     const repo = repository({ ...inspection('UNDER_REVIEW'), version: 3n });
     await expect(
       new ApproveInspectionUseCase(repo).execute({
@@ -115,6 +115,15 @@ describe('Quarantine inspection review and approval', () => {
         id: inspection().id,
         expectedVersion: 3n,
         requestId: 'req',
+      }),
+    ).resolves.toMatchObject({ state: 'APPROVED' });
+    const deniedRepo = repository({ ...inspection('UNDER_REVIEW'), version: 3n });
+    await expect(
+      new ApproveInspectionUseCase(deniedRepo, { canApprove: () => false }).execute({
+        actor: actor(reviewerId),
+        id: inspection().id,
+        expectedVersion: 3n,
+        requestId: 'req-deny',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
   });

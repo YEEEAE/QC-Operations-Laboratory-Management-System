@@ -1,5 +1,124 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تنفيذ P-05 authority matrix inline (دفعة أولى)
+
+### تم التنفيذ
+- أضفت `isP05Authority` لتمييز Supervisor وManager/QCM وyazeed/SYSTEM_OWNER، مع رفض Admin-only والحسابات غير النشطة.
+- سجلت سياسات P-05 الصريحة ومنحت Supervisor وManager صلاحيات inspection/lab/release/retest/document/VOID مع `PERM-APR-APPROVE` و`PERM-ESIG-SIGN` بدون منح Admin.
+- فعّلت inspection وlab وrelease وdocument approval بفحص السلطة، وفعّلت retest بصلاحيتي `PERM-LAB-RETEST` و`PERM-LAB-AUTHORIZE-RETEST` وربط تسلسلي من البيانات القائمة بدون اختراع limits.
+- أضفت `VoidInspectionUseCase` و`VoidVersionUseCase` وشددت Finding VOID على سلطة P-05، مع سبب إلزامي وحفظ التاريخ.
+- أضفت عقد `assertP05Ceremony` وsuite مصفوفة يغطي Employee/Supervisor/Manager/Admin-only/yazeed/Admin+Manager لخمس عمليات، وحدثت اختبارات fail-closed القديمة للسياسة الجديدة.
+
+### الملفات المتأثرة
+- `src/shared/authorization/{p05-authority,p05-ceremony,policy-registry}.ts`
+- `db/seeds/common.ts`
+- `src/modules/quarantine/inspection/application/{approve-inspection,void-inspection}.ts`
+- `src/modules/laboratory/application/{approve-lab-test,create-retest}.ts`
+- `src/modules/quarantine/receiving/application/release-receiving.ts`
+- `src/modules/documents/application/{approve-version,void-version,dependencies}.ts`
+- `src/modules/quality/findings/application/transition-finding.ts`
+- `tests/unit/shared/{p05-authority,p05-ceremony}.test.ts`
+- `tests/unit/policy/controlled-policy-fail-closed.test.ts`
+- `tests/integration/{p05/authority-matrix,quarantine/{inspection-review,release-state}}`
+
+### التحقق
+- `pnpm exec vitest run` للمسارات المركزة ✅ — 8 ملفات / 44 اختبارًا.
+- `pnpm typecheck` ✅ — 0 أخطاء، 61 hint legacy.
+- `pnpm lint` ✅ بعد إصلاح `any` في اختبار المصفوفة.
+- `pnpm test:architecture` ✅.
+- `pnpm test:unit` ✅ — 57 ملفًا / 300 اختبارًا.
+- `pnpm build` ✅ — تحذيرات bundle السابقة فقط.
+- `git diff --check` ✅.
+- PostgreSQL integration/concurrency/E2E المصادق لم تُشغّل في هذه الدفعة.
+
+### النتيجة
+- **الحالة:** جزئي.
+- **مختصر:** نواة P-05 التنفيذية والمصفوفة الأساسية خضراء محليًا، لكن أدلة transaction/concurrency/rollback وPlaywright المصادق وتوثيق المصفوفات النهائية ما زالت مفتوحة.
+
+### ملاحظات / مشاكل مفتوحة
+- E-Signature/reauthentication الكاملة ما زالت عبر محرك Approvals ولم تُدمج ذريًا داخل كل repository دومين.
+- VOID المختبر والاستلام وNCR/RCA ما زالت `DENY` لعدم وجود transition/permission موثق.
+- لا commit أو push أو deploy.
+
+## [2026-09-10] — إنشاء خطة تنفيذ P-05
+
+### تم التنفيذ
+- أنشأت خطة تنفيذ تفصيلية لـP-05 مقسمة إلى عشر مهام صغيرة تبدأ بالسياسة المشتركة ثم ceremony والعمليات والاختبارات والتوثيق.
+- ربطت كل مهمة بمسارات ملفات محددة، خطوات RED/GREEN، أوامر التحقق، ونقاط atomicity وconcurrency وidempotency.
+- ثبّتت في الخطة أن `QCM` هو `Manager`، وأن Admin-only مرفوض، وأن Admin+Manager ينجح عبر Manager فقط.
+- ثبّتت أن Retest لا يضيف limits أو sampling أو rounding أو عدد محاولات غير معتمد، وأن VOID لا يحذف التاريخ ولا يضيف انتقالات مجهولة.
+- راجعت الخطة ذاتيًا وأزلت الصياغات الفضفاضة ومسارات الترحيل غير اللازمة مبدئيًا؛ لا يوجد commit أو push.
+
+### الملفات المتأثرة
+- `docs/superpowers/plans/2026-09-10-p05-authority-matrix.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- قراءة الخطة كاملة بعد إنشائها ✅
+- فحص placeholders/الغموض والتغطية مقابل المواصفة ✅
+- لم يُكتب كود ولم تُشغّل اختبارات أو build.
+
+### النتيجة
+- **الحالة:** الخطة مكتملة.
+- **مختصر:** خطة P-05 جاهزة للتنفيذ task-by-task عبر subagent-driven development أو executing-plans، لكن التنفيذ نفسه لم يبدأ.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يبدأ التنفيذ إلا بعد اختيار المستخدم طريقة التنفيذ.
+
+## [2026-09-10] — اعتماد وتصميم P-05 authority matrix
+
+### تم التنفيذ
+- اعتمد المستخدم نهائيًا أن `QCM` هو دور `Manager`، وأن سلطة P-05 هي `Supervisor OR Manager OR yazeed/SYSTEM_OWNER`.
+- ثبّت المستخدم أن `Admin` وحده ليس جهة اعتماد، وأن كل عملية تبقى مشروطة بالصلاحية الصريحة والنطاق والحالة والنسخة والدليل والتوقيع حسب العملية.
+- أعددت مواصفات تصميم P-05 باختيار المعمارية الهجينة: Approval/E-Signature للـceremony العامة، وكل Domain يملك transition والدليل والـsnapshot.
+- غطت المواصفة Inspection وLaboratory وRelease وRetest وControlled VOID وDocument approval، مع حدود عدم اختراع أي سياسة علمية أو تشغيلية.
+- أضفت خطة transaction ذرية وidempotency وconcurrency وrollback واختبارات table-driven وPostgreSQL وauthenticated Playwright.
+
+### الملفات المتأثرة
+- `docs/superpowers/specs/2026-09-10-p05-authority-matrix-design.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- مراجعة ذاتية للمواصفة كاملة ✅ — لا placeholders أو تعارضات داخلية ظاهرة.
+- لم يُكتب كود ولم تُشغّل اختبارات أو build.
+- لا commit أو push أو deploy أو production mutation.
+
+### النتيجة
+- **الحالة:** التصميم مكتمل بانتظار مراجعة المستخدم المكتوبة.
+- **مختصر:** مواصفة P-05 جاهزة للمراجعة قبل إنشاء خطة التنفيذ؛ التنفيذ لم يبدأ بعد التزامًا ببوابة التصميم.
+
+### ملاحظات / مشاكل مفتوحة
+- بعد موافقة المستخدم على ملف المواصفة، الخطوة التالية هي إنشاء implementation plan؛ لا يبدأ تعديل الكود قبل ذلك.
+
+## [2026-09-10] — استكشاف P-05 وتحديد فجوات authority matrix
+
+### تم التنفيذ
+- راجعت P-05 مقابل الواقع الحالي في Inspection وLaboratory وReceiving/Release وRetest وControlled VOID وControlled Documents.
+- ثبت أن approval/release الأساسية موجودة كـuse cases وActions وبعض معاملات PostgreSQL، لكنها تبقى runtime `DENY` عند غياب policy معتمدة.
+- ثبت أن Retest authorization وcontrolled VOID العام ناقصان كتدفقات تطبيقية مستقلة، ولا توجد لهما تغطية مكتملة.
+- ثبت أن Approval/E-Signature engine العام موجود، لكن ربطه النهائي بعمليات P-05 وسياسات التوقيع والـreauthentication غير محسوم.
+- جردت فجوات الاختبارات: matrix table-driven لكل الأدوار، Admin+Manager، scope/state/evidence/replay، وفشل transaction/توقيع، وauthenticated E2E.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+- `Documents/PERMISSION-MATRIX.md`
+- `Documents/BUSINESS-RULES.md`
+- `Documents/STATE-MACHINES.md`
+- `src/modules/{quarantine,laboratory,documents,approvals}/`
+- `tests/{unit,integration,e2e}/`
+
+### التحقق
+- استكشاف قراءة فقط للوثائق والكود والاختبارات ✅
+- لم تُشغّل اختبارات أو build؛ ما صار أي تعديل implementation.
+- لم يحدث commit أو push أو deploy أو production mutation.
+
+### النتيجة
+- **الحالة:** جزئي / بانتظار قرار سياسة.
+- **مختصر:** اتحدد نطاق P-05 وفجواته بدقة، لكن ما نقدر ننفذ بأمان قبل حسم التعارض بين Prompt 9 والوثائق التي ما زالت تسمي authority/retest/VOID `POLICY-DEPENDENT`.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تأكيد هل Prompt 9 هو اعتماد السياسة النهائي، أو أن تبقى العمليات `DENY` حتى تصدر مصفوفة QMS/RD رسمية تفصل كل عملية ومتطلبات التوقيع والدليل.
+
 ## [2026-09-10] — تنفيذ P-04 لإغلاق CAPA بمسار Supervisor مضبوط
 
 ### تم التنفيذ

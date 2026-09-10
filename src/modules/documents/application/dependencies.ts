@@ -11,6 +11,7 @@ import { ReviewVersionUseCase } from './review-version.js';
 import { SubmitVersionUseCase } from './submit-version.js';
 import { SupersedeVersionUseCase } from './supersede-version.js';
 import { UpdateVersionDraftUseCase } from './update-version-draft.js';
+import { VoidVersionUseCase } from './void-version.js';
 
 export function documentsReadDependencies() {
   const repository = new PostgresDocumentRepository(getDatabase());
@@ -28,5 +29,6 @@ export function documentsActionDependencies() {
     review: new ReviewVersionUseCase(repository),
     approve: new ApproveVersionUseCase(repository),
     supersede: new SupersedeVersionUseCase(repository),
+    void: new VoidVersionUseCase(repository),
   };
 }

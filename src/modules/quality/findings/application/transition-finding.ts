@@ -3,6 +3,7 @@ import { AppError } from '../../../../shared/errors/app-error.js';
 import { transitionFinding, type FindingAction } from '../domain/finding.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { PermissionCode } from '../../../../shared/authorization/permissions.js';
+import { isP05Authority } from '../../../../shared/authorization/p05-authority.js';
 import type { FindingRepository } from '../ports/repository.js';
 const p: Record<FindingAction, PermissionCode> = {
   OPEN: 'PERM-FIND-SUBMIT',
@@ -26,6 +27,8 @@ export class TransitionFindingUseCase {
   }) {
     const f = await this.repo.get(i.id, i.actor);
     if (!f) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    if (i.action === 'VOID' && !isP05Authority(i.actor))
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     authorize(
       {
         actor: i.actor,

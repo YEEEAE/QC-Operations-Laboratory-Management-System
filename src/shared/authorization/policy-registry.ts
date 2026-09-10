@@ -277,6 +277,18 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['RELEASE_PENDING'],
   },
   {
+    permission: 'PERM-LAB-RETEST',
+    action: 'AUTHORIZE_RETEST',
+    entityType: 'LAB_TEST',
+    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'],
+  },
+  {
+    permission: 'PERM-LAB-AUTHORIZE-RETEST',
+    action: 'AUTHORIZE_RETEST',
+    entityType: 'LAB_TEST',
+    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'],
+  },
+  {
     permission: 'PERM-INSP-CREATE',
     action: 'CREATE',
     entityType: 'INSPECTION_REPORT',
@@ -398,6 +410,12 @@ const policies: readonly AuthorizationPolicy[] = [
     action: 'APPROVE',
     entityType: 'INSPECTION_REPORT',
     states: ['UNDER_REVIEW'],
+  },
+  {
+    permission: 'PERM-INSP-VOID',
+    action: 'VOID',
+    entityType: 'INSPECTION_REPORT',
+    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'],
   },
   {
     permission: 'PERM-APR-APPROVE',
@@ -664,6 +682,12 @@ const policies: readonly AuthorizationPolicy[] = [
     action: 'APPROVE',
     entityType: 'DOCUMENT_VERSION',
     states: ['IN_REVIEW'],
+  },
+  {
+    permission: 'PERM-DOC-VOID',
+    action: 'VOID',
+    entityType: 'DOCUMENT_VERSION',
+    states: ['DRAFT', 'IN_REVIEW', 'RETURNED', 'APPROVED', 'EFFECTIVE'],
   },
   {
     permission: 'PERM-APR-APPROVE',

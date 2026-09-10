@@ -19,6 +19,7 @@ import { ReviewInspectionUseCase } from '../inspection/application/review-inspec
 import { ApproveInspectionUseCase } from '../inspection/application/approve-inspection.js';
 import { ReturnInspectionUseCase } from '../inspection/application/return-inspection.js';
 import { ResumeInspectionUseCase } from '../inspection/application/resume-inspection.js';
+import { VoidInspectionUseCase } from '../inspection/application/void-inspection.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 
@@ -62,6 +63,7 @@ export function quarantineActionDependencies() {
       approve: new ApproveInspectionUseCase(inspectionRepository),
       return: new ReturnInspectionUseCase(inspectionRepository),
       resume: new ResumeInspectionUseCase(inspectionRepository),
+      void: new VoidInspectionUseCase(inspectionRepository),
     },
   };
 }

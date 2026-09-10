@@ -54,17 +54,17 @@ function repository(initial: ReceivingItem): ReceivingRepository {
 }
 
 describe('Quarantine release system state', () => {
-  it('keeps PASS unreleased until the explicit release policy is approved', async () => {
+  it('releases PASS under the approved P-05 policy but denies with an explicit deny policy', async () => {
     await expect(
-      new ReleaseReceivingUseCase(repository(item())).execute({
+      new ReleaseReceivingUseCase(repository(item()), { canRelease: () => false }).execute({
         actor,
         id: item().id,
         expectedVersion: 5n,
-        requestId: 'req',
+        requestId: 'req-deny',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     await expect(
-      new ReleaseReceivingUseCase(repository(item()), { canRelease: () => true }).execute({
+      new ReleaseReceivingUseCase(repository(item())).execute({
         actor,
         id: item().id,
         expectedVersion: 5n,
