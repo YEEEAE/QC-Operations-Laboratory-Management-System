@@ -1,5 +1,35 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — تدقيق عقد التوكنز البصرية والتباين (visual-token audit, fail-closed)
+
+### تم التنفيذ
+- جمّدت `main@64b443b` بتاريخ `2026-09-10T05:52:48Z` (Node المحلي `v22.22.3` خارج العقد — النتائج محلية) وقرأت `DESIGN-SYSTEM.md` و`UI-UX-SPECIFICATION.md` و`tokens.css` و`global.css` و`StatusBadge.astro` ومهارة `ui-ux-pro-max` المحلية (`SKILL.md` كاملًا + بحثان محليان موثقان، وثالث `astro/focus` بلا نتائج مسجلة كذلك).
+- جردت التوكنز: المعرفة `75` تحت `src/ui/styles` والمستهلكة `71` في `src/pages+src/ui`؛ الوحيدان خارج العقد العام هما `--bar-size` و`--legend-color` وهما scoped inline معرّفان في موقع الاستخدام (`quarantine/index.astro` و`Legend.astro`)، وتحقق `--status-success/error` أنهما alias معرّفان (`pass/danger`) مع بقاء `PASS != RELEASED`.
+- حسبت تباين WCAG لكل زوج معروض فعليًا: الناجح (body/secondary/link/focus/badges pass-approved-hold-warning/pills ok-warn-unknown/primary-inverse/secondary/ghost/controlled/error-summary/input) محروس، والفاشل المثبت كفجوات مالك: `muted-on-raised 4.41` و`danger-on-panel 4.43` و`danger-on-raised 4.04` و`released 3.98` و`danger-badge 3.84` و`review 4.04` و`neutral 4.21` و`pill-bad 4.43` و`white-on-accent 3.12` و`danger-btn 3.84` و`disabled/borders` — بلا توحيد hues وبلا تغيير باليت وبلا عربي وبلا light وبلا مساس بأسماء الحالات أو POST fallbacks أو التفويض الخادمي.
+- أضفت `tests/unit/ui/visual-token-contract.test.ts` (عقد شامل كل الملفات + scoped + aliases + الفروقات الدلالية الأربع + نص الحالة + تطابق الوثائق) و`tests/unit/ui/visual-contrast.test.ts` (أزواج PASS صارمة + فجوات مثبتة كـpinned FAILs + توثيق white-vs-inverse وdisabled/borders) لمنع أي تراجع مستقبلي.
+
+### الملفات المتأثرة
+- `tests/unit/ui/visual-token-contract.test.ts` (جديد)
+- `tests/unit/ui/visual-contrast.test.ts` (جديد)
+- بلا تعديل مصدري: `tokens.css` و`DESIGN-SYSTEM.md` والصفحات والمكونات لم تُمس.
+
+### التحقق
+- `pnpm exec vitest run` للملفين + العقد القديم ✅ — 3 ملفات / 43 اختبارًا
+- `pnpm test:unit` ✅ — 64 ملفًا / 395 اختبارًا (كانت 62/355 في سجل Pro Max: +2 ملف/40 اختبارًا هنا)
+- `pnpm typecheck` ✅ — 0 أخطاء؛ `pnpm test:architecture` ✅؛ `pnpm build` ✅ (تحذير chunk الـ617kB القائم)؛ `eslint` للملفين ✅؛ `git diff --check` ✅
+- بحثا Pro Max المحليان ✅ (`color/dark-mode-contrast` و`ux/error-summary-contrast` بـ5+5 نتائج) والثالث `astro/focus` سُجل صفر نتائج بصدق؛ فحص حي (متصفح/زوم/forced-colors حي): NOT VERIFIED — لم يُشغّل هنا
+- Node المحلي `v22.22.3` خارج العقد — النتائج محلية
+
+### النتيجة
+- **الحالة:** جزئي (NEEDS CHANGES — fail-closed)
+- **مختصر:** عقد التوكنز العام سليم (صفر undefined عامة) والنص المصاحب للحالة وتطابق الوثائق محققان، لكن تباين النص العادي ما زال فاشلًا في 9 تركيبات معروضة (badges released/danger/review/neutral وdanger-on-panel/raised وmuted-on-raised وpill-bad وwhite-buttons) فيحتاج قرار مالك على الباليت قبل أي PASS؛ لم تُدخل عربي ولم يُكسر dark-only ولم يحدث commit/push/deploy.
+
+### ملاحظات / مشاكل مفتوحة
+- إصلاح `white→inverse` المقترح (`#fff` إلى `var(--color-text-inverse)` على أزرار الـaccent في ~20 صفحة) يرفع 3.12 إلى 5.74 بتوكن معتمد وبلا تغيير hue — تُرك للمالك لتأكيد الـdiff البصري قبل التنفيذ.
+- تفتيح `released/danger/review/neutral/muted/danger-on-panel` يحتاج قرار مالك صريح (ممنوع `--persist/--force` وممنوع توحيد الألوان)؛ الاختبارات الجديدة ستفشل تلقائيًا إذا ساءت أي نسبة وتحتاج تحديثًا صريحًا إذا أُصلحت الفجوات.
+- `HOLD` و`WARNING` يتشاركان tone الـ`warning` في `StatusBadge` (مقبول للفروقات الأربع المطلوبة لكنه يدمج hold/warning) — موثق بلا تغيير دلالي.
+- الشجرة فيها تغييرات مسبقة خارج مهمتي (`D audit/...final-prompts.md` و`?? complete-prompts`) تُركت كما هي.
+
 ## [2026-09-10] — تدقيق UI/UX Pro Max المستقل + معالجة P0 الآمنة (MASTER + Prompts 1–9 جزئيًا)
 
 ### تم التنفيذ
