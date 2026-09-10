@@ -70,7 +70,7 @@ Production evidence
 | 14 | Accessibility & Ergonomics Deep Dive | ✅ |
 | 15 | Dashboard & Data Visualization Design Deep Dive | ✅ |
 | 16 | Data-Driven Design & Product Analytics | ✅ |
-| 17 | Motion & Digital Art Direction Deep Dive | ☐ |
+| 17 | Motion & Digital Art Direction Deep Dive | ✅ |
 | 18 | Privacy & Security UX | ☐ |
 | 19 | Service Design & End-to-End QC Journeys | ☐ |
 | 20 | UX Research & Heuristic Validation | ☐ |
@@ -1731,7 +1731,7 @@ If analytics infrastructure does not exist, create the design/specification and 
 
 # PROMPT 17 — Motion & Digital Art Direction Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
 
 ```text
 Act as a Motion Designer and Digital Art Director specializing in premium scientific enterprise software.
