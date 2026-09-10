@@ -133,6 +133,7 @@ describe('universal shell preservation', () => {
     expect(sidebar).toContain('aria-label="Collapse navigation"');
     expect(sidebar).toContain('aria-expanded');
     expect(sidebar).toContain('aria-label={item.label}');
+    expect(sidebar).toContain("aria-current={isActive ? 'page' : undefined}");
     expect(sidebar).toContain('data-collapsed-tip');
     // Visible tooltip appears on both hover AND keyboard focus, not title-only.
     expect(sidebar).toContain(':hover::after');

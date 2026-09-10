@@ -13,7 +13,7 @@ const groups = visibleNavigation(capabilities);
   <div class="nav-groups">
     {groups.map(group => <section class="nav-group" aria-labelledby={`nav-${group.id}`}>
       <h2 id={`nav-${group.id}`}>{group.label}</h2>
-      <ul>{group.items.map(item => <li><a class:list={['nav-link', { active: activePath === item.href || activePath.startsWith(`${item.href}/`) }]} href={item.href} title={item.label} aria-label={item.label} data-collapsed-tip={item.label}><span class="nav-icon"><Icon name={item.icon as IconName} /></span><span class="nav-label">{item.label}</span></a></li>)}</ul>
+      <ul>{group.items.map(item => { const isActive = activePath === item.href || activePath.startsWith(`${item.href}/`); return <li><a class:list={['nav-link', { active: isActive }]} href={item.href} title={item.label} aria-label={item.label} aria-current={isActive ? 'page' : undefined} data-collapsed-tip={item.label}><span class="nav-icon"><Icon name={item.icon as IconName} /></span><span class="nav-label">{item.label}</span></a></li>})}</ul>
     </section>)}
   </div>
 </nav>

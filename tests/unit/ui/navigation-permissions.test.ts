@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { APPROVED_PERMISSION_CODES } from '../../../db/seeds/common';
 import { isPermissionCode } from '../../../src/shared/authorization/permissions';
-import { navigationGroups, visibleNavigation } from '../../../src/ui/navigation/navigation';
+import { navigationGroups, routeBreadcrumbs, visibleNavigation } from '../../../src/ui/navigation/navigation';
 
 describe('navigation permission and route integrity', () => {
   it('uses canonical permission codes and implemented pages', () => {
@@ -59,5 +59,22 @@ describe('navigation permission and route integrity', () => {
       group.items.map((item) => item.href),
     );
     expect(visibleLinks).toEqual(allLinks);
+  });
+
+  it('keeps breadcrumbs contextual without inventing a /system landing route', () => {
+    expect(routeBreadcrumbs('/quality/findings/abc')).toEqual([
+      { label: 'Quality', href: '/quality' },
+      { label: 'Findings', href: '/quality/findings' },
+      { label: 'Record detail' },
+    ]);
+    expect(routeBreadcrumbs('/laboratory/tests/new')).toEqual([
+      { label: 'Laboratory', href: '/laboratory' },
+      { label: 'Laboratory tests', href: '/laboratory/tests' },
+      { label: 'New record' },
+    ]);
+    expect(routeBreadcrumbs('/system/health')).toEqual([
+      { label: 'System', href: undefined },
+      { label: 'System health', href: undefined },
+    ]);
   });
 });

@@ -262,12 +262,39 @@ export function visibleNavigation(capabilities: readonly string[] = []) {
 }
 
 export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?: string }> {
+  const sectionLabels: Record<string, { label: string; href?: string }> = {
+    quality: { label: 'Quality', href: '/quality' },
+    quarantine: { label: 'Quarantine', href: '/quarantine' },
+    laboratory: { label: 'Laboratory', href: '/laboratory' },
+    assets: { label: 'Assets', href: '/assets' },
+    documents: { label: 'Controlled documents', href: '/documents' },
+    approvals: { label: 'My approvals', href: '/approvals' },
+    'change-requests': { label: 'Change requests', href: '/change-requests' },
+    reports: { label: 'Reports', href: '/reports' },
+    admin: { label: 'Administration', href: '/admin' },
+    system: { label: 'System' },
+  };
   const matched = navigationGroups
     .flatMap((group) => group.items)
     .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
     .sort((left, right) => right.href.length - left.href.length)[0];
 
-  if (!matched) return [];
-  const isRecordWorkspace = pathname !== matched.href;
-  return [{ label: matched.label, href: isRecordWorkspace ? matched.href : undefined }];
+  const segments = pathname.split('/').filter(Boolean);
+  const section = sectionLabels[segments[0] ?? ''];
+  if (!matched && !section) return [];
+
+  const crumbs: Array<{ label: string; href?: string }> = [];
+  if (section && (!matched || (matched.label !== section.label && (pathname !== matched.href || !section.href)))) {
+    crumbs.push({ label: section.label, href: section.href });
+  }
+  if (matched) {
+    const isRecordWorkspace = pathname !== matched.href;
+    crumbs.push({ label: matched.label, href: isRecordWorkspace ? matched.href : undefined });
+  }
+
+  const leaf = segments.at(-1);
+  const suffix = leaf === 'new' ? 'New record' : leaf === 'review' ? 'Review' : leaf === 'execute' ? 'Execution' : undefined;
+  if (suffix && crumbs.at(-1)?.label !== suffix) crumbs.push({ label: suffix });
+  else if (matched && pathname !== matched.href && !suffix) crumbs.push({ label: 'Record detail' });
+  return crumbs;
 }

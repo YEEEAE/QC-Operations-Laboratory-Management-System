@@ -64,7 +64,7 @@ Production evidence
 | 8 | Authorization-Aware UX, Roles & Controlled Workflow Clarity | ✅ |
 | 9 | Design System Maturity Deep Dive | ☐ |
 | 10 | Information Architecture & Permissions Deep Dive | ✅ |
-| 11 | Interaction Design Deep Dive | ☐ |
+| 11 | Interaction Design Deep Dive | ✅ |
 | 12 | Advanced Form Design Deep Dive | ☐ |
 | 13 | UX Writing & Microcopy Deep Dive | ☐ |
 | 14 | Accessibility & Ergonomics Deep Dive | ☐ |
@@ -1250,7 +1250,8 @@ Deliver:
 
 # PROMPT 10 — Information Architecture & Permissions Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 
 ```text
@@ -1330,7 +1331,8 @@ Implement justified IA improvements without changing security policy.
 
 # PROMPT 11 — Interaction Design Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Act as a Principal Interaction Designer for mission-critical enterprise software.
