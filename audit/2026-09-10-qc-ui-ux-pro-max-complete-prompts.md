@@ -66,7 +66,7 @@ Production evidence
 | 10 | Information Architecture & Permissions Deep Dive | ✅ |
 | 11 | Interaction Design Deep Dive | ✅ |
 | 12 | Advanced Form Design Deep Dive | ✅ |
-| 13 | UX Writing & Microcopy Deep Dive | ☐ |
+| 13 | UX Writing & Microcopy Deep Dive | ✅ |
 | 14 | Accessibility & Ergonomics Deep Dive | ☐ |
 | 15 | Dashboard & Data Visualization Design Deep Dive | ☐ |
 | 16 | Data-Driven Design & Product Analytics | ☐ |
@@ -1474,7 +1474,8 @@ Preserve no-JavaScript POST fallbacks and server truth.
 
 # PROMPT 13 — UX Writing & Microcopy Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
+
 
 ```text
 Act as a Senior UX Writer for regulated medical/QC enterprise software.

@@ -70,42 +70,20 @@ const allowed = canAccessAdminRoute(actor, 'scopes');
         </section>
         <section class="panel">
           <p class="eyebrow">MEMBER SCOPES</p>
-          <h2>Open a member</h2>
+          <h2>Choose a member</h2>
           <p class="note">
-            Scope replacement happens on the member detail workspace so the current scopes,
-            account state, and version are always visible together.
+            Open scope management from the authorized member register. This keeps technical
+            identifiers out of operator entry and keeps account state, current scopes, and
+            version together before a controlled replacement.
           </p>
-          <form class="form" data-admin-scope-lookup>
-            <label>
-              Member ID (UUID)
-              <input name="userId" required minlength="36" maxlength="36" autocomplete="off" />
-            </label>
-            <div class="actions">
-              <button type="submit">Open scopes</button>
-              <a href="/admin/users">Browse users</a>
-            </div>
-            <p role="status" data-result />
-          </form>
+          <div class="actions">
+            <a class="button" href="/admin/users">Browse members</a>
+          </div>
         </section>
       </div>
     )
   }
 </AppLayout>
-<script>
-  const form = document.querySelector<HTMLFormElement>('[data-admin-scope-lookup]');
-  form?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    const userId = String(data.get('userId') || '').trim();
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const output = form.querySelector('[data-result]');
-    if (!uuid.test(userId)) {
-      if (output) output.textContent = 'Enter a valid member UUID.';
-      return;
-    }
-    window.location.href = `/admin/users/${userId}?section=scopes`;
-  });
-</script>
 <style>
   .page-head {
     display: flex;
@@ -127,6 +105,18 @@ const allowed = canAccessAdminRoute(actor, 'scopes');
   .lede {
     color: var(--text-muted);
     font-size: 0.86rem;
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--color-text-inverse);
+    font-weight: 700;
+    text-decoration: none;
   }
   .grid {
     display: grid;

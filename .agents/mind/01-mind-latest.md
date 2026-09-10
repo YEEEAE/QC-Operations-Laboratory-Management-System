@@ -1,5 +1,41 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — إصلاح ملاحظات نماذج UX للبيانات المنظمة
+
+### تم التنفيذ
+- راجعت 48 نموذجًا فعليًا تحت `src/pages` و`src/ui` ضمن Tasks وQuality وQuarantine وLaboratory وAssets وDocuments وAdministration وControlled Actions.
+- أزلت نموذج إدخال UUID من `/admin/scopes` واستبدلته بالوصول عبر سجل الأعضاء المصرح به، بحيث لا يكتب المشغل معرّفًا تقنيًا يدويًا.
+- حسّنت Approval review بإخفاء subject/requester IDs وbackend enums من العرض البشري، مع إبقاء المراجع hidden اللازمة لعقد الخادم وتحويل labels إلى تسميات سياقية.
+- ربطت حقول inspection notes وreturn reason بعناصرها عبر `for/id`، وأضفت `data-submit` لحفظ draft، وفعّلت required لسبب Approval عند Return/Reject.
+- أضفت تقرير remediation ومجموعة regression tests تمنع رجوع UUID exposure أو فقدان label association أو dependency الخاصة بسبب القرار.
+
+### الملفات المتأثرة
+- `src/pages/admin/scopes/index.astro`
+- `src/pages/approvals/[approvalId].astro`
+- `src/pages/quarantine/inspections/[inspectionId]/execute.astro`
+- `src/pages/quarantine/inspections/[inspectionId]/review.astro`
+- `audit/2026-09-10-regulated-form-ux-remediation.md`
+- `tests/unit/ui/form-ux-contract.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/form-ux-contract.test.ts tests/unit/ui/mutation-post.test.ts tests/unit/ui/app-shell.test.ts` ✅ — 3 ملفات / 61 اختبارًا.
+- `pnpm test:unit` ✅ — 68 ملفًا / 422 اختبارًا.
+- `pnpm test:architecture` ✅.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 0 warnings، 62 hints قائمة من قبل.
+- `pnpm build` ✅ — server/client build مكتمل؛ بقيت تحذيرات Node 22 خارج عقد المشروع وتحذير chunk Three.js المعروف.
+- `git diff --check` ✅.
+- Browser المصادق وPOST/no-JS والـrole/stale/provider matrix ⚠️ لم تُثبت لغياب fixture/بيئة تشغيل مناسبة.
+
+### النتيجة
+- **الحالة:** نجح محليًا / يحتاج live evidence.
+- **مختصر:** أُصلحت الملاحظات المؤكدة في النماذج بدون تغيير authorization أو state machine أو business/scientific policy، ووُثقت حدود ما يحتاج backend fixture أو قرار مالك.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- حقول `severity` و`priority` و`maintenance type` بقيت نصية لأن الوثائق الحالية لا تعتمد vocabularies كاملة لها؛ لا يجوز اختلاق allowed values.
+- يلزم تشغيل متصفح مصادق للتحقق من جميع المسارات والمقاسات وPOST/no-JS قبل أي claim اكتمال.
+
 ## [2026-09-10] — Principal interaction audit وتنضيج primitives المشتركة
 
 ### تم التنفيذ

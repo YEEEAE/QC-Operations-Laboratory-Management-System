@@ -10,12 +10,24 @@ const approval = await approvalsReadDependencies().get.execute({ actor, approval
 if (!approval) return Astro.redirect('/404');
 const context = approval.subject.reviewContext;
 const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? context['labTestNo'] ?? context['calibrationNo'] ?? approval.approvalCase.subjectType);
+const humanSubjectType: Record<string, string> = {
+  DOCUMENT_VERSION: 'Controlled document version',
+  INSPECTION_REPORT: 'Inspection report',
+  LAB_TEST: 'Laboratory test',
+  CHANGE_REQUEST: 'Change request',
+};
+const humanize = (key: string): string =>
+  key
+    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const contextLabel = (key: string): string => humanize(key);
 ---
 <AppLayout title={`Approval · ${subjectLabel}`} locale="en" direction="ltr">
   <nav class="crumb"><a href="/approvals">My Approvals</a><span>/</span><span>{subjectLabel}</span></nav>
-  <section class="head"><div><p class="eyebrow">UI-APR-002 · APPROVAL REVIEW WORKSPACE</p><h1>{subjectLabel}</h1><p>{approval.approvalCase.subjectType} · {approval.approvalCase.subjectId}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
-  <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{approval.approvalCase.workflowType}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requested by</dt><dd>{approval.approvalCase.requestedBy}</dd><dt>State</dt><dd>{approval.subject.state}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ?? 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{key}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
-  <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<textarea id="reason" name="reason" rows="4" maxlength="4000"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit">Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output></form></section>
+  <section class="head"><div><p class="eyebrow">UI-APR-002 · APPROVAL REVIEW WORKSPACE</p><h1>{subjectLabel}</h1><p>{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · Current version {approval.subject.version.toString()}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
+  <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{humanize(approval.approvalCase.workflowType)}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requester</dt><dd>Recorded in the controlled audit trail</dd><dt>State</dt><dd>{humanize(approval.subject.state)}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ? 'Available in the controlled record' : 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{contextLabel(key)}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value).match(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i) ? 'Available in the controlled record' : String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
+  <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required when returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit" data-submit>Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output></form></section>
   <div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div>
   <div data-stale-state hidden><StaleVersionState version={approval.subject.version.toString()} /></div>
 </AppLayout>
@@ -27,6 +39,15 @@ const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? 
     event.preventDefault();
     if (!form || form.getAttribute('aria-busy') === 'true') return;
     const button = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
+    const decision = form.querySelector<HTMLSelectElement>('#decision');
+    const reason = form.querySelector<HTMLTextAreaElement>('#reason');
+    const requiresReason = decision?.value === 'RETURN' || decision?.value === 'REJECT';
+    if (reason) reason.required = Boolean(requiresReason);
+    if (requiresReason && !reason?.value.trim()) {
+      reason?.setAttribute('aria-invalid', 'true');
+      reason?.focus();
+      return;
+    }
     const output = form.querySelector<HTMLOutputElement>('[data-result]');
     form.setAttribute('aria-busy', 'true');
     const loading = form.closest('.decision')?.querySelector<HTMLElement>('[data-loading-state]');
@@ -52,6 +73,11 @@ const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? 
     } catch {
       if (output) { output.textContent = 'The service is temporarily unavailable. Your entries are preserved — try again if permitted.'; output.focus?.(); }
     } finally { if (loading) loading.hidden = true; form.removeAttribute('aria-busy'); if (button) button.disabled = false; }
+  });
+  form?.querySelector<HTMLSelectElement>('#decision')?.addEventListener('change', (event) => {
+    const decision = event.currentTarget as HTMLSelectElement;
+    const reason = form?.querySelector<HTMLTextAreaElement>('#reason');
+    if (reason) reason.required = decision.value === 'RETURN' || decision.value === 'REJECT';
   });
 </script>
 <style>
