@@ -1,5 +1,72 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — إصلاح فجوات التفويض والرؤية في الواجهة
+
+### تم التنفيذ
+- فصلت اكتشاف صفحات التشغيل العادية عن صلاحيات الأفعال؛ بقيت صفحات الإدارة والصحة محجوبة حسب capability.
+- أضفت منح القراءة التشغيلية العامة المعتمدة وقت حلّ actor، بدون منح mutation أو approval أو release أو health أو admin.
+- ربطت مساحات inspection وlaboratory بالحالة والصلاحية مع رسائل آمنة توضّح أن visibility ما تعني authority.
+- أخفيت retest غير المعتمد كإجراء قابل للتنفيذ، وحافظت على العبارات الدلالية: PASS لا يساوي RELEASED، والـAI استشاري فقط.
+- حدّثت اختبارات navigation وfixtures وE2E لتطابق AVD، وأضافت اختبارات UI authorization/visibility.
+
+### الملفات المتأثرة
+- `src/ui/navigation/navigation.ts`
+- `src/shared/authorization/visibility.ts`
+- `src/modules/identity/application/identity-dependencies.ts`
+- `src/pages/quarantine/inspections/[inspectionId]/execute.astro`
+- `src/pages/quarantine/inspections/[inspectionId]/review.astro`
+- `src/pages/laboratory/tests/[labTestId]/index.astro`
+- `src/pages/laboratory/tests/[labTestId]/execute.astro`
+- `audit/2026-09-10-authorization-visibility-ui-audit.md`
+- `tests/unit/ui/authorization-visibility-ui.test.ts`
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 أخطاء، و62 hints موجودة مسبقًا.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — مع تحذيرات Vite الحالية الخاصة بحجم chunk وبعض الاعتمادات.
+- `pnpm test:unit` ✅ — 66 ملف / 410 اختبار.
+- `pnpm exec playwright test tests/e2e/verification-access.spec.ts` ⚠️ — الاختباران skipped لعدم توفر `QC_VERIFY_*`.
+- `git diff --check` ✅.
+
+### النتيجة
+- **الحالة:** جزئي / fail-closed.
+- **مختصر:** انحلت فجوات presentation المكتشفة محليًا بدون تغيير السياسة، لكن التحقق المصادق للشخصيات والـfixtures وstale/SoD/e-signature وindistinguishable empty states ما زال ينتظر credentials بيئة غير إنتاجية.
+
+### ملاحظات / مشاكل مفتوحة
+- ما صار commit أو push أو mutation أو deploy.
+- تحذير Node مستمر: البيئة الحالية `v22.22.3` بينما عقد المشروع `>=24.20.0 <25`.
+
+## [2026-09-10] — تدقيق واجهة التفويض والرؤية مقابل AVD (fail-closed)
+
+### تم التنفيذ
+- قرأت وثائق AVD والصلاحيات والأدوار وآلات الحالة وقواعد العمل ومهارة `ui-ux-pro-max` كاملة، وراجعت navigation وAppLayout ومساحات inspection/lab/receiving/backup/AI.
+- فتحت النسخة المحلية بالمتصفح ونفذت فحصًا anonymous قراءة فقط على 11 مسارًا محميًا؛ كلها أعادت `/login?returnTo=...` بدون كشف بيانات أو POST.
+- أثبتت فجوة F-01: `visibleNavigation` ما زال يخفي أغلب صفحات التشغيل العادية حسب `PERM-*-VIEW`، بينما AVD-001/004 يفرضان visibility/read عامة لكل عضو نشط.
+- أثبتت فجوات عرض إضافية: روابط execution/review/retest في تفاصيل المختبر غير مربوطة بوضوح بالصلاحية/الحالة، وReturn/Submit/Resume في مساحات inspection تحتاج capability-aware presentation.
+- أثبتت semantic truths في UI: `PASS != RELEASED`، وbackup success لا يساوي restore verified، وAI advisory لا يقرر PASS/FAIL أو approval/release/sign.
+- أنشأت تقرير التدقيق التفصيلي بدون تعديل policy أو source implementation أو database أو production.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-authorization-visibility-ui-audit.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- Browser anonymous direct-route sample ✅ — 11/11 protected routes redirected safely.
+- `pnpm exec vitest run tests/unit/ui/navigation-permissions.test.ts tests/unit/ui/universal-shell.test.ts tests/unit/ui/action-vocabulary.test.ts tests/unit/ui/mutation-post.test.ts tests/unit/ui/app-shell.test.ts tests/unit/ui/mobile-drawer-inert.test.ts` ✅ — 6 files / 82 tests.
+- `pnpm typecheck` ✅ — 0 errors, 62 existing hints; Node `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- `pnpm test:architecture` ✅.
+- Authenticated disposable personas / inactive persona / SoD / stale / e-sign / no-existence leakage ⚠️ NOT VERIFIED — `QC_VERIFY_*` credentials/fixture run غير متاحة.
+- لا POST أو mutation أو commit أو push أو deploy.
+
+### النتيجة
+- **الحالة:** جزئي / fail-closed.
+- **مختصر:** denial anonymous والحدود الدلالية الأساسية واضحة، لكن AVD universal operational visibility غير منعكس بالكامل في navigation، والتحقق المصادق لكل الشخصيات ما اكتمل.
+
+### ملاحظات / مشاكل مفتوحة
+- F-01 أولوية عالية: يلزم فصل page visibility/read عن mutation permissions مع إبقاء `/system/health` owner-only و`/admin/*` admin/owner-only.
+- F-02 إلى F-04 تحتاج تحسين presentation للروابط والأفعال حسب state + permission + safe reason.
+- يلزم تشغيل fixtures في non-production ثم إعادة الجولة قبل أي claim اكتمال.
+
 ## [2026-09-10] — إصلاح motion والأداء وتقسيم Three.js في login
 
 ### تم التنفيذ

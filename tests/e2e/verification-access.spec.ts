@@ -34,16 +34,16 @@ async function signIn(page: Page, identity: string, password: string) {
 test.describe('C-12 role fixtures: positive access and server-side denial', () => {
   test.skip(!hasFixtures, 'QC_VERIFY_* fixtures are absent; C-12 stays NOT VERIFIED.');
 
-  test('least-privileged fixture reads operational pages but is denied admin/health/audit routes', async ({
+  test('least-privileged fixture reads operational pages but is denied admin/health routes', async ({
     page,
   }) => {
     const base = String(process.env.QC_VERIFY_BASE_URL);
     await signIn(page, 'verify-least', String(process.env.QC_VERIFY_LEAST_PASSWORD));
-    for (const path of ['/dashboard', '/tasks', '/change-requests']) {
+    for (const path of ['/dashboard', '/tasks', '/change-requests', '/laboratory/tests', '/audit']) {
       await page.goto(`${base}${path}`);
       await expect(page, `${path} must stay readable`).not.toHaveURL(/\/login/);
     }
-    for (const path of ['/admin', '/admin/users', '/system/health', '/audit']) {
+    for (const path of ['/admin', '/admin/users', '/system/health']) {
       await page.goto(`${base}${path}`);
       const body = await page.content();
       expect(body, `${path} must not leak controlled data`).not.toMatch(

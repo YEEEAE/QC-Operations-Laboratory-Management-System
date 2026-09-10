@@ -7,6 +7,7 @@ import { Argon2idPasswordHasher } from '../security/argon2-password-hasher.js';
 import { SessionService } from './session-service.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { systemClock } from '../../../shared/time/clock.js';
+import { addUniversalOperationalReadPermissions } from '../../../shared/authorization/visibility.js';
 
 export function identityDependencies(database: Kysely<DatabaseSchema> = getDatabase()) {
   const users = new PostgresUserRepository(database);
@@ -56,9 +57,9 @@ export async function resolveActor(
     id: userId,
     accountState: user.account_state as ActorContext['accountState'],
     roles: [...new Set(rows.map((r) => r.role))],
-    permissions: [...new Set(rows.map((r) => r.permission))].map((code) => ({
+    permissions: addUniversalOperationalReadPermissions([...new Set(rows.map((r) => r.permission))].map((code) => ({
       code: code as ActorContext['permissions'][number]['code'],
       scopes: scopeKinds,
-    })),
+    }))),
   };
 }

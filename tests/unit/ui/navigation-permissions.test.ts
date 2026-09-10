@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { APPROVED_PERMISSION_CODES, FOUNDATION_ROLE_PERMISSIONS } from '../../../db/seeds/common';
+import { APPROVED_PERMISSION_CODES } from '../../../db/seeds/common';
 import { isPermissionCode } from '../../../src/shared/authorization/permissions';
 import { navigationGroups, visibleNavigation } from '../../../src/ui/navigation/navigation';
 
@@ -19,8 +19,8 @@ describe('navigation permission and route integrity', () => {
     }
   });
 
-  it('exposes existing admin reading capabilities instead of only health and backups', () => {
-    const links = visibleNavigation(FOUNDATION_ROLE_PERMISSIONS.ADMIN).flatMap((group) =>
+  it('keeps ordinary operational navigation visible without granting mutations', () => {
+    const links = visibleNavigation([]).flatMap((group) =>
       group.items.map((item) => item.href),
     );
     for (const href of [
@@ -33,10 +33,10 @@ describe('navigation permission and route integrity', () => {
     ]) {
       expect(links).toContain(href);
     }
-    expect(links).not.toContain('/laboratory/tests');
-    expect(
-      visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href)),
-    ).toEqual(['/tasks']);
+    expect(links).toContain('/laboratory/tests');
+    expect(links).not.toContain('/quarantine/admin');
+    expect(links).not.toContain('/system/health');
+    expect(links).not.toContain('/admin');
   });
 
   it('shows Tasks to every authenticated member without granting task actions', () => {

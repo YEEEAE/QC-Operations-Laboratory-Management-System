@@ -119,6 +119,7 @@ export const VERIFICATION_PERSONAS: readonly VerificationPersona[] = [
     passwordEnvVar: 'QC_VERIFY_LEAST_PASSWORD',
     scope: 'OWN',
     minimumPermissions: [
+      'AVD universal operational read grant (derived at actor resolution; read-only)',
       'PERM-IDN-VIEW-SELF',
       'PERM-IDN-CHANGE-OWN-PASSWORD',
       'PERM-NOT-VIEW-OWN',
