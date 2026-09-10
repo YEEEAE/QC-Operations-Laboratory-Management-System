@@ -68,7 +68,7 @@ Production evidence
 | 12 | Advanced Form Design Deep Dive | ✅ |
 | 13 | UX Writing & Microcopy Deep Dive | ✅ |
 | 14 | Accessibility & Ergonomics Deep Dive | ✅ |
-| 15 | Dashboard & Data Visualization Design Deep Dive | ☐ |
+| 15 | Dashboard & Data Visualization Design Deep Dive | ✅ |
 | 16 | Data-Driven Design & Product Analytics | ☐ |
 | 17 | Motion & Digital Art Direction Deep Dive | ☐ |
 | 18 | Privacy & Security UX | ☐ |
@@ -1610,7 +1610,7 @@ Add tests where feasible and do not claim manual verification that was not perfo
 
 # PROMPT 15 — Dashboard & Data Visualization Design Deep Dive
 
-> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+> **الحالة:** ✅  مُنجز
 
 ```text
 Act as a Principal Dashboard and Data Visualization Designer for Quality Control operations.

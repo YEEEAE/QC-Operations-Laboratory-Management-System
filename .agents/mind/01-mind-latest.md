@@ -1,5 +1,70 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — معالجة فجوات الوصول المؤكدة من تدقيق WCAG
+
+### تم التنفيذ
+- حسّنت `LoadingState` إلى `role=status` مع `aria-live=polite`، وخفيت خطوط التحميل الزخرفية عن شجرة الوصول.
+- أضفت نصًا وصوليًا مخفيًا لشدة كل notification، مع إبقاء نقطة اللون زخرفية، حتى لا يعتمد معنى التنبيه على اللون وحده.
+- أضفت عقد forced-colors عام يبدّل focus والحدود إلى ألوان النظام ويحافظ على وضوح شارات الحالات.
+- وسعت اختبار WCAG الثابت ليحرس loading announcement وnotification severity، وعدّلت تقرير التدقيق ليعكس الإصلاحات.
+
+### الملفات المتأثرة
+- `src/ui/components/feedback/LoadingState.astro`
+- `src/pages/notifications.astro`
+- `src/ui/styles/global.css`
+- `tests/unit/ui/wcag22-accessibility-contract.test.ts`
+- `audit/2026-09-10-wcag22-aa-ergonomics-audit.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/wcag22-accessibility-contract.test.ts tests/unit/ui/universal-shell.test.ts tests/unit/ui/form-ux-contract.test.ts` ✅ — 3 ملفات / 21 اختبارًا.
+- `pnpm test:unit` ✅ — 69 ملفًا / 432 اختبارًا.
+- `pnpm typecheck` ✅ — 0 أخطاء، 62 hints قائمة.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅ — تحذيرات bundle وNode خارج العقد ما زالت قائمة.
+- `git diff --check` ✅.
+
+### النتيجة
+- **الحالة:** نجح جزئيًا / يحتاج live evidence.
+- **مختصر:** الفجوات المؤكدة في loading/status/forced-colors/notification severity انصلحت ومحروسة، لكن التحقق الحي الكامل لكل route وscreen reader ما زال غير متاح.
+
+### ملاحظات / مشاكل مفتوحة
+- ما زالت 200% zoom و320px وVoiceOver/NVDA وkeyboard workflows المصادق عليها تحتاج بيئة تشغيل مناسبة وfixture.
+- Node المحلي `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- لا commit أو push أو deploy.
+
+## [2026-09-10] — تدقيق WCAG 2.2 AA وergonomics لتطبيق QC
+
+### تم التنفيذ
+- أضفت تقريرًا يفصل الأدلة إلى `AUTOMATED VERIFIED` و`MANUAL VERIFIED` و`NOT VERIFIED`، ويغطي keyboard، semantics، focus، forms، tables/charts، dialogs/drawers، authentication، reduced motion، forced colors، zoom، reflow، والكثافة المؤسسية.
+- أضفت عقد `wcag22-accessibility-contract.test.ts` لحراسة skip navigation/landmarks، visible focus، focus restoration وعزل drawer، أسماء الأزرار الأيقونية، error summary، chart/table alternatives، status semantics، وخصائص login.
+- نفذت فحص متصفح حي read-only على `/login`: H1 وlabels وautocomplete وShow password وTab focus وoutline المرئي.
+- نفذت فحصًا حيًا read-only على 404: عنوان واضح وروابط تعافٍ ومسار `main`.
+- سجّلت عدم التحقق من الأسطح المصادق عليها لأن نسخة الإنتاج الحالية بلا جلسة مصادق جديدة، وتشغيل Astro المحلي فشل بقيد `listen EPERM` على `127.0.0.1:4321`.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-wcag22-aa-ergonomics-audit.md`
+- `tests/unit/ui/wcag22-accessibility-contract.test.ts`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/wcag22-accessibility-contract.test.ts tests/unit/ui/universal-shell.test.ts tests/unit/ui/form-ux-contract.test.ts` ✅ — 3 ملفات / 20 اختبارًا.
+- `pnpm test:unit` ✅ — 69 ملفًا / 431 اختبارًا.
+- `pnpm exec astro check` ✅ — 0 أخطاء، 0 warnings، و62 hints قائمة.
+- `pnpm test:architecture` ✅.
+- `git diff --check` ✅.
+- متصفح read-only ✅ — `/login` و404 فقط؛ axe/VoiceOver أو NVDA والأسطح المصادق عليها ❌/NOT VERIFIED.
+
+### النتيجة
+- **الحالة:** جزئي / NEEDS LIVE EVIDENCE.
+- **مختصر:** عقود الوصول الأساسية محروسة آليًا، ودليل المتصفح يؤكد صفحة الدخول و404 فقط؛ لا يوجد claim WCAG كامل أو ergonomics كامل لكل route/workflow.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم تشغيل Chromium/preview ببيئة مسموحة وfixture مصادق لإعادة تنفيذ route-by-route مع axe، 320px، 200%، forced colors، reduced motion، tables، dialogs، drawers، وVoiceOver/NVDA.
+- تم تسجيل أن `DataTable` يضمن caption وscroll، لكن `scope` للعناوين مسؤولية الـslot ويحتاج تحققًا على الـmarkup النهائي.
+- Node المحلي `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- لا commit أو push أو deploy.
+
 ## [2026-09-10] — تدقيق وكتابة UX للنصوص المنظمة
 
 ### تم التنفيذ

@@ -151,6 +151,25 @@ a {
 :where(button, a, input, select, textarea) {
   min-height: 40px;
 }
+
+/* Forced-colors users need the same focus and state affordances without
+   relying on the authored green palette. Text labels remain the source of
+   status meaning; system colors only reinforce the boundary/state. */
+@media (forced-colors: active) {
+  :where(button, a, input, select, textarea, summary):focus-visible {
+    outline-color: Highlight;
+  }
+
+  :where(button, input, select, textarea) {
+    border-color: ButtonBorder;
+  }
+
+  :where(.status-badge, .status-pill, .pill, .state-pill, .result, .release) {
+    border-color: ButtonBorder;
+    forced-color-adjust: auto;
+  }
+}
+
 button,
 select {
   cursor: pointer;
