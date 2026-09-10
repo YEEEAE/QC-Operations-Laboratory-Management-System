@@ -1,16 +1,18 @@
 ---
 import { visibleNavigation } from '../navigation/navigation';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../components/icon';
 interface Props { capabilities?: string[]; activePath?: string; collapsed?: boolean; }
 const { capabilities = [], activePath = Astro.url.pathname, collapsed = false } = Astro.props;
 const groups = visibleNavigation(capabilities);
 ---
 <nav class="sidebar" data-collapsed={collapsed} aria-label="Primary navigation">
   <div class="brand"><span class="brand-mark" aria-hidden="true">QC</span><span class="brand-name">QC Operations</span></div>
-  <button class="collapse-button" type="button" data-sidebar-toggle aria-label="Collapse navigation" aria-expanded={!collapsed}>‹</button>
+  <button class="collapse-button" type="button" data-sidebar-toggle aria-label="Collapse navigation" aria-expanded={!collapsed}><Icon name="chevron-left" /></button>
   <div class="nav-groups">
     {groups.map(group => <section class="nav-group" aria-labelledby={`nav-${group.id}`}>
       <h2 id={`nav-${group.id}`}>{group.label}</h2>
-      <ul>{group.items.map(item => <li><a class:list={['nav-link', { active: activePath === item.href || activePath.startsWith(`${item.href}/`) }]} href={item.href} title={item.label}><span class="nav-icon" aria-hidden="true">{item.icon}</span><span class="nav-label">{item.label}</span></a></li>)}</ul>
+      <ul>{group.items.map(item => <li><a class:list={['nav-link', { active: activePath === item.href || activePath.startsWith(`${item.href}/`) }]} href={item.href} title={item.label}><span class="nav-icon"><Icon name={item.icon as IconName} /></span><span class="nav-label">{item.label}</span></a></li>)}</ul>
     </section>)}
   </div>
 </nav>

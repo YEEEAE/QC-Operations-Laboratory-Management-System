@@ -38,7 +38,7 @@ const REQUIRED_FIELDS = [
 ] as const;
 
 // Authorized selector source: controlled document versions the actor may view
-// (PERM-DOC-VIEW, resolved server-side through the application read model).
+// (PERM-DOC-VIEW, resolved on the server from records available to the account).
 // The operator always sees human labels (document number · title · revision
 // · state); the technical version identifier travels only as the selected
 // option value and every authoritative field (target id/version, snapshot,

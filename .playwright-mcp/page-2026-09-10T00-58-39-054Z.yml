@@ -1,0 +1,11 @@
+- main [ref=e3]:
+  - region [ref=e4]:
+    - paragraph [ref=e5]: QC Operations & Laboratory Management System
+    - heading "Sign in" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Secure operational access
+    - generic [ref=e8]:
+      - generic [ref=e9]: Login identity
+      - textbox "Login identity" [active] [ref=e10]
+      - generic [ref=e11]: Password
+      - textbox "Password" [ref=e12]
+      - button "Sign in" [ref=e13] [cursor=pointer]

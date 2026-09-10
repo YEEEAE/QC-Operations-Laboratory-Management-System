@@ -1,5 +1,36 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-10] — توحيد أيقونات SVG المحلية وتنظيف النسخ التشغيلية
+
+### تم التنفيذ
+- أضفت primitive محليًا موحدًا `Icon.astro` مع registry typed من 33 اسمًا دلاليًا، كلها inline SVG بـ`24×24` و`currentColor` و`aria-hidden`؛ بدون مكتبة أو assets خارجية.
+- استبدلت رموز Unicode في navigation وSidebar وTopbar وUserMenu والفرز والـKPI وحالة الجدول والتقارير، مع بقاء labels والأسماء الوصولية كما هي.
+- حوّلت قيم navigation من glyph strings إلى `IconName`، بدون تغيير hrefs أو capabilities أو منطق الظهور والتفويض.
+- نظفت مصطلحات `read model` الظاهرة في dashboard/documents/change requests، واستبدلت الأسهم والرموز المعروضة في صفحات audit/change request/tasks بنصوص واضحة أو SVG محلي.
+- أضفت contract ثابت يفحص كل `src/pages` و`src/ui` ضد المصطلحات والرموز المحظورة، واختبار Playwright عام لعقد SVG مع تغطية authenticated fixture-gated للطي/الجوال/الزوم/forced-colors.
+
+### الملفات المتأثرة
+- `src/ui/components/{Icon.astro,icon.ts}` و`src/ui/{navigation/navigation.ts,shell/*,components/data/*,charts/KpiCard.astro}`
+- `src/pages/{dashboard/index,reports/index,audit,tasks/[taskId],documents/[documentId]/index,change-requests/**}`
+- `tests/unit/ui/icon-and-copy-contract.test.ts`
+- `tests/e2e/navigation-icons.spec.ts`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/ui/icon-and-copy-contract.test.ts tests/unit/ui/app-shell.test.ts tests/unit/ui/navigation-permissions.test.ts` ✅ — 3 ملفات / 12 اختبارًا.
+- `pnpm typecheck` ✅ — 0 أخطاء، 56 hints سابقة؛ Node المحلي `v22.22.3` خارج العقد `>=24.20.0 <25`.
+- `pnpm lint` ✅ و`pnpm build` ✅ و`git diff --check` ✅.
+- `pnpm exec playwright test tests/e2e/navigation-icons.spec.ts` ✅ — 1 passed / 2 skipped لغياب fixture مصادقة.
+- الحزمة المرتبطة Playwright: 2 passed / 27 skipped / 6 failed؛ الفشل العام في login axe و`boundingBox` عند 320px/200%، وهو نفس عائق headless لخلفية login الموثق سابقًا، وليس فشلًا من اختبار الأيقونات الجديد.
+- `prettier` نسّق ملفات TypeScript الجديدة/المعدلة؛ لا parser Astro مهيأ في إعداد Prettier الحالي.
+
+### النتيجة
+- **الحالة:** نجح جزئيًا.
+- **مختصر:** توحيد الأيقونات والنسخ وعقود الحماية مكتمل محليًا، لكن إثبات shell المصادق في المتصفح ينتظر fixture دخول، وحزمة Playwright العامة ما زالت تتأثر بعائق login headless المعروف.
+
+### ملاحظات / مشاكل مفتوحة
+- لا commit أو push أو deploy.
+- مجلد `.playwright-mcp/` غير متتبع وموجود خارج نطاق هذه المهمة ولم يُلمس.
+
 ## [2026-09-10] — استمرار تنفيذ F-11: تشغيل النسخ المحلي وتوثيق RPO/RTO
 
 ### تم التنفيذ
