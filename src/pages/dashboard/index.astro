@@ -10,7 +10,7 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fdashboard');
 let dashboard = { generatedAt: new Date(), scopeLabel: 'Authorized operational scope', metrics: [], attention: [], activity: [] } as Awaited<ReturnType<GetDashboardUseCase['execute']>>;
 try { dashboard = await dashboardDependencies().get.execute(actor); } catch { /* render a safe empty state when the read provider is unavailable */ }
 ---
-<AppLayout title="Dashboard · QC Operations" locale="en" direction="ltr">
+<AppLayout title="Dashboard · QC Operations" locale="en" direction="ltr" scope={dashboard.scopeLabel}>
   <section class="page-head"><div><p class="eyebrow">OVERVIEW · QC OPERATIONAL COMMAND CENTER</p><h1>Dashboard</h1><p class="lede">Authorized work that needs attention, in your current operational scope. Scope: {dashboard.scopeLabel}.</p></div><time datetime={dashboard.generatedAt.toISOString()}>Snapshot {dashboard.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></section>
   <section class="kpis" aria-label="Operational key performance indicators">{dashboard.metrics.map((metric) => <KpiCard label={metric.label} value={metric.value} definition={metric.definition} href={metric.href} tone={metric.tone} freshness="current snapshot" />)}</section>
   <section class="dashboard-grid">

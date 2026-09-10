@@ -44,6 +44,40 @@ Authorization-aware UX
 Cross-system consistency
 Production evidence
 ```
+## 📊 جدول متابعة الحالة — حدّث عمود الحالة عند إكمال أي برومبت
+
+```text
+☐ = لم يُنجَز   ✅ = مكتمل
+```
+
+| # | البرومبت | الحالة |
+|---|----------|--------|
+| M | MASTER PROMPT — System Closure Orchestrator | ✅ |
+| P2 | PHASE 2 MASTER — Improvement & Development | ✅ |
+| 1 | Design Tokens, Semantic Color & Visual Contract | ✅ |
+| 2 | Universal App Shell, Dashboard, Navigation & Topbar | ✅ |
+| 3 | Accessibility, Reflow, Zoom & Focus Closure | ✅ |
+| 4 | Forms, Validation, Error Recovery & Controlled Action UX | ☐ |
+| 5 | Data-Dense UX: Tables, Charts, Search, Notifications & States | ☐ |
+| 6 | Responsive Layout, Mobile Ergonomics & Information Density | ☐ |
+| 7 | Motion, Lottie, Three.js & Front-End Performance | ☐ |
+| 8 | Authorization-Aware UX, Roles & Controlled Workflow Clarity | ☐ |
+| 9 | Design System Maturity Deep Dive | ☐ |
+| 10 | Information Architecture & Permissions Deep Dive | ☐ |
+| 11 | Interaction Design Deep Dive | ☐ |
+| 12 | Advanced Form Design Deep Dive | ☐ |
+| 13 | UX Writing & Microcopy Deep Dive | ☐ |
+| 14 | Accessibility & Ergonomics Deep Dive | ☐ |
+| 15 | Dashboard & Data Visualization Design Deep Dive | ☐ |
+| 16 | Data-Driven Design & Product Analytics | ☐ |
+| 17 | Motion & Digital Art Direction Deep Dive | ☐ |
+| 18 | Privacy & Security UX | ☐ |
+| 19 | Service Design & End-to-End QC Journeys | ☐ |
+| 20 | UX Research & Heuristic Validation | ☐ |
+| 21 | Cross-System Consistency & Final Polish | ☐ |
+| 22 | Final Independent Closure & Production Evidence | ☐ |
+
+## قواعد مشتركة لجميع البرومبتات
 
 ## قواعد مشتركة لجميع البرومبتات
 
@@ -83,6 +117,8 @@ Verify every returned result fits a desktop-first enterprise QC web app before a
 ---
 
 # MASTER PROMPT — UI/UX System Closure Orchestrator
+
+> **الحالة:** ✅  مُنجز
 
 ```text
 You are the independent senior UI/UX systems auditor and remediation agent for the repository:
@@ -171,6 +207,8 @@ Then execute the Phase 2 Master Improvement Prompt, followed by Prompts 1–22 b
 ---
 
 # PHASE 2 MASTER PROMPT — Current UI/UX Improvement & Development
+
+> **الحالة:** ✅  مُنجز
 
 ```text
 You are now entering Phase 2: Improvement, Remediation, and Product-Level UI/UX Development for:
@@ -628,6 +666,8 @@ inspect → reproduce → implement → test → verify.
 
 # PROMPT 1 — Design Tokens, Semantic Color & Visual Contract
 
+> **الحالة:** ✅  مُنجز
+
 ```text
 Audit and remediate the global visual-token contract using the repo-local ui-ux-pro-max skill.
 
@@ -681,6 +721,8 @@ Do not change business state names or status meaning.
 ---
 
 # PROMPT 2 — Universal App Shell, Dashboard, Navigation & Topbar
+
+> **الحالة:** ✅  مُنجز
 
 ```text
 Repair the universal navigation/context architecture without changing authorization.
@@ -746,6 +788,8 @@ Add/repair tests so they fail if Dashboard ever removes the global shell again.
 ---
 
 # PROMPT 3 — Accessibility, Reflow, Zoom & Focus Closure
+
+> **الحالة:** ✅  مُنجز
 
 ```text
 Perform a WCAG 2.2 AA closure pass across the complete product using the local ui-ux-pro-max UX dataset.
@@ -813,6 +857,8 @@ Record every skipped authenticated test as NOT VERIFIED.
 ---
 
 # PROMPT 4 — Forms, Validation, Error Recovery & Controlled Action UX
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Standardize the complete mutation UX without weakening server controls.
@@ -895,6 +941,8 @@ JS + no-JS + slow response + double click + validation + stale + authorization +
 
 # PROMPT 5 — Data-Dense UX: Tables, Charts, Search, Notifications & Operational States
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Audit every data-heavy and decision-heavy surface as an enterprise QC workspace, not a generic admin template.
 
@@ -961,6 +1009,8 @@ Do not invent dashboards or metrics that the backend cannot support.
 
 # PROMPT 6 — Responsive Layout, Mobile Ergonomics & Information Density
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Run a full responsive and density audit using current content, not synthetic empty pages only.
 
@@ -1003,6 +1053,8 @@ Add E2E assertions for bounding boxes and overflow.
 ---
 
 # PROMPT 7 — Motion, Lottie, Three.js & Front-End Performance
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Audit motion as an operational UX dependency, not a visual decoration exercise.
@@ -1057,6 +1109,8 @@ Do not remove the 3D design unless measurements or usability evidence justify it
 
 # PROMPT 8 — Authorization-Aware UX, Roles & Controlled Workflow Clarity
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Validate that the interface reflects the approved authorization model without treating visibility as security.
 
@@ -1106,6 +1160,8 @@ Change presentation around the policy.
 ---
 
 # PROMPT 9 — Design System Maturity Deep Dive
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Act as a Principal Design Systems Architect.
@@ -1189,6 +1245,8 @@ Deliver:
 
 # PROMPT 10 — Information Architecture & Permissions Deep Dive
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Senior Information Architect specializing in regulated enterprise software.
 
@@ -1266,6 +1324,8 @@ Implement justified IA improvements without changing security policy.
 
 # PROMPT 11 — Interaction Design Deep Dive
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Principal Interaction Designer for mission-critical enterprise software.
 
@@ -1329,6 +1389,8 @@ Implement shared interaction patterns instead of page-specific hacks.
 ---
 
 # PROMPT 12 — Advanced Form Design Deep Dive
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Act as an expert in enterprise and regulated-data Form UX.
@@ -1404,6 +1466,8 @@ Preserve no-JavaScript POST fallbacks and server truth.
 
 # PROMPT 13 — UX Writing & Microcopy Deep Dive
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Senior UX Writer for regulated medical/QC enterprise software.
 
@@ -1471,6 +1535,8 @@ Do not rename regulated domain terms without evidence and document authority.
 
 # PROMPT 14 — Accessibility & Ergonomics Deep Dive
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a WCAG 2.2 AA Accessibility Engineer and enterprise ergonomics specialist.
 
@@ -1533,6 +1599,8 @@ Add tests where feasible and do not claim manual verification that was not perfo
 ---
 
 # PROMPT 15 — Dashboard & Data Visualization Design Deep Dive
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Act as a Principal Dashboard and Data Visualization Designer for Quality Control operations.
@@ -1597,6 +1665,8 @@ Dashboard interactions should take users to useful operational context, not deco
 
 # PROMPT 16 — Data-Driven Design & Product Analytics
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Data-Driven Product Designer.
 
@@ -1649,6 +1719,8 @@ If analytics infrastructure does not exist, create the design/specification and 
 ---
 
 # PROMPT 17 — Motion & Digital Art Direction Deep Dive
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Act as a Motion Designer and Digital Art Director specializing in premium scientific enterprise software.
@@ -1713,6 +1785,8 @@ Measure CPU/GPU and usability before increasing visual fidelity.
 
 # PROMPT 18 — Privacy & Security UX
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Privacy UX and Security UX specialist.
 
@@ -1766,6 +1840,8 @@ Presentation must reinforce, not weaken, the security model.
 ---
 
 # PROMPT 19 — Service Design & End-to-End QC Journeys
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 Act as a Service Designer for a medical-products Quality Control department.
@@ -1833,6 +1909,8 @@ Preserve audit and authorization boundaries.
 
 # PROMPT 20 — UX Research & Heuristic Validation
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Senior UX Researcher.
 
@@ -1891,6 +1969,8 @@ Any untested recommendation must be labeled RESEARCH HYPOTHESIS until validated.
 
 # PROMPT 21 — Cross-System Consistency & Final Polish
 
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
+
 ```text
 Act as a Principal Product Designer performing a cross-system consistency pass.
 
@@ -1934,6 +2014,8 @@ The product should feel like one intentionally designed operational system rathe
 ---
 
 # PROMPT 22 — Final Independent Closure & Production Evidence
+
+> **الحالة:** ☐ لم يُنجَز — بدّلها بـ ✅ عند الاكتمال
 
 ```text
 After all UI/UX remediation, perform an independent closure audit from scratch.
