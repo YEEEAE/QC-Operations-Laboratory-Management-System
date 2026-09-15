@@ -1,5 +1,6 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 
 export const RELEASE_GATE_KEYS = [
   'ci',
@@ -65,13 +66,13 @@ export function assertReleaseIdentityShape(identity: ReleaseCandidateIdentity): 
 export function isReleaseAuthority(actor: ActorContext): boolean {
   if (actor.accountState !== 'ACTIVE') return false;
   if (actor.roles.includes('MANAGER')) return true;
-  return actor.id === 'yazeed' && actor.roles.includes('SYSTEM_OWNER');
+  return isNamedSystemOwner(actor);
 }
 
 export function releaseAuthorityKind(actor: ActorContext): 'MANAGER' | 'SYSTEM_OWNER' | null {
   if (actor.accountState !== 'ACTIVE') return null;
   if (actor.roles.includes('MANAGER')) return 'MANAGER';
-  if (actor.id === 'yazeed' && actor.roles.includes('SYSTEM_OWNER')) return 'SYSTEM_OWNER';
+  if (isNamedSystemOwner(actor)) return 'SYSTEM_OWNER';
   return null;
 }
 

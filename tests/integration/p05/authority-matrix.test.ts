@@ -48,7 +48,7 @@ const ADMIN_ONLY = actor('adm-1', ['ADMIN'], [
   'PERM-INSP-VOID',
   'PERM-FIND-VOID',
 ]);
-const YAZEED = actor('yazeed', ['SYSTEM_OWNER'], [
+const YAZEED = { ...actor('owner-uuid', ['SYSTEM_OWNER'], [
   'PERM-INSP-APPROVE',
   'PERM-APR-APPROVE',
   'PERM-QUAR-RELEASE',
@@ -56,7 +56,7 @@ const YAZEED = actor('yazeed', ['SYSTEM_OWNER'], [
   'PERM-DOC-VOID',
   'PERM-INSP-VOID',
   'PERM-FIND-VOID',
-]);
+]), loginIdentity: 'yazeed' };
 const ADMIN_MANAGER = actor('adm-mgr-1', ['ADMIN', 'MANAGER'], [
   'PERM-INSP-APPROVE',
   'PERM-APR-APPROVE',

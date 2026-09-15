@@ -1,4 +1,6 @@
 import type { Pool } from 'pg';
+import { Kysely, PostgresDialect } from 'kysely';
+import type { DatabaseSchema } from '../../../src/shared/database/db-types';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { seedFoundationData } from '../../../db/seeds/common';
@@ -10,6 +12,7 @@ import { migrate } from '../../../scripts/db/migrate';
 import { createPool } from '../../../src/shared/database/pool';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container';
 import { getTestDatabaseUrl } from '../../helpers/test-env';
+import { resolveActor } from '../../../src/modules/identity/application/identity-dependencies';
 
 describe('exclusive system-owner access', () => {
   let databaseUrl = '';
@@ -77,12 +80,23 @@ describe('exclusive system-owner access', () => {
     expect(audits.rows[0]?.count).toBe(1);
   });
 
+  it('resolves the UUID user id and canonical login identity into ActorContext', async () => {
+    const row = await pool!.query<{ id: string }>(
+      `SELECT id FROM qc.users WHERE login_identity = 'yazeed'`,
+    );
+    const database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: pool! }) });
+    const resolved = await resolveActor(database, row.rows[0]!.id);
+    expect(row.rows[0]!.id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(resolved).toMatchObject({ id: row.rows[0]!.id, loginIdentity: 'yazeed', accountState: 'ACTIVE' });
+    await database.destroy();
+  });
+
   it('refuses to assign the exclusive role to a second account', async () => {
     await expect(
       grantSystemOwnerAccess({
         DATABASE_URL: databaseUrl,
         SYSTEM_OWNER_LOGIN_IDENTITY: 'other-owner',
       }),
-    ).rejects.toThrow('SYSTEM_OWNER is already assigned to another account');
+    ).rejects.toThrow('SYSTEM_OWNER_LOGIN_IDENTITY must be yazeed');
   });
 });

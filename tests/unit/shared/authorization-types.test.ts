@@ -6,6 +6,7 @@ describe('authorization input contract', () => {
     const input: AuthorizationInput = {
       actor: {
         id: 'actor-1',
+        loginIdentity: 'test-user',
         accountState: 'ACTIVE',
         permissions: [{ code: 'PERM-INSP-REVIEW', scopes: ['DOMAIN'] }],
         roles: ['EMPLOYEE'],

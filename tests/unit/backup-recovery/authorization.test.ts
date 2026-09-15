@@ -16,7 +16,7 @@ const base = {
   reason: 'approved recovery test',
   requestId: 'req-1',
 };
-const actor = (id: string, roles: string[]): ActorContext => ({ id, roles, accountState: 'ACTIVE', permissions: [] });
+const actor = (id: string, roles: string[], loginIdentity = 'test-user'): ActorContext => ({ id, loginIdentity, roles, accountState: 'ACTIVE', permissions: [] });
 
 describe('production recovery authorization', () => {
   it('denies Admin, Supervisor, and Manager', () => {
@@ -24,9 +24,10 @@ describe('production recovery authorization', () => {
       expect(() => authorizeProductionRecovery({ ...base, actor: actor(role.toLowerCase(), [role]) })).toThrow();
   });
   it('requires reauthentication and signature for the system owner', () => {
-    const owner = actor('yazeed', ['SYSTEM_OWNER']);
+    const owner = actor('owner-uuid', ['SYSTEM_OWNER'], 'yazeed');
     expect(() => authorizeProductionRecovery({ ...base, actor: owner, reauthenticated: false })).toThrow();
     expect(() => authorizeProductionRecovery({ ...base, actor: owner, signatureEvidenceId: '' })).toThrow();
     expect(() => authorizeProductionRecovery({ ...base, actor: owner })).not.toThrow();
+    expect(() => authorizeProductionRecovery({ ...base, actor: actor('yazeed', ['SYSTEM_OWNER']) })).toThrow();
   });
 });

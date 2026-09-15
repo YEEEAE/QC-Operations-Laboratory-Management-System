@@ -1,5 +1,106 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-15] — QC-CLOSURE-IDENTITY-001: إغلاق هوية SYSTEM_OWNER وصلاحيات P-05 والإفراج
+
+### تم التنفيذ
+- أضفت نموذج ActorContext يميّز `id` الداخلي الثابت عن `loginIdentity`، وجعلت `resolveActor` يأخذ الاثنين من صف `users` المصادق عليه خادميًا.
+- أنشأت فحصًا مركزيًا للمالك المسمى: `ACTIVE` + دور `SYSTEM_OWNER` + `loginIdentity === 'yazeed'`، واستخدمته في P-05 وتفويض اعتماد الإصدار واستعادة الإنتاج.
+- قفلت أمر `grant-system-owner` على الهوية القانونية `yazeed`، مع بقاء حماية المالك الوحيد وحالة الحساب `ACTIVE` كما هي.
+- صححت fixtures التي كانت تستخدم `id: 'yazeed'`، وأضافت اختبارات للـUUID/هوية الدخول، الهوية القديمة وحدها، مالك مختلف، غياب الدور، الحساب غير النشط، Manager، وAdmin-only.
+- أضفت اختبار تكامل يقرأ صف `users` حقيقيًا ويثبت أن UUID و`login_identity` يتحولان إلى ActorContext الصحيح؛ يعتمد تشغيله على Testcontainers/PostgreSQL.
+
+### الملفات المتأثرة
+- `src/shared/authorization/types.ts`
+- `src/shared/authorization/p05-authority.ts`
+- `src/modules/identity/application/identity-dependencies.ts`
+- `src/modules/release-governance/domain/release-approval.ts`
+- `src/modules/backup-recovery/application/production-recovery-authorization.ts`
+- `scripts/access/grant-system-owner.ts`
+- اختبارات P-05 وRelease وRecovery وIdentity
+
+### التحقق
+- الاختبارات المركزة: `43/43` ✅ — P-05 وRelease وProduction Recovery.
+- `pnpm typecheck` ✅ — 0 أخطاء، 0 تحذيرات، 62 hints قائمة مسبقًا.
+- `pnpm test:architecture` ✅ — لا مخالفات حدود.
+- `pnpm build` ✅ — server/client build اكتمل؛ تحذيرات Zod/chunk/Node المعروفة فقط.
+- فحص المصدر ✅ — صفر مقارنات إنتاجية خاطئة من نوع `actor.id ===/!== 'yazeed'` في `src` و`scripts`.
+- `pnpm test:unit` ⚠️ — `69` ملفًا نجح، `439/441` اختبارًا نجح؛ فشلا retention وUI icon/copy موجودان مسبقًا وخارج نطاق الهوية.
+- اختبار تكامل صف `users` أُضيف، ولم يُشغّل كاملًا في هذه الجولة لعدم توفر Docker/Testcontainers.
+
+### النتيجة
+- **الحالة:** جزئي / إغلاق الكود المحلي ناجح، والإغلاق التكاملي يحتاج تشغيل PostgreSQL.
+- **مختصر:** لم تعد مسارات P-05 أو Release أو Production Recovery تعتمد على `actor.id` كهوية دخول؛ الحساب المسمى لا ينجح إلا بهوية server-derived مع الدور والحالة الصحيحة.
+
+### ملاحظات / مشاكل مفتوحة
+- `loginIdentity` اختياري في type لأجل test doubles قديمة، لكن `resolveActor` يملؤه دائمًا ومسارات السلطة ترفض غيابه؛ يفضّل ترقية كل fixtures إلى الحقل المطلوب في دفعة تنظيف مستقلة.
+- فشلا baseline في `tests/unit/backup-recovery/retention.test.ts` و`tests/unit/ui/icon-and-copy-contract.test.ts` ما زالا مفتوحين.
+- بيئة Node الحالية `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- لا commit أو push أو deploy.
+
+## [2026-09-15] — خط أساس الواقع الحالي قبل أي تغيير
+
+### تم التنفيذ
+- قرأت `AGENTS.md` و`01-mind-latest.md` والوثائق المعتمدة ذات الصلة بالمعمارية وقواعد العمل والصلاحيات وآلات الحالة والأمن والاختبار والجاهزية.
+- ثبتُّ الواقع الحالي على `main` عند HEAD `2a94573d24d85353ae27f40816e7ba548843ee38`؛ الشجرة كانت تحتوي مسبقًا تعديل `01-mind-latest.md` وملف audit غير متتبع، ولم تُلمس هذه التغييرات.
+- سجلت بيئة التشغيل: Node `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`، وpnpm `11.25.0` مطابق للعقد.
+- ثبتُّ رأس migrations من الملفات كـ`0021_release_governance.sql`؛ لم يثبت الرأس المطبق على PostgreSQL لأن `pnpm db:migrate:status` توقف قبل الاتصال بسبب `tsx listen EPERM`.
+- نفذت فحوصًا طازجة: `typecheck` والحدود المعمارية و`build` و`git diff --check` نجحت، بينما `pnpm test:unit` فشل في اختبارين من 439.
+
+### الملفات المتأثرة
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm typecheck` ✅ — 0 أخطاء، 0 warnings، 62 hints.
+- `pnpm test:architecture` ✅ — لا مخالفات حدود Delivery.
+- `pnpm build` ✅ — server/client build اكتمل؛ بقيت تحذيرات Zod/Vite/chunk المعروفة.
+- `pnpm test:unit` ❌ — 69 ملفًا ناجحًا، ملفان فاشلان، 437/439 اختبارًا ناجحًا.
+- `tests/unit/backup-recovery/retention.test.ts` ❌ — `protected=[]` بدل `['old']` لأن تاريخ الإنشاء الفعلي حديث بالنسبة إلى `now` المستخدم.
+- `tests/unit/ui/icon-and-copy-contract.test.ts` ❌ — `src/pages/change-requests/[changeRequestId]/index.astro` يحتوي مصطلح/glyph يمنعهما contract.
+- `pnpm lint` ❌ — 143 خطأ في `.opencode/skills/**` خارج نطاق كود المشروع الحالي.
+- `pnpm format:check` ❌ — 99 ملفًا غير منسق، بينها ملفات `.opencode` و`.playwright-mcp` وملفات مصدر/اختبار؛ لم تُنفذ إعادة تنسيق.
+- `pnpm db:migrate:status` ❌ — `tsx` فشل بـ`listen EPERM` قبل فحص PostgreSQL.
+- لم تُنفذ أي POST أو login أو mutation أو commit أو push أو deploy.
+
+### النتيجة
+- **الحالة:** خط أساس مكتمل / غير جاهز للإغلاق.
+- **مختصر:** الواقع الحالي لا يبرر ادعاء أن الاختبارات أو lint أو format أو migration runtime كلها ناجحة؛ البناء والـtypecheck والحدود ناجحة فقط ضمن البيئة الحالية.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم قرار وتنفيذ TDD مستقل لإصلاح اختبار retention وعقد presentation، ثم إعادة الاختبار الكامل قبل أي claim نجاح.
+- يلزم تشغيل migration status على بيئة تسمح بـ`tsx` وPostgreSQL لتأكيد الرأس المطبق، لا الاكتفاء برأس الملفات.
+- نسخة Node الحالية خارج العقد، لذلك نتائج التحقق محلية ولا تمثل عقد التشغيل المعتمد بالكامل.
+- لا commit أو push أو deploy.
+
+## [2026-09-10] — إعداد سيناريوهات UX وخطة اختبار قابلية الاستخدام بدون ادعاءات بحثية
+
+### تم التنفيذ
+- أنشأت خطة بحث UX مستقلة تغطي QC operator/data-entry user وSupervisor وManager وAdmin و`SYSTEM_OWNER`.
+- أضفت 9 سيناريوهات عملية، منها رحلة الفحص عالية القيمة: locate → understand state → identify failure reason → follow-up → return to source record.
+- عرّفت task success وwrong-turn risk وerror rate وrecovery وnavigation confidence وterminology comprehension وdecision confidence وunnecessary steps مع قواعد قياس وعدم اختلاق baseline.
+- أضفت تحليل Nielsen heuristic مخصص لسياق QC، مع فصل الأدلة عن التحليل، ووسم كل توصية غير مختبرة `RESEARCH HYPOTHESIS`.
+- أضفت usability-test protocol، moderator script، interview guide بأسئلة غير موجّهة، observation schema، analysis plan، pilot checklist، وstop conditions.
+- فصلت داخل الوثيقة بين `OBSERVED EVIDENCE` و`REPOSITORY EVIDENCE` و`AUTOMATION EVIDENCE` و`ANALYTICS EVIDENCE` و`RESEARCH HYPOTHESIS` و`UNVERIFIED ASSUMPTION`؛ وسجلت عدم وجود جلسات أو dataset تحليلي حالي.
+
+### الملفات المتأثرة
+- `audit/2026-09-10-ux-research-scenarios-and-usability-plan.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- قراءة `01-mind-latest.md` والوثائق المعتمدة ذات الصلة ✅
+- تطبيق مهارات `research-repository` و`scenario-map` و`heuristic-evaluation` و`usability-test-plan` و`interview-script` ✅
+- `git diff --check` ✅
+- فحص أقسام الأدلة والسيناريوهات والمقاييس والـheuristics والسكربتات بالبحث النصي ✅
+- جلسات مستخدمين حقيقية وتحليلات سلوكية حية ❌ لم تُنفذ؛ لا توجد نتائج participant أو sentiment أو rates في الوثيقة
+
+### النتيجة
+- **الحالة:** نجح توثيقيًا / قابلية الاستخدام غير متحققة
+- **مختصر:** صارت خطة الاختبار والسيناريوهات جاهزة للتنفيذ على بيانات synthetic، مع منع ترقية فرضيات UX إلى findings قبل وجود ملاحظة أو قياس صالح.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم pilot بفيكستشر مصادق وsynthetic لكل role قبل أي claim عن task success أو error rate أو terminology.
+- لا توجد حاليًا analytics dashboard أو dataset يثبت navigation/backtracking/recovery؛ التنفيذ التحليلي الحالي محدود لأحداث بحث/validation مختارة.
+- لا commit أو push أو deploy.
+
 ## [2026-09-10] — إكمال ربط handoffs والـtimelines لكل المساحات المطلوبة
 
 ### تم التنفيذ

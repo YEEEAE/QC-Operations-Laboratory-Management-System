@@ -48,6 +48,7 @@ const actor = (
   permissions: string[] = ['PERM-APR-APPROVE'],
 ): ActorContext => ({
   id,
+  loginIdentity: 'test-user',
   accountState: 'ACTIVE',
   roles,
   permissions: permissions.map((code) => ({
@@ -56,7 +57,7 @@ const actor = (
   })),
 });
 const manager = () => actor('mgr-1', ['MANAGER']);
-const systemOwner = () => actor('yazeed', ['SYSTEM_OWNER']);
+const systemOwner = () => ({ ...actor('owner-uuid', ['SYSTEM_OWNER']), loginIdentity: 'yazeed' });
 
 function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}) {
   const current: ReleaseCandidateRecord = { ...candidate, ...overrides };
@@ -122,7 +123,7 @@ describe('release gates (fail-closed, table-driven)', () => {
 describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
   it.each([
     ['manager', actor('mgr-1', ['MANAGER']), true],
-    ['system owner', actor('yazeed', ['SYSTEM_OWNER']), true],
+    ['system owner', systemOwner(), true],
     ['admin+manager', actor('adm-1', ['ADMIN', 'MANAGER']), true],
     ['admin alone', actor('adm-1', ['ADMIN']), false],
     ['employee', actor('emp-1', ['EMPLOYEE']), false],
@@ -154,6 +155,12 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
         requestId: 'req-auth-identity',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+  });
+
+  it('does not use a literal id as the named owner identity', () => {
+    expect(getReleaseApprovalCapability({ actor: actor('yazeed', ['SYSTEM_OWNER']), gates: passGates, risks: [] }).canApprove).toBe(false);
+    expect(getReleaseApprovalCapability({ actor: systemOwner(), gates: passGates, risks: [] }).canApprove).toBe(true);
+    expect(getReleaseApprovalCapability({ actor: { ...actor('owner-uuid', ['SYSTEM_OWNER']), loginIdentity: 'other-user' }, gates: passGates, risks: [] }).canApprove).toBe(false);
   });
 
   it('one authorized signer is sufficient', async () => {

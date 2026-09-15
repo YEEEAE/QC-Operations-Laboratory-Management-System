@@ -42,6 +42,7 @@ class Sessions implements SessionRepository {
 }
 const actor = {
   id: 'u1',
+  loginIdentity: 'qa',
   accountState: 'ACTIVE' as const,
   roles: ['EMPLOYEE'],
   permissions: [

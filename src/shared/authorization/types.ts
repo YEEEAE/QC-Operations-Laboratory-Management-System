@@ -2,13 +2,17 @@ import type { PermissionCode } from './permissions';
 export type AccountState = 'ACTIVE' | 'INACTIVE' | 'DISABLED';
 export type ScopeKind = 'OWN' | 'ASSIGNED' | 'TEAM' | 'DEPARTMENT' | 'SITE' | 'DOMAIN' | 'GLOBAL';
 export type DecisionAction = string;
+/** Immutable internal user identifier. Login identities are not user IDs. */
+export type UserId = string;
 export interface PermissionGrant {
   code: PermissionCode;
   scopes: readonly ScopeKind[];
   active?: boolean;
 }
 export interface ActorContext {
-  id: string;
+  id: UserId;
+  /** Always populated by resolveActor; optional only for legacy non-auth test doubles. */
+  loginIdentity?: string;
   accountState: AccountState;
   roles: readonly string[];
   permissions: readonly PermissionGrant[];

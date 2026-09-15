@@ -54,7 +54,8 @@ export async function resolveActor(
     ...new Set(scopes.map((scope) => scope.scope_kind)),
   ] as ActorContext['permissions'][number]['scopes'];
   return {
-    id: userId,
+    id: user.id,
+    loginIdentity: user.login_identity,
     accountState: user.account_state as ActorContext['accountState'],
     roles: [...new Set(rows.map((r) => r.role))],
     permissions: addUniversalOperationalReadPermissions([...new Set(rows.map((r) => r.permission))].map((code) => ({

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
+import { SYSTEM_OWNER_LOGIN_IDENTITY } from '../../src/shared/authorization/p05-authority.js';
 import { loadLocalEnv } from '../db/load-local-env.js';
 
 export const SYSTEM_OWNER_ROLE_CODE = 'SYSTEM_OWNER';
@@ -21,6 +22,9 @@ export function parseSystemOwnerGrantConfig(
   const loginIdentity = environment.SYSTEM_OWNER_LOGIN_IDENTITY?.trim();
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
   if (!loginIdentity) throw new Error('SYSTEM_OWNER_LOGIN_IDENTITY is required.');
+  if (loginIdentity !== SYSTEM_OWNER_LOGIN_IDENTITY) {
+    throw new Error(`SYSTEM_OWNER_LOGIN_IDENTITY must be ${SYSTEM_OWNER_LOGIN_IDENTITY}.`);
+  }
   return { databaseUrl, loginIdentity };
 }
 

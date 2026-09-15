@@ -1,5 +1,6 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 
 export interface ProductionRecoveryAuthorizationInput {
   actor: ActorContext;
@@ -19,7 +20,7 @@ export interface ProductionRecoveryAuthorizationInput {
 
 /** Production recovery is deliberately stricter than drill intent. */
 export function authorizeProductionRecovery(input: ProductionRecoveryAuthorizationInput): void {
-  if (input.actor.id !== 'yazeed' || !input.actor.roles.includes('SYSTEM_OWNER'))
+  if (!isNamedSystemOwner(input.actor))
     throw new AppError('AUTHZ_DENIED', { userSafe: true });
   if (!input.reauthenticated) throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
   if (!input.signatureEvidenceId?.trim()) throw new AppError('AUTHZ_DENIED', { userSafe: true });
