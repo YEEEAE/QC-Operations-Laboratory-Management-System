@@ -189,8 +189,10 @@ const actor = (
   id: string,
   roles: string[],
   permissions: PermissionCode[] = ['PERM-ADM-TEMPLATES', 'PERM-ESIG-SIGN'],
+  loginIdentity?: string,
 ): ActorContext => ({
   id,
+  ...(loginIdentity ? { loginIdentity } : {}),
   accountState: 'ACTIVE',
   roles,
   permissions: permissions.map((code) => ({ code, scopes: ['GLOBAL'] as const })),
@@ -244,14 +246,14 @@ describe('template lifecycle authorization (P-06)', () => {
       const useCase = new CreateTemplateUseCase(repo, ceremony);
       await expect(
         useCase.execute({
-          actor: actor(id, [role]),
+          actor: actor(id, [role], undefined, role === 'SYSTEM_OWNER' ? 'yazeed' : undefined),
           ...base,
           versionNo: 'v1',
           requestId: `req-${role}-nosig`,
         }),
       ).rejects.toThrowError(AppError);
       const created = await useCase.execute({
-        actor: actor(id, [role]),
+        actor: actor(id, [role], undefined, role === 'SYSTEM_OWNER' ? 'yazeed' : undefined),
         ...base,
         versionNo: 'v1',
         reauthenticationSecret: 'correct-password',
@@ -483,7 +485,7 @@ describe('template lifecycle authorization (P-06)', () => {
     const repo = new InMemoryTemplateRepository();
     const useCase = new CreateTemplateUseCase(repo, ceremony);
     const created = await useCase.execute({
-      actor: actor(OWNER, ['SYSTEM_OWNER']),
+      actor: actor(OWNER, ['SYSTEM_OWNER'], undefined, 'yazeed'),
       ...base,
       versionNo: 'v1',
       reauthenticationSecret: 'pw',

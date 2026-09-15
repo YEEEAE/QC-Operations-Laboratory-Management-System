@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-15] — QC-CLOSURE-TEMPLATES-003: تثبيت سلطة القوالب وإغلاق حفظ السياق التاريخي
+
+### تم التنفيذ
+- قيّدت `isTemplateAuthority` بحيث تكون سلطة `SYSTEM_OWNER` للقوالب محصورة بالحساب المسمّى `yazeed` بعد اشتقاق الهوية خادميًا؛ Supervisor وManager بقيا سلطات القوالب، وAdmin أو SYSTEM_OWNER غير المسمّى مرفوضان.
+- حدّثت اختبارات سياسة القوالب ومسار الإنشاء المباشر لتثبت `yazeed`، وترفض SYSTEM_OWNER بهوية أخرى أو بدون `loginIdentity`.
+- جعلت مستودع التفتيش ينشئ snapshot للقالب عند بدء التنفيذ، ويقرأ snapshot التاريخي عند تحميل السجل بدل إعادة بناء السياق من حالة القالب الحالية.
+- حفظ snapshot التفتيش صار يتضمن هوية القالب/الإصدار والسياق المقدم وhash؛ وغيّرت رقم snapshot عند Submit لتجنب تعارض snapshot الإنشاء.
+- وثّقت متطلبات P-06 الجديدة، وضحت أن RD-019 خاص باعتماد WI/SOP ولم يُغلق، وأضافت متطلب حفظ المصدر/المعايير/content hash وعدم تغيير التنفيذ التاريخي عند STOP/SUPERSEDE.
+
+### الملفات المتأثرة
+- `src/modules/quarantine/templates/domain/template-policy.ts`
+- `src/modules/quarantine/inspection/infrastructure/postgres-repository.ts`
+- `tests/unit/quarantine/template-policy.test.ts`
+- `tests/integration/quarantine/template-lifecycle.test.ts`
+- `Documents/{BUSINESS-RULES,PERMISSION-MATRIX,REQUIREMENTS-TRACEABILITY,STATE-MACHINES}.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/quarantine tests/integration/quarantine/template-lifecycle.test.ts tests/integration/p05/authority-matrix.test.ts tests/integration/quarantine/inspection-execution.test.ts` ✅ — 5 ملفات / 40 اختبارًا.
+- `pnpm test:architecture` ✅ — لا مخالفات حدود Delivery.
+- `pnpm build` ✅ — server/client build اكتمل؛ بقيت تحذيرات Zod/chunk وNode المحلي خارج العقد.
+- `git diff --check` ✅.
+- `pnpm test:unit` ⚠️ — 70 ملفًا و438/440 اختبارًا ناجحًا؛ فشل retention وicon/copy موجودان من خط الأساس وخارج نطاق المهمة.
+- `pnpm typecheck` ⚠️ — `astro check` توقف على خطأين سابقين في `tests/integration/release-governance/release-concurrency.test.ts` بسبب مرجع `row` خارج النطاق؛ لا خطأ أبلغ عنه في الملفات المعدلة.
+- PostgreSQL/Testcontainers وE2E المصادق لم تُشغّل لعدم توفر runtime/fixtures.
+
+### النتيجة
+- **الحالة:** جزئي / إغلاق الكود المحلي ناجح، والإثبات التكاملي الحي يحتاج PostgreSQL وfixtures.
+- **مختصر:** أُغلق انحراف هوية SYSTEM_OWNER في قوالب التفتيش، وصارت قراءات التفتيش تعتمد على snapshot تاريخي يحافظ على نسخة القالب بعد الإيقاف أو الاستبدال، مع إبقاء RD-019 والـSoD العام خارج نطاق الإغلاق.
+
+### ملاحظات / مشاكل مفتوحة
+- ما زال يلزم تشغيل PostgreSQL/Testcontainers لإثبات snapshot creation/stop-supersede وسلسلة audit/signature فعليًا.
+- فشلا `tests/unit/backup-recovery/retention.test.ts` و`tests/unit/ui/icon-and-copy-contract.test.ts` من خط الأساس ما زالا مفتوحين.
+- بيئة Node المحلية `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- لا commit أو push أو deploy.
+
 ## [2026-09-15] — QC-CLOSURE-RELEASE-002: Server-Derived Production Release Evidence
 
 ### تم التنفيذ

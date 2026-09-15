@@ -2783,6 +2783,10 @@ Runtime:
 DENY UNTIL RD-019 APPROVED
 ```
 
+هذا السطر خاص بآلة حالة `DOCUMENT_VERSION` لـWI/SOP. لا ينطبق على
+`INSPECTION_TEMPLATE_VERSION`؛ دورة القالب المنفصلة وسياسة P-06 موثقتان
+في §118، مع بقاء RD-019 وSoD العام للمستندات كما هما.
+
 Snapshot/hash:
 
 ```text

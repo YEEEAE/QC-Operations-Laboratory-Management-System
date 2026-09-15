@@ -1108,6 +1108,10 @@ RD-019
 DENY UNTIL EXPLICITLY APPROVED
 ```
 
+هذا القرار يخص اعتماد `DOCUMENT_VERSION` لـWI/SOP فقط. سياسة قوالب
+التفتيش المعتمدة في P-06 لا تمنح `PERM-DOC-APPROVE` ولا تغلق RD-019،
+ولا تغيّر SoD العام لمساحة المستندات.
+
 ---
 
 # 59. Reviews / Approvals Permissions
@@ -2803,8 +2807,9 @@ DENY
 # 151. Inspection Template Administration (P-06 — APPROVED 2026-09-10)
 
 `PERM-ADM-TEMPLATES` is granted to Employee, Supervisor, and Manager
-(plus `PERM-ESIG-SIGN` for Supervisor and Manager; `SYSTEM_OWNER`
-`yazeed` holds every active permission). Admin-only actors hold
+(plus `PERM-ESIG-SIGN` for Supervisor and Manager; only the canonical
+`SYSTEM_OWNER` account with login identity `yazeed` holds every active
+permission). Admin-only actors hold
 neither template permission and are denied every template mutation.
 
 | Action | Employee | Supervisor | Manager | Admin | SYSTEM_OWNER (`yazeed`) |

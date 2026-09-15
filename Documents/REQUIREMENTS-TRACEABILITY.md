@@ -655,6 +655,23 @@ Current CI Evidence
 
 ---
 
+# 27A. Inspection Template Administration Requirements (P-06)
+
+| ID           | Requirement                                                         | Rule / Policy | Permission         | Transition       | Data / Evidence                                      | Status   |
+| ------------ | ------------------------------------------------------------------- | ------------- | ------------------ | ---------------- | ---------------------------------------------------- | -------- |
+| REQ-TMPL-001 | Employee creation starts at DRAFT                                  | P-06          | PERM-ADM-TEMPLATES | TR-TMPL-001      | inspection_template_versions                         | APPROVED |
+| REQ-TMPL-002 | Supervisor/Manager/canonical yazeed creation may approve directly | P-06          | PERM-ADM-TEMPLATES | TR-TMPL-001      | electronic_signatures/audit_events                  | APPROVED |
+| REQ-TMPL-003 | Template approval self-approval is template-only                   | P-06          | PERM-ADM-TEMPLATES | TR-TMPL-003      | authorization SoD policy                             | APPROVED |
+| REQ-TMPL-004 | Stop/Supersede/VOID require controlled ceremony                    | P-06          | PERM-ADM-TEMPLATES | TR-TMPL-004..006 | reason/reauth/signature/audit/version              | APPROVED |
+| REQ-TMPL-005 | Stopped/Superseded versions are unavailable to new execution       | BR-INSP-001   | —                 | —                | approved-template selector                          | APPROVED |
+| REQ-TMPL-006 | Historical executions retain exact template/source snapshot        | BR-INSP-003   | —                 | —                | template_version_id/content_hash/criteria snapshot | APPROVED |
+
+P-06 closes the template-specific policy decision only. It does not close
+generic `DOCUMENT_VERSION` approval (RD-019), inspection/laboratory/release
+SoD, or any unrelated policy-dependent permission.
+
+---
+
 # 28. Inspection Requirements
 
 | ID           | Requirement                                          | Rule              | Permission             | Transition     | Data                         | Status           |

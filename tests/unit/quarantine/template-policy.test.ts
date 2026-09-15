@@ -6,8 +6,9 @@ import {
   isTemplateAuthority,
 } from '../../../src/modules/quarantine/templates/domain/template-policy.js';
 
-const actor = (roles: string[]): ActorContext => ({
+const actor = (roles: string[], loginIdentity?: string): ActorContext => ({
   id: '01900000-0000-7000-8000-000000000001',
+  ...(loginIdentity ? { loginIdentity } : {}),
   accountState: 'ACTIVE',
   roles,
   permissions: [{ code: 'PERM-ADM-TEMPLATES', scopes: ['GLOBAL'] }],
@@ -17,7 +18,13 @@ describe('template authority policy (P-06)', () => {
   it('recognizes Supervisor, Manager, and SYSTEM_OWNER (yazeed) as authorities', () => {
     expect(isTemplateAuthority(actor(['SUPERVISOR']))).toBe(true);
     expect(isTemplateAuthority(actor(['MANAGER']))).toBe(true);
-    expect(isTemplateAuthority(actor(['SYSTEM_OWNER']))).toBe(true);
+    expect(isTemplateAuthority(actor(['SYSTEM_OWNER'], 'yazeed'))).toBe(true);
+  });
+
+  it('requires the canonical yazeed identity for SYSTEM_OWNER authority', () => {
+    expect(isTemplateAuthority(actor(['SYSTEM_OWNER'], 'other-owner'))).toBe(false);
+    expect(isTemplateAuthority(actor(['SYSTEM_OWNER']))).toBe(false);
+    expect(isTemplateAuthority(actor(['SYSTEM_OWNER'], 'yazeed'))).toBe(true);
   });
 
   it('never treats Employee or Admin-only actors as authorities', () => {

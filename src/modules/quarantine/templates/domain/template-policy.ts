@@ -1,6 +1,5 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
-
-const AUTHORITY_ROLES = new Set(['SUPERVISOR', 'MANAGER', 'SYSTEM_OWNER']);
+import { isNamedSystemOwner } from '../../../../shared/authorization/p05-authority.js';
 
 /**
  * P-06 template authority: Supervisor, Manager, and yazeed (SYSTEM_OWNER).
@@ -8,7 +7,10 @@ const AUTHORITY_ROLES = new Set(['SUPERVISOR', 'MANAGER', 'SYSTEM_OWNER']);
  * reviewer/approver/stopper/voider/superseder.
  */
 export function isTemplateAuthority(actor: ActorContext): boolean {
-  return actor.roles.some((role) => AUTHORITY_ROLES.has(role));
+  if (actor.accountState !== 'ACTIVE') return false;
+  if (actor.roles.some((role) => role === 'SUPERVISOR' || role === 'MANAGER')) return true;
+  // The approved policy names yazeed, not the SYSTEM_OWNER role by itself.
+  return isNamedSystemOwner(actor);
 }
 
 export function isEmployeeOnly(actor: ActorContext): boolean {

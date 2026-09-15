@@ -1113,6 +1113,17 @@ Template غير approved لا يستخدم لإصدار Controlled Inspection ر
 التقرير يحتفظ بـ:
 
 ```text
+template_version_id
+version_no
+approved source reference
+acceptance criteria snapshot
+content_hash where supplied by the controlled source
+```
+
+إيقاف أو استبدال القالب يمنع الاستخدام الجديد فقط، ولا يعيد حلّ
+السياق من النسخة الحالية عند قراءة تنفيذ تاريخي.
+
+```text
 template_id
 template_version
 template_snapshot

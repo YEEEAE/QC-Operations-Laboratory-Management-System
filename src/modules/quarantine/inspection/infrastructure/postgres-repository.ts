@@ -15,12 +15,15 @@ import type { AuditRepository } from '../../../../shared/audit/audit-repository.
 import { PostgresAuditRepository } from '../../../../shared/audit/postgres-audit-repository.js';
 import type { OutboxRepository } from '../../../../shared/outbox/outbox-repository.js';
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
+import { stableJson } from '../../../../shared/json/stable-stringify.js';
+import { createHash } from 'node:crypto';
 
 const map = (
   r: DatabaseRow<'inspection_reports'>,
   rec: DatabaseRow<'receiving_items'>,
   tv: DatabaseRow<'inspection_template_versions'>,
   resultRows: DatabaseRow<'inspection_report_results'>[] = [],
+  snapshot?: DatabaseRow<'inspection_report_snapshots'>,
 ): Inspection => ({
   id: r.id,
   inspectionNo: r.inspection_no,
@@ -39,8 +42,18 @@ const map = (
     templateId: tv.template_id,
     templateVersionId: tv.id,
     versionNo: tv.version_no,
-    templateSnapshot: { templateVersionId: tv.id, versionNo: tv.version_no },
-    approved: tv.state === 'APPROVED',
+    templateSnapshot:
+      (snapshot?.template_snapshot as Readonly<Record<string, unknown>> | null) ?? {
+        templateId: tv.template_id,
+        templateVersionId: tv.id,
+        versionNo: tv.version_no,
+        sourceDocument: tv.source_document,
+        contentHash: tv.content_hash,
+      },
+    // A stopped/superseded template can still be the approved source of an
+    // existing execution. The immutable execution snapshot is authoritative
+    // for that historical fact; only new executions consult current state.
+    approved: Boolean(snapshot) || tv.state === 'APPROVED',
   },
   state: r.state as Inspection['state'],
   finalResult: r.final_result as Inspection['finalResult'],
@@ -78,7 +91,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
       .where('id', '=', id)
       .executeTakeFirst();
     if (!report) return undefined;
-    const [receiving, template, results] = await Promise.all([
+    const [receiving, template, results, snapshot] = await Promise.all([
       this.db
         .selectFrom('receiving_items')
         .selectAll()
@@ -95,8 +108,14 @@ export class PostgresInspectionRepository implements InspectionRepository {
         .where('inspection_report_id', '=', id)
         .orderBy('entered_at')
         .execute(),
+      this.db
+        .selectFrom('inspection_report_snapshots')
+        .selectAll()
+        .where('inspection_report_id', '=', id)
+        .orderBy('snapshot_version', 'desc')
+        .executeTakeFirst(),
     ]);
-    return map(report, receiving, template, results);
+    return map(report, receiving, template, results, snapshot);
   }
   async get(id: string, actor: ActorContext) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return undefined;
@@ -140,29 +159,58 @@ export class PostgresInspectionRepository implements InspectionRepository {
   async create(i: { inspection: Inspection; actor: ActorContext; requestId: string }) {
     try {
       const x = i.inspection;
-      await this.db
-        .insertInto('inspection_reports')
-        .values({
-          id: x.id,
-          inspection_no: x.inspectionNo,
-          receiving_item_id: x.receiving.receivingId,
-          template_version_id: x.template.templateVersionId,
-          state: 'DRAFT',
-          final_result: null,
-          author_id: x.authorId,
-          submitted_at: null,
-          review_started_at: null,
-          approved_at: null,
-          rejected_at: null,
-          voided_at: null,
-          void_reason: null,
-          snapshot_id: null,
-          created_by: x.authorId,
-          updated_by: x.authorId,
-          updated_at: x.updatedAt,
-          version: 1n,
-        })
-        .execute();
+      await this.db.transaction().execute(async (tx) => {
+        await tx
+          .insertInto('inspection_reports')
+          .values({
+            id: x.id,
+            inspection_no: x.inspectionNo,
+            receiving_item_id: x.receiving.receivingId,
+            template_version_id: x.template.templateVersionId,
+            state: 'DRAFT',
+            final_result: null,
+            author_id: x.authorId,
+            submitted_at: null,
+            review_started_at: null,
+            approved_at: null,
+            rejected_at: null,
+            voided_at: null,
+            void_reason: null,
+            snapshot_id: null,
+            created_by: x.authorId,
+            updated_by: x.authorId,
+            updated_at: x.updatedAt,
+            version: 1n,
+          })
+          .execute();
+        const templateSnapshot = {
+          ...x.template.templateSnapshot,
+          templateId: x.template.templateId,
+          templateVersionId: x.template.templateVersionId,
+          versionNo: x.template.versionNo,
+        };
+        const snapshot = await tx
+          .insertInto('inspection_report_snapshots')
+          .values({
+            id: uuidv7(),
+            inspection_report_id: x.id,
+            snapshot_version: 1,
+            snapshot_stage: 'CREATION',
+            receiving_snapshot: stableJson(x.receiving),
+            template_snapshot: stableJson(templateSnapshot),
+            controlled_source_snapshot: null,
+            criteria_snapshot: null,
+            created_at: new Date(x.createdAt),
+            snapshot_hash: createHash('sha256').update(stableJson(templateSnapshot)).digest('hex'),
+          })
+          .returning('id')
+          .executeTakeFirstOrThrow();
+        await tx
+          .updateTable('inspection_reports')
+          .set({ snapshot_id: snapshot.id })
+          .where('id', '=', x.id)
+          .execute();
+      });
       return x;
     } catch (e) {
       throw translateDatabaseError(e);
@@ -259,7 +307,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             .values({
               id: uuidv7(),
               inspection_report_id: i.id,
-              snapshot_version: Number(i.expectedVersion),
+              snapshot_version: Number(i.expectedVersion + 1n),
               snapshot_stage: 'SUBMISSION',
               receiving_snapshot: old.receiving,
               template_snapshot: old.template.templateSnapshot,
