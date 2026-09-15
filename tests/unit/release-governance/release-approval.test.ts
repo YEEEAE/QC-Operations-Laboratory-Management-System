@@ -5,6 +5,8 @@ import {
   evaluateGates,
   getReleaseApprovalCapability,
   type ReleaseGateEvidence,
+  type ReleaseGateEvidenceRecord,
+  type ReleaseRiskEvidenceRecord,
 } from '../../../src/modules/release-governance/domain/release-approval.js';
 import type {
   ReleaseCandidateRecord,
@@ -42,6 +44,22 @@ const passGates: ReleaseGateEvidence = {
   residualRisk: 'PASS',
 };
 
+const trustedEvidence = (): { gateRecords: ReleaseGateEvidenceRecord[]; riskRecords: ReleaseRiskEvidenceRecord[] } => ({
+  gateRecords: RELEASE_GATE_KEYS.map((evidenceType, index) => ({
+    evidenceType,
+    status: 'PASS' as const,
+    source: evidenceType === 'uat' ? 'SIGNED_UAT_CYCLE' : evidenceType === 'signatures' ? 'E_SIGNATURE_STORE' : evidenceType === 'criticalRisks' || evidenceType === 'residualRisk' ? 'CONTROLLED_RISK_REGISTER' : evidenceType === 'database' ? 'TRUSTED_DATABASE_PREFLIGHT' : evidenceType === 'e2e' ? 'TRUSTED_PLAYWRIGHT' : evidenceType === 'security' ? 'TRUSTED_SECURITY_SUITE' : 'TRUSTED_CI',
+    immutableReference: 'evidence/' + evidenceType + '/1',
+    observedAt: new Date(),
+    releaseVersion: 3n,
+    evidenceVersion: BigInt(index + 1),
+    recordedBy: 'trusted-service',
+    auditInfo: { source: 'test' },
+    ...candidate,
+  })),
+  riskRecords: [],
+});
+
 const actor = (
   id: string,
   roles: string[],
@@ -59,19 +77,20 @@ const actor = (
 const manager = () => actor('mgr-1', ['MANAGER']);
 const systemOwner = () => ({ ...actor('owner-uuid', ['SYSTEM_OWNER']), loginIdentity: 'yazeed' });
 
-function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}) {
+function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = trustedEvidence()) {
   const current: ReleaseCandidateRecord = { ...candidate, ...overrides };
   return {
     getCandidate: vi.fn(async () => current),
+    getEvidence: vi.fn(async () => evidence),
     approve: vi.fn(async (input: Parameters<ReleaseGovernanceRepository['approve']>[0]) => ({
       id: 'approval-1',
       releaseId: current.releaseId,
       approvedBy: input.actor.id,
       authority: input.actor.roles.includes('MANAGER') ? ('MANAGER' as const) : ('SYSTEM_OWNER' as const),
-      gitSha: input.gitSha,
-      buildId: input.buildId,
-      applicationVersion: input.applicationVersion,
-      migrationHead: input.migrationHead,
+      gitSha: current.gitSha,
+      buildId: current.buildId,
+      applicationVersion: current.applicationVersion,
+      migrationHead: current.migrationHead,
       uatStatus: input.uatStatus,
       residualRiskStatus: input.residualRiskStatus,
       signatureEvidenceId: input.signature.id,
@@ -102,10 +121,11 @@ const baseInput = () => ({
 
 describe('release gates (fail-closed, table-driven)', () => {
   it.each(RELEASE_GATE_KEYS)('gate %s must be PASS', async (gate) => {
-    const repo = makeRepo();
-    const gates = { ...passGates, [gate]: 'FAIL' } as ReleaseGateEvidence;
+    const evidence = trustedEvidence();
+    evidence.gateRecords[RELEASE_GATE_KEYS.indexOf(gate)].status = 'FAIL';
+    const repo = makeRepo({}, evidence);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), gates, requestId: `req-gate-${gate}` }),
+      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), requestId: `req-gate-${gate}` }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     expect(repo.approve).not.toHaveBeenCalled();
   });
@@ -174,91 +194,79 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
   });
 });
 
-describe('build identity must match the exact release candidate', () => {
-  it.each([
-    ['git sha', { gitSha: 'b'.repeat(40) }],
-    ['build id', { buildId: 'build-tampered' }],
-    ['application version', { applicationVersion: '9.9.9' }],
-    ['migration head', { migrationHead: '0001_core_schema' }],
-    ['release id', { releaseId: '01900000-0000-7000-8000-00000000aa02' }],
-  ])('%s mismatch is denied', async (_name, patch) => {
-    const repo = makeRepo();
-    await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), ...patch, requestId: `req-id-${_name}` }),
-    ).rejects.toMatchObject({ code: expect.any(String) });
-    expect(repo.approve).not.toHaveBeenCalled();
-  });
-
+describe('server-owned identity and version', () => {
   it('stale expected version is denied', async () => {
     const repo = makeRepo();
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), expectedVersion: 2n, requestId: 'req-stale' }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
   });
+
+  it('uses the candidate identity and ignores browser identity-shaped extras', async () => {
+    const repo = makeRepo();
+    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+      ...baseInput(),
+      requestId: 'req-browser-extra',
+      ...( { gitSha: 'b'.repeat(40), buildId: 'tampered', applicationVersion: '9.9.9', migrationHead: 'old', uatCycleId: 'old', gates: {}, risks: [] } as object),
+    } as typeof baseInput extends () => infer T ? T : never);
+    expect(result.gitSha).toBe(GIT_SHA);
+    expect(result.buildId).toBe(candidate.buildId);
+  });
 });
 
 describe('residual-risk handling', () => {
   it('CRITICAL residual risk blocks a normal release', async () => {
-    const repo = makeRepo();
+    const evidence = trustedEvidence();
+    evidence.riskRecords.push({ riskId: 'RISK-001', severity: 'CRITICAL', status: 'OPEN', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-001/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, ...candidate });
+    const repo = makeRepo({}, evidence);
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({
         ...baseInput(),
-        risks: [{ riskId: 'RISK-001', severity: 'CRITICAL', status: 'OPEN' }],
         requestId: 'req-critical',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
   });
 
   it('VERY_HIGH residual risk blocks fail-closed', async () => {
-    const repo = makeRepo();
+    const evidence = trustedEvidence();
+    evidence.riskRecords.push({ riskId: 'RISK-002', severity: 'VERY_HIGH', status: 'OPEN', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-002/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, ...candidate });
+    const repo = makeRepo({}, evidence);
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({
         ...baseInput(),
-        risks: [{ riskId: 'RISK-002', severity: 'VERY_HIGH', status: 'OPEN' }],
         requestId: 'req-very-high',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
   });
 
   it('HIGH without acceptance is denied; HIGH with Manager acceptance passes', async () => {
-    const denied = makeRepo();
+    const deniedEvidence = trustedEvidence();
+    deniedEvidence.riskRecords.push({ riskId: 'RISK-003', severity: 'HIGH', status: 'OPEN', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-003/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, ...candidate });
+    const denied = makeRepo({}, deniedEvidence);
     await expect(
       new ApproveReleaseUseCase(denied, verifier).execute({
         ...baseInput(),
-        risks: [{ riskId: 'RISK-003', severity: 'HIGH', status: 'OPEN' }],
         requestId: 'req-high-denied',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
 
-    const allowed = makeRepo();
+    const allowedEvidence = trustedEvidence();
+    allowedEvidence.riskRecords.push({ riskId: 'RISK-003', severity: 'HIGH', status: 'ACCEPTED', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-003/2', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 2n, recordedBy: 'risk-service', auditInfo: {}, acceptance: { acceptedBy: 'mgr-1', authority: 'MANAGER', evidenceRef: 'EV-1', acceptedAt: '2026-09-10T00:00:00Z' }, ...candidate });
+    const allowed = makeRepo({}, allowedEvidence);
     const result = await new ApproveReleaseUseCase(allowed, verifier).execute({
       ...baseInput(),
-      risks: [
-        {
-          riskId: 'RISK-003',
-          severity: 'HIGH',
-          status: 'ACCEPTED',
-          acceptance: { acceptedBy: 'mgr-1', authority: 'MANAGER', evidenceRef: 'EV-1', acceptedAt: '2026-09-10T00:00:00Z' },
-        },
-      ],
       requestId: 'req-high-allowed',
     });
     expect(result.releaseId).toBe(RELEASE_ID);
   });
 
   it('acceptance by a non-authority is denied', async () => {
-    const repo = makeRepo();
+    const evidence = trustedEvidence();
+    evidence.riskRecords.push({ riskId: 'RISK-004', severity: 'MEDIUM', status: 'ACCEPTED', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-004/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, acceptance: { acceptedBy: 'emp-1', authority: 'MANAGER', evidenceRef: '', acceptedAt: '2026-09-10T00:00:00Z' }, ...candidate });
+    const repo = makeRepo({}, evidence);
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({
         ...baseInput(),
-        risks: [
-          {
-            riskId: 'RISK-004',
-            severity: 'MEDIUM',
-            status: 'ACCEPTED',
-            acceptance: { acceptedBy: 'emp-1', authority: 'MANAGER', evidenceRef: '', acceptedAt: '2026-09-10T00:00:00Z' },
-          },
-        ],
         requestId: 'req-acceptance-evidence',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });

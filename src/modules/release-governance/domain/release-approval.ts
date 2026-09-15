@@ -18,6 +18,18 @@ export type GateStatus = 'PASS' | 'PARTIAL' | 'FAIL' | 'UNVERIFIED' | 'NOT_APPLI
 
 export type ReleaseGateEvidence = Record<ReleaseGateKey, GateStatus>;
 
+export interface ReleaseGateEvidenceRecord extends ReleaseCandidateIdentity {
+  evidenceType: ReleaseGateKey;
+  status: GateStatus;
+  source: string;
+  immutableReference: string;
+  observedAt: Date;
+  releaseVersion: bigint;
+  evidenceVersion: bigint;
+  recordedBy: string;
+  auditInfo: unknown;
+}
+
 export type ResidualSeverity = 'LOW' | 'MEDIUM' | 'MODERATE' | 'HIGH' | 'VERY_HIGH' | 'CRITICAL';
 
 export interface ResidualRiskAcceptance {
@@ -32,6 +44,36 @@ export interface ResidualRiskEntry {
   severity: ResidualSeverity;
   status: 'OPEN' | 'MITIGATED' | 'ACCEPTED' | 'CLOSED' | 'BLOCKED';
   acceptance?: ResidualRiskAcceptance;
+}
+
+export interface ReleaseRiskEvidenceRecord extends ReleaseCandidateIdentity {
+  riskId: string;
+  severity: ResidualSeverity;
+  status: ResidualRiskEntry['status'];
+  source: string;
+  immutableReference: string;
+  observedAt: Date;
+  releaseVersion: bigint;
+  evidenceVersion: bigint;
+  recordedBy: string;
+  acceptance?: ResidualRiskAcceptance;
+  auditInfo: unknown;
+}
+
+export interface ReleaseEvidenceSnapshot {
+  gates: ReleaseGateEvidence;
+  gateRecords: Partial<Record<ReleaseGateKey, ReleaseGateEvidenceRecord>>;
+  risks: ResidualRiskEntry[];
+  riskRecords: ReleaseRiskEvidenceRecord[];
+}
+
+export interface ReleaseCandidateForEvidence extends ReleaseCandidateIdentity {
+  uatStatus: string;
+  residualRiskStatus: string;
+  state: 'PENDING' | 'RELEASE_APPROVED';
+  version: bigint;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ReleaseCandidateIdentity {
@@ -89,6 +131,71 @@ export function evaluateGates(gates: ReleaseGateEvidence): { ok: boolean; failur
 
 export function assertAllGatesPass(gates: ReleaseGateEvidence): void {
   if (!evaluateGates(gates).ok) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+}
+
+const TRUSTED_GATE_SOURCES: Record<ReleaseGateKey, readonly string[]> = {
+  ci: ['TRUSTED_CI', 'IMPORTED_CI'],
+  security: ['TRUSTED_SECURITY_SUITE', 'IMPORTED_SECURITY'],
+  database: ['TRUSTED_DATABASE_PREFLIGHT', 'IMPORTED_DATABASE'],
+  e2e: ['TRUSTED_PLAYWRIGHT', 'IMPORTED_E2E'],
+  uat: ['SIGNED_UAT_CYCLE'],
+  signatures: ['E_SIGNATURE_STORE'],
+  criticalRisks: ['CONTROLLED_RISK_REGISTER'],
+  residualRisk: ['CONTROLLED_RISK_REGISTER'],
+};
+
+function isCurrentEvidence(record: ReleaseGateEvidenceRecord, candidate: ReleaseCandidateForEvidence, now: Date): boolean {
+  return (
+    record.releaseId === candidate.releaseId &&
+    record.gitSha.toLowerCase() === candidate.gitSha.toLowerCase() &&
+    record.buildId === candidate.buildId &&
+    record.applicationVersion === candidate.applicationVersion &&
+    record.migrationHead === candidate.migrationHead &&
+    record.uatCycleId === candidate.uatCycleId &&
+    record.releaseVersion === candidate.version &&
+    record.evidenceVersion > 0n &&
+    record.immutableReference.trim().length > 0 &&
+    record.observedAt.getTime() <= now.getTime() &&
+    TRUSTED_GATE_SOURCES[record.evidenceType].includes(record.source)
+  );
+}
+
+export function deriveReleaseEvidence(
+  candidate: ReleaseCandidateForEvidence,
+  gateRecords: readonly ReleaseGateEvidenceRecord[],
+  riskRecords: readonly ReleaseRiskEvidenceRecord[],
+  now: Date,
+): ReleaseEvidenceSnapshot {
+  const current = gateRecords.filter((record) => isCurrentEvidence(record, candidate, now));
+  const latest = new Map<ReleaseGateKey, ReleaseGateEvidenceRecord>();
+  for (const record of current) {
+    const previous = latest.get(record.evidenceType);
+    if (!previous || record.evidenceVersion > previous.evidenceVersion) latest.set(record.evidenceType, record);
+  }
+  const gates = Object.fromEntries(RELEASE_GATE_KEYS.map((key) => [key, latest.get(key)?.status ?? 'UNVERIFIED'])) as ReleaseGateEvidence;
+  const currentRisks = riskRecords
+    .filter(
+      (risk) =>
+        risk.releaseId === candidate.releaseId &&
+        risk.gitSha.toLowerCase() === candidate.gitSha.toLowerCase() &&
+        risk.buildId === candidate.buildId &&
+        risk.applicationVersion === candidate.applicationVersion &&
+        risk.migrationHead === candidate.migrationHead &&
+        risk.uatCycleId === candidate.uatCycleId &&
+        risk.releaseVersion === candidate.version &&
+        risk.evidenceVersion > 0n &&
+        risk.immutableReference.trim().length > 0 &&
+        risk.observedAt.getTime() <= now.getTime() &&
+        risk.source === 'CONTROLLED_RISK_REGISTER',
+    )
+    .sort((a, b) => a.riskId.localeCompare(b.riskId) || Number(b.evidenceVersion - a.evidenceVersion));
+  const risks = [...new Map(currentRisks.map((risk) => [risk.riskId, risk])).values()].map((risk) => ({
+    riskId: risk.riskId,
+    severity: risk.severity,
+    status: risk.status,
+    ...(risk.acceptance ? { acceptance: risk.acceptance } : {}),
+  }));
+  return { gates, gateRecords: Object.fromEntries(latest), risks, riskRecords: currentRisks };
 }
 
 function isAcceptanceAuthority(entry: ResidualRiskEntry): boolean {

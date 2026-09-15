@@ -10,8 +10,8 @@ import {
 import type { ReauthenticationVerifier } from '../../e-signatures/ports/repository.js';
 import {
   assertAllGatesPass,
+  deriveReleaseEvidence,
   assertReleaseAuthority,
-  assertReleaseIdentityShape,
   assertResidualRisksAcceptable,
 } from '../domain/release-approval.js';
 import type {
@@ -40,36 +40,16 @@ export class ApproveReleaseUseCase {
     if (!input.reauthenticationSecret?.trim()) {
       throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
     }
-    if (!input.uatStatus?.trim() || !input.residualRiskStatus?.trim()) {
-      throw new AppError('VALIDATION_FAILED', { userSafe: true });
-    }
-    assertReleaseIdentityShape({
-      releaseId: input.releaseId,
-      gitSha: input.gitSha,
-      buildId: input.buildId,
-      applicationVersion: input.applicationVersion,
-      migrationHead: input.migrationHead,
-      uatCycleId: input.uatCycleId,
-    });
     const authority = assertReleaseAuthority(input.actor);
     void authority;
-    // Fail closed: every gate must be PASS for this exact release candidate.
-    assertAllGatesPass(input.gates);
-    assertResidualRisksAcceptable(input.risks);
-
     const candidate = await this.repository.getCandidate(input.releaseId.trim());
     if (!candidate) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (candidate.state !== 'PENDING') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
-    // Build identity must match the exact same release candidate.
-    if (
-      candidate.gitSha.toLowerCase() !== input.gitSha.trim().toLowerCase() ||
-      candidate.buildId !== input.buildId.trim() ||
-      candidate.releaseId !== input.releaseId.trim() ||
-      candidate.applicationVersion !== input.applicationVersion.trim() ||
-      candidate.migrationHead !== input.migrationHead.trim()
-    ) {
-      throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    }
+
+    const trusted = await this.repository.getEvidence(candidate.releaseId);
+    const evidence = deriveReleaseEvidence(candidate, trusted.gateRecords, trusted.riskRecords, this.now());
+    assertAllGatesPass(evidence.gates);
+    assertResidualRisksAcceptable(evidence.risks);
 
     authorize(
       {
@@ -92,21 +72,21 @@ export class ApproveReleaseUseCase {
     });
     if (!valid) throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
 
-    const gateSnapshot = { ...input.gates };
-    const riskSnapshot = input.risks.map((risk) => ({ ...risk }));
+    const gateSnapshot = { ...evidence.gates };
+    const riskSnapshot = evidence.risks.map((risk) => ({ ...risk }));
     const snapshotHash = createHash('sha256')
       .update(
         stableJson({
           releaseId: candidate.releaseId,
-          gitSha: input.gitSha.trim().toLowerCase(),
-          buildId: input.buildId.trim(),
-          applicationVersion: input.applicationVersion.trim(),
-          migrationHead: input.migrationHead.trim(),
-          uatCycleId: input.uatCycleId.trim(),
+          gitSha: candidate.gitSha.toLowerCase(),
+          buildId: candidate.buildId,
+          applicationVersion: candidate.applicationVersion,
+          migrationHead: candidate.migrationHead,
+          uatCycleId: candidate.uatCycleId,
           gates: gateSnapshot,
           risks: riskSnapshot,
-          uatStatus: input.uatStatus.trim(),
-          residualRiskStatus: input.residualRiskStatus.trim(),
+          uatStatus: candidate.uatStatus,
+          residualRiskStatus: candidate.residualRiskStatus,
         }),
       )
       .digest('hex');
@@ -116,7 +96,7 @@ export class ApproveReleaseUseCase {
       subjectId: candidate.releaseId,
       subjectVersion: candidate.version,
       action: 'RELEASE_APPROVE',
-      meaning: `Approve production release ${candidate.releaseId} at ${input.gitSha.trim().toLowerCase()} build ${input.buildId.trim()}`,
+      meaning: `Approve production release ${candidate.releaseId} at ${candidate.gitSha.toLowerCase()} build ${candidate.buildId}`,
       snapshotHash,
       reauthMethod: 'PASSWORD',
       requestId: input.requestId,
@@ -126,12 +106,9 @@ export class ApproveReleaseUseCase {
       actor: input.actor as ActorContext,
       candidate,
       expectedVersion: input.expectedVersion,
-      gitSha: input.gitSha.trim().toLowerCase(),
-      buildId: input.buildId.trim(),
-      applicationVersion: input.applicationVersion.trim(),
-      migrationHead: input.migrationHead.trim(),
-      uatStatus: input.uatStatus.trim(),
-      residualRiskStatus: input.residualRiskStatus.trim(),
+      evidence,
+      uatStatus: candidate.uatStatus,
+      residualRiskStatus: candidate.residualRiskStatus,
       gateSnapshot,
       riskSnapshot,
       signature,

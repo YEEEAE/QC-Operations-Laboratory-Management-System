@@ -1,9 +1,12 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 import type {
+  ReleaseEvidenceSnapshot,
   ReleaseCandidateIdentity,
-  ReleaseGateEvidence,
+  ReleaseGateEvidenceRecord,
+  ReleaseRiskEvidenceRecord,
   ResidualRiskEntry,
+  ReleaseGateEvidence,
 } from '../domain/release-approval.js';
 
 export interface ReleaseCandidateRecord extends ReleaseCandidateIdentity {
@@ -35,29 +38,21 @@ export interface ApproveReleaseInput {
   actor: ActorContext;
   releaseId: string;
   expectedVersion: bigint;
-  gitSha: string;
-  buildId: string;
-  applicationVersion: string;
-  migrationHead: string;
-  uatCycleId: string;
-  gates: ReleaseGateEvidence;
-  risks: readonly ResidualRiskEntry[];
-  uatStatus: string;
-  residualRiskStatus: string;
   reauthenticationSecret: string;
   requestId: string;
 }
 
 export interface ReleaseGovernanceRepository {
   getCandidate(releaseId: string): Promise<ReleaseCandidateRecord | undefined>;
+  getEvidence(releaseId: string): Promise<{
+    gateRecords: ReleaseGateEvidenceRecord[];
+    riskRecords: ReleaseRiskEvidenceRecord[];
+  }>;
   approve(input: {
     actor: ActorContext;
     candidate: ReleaseCandidateRecord;
     expectedVersion: bigint;
-    gitSha: string;
-    buildId: string;
-    applicationVersion: string;
-    migrationHead: string;
+    evidence: ReleaseEvidenceSnapshot;
     uatStatus: string;
     residualRiskStatus: string;
     gateSnapshot: ReleaseGateEvidence;

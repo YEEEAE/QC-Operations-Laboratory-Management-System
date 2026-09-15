@@ -8,6 +8,7 @@ import type {
   ReleaseCandidateRecord,
   ReleaseGovernanceRepository,
 } from '../ports/repository.js';
+import { assertAllGatesPass, assertResidualRisksAcceptable, deriveReleaseEvidence } from '../domain/release-approval.js';
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -40,6 +41,51 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
     };
   }
 
+  async getEvidence(releaseId: string) {
+    const [gates, risks] = await Promise.all([
+      this.db.selectFrom('release_gate_evidence').selectAll().where('release_id', '=', releaseId).execute(),
+      this.db.selectFrom('release_risk_evidence').selectAll().where('release_id', '=', releaseId).execute(),
+    ]);
+    return {
+      gateRecords: gates.map((row) => ({
+        evidenceType: row.evidence_type as never,
+        status: row.status as never,
+        source: row.source,
+        immutableReference: row.immutable_reference,
+        observedAt: row.observed_at,
+        releaseVersion: BigInt(row.release_version),
+        evidenceVersion: BigInt(row.evidence_version),
+        recordedBy: row.recorded_by,
+        auditInfo: row.audit_info,
+        releaseId: row.release_id,
+        gitSha: row.git_sha,
+        buildId: row.build_id,
+        applicationVersion: row.application_version,
+        migrationHead: row.migration_head,
+        uatCycleId: row.uat_cycle_id,
+      })),
+      riskRecords: risks.map((row) => ({
+        riskId: row.risk_id,
+        severity: row.severity as never,
+        status: row.status as never,
+        source: row.source,
+        immutableReference: row.immutable_reference,
+        observedAt: row.observed_at,
+        releaseVersion: BigInt(row.release_version),
+        evidenceVersion: BigInt(row.evidence_version),
+        recordedBy: row.recorded_by,
+        ...(row.acceptance ? { acceptance: row.acceptance as never } : {}),
+        auditInfo: row.audit_info,
+        releaseId: row.release_id,
+        gitSha: row.git_sha,
+        buildId: row.build_id,
+        applicationVersion: row.application_version,
+        migrationHead: row.migration_head,
+        uatCycleId: row.uat_cycle_id,
+      })),
+    };
+  }
+
   async approve(input: Parameters<ReleaseGovernanceRepository['approve']>[0]): Promise<ReleaseApprovalRecord> {
     const key = `RELEASE:APPROVE:${input.candidate.releaseId}:${input.requestId}`;
     const fingerprint = createHash('sha256')
@@ -48,10 +94,10 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
           releaseId: input.candidate.releaseId,
           expectedVersion: String(input.expectedVersion),
           actorId: input.actor.id,
-          gitSha: input.gitSha,
-          buildId: input.buildId,
-          applicationVersion: input.applicationVersion,
-          migrationHead: input.migrationHead,
+          gitSha: input.candidate.gitSha,
+          buildId: input.candidate.buildId,
+          applicationVersion: input.candidate.applicationVersion,
+          migrationHead: input.candidate.migrationHead,
         }),
       )
       .digest('hex');
@@ -86,28 +132,48 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
         throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
       }
       if (row.state !== 'PENDING') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
-      if (
-        row.git_sha.toLowerCase() !== input.gitSha.toLowerCase() ||
-        row.build_id !== input.buildId ||
-        row.application_version !== input.applicationVersion ||
-        row.migration_head !== input.migrationHead
-      ) {
-        throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      const rows = await Promise.all([
+        trx.selectFrom('release_gate_evidence').selectAll().where('release_id', '=', row.id).execute(),
+        trx.selectFrom('release_risk_evidence').selectAll().where('release_id', '=', row.id).execute(),
+      ]);
+      const freshEvidence = deriveReleaseEvidence(
+        {
+          releaseId: row.id,
+          gitSha: row.git_sha,
+          buildId: row.build_id,
+          applicationVersion: row.application_version,
+          migrationHead: row.migration_head,
+          uatCycleId: row.uat_cycle_id,
+          uatStatus: row.uat_status,
+          residualRiskStatus: row.residual_risk_status,
+          state: row.state as 'PENDING' | 'RELEASE_APPROVED',
+          version: BigInt(row.version),
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        },
+        rows[0].map((e) => ({ ...e, evidenceType: e.evidence_type as never, status: e.status as never, immutableReference: e.immutable_reference, observedAt: e.observed_at, releaseVersion: BigInt(e.release_version), evidenceVersion: BigInt(e.evidence_version), recordedBy: e.recorded_by, auditInfo: e.audit_info, releaseId: e.release_id, gitSha: e.git_sha, buildId: e.build_id, applicationVersion: e.application_version, migrationHead: e.migration_head, uatCycleId: e.uat_cycle_id })),
+        rows[1].map((e) => ({ ...e, riskId: e.risk_id, severity: e.severity as never, status: e.status as never, immutableReference: e.immutable_reference, observedAt: e.observed_at, releaseVersion: BigInt(e.release_version), evidenceVersion: BigInt(e.evidence_version), recordedBy: e.recorded_by, auditInfo: e.audit_info, releaseId: e.release_id, gitSha: e.git_sha, buildId: e.build_id, applicationVersion: e.application_version, migrationHead: e.migration_head, uatCycleId: e.uat_cycle_id, ...(e.acceptance ? { acceptance: e.acceptance as unknown as { acceptedBy: string; authority: 'MANAGER' | 'SYSTEM_OWNER'; evidenceRef: string; acceptedAt: string } } : {}) })) as never,
+        new Date(),
+      );
+      assertAllGatesPass(freshEvidence.gates);
+      assertResidualRisksAcceptable(freshEvidence.risks);
+      if (stableJson(freshEvidence.gates) !== stableJson(input.evidence.gates) || stableJson(freshEvidence.risks) !== stableJson(input.evidence.risks)) {
+        throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
       }
-      // Recompute the signed snapshot inside the transaction: stale or tampered gate/risk evidence fails closed.
+      // Recompute the signed snapshot inside the transaction from database evidence.
       const recomputed = createHash('sha256')
         .update(
           stableJson({
             releaseId: row.id,
-            gitSha: input.gitSha.toLowerCase(),
-            buildId: input.buildId,
-            applicationVersion: input.applicationVersion,
-            migrationHead: input.migrationHead,
+            gitSha: row.git_sha.toLowerCase(),
+            buildId: row.build_id,
+            applicationVersion: row.application_version,
+            migrationHead: row.migration_head,
             uatCycleId: row.uat_cycle_id,
             gates: input.gateSnapshot,
             risks: input.riskSnapshot,
-            uatStatus: input.uatStatus,
-            residualRiskStatus: input.residualRiskStatus,
+            uatStatus: row.uat_status,
+            residualRiskStatus: row.residual_risk_status,
           }),
         )
         .digest('hex');
@@ -153,12 +219,12 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
           release_id: row.id,
           approved_by: input.actor.id,
           authority,
-          git_sha: input.gitSha.toLowerCase(),
-          build_id: input.buildId,
-          application_version: input.applicationVersion,
-          migration_head: input.migrationHead,
-          uat_status: input.uatStatus,
-          residual_risk_status: input.residualRiskStatus,
+          git_sha: row.git_sha.toLowerCase(),
+          build_id: row.build_id,
+          application_version: row.application_version,
+          migration_head: row.migration_head,
+          uat_status: row.uat_status,
+          residual_risk_status: row.residual_risk_status,
           gate_snapshot: input.gateSnapshot,
           risk_snapshot: input.riskSnapshot,
           signature_evidence_id: input.signature.id,
@@ -188,14 +254,14 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
           transition_id: 'TR-REL-001',
           old_state: 'PENDING',
           new_state: 'RELEASE_APPROVED',
-          reason: `UAT ${input.uatStatus}; residual risk ${input.residualRiskStatus}`,
+          reason: `UAT ${row.uat_status}; residual risk ${row.residual_risk_status}`,
           request_id: input.requestId,
           signature_id: input.signature.id,
           payload: {
-            gitSha: input.gitSha.toLowerCase(),
-            buildId: input.buildId,
-            applicationVersion: input.applicationVersion,
-            migrationHead: input.migrationHead,
+            gitSha: row.git_sha.toLowerCase(),
+            buildId: row.build_id,
+            applicationVersion: row.application_version,
+            migrationHead: row.migration_head,
             authority,
             approvedBy: input.actor.id,
             snapshotHash: input.signature.snapshotHash,

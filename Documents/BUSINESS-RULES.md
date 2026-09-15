@@ -485,6 +485,10 @@ Unknown
 
 ## BR-GEN-020 — No Release Readiness Claim Without Evidence
 
+### Production release evidence enforcement
+
+Production release gate truth is server-owned. The approval request may identify the release and expected version and provide reauthentication, but it may not provide gate statuses, release identity, UAT outcome, or risk acceptance objects. The server derives CI, Security, Database, E2E, UAT, Signature, Critical Risk, and Residual Risk states from current trusted evidence tied to the exact release identity. Missing, stale, foreign-release, untrusted-provider, or unsigned evidence is `UNVERIFIED` and cannot approve a release.
+
 **Status:** APPROVED
 
 كلمات مثل:

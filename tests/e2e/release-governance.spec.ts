@@ -22,14 +22,11 @@ test.describe('Production release governance (fail-closed)', () => {
     test.skip(!identity || !password || !releaseId, 'Requires an authorized fixture and a PENDING release candidate (no production mutations).');
     await page.goto(`/governance/releases/${releaseId}`);
     await expect(page.locator('body')).toContainText('Production release approval');
-    // Fail-closed UI: the approval action is disabled until all eight gates are confirmed.
+    // Fail-closed UI: the approval action is capability-driven by server evidence.
     const submit = page.locator('[data-submit]');
     await expect(submit).toBeDisabled();
-    const gates = page.locator('[data-gate]');
-    await expect(gates).toHaveCount(8);
-    for (const gate of await gates.all()) {
-      await gate.check();
-    }
-    await expect(submit).toBeEnabled();
+    await expect(page.locator('[data-gate]')).toHaveCount(0);
+    await expect(page.locator('table tbody tr')).toHaveCount(8);
+    await expect(page.locator('text=Server-derived release evidence')).toBeVisible();
   });
 });

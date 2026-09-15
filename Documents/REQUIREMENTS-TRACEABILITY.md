@@ -17,6 +17,12 @@
 
 # 1. Purpose
 
+## QC-CLOSURE-RELEASE-002 — Server-derived Production Release Evidence
+
+Release approval is traceable through `release_gate_evidence` and `release_risk_evidence`. Each record is tied to the exact release ID, Git SHA, build ID, application version, migration head, UAT cycle, candidate version, immutable reference, provenance, observed time, recorder, evidence version, and audit metadata. The browser submits only approval intent (`releaseId`, `expectedVersion`, and reauthentication secret); gate and risk truth is recomputed by the server and rechecked inside the approval transaction.
+
+The eight gates require trusted provenance; missing, stale, foreign-release, untrusted-CI, or unsigned-UAT evidence derives to `UNVERIFIED` and blocks approval. Controlled risk records, not browser JSON, determine critical/open and acceptance blockers. The read-only governance dashboard exposes status, reference, source, timestamp, identity, and the server-derived disabled reason.
+
 هذه الوثيقة هي المرجع المركزي لربط متطلبات:
 
 > **QC Operations & Laboratory Management System**

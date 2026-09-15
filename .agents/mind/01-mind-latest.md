@@ -1,5 +1,40 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-15] — QC-CLOSURE-RELEASE-002: Server-Derived Production Release Evidence
+
+### تم التنفيذ
+- أزلت من عقد اعتماد الإصدار كل حقول الهوية والبوابات والمخاطر القادمة من المتصفح؛ الـAction يقبل `releaseId` و`expectedVersion` و`reauthenticationSecret` فقط.
+- أضفت migration `0022_server_release_evidence.sql` وجدولي `release_gate_evidence` و`release_risk_evidence` كسجلات append-only مرتبطة بهوية الإصدار الكاملة، مصدر الدليل، المرجع غير القابل للتغيير، الوقت، الإصدار، المسجل، وبيانات التدقيق.
+- بنيت اشتقاقًا fail-closed للبوابات الثمان: المصادر غير الموثوقة، الدليل الناقص، القديم، الموقع لدورة/إصدار آخر، وUAT غير الموقع تتحول إلى `UNVERIFIED`؛ والمخاطر تُقرأ من سجل مضبوط فقط.
+- أعدت بناء صفحة `/governance/releases/[releaseId]` كلوحة قراءة فقط تعرض status/reference/source/timestamp والهوية الدقيقة وسبب تعطيل الاعتماد، بلا checkboxes أو risk JSON قابل للتحرير.
+- أضفت إعادة قراءة وقفل `FOR UPDATE` وإعادة اشتقاق الأدلة داخل transaction قبل snapshot/signature/approval/state/audit/idempotency، مع رفض أي اختلاف بين لقطة البداية واللقطة المقفلة.
+- أضفت اختبارات سلبية للدليل غير الموثوق، CI/UAT الناقص، stale/foreign identity، critical/high risks، browser identity extras، authority/reauth/version، وحدّثت اختبار التزامن والتكرار ليزرع أدلة server-owned.
+
+### الملفات المتأثرة
+- `db/migrations/0022_server_release_evidence.sql`
+- `src/modules/release-governance/{domain,application,ports,infrastructure}/*`
+- `src/actions/release-governance.ts`
+- `src/pages/governance/releases/[releaseId].astro`
+- `src/shared/database/db-types.ts`
+- `tests/unit/release-governance/*` و`tests/integration/release-governance/release-concurrency.test.ts`
+- `Documents/{BUSINESS-RULES,STATE-MACHINES,REQUIREMENTS-TRACEABILITY}.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/release-governance tests/unit/architecture/boundary-guard.test.ts` ✅ — 3 ملفات / 35 اختبارًا.
+- `pnpm typecheck` ✅ — 0 أخطاء، 62 hints قائمة؛ Node المحلي `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- `pnpm test:architecture` ✅ — لا مخالفات Delivery.
+- `pnpm build` ✅ — server/client build اكتمل؛ تحذيرات Zod/chunk المعروفة فقط.
+- `pnpm test:unit` ⚠️ — 70 ملفًا / 437 من 439 اختبارًا نجح؛ فشلا retention وicon/copy موجودان من خط الأساس وخارج نطاق المهمة.
+- `git diff --check` ✅. PostgreSQL/Testcontainers وE2E المصادق لم تُشغّل لغياب runtime/fixtures.
+
+### النتيجة
+- **الحالة:** جزئي / إغلاق الكود المحلي ناجح، والإغلاق التكاملي يحتاج PostgreSQL وfixtures وأدلة provider حقيقية.
+- **مختصر:** لا توجد الآن قناة واجهة تجعل browser-controlled PASS أو risk acceptance حقيقة اعتماد؛ أي اعتماد فعلي يحتاج أدلة موثوقة مخزنة ومطابقة لهوية الإصدار.
+
+### ملاحظات / مشاكل مفتوحة
+- لم تُسجل آلية ingestion خارجية لـCI/Security/E2E/UAT؛ إدخال الأدلة الموثوقة يبقى مسؤولية integration/service boundary خارج Action المتصفح.
+- لم يُنفذ commit أو push أو deploy.
+
 ## [2026-09-15] — QC-CLOSURE-IDENTITY-001: إغلاق هوية SYSTEM_OWNER وصلاحيات P-05 والإفراج
 
 ### تم التنفيذ

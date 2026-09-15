@@ -3806,6 +3806,10 @@ Required measurements
 
 # 92. Release Tests
 
+## Server-derived release evidence invariant
+
+Before `PENDING → RELEASE_APPROVED`, the server locks the candidate, loads immutable gate/risk evidence for the exact release identity and candidate version, derives all eight gate states, verifies authority and reauthentication, then signs and persists the snapshot, approval, state transition, audit, and idempotency result atomically. Client checkboxes, identity fields, and risk JSON are never authoritative. Missing or stale evidence is `UNVERIFIED` and denied.
+
 عند اعتماد Release policy:
 
 ```text

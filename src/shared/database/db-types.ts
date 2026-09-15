@@ -874,6 +874,48 @@ export interface ReleaseApprovalsTable {
   request_id: string;
 }
 
+export interface ReleaseGateEvidenceTable {
+  id: Generated<string>;
+  release_id: string;
+  evidence_type: string;
+  status: string;
+  source: string;
+  immutable_reference: string;
+  observed_at: Date;
+  git_sha: string;
+  build_id: string;
+  application_version: string;
+  migration_head: string;
+  uat_cycle_id: string;
+  release_version: bigint;
+  evidence_version: bigint;
+  recorded_by: string;
+  audit_info: unknown;
+  created_at: Generated<Date>;
+}
+
+export interface ReleaseRiskEvidenceTable {
+  id: Generated<string>;
+  release_id: string;
+  risk_id: string;
+  severity: string;
+  status: string;
+  source: string;
+  immutable_reference: string;
+  observed_at: Date;
+  git_sha: string;
+  build_id: string;
+  application_version: string;
+  migration_head: string;
+  uat_cycle_id: string;
+  release_version: bigint;
+  evidence_version: bigint;
+  recorded_by: string;
+  acceptance: unknown | null;
+  audit_info: unknown;
+  created_at: Generated<Date>;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -937,6 +979,8 @@ export interface DatabaseSchema {
   rate_limit_windows: RateLimitWindowsTable;
   release_candidates: ReleaseCandidatesTable;
   release_approvals: ReleaseApprovalsTable;
+  release_gate_evidence: ReleaseGateEvidenceTable;
+  release_risk_evidence: ReleaseRiskEvidenceTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

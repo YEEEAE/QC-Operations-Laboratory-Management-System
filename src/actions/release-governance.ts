@@ -27,50 +27,19 @@ const run = async <T>(work: () => Promise<T>): Promise<T> => {
   }
 };
 
-const gate = z.enum(['PASS', 'PARTIAL', 'FAIL', 'UNVERIFIED', 'NOT_APPLICABLE']);
-const risk = z.object({
-  riskId: z.string().trim().min(1).max(64),
-  severity: z.enum(['LOW', 'MEDIUM', 'MODERATE', 'HIGH', 'VERY_HIGH', 'CRITICAL']),
-  status: z.enum(['OPEN', 'MITIGATED', 'ACCEPTED', 'CLOSED', 'BLOCKED']),
-  acceptance: z
-    .object({
-      acceptedBy: z.string().trim().min(1).max(128),
-      authority: z.enum(['MANAGER', 'SYSTEM_OWNER']),
-      evidenceRef: z.string().trim().min(1).max(256),
-      acceptedAt: z.string().trim().min(1).max(64),
-    })
-    .optional(),
-});
-
 const approveRelease = defineAction({
   accept: 'json',
   input: z.object({
     releaseId: z.string().uuid(),
     expectedVersion: z.coerce.bigint(),
-    gitSha: z.string().trim().min(40).max(40),
-    buildId: z.string().trim().min(1).max(128),
-    applicationVersion: z.string().trim().min(1).max(128),
-    migrationHead: z.string().trim().min(1).max(128),
-    uatCycleId: z.string().trim().min(1).max(128),
-    uatStatus: z.string().trim().min(1).max(64),
-    residualRiskStatus: z.string().trim().min(1).max(64),
-    gates: z.object({
-      ci: gate,
-      security: gate,
-      database: gate,
-      e2e: gate,
-      uat: gate,
-      signatures: gate,
-      criticalRisks: gate,
-      residualRisk: gate,
-    }),
-    risks: z.array(risk).max(200),
     reauthenticationSecret: z.string().min(1),
   }),
   handler: (input, context) =>
     run(() =>
       releaseGovernanceActionDependencies().approve.execute({
-        ...input,
+        releaseId: input.releaseId,
+        expectedVersion: input.expectedVersion,
+        reauthenticationSecret: input.reauthenticationSecret,
         actor: actor(context),
         requestId: requestId(context),
       }),

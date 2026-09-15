@@ -3,7 +3,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { PostgresReleaseGovernanceRepository } from '../../../src/modules/release-governance/infrastructure/postgres-repository.js';
 import { ApproveReleaseUseCase } from '../../../src/modules/release-governance/application/approve-release.js';
-import type { ReleaseGateEvidence } from '../../../src/modules/release-governance/domain/release-approval.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
@@ -20,16 +19,6 @@ const manager = (): ActorContext => ({
   permissions: [{ code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] }],
 });
 
-const passGates: ReleaseGateEvidence = {
-  ci: 'PASS',
-  security: 'PASS',
-  database: 'PASS',
-  e2e: 'PASS',
-  uat: 'PASS',
-  signatures: 'PASS',
-  criticalRisks: 'PASS',
-  residualRisk: 'PASS',
-};
 
 let pool: ReturnType<typeof createPool> | undefined;
 let db: Kysely<DatabaseSchema>;
@@ -64,7 +53,16 @@ async function createCandidate(suffix: string): Promise<string> {
      VALUES ($1, $2, $3, $4, $5, 'ACCEPTED', 'ACCEPTED', 'PENDING') RETURNING id::text AS id`,
     [GIT_SHA, `build-${suffix}`, '1.4.0', '0021_release_governance', `UAT-${suffix}`],
   );
-  return rows.rows[0].id;
+  const releaseId = rows.rows[0].id;
+  const gateSources: Record<string, string> = { ci: 'TRUSTED_CI', security: 'TRUSTED_SECURITY_SUITE', database: 'TRUSTED_DATABASE_PREFLIGHT', e2e: 'TRUSTED_PLAYWRIGHT', uat: 'SIGNED_UAT_CYCLE', signatures: 'E_SIGNATURE_STORE', criticalRisks: 'CONTROLLED_RISK_REGISTER', residualRisk: 'CONTROLLED_RISK_REGISTER' };
+  for (const [index, [gate, source]] of Object.entries(gateSources).entries()) {
+    await pool!.query(
+      `INSERT INTO qc.release_gate_evidence (release_id, evidence_type, status, source, immutable_reference, observed_at, git_sha, build_id, application_version, migration_head, uat_cycle_id, release_version, evidence_version, recorded_by, audit_info)
+       SELECT id, $2, 'PASS', $3, $4, CURRENT_TIMESTAMP, git_sha, build_id, application_version, migration_head, uat_cycle_id, version, $5, 'test-ci', '{}'::jsonb FROM qc.release_candidates WHERE id = $1`,
+      [releaseId, gate, source, `test/${gate}/${suffix}`, index + 1],
+    );
+  }
+  return releaseId;
 }
 
 function useCase() {
@@ -80,21 +78,8 @@ describe('release governance PostgreSQL concurrency and idempotency', () => {
       actor: manager(),
       releaseId,
       expectedVersion: 1n,
-      gitSha: GIT_SHA,
-      buildId: '',
-      applicationVersion: '1.4.0',
-      migrationHead: '0021_release_governance',
-      uatCycleId: '',
-      gates: passGates,
-      risks: [],
-      uatStatus: 'ACCEPTED',
-      residualRiskStatus: 'ACCEPTED',
       reauthenticationSecret: 'secret',
     };
-    const row = await pool!.query<{ build_id: string; uat_cycle_id: string }>(
-      `SELECT build_id, uat_cycle_id FROM qc.release_candidates WHERE id = $1`,
-      [releaseId],
-    );
     const base = { ...input, buildId: row.rows[0].build_id, uatCycleId: row.rows[0].uat_cycle_id };
     const results = await Promise.allSettled([
       useCase().execute({ ...base, requestId: `rel-conc-a-${Date.now()}` }),
@@ -108,24 +93,11 @@ describe('release governance PostgreSQL concurrency and idempotency', () => {
 
   it('replays the same request id without duplicating approvals, audit, or signatures', async () => {
     const releaseId = await createCandidate(`replay-${Date.now()}`);
-    const row = await pool!.query<{ build_id: string; uat_cycle_id: string }>(
-      `SELECT build_id, uat_cycle_id FROM qc.release_candidates WHERE id = $1`,
-      [releaseId],
-    );
     const requestId = `rel-replay-${Date.now()}`;
     const input = {
       actor: manager(),
       releaseId,
       expectedVersion: 1n,
-      gitSha: GIT_SHA,
-      buildId: row.rows[0].build_id,
-      applicationVersion: '1.4.0',
-      migrationHead: '0021_release_governance',
-      uatCycleId: row.rows[0].uat_cycle_id,
-      gates: passGates,
-      risks: [],
-      uatStatus: 'ACCEPTED',
-      residualRiskStatus: 'ACCEPTED',
       reauthenticationSecret: 'secret',
       requestId,
     };
@@ -162,15 +134,6 @@ describe('release governance PostgreSQL concurrency and idempotency', () => {
         actor: manager(),
         releaseId,
         expectedVersion: 99n,
-        gitSha: GIT_SHA,
-        buildId: row.rows[0].build_id,
-        applicationVersion: '1.4.0',
-        migrationHead: '0021_release_governance',
-        uatCycleId: row.rows[0].uat_cycle_id,
-        gates: passGates,
-        risks: [],
-        uatStatus: 'ACCEPTED',
-        residualRiskStatus: 'ACCEPTED',
         reauthenticationSecret: 'secret',
         requestId: `rel-stale-${Date.now()}`,
       }),
