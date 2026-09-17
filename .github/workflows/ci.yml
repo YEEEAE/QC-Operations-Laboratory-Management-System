@@ -49,6 +49,9 @@ jobs:
       - name: Format
         run: pnpm format:check
 
+      - name: Git whitespace check
+        run: git diff --check HEAD
+
       - name: Lint
         run: pnpm lint
 

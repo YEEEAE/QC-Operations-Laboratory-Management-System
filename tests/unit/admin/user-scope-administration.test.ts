@@ -16,10 +16,7 @@ import {
 } from '../../../src/shared/authorization/p05-authority.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 
-const scope = (
-  kind: UserScopeRecord['kind'],
-  value: string | null = null,
-): UserScopeRecord => ({
+const scope = (kind: UserScopeRecord['kind'], value: string | null = null): UserScopeRecord => ({
   id: `scope-${kind}`,
   userId: 'member-1',
   kind,
@@ -59,11 +56,9 @@ describe('AssignUserScopeUseCase', () => {
   it('grants exactly one scope and leaves every unrelated scope untouched', async () => {
     const remaining = [scope('SITE', 'site-1'), scope('DOMAIN', 'quality')];
     const repo = repository({
-      assignUserScope: vi.fn().mockResolvedValue([
-        scope('SITE', 'site-1'),
-        scope('DOMAIN', 'quality'),
-        scope('GLOBAL'),
-      ]),
+      assignUserScope: vi
+        .fn()
+        .mockResolvedValue([scope('SITE', 'site-1'), scope('DOMAIN', 'quality'), scope('GLOBAL')]),
     });
     const result = await new AssignUserScopeUseCase(repo).execute({
       actor: actor(),

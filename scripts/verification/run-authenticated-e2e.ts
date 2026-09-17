@@ -102,7 +102,6 @@ async function main(): Promise<void> {
   env.E2E_EVIDENCE_OUTPUT = output;
 
   let server: ReturnType<typeof spawn> | undefined;
-  let databaseUrl = env.QC_TEST_DATABASE_URL;
   try {
     const buildCode = await run(resolve('node_modules/.bin/astro'), ['build'], env);
     if (buildCode !== 0) fail(`Exact build failed with exit code ${buildCode}.`);
@@ -121,7 +120,7 @@ async function main(): Promise<void> {
       fail(`Release identity generation failed with exit code ${identityCode}.`);
 
     const container = await startPostgresContainer();
-    databaseUrl = container.getConnectionUri();
+    const databaseUrl = container.getConnectionUri();
     env.DATABASE_URL = databaseUrl;
     env.QC_TEST_DATABASE_URL = databaseUrl;
     env.QC_SEED_ALLOW_NON_PRODUCTION = 'true';

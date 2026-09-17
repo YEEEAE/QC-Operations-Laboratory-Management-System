@@ -1,6 +1,5 @@
 import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
-import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditService } from '../../../shared/audit/audit-service.js';
 import type { UserRepository } from '../ports/user-repository.js';

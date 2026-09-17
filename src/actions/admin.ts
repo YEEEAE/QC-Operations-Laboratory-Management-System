@@ -22,7 +22,10 @@ const withErrors = async <T>(work: () => Promise<T>, requestId?: string): Promis
     return await work();
   } catch (error) {
     const mapped = toActionError(error, requestId);
-    throw new ActionError({ code: astroActionCodeFor(mapped.error.code), message: mapped.error.code });
+    throw new ActionError({
+      code: astroActionCodeFor(mapped.error.code),
+      message: mapped.error.code,
+    });
   }
 };
 const requireActor = (actor: unknown) => {

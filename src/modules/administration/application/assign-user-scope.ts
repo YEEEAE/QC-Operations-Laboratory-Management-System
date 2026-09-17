@@ -25,8 +25,7 @@ export class AssignUserScopeUseCase {
     requestId: string;
     reason?: string;
   }) {
-    if (!isScopeKind(input.kind))
-      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    if (!isScopeKind(input.kind)) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const normalized = normalizeScopeValue(input.kind, input.value);
     if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     this.authorize(input);

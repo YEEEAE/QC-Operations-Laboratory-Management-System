@@ -6,12 +6,17 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `02d94fa48fa5e0ecca0150aa16d1a42997832587` on `main`. The earlier yazeed owner-control work (tasks 001–006) is now **committed**; the working tree currently holds only the uncommitted closure changes of `QC-SYSTEM-OWNER-YAZEED-FINAL-CLOSURE-005` (13 modified + 7 new paths, `1547 insertions / 210 deletions`).
-- Fresh local evidence on this HEAD + working tree: `pnpm typecheck` (`astro check`, 729 files) **PASS / 0 errors**; `tests/unit/admin` **65/65 PASS** (6 files). Full `pnpm test:unit` observed **75 files / 485 tests → 484 PASS, 1 FAIL** at `tests/unit/ui/app-shell.test.ts` (a source-text guard on `src/ui/client/dialog.ts` that the dialog refactor invalidated); the guard was then satisfied in source but **NOT re-run** → treat full-unit status as `NOT VERIFIED` for the current tree.
-- NOT RUN on this tree: `format:check`, `lint`, `test:architecture`, `build`, `git diff --check`, Playwright, `test:integration`, `test:migrations`, `test:concurrency`, `test:security`, `system-owner:check`, `system-owner:reconcile`. Older lint/format FAILs (`scripts/verification/run-authenticated-e2e.ts:105`, two system-background tests) and the tracked `.DS_Store` hygiene failure are on record and were **not** re-checked.
-- Migration source head remains `0023_uat_evidence` with **no new migration** in this task. Release identity `rel-b6af9b842676c931` / build `local-1686d2951e9e` is **stale** relative to this tree; applied DB head, CI, authenticated E2E, UAT, provider, and restore evidence are still not current/verified.
-- Docker daemon is **unavailable** on this host (socket `~/.docker/run/docker.sock` missing), so PostgreSQL 18 / Testcontainers execution is `BLOCKED`; UAT validator still reports `sessions=0`.
+- Exact current HEAD: `5b1b7466d49e275eb655d6252ef9f1eb911d8426` on `main`. The working tree contains Task `QC-CLOSURE-001` fixes (format/lint and staged removal of four tracked `.DS_Store` files); no commit, push, or deployment occurred.
+- Fresh local evidence on this HEAD + working tree: frozen install, format, lint, typecheck (`732 files`, 0 errors/0 warnings), architecture, technical-debt contract, unit (`75 files / 485 tests`), build, and staged/unstaged `git diff --check` are all **PASS**. Release identity/verification is **PASS** for `rel-bdb926bef313c5c0`, build `qc-closure-001-5b1b7466`, source migration head `0023_uat_evidence` (checksum `a1ff60a7dbffbc8906b3f648f88a50bbeb96e63e45de8d4b8169f4235d1b2fd6`), and dirty working tree.
+- Node is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker remains **unavailable** (missing `~/.docker/run/docker.sock`), so PostgreSQL/Testcontainers suites and authenticated E2E are **BLOCKED**; UAT remains unexecuted.
+- GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+
+## [2026-09-18] — QC-CLOSURE-001 / baseline, CI, and repository hygiene
+
+- Changed: removed four tracked `.DS_Store` files; applied canonical Prettier output; removed two unused assignments/imports that made ESLint fail; added the required Git whitespace gate to canonical CI.
+- Evidence: frozen install, format, lint, typecheck, architecture, tech-debt, unit `75/485`, build, release identity/verification, and both diff checks PASS; no tracked `.DS_Store` remains. Exact-head GitHub CI run `35284944134` has zero steps because the account is billing-locked.
+- State: PARTIAL / BLOCKED (local repository defects closed; Node 22 mismatch, Docker-backed suites, authenticated E2E, and remote CI cannot be closed locally).
 
 ## [2026-09-18] — QC-SYSTEM-OWNER-YAZEED-FINAL-CLOSURE-005 / explicit role+scope admin, dialogs, stale UX
 

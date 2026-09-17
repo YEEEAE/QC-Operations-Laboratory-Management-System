@@ -19,7 +19,9 @@ async function signIn(page: Page): Promise<void> {
 }
 
 test.describe('decorative motion boundaries', () => {
-  test('renders the fixed local Lottie background below authenticated content', async ({ page }) => {
+  test('renders the fixed local Lottie background below authenticated content', async ({
+    page,
+  }) => {
     requireFixture();
     await signIn(page);
     await page.goto('/dashboard');
@@ -31,7 +33,9 @@ test.describe('decorative motion boundaries', () => {
       'none',
     );
     const layering = await page.evaluate(() => ({
-      background: Number(getComputedStyle(document.querySelector('[data-system-background]')!).zIndex),
+      background: Number(
+        getComputedStyle(document.querySelector('[data-system-background]')!).zIndex,
+      ),
       content: Number(getComputedStyle(document.querySelector('.system-content')!).zIndex),
     }));
     expect(layering.content).toBeGreaterThan(layering.background);

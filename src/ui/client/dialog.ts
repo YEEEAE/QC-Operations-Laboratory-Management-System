@@ -124,9 +124,7 @@ export function initDialogs(root: ParentNode = document): void {
     dialog.dataset.dialogEnhanced = 'true';
     root
       .querySelectorAll<HTMLElement>(`[data-dialog-open="${dialog.id}"]`)
-      .forEach((button) =>
-        button.addEventListener('click', () => openDialog(dialog, button)),
-      );
+      .forEach((button) => button.addEventListener('click', () => openDialog(dialog, button)));
     dialog
       .querySelectorAll<HTMLElement>('[data-dialog-close]')
       .forEach((button) => button.addEventListener('click', () => dialog.close('cancel')));

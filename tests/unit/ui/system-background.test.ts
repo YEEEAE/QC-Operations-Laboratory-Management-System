@@ -25,19 +25,21 @@ describe('system background contracts', () => {
     expect(component).toContain('position: fixed');
     expect(component).toContain('z-index: 0');
     expect(component).toContain('data-system-background-canvas');
-    expect(component).toContain("z-index: 2");
+    expect(component).toContain('z-index: 2');
   });
 
   it('uses the pinned official local dotLottie runtime with a static fallback', () => {
     const component = readFileSync(componentPath, 'utf8');
     expect(component).toContain('data-motion="static"');
     expect(component).toContain('radial-gradient');
-    expect(component).toContain("@lottiefiles/dotlottie-web");
+    expect(component).toContain('@lottiefiles/dotlottie-web');
     expect(component).toContain("'/assets/background.lottie'");
     expect(component).toContain("'/assets/dotlottie-player.wasm'");
     expect(component).toContain('setWasmUrl');
     expect(component).not.toMatch(/https?:\/\//);
-    const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as { dependencies: Record<string, string> };
+    const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
     expect(packageJson.dependencies['@lottiefiles/dotlottie-web']).toBe('0.80.0');
     expect(existsSync(lottiePath)).toBe(true);
     expect(existsSync(wasmPath)).toBe(true);
@@ -58,9 +60,9 @@ describe('system background contracts', () => {
     const baseLayout = readFileSync(baseLayoutPath, 'utf8');
     expect(baseLayout).toContain('<SystemBackground />');
     expect(baseLayout).toContain('<div class="system-content">');
-    expect(readFileSync(new URL('../../../src/ui/styles/global.css', import.meta.url), 'utf8')).toMatch(
-      /\.system-content\s*\{[\s\S]*?z-index:\s*1;/,
-    );
+    expect(
+      readFileSync(new URL('../../../src/ui/styles/global.css', import.meta.url), 'utf8'),
+    ).toMatch(/\.system-content\s*\{[\s\S]*?z-index:\s*1;/);
   });
 
   it('keeps the login renderer separate from the authenticated system background', () => {

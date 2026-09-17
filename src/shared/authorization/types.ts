@@ -20,7 +20,12 @@ export type ScopeKind = (typeof SCOPE_KINDS)[number];
  * Scope kinds that always name a collection, so a non-empty value is required
  * (this mirrors the persistence CHECK constraint on qc.user_scopes).
  */
-export const NAMED_SCOPE_KINDS = ['TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN'] as const satisfies readonly ScopeKind[];
+export const NAMED_SCOPE_KINDS = [
+  'TEAM',
+  'DEPARTMENT',
+  'SITE',
+  'DOMAIN',
+] as const satisfies readonly ScopeKind[];
 
 /** GLOBAL is the whole-system grant: it is never qualified by a value. */
 export const VALUELESS_SCOPE_KINDS = ['GLOBAL'] as const satisfies readonly ScopeKind[];

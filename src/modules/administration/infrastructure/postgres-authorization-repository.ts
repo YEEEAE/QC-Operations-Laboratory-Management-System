@@ -11,13 +11,8 @@ import type {
   UserScopeRecord,
 } from '../ports/authorization-repository.js';
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
-import {
-  isProtectedOwnerScope,
-} from '../../../shared/authorization/p05-authority.js';
-import {
-  normalizeScopeValue,
-  type ScopeKind,
-} from '../../../shared/authorization/types.js';
+import { isProtectedOwnerScope } from '../../../shared/authorization/p05-authority.js';
+import { normalizeScopeValue, type ScopeKind } from '../../../shared/authorization/types.js';
 
 const role = (r: DatabaseRow<'roles'>): RoleRecord => ({
   id: r.id,

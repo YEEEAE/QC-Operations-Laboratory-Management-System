@@ -185,7 +185,8 @@ describe('admin action server-side denial', () => {
 
   beforeAll(() => {
     previousDatabaseUrl = process.env.DATABASE_URL;
-    process.env.DATABASE_URL = 'postgresql://qc:qc@127.0.0.1:5432/qc_admin_contract?sslmode=require';
+    process.env.DATABASE_URL =
+      'postgresql://qc:qc@127.0.0.1:5432/qc_admin_contract?sslmode=require';
     resetServerEnvForTests();
     resetPoolForTests();
   });
