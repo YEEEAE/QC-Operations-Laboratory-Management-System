@@ -1,6 +1,5 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { APPROVED_PERMISSION_CODES } from '../../../db/seeds/common';
 import { isPermissionCode } from '../../../src/shared/authorization/permissions';
 import {
   navigationGroups,
@@ -24,7 +23,13 @@ describe('navigation permission and route integrity', () => {
   });
 
   it('keeps ordinary operational navigation visible without granting mutations', () => {
-    const links = visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href));
+    const links = visibleNavigation({
+      id: 'member',
+      loginIdentity: 'member',
+      accountState: 'ACTIVE',
+      roles: [],
+      permissions: [],
+    }).flatMap((group) => group.items.map((item) => item.href));
     for (const href of [
       '/documents',
       '/change-requests',
@@ -36,13 +41,19 @@ describe('navigation permission and route integrity', () => {
       expect(links).toContain(href);
     }
     expect(links).toContain('/laboratory/tests');
-    expect(links).not.toContain('/quarantine/admin');
+    expect(links).toContain('/quarantine/admin');
     expect(links).not.toContain('/system/health');
-    expect(links).not.toContain('/admin');
+    expect(links).toContain('/admin');
   });
 
   it('shows Tasks to every authenticated member without granting task actions', () => {
-    const links = visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href));
+    const links = visibleNavigation({
+      id: 'member',
+      loginIdentity: 'member',
+      accountState: 'ACTIVE',
+      roles: [],
+      permissions: [],
+    }).flatMap((group) => group.items.map((item) => item.href));
     expect(links).toContain('/tasks');
     expect(
       navigationGroups.find((group) => group.id === 'work')?.items[0]?.capability,
@@ -52,16 +63,26 @@ describe('navigation permission and route integrity', () => {
   it('supports each canonical dashboard permission independently', () => {
     for (const permission of ['PERM-DASH-VIEW', 'PERM-DASH-MANAGEMENT', 'PERM-DASH-ADMIN']) {
       expect(
-        visibleNavigation([permission]).flatMap((group) => group.items.map((item) => item.href)),
+        visibleNavigation({
+          id: 'member',
+          loginIdentity: 'member',
+          accountState: 'ACTIVE',
+          roles: [],
+          permissions: [{ code: permission as never, scopes: ['GLOBAL'] }],
+        }).flatMap((group) => group.items.map((item) => item.href)),
       ).toContain('/dashboard');
     }
   });
 
   it('exposes every implemented navigation page to the system-owner permission set', () => {
     const allLinks = navigationGroups.flatMap((group) => group.items.map((item) => item.href));
-    const visibleLinks = visibleNavigation(APPROVED_PERMISSION_CODES).flatMap((group) =>
-      group.items.map((item) => item.href),
-    );
+    const visibleLinks = visibleNavigation({
+      id: 'yazeed',
+      loginIdentity: 'yazeed',
+      accountState: 'ACTIVE',
+      roles: ['SYSTEM_OWNER'],
+      permissions: [],
+    }).flatMap((group) => group.items.map((item) => item.href));
     expect(visibleLinks).toEqual(allLinks);
   });
 

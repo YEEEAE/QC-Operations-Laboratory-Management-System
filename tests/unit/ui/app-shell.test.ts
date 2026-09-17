@@ -5,11 +5,10 @@ const readUi = (path: string) =>
   readFileSync(new URL(`../../../src/ui/${path}`, import.meta.url), 'utf8');
 
 describe('enterprise application shell contracts', () => {
-  it('derives context from the current route and passes only active capabilities to navigation', () => {
+  it('derives context from the current route and passes the server actor to navigation', () => {
     const layout = readUi('layouts/AppLayout.astro');
     expect(layout).toContain('routeBreadcrumbs(Astro.url.pathname)');
-    expect(layout).toContain('actor?.permissions');
-    expect(layout).toContain('activeCapabilities');
+    expect(layout).toContain('<Sidebar actor={actor} />');
   });
 
   it('provides an operable mobile navigation control and keeps collapsed state on the workspace', () => {

@@ -1,10 +1,8 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
-import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const allowed = canAccessAdminRoute(actor, 'scopes');
 ---
 
 <AppLayout title="Scopes · Administration" locale="en" direction="ltr">
@@ -19,17 +17,7 @@ const allowed = canAccessAdminRoute(actor, 'scopes');
     </div>
     <a href="/admin">Back to administration</a>
   </section>
-  {
-    !allowed ? (
-      <section class="denied" role="alert">
-        <h2>Scope management is not available</h2>
-        <p>
-          Managing scopes requires the explicit scope-assignment permission. Role membership
-          alone does not authorize this workspace.
-        </p>
-      </section>
-    ) : (
-      <div class="grid">
+  <div class="grid">
         <section class="panel">
           <p class="eyebrow">SCOPE KINDS</p>
           <h2>Canonical vocabulary</h2>
@@ -80,9 +68,7 @@ const allowed = canAccessAdminRoute(actor, 'scopes');
             <a class="button" href="/admin/users">Browse members</a>
           </div>
         </section>
-      </div>
-    )
-  }
+  </div>
 </AppLayout>
 <style>
   .page-head {

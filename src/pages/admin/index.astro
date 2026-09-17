@@ -1,18 +1,10 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
-import {
-  canAccessAdminRoute,
-  hasAdminGrant,
-} from '../../shared/authorization/admin-workspace.js';
+import { canAccessAdminRoute, hasAdminGrant } from '../../shared/authorization/admin-workspace.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const allowed = canAccessAdminRoute(actor, 'admin');
-const canUsers = canAccessAdminRoute(actor, 'users');
 const canCreateUser = canAccessAdminRoute(actor, 'usersNew');
-const canRoles = canAccessAdminRoute(actor, 'roles');
-const canPermissions = canAccessAdminRoute(actor, 'permissions');
-const canScopes = canAccessAdminRoute(actor, 'scopes');
 const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
 ---
 
@@ -27,63 +19,27 @@ const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
       </p>
     </div>
   </section>
-  {
-    !allowed ? (
-      <section class="denied" role="alert">
-        <h2>Administration is not available</h2>
-        <p>
-          This workspace requires an explicit administration permission grant. Role membership
-          alone does not authorize member or permission changes.
-        </p>
-      </section>
-    ) : (
-      <div class="grid">
+  <div class="grid">
         <section class="panel">
           <p class="eyebrow">UI-ADM-USR-001</p>
           <h2>Users</h2>
           <p>Create, inspect, update, disable, and reset member accounts within your authority.</p>
-          {canUsers ? (
-            <div class="links">
-              <a class="button" href="/admin/users">
-                Open users
-              </a>
-              {canCreateUser && (
-                <a class="button secondary" href="/admin/users/new">
-                  Create user
-                </a>
-              )}
-            </div>
-          ) : (
-            <p class="empty">You are not authorized for user administration.</p>
-          )}
+          <div class="links">
+            <a class="button" href="/admin/users">Open users</a>
+            {canCreateUser && <a class="button secondary" href="/admin/users/new">Create user</a>}
+          </div>
         </section>
         <section class="panel">
           <p class="eyebrow">UI-ADM-ROLE-001</p>
           <h2>Roles</h2>
           <p>Inspect roles and manage their canonical permission grants with version checks.</p>
-          {canRoles ? (
-            <div class="links">
-              <a class="button" href="/admin/roles">
-                Open roles
-              </a>
-            </div>
-          ) : (
-            <p class="empty">You are not authorized for role administration.</p>
-          )}
+          <div class="links"><a class="button" href="/admin/roles">Open roles</a></div>
         </section>
         <section class="panel">
           <p class="eyebrow">UI-ADM-PERM-001</p>
           <h2>Permissions</h2>
           <p>Read-only catalog of canonical permissions. Grants change only through roles.</p>
-          {canPermissions ? (
-            <div class="links">
-              <a class="button" href="/admin/permissions">
-                Open permissions
-              </a>
-            </div>
-          ) : (
-            <p class="empty">You are not authorized to view permissions.</p>
-          )}
+          <div class="links"><a class="button" href="/admin/permissions">Open permissions</a></div>
         </section>
         <section class="panel">
           <p class="eyebrow">UI-ADM-SCOPE-001</p>
@@ -91,15 +47,7 @@ const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
           <p>
             Manage member authorization scopes. Self-grants are always blocked and audited.
           </p>
-          {canScopes ? (
-            <div class="links">
-              <a class="button" href="/admin/scopes">
-                Open scopes
-              </a>
-            </div>
-          ) : (
-            <p class="empty">You are not authorized for scope administration.</p>
-          )}
+          <div class="links"><a class="button" href="/admin/scopes">Open scopes</a></div>
         </section>
         {canAudit && (
           <section class="panel">
@@ -113,9 +61,7 @@ const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
             </div>
           </section>
         )}
-      </div>
-    )
-  }
+  </div>
 </AppLayout>
 <style>
   .page-head {

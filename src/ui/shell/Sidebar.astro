@@ -2,9 +2,10 @@
 import { visibleNavigation } from '../navigation/navigation';
 import Icon from '../components/Icon.astro';
 import type { IconName } from '../components/icon';
-interface Props { capabilities?: string[]; activePath?: string; collapsed?: boolean; }
-const { capabilities = [], activePath = Astro.url.pathname, collapsed = false } = Astro.props;
-const groups = visibleNavigation(capabilities);
+import type { ActorContext } from '../../shared/authorization/types';
+interface Props { actor?: ActorContext; activePath?: string; collapsed?: boolean; }
+const { actor, activePath = Astro.url.pathname, collapsed = false } = Astro.props;
+const groups = visibleNavigation(actor);
 ---
 <nav class="sidebar" data-collapsed={collapsed} aria-label="Primary navigation">
   <div class="brand"><span class="brand-mark" aria-hidden="true">QC</span><span class="brand-name">QC Operations</span></div>

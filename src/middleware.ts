@@ -16,6 +16,7 @@ import {
 } from './shared/observability/telemetry';
 import { createRequestLogger } from './shared/observability/logger';
 import { cleanAstroPagePath } from './shared/routing/clean-page-path';
+import { pageAccessDecision } from './shared/routing/page-access';
 import { getServerEnv } from './config/env';
 import { PROBLEM_CONTENT_TYPE } from './config/constants';
 import {
@@ -26,8 +27,6 @@ import {
 } from './shared/http/health-gates.js';
 
 export { headerEnvironmentForHealth, liveHealthResponse, unavailableHealthResponse };
-
-const publicPaths = new Set(['/login']);
 
 // Fixed-window limiter for high-risk POST routes; thresholds are config-driven
 // (SECURITY-ARCHITECTURE §33/§141). This is abuse protection only — never
@@ -193,6 +192,9 @@ export const onRequest = defineMiddleware(
     }
 
     let response: Response;
+    // Route visibility is resolved after the server-derived session actor is
+    // available. This is a server boundary, never a navigation-only control.
+    const pageAccess = pageAccessDecision(locals.actor, url.pathname);
 
     // Astro form Actions are executed after user middleware. Login's limiter
     // therefore lives inside `actions.login`, where Astro can redirect normal
@@ -206,7 +208,10 @@ export const onRequest = defineMiddleware(
     const rateLimitResolution = isLoginActionPost
       ? undefined
       : resolveHighRiskRateLimitPolicy(url.pathname, request.method, process.env, env.NODE_ENV);
-    if (rateLimitResolution === 'FAIL_CLOSED') {
+    if (pageAccess === 'YAZEED_ONLY') {
+      // Do not disclose owner-private routes to authenticated non-owners.
+      response = new Response(null, { status: 404 });
+    } else if (rateLimitResolution === 'FAIL_CLOSED') {
       // Production without configured thresholds: fail closed (§142).
       requestLogger.warn(
         {
@@ -257,8 +262,7 @@ export const onRequest = defineMiddleware(
     }
 
     if (
-      !publicPaths.has(url.pathname) &&
-      !locals.user &&
+      pageAccess === 'AUTHENTICATION_REQUIRED' &&
       !url.pathname.startsWith('/api/') &&
       response.status < 400
     ) {

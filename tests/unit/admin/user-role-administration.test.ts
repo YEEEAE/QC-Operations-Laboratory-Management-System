@@ -123,7 +123,7 @@ describe('role administration use cases', () => {
     );
   });
 
-  it('reads role membership only with the explicit role-view grant', async () => {
+  it('reads role membership for active users without granting role mutation authority', async () => {
     const repo = repository({ listUserRoles: vi.fn().mockResolvedValue([role('QUALITY')]) });
     const roles = await new ListUserRolesUseCase(repo).execute({
       actor: actor({ permissions: [{ code: 'PERM-ADM-ROLE-VIEW', scopes: ['GLOBAL'] }] }),
@@ -132,9 +132,9 @@ describe('role administration use cases', () => {
     expect(roles.map((entry) => entry.code)).toEqual(['QUALITY']);
     await expect(
       new ListUserRolesUseCase(repository()).execute({
-        actor: actor({ permissions: [{ code: 'PERM-ADM-ROLE-ASSIGN', scopes: ['GLOBAL'] }] }),
+        actor: actor({ permissions: [] }),
         userId: 'member-1',
       }),
-    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    ).resolves.toEqual([]);
   });
 });

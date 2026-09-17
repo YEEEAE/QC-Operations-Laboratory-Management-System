@@ -6,15 +6,12 @@ import { routeBreadcrumbs } from '../navigation/navigation';
 interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; scope?: string; approvalCount?: number; notificationCount?: number; userRole?: string; }
 const props = Astro.props;
 const actor = Astro.locals.actor;
-const activeCapabilities = Array.isArray(actor?.permissions)
-  ? actor.permissions.filter((permission) => permission.active !== false).map((permission) => permission.code)
-  : [];
 const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 ---
 <BaseLayout {...props}>
   <a class="skip-link" href="#main-content" data-skip-link>Skip to main content</a>
   <div class="app-shell" data-app-shell data-mobile-nav-open="false" data-sidebar-collapsed="false">
-    <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation"><slot name="sidebar"><Sidebar capabilities={activeCapabilities} /></slot></aside>
+    <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>
     <div class="app-workspace" data-app-workspace>
       <header class="app-topbar"><slot name="topbar"><Topbar breadcrumbs={breadcrumbs} userName={actor?.id} userRole={props.userRole} scope={props.scope ?? 'Authorized operational scope'} approvalCount={props.approvalCount} notificationCount={props.notificationCount} /></slot></header>
       <main id="main-content" class="app-main"><slot /></main>

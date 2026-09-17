@@ -60,12 +60,10 @@ describe('administration read use cases', () => {
     expect(repo.listUserScopes).toHaveBeenCalledWith('member-1');
   });
 
-  it('denies scope reads to an Admin role without the assignment grant', async () => {
+  it('allows active users to read scopes without granting assignment authority', async () => {
     const repo = repository();
-    await expect(
-      new ListUserScopesUseCase(repo).execute({ actor: actor([]), userId: 'member-1' }),
-    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
-    expect(repo.listUserScopes).not.toHaveBeenCalled();
+    await new ListUserScopesUseCase(repo).execute({ actor: actor([]), userId: 'member-1' });
+    expect(repo.listUserScopes).toHaveBeenCalledWith('member-1');
   });
 
   it('reads role grants and reports missing roles as not found', async () => {
@@ -84,12 +82,10 @@ describe('administration read use cases', () => {
     ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
   });
 
-  it('denies role grant reads without the explicit view grant', async () => {
+  it('allows active users to read role grants without granting mutation authority', async () => {
     const repo = repository();
-    await expect(
-      new ListRolePermissionsUseCase(repo).execute({ actor: actor([]), roleId: 'role-admin' }),
-    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
-    expect(repo.listRolePermissions).not.toHaveBeenCalled();
+    await new ListRolePermissionsUseCase(repo).execute({ actor: actor([]), roleId: 'role-admin' });
+    expect(repo.listRolePermissions).toHaveBeenCalledWith('role-admin');
   });
 
   it('replaces role grants with version, actor, and audit through the repository', async () => {

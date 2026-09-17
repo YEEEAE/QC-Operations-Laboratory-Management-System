@@ -84,7 +84,7 @@ describe('BI-01 mobile drawer background isolation', () => {
   it('does not alter server authorization or navigation visibility', () => {
     const source = layout();
     expect(source).toContain('Astro.locals.actor');
-    expect(source).toContain('activeCapabilities');
+    expect(source).toContain('<Sidebar actor={actor} />');
     expect(source).toContain('routeBreadcrumbs(Astro.url.pathname)');
     expect(source).not.toContain('PERM-');
   });

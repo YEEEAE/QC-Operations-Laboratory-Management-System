@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { APPROVED_PERMISSION_CODES } from '../../../db/seeds/common.js';
 import { visibleNavigation } from '../../../src/ui/navigation/navigation.js';
 
 /**
@@ -93,7 +92,7 @@ describe('universal shell preservation', () => {
     expect(layout).toContain('<Topbar');
     expect(layout).toContain('breadcrumbs');
     expect(layout).toContain('routeBreadcrumbs(Astro.url.pathname)');
-    expect(layout).toContain('activeCapabilities');
+    expect(layout).toContain('<Sidebar actor={actor} />');
     // Authorized scope/count context passes through; defaults never fake a zero.
     expect(layout).toContain('props.scope');
     expect(layout).toContain('props.approvalCount');
@@ -178,18 +177,26 @@ describe('universal shell preservation', () => {
     expect(layout).not.toContain('smooth');
   });
 
-  it('hides owner-exclusive navigation without grants while keeping ordinary Tasks visible', () => {
-    const granted = visibleNavigation(APPROVED_PERMISSION_CODES).flatMap((group) =>
-      group.items.map((item) => item.href),
-    );
+  it('shows all normal navigation to active users and isolates owner-private navigation', () => {
+    const granted = visibleNavigation({
+      id: 'yazeed',
+      loginIdentity: 'yazeed',
+      accountState: 'ACTIVE',
+      roles: ['SYSTEM_OWNER'],
+      permissions: [],
+    }).flatMap((group) => group.items.map((item) => item.href));
     expect(granted).toContain('/system/health');
     expect(granted).toContain('/admin/users');
-    const ungranted = visibleNavigation([]).flatMap((group) =>
-      group.items.map((item) => item.href),
-    );
+    const ungranted = visibleNavigation({
+      id: 'member',
+      loginIdentity: 'member',
+      accountState: 'ACTIVE',
+      roles: [],
+      permissions: [],
+    }).flatMap((group) => group.items.map((item) => item.href));
     expect(ungranted).toContain('/tasks');
     expect(ungranted).not.toContain('/system/health');
-    expect(ungranted).not.toContain('/admin');
-    expect(ungranted).not.toContain('/admin/users');
+    expect(ungranted).toContain('/admin');
+    expect(ungranted).toContain('/admin/users');
   });
 });

@@ -1,22 +1,11 @@
-import { authorize } from '../../../shared/authorization/authorize.js';
+import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuthorizationRepository } from '../ports/authorization-repository.js';
 export class ListPermissionsUseCase {
   constructor(private readonly repository: AuthorizationRepository) {}
   async execute(input: { actor: ActorContext }) {
-    authorize(
-      {
-        actor: input.actor,
-        permission: 'PERM-ADM-PERMISSION-VIEW',
-        action: 'VIEW',
-        entity: { type: 'PERMISSION', id: 'permissions', state: 'ACTIVE' },
-        scope: {},
-        currentVersion: 1,
-        expectedVersion: 1,
-        businessCondition: true,
-      },
-      { throwOnDeny: true },
-    );
+    if (input.actor.accountState !== 'ACTIVE')
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     return this.repository.listPermissions();
   }
 }

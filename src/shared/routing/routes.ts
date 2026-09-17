@@ -498,7 +498,7 @@ function titleFor(path: string): string {
  * visibility default to AUTHENTICATED and prevents parallel policy lists.
  */
 export const routes: readonly CanonicalRoute[] = routeTuples.map(
-  ([id, path, page, _access, fileExpectation]) =>
+  ([id, path, page, , fileExpectation]) =>
     definePageRoute({
       id,
       path,
@@ -521,6 +521,24 @@ export function getRouteById(id: string): CanonicalRoute | undefined {
 
 export function getRouteByPath(path: string): CanonicalRoute | undefined {
   return routes.find((route) => route.path === path);
+}
+
+/**
+ * Resolves a browser pathname against the canonical route templates. This is
+ * deliberately shared by the server guard and presentation metadata so a
+ * dynamic route cannot accidentally bypass its declared visibility.
+ */
+export function getRouteByPathname(pathname: string): CanonicalRoute | undefined {
+  const pathSegments = pathname.split('/').filter(Boolean);
+  return routes.find((route) => {
+    const routeSegments = route.path.split('/').filter(Boolean);
+    return (
+      routeSegments.length === pathSegments.length &&
+      routeSegments.every(
+        (segment, index) => segment.startsWith('[') || segment === pathSegments[index],
+      )
+    );
+  });
 }
 
 export function getRequiredRouteFiles(): readonly CanonicalRoute['file'][] {

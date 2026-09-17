@@ -2,6 +2,8 @@ import type { PermissionCode } from '../../shared/authorization/permissions';
 import type { IconName } from '../components/icon';
 import { copy } from '../../shared/copy/ux-vocabulary';
 import { getRouteByPath } from '../../shared/routing/routes';
+import { pageAccessDecision } from '../../shared/routing/page-access';
+import type { ActorContext } from '../../shared/authorization/types';
 
 export interface NavigationItem {
   /** Canonical registry identity, derived from href so drift is testable. */
@@ -269,16 +271,11 @@ export const navigationRouteIds = navigationGroups.flatMap((group) =>
   group.items.map((item) => item.routeId),
 );
 
-export function visibleNavigation(capabilities: readonly string[] = []) {
-  const allowed = new Set(capabilities);
+export function visibleNavigation(actor: ActorContext | undefined) {
   return navigationGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => {
-        if (!item.capability) return true;
-        const required = Array.isArray(item.capability) ? item.capability : [item.capability];
-        return required.some((permission) => allowed.has(permission));
-      }),
+      items: group.items.filter((item) => pageAccessDecision(actor, item.href) === 'ALLOWED'),
     }))
     .filter((group) => group.items.length > 0);
 }

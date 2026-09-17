@@ -138,11 +138,11 @@ describe('identity administration use cases', () => {
     expect(result[0]?.loginIdentity).toBe('member');
   });
 
-  it('denies listing to an Admin role without the explicit permission', async () => {
+  it('allows active users to list safe member views without mutation authority', async () => {
     const users = new MemoryUsers([user()]);
-    await expect(new ListUsersUseCase(users).execute({ actor: actor([]) })).rejects.toMatchObject({
-      code: 'AUTHZ_PERMISSION_MISSING',
-    });
+    await expect(new ListUsersUseCase(users).execute({ actor: actor([]) })).resolves.toHaveLength(
+      1,
+    );
   });
 
   it('denies listing to inactive accounts even with the grant', async () => {
@@ -164,8 +164,8 @@ describe('identity administration use cases', () => {
     await expect(
       useCase.execute({ actor: actor([manageUsers]), userId: 'missing' }),
     ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
-    await expect(useCase.execute({ actor: actor([]), userId: found.id })).rejects.toMatchObject({
-      code: 'AUTHZ_PERMISSION_MISSING',
+    await expect(useCase.execute({ actor: actor([]), userId: found.id })).resolves.toMatchObject({
+      id: found.id,
     });
   });
 
