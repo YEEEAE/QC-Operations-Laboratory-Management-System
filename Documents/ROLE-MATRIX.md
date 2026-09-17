@@ -563,9 +563,9 @@ POLICY-DEPENDENT
 
 # 26. Supervisor Release Position
 
-Release authority ليست implicit في Role.
-
-تحدد لاحقًا.
+حسب قرار P-05 المعتمد، Supervisor يملك Release فقط مع `PERM-QUAR-RELEASE`
+والـscope/state/version/SoD والـceremony المطلوبة. هذا لا يجعل Supervisor
+جهة اعتماد عامة، ولا يمنح Admin صلاحية Release.
 
 ---
 
@@ -742,21 +742,10 @@ Approve equipment change
 
 # 37. Manager Release Position
 
-Manager قد يكون المرشح الطبيعي لـRelease.
-
-لكن القرار النهائي لا يعتمد هنا.
-
-الحالة:
-
-```text
-POLICY-DEPENDENT
-```
-
-وسيتم تثبيتها في:
-
-```text
-PERMISSION-MATRIX.md
-```
+قرار P-05 المعتمد يجيز لـManager تنفيذ Release Receiving فقط مع
+`PERM-QUAR-RELEASE` وجميع شروط state/scope/version/SoD/ceremony. أما اعتماد
+Production Release النهائي فهو قرار P-07 منفصل ومقصور على Manager أو
+`yazeed/SYSTEM_OWNER` بتوقيع واحد بعد اجتياز البوابات الخادمية.
 
 ---
 
@@ -1058,7 +1047,7 @@ Directly modify historical records through admin UI
 | Submit own work            | Yes where permitted | Yes                | Yes where permitted           | Not automatic                         |
 | Review others              | Not default         | Primary candidate  | Yes where permitted           | Not automatic                         |
 | Approve controlled records | Not default         | Policy-dependent   | Primary candidate             | Not automatic                         |
-| Material Release           | Not default         | Policy-dependent   | Policy-dependent              | Not automatic                         |
+| Material Release           | Not default         | ALLOW with P-05 permission | ALLOW with P-05 permission | DENY |
 | Team oversight             | No                  | Primary            | Broader oversight             | No                                    |
 | Management oversight       | No                  | Limited            | Primary                       | Technical only                        |
 | Manage users               | No                  | No                 | No                            | No — SYSTEM_OWNER only                |

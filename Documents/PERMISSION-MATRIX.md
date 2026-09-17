@@ -770,31 +770,35 @@ PERM-QUAR-ARCHIVE
 | Import Receiving Data   |        DENY |     POLICY |      POLICY | POLICY |
 | Start Inspection        | CONDITIONAL |      ALLOW | CONDITIONAL |   DENY |
 | Place on HOLD           |      POLICY |     POLICY |      POLICY |   DENY |
-| Release System          |        DENY |     POLICY |      POLICY | POLICY |
+| Release System          |        DENY |       ALLOW |       ALLOW |   DENY |
 | Controlled Correction   |        DENY |     POLICY |      POLICY | POLICY |
 | Archive eligible record |        DENY |     POLICY |      POLICY | POLICY |
 
 ---
 
-# 42. Receiving Release Rule
+# 42. Receiving Release Rule — P-05 APPROVED
 
 `PERM-QUAR-RELEASE`
 
-يبقى:
+P-05 approves `Supervisor`, `Manager`, and the named `yazeed/SYSTEM_OWNER`
+as the receiving-release authority set. The explicit permission, scope,
+state, inspection consequence, version, and applicable ceremony checks still
+apply. `Admin` alone is denied. This closes the authority-role decision only;
+release signature scope remains `PD-32`.
 
 ```text
-DENY UNTIL BD-001 IS APPROVED
+ALLOW only for the approved P-05 authority set and explicit permission
 ```
 
 لكل Role.
 
-حتى يتم تحديد:
+The remaining open question is only:
 
 ```text
 Who can release?
 At which state?
 Does release require E-Signature?
-Can Admin ever release?
+Can release require E-Signature under the approved signature-scope policy?
 ```
 
 ---
@@ -1408,7 +1412,7 @@ PERM-ADM-AUDIT-VIEW
 | Reference Data          |     DENY |     POLICY |  POLICY | ALLOW |                   ALLOW |
 | System Config           |     DENY |       DENY |    DENY | ALLOW |                   ALLOW |
 | Security Config         |     DENY |       DENY |    DENY | ALLOW |                   ALLOW |
-| Template Administration |     DENY |     POLICY |  POLICY | POLICY |                  POLICY |
+| Template Administration |     DENY |     ALLOW |  ALLOW | DENY |                  ALLOW |
 | View Admin Audit        |     DENY |       DENY |  POLICY | ALLOW |                   ALLOW |
 
 ---
@@ -2332,7 +2336,7 @@ This record changed after you opened it. Reload before continuing.
 
 | Decision                        | Permission Impact           |
 | ------------------------------- | --------------------------- |
-| BD-001 Release authority        | PERM-QUAR-RELEASE           |
+| BD-001 Release authority (P-05 approved) | PERM-QUAR-RELEASE           |
 | BD-002 Release E-Signature      | Release signature policy    |
 | BD-003 Automatic NCR            | Inspection failure workflow |
 | BD-006 Retest count             | PERM-LAB-RETEST             |
@@ -2358,8 +2362,6 @@ This record changed after you opened it. Reload before continuing.
 الـPermissions التالية يجب أن تكون Runtime DENY حتى policy approval:
 
 ```text
-PERM-QUAR-RELEASE
-
 PERM-INSP-APPROVE
 where role policy unresolved
 

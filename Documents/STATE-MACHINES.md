@@ -1397,11 +1397,9 @@ Inspection result compatible with release
 No blocking HOLD
 ```
 
-Exact release compatibility:
-
-```text
-POLICY-DEPENDENT
-```
+Exact release compatibility remains fail-closed and source/policy-bound;
+P-05 resolves the authority role set, not scientific compatibility or
+signature scope.
 
 ---
 
@@ -1422,7 +1420,7 @@ PERM-QUAR-RELEASE
 State of permission:
 
 ```text
-DENY UNTIL BD-001/RD-006 APPROVED
+P-05 APPROVED: Supervisor / Manager / named yazeed with PERM-QUAR-RELEASE
 ```
 
 Additional result:

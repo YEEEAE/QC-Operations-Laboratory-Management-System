@@ -17,7 +17,14 @@
 
 # 1. Purpose
 
-## QC-CLOSURE-RELEASE-002 — Server-derived Production Release Evidence
+## QC-CLOSURE-POLICY-009 — Canonical Policy Closure Matrix
+
+All open/policy/source-dependent decisions are reconciled in
+`audit/100-percent/POLICY-CLOSURE-MATRIX.md`. `CLOSED` is policy closure
+only; missing QMS/provider/UAT/runtime evidence remains `OPEN`, `PARTIAL`, or
+`BLOCKED` and cannot become a release claim.
+
+## P-07 — Server-derived Production Release Evidence
 
 Release approval is traceable through `release_gate_evidence` and `release_risk_evidence`. Each record is tied to the exact release ID, Git SHA, build ID, application version, migration head, UAT cycle, candidate version, immutable reference, provenance, observed time, recorder, evidence version, and audit metadata. The browser submits only approval intent (`releaseId`, `expectedVersion`, and reauthentication secret); gate and risk truth is recomputed by the server and rechecked inside the approval transaction.
 
@@ -648,7 +655,7 @@ Current CI Evidence
 | REQ-QUAR-005 | Workflow State منفصل عن Inspection Result            | BR-QUAR-005 | —                          | all        | receiving_items        | APPROVED         |
 | REQ-QUAR-006 | Inspection Result منفصل عن Release System            | BR-QUAR-006 | —                          | all        | receiving_items        | APPROVED         |
 | REQ-QUAR-007 | PASS لا يعني Release تلقائيًا                        | BR-QUAR-007 | PERM-QUAR-RELEASE          | TR-RCV-006 | release_system         | APPROVED         |
-| REQ-QUAR-008 | Release action explicit                              | BR-QUAR-008 | PERM-QUAR-RELEASE          | TR-RCV-006 | receiving_items        | POLICY-DEPENDENT |
+| REQ-QUAR-008 | Release action explicit; P-05 authority set is Supervisor/Manager/yazeed | BR-QUAR-008 | PERM-QUAR-RELEASE | TR-RCV-006 | receiving_items | APPROVED (authority slice; signature scope remains PD-32) |
 | REQ-QUAR-009 | Inspection creation auto-populates Receiving context | BR-QUAR-010 | PERM-QUAR-START-INSPECTION | TR-RCV-003 | receiving + inspection | APPROVED         |
 | REQ-QUAR-010 | Duplicate definition لا تخترع                        | BR-QUAR-011 | —                          | TR-RCV-001 | receiving              | POLICY-DEPENDENT |
 | REQ-QUAR-011 | Controlled downstream data cannot be silently edited | BR-QUAR-012 | PERM-QUAR-CORRECT          | —          | receiving/audit        | APPROVED         |
@@ -690,7 +697,7 @@ SoD, or any unrelated policy-dependent permission.
 | REQ-INSP-012 | Approval verifies current version                    | BR-INSP-013       | PERM-INSP-APPROVE      | TR-INSP-006    | version                      | APPROVED         |
 | REQ-INSP-013 | Approval + required consequences are atomic          | BR-INSP-014       | PERM-INSP-APPROVE      | TR-INSP-006    | reports/receiving/audit      | APPROVED         |
 | REQ-INSP-014 | Scientific result separated from workflow state      | STATE-MACHINES    | —                      | —              | state/final_result           | APPROVED         |
-| REQ-INSP-015 | Final approver role must be explicitly approved      | Permission Matrix | PERM-INSP-APPROVE      | TR-INSP-006    | —                            | POLICY-DEPENDENT |
+| REQ-INSP-015 | Final approver role must be explicitly approved      | P-05 / Permission Matrix | PERM-INSP-APPROVE | TR-INSP-006 | — | APPROVED (authority slice; live evidence separate) |
 | REQ-INSP-016 | AI cannot create official result                     | BR-AI-007         | —                      | —              | —                            | APPROVED         |
 
 ---

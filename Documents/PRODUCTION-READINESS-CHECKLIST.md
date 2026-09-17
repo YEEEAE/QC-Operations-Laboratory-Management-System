@@ -10,7 +10,7 @@
 **Release Binding:** Exact Release ID + Git SHA + Build/Artifact ID + Migration Head  
 **Decision Model:** Evidence Before Assertion  
 **Operational Timezone:** `Asia/Riyadh`  
-**Final Release Authority:** POLICY-DEPENDENT  
+**Final Release Authority:** `Manager OR yazeed/SYSTEM_OWNER` (P-07; one signer)
 
 ---
 
@@ -362,7 +362,7 @@ Tier 1 gate.
 [ ] PASS — PASS does NOT automatically mean RELEASED
 [ ] PASS — HOLD behavior visible and controlled
 [ ] PASS — Unauthorized release denied
-[ ] PASS — Release policy remains blocked if authority unresolved
+[ ] PASS — Receiving release authority is P-05-bound; final production release authority is P-07-bound
 ```
 
 PASS→Released automatic coupling:
@@ -1044,7 +1044,6 @@ PRODUCTION DEPLOYED SUCCESSFULLY
 # 53. Deferred Readiness Decisions
 
 ```text
-PRD-DD-001 Named final production decision authority
 PRD-DD-002 Exact required sign-off ceremony
 PRD-DD-003 Exact RPO/RTO targets
 PRD-DD-004 Exact performance SLOs

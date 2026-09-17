@@ -11,6 +11,13 @@
 **Time Strategy:** UTC / `TIMESTAMPTZ`
 **Concurrency:** Version-based optimistic concurrency
 
+**Policy closure authority:** `audit/100-percent/POLICY-CLOSURE-MATRIX.md`
+
+Scientific values, source versions, effective dates, hashes, approval identity,
+reauthentication, signatures, and audit requirements are not inferred from a
+field name. Missing or unconfirmed policy data remains `SOURCE-DEPENDENT`,
+`POLICY-DEPENDENT`, or `UNCONFIRMED` and is consumed fail-closed.
+
 ---
 
 # 1. Purpose

@@ -3,6 +3,8 @@
 # QC Operations & Laboratory Management System
 ## PostgreSQL Database Architecture Specification — v1.0
 
+**Policy decision reconciliation:** `audit/100-percent/POLICY-CLOSURE-MATRIX.md` is the canonical matrix for unresolved scientific, authorization, retention, recovery, provider, and configuration decisions. Database structure must not promote a matrix record to `APPROVED` without its controlled source.
+
 **Document Path:** `Documents/DATABASE-ARCHITECTURE.md`  
 **Status:** FOUNDATION — APPROVED DATABASE ARCHITECTURE BASELINE  
 **Product:** QC Operations & Laboratory Management System  

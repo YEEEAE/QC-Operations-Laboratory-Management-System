@@ -1,10 +1,16 @@
 # Controlled Policy Decision Register — QC-100-CLOSURE-08 (R-007)
 
+> **Canonical reconciliation:** See `POLICY-CLOSURE-MATRIX.md` for the current
+> status of PD-01–PD-37 and the approved P-05/P-06/P-07 decisions. This legacy
+> register remains the detailed source map for the unresolved PD records; its
+> historical blanket statement that no item was closed is superseded only for
+> the explicitly approved slices documented in the canonical matrix.
+
 ## Master header
 
 - Repository: `YEEEAE/QC-Operations-Laboratory-Management-System`
 - Target: `main`
-- HEAD: `06b14cfa571275e76a3839e671fc635559408960` (recomputed fresh; old SHAs in prior audit sections were NOT reused)
+- HEAD at matrix audit start: `80c92eb6e4c9c21ec7f901d702288b506f9d4f03` (working tree changes are listed in the canonical matrix task)
 - Date: `2026-09-08`
 - Task: `QC-100-CLOSURE-08` — Controlled Scientific and Business Policy Decision Closure
 - Normative rule: **until a policy is approved, the software must fail closed.** No scientific limit, threshold,
@@ -138,51 +144,50 @@
 
 ## C. Release, approval, SoD authority
 
-### PD-08 — Release authority (who may release quarantined product)
+### PD-08 — Release authority (who may release quarantined product) — CLOSED authority slice
 
 - domain: quarantine/receiving
 - decision: which role/permission may execute RELEASE (`BR-QUAR-008` POLICY-DEPENDENT; `PERMISSION-MATRIX.md`).
 - why required: PASS ≠ released; release is a separate controlled fact.
-- current behavior: `ReleaseReceivingUseCase` default `denyByDefault` (`canRelease: () => false`,
-  `release-receiving.ts:10`); release additionally requires state `RELEASE_PENDING` + `PASS` + unreleased
-  + explicit `PERM-QUAR-RELEASE` (`release-receiving.ts:40-44`).
-- current source: `BR-QUAR-006/007` (APPROVED separation) + `BR-QUAR-008` (POLICY-DEPENDENT owner).
+- current behavior: P-05 authority set is enforced by `isP05Authority`; release additionally requires
+  `RELEASE_PENDING` + `PASS` + unreleased + explicit `PERM-QUAR-RELEASE` (`release-receiving.ts:26-49`).
+- current source: approved P-05 decision + `BR-QUAR-006/007` (APPROVED separation). Signature scope remains PD-32.
 - risk: unauthorized product release to stock/customers.
 - system default: DENY.
-- required approver/source: QMS-approved release-authority matrix (permission/scope/role binding).
-- implementation impact: none until approved; authority arrives as a `ReleasePolicy` implementation.
+- required approver/source: explicit project-owner P-05 decision for the authority role set; release signature scope remains PD-32.
+- implementation impact: existing P-05 authority and permission binding is the approved implementation; no role inference is allowed.
 - tests required: fail-closed suite ✅ + `release-state.test.ts` ✅.
-- status: OPEN.
+- status: CLOSED (authority role only; signature/evidence subdecisions remain open).
 
-### PD-09 — Laboratory approval authority
+### PD-09 — Laboratory approval authority — CLOSED authority slice
 
 - domain: laboratory
 - decision: who may approve a lab test (beyond holding the permission codes).
 - why required: approval certifies a scientific record.
 - current behavior: default `denyPolicy` throws (`approve-lab-test.ts:7-11`); dual permission check
   (`PERM-LAB-APPROVE` + `PERM-APR-APPROVE`), SoD (approver ≠ author), version check, source-drift check.
-- current source: `BR-APR-003/004/005/006` (APPROVED mechanics) + exact matrix `BR-APR-007` (POLICY-DEPENDENT).
+- current source: approved P-05 decision + `BR-APR-003/004/005/006` mechanics. Generic SoD matrix remains PD-11.
 - risk: self-approval or rubber-stamping.
 - system default: DENY.
-- required approver/source: QMS-approved lab approval matrix.
+- required approver/source: explicit project-owner P-05 decision for the authority role set; generic SoD remains PD-11.
 - implementation impact: none until approved.
 - tests required: fail-closed suite (deny + allow-path) ✅.
-- status: OPEN.
+- status: CLOSED (authority role only; live evidence separate).
 
-### PD-10 — Inspection approval authority
+### PD-10 — Inspection approval authority — CLOSED authority slice
 
 - domain: inspection
 - decision: who may approve an inspection report.
 - why required: approval publishes the official inspection outcome.
 - current behavior: default `denyByDefault` (`approve-inspection.ts:10`); dual permission + SoD + version +
   recorded-result conditions (`approve-inspection.ts:25-54`).
-- current source: same approval mechanics as PD-09.
+- current source: approved P-05 decision + same approval mechanics as PD-09.
 - risk: same as PD-09.
 - system default: DENY.
-- required approver/source: QMS-approved inspection approval matrix.
+- required approver/source: explicit project-owner P-05 decision for the authority role set; generic SoD remains PD-11.
 - implementation impact: none until approved.
 - tests required: fail-closed suite ✅.
-- status: OPEN.
+- status: CLOSED (authority role only; live evidence separate).
 
 ### PD-11 — Exact separation-of-duties matrix
 
@@ -609,8 +614,8 @@ signed source; implementation and tests follow per item.
 2. [ ] Per-parameter precision and rounding rules, if any (PD-04, PD-05) — QC.
 3. [ ] Laboratory retest policy: count, authorizer, final-result effect (PD-06) — lab/QMS.
 4. [ ] Manual PASS/FAIL judgment procedure (PD-07) — QC.
-5. [ ] Release authority matrix (PD-08) — QMS.
-6. [ ] Lab + inspection approval matrices (PD-09, PD-10) — QMS.
+5. [x] Release authority role set (PD-08) — P-05 approved; signature scope remains PD-32.
+6. [x] Lab + inspection approval authority role set (PD-09, PD-10) — P-05 approved; live evidence separate.
 7. [ ] Exact SoD matrix beyond the self-approval default (PD-11) — QMS.
 8. [ ] Exact role→permission grants (PD-12) — business owner.
 9. [ ] Effective-date rule (PD-13) and revision-numbering scheme (PD-14) — document control.
@@ -639,6 +644,9 @@ R-007 stays **OPEN**. This register traces every unresolved policy-dependent dec
 fail-closed behavior, and required approver — and adds executable negative-proof cover
 (`tests/unit/policy/controlled-policy-fail-closed.test.ts`, 10/10) for the six critical gates
 (scientific evaluation, lab approval, retest, release, inspection approval, document effective-date).
-No item is closed because no approved controlled source was supplied in this task, and none was invented.
-Closing any PD item requires: (1) the approved source, (2) implementation bound to it, (3) green
-positive + negative tests on the exact HEAD.
+The canonical matrix closes only the explicitly supplied owner decisions:
+P-05 authority slices for PD-08/09/10, P-06 template lifecycle, and P-07 final
+production-release authority. No scientific/QMS/provider value was invented.
+All remaining PD items require: (1) the approved source, (2) implementation
+bound to it, (3) green positive + negative tests on the exact HEAD, and (4)
+current evidence where the decision is operational.

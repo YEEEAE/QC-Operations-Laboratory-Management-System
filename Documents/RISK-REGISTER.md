@@ -12,6 +12,11 @@
 **Release Rule:** Residual CRITICAL / VERY HIGH risks block release by default  
 **Risk Acceptance Authority:** POLICY-DEPENDENT  
 
+**Policy closure matrix:** `audit/100-percent/POLICY-CLOSURE-MATRIX.md`
+P-07 closes the final production-release signer and release-time residual-risk
+handling for the documented gates; it does not assign a universal risk-
+acceptance authority for every risk process.
+
 ---
 
 # 1. Purpose
@@ -636,7 +641,8 @@ No derived automatic release from PASS
 
 ```text
 Explicit Release command
-Default Deny while release policy unresolved
+P-05-approved authority set only: Supervisor / Manager / named yazeed, with
+explicit permission and all state/scope/version/SoD checks
 State/version/authorization checks
 Transaction + audit
 E-Signature if later required by approved policy
@@ -1499,7 +1505,6 @@ APPROVED
 | RD-RISK-006 | Risk-management owner assignments by person |
 | RD-RISK-007 | Regulatory/compliance-specific risk thresholds if applicable |
 | RD-RISK-008 | Formal incident severity mapping |
-| RD-RISK-009 | Final production release authority |
 | RD-RISK-010 | Quantitative operational-loss model if later required |
 
 ---

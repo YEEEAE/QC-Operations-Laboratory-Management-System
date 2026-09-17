@@ -1012,11 +1012,15 @@ PASS لا يغير `Release System` تلقائيًا إلى YES بدون Release
 
 ## BR-QUAR-008 — Release Action Must Be Explicit
 
-**Status:** POLICY-DEPENDENT
+**Status:** APPROVED (authority slice; P-05)
 
-Release يحتاج action رسمي وصلاحية معتمدة.
+Release يحتاج action رسمي وصلاحية معتمدة. السلطة المعتمدة هي
+Supervisor/Manager/named `yazeed/SYSTEM_OWNER` فقط مع `PERM-QUAR-RELEASE`؛
+Admin وحده مرفوض. state/scope/version/inspection consequence وSoD وأي
+E-Signature مطلوبة تبقى شروطًا مستقلة ولا تُستنتج من الدور.
 
-من يملك هذه الصلاحية يحدد في `PERMISSION-MATRIX.md`.
+تفاصيل permission/scope/state/ceremony موثقة في `PERMISSION-MATRIX.md`؛
+قرار التوقيع العام يبقى ضمن `PD-32`.
 
 ---
 
@@ -2827,7 +2831,41 @@ Row-level staging
 
 ---
 
-# 33. Business Decisions Not Yet Confirmed
+# 33. Approved Policy Decisions Added by QC-CLOSURE-POLICY-009
+
+## P-05 — Controlled approval authority slice
+
+`Supervisor`, `Manager`, and the named `yazeed/SYSTEM_OWNER` are the approved
+authority set for inspection approval, laboratory approval, receiving release,
+retest authorization, controlled VOID, and controlled-document approval where
+the action's explicit permission is granted. `Admin` alone is never business
+approval authority. Every action still rechecks permission, scope, state,
+version, SoD, business evidence, and any required reauthentication/signature.
+
+This resolves the authority-role portion of `BD-001`; it does not resolve
+release-signature scope, retest count/effect, generic document approval, or the
+general SoD matrix.
+
+## P-06 — Inspection template authority and lifecycle
+
+Every active user may create a template. Employee creation is `DRAFT` only.
+Supervisor, Manager, and named `yazeed/SYSTEM_OWNER` may direct-create
+`APPROVED` with reauthentication and E-Signature, and may review, approve,
+stop, void, and supersede. Any active user may create a new revision as
+`DRAFT`; approved content is never edited in place. Reviewer/approver
+self-combination is a template-only exception; all other domains keep the
+general SoD rule.
+
+## P-07 — Final production-release authority
+
+Final production-release approval belongs to `Manager OR yazeed/SYSTEM_OWNER`.
+One authorized signer is sufficient; Admin alone, Employee, and Supervisor are
+denied. Approval requires server-derived evidence for the exact release,
+reauthentication, E-Signature, and all release gates/risk conditions to pass.
+This decision does not claim that UAT, provider, CI, recovery, or production
+evidence currently exists.
+
+# 34. Business Decisions Not Yet Confirmed
 
 هذه ليست Bugs.
 
@@ -2835,7 +2873,7 @@ Row-level staging
 
 | Decision ID | Question                                                | Related Domain       |
 | ----------- | ------------------------------------------------------- | -------------------- |
-| BD-001      | من يستطيع Release Receiving Item في النظام؟             | Quarantine           |
+| BD-001      | من يستطيع Release Receiving Item في النظام؟             | Quarantine — RESOLVED by P-05 authority set |
 | BD-002      | هل Release يحتاج E-Signature؟                           | Quarantine           |
 | BD-003      | هل كل Inspection FAIL ينشئ NCR تلقائيًا؟                | Inspection / Quality |
 | BD-004      | متى Finding يصبح NCR؟                                   | Quality              |
