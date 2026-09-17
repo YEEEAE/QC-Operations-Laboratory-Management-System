@@ -1,6 +1,59 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+const loginIdentity = process.env.QC_E2E_LOGIN_IDENTITY;
+const password = process.env.QC_E2E_PASSWORD;
+
+function requireFixture(): void {
+  test.skip(
+    !loginIdentity || !password,
+    'QC_E2E_LOGIN_IDENTITY and QC_E2E_PASSWORD are required for authenticated background coverage',
+  );
+}
+
+async function signIn(page: Page): Promise<void> {
+  await page.goto('/login');
+  await page.getByLabel('Login identity').fill(loginIdentity ?? '');
+  await page.getByLabel('Password', { exact: true }).fill(password ?? '');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+}
 
 test.describe('decorative motion boundaries', () => {
+  test('renders the fixed local Lottie background below authenticated content', async ({ page }) => {
+    requireFixture();
+    await signIn(page);
+    await page.goto('/dashboard');
+    await expect(page.locator('[data-system-background]')).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('[data-system-background]')).toHaveCSS('position', 'fixed');
+    await expect(page.locator('[data-system-background]')).toHaveCSS('pointer-events', 'none');
+    await expect(page.locator('[data-system-background-canvas]')).toHaveCSS(
+      'pointer-events',
+      'none',
+    );
+    const layering = await page.evaluate(() => ({
+      background: Number(getComputedStyle(document.querySelector('[data-system-background]')!).zIndex),
+      content: Number(getComputedStyle(document.querySelector('.system-content')!).zIndex),
+    }));
+    expect(layering.content).toBeGreaterThan(layering.background);
+    expect(await page.locator('[data-system-background]').getAttribute('data-motion')).toMatch(
+      /animated|static/,
+    );
+  });
+
+  test('keeps the authenticated background static under reduced motion and hides it for print', async ({
+    page,
+  }) => {
+    requireFixture();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signIn(page);
+    await page.goto('/dashboard');
+    await expect(page.locator('[data-system-background]')).toHaveAttribute('data-motion', 'static');
+    await expect(page.locator('[data-system-background-canvas]')).toHaveCount(1);
+    await expect(page.locator('[data-system-background-canvas]')).toBeHidden();
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('[data-system-background]')).toBeHidden();
+  });
+
   test('keeps login content above a non-interactive local Three.js background without external requests', async ({
     page,
   }) => {

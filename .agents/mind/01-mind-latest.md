@@ -1,5 +1,38 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-17] — QC-CLOSURE-UI-BG-005: Restore Approved Fixed System Lottie Background Safely
+
+### تم التنفيذ
+- ربطت `SystemBackground` بخلفية `background.lottie` المحلية عبر الحزمة الرسمية المثبتة `@lottiefiles/dotlottie-web@0.80.0`.
+- وجّهت WebAssembly إلى `/assets/dotlottie-player.wasm` المحلي، ومنعت أي CDN أو عنوان خارجي، مع إبقاء CSP الإنتاجي كما هو بدون `unsafe-inline` أو `unsafe-eval`.
+- أبقيت gradient veil كـstatic fallback أولي ودائم عند `prefers-reduced-motion`, فشل التحميل، فشل الرسم، أو عدم دعم WebAssembly.
+- جعلت التهيئة lazy داخل `requestIdleCallback`/مؤقت fallback، وحددت DPR والجودة، وربطت `pagehide` بالتنظيف عبر `destroy()`، مع `pointer-events:none` و`aria-hidden` وطبقات z-index واضحة.
+- أبقيت خلفية login الحالية `QCLogin3DBackground` منفصلة عبر `systemBackground={false}`.
+- وسعت اختبارات UI لتثبت الأصول المحلية، non-interactive layering، reduced-motion، lifecycle cleanup، fallback، الطباعة، فصل login، وبقاء عقد CSP restrictive.
+
+### الملفات المتأثرة
+- `src/ui/components/SystemBackground.astro`
+- `tests/unit/ui/system-background.test.ts`
+- `package.json`
+- `pnpm-lock.yaml`
+
+### التحقق
+- اختبارات UI/security المركزة ✅ — 3 ملفات / 22 اختبارًا.
+- `astro check` ✅ — 0 أخطاء، 0 warnings، و61 hint قديمة.
+- `astro build` ✅ — server/client build اكتمل؛ تحذيرات Zod/chunk المعروفة بقيت.
+- `git diff --check` ✅.
+- فحص bundle ✅ — renderer صار dynamic chunk ولا يدخل مسار الرسم الحرج.
+- E2E مصادق وقياس CPU/GPU/heap حي ❌ — لم تُنفذ لعدم توفر session/fixture تشغيلية في هذه الجولة.
+
+### النتيجة
+- **الحالة:** نجح محليًا / يحتاج live evidence للأداء وruntime المصادق.
+- **مختصر:** الخلفية الثابتة تعمل كطبقة زخرفية آمنة على الأسطح المصادق عليها، مع fallback مضمون وعدم تغيير CSP أو خلفية login.
+
+### ملاحظات / مشاكل مفتوحة
+- بيئة Node المحلية `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- ملف Lottie يحتوي metadata/asset غير مستخدم من المصدر؛ الفحص الحالي يؤكد أن طبقات العرض المستخدمة لا تحمل نصًا ظاهرًا أو `refId` لشعار، ويحتاج اعتماد asset pipeline مستقل إذا تقرر تنظيف الحاوية نفسها.
+- لا commit أو push أو deploy.
+
 ## [2026-09-17] — QC-CLOSURE-CI-004: Exact-HEAD Verification CI Closure
 
 ### تم التنفيذ
