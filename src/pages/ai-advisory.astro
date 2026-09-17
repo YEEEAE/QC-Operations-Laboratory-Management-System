@@ -39,6 +39,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
         <p class="advisory-label" data-advisory-label>AI-generated advisory content — suggestions and analysis only, not an approval authority.</p>
         <p class="status" data-status></p>
         <div class="advisory-text" data-advisory-text></div>
+        <p class="muted" data-source-references hidden></p>
         <div class="actions">
           <button type="button" data-copy disabled>Copy</button>
           <button type="button" data-use-draft disabled>Use as Draft</button>
@@ -61,6 +62,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
   const resultEl = document.querySelector<HTMLElement>('[data-result]');
   const copyButton = document.querySelector<HTMLButtonElement>('[data-copy]');
   const draftButton = document.querySelector<HTMLButtonElement>('[data-use-draft]');
+  const sourceReferencesEl = document.querySelector<HTMLElement>('[data-source-references]');
   let advisoryText = '';
   const resetButtons = () => {
     if (copyButton) copyButton.disabled = true;
@@ -93,6 +95,13 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
         statusEl.textContent = response.data.message;
         advisoryText = response.data.advisory?.text ?? '';
         textEl.textContent = advisoryText;
+        if (sourceReferencesEl) {
+          const references = response.data.advisory?.sourceReferences ?? [];
+          sourceReferencesEl.textContent = references.length
+            ? `Sources preserved: ${references.map((reference) => reference.citation || reference.label || reference.sourceId).join(' · ')}`
+            : '';
+          sourceReferencesEl.hidden = references.length === 0;
+        }
         labelEl.textContent = response.data.advisoryNotice;
         if (advisoryText) {
           if (copyButton) copyButton.disabled = false;

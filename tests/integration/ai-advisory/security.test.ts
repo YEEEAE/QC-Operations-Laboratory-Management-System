@@ -192,4 +192,22 @@ describe('AI advisory security suite — deterministic fake provider', () => {
       expect(content).not.toMatch(/\bpino\b/);
     }
   });
+
+  it('cannot call or reach controlled mutation authority', () => {
+    const sources = [
+      'src/modules/ai-advisory/application/get-advisory.ts',
+      'src/modules/ai-advisory/application/dependencies.ts',
+      'src/actions/ai-advisory.ts',
+    ];
+    for (const source of sources) {
+      const content = readFileSync(source, 'utf8');
+      expect(content).not.toMatch(
+        /modules\/(?:release-governance|approvals|laboratory|quarantine|documents|e-signatures)\/(?:application|infrastructure)/,
+      );
+      expect(content).not.toMatch(/(?:approve|release|sign|transition|mutate|permission)\s*\(/i);
+    }
+    const actionSource = readFileSync('src/actions/ai-advisory.ts', 'utf8');
+    expect(actionSource).toContain('export const aiAdvisory = { requestAdvisory };');
+    expect(actionSource).not.toContain("defineAction({\n  accept: 'form'");
+  });
 });

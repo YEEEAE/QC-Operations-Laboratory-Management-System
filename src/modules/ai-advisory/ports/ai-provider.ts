@@ -14,6 +14,10 @@ export interface AdvisoryContextSegment {
   label: string;
   /** Pre-authorized, minimized content excerpt. */
   content: string;
+  /** Optional source identity/citation; preserved verbatim when supplied. */
+  sourceId?: string;
+  sourceType?: string;
+  citation?: string;
 }
 
 export interface AiAdvisoryRequest {

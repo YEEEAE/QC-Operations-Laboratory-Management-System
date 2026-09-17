@@ -306,9 +306,36 @@
 - ترقية fixtures القديمة بحيث `loginIdentity` يصبح حاضرًا بوضوح في test doubles.
 - تنظيف Lottie container metadata/unused asset فقط إذا اعتُمد asset-pipeline لذلك.
 
-## 15) سجل تاريخي مضغوط
+## 15) الحالة الحالية — Production NFR evidence
 
-> هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–14، استخدم الأقسام 1–14.
+- `QC-CLOSURE-NFR-010` أضاف سجل أدلة موحدًا على exact source `313bdfcc031abc18d3e55e75a025d880b9d16450` وbuild `rel-d740622fc9010566`، مع فصل الأدلة المحلية عن claims الإنتاج/UAT.
+- frozen install/lock integrity، 37 focused security/observability tests، typecheck، architecture، build، release identity/verification، source-map scan، local CSP/CSRF/safe-error HTTP checks: **VERIFIED/PASS** ضمن Node `v22.23.1` فقط، وهو خارج contract `>=24.20.0 <25`.
+- local smoke: login/live 200، readiness 503 بسبب PostgreSQL unavailable، cross-origin mutation 403؛ هذه أدلة runtime محلي لا production.
+- accessibility selected browser run: 6/8 PASS؛ login tests unstable/NOT VERIFIED، وكل authenticated keyboard/AT/manual workflows NOT EXECUTED.
+- dependency audit لم يرجع بسبب network، CI exact-head ما زال غير مثبت، Docker/PostgreSQL 18/authenticated E2E/provider/exporter/live performance ما زالت **BLOCKED/UNVERIFIED**.
+- privacy data-flow inventory موجود في evidence file؛ مدد retention وdeletion/correction الدقيقة غير مخترعة وتبقى pending policy.
+
+## 16) الحالة الحالية — AI Advisory Safety / Evaluation
+
+- AI remains advisory-only. The boundary now blocks detected PII/secret-like input before provider access, rejects authority-claiming text and structured recommendations, fail-safe refuses high-risk unsupported-source requests, and preserves source identity/citations when supplied.
+- Deterministic dataset is `qc-ai-governance-v2` / `2.0.0`; focused run `41/41 PASS` across 3 files. Evidence: `audit/2026-09-17-qc-closure-ai-011-evidence.md`.
+- Provider/model identity remains `DisabledAiProvider` / not configured; external provider policy, data handling, live outage/telemetry, and human UAT remain `BLOCKED`. No production/provider approval is inferred.
+
+## 17) سجل تاريخي مضغوط
+
+> هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+
+- **2026-09-17 — QC-CLOSURE-AI-011 / AI Advisory Safety and Evaluation Closure**
+  - Changed: شدّدنا fail-safe للإدخال/الإخراج، حفظ source identity، واختبار عدم الوصول إلى controlled mutation authority؛ dataset v2 يغطي الحالات المطلوبة ويعرّف المقاييس.
+  - Evidence: deterministic AI suite `41/41 PASS`; provider/model/external data policy وUAT بقيت `BLOCKED`.
+  - State: PARTIAL.
+  - Key files: `audit/2026-09-17-qc-closure-ai-011-evidence.md`، `audit/100-percent/ai-evals/deterministic-eval-dataset.json`.
+
+- **2026-09-17 — QC-CLOSURE-NFR-010 / Production Non-Functional Evidence Closure**
+  - Changed: أضيف سجل موحد للأمن وسلسلة التوريد والخصوصية والأداء والـobservability والوصول، مربوط بـexact SHA/build، مع budgets مقترحة وحدود evidence صريحة.
+  - Evidence: frozen install وlock integrity و37 focused tests وbuild/release verification وlocal HTTP security checks PASS؛ Docker/PostgreSQL، dependency audit، CI، authenticated E2E، provider/live performance، وmanual AT بقيت BLOCKED/UNVERIFIED.
+  - State: PARTIAL.
+  - Key files: `audit/2026-09-17-qc-nfr-010-production-nfr-evidence.md`.
 
 - **2026-09-17 — QC-CLOSURE-POLICY-009 / Canonical policy closure matrix**
   - Changed: أُغلقت فقط قرارات P-05 authority slices وP-06 وP-07؛ أضيفت مصفوفة canonical وسير controlled configuration، وبقيت قرارات QMS/provider/data-instance مفتوحة.

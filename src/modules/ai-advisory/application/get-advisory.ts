@@ -18,6 +18,7 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
 import {
   parseProviderAdvisory,
+  containsSensitiveData,
   ADVISORY_NOTICE,
   ADVISORY_REFUSAL_NOTICE,
   ADVISORY_UNAVAILABLE_NOTICE,
@@ -40,6 +41,9 @@ const MODE_PERMISSION: Record<AdvisoryMode, PermissionCode> = {
 
 const SECRET_LIKE_PATTERN =
   /(-----BEGIN [A-Z ]*PRIVATE KEY-----|bearer\s+[A-Za-z0-9._~-]+|\bpassword\b\s*[:=]|\bpasswd\b\s*[:=]|\bapi[_-]?key\b\s*[:=]|\bsecret\b\s*[:=]|\b(access[_-]?)?token\b\s*[:=]|authorization\s*[:=]|database[_-]?url\s*[:=]|postgres(ql)?:\/\/[^\s@]+:[^\s@]+@|\bsk-[A-Za-z0-9]{16,})/i;
+
+const HIGH_RISK_UNSUPPORTED_REQUEST =
+  /(?:official\s+(?:assay\s+)?limit|current\s+wi|sop|without\s+(?:a\s+)?controlled\s+source|stale.{0,30}current\s+official|certain\s+answer.{0,30}incomplete)/i;
 
 export type AdvisoryOutcome = 'AVAILABLE' | 'UNAVAILABLE' | 'REFUSED';
 
@@ -123,7 +127,21 @@ function refuseSecretLikeMaterial(
     if (SECRET_LIKE_PATTERN.test(segment.label) || SECRET_LIKE_PATTERN.test(segment.content)) {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     }
+    if (containsSensitiveData(segment.label) || containsSensitiveData(segment.content)) {
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    }
   }
+  if (containsSensitiveData(question)) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+}
+
+function requiresFailSafeRefusal(
+  question: string,
+  context: readonly AdvisoryContextSegment[],
+): boolean {
+  return (
+    HIGH_RISK_UNSUPPORTED_REQUEST.test(question) ||
+    context.some((segment) => /\bstale\b/i.test(segment.label))
+  );
 }
 
 export class GetAdvisoryUseCase {
@@ -136,6 +154,13 @@ export class GetAdvisoryUseCase {
     authorizeAdvisory(input.actor, input.mode);
     validateInput(input.question, input.context);
     refuseSecretLikeMaterial(input.question, input.context);
+    if (requiresFailSafeRefusal(input.question, input.context)) {
+      return {
+        status: 'REFUSED',
+        message: ADVISORY_REFUSAL_NOTICE,
+        advisoryNotice: ADVISORY_NOTICE,
+      };
+    }
 
     let availability;
     try {
@@ -166,9 +191,9 @@ export class GetAdvisoryUseCase {
       };
     }
 
-    let advisoryText: string;
+    let parsedAdvisory: ReturnType<typeof parseProviderAdvisory>;
     try {
-      advisoryText = parseProviderAdvisory(raw).text;
+      parsedAdvisory = parseProviderAdvisory(raw);
     } catch {
       return {
         status: 'REFUSED',
@@ -181,7 +206,13 @@ export class GetAdvisoryUseCase {
       status: 'AVAILABLE',
       message: ADVISORY_NOTICE,
       advisoryNotice: ADVISORY_NOTICE,
-      advisory: { mode: input.mode, text: advisoryText },
+      advisory: {
+        mode: input.mode,
+        text: parsedAdvisory.text,
+        ...(parsedAdvisory.sourceReferences
+          ? { sourceReferences: parsedAdvisory.sourceReferences }
+          : {}),
+      },
     };
   }
 }
