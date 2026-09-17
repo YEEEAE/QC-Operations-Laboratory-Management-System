@@ -1,4 +1,5 @@
 import { asAppError, type AppError } from './app-error';
+import type { ErrorCode } from './error-codes';
 
 /**
  * Astro 4 exposes ActionError through a virtual module that is available to
@@ -19,7 +20,7 @@ export function isAstroActionError(error: unknown): boolean {
 export interface ActionErrorResult {
   ok: false;
   error: {
-    code: string;
+    code: ErrorCode;
     messageKey: string;
     fieldErrors?: Record<string, readonly string[]>;
     requestId?: string;

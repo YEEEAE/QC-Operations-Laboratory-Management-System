@@ -2,6 +2,7 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
+import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 
 const actor = Astro.locals.actor;
@@ -58,9 +59,28 @@ if (canCreate) {
         </fieldset>
         <fieldset>
           <legend>Initial scopes</legend>
-          <label class="check"><input type="checkbox" name="scopeKind" value="GLOBAL" /> GLOBAL</label>
-          <label class="check"><input type="checkbox" name="scopeKind" value="SITE" /> SITE <input name="scopeValue-SITE" maxlength="200" placeholder="Site value" /></label>
-          <label class="check"><input type="checkbox" name="scopeKind" value="DEPARTMENT" /> DEPARTMENT <input name="scopeValue-DEPARTMENT" maxlength="200" placeholder="Department value" /></label>
+          <p class="note">
+            Scopes are optional. Kinds that name a collection require a value; GLOBAL is a
+            whole-system grant and takes none.
+          </p>
+          {SCOPE_KINDS.map((kind) => (
+            <div class="scope-row">
+              <label class="check">
+                <input type="checkbox" name="scopeKind" value={kind} />
+                {kind}
+              </label>
+              {scopeRequiresValue(kind) ? (
+                <input
+                  name={`scopeValue-${kind}`}
+                  maxlength="200"
+                  placeholder={`${kind} value`}
+                  aria-label={`${kind} scope value`}
+                />
+              ) : (
+                <span class="note">No value</span>
+              )}
+            </div>
+          ))}
         </fieldset>
         <div class="actions">
           <button type="submit" data-submit>Create user</button>
@@ -84,6 +104,18 @@ if (canCreate) {
   import { enhanceMutationForm } from '../../../ui/forms/mutation-interaction.js';
   const form = document.querySelector<HTMLFormElement>('[data-admin-create-user]');
   if (form) {
+    // A scope kind that names a collection needs its value before submit; the
+    // valueless kinds never ask for one. The server re-validates either way.
+    for (const checkbox of form.querySelectorAll<HTMLInputElement>('input[name="scopeKind"]')) {
+      const valueInput = form.querySelector<HTMLInputElement>(
+        `input[name="scopeValue-${checkbox.value}"]`,
+      );
+      const sync = () => {
+        if (valueInput) valueInput.required = checkbox.checked;
+      };
+      checkbox.addEventListener('change', sync);
+      sync();
+    }
     enhanceMutationForm({
       form,
       progressText: 'Creating user…',
@@ -165,12 +197,49 @@ if (canCreate) {
     font-size: 0.85rem;
   }
   input {
-    font: inherit;
+    min-height: 44px;
     padding: 0.7rem;
     background: var(--surface-page);
     color: inherit;
+    font: inherit;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
+  }
+  .note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  fieldset {
+    display: grid;
+    gap: var(--space-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+    margin: 0;
+  }
+  legend {
+    padding: 0 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .scope-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) 1fr;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-direction: row;
+  }
+  .check input {
+    min-height: 0;
+    width: 1.1rem;
+    height: 1.1rem;
   }
   .actions {
     display: flex;

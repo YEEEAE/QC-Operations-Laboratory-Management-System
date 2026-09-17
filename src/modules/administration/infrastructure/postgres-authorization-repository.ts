@@ -11,7 +11,13 @@ import type {
   UserScopeRecord,
 } from '../ports/authorization-repository.js';
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
-import type { ScopeKind } from '../../../shared/authorization/types.js';
+import {
+  isProtectedOwnerScope,
+} from '../../../shared/authorization/p05-authority.js';
+import {
+  normalizeScopeValue,
+  type ScopeKind,
+} from '../../../shared/authorization/types.js';
 
 const role = (r: DatabaseRow<'roles'>): RoleRecord => ({
   id: r.id,
@@ -285,6 +291,95 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
           .execute()
       ).map(scope);
     });
+  }
+  async assignUserScope(input: Parameters<AuthorizationRepository['assignUserScope']>[0]) {
+    const normalized = normalizeScopeValue(input.kind, input.value);
+    if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    return this.db.transaction().execute(async (tx) => {
+      const target = await tx
+        .selectFrom('users')
+        .select(['id', 'login_identity'])
+        .where('id', '=', input.userId)
+        .executeTakeFirst();
+      if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      // Granting is idempotent: assigning a grant the member already holds
+      // converges on the same end state and never duplicates the row or the
+      // audit event.
+      const inserted = await tx
+        .insertInto('user_scopes')
+        .values({
+          id: uuidv7(),
+          user_id: input.userId,
+          scope_kind: input.kind,
+          scope_value: normalized.value ?? null,
+          assigned_by: input.actorId,
+          reason: input.reason ?? null,
+        })
+        .onConflict((oc) => oc.doNothing())
+        .executeTakeFirst();
+      if ((inserted.numInsertedOrUpdatedRows ?? 0n) > 0n && this.audit)
+        await this.auditFor(tx).append({
+          actorType: 'USER',
+          actorId: input.actorId,
+          subjectType: 'USER',
+          subjectId: input.userId,
+          action: 'ASSIGN_USER_SCOPE',
+          requestId: input.requestId,
+          reason: input.reason,
+          payload: { kind: input.kind, value: normalized.value ?? null },
+        });
+      return this.activeScopes(tx, input.userId);
+    });
+  }
+  async removeUserScope(input: Parameters<AuthorizationRepository['removeUserScope']>[0]) {
+    const normalized = normalizeScopeValue(input.kind, input.value);
+    if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    return this.db.transaction().execute(async (tx) => {
+      const target = await tx
+        .selectFrom('users')
+        .select(['id', 'login_identity'])
+        .where('id', '=', input.userId)
+        .executeTakeFirst();
+      if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      if (isProtectedOwnerScope(target.login_identity, input.kind))
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      const removed = await tx
+        .updateTable('user_scopes')
+        .set({ revoked_at: new Date(), revoked_by: input.actorId })
+        .where('user_id', '=', input.userId)
+        .where('scope_kind', '=', input.kind)
+        .where('revoked_at', 'is', null)
+        .$if(normalized.value === undefined, (qb) => qb.where('scope_value', 'is', null))
+        .$if(normalized.value !== undefined, (qb) =>
+          qb.where('scope_value', '=', normalized.value as string),
+        )
+        .executeTakeFirst();
+      // Removing an absent grant is a deterministic no-op: the end state the
+      // operator asked for already holds, so nothing is audited.
+      if ((removed.numUpdatedRows ?? 0n) > 0n && this.audit)
+        await this.auditFor(tx).append({
+          actorType: 'USER',
+          actorId: input.actorId,
+          subjectType: 'USER',
+          subjectId: input.userId,
+          action: 'REMOVE_USER_SCOPE',
+          requestId: input.requestId,
+          reason: input.reason,
+          payload: { kind: input.kind, value: normalized.value ?? null },
+        });
+      return this.activeScopes(tx, input.userId);
+    });
+  }
+  private async activeScopes(tx: Transaction<DatabaseSchema>, userId: string) {
+    return (
+      await tx
+        .selectFrom('user_scopes')
+        .selectAll()
+        .where('user_id', '=', userId)
+        .where('revoked_at', 'is', null)
+        .orderBy('scope_kind')
+        .execute()
+    ).map(scope);
   }
   private auditFor(tx: Transaction<DatabaseSchema>): AuditRepository {
     return this.audit instanceof PostgresAuditRepository

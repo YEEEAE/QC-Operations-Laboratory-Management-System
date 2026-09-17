@@ -64,4 +64,26 @@ export interface AuthorizationRepository {
     requestId: string;
     reason?: string;
   }): Promise<readonly UserScopeRecord[]>;
+  /**
+   * Incremental scope administration. `replaceUserScopes` stays available for
+   * atomic provisioning and bulk operations, but ordinary interactive
+   * administration must be able to add or revoke one grant without disturbing
+   * every unrelated grant the member already holds.
+   */
+  assignUserScope(input: {
+    userId: string;
+    kind: ScopeKind;
+    value?: string;
+    actorId: string;
+    requestId: string;
+    reason?: string;
+  }): Promise<readonly UserScopeRecord[]>;
+  removeUserScope(input: {
+    userId: string;
+    kind: ScopeKind;
+    value?: string;
+    actorId: string;
+    requestId: string;
+    reason?: string;
+  }): Promise<readonly UserScopeRecord[]>;
 }

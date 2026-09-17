@@ -1,19 +1,28 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { isPermissionCode } from '../shared/authorization/permissions.js';
+import { SCOPE_KINDS } from '../shared/authorization/types.js';
 import { toActionError } from '../shared/errors/action-error.js';
+import { astroActionCodeFor } from '../shared/errors/action-error-code.js';
 import { AppError } from '../shared/errors/app-error.js';
 import { administrationDependencies } from '../modules/administration/application/dependencies.js';
 import { identityAdminActionDependencies } from '../modules/identity/application/admin-dependencies.js';
 
 const repo = () => administrationDependencies();
 const identity = () => identityAdminActionDependencies();
+/**
+ * Administrative contract: every failure is re-encoded on the Astro Action
+ * boundary with a distinguishable code plus the exact application error code
+ * as the message. No stack trace, SQL text, or secret crosses this boundary,
+ * and the UI can react to the specific cause (stale record, authorization
+ * change, duplicate, missing dependency) instead of one generic message.
+ */
 const withErrors = async <T>(work: () => Promise<T>, requestId?: string): Promise<T> => {
   try {
     return await work();
   } catch (error) {
     const mapped = toActionError(error, requestId);
-    throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
+    throw new ActionError({ code: astroActionCodeFor(mapped.error.code), message: mapped.error.code });
   }
 };
 const requireActor = (actor: unknown) => {
@@ -69,16 +78,15 @@ const updateRolePermissions = defineAction({
       });
     }, context.locals.requestContext?.requestId),
 });
+const scopeShape = z.object({
+  kind: z.enum(SCOPE_KINDS),
+  value: z.string().max(200).optional(),
+});
 const manageUserScopes = defineAction({
   accept: 'json',
   input: z.object({
     userId: z.string(),
-    scopes: z.array(
-      z.object({
-        kind: z.enum(['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL']),
-        value: z.string().optional(),
-      }),
-    ),
+    scopes: z.array(scopeShape),
     reason: z.string().optional(),
   }),
   handler: (input, context) =>
@@ -91,6 +99,44 @@ const manageUserScopes = defineAction({
         reason: input.reason,
         requestId: context.locals.requestContext?.requestId ?? 'unknown',
       });
+    }, context.locals.requestContext?.requestId),
+});
+const assignUserScope = defineAction({
+  accept: 'json',
+  input: z.object({
+    userId: z.string().uuid(),
+    kind: z.enum(SCOPE_KINDS),
+    value: z.string().max(200).optional(),
+    reason: z.string().max(500).optional(),
+  }),
+  handler: (input, context) =>
+    withErrors(async () => {
+      requireActor(context.locals.actor);
+      await repo().assignUserScope.execute({
+        actor: context.locals.actor!,
+        ...input,
+        requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return { ok: true };
+    }, context.locals.requestContext?.requestId),
+});
+const removeUserScope = defineAction({
+  accept: 'json',
+  input: z.object({
+    userId: z.string().uuid(),
+    kind: z.enum(SCOPE_KINDS),
+    value: z.string().max(200).optional(),
+    reason: z.string().max(500).optional(),
+  }),
+  handler: (input, context) =>
+    withErrors(async () => {
+      requireActor(context.locals.actor);
+      await repo().removeUserScope.execute({
+        actor: context.locals.actor!,
+        ...input,
+        requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return { ok: true };
     }, context.locals.requestContext?.requestId),
 });
 const listUserRoles = defineAction({
@@ -144,6 +190,8 @@ export const admin = {
   listPermissions,
   updateRolePermissions,
   manageUserScopes,
+  assignUserScope,
+  removeUserScope,
   listUserRoles,
   assignUserRole,
   removeUserRole,
@@ -155,14 +203,7 @@ export const admin = {
       email: z.string().email().max(320).optional(),
       temporaryPassword: z.string().min(1).max(512),
       roleCodes: z.array(z.string().min(1)).optional(),
-      scopes: z
-        .array(
-          z.object({
-            kind: z.enum(['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL']),
-            value: z.string().optional(),
-          }),
-        )
-        .optional(),
+      scopes: z.array(scopeShape).optional(),
     }),
     handler: (input, context) =>
       withErrors(async () => {

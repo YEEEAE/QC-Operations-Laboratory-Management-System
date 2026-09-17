@@ -1,8 +1,17 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import ConfirmDialog from '../../../ui/components/feedback/ConfirmDialog.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
-import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import {
+  canAccessAdminRoute,
+  hasAdminGrant,
+} from '../../../shared/authorization/admin-workspace.js';
+import {
+  isProtectedOwnerRoleGrant,
+  isProtectedOwnerScope,
+} from '../../../shared/authorization/p05-authority.js';
+import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 
 const actor = Astro.locals.actor;
@@ -14,12 +23,14 @@ const scopeSection = Astro.url.searchParams.get('section') === 'scopes';
 type UserView = Awaited<ReturnType<ReturnType<typeof identityAdminReadDependencies>['getUser']['execute']>>;
 type ScopeList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listUserScopes']['execute']>>;
 type RoleList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listUserRoles']['execute']>>;
+type AvailableRoles = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>>;
 
 let user: UserView | undefined;
 let scopes: ScopeList | undefined;
 let scopesRestricted = false;
 let roles: RoleList | undefined;
 let rolesRestricted = false;
+let availableRoles: AvailableRoles = [];
 let denied = false;
 try {
   user = await identityAdminReadDependencies().getUser.execute({ actor, userId });
@@ -30,25 +41,53 @@ try {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
   if (!denied) throw error;
 }
-if (user && !isSelf) {
-  try {
-    scopes = await administrationDependencies().listUserScopes.execute({ actor, userId });
-  } catch (error) {
-    scopesRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
-    if (!scopesRestricted) throw error;
-  }
+
+/**
+ * Capability-driven controls. Each control is governed by the same explicit
+ * permission its server-side use case re-checks, so administration is never
+ * exposed merely because someone reached /admin/users/*. Role membership
+ * alone never grants access here.
+ */
+const canManage = canAccessAdminRoute(actor, 'users');
+const canViewRoles = hasAdminGrant(actor, 'PERM-ADM-ROLE-VIEW');
+const canAssignRoles = hasAdminGrant(actor, 'PERM-ADM-ROLE-ASSIGN');
+const canAssignScopes = hasAdminGrant(actor, 'PERM-ADM-SCOPE-ASSIGN');
+const canManageRoles = canViewRoles && !isSelf;
+const canManageScopes = canAssignScopes && !isSelf;
+
+if (user && !isSelf && canManageRoles) {
   try {
     roles = await administrationDependencies().listUserRoles.execute({ actor, userId });
   } catch (error) {
     rolesRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
     if (!rolesRestricted) throw error;
   }
+  try {
+    const assigned = new Set((roles ?? []).map((role) => role.id));
+    availableRoles = [
+      ...(await administrationDependencies().listRoles.execute({ actor })),
+    ].filter((role) => role.active && !assigned.has(role.id));
+  } catch (error) {
+    if (!(error instanceof AppError && error.category === 'AUTHORIZATION')) throw error;
+  }
+}
+if (user && !isSelf && canManageScopes) {
+  try {
+    scopes = await administrationDependencies().listUserScopes.execute({ actor, userId });
+  } catch (error) {
+    scopesRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
+    if (!scopesRestricted) throw error;
+  }
 }
 
-const canManage = canAccessAdminRoute(actor, 'users');
-const canManageScopes = canAccessAdminRoute(actor, 'scopes');
 const version = user?.version.toString() ?? '0';
-const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL'] as const;
+const subject = user ? `${user.loginIdentity} — ${user.displayName}` : 'user';
+const protectedRole = (roleCode: string) =>
+  Boolean(user) && isProtectedOwnerRoleGrant(user!.loginIdentity, roleCode);
+const protectedScope = (kind: (typeof SCOPE_KINDS)[number]) =>
+  Boolean(user) && isProtectedOwnerScope(user!.loginIdentity, kind);
+const scopeLabel = (scope: { kind: string; value: string | null }) =>
+  scope.value ? `${scope.kind}:${scope.value}` : scope.kind;
 ---
 
 <AppLayout title="User detail · Administration" locale="en" direction="ltr">
@@ -72,10 +111,18 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
         </p>
       </section>
     ) : (
-      <div class="grid">
-        <section class="panel">
-          <p class="eyebrow">ACCOUNT</p>
-          <h2>Profile</h2>
+      <div class="grid" data-admin-user data-user-id={user.id} data-version={version} data-subject={subject}>
+        <div class="failure" role="alert" tabindex="-1" data-failure hidden>
+          <p data-failure-message />
+          <div class="stale-actions" hidden data-stale-actions>
+            <button type="button" data-refresh-record>
+              Refresh record
+            </button>
+          </div>
+        </div>
+        <section class="panel" id="profile">
+          <p class="eyebrow">PROFILE</p>
+          <h2>Account profile</h2>
           <dl>
             <div>
               <dt>Login identity</dt>
@@ -98,20 +145,45 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
               <dd>{user.lastLoginAt?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? '—'}</dd>
             </div>
           </dl>
-          {canManage && !isSelf ? (
-            <form class="form" method="post" data-admin-update-user data-version={version}>
+          {canManage && !isSelf ? (              <form
+                class="form"
+                method="post"
+                data-admin-form
+                data-operation="Save profile"
+                data-subject={subject}
+                data-update-user
+              >
               <label for="displayName">
                 Display name<span aria-hidden="true"> *</span>
-                <input id="displayName" name="displayName" required maxlength="200" value={user.displayName} />
+                <input
+                  id="displayName"
+                  name="displayName"
+                  required
+                  maxlength="200"
+                  value={user.displayName}
+                />
               </label>
               <label for="email">
                 Email (optional)
-                <input id="email" name="email" type="email" maxlength="320" autocomplete="email" value={user.email ?? ''} />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  maxlength="320"
+                  autocomplete="email"
+                  value={user.email ?? ''}
+                />
               </label>
+              <p class="hint">
+                Saving sends the version this page was opened with, so a concurrent change is
+                rejected instead of silently overwritten.
+              </p>
               <div class="actions">
-                <button type="submit" data-submit>Save profile</button>
+                <button type="submit" data-submit>
+                  Save profile
+                </button>
               </div>
-              <p role="status" data-result tabindex="-1" />
+              <p class="status" role="status" aria-live="polite" data-status />
             </form>
           ) : (
             isSelf && (
@@ -119,71 +191,189 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
             )
           )}
         </section>
+
         <section class="panel" id="security">
           <p class="eyebrow">ACCOUNT SECURITY</p>
-          <h2>Disable and password reset</h2>
+          <h2>Account lifecycle</h2>
           {isSelf ? (
             <p class="note">
-              Self-disable and self password-reset through administration are always blocked.
-              Disabling a member revokes every session immediately and is audited.
+              Self-disable, self-activate, self session revocation, and self password reset through
+              administration are always blocked. Every lifecycle change revokes sessions
+              immediately and is audited.
             </p>
           ) : canManage ? (
             <div class="stack">
-              <div class="actions">
-                {user.accountState === 'ACTIVE' ? (
-                  <button type="button" data-account-action="disable" class="danger">Disable account</button>
-                ) : (
-                  <button type="button" data-account-action="activate">Activate account</button>
-                )}
-                <button type="button" data-account-action="revoke">Revoke all sessions</button>
+              <div class="control">
+                <h3>Password</h3>
+                <p class="note">
+                  Resetting revokes every session for this member immediately and is audited. The
+                  member must change the password at next sign-in.
+                </p>
+                <form
+                  class="form"
+                  method="post"
+                  data-admin-form
+                  data-operation="Reset password"
+                  data-subject={subject}
+                  data-reset-password
+                  data-confirm-dialog="dialog-password-reset"
+                >
+                  <label for="temporaryPassword">
+                    Temporary password<span aria-hidden="true"> *</span>
+                    <input
+                      id="temporaryPassword"
+                      name="temporaryPassword"
+                      type="password"
+                      required
+                      maxlength="512"
+                      autocomplete="new-password"
+                    />
+                  </label>
+                  <div class="actions">
+                    <button type="submit" data-submit>
+                      Reset password
+                    </button>
+                  </div>
+                  <p class="status" role="status" aria-live="polite" data-status />
+                </form>
               </div>
-              <form class="form" method="post" data-admin-reset-password data-user={user.id} data-version={version}>
-                <label for="temporaryPassword">
-                  Temporary password<span aria-hidden="true"> *</span>
-                  <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" />
-                </label>
+              <div class="control">
+                <h3>Account state</h3>
                 <p class="note">
-                  Resetting revokes every session for this member immediately and is audited.
+                  {user.accountState === 'ACTIVE'
+                    ? 'Disabling sets the account to DISABLED, revokes every session immediately, and is audited. The current version is required.'
+                    : 'Activating returns the account to ACTIVE and is audited. The current version is required.'}
+                </p>
+                {user.accountState === 'ACTIVE' ? (
+                  <div class="actions">
+                    <button type="button" class="danger" data-dialog-open="dialog-disable-account">
+                      Disable account
+                    </button>
+                  </div>
+                ) : (
+                  <div class="actions">
+                    <button type="button" data-dialog-open="dialog-activate-account">
+                      Activate account
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div class="control">
+                <h3>Sessions</h3>
+                <p class="note">
+                  Revoking ends every active session for this member immediately. The account state
+                  and password are unchanged, and the revocation is audited.
                 </p>
                 <div class="actions">
-                  <button type="submit" data-submit>Reset password</button>
-                </div>
-                <p role="status" data-result tabindex="-1" />
-              </form>
-              <form class="form" method="post" data-admin-disable-user data-user={user.id} data-version={version}>
-                <p class="note">
-                  Disabling sets the account to DISABLED, revokes every session immediately, and
-                  is audited. The current version is required.
-                </p>
-                <div class="actions">
-                  <button type="submit" data-submit class="danger">
-                    Disable account
+                  <button type="button" data-dialog-open="dialog-revoke-sessions">
+                    Revoke all sessions
                   </button>
                 </div>
-                <p role="status" data-result tabindex="-1" />
-              </form>
+              </div>
             </div>
           ) : (
             <p class="note">You are not authorized to change this member's security state.</p>
           )}
         </section>
+
         <section class="panel" id="roles">
-          <p class="eyebrow">UI-ADM-ROLE-001</p>
+          <p class="eyebrow">ROLES · UI-ADM-ROLE-001</p>
           <h2>Roles</h2>
-          {rolesRestricted || !canManage ? <p class="note">Role management is not available under your current authority.</p> : (
-            <ul class="scopes">
-              {(roles ?? []).map((role) => <li><span>{role.name}</span><strong>{role.code === 'SYSTEM_OWNER' && user.loginIdentity === 'yazeed' ? 'Protected' : role.code}</strong></li>)}
-            </ul>
+          {!canViewRoles ? (
+            <p class="note">
+              Reading role membership requires the explicit role-view permission. Your current
+              grants do not include it.
+            </p>
+          ) : rolesRestricted ? (
+            <p class="note">Role membership is not available under your current authority.</p>
+          ) : (
+            <div>
+              <h3>Current roles</h3>
+              {roles?.length ? (
+                <ul class="grants">
+                  {roles.map((role) => (
+                    <li>
+                      <span class="grant-name">
+                        {role.name} <span class="code">{role.code}</span>
+                      </span>
+                      {protectedRole(role.code) ? (
+                        <span class="protected">Protected</span>
+                      ) : isSelf || !canAssignRoles ? (
+                        <span class="note">—</span>
+                      ) : (
+                        <button
+                          type="button"
+                          class="danger"
+                          data-dialog-open={`dialog-remove-role-${role.id}`}
+                          data-role-id={role.id}
+                          aria-label={`Remove role ${role.name} from ${user.loginIdentity}`}
+                        >
+                          Remove role
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="note">No roles are assigned to this member.</p>
+              )}
+              {isSelf ? (
+                <p class="note">
+                  Role changes on your own account are always blocked, even with explicit
+                  permission.
+                </p>
+              ) : canAssignRoles ? (
+                availableRoles.length ? (
+                  <form
+                    class="form"
+                    method="post"
+                    data-admin-form
+                    data-operation="Assign role"
+                    data-subject={subject}
+                    data-assign-role
+                  >
+                    <h3>Assign role</h3>
+                    <label for="roleId">
+                      Role<span aria-hidden="true"> *</span>
+                      <select id="roleId" name="roleId" required>
+                        {availableRoles.map((role) => (
+                          <option value={role.id}>
+                            {role.name} ({role.code})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label for="roleReason">
+                      Reason (optional)
+                      <input id="roleReason" name="reason" maxlength="500" />
+                    </label>
+                    <div class="actions">
+                      <button type="submit" data-submit>
+                        Assign role
+                      </button>
+                    </div>
+                    <p class="status" role="status" aria-live="polite" data-status />
+                  </form>
+                ) : (
+                  <p class="note">Every active role is already assigned to this member.</p>
+                )
+              ) : (
+                <p class="note">
+                  Assigning or removing roles requires the explicit role-assignment permission.
+                </p>
+              )}
+            </div>
           )}
         </section>
+
         <section class="panel" id="scopes">
-          <p class="eyebrow">UI-ADM-SCOPE-001</p>
+          <p class="eyebrow">SCOPES · UI-ADM-SCOPE-001</p>
           <h2>Scopes {scopeSection && <span class="flag">(requested section)</span>}</h2>
           {isSelf ? (
             <p class="note">
               Scope changes on your own account are always blocked, even with explicit permission.
             </p>
-          ) : scopesRestricted || !canManageScopes ? (
+          ) : scopesRestricted || !canAssignScopes ? (
             <p class="note">
               Scope management requires the explicit scope-assignment permission. Your current
               grants do not include it.
@@ -192,124 +382,518 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
             <div>
               <h3>Current scopes</h3>
               {scopes?.length ? (
-                <ul class="scopes">
+                <ul class="grants">
                   {scopes.map((scope) => (
                     <li>
-                      <span>{scope.kind}</span>
-                      <strong>{scope.value ?? '—'}</strong>
+                      <span class="grant-name">
+                        {scope.kind} <span class="code">{scope.value ?? '—'}</span>
+                      </span>
+                      {protectedScope(scope.kind) ? (
+                        <span class="protected">Protected</span>
+                      ) : (
+                        <button
+                          type="button"
+                          class="danger"
+                          data-dialog-open={`dialog-remove-scope-${scope.id}`}
+                          data-scope-kind={scope.kind}
+                          data-scope-value={scope.value ?? ''}
+                          aria-label={`Remove scope ${scopeLabel(scope)} from ${user.loginIdentity}`}
+                        >
+                          Remove scope
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
               ) : (
                 <p class="note">No active scopes are assigned to this member.</p>
               )}
-              <form class="form" method="post" data-admin-replace-scopes data-user={user.id}>
-                <h3>Replace scopes</h3>
-                {scopeKinds.map((kind) => (
-                  <div class="scope-row">
-                    <label class="check">
-                      <input
-                        type="checkbox"
-                        name={`scope-${kind}`}
-                        checked={scopes?.some((scope) => scope.kind === kind)}
-                        disabled={user.loginIdentity === 'yazeed' && kind === 'GLOBAL'}
-                      />
-                      {kind}{user.loginIdentity === 'yazeed' && kind === 'GLOBAL' ? ' (Protected)' : ''}
-                    </label>
-                    <input
-                      name={`scope-value-${kind}`}
-                      placeholder="Value (optional)"
-                      maxlength="200"
-                      value={scopes?.find((scope) => scope.kind === kind)?.value ?? ''}
-                    />
-                  </div>
-                ))}
-                <label>
+              <form
+                class="form"
+                method="post"
+                data-admin-form
+                data-operation="Assign scope"
+                data-subject={subject}
+                data-assign-scope
+              >
+                <h3>Assign scope</h3>
+                <label for="scopeKind">
+                  Scope kind<span aria-hidden="true"> *</span>
+                  <select id="scopeKind" name="kind" required data-scope-kind-select>
+                    {SCOPE_KINDS.map((kind) => (
+                      <option value={kind} data-requires-value={scopeRequiresValue(kind) ? 'true' : 'false'}>
+                        {kind}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label for="scopeValue" data-scope-value-field>
+                  Scope value<span aria-hidden="true" data-scope-value-required> *</span>
+                  <input id="scopeValue" name="value" maxlength="200" data-scope-value-input required />
+                </label>
+                <p class="hint" data-scope-value-hint />
+                <label for="scopeReason">
                   Reason (optional)
-                  <input name="reason" maxlength="500" />
+                  <input id="scopeReason" name="reason" maxlength="500" />
                 </label>
                 <div class="actions">
-                  <button type="submit" data-submit>Replace scopes</button>
+                  <button type="submit" data-submit>
+                    Assign scope
+                  </button>
                 </div>
-                <p role="status" data-result tabindex="-1" />
+                <p class="status" role="status" aria-live="polite" data-status />
               </form>
+              <details class="bulk">
+                <summary>Bulk operations</summary>
+                <p class="note">
+                  Replacement revokes every current grant and writes the selected set in one
+                  transaction. Use it only for an intentional bulk reset — normal administration
+                  uses the incremental assign and remove controls above.
+                </p>
+                <form
+                  class="form"
+                  method="post"
+                  data-admin-form
+                  data-operation="Replace scopes"
+                  data-subject={subject}
+                  data-replace-scopes
+                >
+                  <fieldset>
+                    <legend>Resulting scope set</legend>
+                    {SCOPE_KINDS.map((kind) => (
+                      <div class="scope-row">
+                        <label class="check">
+                          <input
+                            type="checkbox"
+                            name={`scope-${kind}`}
+                            checked={scopes?.some((scope) => scope.kind === kind)}
+                            disabled={protectedScope(kind)}
+                          />
+                          {kind}
+                          {protectedScope(kind) ? ' (Protected)' : ''}
+                        </label>
+                        <input
+                          name={`scope-value-${kind}`}
+                          placeholder="Value (optional)"
+                          maxlength="200"
+                          value={scopes?.find((scope) => scope.kind === kind)?.value ?? ''}
+                          aria-label={`${kind} scope value`}
+                        />
+                      </div>
+                    ))}
+                  </fieldset>
+                  <label for="replaceReason">
+                    Reason (optional)
+                    <input id="replaceReason" name="reason" maxlength="500" />
+                  </label>
+                  <div class="actions">
+                    <button type="submit" data-submit class="danger">
+                      Replace scopes
+                    </button>
+                  </div>
+                  <p class="status" role="status" aria-live="polite" data-status />
+                </form>
+              </details>
             </div>
           )}
         </section>
+
+        <section class="panel" id="administrative-control">
+          <p class="eyebrow">ADMINISTRATIVE CONTROL</p>
+          <h2>Your authority for this member</h2>
+          <dl>
+            <div>
+              <dt>Profile edit</dt>
+              <dd>{canManage && !isSelf ? 'Allowed' : 'Not allowed'}</dd>
+            </div>
+            <div>
+              <dt>Account lifecycle</dt>
+              <dd>{canManage && !isSelf ? 'Allowed' : 'Not allowed'}</dd>
+            </div>
+            <div>
+              <dt>Role administration</dt>
+              <dd>{canManageRoles ? (canAssignRoles ? 'View and assign' : 'View only') : 'Not allowed'}</dd>
+            </div>
+            <div>
+              <dt>Scope administration</dt>
+              <dd>{canManageScopes ? 'View, assign and remove' : 'Not allowed'}</dd>
+            </div>
+          </dl>
+          <p class="note">
+            Capabilities are derived from your explicit server-side permission grants, and every
+            mutation re-authorizes inside its use case. Rendering this page never grants an action.
+          </p>
+          <p class="note">
+            Protected grants belong to the canonical named system owner. The interface never offers
+            their removal, and the persistence layer rejects a crafted removal even for a caller
+            holding the role or scope assignment permission.
+          </p>
+        </section>
+
+        {(roles ?? [])
+          .filter((role) => !isSelf && canAssignRoles && !protectedRole(role.code))
+          .map((role) => (
+            <ConfirmDialog
+              id={`dialog-remove-role-${role.id}`}
+              title="Remove role"
+              description="Removing this role ends the member's role membership. The change is audited, and permissions derived from this role stop applying immediately."
+              subject={subject}
+              intent={`Remove Role — ${role.name} (${role.code})`}
+              confirmLabel="Confirm removal"
+              cancelLabel="Cancel"
+              danger
+              pendingLabel="Removing role…"
+            />
+          ))}
+        {(scopes ?? [])
+          .filter((scope) => !isSelf && canAssignScopes && !protectedScope(scope.kind))
+          .map((scope) => (
+            <ConfirmDialog
+              id={`dialog-remove-scope-${scope.id}`}
+              title="Remove scope"
+              description="Removing this scope revokes one authorization scope. Unrelated scopes the member holds are preserved, and the change is audited."
+              subject={subject}
+              intent={`Remove Scope — ${scopeLabel(scope)}`}
+              confirmLabel="Confirm removal"
+              cancelLabel="Cancel"
+              danger
+              pendingLabel="Removing scope…"
+            />
+          ))}
+        {
+          !isSelf && canManage && (
+            <>
+              <ConfirmDialog
+                id="dialog-disable-account"
+                title="Disable account"
+                description="Disabling sets the account to DISABLED and revokes every session immediately. The account can be activated again later, and the change is audited."
+                subject={subject}
+                intent="Disable account"
+                confirmLabel="Confirm disable"
+                cancelLabel="Cancel"
+                danger
+                pendingLabel="Disabling account…"
+              />
+              <ConfirmDialog
+                id="dialog-activate-account"
+                title="Activate account"
+                description="Activating returns the account to ACTIVE and is audited."
+                subject={subject}
+                intent="Activate account"
+                confirmLabel="Confirm activate"
+                cancelLabel="Cancel"
+                pendingLabel="Activating account…"
+              />
+              <ConfirmDialog
+                id="dialog-revoke-sessions"
+                title="Revoke all sessions"
+                description="Every active session for this member ends immediately. The account state and password are unchanged, and the revocation is audited."
+                subject={subject}
+                intent="Revoke all sessions"
+                confirmLabel="Confirm revocation"
+                cancelLabel="Cancel"
+                danger
+                pendingLabel="Revoking sessions…"
+              />
+              <ConfirmDialog
+                id="dialog-password-reset"
+                title="Reset password"
+                description="Resetting sets a temporary password, requires a change at next sign-in, and revokes every session immediately. The change is audited."
+                subject={subject}
+                intent="Reset password"
+                confirmLabel="Confirm reset"
+                cancelLabel="Cancel"
+                danger
+                pendingLabel="Resetting password…"
+              />
+            </>
+          )
+        }
       </div>
     )
   }
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
-  const userId = location.pathname.split('/').pop() ?? '';
-  const run = async (form: HTMLFormElement, label: string, call: () => Promise<{ error?: unknown }>) => {
-    if (form.getAttribute('aria-busy') === 'true') return;
-    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
-    const output = form.querySelector<HTMLElement>('[data-result]');
-    form.setAttribute('aria-busy', 'true');
-    if (submit) submit.disabled = true;
-    if (output) output.textContent = label;
-    try {
-      const result = await call();
-      if (result.error) {
-        if (output) { output.textContent = 'The change was not applied. The member may have changed or your authorization may have changed — refresh and try again if authorized. Your entries are preserved.'; output.focus?.(); }
-      } else location.reload();
-    } catch {
-      if (output) { output.textContent = 'The service is temporarily unavailable. Nothing was changed — your entries are preserved.'; output.focus?.(); }
-    } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
+  import { bindDialogMutation, initDialogs, openDialog } from '../../../ui/client/dialog.js';
+  import { classifyActionResult } from '../../../ui/forms/mutation-interaction.js';
+  import {
+    adminFailureMessage,
+    isStaleVersionState,
+  } from '../../../ui/forms/admin-mutation-copy.js';
+
+  initDialogs();
+
+  const root = document.querySelector<HTMLElement>('[data-admin-user]');
+  const userId = root?.dataset.userId ?? '';
+  const subject = root?.dataset.subject ?? 'this member';
+  const version = BigInt(root?.dataset.version ?? '0');
+
+  const failure = root?.querySelector<HTMLElement>('[data-failure]');
+  const failureMessage = root?.querySelector<HTMLElement>('[data-failure-message]');
+  const staleActions = root?.querySelector<HTMLElement>('[data-stale-actions]');
+  root
+    ?.querySelector<HTMLButtonElement>('[data-refresh-record]')
+    ?.addEventListener('click', () => window.location.reload());
+
+  /**
+   * Non-stale failures surface in the shared page-level alert region; a stale
+   * record additionally reveals the explicit refresh control. The stale
+   * intention is never resubmitted automatically against newer data.
+   */
+  const reportFailure = (state: Parameters<typeof adminFailureMessage>[0], message: string) => {
+    const stale = isStaleVersionState(state);
+    if (staleActions) staleActions.hidden = !stale;
+    if (failureMessage) failureMessage.textContent = message;
+    if (failure) {
+      failure.hidden = false;
+      failure.focus();
+    }
   };
-  const updateForm = document.querySelector<HTMLFormElement>('[data-admin-update-user]');
-  updateForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!updateForm) return;
-    const data = new FormData(updateForm);
-    const email = String(data.get('email') || '').trim();
-    void run(updateForm, 'Saving profile…', () => actions.admin.updateUser({ userId, displayName: String(data.get('displayName')), ...(email ? { email } : {}), expectedVersion: BigInt(updateForm.dataset.version ?? '0') }));
+  if (failure) failure.hidden = true;
+
+  type Outcome = { data?: unknown; error?: unknown };
+  const contextOf = (element: HTMLElement) => ({
+    operation: element.dataset.operation ?? 'This change',
+    subject: element.dataset.subject || subject,
   });
-  const resetForm = document.querySelector<HTMLFormElement>('[data-admin-reset-password]');
-  resetForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!resetForm) return;
-    const data = new FormData(resetForm);
-    void run(resetForm, 'Resetting password…', () => actions.admin.resetPassword({ userId, temporaryPassword: String(data.get('temporaryPassword')), expectedVersion: BigInt(resetForm.dataset.version ?? '0') }));
-  });
-  const disableForm = document.querySelector<HTMLFormElement>('[data-admin-disable-user]');
-  disableForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!disableForm) return;
-    void run(disableForm, 'Disabling account…', () => actions.admin.disableUser({ userId, expectedVersion: BigInt(disableForm.dataset.version ?? '0') }));
-  });
-  document.querySelectorAll<HTMLButtonElement>('[data-account-action]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const action = button.dataset.accountAction;
-      if (!confirm(action === 'revoke' ? 'Revoke all sessions for this member?' : `${action === 'disable' ? 'Disable' : 'Activate'} this member?`)) return;
-      button.disabled = true;
+
+  /**
+   * Shared contract for the profile, role-assignment, and scope forms:
+   * progress in a polite status region, prompt-free failures in a blocking
+   * alert region, and a full reload only after the server confirms success so
+   * the authoritative state is always re-read.
+   */
+  const enhanceForm = (
+    form: HTMLFormElement,
+    invoke: (data: FormData) => Promise<Outcome>,
+    onSuccess?: () => void,
+  ) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (form.getAttribute('aria-busy') === 'true') return;
+      const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+      const status = form.querySelector<HTMLElement>('[data-status]');
+      const context = contextOf(form);
+      form.setAttribute('aria-busy', 'true');
+      if (submit) submit.disabled = true;
+      if (status) status.textContent = `${context.operation}…`;
       try {
-        const result = action === 'revoke'
-          ? await actions.admin.revokeUserSessions({ userId })
-          : action === 'disable'
-            ? await actions.admin.disableUser({ userId, expectedVersion: BigInt('${version}') })
-            : await actions.admin.activateUser({ userId, expectedVersion: BigInt('${version}') });
-        if (result.error) alert('The change was not applied. Refresh and try again.');
-        else location.reload();
-      } catch { alert('The service is temporarily unavailable.'); }
-      finally { button.disabled = false; }
+        const outcome = classifyActionResult(await invoke(new FormData(form)));
+        if (outcome.state === 'SUCCESS') {
+          if (onSuccess) onSuccess();
+          else window.location.reload();
+          return;
+        }
+        reportFailure(outcome.state, adminFailureMessage(outcome.state, context));
+      } catch {
+        reportFailure(
+          'UNKNOWN_SAFE_ERROR',
+          adminFailureMessage('UNKNOWN_SAFE_ERROR', context),
+        );
+      } finally {
+        form.removeAttribute('aria-busy');
+        if (submit) submit.disabled = false;
+        if (status) status.textContent = '';
+      }
     });
-  });
-  const scopesForm = document.querySelector<HTMLFormElement>('[data-admin-replace-scopes]');
-  scopesForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!scopesForm) return;
-    const data = new FormData(scopesForm);
+  };
+
+  const profileForm = document.querySelector<HTMLFormElement>('[data-update-user]');
+  if (profileForm)
+    enhanceForm(profileForm, (data) => {
+      const email = String(data.get('email') || '').trim();
+      return actions.admin.updateUser({
+        userId,
+        displayName: String(data.get('displayName')),
+        ...(email ? { email } : {}),
+        expectedVersion: version,
+      }) as unknown as Promise<Outcome>;
+    });
+
+  const roleForm = document.querySelector<HTMLFormElement>('[data-assign-role]');
+  if (roleForm)
+    enhanceForm(roleForm, (data) => {
+      const reason = String(data.get('reason') || '').trim();
+      return actions.admin.assignUserRole({
+        userId,
+        roleId: String(data.get('roleId')),
+        ...(reason ? { reason } : {}),
+      }) as unknown as Promise<Outcome>;
+    });
+
+  const scopeForm = document.querySelector<HTMLFormElement>('[data-assign-scope]');
+  if (scopeForm) {
+    const kindSelect = scopeForm.querySelector<HTMLSelectElement>('[data-scope-kind-select]');
+    const valueField = scopeForm.querySelector<HTMLElement>('[data-scope-value-field]');
+    const valueInput = scopeForm.querySelector<HTMLInputElement>('[data-scope-value-input]');
+    const valueRequired = scopeForm.querySelector<HTMLElement>('[data-scope-value-required]');
+    const valueHint = scopeForm.querySelector<HTMLElement>('[data-scope-value-hint]');
+    const syncValueField = () => {
+      const option = kindSelect?.selectedOptions[0];
+      const kind = option?.value ?? 'OWN';
+      const requiresValue = option?.dataset.requiresValue === 'true';
+      if (valueField) valueField.hidden = !requiresValue;
+      if (valueInput) valueInput.required = requiresValue;
+      if (valueRequired) valueRequired.hidden = !requiresValue;
+      if (valueHint)
+        valueHint.textContent = requiresValue
+          ? `The value names the ${kind} scope, for example an operational site or domain.`
+          : `${kind} is a whole-system grant and takes no value.`;
+    };
+    kindSelect?.addEventListener('change', syncValueField);
+    syncValueField();
+    enhanceForm(scopeForm, (data) => {
+      const value = String(data.get('value') || '').trim();
+      const reason = String(data.get('reason') || '').trim();
+      return actions.admin.assignUserScope({
+        userId,
+        kind: String(data.get('kind')) as 'OWN' | 'ASSIGNED' | 'TEAM' | 'DEPARTMENT' | 'SITE' | 'DOMAIN' | 'GLOBAL',
+        ...(value ? { value } : {}),
+        ...(reason ? { reason } : {}),
+      }) as unknown as Promise<Outcome>;
+    });
+  }
+
+  const replaceForm = document.querySelector<HTMLFormElement>('[data-replace-scopes]');
+  if (replaceForm) {
     const kinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL'] as const;
-    const scopes = kinds.filter((kind) => data.get(`scope-${kind}`) === 'on').map((kind) => {
-      const value = String(data.get(`scope-value-${kind}`) || '').trim();
-      return value ? { kind, value } : { kind };
+    enhanceForm(replaceForm, (data) => {
+      const scopes = kinds
+        .filter((kind) => data.get(`scope-${kind}`) === 'on')
+        .map((kind) => {
+          const value = String(data.get(`scope-value-${kind}`) || '').trim();
+          return value ? { kind, value } : { kind };
+        });
+      const reason = String(data.get('reason') || '').trim();
+      return actions.admin.manageUserScopes({
+        userId,
+        scopes,
+        ...(reason ? { reason } : {}),
+      }) as unknown as Promise<Outcome>;
     });
-    const reason = String(data.get('reason') || '').trim();
-    void run(scopesForm, 'Replacing scopes…', () => actions.admin.manageUserScopes({ userId, scopes, ...(reason ? { reason } : {}) }));
-  });
+  }
+
+  /**
+   * Removal dialogs are generated per grant, so each dialog inherits the
+   * identity of the exact control that opens it. This keeps the render loop
+   * declarative while the mutation still targets one precise grant.
+   */
+  for (const button of document.querySelectorAll<HTMLElement>('[data-dialog-open]')) {
+    const dialog = document.getElementById(button.dataset.dialogOpen ?? '') as
+      | HTMLDialogElement
+      | null;
+    if (!dialog) continue;
+    dialog.dataset.operation = button.dataset.operation ?? dialog.dataset.operation ?? '';
+    if (button.dataset.roleId) dialog.dataset.roleId = button.dataset.roleId;
+    if (button.dataset.scopeKind) dialog.dataset.scopeKind = button.dataset.scopeKind;
+    if (button.dataset.scopeValue) dialog.dataset.scopeValue = button.dataset.scopeValue;
+  }
+
+  /**
+   * Password reset needs its own payload captured before the confirmation
+   * dialog runs, so the secret never leaves the form until the operator
+   * confirms.
+   */
+  const resetForm = document.querySelector<HTMLFormElement>('[data-reset-password]');
+  let pendingPassword = '';
+  if (resetForm)
+    resetForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      pendingPassword = String(new FormData(resetForm).get('temporaryPassword') ?? '');
+      if (!pendingPassword) {
+        resetForm.querySelector<HTMLInputElement>('#temporaryPassword')?.focus();
+        return;
+      }
+      const dialog = document.getElementById(
+        resetForm.dataset.confirmDialog ?? '',
+      ) as HTMLDialogElement | null;
+      if (dialog) {
+        dialog.dataset.operation = 'Reset password';
+        openDialog(dialog, resetForm.querySelector<HTMLButtonElement>('[data-submit]'));
+      }
+    });
+
+  const dialogOps: ReadonlyArray<{
+    selector: string;
+    operation: string;
+    invoke: (dialog: HTMLDialogElement) => Promise<Outcome>;
+  }> = [
+    {
+      selector: '#dialog-password-reset',
+      operation: 'Reset password',
+      invoke: () =>
+        actions.admin.resetPassword({
+          userId,
+          temporaryPassword: pendingPassword,
+          expectedVersion: version,
+        }) as unknown as Promise<Outcome>,
+    },
+    {
+      selector: '#dialog-disable-account',
+      operation: 'Disable account',
+      invoke: () =>
+        actions.admin.disableUser({ userId, expectedVersion: version }) as unknown as Promise<Outcome>,
+    },
+    {
+      selector: '#dialog-activate-account',
+      operation: 'Activate account',
+      invoke: () =>
+        actions.admin.activateUser({ userId, expectedVersion: version }) as unknown as Promise<Outcome>,
+    },
+    {
+      selector: '#dialog-revoke-sessions',
+      operation: 'Revoke all sessions',
+      invoke: () => actions.admin.revokeUserSessions({ userId }) as unknown as Promise<Outcome>,
+    },
+    {
+      selector: 'dialog[id^="dialog-remove-role-"]',
+      operation: 'Remove role',
+      invoke: (dialog) => {
+        const reason = dialog.querySelector<HTMLTextAreaElement>('textarea[name="reason"]')?.value;
+        return actions.admin.removeUserRole({
+          userId,
+          roleId: dialog.dataset.roleId ?? dialog.id.replace('dialog-remove-role-', ''),
+          ...(reason ? { reason } : {}),
+        }) as unknown as Promise<Outcome>;
+      },
+    },
+    {
+      selector: 'dialog[id^="dialog-remove-scope-"]',
+      operation: 'Remove scope',
+      invoke: (dialog) => {
+        const kind = dialog.dataset.scopeKind ?? 'GLOBAL';
+        const value = dialog.dataset.scopeValue ?? '';
+        const reason = dialog.querySelector<HTMLTextAreaElement>('textarea[name="reason"]')?.value;
+        return actions.admin.removeUserScope({
+          userId,
+          kind: kind as 'OWN' | 'ASSIGNED' | 'TEAM' | 'DEPARTMENT' | 'SITE' | 'DOMAIN' | 'GLOBAL',
+          ...(value ? { value } : {}),
+          ...(reason ? { reason } : {}),
+        }) as unknown as Promise<Outcome>;
+      },
+    },
+  ];
+
+  for (const op of dialogOps) {
+    for (const dialog of Array.from(document.querySelectorAll<HTMLDialogElement>(op.selector))) {
+      bindDialogMutation(dialog, async () => {
+        const outcome = classifyActionResult(await op.invoke(dialog));
+        if (outcome.state === 'SUCCESS') {
+          window.location.reload();
+          return { ok: true };
+        }
+        return {
+          ok: false,
+          message: adminFailureMessage(outcome.state, {
+            operation: dialog.dataset.operation || op.operation,
+            subject,
+          }),
+          stale: isStaleVersionState(outcome.state),
+        };
+      });
+    }
+  }
 </script>
 <style>
   .page-head {
@@ -335,8 +919,29 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: var(--space-5);
+    align-items: start;
+  }
+  .failure {
+    grid-column: 1 / -1;
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--status-error);
+    border-inline-start: 3px solid var(--status-error);
+    border-radius: var(--radius-lg);
+  }
+  .failure:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 2px;
+  }
+  .failure p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .stale-actions {
+    margin-top: var(--space-3);
   }
   .panel,
   .denied {
@@ -357,6 +962,7 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
     font-size: 1rem;
   }
   h3 {
+    margin: 0;
     font-size: 0.85rem;
   }
   .flag {
@@ -394,53 +1000,117 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
     display: grid;
     gap: var(--space-5);
   }
+  .control {
+    display: grid;
+    gap: var(--space-3);
+  }
   label {
     display: grid;
     gap: 0.4rem;
     font-size: 0.85rem;
   }
-  input {
-    font: inherit;
+  input,
+  select {
+    min-height: 44px;
     padding: 0.65rem;
     background: var(--surface-page);
     color: inherit;
+    font: inherit;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
   }
-  .note {
+  .note,
+  .hint {
     color: var(--text-muted);
     font-size: 0.82rem;
     line-height: 1.5;
+  }
+  .hint {
+    margin: 0;
+  }
+  .status {
+    margin: 0;
+    min-height: 1rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
   }
   .actions {
     display: flex;
     gap: var(--space-3);
     align-items: center;
+    flex-wrap: wrap;
   }
   button {
     border: 0;
+    min-height: 44px;
     padding: 0.65rem 1rem;
     background: var(--color-accent-primary);
     color: #fff;
     border-radius: var(--radius-md);
+    font: inherit;
     font-weight: 700;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.7;
+    cursor: progress;
   }
   button.danger {
     background: var(--status-error);
   }
-  .scopes {
+  .grants {
     list-style: none;
     margin: var(--space-3) 0;
     padding: 0;
   }
-  .scopes li {
+  .grants li {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
     gap: var(--space-3);
     padding: 0.6rem 0;
     border-top: 1px solid var(--color-border-subtle);
     font-size: 0.82rem;
+  }
+  .grant-name {
+    font-weight: 700;
+  }
+  .code {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  .protected {
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--surface-page);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .bulk {
+    margin-top: var(--space-5);
+  }
+  .bulk summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  fieldset {
+    display: grid;
+    gap: var(--space-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+    margin: 0;
+  }
+  legend {
+    padding: 0 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
   }
   .scope-row {
     display: grid;
@@ -453,11 +1123,17 @@ const scopeKinds = ['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', '
     gap: 0.5rem;
     align-items: center;
     flex-direction: row;
+    font-size: 0.82rem;
+  }
+  .check input {
+    min-height: 0;
+    width: 1.1rem;
+    height: 1.1rem;
   }
   a {
     color: var(--color-accent-primary-hover);
   }
-  @media (max-width: 600px) {
+  @media (max-width: 700px) {
     .page-head {
       display: grid;
     }

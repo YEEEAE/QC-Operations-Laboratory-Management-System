@@ -1,16 +1,26 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
-> آخر دمج: 2026-09-17  
+> آخر دمج: 2026-09-18  
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
-## Current audit reality — 2026-09-17
+## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `5dc6e3e2cb6ab9c83e13a0d2d8f9747f81936137` on `main`; working tree contains authorized uncommitted owner-control changes plus unrelated user-added files.
-- Fresh local evidence: unit `72 files / 442 PASS`, architecture/build PASS; typecheck BLOCKED by unrelated untracked `scripts/access/check-system-owner 2.ts`; lint FAIL at `scripts/verification/run-authenticated-e2e.ts:105`; format FAIL in two system-background tests.
-- Release identity: `rel-b6af9b842676c931`, build `local-1686d2951e9e`; migration source head `0023_uat_evidence`; applied DB head, CI, authenticated E2E, UAT, provider, and restore evidence are not current/verified.
-- UAT validator reports valid header but `sessions=0`; Docker/PostgreSQL 18 is unavailable; tracked `.DS_Store` artifacts remain and fail hygiene closure.
-- Final independent audit decision: `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+- Exact current HEAD: `02d94fa48fa5e0ecca0150aa16d1a42997832587` on `main`. The earlier yazeed owner-control work (tasks 001–006) is now **committed**; the working tree currently holds only the uncommitted closure changes of `QC-SYSTEM-OWNER-YAZEED-FINAL-CLOSURE-005` (13 modified + 7 new paths, `1547 insertions / 210 deletions`).
+- Fresh local evidence on this HEAD + working tree: `pnpm typecheck` (`astro check`, 729 files) **PASS / 0 errors**; `tests/unit/admin` **65/65 PASS** (6 files). Full `pnpm test:unit` observed **75 files / 485 tests → 484 PASS, 1 FAIL** at `tests/unit/ui/app-shell.test.ts` (a source-text guard on `src/ui/client/dialog.ts` that the dialog refactor invalidated); the guard was then satisfied in source but **NOT re-run** → treat full-unit status as `NOT VERIFIED` for the current tree.
+- NOT RUN on this tree: `format:check`, `lint`, `test:architecture`, `build`, `git diff --check`, Playwright, `test:integration`, `test:migrations`, `test:concurrency`, `test:security`, `system-owner:check`, `system-owner:reconcile`. Older lint/format FAILs (`scripts/verification/run-authenticated-e2e.ts:105`, two system-background tests) and the tracked `.DS_Store` hygiene failure are on record and were **not** re-checked.
+- Migration source head remains `0023_uat_evidence` with **no new migration** in this task. Release identity `rel-b6af9b842676c931` / build `local-1686d2951e9e` is **stale** relative to this tree; applied DB head, CI, authenticated E2E, UAT, provider, and restore evidence are still not current/verified.
+- Docker daemon is **unavailable** on this host (socket `~/.docker/run/docker.sock` missing), so PostgreSQL 18 / Testcontainers execution is `BLOCKED`; UAT validator still reports `sessions=0`.
+- Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+
+## [2026-09-18] — QC-SYSTEM-OWNER-YAZEED-FINAL-CLOSURE-005 / explicit role+scope admin, dialogs, stale UX
+
+- Changed: added explicit incremental scope administration end to end (`assignUserScope` / `removeUserScope` port methods, transactional PostgreSQL implementation with canonical-owner `GLOBAL` protection, `AssignUserScopeUseCase` / `RemoveUserScopeUseCase`, Astro actions); replaced the replace-only scope UX with per-grant assign/remove plus a clearly-labelled bulk *Replace* inside `<details>`; rewrote `/admin/users/[userId]` with Profile / Account security / Roles / Scopes / Administrative control sections, capability-driven controls, `Protected` markers for canonical owner grants, and de-duplicated lifecycle controls; removed all native `confirm()`/`alert()` from the journey in favour of the shared `ConfirmDialog` + `src/ui/client/dialog.ts` (focus trap, focus return via opener registry, Escape blocked mid-submission, pending state, inline error region, stale refresh control); made the admin Action error boundary deterministic (`astroActionCodeFor` projects `ErrorCode` → Astro code, exact `ErrorCode` travels as the message) and taught the shared classifier the exact-code map plus a `DUPLICATE_COMMAND` state; added `STALE_VERSION_MESSAGE` with an explicit `Refresh record` path and no auto-retry; made `SCOPE_KINDS` the single canonical scope vocabulary for actions, pages, and persistence validation.
+- Fixed regression: `ListUserRolesUseCase` authorized `PERM-ADM-ROLE-VIEW`/`VIEW` against entity type `USER`, which the policy registry does not declare (it is declared on `ROLE`), so role membership could never be read; it now uses the registered entity type. This means the pre-005 role list on the user-detail page was always restricted.
+- Evidence: `pnpm typecheck` 0 errors; `tests/unit/admin` 65/65 PASS (3 new files: scope administration 17, role administration 6, error contract 14, plus existing guards). Not verified: full unit suite, lint, format, architecture, build, diff check, Playwright, PostgreSQL.
+- State: PARTIAL / BLOCKED (source-level closure only).
+- Key files: `src/modules/administration/application/{assign-user-scope,remove-user-scope}.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`, `src/actions/admin.ts`, `src/pages/admin/users/[userId].astro`, `src/ui/components/feedback/ConfirmDialog.astro`, `src/ui/client/dialog.ts`, `src/ui/forms/admin-mutation-copy.ts`, `src/shared/errors/action-error-code.ts`.
+- Not done in this task: dedicated Playwright spec, accessibility-spec extension, PostgreSQL integration tests, `SYSTEM-OWNER-DATA-CONTROL-MATRIX.md` classification refresh.
 
 ## [2026-09-17] — QC-SYSTEM-OWNER-CROSS-DOMAIN-CONTROL-005 / executable task retirement path
 
@@ -180,6 +190,15 @@
 - `grant-system-owner` مقفول على الهوية القانونية `yazeed` مع حماية المالك الوحيد.
 - `loginIdentity` ما زال اختياريًا في type لتوافق test doubles قديمة، لكن المسارات السلطوية ترفض غيابه.
 
+### Protected grants + explicit scope administration (owner-005, 2026-09-18)
+- الحماية على مستوى المنحة لا على مستوى الفاعل: `isProtectedOwnerRoleGrant` (yazeed + SYSTEM_OWNER) و`isProtectedOwnerScope` (yazeed + GLOBAL) هما المصدر الواحد للـUI وللـpersistence.
+- `removeUserRole` و`removeUserScope` يرفضان إزالة منحة المالك القانوني حتى لو كان الطالب يملك `PERM-ADM-ROLE-ASSIGN` أو `PERM-ADM-SCOPE-ASSIGN`؛ الإخفاء في الواجهة ليس الضمان.
+- إدارة النطاقات صارت incremental: `assignUserScope` / `removeUserScope` (Use Cases + actions) وتعدّل منحة واحدة فقط. `manageUserScopes` / `replaceUserScopes` باقيان للـbulk والـatomic provisioning فقط، وليسا المسار التفاعلي الوحيد.
+- Assign idempotent (لا تكرار سجل/تدقيق)، وRemove على منحة غير موجودة no-op محدد بلا تدقيق؛ كل ذلك داخل transaction مع `ASSIGN_USER_SCOPE` / `REMOVE_USER_SCOPE` audit.
+- `SCOPE_KINDS` في `src/shared/authorization/types.ts` هو المفردات القانونية الوحيدة (تُستهلك في actions/pages/persistence)؛ `normalizeScopeValue` يفرض القيمة على TEAM/DEPARTMENT/SITE/DOMAIN ويمنعها على GLOBAL.
+- جدولا `user_roles` و`user_scopes` بلا version column، فلا يوجد expectedVersion عليهما؛ optimistic concurrency يبقى على `users` (profile/activate/disable/reset password) ولا يُخترع فحص وهمي.
+- لا يجوز مصادقة use case على permission مسجّل بنوع كيان مختلف؛ `PERM-ADM-ROLE-VIEW`+VIEW مسجّل على `ROLE` (كان bug في `ListUserRolesUseCase`).
+
 ### Operational visibility
 - القاعدة التشغيلية: كل حساب `ACTIVE` ومصادق يقدر يقرأ صفحات وسجلات التشغيل العادية على مستوى النظام.
 - القراءة العامة لا تعطي حق mutation؛ الإنشاء/التعديل/المراجعة/الاعتماد/الإفراج/VOID/الاستعادة/التوقيع تبقى محكومة بالسياسات.
@@ -277,6 +296,9 @@
 
 ### Mutation UX
 - نماذج الإنشاء الرئيسية تملك POST baseline حقيقي وتعمل بدون JavaScript؛ JS enhancement فقط.
+- مسار إدارة الأعضاء (owner-005): كل فعل له control واحد canonical، والفشل لا يُختزل في رسالة واحدة — `astroActionCodeFor` يضبط كود Astro بينما `ErrorCode` الدقيق يمرّ كـmessage، ويصنّفه `classifyActionResult` عبر خريطة exact-code إلى `VALIDATION_ERROR` / `CONFLICT_STALE` / `DUPLICATE_COMMAND` / `AUTHORIZATION_CHANGED` / `DEPENDENCY_UNAVAILABLE` / `UNKNOWN_SAFE_ERROR`.
+- stale version له UX صريح: `STALE_VERSION_MESSAGE` + زر `Refresh record`، ولا يوجد auto-retry للنية القديمة على data أحدث. `role/scope` لا تحمل version فلا تعرض رسالة stale مُختلقة.
+- لا native `confirm()`/`alert()` في مسار الإدارة؛ الحوارات تمر عبر `ConfirmDialog.astro` + `src/ui/client/dialog.ts` (native `<dialog showModal>` للـfocus trap، opener registry لرجوع focus، Escape لا يُغلق أثناء submission، pending + error region + stale refresh). إتاحة الأزرار 44px والمناطق role=status/role=alert مفصولة.
 - الأخطاء مرئية ومترابطة مع الحقول، القيم تُحفظ بعد الفشل، النجاح `303` إلى record id مفحوص.
 - لا SQL أو business rules داخل الصفحات.
 - dialogs/pagination/sort primitives نضجت محليًا، لكن التوصيل الكامل لكل route families يحتاج استمرار تدريجي.
