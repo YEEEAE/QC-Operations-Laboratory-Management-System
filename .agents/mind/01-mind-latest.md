@@ -4,6 +4,21 @@
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
+## Current audit reality — 2026-09-17
+
+- Exact current HEAD: `1686d2951e9eed78b5b78a2c44444cdd6c8acecd` on `main`; working tree was clean at freeze.
+- Fresh local evidence: unit `72 files / 442 PASS`, architecture/typecheck/build PASS; lint FAIL at `scripts/verification/run-authenticated-e2e.ts:105`; format FAIL in two system-background tests.
+- Release identity: `rel-b6af9b842676c931`, build `local-1686d2951e9e`; migration source head `0023_uat_evidence`; applied DB head, CI, authenticated E2E, UAT, provider, and restore evidence are not current/verified.
+- UAT validator reports valid header but `sessions=0`; Docker/PostgreSQL 18 is unavailable; tracked `.DS_Store` artifacts remain and fail hygiene closure.
+- Final independent audit decision: `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+
+## [2026-09-17] — QC-ULTIMATE-SYSTEM-CLOSURE-FINAL / Independent 100-domain final verification
+
+- Changed: Added fresh current-HEAD freeze, 100-row evidence matrix, claims-vs-reality, file coverage, release-gate evidence, skill usage, and unresolved blocker records.
+- Evidence: 72/442 unit PASS; architecture/typecheck/build PASS; lint/format FAIL; CI/E2E/UAT/restore/provider/database runtime unavailable or unverified; `.DS_Store` tracked.
+- State: BLOCKED / NO-GO.
+- Key files: `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md`, `audit/100-percent/RELEASE-GATE-EVIDENCE.md`, `audit/100-percent/unresolved-blockers.md`.
+
 > ## 1) قواعد القراءة والتنفيذ
 
 >- اقرأ هذا الملف أولًا لفهم الوضع الحالي، ثم ارجع إلى الكود والوثائق المعتمدة عند التنفيذ.
