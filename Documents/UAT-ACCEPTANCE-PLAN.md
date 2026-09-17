@@ -129,6 +129,14 @@ Affected UAT evidence becomes stale
 
 ويجب إعادة الاختبار بالقدر المناسب للتغيير والمخاطر.
 
+## 4.1 Controlled server-side evidence
+
+ملفات CSV في `audit/100-percent/uat/` هي working evidence يملؤها الميسّر فقط، وليست مصدر حقيقة للإفراج. عند إدخال دورة UAT معتمدة إلى التطبيق تُخزّن في جداول `qc.uat_cycles` و`qc.uat_session_evidence` و`qc.uat_defects`، مع نسخة snapshot hash وهوية الإصدار الكاملة. الاعتماد يُخزّن في `qc.uat_acceptances` ويرتبط بـ`qc.electronic_signatures` وبحساب الموقّع المخوّل.
+
+لا يُسمح بتحويل CSV إلى بوابة `uat=PASS` إلا بعد تحقق خادمي من تطابق `release_id`, `git_sha`, `build_id`, `application_version`, `migration_head`, والبيئة، ومن اكتمال السيناريوهات الحرجة وعدم وجود فشل حرج غير معالج. لا تكفي صفوف CSV أو screenshots أو توقيع واجهة غير معاد التحقق وحدها.
+
+الحالة الافتراضية للدورة الجديدة هي `UNVERIFIED`، وإذا غابت الجلسات البشرية أو التوقيع المخوّل تبقى `BLOCKED`/`UNVERIFIED` ولا تُغذّي Release Governance كـ`SIGNED_UAT_CYCLE`.
+
 ---
 
 # 5. UAT Status Vocabulary

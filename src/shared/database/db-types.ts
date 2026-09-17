@@ -916,6 +916,79 @@ export interface ReleaseRiskEvidenceTable {
   created_at: Generated<Date>;
 }
 
+export interface UatCyclesTable {
+  id: Generated<string>;
+  cycle_id: string;
+  release_id: string;
+  git_sha: string;
+  build_id: string;
+  application_version: string;
+  migration_head: string;
+  environment: string;
+  plan_reference: string;
+  status: string;
+  evidence_snapshot_hash: string;
+  execution_started_at: Date | null;
+  execution_ended_at: Date | null;
+  created_at: Generated<Date>;
+}
+
+export interface UatSessionEvidenceTable {
+  id: Generated<string>;
+  cycle_id: string;
+  session_id: string;
+  participant_role: string;
+  participant_code: string;
+  task_id: string;
+  started_at: Date;
+  ended_at: Date;
+  time_on_task_seconds: number;
+  task_success: boolean;
+  error_count: number;
+  backtracking_count: number;
+  failed_navigation_count: number;
+  form_correction_count: number;
+  assistance: string;
+  wrong_action_attempts: number;
+  confidence_1_to_5: number;
+  seq_1_to_7: number;
+  observations: string;
+  severity: string;
+  participant_comments: string;
+  scenario_status: string;
+  task_accept_reject: string;
+  evidence_reference: string;
+  created_at: Generated<Date>;
+}
+
+export interface UatDefectsTable {
+  id: Generated<string>;
+  cycle_id: string;
+  defect_id: string;
+  session_id: string;
+  task_id: string;
+  severity: string;
+  title: string;
+  observed_evidence: string;
+  expected_business_outcome: string;
+  actual_business_outcome: string;
+  request_id_or_ref: string;
+  status: string;
+  created_at: Generated<Date>;
+}
+
+export interface UatAcceptancesTable {
+  id: Generated<string>;
+  cycle_id: string;
+  outcome: string;
+  authorized_signer_id: string;
+  signature_evidence_id: string;
+  reauthenticated_at: Date;
+  evidence_snapshot_hash: string;
+  request_id: string;
+  signed_at: Generated<Date>;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -981,6 +1054,10 @@ export interface DatabaseSchema {
   release_approvals: ReleaseApprovalsTable;
   release_gate_evidence: ReleaseGateEvidenceTable;
   release_risk_evidence: ReleaseRiskEvidenceTable;
+  uat_cycles: UatCyclesTable;
+  uat_session_evidence: UatSessionEvidenceTable;
+  uat_defects: UatDefectsTable;
+  uat_acceptances: UatAcceptancesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

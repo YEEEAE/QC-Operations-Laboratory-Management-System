@@ -4,16 +4,53 @@
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
-## 1) قواعد القراءة والتنفيذ
+> ## 1) قواعد القراءة والتنفيذ
 
-- اقرأ هذا الملف أولًا لفهم الوضع الحالي، ثم ارجع إلى الكود والوثائق المعتمدة عند التنفيذ.
-- عند التعارض: الكود الحالي + الوثائق المعتمدة + الأدلة الطازجة على نفس HEAD تتقدم على وصف تاريخي قديم.
-- لا تحول نتيجة محلية أو static audit إلى claim عن production/UAT/live behavior.
-- لا تعتبر `PASS` في الفحص مساويًا لـ`RELEASED`; نتيجة الفحص وحالة الإفراج منفصلتان.
-- الأفعال الحساسة تبقى server-authorized وتخضع حسب المسار إلى permission + scope + state + SoD + expected version + business/scientific rules + reauthentication/e-signature عند الحاجة.
-- لا تعتمد بيانات هوية/بوابات/مخاطر قادمة من المتصفح كحقيقة إصدار أو اعتماد.
-- لا commit أو push أو deploy من الوكيل إلا بطلب صريح.
-- Render هو مسار نشر Astro SSR. GitHub Pages/Jekyll ليس هدف نشر التطبيق.
+>- اقرأ هذا الملف أولًا لفهم الوضع الحالي، ثم ارجع إلى الكود والوثائق المعتمدة عند التنفيذ.
+>- عند التعارض: الكود الحالي + الوثائق المعتمدة + الأدلة الطازجة على نفس HEAD تتقدم على وصف تاريخي قديم.
+>- لا تحول نتيجة محلية أو static audit إلى claim عن production/UAT/live behavior.
+>- لا تعتبر `PASS` في الفحص مساويًا لـ`RELEASED`; نتيجة الفحص وحالة الإفراج منفصلتان.
+>- الأفعال الحساسة تبقى server-authorized وتخضع حسب المسار إلى permission + scope + state + SoD + expected version + business/scientific rules + reauthentication/e-signature عند الحاجة.
+>- لا تعتمد بيانات هوية/بوابات/مخاطر قادمة من المتصفح كحقيقة إصدار أو اعتماد.
+>- لا commit أو push أو deploy من الوكيل إلا بطلب صريح.
+>- Render هو مسار نشر Astro SSR. GitHub Pages/Jekyll ليس هدف نشر التطبيق.
+
+## [2026-09-17] — QC-CLOSURE-UAT-007: تجهيز UAT المضبوط وربط أدلة القبول
+
+### تم التنفيذ
+- أضيفت migration `0023_uat_evidence` لتخزين دورات UAT والجلسات والعيوب والقبول الموقّع server-side، مع ربط القبول بإعادة التحقق، الموقّع المخوّل، و`electronic_signatures` وsnapshot hash.
+- توسعت مصفوفة التغطية والـkit لتشمل Change Request، File/Evidence، Notifications/Handoffs، Session expiry/recovery، Error/Stale/Conflict recovery، وProduction Release approval UX، إضافة إلى المسارات المطلوبة السابقة.
+- شُدد `validate-uat-records.mjs` بعقد CSV مقتبس آمن، تطابق header حرفيًا، SHA كامل ومطابق، بيئة/دور/سيناريو allowlist، منع التكرار، تحقق كل العدادات والـconfidence والـsequence، ومطابقة مدة المهمة للوقت الفعلي.
+- أضيف template مستقل لـUAT cycle يترك release/participant/signature بلا قيم، ويبقي الحالة `UNVERIFIED`/`BLOCKED` حتى وجود جلسات بشرية وتوقيع حقيقي.
+- وثقت الخطة صراحة أن CSV أو screenshot وحده لا يرفع Release Governance إلى `SIGNED_UAT_CYCLE`، وأن أي تغيير controlled behavior يبطل evidence السابق ويحتاج re-scope/retest.
+
+### الملفات المتأثرة
+- `db/migrations/0023_uat_evidence.sql`
+- `src/shared/database/db-types.ts`
+- `audit/100-percent/uat/UAT-COVERAGE-MATRIX.csv`
+- `audit/100-percent/uat/UAT-SESSION-RECORD.csv`
+- `audit/100-percent/uat/UAT-DEFECT-BACKLOG.csv`
+- `audit/100-percent/uat/validate-uat-records.mjs`
+- `audit/100-percent/uat/UAT-CYCLE-MANIFEST.template.json`
+- `audit/100-percent/QC-100-CLOSURE-06-UAT-KIT.md`
+- `Documents/UAT-ACCEPTANCE-PLAN.md`
+
+### التحقق
+- `pnpm exec vitest run tests/unit/uat/uat-record-validator.test.ts` ✅ 6/6
+- `pnpm test:architecture` ✅
+- `pnpm typecheck` ✅ 0 errors؛ warnings/hints موجودة سابقًا
+- `pnpm exec prettier --check ...` ✅
+- validator على `UAT-SESSION-RECORD.csv` ✅ header صالح، `sessions=0`، وخرج `UAT EXECUTION REQUIRED`
+- PostgreSQL/Testcontainers/integration لم تُشغّل: Docker runtime غير متوفر على المضيف
+
+### النتيجة
+- **الحالة:** جزئي
+- **مختصر:** إطار UAT وأدلة القبول المخزنة صاروا جاهزين للتنفيذ، لكن لا توجد جلسات بشرية أو قبول/توقيع حقيقي؛ لذلك UAT تبقى `UNVERIFIED/BLOCKED` وR-005 لا يُغلق.
+
+### ملاحظات / مشاكل مفتوحة
+- المطلوب المتبقي للبشر: نشر نفس release المرشح في test/staging، إدخال مشاركين QC/Laboratory حقيقيين، تنفيذ السيناريوهات، تسجيل كل المقاييس والعيوب، ثم توقيع الدورة من authority مخوّلة بعد reauthentication.
+- Node المحلي `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`، لذلك لا تُعامل نتائج التحقق الحالية كدليل بيئة التشغيل النهائية.
+
 
 ## 2) الحالة الحالية — 2026-09-17
 

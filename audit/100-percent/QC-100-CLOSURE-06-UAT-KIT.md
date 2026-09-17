@@ -126,6 +126,36 @@ Read the **participant wording** verbatim. Never name buttons or routes.
 - Participant: "تتبع تاريخ هالسجل من إنشائه لين حالته الحالية."
 - Facilitator-only: `/audit`; actor/action/entity/time/transition/version present; audit read-only.
 
+### T-UAT-15 — Change Request (P-SUP, P-MGR; Tier 1)
+
+- Participant: "قدّم طلب تغيير مضبوط على النسخة الحالية وراجِع حالته بدون تعديل الحقول المشتقة."
+- Success: target/version/snapshot are server-derived; stale target is rejected; history remains intact.
+
+### T-UAT-16 — File/evidence workflow (P-INSP, P-LAB, P-AUD; Tier 1)
+
+- Participant: "اربط الدليل المناسب بالسجل، افتحه إذا كان مسموحًا لك، وتأكد إن الصلاحية محفوظة."
+- Success: authorized evidence is retrievable, unauthorized evidence is denied, checksum/reference is visible.
+
+### T-UAT-17 — Notifications and handoffs (P-EMP, P-SUP, P-MGR)
+
+- Participant: "تابع المهمة المحوّلة لك وحدد المالك والخطوة الجاية والدليل المطلوب."
+- Success: notification delivery is distinguishable from business completion; handoff does not transfer mutation authority.
+
+### T-UAT-18 — Session expiry and recovery (all applicable personas; Tier 1)
+
+- Participant: "بعد انتهاء الجلسة، حاول تكمل شغلك ورجّع الدخول بالطريقة الصحيحة."
+- Success: protected content/action is denied after expiry, no unsaved secret is exposed, recovery returns safely to the intended workflow.
+
+### N-UAT-07 — Error/stale/conflict recovery (P-INSP, P-LAB, P-SUP; Tier 1)
+
+- Participant: "تعامل مع رسالة الخطأ أو التعارض وكمّل بدون ما تستبدل تعديل شخص ثاني."
+- Success: safe error/reference is shown, entered values remain where appropriate, stale version blocks silent overwrite, retry is safe/idempotent.
+
+### T-UAT-19 — Production Release approval UX (P-MGR or named P-05 authority; Tier 1)
+
+- Participant: "راجع أدلة المرشح الحالي، وتحقق من الهوية الكاملة، ووقّع اعتماد الإصدار إذا كنت مخوّل."
+- Success: server-derived gate evidence shows exact SHA/build/version/migration/UAT cycle; reauthentication and e-signature are required; unauthorized or incomplete candidates cannot be approved.
+
 ## 5. Security / compliance negative scripts (Tier 1 — all must DENY server-side)
 
 | ID | Attempt | Expected |

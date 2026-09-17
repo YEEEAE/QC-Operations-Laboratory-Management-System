@@ -1,0 +1,22 @@
+{
+  "cycleId": "UAT-YYYY-MM-DD-NNN",
+  "releaseId": "",
+  "gitSha": "",
+  "buildId": "",
+  "applicationVersion": "",
+  "migrationHead": "",
+  "environment": "staging",
+  "planReference": "Documents/UAT-ACCEPTANCE-PLAN.md",
+  "status": "UNVERIFIED",
+  "executionStartedAt": null,
+  "executionEndedAt": null,
+  "evidenceSnapshotHash": "",
+  "acceptance": {
+    "outcome": "BLOCKED",
+    "authorizedSignerId": "",
+    "reauthenticatedAt": null,
+    "electronicSignatureEvidenceId": "",
+    "requestId": ""
+  },
+  "operatorNote": "Template only. Do not add participant results or a signature until a real controlled UAT session and authorized sign-off occur."
+}
