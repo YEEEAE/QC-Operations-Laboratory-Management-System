@@ -42,13 +42,15 @@ class MemoryAuditStore implements AuditQuery {
     const normalized = normalizeAuditQueryFilter(filter);
     this.lastFilter = normalized;
     const matches = this.rows
-      .filter((candidate) =>
-        (normalized.subjectType === undefined || candidate.subject_type === normalized.subjectType) &&
-        (normalized.subjectId === undefined || candidate.subject_id === normalized.subjectId) &&
-        (normalized.actorId === undefined || candidate.actor_id === normalized.actorId) &&
-        (normalized.action === undefined || candidate.action === normalized.action) &&
-        (normalized.from === undefined || new Date(candidate.occurred_at) >= normalized.from) &&
-        (normalized.to === undefined || new Date(candidate.occurred_at) < normalized.to),
+      .filter(
+        (candidate) =>
+          (normalized.subjectType === undefined ||
+            candidate.subject_type === normalized.subjectType) &&
+          (normalized.subjectId === undefined || candidate.subject_id === normalized.subjectId) &&
+          (normalized.actorId === undefined || candidate.actor_id === normalized.actorId) &&
+          (normalized.action === undefined || candidate.action === normalized.action) &&
+          (normalized.from === undefined || new Date(candidate.occurred_at) >= normalized.from) &&
+          (normalized.to === undefined || new Date(candidate.occurred_at) < normalized.to),
       )
       .sort((a, b) => {
         const time = new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime();
@@ -147,9 +149,9 @@ describe('F-07 dashboard/audit canonical contract', () => {
   it('denies audit viewing without the explicit permission, including Admin role alone', async () => {
     const store = new MemoryAuditStore([row({ id: 'grant-1' })]);
     const service = new AuditQueryService(store);
-    await expect(
-      service.list({ ...dualActor(), permissions: [] }, {}),
-    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    await expect(service.list({ ...dualActor(), permissions: [] }, {})).rejects.toMatchObject({
+      code: 'AUTHZ_PERMISSION_MISSING',
+    });
     await expect(
       service.list({ ...dualActor(), permissions: [], roles: ['ADMIN'] }, {}),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
@@ -206,13 +208,17 @@ describe('F-07 dashboard/audit canonical contract', () => {
       }),
     ]);
     const service = new AuditQueryService(store);
-    expect((await service.list(dualActor(), { subjectType: 'LAB_TEST' })).events.map((e) => e.id)).toEqual(['lab-1']);
+    expect(
+      (await service.list(dualActor(), { subjectType: 'LAB_TEST' })).events.map((e) => e.id),
+    ).toEqual(['lab-1']);
     expect(
       (await service.list(dualActor(), { subjectType: 'LAB_TEST', subjectId: 't1' })).total,
     ).toBe(1);
     expect((await service.list(dualActor(), { actorId: 'u2' })).total).toBe(0);
     expect(
-      (await service.list(dualActor(), { action: 'GRANT_SYSTEM_OWNER_ACCESS' })).events.map((e) => e.id),
+      (await service.list(dualActor(), { action: 'GRANT_SYSTEM_OWNER_ACCESS' })).events.map(
+        (e) => e.id,
+      ),
     ).toEqual(['grant-1']);
     expect(
       (

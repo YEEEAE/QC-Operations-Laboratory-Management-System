@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { CloudflareR2ArtifactStore, parseR2Config } from '../../src/modules/backup-recovery/infrastructure/cloudflare-r2-artifact-store.js';
+import {
+  CloudflareR2ArtifactStore,
+  parseR2Config,
+} from '../../src/modules/backup-recovery/infrastructure/cloudflare-r2-artifact-store.js';
 import { PostgresLogicalBackupExecutor } from '../../src/modules/backup-recovery/infrastructure/postgres-logical-backup-executor.js';
 import { runLogicalBackupJob } from '../../src/modules/backup-recovery/application/run-backup-job.js';
 
@@ -27,7 +30,13 @@ try {
     catalogId: randomUUID(),
     requestId: randomUUID(),
   });
-  process.stdout.write(JSON.stringify({ status: result.status, failureCode: result.failureCode, catalogId: result.manifest?.catalogId ?? null }) + '\n');
+  process.stdout.write(
+    JSON.stringify({
+      status: result.status,
+      failureCode: result.failureCode,
+      catalogId: result.manifest?.catalogId ?? null,
+    }) + '\n',
+  );
   if (result.status !== 'VERIFIED') process.exitCode = 1;
 } catch {
   process.stderr.write('BACKUP_JOB_BLOCKED\n');

@@ -21,7 +21,10 @@ function hash(value: string | Uint8Array): string {
   return createHash('sha256').update(value).digest('hex');
 }
 function encodePath(value: string): string {
-  return value.split('/').map((part) => encodeURIComponent(part)).join('/');
+  return value
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
 }
 function publicSafeError(): Error {
   return new Error('BACKUP_STORAGE_UNAVAILABLE');
@@ -49,17 +52,48 @@ export class CloudflareR2ArtifactStore implements BackupArtifactStore {
 
   private async request(method: string, reference: string, body?: Uint8Array, headers = {}) {
     const now = new Date();
-    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').replace('Z', 'Z');
+    const amzDate = now
+      .toISOString()
+      .replace(/[:-]|\.\d{3}/g, '')
+      .replace('Z', 'Z');
     const date = amzDate.slice(0, 8);
     const path = `/${encodePath(this.config.bucket)}/${encodePath(reference)}`;
-    const payloadHash = body ? hash(body) : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-    const signedHeaders = { host: this.config.endpoint.host, 'x-amz-content-sha256': payloadHash, 'x-amz-date': amzDate, ...headers };
-    const names = Object.keys(signedHeaders).map((name) => name.toLowerCase()).sort();
-    const canonicalHeaders = names.map((name) => `${name}:${String(signedHeaders[name as keyof typeof signedHeaders]).trim()}\n`).join('');
-    const canonicalRequest = [method, path, '', canonicalHeaders, names.join(';'), payloadHash].join('\n');
+    const payloadHash = body
+      ? hash(body)
+      : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    const signedHeaders = {
+      host: this.config.endpoint.host,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+      ...headers,
+    };
+    const names = Object.keys(signedHeaders)
+      .map((name) => name.toLowerCase())
+      .sort();
+    const canonicalHeaders = names
+      .map(
+        (name) => `${name}:${String(signedHeaders[name as keyof typeof signedHeaders]).trim()}\n`,
+      )
+      .join('');
+    const canonicalRequest = [
+      method,
+      path,
+      '',
+      canonicalHeaders,
+      names.join(';'),
+      payloadHash,
+    ].join('\n');
     const credentialScope = `${date}/auto/s3/aws4_request`;
-    const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, hash(canonicalRequest)].join('\n');
-    const signingKey = hmac(hmac(hmac(hmac(`AWS4${this.config.secretAccessKey}`, date), 'auto'), 's3'), 'aws4_request');
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      amzDate,
+      credentialScope,
+      hash(canonicalRequest),
+    ].join('\n');
+    const signingKey = hmac(
+      hmac(hmac(hmac(`AWS4${this.config.secretAccessKey}`, date), 'auto'), 's3'),
+      'aws4_request',
+    );
     const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
     const authorization = `AWS4-HMAC-SHA256 Credential=${this.config.accessKeyId}/${credentialScope}, SignedHeaders=${names.join(';')}, Signature=${signature}`;
     try {
@@ -107,7 +141,9 @@ export class CloudflareR2ArtifactStore implements BackupArtifactStore {
     if (!response.ok && response.status !== 404) throw publicSafeError();
   }
 
-  async list(): Promise<readonly { reference: string; createdAt: Date; metadata: ArtifactMetadata }[]> {
+  async list(): Promise<
+    readonly { reference: string; createdAt: Date; metadata: ArtifactMetadata }[]
+  > {
     throw new Error('R2 listing is not available through this restricted adapter.');
   }
 }

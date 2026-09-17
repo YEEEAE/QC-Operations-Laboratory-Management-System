@@ -10,7 +10,8 @@ export async function expireBackupArtifacts(input: {
 }): Promise<{ deleted: readonly string[]; protected: readonly string[] }> {
   const entries = await input.store.list();
   const eligible = entries.filter((entry) => input.eligibleReferences.has(entry.reference));
-  const oldestEligible = eligible.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0]?.reference;
+  const oldestEligible = eligible.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0]
+    ?.reference;
   const deleted: string[] = [];
   const protectedReferences: string[] = [];
   for (const entry of entries) {

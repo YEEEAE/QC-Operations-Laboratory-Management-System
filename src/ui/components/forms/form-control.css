@@ -27,7 +27,9 @@
 }
 .form-field input:not([type='checkbox']):hover:not(:disabled),
 .form-field select:hover:not(:disabled),
-.form-field textarea:hover:not(:disabled) { border-color: var(--input-border-hover); }
+.form-field textarea:hover:not(:disabled) {
+  border-color: var(--input-border-hover);
+}
 .form-field textarea {
   min-height: 8rem;
   resize: vertical;

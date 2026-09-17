@@ -32,8 +32,12 @@ describe('regulated form UX contracts', () => {
   it('makes approval reason dependency explicit without changing server truth', () => {
     const page = read('src/pages/approvals/[approvalId].astro');
     expect(page).toMatch(/Required when returning or rejecting/);
-    expect(page).toMatch(/reason\.required = decision\.value === 'RETURN' \|\| decision\.value === 'REJECT'/);
-    expect(page).toMatch(/Decision meaning, reauthentication, permission, scope, state, version, and SoD/);
+    expect(page).toMatch(
+      /reason\.required = decision\.value === 'RETURN' \|\| decision\.value === 'REJECT'/,
+    );
+    expect(page).toMatch(
+      /Decision meaning, reauthentication, permission, scope, state, version, and SoD/,
+    );
   });
 
   it('keeps the accessible zoom-friendly viewport contract', () => {

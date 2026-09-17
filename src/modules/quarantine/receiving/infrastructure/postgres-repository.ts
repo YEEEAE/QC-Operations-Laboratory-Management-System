@@ -111,7 +111,11 @@ export class PostgresReceivingRepository implements ReceivingRepository {
   }
 
   async list(i: { actor: ActorContext; state?: ReceivingItem['workflowState'] }) {
-    let query = this.db.selectFrom('receiving_items').selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
+    let query = this.db
+      .selectFrom('receiving_items')
+      .selectAll()
+      .orderBy('updated_at', 'desc')
+      .orderBy('id', 'desc');
     if (i.state) query = query.where('workflow_state', '=', i.state) as typeof query;
     const rows = await query.execute();
     const grant = i.actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');

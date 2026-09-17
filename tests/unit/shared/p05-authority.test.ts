@@ -38,9 +38,38 @@ describe('P-05 authority', () => {
 
   it('requires canonical login identity instead of the legacy id value', () => {
     expect(isP05Authority(actor({ id: 'yazeed', roles: ['SYSTEM_OWNER'] }))).toBe(false);
-    expect(isP05Authority(actor({ id: '01900000-0000-7000-8000-000000000001', loginIdentity: 'yazeed', roles: ['SYSTEM_OWNER'] }))).toBe(true);
-    expect(isP05Authority(actor({ id: '01900000-0000-7000-8000-000000000002', loginIdentity: 'other-user', roles: ['SYSTEM_OWNER'] }))).toBe(false);
-    expect(isP05Authority(actor({ id: '01900000-0000-7000-8000-000000000003', loginIdentity: 'yazeed', roles: [] }))).toBe(false);
-    expect(isP05Authority(actor({ id: '01900000-0000-7000-8000-000000000004', loginIdentity: 'yazeed', roles: ['SYSTEM_OWNER'], accountState: 'INACTIVE' }))).toBe(false);
+    expect(
+      isP05Authority(
+        actor({
+          id: '01900000-0000-7000-8000-000000000001',
+          loginIdentity: 'yazeed',
+          roles: ['SYSTEM_OWNER'],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      isP05Authority(
+        actor({
+          id: '01900000-0000-7000-8000-000000000002',
+          loginIdentity: 'other-user',
+          roles: ['SYSTEM_OWNER'],
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isP05Authority(
+        actor({ id: '01900000-0000-7000-8000-000000000003', loginIdentity: 'yazeed', roles: [] }),
+      ),
+    ).toBe(false);
+    expect(
+      isP05Authority(
+        actor({
+          id: '01900000-0000-7000-8000-000000000004',
+          loginIdentity: 'yazeed',
+          roles: ['SYSTEM_OWNER'],
+          accountState: 'INACTIVE',
+        }),
+      ),
+    ).toBe(false);
   });
 });

@@ -124,7 +124,9 @@ async function assertReflowContracts(page: Page, label: string): Promise<void> {
     }
   }
 
-  const critical = page.locator('h1:visible, h2:visible, h3:visible, legend:visible, label:visible, .status-badge:visible');
+  const critical = page.locator(
+    'h1:visible, h2:visible, h3:visible, legend:visible, label:visible, .status-badge:visible',
+  );
   const criticalCount = Math.min(await critical.count(), 40);
   for (let index = 0; index < criticalCount; index += 1) {
     const item = critical.nth(index);
@@ -153,8 +155,13 @@ async function assertReflowContracts(page: Page, label: string): Promise<void> {
     await assertInsideViewport(dialogs.nth(index), page, `${label}: dialog/panel`);
   }
 
-  const bodyText = await page.locator('main').innerText().catch(() => '');
-  expect(bodyText.trim().length, `${label}: current route rendered usable content`).toBeGreaterThan(30);
+  const bodyText = await page
+    .locator('main')
+    .innerText()
+    .catch(() => '');
+  expect(bodyText.trim().length, `${label}: current route rendered usable content`).toBeGreaterThan(
+    30,
+  );
 }
 
 async function applyTextSpacingOverride(page: Page): Promise<void> {
@@ -190,7 +197,12 @@ test.describe('full responsive and density audit with current content', () => {
       { width: 1024, height: 768, label: 'tablet-landscape' },
     ]) {
       await page.setViewportSize(viewport);
-      for (const path of ['/dashboard', '/tasks', '/quarantine/receiving/new', '/laboratory/tests']) {
+      for (const path of [
+        '/dashboard',
+        '/tasks',
+        '/quarantine/receiving/new',
+        '/laboratory/tests',
+      ]) {
         await page.goto(path);
         await assertReflowContracts(page, `${path} ${viewport.label}`);
       }
@@ -198,13 +210,17 @@ test.describe('full responsive and density audit with current content', () => {
   });
 
   for (const direction of ['ltr', 'rtl'] as const) {
-    test(`200% browser-scale reflow preserves focusable content (${direction})`, async ({ page }) => {
+    test(`200% browser-scale reflow preserves focusable content (${direction})`, async ({
+      page,
+    }) => {
       requireFixture();
       await page.setViewportSize({ width: 1024, height: 900 });
       await signIn(page);
       for (const path of ['/dashboard', '/tasks', '/quarantine/receiving/new', '/documents']) {
         await page.goto(path);
-        await page.locator('html').evaluate((html, dir) => html.setAttribute('dir', dir), direction);
+        await page
+          .locator('html')
+          .evaluate((html, dir) => html.setAttribute('dir', dir), direction);
         await page.evaluate(() => {
           document.documentElement.style.zoom = '2';
         });
@@ -232,11 +248,20 @@ test.describe('full responsive and density audit with current content', () => {
       requireFixture();
       await page.setViewportSize({ width: 375, height: 812 });
       await signIn(page);
-      for (const path of ['/dashboard', '/tasks', '/quarantine/receiving/new', '/laboratory/tests']) {
+      for (const path of [
+        '/dashboard',
+        '/tasks',
+        '/quarantine/receiving/new',
+        '/laboratory/tests',
+      ]) {
         await page.goto(path);
-        await page.locator('html').evaluate((html, value) => html.setAttribute('data-density', value), density);
+        await page
+          .locator('html')
+          .evaluate((html, value) => html.setAttribute('data-density', value), density);
         await assertReflowContracts(page, `${path} ${density}`);
-        const controls = page.locator('button:visible, input:visible, select:visible, textarea:visible');
+        const controls = page.locator(
+          'button:visible, input:visible, select:visible, textarea:visible',
+        );
         for (let index = 0; index < Math.min(await controls.count(), 60); index += 1) {
           const box = await controls.nth(index).boundingBox();
           if (!box) continue;
@@ -246,7 +271,9 @@ test.describe('full responsive and density audit with current content', () => {
     });
   }
 
-  test('mobile drawer is reachable, contained, and does not obscure focused content', async ({ page }) => {
+  test('mobile drawer is reachable, contained, and does not obscure focused content', async ({
+    page,
+  }) => {
     requireFixture();
     await page.setViewportSize({ width: 320, height: 800 });
     await signIn(page);

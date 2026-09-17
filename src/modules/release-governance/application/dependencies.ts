@@ -12,7 +12,9 @@ export function releaseGovernanceActionDependencies() {
     verify: async (input: { actorId: string; secret: string }): Promise<boolean> => {
       const user = await users.findById(input.actorId);
       return Boolean(
-        user && user.accountState === 'ACTIVE' && (await passwords.verify(input.secret, user.passwordHash)),
+        user &&
+        user.accountState === 'ACTIVE' &&
+        (await passwords.verify(input.secret, user.passwordHash)),
       );
     },
   };

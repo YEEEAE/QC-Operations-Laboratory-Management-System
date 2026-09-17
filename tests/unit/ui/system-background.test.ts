@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 const componentPath = new URL('../../../src/ui/components/SystemBackground.astro', import.meta.url);
 const faviconPath = new URL('../../../public/favicon.svg', import.meta.url);
 const baseLayoutPath = new URL('../../../src/ui/layouts/BaseLayout.astro', import.meta.url);
-const login3dPath = new URL('../../../src/ui/components/QCLogin3DBackground.astro', import.meta.url);
+const login3dPath = new URL(
+  '../../../src/ui/components/QCLogin3DBackground.astro',
+  import.meta.url,
+);
 
 describe('system background contracts', () => {
   it('serves an explicit local favicon from the shared document head', () => {

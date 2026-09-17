@@ -93,7 +93,8 @@ async function ensureRole(
     'SELECT id FROM qc.roles WHERE code = $1 AND active = TRUE',
     [roleCode],
   );
-  if (!role.rows[0]) fail(`Foundation role is missing: ${roleCode}. Run the foundation seed first.`);
+  if (!role.rows[0])
+    fail(`Foundation role is missing: ${roleCode}. Run the foundation seed first.`);
   const existing = await client.query(
     'SELECT id FROM qc.user_roles WHERE user_id = $1 AND role_id = $2 AND revoked_at IS NULL',
     [userId, role.rows[0].id],

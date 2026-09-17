@@ -42,14 +42,13 @@ const map = (
     templateId: tv.template_id,
     templateVersionId: tv.id,
     versionNo: tv.version_no,
-    templateSnapshot:
-      (snapshot?.template_snapshot as Readonly<Record<string, unknown>> | null) ?? {
-        templateId: tv.template_id,
-        templateVersionId: tv.id,
-        versionNo: tv.version_no,
-        sourceDocument: tv.source_document,
-        contentHash: tv.content_hash,
-      },
+    templateSnapshot: (snapshot?.template_snapshot as Readonly<Record<string, unknown>> | null) ?? {
+      templateId: tv.template_id,
+      templateVersionId: tv.id,
+      versionNo: tv.version_no,
+      sourceDocument: tv.source_document,
+      contentHash: tv.content_hash,
+    },
     // A stopped/superseded template can still be the approved source of an
     // existing execution. The immutable execution snapshot is authoritative
     // for that historical fact; only new executions consult current state.

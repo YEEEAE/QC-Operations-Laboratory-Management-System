@@ -286,7 +286,10 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
   if (!matched && !section) return [];
 
   const crumbs: Array<{ label: string; href?: string }> = [];
-  if (section && (!matched || (matched.label !== section.label && (pathname !== matched.href || !section.href)))) {
+  if (
+    section &&
+    (!matched || (matched.label !== section.label && (pathname !== matched.href || !section.href)))
+  ) {
     crumbs.push({ label: section.label, href: section.href });
   }
   if (matched) {

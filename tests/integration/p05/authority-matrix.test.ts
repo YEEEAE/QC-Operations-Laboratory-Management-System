@@ -21,51 +21,74 @@ function actor(id: string, roles: string[], permissions: string[]): ActorContext
 }
 
 const EMPLOYEE = actor('emp-1', ['EMPLOYEE'], ['PERM-INSP-APPROVE', 'PERM-APR-APPROVE']);
-const SUPERVISOR = actor('sup-1', ['SUPERVISOR'], [
-  'PERM-INSP-APPROVE',
-  'PERM-APR-APPROVE',
-  'PERM-QUAR-RELEASE',
-  'PERM-DOC-APPROVE',
-  'PERM-DOC-VOID',
-  'PERM-INSP-VOID',
-  'PERM-FIND-VOID',
-]);
-const MANAGER = actor('mgr-1', ['MANAGER'], [
-  'PERM-INSP-APPROVE',
-  'PERM-APR-APPROVE',
-  'PERM-QUAR-RELEASE',
-  'PERM-DOC-APPROVE',
-  'PERM-DOC-VOID',
-  'PERM-INSP-VOID',
-  'PERM-FIND-VOID',
-]);
-const ADMIN_ONLY = actor('adm-1', ['ADMIN'], [
-  'PERM-INSP-APPROVE',
-  'PERM-APR-APPROVE',
-  'PERM-QUAR-RELEASE',
-  'PERM-DOC-APPROVE',
-  'PERM-DOC-VOID',
-  'PERM-INSP-VOID',
-  'PERM-FIND-VOID',
-]);
-const YAZEED = { ...actor('owner-uuid', ['SYSTEM_OWNER'], [
-  'PERM-INSP-APPROVE',
-  'PERM-APR-APPROVE',
-  'PERM-QUAR-RELEASE',
-  'PERM-DOC-APPROVE',
-  'PERM-DOC-VOID',
-  'PERM-INSP-VOID',
-  'PERM-FIND-VOID',
-]), loginIdentity: 'yazeed' };
-const ADMIN_MANAGER = actor('adm-mgr-1', ['ADMIN', 'MANAGER'], [
-  'PERM-INSP-APPROVE',
-  'PERM-APR-APPROVE',
-  'PERM-QUAR-RELEASE',
-  'PERM-DOC-APPROVE',
-  'PERM-DOC-VOID',
-  'PERM-INSP-VOID',
-  'PERM-FIND-VOID',
-]);
+const SUPERVISOR = actor(
+  'sup-1',
+  ['SUPERVISOR'],
+  [
+    'PERM-INSP-APPROVE',
+    'PERM-APR-APPROVE',
+    'PERM-QUAR-RELEASE',
+    'PERM-DOC-APPROVE',
+    'PERM-DOC-VOID',
+    'PERM-INSP-VOID',
+    'PERM-FIND-VOID',
+  ],
+);
+const MANAGER = actor(
+  'mgr-1',
+  ['MANAGER'],
+  [
+    'PERM-INSP-APPROVE',
+    'PERM-APR-APPROVE',
+    'PERM-QUAR-RELEASE',
+    'PERM-DOC-APPROVE',
+    'PERM-DOC-VOID',
+    'PERM-INSP-VOID',
+    'PERM-FIND-VOID',
+  ],
+);
+const ADMIN_ONLY = actor(
+  'adm-1',
+  ['ADMIN'],
+  [
+    'PERM-INSP-APPROVE',
+    'PERM-APR-APPROVE',
+    'PERM-QUAR-RELEASE',
+    'PERM-DOC-APPROVE',
+    'PERM-DOC-VOID',
+    'PERM-INSP-VOID',
+    'PERM-FIND-VOID',
+  ],
+);
+const YAZEED = {
+  ...actor(
+    'owner-uuid',
+    ['SYSTEM_OWNER'],
+    [
+      'PERM-INSP-APPROVE',
+      'PERM-APR-APPROVE',
+      'PERM-QUAR-RELEASE',
+      'PERM-DOC-APPROVE',
+      'PERM-DOC-VOID',
+      'PERM-INSP-VOID',
+      'PERM-FIND-VOID',
+    ],
+  ),
+  loginIdentity: 'yazeed',
+};
+const ADMIN_MANAGER = actor(
+  'adm-mgr-1',
+  ['ADMIN', 'MANAGER'],
+  [
+    'PERM-INSP-APPROVE',
+    'PERM-APR-APPROVE',
+    'PERM-QUAR-RELEASE',
+    'PERM-DOC-APPROVE',
+    'PERM-DOC-VOID',
+    'PERM-INSP-VOID',
+    'PERM-FIND-VOID',
+  ],
+);
 
 function inspectionRepo(state = 'UNDER_REVIEW', version = 4n, authorId = 'author-1') {
   const inspection: any = {
@@ -277,7 +300,13 @@ describe('P-05 authority matrix', () => {
         return version;
       },
       async getDocument() {
-        return { id: 'doc-1', active: true, ownerId: 'author-1', createdBy: 'author-1', version: 1n };
+        return {
+          id: 'doc-1',
+          active: true,
+          ownerId: 'author-1',
+          createdBy: 'author-1',
+          version: 1n,
+        };
       },
       async transition(input: any) {
         return { ...version, state: input.toState, version: 3n };

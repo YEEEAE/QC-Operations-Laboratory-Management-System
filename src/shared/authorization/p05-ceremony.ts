@@ -1,11 +1,7 @@
 import { AppError } from '../errors/app-error.js';
 import type { ActorContext } from './types.js';
 
-export type P05Operation =
-  | 'APPROVE'
-  | 'RELEASE'
-  | 'AUTHORIZE_RETEST'
-  | 'VOID';
+export type P05Operation = 'APPROVE' | 'RELEASE' | 'AUTHORIZE_RETEST' | 'VOID';
 
 export interface P05CeremonyInput {
   actor: ActorContext;
@@ -27,6 +23,5 @@ export function assertP05Ceremony(input: P05CeremonyInput): void {
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   if (!input.reauthenticationSecret?.trim())
     throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
-  if (input.actor.accountState !== 'ACTIVE')
-    throw new AppError('AUTHZ_DENIED', { userSafe: true });
+  if (input.actor.accountState !== 'ACTIVE') throw new AppError('AUTHZ_DENIED', { userSafe: true });
 }

@@ -15,7 +15,7 @@ async function signIn(page: Page): Promise<void> {
   const credential = configuredFixture('QC_E2E_PASSWORD');
   await page.goto('/login');
   await page.getByLabel('Login identity').fill(identity);
-  await page.getByLabel('Password').fill(credential);
+  await page.getByLabel('Password', { exact: true }).fill(credential);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/dashboard/);
 }

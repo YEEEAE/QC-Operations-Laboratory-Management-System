@@ -15,11 +15,16 @@ test.describe('Production release governance (fail-closed)', () => {
     await expect(page.locator('body')).not.toContainText('Approve release');
   });
 
-  test('gated: authorized release approval stays disabled until every gate is PASS', async ({ page }) => {
+  test('gated: authorized release approval stays disabled until every gate is PASS', async ({
+    page,
+  }) => {
     const identity = process.env.QC_E2E_LOGIN_IDENTITY;
     const password = process.env.QC_E2E_LOGIN_PASSWORD;
     const releaseId = process.env.QC_E2E_RELEASE_CANDIDATE_ID;
-    test.skip(!identity || !password || !releaseId, 'Requires an authorized fixture and a PENDING release candidate (no production mutations).');
+    test.skip(
+      !identity || !password || !releaseId,
+      'Requires an authorized fixture and a PENDING release candidate (no production mutations).',
+    );
     await page.goto(`/governance/releases/${releaseId}`);
     await expect(page.locator('body')).toContainText('Production release approval');
     // Fail-closed UI: the approval action is capability-driven by server evidence.

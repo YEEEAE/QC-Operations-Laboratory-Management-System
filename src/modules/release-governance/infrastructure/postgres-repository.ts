@@ -8,7 +8,11 @@ import type {
   ReleaseCandidateRecord,
   ReleaseGovernanceRepository,
 } from '../ports/repository.js';
-import { assertAllGatesPass, assertResidualRisksAcceptable, deriveReleaseEvidence } from '../domain/release-approval.js';
+import {
+  assertAllGatesPass,
+  assertResidualRisksAcceptable,
+  deriveReleaseEvidence,
+} from '../domain/release-approval.js';
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -43,8 +47,16 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
 
   async getEvidence(releaseId: string) {
     const [gates, risks] = await Promise.all([
-      this.db.selectFrom('release_gate_evidence').selectAll().where('release_id', '=', releaseId).execute(),
-      this.db.selectFrom('release_risk_evidence').selectAll().where('release_id', '=', releaseId).execute(),
+      this.db
+        .selectFrom('release_gate_evidence')
+        .selectAll()
+        .where('release_id', '=', releaseId)
+        .execute(),
+      this.db
+        .selectFrom('release_risk_evidence')
+        .selectAll()
+        .where('release_id', '=', releaseId)
+        .execute(),
     ]);
     return {
       gateRecords: gates.map((row) => ({
@@ -86,7 +98,9 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
     };
   }
 
-  async approve(input: Parameters<ReleaseGovernanceRepository['approve']>[0]): Promise<ReleaseApprovalRecord> {
+  async approve(
+    input: Parameters<ReleaseGovernanceRepository['approve']>[0],
+  ): Promise<ReleaseApprovalRecord> {
     const key = `RELEASE:APPROVE:${input.candidate.releaseId}:${input.requestId}`;
     const fingerprint = createHash('sha256')
       .update(
@@ -118,7 +132,12 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
       }
       await trx
         .insertInto('idempotency_records')
-        .values({ key, request_fingerprint: fingerprint, status: 'IN_PROGRESS', response_payload: null })
+        .values({
+          key,
+          request_fingerprint: fingerprint,
+          status: 'IN_PROGRESS',
+          response_payload: null,
+        })
         .execute();
 
       const row = await trx
@@ -131,10 +150,19 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
       if (BigInt(row.version) !== input.expectedVersion) {
         throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
       }
-      if (row.state !== 'PENDING') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+      if (row.state !== 'PENDING')
+        throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
       const rows = await Promise.all([
-        trx.selectFrom('release_gate_evidence').selectAll().where('release_id', '=', row.id).execute(),
-        trx.selectFrom('release_risk_evidence').selectAll().where('release_id', '=', row.id).execute(),
+        trx
+          .selectFrom('release_gate_evidence')
+          .selectAll()
+          .where('release_id', '=', row.id)
+          .execute(),
+        trx
+          .selectFrom('release_risk_evidence')
+          .selectAll()
+          .where('release_id', '=', row.id)
+          .execute(),
       ]);
       const freshEvidence = deriveReleaseEvidence(
         {
@@ -151,13 +179,59 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         },
-        rows[0].map((e) => ({ ...e, evidenceType: e.evidence_type as never, status: e.status as never, immutableReference: e.immutable_reference, observedAt: e.observed_at, releaseVersion: BigInt(e.release_version), evidenceVersion: BigInt(e.evidence_version), recordedBy: e.recorded_by, auditInfo: e.audit_info, releaseId: e.release_id, gitSha: e.git_sha, buildId: e.build_id, applicationVersion: e.application_version, migrationHead: e.migration_head, uatCycleId: e.uat_cycle_id })),
-        rows[1].map((e) => ({ ...e, riskId: e.risk_id, severity: e.severity as never, status: e.status as never, immutableReference: e.immutable_reference, observedAt: e.observed_at, releaseVersion: BigInt(e.release_version), evidenceVersion: BigInt(e.evidence_version), recordedBy: e.recorded_by, auditInfo: e.audit_info, releaseId: e.release_id, gitSha: e.git_sha, buildId: e.build_id, applicationVersion: e.application_version, migrationHead: e.migration_head, uatCycleId: e.uat_cycle_id, ...(e.acceptance ? { acceptance: e.acceptance as unknown as { acceptedBy: string; authority: 'MANAGER' | 'SYSTEM_OWNER'; evidenceRef: string; acceptedAt: string } } : {}) })) as never,
+        rows[0].map((e) => ({
+          ...e,
+          evidenceType: e.evidence_type as never,
+          status: e.status as never,
+          immutableReference: e.immutable_reference,
+          observedAt: e.observed_at,
+          releaseVersion: BigInt(e.release_version),
+          evidenceVersion: BigInt(e.evidence_version),
+          recordedBy: e.recorded_by,
+          auditInfo: e.audit_info,
+          releaseId: e.release_id,
+          gitSha: e.git_sha,
+          buildId: e.build_id,
+          applicationVersion: e.application_version,
+          migrationHead: e.migration_head,
+          uatCycleId: e.uat_cycle_id,
+        })),
+        rows[1].map((e) => ({
+          ...e,
+          riskId: e.risk_id,
+          severity: e.severity as never,
+          status: e.status as never,
+          immutableReference: e.immutable_reference,
+          observedAt: e.observed_at,
+          releaseVersion: BigInt(e.release_version),
+          evidenceVersion: BigInt(e.evidence_version),
+          recordedBy: e.recorded_by,
+          auditInfo: e.audit_info,
+          releaseId: e.release_id,
+          gitSha: e.git_sha,
+          buildId: e.build_id,
+          applicationVersion: e.application_version,
+          migrationHead: e.migration_head,
+          uatCycleId: e.uat_cycle_id,
+          ...(e.acceptance
+            ? {
+                acceptance: e.acceptance as unknown as {
+                  acceptedBy: string;
+                  authority: 'MANAGER' | 'SYSTEM_OWNER';
+                  evidenceRef: string;
+                  acceptedAt: string;
+                },
+              }
+            : {}),
+        })) as never,
         new Date(),
       );
       assertAllGatesPass(freshEvidence.gates);
       assertResidualRisksAcceptable(freshEvidence.risks);
-      if (stableJson(freshEvidence.gates) !== stableJson(input.evidence.gates) || stableJson(freshEvidence.risks) !== stableJson(input.evidence.risks)) {
+      if (
+        stableJson(freshEvidence.gates) !== stableJson(input.evidence.gates) ||
+        stableJson(freshEvidence.risks) !== stableJson(input.evidence.risks)
+      ) {
         throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
       }
       // Recompute the signed snapshot inside the transaction from database evidence.
@@ -208,10 +282,9 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
 
       const approvalId = crypto.randomUUID();
       const approvedAt = new Date();
-      const authority =
-        input.actor.roles.includes('MANAGER')
-          ? 'MANAGER'
-          : ('SYSTEM_OWNER' as const);
+      const authority = input.actor.roles.includes('MANAGER')
+        ? 'MANAGER'
+        : ('SYSTEM_OWNER' as const);
       const inserted = await trx
         .insertInto('release_approvals')
         .values({
@@ -236,7 +309,11 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
 
       const updated = await trx
         .updateTable('release_candidates')
-        .set({ state: 'RELEASE_APPROVED', updated_at: new Date(), version: BigInt(row.version) + 1n })
+        .set({
+          state: 'RELEASE_APPROVED',
+          updated_at: new Date(),
+          version: BigInt(row.version) + 1n,
+        })
         .where('id', '=', row.id)
         .where('version', '=', input.expectedVersion)
         .returningAll()

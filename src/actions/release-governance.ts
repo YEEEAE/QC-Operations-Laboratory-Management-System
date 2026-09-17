@@ -14,7 +14,9 @@ const run = async <T>(work: () => Promise<T>): Promise<T> => {
     return await work();
   } catch (error) {
     const appError =
-      error instanceof AppError ? error : new AppError('SYSTEM_INTERNAL', { userSafe: false, cause: error });
+      error instanceof AppError
+        ? error
+        : new AppError('SYSTEM_INTERNAL', { userSafe: false, cause: error });
     throw new ActionError({
       code:
         appError.category === 'AUTHENTICATION'

@@ -19,7 +19,6 @@ const manager = (): ActorContext => ({
   permissions: [{ code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] }],
 });
 
-
 let pool: ReturnType<typeof createPool> | undefined;
 let db: Kysely<DatabaseSchema>;
 
@@ -54,7 +53,16 @@ async function createCandidate(suffix: string): Promise<string> {
     [GIT_SHA, `build-${suffix}`, '1.4.0', '0021_release_governance', `UAT-${suffix}`],
   );
   const releaseId = rows.rows[0].id;
-  const gateSources: Record<string, string> = { ci: 'TRUSTED_CI', security: 'TRUSTED_SECURITY_SUITE', database: 'TRUSTED_DATABASE_PREFLIGHT', e2e: 'TRUSTED_PLAYWRIGHT', uat: 'SIGNED_UAT_CYCLE', signatures: 'E_SIGNATURE_STORE', criticalRisks: 'CONTROLLED_RISK_REGISTER', residualRisk: 'CONTROLLED_RISK_REGISTER' };
+  const gateSources: Record<string, string> = {
+    ci: 'TRUSTED_CI',
+    security: 'TRUSTED_SECURITY_SUITE',
+    database: 'TRUSTED_DATABASE_PREFLIGHT',
+    e2e: 'TRUSTED_PLAYWRIGHT',
+    uat: 'SIGNED_UAT_CYCLE',
+    signatures: 'E_SIGNATURE_STORE',
+    criticalRisks: 'CONTROLLED_RISK_REGISTER',
+    residualRisk: 'CONTROLLED_RISK_REGISTER',
+  };
   for (const [index, [gate, source]] of Object.entries(gateSources).entries()) {
     await pool!.query(
       `INSERT INTO qc.release_gate_evidence (release_id, evidence_type, status, source, immutable_reference, observed_at, git_sha, build_id, application_version, migration_head, uat_cycle_id, release_version, evidence_version, recorded_by, audit_info)
@@ -80,6 +88,10 @@ describe('release governance PostgreSQL concurrency and idempotency', () => {
       expectedVersion: 1n,
       reauthenticationSecret: 'secret',
     };
+    const row = await pool!.query<{ build_id: string; uat_cycle_id: string }>(
+      `SELECT build_id, uat_cycle_id FROM qc.release_candidates WHERE id = $1`,
+      [releaseId],
+    );
     const base = { ...input, buildId: row.rows[0].build_id, uatCycleId: row.rows[0].uat_cycle_id };
     const results = await Promise.allSettled([
       useCase().execute({ ...base, requestId: `rel-conc-a-${Date.now()}` }),
@@ -125,10 +137,6 @@ describe('release governance PostgreSQL concurrency and idempotency', () => {
 
   it('rejects a stale expected version without mutating the candidate', async () => {
     const releaseId = await createCandidate(`stale-${Date.now()}`);
-    const row = await pool!.query<{ build_id: string; uat_cycle_id: string }>(
-      `SELECT build_id, uat_cycle_id FROM qc.release_candidates WHERE id = $1`,
-      [releaseId],
-    );
     await expect(
       useCase().execute({
         actor: manager(),

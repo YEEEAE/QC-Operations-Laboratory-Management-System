@@ -51,10 +51,9 @@ async function main(): Promise<void> {
          WHERE user_id = $1 AND revoked_at IS NULL`,
         [target.id],
       );
-      await client.query(
-        `UPDATE qc.users SET account_state = 'DISABLED' WHERE id = $1`,
-        [target.id],
-      );
+      await client.query(`UPDATE qc.users SET account_state = 'DISABLED' WHERE id = $1`, [
+        target.id,
+      ]);
       await client.query(
         `INSERT INTO qc.audit_events (actor_type, subject_type, subject_id, action, request_id, reason)
          VALUES ('SYSTEM', 'USER', $1, 'VERIFY_FIXTURE_CLEANED_UP', 'verify-cleanup', 'Prompt 13 expiry/cleanup')`,
@@ -62,7 +61,9 @@ async function main(): Promise<void> {
       );
     }
     await client.query('COMMIT');
-    console.log(`Verification cleanup complete: ${targets.rows.length} disposable account(s) disabled.`);
+    console.log(
+      `Verification cleanup complete: ${targets.rows.length} disposable account(s) disabled.`,
+    );
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

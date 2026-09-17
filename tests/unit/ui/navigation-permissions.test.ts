@@ -2,7 +2,11 @@ import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { APPROVED_PERMISSION_CODES } from '../../../db/seeds/common';
 import { isPermissionCode } from '../../../src/shared/authorization/permissions';
-import { navigationGroups, routeBreadcrumbs, visibleNavigation } from '../../../src/ui/navigation/navigation';
+import {
+  navigationGroups,
+  routeBreadcrumbs,
+  visibleNavigation,
+} from '../../../src/ui/navigation/navigation';
 
 describe('navigation permission and route integrity', () => {
   it('uses canonical permission codes and implemented pages', () => {
@@ -20,9 +24,7 @@ describe('navigation permission and route integrity', () => {
   });
 
   it('keeps ordinary operational navigation visible without granting mutations', () => {
-    const links = visibleNavigation([]).flatMap((group) =>
-      group.items.map((item) => item.href),
-    );
+    const links = visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href));
     for (const href of [
       '/documents',
       '/change-requests',
@@ -42,7 +44,9 @@ describe('navigation permission and route integrity', () => {
   it('shows Tasks to every authenticated member without granting task actions', () => {
     const links = visibleNavigation([]).flatMap((group) => group.items.map((item) => item.href));
     expect(links).toContain('/tasks');
-    expect(navigationGroups.find((group) => group.id === 'work')?.items[0]?.capability).toBeUndefined();
+    expect(
+      navigationGroups.find((group) => group.id === 'work')?.items[0]?.capability,
+    ).toBeUndefined();
   });
 
   it('supports each canonical dashboard permission independently', () => {

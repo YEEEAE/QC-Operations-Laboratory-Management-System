@@ -7,7 +7,9 @@ const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.m
 
 describe('authorization visibility presentation contract', () => {
   it('adds only the approved global read grants and never mutation authority', () => {
-    const permissions = addUniversalOperationalReadPermissions([]).map((permission) => permission.code);
+    const permissions = addUniversalOperationalReadPermissions([]).map(
+      (permission) => permission.code,
+    );
     expect(permissions).toContain('PERM-DOC-VIEW');
     expect(permissions).toContain('PERM-ADM-AUDIT-VIEW');
     expect(permissions).not.toContain('PERM-DOC-APPROVE');
@@ -35,10 +37,10 @@ describe('authorization visibility presentation contract', () => {
     const review = read('src/pages/quarantine/inspections/[inspectionId]/review.astro');
     const execute = read('src/pages/quarantine/inspections/[inspectionId]/execute.astro');
 
-    expect(review).toContain("const canReturn =");
+    expect(review).toContain('const canReturn =');
     expect(review).toContain('canReturn ? <form');
-    expect(execute).toContain("const canEdit = stateEditable");
-    expect(execute).toContain("const canSubmit = canEdit");
+    expect(execute).toContain('const canEdit = stateEditable');
+    expect(execute).toContain('const canSubmit = canEdit');
     expect(execute).toContain('canSubmit ? <button');
     expect(execute).toContain('Page visibility does not grant mutation authority.');
   });

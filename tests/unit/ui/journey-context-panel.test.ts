@@ -9,7 +9,16 @@ const read = (file: string) => readFileSync(join(root, file), 'utf8');
 describe('journey handoff presentation contract', () => {
   it('keeps the shared context panel read-only and explicit about handoff facts', () => {
     const panel = read('src/ui/components/workflow/JourneyContextPanel.astro');
-    for (const label of ['Current state', 'Next action', 'Next owner', 'Why unavailable', 'Waiting / dependency', 'Evidence and trace', 'View audit history for this record']) expect(panel).toContain(label);
+    for (const label of [
+      'Current state',
+      'Next action',
+      'Next owner',
+      'Why unavailable',
+      'Waiting / dependency',
+      'Evidence and trace',
+      'View audit history for this record',
+    ])
+      expect(panel).toContain(label);
     expect(panel).not.toContain('<form');
     expect(panel).not.toContain('astro:actions');
   });
@@ -34,6 +43,8 @@ describe('journey handoff presentation contract', () => {
       expect(source, page).toContain('audit?subjectType=');
     }
     expect(read('src/pages/approvals/[approvalId].astro')).toContain('HandoffTimeline');
-    expect(read('src/pages/change-requests/[changeRequestId]/index.astro')).toContain('HandoffTimeline');
+    expect(read('src/pages/change-requests/[changeRequestId]/index.astro')).toContain(
+      'HandoffTimeline',
+    );
   });
 });

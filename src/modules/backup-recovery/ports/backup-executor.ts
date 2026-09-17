@@ -13,7 +13,10 @@ export interface RestoreExecutionResult {
 }
 
 export interface PostgresBackupExecutor {
-  createLogicalBackup(input: { databaseUrl: string; requestId: string }): Promise<BackupExecutionResult>;
+  createLogicalBackup(input: {
+    databaseUrl: string;
+    requestId: string;
+  }): Promise<BackupExecutionResult>;
   restoreLogicalBackup(input: {
     bytes: Uint8Array;
     targetDatabaseUrl: string;

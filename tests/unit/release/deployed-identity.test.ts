@@ -39,9 +39,9 @@ describe('deployed build-identity verification (C-11 fail-closed)', () => {
   });
 
   it('fails closed when any sample carries a malformed value', () => {
-    expect(() =>
-      assertDeployedIdentitySample({ ...sample(), releaseId: 'not-a-release' }),
-    ).toThrow(/releaseId/i);
+    expect(() => assertDeployedIdentitySample({ ...sample(), releaseId: 'not-a-release' })).toThrow(
+      /releaseId/i,
+    );
     expect(() =>
       assertDeployedIdentitySample({ ...sample(), buildTimestamp: 'yesterday' }),
     ).toThrow(/buildTimestamp/i);
@@ -67,7 +67,13 @@ describe('deployed build-identity verification (C-11 fail-closed)', () => {
       buildTimestamp: '2026-09-11T01:00:00.000Z',
       environment: 'staging',
     } as const;
-    for (const field of ['releaseId', 'buildId', 'gitSha', 'buildTimestamp', 'environment'] as const) {
+    for (const field of [
+      'releaseId',
+      'buildId',
+      'gitSha',
+      'buildTimestamp',
+      'environment',
+    ] as const) {
       const mismatch = triple({
         expected: { ...sample(), [field]: alternates[field] },
       });

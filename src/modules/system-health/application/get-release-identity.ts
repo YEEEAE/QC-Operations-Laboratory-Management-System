@@ -19,7 +19,12 @@ export class GetReleaseIdentityUseCase {
         actor: input.actor,
         permission: 'PERM-HLTH-VIEW',
         action: 'VIEW',
-        entity: { type: 'SYSTEM_HEALTH', id: 'release-identity', state: 'ACTIVE', domain: 'SYSTEM_OPERATION' },
+        entity: {
+          type: 'SYSTEM_HEALTH',
+          id: 'release-identity',
+          state: 'ACTIVE',
+          domain: 'SYSTEM_OPERATION',
+        },
         scope: { domain: 'SYSTEM_OPERATION' },
         currentVersion: 1n,
         expectedVersion: 1n,

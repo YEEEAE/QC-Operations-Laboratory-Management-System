@@ -44,11 +44,27 @@ const passGates: ReleaseGateEvidence = {
   residualRisk: 'PASS',
 };
 
-const trustedEvidence = (): { gateRecords: ReleaseGateEvidenceRecord[]; riskRecords: ReleaseRiskEvidenceRecord[] } => ({
+const trustedEvidence = (): {
+  gateRecords: ReleaseGateEvidenceRecord[];
+  riskRecords: ReleaseRiskEvidenceRecord[];
+} => ({
   gateRecords: RELEASE_GATE_KEYS.map((evidenceType, index) => ({
     evidenceType,
     status: 'PASS' as const,
-    source: evidenceType === 'uat' ? 'SIGNED_UAT_CYCLE' : evidenceType === 'signatures' ? 'E_SIGNATURE_STORE' : evidenceType === 'criticalRisks' || evidenceType === 'residualRisk' ? 'CONTROLLED_RISK_REGISTER' : evidenceType === 'database' ? 'TRUSTED_DATABASE_PREFLIGHT' : evidenceType === 'e2e' ? 'TRUSTED_PLAYWRIGHT' : evidenceType === 'security' ? 'TRUSTED_SECURITY_SUITE' : 'TRUSTED_CI',
+    source:
+      evidenceType === 'uat'
+        ? 'SIGNED_UAT_CYCLE'
+        : evidenceType === 'signatures'
+          ? 'E_SIGNATURE_STORE'
+          : evidenceType === 'criticalRisks' || evidenceType === 'residualRisk'
+            ? 'CONTROLLED_RISK_REGISTER'
+            : evidenceType === 'database'
+              ? 'TRUSTED_DATABASE_PREFLIGHT'
+              : evidenceType === 'e2e'
+                ? 'TRUSTED_PLAYWRIGHT'
+                : evidenceType === 'security'
+                  ? 'TRUSTED_SECURITY_SUITE'
+                  : 'TRUSTED_CI',
     immutableReference: 'evidence/' + evidenceType + '/1',
     observedAt: new Date(),
     releaseVersion: 3n,
@@ -86,7 +102,9 @@ function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = tr
       id: 'approval-1',
       releaseId: current.releaseId,
       approvedBy: input.actor.id,
-      authority: input.actor.roles.includes('MANAGER') ? ('MANAGER' as const) : ('SYSTEM_OWNER' as const),
+      authority: input.actor.roles.includes('MANAGER')
+        ? ('MANAGER' as const)
+        : ('SYSTEM_OWNER' as const),
       gitSha: current.gitSha,
       buildId: current.buildId,
       applicationVersion: current.applicationVersion,
@@ -97,7 +115,10 @@ function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = tr
       approvedAt: new Date(),
       requestId: input.requestId,
     })),
-  } as unknown as ReleaseGovernanceRepository & { getCandidate: ReturnType<typeof vi.fn>; approve: ReturnType<typeof vi.fn> };
+  } as unknown as ReleaseGovernanceRepository & {
+    getCandidate: ReturnType<typeof vi.fn>;
+    approve: ReturnType<typeof vi.fn>;
+  };
 }
 
 const verifier: ReauthenticationVerifier = { verify: vi.fn(async () => true) };
@@ -125,7 +146,10 @@ describe('release gates (fail-closed, table-driven)', () => {
     evidence.gateRecords[RELEASE_GATE_KEYS.indexOf(gate)].status = 'FAIL';
     const repo = makeRepo({}, evidence);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), requestId: `req-gate-${gate}` }),
+      new ApproveReleaseUseCase(repo, verifier).execute({
+        ...baseInput(),
+        requestId: `req-gate-${gate}`,
+      }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     expect(repo.approve).not.toHaveBeenCalled();
   });
@@ -178,9 +202,24 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
   });
 
   it('does not use a literal id as the named owner identity', () => {
-    expect(getReleaseApprovalCapability({ actor: actor('yazeed', ['SYSTEM_OWNER']), gates: passGates, risks: [] }).canApprove).toBe(false);
-    expect(getReleaseApprovalCapability({ actor: systemOwner(), gates: passGates, risks: [] }).canApprove).toBe(true);
-    expect(getReleaseApprovalCapability({ actor: { ...actor('owner-uuid', ['SYSTEM_OWNER']), loginIdentity: 'other-user' }, gates: passGates, risks: [] }).canApprove).toBe(false);
+    expect(
+      getReleaseApprovalCapability({
+        actor: actor('yazeed', ['SYSTEM_OWNER']),
+        gates: passGates,
+        risks: [],
+      }).canApprove,
+    ).toBe(false);
+    expect(
+      getReleaseApprovalCapability({ actor: systemOwner(), gates: passGates, risks: [] })
+        .canApprove,
+    ).toBe(true);
+    expect(
+      getReleaseApprovalCapability({
+        actor: { ...actor('owner-uuid', ['SYSTEM_OWNER']), loginIdentity: 'other-user' },
+        gates: passGates,
+        risks: [],
+      }).canApprove,
+    ).toBe(false);
   });
 
   it('one authorized signer is sufficient', async () => {
@@ -198,7 +237,11 @@ describe('server-owned identity and version', () => {
   it('stale expected version is denied', async () => {
     const repo = makeRepo();
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), expectedVersion: 2n, requestId: 'req-stale' }),
+      new ApproveReleaseUseCase(repo, verifier).execute({
+        ...baseInput(),
+        expectedVersion: 2n,
+        requestId: 'req-stale',
+      }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
   });
 
@@ -207,7 +250,15 @@ describe('server-owned identity and version', () => {
     const result = await new ApproveReleaseUseCase(repo, verifier).execute({
       ...baseInput(),
       requestId: 'req-browser-extra',
-      ...( { gitSha: 'b'.repeat(40), buildId: 'tampered', applicationVersion: '9.9.9', migrationHead: 'old', uatCycleId: 'old', gates: {}, risks: [] } as object),
+      ...({
+        gitSha: 'b'.repeat(40),
+        buildId: 'tampered',
+        applicationVersion: '9.9.9',
+        migrationHead: 'old',
+        uatCycleId: 'old',
+        gates: {},
+        risks: [],
+      } as object),
     } as typeof baseInput extends () => infer T ? T : never);
     expect(result.gitSha).toBe(GIT_SHA);
     expect(result.buildId).toBe(candidate.buildId);
@@ -217,7 +268,19 @@ describe('server-owned identity and version', () => {
 describe('residual-risk handling', () => {
   it('CRITICAL residual risk blocks a normal release', async () => {
     const evidence = trustedEvidence();
-    evidence.riskRecords.push({ riskId: 'RISK-001', severity: 'CRITICAL', status: 'OPEN', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-001/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, ...candidate });
+    evidence.riskRecords.push({
+      riskId: 'RISK-001',
+      severity: 'CRITICAL',
+      status: 'OPEN',
+      source: 'CONTROLLED_RISK_REGISTER',
+      immutableReference: 'risk/RISK-001/1',
+      observedAt: new Date(),
+      releaseVersion: 3n,
+      evidenceVersion: 1n,
+      recordedBy: 'risk-service',
+      auditInfo: {},
+      ...candidate,
+    });
     const repo = makeRepo({}, evidence);
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({
@@ -229,7 +292,19 @@ describe('residual-risk handling', () => {
 
   it('VERY_HIGH residual risk blocks fail-closed', async () => {
     const evidence = trustedEvidence();
-    evidence.riskRecords.push({ riskId: 'RISK-002', severity: 'VERY_HIGH', status: 'OPEN', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-002/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, ...candidate });
+    evidence.riskRecords.push({
+      riskId: 'RISK-002',
+      severity: 'VERY_HIGH',
+      status: 'OPEN',
+      source: 'CONTROLLED_RISK_REGISTER',
+      immutableReference: 'risk/RISK-002/1',
+      observedAt: new Date(),
+      releaseVersion: 3n,
+      evidenceVersion: 1n,
+      recordedBy: 'risk-service',
+      auditInfo: {},
+      ...candidate,
+    });
     const repo = makeRepo({}, evidence);
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({
@@ -241,7 +316,19 @@ describe('residual-risk handling', () => {
 
   it('HIGH without acceptance is denied; HIGH with Manager acceptance passes', async () => {
     const deniedEvidence = trustedEvidence();
-    deniedEvidence.riskRecords.push({ riskId: 'RISK-003', severity: 'HIGH', status: 'OPEN', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-003/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, ...candidate });
+    deniedEvidence.riskRecords.push({
+      riskId: 'RISK-003',
+      severity: 'HIGH',
+      status: 'OPEN',
+      source: 'CONTROLLED_RISK_REGISTER',
+      immutableReference: 'risk/RISK-003/1',
+      observedAt: new Date(),
+      releaseVersion: 3n,
+      evidenceVersion: 1n,
+      recordedBy: 'risk-service',
+      auditInfo: {},
+      ...candidate,
+    });
     const denied = makeRepo({}, deniedEvidence);
     await expect(
       new ApproveReleaseUseCase(denied, verifier).execute({
@@ -251,7 +338,25 @@ describe('residual-risk handling', () => {
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
 
     const allowedEvidence = trustedEvidence();
-    allowedEvidence.riskRecords.push({ riskId: 'RISK-003', severity: 'HIGH', status: 'ACCEPTED', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-003/2', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 2n, recordedBy: 'risk-service', auditInfo: {}, acceptance: { acceptedBy: 'mgr-1', authority: 'MANAGER', evidenceRef: 'EV-1', acceptedAt: '2026-09-10T00:00:00Z' }, ...candidate });
+    allowedEvidence.riskRecords.push({
+      riskId: 'RISK-003',
+      severity: 'HIGH',
+      status: 'ACCEPTED',
+      source: 'CONTROLLED_RISK_REGISTER',
+      immutableReference: 'risk/RISK-003/2',
+      observedAt: new Date(),
+      releaseVersion: 3n,
+      evidenceVersion: 2n,
+      recordedBy: 'risk-service',
+      auditInfo: {},
+      acceptance: {
+        acceptedBy: 'mgr-1',
+        authority: 'MANAGER',
+        evidenceRef: 'EV-1',
+        acceptedAt: '2026-09-10T00:00:00Z',
+      },
+      ...candidate,
+    });
     const allowed = makeRepo({}, allowedEvidence);
     const result = await new ApproveReleaseUseCase(allowed, verifier).execute({
       ...baseInput(),
@@ -262,7 +367,25 @@ describe('residual-risk handling', () => {
 
   it('acceptance by a non-authority is denied', async () => {
     const evidence = trustedEvidence();
-    evidence.riskRecords.push({ riskId: 'RISK-004', severity: 'MEDIUM', status: 'ACCEPTED', source: 'CONTROLLED_RISK_REGISTER', immutableReference: 'risk/RISK-004/1', observedAt: new Date(), releaseVersion: 3n, evidenceVersion: 1n, recordedBy: 'risk-service', auditInfo: {}, acceptance: { acceptedBy: 'emp-1', authority: 'MANAGER', evidenceRef: '', acceptedAt: '2026-09-10T00:00:00Z' }, ...candidate });
+    evidence.riskRecords.push({
+      riskId: 'RISK-004',
+      severity: 'MEDIUM',
+      status: 'ACCEPTED',
+      source: 'CONTROLLED_RISK_REGISTER',
+      immutableReference: 'risk/RISK-004/1',
+      observedAt: new Date(),
+      releaseVersion: 3n,
+      evidenceVersion: 1n,
+      recordedBy: 'risk-service',
+      auditInfo: {},
+      acceptance: {
+        acceptedBy: 'emp-1',
+        authority: 'MANAGER',
+        evidenceRef: '',
+        acceptedAt: '2026-09-10T00:00:00Z',
+      },
+      ...candidate,
+    });
     const repo = makeRepo({}, evidence);
     await expect(
       new ApproveReleaseUseCase(repo, verifier).execute({
@@ -277,18 +400,28 @@ describe('reauthentication and signature ceremony', () => {
   it('missing secret and failed verification are denied', async () => {
     const repo = makeRepo();
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), reauthenticationSecret: ' ', requestId: 'req-nosecret' }),
+      new ApproveReleaseUseCase(repo, verifier).execute({
+        ...baseInput(),
+        reauthenticationSecret: ' ',
+        requestId: 'req-nosecret',
+      }),
     ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
     vi.mocked(verifier.verify).mockResolvedValueOnce(false);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), requestId: 'req-badsecret' }),
+      new ApproveReleaseUseCase(repo, verifier).execute({
+        ...baseInput(),
+        requestId: 'req-badsecret',
+      }),
     ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
     expect(repo.approve).not.toHaveBeenCalled();
   });
 
   it('stores RELEASE_APPROVED with the required atomic fields', async () => {
     const repo = makeRepo();
-    const result = await new ApproveReleaseUseCase(repo, verifier).execute({ ...baseInput(), requestId: 'req-success' });
+    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+      ...baseInput(),
+      requestId: 'req-success',
+    });
     expect(result).toMatchObject({
       releaseId: RELEASE_ID,
       approvedBy: 'mgr-1',

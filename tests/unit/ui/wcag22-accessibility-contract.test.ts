@@ -64,7 +64,7 @@ describe('WCAG 2.2 AA accessibility contracts', () => {
     expect(summary).toContain('href={`#${item.fieldId}`}');
     expect(summary).toContain('Back to {listLabel}');
     expect(mutation).toContain("form.setAttribute('aria-busy', 'true')");
-    expect(mutation).toContain("output?.focus?.()");
+    expect(mutation).toContain('output?.focus?.()');
   });
 
   it('provides a non-visual data alternative for charts and semantic table headers', () => {

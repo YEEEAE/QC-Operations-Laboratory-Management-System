@@ -10,11 +10,22 @@ describe('QC design-system maturity contracts', () => {
   it('exposes semantic, component, typography, focus, and motion layers', () => {
     const tokens = read('src/ui/styles/tokens.css');
     for (const token of [
-      '--surface-readonly', '--surface-disabled', '--border-invalid', '--border-selected',
-      '--button-radius', '--input-background', '--card-padding', '--table-header-background',
-      '--nav-item-radius', '--font-size-display', '--line-height-normal', '--focus-width',
-      '--motion-ease-standard', '--disabled-opacity',
-    ]) expect(tokens, token).toContain(`${token}:`);
+      '--surface-readonly',
+      '--surface-disabled',
+      '--border-invalid',
+      '--border-selected',
+      '--button-radius',
+      '--input-background',
+      '--card-padding',
+      '--table-header-background',
+      '--nav-item-radius',
+      '--font-size-display',
+      '--line-height-normal',
+      '--focus-width',
+      '--motion-ease-standard',
+      '--disabled-opacity',
+    ])
+      expect(tokens, token).toContain(`${token}:`);
   });
 
   it('keeps all controlled status distinctions explicit', () => {
@@ -30,8 +41,16 @@ describe('QC design-system maturity contracts', () => {
   it('covers interaction states in shared button and form contracts', () => {
     const button = read('src/ui/components/Button.astro');
     const input = read('src/ui/components/forms/form-control.css');
-    for (const state of [':hover', ':active', ':focus-visible', ':disabled']) expect(button).toContain(state);
-    for (const state of [':hover', ':focus-visible', "[aria-invalid='true']", '[readonly]', ':disabled']) expect(input).toContain(state);
+    for (const state of [':hover', ':active', ':focus-visible', ':disabled'])
+      expect(button).toContain(state);
+    for (const state of [
+      ':hover',
+      ':focus-visible',
+      "[aria-invalid='true']",
+      '[readonly]',
+      ':disabled',
+    ])
+      expect(input).toContain(state);
   });
 
   it('does not leave shared table striping as an inline color', () => {

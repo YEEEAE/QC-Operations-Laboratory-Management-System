@@ -31,9 +31,7 @@ export const UNIVERSAL_OPERATIONAL_READ_PERMISSIONS = [
   'PERM-ADM-AUDIT-VIEW',
 ] as const satisfies readonly PermissionCode[];
 
-export function addUniversalOperationalReadPermissions(
-  permissions: readonly PermissionGrant[],
-) {
+export function addUniversalOperationalReadPermissions(permissions: readonly PermissionGrant[]) {
   const existing = new Set(permissions.map((permission) => permission.code));
   return [
     ...permissions,

@@ -38,6 +38,15 @@ Authorization:      Server-side — Default Deny
 
 > **ملاحظة معمارية:** البناء الافتراضي للتطبيق هو **server output**؛ Static-only Astro لا يناسب هذا النظام لأنه يعتمد على Authentication وserver-side authorization وPostgreSQL وcontrolled mutations. صفحات/UI/Astro Actions هي Delivery Layer فقط، وBusiness Logic يعيش داخل Modules مستقلة عن الـFramework.
 
+## Deployment and CI boundary
+
+The application deployment path is the Render Web Service defined in `render.yaml`:
+Render installs the pinned pnpm lockfile, builds the Astro SSR output, and starts
+`dist/server/entry.mjs`. GitHub Pages/Jekyll is not an application deployment target,
+and Verification CI does not depend on it. If the repository's externally configured
+Pages workflow remains enabled, disable it in GitHub repository Settings → Pages →
+Build and deployment, or remove the Pages source/workflow from repository settings.
+
 ---
 
 # الأقسام الرئيسية

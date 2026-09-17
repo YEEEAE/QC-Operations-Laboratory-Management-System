@@ -20,13 +20,20 @@ export interface ProductionRecoveryAuthorizationInput {
 
 /** Production recovery is deliberately stricter than drill intent. */
 export function authorizeProductionRecovery(input: ProductionRecoveryAuthorizationInput): void {
-  if (!isNamedSystemOwner(input.actor))
-    throw new AppError('AUTHZ_DENIED', { userSafe: true });
+  if (!isNamedSystemOwner(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
   if (!input.reauthenticated) throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
   if (!input.signatureEvidenceId?.trim()) throw new AppError('AUTHZ_DENIED', { userSafe: true });
-  if (!input.artifactId.trim() || !input.artifactSha256.trim() || !input.releaseId.trim() || !input.gitSha.trim() || !input.buildId.trim() || !input.migrationHead.trim())
+  if (
+    !input.artifactId.trim() ||
+    !input.artifactSha256.trim() ||
+    !input.releaseId.trim() ||
+    !input.gitSha.trim() ||
+    !input.buildId.trim() ||
+    !input.migrationHead.trim()
+  )
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
-  if (!input.reason.trim() || !input.requestId.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+  if (!input.reason.trim() || !input.requestId.trim())
+    throw new AppError('VALIDATION_FAILED', { userSafe: true });
   if (input.expectedVersion !== input.currentVersion)
     throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
 }

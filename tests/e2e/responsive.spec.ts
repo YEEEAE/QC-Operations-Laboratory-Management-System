@@ -34,7 +34,7 @@ test.describe('responsive accessibility baseline', () => {
       await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
       await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
       await expect(page.getByLabel('Login identity')).toBeVisible();
-      await expect(page.getByLabel('Password')).toBeVisible();
+      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
       await assertNoUnexpectedOverflow(page);
 
       if (viewport.width <= 768) {
@@ -60,16 +60,14 @@ test.describe('responsive accessibility baseline', () => {
       });
       await assertNoUnexpectedOverflow(page);
       await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-      await expect(page.getByLabel('Password')).toBeVisible();
+      await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
       await page.evaluate(() => {
         document.documentElement.style.zoom = '';
       });
     }
   });
 
-  test('English-only login reflow at 400% zoom without horizontal overflow', async ({
-    page,
-  }) => {
+  test('English-only login reflow at 400% zoom without horizontal overflow', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 
     for (const [path, heading, submit] of [

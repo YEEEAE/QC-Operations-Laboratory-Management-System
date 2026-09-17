@@ -4,6 +4,8 @@ docs/
 .agents/
 .claude/
 .clinerules/
+.opencode/
+.playwright-mcp/
 dist/
 coverage/
 node_modules/

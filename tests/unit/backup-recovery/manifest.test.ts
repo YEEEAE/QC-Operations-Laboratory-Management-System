@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createBackupManifest, toPublicBackupManifest } from '../../../src/modules/backup-recovery/domain/backup-manifest.js';
+import {
+  createBackupManifest,
+  toPublicBackupManifest,
+} from '../../../src/modules/backup-recovery/domain/backup-manifest.js';
 
 const base = {
   catalogId: '01999999-9999-7999-8999-999999999999',
@@ -22,7 +25,12 @@ describe('backup manifest', () => {
     const manifest = createBackupManifest(base);
     const view = toPublicBackupManifest(manifest, true, ['RESTORE_NOT_VERIFIED']);
     expect(manifest.manifestSha256).toHaveLength(64);
-    expect(view).toMatchObject({ catalogId: base.catalogId, releaseId: 'rel-1', byteSize: '12', artifactVerified: true });
+    expect(view).toMatchObject({
+      catalogId: base.catalogId,
+      releaseId: 'rel-1',
+      byteSize: '12',
+      artifactVerified: true,
+    });
     expect(view).not.toHaveProperty('checksum');
     expect(view).not.toHaveProperty('manifestSha256');
   });

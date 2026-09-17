@@ -271,7 +271,10 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
     filter?: ChangeRequestListFilter;
   }): Promise<readonly ChangeRequestAggregate[]> {
     try {
-      let query = this.scopedQuery(input.actor).selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
+      let query = this.scopedQuery(input.actor)
+        .selectAll()
+        .orderBy('updated_at', 'desc')
+        .orderBy('id', 'desc');
       if (input.filter?.state)
         query = query.where('state', '=', input.filter.state) as typeof query;
       if (input.filter?.targetType)

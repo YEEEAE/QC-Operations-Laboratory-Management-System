@@ -87,7 +87,11 @@ describe('exclusive system-owner access', () => {
     const database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: pool! }) });
     const resolved = await resolveActor(database, row.rows[0]!.id);
     expect(row.rows[0]!.id).toMatch(/^[0-9a-f-]{36}$/i);
-    expect(resolved).toMatchObject({ id: row.rows[0]!.id, loginIdentity: 'yazeed', accountState: 'ACTIVE' });
+    expect(resolved).toMatchObject({
+      id: row.rows[0]!.id,
+      loginIdentity: 'yazeed',
+      accountState: 'ACTIVE',
+    });
     await database.destroy();
   });
 

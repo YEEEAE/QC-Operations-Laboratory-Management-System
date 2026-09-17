@@ -141,7 +141,9 @@ describe('visual token contract (global)', () => {
       '--status-neutral-bg',
     ];
     for (const name of core) {
-      const inDocs = docs.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`, 'i'))?.[1].toLowerCase();
+      const inDocs = docs
+        .match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`, 'i'))?.[1]
+        .toLowerCase();
       const inTokens = tokens.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1].toLowerCase();
       expect(inDocs, `${name} documented`).toBeTruthy();
       expect(inTokens, `${name} in runtime`).toBeTruthy();

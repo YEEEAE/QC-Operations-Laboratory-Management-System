@@ -10,10 +10,20 @@ function requestId(schedule: string, now: Date, release: BackupReleaseIdentity):
 
 export class CalendarBackupScheduler implements BackupScheduler {
   nextDailyBackup(now: Date, release: BackupReleaseIdentity): ScheduledRecoveryCommand {
-    return { schedule: 'daily-backup', requestId: requestId('daily-backup', now, release), release, targetEnvironment: 'test' };
+    return {
+      schedule: 'daily-backup',
+      requestId: requestId('daily-backup', now, release),
+      release,
+      targetEnvironment: 'test',
+    };
   }
 
   nextMonthlyDrill(now: Date, release: BackupReleaseIdentity): ScheduledRecoveryCommand {
-    return { schedule: 'monthly-isolated-restore-drill', requestId: requestId('monthly-isolated-restore-drill', now, release), release, targetEnvironment: 'test' };
+    return {
+      schedule: 'monthly-isolated-restore-drill',
+      requestId: requestId('monthly-isolated-restore-drill', now, release),
+      release,
+      targetEnvironment: 'test',
+    };
   }
 }

@@ -84,9 +84,9 @@ export function transitionCapa(
       EFFECTIVENESS_REVIEW: 'READY_FOR_CLOSURE',
       AWAITING_VERIFICATION: 'READY_FOR_CLOSURE',
     },
-    CLOSE: Object.fromEntries(CAPA_CLOSE_ELIGIBLE_STATES.map((state) => [state, 'CLOSED'])) as Partial<
-      Record<CapaState, CapaState>
-    >,
+    CLOSE: Object.fromEntries(
+      CAPA_CLOSE_ELIGIBLE_STATES.map((state) => [state, 'CLOSED']),
+    ) as Partial<Record<CapaState, CapaState>>,
     VOID: { DRAFT: 'VOID', OPEN: 'VOID', IN_PROGRESS: 'VOID' },
   };
   const next = m[a][c.state];
@@ -98,9 +98,12 @@ export function transitionCapa(
     (a === 'READY_FOR_CLOSURE' && !conditions.effectivenessAccepted) ||
     (a === 'CLOSE' && !reason?.trim())
   )
-    throw new AppError(a === 'CLOSE' && !reason?.trim() ? 'VALIDATION_FAILED' : 'DOMAIN_INVALID_TRANSITION', {
-      userSafe: true,
-    });
+    throw new AppError(
+      a === 'CLOSE' && !reason?.trim() ? 'VALIDATION_FAILED' : 'DOMAIN_INVALID_TRANSITION',
+      {
+        userSafe: true,
+      },
+    );
   return {
     ...c,
     state: next,

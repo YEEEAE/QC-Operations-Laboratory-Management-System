@@ -20,12 +20,12 @@ export function initDialogs(root: ParentNode = document) {
       dialog.showModal();
       focusDialog();
     };
-    root.querySelectorAll<HTMLElement>(`[data-dialog-open="${dialog.id}"]`).forEach((button) =>
-      button.addEventListener('click', () => open(button)),
-    );
-    dialog.querySelectorAll<HTMLElement>('[data-dialog-close]').forEach((button) =>
-      button.addEventListener('click', () => dialog.close('cancel')),
-    );
+    root
+      .querySelectorAll<HTMLElement>(`[data-dialog-open="${dialog.id}"]`)
+      .forEach((button) => button.addEventListener('click', () => open(button)));
+    dialog
+      .querySelectorAll<HTMLElement>('[data-dialog-close]')
+      .forEach((button) => button.addEventListener('click', () => dialog.close('cancel')));
     dialog.addEventListener('cancel', () => {
       // Native <dialog> already provides Escape handling and focus trapping.
       // Keep this listener for a stable cancellation contract and focus return.

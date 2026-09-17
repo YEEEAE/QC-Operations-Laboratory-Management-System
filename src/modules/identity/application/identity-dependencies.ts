@@ -58,9 +58,11 @@ export async function resolveActor(
     loginIdentity: user.login_identity,
     accountState: user.account_state as ActorContext['accountState'],
     roles: [...new Set(rows.map((r) => r.role))],
-    permissions: addUniversalOperationalReadPermissions([...new Set(rows.map((r) => r.permission))].map((code) => ({
-      code: code as ActorContext['permissions'][number]['code'],
-      scopes: scopeKinds,
-    }))),
+    permissions: addUniversalOperationalReadPermissions(
+      [...new Set(rows.map((r) => r.permission))].map((code) => ({
+        code: code as ActorContext['permissions'][number]['code'],
+        scopes: scopeKinds,
+      })),
+    ),
   };
 }

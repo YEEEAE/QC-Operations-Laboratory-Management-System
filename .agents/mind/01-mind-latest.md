@@ -1,5 +1,42 @@
 # QC Operations & Laboratory Management System — Project Mind
 
+## [2026-09-17] — QC-CLOSURE-CI-004: Exact-HEAD Verification CI Closure
+
+### تم التنفيذ
+- أغلقت أعطال بوابة الاختبارات الفعلية: نطاق `row` في اختبار release concurrency، هوية `loginIdentity` في fixture الخاص بـSYSTEM_OWNER، تاريخ اختبار retention، ومفردات `read model` المخالفة للعقد.
+- ثبّتُّ محددات Playwright الخاصة بكلمة المرور باستخدام `exact: true`، وأخفيت خلفية 3D عند الطباعة بما يطابق اختبار النظام.
+- أزلت شجرة المصدر المنسوخة `public/assets/astro/**`، وأضفت فحص حدود يمنع عودتها إلى assets الإنتاجية.
+- حصرت Prettier وESLint على كود المشروع باستثناء مجلدات أدوات العمل `.opencode/**` و`.playwright-mcp/**`، مع بقاء بوابات التطبيق مفعّلة.
+- وثّقت أن Render هو مسار نشر Astro SSR، وأن GitHub Pages/Jekyll ليس هدف نشر للتطبيق.
+
+### الملفات المتأثرة
+- `.github/workflows/ci.yml`
+- `scripts/architecture/check-boundaries.mjs`
+- `src/ui/components/QCLogin3DBackground.astro`
+- `tests/{unit,integration,e2e}/**`
+- `public/assets/astro/**` (removed)
+- `README.md`
+- `audit/2026-09-16-exact-head-verification.md`
+
+### التحقق
+- `pnpm install --frozen-lockfile` ✅ — pnpm 11.25.0؛ تحذير metadata للشبكة فقط.
+- `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test:architecture` ✅ — typecheck: 0 errors / 61 hints.
+- `pnpm test:unit` ✅ — 72 ملفًا / 440 اختبارًا.
+- `pnpm build` ✅ — Astro SSR build.
+- security focused ✅ — 6 ملفات / 38 اختبارًا؛ بوابة Security الكاملة محجوبة لاختبار Postgres بسبب غياب Docker.
+- integration/migrations/concurrency ⚠️ — Testcontainers محجوب لعدم توفر Docker runtime محليًا.
+- Playwright E2E ⚠️ — full: 42 passed / 98 skipped / 22 failed؛ targeted بعد الإصلاح: 15 passed / 2 skipped / 3 failed، مع timeouts محلية غير مستقرة.
+- release identity/verify ✅ — الهوية المولدة تطابق SHA المحلي `60371e6a59c97af2566c7d9ac29b49628ab497d1`.
+- GitHub exact-HEAD ❌/غير مُثبت — Verification CI توقف قبل التشغيل بسبب billing lock؛ Pages فشل كـJekyll workflow خارجي مستقل.
+
+### النتيجة
+- **الحالة:** جزئي / BLOCKED خارجيًا وبيئيًا.
+- **مختصر:** بوابات الكود القابلة للتشغيل محليًا خضراء بعد إصلاحات السبب الجذري، لكن لا يمكن إعلان GitHub exact-HEAD GREEN قبل تشغيل Docker/E2E في CI وحل قفل الفوترة وتعطيل Pages خارجيًا.
+
+### ملاحظات / مشاكل مفتوحة
+- يلزم عدم commit/push من الوكيل؛ بعد اعتماد التغييرات يدويًا يجب تشغيل Verification CI على نفس SHA.
+- يلزم تعطيل GitHub Pages من Settings → Pages إذا كان مفعّلًا خارجيًا.
+
 ## [2026-09-15] — QC-CLOSURE-TEMPLATES-003: تثبيت سلطة القوالب وإغلاق حفظ السياق التاريخي
 
 ### تم التنفيذ

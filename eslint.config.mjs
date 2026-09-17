@@ -11,6 +11,8 @@ export default tseslint.config(
       '.agents/**',
       '.claude/**',
       '.clinerules/**',
+      '.opencode/**',
+      '.playwright-mcp/**',
       'Documents/**',
       'docs/**',
     ],

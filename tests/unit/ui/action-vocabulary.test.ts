@@ -12,8 +12,7 @@ import { copy } from '../../../src/shared/copy/ux-vocabulary';
 
 const ROOT = new URL('../../../', import.meta.url);
 
-const readRepo = (path: string): string =>
-  readFileSync(new URL(path, ROOT), 'utf8');
+const readRepo = (path: string): string => readFileSync(new URL(path, ROOT), 'utf8');
 
 function astroPages(dir = 'src/pages'): string[] {
   const base = new URL(dir, ROOT);
@@ -45,15 +44,9 @@ describe('F-12 English-only action vocabulary', () => {
   it('does not render Arabic copy or RTL literals in product pages', () => {
     for (const page of astroPages()) {
       const source = readRepo(page);
-      expect(source, `${page} must stay English-only`).not.toMatch(
-        /[\u0600-\u06FF]/,
-      );
-      expect(source, `${page} must not hardcode Arabic`).not.toContain(
-        'locale="ar"',
-      );
-      expect(source, `${page} must not hardcode RTL`).not.toContain(
-        'direction="rtl"',
-      );
+      expect(source, `${page} must stay English-only`).not.toMatch(/[\u0600-\u06FF]/);
+      expect(source, `${page} must not hardcode Arabic`).not.toContain('locale="ar"');
+      expect(source, `${page} must not hardcode RTL`).not.toContain('direction="rtl"');
     }
   });
 
@@ -80,16 +73,11 @@ describe('F-12 English-only action vocabulary', () => {
       'New Revision ·',
     ];
     const pages = astroPages();
-    const shared = [
-      'src/ui/components/forms/FormActions.astro',
-      ...pages,
-    ];
+    const shared = ['src/ui/components/forms/FormActions.astro', ...pages];
     for (const file of shared) {
       const source = readRepo(file);
       for (const label of banned) {
-        expect(source, `${file} must not contain "${label}"`).not.toContain(
-          label,
-        );
+        expect(source, `${file} must not contain "${label}"`).not.toContain(label);
       }
     }
   });
@@ -126,9 +114,7 @@ describe('F-12 English-only action vocabulary', () => {
       'src/pages/documents/[documentId]/versions/[versionId]/review.astro',
     );
     expect(versionReview).toContain('Approve revision');
-    const receivingDetail = readRepo(
-      'src/pages/quarantine/receiving/[receivingId].astro',
-    );
+    const receivingDetail = readRepo('src/pages/quarantine/receiving/[receivingId].astro');
     expect(receivingDetail).toContain('Release item');
     expect(receivingDetail).toContain('PASS is recorded, but this item is not released');
   });

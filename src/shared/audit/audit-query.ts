@@ -87,8 +87,10 @@ export function normalizeAuditQueryFilter(filter: AuditQueryFilter): NormalizedA
   const offset = Number.isFinite(filter.offset)
     ? Math.max(0, Math.floor(filter.offset as number))
     : 0;
-  const from = filter.from instanceof Date && !Number.isNaN(filter.from.getTime()) ? filter.from : undefined;
-  const to = filter.to instanceof Date && !Number.isNaN(filter.to.getTime()) ? filter.to : undefined;
+  const from =
+    filter.from instanceof Date && !Number.isNaN(filter.from.getTime()) ? filter.from : undefined;
+  const to =
+    filter.to instanceof Date && !Number.isNaN(filter.to.getTime()) ? filter.to : undefined;
   return {
     subjectType: cleanText(filter.subjectType),
     subjectId: cleanText(filter.subjectId),
@@ -133,7 +135,8 @@ function toDate(value: Date | string): Date {
  * structurally (the view type has no payload member at all).
  */
 export function mapAuditRowToView(row: AuditEventRow): AuditEventView {
-  const actorType = row.actor_type === 'SYSTEM' || row.actor_type === 'SERVICE' ? row.actor_type : 'USER';
+  const actorType =
+    row.actor_type === 'SYSTEM' || row.actor_type === 'SERVICE' ? row.actor_type : 'USER';
   return {
     id: String(row.id),
     eventNo: toBigint(row.event_no),

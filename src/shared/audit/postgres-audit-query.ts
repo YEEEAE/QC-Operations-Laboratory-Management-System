@@ -18,21 +18,23 @@ export class PostgresAuditQuery implements AuditQuery {
     let countQuery = this.database
       .selectFrom('audit_events')
       .select((builder) => builder.fn.countAll().as('count'));
-    let pageQuery = this.database.selectFrom('audit_events').select([
-      'id',
-      'event_no',
-      'occurred_at',
-      'actor_type',
-      'actor_id',
-      'subject_type',
-      'subject_id',
-      'action',
-      'old_state',
-      'new_state',
-      'reason',
-      'request_id',
-      'signature_id',
-    ]);
+    let pageQuery = this.database
+      .selectFrom('audit_events')
+      .select([
+        'id',
+        'event_no',
+        'occurred_at',
+        'actor_type',
+        'actor_id',
+        'subject_type',
+        'subject_id',
+        'action',
+        'old_state',
+        'new_state',
+        'reason',
+        'request_id',
+        'signature_id',
+      ]);
     const narrow = (
       column: 'subject_type' | 'subject_id' | 'actor_id' | 'action',
       value: string | undefined,

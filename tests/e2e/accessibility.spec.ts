@@ -14,7 +14,7 @@ function requireAuthenticatedFixture(): void {
 async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await page.getByLabel('Login identity').fill(loginIdentity ?? '');
-  await page.getByLabel('Password').fill(password ?? '');
+  await page.getByLabel('Password', { exact: true }).fill(password ?? '');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/dashboard/);
 }
@@ -76,7 +76,10 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
     await expect(page.getByLabel('Login identity')).toHaveAttribute('autocomplete', 'username');
-    await expect(page.getByLabel('Password')).toHaveAttribute('autocomplete', 'current-password');
+    await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute(
+      'autocomplete',
+      'current-password',
+    );
     await expectNoAxeViolations(page, 'English login');
     await assertKeyboardOrder(page);
   });
@@ -89,7 +92,7 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
     await expect(page.getByLabel('Login identity')).toHaveAttribute('autocomplete', 'username');
-    await expect(page.getByLabel('Password')).toHaveAttribute(
+    await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute(
       'autocomplete',
       'current-password',
     );

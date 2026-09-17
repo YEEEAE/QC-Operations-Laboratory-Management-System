@@ -36,6 +36,7 @@ const systemOwner = actor(
   ['SYSTEM_OWNER'],
   ['PERM-INSP-APPROVE', 'PERM-APR-APPROVE', 'PERM-QUAR-RELEASE'],
 );
+systemOwner.loginIdentity = 'yazeed';
 const adminOnly = actor('verify-admin-actor', ['ADMIN'], ['PERM-ADM-USERS']);
 const employee = actor('verify-employee-actor', ['EMPLOYEE'], ['PERM-INSP-VIEW']);
 const least = actor('verify-least-actor', [], ['PERM-TASK-VIEW']);

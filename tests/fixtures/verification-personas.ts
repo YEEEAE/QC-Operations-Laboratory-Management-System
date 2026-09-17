@@ -14,12 +14,7 @@
  */
 
 export type VerificationPersonaId =
-  | 'system-owner'
-  | 'supervisor'
-  | 'manager'
-  | 'admin-only'
-  | 'employee'
-  | 'least-privileged';
+  'system-owner' | 'supervisor' | 'manager' | 'admin-only' | 'employee' | 'least-privileged';
 
 export interface VerificationPersona {
   id: VerificationPersonaId;
@@ -136,12 +131,36 @@ export const VERIFICATION_PERSONAS: readonly VerificationPersona[] = [
 export const VERIFICATION_RECORD_PREFIX = 'VERIFY-';
 
 export const VERIFICATION_DISPOSABLE_RECORDS = [
-  { kind: 'TASK', businessNo: 'VERIFY-TASK-001', purpose: 'read-only list/detail + validation-error scenario' },
-  { kind: 'RECEIVING_ITEM', businessNo: 'VERIFY-RCV-001', purpose: 'read-only quarantine detail + release-denial target' },
-  { kind: 'LAB_TEST', businessNo: 'VERIFY-LAB-001', purpose: 'read-only lab detail + approval-denial target' },
-  { kind: 'DOCUMENT_VERSION', businessNo: 'VERIFY-DOC-001', purpose: 'authorized change-request selector target' },
-  { kind: 'CAPA', businessNo: 'VERIFY-CAPA-001', purpose: 'P-04 close-denial target (non-terminal)' },
-  { kind: 'INSPECTION_TEMPLATE_VERSION', businessNo: 'VERIFY-TMPL-001', purpose: 'F-10 lifecycle read-only target' },
+  {
+    kind: 'TASK',
+    businessNo: 'VERIFY-TASK-001',
+    purpose: 'read-only list/detail + validation-error scenario',
+  },
+  {
+    kind: 'RECEIVING_ITEM',
+    businessNo: 'VERIFY-RCV-001',
+    purpose: 'read-only quarantine detail + release-denial target',
+  },
+  {
+    kind: 'LAB_TEST',
+    businessNo: 'VERIFY-LAB-001',
+    purpose: 'read-only lab detail + approval-denial target',
+  },
+  {
+    kind: 'DOCUMENT_VERSION',
+    businessNo: 'VERIFY-DOC-001',
+    purpose: 'authorized change-request selector target',
+  },
+  {
+    kind: 'CAPA',
+    businessNo: 'VERIFY-CAPA-001',
+    purpose: 'P-04 close-denial target (non-terminal)',
+  },
+  {
+    kind: 'INSPECTION_TEMPLATE_VERSION',
+    businessNo: 'VERIFY-TMPL-001',
+    purpose: 'F-10 lifecycle read-only target',
+  },
 ] as const;
 
 export function getPersona(id: VerificationPersonaId): VerificationPersona {

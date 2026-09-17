@@ -20,7 +20,10 @@ export class LocalArtifactStore implements BackupArtifactStore {
     if (this.entries.has(input.reference)) throw new Error('ARTIFACT_ALREADY_EXISTS');
     const bytes = new Uint8Array(input.bytes);
     const checksum = createHash('sha256').update(bytes).digest('hex');
-    if (BigInt(bytes.byteLength) !== input.metadata.sizeBytes || checksum !== input.metadata.checksum)
+    if (
+      BigInt(bytes.byteLength) !== input.metadata.sizeBytes ||
+      checksum !== input.metadata.checksum
+    )
       throw new Error('ARTIFACT_METADATA_MISMATCH');
     const metadata = { ...input.metadata };
     this.entries.set(input.reference, { bytes, metadata, createdAt: new Date() });
@@ -43,7 +46,9 @@ export class LocalArtifactStore implements BackupArtifactStore {
     this.entries.delete(reference);
   }
 
-  async list(): Promise<readonly { reference: string; createdAt: Date; metadata: ArtifactMetadata }[]> {
+  async list(): Promise<
+    readonly { reference: string; createdAt: Date; metadata: ArtifactMetadata }[]
+  > {
     return [...this.entries.entries()].map(([reference, entry]) => ({
       reference,
       createdAt: entry.createdAt,

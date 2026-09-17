@@ -10,6 +10,16 @@ const deliveryRoots = envRoots
   : ['src/pages', 'src/actions', 'src/ui', 'src/middleware.ts'];
 const violations = [];
 
+const copiedAstroTree = join(repositoryRoot, 'public/assets/astro');
+try {
+  await access(copiedAstroTree);
+  violations.push(
+    'public/assets/astro:copied-source-tree: runtime assets must live directly under public/assets',
+  );
+} catch {
+  // The copied source tree is intentionally absent.
+}
+
 /**
  * Narrow allowlist for architecturally necessary Delivery exceptions.
  *

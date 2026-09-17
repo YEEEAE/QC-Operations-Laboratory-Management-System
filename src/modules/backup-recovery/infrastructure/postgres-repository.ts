@@ -34,7 +34,9 @@ const mapBackup = (row: DatabaseRow<'backup_runs'>): BackupRun => ({
   ...(row.postgres_version ? { postgresVersion: row.postgres_version } : {}),
   ...(row.retention_expires_at ? { retentionExpiresAt: row.retention_expires_at } : {}),
   ...(row.manifest_sha256 ? { manifestSha256: row.manifest_sha256 } : {}),
-  ...(Array.isArray(row.known_gaps) ? { knownGaps: row.known_gaps.filter((value): value is string => typeof value === 'string') } : {}),
+  ...(Array.isArray(row.known_gaps)
+    ? { knownGaps: row.known_gaps.filter((value): value is string => typeof value === 'string') }
+    : {}),
   ...(row.error_code ? { errorCode: row.error_code } : {}),
   requestId: row.request_id,
 });
@@ -73,8 +75,8 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
       let query = this.database
         .selectFrom('backup_runs')
         .selectAll()
-      .orderBy('requested_at', 'desc')
-      .orderBy('id', 'desc');
+        .orderBy('requested_at', 'desc')
+        .orderBy('id', 'desc');
       if (filter.states?.length)
         query = query.where('state', 'in', [...filter.states]) as typeof query;
       query = query.limit(Math.min(Math.max(filter.limit ?? 50, 1), 100)) as typeof query;

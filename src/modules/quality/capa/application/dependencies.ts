@@ -13,7 +13,11 @@ export function capaActionDependencies() {
   const verifier = {
     verify: async (input: { actorId: string; secret: string }): Promise<boolean> => {
       const user = await users.findById(input.actorId);
-      return Boolean(user && user.accountState === 'ACTIVE' && (await passwords.verify(input.secret, user.passwordHash)));
+      return Boolean(
+        user &&
+        user.accountState === 'ACTIVE' &&
+        (await passwords.verify(input.secret, user.passwordHash)),
+      );
     },
   };
   return { close: new CloseCapaUseCase(new PostgresCapaRepository(database), verifier) };
@@ -22,9 +26,19 @@ export function capaActionDependencies() {
 export function capaReadDependencies() {
   return {
     get: new GetCapaUseCase(new PostgresCapaRepository(getDatabase())),
-    canClose: (actor: { accountState: string; roles: readonly string[]; permissions: readonly { code: string; active?: boolean }[] }, state: string) =>
-      actor.accountState === 'ACTIVE' && actor.roles.includes('SUPERVISOR') &&
-      actor.permissions.some((permission) => permission.code === 'PERM-CAPA-CLOSE' && permission.active !== false) &&
+    canClose: (
+      actor: {
+        accountState: string;
+        roles: readonly string[];
+        permissions: readonly { code: string; active?: boolean }[];
+      },
+      state: string,
+    ) =>
+      actor.accountState === 'ACTIVE' &&
+      actor.roles.includes('SUPERVISOR') &&
+      actor.permissions.some(
+        (permission) => permission.code === 'PERM-CAPA-CLOSE' && permission.active !== false,
+      ) &&
       CAPA_CLOSE_ELIGIBLE_STATES.includes(state as (typeof CAPA_CLOSE_ELIGIBLE_STATES)[number]),
   };
 }

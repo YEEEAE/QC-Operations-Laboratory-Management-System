@@ -30,7 +30,8 @@ export const uxVocabulary = {
   },
   states: {
     providerUnavailable: 'Data is temporarily unavailable',
-    providerUnavailableDetail: 'The system did not receive a confirmed response. This view is not empty, and no count is shown.',
+    providerUnavailableDetail:
+      'The system did not receive a confirmed response. This view is not empty, and no count is shown.',
     noRecords: 'No records in this view',
     noFilterMatches: 'No records match the selected filters',
     noAuthorizedResults: 'No matching records found',
@@ -61,7 +62,8 @@ export const uxVocabulary = {
   boundaries: {
     backupNotRestoreProof: 'A backup created or verified here is not proof of a verified restore.',
     passNotRelease: 'PASS is a scientific result. It does not release the item.',
-    aiNotAuthority: 'AI output is advisory only. It cannot approve, reject, release, sign, or set an official PASS/FAIL.',
+    aiNotAuthority:
+      'AI output is advisory only. It cannot approve, reject, release, sign, or set an official PASS/FAIL.',
   },
 } as const;
 

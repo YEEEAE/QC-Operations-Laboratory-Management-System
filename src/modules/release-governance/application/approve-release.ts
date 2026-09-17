@@ -44,10 +44,16 @@ export class ApproveReleaseUseCase {
     void authority;
     const candidate = await this.repository.getCandidate(input.releaseId.trim());
     if (!candidate) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (candidate.state !== 'PENDING') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (candidate.state !== 'PENDING')
+      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
 
     const trusted = await this.repository.getEvidence(candidate.releaseId);
-    const evidence = deriveReleaseEvidence(candidate, trusted.gateRecords, trusted.riskRecords, this.now());
+    const evidence = deriveReleaseEvidence(
+      candidate,
+      trusted.gateRecords,
+      trusted.riskRecords,
+      this.now(),
+    );
     assertAllGatesPass(evidence.gates);
     assertResidualRisksAcceptable(evidence.risks);
 

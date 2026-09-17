@@ -399,7 +399,13 @@ const routeTuples = [
     'permission-bound',
     'required',
   ],
-  ['RT-ADMIN-003', '/admin/scopes', 'src/pages/admin/scopes/index.astro', 'permission-bound', 'required'],
+  [
+    'RT-ADMIN-003',
+    '/admin/scopes',
+    'src/pages/admin/scopes/index.astro',
+    'permission-bound',
+    'required',
+  ],
   [
     'RT-SYSTEM-001',
     '/system/health',

@@ -95,8 +95,10 @@ export function assertReleaseIdentityShape(identity: ReleaseCandidateIdentity): 
   if (!identity.releaseId?.trim() || !identity.gitSha?.trim() || !identity.buildId?.trim()) {
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   }
-  if (!GIT_SHA.test(identity.gitSha.trim())) throw new AppError('VALIDATION_FAILED', { userSafe: true });
-  if (!SAFE_ID.test(identity.buildId.trim())) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+  if (!GIT_SHA.test(identity.gitSha.trim()))
+    throw new AppError('VALIDATION_FAILED', { userSafe: true });
+  if (!SAFE_ID.test(identity.buildId.trim()))
+    throw new AppError('VALIDATION_FAILED', { userSafe: true });
   if (!identity.applicationVersion?.trim() || !SAFE_ID.test(identity.applicationVersion.trim())) {
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   }
@@ -124,7 +126,10 @@ export function assertReleaseAuthority(actor: ActorContext): 'MANAGER' | 'SYSTEM
   return kind;
 }
 
-export function evaluateGates(gates: ReleaseGateEvidence): { ok: boolean; failures: ReleaseGateKey[] } {
+export function evaluateGates(gates: ReleaseGateEvidence): {
+  ok: boolean;
+  failures: ReleaseGateKey[];
+} {
   const failures = RELEASE_GATE_KEYS.filter((key) => gates[key] !== 'PASS');
   return { ok: failures.length === 0, failures };
 }
@@ -144,7 +149,11 @@ const TRUSTED_GATE_SOURCES: Record<ReleaseGateKey, readonly string[]> = {
   residualRisk: ['CONTROLLED_RISK_REGISTER'],
 };
 
-function isCurrentEvidence(record: ReleaseGateEvidenceRecord, candidate: ReleaseCandidateForEvidence, now: Date): boolean {
+function isCurrentEvidence(
+  record: ReleaseGateEvidenceRecord,
+  candidate: ReleaseCandidateForEvidence,
+  now: Date,
+): boolean {
   return (
     record.releaseId === candidate.releaseId &&
     record.gitSha.toLowerCase() === candidate.gitSha.toLowerCase() &&
@@ -170,9 +179,12 @@ export function deriveReleaseEvidence(
   const latest = new Map<ReleaseGateKey, ReleaseGateEvidenceRecord>();
   for (const record of current) {
     const previous = latest.get(record.evidenceType);
-    if (!previous || record.evidenceVersion > previous.evidenceVersion) latest.set(record.evidenceType, record);
+    if (!previous || record.evidenceVersion > previous.evidenceVersion)
+      latest.set(record.evidenceType, record);
   }
-  const gates = Object.fromEntries(RELEASE_GATE_KEYS.map((key) => [key, latest.get(key)?.status ?? 'UNVERIFIED'])) as ReleaseGateEvidence;
+  const gates = Object.fromEntries(
+    RELEASE_GATE_KEYS.map((key) => [key, latest.get(key)?.status ?? 'UNVERIFIED']),
+  ) as ReleaseGateEvidence;
   const currentRisks = riskRecords
     .filter(
       (risk) =>
@@ -188,13 +200,17 @@ export function deriveReleaseEvidence(
         risk.observedAt.getTime() <= now.getTime() &&
         risk.source === 'CONTROLLED_RISK_REGISTER',
     )
-    .sort((a, b) => a.riskId.localeCompare(b.riskId) || Number(b.evidenceVersion - a.evidenceVersion));
-  const risks = [...new Map(currentRisks.map((risk) => [risk.riskId, risk])).values()].map((risk) => ({
-    riskId: risk.riskId,
-    severity: risk.severity,
-    status: risk.status,
-    ...(risk.acceptance ? { acceptance: risk.acceptance } : {}),
-  }));
+    .sort(
+      (a, b) => a.riskId.localeCompare(b.riskId) || Number(b.evidenceVersion - a.evidenceVersion),
+    );
+  const risks = [...new Map(currentRisks.map((risk) => [risk.riskId, risk])).values()].map(
+    (risk) => ({
+      riskId: risk.riskId,
+      severity: risk.severity,
+      status: risk.status,
+      ...(risk.acceptance ? { acceptance: risk.acceptance } : {}),
+    }),
+  );
   return { gates, gateRecords: Object.fromEntries(latest), risks, riskRecords: currentRisks };
 }
 

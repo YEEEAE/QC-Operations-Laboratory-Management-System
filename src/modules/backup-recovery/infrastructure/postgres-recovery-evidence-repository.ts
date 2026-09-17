@@ -2,7 +2,10 @@ import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
-import type { RecoveryEvidenceInput, RecoveryEvidenceRepository } from '../ports/recovery-evidence.js';
+import type {
+  RecoveryEvidenceInput,
+  RecoveryEvidenceRepository,
+} from '../ports/recovery-evidence.js';
 
 export class PostgresRecoveryEvidenceRepository implements RecoveryEvidenceRepository {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
@@ -71,14 +74,25 @@ export class PostgresRecoveryEvidenceRepository implements RecoveryEvidenceRepos
         postgresVersion: row.postgres_version ?? '',
         startedAt: row.started_at,
         ...(row.completed_at ? { completedAt: row.completed_at } : {}),
-        ...(row.measured_rpo_seconds !== null ? { measuredRpoSeconds: Number(row.measured_rpo_seconds) } : {}),
-        ...(row.measured_rto_seconds !== null ? { measuredRtoSeconds: Number(row.measured_rto_seconds) } : {}),
+        ...(row.measured_rpo_seconds !== null
+          ? { measuredRpoSeconds: Number(row.measured_rpo_seconds) }
+          : {}),
+        ...(row.measured_rto_seconds !== null
+          ? { measuredRtoSeconds: Number(row.measured_rto_seconds) }
+          : {}),
         databaseValidation: row.database_validation as 'PASS' | 'FAIL',
         objectValidation: row.object_validation as 'PASS' | 'FAIL',
         securityValidation: row.security_validation as 'PASS' | 'FAIL',
         businessValidation: row.business_validation as 'PASS' | 'FAIL',
-        ...(row.session_invalidation ? { sessionInvalidation: row.session_invalidation as RecoveryEvidenceInput['sessionInvalidation'] } : {}),
-        knownGaps: Array.isArray(row.known_gaps) ? row.known_gaps.filter((value): value is string => typeof value === 'string') : [],
+        ...(row.session_invalidation
+          ? {
+              sessionInvalidation:
+                row.session_invalidation as RecoveryEvidenceInput['sessionInvalidation'],
+            }
+          : {}),
+        knownGaps: Array.isArray(row.known_gaps)
+          ? row.known_gaps.filter((value): value is string => typeof value === 'string')
+          : [],
       }));
     } catch (error) {
       throw translateDatabaseError(error);

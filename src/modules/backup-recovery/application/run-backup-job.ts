@@ -7,7 +7,8 @@ import { checksum } from '../infrastructure/postgres-logical-backup-executor.js'
 export interface BackupJobResult {
   readonly status: 'VERIFIED' | 'FAILED';
   readonly manifest?: ReturnType<typeof createBackupManifest>;
-  readonly failureCode?: 'BACKUP_EXECUTION_FAILED' | 'BACKUP_ARTIFACT_INTEGRITY_FAILED' | 'BACKUP_STORAGE_UNAVAILABLE';
+  readonly failureCode?:
+    'BACKUP_EXECUTION_FAILED' | 'BACKUP_ARTIFACT_INTEGRITY_FAILED' | 'BACKUP_STORAGE_UNAVAILABLE';
 }
 
 export async function runLogicalBackupJob(input: {
@@ -22,7 +23,10 @@ export async function runLogicalBackupJob(input: {
   const now = input.now ?? (() => new Date());
   let execution;
   try {
-    execution = await input.executor.createLogicalBackup({ databaseUrl: input.databaseUrl, requestId: input.requestId });
+    execution = await input.executor.createLogicalBackup({
+      databaseUrl: input.databaseUrl,
+      requestId: input.requestId,
+    });
   } catch {
     return { status: 'FAILED', failureCode: 'BACKUP_EXECUTION_FAILED' };
   }
@@ -52,7 +56,10 @@ export async function runLogicalBackupJob(input: {
       metadata: { sizeBytes: manifest.byteSize, checksum: manifest.checksum },
     });
     const stored = await input.store.head(reference);
-    if (stored.sizeBytes !== manifest.byteSize || stored.checksum.toLowerCase() !== manifest.checksum.toLowerCase())
+    if (
+      stored.sizeBytes !== manifest.byteSize ||
+      stored.checksum.toLowerCase() !== manifest.checksum.toLowerCase()
+    )
       return { status: 'FAILED', failureCode: 'BACKUP_ARTIFACT_INTEGRITY_FAILED' };
     return { status: 'VERIFIED', manifest };
   } catch {

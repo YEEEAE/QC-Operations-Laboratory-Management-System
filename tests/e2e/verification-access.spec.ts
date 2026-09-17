@@ -39,7 +39,13 @@ test.describe('C-12 role fixtures: positive access and server-side denial', () =
   }) => {
     const base = String(process.env.QC_VERIFY_BASE_URL);
     await signIn(page, 'verify-least', String(process.env.QC_VERIFY_LEAST_PASSWORD));
-    for (const path of ['/dashboard', '/tasks', '/change-requests', '/laboratory/tests', '/audit']) {
+    for (const path of [
+      '/dashboard',
+      '/tasks',
+      '/change-requests',
+      '/laboratory/tests',
+      '/audit',
+    ]) {
       await page.goto(`${base}${path}`);
       await expect(page, `${path} must stay readable`).not.toHaveURL(/\/login/);
     }
