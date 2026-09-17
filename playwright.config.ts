@@ -6,8 +6,13 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI
-    ? [['github'], ['json', { outputFile: '.ci-results/e2e.json' }], ['html', { open: 'never' }]]
-    : 'list',
+    ? [
+        ['github'],
+        ['json', { outputFile: '.ci-results/e2e.json' }],
+        ['html', { open: 'never' }],
+        ['./tests/e2e/release-evidence-reporter.ts'],
+      ]
+    : [['list'], ['./tests/e2e/release-evidence-reporter.ts']],
   use: {
     baseURL: 'http://127.0.0.1:4321',
     screenshot: 'only-on-failure',

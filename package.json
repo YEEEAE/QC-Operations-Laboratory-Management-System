@@ -24,6 +24,8 @@
     "test:security": "vitest run tests/unit/shared/security-headers.test.ts tests/integration/security tests/integration/ai-advisory tests/integration/http --reporter=default --reporter=json --outputFile=.ci-results/security.json",
     "test:architecture": "node scripts/architecture/check-boundaries.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:closure": "playwright test tests/e2e/authenticated-closure.spec.ts tests/e2e/accessibility.spec.ts tests/e2e/authorization-matrix.spec.ts tests/e2e/critical-workflows.spec.ts tests/e2e/error-recovery.spec.ts tests/e2e/files-reports.spec.ts",
+    "verify:e2e:authenticated": "node --import=tsx scripts/verification/run-authenticated-e2e.ts",
     "test:coverage": "vitest run --coverage",
     "release:identity": "node scripts/release/release-id.mjs",
     "release:verify": "node scripts/release/verify-release.mjs --input dist/release-identity.json",
