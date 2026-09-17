@@ -24,6 +24,28 @@
 - `/system/health` حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
 - `/admin` وكل `/admin/*` متاحة لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، ولا يكفي وجود الدور وحده لتنفيذ إجراء حساس بلا permission/scope/SoD/state/version.
 
+## 2026-09-18 Extensible page-route contract
+
+كل صفحة تطبيق تسجل في `src/shared/routing/routes.ts` عبر `definePageRoute` بعقد موحد:
+
+```text
+id, path, page, domain, title, navigation?, breadcrumb,
+visibility, mutationCapabilities, fileExpectation
+```
+
+- `visibility` محصورة في `PUBLIC | AUTHENTICATED | YAZEED_ONLY`، والافتراضي لأي صفحة جديدة هو `AUTHENTICATED`.
+- `YAZEED_ONLY` opt-in صريح للصفحات الخاصة بالمالك المسمى؛ لا يستبدل التحقق الخادمي.
+- visibility وnavigation لا تمنحان mutation authority؛ Astro Actions/use cases تبقى نقطة permission/scope/state/SoD/signature الوحيدة.
+- API/machine routes ليست browser pages وتبقى مصنفة بعقود endpoint الخاصة بها.
+- `pnpm test:architecture` يشغّل فحص registry يمسح `src/pages`: يمنع صفحة غير مسجلة، route بملف مفقود، ID/path مكرر، breadcrumb/metadata ناقص، visibility غير معروفة، أو navigation تشير إلى route غير معروف.
+
+### إضافة صفحة أو module
+
+1. أنشئ صفحة Astro ضمن domain المالك، بدون business policy أو authorization definitions.
+2. أضف declaration إلى canonical route registry قبل ربط navigation.
+3. أضف navigation presentation فقط إن كانت الصفحة وجهة رئيسية؛ لا تكرر visibility أو mutation policy فيها.
+4. أضف unit regression للـcontract ثم شغّل `pnpm test:architecture`.
+
 ---
 **Business ID:** Display/Search identifier — not route authority
 **Mutation Model:** Astro Actions / explicit API endpoints → Application Use Cases

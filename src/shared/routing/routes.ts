@@ -1,14 +1,15 @@
-import type { CanonicalRoute, RouteAccess, RouteFileExpectation } from './route-types.js';
+import { definePageRoute, type CanonicalRoute, type RouteFileExpectation } from './route-types.js';
 
 type RouteTuple = readonly [
   string,
-  string,
+  `/${string}`,
   `src/pages/${string}`,
-  RouteAccess,
+  'public' | 'authenticated' | 'permission-bound',
   RouteFileExpectation,
 ];
 
 const routeTuples = [
+  ['RT-ROOT-001', '/', 'src/pages/index.astro', 'public', 'required'],
   ['RT-AUTH-001', '/login', 'src/pages/login.astro', 'public', 'required'],
   ['RT-AUTH-002', '/auth/recovery', 'src/pages/auth/recovery.astro', 'public', 'deferred'],
   [
@@ -439,14 +440,87 @@ const routeTuples = [
   ['RT-SHARED-002', '/notifications', 'src/pages/notifications.astro', 'authenticated', 'required'],
   ['RT-SHARED-003', '/account', 'src/pages/account.astro', 'authenticated', 'required'],
   ['RT-SHARED-004', '/audit', 'src/pages/audit.astro', 'permission-bound', 'required'],
+  [
+    'RT-QUAR-003',
+    '/quarantine/admin/[templateId]',
+    'src/pages/quarantine/admin/[templateId].astro',
+    'permission-bound',
+    'required',
+  ],
+  [
+    'RT-DOC-007',
+    '/documents/[documentId]/versions/[versionId]/edit',
+    'src/pages/documents/[documentId]/versions/[versionId]/edit.astro',
+    'permission-bound',
+    'required',
+  ],
+  [
+    'RT-REL-001',
+    '/governance/releases/[releaseId]',
+    'src/pages/governance/releases/[releaseId].astro',
+    'permission-bound',
+    'required',
+  ],
 ] as const satisfies readonly RouteTuple[];
 
+const DOMAIN_BY_PREFIX: Record<string, string> = {
+  admin: 'administration',
+  'ai-advisory': 'ai-advisory',
+  approvals: 'approvals',
+  assets: 'assets',
+  audit: 'audit',
+  'change-requests': 'change-requests',
+  dashboard: 'dashboard',
+  documents: 'documents',
+  governance: 'release-governance',
+  laboratory: 'laboratory',
+  login: 'identity',
+  notifications: 'identity',
+  quality: 'quality',
+  quarantine: 'quarantine',
+  reports: 'reporting',
+  search: 'search',
+  system: 'system-health',
+  tasks: 'tasks',
+  account: 'identity',
+  auth: 'identity',
+};
+function titleFor(path: string): string {
+  const leaf = path.split('/').filter(Boolean).at(-1) ?? 'Page';
+  if (leaf.startsWith('[')) return 'Record detail';
+  return leaf === 'new'
+    ? 'New record'
+    : leaf.replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+/**
+ * Transitional composition point. Route declarations retain their stable IDs;
+ * new modules add a declaration here through definePageRoute, which makes
+ * visibility default to AUTHENTICATED and prevents parallel policy lists.
+ */
 export const routes: readonly CanonicalRoute[] = routeTuples.map(
-  ([id, path, file, access, fileExpectation]) => ({ id, path, file, access, fileExpectation }),
+  ([id, path, page, _access, fileExpectation]) =>
+    definePageRoute({
+      id,
+      path,
+      page,
+      fileExpectation,
+      domain: DOMAIN_BY_PREFIX[path.split('/').filter(Boolean)[0] ?? ''] ?? 'shared',
+      title: titleFor(path),
+      visibility:
+        id === 'RT-ROOT-001' || id === 'RT-AUTH-001'
+          ? 'PUBLIC'
+          : id === 'RT-SYSTEM-001'
+            ? 'YAZEED_ONLY'
+            : undefined,
+    }),
 );
 
 export function getRouteById(id: string): CanonicalRoute | undefined {
   return routes.find((route) => route.id === id);
+}
+
+export function getRouteByPath(path: string): CanonicalRoute | undefined {
+  return routes.find((route) => route.path === path);
 }
 
 export function getRequiredRouteFiles(): readonly CanonicalRoute['file'][] {

@@ -1,8 +1,11 @@
 import type { PermissionCode } from '../../shared/authorization/permissions';
 import type { IconName } from '../components/icon';
 import { copy } from '../../shared/copy/ux-vocabulary';
+import { getRouteByPath } from '../../shared/routing/routes';
 
 export interface NavigationItem {
+  /** Canonical registry identity, derived from href so drift is testable. */
+  routeId: string;
   id: string;
   label: string;
   href: string;
@@ -15,7 +18,9 @@ export interface NavigationGroup {
   items: NavigationItem[];
 }
 
-export const navigationGroups: NavigationGroup[] = [
+const declaredNavigationGroups: Array<
+  Omit<NavigationGroup, 'items'> & { items: Omit<NavigationItem, 'routeId'>[] }
+> = [
   {
     id: 'overview',
     label: 'Overview',
@@ -247,6 +252,22 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
 ];
+
+/**
+ * Navigation is presentation metadata only. Route visibility stays in the
+ * canonical page registry; mutation authority remains in server use cases.
+ */
+export const navigationGroups: NavigationGroup[] = declaredNavigationGroups.map((group) => ({
+  ...group,
+  items: group.items.map((item) => ({
+    ...item,
+    routeId: getRouteByPath(item.href)?.id ?? `UNKNOWN:${item.href}`,
+  })),
+}));
+
+export const navigationRouteIds = navigationGroups.flatMap((group) =>
+  group.items.map((item) => item.routeId),
+);
 
 export function visibleNavigation(capabilities: readonly string[] = []) {
   const allowed = new Set(capabilities);

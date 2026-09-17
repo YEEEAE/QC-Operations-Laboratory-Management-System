@@ -346,6 +346,7 @@
 - Prettier/ESLint يركزان على كود المشروع ويستثنيان أدوات العمل `.opencode/**` و`.playwright-mcp/**`.
 - Login Three.js dynamic/lazy ولا يدخل authenticated critical rendering path.
 - لا تعتمد GitHub Pages/Jekyll كمسار نشر أو كإشارة صحة للتطبيق.
+- Page-route contract: `definePageRoute` centralizes `id/path/page/domain/title/breadcrumb/visibility`; new browser pages default to `AUTHENTICATED`, `/system/health` is explicit `YAZEED_ONLY`, and the architecture gate rejects registry/page/navigation drift. Route visibility remains separate from server-side mutation authority.
 
 ## 13) الوثائق والملفات المرجعية الأعلى أولوية
 
@@ -408,6 +409,16 @@
 ## 17) سجل تاريخي مضغوط
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+
+- **2026-09-18 — QC-CLOSURE-002 / Extensible Route, Module & Page Architecture**
+  - Changed: introduced typed page visibility and canonical route integrity checks; registered existing orphaned pages and bound navigation references to canonical route IDs.
+  - Evidence: targeted routing/navigation unit tests, route-file architecture gate, and typecheck PASS (Node 22 is outside the runtime contract).
+  - State: DONE (local source contract; no production/UAT claim).
+
+- **2026-09-18 — Project Mind rollover**
+  - Changed: moved eight obsolete historical ledger entries to `02-mind-mid.md` to keep the live mind under its soft limit.
+  - Evidence: archived entries were verified before removal.
+  - State: DONE.
 
 - **2026-09-17 — QC-CLOSURE-AI-011 / AI Advisory Safety and Evaluation Closure**
   - Changed: شدّدنا fail-safe للإدخال/الإخراج، حفظ source identity، واختبار عدم الوصول إلى controlled mutation authority؛ dataset v2 يغطي الحالات المطلوبة ويعرّف المقاييس.
@@ -487,15 +498,3 @@
 - **[2026-09-09] — دمج خلفية QC ثلاثية الأبعاد في صفحة /login فقط** — خلفية الدخول ثلاثية الأبعاد تعمل على `/login` فقط (desktop وmobile) مع بقاء المصادقة والعزل والتنظيف، وبلا commit أو push.
 - **[2026-09-09] — حزمة F-10 وF-11: سياسة ونشر مضبوطة بلا تغيير جاهزية** — الحزمة المضبوطة جاهزة كـ blocker متتبع: الجرد والفصل والرفض موثقة بدليل طازج، ولا مزود اختُرع ولا جاهزية تغيّرت.
 - **[2026-09-09] — إصلاح F-07: توحيد استعلام التدقيق بين Dashboard و/audit** — السطحان يقرآن الآن نفس العقد المعتمد بترتيب وmapping وترقيم موحد، وحدث GRANT المؤهل يظهر متطابقًا عليهما لنفس الفاعل المخوّل، مع بقاء حماية عدم التسريب وبلا payload/أسرار.
-- **[2026-09-09] — إصلاح F-12: واجهة إنجليزية فقط + مفردات sentence-case موحدة** — الواجهة الآن إنجليزية فقط بمفردات جملة موحدة ومحروسة آليًا، مع بقاء semantics المضبوطة والمصطلحات العلمية كما اعتُمدت.
-- **[2026-09-09] — إصلاح F-03: إغلاق التمدد الأفقي عند 320px و200% زوم (LTR/RTL)** — التمدد الأفقي على مستوى الصفحة مغلق بالتوكنز القائمة مع درج ميسّر، والحراسة الآلية تمنع الانتكاس، لكن تشغيل الـ18 اختبارًا المصادق يحتاج بيئة disposable بصلاحيات مناسبة (وصحة النظام تحتاج مالك SYSTEM_OWNER).
-- **[2026-09-09] — إصلاح F-04 وF-05: POST baseline لكل فورمات الإنشاء التسعة** — الفورمات التسعة تعمل الآن بلا JavaScript عبر POST حقيقي مع أخطاء مرئية وقيم محفوظة واسترداد، وJS تحسين اختياري، مع تغطية unit وعقود وE2E gated.
-- **[2026-09-09] — إظهار صفحة Tasks وبياناتها لكل الأعضاء النشطين** — صفحة Tasks وبياناتها صارت ظاهرة لكل الأعضاء النشطين، بينما الإنشاء والتعديل وتغييرات الحالة ما زالت محكومة بالصلاحيات.
-- **[2026-09-09] — تنفيذ F-02: مساحة Administration المضبوطة (/admin × 8 مسارات)** — مساحة الإدارة الثمانية تعمل بإنكار افتراضي ومنح صريح، مع رفض Admin-بلا-صلاحية وظهور SYSTEM_OWNER مثبتًا بالاختبارات، وكل الكتابات مدققة ومبنية على النسخة مع إبطال الجلسات.
-- **[2026-09-09] — إصلاح F-01: توحيد فحص جاهزية قاعدة البيانات بين System Health وready** — الواجهتان تستهلكان الآن نفس فحص الجاهزية وإعداد TLS، وتتفقان في الحالات الثلاث مع مخرجات منقّحة مثبتة بالاختبارات والدخان الإنتاجي.
-- **[2026-09-09] — توسيع وصول Administration لـAdmin وyazeed** — Admin و`yazeed` صاروا مخولين لمساحة Administration، وصحة النظام بقيت مقصورة على `yazeed`.
-- **[2026-09-09] — تعريب تقرير تدقيق واجهة الإنتاج** — التقرير الآن بالعربي مع إبقاء البرومبتات التنفيذية بالإنجليزي.
-- **[2026-09-09] — اعتماد القراءة العامة وحصرية صحة النظام وإدارة الأعضاء** — أصبحت سياسة الوثائق واضحة: قراءة تشغيلية عامة لكل الأعضاء، مع بقاء الأفعال الحساسة مفوضة، وحصرية صحة النظام وإدارة الأعضاء لـ`yazeed`.
-- **[2026-09-09] — تدقيق إنتاجي شامل للواجهة والتدفقات بحساب yazeed** — الوصول الأساسي قوي، لكن النتيجة الإجمالية 68% مع خمس مشكلات عالية تمنع اعتماد الواجهة كتجربة تشغيلية مكتملة.
-- **[2026-09-09] — تفعيل SYSTEM_OWNER لحساب yazeed على إنتاج Render** — حساب yazeed يملك الآن `SYSTEM_OWNER` وكل الصلاحيات النشطة بنطاق GLOBAL، والصفحات الأربع التي كانت مفقودة أصبحت ظاهرة وقابلة للفتح على الإنتاج.
-- **[2026-09-09] — استثناء yazeed كمالك نظام بصلاحيات كاملة** — أصبح هناك مسار صريح وحصري يمنح yazeed كل permissions والصفحات عبر `SYSTEM_OWNER`. يلزم نشر النسخة ثم تشغيل الأمر على قاعدة الإنتاج حتى يصبح الحساب فعليًا كامل الصلاحيات.

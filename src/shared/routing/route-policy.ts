@@ -5,9 +5,13 @@ import type { CanonicalRoute } from './route-types.js';
  * authorized by its Application Use Case against the current actor and scope.
  */
 export function requiresAuthenticatedContext(route: CanonicalRoute): boolean {
-  return route.access !== 'public';
+  return route.visibility !== 'PUBLIC';
+}
+
+export function requiresNamedYazeed(route: CanonicalRoute): boolean {
+  return route.visibility === 'YAZEED_ONLY';
 }
 
 export function requiresExplicitPermission(route: CanonicalRoute): boolean {
-  return route.access === 'permission-bound';
+  return route.mutationCapabilities.length > 0;
 }
