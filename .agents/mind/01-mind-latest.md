@@ -15,6 +15,38 @@
 >- لا commit أو push أو deploy من الوكيل إلا بطلب صريح.
 >- Render هو مسار نشر Astro SSR. GitHub Pages/Jekyll ليس هدف نشر التطبيق.
 
+
+## [2026-09-17] — QC-CLOSURE-DR-008: Current-HEAD restore and disaster recovery evidence
+
+### تم التنفيذ
+- ثبّتُّ الواقع الحالي على HEAD `54d4fd3320bc9f35631f5bdb0a816e53b8bb2a01`، الإصدار `0.1.0`، وهوية build الاختبار `rel-ebb1253bf3af841e`، وmigration head `0023_uat_evidence` مع checksum `a1ff60a7dbffbc8906b3f648f88a50bbeb96e63e45de8d4b8169f4235d1b2fd6`.
+- أحصيت 23 migration source files و70 تعريف جدول static من ملفات migrations؛ هذا ليس live schema/table count.
+- حاولت بدء مسار restore الحالي، وتأكد أن Docker daemon غير متوفر وأن أدوات `pg_dump` المحلية PostgreSQL 14.19، لذلك لم يُنشأ backup artifact ولم تُزرع controlled dataset ولم تُنفذ restore.
+- حدّثت سجل `RER-2026-09-17-008` بمراحل التجميد، manifest المطلوب، negative tests، application compatibility، وprovider capability status بدون اختراع backup ID أو SHA أو parity.
+- حدّثت DR evidence matrix لتربط الحالة بالـcurrent HEAD وتبقي gates المعتمدة `BLOCKED/UNVERIFIED`.
+
+### الملفات المتأثرة
+- `audit/100-percent/RESTORE-DRILL-RESULT.md`
+- `audit/100-percent/DR-EVIDENCE-MATRIX.md`
+- `.agents/mind/01-mind-latest.md`
+
+### التحقق
+- `pnpm release:identity -- --environment test ...` ✅؛ حذّر فقط أن Node `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`.
+- `pnpm exec vitest run tests/unit/recovery/recovery-tooling.test.ts tests/unit/backup-recovery/manifest.test.ts tests/unit/backup-recovery/backup-job.test.ts` ✅؛ 3 ملفات / 10 اختبارات.
+- `pnpm test:architecture` ✅.
+- `pnpm build` ✅؛ مع تحذير engine السابق وتحذيرات Rollup من تعليقات dependency.
+- `pnpm recovery:restore:monthly` لم يُنفذ كـdrill؛ السكربت رفض قبل التشغيل، وDocker API غير متاح.
+- PostgreSQL 18/Testcontainers و`pg_dump`/`pg_restore` الفعلي وHTTP auth/read workflows لم تُشغّل: runtime معزول مطابق غير متوفر.
+
+### النتيجة
+- **الحالة:** جزئي / BLOCKED
+- **مختصر:** تم تحديث الأدلة على exact current HEAD فقط، لكن logical restore scope المثبت في هذا السجل = لا شيء؛ المطلوب التالي هو توفير disposable PostgreSQL 18 runtime ثم إعادة Phase 2–5 فعليًا. Provider backup/WAL/PITR/retention/cross-region/object/secret recovery وRPO/RTO بقيت `BLOCKED/UNVERIFIED`.
+
+### ملاحظات / مشاكل مفتوحة
+- لا يوجد أي اتصال production ولا backup artifact أو dataset restored.
+- لا يُسمح بترقية هذا السجل إلى `ACCEPTED` أو `RESTORE VERIFIED` قبل artifact حقيقي وisolated restore واختبارات التطبيق والأمن.
+
+
 ## [2026-09-17] — QC-CLOSURE-UAT-007: تجهيز UAT المضبوط وربط أدلة القبول
 
 ### تم التنفيذ

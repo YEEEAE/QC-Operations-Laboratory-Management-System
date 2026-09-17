@@ -1,3 +1,104 @@
+# QC-CLOSURE-DR-008 — Current-HEAD Restore and Disaster Recovery Evidence
+
+**Task:** `QC-CLOSURE-DR-008` — Current-HEAD Restore and Disaster Recovery Evidence
+**Record ID:** `RER-2026-09-17-008`
+**Drill type:** `DRILL` (requested logical `pg_dump` / isolated restore; not executed)
+**Status:** `BLOCKED / UNVERIFIED`
+**Rule applied:** no backup, restore, parity, RPO, RTO, or provider capability is claimed without a live PostgreSQL 18-compatible isolated target and current evidence.
+
+## 1. Phase 1 — freeze release reality
+
+| Field | Value / evidence |
+|---|---|
+| Exact Git HEAD | `54d4fd3320bc9f35631f5bdb0a816e53b8bb2a01` |
+| Branch / working tree | `main` / clean at inspection time |
+| Application version | `0.1.0` |
+| Build identity | `rel-ebb1253bf3af841e`, build `qc-closure-dr-008-54d4fd3320bc`, test environment; generated from exact HEAD |
+| Migration head | `0023_uat_evidence` |
+| Migration head SHA-256 | `a1ff60a7dbffbc8906b3f648f88a50bbeb96e63e45de8d4b8169f4235d1b2fd6` |
+| Repository migration inventory | `23` migration files; source ledger checksums generated for `0001`–`0023` |
+| PostgreSQL 18 source/target version | `UNVERIFIED` — Docker daemon unavailable; only local PostgreSQL client `14.19` is installed |
+| Live schema/table count | `UNVERIFIED` — no disposable database was started; repository declares `70` table definitions as a static inventory only |
+| Provider context | `UNVERIFIED/BLOCKED` — `render.yaml` defines a web service only; no provider database/API evidence is available |
+
+## 2. Phase 2 — controlled dataset manifest
+
+The requested representative dataset was **not inserted** because no isolated PostgreSQL 18 target was available. The following is the required manifest scope, not a claim that records exist:
+
+| Dataset area | Required representative records | Current result |
+|---|---|---|
+| Identity and authorization | users, roles, permissions, scopes, sessions | `NOT EXECUTED` |
+| Operations | tasks, quarantine/receiving, inspection, laboratory | `NOT EXECUTED` |
+| Quality and assets | quality/NCR/CAPA, assets/calibration | `NOT EXECUTED` |
+| Controlled records | documents/templates, approvals, electronic signatures, change requests | `NOT EXECUTED` |
+| Evidence and recovery | files/evidence links, audit, outbox, idempotency | `NOT EXECUTED` |
+| Release governance | release_candidates, release_approvals, release gate evidence where introduced by `0022_server_release_evidence` | `NOT EXECUTED` |
+
+No source dataset, credentials, session tokens, or production connection was used.
+
+## 3. Phase 3 — real logical backup
+
+| Check | Result | Evidence |
+|---|---|---|
+| Disposable PostgreSQL 18 source | `BLOCKED` | Docker API unavailable: no daemon at `~/.docker/run/docker.sock` |
+| PostgreSQL 18-compatible `pg_dump` | `BLOCKED` | Local `pg_dump` is PostgreSQL `14.19`; no PG18-compatible container/tooling available |
+| Actual `pg_dump` execution | `NOT EXECUTED` | No backup artifact, backup ID, timestamps, duration, size, or SHA-256 was created |
+
+## 4. Phase 4 — isolated restore and negative tests
+
+| Check | Result | Evidence |
+|---|---|---|
+| New disposable PostgreSQL 18 target | `BLOCKED` | Docker runtime unavailable |
+| Migration ledger/checksums/current head | `UNVERIFIED` | Source migration inventory is known; live ledger was not available for comparison |
+| Relation/FK/orphan/record parity | `UNVERIFIED` | No source or restored database existed for read-only validation |
+| Audit/event history, e-signature links, file metadata | `UNVERIFIED` | Dataset was not seeded and no restore occurred |
+| Restored object hashes | `UNVERIFIED` | No backup object manifest/artifact was created |
+| Release governance/source-context hashes/idempotency | `UNVERIFIED` | No controlled dataset or restored database existed |
+| Missing-file negative test | `NOT EXECUTED` | No artifact/object root |
+| Tampered-bytes negative test | `NOT EXECUTED` | No artifact/object root |
+| Migration-checksum mismatch negative test | `NOT EXECUTED` | No restored ledger |
+| Incomplete-relation negative test | `NOT EXECUTED` | No restored database |
+| Stale release-evidence negative test | `NOT EXECUTED` | No restored release-governance dataset |
+
+## 5. Phase 5 — application compatibility
+
+| Check | Result | Evidence |
+|---|---|---|
+| Exact build booted against restored target | `BLOCKED` | No restored target |
+| Liveness/readiness | `NOT EXECUTED` | No recovery application target |
+| Drill-only authenticated login | `NOT EXECUTED` | No seeded drill identities or restored sessions |
+| Representative reads/authorization/session behavior | `NOT EXECUTED` | No restored target; no security claim made |
+| Restored-session revocation | `NOT EXECUTED` | No restored sessions existed |
+
+## 6. Provider capability determination
+
+| Capability | Determination |
+|---|---|
+| Render backup/snapshot | `UNVERIFIED/BLOCKED` — no Render provider/API evidence available; `render.yaml` has no database service or backup stanza |
+| WAL | `BLOCKED` — not configured/evidenced locally or by provider |
+| PITR | `BLOCKED` — no provider/API evidence |
+| Retention | `UNVERIFIED` — no approved provider evidence |
+| Cross-region copy | `UNVERIFIED` — no provider evidence |
+| Object-storage recovery | `UNVERIFIED` — no provider evidence; local object copy was not performed |
+| Secret/key recovery | `UNVERIFIED` — no provider/KMS evidence; no secret was accessed |
+| RPO / RTO | `POLICY-DEPENDENT / UNVERIFIED` — no measured local backup/restore duration exists for this task and no approved policy comparison was supplied |
+
+## 7. Decision
+
+| Decision | Result |
+|---|---|
+| Current-HEAD logical backup actually executed | `NO — BLOCKED` |
+| Isolated restore actually executed | `NO — BLOCKED` |
+| All automated restore checks passed | `UNVERIFIED` |
+| Application/security/business recovery checks passed | `UNVERIFIED` |
+| Provider/PITR/WAL capability evidenced | `NO — BLOCKED/UNVERIFIED` |
+| Logical restore scope proven by this record | `NONE` |
+| Overall drill | `BLOCKED / UNVERIFIED` |
+
+**Exact blocker and minimum next action:** provide a disposable PostgreSQL 18 runtime (Docker/Testcontainers or approved equivalent), run the current-HEAD seed/backup/restore procedure, attach the real artifact manifest and validation outputs, then repeat Phases 3–5 and update this record. No production connection is required or permitted.
+
+---
+
 # QC-100-CLOSURE-07 — Isolated Restore Drill Result (RECOVERY DRILL, NO PRODUCTION DESTRUCTION)
 
 **Task:** `QC-100-CLOSURE-07` — Real Restore, Disaster Recovery and Business Continuity Closure
