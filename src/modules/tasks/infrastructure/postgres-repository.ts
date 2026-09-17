@@ -254,6 +254,47 @@ export class PostgresTaskRepository implements TaskRepository {
       input.reason,
     );
   }
+  async deleteDraft(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+    reason: string;
+  }) {
+    await this.database.transaction().execute(async (tx) => {
+      const deps = await tx
+        .selectFrom('task_checklist_items')
+        .select('id')
+        .where('task_id', '=', input.id)
+        .executeTakeFirst();
+      const evidence = await tx
+        .selectFrom('evidence_links')
+        .select('id')
+        .where('subject_type', '=', 'TASK')
+        .where('subject_id', '=', input.id)
+        .where('removed_at', 'is', null)
+        .executeTakeFirst();
+      if (deps || evidence) throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+      const deleted = await tx
+        .deleteFrom('tasks')
+        .where('id', '=', input.id)
+        .where('state', '=', 'DRAFT')
+        .where('version', '=', input.expectedVersion)
+        .executeTakeFirst();
+      if ((deleted.numDeletedRows ?? 0n) !== 1n)
+        throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+      await this.auditFor(tx)?.append({
+        actorType: 'USER',
+        actorId: input.actor.id,
+        subjectType: 'TASK',
+        subjectId: input.id,
+        action: 'SYSTEM_OWNER_DELETE_DRAFT_TASK',
+        oldState: 'DRAFT',
+        reason: input.reason.trim(),
+        requestId: input.requestId,
+      });
+    });
+  }
   private async mutate(
     input: {
       id: string;

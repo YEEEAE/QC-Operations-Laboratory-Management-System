@@ -93,12 +93,60 @@ const manageUserScopes = defineAction({
       });
     }, context.locals.requestContext?.requestId),
 });
+const listUserRoles = defineAction({
+  accept: 'json',
+  input: z.object({ userId: z.string().uuid() }),
+  handler: (input, context) =>
+    withErrors(async () => {
+      requireActor(context.locals.actor);
+      return repo().listUserRoles.execute({ actor: context.locals.actor!, userId: input.userId });
+    }, context.locals.requestContext?.requestId),
+});
+const assignUserRole = defineAction({
+  accept: 'json',
+  input: z.object({
+    userId: z.string().uuid(),
+    roleId: z.string().uuid(),
+    reason: z.string().optional(),
+  }),
+  handler: (input, context) =>
+    withErrors(async () => {
+      requireActor(context.locals.actor);
+      await repo().manageUserRole.assign({
+        actor: context.locals.actor!,
+        ...input,
+        requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return { ok: true };
+    }, context.locals.requestContext?.requestId),
+});
+const removeUserRole = defineAction({
+  accept: 'json',
+  input: z.object({
+    userId: z.string().uuid(),
+    roleId: z.string().uuid(),
+    reason: z.string().optional(),
+  }),
+  handler: (input, context) =>
+    withErrors(async () => {
+      requireActor(context.locals.actor);
+      await repo().manageUserRole.remove({
+        actor: context.locals.actor!,
+        ...input,
+        requestId: context.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return { ok: true };
+    }, context.locals.requestContext?.requestId),
+});
 export const admin = {
   listRoles,
   getRole,
   listPermissions,
   updateRolePermissions,
   manageUserScopes,
+  listUserRoles,
+  assignUserRole,
+  removeUserRole,
   createUser: defineAction({
     accept: 'json',
     input: z.object({
@@ -106,6 +154,15 @@ export const admin = {
       displayName: z.string().min(1).max(200),
       email: z.string().email().max(320).optional(),
       temporaryPassword: z.string().min(1).max(512),
+      roleCodes: z.array(z.string().min(1)).optional(),
+      scopes: z
+        .array(
+          z.object({
+            kind: z.enum(['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL']),
+            value: z.string().optional(),
+          }),
+        )
+        .optional(),
     }),
     handler: (input, context) =>
       withErrors(async () => {
@@ -145,6 +202,34 @@ export const admin = {
       withErrors(async () => {
         requireActor(context.locals.actor);
         await identity().disableUser.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return { ok: true };
+      }, context.locals.requestContext?.requestId),
+  }),
+  activateUser: defineAction({
+    accept: 'json',
+    input: z.object({ userId: z.string().uuid(), expectedVersion: z.coerce.bigint() }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        await identity().activateUser.execute({
+          actor: context.locals.actor!,
+          ...input,
+          requestId: context.locals.requestContext?.requestId ?? 'unknown',
+        });
+        return { ok: true };
+      }, context.locals.requestContext?.requestId),
+  }),
+  revokeUserSessions: defineAction({
+    accept: 'json',
+    input: z.object({ userId: z.string().uuid(), reason: z.string().optional() }),
+    handler: (input, context) =>
+      withErrors(async () => {
+        requireActor(context.locals.actor);
+        await identity().revokeUserSessions.execute({
           actor: context.locals.actor!,
           ...input,
           requestId: context.locals.requestContext?.requestId ?? 'unknown',

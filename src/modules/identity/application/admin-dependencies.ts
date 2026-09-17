@@ -7,6 +7,8 @@ import { GetUserUseCase } from './get-user.js';
 import { identityDependencies } from './identity-dependencies.js';
 import { ListUsersUseCase } from './list-users.js';
 import { UpdateUserUseCase } from './update-user.js';
+import { ActivateUserUseCase } from './activate-user.js';
+import { RevokeUserSessionsUseCase } from './revoke-user-sessions.js';
 
 /**
  * Controlled Administration (F-02) identity wiring. Pages call the read
@@ -34,5 +36,7 @@ export function identityAdminActionDependencies() {
       base.sessionService,
       audit,
     ),
+    activateUser: new ActivateUserUseCase(base.users, audit),
+    revokeUserSessions: new RevokeUserSessionsUseCase(base.users, base.sessionService, audit),
   };
 }

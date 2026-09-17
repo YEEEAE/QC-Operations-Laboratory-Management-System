@@ -40,6 +40,7 @@ export class AdminResetPasswordUseCase {
       input.expectedVersion,
       input.actor.id,
       new Date(),
+      true,
     );
     await this.sessions.revokeAllForUser(target.id, 'PASSWORD_RESET');
     if (this.audit)

@@ -75,12 +75,24 @@ class MemoryUsers implements UserRepository {
     this.store.set(id, next);
     return next;
   };
-  changePassword = async (id: string, passwordHash: string, expectedVersion: bigint) => {
+  changePassword = async (
+    id: string,
+    passwordHash: string,
+    expectedVersion: bigint,
+    _actorId?: string,
+    _at?: Date,
+    mustChangePassword = false,
+  ) => {
     const current = this.store.get(id);
     if (!current || current.version !== expectedVersion) {
       throw new AppError('CONFLICT_STALE_VERSION');
     }
-    this.store.set(id, { ...current, passwordHash, version: current.version + 1n });
+    this.store.set(id, {
+      ...current,
+      passwordHash,
+      mustChangePassword,
+      version: current.version + 1n,
+    });
   };
   setAccountState = async (id: string, state: User['accountState'], expectedVersion: bigint) => {
     const current = this.store.get(id);
@@ -250,6 +262,7 @@ describe('identity administration use cases', () => {
       requestId: 'req-1',
     });
     expect(users.store.get(target.id)?.passwordHash).toBe('hash:temp-next');
+    expect(users.store.get(target.id)?.mustChangePassword).toBe(true);
     expect(sessionStub.revokeAllForUser).toHaveBeenCalledWith(target.id, 'PASSWORD_RESET');
     expect(recorder.record).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'ADMIN_RESET_PASSWORD' }),

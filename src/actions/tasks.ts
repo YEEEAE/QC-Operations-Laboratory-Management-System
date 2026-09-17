@@ -60,6 +60,24 @@ const updateDraft = defineAction({
       context,
     ),
 });
+const deleteDraft = defineAction({
+  accept: 'json',
+  input: z.object({
+    taskId: z.string().uuid(),
+    expectedVersion: z.coerce.bigint(),
+    reason: z.string().min(1).max(1000),
+  }),
+  handler: (input, context) =>
+    run(
+      () =>
+        repo().deleteDraft.execute({
+          actor: actor(context),
+          ...input,
+          requestId: requestId(context),
+        }),
+      context,
+    ),
+});
 const transition = defineAction({
   accept: 'json',
   input: z.object({
@@ -79,4 +97,4 @@ const transition = defineAction({
       context,
     ),
 });
-export const tasks = { createTask, updateDraft, transition };
+export const tasks = { createTask, updateDraft, transition, deleteDraft };

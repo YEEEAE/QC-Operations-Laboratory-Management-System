@@ -43,6 +43,8 @@
     "bootstrap:admin": "tsx scripts/bootstrap/create-initial-admin.ts",
     "bootstrap:admin:check": "tsx scripts/bootstrap/check-initial-admin.ts",
     "access:grant-system-owner": "tsx scripts/access/grant-system-owner.ts",
+    "system-owner:check": "tsx scripts/access/check-system-owner.ts",
+    "system-owner:reconcile": "tsx scripts/access/grant-system-owner.ts",
     "verify:fixtures:seed": "tsx scripts/verification/seed-verification-fixtures.ts",
     "verify:fixtures:clean": "tsx scripts/verification/cleanup-verification-fixtures.ts"
   },

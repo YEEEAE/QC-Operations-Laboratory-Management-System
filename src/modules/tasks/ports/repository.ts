@@ -30,4 +30,11 @@ export interface TaskRepository {
     reason?: string;
     requestId: string;
   }): Promise<Task>;
+  deleteDraft?(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+    reason: string;
+  }): Promise<void>;
 }

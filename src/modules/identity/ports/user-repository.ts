@@ -1,5 +1,17 @@
 import type { User } from '../domain/user.js';
 export interface UserRepository {
+  createProvisioned?(input: {
+    id: string;
+    loginIdentity: string;
+    email?: string;
+    displayName: string;
+    passwordHash: string;
+    actorId: string;
+    at: Date;
+    roleCodes: readonly string[];
+    scopes: readonly { kind: string; value?: string }[];
+    requestId: string;
+  }): Promise<User>;
   findByLoginIdentity(loginIdentity: string): Promise<User | undefined>;
   findById(id: string): Promise<User | undefined>;
   listUsers(): Promise<readonly User[]>;
@@ -31,6 +43,7 @@ export interface UserRepository {
     expectedVersion: bigint,
     actorId: string,
     at: Date,
+    mustChangePassword?: boolean,
   ): Promise<void>;
   setAccountState(
     id: string,

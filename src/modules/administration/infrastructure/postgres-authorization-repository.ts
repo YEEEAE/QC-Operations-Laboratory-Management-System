@@ -89,6 +89,104 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
         .execute()
     ).map(scope);
   }
+  async listUserRoles(userId: string) {
+    const rows = await this.db
+      .selectFrom('user_roles')
+      .innerJoin('roles', 'roles.id', 'user_roles.role_id')
+      .select([
+        'roles.id',
+        'roles.code',
+        'roles.name',
+        'roles.description',
+        'roles.is_system_role',
+        'roles.active',
+        'roles.version',
+      ])
+      .where('user_roles.user_id', '=', userId)
+      .where('user_roles.revoked_at', 'is', null)
+      .orderBy('roles.code')
+      .execute();
+    return rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      description: r.description,
+      isSystemRole: r.is_system_role,
+      active: r.active,
+      version: BigInt(r.version),
+    }));
+  }
+  async assignUserRole(input: {
+    userId: string;
+    roleId: string;
+    actorId: string;
+    requestId: string;
+    reason?: string;
+  }) {
+    await this.db.transaction().execute(async (tx) => {
+      const result = await tx
+        .insertInto('user_roles')
+        .values({
+          user_id: input.userId,
+          role_id: input.roleId,
+          assigned_by: input.actorId,
+          reason: input.reason ?? null,
+        })
+        .onConflict((oc) => oc.doNothing())
+        .executeTakeFirst();
+      if ((result.numInsertedOrUpdatedRows ?? 0n) > 0n && this.audit)
+        await this.auditFor(tx).append({
+          actorType: 'USER',
+          actorId: input.actorId,
+          subjectType: 'USER',
+          subjectId: input.userId,
+          action: 'ASSIGN_USER_ROLE',
+          requestId: input.requestId,
+          reason: input.reason,
+          payload: { roleId: input.roleId },
+        });
+    });
+  }
+  async removeUserRole(input: {
+    userId: string;
+    roleId: string;
+    actorId: string;
+    requestId: string;
+    reason?: string;
+  }) {
+    await this.db.transaction().execute(async (tx) => {
+      const protectedOwner = await tx
+        .selectFrom('user_roles')
+        .innerJoin('users', 'users.id', 'user_roles.user_id')
+        .innerJoin('roles', 'roles.id', 'user_roles.role_id')
+        .select('users.id')
+        .where('user_roles.user_id', '=', input.userId)
+        .where('user_roles.role_id', '=', input.roleId)
+        .where('users.login_identity', '=', 'yazeed')
+        .where('roles.code', '=', 'SYSTEM_OWNER')
+        .where('user_roles.revoked_at', 'is', null)
+        .executeTakeFirst();
+      if (protectedOwner) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      const result = await tx
+        .updateTable('user_roles')
+        .set({ revoked_at: new Date(), revoked_by: input.actorId })
+        .where('user_id', '=', input.userId)
+        .where('role_id', '=', input.roleId)
+        .where('revoked_at', 'is', null)
+        .executeTakeFirst();
+      if ((result.numUpdatedRows ?? 0n) > 0n && this.audit)
+        await this.auditFor(tx).append({
+          actorType: 'USER',
+          actorId: input.actorId,
+          subjectType: 'USER',
+          subjectId: input.userId,
+          action: 'REMOVE_USER_ROLE',
+          requestId: input.requestId,
+          reason: input.reason,
+          payload: { roleId: input.roleId },
+        });
+    });
+  }
   async replaceRolePermissions(
     input: Parameters<AuthorizationRepository['replaceRolePermissions']>[0],
   ) {
@@ -140,6 +238,14 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
   }
   async replaceUserScopes(input: Parameters<AuthorizationRepository['replaceUserScopes']>[0]) {
     return this.db.transaction().execute(async (tx) => {
+      const target = await tx
+        .selectFrom('users')
+        .select(['id', 'login_identity'])
+        .where('id', '=', input.userId)
+        .executeTakeFirst();
+      if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      if (target.login_identity === 'yazeed' && !input.scopes.some((s) => s.kind === 'GLOBAL'))
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
       await tx
         .updateTable('user_scopes')
         .set({ revoked_at: new Date(), revoked_by: input.actorId })

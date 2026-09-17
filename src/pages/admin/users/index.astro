@@ -3,6 +3,7 @@ import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
 import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -10,9 +11,22 @@ const canCreate = canAccessAdminRoute(actor, 'usersNew');
 
 type UserList = Awaited<ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['execute']>>;
 let users: UserList | undefined;
+let roleSummary = new Map<string, string>();
+let scopeSummary = new Map<string, string>();
 let denied = false;
 try {
   users = await identityAdminReadDependencies().listUsers.execute({ actor });
+  const auth = administrationDependencies();
+  await Promise.all(users.map(async (user) => {
+    try {
+      const roles = await auth.listUserRoles.execute({ actor, userId: user.id });
+      roleSummary.set(user.id, roles.map((role) => role.code).join(', ') || '—');
+    } catch { roleSummary.set(user.id, 'Restricted'); }
+    try {
+      const scopes = await auth.listUserScopes.execute({ actor, userId: user.id });
+      scopeSummary.set(user.id, scopes.map((scope) => scope.value ? `${scope.kind}:${scope.value}` : scope.kind).join(', ') || '—');
+    } catch { scopeSummary.set(user.id, 'Restricted'); }
+  }));
 } catch (error) {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
   if (!denied) throw error;
@@ -53,6 +67,8 @@ try {
               <th scope="col">Login identity</th>
               <th scope="col">Display name</th>
               <th scope="col">State</th>
+              <th scope="col">Roles</th>
+              <th scope="col">Scopes</th>
               <th scope="col">Version</th>
             </tr>
           </thead>
@@ -64,6 +80,8 @@ try {
                 </th>
                 <td>{user.displayName}</td>
                 <td>{user.accountState}</td>
+                <td>{roleSummary.get(user.id) ?? '—'}</td>
+                <td>{scopeSummary.get(user.id) ?? '—'}</td>
                 <td>{user.version.toString()}</td>
               </tr>
             ))}

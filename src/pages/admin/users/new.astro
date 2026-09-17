@@ -1,10 +1,21 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
+import { AppError } from '../../../shared/errors/app-error.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const canCreate = canAccessAdminRoute(actor, 'usersNew');
+let roles: Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>> = [];
+let optionsError = false;
+if (canCreate) {
+  try {
+    roles = [...(await administrationDependencies().listRoles.execute({ actor }))].filter((role) => role.active);
+  } catch (error) {
+    optionsError = error instanceof AppError;
+  }
+}
 ---
 
 <AppLayout title="Create user · Administration" locale="en" direction="ltr">
@@ -38,6 +49,19 @@ const canCreate = canAccessAdminRoute(actor, 'usersNew');
           Temporary password<span aria-hidden="true"> *</span>
           <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" />
         </label>
+        <fieldset>
+          <legend>Roles</legend>
+          {roles.map((role) => (
+            <label class="check"><input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})</label>
+          ))}
+          {optionsError && <p class="note" role="alert">Role options are temporarily unavailable. Try again later.</p>}
+        </fieldset>
+        <fieldset>
+          <legend>Initial scopes</legend>
+          <label class="check"><input type="checkbox" name="scopeKind" value="GLOBAL" /> GLOBAL</label>
+          <label class="check"><input type="checkbox" name="scopeKind" value="SITE" /> SITE <input name="scopeValue-SITE" maxlength="200" placeholder="Site value" /></label>
+          <label class="check"><input type="checkbox" name="scopeKind" value="DEPARTMENT" /> DEPARTMENT <input name="scopeValue-DEPARTMENT" maxlength="200" placeholder="Department value" /></label>
+        </fieldset>
         <div class="actions">
           <button type="submit" data-submit>Create user</button>
           <a href="/admin/users">Cancel</a>
@@ -77,6 +101,12 @@ const canCreate = canAccessAdminRoute(actor, 'usersNew');
           displayName: String(data.get('displayName')),
           ...(email ? { email } : {}),
           temporaryPassword: String(data.get('temporaryPassword')),
+          roleCodes: data.getAll('roleCode').map(String),
+          scopes: data.getAll('scopeKind').map((kind) => {
+            const scopeKind = String(kind) as 'OWN' | 'ASSIGNED' | 'TEAM' | 'DEPARTMENT' | 'SITE' | 'DOMAIN' | 'GLOBAL';
+            const value = String(data.get(`scopeValue-${String(kind)}`) || '').trim();
+            return value ? { kind: scopeKind, value } : { kind: scopeKind };
+          }),
         }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>;
       },
       onSuccess: (outcome) => {

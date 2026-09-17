@@ -42,6 +42,21 @@ export interface AuthorizationRepository {
     requestId: string;
   }): Promise<RoleRecord>;
   listUserScopes(userId: string): Promise<readonly UserScopeRecord[]>;
+  listUserRoles(userId: string): Promise<readonly RoleRecord[]>;
+  assignUserRole(input: {
+    userId: string;
+    roleId: string;
+    actorId: string;
+    requestId: string;
+    reason?: string;
+  }): Promise<void>;
+  removeUserRole(input: {
+    userId: string;
+    roleId: string;
+    actorId: string;
+    requestId: string;
+    reason?: string;
+  }): Promise<void>;
   replaceUserScopes(input: {
     userId: string;
     scopes: readonly { kind: ScopeKind; value?: string }[];

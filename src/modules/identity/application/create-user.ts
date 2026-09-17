@@ -20,6 +20,8 @@ export class CreateUserUseCase {
     displayName: string;
     temporaryPassword: string;
     requestId: string;
+    roleCodes?: readonly string[];
+    scopes?: readonly { kind: string; value?: string }[];
   }): Promise<Omit<User, 'passwordHash'>> {
     authorize(
       {
@@ -37,18 +39,40 @@ export class CreateUserUseCase {
     if (!input.loginIdentity.trim() || !input.displayName.trim() || !input.temporaryPassword)
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const at = new Date();
-    const user = await this.users.create({
-      id: uuidv7(),
-      loginIdentity: input.loginIdentity,
-      email: input.email,
-      displayName: input.displayName,
-      passwordHash: await this.passwords.hash(input.temporaryPassword),
-      accountState: 'ACTIVE',
-      mustChangePassword: true,
-      actorId: input.actor.id,
-      at,
-    });
-    if (this.audit)
+    const roleCodes = input.roleCodes ?? [];
+    const scopes = input.scopes ?? [];
+    const provisioned = Boolean(input.roleCodes || input.scopes);
+    const hashedPassword = await this.passwords.hash(input.temporaryPassword);
+    const user =
+      input.roleCodes || input.scopes
+        ? this.users.createProvisioned
+          ? await this.users.createProvisioned({
+              id: uuidv7(),
+              loginIdentity: input.loginIdentity,
+              email: input.email,
+              displayName: input.displayName,
+              passwordHash: hashedPassword,
+              actorId: input.actor.id,
+              at,
+              roleCodes,
+              scopes,
+              requestId: input.requestId,
+            })
+          : (() => {
+              throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+            })()
+        : await this.users.create({
+            id: uuidv7(),
+            loginIdentity: input.loginIdentity,
+            email: input.email,
+            displayName: input.displayName,
+            passwordHash: hashedPassword,
+            accountState: 'ACTIVE',
+            mustChangePassword: true,
+            actorId: input.actor.id,
+            at,
+          });
+    if (this.audit && !provisioned)
       await this.audit.record({
         actorType: 'USER',
         actorId: input.actor.id,

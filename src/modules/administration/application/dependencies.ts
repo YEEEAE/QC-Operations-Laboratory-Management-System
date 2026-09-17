@@ -8,6 +8,8 @@ import { ListRolesUseCase } from './list-roles.js';
 import { ListUserScopesUseCase } from './list-user-scopes.js';
 import { ManageUserScopesUseCase } from './manage-user-scopes.js';
 import { UpdateRolePermissionsUseCase } from './update-role-permissions.js';
+import { ListUserRolesUseCase } from './list-user-roles.js';
+import { ManageUserRoleUseCase } from './manage-user-role.js';
 
 export function administrationDependencies() {
   const database = getDatabase();
@@ -23,5 +25,7 @@ export function administrationDependencies() {
     listUserScopes: new ListUserScopesUseCase(repository),
     updateRolePermissions: new UpdateRolePermissionsUseCase(repository),
     manageUserScopes: new ManageUserScopesUseCase(repository),
+    listUserRoles: new ListUserRolesUseCase(repository),
+    manageUserRole: new ManageUserRoleUseCase(repository),
   };
 }

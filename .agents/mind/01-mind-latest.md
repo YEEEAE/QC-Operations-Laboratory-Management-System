@@ -6,11 +6,53 @@
 
 ## Current audit reality — 2026-09-17
 
-- Exact current HEAD: `1686d2951e9eed78b5b78a2c44444cdd6c8acecd` on `main`; working tree was clean at freeze.
-- Fresh local evidence: unit `72 files / 442 PASS`, architecture/typecheck/build PASS; lint FAIL at `scripts/verification/run-authenticated-e2e.ts:105`; format FAIL in two system-background tests.
+- Exact current HEAD: `5dc6e3e2cb6ab9c83e13a0d2d8f9747f81936137` on `main`; working tree contains authorized uncommitted owner-control changes plus unrelated user-added files.
+- Fresh local evidence: unit `72 files / 442 PASS`, architecture/build PASS; typecheck BLOCKED by unrelated untracked `scripts/access/check-system-owner 2.ts`; lint FAIL at `scripts/verification/run-authenticated-e2e.ts:105`; format FAIL in two system-background tests.
 - Release identity: `rel-b6af9b842676c931`, build `local-1686d2951e9e`; migration source head `0023_uat_evidence`; applied DB head, CI, authenticated E2E, UAT, provider, and restore evidence are not current/verified.
 - UAT validator reports valid header but `sessions=0`; Docker/PostgreSQL 18 is unavailable; tracked `.DS_Store` artifacts remain and fail hygiene closure.
 - Final independent audit decision: `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+
+## [2026-09-17] — QC-SYSTEM-OWNER-CROSS-DOMAIN-CONTROL-005 / executable task retirement path
+
+- Changed: added server-authorized draft-task deletion with dependency guard, optimistic concurrency, and transactional audit tombstone; refreshed the system-owner matrix with the exact permission and invariants.
+- Evidence: focused administration suite `18/18 PASS`; typecheck has one error in unrelated untracked `scripts/access/check-system-owner 2.ts`; PostgreSQL 18 integration remains `BLOCKED` because Docker is unavailable.
+- State: PARTIAL / BLOCKED.
+- Key files: `src/modules/tasks/application/delete-draft.ts`, `src/modules/tasks/infrastructure/postgres-repository.ts`, `src/actions/tasks.ts`, `audit/system-owner/SYSTEM-OWNER-DATA-CONTROL-MATRIX.md`.
+
+## [2026-09-17] — QC-SYSTEM-OWNER-ADMIN-UI-006 / identity administration UI
+
+- Changed: wired users list role/scope summaries, authoritative role and initial-scope selection into atomic user creation, and user-detail profile/security/role/scope surfaces with capability-gated activate, disable, revoke-session, and protected-owner indicators.
+- Evidence: `pnpm typecheck` 0 errors, unit `72 files / 442 PASS`, architecture/build/diff checks PASS; authenticated E2E and PostgreSQL remain BLOCKED without disposable runtime.
+- State: PARTIAL / BLOCKED.
+- Key files: `src/pages/admin/users/index.astro`, `src/pages/admin/users/new.astro`, `src/pages/admin/users/[userId].astro`.
+
+## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-004 / scopes, provisioning, lifecycle
+
+- Changed: added activation and explicit session-revocation use cases/actions, protected canonical owner GLOBAL scope, added transactional PostgreSQL user provisioning with role/scope validation and audit, and expanded the data-control matrix with explicit statuses.
+- Evidence: focused administration suite `18/18 PASS`; typecheck PASS; PostgreSQL 18 execution BLOCKED because Docker Desktop is unavailable.
+- State: PARTIAL / BLOCKED.
+- Key files: `src/modules/identity/application/activate-user.ts`, `src/modules/identity/application/revoke-user-sessions.ts`, `src/modules/identity/infrastructure/postgres-user-repository.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`.
+
+## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-003 / role administration
+
+- Changed: added server-side list/assign/remove user-role use cases, PostgreSQL transaction-backed repository methods, Astro actions, and preserved owner/password invariants.
+- Evidence: focused administration/authorization `18/18 PASS`; typecheck and targeted ESLint PASS; PostgreSQL 18/Testcontainers remains BLOCKED because Docker Desktop is unavailable.
+- State: PARTIAL / BLOCKED.
+- Key files: `src/modules/administration/application/list-user-roles.ts`, `src/modules/administration/application/manage-user-role.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`, `src/actions/admin.ts`.
+
+## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-002 / permission drift and data-control inventory
+
+- Changed: added read-only `system-owner:check` / `system-owner:reconcile` scripts and a persisted-domain control matrix; password-reset semantics from task 001 remain intact.
+- Evidence: typecheck PASS; focused administration tests PASS; PostgreSQL 18/Testcontainers BLOCKED because Docker Desktop is unavailable.
+- State: PARTIAL / BLOCKED.
+- Key files: `scripts/access/check-system-owner.ts`, `audit/system-owner/SYSTEM-OWNER-DATA-CONTROL-MATRIX.md`.
+
+## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-001 / initial owner-control correction
+
+- Changed: administrative password reset now persists `must_change_password = true`; ordinary self-password changes keep it false.
+- Evidence: targeted typecheck/unit pending; Docker Desktop is not installed and PostgreSQL runtime remains unavailable.
+- State: PARTIAL / BLOCKED.
+- Key files: `src/modules/identity/application/admin-reset-password.ts`, `src/modules/identity/infrastructure/postgres-user-repository.ts`.
 
 ## [2026-09-17] — QC-ULTIMATE-SYSTEM-CLOSURE-FINAL / Independent 100-domain final verification
 
