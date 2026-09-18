@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FileService } from '../../../src/shared/files/file-service';
+import { FileService, MAX_FILE_SIZE_BYTES } from '../../../src/shared/files/file-service';
 import type { EvidenceLink, FileRecord } from '../../../src/shared/files/file-record';
 import type { FileRepository } from '../../../src/shared/files/file-repository';
 import type { ObjectStore, StoredObject } from '../../../src/shared/files/object-store';
@@ -62,6 +62,32 @@ describe('files and evidence', () => {
     await expect(upload({ bytes: new TextEncoder().encode('not a PDF') })).rejects.toMatchObject({
       code: 'VALIDATION_FAILED',
     });
+    expect(repository.files.size).toBe(0);
+    expect(store.objects.size).toBe(0);
+  });
+
+  it('rejects oversized payloads and inconsistent or unsafe extensions before storage', async () => {
+    const repository = new MemoryFiles();
+    const store = new MemoryStore();
+    const service = new FileService(repository, store, async () => undefined);
+    const base = {
+      originalFilename: 'evidence.pdf',
+      mimeType: 'application/pdf',
+      bytes: new TextEncoder().encode('%PDF-1.7\ncontrolled evidence'),
+      uploadedBy: 'u1',
+      subjectType: 'LAB_TEST',
+      subjectId: 'test-1',
+    } as const;
+
+    await expect(service.upload({ ...base, extension: 'exe' })).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    await expect(service.upload({ ...base, extension: 'txt' })).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    await expect(
+      service.upload({ ...base, bytes: new Uint8Array(MAX_FILE_SIZE_BYTES + 1) }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
     expect(repository.files.size).toBe(0);
     expect(store.objects.size).toBe(0);
   });

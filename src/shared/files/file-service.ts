@@ -10,6 +10,9 @@ const EXECUTABLE_FILENAME_EXTENSION =
   /\.(?:ade|adp|app|bat|cmd|com|cpl|exe|gadget|hta|inf|ins|isp|jar|jse|lib|lnk|mde|msc|msi|msp|mst|pif|ps1|reg|scr|sct|sh|sys|vb|vbe|vbs|wsc|wsf|wsh)$/i;
 const MIME_TYPE =
   /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*(?:;\s*charset=[a-z0-9._-]+)?$/i;
+const SAFE_EXTENSION = /^[a-z0-9]{1,10}$/i;
+/** Defensive default until a per-evidence-type upload policy is approved. */
+export const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
 function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
   return signature.every((value, index) => bytes[index] === value);
@@ -17,13 +20,20 @@ function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
 
 function assertSafeFileUpload(input: FileUploadInput): void {
   const filename = input.originalFilename.trim();
+  const extension = input.extension?.trim().replace(/^\./, '');
   if (
     !filename ||
     filename === '.' ||
     filename === '..' ||
-    /[\\/\0\r\n]/.test(filename) ||
+    filename.length > 255 ||
+    /[\\/\0\r\n\u0000-\u001f\u007f]/.test(filename) ||
     EXECUTABLE_FILENAME_EXTENSION.test(filename) ||
-    !MIME_TYPE.test(input.mimeType)
+    !MIME_TYPE.test(input.mimeType) ||
+    input.bytes.byteLength > MAX_FILE_SIZE_BYTES ||
+    (extension !== undefined &&
+      (!SAFE_EXTENSION.test(extension) ||
+        (filename.includes('.') &&
+          filename.split('.').at(-1)?.toLowerCase() !== extension.toLowerCase())))
   ) {
     throw new AppError('VALIDATION_FAILED');
   }
@@ -32,7 +42,8 @@ function assertSafeFileUpload(input: FileUploadInput): void {
   if (startsWith(input.bytes, [0x4d, 0x5a])) throw new AppError('VALIDATION_FAILED');
 
   // Validate a client-declared type whenever that format has an unambiguous
-  // signature. The approved allowlist and maximum size remain policy-dependent.
+  // signature. The allowlist remains policy-dependent; this service still
+  // applies a defensive size ceiling before any storage write.
   const expectedSignature =
     input.mimeType === 'application/pdf'
       ? [0x25, 0x50, 0x44, 0x46, 0x2d]
