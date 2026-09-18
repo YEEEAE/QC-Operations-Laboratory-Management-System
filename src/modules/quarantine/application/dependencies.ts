@@ -18,6 +18,7 @@ import { SubmitInspectionUseCase } from '../inspection/application/submit-inspec
 import { ReviewInspectionUseCase } from '../inspection/application/review-inspection.js';
 import { ApproveInspectionUseCase } from '../inspection/application/approve-inspection.js';
 import { ReturnInspectionUseCase } from '../inspection/application/return-inspection.js';
+import { RejectInspectionUseCase } from '../inspection/application/reject-inspection.js';
 import { ResumeInspectionUseCase } from '../inspection/application/resume-inspection.js';
 import { VoidInspectionUseCase } from '../inspection/application/void-inspection.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
@@ -62,6 +63,7 @@ export function quarantineActionDependencies() {
       review: new ReviewInspectionUseCase(inspectionRepository),
       approve: new ApproveInspectionUseCase(inspectionRepository),
       return: new ReturnInspectionUseCase(inspectionRepository),
+      reject: new RejectInspectionUseCase(inspectionRepository),
       resume: new ResumeInspectionUseCase(inspectionRepository),
       void: new VoidInspectionUseCase(inspectionRepository),
     },

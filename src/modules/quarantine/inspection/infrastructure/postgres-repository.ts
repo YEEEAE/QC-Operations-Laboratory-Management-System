@@ -24,12 +24,14 @@ const map = (
   tv: DatabaseRow<'inspection_template_versions'>,
   resultRows: DatabaseRow<'inspection_report_results'>[] = [],
   snapshot?: DatabaseRow<'inspection_report_snapshots'>,
+  evidenceCount = 0,
 ): Inspection => ({
   id: r.id,
   inspectionNo: r.inspection_no,
   receiving: {
     receivingId: rec.id,
     receivingNo: rec.receiving_no,
+    supplier: rec.supplier_name ?? undefined,
     docNo: rec.doc_no,
     itemCode: rec.item_code,
     description: rec.description,
@@ -53,10 +55,13 @@ const map = (
     // existing execution. The immutable execution snapshot is authoritative
     // for that historical fact; only new executions consult current state.
     approved: Boolean(snapshot) || tv.state === 'APPROVED',
+    sourceDocument: tv.source_document ?? undefined,
   },
   state: r.state as Inspection['state'],
   finalResult: r.final_result as Inspection['finalResult'],
   authorId: r.author_id,
+  assignedTo: r.assigned_user_id ?? r.author_id,
+  evidenceCount,
   results: resultRows.map((result) => ({
     id: result.id,
     pointId: result.template_point_id,
@@ -90,7 +95,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
       .where('id', '=', id)
       .executeTakeFirst();
     if (!report) return undefined;
-    const [receiving, template, results, snapshot] = await Promise.all([
+    const [receiving, template, results, snapshot, evidence] = await Promise.all([
       this.db
         .selectFrom('receiving_items')
         .selectAll()
@@ -113,8 +118,15 @@ export class PostgresInspectionRepository implements InspectionRepository {
         .where('inspection_report_id', '=', id)
         .orderBy('snapshot_version', 'desc')
         .executeTakeFirst(),
+      this.db
+        .selectFrom('evidence_links')
+        .select((eb) => eb.fn.count('id').as('count'))
+        .where('subject_type', '=', 'INSPECTION_REPORT')
+        .where('subject_id', '=', id)
+        .where('removed_at', 'is', null)
+        .executeTakeFirstOrThrow(),
     ]);
-    return map(report, receiving, template, results, snapshot);
+    return map(report, receiving, template, results, snapshot, Number(evidence.count));
   }
   async get(id: string, actor: ActorContext) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return undefined;
@@ -130,7 +142,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
           authorId: item.authorId,
           executorId: item.authorId,
         },
-        { ownerId: item.authorId, assigneeId: item.authorId },
+        { ownerId: item.authorId, assigneeId: item.assignedTo ?? item.authorId },
         grant,
       )
       ? item
@@ -149,7 +161,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
       if (
         item &&
         (!i.state || item.state === i.state) &&
-        (!i.assignedTo || item.authorId === i.assignedTo)
+        (!i.assignedTo || item.assignedTo === i.assignedTo)
       )
         result.push(item);
     }
@@ -169,6 +181,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             state: 'DRAFT',
             final_result: null,
             author_id: x.authorId,
+            assigned_user_id: x.assignedTo ?? x.authorId,
             submitted_at: null,
             review_started_at: null,
             approved_at: null,

@@ -212,6 +212,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
     const item: ReceivingItem = {
       id: '01900000-0000-7000-8000-0000000000c1',
       receivingNo: 'RCV-1',
+      supplier: 'Supplier 1',
       docNo: 'DOC-1',
       itemCode: 'ITEM-1',
       description: 'Material',

@@ -11,6 +11,7 @@ export class CreateReceivingUseCase {
   execute(i: {
     actor: ActorContext;
     receivingNo: string;
+    supplier: string;
     docNo: string;
     itemCode: string;
     description: string;

@@ -8,6 +8,7 @@ import type {
 export interface ReceivingItem {
   id: string;
   receivingNo: string;
+  supplier: string;
   docNo: string;
   itemCode: string;
   description: string;
@@ -23,10 +24,26 @@ export interface ReceivingItem {
   updatedBy?: string;
   updatedAt: Date;
   version: bigint;
+  /** Server-derived inspection executor for release SoD checks. */
+  inspectionAuthorId?: string;
+  /** Server-derived count of active receiving evidence links. */
+  evidenceCount?: number;
+  history?: readonly ReceivingHistoryEvent[];
+}
+
+export interface ReceivingHistoryEvent {
+  action: string;
+  oldState?: string;
+  newState?: string;
+  reason?: string;
+  actorId?: string;
+  occurredAt: Date;
+  requestId: string;
 }
 export interface NewReceivingItem {
   id: string;
   receivingNo: string;
+  supplier: string;
   docNo: string;
   itemCode: string;
   description: string;
@@ -48,6 +65,7 @@ export function createReceivingItem(i: NewReceivingItem): ReceivingItem {
   return {
     id: i.id,
     receivingNo: required(i.receivingNo, 'receivingNo'),
+    supplier: required(i.supplier, 'supplier'),
     docNo: required(i.docNo, 'docNo'),
     itemCode: required(i.itemCode, 'itemCode'),
     description: required(i.description, 'description'),

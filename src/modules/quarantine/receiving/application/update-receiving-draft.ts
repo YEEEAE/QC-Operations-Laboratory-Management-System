@@ -6,6 +6,7 @@ export class UpdateReceivingDraftUseCase {
   constructor(private repo: ReceivingRepository) {}
   async execute(i: {
     actor: ActorContext;
+    supplier: string;
     id: string;
     expectedVersion: bigint;
     docNo: string;

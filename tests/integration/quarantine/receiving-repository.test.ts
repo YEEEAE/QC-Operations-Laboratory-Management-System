@@ -5,6 +5,7 @@ describe('receiving repository contract inputs', () => {
     const x = createReceivingItem({
       id: '01900000-0000-7000-8000-000000000001',
       receivingNo: 'RCV-1',
+      supplier: 'Supplier 1',
       docNo: 'D',
       itemCode: 'I',
       description: 'M',

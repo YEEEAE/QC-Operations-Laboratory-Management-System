@@ -325,6 +325,7 @@ export interface TaskDependenciesTable {
 export interface ReceivingItemsTable {
   id: Generated<string>;
   receiving_no: string;
+  supplier_name: string | null;
   doc_no: string;
   item_code: string;
   description: string;
@@ -398,6 +399,7 @@ export interface InspectionReportsTable {
   state: string;
   final_result: string | null;
   author_id: string;
+  assigned_user_id: string | null;
   submitted_at: Date | null;
   review_started_at: Date | null;
   approved_at: Date | null;

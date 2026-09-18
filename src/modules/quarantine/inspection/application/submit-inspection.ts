@@ -13,6 +13,11 @@ export class SubmitInspectionUseCase {
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    if (x.evidenceCount !== undefined && x.evidenceCount < 1)
+      throw new AppError('VALIDATION_FAILED', {
+        userSafe: true,
+        messageKey: 'errors.inspection_evidence_required',
+      });
     applyInspectionAction(x, 'SUBMIT');
     authorize(
       {
@@ -26,7 +31,7 @@ export class SubmitInspectionUseCase {
           authorId: x.authorId,
           executorId: x.authorId,
         },
-        scope: { ownerId: x.authorId, assigneeId: x.authorId },
+        scope: { ownerId: x.authorId, assigneeId: x.assignedTo ?? x.authorId },
         currentVersion: x.version,
         expectedVersion: i.expectedVersion,
         businessCondition: true,

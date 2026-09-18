@@ -31,6 +31,7 @@ const run = async <T>(work: () => Promise<T>) => {
 
 const receivingInput = z.object({
   receivingNo: z.string().trim().min(1),
+  supplier: z.string().trim().min(1),
   docNo: z.string().trim().min(1),
   itemCode: z.string().trim().min(1),
   description: z.string().trim().min(1),
@@ -185,6 +186,18 @@ const returnInspection = defineAction({
       }),
     ),
 });
+const rejectInspection = defineAction({
+  accept: 'json',
+  input: inspectionVersion.extend({ reason: z.string().trim().min(1) }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().inspection.reject.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
 const resumeInspection = defineAction({
   accept: 'json',
   input: inspectionVersion,
@@ -209,5 +222,6 @@ export const quarantine = {
   reviewInspection,
   approveInspection,
   returnInspection,
+  rejectInspection,
   resumeInspection,
 };

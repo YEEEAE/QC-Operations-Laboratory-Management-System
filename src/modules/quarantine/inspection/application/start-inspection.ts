@@ -17,6 +17,7 @@ export class StartInspectionUseCase {
     inspectionNo: string;
     receiving: ReceivingContext;
     template: TemplateContext;
+    assignedTo?: string;
     requestId: string;
   }) {
     authorize(
@@ -45,6 +46,7 @@ export class StartInspectionUseCase {
         receiving: i.receiving,
         template: i.template,
         authorId: i.actor.id,
+        assignedTo: i.assignedTo,
         now: this.now(),
       }),
       actor: i.actor,

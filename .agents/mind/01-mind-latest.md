@@ -6,9 +6,9 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `587e807619d9b9e606e22d5bce992ee9f2617a20` on `main`. The working tree contains uncommitted `QC-CLOSURE-005` PostgreSQL/migration/transaction changes; no commit, push, or deployment occurred. Migration head is `0024_identity_rbac_grant_integrity` (24 files, committed).
-- Fresh local evidence on this HEAD + working tree: typecheck (`736 files`, 0 errors/0 warnings), lint, format, architecture, build, unit (`76 files / 497 tests`), and `git diff --check` are **PASS**. Database runtime now executes against a disposable PostgreSQL **18.6** cluster: `db:preflight` PASS (0 applied / 24 pending on an empty database), `db:migrate` applied `0001…0024` with `pending []`, `db:schema:check` 24 migrations / 70 tables / **0 orphans**, `test:integration` `80 files / 314 tests` PASS, `test:migrations` `6 files / 22 tests` PASS, `test:concurrency` `2 files / 12 tests` PASS.
-- Node is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker remains **unavailable** (missing `~/.docker/run/docker.sock`), so the **Testcontainers/Docker image path and authenticated E2E remain unexecuted**; UAT remains unexecuted. PostgreSQL suites are no longer blocked: `scripts/db/disposable-postgres.sh` provisions a local PG18 cluster (own `.tmp/` PGDATA, port `55432`, throwaway TLS CA so `sslmode=verify-full` satisfies the canonical policy) and feeds tests via `QC_TEST_DATABASE_URL`.
+- Exact current HEAD: `3c3419233737dfe8464007a64cb82484841617b7` on `main`. The working tree contains uncommitted `QC-CLOSURE-006` workflow changes; no commit, push, or deployment occurred. Migration source head is `0025_qc_closure_006_workflow`; it has not been applied in this environment.
+- Fresh local evidence on this HEAD + working tree: typecheck (`738 files`, 0 errors/0 warnings/61 hints), lint, format, build, unit (`76 files / 497 tests`), and `git diff --check` are **PASS**. Targeted QC logic is `15/15 PASS`; the PostgreSQL-backed integration path is **BLOCKED** because Testcontainers has no working container runtime.
+- Node is `v22.23.1`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker/Testcontainers remains **unavailable**, so authenticated Playwright E2E is **NOT VERIFIED**; the new QC-CLOSURE-006 spec is listed successfully but not executed. UAT remains unexecuted.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
 
@@ -253,11 +253,13 @@
 - P-06 authority/lifecycle policy مغلق كقرار مالك ومربوط بالوثائق والكود والاختبارات؛ live PostgreSQL/UAT evidence ما زال BLOCKED.
 - P-05 يحسم authority role set لـreceiving release/inspection/lab approval إلى Supervisor/Manager/named yazeed مع explicit permission؛ release signature scope يبقى PD-32.
 - إثبات PostgreSQL الحي لسلسلة snapshot/audit/signature ما زال يحتاج Testcontainers/runtime.
+- QC-CLOSURE-006 يثبت عقود receiving supplier وinspection assignment وsource/evidence linkage/count وreceiving history؛ Submit يرفض التفتيش بلا evidence نشط، وReject قرار workflow مستقل عن النتيجة العلمية FAIL. الإثبات الحي لقاعدة البيانات ما زال BLOCKED.
 
 ## 6) Inspection / Laboratory / Release invariants
 
 - `Inspection Result` و`Release System State` حالتان منفصلتان؛ `PASS ≠ RELEASED`.
 - لا تربط نجاح inspection تلقائيًا بإفراج النظام.
+- مسار release يفرض SoD مشتقًا خادميًا بين منفذ التفتيش ومنفذ الإفراج، ويعيد الطلب المكرر بعد نجاحه عبر idempotency؛ لا يوجد بعد دليل runtime مطبق للـmigration الجديدة.
 - Laboratory retest يخضع للسياسة/السلطة المطبقة ولا تُخترع limits غير موجودة في الوثائق.
 - Finding/NCR/CAPA/VOID تبقى مرتبطة بآلات الحالة والأدلة والتوقيعات المعتمدة.
 - أي handoff أو Journey Context هو read context؛ لا ينقل ملكية mutation بين الدومينات.
@@ -417,6 +419,12 @@
 ## 17) سجل تاريخي مضغوط
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+
+- **2026-09-18 — QC-CLOSURE-006 / QC operational workflow**
+  - Changed: added forward migration `0025_qc_closure_006_workflow`, supplier/assignment/evidence/history contracts, server-counted evidence Submit gate, independent Reject decision, release SoD/idempotency, and fixture-driven Receiving→Inspection→Release Playwright coverage.
+  - Evidence: unit `76/497 PASS`; targeted QC tests `15 PASS`; typecheck/build/format/lint/diff checks PASS; PostgreSQL-backed integration and authenticated E2E **BLOCKED/NOT VERIFIED** because no container runtime.
+  - State: PARTIAL / BLOCKED.
+  - Key files: `db/migrations/0025_qc_closure_006_workflow.sql`, `src/modules/quarantine/{receiving,inspection}`, `tests/e2e/critical-workflows.spec.ts`.
 
 - **2026-09-18 — Project Mind rollover (QC-CLOSURE-005)** — نُقلت 23 من أقدم سجلات `[2026-09-10]` إلى `02-mind-mid.md` للبقاء تحت soft limit؛ تُحقق من وجود كل سجل في الأرشيف قبل حذفه، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
 

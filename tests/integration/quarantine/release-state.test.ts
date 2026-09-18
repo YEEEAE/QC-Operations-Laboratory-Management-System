@@ -13,6 +13,7 @@ const actor: ActorContext = {
 const item = (result: ReceivingItem['inspectionResult'] = 'PASS'): ReceivingItem => ({
   id: '01900000-0000-7000-8000-000000000002',
   receivingNo: 'RCV-1',
+  supplier: 'Supplier 1',
   docNo: 'DOC-1',
   itemCode: 'ITEM-1',
   description: 'Material',
@@ -89,5 +90,47 @@ describe('Quarantine release system state', () => {
         requestId: 'req',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    await expect(
+      new ReleaseReceivingUseCase(repository(item('HOLD')), { canRelease: () => true }).execute({
+        actor,
+        id: item().id,
+        expectedVersion: 5n,
+        requestId: 'req-hold',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    await expect(
+      new ReleaseReceivingUseCase(repository(item()), { canRelease: () => true }).execute({
+        actor: { ...actor, roles: ['EMPLOYEE'] },
+        id: item().id,
+        expectedVersion: 5n,
+        requestId: 'req-unauthorized',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+  });
+  it('blocks release when the release authority is the inspection author', async () => {
+    await expect(
+      new ReleaseReceivingUseCase(repository({ ...item(), inspectionAuthorId: actor.id })).execute({
+        actor,
+        id: item().id,
+        expectedVersion: 5n,
+        requestId: 'req-sod',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_SOD_VIOLATION' });
+  });
+  it('returns a committed replay for a duplicate release request', async () => {
+    const repositoryWithReplay = repository(item());
+    repositoryWithReplay.resolveReplay = async () => ({
+      ...item(),
+      workflowState: 'RELEASED',
+      releaseSystem: true,
+    });
+    await expect(
+      new ReleaseReceivingUseCase(repositoryWithReplay).execute({
+        actor,
+        id: item().id,
+        expectedVersion: 5n,
+        requestId: 'req-replay',
+      }),
+    ).resolves.toMatchObject({ workflowState: 'RELEASED', releaseSystem: true });
   });
 });

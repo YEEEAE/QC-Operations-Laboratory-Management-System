@@ -5,6 +5,7 @@ import type { InspectionAction, InspectionState } from './inspection-state.js';
 export interface ReceivingContext {
   receivingId: string;
   receivingNo: string;
+  supplier?: string;
   docNo: string;
   itemCode: string;
   description: string;
@@ -19,6 +20,7 @@ export interface TemplateContext {
   versionNo: string;
   templateSnapshot: Readonly<Record<string, unknown>>;
   approved: boolean;
+  sourceDocument?: string;
 }
 export interface Inspection {
   id: string;
@@ -28,6 +30,8 @@ export interface Inspection {
   state: InspectionState;
   finalResult?: FinalResult;
   authorId: string;
+  assignedTo?: string;
+  evidenceCount?: number;
   results: readonly InspectionResultEntry[];
   submittedAt?: Date;
   version: bigint;
@@ -40,12 +44,14 @@ export function createInspection(i: {
   receiving: ReceivingContext;
   template: TemplateContext;
   authorId: string;
+  assignedTo?: string;
   now: Date;
 }) {
   if (!i.template.approved) throw new AppError('VALIDATION_FAILED', { userSafe: true });
   return {
     ...i,
     state: 'DRAFT' as const,
+    assignedTo: i.assignedTo ?? i.authorId,
     results: [],
     version: 1n,
     createdAt: i.now,

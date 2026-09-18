@@ -16,6 +16,7 @@ export interface ReceivingRepository {
     id: string;
     expectedVersion: bigint;
     actor: ActorContext;
+    supplier: string;
     docNo: string;
     itemCode: string;
     description: string;
@@ -25,6 +26,13 @@ export interface ReceivingRepository {
     expiryDate?: Date;
     requestId: string;
   }): Promise<ReceivingItem>;
+  /** Returns a committed release replay before state validation. */
+  resolveReplay?(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+  }): Promise<ReceivingItem | undefined>;
   transition(i: {
     id: string;
     expectedVersion: bigint;

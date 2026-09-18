@@ -87,6 +87,45 @@ test.describe('critical controlled workflows', () => {
     if (rows[0].inspection_result === 'PASS') expect(rows[0].release_system).toBe(false);
   });
 
+  test('QC-CLOSURE-006 follows the receiving-to-release journey with independent gates', async ({
+    page,
+  }) => {
+    await signIn(page);
+    const receivingId = configuredFixture('QC_E2E_RECEIVING_ID');
+    const inspectionId = configuredFixture('QC_E2E_INSPECTION_ID');
+    const releasePendingId = configuredFixture('QC_E2E_RELEASE_PENDING_ID');
+
+    await page.goto(`/quarantine/receiving/${receivingId}`);
+    await expect(page.getByRole('heading', { name: /RECEIVING|RCV/i })).toBeVisible();
+    await expect(page.getByText('Supplier')).toBeVisible();
+    await expect(page.getByText('Receiving state')).toBeVisible();
+    await expect(page.getByText('Inspection result')).toBeVisible();
+    await expect(page.getByText('Release System State')).toBeVisible();
+
+    await page.goto(`/quarantine/inspections/${inspectionId}`);
+    await expect(page.getByRole('heading', { name: /INSPECTION REPORT|INSP/i })).toBeVisible();
+    await expect(page.getByText('Receiving snapshot')).toBeVisible();
+    await expect(page.getByText('Inspection requirements and evidence')).toBeVisible();
+    await expect(page.getByText(/approved template/i)).toBeVisible();
+
+    await page.goto(`/quarantine/receiving/${releasePendingId}`);
+    await expect(page.getByText('Release System State')).toBeVisible();
+    const releaseFacts = await page.locator('.facts').innerText();
+    expect(releaseFacts).toMatch(/PASS|NOT_STARTED|FAIL|HOLD/);
+    expect(releaseFacts).toMatch(/NOT_RELEASED|RELEASED/);
+    const releaseRows = await dbQuery<{
+      workflow_state: string;
+      inspection_result: string;
+      release_system: boolean;
+    }>(
+      'select workflow_state, inspection_result, release_system from qc.receiving_items where id = $1',
+      [releasePendingId],
+    );
+    expect(releaseRows).toHaveLength(1);
+    if (releaseRows[0].inspection_result === 'PASS')
+      expect(releaseRows[0].release_system).toBe(false);
+  });
+
   test('laboratory execute and review expose approved fixture context and preserve audit evidence', async ({
     page,
   }) => {

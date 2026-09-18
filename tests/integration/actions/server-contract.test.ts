@@ -55,6 +55,7 @@ const UI_ACTION_PATHS = [
   'quarantine.reviewInspection',
   'quarantine.approveInspection',
   'quarantine.returnInspection',
+  'quarantine.rejectInspection',
   'quarantine.resumeInspection',
   'documents.create',
   'documents.createVersion',

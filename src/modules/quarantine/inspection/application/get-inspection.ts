@@ -19,7 +19,7 @@ export class GetInspectionUseCase {
           authorId: x.authorId,
           executorId: x.authorId,
         },
-        scope: { ownerId: x.authorId, assigneeId: x.authorId },
+        scope: { ownerId: x.authorId, assigneeId: x.assignedTo ?? x.authorId },
         currentVersion: x.version,
         expectedVersion: x.version,
         businessCondition: true,

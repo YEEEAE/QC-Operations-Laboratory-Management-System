@@ -47,6 +47,7 @@ describe('quarantine receiving use cases', () => {
     const x = await new CreateReceivingUseCase(r, () => new Date('2026-01-01')).execute({
       actor,
       receivingNo: 'RCV-1',
+      supplier: 'Supplier 1',
       docNo: 'DOC-1',
       itemCode: 'ITEM-1',
       description: 'Material',
@@ -64,6 +65,7 @@ describe('quarantine receiving use cases', () => {
     await new CreateReceivingUseCase(r).execute({
       actor,
       receivingNo: 'RCV-2',
+      supplier: 'Supplier 1',
       docNo: 'DOC-1',
       itemCode: 'ITEM-1',
       description: 'Material',

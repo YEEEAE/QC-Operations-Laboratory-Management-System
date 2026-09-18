@@ -22,7 +22,10 @@ export class ReviewInspectionUseCase {
         authorId: inspection.authorId,
         executorId: inspection.authorId,
       },
-      scope: { ownerId: inspection.authorId, assigneeId: inspection.authorId },
+      scope: {
+        ownerId: inspection.authorId,
+        assigneeId: inspection.assignedTo ?? inspection.authorId,
+      },
       currentVersion: inspection.version,
       expectedVersion: input.expectedVersion,
       sod: {

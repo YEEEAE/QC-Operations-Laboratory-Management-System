@@ -12,10 +12,13 @@ import type { AuditRepository } from '../../../../shared/audit/audit-repository.
 import { PostgresAuditRepository } from '../../../../shared/audit/postgres-audit-repository.js';
 import type { OutboxRepository } from '../../../../shared/outbox/outbox-repository.js';
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
+import { createHash } from 'node:crypto';
+import { stableJson } from '../../../../shared/json/stable-stringify.js';
 
 const map = (r: DatabaseRow<'receiving_items'>): ReceivingItem => ({
   id: r.id,
   receivingNo: r.receiving_no,
+  supplier: r.supplier_name ?? '',
   docNo: r.doc_no,
   itemCode: r.item_code,
   description: r.description,
@@ -48,6 +51,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
           .values({
             id: i.item.id,
             receiving_no: i.item.receivingNo,
+            supplier_name: i.item.supplier,
             doc_no: i.item.docNo,
             item_code: i.item.itemCode,
             description: i.item.description,
@@ -99,6 +103,38 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       .executeTakeFirst();
     if (!r) return undefined;
     const x = map(r);
+    const [inspection, history, evidence] = await Promise.all([
+      this.db
+        .selectFrom('inspection_reports')
+        .select('author_id')
+        .where('receiving_item_id', '=', id)
+        .where('state', '=', 'APPROVED')
+        .orderBy('updated_at', 'desc')
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('audit_events')
+        .select([
+          'action',
+          'old_state',
+          'new_state',
+          'reason',
+          'actor_id',
+          'occurred_at',
+          'request_id',
+        ])
+        .where('subject_type', '=', 'RECEIVING_ITEM')
+        .where('subject_id', '=', id)
+        .orderBy('occurred_at', 'desc')
+        .limit(100)
+        .execute(),
+      this.db
+        .selectFrom('evidence_links')
+        .select((eb) => eb.fn.count('id').as('count'))
+        .where('subject_type', '=', 'RECEIVING_ITEM')
+        .where('subject_id', '=', id)
+        .where('removed_at', 'is', null)
+        .executeTakeFirstOrThrow(),
+    ]);
     const grant = actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');
     return actorHasScope(
       actor,
@@ -106,7 +142,20 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       { ownerId: x.createdBy },
       grant,
     )
-      ? x
+      ? {
+          ...x,
+          inspectionAuthorId: inspection?.author_id,
+          evidenceCount: Number(evidence.count),
+          history: history.map((event) => ({
+            action: event.action,
+            oldState: event.old_state ?? undefined,
+            newState: event.new_state ?? undefined,
+            reason: event.reason ?? undefined,
+            actorId: event.actor_id ?? undefined,
+            occurredAt: event.occurred_at,
+            requestId: event.request_id,
+          })),
+        }
       : undefined;
   }
 
@@ -135,6 +184,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     id: string;
     expectedVersion: bigint;
     actor: ActorContext;
+    supplier: string;
     docNo: string;
     itemCode: string;
     description: string;
@@ -148,6 +198,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       const r = await this.db
         .updateTable('receiving_items')
         .set({
+          supplier_name: i.supplier,
           doc_no: i.docNo,
           item_code: i.itemCode,
           description: i.description,
@@ -185,6 +236,46 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     const changed = applyReceivingAction(old, i.action, i.reason);
     try {
       const result = await this.db.transaction().execute(async (tx) => {
+        const idempotencyKey = `RECEIVING:${i.action}:${i.id}:${i.requestId}`;
+        const commandFingerprint = createHash('sha256')
+          .update(
+            stableJson({
+              id: i.id,
+              expectedVersion: String(i.expectedVersion),
+              actorId: i.actor.id,
+              action: i.action,
+              reason: i.reason ?? null,
+            }),
+          )
+          .digest('hex');
+        const existing = await tx
+          .selectFrom('idempotency_records')
+          .select(['request_fingerprint', 'status'])
+          .where('key', '=', idempotencyKey)
+          .forUpdate()
+          .executeTakeFirst();
+        if (existing) {
+          if (
+            existing.request_fingerprint !== commandFingerprint ||
+            existing.status !== 'COMPLETED'
+          )
+            throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+          const replay = await tx
+            .selectFrom('receiving_items')
+            .selectAll()
+            .where('id', '=', i.id)
+            .executeTakeFirstOrThrow();
+          return replay;
+        }
+        await tx
+          .insertInto('idempotency_records')
+          .values({
+            key: idempotencyKey,
+            request_fingerprint: commandFingerprint,
+            status: 'IN_PROGRESS',
+            response_payload: null,
+          })
+          .execute();
         const releasing = i.action === 'RELEASE';
         const row = await tx
           .updateTable('receiving_items')
@@ -226,6 +317,15 @@ export class PostgresReceivingRepository implements ReceivingRepository {
           },
           dedupeKey: `receiving:${i.id}:v${i.expectedVersion + 1n}`,
         });
+        await tx
+          .updateTable('idempotency_records')
+          .set({
+            status: 'COMPLETED',
+            response_payload: JSON.parse(stableJson(map(row))),
+            completed_at: new Date(),
+          })
+          .where('key', '=', idempotencyKey)
+          .execute();
         return row;
       });
       return map(result);
@@ -233,6 +333,35 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       if (e instanceof AppError) throw e;
       throw translateDatabaseError(e);
     }
+  }
+
+  async resolveReplay(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+  }): Promise<ReceivingItem | undefined> {
+    const key = `RECEIVING:RELEASE:${i.id}:${i.requestId}`;
+    const fingerprint = createHash('sha256')
+      .update(
+        stableJson({
+          id: i.id,
+          expectedVersion: String(i.expectedVersion),
+          actorId: i.actor.id,
+          action: 'RELEASE',
+          reason: null,
+        }),
+      )
+      .digest('hex');
+    const row = await this.db
+      .selectFrom('idempotency_records')
+      .select(['request_fingerprint', 'status'])
+      .where('key', '=', key)
+      .executeTakeFirst();
+    if (!row) return undefined;
+    if (row.request_fingerprint !== fingerprint || row.status !== 'COMPLETED')
+      throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+    return this.get(i.id, i.actor);
   }
 
   private auditFor(tx: Transaction<DatabaseSchema>): AuditRepository | undefined {

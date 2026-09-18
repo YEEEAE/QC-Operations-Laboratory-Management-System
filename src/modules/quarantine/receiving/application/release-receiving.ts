@@ -21,6 +21,8 @@ export class ReleaseReceivingUseCase {
     expectedVersion: bigint;
     requestId: string;
   }) {
+    const replay = await this.repository.resolveReplay?.(input);
+    if (replay) return replay;
     const item = await this.repository.get(input.id, input.actor);
     if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -37,6 +39,11 @@ export class ReleaseReceivingUseCase {
           ownerId: item.createdBy,
         },
         scope: { ownerId: item.createdBy },
+        sod: {
+          actorId: input.actor.id,
+          authorId: item.inspectionAuthorId,
+          executorId: item.inspectionAuthorId,
+        },
         currentVersion: item.version,
         expectedVersion: input.expectedVersion,
         businessCondition:

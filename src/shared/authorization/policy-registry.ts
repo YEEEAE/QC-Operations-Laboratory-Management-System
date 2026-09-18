@@ -416,6 +416,12 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['SUBMITTED', 'UNDER_REVIEW'],
   },
   {
+    permission: 'PERM-INSP-REJECT',
+    action: 'REJECT',
+    entityType: 'INSPECTION_REPORT',
+    states: ['UNDER_REVIEW'],
+  },
+  {
     permission: 'PERM-INSP-APPROVE',
     action: 'APPROVE',
     entityType: 'INSPECTION_REPORT',
@@ -430,6 +436,12 @@ const policies: readonly AuthorizationPolicy[] = [
   {
     permission: 'PERM-APR-APPROVE',
     action: 'APPROVE',
+    entityType: 'INSPECTION_REPORT',
+    states: ['UNDER_REVIEW'],
+  },
+  {
+    permission: 'PERM-APR-REJECT',
+    action: 'REJECT',
     entityType: 'INSPECTION_REPORT',
     states: ['UNDER_REVIEW'],
   },
