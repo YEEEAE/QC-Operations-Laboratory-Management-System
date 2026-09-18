@@ -4,6 +4,17 @@ import type {
   MaintenanceRecord,
   MaintenanceState,
 } from '../domain/maintenance.js';
+export interface MaintenanceHistory {
+  id: string;
+  maintenanceId: string;
+  state: MaintenanceState;
+  action: string;
+  snapshot: Readonly<Record<string, unknown>>;
+  changedBy: string;
+  changedAt: Date;
+  recordVersion: bigint;
+  requestId: string;
+}
 export interface MaintenanceListFilter {
   state?: MaintenanceState;
   equipmentId?: string;
@@ -28,4 +39,5 @@ export interface MaintenanceRepository {
     reason?: string;
     requestId: string;
   }): Promise<MaintenanceRecord>;
+  history?(id: string, actor: ActorContext): Promise<readonly MaintenanceHistory[]>;
 }

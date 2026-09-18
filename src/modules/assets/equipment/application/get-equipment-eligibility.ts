@@ -37,6 +37,7 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
         !calibration ||
         calibration.equipmentId !== equipment.id ||
         equipment.state !== 'ACTIVE' ||
+        equipment.currentCalibrationId !== calibration.id ||
         calibration.state !== 'CURRENT'
       )
         throw new AppError('AUTHZ_DENIED', {

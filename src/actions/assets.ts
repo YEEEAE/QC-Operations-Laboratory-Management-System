@@ -29,6 +29,8 @@ const createEquipment = defineAction({
     model: z.string().optional(),
     serialNo: z.string().optional(),
     location: z.string().optional(),
+    calibrationRequired: z.boolean().optional(),
+    maintenanceRequired: z.boolean().optional(),
   }),
   handler: (input, context) =>
     run(
@@ -52,6 +54,8 @@ const updateEquipment = defineAction({
     model: z.string().optional(),
     serialNo: z.string().optional(),
     location: z.string().optional(),
+    calibrationRequired: z.boolean().optional(),
+    maintenanceRequired: z.boolean().optional(),
   }),
   handler: (input, context) =>
     run(
@@ -117,8 +121,11 @@ const transitionCalibration = defineAction({
     calibrationId: id,
     expectedVersion: version,
     action: z.enum([
+      'SCHEDULE',
       'SUBMIT',
       'APPROVE',
+      'COMPLETE',
+      'FAIL',
       'MAKE_CURRENT',
       'MARK_DUE',
       'MARK_OVERDUE',

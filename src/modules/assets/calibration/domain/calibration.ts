@@ -2,17 +2,29 @@ import { AppError } from '../../../../shared/errors/app-error.js';
 
 export const CALIBRATION_STATES = [
   'DRAFT',
+  'SCHEDULED',
   'SUBMITTED',
   'APPROVED',
   'CURRENT',
   'DUE',
   'OVERDUE',
+  'COMPLETED',
+  'FAILED',
   'SUPERSEDED',
   'VOID',
 ] as const;
 export type CalibrationState = (typeof CALIBRATION_STATES)[number];
 export type CalibrationAction =
-  'SUBMIT' | 'APPROVE' | 'MAKE_CURRENT' | 'MARK_DUE' | 'MARK_OVERDUE' | 'SUPERSEDE' | 'VOID';
+  | 'SCHEDULE'
+  | 'SUBMIT'
+  | 'APPROVE'
+  | 'COMPLETE'
+  | 'FAIL'
+  | 'MAKE_CURRENT'
+  | 'MARK_DUE'
+  | 'MARK_OVERDUE'
+  | 'SUPERSEDE'
+  | 'VOID';
 export interface CalibrationRecord {
   id: string;
   calibrationNo: string;
@@ -81,9 +93,28 @@ export function isCalibrationOverdue(
   return Boolean(record.dueDate && now.getTime() > record.dueDate.getTime());
 }
 const transitions: Record<CalibrationAction, readonly [CalibrationState, CalibrationState][]> = {
-  SUBMIT: [['DRAFT', 'SUBMITTED']],
+  SCHEDULE: [['DRAFT', 'SCHEDULED']],
+  SUBMIT: [
+    ['DRAFT', 'SUBMITTED'],
+    ['SCHEDULED', 'SUBMITTED'],
+  ],
   APPROVE: [['SUBMITTED', 'APPROVED']],
-  MAKE_CURRENT: [['APPROVED', 'CURRENT']],
+  COMPLETE: [
+    ['APPROVED', 'COMPLETED'],
+    ['CURRENT', 'COMPLETED'],
+  ],
+  FAIL: [
+    ['SUBMITTED', 'FAILED'],
+    ['APPROVED', 'FAILED'],
+    ['COMPLETED', 'FAILED'],
+    ['CURRENT', 'FAILED'],
+    ['DUE', 'FAILED'],
+    ['OVERDUE', 'FAILED'],
+  ],
+  MAKE_CURRENT: [
+    ['APPROVED', 'CURRENT'],
+    ['COMPLETED', 'CURRENT'],
+  ],
   MARK_DUE: [['CURRENT', 'DUE']],
   MARK_OVERDUE: [
     ['CURRENT', 'OVERDUE'],
@@ -93,14 +124,18 @@ const transitions: Record<CalibrationAction, readonly [CalibrationState, Calibra
     ['CURRENT', 'SUPERSEDED'],
     ['DUE', 'SUPERSEDED'],
     ['OVERDUE', 'SUPERSEDED'],
+    ['FAILED', 'SUPERSEDED'],
   ],
   VOID: [
     ['DRAFT', 'VOID'],
+    ['SCHEDULED', 'VOID'],
     ['SUBMITTED', 'VOID'],
     ['APPROVED', 'VOID'],
     ['CURRENT', 'VOID'],
     ['DUE', 'VOID'],
     ['OVERDUE', 'VOID'],
+    ['COMPLETED', 'VOID'],
+    ['FAILED', 'VOID'],
   ],
 };
 export function transitionCalibration(

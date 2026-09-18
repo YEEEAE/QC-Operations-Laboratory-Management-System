@@ -15,7 +15,11 @@ import {
   type MaintenanceAction,
   type MaintenanceRecord,
 } from '../domain/maintenance.js';
-import type { MaintenanceListFilter, MaintenanceRepository } from '../ports/repository.js';
+import type {
+  MaintenanceHistory,
+  MaintenanceListFilter,
+  MaintenanceRepository,
+} from '../ports/repository.js';
 const map = (row: DatabaseRow<'maintenance_records'>): MaintenanceRecord => ({
   id: row.id,
   maintenanceNo: row.maintenance_no,
@@ -33,12 +37,33 @@ const map = (row: DatabaseRow<'maintenance_records'>): MaintenanceRecord => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   version: BigInt(row.version),
+  downtimeStartedAt: row.downtime_started_at ?? undefined,
+  downtimeEndedAt: row.downtime_ended_at ?? undefined,
+  downtimeMinutes: row.downtime_minutes ?? undefined,
 });
 const entity = (x: MaintenanceRecord) => ({
   type: 'MAINTENANCE_RECORD',
   id: x.id,
   state: x.state,
   ownerId: x.createdBy,
+});
+const snapshot = (x: MaintenanceRecord): Readonly<Record<string, unknown>> => ({
+  id: x.id,
+  maintenanceNo: x.maintenanceNo,
+  equipmentId: x.equipmentId,
+  state: x.state,
+  maintenanceType: x.maintenanceType ?? null,
+  description: x.description,
+  plannedAt: x.plannedAt?.toISOString() ?? null,
+  startedAt: x.startedAt?.toISOString() ?? null,
+  completedAt: x.completedAt?.toISOString() ?? null,
+  performedBy: x.performedBy ?? null,
+  provider: x.provider ?? null,
+  result: x.result ?? null,
+  downtimeStartedAt: x.downtimeStartedAt?.toISOString() ?? null,
+  downtimeEndedAt: x.downtimeEndedAt?.toISOString() ?? null,
+  downtimeMinutes: x.downtimeMinutes ?? null,
+  version: x.version.toString(),
 });
 export class PostgresMaintenanceRepository implements MaintenanceRepository {
   constructor(
@@ -72,6 +97,9 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
             created_by: input.actor.id,
             updated_at: x.updatedAt,
             version: 1n,
+            downtime_started_at: x.downtimeStartedAt ?? null,
+            downtime_ended_at: null,
+            downtime_minutes: null,
           })
           .returningAll()
           .executeTakeFirstOrThrow();
@@ -84,6 +112,19 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
           newState: 'DRAFT',
           requestId: input.requestId,
         });
+        await tx
+          .insertInto('maintenance_history')
+          .values({
+            maintenance_id: x.id,
+            state: 'DRAFT',
+            action: 'CREATE',
+            snapshot: snapshot(x),
+            changed_by: input.actor.id,
+            changed_at: x.updatedAt,
+            record_version: 1n,
+            request_id: input.requestId,
+          })
+          .execute();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'MAINTENANCE_CREATED',
           aggregateType: 'MAINTENANCE_RECORD',
@@ -129,6 +170,28 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
       .map(map)
       .filter((x) => actorHasScope(input.actor, entity(x), { ownerId: x.createdBy }, grant));
   }
+  async history(id: string, actor: ActorContext): Promise<readonly MaintenanceHistory[]> {
+    const current = await this.get(id, actor);
+    if (!current) return [];
+    const rows = await this.db
+      .selectFrom('maintenance_history')
+      .selectAll()
+      .where('maintenance_id', '=', id)
+      .orderBy('changed_at', 'asc')
+      .orderBy('id', 'asc')
+      .execute();
+    return rows.map((row) => ({
+      id: row.id,
+      maintenanceId: row.maintenance_id,
+      state: row.state as MaintenanceHistory['state'],
+      action: row.action,
+      snapshot: row.snapshot as Readonly<Record<string, unknown>>,
+      changedBy: row.changed_by,
+      changedAt: row.changed_at,
+      recordVersion: BigInt(row.record_version),
+      requestId: row.request_id,
+    }));
+  }
   async transition(input: {
     id: string;
     expectedVersion: bigint;
@@ -148,6 +211,9 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
             state: changed.state,
             started_at: changed.startedAt ?? null,
             completed_at: changed.completedAt ?? null,
+            downtime_started_at: changed.downtimeStartedAt ?? null,
+            downtime_ended_at: changed.downtimeEndedAt ?? null,
+            downtime_minutes: changed.downtimeMinutes ?? null,
             updated_at: changed.updatedAt,
             version: input.expectedVersion + 1n,
           })
@@ -175,7 +241,7 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
               })
               .where('id', '=', equipment.id)
               .where('version', '=', equipment.version)
-              .returning('id')
+              .returning(['id', 'version'])
               .executeTakeFirst();
             if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
             await this.auditFor(tx)?.append({
@@ -188,6 +254,22 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
               newState: 'UNDER_MAINTENANCE',
               requestId: input.requestId,
             });
+            await tx
+              .insertInto('equipment_status_history')
+              .values({
+                equipment_id: equipment.id,
+                from_state: equipment.state,
+                to_state: 'UNDER_MAINTENANCE',
+                action: 'START_MAINTENANCE',
+                reason: input.reason ?? null,
+                changed_by: input.actor.id,
+                changed_at: changed.updatedAt,
+                equipment_version: BigInt(updated.version),
+                request_id: input.requestId,
+              })
+              .execute();
+          } else {
+            throw new AppError('AUTHZ_DENIED', { userSafe: true });
           }
         }
         await this.auditFor(tx)?.append({
@@ -201,6 +283,19 @@ export class PostgresMaintenanceRepository implements MaintenanceRepository {
           reason: input.reason,
           requestId: input.requestId,
         });
+        await tx
+          .insertInto('maintenance_history')
+          .values({
+            maintenance_id: input.id,
+            state: changed.state,
+            action: input.action,
+            snapshot: snapshot(changed),
+            changed_by: input.actor.id,
+            changed_at: changed.updatedAt,
+            record_version: changed.version,
+            request_id: input.requestId,
+          })
+          .execute();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'MAINTENANCE_CHANGED',
           aggregateType: 'MAINTENANCE_RECORD',

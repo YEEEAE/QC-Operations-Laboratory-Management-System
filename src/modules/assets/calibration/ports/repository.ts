@@ -4,6 +4,17 @@ import type {
   CalibrationRecord,
   CalibrationState,
 } from '../domain/calibration.js';
+export interface CalibrationHistory {
+  id: string;
+  calibrationId: string;
+  state: CalibrationState;
+  action: string;
+  snapshot: Readonly<Record<string, unknown>>;
+  changedBy: string;
+  changedAt: Date;
+  recordVersion: bigint;
+  requestId: string;
+}
 export interface CalibrationListFilter {
   state?: CalibrationState;
   equipmentId?: string;
@@ -28,4 +39,5 @@ export interface CalibrationRepository {
     reason?: string;
     requestId: string;
   }): Promise<CalibrationRecord>;
+  history?(id: string, actor: ActorContext): Promise<readonly CalibrationHistory[]>;
 }

@@ -1,0 +1,31 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "Alpaca",
+    "url": "https://alpaca.markets/"
+  },
+  "description": "Stop watching the markets. Turn your words into insights with Alpaca.\nAsk ChatGPT real market questions and get live answers you can act on, including historical data, snapshots, quotes, and option chain information. Stock, options, and crypto market data embedded right into your conversation so you can turn analysis into automated actions.\n\"How has AAPL's stock performed this quarter vs GOOG?\"\n\"Show me the SPY option chain that expires next Friday.\"\n\"When has BTC's price reached $100k USD this year?\"",
+  "homepage": "https://alpaca.markets/",
+  "interface": {
+    "capabilities": [],
+    "category": "Finance",
+    "composerIcon": "./assets/composer-icon.png",
+    "defaultPrompt": [
+      "Use Alpaca to help with this task"
+    ],
+    "developerName": "Alpaca",
+    "displayName": "Alpaca",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png",
+    "longDescription": "Stop watching the markets. Turn your words into insights with Alpaca.\nAsk Codex real market questions and get live answers you can act on, including historical data, snapshots, quotes, and option chain information. Stock, options, and crypto market data embedded right into your conversation so you can turn analysis into automated actions.\n\"How has AAPL's stock performed this quarter vs GOOG?\"\n\"Show me the SPY option chain that expires next Friday.\"\n\"When has BTC's price reached $100k USD this year?\"",
+    "privacyPolicyURL": "https://s3.amazonaws.com/files.alpaca.markets/disclosures/PrivacyPolicy.pdf",
+    "screenshots": [],
+    "shortDescription": "Market data: stocks & crypto",
+    "websiteURL": "https://alpaca.markets/"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "name": "alpaca",
+  "repository": "https://github.com/openai/plugins",
+  "version": "1.0.0"
+}

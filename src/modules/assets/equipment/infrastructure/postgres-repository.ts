@@ -10,7 +10,11 @@ import { PostgresAuditRepository } from '../../../../shared/audit/postgres-audit
 import type { OutboxRepository } from '../../../../shared/outbox/outbox-repository.js';
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
 import { transitionEquipment, type Equipment, type EquipmentAction } from '../domain/equipment.js';
-import type { EquipmentListFilter, EquipmentRepository } from '../ports/repository.js';
+import type {
+  EquipmentListFilter,
+  EquipmentRepository,
+  EquipmentStatusHistory,
+} from '../ports/repository.js';
 
 const map = (row: DatabaseRow<'equipment'>): Equipment => ({
   id: row.id,
@@ -29,6 +33,8 @@ const map = (row: DatabaseRow<'equipment'>): Equipment => ({
   updatedBy: row.updated_by ?? undefined,
   updatedAt: row.updated_at,
   version: BigInt(row.version),
+  calibrationRequired: row.calibration_required ?? undefined,
+  maintenanceRequired: row.maintenance_required ?? undefined,
 });
 const entity = (x: Equipment) => ({
   type: 'EQUIPMENT',
@@ -69,6 +75,8 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
             updated_by: input.actor.id,
             updated_at: x.updatedAt,
             version: 1n,
+            calibration_required: x.calibrationRequired ?? null,
+            maintenance_required: x.maintenanceRequired ?? null,
           })
           .returningAll()
           .executeTakeFirstOrThrow();
@@ -81,6 +89,20 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
           newState: 'DRAFT',
           requestId: input.requestId,
         });
+        await tx
+          .insertInto('equipment_status_history')
+          .values({
+            equipment_id: x.id,
+            from_state: null,
+            to_state: 'DRAFT',
+            action: 'CREATE',
+            reason: null,
+            changed_by: input.actor.id,
+            changed_at: x.updatedAt,
+            equipment_version: 1n,
+            request_id: input.requestId,
+          })
+          .execute();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'EQUIPMENT_CREATED',
           aggregateType: 'EQUIPMENT',
@@ -131,6 +153,29 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
       .map(map)
       .filter((x) => actorHasScope(input.actor, entity(x), { ownerId: x.createdBy }, grant));
   }
+  async history(id: string, actor: ActorContext): Promise<readonly EquipmentStatusHistory[]> {
+    const current = await this.get(id, actor);
+    if (!current) return [];
+    const rows = await this.db
+      .selectFrom('equipment_status_history')
+      .selectAll()
+      .where('equipment_id', '=', id)
+      .orderBy('changed_at', 'asc')
+      .orderBy('id', 'asc')
+      .execute();
+    return rows.map((row) => ({
+      id: row.id,
+      equipmentId: row.equipment_id,
+      fromState: (row.from_state ?? undefined) as EquipmentStatusHistory['fromState'],
+      toState: row.to_state as EquipmentStatusHistory['toState'],
+      action: row.action,
+      reason: row.reason ?? undefined,
+      changedBy: row.changed_by,
+      changedAt: row.changed_at,
+      equipmentVersion: BigInt(row.equipment_version),
+      requestId: row.request_id,
+    }));
+  }
   async updateDraft(input: {
     id: string;
     expectedVersion: bigint;
@@ -141,6 +186,8 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
     model?: string;
     serialNo?: string;
     location?: string;
+    calibrationRequired?: boolean;
+    maintenanceRequired?: boolean;
     requestId: string;
   }): Promise<Equipment> {
     try {
@@ -154,13 +201,22 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
           model: input.model?.trim() || null,
           serialNo: input.serialNo?.trim() || null,
           location: input.location?.trim() || null,
+          calibrationRequired: input.calibrationRequired ?? null,
+          maintenanceRequired: input.maintenanceRequired ?? null,
         };
         if (!changed.equipmentNo || !changed.name)
           throw new AppError('VALIDATION_FAILED', { userSafe: true });
         const row = await tx
           .updateTable('equipment')
           .set({
-            ...changed,
+            equipment_no: changed.equipmentNo,
+            name: changed.name,
+            manufacturer: changed.manufacturer,
+            model: changed.model,
+            serial_no: changed.serialNo,
+            location: changed.location,
+            calibration_required: changed.calibrationRequired,
+            maintenance_required: changed.maintenanceRequired,
             updated_by: input.actor.id,
             updated_at: new Date(),
             version: input.expectedVersion + 1n,
@@ -235,6 +291,20 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
           reason: input.reason,
           requestId: input.requestId,
         });
+        await tx
+          .insertInto('equipment_status_history')
+          .values({
+            equipment_id: input.id,
+            from_state: old.state,
+            to_state: changed.state,
+            action: input.action,
+            reason: input.reason ?? null,
+            changed_by: input.actor.id,
+            changed_at: changed.updatedAt,
+            equipment_version: changed.version,
+            request_id: input.requestId,
+          })
+          .execute();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'EQUIPMENT_CHANGED',
           aggregateType: 'EQUIPMENT',

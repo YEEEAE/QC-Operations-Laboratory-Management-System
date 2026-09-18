@@ -16,6 +16,8 @@ export class CreateEquipmentUseCase {
     model?: string;
     serialNo?: string;
     location?: string;
+    calibrationRequired?: boolean;
+    maintenanceRequired?: boolean;
     requestId: string;
   }) {
     authorize(

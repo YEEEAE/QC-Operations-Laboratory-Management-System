@@ -15,6 +15,7 @@ const equipment = {
   equipmentNo: 'EQ-1',
   name: 'Balance',
   state: 'ACTIVE' as const,
+  currentCalibrationId: '00000000-0000-7000-8000-000000000003',
   createdBy: actor.id,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -75,6 +76,29 @@ describe('Assets-owned laboratory eligibility', () => {
       {
         getEquipment: async () => equipment,
         getCalibration: async () => ({ ...calibration, dueDate: new Date('2026-01-01T00:00:00Z') }),
+      },
+      () => new Date('2026-06-01T00:00:00Z'),
+    );
+    await expect(useCase.verify({ actor, equipment: [usage], context })).rejects.toThrow();
+  });
+  it.each(['OUT_OF_SERVICE', 'UNDER_MAINTENANCE', 'DECOMMISSIONED'] as const)(
+    'denies use when equipment is %s',
+    async (state) => {
+      const useCase = new GetEquipmentEligibilityUseCase(
+        {
+          getEquipment: async () => ({ ...equipment, state }),
+          getCalibration: async () => calibration,
+        },
+        () => new Date('2026-06-01T00:00:00Z'),
+      );
+      await expect(useCase.verify({ actor, equipment: [usage], context })).rejects.toThrow();
+    },
+  );
+  it('denies a failed calibration even when its equipment is active', async () => {
+    const useCase = new GetEquipmentEligibilityUseCase(
+      {
+        getEquipment: async () => equipment,
+        getCalibration: async () => ({ ...calibration, state: 'FAILED' as const }),
       },
       () => new Date('2026-06-01T00:00:00Z'),
     );

@@ -134,7 +134,7 @@ describe('owner control center PostgreSQL contracts', () => {
     const view = await overview().execute({ actor: ownerActor() });
     expect(view.databaseStatus).toBe('HEALTHY');
     expect(view.auditStatus).toBe('HEALTHY');
-    expect(view.migration.appliedHead).toBe('0025');
+    expect(view.migration.appliedHead).toBe('0027');
     expect(view.migration.drift).toBe(false);
     expect(JSON.stringify(view)).not.toMatch(/password|postgres:\/\//i);
   });

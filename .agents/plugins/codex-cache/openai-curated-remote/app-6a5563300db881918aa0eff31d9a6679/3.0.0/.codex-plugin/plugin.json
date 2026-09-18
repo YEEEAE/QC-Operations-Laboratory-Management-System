@@ -1,0 +1,26 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "YANIV FINKELSHTEIN"
+  },
+  "description": "Describe the home you want — \"a 10 by 10 house with a master bedroom and a private bathroom, two kids' rooms, an open kitchen and living room, a garden with trees\" — and WalkMyPlan builds it in one go: real walls, doors, windows, furniture and garden. Open the live link and walk through it in 3D.\n\nKeep designing in conversation. \"Make the living room bigger.\" \"Put a TV on the north wall.\" \"I marked pin A — put the front door exactly there.\" Furniture placement is automatic — it finds a free spot, away from doorways. Every edit lands in a revision history you can undo or roll back to any point. Edits are for visualization and planning; WalkMyPlan does not check structural safety or building codes.\n\nAsk about what you built. \"How big is the kitchen?\", \"Is there room for a double bed in the small bedroom?\" Answers are measured from the model's real geometry.\n\nShare and collaborate. Share a plan privately with named people as viewers or editors, or with a link. See who changed what, when.\n\nAlready have a plan? Upload the real CAD file your architect sent — DWG or vector PDF, up to 100MB — and WalkMyPlan converts it into the same editable, walkable 3D model, so you start from reality instead of a blank page.\n\nGreat for home design, interior design, room planning, renovation, and planning a build. Your plans stay private to your account unless you share them, are never used to train AI models, and can be deleted any time (trash keeps them recoverable for 30 days).\n\nTry: \"Build me a three-bedroom house with a garden\" — then \"walk me through it.\"",
+  "interface": {
+    "capabilities": [],
+    "category": "Creativity",
+    "defaultPrompt": [
+      "Design a 120 m2 L-shaped house: bedrooms in one wing, living in the other, a covered patio in the corner. Give me the link.",
+      "Build a 10 by 10 meter house: master bedroom with private bathroom, two kids' rooms, a garden. Decorate it, give me the link.",
+      "Give me a link to upload my floor plan, then turn it into a walkable 3D model."
+    ],
+    "developerName": "YANIV FINKELSHTEIN",
+    "displayName": "WalkMyPlan — Floor Plans in 3D",
+    "longDescription": "Describe the home you want — \"a 10 by 10 house with a master bedroom and a private bathroom, two kids' rooms, an open kitchen and living room, a garden with trees\" — and WalkMyPlan builds it in one go: real walls, doors, windows, furniture and garden. Open the live link and walk through it in 3D.\n\nKeep designing in conversation. \"Make the living room bigger.\" \"Put a TV on the north wall.\" \"I marked pin A — put the front door exactly there.\" Furniture placement is automatic — it finds a free spot, away from doorways. Every edit lands in a revision history you can undo or roll back to any point. Edits are for visualization and planning; WalkMyPlan does not check structural safety or building codes.\n\nAsk about what you built. \"How big is the kitchen?\", \"Is there room for a double bed in the small bedroom?\" Answers are measured from the model's real geometry.\n\nShare and collaborate. Share a plan privately with named people as viewers or editors, or with a link. See who changed what, when.\n\nAlready have a plan? Upload the real CAD file your architect sent — DWG or vector PDF, up to 100MB — and WalkMyPlan converts it into the same editable, walkable 3D model, so you start from reality instead of a blank page.\n\nGreat for home design, interior design, room planning, renovation, and planning a build. Your plans stay private to your account unless you share them, are never used to train AI models, and can be deleted any time (trash keeps them recoverable for 30 days).\n\nTry: \"Build me a three-bedroom house with a garden\" — then \"walk me through it.\"",
+    "privacyPolicyURL": "https://www.walkmyplan.com/privacy",
+    "shortDescription": "Home design by chat, in 3D",
+    "supportURL": "https://www.walkmyplan.com/support.html",
+    "termsOfServiceURL": "https://www.walkmyplan.com/terms",
+    "websiteURL": "https://www.walkmyplan.com"
+  },
+  "name": "app-6a5563300db881918aa0eff31d9a6679",
+  "version": "3.0.0"
+}

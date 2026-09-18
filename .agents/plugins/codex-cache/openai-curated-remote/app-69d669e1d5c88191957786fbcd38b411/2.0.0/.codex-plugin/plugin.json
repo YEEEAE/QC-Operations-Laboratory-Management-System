@@ -1,0 +1,26 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "Opera Norway AS"
+  },
+  "description": "Connect Opera Browser to ChatGPT. When enabled, it can see open tabs, read page content, take screenshots of the page, and navigate to the page. And, based on the permissions you allow it, it could also view browsing history and close tabs\n\nFirst ensure that Opera Browser Connector is enabled in Opera; \nOpera browser settings > search for \"AI Services\" > On Browser Connector click install\n\nOnce installed, the connector appears in Opera's toolbar, where you can manage connections to ChatGPT",
+  "interface": {
+    "capabilities": [],
+    "category": "Productivity",
+    "defaultPrompt": [
+      "Summarize all my tabs in Opera",
+      "Which sites did I visit in Opera today?",
+      "Take a screenshot of the BBC tab in Opera and analyze it"
+    ],
+    "developerName": "Opera Norway AS",
+    "displayName": "Opera Browser Connector",
+    "longDescription": "Connect Opera Browser to ChatGPT. When enabled, it can see open tabs, read page content, take screenshots of the page, and navigate to the page. And, based on the permissions you allow it, it could also view browsing history and close tabs\n\nFirst ensure that Opera Browser Connector is enabled in Opera; \nOpera browser settings > search for \"AI Services\" > On Browser Connector click install\n\nOnce installed, the connector appears in Opera's toolbar, where you can manage connections to ChatGPT",
+    "privacyPolicyURL": "https://www.opera.com/legal/privacy",
+    "shortDescription": "Connect with the Opera browser",
+    "supportURL": "https://opera.atlassian.net/servicedesk/customer/portal/52",
+    "termsOfServiceURL": "https://www.opera.com/legal/terms",
+    "websiteURL": "https://blogs.opera.com/news/2026/05/how-to-set-up-opera-browser-connector-for-chatgpt/"
+  },
+  "name": "app-69d669e1d5c88191957786fbcd38b411",
+  "version": "2.0.0"
+}

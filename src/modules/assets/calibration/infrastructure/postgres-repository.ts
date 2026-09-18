@@ -15,15 +15,24 @@ import {
   type CalibrationAction,
   type CalibrationRecord,
 } from '../domain/calibration.js';
-import type { CalibrationListFilter, CalibrationRepository } from '../ports/repository.js';
+import type {
+  CalibrationHistory,
+  CalibrationListFilter,
+  CalibrationRepository,
+} from '../ports/repository.js';
 
+const dateOnly = (value: string | Date): Date => {
+  if (value instanceof Date)
+    return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+  return new Date(`${value}T00:00:00.000Z`);
+};
 const map = (row: DatabaseRow<'calibration_records'>): CalibrationRecord => ({
   id: row.id,
   calibrationNo: row.calibration_no,
   equipmentId: row.equipment_id,
   state: row.state as CalibrationRecord['state'],
-  calibrationDate: new Date(`${row.calibration_date}T00:00:00.000Z`),
-  dueDate: row.due_date ? new Date(`${row.due_date}T00:00:00.000Z`) : undefined,
+  calibrationDate: dateOnly(row.calibration_date),
+  dueDate: row.due_date ? dateOnly(row.due_date) : undefined,
   provider: row.provider ?? undefined,
   certificateNo: row.certificate_no ?? undefined,
   result: row.result ?? undefined,
@@ -43,6 +52,24 @@ const entity = (x: CalibrationRecord) => ({
   id: x.id,
   state: x.state,
   ownerId: x.createdBy,
+});
+const snapshot = (x: CalibrationRecord): Readonly<Record<string, unknown>> => ({
+  id: x.id,
+  calibrationNo: x.calibrationNo,
+  equipmentId: x.equipmentId,
+  state: x.state,
+  calibrationDate: x.calibrationDate.toISOString(),
+  dueDate: x.dueDate?.toISOString() ?? null,
+  provider: x.provider ?? null,
+  certificateNo: x.certificateNo ?? null,
+  result: x.result ?? null,
+  approvedAt: x.approvedAt?.toISOString() ?? null,
+  approvedBy: x.approvedBy ?? null,
+  becameCurrentAt: x.becameCurrentAt?.toISOString() ?? null,
+  supersededAt: x.supersededAt?.toISOString() ?? null,
+  voidedAt: x.voidedAt?.toISOString() ?? null,
+  voidReason: x.voidReason ?? null,
+  version: x.version.toString(),
 });
 export class PostgresCalibrationRepository implements CalibrationRepository {
   constructor(
@@ -91,6 +118,19 @@ export class PostgresCalibrationRepository implements CalibrationRepository {
           newState: 'DRAFT',
           requestId: input.requestId,
         });
+        await tx
+          .insertInto('calibration_history')
+          .values({
+            calibration_id: x.id,
+            state: 'DRAFT',
+            action: 'CREATE',
+            snapshot: snapshot(x),
+            changed_by: input.actor.id,
+            changed_at: x.updatedAt,
+            record_version: 1n,
+            request_id: input.requestId,
+          })
+          .execute();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'CALIBRATION_CREATED',
           aggregateType: 'CALIBRATION_RECORD',
@@ -136,6 +176,28 @@ export class PostgresCalibrationRepository implements CalibrationRepository {
       .map(map)
       .filter((x) => actorHasScope(input.actor, entity(x), { ownerId: x.createdBy }, grant));
   }
+  async history(id: string, actor: ActorContext): Promise<readonly CalibrationHistory[]> {
+    const current = await this.get(id, actor);
+    if (!current) return [];
+    const rows = await this.db
+      .selectFrom('calibration_history')
+      .selectAll()
+      .where('calibration_id', '=', id)
+      .orderBy('changed_at', 'asc')
+      .orderBy('id', 'asc')
+      .execute();
+    return rows.map((row) => ({
+      id: row.id,
+      calibrationId: row.calibration_id,
+      state: row.state as CalibrationHistory['state'],
+      action: row.action,
+      snapshot: row.snapshot as Readonly<Record<string, unknown>>,
+      changedBy: row.changed_by,
+      changedAt: row.changed_at,
+      recordVersion: BigInt(row.record_version),
+      requestId: row.request_id,
+    }));
+  }
   async transition(input: {
     id: string;
     expectedVersion: bigint;
@@ -150,18 +212,48 @@ export class PostgresCalibrationRepository implements CalibrationRepository {
       const changed = transitionCalibration(old, input.action, new Date(), input.reason);
       return await this.db.transaction().execute(async (tx) => {
         if (input.action === 'MAKE_CURRENT') {
+          const supersededAt = new Date();
+          const superseded = await tx
+            .selectFrom('calibration_records')
+            .selectAll()
+            .where('equipment_id', '=', old.equipmentId)
+            .where('id', '!=', old.id)
+            .where('state', 'in', ['CURRENT', 'DUE', 'OVERDUE'])
+            .execute();
           await tx
             .updateTable('calibration_records')
             .set({
               state: 'SUPERSEDED',
-              superseded_at: new Date(),
-              updated_at: new Date(),
+              superseded_at: supersededAt,
+              updated_at: supersededAt,
               version: sql<bigint>`version + 1`,
             })
             .where('equipment_id', '=', old.equipmentId)
             .where('id', '!=', old.id)
             .where('state', 'in', ['CURRENT', 'DUE', 'OVERDUE'])
             .execute();
+          for (const row of superseded) {
+            const previous = map(row);
+            await tx
+              .insertInto('calibration_history')
+              .values({
+                calibration_id: row.id,
+                state: 'SUPERSEDED',
+                action: 'AUTO_SUPERSEDE',
+                snapshot: snapshot({
+                  ...previous,
+                  state: 'SUPERSEDED',
+                  supersededAt,
+                  updatedAt: supersededAt,
+                  version: BigInt(row.version) + 1n,
+                }),
+                changed_by: input.actor.id,
+                changed_at: supersededAt,
+                record_version: BigInt(row.version) + 1n,
+                request_id: input.requestId,
+              })
+              .execute();
+          }
           await tx
             .updateTable('equipment')
             .set({
@@ -170,6 +262,14 @@ export class PostgresCalibrationRepository implements CalibrationRepository {
               version: sql<bigint>`version + 1`,
             })
             .where('id', '=', old.equipmentId)
+            .execute();
+        }
+        if (['FAIL', 'VOID', 'SUPERSEDE'].includes(input.action)) {
+          await tx
+            .updateTable('equipment')
+            .set({ current_calibration_id: null, updated_at: new Date() })
+            .where('id', '=', old.equipmentId)
+            .where('current_calibration_id', '=', old.id)
             .execute();
         }
         const row = await tx
@@ -202,6 +302,22 @@ export class PostgresCalibrationRepository implements CalibrationRepository {
           reason: input.reason,
           requestId: input.requestId,
         });
+        await tx
+          .insertInto('calibration_history')
+          .values({
+            calibration_id: input.id,
+            state: changed.state,
+            action: input.action,
+            snapshot: snapshot({
+              ...changed,
+              approvedBy: input.action === 'APPROVE' ? input.actor.id : old.approvedBy,
+            }),
+            changed_by: input.actor.id,
+            changed_at: changed.updatedAt,
+            record_version: changed.version,
+            request_id: input.requestId,
+          })
+          .execute();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'CALIBRATION_CHANGED',
           aggregateType: 'CALIBRATION_RECORD',

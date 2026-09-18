@@ -1,0 +1,4 @@
+interface:
+  display_name: "WebMCP Enable"
+  short_description: "Build and verify WebMCP tools for real website workflows"
+  default_prompt: "Use $webmcp-enable to inspect this website, implement WebMCP for its main workflows, and report verified coverage and remaining limits."

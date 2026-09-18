@@ -32,14 +32,36 @@ export function assetsReadDependencies() {
     equipment: {
       get: new GetEquipmentUseCase(repositories.equipment),
       list: new ListEquipmentUseCase(repositories.equipment),
+      history: {
+        execute: ({ actor, equipmentId }: { actor: App.Locals['actor']; equipmentId: string }) =>
+          repositories.equipment.history?.(equipmentId, actor!) ?? Promise.resolve([]),
+      },
     },
     calibration: {
       get: new GetCalibrationUseCase(repositories.calibration),
       list: new ListCalibrationsUseCase(repositories.calibration),
+      history: {
+        execute: ({
+          actor,
+          calibrationId,
+        }: {
+          actor: App.Locals['actor'];
+          calibrationId: string;
+        }) => repositories.calibration.history?.(calibrationId, actor!) ?? Promise.resolve([]),
+      },
     },
     maintenance: {
       get: new GetMaintenanceUseCase(repositories.maintenance),
       list: new ListMaintenanceUseCase(repositories.maintenance),
+      history: {
+        execute: ({
+          actor,
+          maintenanceId,
+        }: {
+          actor: App.Locals['actor'];
+          maintenanceId: string;
+        }) => repositories.maintenance.history?.(maintenanceId, actor!) ?? Promise.resolve([]),
+      },
     },
   };
 }

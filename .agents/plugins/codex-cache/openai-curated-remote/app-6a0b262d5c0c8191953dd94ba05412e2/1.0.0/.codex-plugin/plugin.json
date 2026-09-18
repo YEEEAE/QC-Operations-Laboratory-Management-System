@@ -1,0 +1,24 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "SE Ranking"
+  },
+  "description": "SE Ranking connects ChatGPT to SE Ranking's SEO data and project APIs. Research keywords, analyze backlinks and referring domains, study domain and competitor traffic, pull live SERP data, run website audits, track AI Search visibility across ChatGPT/Perplexity/Gemini/AI Overview, and manage rank-tracking projects you own.",
+  "interface": {
+    "capabilities": [],
+    "category": "Business & Operations",
+    "defaultPrompt": [
+      "Chart a domain's organic growth over time",
+      "Audit any domain's backlink profile",
+      "AI Search share of voice vs competitors"
+    ],
+    "developerName": "SE Ranking",
+    "displayName": "SE Ranking",
+    "longDescription": "SE Ranking connects ChatGPT to SE Ranking's SEO data and project APIs. Research keywords, analyze backlinks and referring domains, study domain and competitor traffic, pull live SERP data, run website audits, track AI Search visibility across ChatGPT/Perplexity/Gemini/AI Overview, and manage rank-tracking projects you own.",
+    "privacyPolicyURL": "https://seranking.com/legal/privacy-policy.html",
+    "shortDescription": "SEO data & rank tracking",
+    "termsOfServiceURL": "https://seranking.com/legal/terms-of-service.html"
+  },
+  "name": "app-6a0b262d5c0c8191953dd94ba05412e2",
+  "version": "1.0.0"
+}

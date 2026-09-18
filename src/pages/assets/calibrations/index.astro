@@ -4,7 +4,7 @@ import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUn
 import { assetsReadDependencies } from '../../../modules/assets/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fassets%2Fcalibrations');
-const states = ['DRAFT','SUBMITTED','APPROVED','CURRENT','DUE','OVERDUE','SUPERSEDED','VOID'] as const;
+const states = ['DRAFT','SCHEDULED','SUBMITTED','APPROVED','CURRENT','DUE','OVERDUE','COMPLETED','FAILED','SUPERSEDED','VOID'] as const;
 const requested = Astro.url.searchParams.get('state');
 const state = states.find((value) => value === requested);
 const equipmentId = Astro.url.searchParams.get('equipmentId') || undefined;

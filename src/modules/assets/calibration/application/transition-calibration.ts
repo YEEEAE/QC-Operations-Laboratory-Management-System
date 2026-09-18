@@ -6,9 +6,20 @@ import type { CalibrationRepository } from '../ports/repository.js';
 const permissions: Partial<
   Record<
     CalibrationAction,
-    'PERM-CAL-SUBMIT' | 'PERM-CAL-REVIEW' | 'PERM-CAL-APPROVE' | 'PERM-CAL-VOID'
+    | 'PERM-CAL-EDIT-DRAFT'
+    | 'PERM-CAL-SUBMIT'
+    | 'PERM-CAL-REVIEW'
+    | 'PERM-CAL-APPROVE'
+    | 'PERM-CAL-VOID'
   >
-> = { SUBMIT: 'PERM-CAL-SUBMIT', APPROVE: 'PERM-CAL-APPROVE', VOID: 'PERM-CAL-VOID' };
+> = {
+  SCHEDULE: 'PERM-CAL-EDIT-DRAFT',
+  SUBMIT: 'PERM-CAL-SUBMIT',
+  APPROVE: 'PERM-CAL-APPROVE',
+  COMPLETE: 'PERM-CAL-REVIEW',
+  FAIL: 'PERM-CAL-REVIEW',
+  VOID: 'PERM-CAL-VOID',
+};
 export class TransitionCalibrationUseCase {
   constructor(
     private readonly repository: CalibrationRepository,

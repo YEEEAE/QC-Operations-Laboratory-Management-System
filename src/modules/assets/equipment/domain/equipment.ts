@@ -28,6 +28,8 @@ export interface Equipment {
   updatedBy?: string;
   updatedAt: Date;
   version: bigint;
+  calibrationRequired?: boolean;
+  maintenanceRequired?: boolean;
 }
 
 export interface NewEquipmentInput {
@@ -40,6 +42,8 @@ export interface NewEquipmentInput {
   location?: string;
   createdBy: string;
   now: Date;
+  calibrationRequired?: boolean;
+  maintenanceRequired?: boolean;
 }
 
 const required = (value: string, field: string): string => {
@@ -67,6 +71,8 @@ export function createDraftEquipment(input: NewEquipmentInput): Equipment {
     createdAt: input.now,
     updatedAt: input.now,
     version: 1n,
+    calibrationRequired: input.calibrationRequired,
+    maintenanceRequired: input.maintenanceRequired,
   };
 }
 
@@ -74,7 +80,14 @@ export function updateDraftEquipment(
   equipment: Equipment,
   input: Pick<
     NewEquipmentInput,
-    'equipmentNo' | 'name' | 'manufacturer' | 'model' | 'serialNo' | 'location'
+    | 'equipmentNo'
+    | 'name'
+    | 'manufacturer'
+    | 'model'
+    | 'serialNo'
+    | 'location'
+    | 'calibrationRequired'
+    | 'maintenanceRequired'
   >,
   now: Date,
 ): Equipment {
@@ -87,6 +100,8 @@ export function updateDraftEquipment(
     model: optional(input.model),
     serialNo: optional(input.serialNo),
     location: optional(input.location),
+    calibrationRequired: input.calibrationRequired,
+    maintenanceRequired: input.maintenanceRequired,
     updatedAt: now,
     version: equipment.version + 1n,
   };

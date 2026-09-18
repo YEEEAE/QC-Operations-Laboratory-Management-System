@@ -1,0 +1,20 @@
+# Site registration
+
+Use the native Sites connector tool in the Site-owning conversation so the runtime supplies the current turn and product context. Use the retained execution below only when the current tool descriptions expose retained `functions.exec` cells and `functions.wait`, and the native `create_site` tool is callable from that execution. Otherwise await the single native registration call normally and apply the same identity, credential, and manifest safeguards. Do not replace the connector call with shell HTTP or delegate it to another agent.
+
+For the split scaffold and `create_site` workflow, keep registration in the Site-owning task. The running call's **cell ID** is used to collect its result; the created **Site ID** is saved as `project_id`.
+
+1. Reuse an existing `project_id` or an already-running registration. An empty `.openai/hosting.json` is not a reason to start another `create_site` call.
+2. Start `create_site` once in its own `functions.exec` call. Put `// @exec: {"yield_time_ms": 1000}` on the first line, and await the request inside that script. This lets the agent continue after about one second while registration keeps running. Keep the returned cell ID if the call is still running; yielding does not cancel it.
+3. While registration runs, inspect source and write the application through subsequent tool calls. Do not edit `.openai/hosting.json` from another cell or immediately wait while useful independent work remains. Keep dependency checks and unrelated reads out of the registration cell; awaiting several tools in a cell that has not yielded still blocks the next model response.
+4. Inside that same registration script, check that `create_site` succeeded. Keep the exact returned Site `id` and source write credential in session memory before attempting to save the ID as `project_id` in `.openai/hosting.json`. Save it immediately, preserve the file's other fields, reject a conflicting ID, and write the file atomically. Return only the Site ID, whether it was saved, and whether a credential is available; never print the credential or full response.
+5. Before other hosting-manifest edits, committing, pushing, packaging, or saving a version, collect that same registration call and re-read `.openai/hosting.json` to verify its ID. Use `functions.wait` only if the call returned a running-cell ID; keep that same ID if it is still running. Otherwise inspect the completed result directly. Verify both request success and that the ID was saved. Wait before a build only when compiled code needs registration values; saving only the ID does not require rebuilding when the packager copies the current manifest.
+
+### Errors and resuming
+
+- If using `store`, use a Site-specific key. Later cells can read its values only after the registration cell completes. Keep credentials out of files, Git configuration, remote URLs, and user-facing output.
+- If the local write fails after creation succeeds, keep the known Site ID and credential. Return the Site ID with `manifest_persisted: false`, then repair the manifest before hosting.
+- A timeout, cancellation, missing cell, malformed response, or transport failure can leave creation's outcome uncertain. Preserve any known Site ID and resolve the original attempt or use Sites discovery before proceeding; do not issue another `create_site` call. A short wait, installation failure, or build failure is not a reason to create again. Treat quota, permission, and access errors as terminal.
+- Retry creation only after the previous attempt has definitively failed with an explicit temporary failure or slug conflict and no Site was created. Resolve an ambiguous outcome before retrying; never start a second request while the first is running.
+- If only the source write credential is missing, expired, or lost after resumption, renew it for the same Site during hosting.
+- If the environment cannot keep a cell running after yielding, await the single registration request normally. Never drop an unawaited promise or cancel the request to regain model control.

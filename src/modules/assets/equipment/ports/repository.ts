@@ -1,5 +1,17 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Equipment, EquipmentAction, EquipmentState } from '../domain/equipment.js';
+export interface EquipmentStatusHistory {
+  id: string;
+  equipmentId: string;
+  fromState?: EquipmentState;
+  toState: EquipmentState;
+  action: string;
+  reason?: string;
+  changedBy: string;
+  changedAt: Date;
+  equipmentVersion: bigint;
+  requestId: string;
+}
 export interface EquipmentListFilter {
   state?: EquipmentState;
   search?: string;
@@ -22,6 +34,8 @@ export interface EquipmentRepository {
     model?: string;
     serialNo?: string;
     location?: string;
+    calibrationRequired?: boolean;
+    maintenanceRequired?: boolean;
     requestId: string;
   }): Promise<Equipment>;
   transition(input: {
@@ -32,4 +46,5 @@ export interface EquipmentRepository {
     reason?: string;
     requestId: string;
   }): Promise<Equipment>;
+  history?(id: string, actor: ActorContext): Promise<readonly EquipmentStatusHistory[]>;
 }

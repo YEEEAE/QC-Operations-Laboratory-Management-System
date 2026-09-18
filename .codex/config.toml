@@ -24,3 +24,18 @@ args = [
     "-y",
     "dataforseo-mcp-server@latest",
 ]
+
+# Read-only PostgreSQL inspection and performance analysis.
+# The launcher loads the allowlisted DATABASE_URL from the ignored .env file
+# and maps it to the DATABASE_URI expected by postgres-mcp.
+[mcp_servers.postgres]
+command = "node"
+args = [
+    "--experimental-strip-types",
+    "scripts/mcp/postgres-mcp.ts",
+]
+cwd = "."
+env_vars = ["DATABASE_URL"]
+default_tools_approval_mode = "prompt"
+startup_timeout_sec = 30
+tool_timeout_sec = 60

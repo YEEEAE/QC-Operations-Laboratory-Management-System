@@ -28,6 +28,8 @@ export class UpdateEquipmentUseCase {
     model?: string;
     serialNo?: string;
     location?: string;
+    calibrationRequired?: boolean;
+    maintenanceRequired?: boolean;
     requestId: string;
   }) {
     const current = await this.repository.get(input.equipmentId, input.actor);

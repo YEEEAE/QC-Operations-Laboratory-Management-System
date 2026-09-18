@@ -584,14 +584,16 @@ export interface EquipmentTable {
   updated_at: Generated<Date>;
   updated_by: string | null;
   version: Generated<bigint>;
+  calibration_required: boolean | null;
+  maintenance_required: boolean | null;
 }
 export interface CalibrationRecordsTable {
   id: Generated<string>;
   calibration_no: string;
   equipment_id: string;
   state: string;
-  calibration_date: string;
-  due_date: string | null;
+  calibration_date: string | Date;
+  due_date: string | Date | null;
   provider: string | null;
   certificate_no: string | null;
   result: string | null;
@@ -623,6 +625,46 @@ export interface MaintenanceRecordsTable {
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
   version: Generated<bigint>;
+  downtime_started_at: Date | null;
+  downtime_ended_at: Date | null;
+  downtime_minutes: number | null;
+}
+
+export interface EquipmentStatusHistoryTable {
+  id: Generated<string>;
+  equipment_id: string;
+  from_state: string | null;
+  to_state: string;
+  action: string;
+  reason: string | null;
+  changed_by: string;
+  changed_at: Generated<Date>;
+  equipment_version: bigint;
+  request_id: string;
+}
+
+export interface CalibrationHistoryTable {
+  id: Generated<string>;
+  calibration_id: string;
+  state: string;
+  action: string;
+  snapshot: unknown;
+  changed_by: string;
+  changed_at: Generated<Date>;
+  record_version: bigint;
+  request_id: string;
+}
+
+export interface MaintenanceHistoryTable {
+  id: Generated<string>;
+  maintenance_id: string;
+  state: string;
+  action: string;
+  snapshot: unknown;
+  changed_by: string;
+  changed_at: Generated<Date>;
+  record_version: bigint;
+  request_id: string;
 }
 export interface DocumentIdentitiesTable {
   id: Generated<string>;
@@ -1114,6 +1156,9 @@ export interface DatabaseSchema {
   equipment: EquipmentTable;
   calibration_records: CalibrationRecordsTable;
   maintenance_records: MaintenanceRecordsTable;
+  equipment_status_history: EquipmentStatusHistoryTable;
+  calibration_history: CalibrationHistoryTable;
+  maintenance_history: MaintenanceHistoryTable;
   document_identities: DocumentIdentitiesTable;
   document_versions: DocumentVersionsTable;
   document_version_files: DocumentVersionFilesTable;

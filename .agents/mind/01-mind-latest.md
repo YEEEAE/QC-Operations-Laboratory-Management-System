@@ -6,14 +6,21 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `38528bd6ffd49b800057f58ac88612ca1b2af97f` on `main` (verified 2026-09-18). `QC-CLOSURE-006` + `QC-CLOSURE-007` are now committed; the working tree carries only the uncommitted `QC-RENDER-POSTGRES-VERIFY-001` changes (6 DB CLI entrypoints, `tests/integration/database/seeds.test.ts`, 2 new test files, 1 audit record). No commit, push, or deployment occurred. Migration source head is `0025_qc_closure_006_workflow`; it is applied locally but **not** on the Render database.
-- Fresh local evidence on this HEAD + working tree: typecheck (`744 files`, 0 errors/0 warnings/67 hints), lint, build, architecture, unit (`79 files / 535 tests`), integration (`83 files / 326 tests`), migrations (`7 files / 26 tests`), concurrency (`12 tests`), security (`7 files / 51 tests`) are **PASS**. The PostgreSQL suites now run against the approved disposable PostgreSQL 18 cluster (`scripts/db/disposable-postgres.sh`), not Testcontainers.
+- Exact current HEAD: `38528bd6ffd49b800057f58ac88612ca1b2af97f` on `main` (verified 2026-09-18). The working tree contains the prior uncommitted Render verification work plus `QC-CLOSURE-008` changes; no commit, push, or deployment occurred. Migration source head is now `0027_equipment_calibration_maintenance_closure` in the working tree and is applied only to the disposable local PostgreSQL database, **not** to Render.
+- Fresh QC-CLOSURE-008 evidence: closure PostgreSQL suite `3/3 PASS`; focused asset suite `17/17 PASS`; migration/database suite `7 files / 26 tests PASS`; typecheck `0 errors / 68 hints`; build and architecture PASS; targeted ESLint PASS; `git diff --check` PASS. Full lint remains **BLOCKED** by existing Reject Reports errors outside this task. PostgreSQL verification used the approved disposable PostgreSQL 18 cluster (`scripts/db/disposable-postgres.sh`), not Testcontainers.
 - **Render PostgreSQL — VERIFIED (read-only):** `dpg-dadqmsgn74is73b774j0-a` is the Render **database** id (not the web-service id) and is the internal hostname label; app database `qc_operations`, principal `qc_operations_user`, PostgreSQL 18.6, region oregon, **free plan expiring `2026-10-05`**. Canonical pool connects with TLS 1.3 and session `search_path=qc,pg_catalog`, `TimeZone=UTC`; `/api/health/ready` is `200 healthy` both for the built app against this database and for live `https://qclevel.top`. Data is bootstrap-only (1 user, 2 role grants, 4 audit events, 0 lab tests).
 - **Render migration gap (blocker):** the Render database is at applied head `0018` with `0019`–`0025` pending, so `db:schema:check` fails closed there while ledger checksums for all 18 applied rows verify. Applying them is **prohibited** until the credential-rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied (the local Render export credential — the one in `.env` — is documented as compromised).
 - **Render live service DIVERGES from `render.yaml`:** runtime `rust` (not `node`), empty `healthCheckPath` (not `/api/health/ready`), `autoDeployTrigger: commit` (not `checksPass`), and a start command that runs `pnpm access:grant-system-owner` before the server, i.e. authorization mutation during boot. `RELEASE_*` identity variables are absent and every deploy reports `commitId: null`, so the deployed release SHA is **NOT VERIFIED**. The Render subdomain is intentionally blocked (`x-render-routing: blocked-render-subdomain`); `qclevel.top` is the production entrypoint.
 - Node locally is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence (the Render service pins `NODE_VERSION=24.20.0`). Docker-backed authenticated Playwright E2E now executes against a fresh PostgreSQL 18 container with an isolated `yazeed` fixture, but is **PARTIAL/FAIL**: 10 passed, 10 failed, 16 skipped. UAT remains unexecuted.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+- Project-local PostgreSQL MCP configuration is present in `.codex/config.toml`: its launcher reads only the allowlisted canonical `DATABASE_URL`, maps it to `DATABASE_URI`, and starts `postgres-mcp` in restricted read-only mode. Live MCP/database handshake is **NOT VERIFIED** because the current local provider export is not an approved canonical URL and the credential-rotation gate remains open.
+
+- **2026-09-18 — QC-CLOSURE-008 / Equipment, calibration & maintenance closure**
+  - Changed: added migration `0027` with explicit calibration states, nullable policy flags, append-only equipment/calibration/maintenance histories, evidence-preserving transitions, maintenance downtime/lock, and fail-closed equipment eligibility; added UI history access and regression coverage.
+  - Evidence: closure PostgreSQL `3/3 PASS`; focused assets `17/17 PASS`; migrations `26/26 PASS`; typecheck/build/architecture PASS. Full lint remains blocked by existing Reject Reports errors; Node 22 remains outside the declared contract.
+  - State: PARTIAL.
+  - Key files: `db/migrations/0027_equipment_calibration_maintenance_closure.sql`, `tests/integration/assets/closure-008.test.ts`.
 
 - **2026-09-18 — QC-AUTH-E2E-DOCKER-001 / Docker E2E attempt**
   - Changed: Docker-only runner now loads allowlisted test secrets, bootstraps a fresh isolated `yazeed` with `SYSTEM_OWNER` + all active permissions + `GLOBAL` scope, and refuses external `QC_TEST_DATABASE_URL`; fixed the Reject Reports migration's invalid `qc.uuidv7()` call and the TEAM fixture's missing scope value.
@@ -287,7 +294,7 @@
 - Laboratory state machine is fully implemented for Create/Save/Submit/Review/Return/Resume/Approve/**Reject**; `VOID` (TR-LAB-008) remains unimplemented and policy-denied.
 - Lab reject (TR-LAB-007) is fail-closed by policy: the transition, reason, dual permission (`PERM-LAB-REJECT` + `PERM-APR-REJECT`), SoD, expected version and P-05 authority are enforced, but the reject **decision authority source does not exist** → default `LabRejectPolicy` throws `POLICY_SOURCE_REQUIRED` (PD-38 OPEN). Reject never changes `scientificResult` and preserves measurements/samples.
 - Scientific evaluation stays server-side only: `PostgresControlledLabSources.evaluate()` throws; `PASS`/`FAIL`/`HOLD` are stored only from an injected server evaluator whose `sourceReference`/`contentHash` must match the frozen context. No limit, unit, formula, tolerance or method was invented.
-- Equipment eligibility is verified fail-closed at Submit: equipment `ACTIVE`, calibration `CURRENT` + linked + not overdue, and equipment/calibration snapshots must match the referenced records.
+- Equipment eligibility is verified fail-closed at Submit: equipment `ACTIVE`, not under maintenance/inactive/failed, its current-calibration pointer must match a `CURRENT` calibration that is not overdue, and equipment/calibration snapshots must match the referenced records. QC-CLOSURE-008 adds append-only status/calibration/maintenance history, explicit `SCHEDULED`/`COMPLETED`/`FAILED` calibration states, certificate preservation, maintenance downtime, and a maintenance lock; source requirement flags remain nullable until policy supplies their values.
 - لا تربط نجاح inspection تلقائيًا بإفراج النظام.
 - مسار release يفرض SoD مشتقًا خادميًا بين منفذ التفتيش ومنفذ الإفراج، ويعيد الطلب المكرر بعد نجاحه عبر idempotency؛ لا يوجد بعد دليل runtime مطبق للـmigration الجديدة.
 - Laboratory retest يخضع للسياسة/السلطة المطبقة ولا تُخترع limits غير موجودة في الوثائق.
@@ -421,6 +428,7 @@
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
+- Render remains at applied migration head `0018`; source head `0027` is not a production claim and must not be applied before the credential-rotation gate.
 
 ### P1 / live validation
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
@@ -448,6 +456,18 @@
 ## 17) سجل تاريخي مضغوط
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+
+- **2026-09-18 — QC-MCP-POSTGRES-001 / Project-local PostgreSQL MCP server**
+  - Changed: added a Codex project-scoped `postgres-mcp` STDIO configuration and a fail-closed launcher that loads the allowlisted local `DATABASE_URL`, maps it to `DATABASE_URI`, and forces restricted read-only mode; documented the credential-rotation requirement.
+  - Evidence: TOML parse PASS; project typecheck `0 errors`; launcher missing-URL guard PASS; live database handshake **NOT VERIFIED** by design while the Render credential-rotation gate is open.
+  - State: PARTIAL.
+  - Key files: `.codex/config.toml`, `scripts/mcp/postgres-mcp.ts`, `docs/operations/POSTGRES-MCP.md`.
+
+- **2026-09-18 — CODEX-PLUGIN-SYNC / Codex plugin cache into project**
+  - Changed: copied 49 installed Codex plugin packages into `.agents/plugins/codex-cache/`, excluding internal `.git` directories and `.DS_Store` files.
+  - Evidence: source/destination `rsync` dry-run clean; 49 plugin roots / 2,685 files / 88 MB.
+  - State: DONE.
+  - Key files: `.agents/plugins/codex-cache/`.
 
 - **2026-09-18 — Project Mind rollover (QC-YAZEED-CONTROL-CENTER-001)** — نُقلت أقدم 12 سجلًا ([2026-09-10]×8 و[2026-09-15]×4) إلى أعلى `02-mind-mid.md` للبقاء تحت soft limit؛ تم التحقق من وجود كل سجل في الأرشيف (12/12) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
 - **2026-09-18 — Project Mind rollover (QC-CLOSURE-007)** — نُقلت أقدم 12 سجلات `[2026-09-10]` إلى أعلى `02-mind-mid.md` للبقاء تحت soft limit؛ تم التحقق من وجود كل سجل في الأرشيف (12/12) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.

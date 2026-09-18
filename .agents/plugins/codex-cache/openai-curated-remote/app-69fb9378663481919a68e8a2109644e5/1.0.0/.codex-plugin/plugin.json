@@ -1,0 +1,21 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "Parallel Web Systems"
+  },
+  "description": "Parallel Search provides drop-in web search and content extraction capabilities. The tools invoke the Search API and Extract API endpoints and ensure effective use by agents. Find content on the web without wasting tokens.",
+  "interface": {
+    "capabilities": [],
+    "category": "Developer Tools",
+    "defaultPrompt": null,
+    "developerName": "Parallel Web Systems",
+    "displayName": "Parallel Search",
+    "longDescription": "Parallel Search provides drop-in web search and content extraction capabilities. The tools invoke the Search API and Extract API endpoints and ensure effective use by agents. Find content on the web without wasting tokens.",
+    "privacyPolicyURL": "https://parallel.ai/privacy-policy",
+    "shortDescription": "Web search for AI",
+    "termsOfServiceURL": "https://parallel.ai/terms-of-service",
+    "websiteURL": "https://parallel.ai/"
+  },
+  "name": "app-69fb9378663481919a68e8a2109644e5",
+  "version": "1.0.0"
+}

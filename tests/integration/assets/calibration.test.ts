@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createDraftCalibration,
   isCalibrationOverdue,
+  transitionCalibration,
   type CalibrationRecord,
 } from '../../../src/modules/assets/calibration/domain/calibration.js';
 import { TransitionCalibrationUseCase } from '../../../src/modules/assets/calibration/application/transition-calibration.js';
@@ -94,5 +95,23 @@ describe('Assets calibration controls', () => {
         requestId: 'req-5',
       }),
     ).rejects.toThrow();
+  });
+  it('represents scheduled, due, overdue, completed, and failed outcomes explicitly', () => {
+    expect(transitionCalibration(make(), 'SCHEDULE', new Date()).state).toBe('SCHEDULED');
+    expect(
+      transitionCalibration({ ...make(), state: 'CURRENT' }, 'MARK_DUE', new Date()).state,
+    ).toBe('DUE');
+    expect(
+      transitionCalibration({ ...make(), state: 'DUE' }, 'MARK_OVERDUE', new Date()).state,
+    ).toBe('OVERDUE');
+    expect(
+      transitionCalibration({ ...make(), state: 'APPROVED' }, 'COMPLETE', new Date()).state,
+    ).toBe('COMPLETED');
+    expect(
+      transitionCalibration({ ...make(), state: 'CURRENT' }, 'FAIL', new Date(), 'failed'),
+    ).toMatchObject({
+      state: 'FAILED',
+      version: 2n,
+    });
   });
 });

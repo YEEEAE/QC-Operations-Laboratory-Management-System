@@ -1,0 +1,33 @@
+{
+  "description": "TypeScript/JavaScript language server for enhanced code intelligence",
+  "version": "1.0.0",
+  "author": {
+    "name": "Anthropic",
+    "email": "support@anthropic.com"
+  },
+  "strict": false,
+  "lspServers": {
+    "typescript": {
+      "command": "typescript-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "extensionToLanguage": {
+        ".ts": "typescript",
+        ".tsx": "typescriptreact",
+        ".js": "javascript",
+        ".jsx": "javascriptreact",
+        ".mts": "typescript",
+        ".cts": "typescript",
+        ".mjs": "javascript",
+        ".cjs": "javascript"
+      }
+    }
+  },
+  "name": "typescript-lsp",
+  "category": "development",
+  "interface": {
+    "developerName": "Anthropic",
+    "category": "development"
+  }
+}

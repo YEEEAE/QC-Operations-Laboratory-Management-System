@@ -1,0 +1,24 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "NP Digital"
+  },
+  "description": "Ubersuggest is a free SEO research app that helps you quickly explore keyword ideas and website SEO metrics directly in ChatGPT.\n\nYou can use the app to:\n\nFind keyword ideas and related search terms for any topic\nSee estimated search volume, keyword difficulty, and CPC\nGet a high-level SEO overview for a website, including estimated traffic, keyword count, and backlinks\n\nThe goal of the app is to make SEO research fast and conversational. It provides lightweight, easy-to-understand data inside ChatGPT, so you can validate ideas, explore topics, or analyze a site without leaving the conversation.\n\nWhen you want deeper analysis, full keyword lists, historical data, or detailed reports, the app links you to Ubersuggest’s free account experience, where you can continue exploring at no cost. No purchase is required to get started.\n\nThis app is ideal for marketers, founders, content creators, and anyone who wants quick SEO insights before deciding what to research further.",
+  "interface": {
+    "capabilities": [],
+    "category": "Business & Operations",
+    "defaultPrompt": [
+      "generate SEO keyword variations for a marketing topic"
+    ],
+    "developerName": "NP Digital",
+    "displayName": "Ubersuggest",
+    "longDescription": "Ubersuggest is a free SEO research app that helps you quickly explore keyword ideas and website SEO metrics directly in ChatGPT.\n\nYou can use the app to:\n\nFind keyword ideas and related search terms for any topic\nSee estimated search volume, keyword difficulty, and CPC\nGet a high-level SEO overview for a website, including estimated traffic, keyword count, and backlinks\n\nThe goal of the app is to make SEO research fast and conversational. It provides lightweight, easy-to-understand data inside ChatGPT, so you can validate ideas, explore topics, or analyze a site without leaving the conversation.\n\nWhen you want deeper analysis, full keyword lists, historical data, or detailed reports, the app links you to Ubersuggest’s free account experience, where you can continue exploring at no cost. No purchase is required to get started.\n\nThis app is ideal for marketers, founders, content creators, and anyone who wants quick SEO insights before deciding what to research further.",
+    "privacyPolicyURL": "https://npdigital.com/privacy-notice/",
+    "shortDescription": "Find keywords and SEO insights",
+    "supportURL": "https://ubersuggest.zendesk.com/hc/en-us/requests/new",
+    "termsOfServiceURL": "https://npdigital.com/terms-of-service/",
+    "websiteURL": "https://ubersuggest.com"
+  },
+  "name": "app-69457f8444848191918f7c00fea68076",
+  "version": "2.0.0"
+}

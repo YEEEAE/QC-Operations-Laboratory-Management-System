@@ -1,0 +1,26 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "ClickUp"
+  },
+  "description": "Manage tasks, collaborate with your team, and ship work without leaving ChatGPT or Codex. Post comments with threaded replies and @mentions to keep conversations moving. Send messages in ClickUp Chat. Write and edit Docs and pages. Track time, set custom fields, and search your entire workspace in natural language. Every action syncs to ClickUp in real time, so teammates see your updates instantly.",
+  "interface": {
+    "capabilities": [],
+    "category": "Productivity",
+    "defaultPrompt": [
+      "What should I work on today?",
+      "What's blocking my team right now?",
+      "What did we accomplish this week?"
+    ],
+    "developerName": "ClickUp",
+    "displayName": "ClickUp",
+    "longDescription": "Manage tasks, collaborate with your team, and ship work without leaving ChatGPT or Codex. Post comments with threaded replies and @mentions to keep conversations moving. Send messages in ClickUp Chat. Write and edit Docs and pages. Track time, set custom fields, and search your entire workspace in natural language. Every action syncs to ClickUp in real time, so teammates see your updates instantly.",
+    "privacyPolicyURL": "https://clickup.com/terms/privacy",
+    "shortDescription": "Run your projects from ChatGPT",
+    "supportURL": "https://help.clickup.com",
+    "termsOfServiceURL": "https://clickup.com/terms",
+    "websiteURL": "https://clickup.com/"
+  },
+  "name": "clickup",
+  "version": "2.0.0"
+}

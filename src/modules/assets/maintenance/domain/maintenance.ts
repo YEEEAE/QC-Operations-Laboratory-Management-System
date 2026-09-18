@@ -8,6 +8,8 @@ export const MAINTENANCE_STATES = [
   'VOID',
 ] as const;
 export type MaintenanceState = (typeof MAINTENANCE_STATES)[number];
+export const MAINTENANCE_TYPES = ['PREVENTIVE', 'CORRECTIVE'] as const;
+export type MaintenanceType = (typeof MAINTENANCE_TYPES)[number];
 export type MaintenanceAction = 'PLAN' | 'START' | 'COMPLETE' | 'CANCEL' | 'VOID';
 export interface MaintenanceRecord {
   id: string;
@@ -26,6 +28,9 @@ export interface MaintenanceRecord {
   createdAt: Date;
   updatedAt: Date;
   version: bigint;
+  downtimeStartedAt?: Date;
+  downtimeEndedAt?: Date;
+  downtimeMinutes?: number;
 }
 export interface NewMaintenanceInput {
   id: string;
@@ -38,6 +43,7 @@ export interface NewMaintenanceInput {
   provider?: string;
   createdBy: string;
   now: Date;
+  downtimeStartedAt?: Date;
 }
 const required = (value: string, field: string) => {
   const normalized = value.trim();
@@ -64,6 +70,7 @@ export function createDraftMaintenance(input: NewMaintenanceInput): MaintenanceR
     createdAt: input.now,
     updatedAt: input.now,
     version: 1n,
+    downtimeStartedAt: input.downtimeStartedAt,
   };
 }
 const transitions: Record<MaintenanceAction, readonly [MaintenanceState, MaintenanceState][]> = {
@@ -94,6 +101,12 @@ export function transitionMaintenance(
     state: match[1],
     startedAt: action === 'START' ? now : record.startedAt,
     completedAt: action === 'COMPLETE' ? now : record.completedAt,
+    downtimeStartedAt: action === 'START' ? now : record.downtimeStartedAt,
+    downtimeEndedAt: action === 'COMPLETE' ? now : record.downtimeEndedAt,
+    downtimeMinutes:
+      action === 'COMPLETE' && record.downtimeStartedAt
+        ? Math.max(0, Math.round((now.getTime() - record.downtimeStartedAt.getTime()) / 60000))
+        : record.downtimeMinutes,
     updatedAt: now,
     version: record.version + 1n,
   };

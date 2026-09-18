@@ -1,0 +1,26 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "GSC Wizard - 11 Internet"
+  },
+  "description": "GSC Wizard connects ChatGPT to your own Google Search Console properties so you can analyze SEO performance in plain language. Ask for a performance summary, your top queries and pages, ranking changes between two periods, content decay, keyword cannibalization, CTR-versus-position curves, or a full SEO report, and get a finished answer back. Instead of streaming thousands of raw rows into the model, every analysis is computed server-side against a data warehouse, so results are fast, accurate, and token-efficient. You can also list and inspect properties, run Google's URL Inspection, track indexing, manage topic clusters and content groups, and submit URLs to IndexNow. It also reports on your own linked Google Analytics 4 properties: traffic overviews, dimension breakdowns, ecommerce, key events (conversions), traffic referred by AI assistants such as ChatGPT and Perplexity, and blended Search Console + GA4 landing-page views. Summary tools render interactive cards and tables directly in ChatGPT. All access is scoped to your own account through Google sign-in.",
+  "interface": {
+    "capabilities": [],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Which of my queries gained or lost rankings this month?",
+      "How did glippy.dev perform over the last 28 days?",
+      "What are my top queries for glippy.dev this month?"
+    ],
+    "developerName": "GSC Wizard - 11 Internet",
+    "displayName": "GSC Wizard",
+    "logo": "./assets/logo.png",
+    "longDescription": "GSC Wizard connects ChatGPT to your own Google Search Console properties so you can analyze SEO performance in plain language. Ask for a performance summary, your top queries and pages, ranking changes between two periods, content decay, keyword cannibalization, CTR-versus-position curves, or a full SEO report, and get a finished answer back. Instead of streaming thousands of raw rows into the model, every analysis is computed server-side against a data warehouse, so results are fast, accurate, and token-efficient. You can also list and inspect properties, run Google's URL Inspection, track indexing, manage topic clusters and content groups, and submit URLs to IndexNow. It also reports on your own linked Google Analytics 4 properties: traffic overviews, dimension breakdowns, ecommerce, key events (conversions), traffic referred by AI assistants such as ChatGPT and Perplexity, and blended Search Console + GA4 landing-page views. Summary tools render interactive cards and tables directly in ChatGPT. All access is scoped to your own account through Google sign-in.",
+    "privacyPolicyURL": "https://www.gscwizard.com/privacy.html",
+    "shortDescription": "Google Search data analysis",
+    "termsOfServiceURL": "https://www.gscwizard.com/terms.html",
+    "websiteURL": "https://www.gscwizard.com"
+  },
+  "name": "app-6a258ab1e0908191aa647c33299ad14c",
+  "version": "2.0.0"
+}

@@ -3,6 +3,11 @@ import type { DatabaseSchema } from '../../../../shared/database/db-types.js';
 import type { CalibrationRecord } from '../../calibration/domain/calibration.js';
 import type { Equipment } from '../domain/equipment.js';
 import type { EquipmentEligibilityReader } from '../application/get-equipment-eligibility.js';
+const dateOnly = (value: string | Date): Date => {
+  if (value instanceof Date)
+    return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+  return new Date(`${value}T00:00:00.000Z`);
+};
 export class PostgresEquipmentEligibilityReader implements EquipmentEligibilityReader {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
   async getEquipment(id: string): Promise<Equipment | undefined> {
@@ -29,6 +34,8 @@ export class PostgresEquipmentEligibilityReader implements EquipmentEligibilityR
           updatedBy: row.updated_by ?? undefined,
           updatedAt: row.updated_at,
           version: BigInt(row.version),
+          calibrationRequired: row.calibration_required ?? undefined,
+          maintenanceRequired: row.maintenance_required ?? undefined,
         }
       : undefined;
   }
@@ -44,8 +51,8 @@ export class PostgresEquipmentEligibilityReader implements EquipmentEligibilityR
           calibrationNo: row.calibration_no,
           equipmentId: row.equipment_id,
           state: row.state as CalibrationRecord['state'],
-          calibrationDate: new Date(`${row.calibration_date}T00:00:00.000Z`),
-          dueDate: row.due_date ? new Date(`${row.due_date}T00:00:00.000Z`) : undefined,
+          calibrationDate: dateOnly(row.calibration_date),
+          dueDate: row.due_date ? dateOnly(row.due_date) : undefined,
           provider: row.provider ?? undefined,
           certificateNo: row.certificate_no ?? undefined,
           result: row.result ?? undefined,
