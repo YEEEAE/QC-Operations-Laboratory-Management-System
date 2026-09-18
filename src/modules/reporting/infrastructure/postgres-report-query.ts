@@ -31,6 +31,11 @@ export class PostgresReportQuery implements ReportQuery {
        WHERE created_by = ${actor.id}
          AND (${filters.from ?? null}::date IS NULL OR receiving_date >= ${filters.from ?? null}::date)
          AND (${filters.to ?? null}::date IS NULL OR receiving_date <= ${filters.to ?? null}::date)
+         AND (${filters.lot ?? null}::text IS NULL OR lot ILIKE ${filters.lot ? `%${filters.lot}%` : null})
+         AND (${filters.itemCode ?? null}::text IS NULL OR item_code ILIKE ${filters.itemCode ? `%${filters.itemCode}%` : null})
+         AND (${filters.workflowState ?? null}::text IS NULL OR workflow_state = ${filters.workflowState ?? null})
+         AND (${filters.inspectionResult ?? null}::text IS NULL OR inspection_result = ${filters.inspectionResult ?? null})
+         AND (${filters.releaseSystem ?? null}::boolean IS NULL OR release_system = ${filters.releaseSystem ?? null})
        ORDER BY receiving_date DESC, id DESC`.execute(this.database);
     return {
       definition,

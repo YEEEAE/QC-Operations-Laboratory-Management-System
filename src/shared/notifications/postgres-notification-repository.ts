@@ -39,9 +39,17 @@ export class PostgresNotificationRepository implements NotificationRepository {
         created_at: input.createdAt ?? new Date(),
         read_at: null,
       })
+      .onConflict((oc) => oc.column('dedupe_key').doNothing())
       .returningAll()
+      .executeTakeFirst();
+    if (row) return toNotification(row);
+    if (!input.dedupeKey) throw new Error('Notification insert returned no row');
+    const existing = await this.database
+      .selectFrom('notifications')
+      .selectAll()
+      .where('dedupe_key', '=', input.dedupeKey)
       .executeTakeFirstOrThrow();
-    return toNotification(row);
+    return toNotification(existing);
   }
 
   async listForRecipient(

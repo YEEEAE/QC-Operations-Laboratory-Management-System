@@ -11,7 +11,17 @@ function validateFilters(filters: ReportFilters): ReportFilters {
       throw new AppError('VALIDATION_INVALID_DATE', { userSafe: true });
   if (filters.from && filters.to && filters.from > filters.to)
     throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
-  return { from: filters.from, to: filters.to };
+  for (const value of [
+    filters.lot,
+    filters.itemCode,
+    filters.workflowState,
+    filters.inspectionResult,
+  ])
+    if (value !== undefined && (!value.trim() || value.length > 100))
+      throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+  if (filters.releaseSystem !== undefined && typeof filters.releaseSystem !== 'boolean')
+    throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+  return { ...filters };
 }
 function requirePermission(
   actor: ActorContext,

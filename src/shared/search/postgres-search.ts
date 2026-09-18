@@ -16,7 +16,7 @@ export class PostgresSearch implements SearchRepository {
           AND (t.created_by = ${query.actorId} OR t.current_assignee_id = ${query.actorId})
         UNION ALL
         SELECT 'RECEIVING_ITEM', r.id, r.receiving_no, r.description, r.workflow_state, r.item_code FROM qc.receiving_items r
-          WHERE (r.receiving_no ILIKE ${pattern} ESCAPE '\\' OR r.doc_no ILIKE ${pattern} ESCAPE '\\' OR r.item_code ILIKE ${pattern} ESCAPE '\\' OR r.description ILIKE ${pattern} ESCAPE '\\') AND r.created_by = ${query.actorId}
+          WHERE (r.receiving_no ILIKE ${pattern} ESCAPE '\\' OR r.doc_no ILIKE ${pattern} ESCAPE '\\' OR r.item_code ILIKE ${pattern} ESCAPE '\\' OR r.description ILIKE ${pattern} ESCAPE '\\' OR r.lot ILIKE ${pattern} ESCAPE '\\') AND r.created_by = ${query.actorId}
         UNION ALL
         SELECT 'INSPECTION_REPORT', i.id, i.inspection_no, i.inspection_no, i.workflow_state, NULL FROM qc.inspection_reports i WHERE i.inspection_no ILIKE ${pattern} ESCAPE '\\' AND i.created_by = ${query.actorId}
         UNION ALL

@@ -7,6 +7,11 @@ export interface ReportColumn {
 export interface ReportFilters {
   readonly from?: string;
   readonly to?: string;
+  readonly lot?: string;
+  readonly itemCode?: string;
+  readonly workflowState?: string;
+  readonly inspectionResult?: string;
+  readonly releaseSystem?: boolean;
 }
 export interface ReportDefinition {
   readonly code: string;

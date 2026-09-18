@@ -49,4 +49,43 @@ describe('report registry and canonical datasets', () => {
       ),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
   });
+
+  it('preserves controlled state filters for the canonical dataset', async () => {
+    const calls: unknown[] = [];
+    const query: ReportQuery = {
+      run: async (definition, currentActor, filters) => {
+        calls.push({ definition, currentActor, filters });
+        return { definition, columns: definition.columns, rows: [] };
+      },
+    };
+    await new RunReportUseCase(new ReportRegistry(), query).execute(actor(), 'quarantine-aging', {
+      lot: 'LOT-42',
+      itemCode: 'ITEM-7',
+      workflowState: 'INSPECTION_COMPLETE',
+      inspectionResult: 'PASS',
+      releaseSystem: false,
+    });
+    expect(calls[0]).toMatchObject({
+      filters: {
+        lot: 'LOT-42',
+        itemCode: 'ITEM-7',
+        workflowState: 'INSPECTION_COMPLETE',
+        inspectionResult: 'PASS',
+        releaseSystem: false,
+      },
+    });
+  });
+
+  it('rejects unbounded filter values before the query boundary', async () => {
+    const query: ReportQuery = {
+      run: async () => {
+        throw new Error('must not query');
+      },
+    };
+    await expect(
+      new RunReportUseCase(new ReportRegistry(), query).execute(actor(), 'quarantine-aging', {
+        lot: 'x'.repeat(101),
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_INVALID_QUERY' });
+  });
 });

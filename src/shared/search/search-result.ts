@@ -9,6 +9,7 @@ export const SEARCHABLE_ENTITY_TYPES = [
   'EQUIPMENT',
   'DOCUMENT',
   'CHANGE_REQUEST',
+  'REJECT_REPORT',
 ] as const;
 export type SearchableEntityType = (typeof SEARCHABLE_ENTITY_TYPES)[number];
 export interface SearchResult {
