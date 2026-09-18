@@ -212,6 +212,9 @@ export class GetAdvisoryUseCase {
         ...(parsedAdvisory.sourceReferences
           ? { sourceReferences: parsedAdvisory.sourceReferences }
           : {}),
+        ...(parsedAdvisory.providerMetadata
+          ? { providerMetadata: parsedAdvisory.providerMetadata }
+          : {}),
       },
     };
   }

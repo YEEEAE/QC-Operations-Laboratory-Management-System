@@ -210,4 +210,21 @@ describe('AI advisory security suite — deterministic fake provider', () => {
     expect(actionSource).toContain('export const aiAdvisory = { requestAdvisory };');
     expect(actionSource).not.toContain("defineAction({\n  accept: 'form'");
   });
+
+  it('provider adapters contain no logging or browser delivery path for secrets', () => {
+    const sources = [
+      'src/modules/ai-advisory/infrastructure/ai-configuration.ts',
+      'src/modules/ai-advisory/infrastructure/http-ai-provider.ts',
+      'src/modules/ai-advisory/infrastructure/groq-ai-provider.ts',
+      'src/modules/ai-advisory/infrastructure/gemini-ai-provider.ts',
+      'src/modules/ai-advisory/infrastructure/failover-ai-provider.ts',
+    ];
+    for (const source of sources) {
+      const content = readFileSync(source, 'utf8');
+      expect(content).not.toMatch(/console\.(log|info|warn|error|debug)/);
+      expect(content).not.toMatch(/document\.|window\.|Astro\./);
+    }
+    const publicSources = readFileSync('src/actions/ai-advisory.ts', 'utf8');
+    expect(publicSources).not.toMatch(/GROQ_API_KEY|GEMINI_API_KEY|API_groq_Key|API_gemini_Key/);
+  });
 });

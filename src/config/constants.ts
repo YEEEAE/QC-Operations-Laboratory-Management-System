@@ -26,6 +26,14 @@ export const ENV_KEYS = {
   r2AccessKeyId: 'R2_ACCESS_KEY_ID',
   r2SecretAccessKey: 'R2_SECRET_ACCESS_KEY',
   r2Bucket: 'R2_BUCKET',
+  aiPrimaryProvider: 'AI_PRIMARY_PROVIDER',
+  aiFallbackProvider: 'AI_FALLBACK_PROVIDER',
+  groqApiKey: 'GROQ_API_KEY',
+  groqModel: 'GROQ_MODEL',
+  groqBaseUrl: 'GROQ_BASE_URL',
+  geminiApiKey: 'GEMINI_API_KEY',
+  geminiModel: 'GEMINI_MODEL',
+  geminiBaseUrl: 'GEMINI_BASE_URL',
 } as const;
 
 export const CRITICAL_ENV_KEYS = [ENV_KEYS.databaseUrl, ENV_KEYS.sessionSecret] as const;

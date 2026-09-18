@@ -33,7 +33,14 @@ export interface AiProviderAvailability {
   reason?: AiProviderUnavailableReason;
 }
 
+export interface AiProviderMetadata {
+  provider: 'groq' | 'gemini';
+  model: string;
+  fallbackUsed: boolean;
+}
+
 export interface AiProvider {
+  metadata?(): Omit<AiProviderMetadata, 'fallbackUsed'>;
   availability(): Promise<AiProviderAvailability>;
   /**
    * Returns a raw, unvalidated provider payload. Callers must pass it

@@ -15,7 +15,7 @@ export type AdvisoryMode = (typeof ADVISORY_MODES)[number];
 export const ADVISORY_NOTICE =
   'AI ADVISORY — Suggestions and analysis only — not an approval authority.';
 export const ADVISORY_UNAVAILABLE_NOTICE =
-  'AI advisory is not available. Advisory capability is optional: core QC workflows are unaffected and remain authoritative.';
+  'AI advisory is temporarily unavailable. Core QC workflows are unaffected and remain authoritative.';
 export const ADVISORY_REFUSAL_NOTICE =
   'The AI response was rejected because it attempted to encode an authoritative decision. Advisory output cannot approve, reject, release, sign, or set official PASS/FAIL.';
 export const AI_ADVISORY_PROMPT_VERSION = 'qc-ai-prompt-v1';
@@ -33,6 +33,13 @@ export interface AdvisoryResponse {
   mode: AdvisoryMode;
   text: string;
   sourceReferences?: readonly AdvisorySourceReference[];
+  providerMetadata?: AdvisoryProviderMetadata;
+}
+
+export interface AdvisoryProviderMetadata {
+  provider: 'groq' | 'gemini';
+  model: string;
+  fallbackUsed: boolean;
 }
 
 export interface AdvisorySourceReference {
@@ -120,6 +127,25 @@ function parseSourceReferences(value: unknown): readonly AdvisorySourceReference
   });
 }
 
+function parseProviderMetadata(value: unknown): AdvisoryProviderMetadata | undefined {
+  if (value === undefined) return undefined;
+  if (!isPlainObject(value)) throw new AdvisoryAuthorityViolationError();
+  if (
+    (value.provider !== 'groq' && value.provider !== 'gemini') ||
+    typeof value.model !== 'string' ||
+    value.model.length === 0 ||
+    value.model.length > 200 ||
+    typeof value.fallbackUsed !== 'boolean'
+  ) {
+    throw new AdvisoryAuthorityViolationError();
+  }
+  return {
+    provider: value.provider,
+    model: value.model,
+    fallbackUsed: value.fallbackUsed,
+  };
+}
+
 function assertNoAuthorityEncoding(node: unknown, depth: number): void {
   if (depth > 4 || !isPlainObject(node)) return;
   for (const [key, value] of Object.entries(node)) {
@@ -153,7 +179,11 @@ export function parseProviderAdvisory(raw: unknown): AdvisoryResponse {
     throw new AdvisoryAuthorityViolationError();
   }
   const sourceReferences = parseSourceReferences(raw.sourceReferences);
-  return sourceReferences
-    ? { mode: 'SUMMARIZE', text, sourceReferences }
-    : { mode: 'SUMMARIZE', text };
+  const providerMetadata = parseProviderMetadata(raw.providerMetadata);
+  return {
+    mode: 'SUMMARIZE',
+    text,
+    ...(sourceReferences ? { sourceReferences } : {}),
+    ...(providerMetadata ? { providerMetadata } : {}),
+  };
 }

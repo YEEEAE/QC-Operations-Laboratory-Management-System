@@ -6,6 +6,7 @@ import {
 } from '../../../shared/health/canonical-database-readiness.js';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { DependencyHealth, SystemHealthProbes } from '../ports/health-probes.js';
+import { configuredAiProvider } from '../../ai-advisory/application/dependencies.js';
 
 /**
  * Server-side dependency probes for the authenticated system health view.
@@ -85,13 +86,24 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
   }
 
   async aiProvider(): Promise<DependencyHealth> {
-    // AI advisory is optional and not yet integrated; it must never fail core
-    // readiness (OBSERVABILITY-ARCHITECTURE.md OBS-015).
-    return {
-      dependency: 'ai-provider',
-      status: 'UNKNOWN',
-      checkedAt: new Date(),
-      detail: 'AI advisory is not configured in this baseline.',
-    };
+    const checkedAt = new Date();
+    try {
+      const availability = await configuredAiProvider().availability();
+      return availability.available
+        ? { dependency: 'ai-provider', status: 'HEALTHY', checkedAt }
+        : {
+            dependency: 'ai-provider',
+            status: 'UNAVAILABLE',
+            checkedAt,
+            detail: 'AI advisory is unavailable; core QC workflows are unaffected.',
+          };
+    } catch {
+      return {
+        dependency: 'ai-provider',
+        status: 'UNAVAILABLE',
+        checkedAt,
+        detail: 'AI advisory is unavailable; core QC workflows are unaffected.',
+      };
+    }
   }
 }

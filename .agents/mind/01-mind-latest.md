@@ -6,7 +6,7 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `38528bd6ffd49b800057f58ac88612ca1b2af97f` on `main` (verified 2026-09-18). The working tree contains the prior uncommitted Render verification work plus `QC-CLOSURE-008` and `QC-CLOSURE-009` changes; no commit, push, or deployment occurred. Migration source head is now `0028_qc_closure_009_controlled_records` in the working tree and is applied only to the disposable local PostgreSQL database, **not** to Render.
+- Exact current HEAD: `a3ff2d14d196511e1a948ace89d638638f8f8fe8` on `main` (verified 2026-09-18). The working tree was clean at task start; current uncommitted changes are limited to `QC-AI-PROVIDERS-001`, with no commit, push, or deployment. Migration source head remains `0028_qc_closure_009_controlled_records` and is applied only to the disposable local PostgreSQL database, **not** to Render.
 - Fresh QC-CLOSURE-008 evidence: closure PostgreSQL suite `3/3 PASS`; focused asset suite `17/17 PASS`; migration/database suite `7 files / 26 tests PASS`; typecheck `0 errors / 68 hints`; build and architecture PASS; targeted ESLint PASS; `git diff --check` PASS. Full lint remains **BLOCKED** by existing Reject Reports errors outside this task. PostgreSQL verification used the approved disposable PostgreSQL 18 cluster (`scripts/db/disposable-postgres.sh`), not Testcontainers.
 - **Render PostgreSQL — VERIFIED (read-only):** `dpg-dadqmsgn74is73b774j0-a` is the Render **database** id (not the web-service id) and is the internal hostname label; app database `qc_operations`, principal `qc_operations_user`, PostgreSQL 18.6, region oregon, **free plan expiring `2026-10-05`**. Canonical pool connects with TLS 1.3 and session `search_path=qc,pg_catalog`, `TimeZone=UTC`; `/api/health/ready` is `200 healthy` both for the built app against this database and for live `https://qclevel.top`. Data is bootstrap-only (1 user, 2 role grants, 4 audit events, 0 lab tests).
 - **Render migration gap (blocker):** the Render database is at applied head `0018` with `0019`–`0025` pending, so `db:schema:check` fails closed there while ledger checksums for all 18 applied rows verify. Applying them is **prohibited** until the credential-rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied (the local Render export credential — the one in `.env` — is documented as compromised).
@@ -463,12 +463,18 @@
 ## 16) الحالة الحالية — AI Advisory Safety / Evaluation
 
 - AI remains advisory-only. The boundary now blocks detected PII/secret-like input before provider access, rejects authority-claiming text and structured recommendations, fail-safe refuses high-risk unsupported-source requests, and preserves source identity/citations when supplied.
-- Deterministic dataset is `qc-ai-governance-v2` / `2.0.0`; focused run `41/41 PASS` across 3 files. Evidence: `audit/2026-09-17-qc-closure-ai-011-evidence.md`.
-- Provider/model identity remains `DisabledAiProvider` / not configured; external provider policy, data handling, live outage/telemetry, and human UAT remain `BLOCKED`. No production/provider approval is inferred.
+- Deterministic dataset is `qc-ai-governance-v2` / `2.0.0`; the current focused provider/advisory/security run is `53/53 PASS` across 4 files. The full unit run is `563 PASS / 1 pre-existing FAIL` (Reject Reports UI contract), and the security run is `51 PASS / 1 Docker-blocked`. Typecheck, architecture, build, targeted lint, targeted format, and diff check pass under local Node `v22.22.3` (outside the declared Node contract).
+- Groq is the default primary adapter, Gemini is the default fallback, and `DisabledAiProvider` remains the final safe fallback. Configuration is server-only with canonical names plus legacy-name transition support; provider metadata is sanitized and advisory-only. Live provider smoke tests, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. No production/provider approval is inferred.
 
 ## 17) سجل تاريخي مضغوط
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+
+- **2026-09-18 — QC-AI-PROVIDERS-001 / Groq + Gemini provider integration**
+  - Changed: added server-only validated Groq/Gemini adapters behind the existing `AiProvider`, bounded failover to Disabled, sanitized provider metadata, optional AI health reporting, canonical/legacy environment transition, Render declarations, and advisory/provider security coverage.
+  - Evidence: focused AI `53/53 PASS`; typecheck `0 errors`; architecture/build/targeted lint/format/diff check PASS. Full unit has one pre-existing Reject Reports UI failure; security has one Docker/Testcontainers-blocked case. Live providers/Render/UAT remain NOT VERIFIED.
+  - State: PARTIAL / BLOCKED.
+  - Key files: `src/modules/ai-advisory/infrastructure/`, `src/modules/ai-advisory/application/dependencies.ts`, `docs/operations/AI-PROVIDERS.md`.
 
 - **2026-09-18 — QC-CLOSURE-010 / Cross-domain integration, search, notifications & reports**
   - Changed: wired approval-event outbox handling to recipient-scoped, replay-safe notifications; expanded authorized search identifiers and canonical report filters.
