@@ -21,7 +21,7 @@
 - كل protected ordinary operational route مرئي وقابل للفتح لكل حساب `ACTIVE` ومصادق عليه.
 - كل ordinary operational list/detail/search/report route يقرأ كل السجلات التشغيلية على مستوى النظام لكل عضو نشط.
 - هذا لا يشمل الأسرار أو بيانات أمن الهوية، ولا يعطي mutation permission؛ action authorization يبقى server-side.
-- `/system/health` حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
+- `/system/health` و`/system/control-center` حصريتان على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
 - `/admin` وكل `/admin/*` متاحة لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، ولا يكفي وجود الدور وحده لتنفيذ إجراء حساس بلا permission/scope/SoD/state/version.
 
 ## 2026-09-18 Extensible page-route contract
@@ -45,6 +45,11 @@ visibility, mutationCapabilities, fileExpectation
 2. أضف declaration إلى canonical route registry قبل ربط navigation.
 3. أضف navigation presentation فقط إن كانت الصفحة وجهة رئيسية؛ لا تكرر visibility أو mutation policy فيها.
 4. أضف unit regression للـcontract ثم شغّل `pnpm test:architecture`.
+
+الحالة الحالية المفصلة لكل route موجودة في
+`docs/architecture/ROUTE-MATRIX.md`: 85 route declarations، منها 2 `PUBLIC`،
+81 `AUTHENTICATED`، و2 `YAZEED_ONLY`. صفحتا `/auth/recovery` و`/auth/reset/[requestId]`
+مسجلتان كـ`AUTHENTICATED` و`deferred` في registry؛ لا تُعاملان كصفحات عامة.
 
 ---
 **Business ID:** Display/Search identifier — not route authority

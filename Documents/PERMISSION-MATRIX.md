@@ -13,7 +13,7 @@
 - كل حساب `ACTIVE` ومصادق عليه يرى ويفتح كل صفحات التشغيل العادية، بصرف النظر عن Employee/Supervisor/Manager/Admin.
 - كل بيانات السجلات التشغيلية العادية تكون `VIEW/READ` على مستوى النظام لكل عضو نشط؛ الأسرار وبيانات أمن الهوية مستثناة.
 - كل mutation تعيد authorization الكامل، ولا ينتقل global read visibility إلى create/edit/review/approve/release/sign/void/restore.
-- `/system/health` حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`؛ أما `/admin` وكل `/admin/*` فتتاح لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، مع بقاء كل إجراء حساس خاضعًا لصلاحياته وقواعده.
+- `/system/health` و`/system/control-center` حصريتان على `SYSTEM_OWNER` المرتبط بحساب `yazeed`؛ أما `/admin` وكل `/admin/*` فتتاح كرؤية للمستخدم النشط، مع بقاء القراءة الإدارية والـmutations خاضعة للصلاحيات وقواعدها.
 - Foundation role باسم `Admin` لا يمنح هاتين المساحتين تلقائيًا.
 - أي جدول قديم يقيّد **رؤية صفحة تشغيل عادية** حسب الدور يعتبر superseded بهذا التعديل؛ جداول أذونات الأفعال تبقى سارية.
 

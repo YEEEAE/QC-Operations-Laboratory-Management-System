@@ -26,6 +26,15 @@
 
 > **كل Business Concept له Owner واحد واضح فقط.**
 
+## Current module reconciliation — 2026-09-18
+
+The implementation currently exposes 18 module roots under `src/modules/`:
+administration, ai-advisory, approvals, assets, backup-recovery,
+change-requests, dashboard, documents, e-signatures, identity, laboratory,
+quality, quarantine, reject-reports, release-governance, reporting,
+system-health, and tasks. Cross-domain writes remain prohibited; shared search,
+audit, notifications, outbox, and reporting are explicit shared capabilities.
+
 ولا يسمح بوجود نفس المنطق أو نفس الحقيقة موزعة بين أكثر من Domain.
 
 ---

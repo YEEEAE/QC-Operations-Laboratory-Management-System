@@ -17,6 +17,14 @@
 **Concurrency:** Optimistic versioning first; row locking where justified  
 **Authorization:** Application-layer, server-side; PostgreSQL RLS deferred  
 
+## Current database reconciliation — 2026-09-18
+
+Source truth is the 29-file migration set ending at
+`0029_performance_query_indexes`. The live Render evidence remains at applied
+head `0018`; migrations `0019`–`0029` are pending and must not be applied until
+the credential-rotation gate is satisfied. Source migration head, applied
+provider head, and release readiness are separate facts.
+
 ---
 
 # 1. Purpose

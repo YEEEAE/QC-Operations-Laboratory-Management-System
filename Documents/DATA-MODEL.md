@@ -36,6 +36,15 @@
 
 ولا تحتوي SQL schema نهائيًا.
 
+## Current schema reconciliation — 2026-09-18
+
+The source migration set contains 29 forward-only files through
+`0029_performance_query_indexes`. The current source head is not the same as
+the live Render applied head (`0018` in the latest read-only evidence). The
+model therefore documents source truth while deployment docs separately record
+provider drift; no pending migration is a production claim until the credential
+rotation and migration gates are open.
+
 التفصيل النهائي للحقول والأنواع والـvalidation سيكون في:
 
 ```text

@@ -51,3 +51,13 @@
 19. All routes, tests and controlled workflows must be machine-verifiable.
 
 20. No release-readiness claim is valid without evidence.
+# SYSTEM-INVARIANTS.md
+
+## Current operational invariants — 2026-09-18
+
+`/system/health` and `/system/control-center` are the only `YAZEED_ONLY` pages
+and require active `SYSTEM_OWNER` plus login identity `yazeed`. Administration
+pages may be visible to active authenticated members, but page visibility never
+grants mutation authority. Source migration head is
+`0029_performance_query_indexes`; production readiness and UAT remain
+unverified.

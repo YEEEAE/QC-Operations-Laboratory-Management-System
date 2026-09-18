@@ -4,6 +4,11 @@
 
 This guide describes the commands currently implemented in the repository. It is a development guide, not a production-readiness approval.
 
+At the 2026-09-18 documentation freeze, this host is running Node `v22.22.3`,
+below the declared `>=24.20.0 <25` contract. Results from this host are useful
+engineering evidence but are not runtime-parity evidence for the deployed
+contract.
+
 ## Prerequisites
 
 - Node.js `>=24.20.0 <25`.

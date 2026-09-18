@@ -1,7 +1,3 @@
-- cloudflare حطيت فيه اسماء خوادمي نقلتهم من هاوستينقر استخدمت الايميل zzo--09@hotmail.com
-
-أكيد. هذا **تقرير مبسط وواضح للنظام** بصيغة تصلح تعرضها على الإدارة أو الفريق:
-
 # تقرير مبسط عن النظام
 
 ## اسم النظام
@@ -46,6 +42,31 @@ Render installs the pinned pnpm lockfile, builds the Astro SSR output, and start
 and Verification CI does not depend on it. If the repository's externally configured
 Pages workflow remains enabled, disable it in GitHub repository Settings → Pages →
 Build and deployment, or remove the Pages source/workflow from repository settings.
+
+## Current implementation snapshot — 2026-09-18
+
+This snapshot is synchronized with the current source freeze. See the
+[canonical route matrix](docs/architecture/ROUTE-MATRIX.md) and the
+[documentation inventory](docs/DOCUMENTATION-INVENTORY.md) for the detailed
+contracts and document classifications.
+
+| Item | Current truth |
+| --- | --- |
+| Git | `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7` on `main`; working tree is not a committed release |
+| Runtime contract | Node `>=24.20.0 <25`; pnpm `11.25.0`; this host runs Node `v22.22.3` |
+| Structure | Astro SSR, Node standalone adapter, PostgreSQL 18 baseline, modular monolith, 18 modules |
+| Pages/routes | 83 physical Astro page files; 85 registered routes; 77 required route files; 2 deferred auth declarations; 2 `YAZEED_ONLY` routes |
+| Database | `qc` schema; 29 forward-only migration files; source head `0029_performance_query_indexes` |
+| Local checks | architecture PASS; typecheck PASS with 68 hints; unit `83 files / 564 PASS`; build PASS |
+| Incomplete gates | format FAIL (3 files); lint FAIL (19 errors); PostgreSQL-backed integration/migration/concurrency unavailable without a container runtime; exact-head CI, authenticated E2E, UAT, provider and production recovery evidence remain unverified |
+| Release posture | `PARTIAL / NO-GO`; `PASS != RELEASED`; no production-readiness or UAT claim |
+
+The route visibility model is `PUBLIC`, `AUTHENTICATED`, and `YAZEED_ONLY`.
+Page visibility does not grant mutation authority: every Action/use case
+re-checks permission, scope, state, version, SoD, signature, and business rules.
+The only owner-exclusive pages are `/system/health` and
+`/system/control-center`, and both require the active `SYSTEM_OWNER` account
+whose login identity is `yazeed`.
 
 ---
 
@@ -332,7 +353,9 @@ Build and deployment, or remove the Pages source/workflow from repository settin
 
 # 11. Administration
 
-خاص بالـAdmin فقط.
+صفحة الإدارة قابلة للفتح ضمن نموذج الرؤية العامة للحسابات النشطة، لكن قراءة
+projections الإدارية وتنفيذ mutations تبقى محكومة بالصلاحيات الخادمية. لا يكفي
+وجود دور `Admin` وحده، ولا يمنح Admin صلاحية اعتماد أعمال الجودة أو صحة النظام.
 
 يشمل:
 
@@ -350,7 +373,10 @@ Build and deployment, or remove the Pages source/workflow from repository settin
 
 # 12. System Health / Backup / Recovery
 
-خاص بالـAdmin.
+`/system/health` و`/system/control-center` خاصتان بالحساب المسمى `yazeed` ذي
+الدور `SYSTEM_OWNER`. كتالوج النسخ الاحتياطية ومساحات التعافي لها رؤية
+مصادق عليها، بينما تنفيذ الاستعادة يحتاج use case وصلاحية وسياسة وهدفًا
+معزولًا وتدقيقًا.
 
 يعرض حالة:
 

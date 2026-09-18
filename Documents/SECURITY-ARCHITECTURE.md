@@ -16,6 +16,15 @@
 **Authentication:** Server-side opaque sessions
 **Operational Timezone:** `Asia/Riyadh`
 
+## Current security evidence — 2026-09-18
+
+Focused deterministic security evidence is available, but full security closure
+is not claimed: PostgreSQL-backed rate-limit coverage, authenticated browser
+CSRF/IDOR/XSS execution, exact-head CI, provider verification, privacy
+retention evidence, and the Node 24 runtime contract remain unverified or
+blocked. The server-side default-deny and advisory-only AI boundaries remain
+the current implementation rules.
+
 ---
 
 # 1. Purpose

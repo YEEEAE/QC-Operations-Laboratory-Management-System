@@ -2,7 +2,10 @@
 
 ## Status
 
-This is an observational baseline only. No approved performance SLO or pass threshold is defined, so the measurements below do not constitute a PASS/READY claim.
+This is a historical observational baseline from 2026-09-07. No approved
+performance SLO or pass threshold is defined, so the measurements below do not
+constitute a PASS/READY claim and must be repeated against the current release
+identity before use as current evidence.
 
 ## Release and environment
 

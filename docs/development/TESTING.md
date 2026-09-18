@@ -4,6 +4,13 @@
 
 This guide documents the test commands and evidence model implemented in this repository. It does not turn a test file or an old CI run into current evidence.
 
+Current freeze `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7`: unit `83 files /
+564 PASS`, architecture/typecheck/build PASS; format fails on 3 files, lint
+fails with 19 errors, security is `51 PASS / 1 skipped / 1 container-blocked`,
+and migration/concurrency suites are blocked by the unavailable container
+runtime. The Playwright inventory is `174 tests in 29 files`; execution is not
+current-head E2E evidence without the required server, fixtures, and database.
+
 ## Test layers
 
 | Layer | Command | What it proves |

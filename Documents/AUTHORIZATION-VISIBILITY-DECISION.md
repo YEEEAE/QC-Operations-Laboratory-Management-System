@@ -17,7 +17,7 @@
 يوجد استثناءان فقط يجب ألا يظهرا أو يفتحا لأي عضو آخر:
 
 1. صحة النظام والتفاصيل التقنية.
-2. إدارة الأعضاء والأدوار والصلاحيات والنطاقات.
+2. مركز تحكم المالك وإدارة الأعضاء والأدوار والصلاحيات والنطاقات.
 
 ---
 
@@ -48,7 +48,9 @@ Own Account
 
 ## AVD-002 — فصل صفحات المالك والإدارة
 
-صفحة صحة النظام حصرية على `SYSTEM_OWNER` المرتبط بحساب الدخول `yazeed`، بينما مساحات الإدارة التالية متاحة لدور `Admin` ولهذا الحساب:
+صفحتا صحة النظام ومركز تحكم المالك حصريتان على `SYSTEM_OWNER` المرتبط بحساب
+الدخول `yazeed`، بينما مساحات الإدارة التالية متاحة لرؤية الحسابات النشطة،
+وتبقى mutations فيها لدور `Admin` أو المالك المسمى مع الصلاحيات المناسبة:
 
 ```text
 /admin
@@ -59,6 +61,13 @@ Own Account
 /admin/roles/[roleId]
 /admin/permissions
 /admin/scopes
+```
+
+المساران owner-only هما بالضبط:
+
+```text
+/system/health
+/system/control-center
 ```
 
 بالنسبة لمسارات الإدارة، أي حساب لا يحمل دور `Admin` ولا يمثل `yazeed` تكون النتيجة:
@@ -130,12 +139,12 @@ Every ACTIVE authenticated non-owner:
   all ordinary operational records are readable
   secrets and identity-security data remain hidden
   unauthorized actions remain denied server-side
-  /system/health denied
+  /system/health and /system/control-center denied
   /admin and /admin/* visible only with explicit Admin permissions
 
 SYSTEM_OWNER yazeed:
   all ordinary pages visible
-  /system/health visible and authorized
+  /system/health and /system/control-center visible and authorized
   /admin and /admin/* visible and authorized
 
 Anonymous/inactive account:

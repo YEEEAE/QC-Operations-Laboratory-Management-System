@@ -2,7 +2,12 @@
 
 ## Status
 
-Configuration baseline only. Creating or syncing the Render Blueprint is not a production deployment approval.
+The repository Blueprint is the source configuration baseline, not proof of the
+live deployment. As of the 2026-09-18 evidence freeze, the live Render service
+exists but diverges from this file: its runtime/health-check/deploy-trigger
+settings and boot command require reconciliation, release variables are absent,
+and the deployed commit identity is not verified. This is `NOT VERIFIED / NO-GO`
+for a production-readiness claim.
 
 ## Service
 
@@ -26,9 +31,18 @@ The root domain is the canonical custom domain in the Render service; Render pai
 ### Current infrastructure identity
 
 - Blueprint service name: `qc-operations-laboratory-management-system`.
-- Existing **Static Site** service ID: `srv-dadfq7pt0dsc738e0tp0` (user-provided dashboard evidence). This is not the required Node Web Service.
-- Existing `onrender.com` hostname: **not available** — it must be copied from the created service, never inferred from the Blueprint name.
-- The replacement Web Service hostname is still required before preparing exact DNS targets.
+- Canonical application domain: `qclevel.top`; the Render subdomain is intentionally
+  blocked in the current provider evidence.
+- Render database identity observed read-only: database `dpg-dadqmsgn74is73b774j0a`,
+  application database `qc_operations`, PostgreSQL `18.6`, Oregon, free plan
+  expiry `2026-10-05`.
+- Live database applied migration head: `0018`; source migration head: `0029_performance_query_indexes`.
+- Live release SHA/build identity: `NOT VERIFIED`; `RELEASE_*` variables are absent
+  and the provider reports no commit identity in the deployment record.
+- Live service divergence recorded in the current audit: runtime `rust`, empty
+  health-check path, `autoDeployTrigger: commit`, and a boot command that grants
+  the system owner before starting the server. These are not the repository
+  Blueprint values and require controlled reconciliation.
 
 `HOST=0.0.0.0` is required by the Render web-service platform. The Astro Node standalone output starts with `node dist/server/entry.mjs`; the service must use the platform-provided `PORT`. Node `24.20.0` is pinned in `render.yaml` and `.node-version`.
 
@@ -48,12 +62,16 @@ The Render `onrender.com` subdomain remains enabled until the custom domain is v
 The exact operator workflow, read-only validation, and safe error handling are documented in
 `docs/operations/RENDER-DATABASE-CONNECTION.md`.
 
-## Explicitly not done
+## Explicitly not verified
 
-- No Render service was created or deployed.
-- No PostgreSQL provider was selected or provisioned.
-- Production readiness, UAT, migration execution, and DNS cutover remain separate controlled gates.
-- PostgreSQL, object storage, KMS/secrets, telemetry, and backup/PITR providers are deliberately unselected.
+- The source `render.yaml` is not proof that the live service uses the same
+  runtime, health check, deploy trigger, boot command, environment variables, or
+  release identity.
+- Source migrations `0019`–`0029` have not been applied to the live database.
+  Applying them is blocked until the credential-rotation gate in
+  `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied.
+- Production readiness, formal UAT, exact-head CI, provider backup/retention/PITR,
+  and a populated controlled-record restore remain separate unverified gates.
 
 ## 2026-09-05: Static Site 404 diagnosis and recovery
 

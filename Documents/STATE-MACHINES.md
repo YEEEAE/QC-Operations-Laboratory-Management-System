@@ -30,6 +30,15 @@ What happens on failure?
 
 > **DENIED BY DEFAULT**
 
+## Current lifecycle reconciliation — 2026-09-18
+
+The source implements the receiving/inspection/release separation,
+laboratory create/save/submit/review/return/resume/approve/reject paths,
+equipment calibration/maintenance histories, controlled-record protection, and
+release evidence checks. `PASS != RELEASED` remains invariant. Laboratory `VOID`
+and the final lab-reject decision authority remain policy-gated; unresolved
+policy is fail-closed rather than inferred.
+
 ---
 
 # 2. State Machine Authority

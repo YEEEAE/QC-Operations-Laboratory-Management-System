@@ -2,6 +2,13 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
+Current source head at the 2026-09-18 documentation freeze is
+`0029_performance_query_indexes` (29 migration files). The latest provider
+evidence separately reports Render applied head `0018`; this is migration drift,
+not a reason to rewrite history or to claim production parity. Pending provider
+migrations remain blocked by the credential-rotation gate documented in
+`docs/operations/RENDER-DATABASE-CONNECTION.md`.
+
 - Files are forward-only SQL and are immutable after application to a shared environment.
 - `scripts/db/migrate.ts` applies them in lexical order and records SHA-256 checksums in `qc.schema_migrations`.
 - Migration execution is explicit; the application never runs migrations during startup.

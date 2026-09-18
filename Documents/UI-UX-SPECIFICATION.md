@@ -21,8 +21,8 @@
 - كل عضو نشط ومسجل دخوله يرى كل مجموعات وصفحات التشغيل العادية.
 - كل بيانات التشغيل العادية داخل الصفحات تكون مقروءة لكل عضو نشط على مستوى النظام.
 - الأسرار وبيانات أمن الهوية لا تدخل في القراءة العامة، والأزرار/actions تظل permission/state/policy-aware.
-- System Health تظهر فقط لـ`SYSTEM_OWNER` المرتبط بـ`yazeed`، بينما Member/Role/Permission/Scope Administration تظهر لدور `Admin` ولهذا الحساب، مع تطبيق صلاحيات الأفعال الحساسة بشكل مستقل.
-- Admin العادي لا يرى ولا يفتح المساحتين الحصريتين.
+- System Health وControl Center تظهران فقط لـ`SYSTEM_OWNER` المرتبط بـ`yazeed`. أما صفحات Member/Role/Permission/Scope Administration فهي صفحات مصادق عليها قابلة للفتح، وتبقى قراءتها وmutations فيها محكومة بصلاحياتها الخادمية.
+- Admin العادي لا يفتح مساحتي الصحة والتحكم الحصريتين، ولا يحصل تلقائيًا على صلاحية اعتماد أعمال الجودة.
 
 ---
 **UI Authority:** Presentation only — never Business Truth
@@ -259,7 +259,9 @@ Navigation visibility:
 
 ```text
 Universal for ordinary operational pages after authentication
-Owner-exclusive for System Health and Member Administration
+Owner-exclusive for System Health and Control Center; administration pages are
+visible after authentication and remain separately authorized for read/mutation
+operations
 ```
 
 لكن:
@@ -1575,7 +1577,9 @@ Backup status
 
 Admin لا يحصل تلقائيًا على business KPIs خارج permission.
 
-`SYSTEM_OWNER` المرتبط بـ`yazeed` وحده يرى System Health وMember Administration.
+`SYSTEM_OWNER` المرتبط بـ`yazeed` وحده يرى System Health وControl Center. صفحات
+Member/Role/Permission/Scope Administration تتبع رؤية الصفحات المصادق عليها؛
+ولا تمنح الرؤية نفسها أي mutation authority.
 
 ---
 
@@ -3507,7 +3511,8 @@ Backup status
 
 Public-style raw diagnostics not shown to ordinary users.
 
-Only the `SYSTEM_OWNER` (`yazeed`) view may expose sanitized detail. Foundation Admin does not receive this page.
+Only the `SYSTEM_OWNER` (`yazeed`) view may expose sanitized System Health and
+Control Center detail. Foundation Admin does not receive those owner-only pages.
 
 ---
 
@@ -4003,7 +4008,10 @@ Navigation/page and all ordinary operational records are visible to every ACTIVE
 
 ## Owner-exclusive capability
 
-System Health and Member/Role/Permission/Scope Administration are omitted and direct access is denied unless the actor is the exclusive `SYSTEM_OWNER` (`yazeed`).
+System Health and Control Center are omitted and direct access is denied unless
+the actor is the exclusive `SYSTEM_OWNER` (`yazeed`). Administration pages are
+visible to active authenticated members; their read projections and mutations
+remain separately authorized.
 
 ## User can see context but cannot perform action
 

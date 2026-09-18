@@ -12,6 +12,14 @@
 **Operational Timezone:** `Asia/Riyadh`  
 **Final Release Authority:** `Manager OR yazeed/SYSTEM_OWNER` (P-07; one signer)
 
+## Current decision — 2026-09-18
+
+The current decision is `PARTIAL / NO-GO`. Local source checks provide
+engineering evidence only. Formal UAT, exact-head CI, authenticated E2E,
+provider release identity, live migration parity, populated controlled-record
+restore evidence, and production observability are not all verified. Do not
+convert local unit/build results into a Production Ready claim.
+
 ---
 
 # 1. Purpose

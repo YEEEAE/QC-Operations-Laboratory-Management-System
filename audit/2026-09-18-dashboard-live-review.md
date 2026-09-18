@@ -90,4 +90,72 @@
 - تحقق drill-down: زيارة `/quarantine/receiving?inspectionResult=HOLD` والفلتر بقي "All states".
 - Lighthouse snapshot: a11y 100 مع فشل `label-content-name-mismatch` (serious) على زر البحث.
 - شبكة/console: 4 أخطاء WASM/CSP، WASM 1.2MB × 2، TTFB 1.67s، FCP 1.84s.
+
+---
+
+# إضافات مقترحة للداشبورد (مربوطة ببيانات وصفحات حقيقية)
+
+> القاعدة: كل إضافة لها مصدر خادمي قائم + وجهة عمل + وحدة ونافذة معلنة. ما لا يوجد له read model يُذكر صراحة كـ"غير متوفر" ولا يُخترع.
+
+## أ) محتوى جاهز الآن (read model موجود ويستحق النقل للداشبورد)
+
+| الإضافة (بشرية) | المصدر الحقيقي | الرابط/الوجهة | العرض |
+|---|---|---|---|
+| "وصل اليوم" + "بانتظار الفحص" + "تحت الفحص" + "PASS ولم يُفرج" + "مُفرج" | `GetQuarantineOverviewUseCase` + `postgres-quarantine-read-model.ts` (6 عدادات حقيقية، تعمل على الإنتاج في `/quarantine`) | `/quarantine/receiving` و`/reports/quarantine-aging?...` | شريط مراحل (received → awaiting → inspecting → hold → pass-not-released → released) أو 6 بطاقات |
+| "هذه تحتاج منك قرارًا" مع سبب حقيقي لكل عنصر | نفس المصدر: `attention` مع `summary` نصي و`severity` CRITICAL/WARNING (أغنى من قائمة الداشبورد الحالية التي تعرض receiving HOLD فقط) | رابط السجل مباشرة | قائمة أولوية |
+| "توزيع حالة الاستقبال" | `overview.distributions` + مكوّن الأعمدة القائم في `/quarantine` (`--bar-size`) | `/quarantine/receiving` | بارات أفقية |
+## ب) رسوم بيانية — ما يمكن رسمه فعلاً
+
+| الرسم | المصدر | الحالة |
+|---|---|---|
+| أشرطة توزيع حالة الاستقبال | `distributions` (موجود ويعمل) | **جاهز** |
+| خط زمني للاستلام/الرفض بحسب اليوم | `analytics.trend` في `postgres-repository.ts` (reject-reports) — سلسلة زمنية حقيقية بـ`report_date` | **في الكود فقط**: `/reject-reports` يرجّع **500** على الإنتاج (migration `0026` غير مطبق؛ Render على `0018`) |
+| أعلى الأصناف/الأقسام/الأسباب المرجّحة | `analytics.byItem` / `byDepartment` / `byReason` | نفس القيد أعلاه |
+| "الكمية المرفوضة الكلية" | `summary.totalRejectedQuantity` | نفس القيد أعلاه |
+| ترند الجودة (Findings/NCR/CAPA) | غير موجود (`trendAvailable: false`) | **لا ترسم** حتى يتوفر read model معتمد |
+| زمن دورات المراجعة/Finding→CAPA | غير موجود | **لا ترسم** |
+
+**قاعدة العرض:** كل رسم يحمل وحدة + نافذة زمنية + مصدر + وقت تحديث، وإن لم تتوفر السلسلة تُستبدل بجملة واحدة بشرية: "لا يوجد ترند كافٍ في نطاقك بعد." — بدلاً من لوحة فارغة بحجم كبير.
+
+## ج) صياغة بشرية + اختصار النصوص (قبل → بعد)
+
+| الموضع | الحالي | المقترح المختصر |
+|---|---|---|
+| eyebrow الترويسة | OVERVIEW · QC OPERATIONAL COMMAND CENTER | نظرة عامة |
+| الوصف | Authorized work that needs attention, in your current operational scope. Scope: Authorized operational scope. | "مهامك التي تحتاج إجراءً، نطاقك: {نطاق}" (يحذف تكرار النطاق) |
+| معنى الأرقام | Values are scoped to your identity, not the whole scope label | صياغة واضحة: "أرقامك أنت" أو رفع الاستعلام للنطاق |
+| KPI | Pending review | بانتظار مراجعتك |
+| KPI | HOLD items | معلّقة (HOLD) |
+| KPI | Inspection PASS | ناجحة فحصاً (PASS) |
+| KPI | Released items | مُفرج عنها |
+| لوحة القرار | Items needing a decision or follow-up | تحتاج قرارًا |
+| لوحة القرار (فراغ) | No items currently require follow-up in this authorized scope. | "لا شيء ينتظرك الآن." |
+| الترند | Trend charts are shown only when the authorized backend provides a time series with a defined unit. | "يظهر الترند عند توفر سلسلة زمنية معتمدة." |
+| الترند (فراغ) | No trend series is available for this scope. Nothing is plotted until a server-defined series is available. | "لا ترند كافٍ في نطاقك بعد." |
+| النشاط | Audit-aware timeline | آخر ما جرى |
+| التغطية | What this snapshot can answer / Available now / Not supplied | "ما يغطيه هذا الملخص" / "متوفر" / "غير متوفر" |
+| KPI صغير | Updated current snapshot | "لحظة العرض" (تُقال مرة واحدة أعلى الصفحة) |
+| الخطأ | Dashboard data is unavailable (يشمل خطأ الصلاحية) | "تحتاج صلاحية عرض الداشبورد" لخطأ الصلاحية، و"بيانات غير متوفرة الآن" لخطأ المزود |
+| الترتيب العام | Eyebrows إنجليزية UPPERCASE في كل لوحة | تخفيفها إلى تسمية واحدة قصيرة لكل لوحة (يقل الضجيج البصري) |
+
+## د) ترتيب مقترح للشاشة (بشري: "ماذا أفعل الآن؟" أولاً)
+
+1. سطر علوي: نطاق + وقت اللقطة + زر تحديث.
+2. صف إجراءاتي: موافقات تنتظرك · إشعارات غير مقروءة · مهام قريبة الاستحقاق (`tasks.due_at`).
+3. لوحة "تحتاج قرارًا" (من `attention` الحقيقي، مع سبب كل عنصر).
+4. شريط مراحل الاستقبال + بارات التوزيع (مصدر واحد يغذي كل الأرقام فيتفق الرقم مع القائمة).
+5. "جودة" و"معامل" في صف واحد، و"كاليبريشن/صيانة" تحته.
+6. آخر ما جرى + رابط التدقيق.
+7. "ما يغطيه هذا الملخص" (سطرين فقط) — وليس لوحة كاملة.
+
+## هـ) ملاحظتان عمليتان قبل التنفيذ
+1. **لا تربط أي رابط KPI بصفحة قائمة لا تدعم الفلتر.** البديل الجاهز والمتحقق منه: `/reports/quarantine-aging?inspectionResult=HOLD` و`?workflowState=RELEASED` (يفلتر خادميًا ويعرض "Filters are applied on the server") — بدل `?inspectionResult=` على صفحة الاستقبال.
+2. **الترند الحقيقي موجود لكن غير متاح في الإنتاج** (`/reject-reports` = 500 حتى تطبيق `0026`). إن كان المطلوب "الداشبورد فيه رسوم"، فالطريق الآمن الآن هو `distributions` + شريط المراحل + بارات الجودة، ثم إضافة ترند الرفض بعد تطبيق المايغريشن عبر `analytics.trend`.
+| "جودة: عناصر مفتوحة" (Findings/NCR/RCA/CAPA) | `PostgresQualityOverview` (مع `trendAvailable: false` صراحةً) | `/quality/findings` · `/quality/ncr` · `/quality/rca` · `/quality/capa` | 4 أرقام |
+| "موافقات تنتظرك + إشعارات غير مقروءة" | أعداد الشريط العلوي الحالية (`approvalCount`/`notificationCount`) | `/approvals` · `/notifications?unread=true` (تعمل حيًا) | شريحة واحدة |
+| "آخر نشاط" | Audit (نفس العقد الحالي) | `/audit?action=...&from=...` | قائمة زمنية |
+| "حالة النظام" (للمالك فقط) | `/system/health` (readiness + تدهور منقّح) | `/system/health` + `/system/control-center` | شريحة حالة، تُخفى لغير المالك وفق `pageAccessDecision` |
+| "الكاليبريشن المنتهي/المستحق" | `calibration_records.state` (CURRENT/DUE/OVERDUE) موجود والفلتر الحي يعمل | `/assets/calibrations?state=OVERDUE` | رقم + رابط (يحتاج read model عدّاد بسيط) |
+| "تصدير لـExcel/CSV" | `QUARANTINE_AGING_REPORT` مع صلاحيات `PERM-RPT-EXPORT-CSV/XLSX` | `/reports/quarantine-aging` | زر تصدير من الداشبورد |
+
 - استجابة: 4 أعمدة KPI عند ≥1200، عمودان عند 768، عمود واحد عند 500 (أصغر مقاس قابل للاختبار في هذه الجلسة)؛ لا overflow أفقي.

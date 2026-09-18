@@ -6,11 +6,18 @@
 
 ## Current audit reality — 2026-09-18
 
+- **2026-09-18 — QC-CLOSURE-018 / Full repository read + documentation synchronization**
+  - Changed: synchronized current README, architecture/route/authorization/data/testing/UAT/security/deployment documents; added the 85-route matrix, documentation inventory, and extensibility guide; preserved historical audits and marked superseded Render/performance records.
+  - Evidence: source freeze `7cb266c248be08765f04896ee8618969bd551e07`; 83 physical pages, 85 route declarations, 18 modules, 29 source migrations; local links resolve with no missing targets.
+  - State: PARTIAL / NO-GO because existing format/lint, PostgreSQL/container, CI, authenticated E2E, UAT, provider, and production recovery gates remain open.
+  - Key files: `docs/architecture/ROUTE-MATRIX.md`, `docs/architecture/EXTENDING-THE-SYSTEM.md`, `docs/DOCUMENTATION-INVENTORY.md`.
+
 - QC-CLOSURE-016 manual browser preflight is recorded in `audit/2026-09-18-qc-closure-016-real-uat-human-validation.md`. The live login page, unauthenticated protected-route redirects, and safe invalid-login recovery were observed manually; no real Employee/Inspector/Supervisor/Manager/Administrator/yazeed participant session, approved staging/UAT environment, authenticated workflow, mobile session, or human sign-off was available. UAT remains **BLOCKED / UNVERIFIED**; preflight is not UAT evidence.
 
 - **2026-09-18 — QC-DASHBOARD-LIVE-REVIEW-001 / Live dashboard UX review (read-only)**
   - Changed: no code changes; produced `audit/2026-09-18-dashboard-live-review.md` from an authenticated live review of `https://qclevel.top/dashboard` as `yazeed` (browser automation).
   - Evidence: 14 findings. Top: authenticated pages render in Times (serif) because `body,button,input,select,textarea{font:inherit}` (`src/ui/styles/global.css:132-137`) overrides the earlier `body{font-family:var(--font-sans)}` (verified in dist order 5813<6983 and by rendered width probe); KPI drill-downs `/quarantine/receiving?inspectionResult=HOLD` and `?workflowState=RELEASED` are silently ignored (list reads only `state`); topbar shows internal `actor.id` UUID + "Authenticated user" (`src/ui/layouts/AppLayout.astro:16`); dotlottie WASM 1.2MB downloaded twice always fails under production CSP (4 console errors); TTFB ~1.7s; Lighthouse a11y 100 except `label-content-name-mismatch` (serious) on the topbar search link.
+  - Also: `/reject-reports` returns **500** on live (missing `0026` tables; Render applied head is `0018`) while all other reviewed pages return 200; the file also carries a data-linked enhancement backlog (quarantine overview/distributions, quality overview, `/reports/quarantine-aging` server-side filters as the working drill-down, calibration `OVERDUE` filter) and chart-ready sources (reject `analytics.trend/byItem/byDepartment/byReason`).
   - State: DONE (review only; no production/UAT claim).
   - Key files: audit/2026-09-18-dashboard-live-review.md.
 
@@ -47,12 +54,12 @@
   - State: PARTIAL / NO-GO.
   - Key files: audit/2026-09-18-qc-closure-013-testing-evidence.md, src/pages/reject-reports/issue-slips/[reportId].astro.
 
-- Exact current HEAD: `8f54442965cd809a8df9f2afb22d0b600a3262ee` on `main` (verified 2026-09-18). Working tree includes local QC-CLOSURE-015 evidence, disposable-runner setting, and earlier local evidence/mind updates; no commit, push, or deployment. Migration source head is `0029_performance_query_indexes`; it is not applied to Render and was not runtime-applied during this task.
+- Exact current HEAD: `7cb266c248be08765f04896ee8618969bd551e07` on `main` (verified 2026-09-18). Working tree includes the QC-CLOSURE-018 documentation synchronization, the current Mind update, earlier local evidence, and the existing dashboard review audit; no commit, push, or deployment was performed by this task. Migration source head is `0029_performance_query_indexes`; it is not applied to Render and was not runtime-applied during this task.
 - Fresh QC-CLOSURE-008 evidence: closure PostgreSQL suite `3/3 PASS`; focused asset suite `17/17 PASS`; migration/database suite `7 files / 26 tests PASS`; typecheck `0 errors / 68 hints`; build and architecture PASS; targeted ESLint PASS; `git diff --check` PASS. Full lint remains **BLOCKED** by existing Reject Reports errors outside this task. PostgreSQL verification used the approved disposable PostgreSQL 18 cluster (`scripts/db/disposable-postgres.sh`), not Testcontainers.
 - **Render PostgreSQL — VERIFIED (read-only):** `dpg-dadqmsgn74is73b774j0-a` is the Render **database** id (not the web-service id) and is the internal hostname label; app database `qc_operations`, principal `qc_operations_user`, PostgreSQL 18.6, region oregon, **free plan expiring `2026-10-05`**. Canonical pool connects with TLS 1.3 and session `search_path=qc,pg_catalog`, `TimeZone=UTC`; `/api/health/ready` is `200 healthy` both for the built app against this database and for live `https://qclevel.top`. Data is bootstrap-only (1 user, 2 role grants, 4 audit events, 0 lab tests).
 - **Render migration gap (blocker):** the Render database is at applied head `0018` with `0019`–`0025` pending, so `db:schema:check` fails closed there while ledger checksums for all 18 applied rows verify. Applying them is **prohibited** until the credential-rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied (the local Render export credential — the one in `.env` — is documented as compromised).
 - **Render live service DIVERGES from `render.yaml`:** runtime `rust` (not `node`), empty `healthCheckPath` (not `/api/health/ready`), `autoDeployTrigger: commit` (not `checksPass`), and a start command that runs `pnpm access:grant-system-owner` before the server, i.e. authorization mutation during boot. `RELEASE_*` identity variables are absent and every deploy reports `commitId: null`, so the deployed release SHA is **NOT VERIFIED**. The Render subdomain is intentionally blocked (`x-render-routing: blocked-render-subdomain`); `qclevel.top` is the production entrypoint.
-- Node locally is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence (the Render service pins `NODE_VERSION=24.20.0`). Docker-backed authenticated Playwright E2E now executes against a fresh PostgreSQL 18 container with an isolated `yazeed` fixture, but is **PARTIAL/FAIL**: 10 passed, 10 failed, 16 skipped. UAT remains unexecuted.
+- Node locally is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence (the Render service pins `NODE_VERSION=24.20.0`). The prior Docker-backed authenticated Playwright run (`10 PASS / 10 FAIL / 16 SKIPPED`) remains historical; current-head E2E is **NOT VERIFIED** in this host. UAT remains unexecuted.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
 - QC-CLOSURE-010 source integration now has an approval-event outbox handler, replay-safe notification dedupe, lot/item/state report filters, and expanded cross-domain search identifiers. Focused tests/build/typecheck/architecture pass; PostgreSQL/outbox runtime evidence remains blocked by local shared-memory/Docker availability. Evidence: `audit/2026-09-18-qc-closure-010-cross-domain-integration.md`.
@@ -264,7 +271,7 @@
 - Node المحلي `v22.22.3` خارج عقد المشروع `>=24.20.0 <25`، لذلك لا تُعامل نتائج التحقق الحالية كدليل بيئة التشغيل النهائية.
 
 
-## 2) الحالة الحالية — 2026-09-17
+## 2) Historical evidence snapshot — 2026-09-17 (superseded by Current audit reality)
 
 ### الإغلاق والتحقق
 - `astro check` و`astro build` و`format/lint/typecheck/architecture/unit` أصبحت خضراء في آخر جولة قابلة للتشغيل محليًا؛ `pnpm test:unit` وصل إلى 72 ملفًا / 440 اختبارًا ناجحًا.
@@ -489,7 +496,8 @@
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
-- Render remains at applied migration head `0018`; source head `0028` is not a production claim and must not be applied before the credential-rotation gate.
+- Render remains at applied migration head `0018`; source head `0029` is not a production claim and must not be applied before the credential-rotation gate.
+- **Live defect (2026-09-18):** `https://qclevel.top/reject-reports` returns `500` because the `0026` reject-report tables are absent on Render (all other reviewed application pages return `200`). Do not present the reject dashboard/trend as live until the migration gate is satisfied.
 
 ### P1 / live validation
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
@@ -499,7 +507,7 @@
 - ترقية fixtures القديمة بحيث `loginIdentity` يصبح حاضرًا بوضوح في test doubles.
 - تنظيف Lottie container metadata/unused asset فقط إذا اعتُمد asset-pipeline لذلك.
 
-## 15) الحالة الحالية — Production NFR evidence
+## 15) Historical evidence snapshot — Production NFR evidence
 
 - `QC-CLOSURE-NFR-010` أضاف سجل أدلة موحدًا على exact source `313bdfcc031abc18d3e55e75a025d880b9d16450` وbuild `rel-d740622fc9010566`، مع فصل الأدلة المحلية عن claims الإنتاج/UAT.
 - frozen install/lock integrity، 37 focused security/observability tests، typecheck، architecture، build، release identity/verification، source-map scan، local CSP/CSRF/safe-error HTTP checks: **VERIFIED/PASS** ضمن Node `v22.23.1` فقط، وهو خارج contract `>=24.20.0 <25`.
@@ -511,7 +519,7 @@
 ## 16) الحالة الحالية — AI Advisory Safety / Evaluation
 
 - AI remains advisory-only. The boundary now blocks detected PII/secret-like input before provider access, rejects authority-claiming text and structured recommendations, fail-safe refuses high-risk unsupported-source requests, and preserves source identity/citations when supplied.
-- Deterministic dataset is `qc-ai-governance-v2` / `2.0.0`; the current focused provider/advisory/security run is `53/53 PASS` across 4 files. The full unit run is `563 PASS / 1 pre-existing FAIL` (Reject Reports UI contract), and the security run is `51 PASS / 1 Docker-blocked`. Typecheck, architecture, build, targeted lint, targeted format, and diff check pass under local Node `v22.22.3` (outside the declared Node contract).
+- Deterministic dataset is `qc-ai-governance-v2` / `2.0.0`; the focused provider/advisory/security run remains `53/53 PASS` across 4 files. The current full unit run is `83 files / 564 PASS`; the current security command is `51 PASS / 1 skipped / 1 container-blocked`. Typecheck, architecture, and build pass under local Node `v22.22.3` (outside the declared Node contract); format and lint do not fully pass.
 - Groq is the default primary adapter, Gemini is the default fallback, and `DisabledAiProvider` remains the final safe fallback. Configuration is server-only with canonical names plus legacy-name transition support; provider metadata is sanitized and advisory-only. Live provider smoke tests, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. No production/provider approval is inferred.
 
 ## 17) سجل تاريخي مضغوط

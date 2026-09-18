@@ -13,6 +13,14 @@
 **Operational Timezone:** `Asia/Riyadh`  
 **Acceptance Authority:** POLICY-DEPENDENT  
 
+## Current UAT status — 2026-09-18
+
+No formal participant-based UAT is closed for the current source freeze. The
+latest manual preflight observed login, safe anonymous redirects, and
+invalid-login recovery only; it did not include authenticated role journeys,
+mobile validation, human sign-off, or an approved staging/UAT environment.
+UAT is therefore `BLOCKED / UNVERIFIED` and cannot feed release approval.
+
 ---
 
 # 1. Purpose

@@ -15,6 +15,15 @@
 **Operational Timezone:** `Asia/Riyadh`  
 **Provider Topology:** DEPLOYMENT-DEPENDENT / not fixed by Foundation  
 
+## Current deployment reconciliation — 2026-09-18
+
+The repository Blueprint targets a Render Node Web Service, but the latest
+read-only provider evidence records a live service that diverges from
+`render.yaml`, a live database at applied migration head `0018`, and no verified
+deployed release SHA. `qclevel.top` is the production entrypoint in that
+evidence. This remains `NOT VERIFIED / NO-GO`; source configuration is not
+deployment evidence.
+
 ---
 
 # 1. Purpose

@@ -1,4 +1,4 @@
-# Render PostgreSQL Recovery Audit
+# Render PostgreSQL Recovery Audit — Historical / Superseded
 
 **Task:** `QC-RENDER-POSTGRES-RECOVERY-001`  
 **Audit date:** 2026-09-07  

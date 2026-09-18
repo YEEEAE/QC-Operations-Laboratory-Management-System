@@ -1,5 +1,11 @@
 # F-11 Backup & Recovery Runbook
 
+**Current status — 2026-09-18:** `OPEN / PARTIAL`. Local logical backup and
+isolated restore evidence exists for the disposable dataset, but populated
+controlled-record recovery, provider retention/PITR/WAL, and a restore drill
+bound to the deployed release remain unverified. RPO/RTO values in this runbook
+are targets until measured evidence exists.
+
 ## Runtime boundary
 
 Cloudflare R2 Standard is used only as private object storage through its S3-compatible API. R2 is not PostgreSQL backup, WAL archiving, or PITR. The current implementation creates a logical `pg_dump` artifact; physical base backup, WAL, and PITR remain unproven.

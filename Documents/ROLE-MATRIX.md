@@ -13,7 +13,7 @@
 - Employee وSupervisor وManager وAdmin يشوفون كل صفحات التشغيل العادية.
 - كل الأدوار تقرأ كل السجلات التشغيلية العادية بـglobal read visibility.
 - هذا لا يعطي mutation/action permissions، ولا يكشف الأسرار أو بيانات أمن الهوية.
-- صحة النظام ليست من صلاحيات Admin العادي، وتبقى حصرية على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
+- صحة النظام ومركز تحكم المالك ليستا من صلاحيات Admin العادي، وتبقيان حصريتين على `SYSTEM_OWNER` المرتبط بحساب `yazeed`.
 - إدارة الأعضاء/الأدوار/الصلاحيات/النطاقات متاحة لدور `Admin` ولـ`SYSTEM_OWNER` المرتبط بحساب `yazeed`، مع خضوع الأفعال الحساسة لصلاحياتها ونطاقها وفصل المهام وحالة السجل وإصداره.
 - أي وصف أقدم يخالف هذا الفصل يعتبر superseded.
 
@@ -895,7 +895,7 @@ Reference-data administration
 
 ---
 
-# 47. Owner-Exclusive User Management
+# 47. Administrative User Management and Owner-Exclusive Health
 
 Foundation Admin يملك إدارة الأعضاء ضمن الصلاحيات والنطاقات المعتمدة. أما صحة النظام فتظل حصرية على `SYSTEM_OWNER` المرتبط بـ`yazeed`:
 
@@ -1841,8 +1841,12 @@ UI يستخدم Role/Permissions لتحسين UX فقط.
 ```text
 SYSTEM_OWNER yazeed only:
   System Health
-  Member / Role / Permission / Scope Administration
+  Control Center
 ```
+
+Member / Role / Permission / Scope Administration pages are visible to active
+authenticated members. Their safe read projections and mutations remain
+permission-bound; page visibility does not grant mutation authority.
 
 لكن Server authorization يبقى المرجع.
 

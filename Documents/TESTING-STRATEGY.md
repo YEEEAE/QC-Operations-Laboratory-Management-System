@@ -15,6 +15,16 @@
 **Verification Model:** Risk-Based + Requirement-Traceable + Evidence-Driven  
 **Readiness Status Vocabulary:** PASS / PARTIAL / FAIL / UNVERIFIED  
 
+## Current evidence reconciliation — 2026-09-18
+
+At source freeze `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7`, local results are
+architecture PASS, typecheck PASS with 68 hints, unit `83 files / 564 PASS`,
+and build PASS. Format fails on 3 files; lint fails with 19 errors.
+Migration/integration/concurrency suites fail at Testcontainers startup because
+no container runtime is available, and authenticated E2E/UAT/CI/provider
+evidence remain unverified. These results are `PARTIAL`, not a production or
+UAT approval.
+
 ---
 
 # 1. Purpose
