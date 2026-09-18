@@ -8,6 +8,18 @@
 
 - QC-CLOSURE-016 manual browser preflight is recorded in `audit/2026-09-18-qc-closure-016-real-uat-human-validation.md`. The live login page, unauthenticated protected-route redirects, and safe invalid-login recovery were observed manually; no real Employee/Inspector/Supervisor/Manager/Administrator/yazeed participant session, approved staging/UAT environment, authenticated workflow, mobile session, or human sign-off was available. UAT remains **BLOCKED / UNVERIFIED**; preflight is not UAT evidence.
 
+- **2026-09-18 — QC-DASHBOARD-LIVE-REVIEW-001 / Live dashboard UX review (read-only)**
+  - Changed: no code changes; produced `audit/2026-09-18-dashboard-live-review.md` from an authenticated live review of `https://qclevel.top/dashboard` as `yazeed` (browser automation).
+  - Evidence: 14 findings. Top: authenticated pages render in Times (serif) because `body,button,input,select,textarea{font:inherit}` (`src/ui/styles/global.css:132-137`) overrides the earlier `body{font-family:var(--font-sans)}` (verified in dist order 5813<6983 and by rendered width probe); KPI drill-downs `/quarantine/receiving?inspectionResult=HOLD` and `?workflowState=RELEASED` are silently ignored (list reads only `state`); topbar shows internal `actor.id` UUID + "Authenticated user" (`src/ui/layouts/AppLayout.astro:16`); dotlottie WASM 1.2MB downloaded twice always fails under production CSP (4 console errors); TTFB ~1.7s; Lighthouse a11y 100 except `label-content-name-mismatch` (serious) on the topbar search link.
+  - State: DONE (review only; no production/UAT claim).
+  - Key files: audit/2026-09-18-dashboard-live-review.md.
+
+- **2026-09-18 — QC-CLOSURE-017 / Independent final 80-domain closure audit**
+  - Changed: recalculated an 80-domain evidence matrix from the frozen exact HEAD `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7`, without carrying prior scores as conclusions.
+  - Evidence: unit `83 files / 564 PASS`, typecheck `0 errors`, architecture/build/release identity PASS; format FAIL, lint FAIL (19 errors), integration/migration/concurrency/security DB paths and authenticated E2E blocked by unavailable Docker runtime; provider/Render, restore, exact-head CI, PostgreSQL applied state, and signed UAT remain unverified.
+  - State: PARTIAL / BLOCKED / NO-GO. Fresh score `2,638 / 80 = 32.98/100`; closure-level domains `0/80`.
+  - Key files: `audit/100-percent/QC-CLOSURE-017-FINAL-80-DOMAIN-AUDIT.md`.
+
 - QC-CLOSURE-015 evidence is recorded in `audit/2026-09-18-qc-closure-015-backup-restore-deployment-production-evidence.md`. A real local PostgreSQL 18.6 logical backup and restore passed on 77 tables / 29 migrations with 0 unvalidated FKs; negative recovery cases fail closed. Populated audit/signature/evidence/session/release-record recovery is not verified because the disposable dataset had zero rows in those tables. `qclevel.top` live/readiness GET checks returned 200 and TLS was valid, but deployed release identity, runtime environment, logs, and provider backup/retention/PITR/WAL/RPO/RTO remain **NOT VERIFIED / BLOCKED / POLICY DECISION REQUIRED**.
 - **2026-09-18 — QC-CLOSURE-016 / Real UAT, Usability & Human Validation**
   - Changed: recorded manual live preflight observations and the complete required persona/scenario coverage as blocked; no fabricated participant results or sign-off were added to the UAT CSV templates.
