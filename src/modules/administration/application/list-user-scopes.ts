@@ -14,4 +14,16 @@ export class ListUserScopesUseCase {
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     return this.repository.listUserScopes(input.userId);
   }
+  async executeForUsers(input: { actor: ActorContext; userIds: readonly string[] }) {
+    if (input.actor.accountState !== 'ACTIVE')
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (this.repository.listUserScopesForUsers)
+      return this.repository.listUserScopesForUsers(input.userIds);
+    return Promise.all(
+      input.userIds.map(async (userId) => ({
+        userId,
+        scopes: await this.repository.listUserScopes(userId),
+      })),
+    );
+  }
 }

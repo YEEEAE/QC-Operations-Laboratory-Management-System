@@ -82,6 +82,8 @@ export const onRequest = defineMiddleware(
       requestLogger.info(
         {
           event: 'http.request',
+          request_id: requestContext.requestId,
+          trace_id: requestContext.traceId,
           route_template: routeTemplate,
           http_method: request.method,
           status_class: '2xx',
@@ -139,6 +141,8 @@ export const onRequest = defineMiddleware(
         requestLogger.info(
           {
             event: 'http.request',
+            request_id: requestContext.requestId,
+            trace_id: requestContext.traceId,
             route_template: routeTemplate,
             http_method: request.method,
             status_class: statusClass,
@@ -291,6 +295,8 @@ export const onRequest = defineMiddleware(
     requestLogger.info(
       {
         event: 'http.request',
+        request_id: requestContext.requestId,
+        trace_id: requestContext.traceId,
         route_template: routeTemplate,
         http_method: request.method,
         status_class: statusClass,
@@ -298,6 +304,15 @@ export const onRequest = defineMiddleware(
       },
       'request completed',
     );
-    return applySecurityHeaders(response, env.NODE_ENV);
+    const withRequestId = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: (() => {
+        const merged = new Headers(response.headers);
+        merged.set('x-request-id', requestContext.requestId);
+        return merged;
+      })(),
+    });
+    return applySecurityHeaders(withRequestId, env.NODE_ENV);
   },
 );

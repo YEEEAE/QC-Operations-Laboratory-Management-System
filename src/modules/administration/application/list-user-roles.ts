@@ -13,4 +13,17 @@ export class ListUserRolesUseCase {
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     return this.repository.listUserRoles(input.userId);
   }
+  async executeForUsers(input: { actor: ActorContext; userIds: readonly string[] }) {
+    if (input.actor.accountState !== 'ACTIVE')
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (this.repository.listUserRolesForUsers)
+      return this.repository.listUserRolesForUsers(input.userIds);
+    const rows = await Promise.all(
+      input.userIds.map(async (userId) => ({
+        userId,
+        roles: await this.repository.listUserRoles(userId),
+      })),
+    );
+    return rows.map(({ userId, roles }) => ({ userId, codes: roles.map((role) => role.code) }));
+  }
 }

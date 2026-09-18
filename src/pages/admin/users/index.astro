@@ -17,16 +17,23 @@ let denied = false;
 try {
   users = await identityAdminReadDependencies().listUsers.execute({ actor });
   const auth = administrationDependencies();
-  await Promise.all(users.map(async (user) => {
-    try {
-      const roles = await auth.listUserRoles.execute({ actor, userId: user.id });
-      roleSummary.set(user.id, roles.map((role) => role.code).join(', ') || '—');
-    } catch { roleSummary.set(user.id, 'Restricted'); }
-    try {
-      const scopes = await auth.listUserScopes.execute({ actor, userId: user.id });
-      scopeSummary.set(user.id, scopes.map((scope) => scope.value ? `${scope.kind}:${scope.value}` : scope.kind).join(', ') || '—');
-    } catch { scopeSummary.set(user.id, 'Restricted'); }
-  }));
+  const userIds = users.map((user) => user.id);
+  const [roles, scopes] = await Promise.all([
+    auth.listUserRoles.executeForUsers({ actor, userIds }),
+    auth.listUserScopes.executeForUsers({ actor, userIds }),
+  ]);
+  for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
+  for (const row of scopes)
+    scopeSummary.set(
+      row.userId,
+      row.scopes
+        .map((scope) => (scope.value ? `${scope.kind}:${scope.value}` : scope.kind))
+        .join(', ') || '—',
+    );
+  for (const user of users) {
+    roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
+    scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
+  }
 } catch (error) {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
   if (!denied) throw error;

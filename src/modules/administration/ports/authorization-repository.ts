@@ -28,6 +28,14 @@ export interface UserScopeRecord {
   assignedAt: Date;
   revokedAt: Date | null;
 }
+export interface UserRoleSummary {
+  userId: string;
+  codes: readonly string[];
+}
+export interface UserScopeSummary {
+  userId: string;
+  scopes: readonly UserScopeRecord[];
+}
 
 export interface AuthorizationRepository {
   listRoles(): Promise<readonly RoleRecord[]>;
@@ -43,6 +51,8 @@ export interface AuthorizationRepository {
   }): Promise<RoleRecord>;
   listUserScopes(userId: string): Promise<readonly UserScopeRecord[]>;
   listUserRoles(userId: string): Promise<readonly RoleRecord[]>;
+  listUserRolesForUsers?(userIds: readonly string[]): Promise<readonly UserRoleSummary[]>;
+  listUserScopesForUsers?(userIds: readonly string[]): Promise<readonly UserScopeSummary[]>;
   assignUserRole(input: {
     userId: string;
     roleId: string;

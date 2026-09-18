@@ -124,6 +124,38 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
       version: BigInt(r.version),
     }));
   }
+  async listUserRolesForUsers(userIds: readonly string[]) {
+    if (!userIds.length) return [];
+    const rows = await this.db
+      .selectFrom('user_roles')
+      .innerJoin('roles', 'roles.id', 'user_roles.role_id')
+      .select(['user_roles.user_id as userId', 'roles.code'])
+      .where('user_roles.user_id', 'in', userIds as string[])
+      .where('user_roles.revoked_at', 'is', null)
+      .orderBy('user_roles.user_id')
+      .orderBy('roles.code')
+      .execute();
+    const grouped = new Map<string, string[]>();
+    for (const row of rows) grouped.set(row.userId, [...(grouped.get(row.userId) ?? []), row.code]);
+    return [...grouped.entries()].map(([userId, codes]) => ({ userId, codes }));
+  }
+  async listUserScopesForUsers(userIds: readonly string[]) {
+    if (!userIds.length) return [];
+    const rows = await this.db
+      .selectFrom('user_scopes')
+      .selectAll()
+      .where('user_id', 'in', userIds as string[])
+      .where('revoked_at', 'is', null)
+      .orderBy('user_id')
+      .orderBy('scope_kind')
+      .execute();
+    const grouped = new Map<string, UserScopeRecord[]>();
+    for (const row of rows) {
+      const value = scope(row);
+      grouped.set(row.user_id, [...(grouped.get(row.user_id) ?? []), value]);
+    }
+    return [...grouped.entries()].map(([userId, scopes]) => ({ userId, scopes }));
+  }
   async assignUserRole(input: {
     userId: string;
     roleId: string;
