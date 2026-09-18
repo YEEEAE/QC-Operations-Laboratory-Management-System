@@ -51,7 +51,12 @@ describe('universal shell preservation', () => {
     expect(query).toContain('source: string');
     expect(dashboard).toContain('Attention data is unavailable');
     expect(dashboard).toContain('Activity data is unavailable');
-    expect(dashboard).toContain('No trend series is available');
+    // The trend panel renders whatever the read model says about the series;
+    // the honest no-series copy lives with the read model, not in the page.
+    expect(dashboard).toContain('{dashboard.series.message}');
+    expect(read('src/modules/dashboard/application/dashboard-series.ts')).toContain(
+      'No trend series is available',
+    );
     expect(dashboard).toContain('Overdue due dates');
     expect(dashboard).toContain('drilldownLabel={metric.drilldownLabel}');
   });

@@ -55,6 +55,65 @@ export interface DashboardReadModel {
   metrics: DashboardMetric[];
   attention: DashboardAttention[];
   activity: DashboardActivity[];
+  /** The approved time series for this surface, or the honest reason there is none. */
+  series: DashboardSeries;
+}
+
+/**
+ * Why a series is not plotted.
+ *
+ * `NOT_SUPPLIED` means this scope has no supplied series (no approved provider
+ * for the actor, or the provider is not composed for this deployment).
+ * `PROVIDER_UNAVAILABLE`/`READ_FAILED` mean a supplied series could not be read
+ * this time. Neither is `EMPTY`, and none of them may be rendered as a chart, a
+ * flat line or a zero.
+ */
+export type DashboardSeriesUnavailableReason =
+  'NOT_AUTHORIZED' | 'PROVIDER_NOT_COMPOSED' | 'PROVIDER_UNAVAILABLE' | 'READ_FAILED';
+export type DashboardSeriesState = 'AVAILABLE' | 'EMPTY' | 'UNAVAILABLE' | 'NOT_SUPPLIED';
+
+export interface DashboardSeriesPoint {
+  label: string;
+  value: number;
+}
+
+/**
+ * An approved server-side time series.
+ *
+ * A series is only presentable when the server defines its grain, numerator,
+ * unit and window, so every consumer states them next to the chart instead of
+ * inventing a trend: `grain`, `numerator`, `actorScope`, `windowLabel` and the
+ * zero policy travel with the points. `points` is empty for every state except
+ * `AVAILABLE`, so no consumer can plot an empty or unavailable series.
+ */
+export interface DashboardSeries {
+  key: string;
+  title: string;
+  summary: string;
+  unit: string;
+  source: string;
+  sourceHref: string;
+  grain: string;
+  numerator: string;
+  actorScope: string;
+  windowLabel: string;
+  zeroPolicy: string;
+  state: DashboardSeriesState;
+  reason?: DashboardSeriesUnavailableReason;
+  /** Honest, state-specific sentence rendered in place of the chart. */
+  message: string;
+  points: readonly DashboardSeriesPoint[];
+}
+
+/**
+ * Supplies the dashboard time series.
+ *
+ * The provider maps its own read failures onto the series state, because an
+ * unavailable series must stay visible as unavailable instead of failing the
+ * whole dashboard read (unlike the decision counters, which fail closed).
+ */
+export interface DashboardSeriesProvider {
+  get(actor: ActorContext): Promise<DashboardSeries>;
 }
 /**
  * One actionable approval awaiting the actor's decision.

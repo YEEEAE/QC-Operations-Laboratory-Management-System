@@ -18,6 +18,11 @@
   - Evidence: typecheck `0 errors`؛ unit `83 files / 563 PASS`؛ integration مركّز على PostgreSQL 18 مصرفي محلي/TLS `39 + 4 + 2 + 15 PASS`؛ build PASS؛ lint 0 errors؛ migration integrity `30`؛ E2E المصادَق عليه وDocker ما زالا BLOCKED.
   - State: DONE (تعويض مرشّح مُتحقَّق منه محليًا) / PARTIAL لنشر النسخة والتدقيق الحي وUAT البشري.
   - Key files: `audit/2026-09-18-LIVE-PRODUCT-UX-AUDIT.md` (§13), `db/migrations/0030_reject_reports_role_parity.sql`, `src/ui/styles/global.css`, `src/shared/copy/ux-vocabulary.ts`, `src/pages/quarantine/{receiving,inspections}/index.astro`.
+- **2026-09-19 — QC-100-FINAL-005 follow-up / Quarantine KPI alignment + approved trend series (candidate-side)**
+  - Changed: مؤشرات `/quarantine` صارت projection لنفس سجل Receiving الذي تفتحه روابطها (لا `created_by` counters) بعقد `numerator`/`state`/`actorScope`/`timeWindow` مشترك عبر `KpiCard`؛ "Awaiting inspection" انقسمت لبطاقتين وHOLD لبطاقتين بمعنى واحد لكل رابط؛ فلتر `receivedOn=today` مدعوم خادميًا؛ و`AUTHORIZATION` منفصل عن انقطاع المزوّد. أُضيفت أول series خادمية معتمدة (Receiving per day، grain/numerator/unit/window/zero معلنة) على `/dashboard` بحالات `AVAILABLE|EMPTY|UNAVAILABLE|NOT_SUPPLIED` ولا نقاط إلا في `AVAILABLE`.
+  - Evidence: typecheck `813 files / 0 errors`؛ unit `85 files / 579 PASS`؛ architecture PASS؛ eslint على المسارات المعدّلة `0 errors`؛ PostgreSQL 18.6 مصرفي: `overview-parity 6/6` (يُنفذ register لكل href ويقارن العدّ) + `read-models 7/7` + `dashboard 19/19` + migrations `29` + concurrency `12`. NOT RUN: `pnpm build` وbrowser. التفاصيل: `audit/2026-09-19-qc-100-final-005-quarantine-kpi-alignment-and-approved-trend.md`.
+  - State: DONE (مرشّح محليًا) / PARTIAL للـbuild/browser/نشر/UAT.
+  - Key files: `src/modules/quarantine/application/get-receiving-trend.ts`, `src/modules/dashboard/application/dashboard-series.ts`, `src/modules/quarantine/application/get-quarantine-overview.ts`, `src/pages/quarantine/index.astro`, `tests/integration/quarantine/overview-parity.test.ts`.
 - **2026-09-19 — QC-100-FINAL-005 / Dashboard & shared user experience repair (candidate-side)**
   - Changed: عقد KPI صريح (`numerator`/`state`/`actorScope`/time window) + rollup واحد يغذّي `Pending review` و`/approvals` وdecision queue بشدة مشتقة؛ فلتر `ownership=mine` مدعوم خادميًا في سجلي Receiving/Inspections وتستعمله روابط الـKPI؛ فشل الـapprovals أو خطأ `AUTHORIZATION` لا يتحولان إلى `0`/انقطاع مزوّد؛ أرضية 12px وهدف 44px؛ وإصلاح انحدار architecture كان قائمًا على HEAD (domain import في صفحة Inspections).
   - Evidence: typecheck `809/0 errors`؛ unit `84 files / 571 PASS`؛ architecture PASS (كان FAIL)؛ migration integrity `30`؛ build/release-identity/tech-debt/diff-check PASS؛ PostgreSQL 18.6 مصرفي `14 files / 49 PASS` ومنها populated drill-down parity؛ browser مصادق مصحوب ببيانات: 200 وعدد صفوف = قيمة الـKPI، `Inter`، أول عنوان `H1`، `0` عقدة `<12px`، `0` overflow، `0` wasm/lottie/console. التفاصيل: `audit/2026-09-19-qc-100-final-005-dashboard-shared-ux-repair.md`.
@@ -225,6 +230,13 @@
 - لا يجوز مصادقة use case على permission مسجّل بنوع كيان مختلف؛ `PERM-ADM-ROLE-VIEW`+VIEW مسجّل على `ROLE` (كان bug في `ListUserRolesUseCase`).
 - كل permission معتمد يجب أن يملك سياسة مسجّلة في `policy-registry.ts`؛ `PERM-IDN-REVOKE-SESSIONS` كان غائبًا تمامًا فكان `RevokeUserSessionsUseCase` مرفوضًا دائمًا بـ`AUTHZ_DENIED`. السياسة الحالية: `REVOKE_SESSIONS` على `USER` بحالات `ACTIVE`/`INACTIVE`/`DISABLED`.
 
+### Quarantine KPIs (QC-100-FINAL-005 follow-up, 2026-09-19)
+- `/quarantine` counters تسقط عبر **نفس register** الذي تفتحه روابطها (`ReceivingOverviewSource` → `ListReceivingUseCase`)؛ لا SQL عدّ خاص ولا `created_by` counter. لذلك `actorScope` هو النطاق المصرّح (قراءة أي منشئ مسموح)، ولاءمة counter↔link محققة بالبناء لا بعُقدين يدويين.
+- "Awaiting inspection" أُلغيت واستُبدلت بـ`Pending` و`Ready for inspection` (كل بطاقة بحالة واحدة ورابط واحد)، وHOLD انقسمت إلى `Receiving HOLD` (`?state=HOLD`) و`Inspection HOLD` (`?inspectionResult=HOLD`).
+- فلتر زمني مدعوم خادميًا `?receivedOn=today` في سجل Receiving (مقارنة `receiving_date` داخل PostgreSQL، و"today" تُحسب مرّة واحدة UTC في `ListReceivingUseCase`) — استُبدل الرابط الذي كان يعرض كل السجل.
+- فشل `AUTHORIZATION` مقابل انقطاع المزوّد حالتان مستقلتان على `/quarantine`، ولا `catch` يشغّل صف KPI فارغًا.
+- تحقق: unit 85/579 PASS، typecheck 813/0 errors، architecture PASS، PostgreSQL مصرفي جدید `overview-parity 6/6` + `read-models 7/7` + `dashboard 19/19` + migrations 29 + concurrency 12. لا build ولا browser على هذا المرشّح (NOT RUN).
+
 ### Operational visibility
 - كل صفحة تطبيق عادية ظاهرة وقابلة للفتح لأي حساب `ACTIVE` ومصادق؛ التنقل يستهلك قرار رؤية المسار نفسه، وليس permissions الخاصة بالـmutation.
 - القراءة العامة لا تعطي حق mutation؛ الإنشاء/التعديل/المراجعة/الاعتماد/الإفراج/VOID/الاستعادة/التوقيع تبقى محكومة خادميًا بالسياسات.
@@ -313,8 +325,8 @@
 - عقد الـKPI صريح (`numerator`/`state`/`actorScope`/time window): لا قيمة شخصية تحت وسم نطاق مصرّح أو العكس، وكل `href` يجب أن يعيد إنتاج نفس المجموعة (وإلا فهو عيب لا خيار تقديمي) — QC-100-FINAL-005.
 - `Pending review` و`/approvals` وdecision queue تقرأ rollup واحدًا (canonical approvals reader + HOLD الخاص بالمستخدم) بشدة مشتقة (HOLD `CRITICAL`، الموافقات `WARNING`)، وKPI الشخصية تربط بفلتر `ownership=mine` المدعوم خادميًا في سجلي Receiving/Inspections؛ لا معاملات غير مدعومة في روابط الـdrill-down.
 - إذا provider غير متاح، تُحجب الادعاءات بدل عرض صفر مضلل، وفشل rollup يفشل الـread model بالكامل؛ وخطأ `AUTHORIZATION` حالة مستقلة عن انقطاع المزوّد.
-- لا chart للـtrend حتى يوفر backend time series معرفة ومعتمدة.
-- overdue/calibration risk/lab workload/blocked reasons/trend تحتاج read models خادمية قبل تقديمها كحقائق.
+- trend chart موجود الآن على `/dashboard` من series خادمية معتمدة صادرة من دومين Quarantine: grain يوم UTC، numerator = سجلات Receiving المسموح بقراءتها، unit = records، window = 14 يومًا متدرجة، وzero معرّف كصفر حقيقي. العقد الكامل (`grain`/`numerator`/`actorScope`/`windowLabel`/`zeroPolicy`) يُعرض مع الرسم، والنسخة على الداشبورد مُضيَّقة إلى ما أنشأه الفاعل لتطابق KPIs الشخصية المجاورة. حالات الseries صريحة `AVAILABLE|EMPTY|UNAVAILABLE|NOT_SUPPLIED` ولا نقاط إلا في `AVAILABLE` (لا chart للـEMPTY/UNAVAILABLE ولا صفر مضلل).
+- overdue/calibration risk/lab workload/blocked reasons ما زالت تحتاج read models خادمية قبل تقديمها كحقائق (لا تُستهلك series جديدة بعد هذه المهمة).
 
 ## 10) UI / UX / Accessibility
 
@@ -408,7 +420,8 @@
 - Render remains at applied migration head `0018`; source head `0029` is not a production claim and must not be applied before the credential-rotation gate.
 - **Live defect — fresh FAIL 2026-09-18:** authorized read-only yazeed GET /reject-reports500; owner pages200 and migration projection0018/pending11. Direct production SQL exception unproven. Fully migrated local analytics independently fails with ambiguous status near postgres-repository.ts:1050; migration alone is insufficient closure.
 
-### P1 / live validation
+### P1 / live validation / pre-existing test estate
+- **Full `pnpm test:integration` على PostgreSQL المصرفي المشترك يفشل في 4–5 ملفات قائمة قبل هذا العمل (وليست انحدارًا منه؛ أُثبت بالاستبعاد على cluster جديد):** `identity/system-owner-upgrade-parity` (Migration checksum mismatch for 0030 — الsuite يسجّل DB كـ`migrations` بدون 0030 فيفشل `verifyMigrationIntegrity` متى سبقه أي ملف آخر إلى الـmigration)، `system/control-center` (`drift=true`)، `reporting/report-export-parity`، `shared/search-scope` (LIKE wildcard row count)، و`shared/notification-outbox-delivery` (dedupe، متقطع). السبب: مسار الخارجي يشارك قاعدة واحدة بين كل الملفات؛ هذه المضيفات تعوّل على قاعدة بكر. الأصل: تصميم اختبارات/migration `0030` في QC-100-FINAL-016، ولم يُغلق بعد.
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
@@ -476,23 +489,9 @@
   - Evidence: source/destination `rsync` dry-run clean; 49 plugin roots / 2,685 files / 88 MB.
   - State: DONE.
   - Key files: `.agents/plugins/codex-cache/`.
-- **2026-09-18 — Project Mind rollover (QC-YAZEED-CONTROL-CENTER-001)** — نُقلت أقدم 12 سجلًا ([2026-09-10]×8 و[2026-09-15]×4) إلى أعلى `02-mind-mid.md` للبقاء تحت soft limit؛ تم التحقق من وجود كل سجل في الأرشيف (12/12) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
-- **2026-09-18 — Project Mind rollover (QC-CLOSURE-007)** — نُقلت أقدم 12 سجلات `[2026-09-10]` إلى أعلى `02-mind-mid.md` للبقاء تحت soft limit؛ تم التحقق من وجود كل سجل في الأرشيف (12/12) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
-- **2026-09-18 — QC-CLOSURE-007 / Laboratory & scientific governance closure**
-  - Changed: implemented the missing TR-LAB-007 reject transition (`RejectLabTestUseCase`, `REJECT: UNDER_REVIEW → REJECTED`, reason + SoD + dual permission + P-05 + expected version, measurements/results preserved, `rejected_at` persisted, action wired as `laboratory.reject`); added the fail-closed `LabRejectPolicy` default and the new `POLICY_SOURCE_REQUIRED` error code; registered `PERM-LAB-REJECT`/`PERM-APR-REJECT` LAB_TEST policies; recorded PD-38 (reject decision authority) as OPEN/BLOCKED in the policy matrix; added fixture-driven lab reject E2E coverage and disclosed the reject policy gate on the review workspace without any actionable control.
-  - Evidence: typecheck `742 files / 0 errors`, lint, format, build, architecture PASS; unit `78 files / 523 tests PASS` (lab-focused `26/26`), lab+policy targeted `42/42`, lab reject spec listed by Playwright (`8 tests`) but **NOT VERIFIED** in execution; PostgreSQL-backed integration **BLOCKED** (no container runtime).
-  - State: PARTIAL / BLOCKED.
-  - Key files: `src/modules/laboratory/application/reject-lab-test.ts`, `src/modules/laboratory/domain/lab-state.ts`, `src/modules/laboratory/infrastructure/postgres-repository.ts`, `tests/unit/laboratory/scientific-governance.test.ts`, `audit/2026-09-18-qc-closure-007-laboratory-scientific-governance.md`.
-- **2026-09-18 — QC-CLOSURE-006 / QC operational workflow**
-  - Changed: added forward migration `0025_qc_closure_006_workflow`, supplier/assignment/evidence/history contracts, server-counted evidence Submit gate, independent Reject decision, release SoD/idempotency, and fixture-driven Receiving→Inspection→Release Playwright coverage.
-  - Evidence: unit `76/497 PASS`; targeted QC tests `15 PASS`; typecheck/build/format/lint/diff checks PASS; PostgreSQL-backed integration and authenticated E2E **BLOCKED/NOT VERIFIED** because no container runtime.
-  - State: PARTIAL / BLOCKED.
-  - Key files: `db/migrations/0025_qc_closure_006_workflow.sql`, `src/modules/quarantine/{receiving,inspection}`, `tests/e2e/critical-workflows.spec.ts`.
-- **2026-09-18 — Project Mind rollover (QC-CLOSURE-005)** — نُقلت 23 من أقدم سجلات `[2026-09-10]` إلى `02-mind-mid.md` للبقاء تحت soft limit؛ تُحقق من وجود كل سجل في الأرشيف قبل حذفه، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
+- **Project Mind rollovers** — `QC-YAZEED-CONTROL-CENTER-001` (12 سجلًا)، `QC-CLOSURE-007` (12)، `QC-CLOSURE-005` (23)، `QC-100-FINAL-016` (5)، `QC-100-FINAL-016 remediation` (5)، و`QC-100-FINAL-005 follow-up` (`QC-CLOSURE-006` + `QC-CLOSURE-007`) نُقلت إلى `02-mind-mid.md` بعد التحقق من وجودها في الأرشيف قبل الحذف (لم تُنقل أي قرارات حالية أو مشاكل مفتوحة). الحالة: DONE.
 - **2026-09-18 — QC-100-FINAL-016 / Live product UX & human-centered application review (read-only)**
   - Changed: no product code changed; live page-family review of the deployed product using an operator-typed session, recorded as `audit/2026-09-18-LIVE-PRODUCT-UX-AUDIT.md` (36 route families + 18 targeted URL probes; 5 P1 / 16 P2 / 10 P3, each with type, source pointer and copy replacement).
   - Evidence: live reproductions of the serif fallback, the ignored KPI drill-down params, the UUID topbar identity, `/reject-reports` 500, CSP-blocked inline scripts (`/ai-advisory` flow dead, `/account` toggle inert), `/account` outside the shell, the two phantom `/quality/*/new` routes, the self-contradicting migration card and the self-view role contradiction; strengths re-confirmed (fail-closed states, 404 semantics, keyboard/focus, no overflow on 34/35 routes, no unlabelled controls).
   - State: PARTIAL — review DONE; indicator unchanged at `29.0%`; consumers are 005/017/018/006. Not human UAT; single role; bootstrap-only data; deployed SHA `UNVERIFIED`.
   - Key files: `audit/2026-09-18-LIVE-PRODUCT-UX-AUDIT.md`.
-- **Rollover note (QC-100-FINAL-016 remediation)** — نُقلت أقدم 5 سجلات إلى أعلى `02-mind-mid.md` تحت `Rollover from 01 — 2026-09-19 (QC-100-FINAL-016 remediation)` (`QC-CLOSURE-004`، rolloverان، `QC-CLOSURE-002`، `QC-CLOSURE-AI-011`)؛ تم التحقق من وجودها في الأرشيف (5/5) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
-- **Rollover note (QC-100-FINAL-016)** — نُقلت أقدم سجلات الـLedger في هذه المهمة إلى أعلى `02-mind-mid.md` تحت عنوان `Rollover from 01 — 2026-09-18 (QC-100-FINAL-016)`: `QC-CLOSURE-E2E-006`، `QC-CLOSURE-UI-BG-005`، `QC-CLOSURE-CI-004`، `QC-CLOSURE-NFR-010`، `QC-CLOSURE-POLICY-009`؛ تم التحقق من وجودها في الأرشيف (5/5) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة.

@@ -1,125 +1,64 @@
 import { sql, type Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import { describeActorScope } from '../../../shared/authorization/scope-description.js';
-import type {
-  QuarantineOverview,
-  QuarantineOverviewReader,
-} from '../application/get-quarantine-overview.js';
+import { actorHasScope } from '../../../shared/authorization/scope-evaluator.js';
 import type {
   QuarantineAdminReadModel,
   QuarantineAdminReader,
 } from '../application/get-quarantine-admin.js';
+import type {
+  ReceivingTrendPoint,
+  ReceivingTrendReader,
+} from '../application/get-receiving-trend.js';
 
-export class PostgresQuarantineReadModel
-  implements QuarantineOverviewReader, QuarantineAdminReader
-{
+export class PostgresQuarantineReadModel implements QuarantineAdminReader, ReceivingTrendReader {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
-  async get(input: { actor: ActorContext }): Promise<QuarantineOverview> {
-    const actorId = input.actor.id;
-    const counts = await sql<{
-      received_today: number;
-      awaiting: number;
-      under_inspection: number;
-      hold: number;
-      pass_not_released: number;
-      released: number;
-    }>`
-      SELECT
-        count(*) FILTER (WHERE receiving_date = CURRENT_DATE)::int AS received_today,
-        count(*) FILTER (WHERE workflow_state IN ('PENDING','READY_FOR_INSPECTION'))::int AS awaiting,
-        count(*) FILTER (WHERE workflow_state = 'UNDER_INSPECTION')::int AS under_inspection,
-        count(*) FILTER (WHERE workflow_state = 'HOLD' OR inspection_result = 'HOLD')::int AS hold,
-        count(*) FILTER (WHERE inspection_result = 'PASS' AND release_system = FALSE)::int AS pass_not_released,
-        count(*) FILTER (WHERE release_system = TRUE)::int AS released
-      FROM qc.receiving_items WHERE created_by = ${actorId}`.execute(this.db);
-    const attention = await sql<{
+
+  /**
+   * The receiving trend read model.
+   *
+   * The day of each point is formatted by PostgreSQL (`receiving_date::text`)
+   * so the calendar day can never drift through a JavaScript time-zone
+   * conversion, and the window is bounded in SQL. Rows are scope-checked with
+   * the same evaluator the register uses, so the series counts exactly the rows
+   * the register would return for the same day.
+   */
+  async get(input: {
+    actor: ActorContext;
+    from: string;
+    to: string;
+    ownership?: 'mine';
+  }): Promise<readonly ReceivingTrendPoint[]> {
+    const ownershipClause =
+      input.ownership === 'mine' ? sql`AND created_by = ${input.actor.id}` : sql``;
+    const rows = await sql<{
       id: string;
-      title: string;
-      summary: string;
-      href: string;
-      severity: 'INFO' | 'WARNING' | 'CRITICAL';
-      state: string;
+      created_by: string;
+      workflow_state: string;
+      date: string;
     }>`
-      SELECT id::text, receiving_no AS title,
-        CASE WHEN inspection_result = 'PASS' AND release_system = FALSE THEN 'Inspection PASS is still not released' ELSE 'Receiving item requires attention' END AS summary,
-        '/quarantine/receiving/' || id::text AS href,
-        CASE WHEN workflow_state = 'HOLD' OR inspection_result = 'HOLD' THEN 'CRITICAL' ELSE 'WARNING' END AS severity,
-        workflow_state AS state
+      SELECT id::text AS id, created_by, workflow_state, receiving_date::text AS date
       FROM qc.receiving_items
-      WHERE created_by = ${actorId} AND (workflow_state IN ('PENDING','READY_FOR_INSPECTION','HOLD') OR (inspection_result = 'PASS' AND release_system = FALSE))
-      ORDER BY updated_at DESC LIMIT 12`.execute(this.db);
-    const distribution = await sql<{
-      state: string;
-      value: number;
-    }>`SELECT workflow_state AS state, count(*)::int AS value FROM qc.receiving_items WHERE created_by = ${actorId} GROUP BY workflow_state ORDER BY workflow_state`.execute(
-      this.db,
+      WHERE receiving_date >= ${input.from}::date AND receiving_date <= ${input.to}::date
+      ${ownershipClause}
+      ORDER BY receiving_date ASC, id ASC`.execute(this.db);
+    const grant = input.actor.permissions.find(
+      (permission) => permission.code === 'PERM-QUAR-VIEW',
     );
-    const row = counts.rows[0] ?? {
-      received_today: 0,
-      awaiting: 0,
-      under_inspection: 0,
-      hold: 0,
-      pass_not_released: 0,
-      released: 0,
-    };
-    return {
-      generatedAt: new Date(),
-      // P2-6: derived from the authenticated actor, never a static placeholder.
-      scopeLabel: describeActorScope(input.actor),
-      metrics: [
-        {
-          key: 'received-today',
-          label: 'Received today',
-          value: row.received_today,
-          definition: 'Receiving items created today in your authorized scope.',
-          href: '/quarantine/receiving',
-          tone: 'neutral',
-        },
-        {
-          key: 'awaiting-inspection',
-          label: 'Awaiting inspection',
-          value: row.awaiting,
-          definition: 'Items pending or ready for inspection.',
-          href: '/quarantine/receiving?state=READY_FOR_INSPECTION',
-          tone: 'warning',
-        },
-        {
-          key: 'under-inspection',
-          label: 'Under inspection',
-          value: row.under_inspection,
-          definition: 'Items currently in inspection workflow.',
-          href: '/quarantine/receiving?state=UNDER_INSPECTION',
-          tone: 'neutral',
-        },
-        {
-          key: 'hold',
-          label: 'HOLD',
-          value: row.hold,
-          definition: 'Items with a receiving or inspection hold.',
-          href: '/quarantine/receiving?state=HOLD',
-          tone: 'danger',
-        },
-        {
-          key: 'pass-not-released',
-          label: 'PASS / not released',
-          value: row.pass_not_released,
-          definition: 'Inspection PASS is separate from the Release System State.',
-          href: '/quarantine/receiving?inspectionResult=PASS&releaseState=NOT_RELEASED',
-          tone: 'success',
-        },
-        {
-          key: 'released',
-          label: 'Released',
-          value: row.released,
-          definition: 'Items whose explicit Release System State is YES.',
-          href: '/quarantine/receiving?releaseState=RELEASED',
-          tone: 'success',
-        },
-      ],
-      attention: attention.rows,
-      distributions: distribution.rows.map((row) => ({ label: row.state, value: row.value })),
-    };
+    const counts = new Map<string, number>();
+    for (const row of rows.rows) {
+      const visible = actorHasScope(
+        input.actor,
+        { type: 'RECEIVING_ITEM', id: row.id, state: row.workflow_state, ownerId: row.created_by },
+        { ownerId: row.created_by },
+        grant,
+      );
+      if (!visible) continue;
+      counts.set(row.date, (counts.get(row.date) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([date, value]) => ({ date, value }));
   }
   async getAdmin(): Promise<QuarantineAdminReadModel> {
     const [templates, byState] = await Promise.all([

@@ -4,6 +4,7 @@ import { PostgresReceivingRepository } from '../receiving/infrastructure/postgre
 import { PostgresInspectionRepository } from '../inspection/infrastructure/postgres-repository.js';
 import { GetQuarantineOverviewUseCase } from './get-quarantine-overview.js';
 import { GetQuarantineAdminUseCase } from './get-quarantine-admin.js';
+import { GetReceivingTrendUseCase } from './get-receiving-trend.js';
 import { GetReceivingUseCase } from '../receiving/application/get-receiving.js';
 import { ListReceivingUseCase } from '../receiving/application/list-receiving.js';
 import { GetInspectionUseCase } from '../inspection/application/get-inspection.js';
@@ -25,10 +26,15 @@ import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-re
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 
 export function quarantineReadDependencies() {
-  const reader = new PostgresQuarantineReadModel(getDatabase());
+  const database = getDatabase();
+  const readModel = new PostgresQuarantineReadModel(database);
+  const receiving = new ListReceivingUseCase(new PostgresReceivingRepository(database));
   return {
-    overview: new GetQuarantineOverviewUseCase(reader),
-    admin: new GetQuarantineAdminUseCase(reader),
+    // The overview projects the same register the drill-downs open, so every
+    // counter and its link stay in agreement by construction.
+    overview: new GetQuarantineOverviewUseCase({ list: (input) => receiving.execute(input) }),
+    receivingTrend: new GetReceivingTrendUseCase(readModel),
+    admin: new GetQuarantineAdminUseCase(readModel),
   };
 }
 export function receivingReadDependencies() {

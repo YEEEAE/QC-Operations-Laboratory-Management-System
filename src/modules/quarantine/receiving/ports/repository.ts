@@ -17,6 +17,12 @@ export interface ReceivingRepository {
     releaseState?: 'RELEASED' | 'NOT_RELEASED';
     /** Ownership filter: 'mine' restricts to records the actor created. */
     ownership?: 'mine';
+    /**
+     * Exact receiving-date filter as `YYYY-MM-DD`. The comparison happens in
+     * PostgreSQL against the `date` column, so the register can never disagree
+     * with a same-predicate counter over a client time-zone boundary.
+     */
+    receivingDate?: string;
   }): Promise<readonly ReceivingItem[]>;
   updateDraft(i: {
     id: string;

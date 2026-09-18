@@ -24,7 +24,12 @@ import { PostgresDashboardQuery } from '../../../src/modules/dashboard/infrastru
 import type {
   DashboardApprovalItem,
   DashboardApprovalQueue,
+  DashboardSeries,
+  DashboardSeriesProvider,
 } from '../../../src/modules/dashboard/ports/dashboard-query.js';
+import { GetReceivingTrendUseCase } from '../../../src/modules/quarantine/application/get-receiving-trend.js';
+import { PostgresQuarantineReadModel } from '../../../src/modules/quarantine/infrastructure/postgres-quarantine-read-model.js';
+import { projectReceivingTrend } from '../../../src/modules/dashboard/application/dashboard-series.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { createPool } from '../../../src/shared/database/pool.js';
@@ -54,6 +59,38 @@ const APPROVALS: DashboardApprovalItem[] = [
 
 const approvalQueue = (items: DashboardApprovalItem[] = APPROVALS): DashboardApprovalQueue => ({
   list: async () => items,
+});
+
+const NO_SERIES: DashboardSeries = {
+  key: 'receiving-records-per-day',
+  title: 'Receiving records per day',
+  summary: '',
+  unit: 'records',
+  source: 'Quarantine receiving register',
+  sourceHref: '/quarantine/receiving',
+  grain: 'One calendar day of the receiving date (UTC), ascending',
+  numerator: 'Receiving items you are allowed to read, per day',
+  actorScope: 'Your authorized scope',
+  windowLabel: 'Last 14 days ending on the current UTC server date',
+  zeroPolicy: 'A day with no receiving records is a real count of zero.',
+  state: 'NOT_SUPPLIED',
+  message: 'No trend series is available for this scope.',
+  points: [],
+};
+
+const seriesProvider = (series: DashboardSeries = NO_SERIES): DashboardSeriesProvider => ({
+  get: async () => series,
+});
+
+/** The real approved series, read through the owning Quarantine module. */
+const liveSeries = (ownership: 'mine' | undefined = 'mine'): DashboardSeriesProvider => ({
+  get: async (actor) =>
+    projectReceivingTrend(
+      await new GetReceivingTrendUseCase(new PostgresQuarantineReadModel(db)).execute({
+        actor,
+        ownership,
+      }),
+    ),
 });
 
 let pool: Pool | undefined;
@@ -132,7 +169,9 @@ describe('dashboard decision rollup agrees with its drill-downs', () => {
   });
 
   it('defines numerator, state, actor scope and time window for every KPI', async () => {
-    const dashboard = await new PostgresDashboardQuery(db, approvalQueue()).get(mine());
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), seriesProvider()).get(
+      mine(),
+    );
     expect(dashboard.metrics.length).toBe(4);
     for (const metric of dashboard.metrics) {
       expect(metric.numerator.length, metric.key).toBeGreaterThan(0);
@@ -144,7 +183,9 @@ describe('dashboard decision rollup agrees with its drill-downs', () => {
   });
 
   it('makes the Pending review counter, queue and destination agree', async () => {
-    const dashboard = await new PostgresDashboardQuery(db, approvalQueue()).get(mine());
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), seriesProvider()).get(
+      mine(),
+    );
     const pending = dashboard.metrics.find((metric) => metric.key === 'pending-review');
     expect(pending?.value).toBe(APPROVALS.length);
     expect(pending?.href).toBe('/approvals');
@@ -158,7 +199,9 @@ describe('dashboard decision rollup agrees with its drill-downs', () => {
   });
 
   it('scopes the personal counters and reproduces them from the linked register', async () => {
-    const dashboard = await new PostgresDashboardQuery(db, approvalQueue()).get(mine());
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), seriesProvider()).get(
+      mine(),
+    );
     const list = new ListReceivingUseCase(new PostgresReceivingRepository(db));
 
     const hold = dashboard.metrics.find((metric) => metric.key === 'hold-items');
@@ -181,7 +224,9 @@ describe('dashboard decision rollup agrees with its drill-downs', () => {
   });
 
   it('agrees the PASS counter with the inspections register it links to', async () => {
-    const dashboard = await new PostgresDashboardQuery(db, approvalQueue()).get(mine());
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), seriesProvider()).get(
+      mine(),
+    );
     const pass = dashboard.metrics.find((metric) => metric.key === 'pass-inspections');
     expect(pass?.value).toBe(1);
     const rows = await new ListInspectionsUseCase(new PostgresInspectionRepository(db)).execute({
@@ -194,7 +239,9 @@ describe('dashboard decision rollup agrees with its drill-downs', () => {
   });
 
   it('orders the decision queue by real severity with the most urgent first', async () => {
-    const dashboard = await new PostgresDashboardQuery(db, approvalQueue()).get(mine());
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), seriesProvider()).get(
+      mine(),
+    );
     expect(dashboard.attention[0]?.severity).toBe('CRITICAL');
     expect(dashboard.attention.some((item) => item.severity === 'WARNING')).toBe(true);
     const ranks = dashboard.attention.map((item) =>
@@ -211,7 +258,43 @@ describe('dashboard decision rollup agrees with its drill-downs', () => {
         throw new Error('approvals provider unavailable');
       },
     };
-    await expect(new PostgresDashboardQuery(db, failing).get(mine())).rejects.toThrow();
+    await expect(
+      new PostgresDashboardQuery(db, failing, seriesProvider()).get(mine()),
+    ).rejects.toThrow();
+  });
+
+  it('plots the approved receiving series over the actor’s own records only', async () => {
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), liveSeries()).get(
+      mine(),
+    );
+    expect(dashboard.series.state).toBe('AVAILABLE');
+    const points = dashboard.series.points;
+    // The window is complete: one point per day, no gaps and no invented days.
+    expect(points.length).toBe(14);
+    const last = points[points.length - 1]!;
+    expect(last.label).toBe(new Date().toISOString().slice(0, 10));
+
+    // The series must equal the register it points at, for the same actor and
+    // the same window: executed through the real register with its own `today`
+    // filter, not a re-implemented predicate.
+    const list = new ListReceivingUseCase(new PostgresReceivingRepository(db));
+    const today = await list.execute({ actor: mine(), ownership: 'mine', receivedOn: 'today' });
+    expect(last.value).toBe(today.length);
+    expect(last.value).toBeGreaterThan(0);
+    expect(today.every((item) => item.createdBy === MINE)).toBe(true);
+    // Nothing from the other actor leaks into the series, and the whole window
+    // accounts for exactly the actor's own rows.
+    const own = await list.execute({ actor: mine(), ownership: 'mine' });
+    expect(own.every((item) => item.createdBy === MINE)).toBe(true);
+    expect(points.reduce((sum, point) => sum + point.value, 0)).toBe(own.length);
+  });
+
+  it('reports a missing series as not supplied instead of an empty chart or zero', async () => {
+    const dashboard = await new PostgresDashboardQuery(db, approvalQueue(), seriesProvider()).get(
+      mine(),
+    );
+    expect(dashboard.series.state).toBe('NOT_SUPPLIED');
+    expect(dashboard.series.points).toEqual([]);
   });
 });
 

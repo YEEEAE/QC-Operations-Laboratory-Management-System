@@ -98,6 +98,50 @@ describe('dashboard decision surface', () => {
     expect(topbar).toContain('<span>Search</span>');
   });
 
+  it('requires an approved series contract before anything is plotted', () => {
+    for (const field of [
+      'grain: string',
+      'numerator: string',
+      'actorScope: string',
+      'windowLabel: string',
+      'zeroPolicy: string',
+    ]) {
+      expect(port, field).toContain(field);
+    }
+    for (const state of ['AVAILABLE', 'EMPTY', 'UNAVAILABLE', 'NOT_SUPPLIED']) {
+      expect(port, state).toContain(state);
+    }
+    // Only AVAILABLE carries points, so no consumer can plot an empty or
+    // unavailable series as a flat zero line.
+    const projection = read('src/modules/dashboard/application/dashboard-series.ts');
+    expect(projection).toContain("state: 'AVAILABLE', message: '', points");
+    expect(projection).toContain("state: 'EMPTY'");
+    expect(projection).toContain("state: 'UNAVAILABLE'");
+    expect(projection).toContain("state: 'NOT_SUPPLIED'");
+    expect(projection).toContain('points: [],');
+    // The series comes from the owning module's contract, not dashboard SQL.
+    const dependencies = read('src/modules/dashboard/application/dependencies.ts');
+    expect(dependencies).toContain('quarantineReadDependencies().receivingTrend');
+    expect(dependencies).toContain("ownership: 'mine'");
+  });
+
+  it('plots only the available series and states every other state honestly', () => {
+    expect(dashboard).toContain("import Chart from '../../ui/charts/Chart.astro'");
+    expect(dashboard).toContain("dashboard.series.state === 'AVAILABLE' ? <Chart");
+    expect(dashboard).toContain('{dashboard.series.message}');
+    expect(dashboard).toContain('seriesUnavailable()');
+    // The non-plotting copy states that nothing is drawn and no zero is offered.
+    expect(read('src/modules/dashboard/application/dashboard-series.ts')).toContain(
+      'No trend series is available',
+    );
+    expect(read('src/modules/dashboard/application/dashboard-series.ts')).toContain(
+      'never shown as an empty chart or a zero',
+    );
+    // The coverage panel no longer claims a trend is missing outright.
+    expect(dashboard).toContain('Overdue due dates');
+    expect(dashboard).not.toContain('laboratory workload, blocked reasons, and trend series');
+  });
+
   it('keeps the icon-only shell controls at the 44px target size', () => {
     const topbar = read('src/ui/shell/Topbar.astro');
     // Icon-only search, notifications and approvals links must not collapse to

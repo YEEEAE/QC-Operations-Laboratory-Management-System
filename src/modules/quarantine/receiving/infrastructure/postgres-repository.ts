@@ -165,6 +165,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     inspectionResult?: ReceivingItem['inspectionResult'];
     releaseState?: 'RELEASED' | 'NOT_RELEASED';
     ownership?: 'mine';
+    receivingDate?: string;
   }) {
     let query = this.db
       .selectFrom('receiving_items')
@@ -182,6 +183,11 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     // Ownership is a display/verification filter on the same owner dimension the
     // dashboard KPIs use, so a personal KPI can link to exactly its own set.
     if (i.ownership === 'mine') query = query.where('created_by', '=', i.actor.id) as typeof query;
+    // Exact-day filter compared in PostgreSQL against the `date` column, so the
+    // register's set matches a same-predicate counter regardless of the host
+    // time zone (no client-side date arithmetic).
+    if (i.receivingDate)
+      query = query.where('receiving_date', '=', i.receivingDate) as typeof query;
     const rows = await query.execute();
     const grant = i.actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');
     return rows

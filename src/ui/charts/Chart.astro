@@ -1,7 +1,7 @@
 ---
 interface Point { label: string; value: number; }
-interface Props { title: string; summary: string; points: Point[]; unit?: string; sourceHref?: string; }
-const { title, summary, points, unit = '', sourceHref } = Astro.props;
+interface Props { title: string; summary: string; points: Point[]; unit?: string; sourceHref?: string; sourceLabel?: string; meta?: Array<{ label: string; value: string }>; }
+const { title, summary, points, unit = '', sourceHref, sourceLabel = 'Open data', meta = [] } = Astro.props;
 const max = Math.max(...points.map((p) => p.value), 1);
 const width = 640;
 const height = 220;
@@ -16,8 +16,20 @@ const coords = points
       <h2>{title}</h2>
       <p>{summary}</p>
     </div>
-    {sourceHref && <a href={sourceHref}>Open data</a>}
+    {sourceHref && <a href={sourceHref}>{sourceLabel}</a>}
   </div>
+  {
+    meta.length > 0 && (
+      <dl class="chart-meta">
+        {meta.map((entry) => (
+          <div>
+            <dt>{entry.label}</dt>
+            <dd>{entry.value}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
   <svg
     viewBox={`0 0 ${width} ${height}`}
     role="img"
@@ -93,6 +105,28 @@ const coords = points
     color: var(--color-accent-primary-hover);
     font-size: 12px;
   }
+  .chart-meta {
+    display: grid;
+    gap: 2px;
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .chart-meta div {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+  }
+  .chart-meta dt {
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .chart-meta dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
   .chart svg {
     display: block;
     width: 100%;
@@ -132,6 +166,7 @@ const coords = points
   .chart-head { gap: var(--space-4); }
   .chart h2 { font-size: var(--font-size-md); }
   .chart p, .chart-head a { font-size: var(--font-size-xs); }
+  .chart-meta, .chart-meta dt, .chart-meta dd { font-size: var(--font-size-xs); }
   .chart svg { margin-top: var(--space-4); }
   .data-alt { margin-top: var(--space-3); font-size: var(--font-size-xs); }
   .data-alt th, .data-alt td { padding: var(--space-2) var(--space-2); }

@@ -9,6 +9,7 @@ import type {
   DashboardAttention,
   DashboardQuery,
   DashboardReadModel,
+  DashboardSeriesProvider,
 } from '../ports/dashboard-query.js';
 
 /** The decision queue is a bounded, most-recent-first slice of the rollup. */
@@ -30,6 +31,13 @@ export class PostgresDashboardQuery implements DashboardQuery {
      * fails closed so the counter is withheld rather than shown as zero.
      */
     private readonly approvals: DashboardApprovalQueue,
+    /**
+     * The approved time series. Unlike the decision counters above, an
+     * unavailable series does not fail the whole read model: it is carried as an
+     * explicit state so the trend panel says it is unavailable instead of
+     * drawing an empty chart or a zero (audit §8).
+     */
+    private readonly series: DashboardSeriesProvider,
   ) {}
 
   async get(actor: ActorContext): Promise<DashboardReadModel> {
@@ -41,7 +49,7 @@ export class PostgresDashboardQuery implements DashboardQuery {
     // audit-read contract (same safe projection, same occurred_at DESC /
     // event_no DESC order, same allowlist mapper) so a qualifying event is
     // rendered identically on both surfaces.
-    const [counts, holdRows, activityRows, approvals] = await Promise.all([
+    const [counts, holdRows, activityRows, approvals, series] = await Promise.all([
       sql<{
         hold_items: number;
         passed_inspections: number;
@@ -86,6 +94,7 @@ export class PostgresDashboardQuery implements DashboardQuery {
         .limit(8)
         .execute(),
       this.approvals.list(actor),
+      this.series.get(actor),
     ]);
     const row = counts.rows[0] ?? {
       hold_items: 0,
@@ -184,6 +193,7 @@ export class PostgresDashboardQuery implements DashboardQuery {
         },
       ],
       attention,
+      series,
       activity: activityRows.map((row) => {
         const view = mapAuditRowToView(row);
         return {

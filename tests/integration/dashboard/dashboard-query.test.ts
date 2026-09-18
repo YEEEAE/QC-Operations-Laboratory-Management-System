@@ -4,6 +4,7 @@ import {
   type DashboardReadModel,
 } from '../../../src/modules/dashboard/application/get-dashboard';
 import type { DashboardQuery } from '../../../src/modules/dashboard/ports/dashboard-query';
+import { seriesNotSupplied } from '../../../src/modules/dashboard/application/dashboard-series';
 import type { ActorContext } from '../../../src/shared/authorization/types';
 
 const actor = (
@@ -41,6 +42,7 @@ class MemoryDashboardQuery implements DashboardQuery {
       ],
       attention: [],
       activity: [],
+      series: seriesNotSupplied('PROVIDER_NOT_COMPOSED'),
     };
   }
 }

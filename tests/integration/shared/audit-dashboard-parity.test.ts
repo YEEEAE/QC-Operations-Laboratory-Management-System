@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GetDashboardUseCase } from '../../../src/modules/dashboard/application/get-dashboard';
+import { seriesNotSupplied } from '../../../src/modules/dashboard/application/dashboard-series';
 import type { DashboardQuery } from '../../../src/modules/dashboard/ports/dashboard-query';
 import {
   AuditQueryService,
@@ -276,6 +277,7 @@ describe('F-07 dashboard/audit canonical contract', () => {
           metrics: [],
           attention: [],
           activity: [],
+          series: seriesNotSupplied('PROVIDER_NOT_COMPOSED'),
         };
       },
     };
