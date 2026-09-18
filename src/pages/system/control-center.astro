@@ -1,0 +1,836 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import {
+  isNamedSystemOwner,
+  isProtectedOwnerRoleGrant,
+} from '../../shared/authorization/p05-authority.js';
+import { controlCenterReadDependencies } from '../../modules/system-health/application/dependencies.js';
+import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
+import { administrationDependencies } from '../../modules/administration/application/dependencies.js';
+import { auditQueryDependencies } from '../../shared/audit/audit-dependencies.js';
+import { SCOPE_KINDS, scopeRequiresValue } from '../../shared/authorization/types.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+// Canonical-owner page: the middleware already returns 404 for non-owners; this
+// defense-in-depth check keeps the page safe even if routing is bypassed.
+if (!isNamedSystemOwner(actor)) return new Response(null, { status: 404 });
+
+type Overview = Awaited<
+  ReturnType<ReturnType<typeof controlCenterReadDependencies>['overview']['execute']>
+>;
+type Users = Awaited<
+  ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['execute']>
+>;
+type Roles = Awaited<
+  ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>
+>;
+type AuditResult = Awaited<ReturnType<ReturnType<typeof auditQueryDependencies>['list']['list']>>;
+
+let overview: Overview | undefined;
+try {
+  overview = await controlCenterReadDependencies().overview.execute({ actor });
+} catch {
+  overview = undefined;
+}
+
+let users: Users = [];
+let usersError = false;
+const roleSummary = new Map<string, string>();
+const scopeSummary = new Map<string, string>();
+try {
+  users = await identityAdminReadDependencies().listUsers.execute({ actor });
+  const auth = administrationDependencies();
+  await Promise.all(
+    users.map(async (user) => {
+      try {
+        const roles = await auth.listUserRoles.execute({ actor, userId: user.id });
+        roleSummary.set(user.id, roles.map((role) => role.code).join(', ') || '—');
+      } catch {
+        roleSummary.set(user.id, 'Restricted');
+      }
+      try {
+        const scopes = await auth.listUserScopes.execute({ actor, userId: user.id });
+        scopeSummary.set(
+          user.id,
+          scopes
+            .map((scope) => (scope.value ? `${scope.kind}:${scope.value}` : scope.kind))
+            .join(', ') || '—',
+        );
+      } catch {
+        scopeSummary.set(user.id, 'Restricted');
+      }
+    }),
+  );
+} catch {
+  usersError = true;
+}
+
+let roles: Roles = [];
+let rolesError = false;
+try {
+  roles = await administrationDependencies().listRoles.execute({ actor });
+} catch {
+  rolesError = true;
+}
+
+let audit: AuditResult | undefined;
+try {
+  audit = await auditQueryDependencies().list.list(actor, { limit: 25 });
+} catch {
+  // Denied or unavailable audit reads render the same empty state; history
+  // existence never leaks through a distinguishable error.
+  audit = undefined;
+}
+
+// Server-rendered search/filter/sort/pagination — fully functional without client JS.
+const query = (Astro.url.searchParams.get('q') ?? '').trim().toLowerCase();
+const stateFilter = Astro.url.searchParams.get('state') ?? '';
+const sortKey = Astro.url.searchParams.get('sort') ?? 'loginIdentity';
+const sortDir = Astro.url.searchParams.get('dir') === 'desc' ? 'desc' : 'asc';
+const pageSize = 10;
+const requestedPage = Number.parseInt(Astro.url.searchParams.get('page') ?? '1', 10);
+
+const filtered = users
+  .filter((user) => (stateFilter ? user.accountState === stateFilter : true))
+  .filter((user) =>
+    query
+      ? [user.loginIdentity, user.displayName, user.email ?? ''].join(' ').toLowerCase().includes(query)
+      : true,
+  )
+  .sort((left, right) => {
+    const pick = (user: Users[number]): string =>
+      sortKey === 'displayName'
+        ? user.displayName
+        : sortKey === 'state'
+          ? user.accountState
+          : sortKey === 'lastLogin'
+            ? (user.lastLoginAt?.toISOString() ?? '')
+            : user.loginIdentity;
+    const order = pick(left).localeCompare(pick(right));
+    return sortDir === 'desc' ? -order : order;
+  });
+const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+const page = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), totalPages);
+const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+const counts = {
+  total: users.length,
+  active: users.filter((user) => user.accountState === 'ACTIVE').length,
+  inactive: users.filter((user) => user.accountState === 'INACTIVE').length,
+  disabled: users.filter((user) => user.accountState === 'DISABLED').length,
+};
+
+const pageParams = (overrides: Record<string, string>) => {
+  const params = new URLSearchParams({
+    q: query,
+    state: stateFilter,
+    sort: sortKey,
+    dir: sortDir,
+    ...overrides,
+  });
+  for (const [key, value] of [...params]) if (!value) params.delete(key);
+  return `/system/control-center?${params.toString()}#accounts`;
+};
+const sortLink = (key: string) =>
+  pageParams({ sort: key, dir: sortKey === key && sortDir === 'asc' ? 'desc' : 'asc', page: '1' });
+
+const statusClass = (status: string) =>
+  status === 'HEALTHY' || status === 'READY' || status === 'VERIFIED'
+    ? 'ok'
+    : status === 'DEGRADED'
+      ? 'warn'
+      : status === 'UNKNOWN'
+        ? 'unknown'
+        : 'bad';
+const generatedAt = overview?.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
+const formatDate = (value?: Date) =>
+  value ? value.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+---
+<AppLayout title="Control center · System" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">UI-SYS-002 · CANONICAL OWNER ONLY</p>
+      <h1>System control center</h1>
+      <p class="lede">
+        Owner-only operational console. Every mutation below executes through audited
+        server-side use cases; protected owner grants can never be removed, and raw
+        secrets, connection strings, and stack traces are never shown.
+      </p>
+    </div>
+    <span class={`banner ${overview?.coreStatus === 'READY' ? 'ok' : 'bad'}`}>
+      {overview
+        ? overview.coreStatus === 'READY'
+          ? 'Core system: READY'
+          : 'Core system: NOT READY'
+        : 'STATUS UNAVAILABLE'}
+    </span>
+  </section>
+
+  <section class="panel" aria-labelledby="overview-title">
+    <h2 id="overview-title">System overview</h2>
+    {
+      !overview ? (
+        <p class="muted" role="status">
+          Live status is temporarily unavailable. Machine readiness remains at
+          /api/health/ready.
+        </p>
+      ) : (
+        <>
+          <p class="muted">
+            Sanitized live status generated {generatedAt} (Asia/Riyadh).
+          </p>
+          <div class="cards">
+            <div class="card">
+              <span class="card-label">Application</span>
+              <span class={`pill ${statusClass(overview.applicationStatus)}`}>
+                {overview.applicationStatus}
+              </span>
+            </div>
+            <div class="card">
+              <span class="card-label">PostgreSQL</span>
+              <span class={`pill ${statusClass(overview.databaseStatus)}`}>
+                {overview.databaseStatus}
+              </span>
+            </div>
+            <div class="card">
+              <span class="card-label">Audit subsystem</span>
+              <span class={`pill ${statusClass(overview.auditStatus)}`}>{overview.auditStatus}</span>
+            </div>
+            <div class="card">
+              <span class="card-label">Migrations</span>
+              <span class={`pill ${overview.migration.drift ? 'bad' : 'ok'}`}>
+                {overview.migration.drift ? 'DRIFT DETECTED' : 'IN SYNC'}
+              </span>
+            </div>
+          </div>
+          <dl>
+            <div><dt>Applied migration head</dt><dd>{overview.migration.appliedHead}</dd></div>
+            <div><dt>Expected migration head</dt><dd>{overview.migration.expectedHead}</dd></div>
+            <div><dt>Pending migrations</dt><dd>{overview.migration.pendingCount}</dd></div>
+            <div>
+              <dt>Release verification</dt>
+              <dd class={overview.release.status === 'VERIFIED' ? 'good' : 'warn'}>
+                {overview.release.status}
+              </dd>
+            </div>
+            <div><dt>Release ID</dt><dd>{overview.release.releaseId ?? 'UNVERIFIED'}</dd></div>
+            <div><dt>Build ID</dt><dd>{overview.release.buildId ?? 'UNVERIFIED'}</dd></div>
+            <div><dt>Git SHA</dt><dd>{overview.release.gitSha ?? 'UNVERIFIED'}</dd></div>
+            <div>
+              <dt>Application version</dt>
+              <dd>{overview.release.applicationVersion ?? 'UNVERIFIED'}</dd>
+            </div>
+            <div><dt>Environment</dt><dd>{overview.release.environment ?? 'UNVERIFIED'}</dd></div>
+          </dl>
+          <p class="muted">
+            Open blockers:{' '}
+            {overview.migration.drift
+              ? 'the applied migration head differs from the expected head.'
+              : 'none modeled in this view.'}{' '}
+            Dependency and backup detail: <a href="/system/health">System health</a> ·{' '}
+            <a href="/system/backups">Backups</a>
+          </p>
+        </>
+      )
+    }
+  </section>
+
+  <section class="panel" id="accounts" aria-labelledby="accounts-title">
+    <h2 id="accounts-title">Accounts</h2>
+    {
+      usersError ? (
+        <p class="muted" role="alert">The account register is temporarily unavailable.</p>
+      ) : (
+        <>
+          <div class="cards">
+            <div class="card"><span class="card-label">Total</span><strong>{counts.total}</strong></div>
+            <div class="card"><span class="card-label">Active</span><strong>{counts.active}</strong></div>
+            <div class="card"><span class="card-label">Inactive</span><strong>{counts.inactive}</strong></div>
+            <div class="card"><span class="card-label">Disabled</span><strong>{counts.disabled}</strong></div>
+          </div>
+          <form class="filters" method="get" action="/system/control-center">
+            <label for="q">
+              Search
+              <input id="q" name="q" type="search" value={query} maxlength="200" placeholder="Login, name, or email" />
+            </label>
+            <label for="state">
+              State
+              <select id="state" name="state">
+                <option value="" selected={stateFilter === ''}>All states</option>
+                <option value="ACTIVE" selected={stateFilter === 'ACTIVE'}>ACTIVE</option>
+                <option value="INACTIVE" selected={stateFilter === 'INACTIVE'}>INACTIVE</option>
+                <option value="DISABLED" selected={stateFilter === 'DISABLED'}>DISABLED</option>
+              </select>
+            </label>
+            <input type="hidden" name="sort" value={sortKey} />
+            <input type="hidden" name="dir" value={sortDir} />
+            <button type="submit">Apply</button>
+          </form>
+          {
+            pageRows.length ? (
+              <div class="table-wrap">
+                <table>
+                  <caption>
+                    All member accounts — page {page} of {totalPages} ({filtered.length} matching)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col"><a href={sortLink('loginIdentity')}>Login identity</a></th>
+                      <th scope="col"><a href={sortLink('displayName')}>Display name</a></th>
+                      <th scope="col">Email</th>
+                      <th scope="col"><a href={sortLink('state')}>State</a></th>
+                      <th scope="col">Roles</th>
+                      <th scope="col">Scopes</th>
+                      <th scope="col"><a href={sortLink('lastLogin')}>Last login</a></th>
+                      <th scope="col">Version</th>
+                      <th scope="col">Manage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageRows.map((user) => (
+                      <tr>
+                        <th scope="row">
+                          {user.loginIdentity}{' '}
+                          {isProtectedOwnerRoleGrant(user.loginIdentity, 'SYSTEM_OWNER') && (
+                            <span class="pill protected">PROTECTED OWNER</span>
+                          )}
+                        </th>
+                        <td>{user.displayName}</td>
+                        <td>{user.email ?? '—'}</td>
+                        <td>
+                          <span
+                            class={`pill ${
+                              user.accountState === 'ACTIVE'
+                                ? 'ok'
+                                : user.accountState === 'DISABLED'
+                                  ? 'bad'
+                                  : 'warn'
+                            }`}
+                          >
+                            {user.accountState}
+                          </span>
+                        </td>
+                        <td>{roleSummary.get(user.id) ?? '—'}</td>
+                        <td>{scopeSummary.get(user.id) ?? '—'}</td>
+                        <td>{formatDate(user.lastLoginAt)}</td>
+                        <td>{user.version.toString()}</td>
+                        <td><a href={`/admin/users/${user.id}`}>Open workspace</a></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p class="muted">No accounts match the current filter.</p>
+            )
+          }
+          <nav class="pagination" aria-label="Accounts pages">
+            {page > 1 ? (
+              <a href={pageParams({ page: String(page - 1) })}>Previous</a>
+            ) : (
+              <span aria-disabled="true">Previous</span>
+            )}
+            <span>
+              Page {page} / {totalPages}
+            </span>
+            {page < totalPages ? (
+              <a href={pageParams({ page: String(page + 1) })}>Next</a>
+            ) : (
+              <span aria-disabled="true">Next</span>
+            )}
+          </nav>
+        </>
+      )
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="create-title">
+    <h2 id="create-title">Create account</h2>
+    <p class="muted">
+      New accounts start ACTIVE with a temporary password that must be changed at first
+      sign-in. Creation runs inside a single audited transaction.
+    </p>
+    <form class="form" method="post" action="/system/control-center" data-owner-create-user>
+      <label for="loginIdentity">
+        Login identity<span aria-hidden="true"> *</span>
+        <input id="loginIdentity" name="loginIdentity" required maxlength="200" autocomplete="off" />
+      </label>
+      <label for="displayName">
+        Display name<span aria-hidden="true"> *</span>
+        <input id="displayName" name="displayName" required maxlength="200" autocomplete="off" />
+      </label>
+      <label for="email">
+        Email (optional)
+        <input id="email" name="email" type="email" maxlength="320" autocomplete="off" />
+      </label>
+      <label for="temporaryPassword">
+        Temporary password<span aria-hidden="true"> *</span>
+        <input id="temporaryPassword" name="temporaryPassword" type="password" required maxlength="512" autocomplete="new-password" />
+      </label>
+      <fieldset>
+        <legend>Initial role grants</legend>
+        {rolesError && (
+          <p class="note" role="alert">Role options are temporarily unavailable.</p>
+        )}
+        {roles
+          .filter((role) => role.active)
+          .map((role) => (
+            <label class="check">
+              <input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})
+            </label>
+          ))}
+      </fieldset>
+      <fieldset>
+        <legend>Initial scopes (optional)</legend>
+        <p class="note">
+          Kinds that name a collection require a value; GLOBAL is a whole-system grant and takes
+          none.
+        </p>
+        {SCOPE_KINDS.map((kind) => (
+          <div class="scope-row">
+            <label class="check">
+              <input type="checkbox" name="scopeKind" value={kind} /> {kind}
+            </label>
+            {scopeRequiresValue(kind) ? (
+              <input
+                name={`scopeValue-${kind}`}
+                maxlength="200"
+                placeholder={`${kind} value`}
+                aria-label={`${kind} scope value`}
+              />
+            ) : (
+              <span class="note">No value</span>
+            )}
+          </div>
+        ))}
+      </fieldset>
+      <div class="actions">
+        <button type="submit">Create account</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="roles-title">
+    <h2 id="roles-title">Roles &amp; permissions</h2>
+    <p class="muted">
+      Read view of canonical roles and grants. Administration happens in the governed
+      workspaces; the canonical owner role and GLOBAL scope grants are protected at the
+      persistence layer and can never be removed.
+    </p>
+    {
+      rolesError ? (
+        <p class="muted" role="alert">The role register is temporarily unavailable.</p>
+      ) : (
+        <div class="table-wrap">
+          <table>
+            <caption>Canonical roles</caption>
+            <thead>
+              <tr>
+                <th scope="col">Code</th>
+                <th scope="col">Name</th>
+                <th scope="col">State</th>
+                <th scope="col">Administration</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roles.map((role) => (
+                <tr>
+                  <th scope="row">{role.code}</th>
+                  <td>{role.name}</td>
+                  <td>
+                    <span class={`pill ${role.active ? 'ok' : 'bad'}`}>
+                      {role.active ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </td>
+                  <td><a href={`/admin/roles/${role.id}`}>Open role</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+    <p class="muted">
+      Full matrices: <a href="/admin/roles">Roles</a> · <a href="/admin/permissions">Permissions</a>{' '}
+      · <a href="/admin/scopes">Scopes</a>
+    </p>
+  </section>
+
+  <section class="panel" aria-labelledby="config-title">
+    <h2 id="config-title">System configuration</h2>
+    <p class="muted">
+      Secrets (database URLs, session secrets, provider credentials, encryption keys) are
+      managed exclusively through the deployment provider environment and are never editable
+      from the application. No persisted application-settings model is currently justified by
+      the business rules; introducing one requires a forward migration, typed repository,
+      validation, audit, and optimistic concurrency — none of which are invented here.
+    </p>
+  </section>
+
+  <section class="panel" aria-labelledby="activity-title">
+    <h2 id="activity-title">Recent administrative activity</h2>
+    <p class="muted">
+      Sanitized audit view — payloads and secret-bearing columns never leave the audit store.
+    </p>
+    {
+      !audit || audit.events.length === 0 ? (
+        <p class="muted">No audit events are visible.</p>
+      ) : (
+        <div class="table-wrap">
+          <table>
+            <caption>Latest {audit.events.length} of {audit.total} audit events</caption>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Action</th>
+                <th scope="col">Subject</th>
+                <th scope="col">State change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audit.events.map((event) => (
+                <tr>
+                  <td>{formatDate(event.occurredAt)}</td>
+                  <td><code>{event.action}</code></td>
+                  <td>{event.subjectType}</td>
+                  <td>
+                    {event.oldState || event.newState
+                      ? `${event.oldState ?? '—'} -> ${event.newState ?? '—'}`
+                      : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+    <p class="muted">Full history with filters: <a href="/audit">Audit history</a></p>
+  </section>
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  import { enhanceMutationForm } from '../../ui/forms/mutation-interaction.js';
+  const form = document.querySelector<HTMLFormElement>('[data-owner-create-user]');
+  if (form) {
+    // A scope kind that names a collection needs its value before submit; the
+    // valueless kinds never ask for one. The server re-validates either way.
+    for (const checkbox of form.querySelectorAll<HTMLInputElement>('input[name="scopeKind"]')) {
+      const valueInput = form.querySelector<HTMLInputElement>(
+        `input[name="scopeValue-${checkbox.value}"]`,
+      );
+      const sync = () => {
+        if (valueInput) valueInput.required = checkbox.checked;
+      };
+      checkbox.addEventListener('change', sync);
+      sync();
+    }
+    enhanceMutationForm({
+      form,
+      progressText: 'Creating account…',
+      copy: {
+        VALIDATION_ERROR: 'The account was not created. Review the fields and try again.',
+        CONFLICT_STALE:
+          'An account with the same login identity may already exist. Your entries are preserved.',
+        AUTHORIZATION_CHANGED:
+          'Your authorization changed. Account creation requires the canonical owner session. Your entries are preserved.',
+        DEPENDENCY_UNAVAILABLE:
+          'A referenced record could not be found. Verify the entries and try again.',
+        UNKNOWN_SAFE_ERROR: 'The account could not be created. Your entries are preserved.',
+      },
+      invoke: (data) => {
+        const email = String(data.get('email') || '').trim();
+        return actions.admin.createUser({
+          loginIdentity: String(data.get('loginIdentity')),
+          displayName: String(data.get('displayName')),
+          ...(email ? { email } : {}),
+          temporaryPassword: String(data.get('temporaryPassword')),
+          roleCodes: data.getAll('roleCode').map(String),
+          scopes: data.getAll('scopeKind').map((kind) => {
+            const scopeKind = String(kind) as
+              | 'OWN'
+              | 'ASSIGNED'
+              | 'TEAM'
+              | 'DEPARTMENT'
+              | 'SITE'
+              | 'DOMAIN'
+              | 'GLOBAL';
+            const value = String(data.get(`scopeValue-${String(kind)}`) || '').trim();
+            return value ? { kind: scopeKind, value } : { kind: scopeKind };
+          }),
+        }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>;
+      },
+      onSuccess: (outcome) => {
+        if (outcome.recordId) window.location.href = `/admin/users/${outcome.recordId}`;
+        else window.location.reload();
+      },
+    });
+  }
+</script>
+<style>
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: flex-start;
+    margin-bottom: var(--space-6);
+  }
+  h1 {
+    margin: 0.25rem 0;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .lede,
+  .muted,
+  .note {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+  .note {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .banner {
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .banner.ok {
+    border: 1px solid var(--status-success);
+    color: var(--status-success);
+  }
+  .banner.bad {
+    border: 1px solid var(--status-error);
+    color: var(--status-error);
+  }
+  .panel {
+    padding: var(--space-5);
+    margin-bottom: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .panel h2 {
+    margin-top: 0;
+    font-size: 1rem;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .card {
+    display: grid;
+    gap: 0.35rem;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-page);
+  }
+  .card-label {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pill {
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    justify-self: start;
+  }
+  .pill.ok {
+    color: var(--status-success);
+    border: 1px solid var(--status-success);
+  }
+  .pill.warn {
+    color: var(--status-warning);
+    border: 1px solid var(--status-warning);
+  }
+  .pill.bad {
+    color: var(--status-error);
+    border: 1px solid var(--status-error);
+  }
+  .pill.unknown {
+    color: var(--text-muted);
+    border: 1px solid var(--color-border-strong);
+  }
+  .pill.protected {
+    color: var(--color-accent-primary-hover);
+    border: 1px solid var(--color-accent-primary);
+    margin-inline-start: 0.4rem;
+  }
+  .good {
+    color: var(--status-success);
+  }
+  .warn {
+    color: var(--status-warning);
+  }
+  dl {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-4);
+  }
+  dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 0.55rem;
+  }
+  dt {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  dd {
+    margin: 0;
+    text-align: end;
+    font-size: 0.8rem;
+    font-weight: 700;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: end;
+    margin-bottom: var(--space-4);
+  }
+  .filters label {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .filters input,
+  .filters select {
+    min-height: 44px;
+    padding: 0.55rem 0.7rem;
+    background: var(--surface-page);
+    color: inherit;
+    font: inherit;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .filters button,
+  .actions button {
+    border: 0;
+    padding: 0.7rem 1rem;
+    background: var(--color-accent-primary);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+  }
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  caption {
+    text-align: start;
+    padding-bottom: var(--space-3);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  th,
+  td {
+    padding: 0.7rem;
+    text-align: start;
+    border-top: 1px solid var(--color-border-subtle);
+    font-size: 0.82rem;
+  }
+  th {
+    font-weight: 700;
+  }
+  .pagination {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+    margin-top: var(--space-4);
+    font-size: 0.84rem;
+  }
+  .form {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 720px;
+  }
+  .form label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+  }
+  .form input {
+    min-height: 44px;
+    padding: 0.7rem;
+    background: var(--surface-page);
+    color: inherit;
+    font: inherit;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  fieldset {
+    display: grid;
+    gap: var(--space-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+    margin: 0;
+  }
+  legend {
+    padding: 0 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .scope-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) 1fr;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-direction: row;
+  }
+  .check input {
+    min-height: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  a {
+    color: var(--color-accent-primary-hover);
+  }
+  code {
+    font-size: 0.78rem;
+  }
+  @media (max-width: 600px) {
+    .page-head,
+    dl div {
+      display: grid;
+    }
+    dd {
+      text-align: start;
+    }
+  }
+</style>

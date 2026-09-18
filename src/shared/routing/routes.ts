@@ -415,6 +415,13 @@ const routeTuples = [
     'required',
   ],
   [
+    'RT-SYSTEM-002',
+    '/system/control-center',
+    'src/pages/system/control-center.astro',
+    'permission-bound',
+    'required',
+  ],
+  [
     'RT-BACKUP-001',
     '/system/backups',
     'src/pages/system/backups/index.astro',
@@ -509,7 +516,7 @@ export const routes: readonly CanonicalRoute[] = routeTuples.map(
       visibility:
         id === 'RT-ROOT-001' || id === 'RT-AUTH-001'
           ? 'PUBLIC'
-          : id === 'RT-SYSTEM-001'
+          : id === 'RT-SYSTEM-001' || id === 'RT-SYSTEM-002'
             ? 'YAZEED_ONLY'
             : undefined,
     }),

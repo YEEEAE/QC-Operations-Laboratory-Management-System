@@ -222,6 +222,12 @@ const declaredNavigationGroups: Array<
         capability: 'PERM-HLTH-VIEW',
       },
       {
+        id: 'control-center',
+        label: 'Control center',
+        href: '/system/control-center',
+        icon: 'settings',
+      },
+      {
         id: 'backups',
         label: copy.labels.backupAndRecovery,
         href: '/system/backups',
