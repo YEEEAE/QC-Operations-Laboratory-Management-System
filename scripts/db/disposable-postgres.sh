@@ -100,6 +100,7 @@ fsync = off
 synchronous_commit = off
 full_page_writes = off
 max_connections = 120
+dynamic_shared_memory_type = 'mmap'
 EOF
 
   "$PGBIN/pg_ctl" -D "$DATA" -l "$LOG" -w -t 60 start >/dev/null
