@@ -1,603 +1,564 @@
-# نظام عمليات مراقبة الجودة وإدارة المختبر
-## تقرير التدقيق الشامل النهائي للنظام — مبني على الحالة الفعلية الحالية في GitHub
+# نظام عمليات مراقبة الجودة وإدارة المختبر — إعادة التدقيق الشامل
 
-**المستودع:** `YEEEAE/QC-Operations-Laboratory-Management-System`  
-**الفرع الذي تم تدقيقه:** `main`  
-**HEAD الدقيق:** `0128e1e53f493b37e7b39c61cad060d76b63cff3`  
-**تاريخ التدقيق:** 2026-09-18  
-**الحكم النهائي:** **NO-GO — غير جاهز للإطلاق الإنتاجي**  
-**نضج المنتج الإجمالي:** **52.6%**  
-**الجاهزية للإنتاج:** **30.0%**
-
-> هذا التقرير للتدقيق فقط. لم يتم تعديل كود التطبيق أو migrations أو تنفيذ commit أو push أو merge أو deployment.
-
----
+QC-MIDPOINT-REBASE-001 · 2026-09-18 · HEAD `298e307721af97d9c1bd22279d0c784fbf5b62a8` · main · PARTIAL / NO-GO
 
 ## 1. الملخص التنفيذي
 
-يُظهر المستودع أساسًا قويًا نسبيًا لبرنامج مؤسسي منظم ومناسب لبيئة خاضعة للحوكمة: تطبيق modular مبني على Astro/TypeScript، مكونات مركزية للصلاحيات، PostgreSQL migrations، أنماط Audit/Outbox، حوكمة للإصدارات، أدوات منظمة للاستعادة والتعافي، إعداد CI، تغطية Playwright، وآليات صريحة للتحكم في `SYSTEM_OWNER`.
+يمثل هذا التقرير خط الأساس الجديد للأدلة في QC-MIDPOINT-REBASE-001، ولا يمنح نقاطًا لمجرد تنفيذ برومبتات التطوير. يضم المصدر الحالي 18 وحدة، وعقد رؤية صريحًا للمسارات، ومركز تحكم للمالك، وتقارير الرفض، و29 migration، وقيودًا أقوى للسجلات المضبوطة ومزودي AI. شُغلت الفحوص المطلوبة على PostgreSQL 18.6 المحلي، واستُبدل مانع الحاويات التاريخي بنتائج فعلية: التكامل 350 PASS و3 FAIL، وmigrations عدد 29 PASS، والتزامن 11 PASS و1 FAIL، والأمن 52 PASS. اختبارات Unit: 83 ملفًا و564 PASS. التنسيق وlint وإغلاق المتصفح لم تنجح بالكامل.
+أثبت الفحص الإنتاجي المصادق عليه، للقراءة فقط بحساب المالك المصرح به، فتح الداشبورد وصفحتي المالك، وصحة live/readiness برمز 200، وعرض رأس الإنتاج 0018 مع 11 migration معلقة، وفشل /reject-reports برمز 500. كذلك تفشل تحليلات الرفض محليًا حتى بعد اكتمال migrations بسبب عمود SQL غير محدد. لم يصل هذا التدقيق مباشرة إلى PostgreSQL الإنتاجي أو إعدادات المزود؛ تدوير بيانات الاتصال المكشوفة ما زال شرطًا موثقًا. لا توجد أدلة UAT بشري حقيقي أو استعادة بيانات مضبوطة ممتلئة أو وصول شامل. الحكم NO-GO.
+تقيس النسب الحالية الأدلة الممنوحة وفق نموذج الطبقات السبع المعلن. هي أحكام تدقيق وليست نسب اكتمال وظيفي مقاسة إحصائيًا. عرض التقرير السابق نسبًا دون حساب طبقات لكل صف؛ لذلك تتضمن الفروق السالبة تشدد احتساب الأدلة ولا تثبت تراجع الوظائف المنفذة. التغطية تشمل فحص المحتوى الآلي عبر المستودع مع مراجعة دلالية موجهة وفحوص منفذة، وليست ادعاء قراءة يدوية تفصيلية لكل مهارة أو إضافة خارجية أو سطر مصدر. حالة المهمة PARTIAL بسبب الأدلة الخارجية والبشرية غير المتاحة.
 
-القيد الرئيسي حاليًا ليس حجم المشروع أو نقص الكود، بل **نقص الأدلة التنفيذية الحديثة والمقبولة**. يحتوي الـHEAD الحالي على قدر كبير من الكود والاختبارات، لكن تشغيل `Verification CI` المطابق لهذا الـHEAD فشل، ولا يوجد إثبات مقبول على الـHEAD الحالي للتكامل الكامل مع PostgreSQL، أو E2E بمستخدم مصادق، أو UAT حقيقي، أو Restore Drill حديث، أو ربط دقيق بين النسخة المنشورة على Render والـGit SHA الحالي.
 
-أقوى مناطق النظام حاليًا هي **Authorization وSYSTEM_OWNER control**. أضعف المناطق هي UAT، وإثبات E2E الحالي، والتعافي من الكوارث، واختبارات الأداء/التحميل، ودعم العربية/RTL، وإثباتات بيئة الإنتاج الحالية.
 
-توجد كذلك فجوة رئيسية في متطلب ظهور الصفحات: نموذج التوجيه الحالي لا يزال يستخدم `permission-bound` لمعظم المسارات، ولا يوجد نوع Route صريح باسم `YAZEED_ONLY`. الكود يمنح المستخدمين المصادقين صلاحيات قراءة تشغيلية عامة، لكن بعض مساحات الإدارة والنظام ما زالت مخفية أو محمية حسب الصلاحيات في الـnavigation أو على مستوى الصفحة. هذا يعني أن قاعدة المنتج المطلوبة:
+## 2. جدول المؤشرات التنفيذية
 
-> كل الصفحات العادية تظهر لجميع المستخدمين المصادقين، باستثناء الصفحات الخاصة بـyazeed فقط
-
-**ليست مطبقة بالكامل حتى الآن.**
-
----
-
-## 2. خط الأساس الدقيق للتدقيق
-
-- المستودع: `YEEEAE/QC-Operations-Laboratory-Management-System`
-- الفرع: `main`
-- HEAD: `0128e1e53f493b37e7b39c61cad060d76b63cff3`
-- عدد ملفات المستودع: حوالي **3,214 ملفًا**
-- صفحات Astro: **78**
-- مجلدات Modules للتطبيق: **17**
-- SQL migrations: **23**
-- رأس الـMigration في المصدر: `db/migrations/0023_uat_evidence.sql`
-- ملفات Unit Tests: **75**
-- ملفات Integration Tests: **79**
-- ملفات Playwright E2E: **28**
-- ملفات `.DS_Store` المتتبعة داخل Git: **4**
-- عقد Node: `>=24.20.0 <25`
-- عقد pnpm: `11.25.0`
-- هدف النشر: Render Node Web Service
-- النطاق: `qclevel.top`
-- Readiness Endpoint: `/api/health/ready`
-
----
-
-## 3. واقع التحقق الحالي
-
-### GitHub CI
-
-يوجد دليل فعلي من GitHub Actions مرتبط مباشرة بالـHEAD الحالي:
-
-- Workflow: `Verification CI`
-- Run: `#133`
-- Run ID: `35281768981`
-- HEAD: `0128e1e53f493b37e7b39c61cad060d76b63cff3`
-- النتيجة: **FAILURE — فشل**
-- Job: `Verify`
-- نتيجة الـJob: **FAILURE — فشل**
-
-انتهى الـJob قبل أن تصبح تفاصيل الخطوات متاحة من استجابة GitHub API المستخدمة أثناء التدقيق، لذلك لا يمكن إثبات الأمر الدقيق الذي تسبب في الفشل من هذه الأدلة وحدها.
-
-كما فشل GitHub Pages dynamic build/deployment على نفس الـSHA، لكن Render هو هدف النشر المعلن للنظام، لذلك لا يُعامل فشل GitHub Pages كبوابة الإنتاج الرئيسية.
-
-### الأدلة المحلية المسجلة في Project Mind على نفس الشجرة
-
-يسجل Project Mind نتائج محلية على الكود الذي تم إدخاله لاحقًا إلى الـHEAD الحالي:
-
-- `pnpm typecheck`: **PASS / 0 errors**
-- اختبارات Admin المركزة: **65/65 PASS**
-- Full unit run: **484 PASS / 1 FAIL**
-- بعد ذلك تم تعديل source guard المتسبب بالفشل، لكن لم تتم إعادة تشغيل الـunit suite كاملة
-- لم تتم إعادة تشغيل جميع:
-  - lint
-  - format
-  - architecture
-  - build
-  - PostgreSQL integration
-  - migrations
-  - concurrency
-  - security
-  - Playwright
-  - system-owner checks
-
-بالتالي:
-
-- حالة Unit Tests الكاملة الحالية: **غير متحقق منها (NOT VERIFIED)**
-- Exact-HEAD CI: **فشل مؤكد (FAIL)**
-
----
-
-## 4. لوحة النسب الإجمالية
-
-| الفئة | النسبة |
-|---|---:|
-| الاكتمال الوظيفي | 55.3% |
-| اكتمال أعمال QC/QMS | 58.6% |
-| اكتمال المختبر | 53.3% |
-| قاعدة البيانات وسلامة البيانات | 58.6% |
-| الأمن | 63.3% |
-| المصادقة والصلاحيات | 71.6% |
-| UI/UX | 52.8% |
-| إمكانية الوصول | 50.0% |
-| نضج الاختبارات | 27.0% |
-| المعمارية وقابلية الصيانة | 60.0% |
-| قابلية التوسع | 52.0% |
-| التشغيل والاعتمادية | 41.4% |
-| الجاهزية للإنتاج | 30.0% |
-| **نضج المنتج الإجمالي** | **52.6%** |
-
-تم حساب النسب بناءً على نموذج الأدلة المطلوب: صحة التنفيذ في المصدر، Unit/Static Verification، Integration، PostgreSQL Persistence، E2E/Browser، UX/Human Validation، وأدلة Production/Provider.
-
-غياب طبقات التنفيذ الفعلية يخفض النسبة حتى عندما يكون الكود نفسه قويًا.
-
----
-
-## 5. تقييم المعمارية
-
-### النتيجة: **62%**
-
-### نقاط القوة
-
-- بنية Modules موجهة حسب Domain تحت `src/modules/*`
-- يوجد فصل بين Application وInfrastructure في الدومينات الرئيسية
-- طبقة Persistence باستخدام Kysely/PostgreSQL
-- Authorization primitives وPolicy Registry مركزية
-- Modules مستقلة لـ:
-  - Release Governance
-  - Recovery
-  - Reporting
-  - Identity
-  - Laboratory
-  - Quarantine
-  - Quality
-- يوجد أمر مخصص لفحص Architecture Boundaries
-- صفحات Astro تعتمد غالبًا على Use Cases / Actions بدل تنفيذ Raw SQL داخل الصفحات
-
-### الفجوات
-
-- بيانات Routes وNavigation وBreadcrumbs وVisibility وPage Files وPermissions والاختبارات موزعة على عدة مصادر وقد يحدث بينها Drift.
-- نوع صلاحية Route الحالي هو فقط:
-  - `public`
-  - `authenticated`
-  - `permission-bound`
-- لا يوجد تصنيف صريح `YAZEED_ONLY`.
-- ظهور الصفحات ما زال مرتبطًا جزئيًا بالصلاحيات داخل Navigation/Admin/System Workspaces.
-- فحص المعمارية الحالي للـHEAD الدقيق غير مثبت؛ لأن Exact-HEAD CI فشل.
-
-### قابلية الصيانة: **60%**
-### قابلية التوسع: **52%**
-
-المشروع قابل للتوسع على مستوى الـModules، لكن إضافة صفحة جديدة بشكل آمن تتطلب حاليًا تنسيق تعديلات عبر:
-
-- Route Registry
-- Page Filesystem
-- Navigation
-- Breadcrumbs
-- Permission / Visibility
-- Tests
-- Documentation
-
-وهذا يزيد احتمال حدوث Drift مستقبلًا.
-
----
-
-## 6. تقييم Routes / Pages / Visibility
-
-التوزيع الحالي في Canonical Route Registry:
-
-- `public`: **3**
-- `authenticated`: **2**
-- `permission-bound`: **71**
-
-نوع Route الحالي:
-
-`public | authenticated | permission-bound`
-
-لا يوجد تصنيف First-Class باسم:
-
-`YAZEED_ONLY`
-
-### أدلة إيجابية
-
-- الملف `src/shared/authorization/visibility.ts` يعرّف Universal Read Permissions.
-- الدالة `resolveActor()` تضيف هذه الصلاحيات للمستخدمين ACTIVE والمصادقين.
-- صلاحيات القراءة العامة لا تمنح صلاحيات Mutation تلقائيًا.
-
-### فجوة المتطلب
-
-الاختبار:
-
-`tests/unit/ui/authorization-visibility-ui.test.ts`
-
-يتوقع صراحة بقاء الصفحات التالية Permission-Gated في الـPrimary Navigation:
-
-- `/quarantine/admin`
-- `/admin`
-- `/admin/users`
-- `/admin/roles`
-- `/admin/permissions`
-- `/admin/scopes`
-- `/system/health`
-
-كذلك:
-
-- `/admin` يعرض Denied State إذا لم يملك المستخدم صلاحيات الإدارة الصريحة.
-- `/system/health` يعيد التوجيه إلى `/404` عندما يرفض Server-Side Health Use Case الوصول.
-
-### النتيجة
-
-نموذج ظهور الصفحات المطلوب **غير مطبق بالكامل حتى الآن**.
-
-**Navigation & Information Architecture: 45%**
-
----
-
-## 7. Authentication / Authorization / yazeed
-
-### Authentication / Authorization: **71.6%**
-### SYSTEM_OWNER / yazeed: **78%**
-
-### نقاط قوة مثبتة في المصدر
-
-- هوية المالك canonical ومقيدة على السيرفر:
-  `loginIdentity === "yazeed"`
-- حماية دور `SYSTEM_OWNER`
-- حماية Scope من نوع `GLOBAL`
-- منع Self Role Assignment / Removal
-- منع Self Scope Widening
-- Scope Vocabulary مركزي
-- Role/Scope Mutations محمية Server-Side
-- توجد Separation of Duties primitive
-- Universal Read Grants لا تمنح Mutation Authority تلقائيًا
-- آخر Admin Closure حسّن:
-  - التعامل مع Stale Records
-  - Error Classification
-  - Dialogs
-  - Role Listing
-  - Incremental Scope Administration
-
-### القيود المتبقية
-
-- لا يوجد PostgreSQL-backed Owner Control Verification مقبول وحديث
-- لا يوجد Exact-HEAD Authenticated Playwright Matrix ناجح ومقبول
-- CI الحالي فاشل
-- تصنيف الصفحات الخاصة بالمالك غير مركزي كعقد Route صريح
-
----
-
-## 8. قاعدة البيانات / PostgreSQL
-
-### Database & Data Integrity: **58.6%**
-
-### نقاط إيجابية
-
-- **23** SQL migration مرتبة
-- Scripts مستقلة لـ:
-  - migration
-  - migration check
-  - preflight
-- بنية اختبار PostgreSQL 18 عبر Testcontainers
-- توجد في الـmigrations بنى خاصة بـ:
-  - constraints
-  - audit/outbox
-  - idempotency
-  - controlled records
-  - release evidence
-  - UAT evidence
-- Restore Drill أقدم أثبت أن أدوات التعافي لها قيمة فعلية على HEAD قديم
-
-### الفجوات الحالية
-
-- Applied Migration Head على قاعدة بيانات حديثة disposable/production غير مثبت
-- Suites الخاصة بـ PostgreSQL 18:
-  - integration
-  - concurrency
-  - security
-
-  غير مقبولة كدليل حالي للـHEAD `0128e1e...`
-- Restore Evidence الحالي BLOCKED/UNVERIFIED
-- أدلة Backup/PITR/WAL الخاصة بالمزود غير متحقق منها
-
----
-
-## 9. الاختبارات / CI / E2E / UAT
-
-### Testing Maturity: **27%**
-
-المستودع يحتوي على Test Estate كبير:
-
-- **75** Unit Test Files
-- **79** Integration Test Files
-- **28** Playwright E2E Specs
-
-كما توجد مجموعات لاختبار:
-
-- Security
-- Migrations
-- Concurrency
-- Architecture
-- Accessibility
-- Authorization
-- Recovery
-- Release
-
-لكن قوة الدليل أقل بكثير من حجم ملفات الاختبار.
-
-### الحالة الحالية
-
-- Exact-HEAD Verification CI: **FAIL**
-- Full Unit Suite بعد آخر إصلاح: **NOT VERIFIED**
-- PostgreSQL Integration: **NOT VERIFIED / كان BLOCKED محليًا**
-- Authenticated E2E: **NOT VERIFIED**
-- UAT: `sessions=0 / NOT VERIFIED`
-- Usability Participants: **لا يوجد دليل**
-
-وجود ملف اختبار لا يُعد إثباتًا على نجاحه.
-
----
-
-## 10. Backup / Restore / Production
-
-### Operations & Reliability: **41.4%**
-### Production Readiness: **30%**
-
-وثيقة Restore الحالية تسجل آخر محاولة حديثة كالتالي:
-
-`BLOCKED / UNVERIFIED`
-
-يوجد HEAD أقدم تم عليه تنفيذ Logical Restore فعلي باستخدام:
-
-- `pg_dump`
-- `pg_restore`
-
-لكن هذا الدليل لا يثبت الـHEAD الحالي ولا Provider-Level Recovery.
-
-### إعداد Render
-
-الإعداد نفسه منظم:
-
-- Build يعتمد Frozen pnpm install
-- Start يستخدم:
-  `dist/server/entry.mjs`
-- `autoDeployTrigger: checksPass`
-- Readiness:
-  `/api/health/ready`
-- Release Identity Values يتم تمريرها خارجيًا
-- Production Hostname:
-  `qclevel.top`
-
-لكن لا يوجد إثبات حالي ومقبول لـ:
-
-- Exact Render Revision
-- Current Database Schema
-- Production Smoke
-- Provider Backups
-- PITR/WAL
-- Restore Parity
-
----
-
-## 11. مصفوفة النسب — 80 مجالًا
-
-| # | المجال | النسبة | الحالة |
-|---:|---|---:|---|
-| 1 | الصحة الوظيفية | 55% | جزئي `PARTIAL` |
-| 2 | مسارات العمل End-to-End | 42% | غير متحقق `NOT VERIFIED` |
-| 3 | تكامل النظام | 45% | جزئي `PARTIAL` |
-| 4 | تجربة المستخدم وقابلية الاستخدام | 55% | جزئي `PARTIAL` |
-| 5 | تصميم الواجهة البصري | 55% | جزئي `PARTIAL` |
-| 6 | التصميم المتجاوب | 52% | جزئي `PARTIAL` |
-| 7 | إمكانية الوصول | 50% | جزئي `PARTIAL` |
-| 8 | الأداء | 35% | غير متحقق `NOT VERIFIED` |
-| 9 | المصادقة والهوية | 68% | جزئي `PARTIAL` |
-| 10 | Authorization / RBAC / Scopes / SoD | 72% | جزئي `PARTIAL` |
-| 11 | التحكم في SYSTEM_OWNER / yazeed | 78% | قوي لكن جزئي `STRONG / PARTIAL` |
-| 12 | إدارة المستخدمين | 70% | جزئي `PARTIAL` |
-| 13 | الأمن | 60% | جزئي `PARTIAL` |
-| 14 | معمارية قاعدة البيانات | 58% | جزئي `PARTIAL` |
-| 15 | سلامة البيانات | 60% | جزئي `PARTIAL` |
-| 16 | المعاملات والذرية | 62% | جزئي `PARTIAL` |
-| 17 | التزامن وIdempotency | 55% | جزئي `PARTIAL` |
-| 18 | الاستمرارية Persistence | 55% | غير متحقق `NOT VERIFIED` |
-| 19 | سجل التدقيق والتتبع | 60% | جزئي `PARTIAL` |
-| 20 | معالجة الأخطاء وتجربة التعافي | 62% | جزئي `PARTIAL` |
-| 21 | إدارة الجودة | 58% | جزئي `PARTIAL` |
-| 22 | الاستلام والحجر | 60% | جزئي `PARTIAL` |
-| 23 | إدارة الفحص | 62% | جزئي `PARTIAL` |
-| 24 | التحكم في Release | 65% | جزئي `PARTIAL` |
-| 25 | إدارة المختبر | 60% | جزئي `PARTIAL` |
-| 26 | حوكمة البيانات العلمية | 48% | غير متحقق `NOT VERIFIED` |
-| 27 | إدارة إعادة الاختبار | 50% | جزئي `PARTIAL` |
-| 28 | إدارة المعدات | 55% | جزئي `PARTIAL` |
-| 29 | المعايرة | 55% | جزئي `PARTIAL` |
-| 30 | الصيانة | 52% | جزئي `PARTIAL` |
-| 31 | المستندات الخاضعة للتحكم | 60% | جزئي `PARTIAL` |
-| 32 | القوالب Templates | 62% | جزئي `PARTIAL` |
-| 33 | طلبات التغيير | 58% | جزئي `PARTIAL` |
-| 34 | الموافقات | 62% | جزئي `PARTIAL` |
-| 35 | التوقيع الإلكتروني / إعادة المصادقة | 58% | جزئي `PARTIAL` |
-| 36 | الملفات والأدلة | 58% | جزئي `PARTIAL` |
-| 37 | الإشعارات | 52% | جزئي `PARTIAL` |
-| 38 | البحث | 50% | جزئي `PARTIAL` |
-| 39 | التقارير | 50% | جزئي `PARTIAL` |
-| 40 | التصدير والطباعة | 40% | غير متحقق `NOT VERIFIED` |
-| 41 | لوحة المعلومات | 50% | جزئي `PARTIAL` |
-| 42 | حوكمة الإصدارات | 62% | جزئي `PARTIAL` |
-| 43 | CI/CD | 30% | فشل `FAIL` |
-| 44 | الاختبارات الآلية | 55% | جزئي `PARTIAL` |
-| 45 | Browser / Playwright E2E | 25% | غير متحقق `NOT VERIFIED` |
-| 46 | UAT حقيقي | 10% | غير متحقق `NOT VERIFIED` |
-| 47 | اختبار قابلية الاستخدام | 15% | غير متحقق `NOT VERIFIED` |
-| 48 | النسخ الاحتياطي | 35% | غير متحقق `NOT VERIFIED` |
-| 49 | الاستعادة والتعافي من الكوارث | 25% | محجوب `BLOCKED` |
-| 50 | الصحة والجاهزية | 60% | جزئي `PARTIAL` |
-| 51 | Observability | 55% | جزئي `PARTIAL` |
-| 52 | القابلية للدعم التشغيلي | 45% | جزئي `PARTIAL` |
-| 53 | المعمارية | 62% | جزئي `PARTIAL` |
-| 54 | قابلية الصيانة | 60% | جزئي `PARTIAL` |
-| 55 | جودة الكود | 58% | جزئي `PARTIAL` |
-| 56 | إدارة Migrations | 60% | جزئي `PARTIAL` |
-| 57 | الإعدادات والأسرار | 55% | جزئي `PARTIAL` |
-| 58 | النشر وRuntime | 40% | غير متحقق `NOT VERIFIED` |
-| 59 | خصوصية البيانات | 50% | جزئي `PARTIAL` |
-| 60 | الامتثال وحوكمة QMS | 45% | غير متحقق `NOT VERIFIED` |
-| 61 | اتساق Business Rules | 60% | جزئي `PARTIAL` |
-| 62 | State Machines | 65% | جزئي `PARTIAL` |
-| 63 | دلالات الحذف والتصحيح | 58% | جزئي `PARTIAL` |
-| 64 | اتساق البيانات بين الـModules | 50% | غير متحقق `NOT VERIFIED` |
-| 65 | Navigation & Information Architecture | 45% | فشل / فجوة متطلب `FAIL / REQUIREMENT GAP` |
-| 66 | جودة Forms | 60% | جزئي `PARTIAL` |
-| 67 | الجداول وData Grids | 55% | جزئي `PARTIAL` |
-| 68 | Dialogs والتأكيدات | 65% | جزئي `PARTIAL` |
-| 69 | حالات Empty / Loading / Error | 55% | جزئي `PARTIAL` |
-| 70 | Localization / Arabic / RTL | 25% | غير متحقق `NOT VERIFIED` |
-| 71 | التعامل مع الوقت والتاريخ | 55% | جزئي `PARTIAL` |
-| 72 | Reference Data | 45% | جزئي `PARTIAL` |
-| 73 | الاستيراد | 40% | جزئي `PARTIAL` |
-| 74 | Bulk Operations | 45% | جزئي `PARTIAL` |
-| 75 | AI Advisory | 55% | جزئي `PARTIAL` |
-| 76 | AI Safety / Governance | 58% | جزئي `PARTIAL` |
-| 77 | استعادة System Owner | 70% | جزئي `PARTIAL` |
-| 78 | عدم قابلية Audit للتعديل | 60% | جزئي `PARTIAL` |
-| 79 | عدم قابلية الأدلة الخاضعة للتحكم للتعديل | 55% | جزئي `PARTIAL` |
-| 80 | الجاهزية للإنتاج | 30% | `NO-GO` |
-
-**المتوسط الحسابي:**  
-`4212 / 80 = 52.65%`
-
----
-
-## 12. بوابات الإصدار الحرجة
-
-| البوابة | الحالة الحالية | السبب |
-|---|---|---|
-| Authentication | جزئي `PARTIAL` | المصدر وUnit seams قوية، لكن لا يوجد Authenticated E2E مقبول للـHEAD الحالي |
-| Authorization | جزئي `PARTIAL` | تصميم Server-Side قوي، لكن Runtime Matrix الحالية غير مثبتة |
-| Data Integrity | جزئي `PARTIAL` | Schema/Constraints موجودة، لكن تشغيل PostgreSQL الحالي غير مثبت |
-| Migrations | غير متحقق `NOT VERIFIED` | Source Head 0023 معروف، لكن Applied DB Head غير مثبت |
-| Critical Workflows | غير متحقق `NOT VERIFIED` | المصدر والاختبارات موجودة، لكن Full E2E الحالي غير متاح |
-| Audit Durability | جزئي `PARTIAL` | التصميم قوي، لكن DB-backed E2E الحالي غير مثبت |
-| Security | جزئي `PARTIAL` | Controls جيدة، لكن Security Suite الحالية وProduction Proof غير مثبتة |
-| PostgreSQL Runtime | غير متحقق `NOT VERIFIED` | لا يوجد دليل Runtime مقبول على الحالة الحالية |
-| Authenticated E2E | غير متحقق `NOT VERIFIED` | CI لم يقدم Passing E2E Evidence |
-| Backup | غير متحقق `NOT VERIFIED` | الأدوات والوثائق موجودة، لكن Artifact حديث غير مثبت |
-| Restore | محجوب `BLOCKED` | Current-HEAD Restore Record مسجل كـBlocked/Unverified |
-| Deployment Identity | غير متحقق `NOT VERIFIED` | ربط Render deployment الدقيق غير مثبت |
-| UAT | غير متحقق `NOT VERIFIED` | `sessions=0` |
-| Health / Readiness | جزئي `PARTIAL` | التنفيذ موجود، لكن استجابة Production غير مثبتة |
-| Exact-HEAD CI | فشل `FAIL` | Verification CI #133 فشل |
-
-وجود أي بوابة إلزامية غير مغلقة يمنع قرار `GO`.
-
----
-
-## 13. الادعاءات مقابل الواقع
-
-| الادعاء | الواقع الحالي | الحكم |
-|---|---|---|
-| Project Mind يعتبر HEAD هو `02d94fa...` | HEAD الحقيقي هو `0128e1e...` | قديم `STALE` |
-| Exact-HEAD CI كان سابقًا غير متاح/غير متحقق | Run #133 موجود وفشل | قديم / الآن فشل |
-| Migration Source Head هو 0023 | يوجد 23 migration تنتهي بـ`0023_uat_evidence.sql` | صحيح `TRUE` |
-| Universal Operational Read موجود | منفذ في `visibility.ts` ويضاف عبر `resolveActor()` | صحيح `TRUE` |
-| يجب أن تظهر كل الصفحات باستثناء صفحات yazeed الخاصة | يوجد 71 Route من نوع `permission-bound` ولا يوجد `YAZEED_ONLY` | غير صحيح حاليًا / غير منفذ |
-| حماية yazeed كمالك موجودة | حماية Canonical Owner Role/Scope موجودة | صحيح على مستوى المصدر |
-| Current Restore Readiness مثبتة | Restore الحالي Blocked/Unverified | غير صحيح |
-| تم UAT حقيقي | الأدلة تسجل صفر جلسات | غير صحيح |
-| النظام Production Ready | بوابات إلزامية ما زالت فاشلة/غير متحققة | غير صحيح |
-
----
-
-## 14. أعلى النتائج أولوية
-
-### `QC-AUDIT-F-001` — P0 — فشل Exact-HEAD CI
-
-تشغيل `Verification CI` الرسمي على HEAD `0128e1e...` انتهى بالفشل. لا يمكن إغلاق بوابة التحقق الآلي للإصدار حتى يوجد Run ناجح على نفس الـHEAD المستهدف.
-
-### `QC-AUDIT-F-002` — P0 — PostgreSQL Runtime الحالي غير مثبت
-
-الـMigration Source متقدم، لكن Applied Schema والتكامل والتزامن والسلوك Transactional على PostgreSQL 18 الحالي غير مثبتة لهذا الـHEAD.
-
-### `QC-AUDIT-F-003` — P0 — بوابة Restore/DR الحالية محجوبة
-
-أدلة Restore الحالية تسجل صراحة عدم وجود Logical Backup + Isolated Restore مثبتين للـHEAD الحالي. نجاح Restore تاريخي لا يعتبر إثباتًا للحالة الحالية.
-
-### `QC-AUDIT-F-004` — P0 — غياب UAT
-
-لا توجد دورة UAT حقيقية وموقعة أو مثبتة، وعدد الجلسات المسجل هو صفر.
-
-### `QC-AUDIT-F-005` — P1 — نموذج ظهور الصفحات المطلوب غير منفذ
-
-العقد المطلوب:
-
-`PUBLIC / AUTHENTICATED / YAZEED_ONLY`
-
-غير موجود حاليًا. أغلب Routes ما زالت `permission-bound`، وعدة Workspaces مخفية حسب Capability.
-
-### `QC-AUDIT-F-006` — P1 — Authenticated E2E غير حديث
-
-توجد ملفات Playwright كثيرة، لكن لا يوجد Passing Exact-HEAD Authenticated Execution مقبول كدليل.
-
-### `QC-AUDIT-F-007` — P1 — Release / Deployment Identity غير مثبتة
-
-إعداد Render موجود، لكن لا يوجد إثبات يربط Provider Revision / Build / Migration Identity بالـHEAD الحالي بدقة.
-
-### `QC-AUDIT-F-008` — P2 — نظافة المستودع
-
-هناك أربعة ملفات `.DS_Store` متتبعة داخل Git، وهو خلل Repository Governance.
-
-### `QC-AUDIT-F-009` — P2 — Project Mind Baseline قديم
-
-Project Mind يسجل HEAD أقدم كأنه الحالي، ولذلك لا ينبغي الاعتماد عليه كخط أساس دقيق قبل تحديثه.
-
-### `QC-AUDIT-F-010` — P2 — قابلية التوسع تتطلب تنسيق عدة Registries
-
-إضافة Routes/Pages/Navigation/Breadcrumbs/Visibility/Tests/Documentation قد تسبب Drift لأن أكثر من Registry وConvention يجب تحديثها يدويًا ومتزامنًا.
-
----
-
-## 15. نتائج المعالجة حسب الأولوية
-
-| الأولوية | النتيجة المطلوبة |
+| المؤشر | الحالي |
 |---|---|
-| P0 | الحصول على Exact-HEAD CI أخضر؛ إثبات PostgreSQL 18 migrations/integration/concurrency؛ تنفيذ Restore Drill حديث؛ تنفيذ UAT حقيقي |
-| P1 | إغلاق Authenticated E2E؛ تطبيق عقد Visibility صريح مطابق لمتطلب المنتج؛ ربط Production Deployment Identity بـSHA/Migration Head الدقيق |
-| P2 | إزالة Repository Hygiene Artifacts؛ مزامنة Project Mind؛ تقليل Drift بين Routes/Navigation/Visibility |
-| P3 | رفع أدلة Performance وRTL/Arabic وUsability Research وHuman Accessibility وProvider Observability |
+| نضج المنتج الإجمالي | 46.7% |
+| الاكتمال الوظيفي | 45.1% |
+| اكتمال QC/QMS | 55.1% |
+| المختبر | 49.7% |
+| قاعدة البيانات وسلامة البيانات | 58.5% |
+| الأمن | 50.7% |
+| المصادقة والصلاحيات | 61.0% |
+| تجربة المستخدم وتصميم الواجهة | 41.6% |
+| إمكانية الوصول | 32.0% |
+| نضج الاختبارات | 27.0% |
+| المعمارية وقابلية الصيانة | 30.0% |
+| قابلية التوسع | 41.2% |
+| التشغيل والاعتمادية | 46.7% |
+| الجاهزية للإنتاج | 5.3% |
+| الحكم | NO-GO |
 
-**لا توجد أي برومبتات تنفيذية ضمن هذا التقرير.**
 
----
+## 3. مقارنة المؤشرات السابقة والحالية
 
-## 16. المتطلبات الدقيقة للوصول إلى 100% بشكل مشروع
+| المؤشر | السابق | الحالي | الفرق |
+|---|---|---|---|
+| نضج المنتج الإجمالي | 52.6% | 46.7% | -5.9 |
+| الاكتمال الوظيفي | 55.3% | 45.1% | -10.2 |
+| اكتمال QC/QMS | 58.6% | 55.1% | -3.5 |
+| المختبر | 53.3% | 49.7% | -3.6 |
+| قاعدة البيانات وسلامة البيانات | 58.6% | 58.5% | -0.1 |
+| الأمن | 63.3% | 50.7% | -12.6 |
+| المصادقة والصلاحيات | 71.6% | 61.0% | -10.6 |
+| تجربة المستخدم وتصميم الواجهة | 52.8% | 41.6% | -11.2 |
+| إمكانية الوصول | 50.0% | 32.0% | -18.0 |
+| نضج الاختبارات | 27.0% | 27.0% | 0.0 |
+| المعمارية وقابلية الصيانة | 60.0% | 30.0% | -30.0 |
+| قابلية التوسع | 52.0% | 41.2% | -10.8 |
+| التشغيل والاعتمادية | 41.4% | 46.7% | +5.3 |
+| الجاهزية للإنتاج | 30.0% | 5.3% | -24.7 |
+| الحكم | NO-GO | NO-GO | Unchanged |
 
-أي ادعاء حقيقي بنسبة 100% يتطلب — كحد أدنى:
 
-- Exact-HEAD CI ناجح بالكامل
-- نجاح جميع:
-  - Unit
-  - Integration
-  - Migration
-  - Concurrency
-  - Security Suites
-- إثبات PostgreSQL 18 Current Schema + Migration Parity
-- نجاح Authenticated E2E للمسارات الحرجة ومسارات الرفض Authorization Negative Paths
-- وجود Route/Page Visibility Contract صريح يحقق نموذج المستخدم المطلوب
-- Backup Artifact حديث + Isolated Restore مع Parity
-- إثبات Provider-Level Backup / PITR / WAL أو حسم رسمي لنطاقها
-- إثبات Render SHA / Build / Migration Identity المطابقة للنسخة المنشورة
-- Production Health/Readiness Smoke Evidence
-- UAT حقيقي بمستخدمين ممثلين لأدوار QC/Lab
-- Human Accessibility / Usability Evidence
-- إثبات جميع Business Invariants الحرجة End-to-End
-- عدم وجود أي P0/P1 Findings مفتوحة
-- مزامنة الوثائق وProject Mind مع الإصدار الذي تم تدقيقه
+## 4. خط أساس التدقيق
 
----
+HEAD الحالي الدقيق: `298e307721af97d9c1bd22279d0c784fbf5b62a8` على main. كانت شجرة العمل معدلة عند التجميد: حذف/نقل ملف audit/QC-Remaining-to-100-Percent-Prompt-Pack.md الموجود، وتعديل docs/operations/RENDER-DEPLOYMENT.md، وإضافة دليل تطابق إنتاج ونسخة Markdown منقولة. ظهر تحديث متزامن للذاكرة أثناء التدقيق وحُفظ. لم تُنفذ commit أو push أو merge أو deployment. المخرجات المقصودة هي التقريرين الحيين وHTML التفاعلي الحالي والذاكرة الحية فقط؛ أدلة التشغيل والبناء المحلية داخل مسارات مستثناة من Git.
+HEAD التقرير السابق المعتمد: 0128e1e53f493b37e7b39c61cad060d76b63cff3؛ رأس المصدر 0023_uat_evidence؛ النضج 52.6% والإنتاج 30.0% والحكم NO-GO. تطابق جميع المؤشرات السابقة التقرير الأصلي. مجموع مجالاته 4212/80=52.65%، لكنه عرض 52.6%؛ حُفظ الرقم المعروض للمقارنة التاريخية دون تغيير التقريب بأثر رجعي.
+بيئة التشغيل: Node محلي v22.22.3 مقابل العقد >=24.20.0 <25، وpnpm 11.25.0 مطابق. بيئة التحقق macOS/aarch64 وقاعدة PG18.6 محلية معزولة مع TLS وشجرة المصدر وخادم مبني localhost:4321. PostgreSQL المكافئ المعتمد منفصل عن مسار Testcontainers postgres:18-alpine في CI. التاريخ 2026-09-18؛ ملاحظات المتصفح 10:10–10:13 UTC. لم تُحفظ كلمات المرور أو أسرار الجلسات في المخرجات.
 
-## 17. القرار النهائي
 
-**نضج المنتج الإجمالي:** **52.6%**  
-**الجاهزية للإنتاج:** **30.0%**  
-**الحكم النهائي:** **NO-GO — غير جاهز للإطلاق الإنتاجي**
 
-هذا الحكم لا يعني أن قاعدة الكود ضعيفة. المشروع يمتلك بنية ومعمارية وتنفيذًا مهمًا وواسعًا.
+## 5. التغييرات منذ التدقيق السابق
 
-سبب `NO-GO` هو عدم اكتمال أو فشل أدلة التشغيل في الطبقات الحرجة للإصدار:
+الوحدات 17→18؛ الصفحات الفعلية 78→83؛ مجموع صفوف توزيع المسارات السابقة 76 مقابل 85 حاليًا؛ migrations من 23 إلى 29؛ ملفات Unit من 75 إلى 83؛ التكامل 79→87؛ ملفات E2E من 28 إلى 29. توجد تقارير الرفض ومركز تحكم المالك، وتقدم رأس المصدر من 0023 إلى 0029. أُغلقت فجوة غياب نوع الرؤية في المصدر عبر عقد صريح وحراسة انحراف المعمارية. انخفض عدد .DS_Store المتتبعة من 4 إلى صفر. نجح انحدار أيقونات ونص Issue Slip ضمن Unit الكامل.
+تشمل الأدلة المحلية الجديدة تشغيل التكامل وmigrations والتزامن والأمن ومخطط 77 جدولًا وصفر أيتام. ظهرت إخفاقات جديدة: status غير محدد في تحليلات الرفض، وتوقع رأس قديم في اختبار المالك، وتوقع Promise لرفض متزامن، واختلاف خطأ الطلب الخاسر في تزامن اعتماد الفحص. تشمل الأدلة الإنتاجية المصادق عليها صفحات المالك 200 والرفض 500 وانحراف migrations وإخفاق axe الصريح في Label in Name. لم تُغلق بوابة إنتاج إلزامية بالكامل سوى الصحة/readiness. أدلة الاستعادة ببيانات فارغة وربط SHA من المزود السابقة ليست أدلة جديدة منفذة هنا.
 
-- Exact-HEAD CI
-- PostgreSQL Execution
-- Authenticated E2E
-- UAT
-- Recovery
-- Deployment Identity
 
-المشكلة الرئيسية الحالية هي **إثبات الجاهزية الفعلية للنظام كمنتج يعمل في بيئة حقيقية** أكثر من كونها مجرد نقص في كمية الكود.
+
+## 6. شكل المستودع الحالي
+
+| القياس | الحقيقة والنطاق |
+|---|---|
+| ملفات Git المتتبعة | 5329 |
+| جرد الملفات غير المستثناة عند التجميد | 5329 |
+| فحص محتوى الطرف الأول الآلي | 1048 ملفًا؛ استُثنيت المهارات والإضافات الخارجية |
+| ملفات المصدر والقاعدة والسكربتات والفحوص وGitHub | 568 / 34 / 30 / 208 / 1 |
+| ملفات docs وDocuments وaudit و.agents وpublic | 29 / 26 / 92 / 4108 / 4 |
+| مجلدات وحدات التطبيق | 18؛ تشمل 19 خانة ملف README.md |
+| توزيع المسارات | 85 = 2 / 81 / 2 |
+| صفحات Astro والمطلوبة والمشروطة والمؤجلة | 83 / 77 / 6 / 2 |
+| وجهات التنقل | 32؛ استيراد navigationRouteIds؛ 32 فريدة |
+| migrations ورأس المصدر | 29 / 0029_performance_query_indexes |
+| جداول qc المحلية والأيتام | 77 / 0 |
+| جداول qc الإنتاجية والأيتام | NOT VERIFIED / NOT VERIFIED |
+| ملفات Unit والتكامل وE2E | 83 / 87 / 29 |
+| وثائق Markdown في docs وDocuments | 55 |
+| ملفات .DS_Store المتتبعة | 0 |
+
+العد غير المستثنى يتضمن أدلة العمل المحلية المتاحة وقد يتغير مع مخرجات المتصفح؛ ليس مجموع جميع الاعتمادات أو الملفات المستثناة.
+
+## 7. واقع التحقق
+
+| الأمر أو النطاق | النتيجة | المدة والبيئة |
+|---|---|---|
+| pnpm install --frozen-lockfile | PASS;up to date | 0.24s;Node22 engine warning |
+| pnpm format:check | FAIL;4 files | 3.46s |
+| pnpm lint | FAIL;37 errors | 3.45s |
+| pnpm typecheck | PASS;793 files / 0 errors / 68 hints | 21.36s |
+| pnpm test:architecture | PASS; boundaries + route files | 0.66s |
+| pnpm test:unit | PASS;83 files / 564 tests / 0 skip | 9.53s |
+| pnpm test:integration | FAIL;85 files PASS /2 FAIL;350 tests PASS /3 FAIL | 49.67s |
+| pnpm test:migrations | PASS;8 files /29 tests | 99.87s |
+| pnpm test:concurrency | FAIL;1 file PASS /1 FAIL;11 tests PASS /1 FAIL | 20.49s |
+| pnpm test:security | PASS;7 files /52 tests | 3.50s |
+| pnpm build | PASS;Node22 local build | 5.03s |
+| pnpm release:identity | PASS;local identity only | 0.40s |
+| pnpm release:verify | PASS;local artifact only | 0.35s |
+| pnpm release:tech-debt:check | PASS | 0.29s |
+| pnpm test:e2e | FAIL; initial attempt lacked server | 32.62s |
+| pnpm test:e2e:closure | FAIL; initial attempt lacked server | 8.48s |
+| pnpm test:e2e (built server) | {'PASS': 48, 'FAIL': 19, 'SKIP': 107} | 180.02s; supervisor exit 124; child summary may be later |
+| pnpm test:e2e:closure (built server) | {'PASS': 11, 'FAIL': 7, 'SKIP': 18} | 118.35s; supervisor exit 1; child summary may be later |
+| Local db preflight/status/check/schema | PASS;29 /77 /0 orphans | 3.32 /11.28 /12.13 /1.67s |
+| system-owner:check (empty local DB) | FAIL;missing seeded owner, not production | 1.43s |
+| Production canonical db:preflight | BLOCKED;DATABASE_URL missing | No direct production connection |
+| Live owner login/dashboard/private reads | PASS;read-only owner only | Narrow browser smoke |
+| Live Reject Reports | FAIL;500 | Authenticated read-only GET |
+| Live explicit axe | FAIL;1 serious /35 rules PASS /3 incomplete | No human/AT claim |
+| git diff --check | PASS | Final check required after report formatting |
+
+الأرقام في هذه المصفوفة تقنية ومطابقة للنسخة الإنجليزية. الفحوص التي انتهت مهلة مشرفها ليست PASS حتى لو أكمل الطفل لاحقًا؛ لا توجد FLAKY=0 مثبتة.
+
+## 8. المعمارية
+
+Astro 4.16.19 بنمط SSR مع @astrojs/node 8.3.4 standalone، وTypeScript 6.0.3 وKysely 0.29.5 وpg 8.23.0. البنية modular monolith مع حدود domain/application/ports/infrastructure. الصفحات وActions حدود تقديم، بينما المعاملات والصلاحيات وSQL مملوكة للتطبيق والبنية التحتية. نجحت حراسة حدود المعمارية وملفات المسارات. غطى فحص SQL والصلاحيات والتخطي وTODO الآلي محتوى الطرف الأول في جميع الأشجار المطلوبة؛ تلت ذلك مراجعة موجهة للمسارات والمالك والرفض والداشبورد والمصادر العلمية وAI. لا يمثل هذا اعتماد كل endpoint أمام كل هجوم ولا بديلًا لحالات التشغيل.
+
+
+
+## 9. قابلية التوسع
+
+يطابق docs/architecture/EXTENDING-THE-SYSTEM.md شكل الوحدات الحالي وافتراضي definePageRoute وهو AUTHENTICATED ومجموعة المالك الخاصة والرأس forward-only رقم 0029 وحدود mutation في use cases. مسارات إضافة صفحة ووحدة وصلاحية وسير عمل وmigration وتقرير موثقة. تكتشف بوابة المعمارية انحراف الصفحة والسجل والتنقل؛ المركزية لا تلغي تنسيق التنقل والصلاحيات وseeds والاختبارات والوثائق. لا توجد تجربة توسعة مطور حالية تثبت الإضافة دون خطأ. لا تتطلب الخطة إعادة تنفيذ العقد؛ يتحقق 002 من الحراسة، ويزود 013 السياسة، ويملك 011 التوسع بالتقارير والبيانات والاستيراد، ويعيد 012 التدقيق.
+
+
+
+## 10. المسارات والصفحات والرؤية
+
+استيراد routes.ts الحالي أعطى 85 تصريحًا: PUBLIC عدد 2 وAUTHENTICATED عدد 81 وYAZEED_ONLY عدد 2. مجموعة المالك الحصرية بالضبط /system/health و/system/control-center. تتسق 83 صفحة .astro مع 77 ملفًا مطلوبًا و6 مشروطة وتصريحَي auth مؤجلين وصفحتَي أخطاء فعليتين. يشترط pageAccessDecision فاعلًا ACTIVE مصادقًا للعادية، وSYSTEM_OWNER المسمى yazeed للخاصة؛ يرفض middleware الرابط الخاص لغير المالك برمز 404. يستهلك التنقل رؤية المسار المركزي. نجح فتح المالك ووجّه الداشبورد المجهول إلى login. إثبات الروابط المباشرة ورفض mutation لكل الشخصيات الست NOT VERIFIED. الرؤية لا تمنح سلطة إنشاء أو اعتماد أو إفراج.
+
+
+
+## 11. المصادقة والصلاحيات وyazeed
+
+يتحقق authorize() من ACTIVE والمنحة الصريحة القانونية وسياسة action/entity/state والنطاق والإصدار المتوقع وشرط الأعمال وSoD. يتطلب isNamedSystemOwner هوية loginIdentity=yazeed مشتقة خادميًا ودور SYSTEM_OWNER؛ منح الدور وGLOBAL محمية في persistence. توجد use cases للملف والتفعيل والتعطيل وreset/revoke والأدوار والنطاقات. نجح تسجيل الدخول المصرح به وقراءة المالك الحية؛ لم يُعدّل حساب أو منحة أو كلمة مرور إنتاجيًا. فشل system-owner:check على قاعدة التطبيق المحلية الجديدة الفارغة لعدم زرع حساب yazeed؛ هذا غياب fixture وليس إثبات فشل مالك الإنتاج. تعرض الواجهة الحية ACTIVE yazeed وADMIN/SYSTEM_OWNER وGLOBAL، لكن مطابقة جميع منح الصلاحيات تحتاج دليل قاعدة معتمد للقراءة فقط.
+
+
+
+## 12. مركز تحكم yazeed
+
+تفوض الصفحة الخاصة overview والحسابات والأدوار والنطاقات والتدقيق إلى dependencies التطبيق؛ لا SQL خام في frontmatter المفحوص. يتحقق GetControlCenterOverviewUseCase من المالك القانوني مستقلًا. الإنشاء يستخدم provisioning ذريًا مدققًا، وعمليات الأمن والأدوار والنطاقات تستعمل مساحات محكومة. اختبار المالك المحلي الحالي 5 PASS و1 FAIL؛ السبب توقع ثابت 0027 مقابل 0029 الفعلي، وليس انقطاع القاعدة.
+الواجهة الحية 200: النظام وPG والتدقيق HEALTHY، وmigrations بحالة DRIFT DETECTED، والرأس المطبق 0018 والمعروض كمتوقع 0018 والمعلق 11، وهوية release/build/Git/environment UNVERIFIED؛ حساب مالك واحد ACTIVE محمي ونشاط منقح. عرض الرأس المتوقع مضلل: المصدر 0029 بينما تعرض الواجهة 0018 مع كشف التعليق الصحيح. لم تُطلب أو تُصدر URL أو hash أو كلمة مرور خام. لم تُنفذ عمليات إنشاء أو تعديل أو تعطيل أو reset/revoke إنتاجيًا أثناء التدقيق؛ الفحوص المحلية والمصدر أدلة جزئية وليست إثبات persistence حي لهذه العمليات.
+
+
+
+## 13. PostgreSQL وقاعدة البيانات
+
+نجحت الأوامر canonical المحلية الحالية: preflight وحالة migrations وسلامة checksum والمخطط. PostgreSQL 18.6 وقاعدة qc_disposable ومستخدم qc_owner ومخطط qc؛ 29 مطبقة وصفر معلقة و77 جدولًا وصفر أيتام. قاعدة qc_test المنفصلة تدعم الفحوص. TLS بنمط verify-full وشهادة معزولة؛ يفرض مصدر pool النطاق qc,pg_catalog وUTC ويرفض sslmode=disable. لا تُعرض التفاصيل المحلية كحقائق إنتاجية.
+تعرض قراءة التطبيق الإنتاجي الحالية رأس 0018 و11 معلقة. عدد جداول الإنتاج والإصدار والمستخدم والقاعدة وTLS والمخطط وsearch_path وسلامة checksum والأيتام NOT VERIFIED باتصال قاعدة مباشر. يفشل preflight الإنتاجي المحلي بأمان لغياب DATABASE_URL القانوني. أفاد تدقيق المزود السابق qc_operations وqc_operations_user وPG major18 وOregon وخطة مجانية تنتهي 2026-10-05T05:41:06Z وأكد إعادة استخدام بيانات اتصال مكشوفة؛ هذه أدلة سابقة موثقة وليست فحص API جديدًا هنا. لم يُركب أو يستخدم URL مكشوف ولم تُطبق migration إنتاجية.
+
+
+
+## 14. تقارير الرفض
+
+ينفذ المصدر Issue Slip وDaily Reject والتنقل والبحث والتدقيق ومستودع PostgreSQL والسجلات القابلة للطباعة والتحليلات. يستخدم الإنشاء صلاحيات تشغيلية للحساب ACTIVE المصادق عليه منفصلة عن سلطات الاعتماد المنظم. مراحل Issue Slip هي SUPERVISOR وQC_MANAGER وFACTORY_DIRECTOR؛ التأكيدات إقرارات يسجلها المنشئ وليست تواقيع إلكترونية للموافقين، والإكمال ينتظر جميع المراحل المطلوبة. يدعم Daily Reject عدة أسطر وكميات رفض وإنتاج جيد ونسبة خادمية (المقام الجيد صفر يعطي null) ودورة draft/finalized دون موافقات.
+التكامل الحالي مع PG: 4 PASS و2 FAIL. يحدث رفض المجهول/غير النشط متزامنًا قبل وصول Promise إلى .rejects، وهو خلل harness مع وجود الرفض الأمني؛ أما COUNT FILTER للتحليلات فيستخدم status غير محدد بين التأكيدات والتقرير، فينتج خطأ عمود ambiguous فعليًا قرب سطر 1050 في المستودع. يحدث حتى على 0029 الكامل. ترجع الصفحة الحية 500؛ انحراف migrations ملاحظ مستقلًا، لكن هذا التدقيق لم يثبت الاستثناء الخادمي المحدد وراء الاستجابة. لا يُدعى أن migration وحدها تصلحها. يملك 014 SQL والانحدار ودورة الحياة والرؤية والتجميع؛ وتملك 003 و011 و001 و004 طبقات المتصفح والتصدير والإنتاج والبشر. لم يُنشأ تقرير إنتاجي.
+
+
+
+## 15. الجودة وQC/QMS
+
+يتضمن مصدر الاستلام والفحص والإفراج الإسناد والمورد والأدلة والتاريخ وعد الأدلة خادميًا قبل Submit والرفض المستقل وSoD والإصدارات وAudit/Outbox الذري وإعادة الطلب. تبقى PASS منفصلة عن RELEASED. توجد Findings/NCR/RCA/CAPA؛ يحفظ إغلاق P-04 سلطة Supervisor والفعالية والسبب وإعادة المصادقة/التوقيع. القرارات المفتوحة في مصفوفة السياسة ليست حقائق منفذة لمجرد وجود use cases. الأدلة المحلية لـQC كبيرة، لكن الطلب الخاسر في تزامن اعتماد الفحص لم يطابق CONFLICT_STALE_VERSION المتوقع. يلزم إغلاق المسارات الحرجة والسياسات العلمية ومراسم الصلاحية وUAT الحقيقي. يوفر 013 السياسة والتنفيذ المتبقيين ويثبت 003 الرحلات.
+
+
+
+## 16. المختبر
+
+توجد آليات الإنشاء والحفظ والإرسال والمراجعة والإعادة والاستئناف والاعتماد والرفض مع القياسات والسياق المحفوظين وhashes القالب والمصدر وأهلية الأجهزة. يرمي PostgresControlledLabSources.evaluate الافتراضي AUTHZ_DENIED؛ لا مقيّم افتراضي معتمد يسمح باختراع حدود. يرفض Reject افتراضيًا بـPOLICY_SOURCE_REQUIRED حتى يوجد مصدر سلطة PD-38؛ يظل VOID/TR-LAB-008 غير منفذ ومرفوضًا بالسياسة. تحتاج إعادة الفحص والحدود العلمية مصادر معتمدة. تثبت الفحوص الحالية آليات الإغلاق الآمن لا اكتمال التشغيل دون المصادر. يجب على 013 حسم المصدر والسياسة والسلوك المطلوب وتسليم حالات ممتلئة إلى E2E/UAT؛ لا تُخترع وحدة أو سماحية أو طريقة.
+
+
+
+## 17. الأجهزة والمعايرة والصيانة
+
+تمثل migration 0027 حالات المعايرة SCHEDULED/COMPLETED/FAILED/CURRENT وتاريخ الأجهزة وحفظ الشهادة وتوقف الصيانة وقفلها وانتقالات append-only. ترفض أهلية Submit الحالات غير الصالحة وتعارض current-pointer والتأخر والصيانة وتحفظ snapshots. نجحت فحوص الأصول المحلية ضمن التكامل الحالي. تظل أعلام المتطلبات المصدرية nullable وسياسة الفترة/استثناء التأخر مدخلات غير محسومة. لا يوجد قبول حي حالي للمعايرة والصيانة لكل الشخصيات الست ولا ادعاء توفر مقاس.
+
+
+
+## 18. الوثائق والموافقات والتوقيعات الإلكترونية
+
+تحمي migration 0028 المحتوى والقوالب المعتمدة وتاريخ التدقيق والتوقيع والموافقة والتغيير وsnapshot بنمط append-only. المحتوى مرتبط بالإصدار، ويُشتق هدف change request وإصداره وقيمته الحالية خادميًا مع القفل. توجد آليات التوقيع وإعادة المصادقة وSoD ونجحت حالات السجلات المضبوطة المحلية. تظل قرارات سلطات P-05/P-06/P-07 منفذة ولا يعاد فتحها بسبب نقص دليل تشغيل. يحتاج نطاق الأفعال الملزمة بالتوقيع والاحتفاظ وسياسة QMS مرجعًا مخولًا. يلزم إثبات دورة السجل الممتلئ والتلاعب والتصدير والاستعادة في طبقات المتصفح والبشر والمزود.
+
+
+
+## 19. الذكاء الاصطناعي — Groq وGemini
+
+مزودو Groq وGemini وFailover وDisabled بحالة IMPLEMENTED. الافتراضي Groq→Gemini مع مهلة HTTP مقدارها 12 ثانية بواسطة AbortController وتصنيف أخطاء منقح ومخرجات محدودة وتعليمات استشارية فقط ورفض PII والأسرار وادعاءات السلطة. نجحت الحالات الحتمية ضمن Unit والأمن الحاليين. تعيد availability وجود الإعداد ولا تثبت اتصالًا شبكيًا حيًا. ينتقل استثناء fallback خارج adapter، لكن GetAdvisoryUseCase يمسك استثناء المزود ويعيد UNAVAILABLE دون تغيير حالة الأعمال الأساسية. لا تُعامل أخطاء authentication/forbidden/invalid-response كقابلة لإعادة المحاولة. لم يُنفذ استدعاء حي لأي مزود؛ وجود متغيرات AI على Render واعتماد معالجة البيانات الخارجية NOT VERIFIED هنا. الإعداد في المصدر ليس LIVE VERIFIED. مهمة 009 تحقق وسلامة وليست إعادة تنفيذ المزودين.
+
+
+
+## 20. الداشبورد وتجربة المستخدم
+
+يرندر الداشبورد المصادق عليه بخط Times. يتجاوز font:inherit اللاحق للجسم وعناصر التحكم في global.css تعريف خط الجسم السابق. ما زالت KPI ترسل inspectionResult=HOLD وworkflowState=RELEASED بينما تقرأ قائمة الاستلام state فقط؛ يصف النص نطاقًا مخولًا بينما تحصر عدة عدادات البيانات بمنشئ/كاتب يساوي actor. عداد المراجعة المعلقة وقائمة HOLD يستخدمان تعريفين مختلفين. يرسل AppLayout القيمة actor.id كاسم بشري. تسبق عناوين التنقل H2 عنوان Dashboard H1، وما زالت metadata بقياس 10px وعناصر 40px بالمصدر. كشف قياس الحدود 46 عنصرًا مرئيًا ببعد أقل من شرط المشروع 44px؛ هذا عد أولي وليس 46 مخالفة WCAG مؤكدة. يحتاج تصنيف الأخطاء ومساحة trend غير المتاحة مراجعة؛ لا يُطلب رسم بيانات مختلقة.
+تظهر 3 أخطاء WASM/CSP في الخلفية الحية؛ سجلت الملاحظة الأولى WASM بحجم decoded قدره 1,238,072 بايت مرتين (transfer عدد 476,637 و300)، وJS decoded عدد 170,075. يحافظ fallback على قابلية المحتوى. يملك 005 العيوب المشتركة وتثبت 006/003/004 بقية التطبيق.
+
+
+
+## 21. إمكانية الوصول
+
+فُعّلت label-content-name-mismatch صراحة في axe على الداشبورد الحي مع WCAG2A/2AA/21A/21AA/22AA: 35 قاعدة ناجحة و3 فحوص غير مكتملة ومخالفة serious واحدة في عنصر واحد. الفحص الأضيق السابق سجل 23 قاعدة ناجحة وفحصين غير مكتملين دون مخالفة؛ أغفل الوسم/القاعدة المطلوبة وأصبح superseded، وليس شهادة سلامة متعارضة. توجد مصادر وفحوص محلية للـlandmarks والتركيز والحوارات وreduced-motion وreflow. فحص لوحة المفاتيح المصادق عليه وVoiceOver/NVDA والتكبير والالتفاف والتباين وإعلانات الحالة/الخطأ لكل الشخصيات NOT VERIFIED. لا يُدعى امتثال WCAG 2.2 AA؛ ترتيب H1 والتنقل وشرط 44px متطلبات منتج منفصلة.
+
+
+
+## 22. الأمن والخصوصية
+
+نجح أمر الأمن الحالي: 7 ملفات و52 اختبارًا على PostgreSQL المحلي المكافئ. تشمل الضوابط المفحوصة الصلاحيات default-deny وأمن Argon2 والجلسات وorigin/CSRF وCSP والـheaders والأخطاء الآمنة وفحص حجم واسم الملفات ومعاملات SQL وخصوصية AI وتاريخ السجلات المضبوطة. ليس هذا اختبار اختراق إنتاجي كاملًا. تدوير الاتصال موثق كمفتوح؛ أكد التدقيق السابق إعادة استخدام credential مكشوف واتصال قاعدة عام، ولم يُعد فحص المزود هنا. تحتاج سياسات الاحتفاظ والحذف والتصحيح ومعالجة البيانات واكتمال dependency/SBOM/secret scans وحالات IDOR/XSS/privilege التشغيلية أدلة مرشح حالية مقبولة. لا يُدعى اعتماد تنظيمي.
+
+
+
+## 23. الاختبارات وCI وE2E
+
+جرد الاختبارات الحالي: 83 ملف Unit و87 تكامل و29 spec. تشغيل Verification CI المطابق للـHEAD هو 35325572254، وVerify job رقم 105537703598، مكتمل/فاشل، وظيفة واحدة وصفر خطوات. يفيد annotation الحالي قفل الحساب بسبب الفوترة. هذا CI DID NOT START / ACCOUNT BLOCKER وليس CODE FAILURE، ولا يُعد PASS. أعاد connector قائمة [] لأن wrapper يحصر أحداث pull-request؛ وجد gh المصادق عليه تشغيل push. فشل تشغيل Pages رقم 35325571280 أيضًا؛ Pages ليس مسار نشر التطبيق.
+المحاولة الأولى للمتصفح لم يكن لها خادم (67 فشلًا و107 تخطي)، وهي غير صالحة لإثبات المنتج. بعد بدء الخادم المحلي المبني أصدر التشغيل الكامل 48 PASS و19 FAIL و107 SKIP من 174، وملخص الطفل النهائي 4.5 دقائق؛ انتهت مهلة مشرف العملية عند 180 ثانية، فلا توجد دورة عملية نظيفة. انتهت closure بنتيجة 11 PASS و7 FAIL و18 SKIP من36 خلال118.35 ثانية. لا تشغيل مصادق عليه لست شخصيات مع fixtures ولا تصنيف FLAKY كامل؛ قراءة المالك الحية دليل متصفح إنتاجي محدود، وليست E2E لست شخصيات أو UAT بشريًا. يجب على 003 إدارة مجموعات العمليات والسجلات ومحددات المعدل وربط الأدلة الآلية النهائية.
+
+
+
+## 24. الأداء والرصد
+
+سجل انتقالان للمالك TTFB بمقدار 951.9ms ثم 1991.6ms، وFCP عدد 5644ms ثم 2740ms؛ سجل buffered LCP للثاني 2740ms. مجموع transfer الموارد المخبأة في الانتقال الثاني 900 بايت يستثني المستند والأجسام المخبأة وليس حجم تحميل صفحة بارد. قياسات JS/WASM decoded/transfer في القسم 20. INP وCLS وفق نافذة جلسة صحيحة NOT VERIFIED؛ لا يُفترض CLS صفر أو حد سعة. لم يُنفذ EXPLAIN ANALYZE أو load أو توقيت N+1 ببيانات ممثلة هنا. يتضمن المصدر فهارس migration0029 وقراءة منح الإدارة بدفعات وrequest IDs وسجلات منظمة وحالات dependencies منقحة. تصدير المقاييس وتسليم التنبيهات وقياس استعلام الإنتاج NOT VERIFIED. تثبت السجلات المحلية نشاط الخادم لا رصد المزود. يملك 007 أدلة البيانات والاستعلامات والصفحات والتحميل والتنبيهات المقاسة.
+
+
+
+## 25. النسخ والاستعادة والتعافي
+
+يوثق QC-CLOSURE-015 السابق dump من PG18.6 بحجم 282954 بايت وchecksum وتطابق 77/77 جدولًا و29/29 ledger وصفر FK غير معتمدة. كانت جداول audit/signature/file/session/release المضبوطة بلا صفوف؛ هذا يثبت تطابق الهيكل الفارغ لا استعادة سجلات ممتلئة. نجحت اختبارات الأدوات الحالية ضمن Unit والتكامل، لكن لم ينشئ هذا التدقيق ويستعد artifact ممتلئًا جديدًا. تظل النسخة الممتلئة الحالية والاستعادة المعزولة وchecksums الملفات واستعادة sessions/scopes/Reject/signatures/audit/releases وRPO/RTO المقاسان NOT VERIFIED. أدلة managed backup والاحتفاظ وPITR/WAL من المزود مستقلة ومفقودة. أهداف 24h/4h بالواجهة ليست قياسات محققة. يملك 008 الاستعادة الممتلئة المعزولة وأدلة المزود؛ لم تُنفذ استعادة إنتاجية.
+
+
+
+## 26. Render والإنتاج
+
+يعلن render.yaml runtime node وNode24.20.0 وfrozen install/build وstart بصيغة node dist/server/entry.mjs وchecksPass وRender subdomain enabled والنطاق qclevel.top و/api/health/ready. يوثق تدقيق التطابق السابق في اليوم نفسه runtime rust ومسار health فارغًا وcommit deploy وsubdomain disabled وaccess:grant-system-owner عند startup وDATABASE_URL خارجيًا وغياب RELEASE_*/AI/OTEL؛ ربط deploy رقم dep-damfhv8u01pc738s4430 الـ298e307721af97d9c1bd22279d0c784fbf5b62a8. حُفظ ذلك الدليل لكن لم يُفحص API/env المزود حديثًا هنا؛ إعداد المزود وSHA المنشور NOT VERIFIED NOW من هذا التدقيق، مع إبقاء الملاحظة التاريخية المقبولة وعدم حذفها ضمنيًا.
+تثبت الأدلة الحية الحالية صحة qclevel.top برمز 200 وهوية release/build/Git/environment بالواجهة UNVERIFIED ورأس0018/معلق11 وReject500. لا تثبت مساواة commit في المزود الهوية الداخلية أو التطابق. يتحقق 001 من المزود والإصدار والمخطط بعد تدوير 015 المعتمد وإغلاق المصدر؛ لم يُعدل مزود أو نشر أو نطاق أو قاعدة إنتاجية.
+
+
+
+## 27. UAT والتحقق البشري
+
+سجلات UAT قوالب دون نتيجة أو توقيع مقبول لمشارك حقيقي. الشخصيات المطلوبة Employee وInspector وSupervisor وManager وAdministrator وyazeed. لم تُختلق نسب نجاح مهام أو زمن أو ارتباك أو توقيع. إذن استخدام الحساب وتفاعل الوكيل بالمتصفح ليس جلسة UAT بشرية. يحتاج المرشح مشاركين وسيناريوهات وexpected/actual وشدة وأدلة وتوقيعًا مربوطًا بهوية الإصدار. لا تُغلق UAT بقراءة المالك الآلية. يلي 004 أدلة المصدر والأمن والوصول والاستعادة والإنتاج ويبقى BLOCKED حتى يتوفر بشر فعليون.
+
+
+
+## 28. مصفوفة المجالات الثمانين
+
+| # | المجال | السابق | الحالي | الفرق | الحالة | التفسير | الدليل الحالي | الفجوة ومهام الإغلاق |
+|---|---|---|---|---|---|---|---|---|
+| 1 | الصحة الوظيفية | 55.0% | 51.0% | -4.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,014 |
+| 2 | مسارات العمل End-to-End | 42.0% | 44.0% | +2.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004 |
+| 3 | تكامل النظام | 45.0% | 49.0% | +4.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,014 |
+| 4 | تجربة المستخدم وقابلية الاستخدام | 55.0% | 28.0% | -27.0 | PARTIAL | ضعيف | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 5 | تصميم الواجهة البصري | 55.0% | 29.0% | -26.0 | PARTIAL | ضعيف | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 6 | التصميم المتجاوب | 52.0% | 32.0% | -20.0 | PARTIAL | ضعيف | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 006,013,004 |
+| 7 | إمكانية الوصول | 50.0% | 32.0% | -18.0 | FAIL / PARTIAL | ضعيف | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 006,013,004 |
+| 8 | الأداء | 35.0% | 37.0% | +2.0 | PARTIAL | ضعيف | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 007 |
+| 9 | المصادقة والهوية | 68.0% | 63.0% | -5.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004 |
+| 10 | Authorization / RBAC / Scopes / SoD | 72.0% | 60.0% | -12.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004 |
+| 11 | التحكم في SYSTEM_OWNER / yazeed | 78.0% | 65.0% | -13.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004 |
+| 12 | إدارة المستخدمين | 70.0% | 60.0% | -10.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004 |
+| 13 | الأمن | 60.0% | 60.0% | 0.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004 |
+| 14 | معمارية قاعدة البيانات | 58.0% | 65.0% | +7.0 | PARTIAL | كبير لكنه غير مكتمل | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 15 | سلامة البيانات | 60.0% | 59.0% | -1.0 | PARTIAL | جزئي | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 16 | المعاملات والذرية | 62.0% | 59.0% | -3.0 | PARTIAL | جزئي | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 17 | التزامن وIdempotency | 55.0% | 53.0% | -2.0 | FAIL / PARTIAL | جزئي | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 18 | الاستمرارية Persistence | 55.0% | 57.0% | +2.0 | PARTIAL | جزئي | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003,014 |
+| 19 | سجل التدقيق والتتبع | 60.0% | 60.0% | 0.0 | PARTIAL | كبير لكنه غير مكتمل | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 20 | معالجة الأخطاء وتجربة التعافي | 62.0% | 55.0% | -7.0 | PARTIAL | جزئي | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 21 | إدارة الجودة | 58.0% | 49.0% | -9.0 | PARTIAL | جزئي | `src/modules/quality/` + `tests/integration/quality/`: فحوص QMS المحلية الحالية؛ حماية P-04 وقرارات سياسة مفتوحة | حسم سياسات QMS وإثبات بشري وإنتاجي متكامل; 013,010,003,004 |
+| 22 | الاستلام والحجر | 60.0% | 57.0% | -3.0 | PARTIAL | جزئي | `src/modules/quarantine/` + `tests/integration/quarantine/`: اختبارات QC الحالية مع PostgreSQL المحلي؛ PASS != RELEASED | السياسات المعتمدة وE2E الحرج وUAT وأدلة الإنتاج; 013,003,004 |
+| 23 | إدارة الفحص | 62.0% | 57.0% | -5.0 | PARTIAL | جزئي | `src/modules/quarantine/` + `tests/integration/quarantine/`: اختبارات QC الحالية مع PostgreSQL المحلي؛ PASS != RELEASED | السياسات المعتمدة وE2E الحرج وUAT وأدلة الإنتاج; 013,003,004 |
+| 24 | التحكم في Release | 65.0% | 57.0% | -8.0 | PARTIAL | جزئي | `src/modules/quarantine/` + `tests/integration/quarantine/`: اختبارات QC الحالية مع PostgreSQL المحلي؛ PASS != RELEASED | السياسات المعتمدة وE2E الحرج وUAT وأدلة الإنتاج; 013,003,004 |
+| 25 | إدارة المختبر | 60.0% | 55.0% | -5.0 | PARTIAL | جزئي | `src/modules/laboratory/` + `tests/integration/laboratory/`: فحوص المختبر العلمية المحلية؛ التقييم والرفض الافتراضيان مغلقان بأمان | مقيّم وطرق معتمدة وPD-38 وحسم VOID وإثبات المسار كاملًا; 013,003,004 |
+| 26 | حوكمة البيانات العلمية | 48.0% | 47.0% | -1.0 | PARTIAL | جزئي | `src/modules/laboratory/` + `tests/integration/laboratory/`: فحوص المختبر العلمية المحلية؛ التقييم والرفض الافتراضيان مغلقان بأمان | مقيّم وطرق معتمدة وPD-38 وحسم VOID وإثبات المسار كاملًا; 013,003,004 |
+| 27 | إدارة إعادة الاختبار | 50.0% | 47.0% | -3.0 | PARTIAL | جزئي | `src/modules/laboratory/` + `tests/integration/laboratory/`: فحوص المختبر العلمية المحلية؛ التقييم والرفض الافتراضيان مغلقان بأمان | مقيّم وطرق معتمدة وPD-38 وحسم VOID وإثبات المسار كاملًا; 013,003,004 |
+| 28 | إدارة المعدات | 55.0% | 59.0% | +4.0 | PARTIAL | جزئي | `src/modules/assets/` + `tests/integration/assets/`: فحوص الأصول وclosure-008 المحلية وقيود 0027 | سياسة معايرة معتمدة وإثبات حي بالمتصفح وUAT; 013,003,004 |
+| 29 | المعايرة | 55.0% | 57.0% | +2.0 | PARTIAL | جزئي | `src/modules/assets/` + `tests/integration/assets/`: فحوص الأصول وclosure-008 المحلية وقيود 0027 | سياسة معايرة معتمدة وإثبات حي بالمتصفح وUAT; 013,003,004 |
+| 30 | الصيانة | 52.0% | 57.0% | +5.0 | PARTIAL | جزئي | `src/modules/assets/` + `tests/integration/assets/`: فحوص الأصول وclosure-008 المحلية وقيود 0027 | سياسة معايرة معتمدة وإثبات حي بالمتصفح وUAT; 013,003,004 |
+| 31 | المستندات الخاضعة للتحكم | 60.0% | 59.0% | -1.0 | PARTIAL | جزئي | `src/modules/documents/` + `tests/integration/database/controlled-record-integrity.test.ts`: فحوص السجلات المضبوطة المحلية وحماية 0028 من التعديل | حسم نطاق التوقيع والسياسة وإثبات E2E واستعادة بيانات فعلية; 013,008,003,004 |
+| 32 | القوالب Templates | 62.0% | 59.0% | -3.0 | PARTIAL | جزئي | `src/modules/quarantine/` + `tests/integration/quarantine/`: اختبارات QC الحالية مع PostgreSQL المحلي؛ PASS != RELEASED | السياسات المعتمدة وE2E الحرج وUAT وأدلة الإنتاج; 013,003,004 |
+| 33 | طلبات التغيير | 58.0% | 57.0% | -1.0 | PARTIAL | جزئي | `src/modules/documents/` + `tests/integration/database/controlled-record-integrity.test.ts`: فحوص السجلات المضبوطة المحلية وحماية 0028 من التعديل | حسم نطاق التوقيع والسياسة وإثبات E2E واستعادة بيانات فعلية; 013,008,003,004 |
+| 34 | الموافقات | 62.0% | 57.0% | -5.0 | PARTIAL | جزئي | `src/modules/documents/` + `tests/integration/database/controlled-record-integrity.test.ts`: فحوص السجلات المضبوطة المحلية وحماية 0028 من التعديل | حسم نطاق التوقيع والسياسة وإثبات E2E واستعادة بيانات فعلية; 013,008,003,004 |
+| 35 | التوقيع الإلكتروني / إعادة المصادقة | 58.0% | 57.0% | -1.0 | PARTIAL | جزئي | `src/modules/documents/` + `tests/integration/database/controlled-record-integrity.test.ts`: فحوص السجلات المضبوطة المحلية وحماية 0028 من التعديل | حسم نطاق التوقيع والسياسة وإثبات E2E واستعادة بيانات فعلية; 013,008,003,004 |
+| 36 | الملفات والأدلة | 58.0% | 57.0% | -1.0 | PARTIAL | جزئي | `src/modules/documents/` + `tests/integration/database/controlled-record-integrity.test.ts`: فحوص السجلات المضبوطة المحلية وحماية 0028 من التعديل | حسم نطاق التوقيع والسياسة وإثبات E2E واستعادة بيانات فعلية; 013,008,003,004 |
+| 37 | الإشعارات | 52.0% | 49.0% | -3.0 | PARTIAL | جزئي | `src/shared/` + `tests/integration/`: فحوص البحث والتقارير وOutbox الحالية؛ تغطية المتصفح محدودة | نسب البيانات والفلترة والتصدير حسب النطاق والتسليم الحي; 011,003,004 |
+| 38 | البحث | 50.0% | 49.0% | -1.0 | PARTIAL | جزئي | `src/shared/` + `tests/integration/`: فحوص البحث والتقارير وOutbox الحالية؛ تغطية المتصفح محدودة | نسب البيانات والفلترة والتصدير حسب النطاق والتسليم الحي; 011,003,004 |
+| 39 | التقارير | 50.0% | 49.0% | -1.0 | PARTIAL | جزئي | `src/shared/` + `tests/integration/`: فحوص البحث والتقارير وOutbox الحالية؛ تغطية المتصفح محدودة | نسب البيانات والفلترة والتصدير حسب النطاق والتسليم الحي; 011,003,004,014 |
+| 40 | التصدير والطباعة | 40.0% | 42.0% | +2.0 | PARTIAL | جزئي | `src/shared/` + `tests/integration/`: فحوص البحث والتقارير وOutbox الحالية؛ تغطية المتصفح محدودة | نسب البيانات والفلترة والتصدير حسب النطاق والتسليم الحي; 011,003,004 |
+| 41 | لوحة المعلومات | 50.0% | 38.0% | -12.0 | FAIL / PARTIAL | ضعيف | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004,014 |
+| 42 | حوكمة الإصدارات | 62.0% | 57.0% | -5.0 | PARTIAL | جزئي | `src/modules/documents/` + `tests/integration/database/controlled-record-integrity.test.ts`: فحوص السجلات المضبوطة المحلية وحماية 0028 من التعديل | حسم نطاق التوقيع والسياسة وإثبات E2E واستعادة بيانات فعلية; 013,008,003,004 |
+| 43 | CI/CD | 30.0% | 29.0% | -1.0 | FAIL / PARTIAL | ضعيف | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 002,003 |
+| 44 | الاختبارات الآلية | 55.0% | 60.0% | +5.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 002,003,012 |
+| 45 | Browser / Playwright E2E | 25.0% | 31.0% | +6.0 | FAIL / PARTIAL | ضعيف | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 003 |
+| 46 | UAT حقيقي | 10.0% | 11.0% | +1.0 | NOT VERIFIED | حرج | `audit/100-percent/uat/` + `Documents/UAT-ACCEPTANCE-PLAN.md`: تجهيزات فقط؛ لا جلسة حقيقية موقعة | مشاركون حقيقيون ونتائج فعلية وتوقيع مخول; 004 |
+| 47 | اختبار قابلية الاستخدام | 15.0% | 4.0% | -11.0 | NOT VERIFIED | حرج | `audit/100-percent/uat/` + `Documents/UAT-ACCEPTANCE-PLAN.md`: تجهيزات فقط؛ لا جلسة حقيقية موقعة | مشاركون حقيقيون ونتائج فعلية وتوقيع مخول; 004 |
+| 48 | النسخ الاحتياطي | 35.0% | 39.0% | +4.0 | PARTIAL | ضعيف | `src/modules/backup-recovery/` + `tests/unit/backup-recovery/`: فحوص الأدوات الحالية؛ الاستعادة المحلية السابقة تاريخية | نسخة ممتلئة حديثة واستعادة معزولة وأدلة التعافي من المزود; 008,001 |
+| 49 | الاستعادة والتعافي من الكوارث | 25.0% | 39.0% | +14.0 | PARTIAL | ضعيف | `src/modules/backup-recovery/` + `tests/unit/backup-recovery/`: فحوص الأدوات الحالية؛ الاستعادة المحلية السابقة تاريخية | نسخة ممتلئة حديثة واستعادة معزولة وأدلة التعافي من المزود; 008,001 |
+| 50 | الصحة والجاهزية | 60.0% | 69.0% | +9.0 | PARTIAL | كبير لكنه غير مكتمل | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 007,001 |
+| 51 | Observability | 55.0% | 53.0% | -2.0 | PARTIAL | جزئي | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 007,001 |
+| 52 | القابلية للدعم التشغيلي | 45.0% | 47.0% | +2.0 | PARTIAL | جزئي | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 007,001 |
+| 53 | المعمارية | 62.0% | 35.0% | -27.0 | PARTIAL | ضعيف | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 002,003,012 |
+| 54 | قابلية الصيانة | 60.0% | 31.0% | -29.0 | PARTIAL | ضعيف | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 002,003,012 |
+| 55 | جودة الكود | 58.0% | 24.0% | -34.0 | FAIL / PARTIAL | ضعيف | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 002,003,012 |
+| 56 | إدارة Migrations | 60.0% | 65.0% | +5.0 | PARTIAL | كبير لكنه غير مكتمل | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 57 | الإعدادات والأسرار | 55.0% | 38.0% | -17.0 | PARTIAL | ضعيف | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 015,010,001 |
+| 58 | النشر وRuntime | 40.0% | 33.0% | -7.0 | FAIL / PARTIAL | ضعيف | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 001,002 |
+| 59 | خصوصية البيانات | 50.0% | 43.0% | -7.0 | PARTIAL | جزئي | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004 |
+| 60 | الامتثال وحوكمة QMS | 45.0% | 40.0% | -5.0 | PARTIAL | جزئي | `src/modules/quality/` + `tests/integration/quality/`: فحوص QMS المحلية الحالية؛ حماية P-04 وقرارات سياسة مفتوحة | حسم سياسات QMS وإثبات بشري وإنتاجي متكامل; 013,010,003,004 |
+| 61 | اتساق Business Rules | 60.0% | 51.0% | -9.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004 |
+| 62 | State Machines | 65.0% | 57.0% | -8.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004 |
+| 63 | دلالات الحذف والتصحيح | 58.0% | 47.0% | -11.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004 |
+| 64 | اتساق البيانات بين الـModules | 50.0% | 49.0% | -1.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,014,011 |
+| 65 | Navigation & Information Architecture | 45.0% | 40.0% | -5.0 | PARTIAL | جزئي | `src/shared/routing/` + `scripts/architecture/`: بوابة المعمارية الحالية ناجحة ودليل التوسع مفحوص | بوابات الجودة وتجربة توسعة وإثبات التشغيل والأدوات; 002,003,012 |
+| 66 | جودة Forms | 60.0% | 51.0% | -9.0 | PARTIAL | جزئي | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 67 | الجداول وData Grids | 55.0% | 47.0% | -8.0 | PARTIAL | جزئي | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 68 | Dialogs والتأكيدات | 65.0% | 49.0% | -16.0 | PARTIAL | جزئي | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 69 | حالات Empty / Loading / Error | 55.0% | 47.0% | -8.0 | PARTIAL | جزئي | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 005,006,003,004 |
+| 70 | Localization / Arabic / RTL | 25.0% | 7.0% | -18.0 | NOT VERIFIED | حرج | `src/ui/` + `tests/unit/ui/`: المصدر واختبارات الواجهة الثابتة الحالية؛ عيوب ظاهرة للمالك | إصلاح الواجهة وإثبات الاستجابة والتقنيات المساعدة والتحقق البشري; 006,013,004 |
+| 71 | التعامل مع الوقت والتاريخ | 55.0% | 49.0% | -6.0 | PARTIAL | جزئي | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,011 |
+| 72 | Reference Data | 45.0% | 38.0% | -7.0 | PARTIAL | ضعيف | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,011 |
+| 73 | الاستيراد | 40.0% | 28.0% | -12.0 | PARTIAL | ضعيف | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,011 |
+| 74 | Bulk Operations | 45.0% | 28.0% | -17.0 | PARTIAL | ضعيف | `src/modules/` + `tests/integration/`: المصدر والفحوص المحلية الحالية؛ تغطية المتطلبات جزئية | متطلبات معتمدة وأدلة كاملة للأدوار ومسارات العمل; 013,003,004,011 |
+| 75 | AI Advisory | 55.0% | 45.0% | -10.0 | PARTIAL | جزئي | `src/modules/ai-advisory/` + `tests/unit/ai-advisory/`: اختبارات المزود والسلامة الحتمية الحالية؛ دون استدعاء مزود حي | Groq وGemini والتحويل الحي وسياسة خصوصية معتمدة وUAT بشري; 009,010,004 |
+| 76 | AI Safety / Governance | 58.0% | 45.0% | -13.0 | PARTIAL | جزئي | `src/modules/ai-advisory/` + `tests/unit/ai-advisory/`: اختبارات المزود والسلامة الحتمية الحالية؛ دون استدعاء مزود حي | Groq وGemini والتحويل الحي وسياسة خصوصية معتمدة وUAT بشري; 009,010,004 |
+| 77 | استعادة System Owner | 70.0% | 57.0% | -13.0 | PARTIAL | جزئي | `src/shared/authorization/` + `tests/integration/administration/`: فحوص الهوية والصلاحيات المحلية الحالية وقراءة المالك الحية | مصفوفة سماح ورفض لست شخصيات وأدلة أمن ومنح حية; 010,003,004,008 |
+| 78 | عدم قابلية Audit للتعديل | 60.0% | 59.0% | -1.0 | PARTIAL | جزئي | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 79 | عدم قابلية الأدلة الخاضعة للتحكم للتعديل | 55.0% | 59.0% | +4.0 | PARTIAL | جزئي | `db/migrations/` + `tests/integration/database/`: PostgreSQL 18.6 محلي؛ رأس 0029 و77 جدولًا وصفر أيتام؛ migrations 29/29 | تطابق الإنتاج وأدلة الرفض والتزامن الكاملة; 002,001,003 |
+| 80 | الجاهزية للإنتاج | 30.0% | 5.3% | -24.7 | NOT VERIFIED | حرج | `src/shared/health/` + `tests/integration/system/`: فحوص الصحة والرصد المحلية الحالية وصحة حية 200 | إعداد المزود والتنبيهات والتصدير وتطابق بيئة التشغيل; 001,002,003,004,006,008,009,010,012,015 |
+
+معرفات المهام المختصرة تسبقها QC-100-FINAL-. كل المجالات دون100 ولها عمل إغلاق؛ لا يُحذف المجال70. المجال80 يخضع لحساب بوابات مستقل.
+
+## 29. بوابات الإصدار الحرجة
+
+| البوابة | الحالة | الدليل الحالي | المتبقي: المهام |
+|---|---|---|---|
+| Authentication | NOT VERIFIED | نجح دخول المالك؛ مصفوفة الشخصيات والجلسات مفقودة | 003,010,004 |
+| Authorization | NOT VERIFIED | سياسات محلية وقراءة المالك؛ مصفوفة الرفض الحية ناقصة | 003,010 |
+| Data Integrity | NOT VERIFIED | PG محلي77/0؛ مخطط الإنتاج غير مقاس | 001,003 |
+| Migrations | FAIL | واجهة المالك0018 ومعلق11 مقابل مصدر0029 | 015,001 |
+| Critical Workflows | FAIL | فشل متصفح وتخطي مطلوب وفجوات سياسة علمية | 013,014,003,004 |
+| Audit Durability | NOT VERIFIED | حراسة محلية ناجحة؛ استمرارية بيانات ممتلئة مفقودة | 008,001 |
+| Security | BLOCKED | 52 محلي ناجح؛ شرط الاتصال المكشوف ورفض تشغيل غير مكتمل | 015,010 |
+| PostgreSQL Runtime | NOT VERIFIED | محلي18.6 ناجح؛ إنتاج بقراءة تطبيق فقط واتصال canonical محجوب | 015,001 |
+| Authenticated E2E | FAIL | لا fixtures مصادقة للشخصيات الست؛ التشغيل غير ناجح | 003 |
+| Backup | NOT VERIFIED | لا artifact ممتلئ حالي | 008 |
+| Restore / DR | NOT VERIFIED | تطابق فارغ تاريخي فقط؛ أدلة المزود مفقودة | 008 |
+| Deployment Identity | NOT VERIFIED | ربط commit سابق؛ هوية التطبيق الحية UNVERIFIED | 001 |
+| Render Parity | NOT VERIFIED | انحراف مزود سابق؛ API حالي غير متاح | 001 |
+| Groq Live | NOT VERIFIED | مصدر حتمي دون استدعاء حي مقبول | 009 |
+| Gemini Live | NOT VERIFIED | مصدر حتمي دون استدعاء حي مقبول | 009 |
+| UAT | NOT VERIFIED | لا جلسات بشرية موقعة | 004 |
+| Accessibility | FAIL | مخالفة axe serious ونقص المصفوفة اليدوية | 005,006 |
+| Health / Readiness | PASS | health/live وready الحيان200 healthy | 001,007 |
+| Exact-HEAD CI | BLOCKED | 35325572254 وVerify بلا خطوات بسبب الفوترة | 002 |
+
+بوابة واحدة PASS من19؛ أي بوابة إلزامية أخرى غير ناجحة تمنع GO. لا يُسوّى نجاح محلي بقبول إنتاجي.
+
+## 30. الادعاءات مقابل الواقع
+
+| الادعاء | المصدر المتوقع | الدليل الجديد | الحقيقة الحالية | الحكم |
+|---|---|---|---|---|
+| HEAD الحالي بالذاكرة وREADME | Project Mind / README | Actual HEAD 298e307721af97d9c1bd22279d0c784fbf5b62a8 | حُدثت الذاكرة متزامنًا؛ تجميد README قديم | PARTIAL / DRIFT |
+| كل المسارات permission-bound | Previous living audit | 85=2PUBLIC+81AUTH+2OWNER; gatePASS | أُصلح غياب نوع الرؤية في المصدر | SUPERSEDED |
+| الفحوص تحتاج Docker حصرًا | README/current old Mind | LocalPG18 full suites executed | المسار المكافئ يعمل؛ مسار CI بالحاوية لم يُعد | FALSE as blanket claim |
+| رأس المصدر0029 | Migrations/guide | 29 files + local applied0029 | صحيح مصدرًا لا رأسًا إنتاجيًا | PASS source |
+| رأس الإنتاج مجهول حاليًا | Earlier parity task | Owner live projection0018/pending11 | ثبتت قراءة التطبيق؛ تفاصيل الاتصال المباشر غير مثبتة | PARTIAL / UPDATED |
+| Render على SHA المصدر | Earlier provider record | Previous dep binds 298e307721af97d9c1bd22279d0c784fbf5b62a8; not reread provider | حُفظ الدليل السابق؛ الهوية الداخلية غير متحققة | HISTORICAL / PARTIAL |
+| تُصلح migrations الرفض وحدها | Source/live expectations | Local fully migrated ambiguous SQL + live500 | يلزم إغلاق عيب المصدر وتطابق الإنتاج معًا | FAIL |
+| غياب مخالفة في فحص axe محدود يغلق الوصول | Narrow earlier scan | Explicit rule1serious;35pass/3incomplete | الفحص الصريح كشف serious؛ AT مفقود | FAIL |
+| availability تعني مزودًا حيًا | HTTP provider/source | availability returns true on configuration | لا إثبات Groq/Gemini حي | FALSE |
+| تطابق الاستعادة يثبت التعافي | Prior restore record | Zero controlled rows; structural parity only | الاستعادة الممتلئة ومن المزود غير متحققة | PARTIAL |
+| مراجعة المالك الآلية تثبت UAT | UAT plan | No signed human session | الآلي ليس UAT بشريًا | FALSE |
+| فتح الصفحة يمنح mutation | Visibility vs authorization | Server usecases enforce grants/scope/state/version/SoD | الرؤية وmutation منفصلان | FALSE |
+| جاهز للإنتاج | Release checklist | 18 non-PASS gates of19 | NO-GO | FAIL |
+
+
+## 31. نتائج التدقيق
+
+| المعرف | الشدة | النتيجة | الدليل والحقيقة | المجالات | المهام |
+|---|---|---|---|---|---|
+| QC-REAUDIT-F-001 | P0 | بوابة تدوير الاتصال مفتوحة | أكد تدقيق المزود السابق إعادة استخدام credential مكشوف؛ DATABASE_URL القانوني مفقود حاليًا، ولم يُجر اتصال قاعدة مباشر. | 57,58,80 | 015,010,001 |
+| QC-REAUDIT-F-002 | P0 | فشل تطابق migrations الحي | واجهة المالك الحالية 0018 و11 معلقة مقابل مصدر0029؛ جداول الإنتاج وأيتامه غير متحقق منها مباشرة. | 14–19,56,80 | 015,001 |
+| QC-REAUDIT-F-003 | P0 | فشل الرفض الحي500 وخطأ SQL محلي فعلي | تفشل التحليلات المكتملة migrations بسبب status غير محدد؛ لوحظ live500 مستقلًا. migration وحدها ليست قبولًا كافيًا. | 1,3,18,39,41,64 | 014,003,001 |
+| QC-REAUDIT-F-004 | P0 | لم يبدأ CI المطابق للـHEAD | تشغيل35325572254 ووظيفة105537703598 بلا خطوات بسبب الفوترة؛ ليس فشل اختبار كود. | 43,44,80 | 002 |
+| QC-REAUDIT-F-005 | P0 | غياب إغلاق المتصفح المصادق الحرج | فشل التشغيل الكامل و107 تخطي؛ لم تُنفذ fixtures للشخصيات الست، وإدارة المهلة والعزل غير سليمة. | 2,9–12,45,80 | 003 |
+| QC-REAUDIT-F-006 | P0 | استعادة البيانات الممتلئة وتعافي المزود مفقودان | الاستعادة التاريخية77 جدولًا بلا سجلات مضبوطة؛ النسخة الممتلئة والاستعادة وقدرات المزود غير متحققة. | 48,49,77–80 | 008 |
+| QC-REAUDIT-F-007 | P0 | غياب UAT بشري موقع | لا نتيجة مشارك/سيناريو فعلية أو توقيع؛ دخول الوكيل ليس UAT بشريًا. | 46,47,80 | 004 |
+| QC-REAUDIT-F-008 | P1 | فشل بوابات الأدوات والتنسيق وlint | Node22 خارج عقد24؛ التنسيق4 ملفات وlint37 خطأ (19 مصدر/سكربت و18 أدوات تشغيل سابقة مستثناة منGit)؛ يلزم التشغيل النهائي على24. | 44,53–55,58 | 002 |
+| QC-REAUDIT-F-009 | P1 | فجوات اختبار أو سلوك التكامل والتزامن | تعارض .rejects مع رفض متزامن؛ رأس ثابت0027 مقابل0029؛ اختلاف خطأ تزامن الفحص. لا تُضعف سلامة الحالة والتدقيق. | 11,17,44,56 | 002,014,003 |
+| QC-REAUDIT-F-010 | P1 | عيوب الواجهة المشتركة ومعاني الداشبورد مفتوحة | Times وفلاتر KPI غير مدعومة ونطاق شخصي لا يطابق النص وهوية UUID وتعريفات queue وWASM/CSP والعناوين والأهداف والنص الصغير. | 4–8,20,41,65–69 | 005,007 |
+| QC-REAUDIT-F-011 | P1 | مخالفة Label in Name serious وغياب وصول يدوي | قاعدة صريحة: عنصر serious واحد و35 قاعدة ناجحة و3 غير مكتملة؛ AT ولوحة مفاتيح شاملان غير منفذين. | 7,45,47,80 | 005,006 |
+| QC-REAUDIT-F-012 | P1 | تطابق Render وهوية التطبيق غير متحقق | انحراف مزود سابق وهوية التطبيق الحية UNVERIFIED ورأس متوقع مضلل؛ لم يُعد فحص SHA الحالي من المزود هنا. | 50,57,58,80 | 001,002 |
+| QC-REAUDIT-F-013 | P1 | غياب إثبات AI الحي واعتماد الخصوصية | نجحت فحوص المصدر الحتمية؛ لا Groq/Gemini/تحويل حي أو اعتماد إرسال أعمال. | 75,76,80 | 009,010,004 |
+| QC-REAUDIT-F-014 | P1 | عدم اكتمال السياسة والمقيّم المضبوطين | المقيّم الافتراضي مرفوض ورفضPD38 محجوب وVOID مفقود؛ سياسات QMS والمعايرة والتوقيع والاحتفاظ مفتوحة. | 21–36,60–63,72–74 | 013,010,003,004 |
+| QC-REAUDIT-F-015 | P2 | انحراف خط أساس الوثائق | تجمد README/المسارات عند a6876f وادعاءات أقدم؛ تناقض فحوص القاعدة المحلية المنفذة مانع الحاويات المطلق القديم. | 53,54,61,65 | 012 |
+| QC-REAUDIT-F-016 | P2 | عدم اكتمال بيانات المرجع والاستيراد والجملة والتوطين | لا قرار غير معتمد يحذف مجال70؛ التطبيق English/LTR حاليًا، وقبول البيانات والاستيراد والجملة ونسب التقارير غير مكتمل. | 38–40,64,70–74 | 013,011,006,004 |
+
+المفتوح:7 P0 و7 P1 و2 P2. لا orphan لـP0/P1؛ يحدد ملحق التقييم أثر كل مجال. النتائج الغائبة الأدلة بوابات غير مغلقة وليست ادعاء عيب كود دون دليل.
+
+## 32. حالة النتائج السابقة
+
+| النتيجة السابقة | الحالة الحالية | سبب التصنيف |
+|---|---|---|
+| QC-AUDIT-F-001 | SUPERSEDED | حُدد السبب الجديد كمنع فوترة بلا خطوات؛ البديل F004. |
+| QC-AUDIT-F-002 | PARTIALLY CLOSED | شُغلت القاعدة المحلية؛ يبقى الإنتاج وإخفاقات الفحوص الفعلية. |
+| QC-AUDIT-F-003 | PARTIALLY CLOSED | توجد استعادة هيكلية تاريخية؛ الإثبات الممتلئ والحالي ومن المزود مفقود. |
+| QC-AUDIT-F-004 | STILL OPEN | UAT الحقيقي الموقع مفقود. |
+| QC-AUDIT-F-005 | CLOSED | يوجد عقد رؤية صريح بالمصدر وفحوص معمارية وUnit؛ يبقى إثبات E2E منفصلًا في F005. |
+| QC-AUDIT-F-006 | STILL OPEN | E2E المصادق الحالي الكامل غير ناجح. |
+| QC-AUDIT-F-007 | PARTIALLY CLOSED | وُثقت مساواة commit سابقة من المزود؛ تبقى الهوية الداخلية والإعدادات. |
+| QC-AUDIT-F-008 | CLOSED | عدد .DS_Store المتتبع صفر. |
+| QC-AUDIT-F-009 | PARTIALLY CLOSED | زُومنت هوية المصدر؛ تبقى تجميدات الوثائق القديمة واضحة. |
+| QC-AUDIT-F-010 | PARTIALLY CLOSED | أضيف عقد سلامة المسارات ودليل التوسع؛ ما زال تنسيق السياسات والفحوص والوثائق مطلوبًا. |
+
+CLOSED عدد2؛ PARTIALLY CLOSED عدد5؛ STILL OPEN عدد2؛ SUPERSEDED عدد1. إغلاق المصدر لا يلغي إثبات التشغيل المنفصل.
+
+## 33. العمل المتبقي للوصول إلى 100%
+
+| الترتيب | المهمة | الغرض: البرومبتات بالإنجليزية | المجالات المتأثرة |
+|---|---|---|---|
+| 1 | QC-100-FINAL-015 | Credential Rotation & Canonical Connection Safety Gate | 57,80 |
+| 2 | QC-100-FINAL-002 | Zero-Defect Toolchain, Lint, Format & Exact-HEAD CI | 14,15,16,17,18,19,43,44,53,54,55,56,58,65,78,79,80 |
+| 3 | QC-100-FINAL-013 | Approved Policies & Remaining Controlled Workflow Closure | 1,2,3,6,7,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,42,60,61,62,63,64,70,71,72,73,74 |
+| 4 | QC-100-FINAL-014 | Reject Reports SQL, Lifecycle, Access & Analytics Closure | 1,3,18,39,41,64 |
+| 5 | QC-100-FINAL-011 | Data Governance, MDM, Reporting, Export & Lineage Closure | 37,38,39,40,64,71,72,73,74 |
+| 6 | QC-100-FINAL-005 | Dashboard UX, Live Data & Decision-Support Closure | 4,5,20,41,66,67,68,69 |
+| 7 | QC-100-FINAL-010 | Security, Privacy, Secure SDLC & Compliance Evidence Closure | 9,10,11,12,13,21,57,59,60,75,76,77,80 |
+| 8 | QC-100-FINAL-003 | Authenticated E2E & Complete Role Matrix Closure | 1,2,3,4,5,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,53,54,55,56,59,60,61,62,63,64,65,66,67,68,69,71,72,73,74,77,78,79,80 |
+| 9 | QC-100-FINAL-006 | WCAG 2.2 AA & Cross-Application Accessibility Closure | 4,5,6,7,20,41,66,67,68,69,70,80 |
+| 10 | QC-100-FINAL-007 | Performance, Capacity, Reliability & Observability Closure | 8,50,51,52 |
+| 11 | QC-100-FINAL-009 | Groq + Gemini Live Production Verification & AI Safety Closure | 75,76,80 |
+| 12 | QC-100-FINAL-008 | Backup, Restore, DR, RPO/RTO & Provider Evidence Closure | 31,33,34,35,36,42,48,49,77,80 |
+| 13 | QC-100-FINAL-001 | Production PostgreSQL & Render Parity Closure | 14,15,16,17,18,19,48,49,50,51,52,56,57,58,78,79,80 |
+| 14 | QC-100-FINAL-004 | Real UAT, Usability & Human Sign-Off | 1,2,3,4,5,6,7,9,10,11,12,13,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,46,47,59,60,61,62,63,64,66,67,68,69,70,71,72,73,74,75,76,77,80 |
+| 15 | QC-100-FINAL-012 | Final 80-Domain 100% Evidence Audit & Documentation Truth Sync | 44,53,54,55,65,80 |
+
+حُفظت12 مهمة ذات غرض حالي وأضيفت3: تدوير الاتصال015 وسياسات ومسارات مضبوطة013 وإصلاح الرفض014. حُول المصدر المنفذ إلى تحقق بدل إعادة بناء. ترتيب الاعتماد:015→002→013→014→011→005→010→003→006→007→009→008→001→004→012. بوابة الحساب الخارجية لا تمنع التحضير المحلي المستقل؛ final CI يعاد على المرشح بعد كل إصلاحات المصدر. لكل نتيجة P0/P1 مهمة ودليل قبول، ولكل80 مجال دون100 عمل إغلاق. لا تستخدم المهمة012 كبديل لتنفيذ وظيفة مفقودة. تتطلب العمليات الخارجية إذنًا صريحًا مستقلًا؛ تعديل الخطة ليس إذنًا بالتنفيذ. HTML يتضمن Copy Prompt وCopied وExpand/Collapse/All وحالة حية وتصميمًا متجاوبًا مع الوضعين. تحقق UI النهائي في ملحق الأدلة.
+
+## 34. المتطلبات الدقيقة لنسبة 100% المشروعة
+
+يجب إثبات 80/80 مجالًا مطلوبًا بالكامل؛ وتكون FAIL وBLOCKED وNOT VERIFIED وP0 وP1 والاختبارات الإلزامية المتخطاة صفرًا. تنجح frozen install والتنسيق وlint والأنواع والمعمارية وUnit والتكامل وmigrations والتزامن والأمن والبناء وE2E المصادق وCI المطابق للـHEAD والتحقق من الإصدار على الشجرة النهائية وبيئة العقد. تحتاج PostgreSQL/Render/هوية الإنتاج والنسخة الممتلئة والاستعادة المعزولة والتعافي من المزود والمزودان المستخدمان والتحويل وUAT البشري الموقع والوصول الآلي واليدوي الحرج أدلة مرشح دقيقة وصالحة. تعتمد وتشرح قرارات N/A بدل إخفاء الأدلة المفقودة. يجدد الدليل المتأثر بعد تغيير مصدر جوهري. لا تُعدل نسبة إلى 100 ولا يحول غياب الدليل إلى PASS ولا تزال فحوص فاشلة أو تضعف قواعد الموافقة.
+
+
+
+## 35. القرار النهائي
+
+PARTIAL / NO-GO. تحسن المصدر وتشغيل PostgreSQL المحلي لا يغلقان فشل migrations/Reject الحي أو CI أو مسارات الشخصيات الست المصادق عليها أو شرط الاتصال المكشوف أو التعافي الممتلئ أو UAT الموقع أو مخالفة الوصول serious أو إعداد وهوية المزود. نضج الأدلة واكتمال بوابات الإنتاج مقياسان مختلفان. حُدث التقريرين الحيين وHTML المتكيف في مواضعها. تحتوي الخطة 15 مهمة بترتيب الاعتماد، ولم تنفذ أي مهمة إغلاق نهائية ضمن هذا التدقيق. حُفظ العمل غير المرتبط الموجود.
+
+
+
+## 36. معادلة التقييم وملحق الأدلة
+
+النموذج: S المصدر20 وU الوحدة/الثابت15 وI التكامل15 وD تشغيل PostgreSQL15 وB المتصفح15 وH UX/الوصول/البشر10 وP الإنتاج/المزود10. الممنوح أدناه نقاط من وزن الطبقة، لا نتائج اختبارات. الدليل الجزئي يمنح نسبة جزئية من الوزن بحسب تغطية المتطلبات الفعلية؛ الغياب صفر. نجاح اختبارات لا يجعل جميع متطلبات المجال ناجحة. لا يمنح نقص دليل وزنًا موزعًا. اعتُبرت جميع الطبقات منطبقة على مجال النظام بحدوده التشغيلية: حتى المعمارية تحتاج تجربة تكامل/persistence/توسعة بشرية ونشر؛ لا يوجد N/A غير معتمد. عند N/A مشروع لاحقًا، الدرجة=100×مجموع النقاط الممنوحة/مجموع الأوزان المنطبقة مع توثيق القرار. المجال80 مستقل:100×عدد بوابات الإنتاج PASS/19، والمطبق1/19=5.263157…؛ لا يستخدم جمع طبقات المصدر. تُعد الصحة/readiness بوابة واحدة ناجحة وبقية18 صفر حتى قبول كامل. هذه صيغة محافظة لإتمام البوابات لا تقدير احتمالي لتوفر الخدمة.
+
+| # | S/20 | U/15 | I/15 | D/15 | B/15 | H/10 | P/10 | المجموع |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 16 | 13 | 10 | 10 | 2 | 0 | 0 | 51.0% |
+| 2 | 16 | 12 | 8 | 8 | 0 | 0 | 0 | 44.0% |
+| 3 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 4 | 14 | 12 | 0 | 0 | 2 | 0 | 0 | 28.0% |
+| 5 | 14 | 12 | 0 | 0 | 3 | 0 | 0 | 29.0% |
+| 6 | 16 | 13 | 0 | 0 | 3 | 0 | 0 | 32.0% |
+| 7 | 16 | 13 | 0 | 0 | 3 | 0 | 0 | 32.0% |
+| 8 | 14 | 10 | 5 | 5 | 3 | 0 | 0 | 37.0% |
+| 9 | 18 | 15 | 12 | 12 | 6 | 0 | 0 | 63.0% |
+| 10 | 18 | 15 | 12 | 12 | 3 | 0 | 0 | 60.0% |
+| 11 | 20 | 15 | 12 | 12 | 6 | 0 | 0 | 65.0% |
+| 12 | 18 | 15 | 12 | 12 | 3 | 0 | 0 | 60.0% |
+| 13 | 18 | 15 | 12 | 12 | 3 | 0 | 0 | 60.0% |
+| 14 | 20 | 15 | 15 | 15 | 0 | 0 | 0 | 65.0% |
+| 15 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 16 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 17 | 18 | 15 | 10 | 10 | 0 | 0 | 0 | 53.0% |
+| 18 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 19 | 18 | 15 | 12 | 12 | 3 | 0 | 0 | 60.0% |
+| 20 | 18 | 15 | 10 | 10 | 2 | 0 | 0 | 55.0% |
+| 21 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 22 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 23 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 24 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 25 | 16 | 15 | 12 | 12 | 0 | 0 | 0 | 55.0% |
+| 26 | 12 | 15 | 10 | 10 | 0 | 0 | 0 | 47.0% |
+| 27 | 14 | 13 | 10 | 10 | 0 | 0 | 0 | 47.0% |
+| 28 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 29 | 16 | 15 | 13 | 13 | 0 | 0 | 0 | 57.0% |
+| 30 | 16 | 15 | 13 | 13 | 0 | 0 | 0 | 57.0% |
+| 31 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 32 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 33 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 34 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 35 | 16 | 15 | 13 | 13 | 0 | 0 | 0 | 57.0% |
+| 36 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 37 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 38 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 39 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 40 | 14 | 12 | 8 | 8 | 0 | 0 | 0 | 42.0% |
+| 41 | 12 | 12 | 5 | 5 | 4 | 0 | 0 | 38.0% |
+| 42 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 43 | 16 | 13 | 0 | 0 | 0 | 0 | 0 | 29.0% |
+| 44 | 18 | 15 | 12 | 12 | 3 | 0 | 0 | 60.0% |
+| 45 | 16 | 12 | 0 | 0 | 3 | 0 | 0 | 31.0% |
+| 46 | 5 | 6 | 0 | 0 | 0 | 0 | 0 | 11.0% |
+| 47 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4.0% |
+| 48 | 16 | 15 | 8 | 0 | 0 | 0 | 0 | 39.0% |
+| 49 | 16 | 15 | 8 | 0 | 0 | 0 | 0 | 39.0% |
+| 50 | 18 | 15 | 12 | 12 | 6 | 0 | 6 | 69.0% |
+| 51 | 18 | 15 | 10 | 8 | 2 | 0 | 0 | 53.0% |
+| 52 | 16 | 13 | 8 | 8 | 2 | 0 | 0 | 47.0% |
+| 53 | 20 | 15 | 0 | 0 | 0 | 0 | 0 | 35.0% |
+| 54 | 18 | 13 | 0 | 0 | 0 | 0 | 0 | 31.0% |
+| 55 | 14 | 10 | 0 | 0 | 0 | 0 | 0 | 24.0% |
+| 56 | 20 | 15 | 15 | 15 | 0 | 0 | 0 | 65.0% |
+| 57 | 12 | 13 | 8 | 5 | 0 | 0 | 0 | 38.0% |
+| 58 | 14 | 12 | 5 | 0 | 2 | 0 | 0 | 33.0% |
+| 59 | 14 | 13 | 8 | 8 | 0 | 0 | 0 | 43.0% |
+| 60 | 12 | 12 | 8 | 8 | 0 | 0 | 0 | 40.0% |
+| 61 | 16 | 15 | 10 | 10 | 0 | 0 | 0 | 51.0% |
+| 62 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 63 | 14 | 13 | 10 | 10 | 0 | 0 | 0 | 47.0% |
+| 64 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 65 | 20 | 15 | 0 | 0 | 5 | 0 | 0 | 40.0% |
+| 66 | 18 | 15 | 8 | 8 | 2 | 0 | 0 | 51.0% |
+| 67 | 16 | 13 | 8 | 8 | 2 | 0 | 0 | 47.0% |
+| 68 | 18 | 15 | 8 | 8 | 0 | 0 | 0 | 49.0% |
+| 69 | 16 | 13 | 8 | 8 | 2 | 0 | 0 | 47.0% |
+| 70 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 7.0% |
+| 71 | 16 | 13 | 10 | 10 | 0 | 0 | 0 | 49.0% |
+| 72 | 12 | 10 | 8 | 8 | 0 | 0 | 0 | 38.0% |
+| 73 | 10 | 8 | 5 | 5 | 0 | 0 | 0 | 28.0% |
+| 74 | 10 | 8 | 5 | 5 | 0 | 0 | 0 | 28.0% |
+| 75 | 18 | 15 | 12 | 0 | 0 | 0 | 0 | 45.0% |
+| 76 | 18 | 15 | 12 | 0 | 0 | 0 | 0 | 45.0% |
+| 77 | 18 | 15 | 12 | 12 | 0 | 0 | 0 | 57.0% |
+| 78 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 79 | 18 | 15 | 13 | 13 | 0 | 0 | 0 | 59.0% |
+| 80 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 5.3 | 5.3% |
+
+المجال80: خانةP تعرض مقياس البوابات المستقل وليست نقاط طبقة المزود. لا يُجمع هذا الصف بنموذج الطبقات. نضج المنتج=مجموع الدرجات غير المقربة/80=3739.263157895/80=46.740789474%.
+
+| المؤشر | معرفات المجالات: المتوسط الحسابي |
+|---|---|
+| نضج المنتج الإجمالي | 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80 |
+| الاكتمال الوظيفي | 1,2,3,20,37,38,39,40,41,64,66,67,68,69,71,72,73,74 |
+| اكتمال QC/QMS | 21,22,23,24,31,32,33,34,35,36,42,60,61,62,63,78,79 |
+| المختبر | 25,26,27 |
+| قاعدة البيانات وسلامة البيانات | 14,15,16,17,18,19,56,64,78,79 |
+| الأمن | 13,57,59,76,78,79 |
+| المصادقة والصلاحيات | 9,10,11,12,77 |
+| تجربة المستخدم وتصميم الواجهة | 4,5,6,20,41,65,66,67,68,69 |
+| إمكانية الوصول | 7 |
+| نضج الاختبارات | 43,44,45,46,47 |
+| المعمارية وقابلية الصيانة | 53,54,55 |
+| قابلية التوسع | 53,54,61,64,65 |
+| التشغيل والاعتمادية | 8,48,49,50,51,52,56,57,58 |
+
+التقريب النهائي فقط إلى منزلة عشرية، والفرق=الحالي المعروض−السابق المعروض. تتوفر نقاط المجال ودليل الأسرة في القسم28؛ أرقام unit/static/integration/domain الجزئية أحكام rubric موضحة وليست استنتاجًا من عدد الملفات. H=0 لغياب تحقق البشر المطلوب؛ P=0 عندما تغيب أدلة التشغيل المرتبطة بالمجال. ملفات source/test الدليل هنا تشمل directories عند توزيع عدة متطلبات؛ السجل المحلي الخام في .tmp/qc-midpoint غير متتبع، والنتائج المهمة محفوظة في هذا التقرير. وثائق المصدر القديمة والمقارنات HISTORICAL. التغطية الميكانيكية1048 ملفًا لا تعني اكتمال القراءة اليدوية المطلوبة؛ عدم اكتمال التغطية البشرية/الخارجية معلن PARTIAL.
+تحقق HTML التفاعلي:15 بطاقة؛ فتح/إغلاق الكل15/0؛ النسخ مطابق للنص، وزرCopied والحالة الحية ظاهران. لا تجاوز أفقي عند320/768/1440 في الوضعين الفاتح والداكن؛ خطsans-serif. هذا تحقق للخطة فقط، لا واجهة التطبيق. المراجعة المستقلة أكدت36 قسمًا و80 صفًا وتطابق الحساب والنسختين؛ صُححت تسميات وروابط الإغلاق.
+
+التحقق النهائي للمخرجات: Prettier للتقريرين وHTML PASS؛ git diff --check PASS. format:check الشامل ما زال FAIL في3 ملفات غير مرتبطة بعد تنسيق HTML الحالي؛ العدد4 المذكور سابقًا يخص تجميد البداية. ملفMind490 سطرًا/74566 بايت؛ الأرشيف لم يتغير. لم تُصلح عيوب التطبيق ضمن نطاق إعادة التدقيق.

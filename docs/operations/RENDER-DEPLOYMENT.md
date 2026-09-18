@@ -31,18 +31,38 @@ The root domain is the canonical custom domain in the Render service; Render pai
 ### Current infrastructure identity
 
 - Blueprint service name: `qc-operations-laboratory-management-system`.
-- Canonical application domain: `qclevel.top`; the Render subdomain is intentionally
-  blocked in the current provider evidence.
+- Canonical application domain: `qclevel.top` (apex, `verified`) with `www.qclevel.top`
+  (`verified`). The Render subdomain is disabled on the service
+  (`renderSubdomainPolicy: disabled`), while `render.yaml` declares it `enabled`.
 - Render database identity observed read-only: database `dpg-dadqmsgn74is73b774j0a`,
-  application database `qc_operations`, PostgreSQL `18.6`, Oregon, free plan
-  expiry `2026-10-05`.
-- Live database applied migration head: `0018`; source migration head: `0029_performance_query_indexes`.
-- Live release SHA/build identity: `NOT VERIFIED`; `RELEASE_*` variables are absent
-  and the provider reports no commit identity in the deployment record.
-- Live service divergence recorded in the current audit: runtime `rust`, empty
-  health-check path, `autoDeployTrigger: commit`, and a boot command that grants
-  the system owner before starting the server. These are not the repository
-  Blueprint values and require controlled reconciliation.
+  application database `qc_operations`, PostgreSQL `18`, Oregon, free plan
+  expiry `2026-10-05T05:41:06Z`. The database principal is `qc_operations_user`.
+- Live database applied migration head: last verified `0018` (read-only check,
+  2026-09-18). It is **not re-verified now**: the local provider export holds no
+  canonical `DATABASE_URL`, and the credential-rotation gate is still open, so the
+  canonical tooling cannot read the applied head. Source migration head:
+  `0029_performance_query_indexes`.
+- Live release SHA/build identity: the provider deployment record on
+  `2026-09-18T08:43:07Z` (deploy `dep-damfhv8u01pc738s4430`) binds commit
+  `298e307721af97d9c1bd22279d0c784fbf5b62a8`, exactly equal to the repository `main`
+  HEAD. The application-internal identity is still `NOT VERIFIED`: all six
+  `RELEASE_*` variables are absent, so the service cannot assert its own build id,
+  migration head, or release id.
+- Live service divergence confirmed again on 2026-09-18 (QC-100-FINAL-001):
+  runtime `rust` (not `node`), empty `healthCheckPath` (not `/api/health/ready`),
+  `autoDeployTrigger: commit` (not `checksPass`), and a start command
+  `SYSTEM_OWNER_LOGIN_IDENTITY=yazeed pnpm access:grant-system-owner; node dist/server/entry.mjs`
+  that performs an authorization mutation during every boot. The AI provider and
+  OpenTelemetry variables declared in the Blueprint are also absent. These are not
+  the repository Blueprint values and require controlled reconciliation through the
+  approved Render configuration path.
+- The live service's `DATABASE_URL` is the **External** database URL
+  (`<database-id>.oregon-postgres.render.com`), so production traffic reaches
+  PostgreSQL over the public internet; the service `ipAllowList` is `0.0.0.0/0`.
+- **Security gate:** the credential in the live service `DATABASE_URL` is byte-identical
+  to the documented-compromised credential in the local Render export, so the
+  rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is still open and
+  the exposure is currently active.
 
 `HOST=0.0.0.0` is required by the Render web-service platform. The Astro Node standalone output starts with `node dist/server/entry.mjs`; the service must use the platform-provided `PORT`. Node `24.20.0` is pinned in `render.yaml` and `.node-version`.
 
