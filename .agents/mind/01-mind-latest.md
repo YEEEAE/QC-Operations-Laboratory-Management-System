@@ -6,7 +6,7 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `38528bd6ffd49b800057f58ac88612ca1b2af97f` on `main` (verified 2026-09-18). The working tree contains the prior uncommitted Render verification work plus `QC-CLOSURE-008` changes; no commit, push, or deployment occurred. Migration source head is now `0027_equipment_calibration_maintenance_closure` in the working tree and is applied only to the disposable local PostgreSQL database, **not** to Render.
+- Exact current HEAD: `38528bd6ffd49b800057f58ac88612ca1b2af97f` on `main` (verified 2026-09-18). The working tree contains the prior uncommitted Render verification work plus `QC-CLOSURE-008` and `QC-CLOSURE-009` changes; no commit, push, or deployment occurred. Migration source head is now `0028_qc_closure_009_controlled_records` in the working tree and is applied only to the disposable local PostgreSQL database, **not** to Render.
 - Fresh QC-CLOSURE-008 evidence: closure PostgreSQL suite `3/3 PASS`; focused asset suite `17/17 PASS`; migration/database suite `7 files / 26 tests PASS`; typecheck `0 errors / 68 hints`; build and architecture PASS; targeted ESLint PASS; `git diff --check` PASS. Full lint remains **BLOCKED** by existing Reject Reports errors outside this task. PostgreSQL verification used the approved disposable PostgreSQL 18 cluster (`scripts/db/disposable-postgres.sh`), not Testcontainers.
 - **Render PostgreSQL — VERIFIED (read-only):** `dpg-dadqmsgn74is73b774j0-a` is the Render **database** id (not the web-service id) and is the internal hostname label; app database `qc_operations`, principal `qc_operations_user`, PostgreSQL 18.6, region oregon, **free plan expiring `2026-10-05`**. Canonical pool connects with TLS 1.3 and session `search_path=qc,pg_catalog`, `TimeZone=UTC`; `/api/health/ready` is `200 healthy` both for the built app against this database and for live `https://qclevel.top`. Data is bootstrap-only (1 user, 2 role grants, 4 audit events, 0 lab tests).
 - **Render migration gap (blocker):** the Render database is at applied head `0018` with `0019`–`0025` pending, so `db:schema:check` fails closed there while ledger checksums for all 18 applied rows verify. Applying them is **prohibited** until the credential-rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied (the local Render export credential — the one in `.env` — is documented as compromised).
@@ -15,6 +15,18 @@
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
 - Project-local PostgreSQL MCP configuration is present in `.codex/config.toml`: its launcher reads only the allowlisted canonical `DATABASE_URL`, maps it to `DATABASE_URI`, and starts `postgres-mcp` in restricted read-only mode. Live MCP/database handshake is **NOT VERIFIED** because the current local provider export is not an approved canonical URL and the credential-rotation gate remains open.
+
+- **2026-09-18 — QC-CLOSURE-009 / Controlled records, templates, change control & signatures**
+  - Changed: added migration `0028` with explicit inspection/laboratory template lifecycle checks, version-local inspection template content, append-only audit/signature/approval/change/snapshot evidence, and database guards preventing approved document/template content tampering; revision creation no longer mutates the shared historical template header.
+  - Evidence: PostgreSQL 18 focused closure suite `6 files / 31 tests PASS`; includes migration engine, tamper/invalid-history negatives, e-signature, document review, change request, and template lifecycle coverage. Typecheck `0 errors`; architecture and `git diff --check` PASS. Testcontainers path was unavailable; disposable PostgreSQL path passed. Node `v22.22.3` remains outside the declared contract.
+  - State: PARTIAL — source/integration closure verified locally; Render remains at `0018`, and UAT/provider/CI evidence remain open.
+  - Key files: `db/migrations/0028_qc_closure_009_controlled_records.sql`, `src/modules/quarantine/templates/infrastructure/postgres-repository.ts`, `tests/integration/database/controlled-record-integrity.test.ts`.
+
+- **2026-09-18 — QC-SKILL-POSTGRES-ANALYTICS-001 / Verified analytics skill**
+  - Changed: installed the global Codex skill and copied it project-scoped into `.agents/skills/postgres-verified-analytics`, adapted from the linked PostgreSQL analytics workspace, with QC-specific schema routing, read-only query guardrails, CTE wrapping, grain/time rules, and evidence labels; no application code or database connection changed.
+  - Evidence: `skill-creator` `quick_validate.py` PASS for both global and project copies; file hashes match.
+  - State: DONE.
+  - Key files: `.agents/skills/postgres-verified-analytics/SKILL.md`, `/Users/yzydalshmry/.codex/skills/postgres-verified-analytics/SKILL.md`.
 
 - **2026-09-18 — QC-CLOSURE-008 / Equipment, calibration & maintenance closure**
   - Changed: added migration `0027` with explicit calibration states, nullable policy flags, append-only equipment/calibration/maintenance histories, evidence-preserving transitions, maintenance downtime/lock, and fail-closed equipment eligibility; added UI history access and regression coverage.
@@ -428,7 +440,7 @@
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
-- Render remains at applied migration head `0018`; source head `0027` is not a production claim and must not be applied before the credential-rotation gate.
+- Render remains at applied migration head `0018`; source head `0028` is not a production claim and must not be applied before the credential-rotation gate.
 
 ### P1 / live validation
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.

@@ -2,7 +2,7 @@ import type { Generated, Insertable, Selectable, Updateable } from 'kysely';
 
 export interface SchemaMigrationsTable {
   version: string;
-  name: string;
+  name: string | null;
   checksum: string;
   applied_at: Generated<Date>;
   execution_ms: number | null;
@@ -364,6 +364,8 @@ export interface InspectionTemplateVersionsTable {
   approved_at: Date | null;
   approved_by: string | null;
   source_document: string | null;
+  name: string;
+  description: string | null;
   created_at: Generated<Date>;
   created_by: string;
   content_hash: string | null;

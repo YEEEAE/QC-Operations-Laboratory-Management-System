@@ -23,8 +23,8 @@ function map(header: HeaderRow, row: TemplateRow): TemplateVersion {
     templateCode: header.template_code,
     versionNo: row.version_no,
     state: row.state as TemplateVersionState,
-    name: header.name,
-    description: header.description,
+    name: row.name ?? header.name,
+    description: row.description ?? header.description,
     contentHash: row.content_hash,
     sourceDocument: row.source_document,
     createdBy: row.created_by,
@@ -150,6 +150,8 @@ export class PostgresTemplateRepository implements TemplateRepository {
             approved_at: input.template.state === 'APPROVED' ? now : null,
             approved_by: input.template.state === 'APPROVED' ? input.actor.id : null,
             source_document: input.template.sourceDocument ?? null,
+            name: input.template.name,
+            description: input.template.description,
             created_by: input.actor.id,
             content_hash: input.template.contentHash ?? null,
             version: 1n,
@@ -287,11 +289,6 @@ export class PostgresTemplateRepository implements TemplateRepository {
         if (input.expectedVersion !== old.version) {
           throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         }
-        await tx
-          .updateTable('inspection_templates')
-          .set({ name: input.name.trim(), description: input.description ?? null })
-          .where('id', '=', old.templateId)
-          .execute();
         const row = await tx
           .insertInto('inspection_template_versions')
           .values({
@@ -303,6 +300,8 @@ export class PostgresTemplateRepository implements TemplateRepository {
             approved_at: null,
             approved_by: null,
             source_document: input.sourceDocument ?? null,
+            name: input.name.trim(),
+            description: input.description ?? null,
             created_by: input.actor.id,
             content_hash: input.contentHash ?? null,
             version: 1n,
