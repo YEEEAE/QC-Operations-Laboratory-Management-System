@@ -5,6 +5,7 @@ import {
 } from '../../../src/modules/dashboard/application/get-dashboard';
 import type { DashboardQuery } from '../../../src/modules/dashboard/ports/dashboard-query';
 import { seriesNotSupplied } from '../../../src/modules/dashboard/application/dashboard-series';
+import { quarantineFlowNotAuthorized } from '../../../src/modules/dashboard/application/dashboard-flow';
 import type { ActorContext } from '../../../src/shared/authorization/types';
 
 const actor = (
@@ -38,11 +39,15 @@ class MemoryDashboardQuery implements DashboardQuery {
           actorScope: 'Assigned to you or your role',
           href: '/approvals',
           drilldownLabel: 'Open review queue',
+          tone: 'warning',
         },
       ],
+      flow: quarantineFlowNotAuthorized(),
       attention: [],
+      attentionSources: [],
       activity: [],
       series: seriesNotSupplied('PROVIDER_NOT_COMPOSED'),
+      coverage: [],
     };
   }
 }

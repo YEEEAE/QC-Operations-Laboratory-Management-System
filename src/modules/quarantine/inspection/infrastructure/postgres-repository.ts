@@ -128,6 +128,88 @@ export class PostgresInspectionRepository implements InspectionRepository {
     ]);
     return map(report, receiving, template, results, snapshot, Number(evidence.count));
   }
+  /**
+   * Loads a page of inspection reports with one query per relation.
+   *
+   * The register used to call `load()` once per row, which cost six queries per
+   * report; this batches the same six relations for every requested id while
+   * producing the identical projection.
+   */
+  private async loadMany(ids: readonly string[]): Promise<Map<string, Inspection>> {
+    const byId = new Map<string, Inspection>();
+    if (!ids.length) return byId;
+    const [reports, resultRows, snapshotRows, evidenceRows] = await Promise.all([
+      this.db.selectFrom('inspection_reports').selectAll().where('id', 'in', ids).execute(),
+      this.db
+        .selectFrom('inspection_report_results')
+        .selectAll()
+        .where('inspection_report_id', 'in', ids)
+        .orderBy('entered_at')
+        .execute(),
+      this.db
+        .selectFrom('inspection_report_snapshots')
+        .selectAll()
+        .where('inspection_report_id', 'in', ids)
+        .orderBy('snapshot_version', 'desc')
+        .execute(),
+      this.db
+        .selectFrom('evidence_links')
+        .select('subject_id')
+        .select((eb) => eb.fn.count('id').as('count'))
+        .where('subject_type', '=', 'INSPECTION_REPORT')
+        .where('subject_id', 'in', ids)
+        .where('removed_at', 'is', null)
+        .groupBy('subject_id')
+        .execute(),
+    ]);
+    if (!reports.length) return byId;
+    const receivingIds = [...new Set(reports.map((report) => report.receiving_item_id))];
+    const templateIds = [...new Set(reports.map((report) => report.template_version_id))];
+    const [receivingRows, templateRows] = await Promise.all([
+      this.db.selectFrom('receiving_items').selectAll().where('id', 'in', receivingIds).execute(),
+      this.db
+        .selectFrom('inspection_template_versions')
+        .selectAll()
+        .where('id', 'in', templateIds)
+        .execute(),
+    ]);
+    const receivingById = new Map(receivingRows.map((row) => [row.id, row]));
+    const templateById = new Map(templateRows.map((row) => [row.id, row]));
+    const resultsByReport = new Map<string, DatabaseRow<'inspection_report_results'>[]>();
+    for (const row of resultRows) {
+      const existing = resultsByReport.get(row.inspection_report_id);
+      if (existing) existing.push(row);
+      else resultsByReport.set(row.inspection_report_id, [row]);
+    }
+    // Rows arrive newest snapshot first, so the first one seen is the current one.
+    const latestSnapshot = new Map<string, DatabaseRow<'inspection_report_snapshots'>>();
+    for (const row of snapshotRows)
+      if (!latestSnapshot.has(row.inspection_report_id))
+        latestSnapshot.set(row.inspection_report_id, row);
+    const evidenceByReport = new Map(
+      evidenceRows.map((row) => [row.subject_id, Number(row.count)]),
+    );
+    for (const report of reports) {
+      const receiving = receivingById.get(report.receiving_item_id);
+      const template = templateById.get(report.template_version_id);
+      // Foreign keys make this unreachable; failing loudly beats dropping a row.
+      if (!receiving || !template)
+        throw new AppError('SYSTEM_INTERNAL', { safeMetadata: { inspectionReport: report.id } });
+      byId.set(
+        report.id,
+        map(
+          report,
+          receiving,
+          template,
+          resultsByReport.get(report.id) ?? [],
+          latestSnapshot.get(report.id),
+          evidenceByReport.get(report.id) ?? 0,
+        ),
+      );
+    }
+    return byId;
+  }
+
   async get(id: string, actor: ActorContext) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return undefined;
     const item = await this.load(id);
@@ -155,21 +237,38 @@ export class PostgresInspectionRepository implements InspectionRepository {
     finalResult?: Inspection['finalResult'];
     ownership?: 'mine';
   }) {
-    const rows = await this.db
+    // The register filters are applied in SQL so a page (and a same-predicate
+    // dashboard counter) only loads the reports it actually shows, and the
+    // related rows are batched instead of loaded per report.
+    let query = this.db
       .selectFrom('inspection_reports')
       .select('id')
       .orderBy('updated_at', 'desc')
-      .orderBy('id', 'desc')
-      .execute();
+      .orderBy('id', 'desc');
+    if (i.state) query = query.where('state', '=', i.state) as typeof query;
+    if (i.finalResult) query = query.where('final_result', '=', i.finalResult) as typeof query;
+    if (i.assignedTo) query = query.where('assigned_user_id', '=', i.assignedTo) as typeof query;
+    if (i.ownership === 'mine') query = query.where('author_id', '=', i.actor.id) as typeof query;
+    const rows = await query.execute();
+    const loaded = await this.loadMany(rows.map((row) => row.id));
+    const grant = i.actor.permissions.find((permission) => permission.code === 'PERM-INSP-VIEW');
     const result: Inspection[] = [];
     for (const row of rows) {
-      const item = await this.get(row.id, i.actor);
+      const item = loaded.get(row.id);
       if (
         item &&
-        (!i.state || item.state === i.state) &&
-        (!i.finalResult || item.finalResult === i.finalResult) &&
-        (!i.assignedTo || item.assignedTo === i.assignedTo) &&
-        (i.ownership !== 'mine' || item.authorId === i.actor.id)
+        actorHasScope(
+          i.actor,
+          {
+            type: 'INSPECTION_REPORT',
+            id: item.id,
+            state: item.state,
+            authorId: item.authorId,
+            executorId: item.authorId,
+          },
+          { ownerId: item.authorId, assigneeId: item.assignedTo ?? item.authorId },
+          grant,
+        )
       )
         result.push(item);
     }

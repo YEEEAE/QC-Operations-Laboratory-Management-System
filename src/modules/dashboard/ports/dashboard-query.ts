@@ -3,25 +3,22 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 export type DashboardMetricTone = 'neutral' | 'warning' | 'danger' | 'success';
 
 /**
- * One KPI on the dashboard decision surface.
- *
- * Every field below is part of the KPI contract so the displayed number can be
- * reconciled with the register it links to:
- * - `numerator` says exactly what is counted.
- * - `state` names the exact domain/workflow condition the count is filtered by.
- * - `actorScope` says whose records the numerator covers ("created by you",
- *   "assigned to you", …). The dashboard never presents a personal count under
- *   an authorized-scope label, or the reverse.
- * - `timeRange` is the observation window. The dashboard only ever reports the
- *   current server snapshot; it never renders a historical or projected value.
- * - `href` must point at a route whose filters reproduce the same
+ * Everything a displayed count must declare so it can be reconciled with the
+ * register it links to:
+ * - `numerator` says exactly what is counted;
+ * - `state` names the exact domain/workflow condition the count is filtered by;
+ * - `actorScope` says whose records the numerator covers ("assigned to you",
+ *   "authorized scope", …). A personal count is never presented under an
+ *   authorized-scope label, or the reverse;
+ * - `timeRange` is the observation window. This surface only ever reports the
+ *   current server snapshot; it never renders a historical or projected value;
+ * - `href` must open a register whose supported filters reproduce the same
  *   numerator/state/actorScope. A drill-down that cannot reproduce the count is
  *   a defect, not a presentation choice.
  */
-export interface DashboardMetric {
+export interface DashboardMetricDefinition {
   key: string;
   label: string;
-  value: number;
   unit: 'records';
   timeRange: 'current snapshot';
   source: string;
@@ -29,18 +26,147 @@ export interface DashboardMetric {
   numerator: string;
   state: string;
   actorScope: string;
-  href?: string;
-  drilldownLabel?: string;
-  tone?: DashboardMetricTone;
+  href: string;
+  drilldownLabel: string;
+  tone: DashboardMetricTone;
 }
+
+/**
+ * Why a count has no number for this account.
+ *
+ * Only an authorization decision produces this state: the account may open the
+ * dashboard but may not read this particular register. A read failure is a
+ * different fact and withholds the whole snapshot (see `DashboardQuery`) rather
+ * than being rendered as a zero.
+ */
+export interface DashboardCountUnavailable {
+  reason: 'NOT_AUTHORIZED';
+  message: string;
+}
+
+export interface DashboardMetric extends DashboardMetricDefinition {
+  /** `null` means "not readable for this account", never zero. */
+  value: number | null;
+  unavailable?: DashboardCountUnavailable;
+}
+
+/**
+ * One row of a real, already-authorized register read.
+ *
+ * The row's count and the item in the attention queue come from the *same*
+ * read, so a count and its queue can never disagree, and `anchorAt` is a real
+ * server timestamp the displayed age is derived from.
+ */
+export interface DashboardAttentionRow {
+  id: string;
+  title: string;
+  state: string;
+  href: string;
+  /**
+   * The real server timestamp the age is derived from. Absent when the record
+   * carries no such timestamp (for example an approval work item with no
+   * assignment date): the age then says so instead of inventing one.
+   */
+  anchorAt?: Date;
+  /** `waiting`: how long the record has been waiting. `due`: how long a deadline is past. */
+  anchor: 'waiting' | 'due';
+  /** Row-level override when the row itself carries the severity (notifications). */
+  severity?: DashboardAttention['severity'];
+  /** Row-level override when the row itself carries the human reason. */
+  reason?: string;
+}
+
 export interface DashboardAttention {
   id: string;
   title: string;
   summary: string;
+  /** Why this item needs a human decision, in one sentence. */
+  reason: string;
+  /** Age derived from `anchorAt`, e.g. "Waiting 3 days" or "Due 2 days ago". */
+  ageLabel: string;
   href: string;
   severity: 'INFO' | 'WARNING' | 'CRITICAL';
   state: string;
 }
+
+export type DashboardAttentionSourceState = 'AVAILABLE' | 'NOT_AUTHORIZED';
+
+/** The honesty record for one attention/action source on this surface. */
+export interface DashboardAttentionSource {
+  key: string;
+  label: string;
+  state: DashboardAttentionSourceState;
+  message: string;
+}
+
+/**
+ * One real source behind a dashboard action count.
+ *
+ * `read` returns the exact rows of a register the actor is allowed to read; the
+ * displayed count is that array's length and the drill-down `href` is the same
+ * register with the same supported filters. A missing permission yields an
+ * explicit `unavailable` state instead of a zero, while any other read failure
+ * propagates and withholds the whole snapshot.
+ */
+export interface DashboardMetricSource {
+  metric: DashboardMetricDefinition;
+  /** Projecting the rows into the attention queue is optional per source. */
+  attention?: { severity: DashboardAttention['severity']; reason: string };
+  read(actor: ActorContext): Promise<readonly DashboardAttentionRow[]>;
+}
+
+/**
+ * One stage of the quarantine pipeline.
+ *
+ * Stages are projected from the Quarantine module's own overview use case — the
+ * same read model that serves `/quarantine` — so no surface re-defines what
+ * "awaiting inspection" or "HOLD" means and no second SQL counts the same rows.
+ */
+export interface DashboardFlowStage {
+  key: string;
+  label: string;
+  value: number;
+  definition: string;
+  numerator: string;
+  state: string;
+  actorScope: string;
+  href: string;
+  drilldownLabel: string;
+  tone: DashboardMetricTone;
+}
+
+export interface DashboardFlow {
+  key: string;
+  title: string;
+  summary: string;
+  source: string;
+  sourceHref: string;
+  actorScope: string;
+  windowLabel: string;
+  state: 'AVAILABLE' | 'NOT_AUTHORIZED';
+  /** Honest, state-specific sentence; never a count when the state is not `AVAILABLE`. */
+  message: string;
+  stages: readonly DashboardFlowStage[];
+}
+
+export interface DashboardFlowSource {
+  get(actor: ActorContext): Promise<DashboardFlow>;
+}
+
+/**
+ * A data product this surface deliberately does not render.
+ *
+ * Recording the reason is what keeps the dashboard honest: the panel states
+ * which operational questions it cannot answer yet instead of approximating
+ * them with an invented number or an unsourced chart.
+ */
+export interface DashboardCoverageItem {
+  key: string;
+  label: string;
+  state: 'AVAILABLE' | 'NOT_SUPPLIED';
+  reason: string;
+}
+
 export interface DashboardActivity {
   id: string;
   action: string;
@@ -49,14 +175,18 @@ export interface DashboardActivity {
   summary: string;
   occurredAt: Date;
 }
+
 export interface DashboardReadModel {
   generatedAt: Date;
   scopeLabel: string;
   metrics: DashboardMetric[];
+  flow: DashboardFlow;
   attention: DashboardAttention[];
+  attentionSources: readonly DashboardAttentionSource[];
   activity: DashboardActivity[];
   /** The approved time series for this surface, or the honest reason there is none. */
   series: DashboardSeries;
+  coverage: readonly DashboardCoverageItem[];
 }
 
 /**
@@ -115,20 +245,24 @@ export interface DashboardSeries {
 export interface DashboardSeriesProvider {
   get(actor: ActorContext): Promise<DashboardSeries>;
 }
-/**
- * One actionable approval awaiting the actor's decision.
- *
- * This is deliberately the same projection the `/approvals` register renders,
- * so the "Pending review" counter and its drill-down can never disagree.
- */
+
+/** One actionable approval awaiting the actor's decision. */
 export interface DashboardApprovalItem {
   id: string;
   title: string;
   state: string;
+  /** When the work item was assigned; the basis of the displayed age. */
+  assignedAt?: Date;
 }
+
+/**
+ * The canonical actionable-approval projection, so the "Pending review" counter
+ * and its drill-down can never disagree.
+ */
 export interface DashboardApprovalQueue {
   list(actor: ActorContext): Promise<readonly DashboardApprovalItem[]>;
 }
+
 export interface DashboardQuery {
   get(actor: ActorContext): Promise<DashboardReadModel>;
 }

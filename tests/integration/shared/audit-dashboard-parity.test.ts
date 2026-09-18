@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GetDashboardUseCase } from '../../../src/modules/dashboard/application/get-dashboard';
 import { seriesNotSupplied } from '../../../src/modules/dashboard/application/dashboard-series';
+import { quarantineFlowNotAuthorized } from '../../../src/modules/dashboard/application/dashboard-flow';
 import type { DashboardQuery } from '../../../src/modules/dashboard/ports/dashboard-query';
 import {
   AuditQueryService,
@@ -275,9 +276,12 @@ describe('F-07 dashboard/audit canonical contract', () => {
           generatedAt: new Date('2026-09-09T08:00:00Z'),
           scopeLabel: 'Authorized operational scope',
           metrics: [],
+          flow: quarantineFlowNotAuthorized(),
           attention: [],
+          attentionSources: [],
           activity: [],
           series: seriesNotSupplied('PROVIDER_NOT_COMPOSED'),
+          coverage: [],
         };
       },
     };

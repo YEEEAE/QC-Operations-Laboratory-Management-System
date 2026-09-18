@@ -55,11 +55,12 @@ describe('dashboard decision surface', () => {
     expect(dashboard).toContain('Your account cannot open the dashboard');
   });
 
-  it('links personal KPIs to the ownership filter their registers implement', () => {
-    const query = read('src/modules/dashboard/infrastructure/postgres-dashboard-query.ts');
-    expect(query).toContain('inspectionResult=HOLD&ownership=mine');
-    expect(query).toContain('releaseState=RELEASED&ownership=mine');
-    expect(query).toContain('finalResult=PASS&ownership=mine');
+  it('links personal counters to the ownership filter their registers implement', () => {
+    const sources = read('src/modules/dashboard/application/dashboard-sources.ts');
+    expect(sources).toContain('inspectionResult=HOLD&ownership=mine');
+    expect(sources).toContain('state=RETURNED&ownership=mine');
+    expect(sources).toContain('assignee=mine&due=overdue');
+    expect(sources).toContain('assignee=mine&due=today');
     for (const page of [
       'src/pages/quarantine/receiving/index.astro',
       'src/pages/quarantine/inspections/index.astro',
@@ -69,14 +70,54 @@ describe('dashboard decision surface', () => {
       expect(source, page).toContain('ownership,');
       expect(source, page).toContain('Only mine');
     }
+    const tasksPage = read('src/pages/tasks/index.astro');
+    expect(tasksPage).toContain("params.get('assignee') === 'mine'");
+    expect(tasksPage).toContain("params.get('due')");
+    expect(tasksPage).toContain('Only mine');
   });
 
-  it('keeps the approval queue as one rollup feeding the counter and the queue', () => {
+  it('declares only drill-down links whose filters the target register parses', () => {
+    const sources = read('src/modules/dashboard/application/dashboard-sources.ts');
+    const pages: Readonly<Record<string, string>> = {
+      '/approvals': 'src/pages/approvals/index.astro',
+      '/notifications': 'src/pages/notifications.astro',
+      '/quarantine/receiving': 'src/pages/quarantine/receiving/index.astro',
+      '/quarantine/inspections': 'src/pages/quarantine/inspections/index.astro',
+      '/tasks': 'src/pages/tasks/index.astro',
+      '/assets/calibrations': 'src/pages/assets/calibrations/index.astro',
+    };
+    const hrefs = [...sources.matchAll(/href: '([^']+)'/g)].map((match) => match[1]!);
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const href of hrefs) {
+      const url = new URL(href, 'http://localhost');
+      const page = pages[url.pathname];
+      expect(page, `no register mapped for ${href}`).toBeTruthy();
+      const source = read(page!);
+      for (const param of url.searchParams.keys()) {
+        expect(source, `${href} → ${page} must parse ${param}`).toContain(`'${param}'`);
+      }
+    }
+    // The task drill-downs are the only ones that use a due-date window, and
+    // the tasks register is the page that implements it.
+    expect(hrefs).toContain('/tasks?assignee=mine&due=overdue');
+    expect(read(pages['/tasks']!)).toContain("'overdue'");
+  });
+
+  it('feeds each counter and its queue items from one read with a declared severity', () => {
+    const sources = read('src/modules/dashboard/application/dashboard-sources.ts');
+    expect(sources).toContain("severity: 'CRITICAL'");
+    expect(sources).toContain('Approval is waiting for your decision');
+    // The count is the source's own row count, so no second query can disagree
+    // with what the queue lists, and a read failure is not a zero.
+    const attention = read('src/modules/dashboard/application/dashboard-attention.ts');
+    expect(attention).toContain('metric: { ...metric, value: rows.length }');
+    expect(attention).toContain('NOT_AUTHORIZED');
+    expect(attention).toContain('throw error;');
     const query = read('src/modules/dashboard/infrastructure/postgres-dashboard-query.ts');
-    expect(query).toContain('DashboardApprovalQueue');
-    expect(query).toContain('Approval is waiting for your decision');
-    expect(query).toContain("severity: 'CRITICAL'");
-    // Severity is derived, never hard-coded for every row.
+    expect(query).toContain('DashboardMetricSource');
+    expect(query).toContain('readMetricSource');
+    expect(query).toContain('buildAttention');
+    // Severeities are declared per source, never stamped onto rows in SQL.
     expect(query).not.toContain("'WARNING' AS severity");
   });
 
@@ -129,7 +170,12 @@ describe('dashboard decision surface', () => {
     expect(dashboard).toContain("import Chart from '../../ui/charts/Chart.astro'");
     expect(dashboard).toContain("dashboard.series.state === 'AVAILABLE' ? <Chart");
     expect(dashboard).toContain('{dashboard.series.message}');
-    expect(dashboard).toContain('seriesUnavailable()');
+    // Nothing numeric is rendered before a confirmed snapshot: the held value
+    // carries the explicit unavailable series state, never a zero.
+    expect(dashboard).toContain('emptyDashboard(actor)');
+    expect(read('src/modules/dashboard/application/dashboard-empty.ts')).toContain(
+      'seriesUnavailable()',
+    );
     // The non-plotting copy states that nothing is drawn and no zero is offered.
     expect(read('src/modules/dashboard/application/dashboard-series.ts')).toContain(
       'No trend series is available',
@@ -137,9 +183,15 @@ describe('dashboard decision surface', () => {
     expect(read('src/modules/dashboard/application/dashboard-series.ts')).toContain(
       'never shown as an empty chart or a zero',
     );
-    // The coverage panel no longer claims a trend is missing outright.
-    expect(dashboard).toContain('Overdue due dates');
-    expect(dashboard).not.toContain('laboratory workload, blocked reasons, and trend series');
+    // The coverage panel is data-driven: the page hard-codes no data claim, and
+    // every unrendered data product states its own reason in the read model.
+    expect(dashboard).toContain('dashboard.coverage.map');
+    const sources = read('src/modules/dashboard/application/dashboard-sources.ts');
+    for (const key of ['laboratory-workload', 'document-review', 'reject-analytics']) {
+      expect(sources, key).toContain(`key: '${key}'`);
+    }
+    expect(sources).toContain("state: 'NOT_SUPPLIED'");
+    expect(sources).toContain('no rejected quantity or trend is estimated here');
   });
 
   it('keeps the icon-only shell controls at the 44px target size', () => {

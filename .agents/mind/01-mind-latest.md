@@ -13,6 +13,12 @@
 - **Fresh authorized live owner read:** login/dashboard/system-health/control-center200; live/readiness200 healthy; migration projection0018/pending11, expected console0018 misleading versus source0029; internal release/build/Git/environment UNVERIFIED; Reject500. Explicit axe35 rulesPASS/3 incomplete/1 serious label-in-name node; narrower zero-violation scan superseded. Not six-persona E2E or human UAT. No password saved in deliverables.
 - **Audit/plan:** overall46.7%(previous52.6); production mandatory-gate completion1/19=5.3%(previous30.0), NO-GO/PARTIAL. Disclosed rubric judgment, not statistical feature completion.16 findings(7P0/7P1/2P2); existing bilingual36-section/80-domain reports and15-prompt HTML refreshed, closure tasks not executed. Copy/Copied/expand-collapse and320/768/1440 light/dark UI PASS.
 - **External gates:** CI35325572254 exactHEAD / Verify105537703598 /0 steps /billing lock, not code-test FAIL or PASS. Prior provider deployedSHA observation remains historical valid evidence; no fresh provider API/direct production DB connection here. Credential rotation, populated DR, signed human UAT, live AI and production parity remain open. Latest detailed evidence: audit/2026-09-18-ULTIMATE-COMPREHENSIVE-SYSTEM-AUDIT{,-AR}.md.
+- **2026-09-19 — QC-100-FINAL-017 / Dashboard command center on real read models (candidate-side)**
+  - Changed: `/dashboard` أُعيد بناؤه ليقرأ 7 action counts من use cases الدومينات نفسها (approvals/notifications/receiving HOLD/inspections RETURNED/tasks due+overdue/calibrations OVERDUE) + quarantine flow من `GetQuarantineOverviewUseCase` + attention queue بسباب وعمر ورابط مباشر + coverage من read model؛ أُضيف فلتر Tasks خادمي `due=overdue|today` مع شرائح مرئية، وأُزيل N+1 من tasks list، ودفع فلاتر inspections register إلى SQL مع batched loads، ومُنحت `KpiCard` قيمة `null` صريحة، ومابر وجهة الإشعارات صار مشتركًا (`notification-destination`).
+  - Evidence (أُعيد التحقق على الحالة النهائية): typecheck `819 files / 0 errors`؛ architecture PASS؛ unit `85 files / 580 PASS` (فشل ملف واحد فقط إذا بقيت أسرار `.env` المحلية `QC_VERIFY_*` في البيئة — قيد بيئي لا يخص الـdiff)؛ build PASS؛ PostgreSQL 18.6 مصرفي: migrations `8 files/29 PASS`، وdashboard rollup `9/9` + dashboard-query `2/2` + audit-dashboard-parity `9/9` + register-bounds `3/3` (عدد statements ثابت مع نمو الجدول؛ snapshot = 8 statements في bench والحد الأقصى 30). 4 ملفات pre-existing فاشلة على قاعدة جديدة أيضًا ولا يمسّها هذا الـdiff (search-scope/reporting/system-owner-upgrade-parity `Migration checksum mismatch for version 0030`/control-center). ملاحظة تشغيلية: **`notification-outbox-delivery` يفشل فقط عند إعادة استخدام قاعدة `qc_test` الملوثة عبر suites (`outbox.claim(10)` يستهلكه صفوف سابقة) ويمرّ على قاعدة جديدة** — لا تعتبره انحدارًا في هذا الـdiff. التفاصيل: `audit/2026-09-19-qc-100-final-017-dashboard-command-center.md`.
+  - State: DONE (مرشّح محليًا) / PARTIAL للـbrowser وE2E المصادق عليه وUAT والنشر/قياس الأداء بالحجم (Task 007).
+  - Key files: `src/modules/dashboard/**`, `src/modules/dashboard/application/dashboard-sources.ts`, `src/pages/dashboard/index.astro`, `src/pages/tasks/index.astro`, `src/modules/tasks/{ports,infrastructure}/`, `src/modules/quarantine/inspection/infrastructure/postgres-repository.ts`.
+- **2026-09-19 — Mind rollover (QC-100-FINAL-017):** نُقلت أقدم 7 سجلات `2026-09-17` (SYSTEM-OWNER-CROSS-DOMAIN/ADMIN-UI/FULL-CONTROL-001..004 + ULTIMATE-SYSTEM-CLOSURE-FINAL) إلى `02-mind-mid.md` بعد التحقق من نسخها؛ أقسام الحالة الحالية والـinvariants لم تُمس.
 - **2026-09-19 — QC-100-FINAL-016 / Live UX findings remediation (candidate-side)**
   - Changed: عولجت نتائج التدقيق الحي داخل الكود المرشّح فقط: P1 الخمسة (fallback الـserif، عقد drill-down للـKPI، هوية الشريط العلوي، صحة `/reject-reports`، سكربتات CSP) وP2/P3 بحسب القسم 13 من الأثر؛ أُضيفت migration `0030` لتمكين `yazeed` من إنشاء تقارير الرفض وقرار المالك بإسقاط طبقة Lottie.
   - Evidence: typecheck `0 errors`؛ unit `83 files / 563 PASS`؛ integration مركّز على PostgreSQL 18 مصرفي محلي/TLS `39 + 4 + 2 + 15 PASS`؛ build PASS؛ lint 0 errors؛ migration integrity `30`؛ E2E المصادَق عليه وDocker ما زالا BLOCKED.
@@ -142,48 +148,6 @@
 - State: PARTIAL / BLOCKED (source-level closure only).
 - Key files: `src/modules/administration/application/{assign-user-scope,remove-user-scope}.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`, `src/actions/admin.ts`, `src/pages/admin/users/[userId].astro`, `src/ui/components/feedback/ConfirmDialog.astro`, `src/ui/client/dialog.ts`, `src/ui/forms/admin-mutation-copy.ts`, `src/shared/errors/action-error-code.ts`.
 - Not done in this task: dedicated Playwright spec, accessibility-spec extension, PostgreSQL integration tests, `SYSTEM-OWNER-DATA-CONTROL-MATRIX.md` classification refresh.
-
-## [2026-09-17] — QC-SYSTEM-OWNER-CROSS-DOMAIN-CONTROL-005 / executable task retirement path
-- Changed: added server-authorized draft-task deletion with dependency guard, optimistic concurrency, and transactional audit tombstone; refreshed the system-owner matrix with the exact permission and invariants.
-- Evidence: focused administration suite `18/18 PASS`; typecheck has one error in unrelated untracked `scripts/access/check-system-owner 2.ts`; PostgreSQL 18 integration remains `BLOCKED` because Docker is unavailable.
-- State: PARTIAL / BLOCKED.
-- Key files: `src/modules/tasks/application/delete-draft.ts`, `src/modules/tasks/infrastructure/postgres-repository.ts`, `src/actions/tasks.ts`, `audit/system-owner/SYSTEM-OWNER-DATA-CONTROL-MATRIX.md`.
-
-## [2026-09-17] — QC-SYSTEM-OWNER-ADMIN-UI-006 / identity administration UI
-- Changed: wired users list role/scope summaries, authoritative role and initial-scope selection into atomic user creation, and user-detail profile/security/role/scope surfaces with capability-gated activate, disable, revoke-session, and protected-owner indicators.
-- Evidence: `pnpm typecheck` 0 errors, unit `72 files / 442 PASS`, architecture/build/diff checks PASS; authenticated E2E and PostgreSQL remain BLOCKED without disposable runtime.
-- State: PARTIAL / BLOCKED.
-- Key files: `src/pages/admin/users/index.astro`, `src/pages/admin/users/new.astro`, `src/pages/admin/users/[userId].astro`.
-
-## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-004 / scopes, provisioning, lifecycle
-- Changed: added activation and explicit session-revocation use cases/actions, protected canonical owner GLOBAL scope, added transactional PostgreSQL user provisioning with role/scope validation and audit, and expanded the data-control matrix with explicit statuses.
-- Evidence: focused administration suite `18/18 PASS`; typecheck PASS; PostgreSQL 18 execution BLOCKED because Docker Desktop is unavailable.
-- State: PARTIAL / BLOCKED.
-- Key files: `src/modules/identity/application/activate-user.ts`, `src/modules/identity/application/revoke-user-sessions.ts`, `src/modules/identity/infrastructure/postgres-user-repository.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`.
-
-## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-003 / role administration
-- Changed: added server-side list/assign/remove user-role use cases, PostgreSQL transaction-backed repository methods, Astro actions, and preserved owner/password invariants.
-- Evidence: focused administration/authorization `18/18 PASS`; typecheck and targeted ESLint PASS; PostgreSQL 18/Testcontainers remains BLOCKED because Docker Desktop is unavailable.
-- State: PARTIAL / BLOCKED.
-- Key files: `src/modules/administration/application/list-user-roles.ts`, `src/modules/administration/application/manage-user-role.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`, `src/actions/admin.ts`.
-
-## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-002 / permission drift and data-control inventory
-- Changed: added read-only `system-owner:check` / `system-owner:reconcile` scripts and a persisted-domain control matrix; password-reset semantics from task 001 remain intact.
-- Evidence: typecheck PASS; focused administration tests PASS; PostgreSQL 18/Testcontainers BLOCKED because Docker Desktop is unavailable.
-- State: PARTIAL / BLOCKED.
-- Key files: `scripts/access/check-system-owner.ts`, `audit/system-owner/SYSTEM-OWNER-DATA-CONTROL-MATRIX.md`.
-
-## [2026-09-17] — QC-SYSTEM-OWNER-YAZEED-FULL-CONTROL-001 / initial owner-control correction
-- Changed: administrative password reset now persists `must_change_password = true`; ordinary self-password changes keep it false.
-- Evidence: targeted typecheck/unit pending; Docker Desktop is not installed and PostgreSQL runtime remains unavailable.
-- State: PARTIAL / BLOCKED.
-- Key files: `src/modules/identity/application/admin-reset-password.ts`, `src/modules/identity/infrastructure/postgres-user-repository.ts`.
-
-## [2026-09-17] — QC-ULTIMATE-SYSTEM-CLOSURE-FINAL / Independent 100-domain final verification
-- Changed: Added fresh current-HEAD freeze, 100-row evidence matrix, claims-vs-reality, file coverage, release-gate evidence, skill usage, and unresolved blocker records.
-- Evidence: 72/442 unit PASS; architecture/typecheck/build PASS; lint/format FAIL; CI/E2E/UAT/restore/provider/database runtime unavailable or unverified; `.DS_Store` tracked.
-- State: BLOCKED / NO-GO.
-- Key files: `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md`, `audit/100-percent/RELEASE-GATE-EVIDENCE.md`, `audit/100-percent/unresolved-blockers.md`.
 
 
 > ## 1) قواعد القراءة والتنفيذ
@@ -320,13 +284,15 @@
 - Dashboard activity و`/audit` يستخدمان mapping/ordering متوافقين ضمن اختلافات التفويض المقصودة.
 - لا تحوّل provider unavailable إلى empty/zero.
 
-### Dashboard
-- Dashboard decision surface يعرض metadata/source/window/drill-down للـKPI.
-- عقد الـKPI صريح (`numerator`/`state`/`actorScope`/time window): لا قيمة شخصية تحت وسم نطاق مصرّح أو العكس، وكل `href` يجب أن يعيد إنتاج نفس المجموعة (وإلا فهو عيب لا خيار تقديمي) — QC-100-FINAL-005.
-- `Pending review` و`/approvals` وdecision queue تقرأ rollup واحدًا (canonical approvals reader + HOLD الخاص بالمستخدم) بشدة مشتقة (HOLD `CRITICAL`، الموافقات `WARNING`)، وKPI الشخصية تربط بفلتر `ownership=mine` المدعوم خادميًا في سجلي Receiving/Inspections؛ لا معاملات غير مدعومة في روابط الـdrill-down.
-- إذا provider غير متاح، تُحجب الادعاءات بدل عرض صفر مضلل، وفشل rollup يفشل الـread model بالكامل؛ وخطأ `AUTHORIZATION` حالة مستقلة عن انقطاع المزوّد.
-- trend chart موجود الآن على `/dashboard` من series خادمية معتمدة صادرة من دومين Quarantine: grain يوم UTC، numerator = سجلات Receiving المسموح بقراءتها، unit = records، window = 14 يومًا متدرجة، وzero معرّف كصفر حقيقي. العقد الكامل (`grain`/`numerator`/`actorScope`/`windowLabel`/`zeroPolicy`) يُعرض مع الرسم، والنسخة على الداشبورد مُضيَّقة إلى ما أنشأه الفاعل لتطابق KPIs الشخصية المجاورة. حالات الseries صريحة `AVAILABLE|EMPTY|UNAVAILABLE|NOT_SUPPLIED` ولا نقاط إلا في `AVAILABLE` (لا chart للـEMPTY/UNAVAILABLE ولا صفر مضلل).
-- overdue/calibration risk/lab workload/blocked reasons ما زالت تحتاج read models خادمية قبل تقديمها كحقائق (لا تُستهلك series جديدة بعد هذه المهمة).
+### Dashboard (QC-100-FINAL-017 — إعادة بناء كـcommand center)
+- عقد الـcount صريح (`numerator`/`state`/`actorScope`/time window/href): لا قيمة شخصية تحت وسم نطاق مصرّح أو العكس، وكل `href` يجب أن يعيد إنتاج نفس المجموعة (وإلا فهو عيب لا خيار تقديمي). `value: number | null`؛ و`null` تعني "غير متاح لهذا الحساب" ولا تُعرض صفرًا — QC-100-FINAL-005/017.
+- 7 action counts على `/dashboard`، كل واحدة تقرأ register يملكه الدومين المعني عبر use case خاص به: approvals، unread notifications، HOLD الخاص بالمستخدم، inspection reports RETURNED (المؤلف)، Tasks overdue، Tasks due today، Calibrations OVERDUE. عدد الـcard = عدد صفوف نفس القراءة التي يفتحها الرابط، فلا يمكن للعدّ أن يخالف رابطه.
+- الروابط المدعومة الوحيدة: `/approvals`، `/notifications?unread=1`، `/quarantine/receiving?inspectionResult=HOLD&ownership=mine`، `/quarantine/inspections?state=RETURNED&ownership=mine`، `/tasks?assignee=mine&due=overdue|today`، `/assets/calibrations?state=OVERDUE`. فلتر Tasks بسبب `due` أُضيف خادميًا في نفس predicate الذي يقرؤه العدّاد؛ والـinspections register صار يدفع state/finalResult/assignedTo/ownership إلى SQL ويجمع العلاقات بـbatched reads بدل 6 queries لكل صف.
+- Quarantine flow على `/dashboard` = 6 مراحل (Received today → Awaiting inspection → Under inspection → HOLD → PASS not released → Released) وكل مرحلة projection لمقياس واحد من `GetQuarantineOverviewUseCase` نفسه الذي يقدّم `/quarantine`؛ لا SQL موازٍ ولا تعريف ثانٍ للحالة.
+- attention queue تُبنى من نفس صفوف الـcounts مع سبب بشري و`ageLabel` مشتق من timestamp خادمي حقيقي (`assignedAt`/`updatedAt`/`dueAt`/`createdAt`) وحالة ورابط مباشر، مرتّبة بالشدة الحقيقية ومحدودة بـ10؛ إن غاب timestamp تُكتب `Age not recorded`.
+- فشل قراءة أي source (غير AUTHZ) يحجب الـsnapshot كاملًا؛ رفض `AUTHORIZATION` لحساب لا يملك قراءة register معيّن يظهر كـ"Not available" بلا رقم وبلا رابط ولا يصبح صفرًا. حالات الseries تبقى `AVAILABLE|EMPTY|UNAVAILABLE|NOT_SUPPLIED` بلا نقاط خارج `AVAILABLE`، ويعرض الرسم source/unit/grain/counts/scope/period/zero/freshness.
+- coverage panel مُشتق من read model لا من copy الصفحة: 13 مدخلًا، منها `NOT_SUPPLIED` لـlaboratory workload وdocument review queue وblocked reasons وreject analytics وquality summary وsystem health (owner-only) — لكل مدخل سببه الحقيقي.
+- ما زال يحتاج read model خادميًا قبل أي عرض: state filter/bounded lab workload، document review، blocked reasons، reject analytics بعد إغلاق عيوب SQL/runtime + مسار قراءة مصرّح، وownership filter في سجلات Quality.
 
 ## 10) UI / UX / Accessibility
 
@@ -422,6 +388,8 @@
 
 ### P1 / live validation / pre-existing test estate
 - **Full `pnpm test:integration` على PostgreSQL المصرفي المشترك يفشل في 4–5 ملفات قائمة قبل هذا العمل (وليست انحدارًا منه؛ أُثبت بالاستبعاد على cluster جديد):** `identity/system-owner-upgrade-parity` (Migration checksum mismatch for 0030 — الsuite يسجّل DB كـ`migrations` بدون 0030 فيفشل `verifyMigrationIntegrity` متى سبقه أي ملف آخر إلى الـmigration)، `system/control-center` (`drift=true`)، `reporting/report-export-parity`، `shared/search-scope` (LIKE wildcard row count)، و`shared/notification-outbox-delivery` (dedupe، متقطع). السبب: مسار الخارجي يشارك قاعدة واحدة بين كل الملفات؛ هذه المضيفات تعوّل على قاعدة بكر. الأصل: تصميم اختبارات/migration `0030` في QC-100-FINAL-016، ولم يُغلق بعد.
+- read models المطلوبة لاستكمال لوحة القيادة (QC-100-FINAL-017): bounded lab workload مع state filter، document review queue، blocked reasons، reject analytics (بعد إغلاق عيوب SQL/runtime ومسار قراءة مصرّح)، وownership filter في سجلات Quality. بدونها تبقى هذه المنتجات `NOT_SUPPLIED` معلنة على السطح نفسه، ولا تُقدَّر بأرقام.
+- أُعيد التأكيد 2026-09-19 (QC-100-FINAL-017): الأربعة (`search-scope`, `reporting/report-export-parity`, `identity/system-owner-upgrade-parity`, `system/control-center`) تفشل أيضًا على cluster مصرفي جديد/فرغ، فليست متعلقة بمشاركة القاعدة وحدها؛ وأي تعديل لها يحتاج مهمة مستقلة.
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.

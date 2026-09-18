@@ -1,45 +1,54 @@
 import { getDatabase } from '../../../shared/database/database.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { notificationDependencies } from '../../../shared/notifications/notification-dependencies.js';
 import { approvalsReadDependencies } from '../../approvals/application/dependencies.js';
-import { quarantineReadDependencies } from '../../quarantine/application/dependencies.js';
+import { assetsReadDependencies } from '../../assets/application/dependencies.js';
+import {
+  inspectionReadDependencies,
+  quarantineReadDependencies,
+  receivingReadDependencies,
+} from '../../quarantine/application/dependencies.js';
+import { taskReadDependencies } from '../../tasks/application/dependencies.js';
 import { PostgresDashboardQuery } from '../infrastructure/postgres-dashboard-query.js';
 import { GetDashboardUseCase } from './get-dashboard.js';
 import { projectReceivingTrend, seriesNotSupplied, seriesUnavailable } from './dashboard-series.js';
-
-/** Human label for an approval subject, falling back to the subject type. */
-function approvalTitle(record: {
-  approvalCase: { subjectType: string };
-  subject: { reviewContext: Readonly<Record<string, unknown>> };
-}): string {
-  const context = record.subject.reviewContext;
-  const candidate = context['documentNo'] ?? context['inspectionNo'] ?? context['labTestNo'];
-  return typeof candidate === 'string' && candidate.length > 0
-    ? candidate
-    : record.approvalCase.subjectType;
-}
+import {
+  DASHBOARD_COVERAGE,
+  dashboardFlowSource,
+  dashboardMetricSources,
+} from './dashboard-sources.js';
 
 export function dashboardDependencies() {
-  // Reuse the canonical approvals reader instead of a second, drifting query.
+  // Every source below is the owning module's own read use case, so this
+  // surface never writes SQL over another domain's tables and a displayed
+  // count is always the register's own row count.
   const approvals = approvalsReadDependencies().list;
-  // The only approved dashboard time series is the Quarantine receiving trend,
-  // read through the owning module's contract (no dashboard SQL over another
-  // domain's tables). It is narrowed to records this actor created so the chart
-  // declares the same actor scope as the KPI cards beside it.
+  const notifications = notificationDependencies().listOwn;
+  const receiving = receivingReadDependencies().list;
+  const inspections = inspectionReadDependencies().list;
+  const tasks = taskReadDependencies().list;
+  const calibrations = assetsReadDependencies().calibration.list;
+  const overview = quarantineReadDependencies().overview;
+  // The only approved dashboard time series is the Quarantine receiving trend.
+  // It is narrowed to records this actor created so the chart declares the same
+  // actor scope as the count cards beside it.
   const receivingTrend = quarantineReadDependencies().receivingTrend;
+
   return {
     get: new GetDashboardUseCase(
       new PostgresDashboardQuery(
         getDatabase(),
-        {
-          list: async (actor) => {
-            const records = await approvals.execute({ actor });
-            return records.map((record) => ({
-              id: record.approvalCase.id,
-              title: approvalTitle(record),
-              state: record.workItem.state,
-            }));
+        dashboardMetricSources({
+          approvals: { execute: (input) => approvals.execute(input) },
+          notifications: {
+            listOwn: (actor, unreadOnly) => notifications.listOwn(actor, unreadOnly),
           },
-        },
+          receiving: { execute: (input) => receiving.execute(input) },
+          inspections: { execute: (input) => inspections.execute(input) },
+          tasks: { execute: (input) => tasks.execute(input) },
+          calibrations: { execute: (input) => calibrations.execute(input) },
+        }),
+        dashboardFlowSource({ execute: (input) => overview.execute(input) }),
         {
           get: async (actor) => {
             try {
@@ -55,6 +64,7 @@ export function dashboardDependencies() {
             }
           },
         },
+        DASHBOARD_COVERAGE,
       ),
     ),
   };

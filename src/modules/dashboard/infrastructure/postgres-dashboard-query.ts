@@ -1,43 +1,49 @@
 import type { Kysely } from 'kysely';
-import { sql } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { mapAuditRowToView } from '../../../shared/audit/audit-query.js';
 import { describeActorScope } from '../../../shared/authorization/scope-description.js';
+import { buildAttention, readMetricSource } from '../application/dashboard-attention.js';
 import type {
-  DashboardApprovalQueue,
-  DashboardAttention,
+  DashboardCoverageItem,
+  DashboardFlowSource,
+  DashboardMetricSource,
   DashboardQuery,
   DashboardReadModel,
   DashboardSeriesProvider,
 } from '../ports/dashboard-query.js';
 
-/** The decision queue is a bounded, most-recent-first slice of the rollup. */
-const ATTENTION_LIMIT = 8;
-const SEVERITY_RANK: Record<DashboardAttention['severity'], number> = {
-  CRITICAL: 0,
-  WARNING: 1,
-  INFO: 2,
-};
+/** The activity timeline is a bounded, most-recent-first slice of the audit register. */
+const ACTIVITY_LIMIT = 8;
 
 export class PostgresDashboardQuery implements DashboardQuery {
   constructor(
     private readonly database: Kysely<DatabaseSchema>,
     /**
-     * The canonical actionable-approval projection. Injecting the same reader
-     * that serves `/approvals` is what keeps the "Pending review" counter and
-     * its drill-down in agreement (audit §8: one rollup feeds both the KPI
-     * counters and the decision queue). If it fails, the whole read model
-     * fails closed so the counter is withheld rather than shown as zero.
+     * The real, already-authorized sources behind every displayed count.
+     *
+     * Each source reads its own register (or the owning module's use case) and
+     * the displayed number is exactly the rows it returned, so a count and the
+     * drill-down link that opens the same filters can never disagree. A source
+     * that fails to read withholds the whole snapshot instead of becoming a
+     * zero; a source the account may not read reports that explicitly.
      */
-    private readonly approvals: DashboardApprovalQueue,
+    private readonly metricSources: readonly DashboardMetricSource[],
+    /**
+     * The quarantine pipeline, projected from the Quarantine module's own
+     * overview use case so this surface adds no second definition of the same
+     * workflow states.
+     */
+    private readonly flow: DashboardFlowSource,
     /**
      * The approved time series. Unlike the decision counters above, an
      * unavailable series does not fail the whole read model: it is carried as an
      * explicit state so the trend panel says it is unavailable instead of
-     * drawing an empty chart or a zero (audit §8).
+     * drawing an empty chart or a zero.
      */
     private readonly series: DashboardSeriesProvider,
+    /** The data products this surface deliberately does not render, with reasons. */
+    private readonly coverage: readonly DashboardCoverageItem[],
   ) {}
 
   async get(actor: ActorContext): Promise<DashboardReadModel> {
@@ -49,28 +55,10 @@ export class PostgresDashboardQuery implements DashboardQuery {
     // audit-read contract (same safe projection, same occurred_at DESC /
     // event_no DESC order, same allowlist mapper) so a qualifying event is
     // rendered identically on both surfaces.
-    const [counts, holdRows, activityRows, approvals, series] = await Promise.all([
-      sql<{
-        hold_items: number;
-        passed_inspections: number;
-        released_items: number;
-      }>`
-        SELECT
-          (SELECT count(*) FROM qc.receiving_items WHERE inspection_result = 'HOLD' AND created_by = ${actor.id})::int AS hold_items,
-          (SELECT count(*) FROM qc.inspection_reports WHERE final_result = 'PASS' AND (author_id = ${actor.id}))::int AS passed_inspections,
-          (SELECT count(*) FROM qc.receiving_items WHERE release_system = TRUE AND (created_by = ${actor.id}))::int AS released_items
-      `.execute(this.database),
-      sql<{
-        id: string;
-        title: string;
-        summary: string;
-        href: string;
-        severity: 'CRITICAL';
-        state: string;
-      }>`
-        SELECT id::text, receiving_no AS title, 'Receiving item is on HOLD' AS summary, '/quarantine/receiving/' || id::text AS href, 'CRITICAL' AS severity, workflow_state AS state
-        FROM qc.receiving_items WHERE inspection_result = 'HOLD' AND created_by = ${actor.id} ORDER BY updated_at DESC
-      `.execute(this.database),
+    const generatedAt = new Date();
+    const [results, flow, activityRows, series] = await Promise.all([
+      Promise.all(this.metricSources.map((source) => readMetricSource(source, actor))),
+      this.flow.get(actor),
       this.database
         .selectFrom('audit_events')
         .select([
@@ -91,109 +79,18 @@ export class PostgresDashboardQuery implements DashboardQuery {
         .where('actor_id', '=', actor.id)
         .orderBy('occurred_at', 'desc')
         .orderBy('event_no', 'desc')
-        .limit(8)
+        .limit(ACTIVITY_LIMIT)
         .execute(),
-      this.approvals.list(actor),
       this.series.get(actor),
     ]);
-    const row = counts.rows[0] ?? {
-      hold_items: 0,
-      passed_inspections: 0,
-      released_items: 0,
-    };
-    // A single decision queue: actionable approvals (the same set `/approvals`
-    // lists) plus receiving items the actor recorded that are on HOLD. Both
-    // branches carry a real severity instead of a hard-coded WARNING.
-    const approvalAttention: DashboardAttention[] = approvals.map((item) => ({
-      id: `approval:${item.id}`,
-      title: item.title,
-      summary: 'Approval is waiting for your decision',
-      href: `/approvals/${item.id}`,
-      severity: 'WARNING',
-      state: item.state,
-    }));
-    const holdAttention: DashboardAttention[] = holdRows.rows.map((item) => ({
-      id: `receiving:${item.id}`,
-      title: item.title,
-      summary: item.summary,
-      href: item.href,
-      severity: 'CRITICAL',
-      state: item.state,
-    }));
-    const attention = [...approvalAttention, ...holdAttention]
-      .sort((left, right) => SEVERITY_RANK[left.severity] - SEVERITY_RANK[right.severity])
-      .slice(0, ATTENTION_LIMIT);
     return {
-      generatedAt: new Date(),
-      // P2-6: a real, server-derived scope description. The previous value was a
-      // static placeholder while every count below is filtered by actor.id.
+      generatedAt,
+      // P2-6: a real, server-derived scope description, never a static label.
       scopeLabel: describeActorScope(actor),
-      metrics: [
-        {
-          key: 'pending-review',
-          value: approvals.length,
-          label: 'Pending review',
-          unit: 'records',
-          timeRange: 'current snapshot',
-          source: 'My approvals queue',
-          numerator: 'Actionable approval work items returned by the approvals queue',
-          state: 'PENDING or IN_PROGRESS work item',
-          actorScope: 'Assigned to you or your role',
-          definition:
-            'Approval work assigned to you or your role that is still actionable. This is the same set the approvals register lists.',
-          href: '/approvals',
-          drilldownLabel: 'Open my approvals',
-          tone: 'warning',
-        },
-        {
-          key: 'hold-items',
-          label: 'HOLD items',
-          value: row.hold_items,
-          unit: 'records',
-          timeRange: 'current snapshot',
-          source: 'Receiving items you recorded',
-          numerator: 'Receiving items you recorded whose inspection result is HOLD',
-          state: 'inspection result = HOLD',
-          actorScope: 'Created by you',
-          definition: 'Receiving items you recorded whose inspection result is HOLD.',
-          href: '/quarantine/receiving?inspectionResult=HOLD&ownership=mine',
-          drilldownLabel: 'Open my HOLD records',
-          tone: 'danger',
-        },
-        {
-          key: 'pass-inspections',
-          label: 'Inspection PASS',
-          value: row.passed_inspections,
-          unit: 'records',
-          timeRange: 'current snapshot',
-          source: 'Inspection reports you authored',
-          numerator: 'Inspection reports you authored whose final scientific result is PASS',
-          state: 'final result = PASS',
-          actorScope: 'Authored by you',
-          definition: 'Inspection reports you authored with final scientific result PASS.',
-          href: '/quarantine/inspections?finalResult=PASS&ownership=mine',
-          drilldownLabel: 'Open my PASS reports',
-          tone: 'success',
-        },
-        {
-          key: 'released-items',
-          label: 'Released items',
-          value: row.released_items,
-          unit: 'records',
-          timeRange: 'current snapshot',
-          source: 'Receiving items you recorded',
-          numerator: 'Receiving items you recorded whose release system state is true',
-          state: 'release system state = true',
-          actorScope: 'Created by you',
-          definition:
-            'Receiving items you recorded with release system state true; separate from PASS.',
-          href: '/quarantine/receiving?releaseState=RELEASED&ownership=mine',
-          drilldownLabel: 'Open my released records',
-          tone: 'success',
-        },
-      ],
-      attention,
-      series,
+      metrics: results.map((result) => result.metric),
+      flow,
+      attention: buildAttention(results, this.metricSources, generatedAt),
+      attentionSources: results.map((result) => result.source),
       activity: activityRows.map((row) => {
         const view = mapAuditRowToView(row);
         return {
@@ -205,6 +102,8 @@ export class PostgresDashboardQuery implements DashboardQuery {
           occurredAt: view.occurredAt,
         };
       }),
+      series,
+      coverage: this.coverage,
     };
   }
 }

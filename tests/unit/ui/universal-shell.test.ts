@@ -57,7 +57,13 @@ describe('universal shell preservation', () => {
     expect(read('src/modules/dashboard/application/dashboard-series.ts')).toContain(
       'No trend series is available',
     );
-    expect(dashboard).toContain('Overdue due dates');
+    // Coverage is data-driven: which operational questions this snapshot cannot
+    // answer yet is stated by the read model, not hard-coded in the page.
+    expect(dashboard).toContain('dashboard.coverage.map');
+    expect(read('src/modules/dashboard/application/dashboard-sources.ts')).toContain(
+      "state: 'NOT_SUPPLIED'",
+    );
+    expect(dashboard).toContain('unavailableMessage={metric.unavailable?.message}');
     expect(dashboard).toContain('drilldownLabel={metric.drilldownLabel}');
   });
 

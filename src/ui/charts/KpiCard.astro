@@ -1,7 +1,12 @@
 ---
 interface Props {
   label: string;
-  value: string | number;
+  /**
+   * `null` means the count could not be read for this account. The card then
+   * states why and shows no number — never a zero.
+   */
+  value: string | number | null;
+  unavailableMessage?: string;
   unit?: string;
   definition: string;
   source?: string;
@@ -19,6 +24,7 @@ import Icon from '../components/Icon.astro';
 const {
   label,
   value,
+  unavailableMessage,
   unit = 'records',
   definition,
   source,
@@ -52,7 +58,19 @@ const {
       </p>
     </details>
   </div>
-  <div class="kpi-value"><strong>{value}</strong><span>{unit}</span></div>
+  {
+    value === null ? (
+      <div class="kpi-value kpi-unavailable" role="status">
+        <strong>Not available</strong>
+        <span>{unavailableMessage ?? 'This count could not be read for your account.'}</span>
+      </div>
+    ) : (
+      <div class="kpi-value">
+        <strong>{value}</strong>
+        <span>{unit}</span>
+      </div>
+    )
+  }
   <dl class="kpi-context">
     {source && <><dt>Source</dt><dd>{source}</dd></>}
     {actorScope && <><dt>Scope</dt><dd>{actorScope}</dd></>}
@@ -66,6 +84,9 @@ const {
   .kpi-value{display:flex;align-items:baseline;gap:var(--space-2)}
   .kpi strong{color:var(--text-primary);font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
   .kpi-value span,.kpi-context{color:var(--text-muted);font-size:var(--font-size-xs)}
+  .kpi-unavailable{align-items:flex-start;gap:6px;flex-direction:column}
+  .kpi-unavailable strong{color:var(--text-secondary);font-size:var(--font-size-sm)}
+  .kpi-unavailable span{font-size:var(--font-size-xs);line-height:1.45}
   .kpi-context{display:grid;grid-template-columns:auto 1fr;gap:2px var(--space-2);margin:var(--space-1) 0 0;line-height:1.4}
   .kpi-context dt{font-weight:700}
   .kpi-context dd{margin:0;min-width:0;overflow-wrap:anywhere}

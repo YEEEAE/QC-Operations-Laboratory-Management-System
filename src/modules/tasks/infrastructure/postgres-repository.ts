@@ -48,11 +48,20 @@ function mapTask(
   };
 }
 
+/** UTC midnight of a moment, so a due window never depends on the host zone. */
+function utcDayStart(moment: Date): Date {
+  return new Date(Date.UTC(moment.getUTCFullYear(), moment.getUTCMonth(), moment.getUTCDate()));
+}
+
+/** States that are closed and therefore never count as outstanding due work. */
+const CLOSED_TASK_STATES: readonly Task['state'][] = ['COMPLETED', 'CANCELLED'];
+
 export class PostgresTaskRepository implements TaskRepository {
   constructor(
     private readonly database: Kysely<DatabaseSchema>,
     private readonly audit?: AuditRepository,
     private readonly outbox?: OutboxRepository,
+    private readonly now: () => Date = () => new Date(),
   ) {}
   async create(input: { task: Task; actor: ActorContext; requestId: string }): Promise<Task> {
     try {
@@ -174,9 +183,48 @@ export class PostgresTaskRepository implements TaskRepository {
           eb('task_no', 'ilike', `%${input.filter!.search}%`),
         ]),
       ) as typeof query;
+    if (input.filter?.due) {
+      // The whole day window is computed once, in UTC, and applied in SQL, so
+      // the register a dashboard counter links to returns exactly the rows the
+      // counter counted — including across a host time zone.
+      const start = utcDayStart(this.now());
+      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      query =
+        input.filter.due === 'overdue'
+          ? (query.where('due_at', '<', start) as typeof query)
+          : (query.where('due_at', '>=', start).where('due_at', '<', end) as typeof query);
+      query = query.where('state', 'not in', CLOSED_TASK_STATES) as typeof query;
+    }
     const rows = await query.execute();
-    const tasks = await Promise.all(rows.map((row) => this.get(row.id)));
-    return tasks.filter((task): task is Task => Boolean(task));
+    if (!rows.length) return [];
+    // Batched related reads: one query per relation for the whole page instead
+    // of three per task, which is what made the register quadratic in rows.
+    const ids = rows.map((row) => row.id);
+    const [checklistRows, evidenceRows] = await Promise.all([
+      this.database
+        .selectFrom('task_checklist_items')
+        .selectAll()
+        .where('task_id', 'in', ids)
+        .orderBy('position')
+        .execute(),
+      this.database
+        .selectFrom('evidence_links')
+        .select('subject_id')
+        .where('subject_type', '=', 'TASK')
+        .where('subject_id', 'in', ids)
+        .where('removed_at', 'is', null)
+        .execute(),
+    ]);
+    const checklistByTask = new Map<string, DatabaseRow<'task_checklist_items'>[]>();
+    for (const item of checklistRows) {
+      const existing = checklistByTask.get(item.task_id);
+      if (existing) existing.push(item);
+      else checklistByTask.set(item.task_id, [item]);
+    }
+    const tasksWithEvidence = new Set(evidenceRows.map((row) => row.subject_id));
+    return rows.map((row) =>
+      mapTask(row, checklistByTask.get(row.id) ?? [], tasksWithEvidence.has(row.id)),
+    );
   }
   async updateDraft(input: {
     id: string;

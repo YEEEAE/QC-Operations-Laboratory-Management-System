@@ -6,6 +6,16 @@ export interface TaskListFilter {
   state?: Task['state'];
   assigneeId?: string;
   search?: string;
+  /**
+   * Due-date window, resolved against the current UTC server date in one place
+   * (the repository) so the count a dashboard shows and the register the same
+   * filter opens are always the same set.
+   *
+   * `overdue`: due before the current UTC date. `today`: due on the current UTC
+   * date. Both exclude COMPLETED and CANCELLED work, because a closed task is
+   * not outstanding work whatever its due date says.
+   */
+  due?: 'overdue' | 'today';
 }
 export interface TaskRepository {
   create(input: { task: Task; actor: ActorContext; requestId: string }): Promise<Task>;
