@@ -1,4 +1,0 @@
-interface:
-  display_name: "Integrate WebMCP"
-  short_description: "Plan and implement task-completing WebMCP tools"
-  default_prompt: "Inspect this site, identify its journey archetypes, propose a small task-completing WebMCP surface for approval, then implement and validate the approved tools."

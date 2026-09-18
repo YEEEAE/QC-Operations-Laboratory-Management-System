@@ -62,6 +62,7 @@ export class PostgresNotificationRepository implements NotificationRepository {
       .selectAll()
       .where('recipient_user_id', '=', recipientUserId)
       .orderBy('created_at', 'desc')
+      .orderBy('id', 'desc')
       .limit(limit);
     if (options.unreadOnly) query = query.where('read_at', 'is', null);
     const rows = await query.execute();

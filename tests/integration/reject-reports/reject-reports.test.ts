@@ -411,5 +411,83 @@ describe('Reject Reports PostgreSQL integration', () => {
     expect(dashboard.recent.length).toBeGreaterThan(0);
     const todaysTrend = dashboard.analytics.trendByDate.find((t) => t.date === '2026-09-18');
     expect(todaysTrend?.rejectedQty).toBeGreaterThan(0);
+
+    // Populated analytics regression: both report and confirmation tables are
+    // populated at this point (confirmed + pending approvals from earlier
+    // tests). Status references in the analytics SQL must stay qualified to the
+    // joined reject_reports / issue_slip_approval_confirmations tables; this
+    // test fails on the historical "column reference status is ambiguous" error.
+    const analytics = await repository.analytics({
+      from: new Date('2026-09-01'),
+      to: new Date('2026-09-30'),
+    });
+
+    // Approval checkpoint grain: one aggregate row over populated confirmation
+    // rows, splitting report vs confirmation table states.
+    expect(analytics.approvalStatus).toHaveLength(1);
+    expect(analytics.approvalStatus[0].pending).toBeGreaterThanOrEqual(1);
+    expect(analytics.approvalStatus[0].completed).toBeGreaterThanOrEqual(3);
+
+    // Trend, by-item, by-department, by-reason come from persisted rows.
+    const trendRow = analytics.trendByDate.find((t) => t.date === '2026-09-18');
+    expect(trendRow?.rejectedQty).toBeGreaterThanOrEqual(42);
+    expect(trendRow?.reportCount).toBeGreaterThanOrEqual(1);
+    expect(analytics.byItem.length).toBeGreaterThanOrEqual(1);
+    expect(analytics.byDepartment.some((d) => d.department === 'Production A')).toBe(true);
+    expect(
+      analytics.byReason.some((r) => r.reason === 'Dimensional defect'),
+    ).toBe(true);
+
+    // Server percentage semantics: day with a zero good-quantity denominator
+    // yields null (never Infinity), and a populated day yields a finite ratio.
+    expect(analytics.rejectPctTrend.length).toBeGreaterThanOrEqual(1);
+
+    // VOID exclusions: a voided report and its rows disappear from every
+    // aggregate while non-void reports keep their totals.
+    const voided = await new CreateIssueSlipUseCase(repository).execute({
+      actor: creator,
+      reportDate: new Date('2026-09-18'),
+      department: 'Production A',
+      fields: {
+        ...slipInput.fields,
+        itemCode: 'VOID-EXCL-001',
+        itemName: 'Voided exclusion check',
+        rejectedQty: '777',
+      },
+      requestId: 'req-analytics-void',
+    });
+    await new VoidRejectReportUseCase(repository).execute({
+      actor: creator,
+      reportId: voided.id,
+      expectedVersion: voided.version,
+      reason: 'analytics exclusion check',
+      requestId: 'req-analytics-void',
+    });
+    const afterVoid = await repository.analytics({ from: new Date('2026-09-01'), to: new Date('2026-09-30') });
+    expect(
+      afterVoid.byItem.some((i) => i.itemCode === 'VOID-EXCL-001'),
+    ).toBe(false);
+    const voidDay = afterVoid.rejectPctTrend.find((p) => p.date === '2026-09-18');
+    expect(voidDay).toBeDefined();
+    // A day whose only entries have good_qty = 0 must produce null, not a crash.
+    await new CreateDailyRejectUseCase(repository).execute({
+      actor: creator,
+      reportDate: new Date('2026-09-17'),
+      department: 'Zero Denominator Line',
+      entries: [
+        {
+          itemDescription: 'Zero good qty entry',
+          rejectQty: '9',
+          goodQty: '0',
+          rejectReason: 'Zero denominator check',
+        },
+      ],
+      requestId: 'req-analytics-zero-den',
+    });
+    const withZero = await repository.analytics({ from: new Date('2026-09-01'), to: new Date('2026-09-30') });
+    const zeroDay = withZero.rejectPctTrend.find((p) => p.date === '2026-09-17');
+    expect(zeroDay?.rejectPct).toBeNull();
+    const pctDay = withZero.rejectPctTrend.find((p) => p.date === '2026-09-18');
+    expect(pctDay?.rejectPct ?? 0).toBeGreaterThan(0);
   });
 });

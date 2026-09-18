@@ -18,9 +18,9 @@ export class PostgresSearch implements SearchRepository {
         SELECT 'RECEIVING_ITEM', r.id, r.receiving_no, r.description, r.workflow_state, r.item_code FROM qc.receiving_items r
           WHERE (r.receiving_no ILIKE ${pattern} ESCAPE '\\' OR r.doc_no ILIKE ${pattern} ESCAPE '\\' OR r.item_code ILIKE ${pattern} ESCAPE '\\' OR r.description ILIKE ${pattern} ESCAPE '\\' OR r.lot ILIKE ${pattern} ESCAPE '\\') AND r.created_by = ${query.actorId}
         UNION ALL
-        SELECT 'INSPECTION_REPORT', i.id, i.inspection_no, i.inspection_no, i.workflow_state, NULL FROM qc.inspection_reports i WHERE i.inspection_no ILIKE ${pattern} ESCAPE '\\' AND i.created_by = ${query.actorId}
+        SELECT 'INSPECTION_REPORT', i.id, i.inspection_no, i.inspection_no, i.state, NULL FROM qc.inspection_reports i WHERE i.inspection_no ILIKE ${pattern} ESCAPE '\\' AND i.created_by = ${query.actorId}
         UNION ALL
-        SELECT 'LAB_TEST', l.id, l.lab_test_no, l.lab_test_no, l.workflow_state, NULL FROM qc.lab_tests l WHERE l.lab_test_no ILIKE ${pattern} ESCAPE '\\' AND l.created_by = ${query.actorId}
+        SELECT 'LAB_TEST', l.id, l.lab_test_no, l.lab_test_no, l.state, NULL FROM qc.lab_tests l WHERE l.lab_test_no ILIKE ${pattern} ESCAPE '\\' AND l.created_by = ${query.actorId}
         UNION ALL
         SELECT 'FINDING', f.id, f.finding_no, f.description, f.state, NULL FROM qc.findings f WHERE (f.finding_no ILIKE ${pattern} ESCAPE '\\' OR f.description ILIKE ${pattern} ESCAPE '\\') AND (f.created_by = ${query.actorId} OR f.owner_id = ${query.actorId})
         UNION ALL
@@ -30,7 +30,7 @@ export class PostgresSearch implements SearchRepository {
         UNION ALL
         SELECT 'EQUIPMENT', e.id, e.equipment_no, e.equipment_no, e.state, e.serial_no FROM qc.equipment e WHERE e.equipment_no ILIKE ${pattern} ESCAPE '\\' AND e.created_by = ${query.actorId}
         UNION ALL
-        SELECT 'DOCUMENT', d.id, d.document_no, COALESCE(d.title, d.document_no), d.state, NULL FROM qc.document_identities d WHERE (d.document_no ILIKE ${pattern} ESCAPE '\\' OR COALESCE(d.title, '') ILIKE ${pattern} ESCAPE '\\') AND (d.created_by = ${query.actorId} OR d.owner_id = ${query.actorId})
+        SELECT 'DOCUMENT', d.id, d.document_no, COALESCE(d.title, d.document_no), CASE WHEN d.active THEN 'ACTIVE' ELSE 'INACTIVE' END, NULL FROM qc.document_identities d WHERE (d.document_no ILIKE ${pattern} ESCAPE '\\' OR COALESCE(d.title, '') ILIKE ${pattern} ESCAPE '\\') AND (d.created_by = ${query.actorId} OR d.owner_id = ${query.actorId})
         UNION ALL
         SELECT 'CHANGE_REQUEST', c.id, c.change_no, c.change_no, c.state, NULL FROM qc.change_requests c WHERE c.change_no ILIKE ${pattern} ESCAPE '\\' AND c.requested_by = ${query.actorId}
         UNION ALL
@@ -43,7 +43,7 @@ export class PostgresSearch implements SearchRepository {
               COALESCE(e.item_code, '') ILIKE ${pattern} ESCAPE '\\' OR e.item_description ILIKE ${pattern} ESCAPE '\\' OR COALESCE(e.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR e.reject_reason ILIKE ${pattern} ESCAPE '\\'
             )
           )) AND r.created_by = ${query.actorId}
-      ) authorized_results ORDER BY "businessId" LIMIT ${limit}
+      ) authorized_results ORDER BY "businessId", "entityType", "entityId" LIMIT ${limit}
     `.execute(this.database);
     return rows.rows;
   }
