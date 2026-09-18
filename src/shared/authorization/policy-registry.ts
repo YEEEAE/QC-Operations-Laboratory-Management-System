@@ -50,6 +50,21 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'LAB_TEST',
     states: ['RETURNED'],
   },
+  // TR-LAB-007: UNDER_REVIEW → REJECTED, reason required, SoD enforced; the
+  // final reject decision authority itself is policy-gated fail-closed
+  // (POLICY_SOURCE_REQUIRED) inside RejectLabTestUseCase.
+  {
+    permission: 'PERM-LAB-REJECT',
+    action: 'REJECT',
+    entityType: 'LAB_TEST',
+    states: ['UNDER_REVIEW'],
+  },
+  {
+    permission: 'PERM-APR-REJECT',
+    action: 'REJECT',
+    entityType: 'LAB_TEST',
+    states: ['UNDER_REVIEW'],
+  },
   {
     permission: 'PERM-LAB-APPROVE',
     action: 'APPROVE',
@@ -59,6 +74,18 @@ const policies: readonly AuthorizationPolicy[] = [
   {
     permission: 'PERM-APR-APPROVE',
     action: 'APPROVE',
+    entityType: 'LAB_TEST',
+    states: ['UNDER_REVIEW'],
+  },
+  {
+    permission: 'PERM-LAB-REJECT',
+    action: 'REJECT',
+    entityType: 'LAB_TEST',
+    states: ['UNDER_REVIEW'],
+  },
+  {
+    permission: 'PERM-APR-REJECT',
+    action: 'REJECT',
     entityType: 'LAB_TEST',
     states: ['UNDER_REVIEW'],
   },

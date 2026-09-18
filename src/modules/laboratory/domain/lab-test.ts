@@ -49,6 +49,7 @@ export interface LabTest {
   submittedAt: string | null;
   reviewStartedAt: string | null;
   approvedAt: string | null;
+  rejectedAt: string | null;
 }
 export function assertContext(context: ControlledContext) {
   if (

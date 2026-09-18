@@ -160,6 +160,7 @@ export class PostgresLabRepository implements LabRepository {
             submitted_at: next.submittedAt ? new Date(next.submittedAt) : null,
             review_started_at: next.reviewStartedAt ? new Date(next.reviewStartedAt) : null,
             approved_at: next.approvedAt ? new Date(next.approvedAt) : null,
+            rejected_at: next.rejectedAt ? new Date(next.rejectedAt) : null,
             updated_by: mutation.actor.id,
             updated_at: new Date(next.updatedAt),
             version: next.version,

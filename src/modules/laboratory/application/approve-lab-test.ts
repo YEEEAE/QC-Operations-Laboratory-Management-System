@@ -5,6 +5,12 @@ import type { ControlledLabSources, LabApprovalPolicy } from '../ports/controlle
 import type { LabRepository } from '../ports/repository.js';
 import { authorizeLab } from './lab-authorization.js';
 import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
+/**
+ * P-05 (PD-09, CLOSED) supplies the approved authority decision for lab test
+ * approval: Supervisor, Manager, or named yazeed/SYSTEM_OWNER with the
+ * explicit dual permissions. The injected hook remains for additional
+ * controlled policy; the default adds nothing beyond P-05.
+ */
 const p05ApprovalPolicy: LabApprovalPolicy = { authorize: async () => undefined };
 export class ApproveLabTestUseCase {
   constructor(

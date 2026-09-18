@@ -119,6 +119,18 @@ const approve = defineAction({
       }),
     ),
 });
+const reject = defineAction({
+  accept: 'json',
+  input: id.extend({ reason: z.string().trim().min(1) }),
+  handler: (input, context) =>
+    run(() =>
+      laboratoryActionDependencies().reject.execute({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
 const createRetest = defineAction({
   accept: 'json',
   input: z.object({ originalId: z.string().uuid(), reason: z.string().trim().min(1) }),
@@ -139,5 +151,6 @@ export const laboratory = {
   returnTest,
   resume,
   approve,
+  reject,
   createRetest,
 };

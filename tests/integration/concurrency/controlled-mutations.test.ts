@@ -377,6 +377,7 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       submittedAt: '2026-01-02T00:00:00.000Z',
       reviewStartedAt: '2026-01-02T01:00:00.000Z',
       approvedAt: null,
+      rejectedAt: null,
     });
     const repository = new PostgresLabRepository(
       db,

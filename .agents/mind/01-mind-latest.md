@@ -6,8 +6,8 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `3c3419233737dfe8464007a64cb82484841617b7` on `main`. The working tree contains uncommitted `QC-CLOSURE-006` workflow changes; no commit, push, or deployment occurred. Migration source head is `0025_qc_closure_006_workflow`; it has not been applied in this environment.
-- Fresh local evidence on this HEAD + working tree: typecheck (`738 files`, 0 errors/0 warnings/61 hints), lint, format, build, unit (`76 files / 497 tests`), and `git diff --check` are **PASS**. Targeted QC logic is `15/15 PASS`; the PostgreSQL-backed integration path is **BLOCKED** because Testcontainers has no working container runtime.
+- Exact current HEAD: `fd6e0972100c00c16ba24576bf51ee308fb6776e` on `main` (verified 2026-09-18). The working tree carries uncommitted `QC-CLOSURE-006` + `QC-CLOSURE-007` changes; no commit, push, or deployment occurred. Migration source head is `0025_qc_closure_006_workflow`; it has not been applied in this environment.
+- Fresh local evidence on this HEAD + working tree: typecheck (`742 files`, 0 errors/0 warnings/68 hints), lint, format, build, architecture, unit (`78 files / 523 tests`), and `git diff --check` are **PASS**. Laboratory-focused unit/integration logic is `42/42 PASS`; the PostgreSQL-backed integration path is **BLOCKED** because Testcontainers has no working container runtime.
 - Node is `v22.23.1`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker/Testcontainers remains **unavailable**, so authenticated Playwright E2E is **NOT VERIFIED**; the new QC-CLOSURE-006 spec is listed successfully but not executed. UAT remains unexecuted.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
@@ -258,6 +258,10 @@
 ## 6) Inspection / Laboratory / Release invariants
 
 - `Inspection Result` و`Release System State` حالتان منفصلتان؛ `PASS ≠ RELEASED`.
+- Laboratory state machine is fully implemented for Create/Save/Submit/Review/Return/Resume/Approve/**Reject**; `VOID` (TR-LAB-008) remains unimplemented and policy-denied.
+- Lab reject (TR-LAB-007) is fail-closed by policy: the transition, reason, dual permission (`PERM-LAB-REJECT` + `PERM-APR-REJECT`), SoD, expected version and P-05 authority are enforced, but the reject **decision authority source does not exist** → default `LabRejectPolicy` throws `POLICY_SOURCE_REQUIRED` (PD-38 OPEN). Reject never changes `scientificResult` and preserves measurements/samples.
+- Scientific evaluation stays server-side only: `PostgresControlledLabSources.evaluate()` throws; `PASS`/`FAIL`/`HOLD` are stored only from an injected server evaluator whose `sourceReference`/`contentHash` must match the frozen context. No limit, unit, formula, tolerance or method was invented.
+- Equipment eligibility is verified fail-closed at Submit: equipment `ACTIVE`, calibration `CURRENT` + linked + not overdue, and equipment/calibration snapshots must match the referenced records.
 - لا تربط نجاح inspection تلقائيًا بإفراج النظام.
 - مسار release يفرض SoD مشتقًا خادميًا بين منفذ التفتيش ومنفذ الإفراج، ويعيد الطلب المكرر بعد نجاحه عبر idempotency؛ لا يوجد بعد دليل runtime مطبق للـmigration الجديدة.
 - Laboratory retest يخضع للسياسة/السلطة المطبقة ولا تُخترع limits غير موجودة في الوثائق.
@@ -420,6 +424,13 @@
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
 
+- **2026-09-18 — Project Mind rollover (QC-CLOSURE-007)** — نُقلت أقدم 12 سجلات `[2026-09-10]` إلى أعلى `02-mind-mid.md` للبقاء تحت soft limit؛ تم التحقق من وجود كل سجل في الأرشيف (12/12) قبل الحذف، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
+- **2026-09-18 — QC-CLOSURE-007 / Laboratory & scientific governance closure**
+  - Changed: implemented the missing TR-LAB-007 reject transition (`RejectLabTestUseCase`, `REJECT: UNDER_REVIEW → REJECTED`, reason + SoD + dual permission + P-05 + expected version, measurements/results preserved, `rejected_at` persisted, action wired as `laboratory.reject`); added the fail-closed `LabRejectPolicy` default and the new `POLICY_SOURCE_REQUIRED` error code; registered `PERM-LAB-REJECT`/`PERM-APR-REJECT` LAB_TEST policies; recorded PD-38 (reject decision authority) as OPEN/BLOCKED in the policy matrix; added fixture-driven lab reject E2E coverage and disclosed the reject policy gate on the review workspace without any actionable control.
+  - Evidence: typecheck `742 files / 0 errors`, lint, format, build, architecture PASS; unit `78 files / 523 tests PASS` (lab-focused `26/26`), lab+policy targeted `42/42`, lab reject spec listed by Playwright (`8 tests`) but **NOT VERIFIED** in execution; PostgreSQL-backed integration **BLOCKED** (no container runtime).
+  - State: PARTIAL / BLOCKED.
+  - Key files: `src/modules/laboratory/application/reject-lab-test.ts`, `src/modules/laboratory/domain/lab-state.ts`, `src/modules/laboratory/infrastructure/postgres-repository.ts`, `tests/unit/laboratory/scientific-governance.test.ts`, `audit/2026-09-18-qc-closure-007-laboratory-scientific-governance.md`.
+
 - **2026-09-18 — QC-CLOSURE-006 / QC operational workflow**
   - Changed: added forward migration `0025_qc_closure_006_workflow`, supplier/assignment/evidence/history contracts, server-counted evidence Submit gate, independent Reject decision, release SoD/idempotency, and fixture-driven Receiving→Inspection→Release Playwright coverage.
   - Evidence: unit `76/497 PASS`; targeted QC tests `15 PASS`; typecheck/build/format/lint/diff checks PASS; PostgreSQL-backed integration and authenticated E2E **BLOCKED/NOT VERIFIED** because no container runtime.
@@ -481,15 +492,3 @@
 - **[2026-09-10] — تنفيذ طبقة Product Analytics الخصوصية وربط قياس البحث** — صارت قياسات البحث تمر عبر عقد privacy-safe وoutbox مع اختبارات، بينما التوسع الكامل والمزود الخارجي والبيانات الفعلية ما زالت غير منفذة.
 - **[2026-09-10] — رفع Dashboard إلى decision surface صادق بالبيانات** — الداشبورد صار أوضح كواجهة قرار، metadata والـdrill-down وحالات unavailable محروسة، والرسوم غير موجودة عمدًا حتى يوفّر الباكند سلسلة زمنية معرفة.
 - **[2026-09-10] — معالجة فجوات الوصول المؤكدة من تدقيق WCAG** — الفجوات المؤكدة في loading/status/forced-colors/notification severity انصلحت ومحروسة، لكن التحقق الحي الكامل لكل route وscreen reader ما زال غير متاح.
-- **[2026-09-10] — تدقيق WCAG 2.2 AA وergonomics لتطبيق QC** — عقود الوصول الأساسية محروسة آليًا، ودليل المتصفح يؤكد صفحة الدخول و404 فقط؛ لا يوجد claim WCAG كامل أو ergonomics كامل لكل route/workflow.
-- **[2026-09-10] — تدقيق وكتابة UX للنصوص المنظمة** — تم توحيد ورفع دقة النسخ في المكونات والأسطح الحساسة مع حفظ المعاني المنظمة، لكن لا يوجد claim بأن كل notification runtime تستخدم القاموس حتى تُفحص ببيانات مصادق عليها.
-- **[2026-09-10] — إصلاح ملاحظات نماذج UX للبيانات المنظمة** — أُصلحت الملاحظات المؤكدة في النماذج بدون تغيير authorization أو state machine أو business/scientific policy، ووُثقت حدود ما يحتاج backend fixture أو قرار مالك.
-- **[2026-09-10] — Principal interaction audit وتنضيج primitives المشتركة** — صار عند المشروع تدقيق تفاعلات قابل للتتبع وتحسينات فعلية في focus/cancel/disabled sort-pagination، مع إبقاء friction والتفويض/state rules حسب الأساس المعتمد. التوصيل الكامل لكل الصفحات والتحقق المصادق ما زال دفعة لاحقة.
-- **[2026-09-10] — تدقيق Information Architecture كامل وتحسينات wayfinding آمنة** — صار عند النظام تقرير IA قابل للتتبع وتحسينات wayfinding/semantic navigation بدون تغيير سياسة الأمن أو صلاحيات الأفعال، لكن مصفوفة الأدوار/النطاقات الحية وسلوك browser/AT الكامل ما زال يحتاج fixture مصادق وبيئة تشغيل مناسبة.
-- **[2026-09-10] — تدقيق responsive والكثافة الكامل على route families مع assertions للـoverflow** — عقود responsive والكثافة وقياسات E2E أضيفت محليًا مع build/unit evidence، لكن تشغيل المصفوفة على current authenticated content يحتاج بيئة Chromium/fixture مصادق قابلة للتشغيل.
-- **[2026-09-10] — تدقيق أسطح البيانات والقرارات كمحطة QC مؤسسية** — الدليل static يثبت أن البنية الدلالية الأساسية موجودة، لكن تجربة القوائم والحالات المؤسسية غير موحّدة، وأكبر blocker هو خلط provider unavailable مع empty/zero، ثم غياب sort/pagination/loading/stale على registers.
-- **[2026-09-10] — تنضيج أساس نظام التصميم المؤسسي** — صارت طبقة التصميم المشتركة أوضح وقابلة للتوسع، لكن ترحيل كل CSS المحلي وتعديل تباين semantic status يحتاج دفعات لاحقة وقرار مالك للألوان.
-- **[2026-09-10] — إصلاح فجوات التفويض والرؤية في الواجهة** — انحلت فجوات presentation المكتشفة محليًا بدون تغيير السياسة، لكن التحقق المصادق للشخصيات والـfixtures وstale/SoD/e-signature وindistinguishable empty states ما زال ينتظر credentials بيئة غير إنتاجية.
-- **[2026-09-10] — تدقيق واجهة التفويض والرؤية مقابل AVD (fail-closed)** — denial anonymous والحدود الدلالية الأساسية واضحة، لكن AVD universal operational visibility غير منعكس بالكامل في navigation، والتحقق المصادق لكل الشخصيات ما اكتمل.
-- **[2026-09-10] — إصلاح motion والأداء وتقسيم Three.js في login** — الحركة الزخرفية الثقيلة خرجت من authenticated workspaces، و3D login بقي محفوظًا لكن صار مؤجلًا وlazy وموقوفًا مع reduced motion، مع تثبيت Three.js وإزالة fallback API مكسور.
-- **[2026-09-10] — تدقيق motion/performance للـSystemBackground وThree.js login على الإنتاج** — التصميم الحالي محافظ على fallback آمن وواجهة login قابلة للعمل بدون WebGL، لكن لا يوجد claim أن الحركة حسّنت الأداء. الأولوية التالية: تفسير سبب fallback، pin exact لـThree.js إذا اعتمدت سياسة المستودع، وخفض TTFB على mobile قبل أي إزالة للـ3D.

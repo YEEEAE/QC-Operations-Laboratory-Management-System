@@ -78,6 +78,7 @@ export class CreateRetestUseCase {
       submittedAt: null,
       reviewStartedAt: null,
       approvedAt: null,
+      rejectedAt: null,
     };
     assertRetestLink(original, next);
     return this.repository.create(next, {

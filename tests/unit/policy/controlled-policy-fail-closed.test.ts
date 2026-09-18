@@ -81,6 +81,7 @@ function labTest(): LabTest {
     submittedAt: null,
     reviewStartedAt: null,
     approvedAt: null,
+    rejectedAt: null,
   };
 }
 

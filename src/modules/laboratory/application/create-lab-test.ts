@@ -51,6 +51,7 @@ export class CreateLabTestUseCase {
       submittedAt: null,
       reviewStartedAt: null,
       approvedAt: null,
+      rejectedAt: null,
     };
     return this.repository.create(test, {
       actor: input.actor,

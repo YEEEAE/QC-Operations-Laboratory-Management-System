@@ -55,6 +55,7 @@ const test: LabTest = {
   submittedAt: null,
   reviewStartedAt: null,
   approvedAt: null,
+  rejectedAt: null,
 };
 class MemoryRepository implements LabRepository {
   value = test;

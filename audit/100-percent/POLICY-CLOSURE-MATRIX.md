@@ -11,7 +11,7 @@
 |---|---|
 | CLOSED | `PD-08 (P-05)` quarantine release authority; `PD-09 (P-05)` laboratory approval authority; `PD-10 (P-05)` inspection approval authority; `P-06` template authority/lifecycle; `P-07` final production-release authority |
 | PARTIAL | 7 records: `PD-11` SoD (P-06 exception closed; general matrix open); `PD-12` role→permission grants (approved high-risk slices only); `PD-13` document effective date (template lifecycle only, generic document rule open); `PD-17` NCR closure (P-04 CAPA closure is separate); `PD-31` AI advisory boundary closed, provider contract open; `PD-32` signature mechanics and P-06/P-07 scopes closed, complete action list open; `PD-36` existing reason guards closed, complete workflow map open |
-| OPEN | `PD-01..07`; `PD-14..16`; `PD-18..27`; `PD-28..30`; `PD-33..35`; `PD-37`; all unresolved QMS/provider/data-instance decisions below |
+| OPEN | `PD-01..07`; `PD-14..16`; `PD-18..27`; `PD-28..30`; `PD-33..35`; `PD-37`; `PD-38`; all unresolved QMS/provider/data-instance decisions below |
 | BLOCKED | Any record requiring a controlled source, human approval, provider evidence, live UAT, or generic configuration intake that is not present. This includes RPO/RTO/PITR/retention/provider behavior and live production evidence. |
 
 ## Canonical index
@@ -59,6 +59,7 @@ The index is the cross-document reconciliation. The detailed records below are a
 | PD-35 | Imports | All-or-nothing/partial/staged strategy | OPEN | BR-GEN-063/064 | Per-use-case owner | Full validation; no silent partial success | OPEN / BLOCKED |
 | PD-36 | Approvals | Workflow-specific reject/return reason mandate | OPEN | BR-APR-011 | QMS mapping | Existing guarded paths require reason; no exemptions inferred | PARTIAL |
 | PD-37 | Reporting | Audit-report export grant list | OPEN | BR-RPT-008 | Business-approved grant list | No specific grant → deny | OPEN / BLOCKED |
+| PD-38 | Laboratory | Lab test reject decision authority (TR-LAB-007) | OPEN | STATE-MACHINES §TR-LAB-007 | QC/QMS reject-authority source | `RejectLabTestUseCase` default policy throws `POLICY_SOURCE_REQUIRED`; transition mechanics exist, decision stays denied | OPEN / BLOCKED |
 
 ## Evidence, code, tests, and implementation impact
 
@@ -103,6 +104,7 @@ The index is the cross-document reconciliation. The detailed records below are a
 | PD-35 | Bulk validation paths | Validation suites; strategy tests pending | Full validation; no silent partial success | Add per-use-case transaction strategy |
 | PD-36 | `requireReason` state guards | State-machine suites | Existing reject/return/void guards require reasons | Add QMS workflow-to-mandate map |
 | PD-37 | `run-report.ts`; `export-report.ts`; `audit-query.ts` | Export-safety suite | Specific grant required; grant list absent | Bind approved export permission |
+| PD-38 | `src/modules/laboratory/application/reject-lab-test.ts`; `domain/lab-state.ts` (`REJECT: UNDER_REVIEW → REJECTED`); policy registry entries for `PERM-LAB-REJECT`/`PERM-APR-REJECT` | `tests/unit/laboratory/lab-workflow.test.ts` reject suite; `tests/unit/laboratory/scientific-governance.test.ts` | TR-LAB-007 implemented with reason + SoD + version + dual permission; default reject policy denies with `POLICY_SOURCE_REQUIRED`; measurements/results preserved | Add approved reject-authority policy source |
 
 ## Detailed closure records
 

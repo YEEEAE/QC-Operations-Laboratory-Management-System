@@ -9,7 +9,7 @@ export const labStates = [
   'VOID',
 ] as const;
 export type LabState = (typeof labStates)[number];
-export type LabAction = 'SAVE' | 'SUBMIT' | 'REVIEW' | 'RETURN' | 'RESUME' | 'APPROVE';
+export type LabAction = 'SAVE' | 'SUBMIT' | 'REVIEW' | 'RETURN' | 'RESUME' | 'APPROVE' | 'REJECT';
 const transitions: Record<LabAction, Partial<Record<LabState, LabState>>> = {
   SAVE: { DRAFT: 'DRAFT' },
   SUBMIT: { DRAFT: 'SUBMITTED' },
@@ -17,6 +17,7 @@ const transitions: Record<LabAction, Partial<Record<LabState, LabState>>> = {
   RETURN: { SUBMITTED: 'RETURNED', UNDER_REVIEW: 'RETURNED' },
   RESUME: { RETURNED: 'DRAFT' },
   APPROVE: { UNDER_REVIEW: 'APPROVED' },
+  REJECT: { UNDER_REVIEW: 'REJECTED' },
 };
 export function transitionLab(state: LabState, action: LabAction): LabState {
   const next = transitions[action]?.[state];

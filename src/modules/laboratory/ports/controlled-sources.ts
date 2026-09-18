@@ -36,6 +36,21 @@ export interface ControlledLabSources {
 export interface LabApprovalPolicy {
   authorize(input: { test: LabTest; actor: ActorContext; expectedVersion: bigint }): Promise<void>;
 }
+/**
+ * Reject decision policy. TR-LAB-007 is documented (UNDER_REVIEW → REJECTED,
+ * reason required, measurements preserved), so the transition is implemented;
+ * whether a given actor may apply the final reject decision is policy-driven
+ * and defaults to fail-closed deny (`POLICY_SOURCE_REQUIRED`) when no
+ * approved reject policy is supplied. POLICY / SCIENTIFIC SOURCE REQUIRED.
+ */
+export interface LabRejectPolicy {
+  authorize(input: {
+    test: LabTest;
+    actor: ActorContext;
+    reason: string;
+    expectedVersion: bigint;
+  }): Promise<void>;
+}
 /** No default count, authority, or final-result replacement rule. */
 export interface RetestPolicy {
   authorize(input: {

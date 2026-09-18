@@ -156,6 +156,54 @@ test.describe('critical controlled workflows', () => {
     expect(Number(audits[0]?.count ?? 0)).toBeGreaterThan(0);
   });
 
+  test('laboratory reject decision stays server-gated and preserves the original scientific record', async ({
+    page,
+  }) => {
+    await signIn(page);
+    // A fixture test already in UNDER_REVIEW: the review workspace must disclose
+    // the reject contract and its policy gate without exposing an actionable
+    // control, and the browser must be unable to mutate the record.
+    const underReviewId = configuredFixture('QC_E2E_LAB_REVIEW_TEST_ID');
+    await page.goto(`/laboratory/tests/${underReviewId}/review`);
+    await expect(page.getByRole('heading', { name: 'Laboratory review' })).toBeVisible();
+    await expect(page.getByText(/POLICY \/ SCIENTIFIC SOURCE REQUIRED/)).toBeVisible();
+    await expect(page.getByText(/TR-LAB-007/)).toBeVisible();
+    await expect(page.getByRole('button', { name: /reject/i })).toHaveCount(0);
+
+    const before = await dbQuery<{ state: string; scientific_result: string | null }>(
+      'select state, scientific_result from qc.lab_tests where id = $1',
+      [underReviewId],
+    );
+    expect(before).toHaveLength(1);
+    expect(before[0].scientific_result).toBeNull();
+
+    // A fixture test that already carries a reject decision: measurements and
+    // samples survive, rejected_at is recorded, and audit evidence exists.
+    const rejectedId = configuredFixture('QC_E2E_LAB_REJECTED_TEST_ID');
+    const rejected = await dbQuery<{
+      state: string;
+      rejected_at: Date | null;
+      measurements: string;
+      samples: string;
+    }>(
+      `select state, rejected_at,
+              (select count(*)::text from qc.lab_measurements m where m.lab_test_id = t.id) as measurements,
+              (select count(*)::text from qc.lab_samples s where s.lab_test_id = t.id) as samples
+         from qc.lab_tests t where t.id = $1`,
+      [rejectedId],
+    );
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0].state).toBe('REJECTED');
+    expect(rejected[0].rejected_at).not.toBeNull();
+    expect(Number(rejected[0].measurements)).toBeGreaterThan(0);
+    expect(Number(rejected[0].samples)).toBeGreaterThan(0);
+    const rejectAudit = await dbQuery<{ count: string }>(
+      "select count(*)::text as count from qc.audit_events where subject_type = 'LAB_TEST' and subject_id = $1 and action = 'REJECT'",
+      [rejectedId],
+    );
+    expect(Number(rejectAudit[0]?.count ?? 0)).toBeGreaterThan(0);
+  });
+
   test('quality route stays bounded by its approved workflow instead of inventing RCA/CAPA authority', async ({
     page,
   }) => {

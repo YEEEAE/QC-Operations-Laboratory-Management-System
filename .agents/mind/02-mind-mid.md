@@ -4,6 +4,21 @@
 > **Source:** Rotated from `01-mind-latest.md` on 2026-09-04 after the live mind exceeded the operating-size guideline.
 
 
+
+## Rollover from 01 — 2026-09-18 (QC-CLOSURE-007)
+
+- **[2026-09-10] — تدقيق WCAG 2.2 AA وergonomics لتطبيق QC** — عقود الوصول الأساسية محروسة آليًا، ودليل المتصفح يؤكد صفحة الدخول و404 فقط؛ لا يوجد claim WCAG كامل أو ergonomics كامل لكل route/workflow.
+- **[2026-09-10] — تدقيق وكتابة UX للنصوص المنظمة** — تم توحيد ورفع دقة النسخ في المكونات والأسطح الحساسة مع حفظ المعاني المنظمة، لكن لا يوجد claim بأن كل notification runtime تستخدم القاموس حتى تُفحص ببيانات مصادق عليها.
+- **[2026-09-10] — إصلاح ملاحظات نماذج UX للبيانات المنظمة** — أُصلحت الملاحظات المؤكدة في النماذج بدون تغيير authorization أو state machine أو business/scientific policy، ووُثقت حدود ما يحتاج backend fixture أو قرار مالك.
+- **[2026-09-10] — Principal interaction audit وتنضيج primitives المشتركة** — صار عند المشروع تدقيق تفاعلات قابل للتتبع وتحسينات فعلية في focus/cancel/disabled sort-pagination، مع إبقاء friction والتفويض/state rules حسب الأساس المعتمد. التوصيل الكامل لكل الصفحات والتحقق المصادق ما زال دفعة لاحقة.
+- **[2026-09-10] — تدقيق Information Architecture كامل وتحسينات wayfinding آمنة** — صار عند النظام تقرير IA قابل للتتبع وتحسينات wayfinding/semantic navigation بدون تغيير سياسة الأمن أو صلاحيات الأفعال، لكن مصفوفة الأدوار/النطاقات الحية وسلوك browser/AT الكامل ما زال يحتاج fixture مصادق وبيئة تشغيل مناسبة.
+- **[2026-09-10] — تدقيق responsive والكثافة الكامل على route families مع assertions للـoverflow** — عقود responsive والكثافة وقياسات E2E أضيفت محليًا مع build/unit evidence، لكن تشغيل المصفوفة على current authenticated content يحتاج بيئة Chromium/fixture مصادق قابلة للتشغيل.
+- **[2026-09-10] — تدقيق أسطح البيانات والقرارات كمحطة QC مؤسسية** — الدليل static يثبت أن البنية الدلالية الأساسية موجودة، لكن تجربة القوائم والحالات المؤسسية غير موحّدة، وأكبر blocker هو خلط provider unavailable مع empty/zero، ثم غياب sort/pagination/loading/stale على registers.
+- **[2026-09-10] — تنضيج أساس نظام التصميم المؤسسي** — صارت طبقة التصميم المشتركة أوضح وقابلة للتوسع، لكن ترحيل كل CSS المحلي وتعديل تباين semantic status يحتاج دفعات لاحقة وقرار مالك للألوان.
+- **[2026-09-10] — إصلاح فجوات التفويض والرؤية في الواجهة** — انحلت فجوات presentation المكتشفة محليًا بدون تغيير السياسة، لكن التحقق المصادق للشخصيات والـfixtures وstale/SoD/e-signature وindistinguishable empty states ما زال ينتظر credentials بيئة غير إنتاجية.
+- **[2026-09-10] — تدقيق واجهة التفويض والرؤية مقابل AVD (fail-closed)** — denial anonymous والحدود الدلالية الأساسية واضحة، لكن AVD universal operational visibility غير منعكس بالكامل في navigation، والتحقق المصادق لكل الشخصيات ما اكتمل.
+- **[2026-09-10] — إصلاح motion والأداء وتقسيم Three.js في login** — الحركة الزخرفية الثقيلة خرجت من authenticated workspaces، و3D login بقي محفوظًا لكن صار مؤجلًا وlazy وموقوفًا مع reduced motion، مع تثبيت Three.js وإزالة fallback API مكسور.
+- **[2026-09-10] — تدقيق motion/performance للـSystemBackground وThree.js login على الإنتاج** — التصميم الحالي محافظ على fallback آمن وواجهة login قابلة للعمل بدون WebGL، لكن لا يوجد claim أن الحركة حسّنت الأداء. الأولوية التالية: تفسير سبب fallback، pin exact لـThree.js إذا اعتمدت سياسة المستودع، وخفض TTFB على mobile قبل أي إزالة للـ3D.
 ## Rollover from 01 — 2026-09-18 (QC-CLOSURE-005)
 
 - **[2026-09-10] — Standardize complete mutation UX without weakening server controls (ui-ux-pro-max)** — العقد الموحد مطبق محليًا على كل أسطح الـmutation المطلوبة مع بقاء التفويض الخادمي وآلات الحالة والتزامن المتفائل والتدقيق وPOST الاحتياطي، لكن الدليل الحي الكامل (JS/no-JS/bطء/نقر مزدوج/stale/auth/dependency/success) يحتاج نشرًا ثم إعادة فحص Chrome على المرشح المنشور.

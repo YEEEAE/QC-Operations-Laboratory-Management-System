@@ -14,6 +14,7 @@ import { ReviewLabTestUseCase } from './review-lab-test.js';
 import { ReturnLabTestUseCase } from './return-lab-test.js';
 import { ResumeLabTestUseCase } from './resume-lab-test.js';
 import { ApproveLabTestUseCase } from './approve-lab-test.js';
+import { RejectLabTestUseCase } from './reject-lab-test.js';
 import { CreateRetestUseCase } from './create-retest.js';
 export function laboratoryReadDependencies() {
   const repository = new PostgresLabRepository(getDatabase());
@@ -40,6 +41,9 @@ export function laboratoryActionDependencies() {
     return: new ReturnLabTestUseCase(repository),
     resume: new ResumeLabTestUseCase(repository),
     approve: new ApproveLabTestUseCase(repository, sources),
+    // TR-LAB-007 reject decision authority is POLICY SOURCE REQUIRED:
+    // the use case is wired with the default fail-closed policy.
+    reject: new RejectLabTestUseCase(repository),
     retest: new CreateRetestUseCase(repository, sources),
   };
 }
