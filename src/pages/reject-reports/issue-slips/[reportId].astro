@@ -2,12 +2,21 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
 import { ISSUE_SLIP_APPROVAL_ROLES } from '../../../modules/reject-reports/application/view-model.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
   return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const reportId = Astro.params.reportId ?? '';
-const slip = await rejectReportReadDependencies().getIssueSlip.execute({ actor, reportId });
+const deps = rejectReportReadDependencies();
+// Without the module schema there is nothing to load. Send the user to the
+// register, which explains the environment state honestly, instead of
+// returning a generic 500 for a deep link (P1-4).
+const availability = await deps.availability.execute({ actor });
+if (!availability.available) return Astro.redirect('/reject-reports', 303);
+const slip = await deps.getIssueSlip.execute({ actor, reportId });
+// Operational surfaces show a human identity, never the internal UUID (P1-3).
+const creatorLabel = slip.createdBy === actor.id ? 'You' : 'Another authorized user';
 const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
 const isCreator = slip.createdBy === actor.id;
@@ -30,8 +39,7 @@ const fmtDateTime = (d?: Date) =>
       <p class="eyebrow">REJECTED MATERIAL/PRODUCT ISSUE SLIP</p>
       <h1>{slip.reportNo}</h1>
       <p class="lede">
-        Status: <strong class={`status status-${slip.status.toLowerCase()}`}>{slip.status}</strong>
-        · Version {slip.version.toString()}
+        Status: <strong class={`status status-${slip.status.toLowerCase()}`}>{stateLabel(slip.status)}</strong>
       </p>
     </div>
     <div class="head-actions">
@@ -46,7 +54,7 @@ const fmtDateTime = (d?: Date) =>
       <dl>
         <dt>Report date</dt><dd>{fmtDate(slip.reportDate)}</dd>
         <dt>Department / section</dt><dd>{slip.department}</dd>
-        <dt>Created by</dt><dd>{slip.createdBy}</dd>
+        <dt>Recorded by</dt><dd>{creatorLabel}</dd>
         <dt>Created at</dt><dd>{fmtDateTime(slip.createdAt)}</dd>
         <dt>Issued at</dt><dd>{fmtDateTime(slip.issuedAt)}</dd>
         <dt>Completed at</dt><dd>{fmtDateTime(slip.completedAt)}</dd>

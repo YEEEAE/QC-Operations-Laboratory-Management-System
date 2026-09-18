@@ -10,7 +10,7 @@ const canSuggest = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUG
 const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT' && grant.active !== false);
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">UI-AI-001 · ADVISORY ONLY</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
+  <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
   {canUse ? (
     <>
       <section class="notice" role="note"><strong>Advisory boundary</strong><span>{copy.boundaries.aiNotAuthority} Response actions are limited to copying text or using it as your own draft.</span></section>
@@ -51,7 +51,11 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
     <p class="empty">You are not authorized to use AI advisory.</p>
   )}
 </AppLayout>
-{canUse && (
+{/* Page enhancement script. It is intentionally a single top-level hoisted
+    script (never nested in a conditional expression): Astro only bundles and
+    externalises top-level scripts, and the production CSP forbids inline
+    script. Every element below is optional, so the script is inert for an
+    account without the advisory permission. */}
 <script>
   import { actions } from 'astro:actions';
   const form = document.querySelector<HTMLFormElement>('[data-advisory-request]');
@@ -119,7 +123,6 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
     if (questionField && advisoryText) questionField.value = advisoryText;
   });
 </script>
-)}
 <style>
 .page-head{margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}h1{margin:.25rem 0}.lede,.muted,.empty{color:var(--text-muted)}
 .notice,.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}

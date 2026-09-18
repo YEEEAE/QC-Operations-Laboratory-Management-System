@@ -159,13 +159,25 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       : undefined;
   }
 
-  async list(i: { actor: ActorContext; state?: ReceivingItem['workflowState'] }) {
+  async list(i: {
+    actor: ActorContext;
+    state?: ReceivingItem['workflowState'];
+    inspectionResult?: ReceivingItem['inspectionResult'];
+    releaseState?: 'RELEASED' | 'NOT_RELEASED';
+  }) {
     let query = this.db
       .selectFrom('receiving_items')
       .selectAll()
       .orderBy('updated_at', 'desc')
       .orderBy('id', 'desc');
     if (i.state) query = query.where('workflow_state', '=', i.state) as typeof query;
+    // Canonical server-side filters for the dashboard/quarantine drill-downs.
+    // The workflow state, the scientific inspection result, and the release
+    // system state remain three separate facts.
+    if (i.inspectionResult)
+      query = query.where('inspection_result', '=', i.inspectionResult) as typeof query;
+    if (i.releaseState)
+      query = query.where('release_system', '=', i.releaseState === 'RELEASED') as typeof query;
     const rows = await query.execute();
     const grant = i.actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');
     return rows

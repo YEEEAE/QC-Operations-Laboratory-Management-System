@@ -13,6 +13,8 @@ export interface InspectionRepository {
     actor: ActorContext;
     assignedTo?: string;
     state?: Inspection['state'];
+    /** Canonical scientific-result filter (PASS | FAIL | HOLD). */
+    finalResult?: FinalResult;
   }): Promise<readonly Inspection[]>;
   saveDraft(i: {
     id: string;

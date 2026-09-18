@@ -1,0 +1,38 @@
+---
+// RT-CAPA-002. This page exists so the declared create route never falls through
+// to the CAPA detail route (`/quality/capa/[capaId]`), which previously rendered
+// a detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
+//
+// A CAPA is opened against an authorized NCR/RCA relation, and closure authority
+// plus effectiveness policy remain unresolved, so this page states that
+// honestly instead of showing a form that cannot be submitted.
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fcapa%2Fnew');
+---
+<AppLayout title="New CAPA · Quality" locale="en" direction="ltr">
+  <section class="page-head">
+    <h1>New corrective or preventive action</h1>
+    <p class="lede">A CAPA is opened against an authorized NCR or RCA relation.</p>
+  </section>
+  <section class="panel" role="status">
+    <h2>Direct creation is not available</h2>
+    <p>
+      Closure authority and effectiveness policy are unresolved, so this page does not offer a
+      create form. Nothing was changed. Existing CAPA records stay available in the register.
+    </p>
+    <p class="links">
+      <a href="/quality/capa">Open the CAPA register</a>
+      <a href="/quality/ncr">Open NCR</a>
+    </p>
+  </section>
+</AppLayout>
+<style>
+  .page-head { margin-bottom: var(--space-6); }
+  h1 { margin: .25rem 0 .4rem; }
+  .lede, .panel p { color: var(--text-muted); }
+  .panel { max-width: 720px; padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .panel h2 { margin-top: 0; font-size: 1rem; }
+  .links { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .links a { color: var(--color-accent-primary-hover); font-weight: 600; }
+</style>

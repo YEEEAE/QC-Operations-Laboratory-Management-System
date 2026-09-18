@@ -3,6 +3,7 @@ import { sql } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { mapAuditRowToView } from '../../../shared/audit/audit-query.js';
+import { describeActorScope } from '../../../shared/authorization/scope-description.js';
 import type { DashboardQuery, DashboardReadModel } from '../ports/dashboard-query.js';
 
 export class PostgresDashboardQuery implements DashboardQuery {
@@ -71,7 +72,9 @@ export class PostgresDashboardQuery implements DashboardQuery {
     };
     return {
       generatedAt: new Date(),
-      scopeLabel: 'Authorized operational scope',
+      // P2-6: a real, server-derived scope description. The previous value was a
+      // static placeholder while every count below is filtered by actor.id.
+      scopeLabel: describeActorScope(actor),
       metrics: [
         {
           key: 'pending-review',
@@ -118,7 +121,7 @@ export class PostgresDashboardQuery implements DashboardQuery {
           source: 'Receiving release state',
           definition:
             'Authorized receiving items with release system state true; separate from PASS.',
-          href: '/quarantine/receiving?workflowState=RELEASED',
+          href: '/quarantine/receiving?releaseState=RELEASED',
           drilldownLabel: 'Open released records',
           tone: 'success',
         },

@@ -9,7 +9,18 @@ export type ControlCenterCoreStatus = 'READY' | 'NOT_READY';
 export interface ControlCenterMigrationStatus {
   /** Applied head from qc.schema_migrations, or UNKNOWN when unreadable. */
   appliedHead: string;
-  /** Expected head: server-derived release identity when present, otherwise the applied head. */
+  /**
+   * Highest migration version shipped with the deployed build.
+   *
+   * This is never the applied head relabelled: an environment whose database
+   * is behind its build must be able to say so (QC-100-FINAL-016 P2-2).
+   */
+  buildHead: string;
+  /**
+   * Expected head: the release identity's migration head when one is
+   * configured, otherwise the deployed build's own migration head. Falls back
+   * to UNKNOWN — never to the applied head — when neither is available.
+   */
   expectedHead: string;
   pendingCount: number;
   drift: boolean;
@@ -39,7 +50,11 @@ export interface ControlCenterOverview {
 export interface ControlCenterOverviewDependencies {
   probes: SystemHealthProbes;
   auditReadiness: () => Promise<{ status: HealthStatus }>;
-  migrationStatus: () => Promise<{ appliedHead: string; pending: readonly string[] }>;
+  migrationStatus: () => Promise<{
+    appliedHead: string;
+    buildHead: string;
+    pending: readonly string[];
+  }>;
   release: ConfiguredReleaseIdentity;
   now?: () => Date;
 }
@@ -84,10 +99,15 @@ export class GetControlCenterOverviewUseCase {
 
     const release = this.dependencies.release;
     const appliedHead = migrationResult.ok ? migrationResult.result.appliedHead : 'UNKNOWN';
+    const buildHead = migrationResult.ok ? migrationResult.result.buildHead : 'UNKNOWN';
     const pendingCount = migrationResult.ok ? migrationResult.result.pending.length : 0;
     // The ledger stores the bare version ("0025"); the release identity carries
     // the full name ("0025_qc_closure_006_workflow"). Compare on the version.
-    const expectedHead = release.migrationHead ?? appliedHead;
+    // A release identity is authoritative for the *intended* head; otherwise the
+    // deployed build's own migration set is the honest expectation. The applied
+    // head is never substituted for the expectation (that relabelling hid the
+    // production drift behind a self-contradicting card).
+    const expectedHead = release.migrationHead ?? (buildHead !== 'NONE' ? buildHead : 'UNKNOWN');
     const expectedVersion = expectedHead.slice(0, 4);
     const drift =
       appliedHead !== 'UNKNOWN' && (appliedHead !== expectedVersion || pendingCount > 0);
@@ -98,7 +118,7 @@ export class GetControlCenterOverviewUseCase {
       applicationStatus,
       databaseStatus,
       auditStatus: auditResult,
-      migration: { appliedHead, expectedHead, pendingCount, drift },
+      migration: { appliedHead, buildHead, expectedHead, pendingCount, drift },
       release: {
         status: release.status,
         ...(release.releaseId ? { releaseId: release.releaseId } : {}),

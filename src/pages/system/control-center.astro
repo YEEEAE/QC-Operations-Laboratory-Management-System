@@ -140,7 +140,7 @@ const formatDate = (value?: Date) =>
 <AppLayout title="Control center · System" locale="en" direction="ltr">
   <section class="page-head">
     <div>
-      <p class="eyebrow">UI-SYS-002 · CANONICAL OWNER ONLY</p>
+      <p class="eyebrow">Owner console</p>
       <h1>System control center</h1>
       <p class="lede">
         Owner-only operational console. Every mutation below executes through audited
@@ -195,9 +195,20 @@ const formatDate = (value?: Date) =>
             </div>
           </div>
           <dl>
-            <div><dt>Applied migration head</dt><dd>{overview.migration.appliedHead}</dd></div>
-            <div><dt>Expected migration head</dt><dd>{overview.migration.expectedHead}</dd></div>
-            <div><dt>Pending migrations</dt><dd>{overview.migration.pendingCount}</dd></div>
+            <div><dt>Applied in this database</dt><dd>{overview.migration.appliedHead}</dd></div>
+            <div>
+              <dt>Shipped with this build</dt>
+              <dd>{overview.migration.buildHead}</dd>
+            </div>
+            <div><dt>Expected head</dt><dd>{overview.migration.expectedHead}</dd></div>
+            <div>
+              <dt>Pending migrations</dt>
+              <dd>
+                {overview.migration.pendingCount}
+                {overview.migration.pendingCount > 0 &&
+                  ` — the database is ${overview.migration.pendingCount} migration${overview.migration.pendingCount === 1 ? '' : 's'} behind this build`}
+              </dd>
+            </div>
             <div>
               <dt>Release verification</dt>
               <dd class={overview.release.status === 'VERIFIED' ? 'good' : 'warn'}>
@@ -216,7 +227,7 @@ const formatDate = (value?: Date) =>
           <p class="muted">
             Open blockers:{' '}
             {overview.migration.drift
-              ? 'the applied migration head differs from the expected head.'
+              ? `the database is at ${overview.migration.appliedHead} while this build ships ${overview.migration.buildHead}; pending migrations are not applied automatically.`
               : 'none modeled in this view.'}{' '}
             Dependency and backup detail: <a href="/system/health">System health</a> ·{' '}
             <a href="/system/backups">Backups</a>
@@ -273,7 +284,6 @@ const formatDate = (value?: Date) =>
                       <th scope="col">Roles</th>
                       <th scope="col">Scopes</th>
                       <th scope="col"><a href={sortLink('lastLogin')}>Last login</a></th>
-                      <th scope="col">Version</th>
                       <th scope="col">Manage</th>
                     </tr>
                   </thead>
@@ -304,7 +314,6 @@ const formatDate = (value?: Date) =>
                         <td>{roleSummary.get(user.id) ?? '—'}</td>
                         <td>{scopeSummary.get(user.id) ?? '—'}</td>
                         <td>{formatDate(user.lastLoginAt)}</td>
-                        <td>{user.version.toString()}</td>
                         <td><a href={`/admin/users/${user.id}`}>Open workspace</a></td>
                       </tr>
                     ))}
@@ -746,6 +755,20 @@ const formatDate = (value?: Date) =>
   }
   th {
     font-weight: 700;
+  }
+  /* P2-11: sort links are real controls; give them the project 44px target
+     instead of the previous 28x16 text box. */
+  th a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 4px;
+    color: var(--color-accent-primary-hover);
+  }
+  td a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
   .pagination {
     display: flex;

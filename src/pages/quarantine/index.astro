@@ -2,14 +2,16 @@
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
 import { quarantineReadDependencies } from '../../modules/quarantine/application/dependencies.js';
+import { describeActorScope } from '../../shared/authorization/scope-description.js';
+import { formatDateTime } from '../../shared/copy/format.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine');
-let overview: Awaited<ReturnType<ReturnType<typeof quarantineReadDependencies>['overview']['execute']>> = { generatedAt: new Date(), scopeLabel: 'Authorized scope', metrics: [], attention: [], distributions: [] };
+let overview: Awaited<ReturnType<ReturnType<typeof quarantineReadDependencies>['overview']['execute']>> = { generatedAt: new Date(), scopeLabel: describeActorScope(actor), metrics: [], attention: [], distributions: [] };
 try { overview = await quarantineReadDependencies().overview.execute({ actor }); } catch { /* safe empty state when the read provider is unavailable */ }
 ---
 <AppLayout title="Quarantine · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">T3 CONTROLLED OPERATIONS</p><h1>Quarantine</h1><p class="lede">Track receiving, inspection decisions, and explicit release state in one authorized scope.</p></div><div class="head-meta"><span>{overview.scopeLabel}</span><time datetime={overview.generatedAt.toISOString()}>Snapshot {overview.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></div></section>
+  <section class="page-head"><div><p class="eyebrow">Operations</p><h1>Quarantine</h1><p class="lede">Track receiving, inspection decisions, and explicit release state in one authorized scope.</p></div><div class="head-meta"><span>{overview.scopeLabel}</span><time datetime={overview.generatedAt.toISOString()}>Server snapshot · {formatDateTime(overview.generatedAt)}</time></div></section>
   <section class="metrics" aria-label="Quarantine key metrics">{overview.metrics.map((metric) => <a class:list={['metric', `metric--${metric.tone}`]} href={metric.href}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.definition}</small></a>)}</section>
   <div class="grid"><section class="panel" aria-labelledby="attention-title"><div class="panel-head"><div><p class="eyebrow">ATTENTION BOARD</p><h2 id="attention-title">Items needing follow-up</h2></div><a href="/quarantine/receiving">Receiving register</a></div>{overview.attention.length ? <ul class="attention">{overview.attention.map((item) => <li><a href={item.href}><span><strong>{item.title}</strong><small>{item.summary}</small></span><StatusBadge status={item.severity === 'CRITICAL' ? 'FAIL' : 'WARNING'} label={item.state} /></a></li>)}</ul> : <p class="empty">No items need attention in this snapshot.</p>}</section><section class="panel" aria-labelledby="distribution-title"><div class="panel-head"><div><p class="eyebrow">STATE DISTRIBUTION</p><h2 id="distribution-title">Receiving workflow</h2></div></div>{overview.distributions.length ? <ul class="bars">{overview.distributions.map((item) => <li><span>{item.label}</span><strong style={`--bar-size:${Math.min(item.value * 10, 100)}%`}>{item.value}</strong></li>)}</ul> : <p class="empty">No receiving items are available in your authorized scope.</p>}<p class="callout"><strong>PASS is not Released.</strong> Inspection result and Release System State remain separate controlled facts.</p></section></div>
 </AppLayout>

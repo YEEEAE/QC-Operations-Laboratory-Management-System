@@ -39,6 +39,17 @@ describe('exclusive system-owner access', () => {
     await stopPostgresContainer();
   });
 
+  it('grants ADMIN the audited recovery code migration 0026 omitted (QC-100-FINAL-016 P2-16)', async () => {
+    const adminGrants = await pool!.query<{ code: string }>(
+      `SELECT permission.code
+       FROM qc.roles role
+       JOIN qc.role_permissions grant_row ON grant_row.role_id = role.id
+       JOIN qc.permissions permission ON permission.id = grant_row.permission_id
+       WHERE role.code = 'ADMIN' AND permission.code = 'PERM-RREJ-ADMIN-CORRECT'`,
+    );
+    expect(adminGrants.rowCount).toBe(1);
+  });
+
   it('grants every active permission and GLOBAL scope only to the selected account', async () => {
     const environment = {
       DATABASE_URL: databaseUrl,

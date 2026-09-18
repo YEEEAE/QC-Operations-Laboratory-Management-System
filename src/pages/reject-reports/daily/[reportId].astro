@@ -2,12 +2,20 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
 import { dailyRejectTotals } from '../../../modules/reject-reports/application/view-model.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
   return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const reportId = Astro.params.reportId ?? '';
-const record = await rejectReportReadDependencies().getDailyReject.execute({ actor, reportId });
+const deps = rejectReportReadDependencies();
+// See the Issue Slip detail page: a deep link into a module whose schema is not
+// provisioned lands on the register's honest environment state (P1-4).
+const availability = await deps.availability.execute({ actor });
+if (!availability.available) return Astro.redirect('/reject-reports', 303);
+const record = await deps.getDailyReject.execute({ actor, reportId });
+// Operational surfaces show a human identity, never the internal UUID (P1-3).
+const creatorLabel = record.createdBy === actor.id ? 'You' : 'Another authorized user';
 const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
 const isCreator = record.createdBy === actor.id;
@@ -25,8 +33,8 @@ const fmtDateTime = (d?: Date) =>
       <p class="eyebrow">DAILY PRODUCTION &amp; REJECTION RECORD</p>
       <h1>{record.reportNo}</h1>
       <p class="lede">
-        Status: <strong class={`status status-${record.status.toLowerCase()}`}>{record.status}</strong>
-        · Version {record.version.toString()} · No approval confirmation is required for this record type.
+        Status: <strong class={`status status-${record.status.toLowerCase()}`}>{stateLabel(record.status)}</strong>
+        · No approval confirmation is needed for this record type.
       </p>
     </div>
     <div class="head-actions">
@@ -42,7 +50,7 @@ const fmtDateTime = (d?: Date) =>
         <dt>Record date</dt><dd>{fmtDate(record.reportDate)}</dd>
         <dt>Department / section</dt><dd>{record.department}</dd>
         <dt>Shift</dt><dd>{record.shift ?? '—'}</dd>
-        <dt>Created by</dt><dd>{record.createdBy}</dd>
+        <dt>Recorded by</dt><dd>{creatorLabel}</dd>
         <dt>Created at</dt><dd>{fmtDateTime(record.createdAt)}</dd>
         <dt>Finalized at</dt><dd>{fmtDateTime(record.finalizedAt)}</dd>
         {record.voidedAt && (<><dt>Voided</dt><dd>{fmtDateTime(record.voidedAt)} · {record.voidReason}</dd></>)}

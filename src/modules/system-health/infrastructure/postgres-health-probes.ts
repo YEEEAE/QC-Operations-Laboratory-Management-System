@@ -46,13 +46,15 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
   }
 
   async storage(): Promise<DependencyHealth> {
-    // Object-storage provider topology is a deferred deployment decision; the
-    // capability is reported as UNKNOWN instead of a false green state.
+    // Object-storage provider topology is a deferred deployment decision.
+    // UNAVAILABLE, not UNKNOWN: the capability is definitively absent in this
+    // environment, and reporting UNKNOWN next to "not configured" read as a
+    // contradiction on /system/health (P2-9).
     return {
       dependency: 'storage',
-      status: 'UNKNOWN',
+      status: 'UNAVAILABLE',
       checkedAt: new Date(),
-      detail: 'Not configured in this baseline.',
+      detail: 'Not configured in this environment.',
     };
   }
 

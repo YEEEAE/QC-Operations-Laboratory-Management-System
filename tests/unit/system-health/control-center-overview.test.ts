@@ -47,7 +47,7 @@ function useCase(overrides: Record<string, unknown> = {}) {
   return new GetControlCenterOverviewUseCase({
     probes: healthyProbes,
     auditReadiness: async () => ({ status: 'HEALTHY' }),
-    migrationStatus: async () => ({ appliedHead: '0025', pending: [] }),
+    migrationStatus: async () => ({ appliedHead: '0025', buildHead: '0025', pending: [] }),
     release: {
       status: 'VERIFIED',
       releaseId: 'rel-0123456789abcdef',

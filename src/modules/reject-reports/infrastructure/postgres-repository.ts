@@ -26,6 +26,7 @@ import type {
 import type {
   PagedResult,
   RejectReportAnalytics,
+  RejectReportAvailability,
   RejectReportListFilter,
   RejectReportRepository,
   RejectReportSummary,
@@ -179,6 +180,33 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     private readonly audit?: AuditRepository,
     private readonly outbox?: OutboxRepository,
   ) {}
+
+  /**
+   * Read-only capability probe for the four tables migration `0026` adds.
+   * `to_regclass` is a catalog lookup: it never touches the tables themselves
+   * and never writes. A missing table is reported as `SCHEMA_NOT_READY` so the
+   * page can fail closed with an honest availability state instead of a raw
+   * database error (QC-100-FINAL-016 P1-4).
+   */
+  async availability(): Promise<RejectReportAvailability> {
+    try {
+      const result = await sql<{ ready: boolean }>`
+        SELECT (
+          to_regclass('qc.reject_reports') IS NOT NULL
+          AND to_regclass('qc.reject_issue_slips') IS NOT NULL
+          AND to_regclass('qc.issue_slip_approval_confirmations') IS NOT NULL
+          AND to_regclass('qc.daily_reject_entries') IS NOT NULL
+        ) AS ready
+      `.execute(this.database);
+      return result.rows[0]?.ready
+        ? { available: true }
+        : { available: false, reason: 'SCHEMA_NOT_READY' };
+    } catch {
+      // A database that cannot answer the probe is unavailable too; the caller
+      // renders the same fail-closed state rather than a stack trace.
+      return { available: false, reason: 'SCHEMA_NOT_READY' };
+    }
+  }
 
   /**
    * Writes audit/outbox rows on the same transaction executor, mirroring the

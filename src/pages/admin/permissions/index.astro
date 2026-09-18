@@ -20,7 +20,7 @@ try {
 <AppLayout title="Permissions · Administration" locale="en" direction="ltr">
   <section class="page-head">
     <div>
-      <p class="eyebrow">UI-ADM-PERM-001 · CONTROLLED ADMINISTRATION</p>
+      <p class="eyebrow">Permissions</p>
       <h1>Permissions</h1>
       <p class="lede">
         Read-only catalog of active canonical permissions. Grants change only through roles —
@@ -47,7 +47,6 @@ try {
               <th scope="col">Code</th>
               <th scope="col">Domain</th>
               <th scope="col">Action</th>
-              <th scope="col">Risk</th>
             </tr>
           </thead>
           <tbody>
@@ -58,7 +57,6 @@ try {
                 </th>
                 <td>{permission.domain}</td>
                 <td>{permission.action}</td>
-                <td>{permission.riskLevel}</td>
               </tr>
             ))}
           </tbody>

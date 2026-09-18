@@ -93,7 +93,7 @@ describe('navigation permission and route integrity', () => {
       { label: 'Record detail' },
     ]);
     expect(routeBreadcrumbs('/laboratory/tests/new')).toEqual([
-      { label: 'Laboratory', href: '/laboratory' },
+      { label: 'Laboratory', href: '/laboratory/tests' },
       { label: 'Laboratory tests', href: '/laboratory/tests' },
       { label: 'New record' },
     ]);

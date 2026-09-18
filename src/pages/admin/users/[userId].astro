@@ -12,6 +12,7 @@ import {
   isProtectedOwnerScope,
 } from '../../../shared/authorization/p05-authority.js';
 import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 
 const actor = Astro.locals.actor;
@@ -55,20 +56,26 @@ const canAssignScopes = hasAdminGrant(actor, 'PERM-ADM-SCOPE-ASSIGN');
 const canManageRoles = canViewRoles && !isSelf;
 const canManageScopes = canAssignScopes && !isSelf;
 
-if (user && !isSelf && canManageRoles) {
+// Reading role membership is a read-only capability: it is loaded for the
+// member's own account too, so the page can never claim "no roles are assigned"
+// while the owner console lists them (P2-3). Only the *mutation* controls stay
+// self-blocked (`canManageRoles`).
+if (user && canViewRoles) {
   try {
     roles = await administrationDependencies().listUserRoles.execute({ actor, userId });
   } catch (error) {
     rolesRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
     if (!rolesRestricted) throw error;
   }
-  try {
-    const assigned = new Set((roles ?? []).map((role) => role.id));
-    availableRoles = [
-      ...(await administrationDependencies().listRoles.execute({ actor })),
-    ].filter((role) => role.active && !assigned.has(role.id));
-  } catch (error) {
-    if (!(error instanceof AppError && error.category === 'AUTHORIZATION')) throw error;
+  if (!isSelf) {
+    try {
+      const assigned = new Set((roles ?? []).map((role) => role.id));
+      availableRoles = [
+        ...(await administrationDependencies().listRoles.execute({ actor })),
+      ].filter((role) => role.active && !assigned.has(role.id));
+    } catch (error) {
+      if (!(error instanceof AppError && error.category === 'AUTHORIZATION')) throw error;
+    }
   }
 }
 if (user && !isSelf && canManageScopes) {
@@ -93,10 +100,10 @@ const scopeLabel = (scope: { kind: string; value: string | null }) =>
 <AppLayout title="User detail · Administration" locale="en" direction="ltr">
   <section class="page-head">
     <div>
-      <p class="eyebrow">UI-ADM-USR-002 · CONTROLLED ADMINISTRATION</p>
+      <p class="eyebrow">Member</p>
       <h1>{user?.displayName ?? 'User detail'}</h1>
       <p class="lede">
-        {user ? `${user.loginIdentity} · ${user.accountState} · Version ${version}` : ''}
+        {user ? `${user.loginIdentity} · ${stateLabel(user.accountState)}` : ''}
       </p>
     </div>
     <a href="/admin/users">Back to users</a>
@@ -277,7 +284,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) =>
         </section>
 
         <section class="panel" id="roles">
-          <p class="eyebrow">ROLES · UI-ADM-ROLE-001</p>
+          <p class="eyebrow">Roles</p>
           <h2>Roles</h2>
           {!canViewRoles ? (
             <p class="note">
@@ -319,8 +326,8 @@ const scopeLabel = (scope: { kind: string; value: string | null }) =>
               )}
               {isSelf ? (
                 <p class="note">
-                  Role changes on your own account are always blocked, even with explicit
-                  permission.
+                  These are your own roles. Changing your own role membership is always blocked,
+                  even with the explicit assignment permission.
                 </p>
               ) : canAssignRoles ? (
                 availableRoles.length ? (

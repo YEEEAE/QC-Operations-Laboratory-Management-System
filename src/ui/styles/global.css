@@ -128,7 +128,9 @@ button {
     color: #111 !important;
   }
 }
-body,
+/* Form controls inherit the workspace font. `body` is deliberately NOT in this
+   list: the `font` shorthand would reset the body family declared above and
+   drop every authenticated surface to the browser default serif. */
 button,
 input,
 select,
@@ -149,7 +151,7 @@ a {
   outline-offset: 2px;
 }
 :where(button, a, input, select, textarea) {
-  min-height: 40px;
+  min-height: 44px;
 }
 
 /* Forced-colors users need the same focus and state affordances without

@@ -230,8 +230,12 @@ describe('selector and navigation contracts across the touched create forms (F-0
       'quarantine/receiving/new.astro',
     ]) {
       const source = readPage(page);
+      // Operator-facing hint (humanized in QC-100-FINAL-016 P3-4): the number
+      // comes from the approved source, and the technical identifier is minted
+      // server-side — asserted against the create use cases below, so no page
+      // may promise a number the operator did not supply.
       expect(source).toMatch(/approved source/i);
-      expect(source).toMatch(/generated server-side/i);
+      expect(source).toMatch(/assigned automatically/i);
     }
     // Technical UUIDs are generated server-side only: create use cases mint
     // uuidv7 and never accept a client-supplied record id.

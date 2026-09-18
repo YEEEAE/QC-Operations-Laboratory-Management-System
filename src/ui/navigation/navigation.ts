@@ -297,7 +297,9 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
     quality: { label: 'Quality', href: '/quality' },
     quarantine: { label: 'Quarantine', href: '/quarantine' },
     'reject-reports': { label: 'Reject Reports', href: '/reject-reports' },
-    laboratory: { label: 'Laboratory', href: '/laboratory' },
+    // P3-3: /laboratory only redirects to /laboratory/tests — breadcrumb the
+    // real register, not the redirect alias.
+    laboratory: { label: 'Laboratory', href: '/laboratory/tests' },
     assets: { label: 'Assets', href: '/assets' },
     documents: { label: 'Controlled documents', href: '/documents' },
     approvals: { label: 'My approval queue', href: '/approvals' },

@@ -11,7 +11,12 @@ const MIGRATION_FILE = /^(\d{4})_[a-z0-9_]+\.sql$/;
  * version identifiers — never connection data or SQL text.
  */
 export function createPostgresMigrationStatus(database: Kysely<DatabaseSchema>) {
-  return async (): Promise<{ appliedHead: string; pending: readonly string[] }> => {
+  return async (): Promise<{
+    appliedHead: string;
+    /** Highest migration version shipped with this build. */
+    buildHead: string;
+    pending: readonly string[];
+  }> => {
     const rows = await database
       .selectFrom('schema_migrations')
       .select('version')
@@ -31,7 +36,8 @@ export function createPostgresMigrationStatus(database: Kysely<DatabaseSchema>) 
       expected = [];
     }
     const pending = expected.filter((name) => !applied.has(name));
-    return { appliedHead, pending };
+    const buildHead = expected.at(-1) ?? 'NONE';
+    return { appliedHead, buildHead, pending };
   };
 }
 

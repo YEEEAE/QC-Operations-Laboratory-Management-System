@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import ErrorState from '../../ui/components/feedback/ErrorState.astro';
 import { rejectReportReadDependencies } from '../../modules/reject-reports/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
 import type { RejectReportListFilter } from '../../modules/reject-reports/ports/repository.js';
@@ -19,16 +20,47 @@ const filter: RejectReportListFilter = {
   to: params.get('to') ? new Date(params.get('to')!) : undefined,
 };
 const deps = rejectReportReadDependencies();
+// Fail closed with an honest availability state when the database behind this
+// deployment has not been provisioned for Reject Reports. The previous
+// behaviour was a generic 500 inviting a retry for a permanent gap (P1-4).
+const availability = await deps.availability.execute({ actor });
+if (!availability.available) Astro.response.status = 503;
 const showSlips = tab !== 'daily';
 const showDaily = tab === 'all' || tab === 'daily' || tab === 'completed' || tab === 'awaiting';
-const [slips, daily, dashboard] = await Promise.all([
-  showSlips ? deps.listIssueSlips.execute({ actor, filter, page }) : Promise.resolve({ items: [], total: 0 }),
-  showDaily && tab !== 'awaiting'
-    ? deps.listDailyRejects.execute({ actor, filter, page })
-    : Promise.resolve({ items: [], total: 0 }),
-  deps.dashboard.execute({ actor }),
-]);
-const { summary, analytics, recent } = dashboard;
+const emptyPage = { items: [], total: 0 } as const;
+const [slips, daily, dashboard] = availability.available
+  ? await Promise.all([
+      showSlips
+        ? deps.listIssueSlips.execute({ actor, filter, page })
+        : Promise.resolve(emptyPage),
+      showDaily && tab !== 'awaiting'
+        ? deps.listDailyRejects.execute({ actor, filter, page })
+        : Promise.resolve(emptyPage),
+      deps.dashboard.execute({ actor }),
+    ])
+  : ([emptyPage, emptyPage, null] as const);
+const { summary, analytics, recent } = dashboard ?? {
+  summary: {
+    reportsToday: 0,
+    reportsThisMonth: 0,
+    totalRejectedQuantity: 0,
+    totalIssueSlips: 0,
+    totalDailyRejects: 0,
+    awaitingApprovals: 0,
+    completedIssueSlips: 0,
+    finalizedDailyRejects: 0,
+  },
+  analytics: {
+    trendByDate: [],
+    byItem: [],
+    byDepartment: [],
+    byReason: [],
+    topRejectItems: [],
+    approvalStatus: [],
+    rejectPctTrend: [],
+  },
+  recent: [],
+};
 const canCreate = actor.permissions.some(
   (grant) => grant.code === 'PERM-RREJ-CREATE' && grant.active !== false,
 );
@@ -43,9 +75,17 @@ const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riy
 const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty));
 ---
 <AppLayout title="Reject Reports · QC Operations" locale="en" direction="ltr">
+  {
+    !availability.available ? (
+      <ErrorState
+        title="Reject reports are not available in this environment yet"
+        description="The database behind this deployment has not been provisioned for reject reports. Nothing was changed. An administrator must apply the pending release migrations before this register can be used."
+      />
+    ) : (
+      <>
   <section class="page-head">
     <div>
-      <p class="eyebrow">QUALITY · REJECT REPORTING</p>
+      <p class="eyebrow">Quality</p>
       <h1>Reject Reports</h1>
       <p class="lede">Issue Slips track three real-world approval confirmations. Daily Reject records are finalized without approvals. All analytics derive from PostgreSQL.</p>
     </div>
@@ -210,6 +250,9 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
       </ul>
     ) : <p class="empty">No reports yet.</p>}
   </section>
+      </>
+    )
+  }
 </AppLayout>
 
 <style>

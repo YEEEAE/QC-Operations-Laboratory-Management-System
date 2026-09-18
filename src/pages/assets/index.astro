@@ -2,16 +2,19 @@
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { assetsReadDependencies } from '../../modules/assets/application/dependencies.js';
+import { describeActorScope } from '../../shared/authorization/scope-description.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fassets');
 let equipment: readonly import('../../modules/assets/equipment/domain/equipment.js').Equipment[] = [];
 let calibrations: readonly import('../../modules/assets/calibration/domain/calibration.js').CalibrationRecord[] = [];
 let maintenance: readonly import('../../modules/assets/maintenance/domain/maintenance.js').MaintenanceRecord[] = [];
 let providerUnavailable = false;
+// P2-6: the scope row is derived from the authenticated actor, not a placeholder.
+const scopeLabel = describeActorScope(actor);
 try { const read = assetsReadDependencies(); [equipment, calibrations, maintenance] = await Promise.all([read.equipment.list.execute({ actor }), read.calibration.list.execute({ actor }), read.maintenance.list.execute({ actor })]); } catch { providerUnavailable = true; }
 ---
 <AppLayout title="Assets · QC Operations" locale="en" direction="ltr">
-  <section class="hero"><div><p class="eyebrow">T7 ASSET CONTROL ROOM</p><h1>Assets</h1><p>Equipment identity, calibration history, and maintenance work in one authorized workspace.</p></div><span class="scope">Authorized scope</span></section>
+  <section class="hero"><div><p class="eyebrow">Assets</p><h1>Assets</h1><p>Equipment identity, calibration history, and maintenance work in one authorized workspace.</p></div><span class="scope">{scopeLabel}</span></section>
   {providerUnavailable ? <ProviderUnavailableState title="Asset data is unavailable" description="One or more asset read providers did not return a confirmed snapshot, so counts are withheld." /> : <section class="cards" aria-label="Asset workspaces"><a href="/assets/equipment"><span>Equipment register</span><strong>{equipment.length}</strong><small>Identity, operational state, and controlled context</small></a><a href="/assets/calibrations"><span>Calibration records</span><strong>{calibrations.length}</strong><small>Historical records; no invented intervals</small></a><a href="/assets/maintenance"><span>Maintenance</span><strong>{maintenance.length}</strong><small>Planned and completed work history</small></a></section>}
   <section class="note"><strong>Control boundary</strong><p>Asset master changes do not rewrite historical Laboratory snapshots. PASS, calibration status, and release are separate controlled facts.</p></section>
 </AppLayout>

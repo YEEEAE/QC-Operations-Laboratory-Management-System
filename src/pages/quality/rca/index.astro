@@ -1,4 +1,4 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fquality%2Frca');
 ---
-<AppLayout title="RCA · Quality" locale="en" direction="ltr"><h1>RCA</h1><p class="lede">RCA workspaces are opened from an authorized NCR.</p></AppLayout><style>.lede{color:var(--text-muted)}</style>
+<AppLayout title="RCA · Quality" locale="en" direction="ltr"><section class="page-head"><h1>RCA</h1><p class="lede">Root-cause analyses are opened from an approved nonconformance. Find the NCR first, then open its RCA workspace from the record.</p></section><p><a class="cta" href="/quality/ncr">Go to NCR records</a></p></AppLayout><style>.lede{color:var(--text-muted)}.cta{display:inline-block;padding:.7rem 1.1rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-panel);color:var(--color-accent-primary-hover);font-weight:700;text-decoration:none;min-height:44px}</style>

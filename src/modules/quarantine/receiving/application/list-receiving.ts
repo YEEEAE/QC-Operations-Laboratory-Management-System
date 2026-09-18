@@ -4,7 +4,12 @@ import type { ReceivingRepository } from '../ports/repository.js';
 import type { ReceivingItem } from '../domain/receiving-item.js';
 export class ListReceivingUseCase {
   constructor(private readonly repo: ReceivingRepository) {}
-  execute(i: { actor: ActorContext; state?: ReceivingItem['workflowState'] }) {
+  execute(i: {
+    actor: ActorContext;
+    state?: ReceivingItem['workflowState'];
+    inspectionResult?: ReceivingItem['inspectionResult'];
+    releaseState?: 'RELEASED' | 'NOT_RELEASED';
+  }) {
     authorize(
       {
         actor: i.actor,

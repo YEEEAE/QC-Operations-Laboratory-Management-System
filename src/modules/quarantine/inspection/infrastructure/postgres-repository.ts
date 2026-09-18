@@ -148,7 +148,12 @@ export class PostgresInspectionRepository implements InspectionRepository {
       ? item
       : undefined;
   }
-  async list(i: { actor: ActorContext; assignedTo?: string; state?: Inspection['state'] }) {
+  async list(i: {
+    actor: ActorContext;
+    assignedTo?: string;
+    state?: Inspection['state'];
+    finalResult?: Inspection['finalResult'];
+  }) {
     const rows = await this.db
       .selectFrom('inspection_reports')
       .select('id')
@@ -161,6 +166,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
       if (
         item &&
         (!i.state || item.state === i.state) &&
+        (!i.finalResult || item.finalResult === i.finalResult) &&
         (!i.assignedTo || item.assignedTo === i.assignedTo)
       )
         result.push(item);

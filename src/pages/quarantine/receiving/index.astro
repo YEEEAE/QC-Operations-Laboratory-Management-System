@@ -1,21 +1,173 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
+import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import { receivingReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
+import { stateLabel, releaseStateLabel, copy } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving');
-const states = ['PENDING','READY_FOR_INSPECTION','UNDER_INSPECTION','INSPECTION_COMPLETE','RELEASE_PENDING','RELEASED','HOLD','EXPIRED','CANCELLED'] as const;
-const requested = Astro.url.searchParams.get('state');
-const state = states.find((value) => value === requested);
+const states = [
+  'PENDING',
+  'READY_FOR_INSPECTION',
+  'UNDER_INSPECTION',
+  'INSPECTION_COMPLETE',
+  'RELEASE_PENDING',
+  'RELEASED',
+  'HOLD',
+  'EXPIRED',
+  'CANCELLED',
+] as const;
+const inspectionResults = ['NOT_STARTED', 'PASS', 'FAIL', 'HOLD'] as const;
+
+const params = Astro.url.searchParams;
+const requestedState = params.get('state') ?? params.get('workflowState');
+const state = states.find((value) => value === requestedState);
+const requestedResult = params.get('inspectionResult');
+const inspectionResult = inspectionResults.find((value) => value === requestedResult);
+const requestedRelease = (params.get('releaseState') ?? '').toUpperCase();
+const releaseState = ['RELEASED', 'YES', 'TRUE'].includes(requestedRelease)
+  ? ('RELEASED' as const)
+  : ['NOT_RELEASED', 'NO', 'FALSE'].includes(requestedRelease)
+    ? ('NOT_RELEASED' as const)
+    : undefined;
+
+/** One link per filter that drops only that filter and keeps the rest. */
+const chipHref = (drop: string) => {
+  const next = new URLSearchParams(params);
+  next.delete(drop);
+  const search = next.toString();
+  return `/quarantine/receiving${search ? `?${search}` : ''}`;
+};
+const appliedFilters = [
+  state && { label: 'Workflow state', value: stateLabel(state), href: chipHref('state') },
+  inspectionResult && {
+    label: 'Inspection result',
+    value: stateLabel(inspectionResult),
+    href: chipHref('inspectionResult'),
+  },
+  releaseState && {
+    label: 'Release state',
+    value: releaseStateLabel(releaseState === 'RELEASED'),
+    href: chipHref('releaseState'),
+  },
+].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
+const hasFilters = appliedFilters.length > 0;
+
 let items: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['list']['execute']>> = [];
 let providerUnavailable = false;
-try { items = await receivingReadDependencies().list.execute({ actor, state }); } catch { providerUnavailable = true; }
+try {
+  items = await receivingReadDependencies().list.execute({ actor, state, inspectionResult, releaseState });
+} catch {
+  providerUnavailable = true;
+}
 ---
 <AppLayout title="Receiving Items · Quarantine" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">T2 OPERATIONAL WORK QUEUE</p><h1>Receiving items</h1><p class="lede">Review authorized receiving records and their separate inspection and release facts.</p></div><a class="button" href="/quarantine/receiving/new">Create receiving item</a></section>
-  <form class="filters" method="get"><label for="state">Receiving state<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{value}</option>)}</select></label><button class="button secondary" type="submit">Apply filter</button></form>
-  {providerUnavailable ? <ProviderUnavailableState title="Receiving data is temporarily unavailable" /> : items.length ? <div class="table-wrap"><table><caption>{items.length} authorized receiving item{items.length === 1 ? '' : 's'}</caption><thead><tr><th scope="col">Receiving ID</th><th scope="col">Item / description</th><th scope="col">Lot</th><th scope="col">Quantity</th><th scope="col">Receiving state</th><th scope="col">Inspection result</th><th scope="col">Release state</th></tr></thead><tbody>{items.map((item) => <tr><th scope="row"><a href={`/quarantine/receiving/${item.id}`}>{item.receivingNo}</a></th><td>{item.itemCode} · {item.description}</td><td>{item.lot}</td><td>{item.qty}</td><td><span class="state-pill">{item.workflowState}</span></td><td><span class:list={['result', item.inspectionResult.toLowerCase()]}>{item.inspectionResult}</span></td><td><span class:list={['release', { yes: item.releaseSystem }]}>{item.releaseSystem ? 'RELEASED' : 'NOT_RELEASED'}</span></td></tr>)}</tbody></table></div> : <section class="empty-state"><p class="eyebrow">NO MATCHES</p><h2>No receiving items in this view</h2><p>Your authorized scope has no records matching the selected state.</p><a href="/quarantine/receiving/new">Create a receiving item</a></section>}
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">Operations</p>
+      <h1>Receiving items</h1>
+      <p class="lede">
+        Material received into quarantine, with its inspection result and release state kept separate.
+      </p>
+    </div>
+    <a class="button" href="/quarantine/receiving/new">Create receiving item</a>
+  </section>
+  <form class="filters" method="get">
+    <label for="state">Workflow state<select id="state" name="state">
+        <option value="">All states</option>
+        {states.map((value) => (
+          <option value={value} selected={state === value}>
+            {stateLabel(value)}
+          </option>
+        ))}
+      </select></label>
+    <label for="inspectionResult">Inspection result<select id="inspectionResult" name="inspectionResult">
+        <option value="">All results</option>
+        {inspectionResults.map((value) => (
+          <option value={value} selected={inspectionResult === value}>
+            {stateLabel(value)}
+          </option>
+        ))}
+      </select></label>
+    <label for="releaseState">Release state<select id="releaseState" name="releaseState">
+        <option value="">Any release state</option>
+        <option value="RELEASED" selected={releaseState === 'RELEASED'}>RELEASED</option>
+        <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>Not released</option>
+      </select></label>
+    <button class="button secondary" type="submit">Apply filters</button>
+  </form>
+  <AppliedFilters
+    filters={appliedFilters}
+    clearHref={hasFilters ? '/quarantine/receiving' : undefined}
+    note="Showing every receiving item in your authorized scope."
+  />
+  {
+    providerUnavailable ? (
+      <ProviderUnavailableState title="Receiving data is temporarily unavailable" />
+    ) : items.length ? (
+      <div class="table-wrap">
+        <table>
+          <caption>
+            {items.length} receiving item{items.length === 1 ? '' : 's'}
+            {hasFilters ? ' matching the current filters' : ''}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Receiving ID</th>
+              <th scope="col">Item / description</th>
+              <th scope="col">Lot</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Workflow state</th>
+              <th scope="col">Inspection result</th>
+              <th scope="col">Release state</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr>
+                <th scope="row">
+                  <a href={`/quarantine/receiving/${item.id}`}>{item.receivingNo}</a>
+                </th>
+                <td>
+                  {item.itemCode} · {item.description}
+                </td>
+                <td>{item.lot}</td>
+                <td>{item.qty}</td>
+                <td>
+                  <span class="state-pill">{stateLabel(item.workflowState)}</span>
+                </td>
+                <td>
+                  <span class:list={['result', item.inspectionResult.toLowerCase()]}>
+                    {stateLabel(item.inspectionResult)}
+                  </span>
+                </td>
+                <td>
+                  <span class:list={['release', { yes: item.releaseSystem }]}>
+                    {releaseStateLabel(item.releaseSystem)}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <section class="empty-state">
+        <h2>{hasFilters ? 'No receiving items match these filters' : 'No receiving items yet'}</h2>
+        <p>
+          {hasFilters
+            ? 'Nothing in your authorized scope matches the filters above. Remove a filter to widen the search.'
+            : copy.states.noRecords + ' Create the first one to start quarantine tracking.'}
+        </p>
+        {hasFilters ? (
+          <a href="/quarantine/receiving">Clear all filters</a>
+        ) : (
+          <a href="/quarantine/receiving/new">Create a receiving item</a>
+        )}
+      </section>
+    )
+  }
 </AppLayout>
 <style>
-  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty-state p{color:var(--text-muted);font-size:.85rem}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700;text-decoration:none}.button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding-inline:.7rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:880px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.state-pill,.result,.release{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.7rem;font-weight:700}.result.pass{color:var(--status-pass);background:var(--status-pass-bg)}.result.fail,.result.hold{color:var(--status-danger);background:var(--status-danger-bg)}.result.not_started,.result.in_progress{color:var(--text-muted)}.release{color:var(--text-muted)}.release.yes{color:var(--status-released);background:var(--status-released-bg);border-color:var(--status-released)}.empty-state{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty-state h2{margin:.5rem 0}.empty-state a{font-weight:700}@media(max-width:650px){.page-head,.filters{display:grid}.button{width:max-content}}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty-state p{color:var(--text-muted);font-size:.85rem}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700;text-decoration:none}.button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding-inline:.7rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:880px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.state-pill,.result,.release{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.75rem;font-weight:700}.result.pass{color:var(--status-pass);background:var(--status-pass-bg)}.result.fail,.result.hold{color:var(--status-danger);background:var(--status-danger-bg)}.result.not_started{color:var(--text-muted)}.release{color:var(--text-muted)}.release.yes{color:var(--status-released);background:var(--status-released-bg);border-color:var(--status-released)}.empty-state{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty-state h2{margin:.5rem 0}.empty-state a{font-weight:700}@media(max-width:650px){.page-head,.filters{display:grid}.button{width:max-content}}
 </style>

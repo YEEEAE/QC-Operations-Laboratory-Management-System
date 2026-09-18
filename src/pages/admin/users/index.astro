@@ -43,7 +43,7 @@ try {
 <AppLayout title="Users · Administration" locale="en" direction="ltr">
   <section class="page-head">
     <div>
-      <p class="eyebrow">UI-ADM-USR-001 · CONTROLLED ADMINISTRATION</p>
+      <p class="eyebrow">Members</p>
       <h1>Users</h1>
       <p class="lede">Member accounts under your explicit administration authority.</p>
     </div>
@@ -76,7 +76,6 @@ try {
               <th scope="col">State</th>
               <th scope="col">Roles</th>
               <th scope="col">Scopes</th>
-              <th scope="col">Version</th>
             </tr>
           </thead>
           <tbody>
@@ -89,7 +88,6 @@ try {
                 <td>{user.accountState}</td>
                 <td>{roleSummary.get(user.id) ?? '—'}</td>
                 <td>{scopeSummary.get(user.id) ?? '—'}</td>
-                <td>{user.version.toString()}</td>
               </tr>
             ))}
           </tbody>

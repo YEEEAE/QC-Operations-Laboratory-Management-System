@@ -49,7 +49,7 @@ const version = role?.version.toString() ?? '0';
 <AppLayout title="Role detail · Administration" locale="en" direction="ltr">
   <section class="page-head">
     <div>
-      <p class="eyebrow">UI-ADM-ROLE-001 · CONTROLLED ADMINISTRATION</p>
+      <p class="eyebrow">Role</p>
       <h1>{role?.name ?? 'Role detail'}</h1>
       <p class="lede">
         {role ? `${role.code} · ${role.active ? 'Active' : 'Inactive'} · Version ${version}` : ''}

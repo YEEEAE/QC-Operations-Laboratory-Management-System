@@ -1,0 +1,38 @@
+---
+// RT-NCR-002. This page exists so the declared create route never falls through
+// to the NCR detail route (`/quality/ncr/[ncrId]`), which previously rendered a
+// detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
+//
+// Direct NCR creation is not enabled until the approved creation policy is
+// available, so this page states that honestly instead of showing a form that
+// cannot be submitted.
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fncr%2Fnew');
+---
+<AppLayout title="New NCR · Quality" locale="en" direction="ltr">
+  <section class="page-head">
+    <h1>New non-conformance report</h1>
+    <p class="lede">Non-conformance records are opened from an authorized finding or inspection.</p>
+  </section>
+  <section class="panel" role="status">
+    <h2>Direct creation is not available</h2>
+    <p>
+      The approved NCR creation policy is not in force yet, so this page does not offer a create
+      form. Nothing was changed. Existing NCR records stay available in the register.
+    </p>
+    <p class="links">
+      <a href="/quality/ncr">Open the NCR register</a>
+      <a href="/quality/findings">Open findings</a>
+    </p>
+  </section>
+</AppLayout>
+<style>
+  .page-head { margin-bottom: var(--space-6); }
+  h1 { margin: .25rem 0 .4rem; }
+  .lede, .panel p { color: var(--text-muted); }
+  .panel { max-width: 720px; padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .panel h2 { margin-top: 0; font-size: 1rem; }
+  .links { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .links a { color: var(--color-accent-primary-hover); font-weight: 600; }
+</style>

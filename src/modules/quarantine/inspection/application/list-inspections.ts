@@ -4,7 +4,12 @@ import type { InspectionRepository } from '../ports/repository.js';
 import type { Inspection } from '../domain/inspection.js';
 export class ListInspectionsUseCase {
   constructor(private readonly repo: InspectionRepository) {}
-  execute(i: { actor: ActorContext; assignedTo?: string; state?: Inspection['state'] }) {
+  execute(i: {
+    actor: ActorContext;
+    assignedTo?: string;
+    state?: Inspection['state'];
+    finalResult?: Inspection['finalResult'];
+  }) {
     authorize(
       {
         actor: i.actor,

@@ -1,6 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { describeActorScope } from '../../../shared/authorization/scope-description.js';
 import type {
   QuarantineOverview,
   QuarantineOverviewReader,
@@ -64,7 +65,8 @@ export class PostgresQuarantineReadModel
     };
     return {
       generatedAt: new Date(),
-      scopeLabel: 'Your authorized Quarantine scope',
+      // P2-6: derived from the authenticated actor, never a static placeholder.
+      scopeLabel: describeActorScope(input.actor),
       metrics: [
         {
           key: 'received-today',
@@ -103,7 +105,7 @@ export class PostgresQuarantineReadModel
           label: 'PASS / not released',
           value: row.pass_not_released,
           definition: 'Inspection PASS is separate from the Release System State.',
-          href: '/quarantine/receiving?inspectionResult=PASS&releaseState=NO',
+          href: '/quarantine/receiving?inspectionResult=PASS&releaseState=NOT_RELEASED',
           tone: 'success',
         },
         {
@@ -111,7 +113,7 @@ export class PostgresQuarantineReadModel
           label: 'Released',
           value: row.released,
           definition: 'Items whose explicit Release System State is YES.',
-          href: '/quarantine/receiving?state=RELEASED',
+          href: '/quarantine/receiving?releaseState=RELEASED',
           tone: 'success',
         },
       ],

@@ -87,7 +87,8 @@
   --nav-item-padding-inline: var(--space-3);
   --nav-item-gap: var(--space-3);
 
-  --font-size-xs: 0.6875rem;
+  /* 12px is the readable floor for small utility text (audit finding P2-10). */
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.8125rem;
   --font-size-md: 0.875rem;
   --font-size-lg: 1rem;

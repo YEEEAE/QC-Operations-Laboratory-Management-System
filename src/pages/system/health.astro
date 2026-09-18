@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { systemHealthReadDependencies } from '../../modules/system-health/application/dependencies.js';
+import { formatDateTime } from '../../shared/copy/format.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -17,7 +18,6 @@ const statusLabel = (status: string) =>
 const coreBanner = view.coreStatus === 'READY'
   ? { class: 'ok', title: 'Core system: READY', note: 'Critical dependencies required to serve core QC workflows are healthy. Optional capability degradation is listed separately.' }
   : { class: 'bad', title: 'Core system: NOT READY', note: 'A critical dependency required to serve core QC workflows is not healthy. This is a sanitized operational view, not a machine readiness endpoint.' };
-const generatedAt = view.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
   const backup = view.backupPosture;
   const releaseValue = (value: string | undefined) => value ?? 'UNVERIFIED';
 const restoreLabel = backup
@@ -33,9 +33,9 @@ const restoreLabel = backup
   : '';
 ---
 <AppLayout title="System health · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">UI-SYS-001 · SANITIZED OPERATIONAL VIEW</p><h1>System health</h1><p class="lede">Status is derived from live server-side checks. Raw infrastructure errors, credentials, and endpoints are intentionally never shown. Machine readiness remains separate at /api/health/ready.</p></div><span class={`banner ${coreBanner.class}`}>{coreBanner.title}</span></section>
-  <section class="notice" role="note"><strong>Reading this view</strong><span>{coreBanner.note} Generated {generatedAt} (Asia/Riyadh).</span></section>
-  <section class="panel"><h2>Dependencies</h2><div class="table-wrap"><table><caption>Sanitized dependency status per approved health vocabulary</caption><thead><tr><th scope="col">Dependency</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead><tbody>{view.checks.map((item) => <tr><th scope="row">{item.dependency}</th><td><span class={`pill ${item.status === 'HEALTHY' ? 'ok' : item.status === 'DEGRADED' ? 'warn' : item.status === 'UNAVAILABLE' ? 'bad' : 'unknown'}`}>{statusLabel(item.status)}</span></td><td>{item.detail ?? '—'}</td></tr>)}</tbody></table></div><p class="muted">The AI advisory capability is optional: {view.aiCapability === 'DEGRADED' ? 'it is currently degraded while the core system remains READY.' : view.aiCapability === 'HEALTHY' ? 'it is available.' : 'its status is unknown and it never gates core readiness.'}</p></section>
+  <section class="page-head"><div><h1>System health</h1><p class="lede">Status is derived from live server-side checks. Raw infrastructure errors, credentials, and endpoints are intentionally never shown. Machine readiness remains separate at /api/health/ready.</p></div><span class={`banner ${coreBanner.class}`}>{coreBanner.title}</span></section>
+  <section class="notice" role="note"><strong>Reading this view</strong><span>{coreBanner.note} Generated {formatDateTime(view.generatedAt)} (Asia/Riyadh).</span></section>
+  <section class="panel"><h2>Dependencies</h2><div class="table-wrap"><table><caption>Sanitized dependency status per approved health vocabulary</caption><thead><tr><th scope="col">Dependency</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead><tbody>{view.checks.map((item) => <tr><th scope="row">{item.dependency}</th><td><span class={`pill ${item.status === 'HEALTHY' ? 'ok' : item.status === 'DEGRADED' ? 'warn' : item.status === 'UNAVAILABLE' ? 'bad' : 'unknown'}`}>{statusLabel(item.status)}</span></td><td>{item.detail ?? '—'}</td></tr>)}</tbody></table></div><p class="muted">AI advisory is optional: {view.aiCapability === 'DEGRADED' ? 'it is currently degraded while the core system remains READY.' : view.aiCapability === 'HEALTHY' ? 'it is available.' : view.aiCapability === 'UNAVAILABLE' ? 'it is not configured in this environment. It never affects QC workflows or core readiness.' : 'its status is unknown and it never gates core readiness.'}</p></section>
   {canSeeBackupPosture && backup && (
     <section class="panel"><h2>Backup &amp; recovery posture</h2><p class="muted">Backup job success never equals a verified restore (BKP-001). These are separate facts and are never merged into a single green badge.</p>
       <dl><div><dt>Last backup job state</dt><dd>{backup.lastBackupJobState ?? 'NO CATALOG DATA'}</dd></div><div><dt>Backup artifact verified</dt><dd>{backup.artifactVerified ? 'YES' : 'NO'}</dd></div><div><dt>Restore verification</dt><dd class={backup.restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{restoreLabel}</dd></div><div><dt>Posture status</dt><dd>{statusLabel(backup.postureStatus)}</dd></div></dl>

@@ -1,43 +1,145 @@
 ---
 import { actions } from 'astro:actions';
+import AppLayout from '../ui/layouts/AppLayout.astro';
 import { GetAccountUseCase } from '../modules/identity/application/get-account.js';
 import { identityDependencies } from '../modules/identity/application/identity-dependencies.js';
-const account = Astro.locals.actor ? await new GetAccountUseCase(identityDependencies().users).execute(Astro.locals.actor) : null;
+import { stateLabel } from '../shared/copy/ux-vocabulary.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const account = await new GetAccountUseCase(identityDependencies().users).execute(actor);
 ---
-<!doctype html>
-<html lang="en" dir="ltr">
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Account · QC Operations</title><style>.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}button{min-height:44px}</style></head>
-  <body>
-    <main>
+<AppLayout title="Account · QC Operations" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">Your account</p>
       <h1>Account</h1>
-      {account && <><section aria-labelledby="account-info"><h2 id="account-info">Account information</h2><dl><dt>Login identity</dt><dd>{account.loginIdentity}</dd><dt>Display name</dt><dd>{account.displayName}</dd><dt>Email</dt><dd>{account.email ?? '—'}</dd><dt>State</dt><dd>{account.accountState}</dd></dl></section>
-      <section aria-labelledby="security"><h2 id="security">Password and security</h2><form method="POST" action={actions.account.changePassword}><label for="currentPassword">Current password</label><div class="password-field"><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required /><button type="button" data-password-toggle aria-pressed="false" aria-controls="currentPassword" aria-label="Show password">Show</button></div><label for="newPassword">New password</label><div class="password-field"><input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required /><button type="button" data-password-toggle-new aria-pressed="false" aria-controls="newPassword" aria-label="Show password">Show</button></div><button type="submit" data-submit>Change password</button><p role="status" data-result tabindex="-1"></p></form></section>
-      <form method="POST" action={actions.logout}><button type="submit">Sign out</button></form></>}
-    <script>
-      const wire = (selector: string, inputId: string) => {
-        const toggle = document.querySelector<HTMLButtonElement>(selector);
-        const input = document.getElementById(inputId) as HTMLInputElement | null;
-        toggle?.addEventListener('click', () => {
-          if (!input || !toggle) return;
-          const show = input.type === 'password';
-          input.type = show ? 'text' : 'password';
-          toggle.setAttribute('aria-pressed', String(show));
-          toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-          toggle.textContent = show ? 'Hide' : 'Show';
-        });
-      };
-      wire('[data-password-toggle]', 'currentPassword');
-      wire('[data-password-toggle-new]', 'newPassword');
-      const form = document.querySelector<HTMLFormElement>('form[method="POST"]');
-      form?.addEventListener('submit', (event: Event) => {
-        if (form.getAttribute('aria-busy') === 'true') { event.preventDefault(); return; }
-        const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
-        const output = form.querySelector<HTMLElement>('[data-result]');
-        form.setAttribute('aria-busy', 'true');
-        if (submit) submit.disabled = true;
-        if (output) output.textContent = 'Changing password…';
-      });
-    </script>
-    </main>
-  </body>
-</html>
+      <p class="lede">
+        Your identity, password, and active session. Role and scope changes are audited and made by
+        an administrator.
+      </p>
+    </div>
+  </section>
+  {
+    account && (
+      <>
+        <section class="panel" aria-labelledby="account-info">
+          <h2 id="account-info">Account information</h2>
+          <dl class="summary">
+            <div>
+              <dt>Login identity</dt>
+              <dd>{account.loginIdentity}</dd>
+            </div>
+            <div>
+              <dt>Display name</dt>
+              <dd>{account.displayName}</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd>{account.email ?? 'Not provided'}</dd>
+            </div>
+            <div>
+              <dt>State</dt>
+              <dd>{stateLabel(account.accountState)}</dd>
+            </div>
+          </dl>
+          <p class="muted">
+            Role and scope grants are visible to administrators in the member register.
+          </p>
+        </section>
+        <section class="panel" aria-labelledby="security">
+          <h2 id="security">Password and security</h2>
+          <form class="form" method="POST" action={actions.account.changePassword}>
+            <div class="field">
+              <label for="currentPassword">Current password</label>
+              <div class="password-field">
+                <input
+                  id="currentPassword"
+                  name="currentPassword"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  data-password-toggle
+                  aria-pressed="false"
+                  aria-controls="currentPassword"
+                  aria-label="Show password"
+                >
+                  Show
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="newPassword">New password</label>
+              <div class="password-field">
+                <input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  autocomplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  data-password-toggle-new
+                  aria-pressed="false"
+                  aria-controls="newPassword"
+                  aria-label="Show password"
+                >
+                  Show
+                </button>
+              </div>
+            </div>
+            <p class="hint">Changing your password keeps you signed in on this device.</p>
+            <div class="actions">
+              <button type="submit" data-submit>Change password</button>
+            </div>
+            <p role="status" data-result tabindex="-1" class="status"></p>
+          </form>
+        </section>
+        <section class="panel" aria-labelledby="session">
+          <h2 id="session">Session</h2>
+          <p class="muted">
+            Signing out ends this browser session. Sessions revoked by an administrator end
+            immediately on their next request.
+          </p>
+          <form method="POST" action={actions.logout}>
+            <button type="submit" class="secondary">Sign out</button>
+          </form>
+        </section>
+      </>
+    )
+  }
+</AppLayout>
+<script>
+  const wire = (selector: string, inputId: string) => {
+    const toggle = document.querySelector<HTMLButtonElement>(selector);
+    const input = document.getElementById(inputId) as HTMLInputElement | null;
+    toggle?.addEventListener('click', () => {
+      if (!input || !toggle) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      toggle.setAttribute('aria-pressed', String(show));
+      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      toggle.textContent = show ? 'Hide' : 'Show';
+    });
+  };
+  wire('[data-password-toggle]', 'currentPassword');
+  wire('[data-password-toggle-new]', 'newPassword');
+  const form = document.querySelector<HTMLFormElement>('form[action*="changePassword"]');
+  form?.addEventListener('submit', (event: Event) => {
+    if (form.getAttribute('aria-busy') === 'true') {
+      event.preventDefault();
+      return;
+    }
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const output = form.querySelector<HTMLElement>('[data-result]');
+    form.setAttribute('aria-busy', 'true');
+    if (submit) submit.disabled = true;
+    if (output) output.textContent = 'Changing password…';
+  });
+</script>
+<style>
+  .page-head{margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.hint{color:var(--text-muted);font-size:.85rem}.panel{padding:var(--space-5);margin-bottom:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);max-width:640px}.panel h2{margin-top:0;font-size:1rem}.summary{display:grid;grid-template-columns:minmax(140px,auto) minmax(0,1fr);gap:.5rem 1rem;margin:0 0 var(--space-3)}.summary div{display:contents}.summary dt{color:var(--text-muted);font-size:.8rem}.summary dd{margin:0;font-size:.85rem}.form{display:grid;gap:var(--space-4)}.field{display:grid;gap:.35rem}label{font-size:.85rem;font-weight:600}.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}input{min-height:44px;padding-inline:.75rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit;min-width:0}button{min-height:44px;padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.status{margin:0;font-size:.85rem;color:var(--text-muted)}@media(max-width:520px){.summary{grid-template-columns:1fr}.summary dt{margin-top:var(--space-2)}}
+</style>

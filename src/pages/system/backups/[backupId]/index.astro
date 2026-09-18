@@ -34,7 +34,7 @@ const knownGaps = [
 ];
 ---
 <AppLayout title={`Backup ${backup.id} · QC Operations`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">UI-BKP-001 · RECOVERY CATALOG RECORD</p><h1>Backup set</h1><p class="lede">Metadata only: this page never exposes storage references or provider paths, and it never restores.</p></div><div class="head-actions"><span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {jobLabel}</span><span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>{restorable && canRequestDrill && <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>}</div></section>
+  <section class="page-head"><div><p class="eyebrow">Backup record</p><h1>Backup set</h1><p class="lede">Metadata only: this page never exposes storage references or provider paths, and it never restores.</p></div><div class="head-actions"><span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {jobLabel}</span><span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>{restorable && canRequestDrill && <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>}</div></section>
   <div class="grid">
     <section class="panel"><h2>Backup metadata</h2><dl>
       <div><dt>Backup set ID</dt><dd><code>{backup.id}</code></dd></div>

@@ -8,12 +8,18 @@ import {
   toFormFailure,
   type FormFailure,
 } from '../../ui/forms/mutation-post.js';
+import ErrorState from '../../ui/components/feedback/ErrorState.astro';
+import { rejectReportReadDependencies } from '../../modules/reject-reports/application/dependencies.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports%2Fnew');
 const canCreate = actor.permissions.some(
   (grant) => grant.code === 'PERM-RREJ-CREATE' && grant.active !== false,
 );
+// A deployment without the module's schema must not offer a form that can only
+// fail on submit; it fails closed and says why (P1-4).
+const availability = await rejectReportReadDependencies().availability.execute({ actor });
+if (!availability.available) Astro.response.status = 503;
 
 const LIST_HREF = '/reject-reports';
 const type = Astro.url.searchParams.get('type') === 'daily' ? 'daily' : 'slip';
@@ -139,16 +145,25 @@ const invalid = (name: string): 'true' | undefined => (err(name) ? 'true' : unde
 const describedBy = (name: string): string | undefined => (err(name) ? `${name}-error` : undefined);
 ---
 <AppLayout title="New Reject Report · QC Operations" locale="en" direction="ltr">
+  {!availability.available ? (
+    <ErrorState
+      title="New reject reports are not available in this environment yet"
+      description="The database behind this deployment has not been provisioned for reject reports, so nothing can be created here. Nothing was changed."
+    />
+  ) : (
+    <>
   <section class="page-head">
-    <p class="eyebrow">REJECT REPORTING</p>
-    <h1>New Report</h1>
-    <p class="lede">What do you want to create? The report number is generated server-side.</p>
+    <h1>New reject report</h1>
+    <p class="lede">What do you want to create? We create the report number for you.</p>
   </section>
 
   <div class="type-select" role="tablist" aria-label="Report type">
     <a role="tab" aria-selected={type === 'slip'} href="/reject-reports/new?type=slip">
       <strong>Rejected Material/Product Issue Slip</strong>
-      <span>Requires approval confirmation tracking (Supervisor · QC Manager · Factory Director)</span>
+      <span
+        >Tracks three real-world approval checkpoints. Those titles — Supervisor, QC Manager,
+        Factory Director — name the people who approve in the plant, not system accounts.</span
+      >
     </a>
     <a role="tab" aria-selected={type === 'daily'} href="/reject-reports/new?type=daily">
       <strong>Daily Production &amp; Rejection Record</strong>
@@ -184,7 +199,7 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
             <div class="wide"><label for="rejectReason">Reject reason<input id="rejectReason" name="rejectReason" required maxlength="2000" value={slipValues.rejectReason} aria-invalid={invalid('rejectReason')} aria-describedby={describedBy('rejectReason')} /></label>{err('rejectReason') && <p class="field-error" id="rejectReason-error">{err('rejectReason')}</p>}</div>
             <div class="wide"><label for="remarks">Detailed remarks<textarea id="remarks" name="remarks" maxlength="4000">{slipValues.remarks}</textarea></label></div>
           </div>
-          <p class="hint">After creation, issue the slip to start approval tracking: Supervisor, QC Manager, Factory Director. You record each real-world approval as a confirmation — it is not an electronic signature by the approver.</p>
+          <p class="hint">After creation, issue the slip to start approval tracking. You record each real-world approval as a confirmation — it is not an electronic signature by the approver and it never changes what the system records as PASS or RELEASED.</p>
         </fieldset>
       ) : (
         <fieldset>
@@ -219,9 +234,15 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
     </form>
   ) : (
     <section class="denied" role="alert">
-      <h2>Creation is not available</h2>
-      <p>Your account does not have the Reject Reports create permission.</p>
+      <h2>You cannot create reject reports yet</h2>
+      <p>
+        Your account does not have the create permission for reject reports. Ask an administrator
+        to grant it — in a provisioned environment every active operational role has it by default.
+      </p>
+      <p><a href="/reject-reports">Back to reject reports</a></p>
     </section>
+  )}
+    </>
   )}
 </AppLayout>
 

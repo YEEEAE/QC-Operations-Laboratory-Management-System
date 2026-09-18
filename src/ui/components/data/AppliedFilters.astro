@@ -1,0 +1,102 @@
+---
+interface FilterChip {
+  label: string;
+  value: string;
+  /** Link that removes this single filter while preserving the others. */
+  href: string;
+}
+interface Props {
+  filters?: readonly FilterChip[];
+  clearHref?: string;
+  /** Shown when no filter is applied, e.g. “Showing everything in your scope”. */
+  note?: string;
+}
+const { filters = [], clearHref, note } = Astro.props;
+---
+{
+  filters.length ? (
+    <div class="applied-filters" role="group" aria-label="Applied filters">
+      <span class="applied-label">Filtered by</span>
+      <ul>
+        {filters.map((filter) => (
+          <li>
+            <a
+              href={filter.href}
+              aria-label={`Remove filter ${filter.label}: ${filter.value}`}
+            >
+              <span class="chip-label">{filter.label}</span>
+              <span class="chip-value">{filter.value}</span>
+              <span class="chip-remove" aria-hidden="true">
+                ×
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      {clearHref && (
+        <a class="clear-filters" href={clearHref}>
+          Clear all filters
+        </a>
+      )}
+    </div>
+  ) : note ? (
+    <p class="filter-note">{note}</p>
+  ) : null
+}
+<style>
+  .applied-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    font-size: 0.8125rem;
+  }
+  .applied-label {
+    color: var(--text-muted);
+  }
+  .applied-filters ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .applied-filters a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding-inline: 10px;
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .chip-label {
+    color: var(--text-muted);
+  }
+  .chip-value {
+    font-weight: 600;
+  }
+  .chip-remove {
+    font-size: 0.875rem;
+    line-height: 1;
+    color: var(--text-muted);
+  }
+  .applied-filters a:hover .chip-remove,
+  .applied-filters a:focus-visible .chip-remove {
+    color: var(--status-danger);
+  }
+  .clear-filters {
+    color: var(--color-accent-primary-hover);
+    text-decoration: underline;
+  }
+  .filter-note {
+    margin: 0 0 var(--space-4);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+</style>

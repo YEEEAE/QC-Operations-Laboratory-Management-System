@@ -10,7 +10,7 @@ const hasPermission = (code: string) => actor.permissions.some((grant) => grant.
 ---
 
 <AppLayout title={`${task.taskNo} · Tasks`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">T3 RECORD WORKSPACE</p><h1>{task.title}</h1><p class="lede">{task.taskNo} · Version {task.version.toString()}</p></div><a href="/tasks">Back to tasks</a></section>
+  <section class="page-head"><div><p class="eyebrow">Task</p><h1>{task.title}</h1><p class="lede">{task.taskNo} · Version {task.version.toString()}</p></div><a href="/tasks">Back to tasks</a></section>
   <div class="grid">
     <section class="panel"><h2>Overview</h2><dl><dt>State</dt><dd>{task.state}</dd><dt>Priority</dt><dd>{task.priority}</dd><dt>Assignee</dt><dd>{task.currentAssigneeId ?? 'Unassigned'}</dd><dt>Due date</dt><dd>{task.dueAt?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not set'}</dd></dl><p>{task.description ?? 'No description.'}</p></section>
     <section class="panel"><h2>Checklist</h2>{task.checklist.length ? <ul>{task.checklist.map((item) => <li><span>{item.completed ? 'Complete:' : 'Pending:'}</span> {item.label}{item.required ? ' (required)' : ''}</li>)}</ul> : <p>No checklist items.</p>}</section>

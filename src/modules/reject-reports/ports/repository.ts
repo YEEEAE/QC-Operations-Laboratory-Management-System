@@ -44,7 +44,23 @@ export interface RejectReportAnalytics {
   rejectPctTrend: readonly { date: string; rejectPct: number | null }[];
 }
 
+/**
+ * Environment-level availability signal for the Reject Reports module.
+ *
+ * The module owns four tables added by migration `0026`. When a deployment's
+ * database is behind the deployed build the register fails closed instead of
+ * surfacing a database error, and the UI can say so honestly. No internal
+ * schema detail is exposed beyond a stable reason code.
+ */
+export interface RejectReportAvailability {
+  available: boolean;
+  reason?: 'SCHEMA_NOT_READY';
+}
+
 export interface RejectReportRepository {
+  /** Read-only probe; never mutates state. */
+  availability(): Promise<RejectReportAvailability>;
+
   createIssueSlip(input: {
     actor: ActorContext;
     requestId: string;

@@ -14,7 +14,7 @@ const canCreate = actor.permissions.some((permission) => permission.active !== f
 ---
 <AppLayout title="Change Requests · QC Operations" locale="en" direction="ltr">
   <section class="page-head">
-    <div><p class="eyebrow">GOV-CHG-001 · CONTROLLED CHANGE REGISTER</p><h1>Change Requests</h1><p class="lede">Proposed changes are versioned, reviewed, and audited. Approval does not rewrite the target record automatically.</p></div>
+    <div><p class="eyebrow">Change requests</p><h1>Change Requests</h1><p class="lede">Proposed changes are versioned, reviewed, and audited. Approval does not rewrite the target record automatically.</p></div>
     {canCreate && <a class="button" href="/change-requests/new">New change request</a>}
   </section>
   <form class="filters" method="get" aria-label="Change request filters">

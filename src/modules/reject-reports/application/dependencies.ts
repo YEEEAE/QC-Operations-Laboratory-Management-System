@@ -16,10 +16,12 @@ import { GetDailyRejectUseCase } from './get-daily-reject.js';
 import { ListDailyRejectsUseCase } from './list-daily-rejects.js';
 import { VoidRejectReportUseCase } from './void-reject-report.js';
 import { GetRejectDashboardUseCase } from './get-reject-dashboard.js';
+import { GetRejectReportAvailabilityUseCase } from './get-reject-report-availability.js';
 
 export function rejectReportReadDependencies() {
   const repository = new PostgresRejectReportRepository(getDatabase());
   return {
+    availability: new GetRejectReportAvailabilityUseCase(repository),
     getIssueSlip: new GetIssueSlipUseCase(repository),
     listIssueSlips: new ListIssueSlipsUseCase(repository),
     getDailyReject: new GetDailyRejectUseCase(repository),

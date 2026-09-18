@@ -5,6 +5,51 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-016 remediation)
+
+- **2026-09-18 — QC-CLOSURE-004 / Identity, RBAC, roles, scopes, and owner-grant integrity**
+  - Changed: added forward migration `0024` for active-role uniqueness and strict canonical scope values; repository now prevents a non-`yazeed` SYSTEM_OWNER grant and validates normalized bulk/provisioned scopes; added PostgreSQL lifecycle/RBAC/concurrency regression suite.
+  - Evidence: typecheck 0 errors; focused identity/RBAC unit 32/32, full unit 76/491, lint, format, architecture, and diff check PASS. PostgreSQL suite and live migration remain BLOCKED (Docker/runtime and approved disposable DATABASE_URL unavailable).
+  - State: PARTIAL / BLOCKED.
+
+- **2026-09-18 — Project Mind rollover**
+  - Changed: moved ten oldest ledger records to `02-mind-mid.md` to retain the live mind at its operating limit.
+  - Evidence: archived records were copied before removal.
+  - State: DONE.
+
+- **2026-09-18 — QC-CLOSURE-002 / Extensible Route, Module & Page Architecture**
+  - Changed: introduced typed page visibility and canonical route integrity checks; registered existing orphaned pages and bound navigation references to canonical route IDs.
+  - Evidence: targeted routing/navigation unit tests, route-file architecture gate, and typecheck PASS (Node 22 is outside the runtime contract).
+  - State: DONE (local source contract; no production/UAT claim).
+
+- **2026-09-18 — Project Mind rollover**
+  - Changed: moved eight obsolete historical ledger entries to `02-mind-mid.md` to keep the live mind under its soft limit.
+  - Evidence: archived entries were verified before removal.
+  - State: DONE.
+
+- **2026-09-17 — QC-CLOSURE-AI-011 / AI Advisory Safety and Evaluation Closure**
+  - Changed: شدّدنا fail-safe للإدخال/الإخراج، حفظ source identity، واختبار عدم الوصول إلى controlled mutation authority؛ dataset v2 يغطي الحالات المطلوبة ويعرّف المقاييس.
+  - Evidence: deterministic AI suite `41/41 PASS`; provider/model/external data policy وUAT بقيت `BLOCKED`.
+  - State: PARTIAL.
+  - Key files: `audit/2026-09-17-qc-closure-ai-011-evidence.md`، `audit/100-percent/ai-evals/deterministic-eval-dataset.json`.
+
+## Rollover from 01 — 2026-09-18 (QC-100-FINAL-016)
+
+- **2026-09-17 — QC-CLOSURE-NFR-010 / Production Non-Functional Evidence Closure**
+  - Changed: أضيف سجل موحد للأمن وسلسلة التوريد والخصوصية والأداء والـobservability والوصول، مربوط بـexact SHA/build، مع budgets مقترحة وحدود evidence صريحة.
+  - Evidence: frozen install وlock integrity و37 focused tests وbuild/release verification وlocal HTTP security checks PASS؛ Docker/PostgreSQL، dependency audit، CI، authenticated E2E، provider/live performance، وmanual AT بقيت BLOCKED/UNVERIFIED.
+  - State: PARTIAL.
+  - Key files: `audit/2026-09-17-qc-nfr-010-production-nfr-evidence.md`.
+- **2026-09-17 — QC-CLOSURE-POLICY-009 / Canonical policy closure matrix**
+  - Changed: أُغلقت فقط قرارات P-05 authority slices وP-06 وP-07؛ أضيفت مصفوفة canonical وسير controlled configuration، وبقيت قرارات QMS/provider/data-instance مفتوحة.
+  - Evidence: targeted unit 43/43 PASS؛ architecture PASS؛ لا UAT/provider/live production claim.
+  - State: PARTIAL.
+  - Key files: `audit/100-percent/POLICY-CLOSURE-MATRIX.md` والوثائق المعيارية المرتبطة.
+
+- **[2026-09-17] — QC-CLOSURE-E2E-006: Authenticated Critical Workflow E2E Closure** — مسار الإغلاق والأدلة الآلية صار جاهزًا وقابلًا للتشغيل، لكن لم تُنفذ الرحلات المصادق عليها فعليًا لأن PostgreSQL 18 يحتاج Docker runtime غير متوفر على هذا المضيف.
+- **[2026-09-17] — QC-CLOSURE-UI-BG-005: Restore Approved Fixed System Lottie Background Safely** — الخلفية الثابتة تعمل كطبقة زخرفية آمنة على الأسطح المصادق عليها، مع fallback مضمون وعدم تغيير CSP أو خلفية login.
+- **[2026-09-17] — QC-CLOSURE-CI-004: Exact-HEAD Verification CI Closure** — بوابات الكود القابلة للتشغيل محليًا خضراء بعد إصلاحات السبب الجذري، لكن لا يمكن إعلان GitHub exact-HEAD GREEN قبل تشغيل Docker/E2E في CI وحل قفل الفوترة وتعطيل Pages خارجيًا.
+
 ## Rollover from 01 — 2026-09-18 (QC-YAZEED-CONTROL-CENTER-001)
 
 - **[2026-09-10] — إعداد سيناريوهات UX وخطة اختبار قابلية الاستخدام بدون ادعاءات بحثية** — صارت خطة الاختبار والسيناريوهات جاهزة للتنفيذ على بيانات synthetic، مع منع ترقية فرضيات UX إلى findings قبل وجود ملاحظة أو قياس صالح.

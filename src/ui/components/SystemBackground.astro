@@ -1,11 +1,14 @@
 ---
 // Decorative-only treatment for authenticated operational workspaces.
-// The static CSS treatment remains the safe first frame and the failure path.
-// The player is initialized only after the critical page has had an idle turn.
+//
+// Owner decision (QC-100-FINAL-016 remediation): the dotLottie layer is dropped.
+// It could never render under the production CSP (`default-src 'self'` without
+// `unsafe-eval` blocks the WASM player), so every authenticated page paid four
+// console errors plus ~2.4 MB of discarded transfer. The approved gradient +
+// grid treatment below is the whole background: zero script, zero extra
+// requests, and it is the same first frame the player used to fall back to.
 ---
-<div class="system-background" data-system-background aria-hidden="true" data-motion="static">
-  <canvas class="system-background__canvas" data-system-background-canvas aria-hidden="true"></canvas>
-</div>
+<div class="system-background" data-system-background aria-hidden="true" data-motion="static"></div>
 
 <style>
   .system-background {
@@ -20,24 +23,6 @@
       radial-gradient(60% 75% at 18% 14%, rgb(109 158 103 / 8%), transparent 66%),
       radial-gradient(55% 70% at 92% 86%, rgb(80 112 82 / 7%), transparent 72%),
       var(--color-canvas-deep);
-  }
-
-  .system-background__canvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    max-inline-size: none;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 280ms ease-out;
-  }
-
-  .system-background[data-motion='animated'] .system-background__canvas {
-    opacity: 0.42;
   }
 
   .system-background::before,
@@ -61,98 +46,7 @@
     background: rgb(16 19 16 / 72%);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .system-background__canvas { display: none; }
-    .system-background[data-motion='animated'] .system-background__canvas { opacity: 0; }
-  }
-
   @media print {
     .system-background { display: none; }
   }
 </style>
-
-<script>
-  // @ts-nocheck -- the player is loaded progressively and its browser API is runtime-only.
-  const root = document.querySelector<HTMLElement>('[data-system-background]');
-  const canvas = root?.querySelector<HTMLCanvasElement>('[data-system-background-canvas]');
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let player = null;
-  let initHandle: number | null = null;
-  let destroyed = false;
-
-  const setStaticFallback = () => {
-    if (!root) return;
-    root.dataset.motion = 'static';
-    canvas?.remove();
-  };
-
-  const destroyPlayer = async () => {
-    destroyed = true;
-    if (initHandle !== null) {
-      window.cancelIdleCallback?.(initHandle);
-      window.clearTimeout(initHandle);
-      initHandle = null;
-    }
-    if (!player) return;
-    const current = player;
-    player = null;
-    try { await current.destroy(); } catch { /* the CSS fallback remains usable */ }
-    setStaticFallback();
-  };
-
-  const initialize = async () => {
-    initHandle = null;
-    if (!root || !canvas || destroyed || reducedMotion.matches || player) return;
-    try {
-      const { DotLottie } = await import('@lottiefiles/dotlottie-web');
-      DotLottie.setWasmUrl('/assets/dotlottie-player.wasm');
-      const current = new DotLottie({
-        canvas,
-        src: '/assets/background.lottie',
-        autoplay: true,
-        loop: true,
-        backgroundColor: 'transparent',
-        layout: { fit: 'cover', align: [0.5, 0.5] },
-        renderConfig: {
-          autoResize: true,
-          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.25),
-          freezeOnOffscreen: true,
-          quality: 70,
-        },
-      });
-      player = current;
-      const fail = () => {
-        if (player !== current) return;
-        void destroyPlayer();
-      };
-      current.addEventListener('loadError', fail);
-      current.addEventListener('renderError', fail);
-      current.addEventListener('ready', () => {
-        if (player === current && !reducedMotion.matches) root.dataset.motion = 'animated';
-      });
-    } catch {
-      setStaticFallback();
-    }
-  };
-
-  const scheduleInitialize = () => {
-    if (reducedMotion.matches || destroyed || initHandle !== null) return;
-    if ('requestIdleCallback' in window) {
-      initHandle = window.requestIdleCallback(() => void initialize(), { timeout: 2500 });
-    } else {
-      initHandle = window.setTimeout(() => void initialize(), 1200);
-    }
-  };
-
-  const onMotionPreferenceChange = () => {
-    if (reducedMotion.matches) void destroyPlayer();
-    else {
-      destroyed = false;
-      scheduleInitialize();
-    }
-  };
-
-  reducedMotion.addEventListener?.('change', onMotionPreferenceChange);
-  window.addEventListener('pagehide', () => void destroyPlayer(), { once: true });
-  if (!reducedMotion.matches) scheduleInitialize();
-</script>

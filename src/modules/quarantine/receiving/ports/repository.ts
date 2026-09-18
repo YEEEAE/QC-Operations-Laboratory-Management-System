@@ -11,6 +11,10 @@ export interface ReceivingRepository {
   list(i: {
     actor: ActorContext;
     state?: ReceivingItem['workflowState'];
+    /** Canonical inspection-result filter (NOT_STARTED | PASS | FAIL | HOLD). */
+    inspectionResult?: ReceivingItem['inspectionResult'];
+    /** Canonical release-system filter: RELEASED or NOT_RELEASED. */
+    releaseState?: 'RELEASED' | 'NOT_RELEASED';
   }): Promise<readonly ReceivingItem[]>;
   updateDraft(i: {
     id: string;

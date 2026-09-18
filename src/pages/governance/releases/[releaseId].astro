@@ -9,7 +9,7 @@ const { candidate, evidence } = model;
 ---
 <AppLayout title="Production release approval · Governance" locale="en" direction="ltr">
   <main class="release-shell">
-    <p class="eyebrow">GOVERNANCE</p><h1>Production release approval</h1>
+    <h1>Production release approval</h1>
     {candidate ? <>
       <p class="lede">Release {candidate.releaseId} · State: {candidate.state} · Version: {candidate.version.toString()}</p>
       <dl class="identity"><div><dt>Git SHA</dt><dd>{candidate.gitSha}</dd></div><div><dt>Build ID</dt><dd>{candidate.buildId}</dd></div><div><dt>Application version</dt><dd>{candidate.applicationVersion}</dd></div><div><dt>Migration head</dt><dd>{candidate.migrationHead}</dd></div><div><dt>UAT cycle</dt><dd>{candidate.uatCycleId}</dd></div></dl>

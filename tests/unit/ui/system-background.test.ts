@@ -9,8 +9,6 @@ const login3dPath = new URL(
   import.meta.url,
 );
 const packagePath = new URL('../../../package.json', import.meta.url);
-const wasmPath = new URL('../../../public/assets/dotlottie-player.wasm', import.meta.url);
-const lottiePath = new URL('../../../public/assets/background.lottie', import.meta.url);
 
 describe('system background contracts', () => {
   it('serves an explicit local favicon from the shared document head', () => {
@@ -24,36 +22,27 @@ describe('system background contracts', () => {
     expect(component).toContain('pointer-events: none');
     expect(component).toContain('position: fixed');
     expect(component).toContain('z-index: 0');
-    expect(component).toContain('data-system-background-canvas');
     expect(component).toContain('z-index: 2');
   });
 
-  it('uses the pinned official local dotLottie runtime with a static fallback', () => {
+  // QC-100-FINAL-016 P2-14: the dotLottie layer never rendered under the
+  // production CSP (no `unsafe-eval`) and cost ~2.4 MB per page. The owner
+  // decided to drop the layer and keep the gradient treatment.
+  it('renders the static gradient treatment without any Lottie runtime or asset request', () => {
     const component = readFileSync(componentPath, 'utf8');
     expect(component).toContain('data-motion="static"');
     expect(component).toContain('radial-gradient');
-    expect(component).toContain('@lottiefiles/dotlottie-web');
-    expect(component).toContain("'/assets/background.lottie'");
-    expect(component).toContain("'/assets/dotlottie-player.wasm'");
-    expect(component).toContain('setWasmUrl');
+    expect(component).not.toContain('@lottiefiles/dotlottie-web');
+    expect(component).not.toContain('background.lottie');
+    expect(component).not.toContain('dotlottie-player.wasm');
+    expect(component).not.toContain('setWasmUrl');
+    expect(component).not.toContain('<script');
+    expect(component).not.toContain('data-system-background-canvas');
     expect(component).not.toMatch(/https?:\/\//);
     const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as {
       dependencies: Record<string, string>;
     };
     expect(packageJson.dependencies['@lottiefiles/dotlottie-web']).toBe('0.80.0');
-    expect(existsSync(lottiePath)).toBe(true);
-    expect(existsSync(wasmPath)).toBe(true);
-  });
-
-  it('lazy-initializes once, respects reduced motion, and cleans up on page hide', () => {
-    const component = readFileSync(componentPath, 'utf8');
-    expect(component).toContain('requestIdleCallback');
-    expect(component).toContain("matchMedia('(prefers-reduced-motion: reduce)')");
-    expect(component).toContain('current.destroy()');
-    expect(component).toContain("window.addEventListener('pagehide'");
-    expect(component).toContain("current.addEventListener('loadError'");
-    expect(component).toContain("current.addEventListener('renderError'");
-    expect(component).toContain('setStaticFallback');
   });
 
   it('keeps the operational content layer above the background through the shared layout', () => {
