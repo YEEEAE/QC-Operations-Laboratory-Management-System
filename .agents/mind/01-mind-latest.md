@@ -6,7 +6,15 @@
 
 ## Current audit reality — 2026-09-18
 
+- QC-CLOSURE-016 manual browser preflight is recorded in `audit/2026-09-18-qc-closure-016-real-uat-human-validation.md`. The live login page, unauthenticated protected-route redirects, and safe invalid-login recovery were observed manually; no real Employee/Inspector/Supervisor/Manager/Administrator/yazeed participant session, approved staging/UAT environment, authenticated workflow, mobile session, or human sign-off was available. UAT remains **BLOCKED / UNVERIFIED**; preflight is not UAT evidence.
+
 - QC-CLOSURE-015 evidence is recorded in `audit/2026-09-18-qc-closure-015-backup-restore-deployment-production-evidence.md`. A real local PostgreSQL 18.6 logical backup and restore passed on 77 tables / 29 migrations with 0 unvalidated FKs; negative recovery cases fail closed. Populated audit/signature/evidence/session/release-record recovery is not verified because the disposable dataset had zero rows in those tables. `qclevel.top` live/readiness GET checks returned 200 and TLS was valid, but deployed release identity, runtime environment, logs, and provider backup/retention/PITR/WAL/RPO/RTO remain **NOT VERIFIED / BLOCKED / POLICY DECISION REQUIRED**.
+- **2026-09-18 — QC-CLOSURE-016 / Real UAT, Usability & Human Validation**
+  - Changed: recorded manual live preflight observations and the complete required persona/scenario coverage as blocked; no fabricated participant results or sign-off were added to the UAT CSV templates.
+  - Evidence: login page, anonymous `/dashboard`, `/system/health`, `/system/control-center` redirects, and safe invalid-login recovery observed through the browser. Real human role sessions, authenticated workflows, mobile use, stale-data recovery, and authorized sign-off remain unavailable.
+  - State: PARTIAL / BLOCKED.
+  - Key files: `audit/2026-09-18-qc-closure-016-real-uat-human-validation.md`.
+
 - **2026-09-18 — QC-CLOSURE-015 / Backup, Restore, Deployment & Production Evidence**
   - Changed: added exact local backup/restore evidence and a disposable PostgreSQL portability setting (`dynamic_shared_memory_type = 'mmap'`) required on this host.
   - Evidence: PostgreSQL 18.6 dump `282,954` bytes, SHA-256 captured, restore parity `77/77` tables, ledger `29/29`, FK validation `0` invalid, focused recovery/catalog/health `35/35 PASS`; live domain/TLS/health verified. Production identity, provider capabilities, and populated controlled-record recovery remain unverified.
