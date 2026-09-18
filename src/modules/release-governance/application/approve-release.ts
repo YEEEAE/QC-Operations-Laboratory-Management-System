@@ -44,6 +44,20 @@ export class ApproveReleaseUseCase {
     void authority;
     const candidate = await this.repository.getCandidate(input.releaseId.trim());
     if (!candidate) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+
+    // Idempotent replay must be resolved before any state, version, or
+    // authority evaluation: a retried command whose approval already committed
+    // is not an invalid transition, and the repository is the owner of that
+    // decision. A reused request id with different command content still fails
+    // closed with CONFLICT_DUPLICATE_COMMAND.
+    const replayed = await this.repository.resolveReplay({
+      candidate,
+      requestId: input.requestId.trim(),
+      expectedVersion: input.expectedVersion,
+      actor: input.actor,
+    });
+    if (replayed) return replayed;
+
     if (candidate.state !== 'PENDING')
       throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
 

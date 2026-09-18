@@ -26,6 +26,9 @@ const MEMBER_ID = '01900000-0000-7000-8000-00000000c002';
 const OWNER_ID = '01900000-0000-7000-8000-00000000c003';
 
 let pool: ReturnType<typeof createPool> | undefined;
+// Kysely's `destroy()` ends the pool it was handed, so the query layer gets its
+// own pool and ownership of each pool stays unambiguous at teardown.
+let readerPool: ReturnType<typeof createPool> | undefined;
 let db: Kysely<DatabaseSchema>;
 
 const actor = (permission: ActorContext['permissions'][number]['code']): ActorContext => ({
@@ -37,10 +40,9 @@ const actor = (permission: ActorContext['permissions'][number]['code']): ActorCo
 });
 
 beforeAll(async () => {
-  pool = createPool({
-    connectionString: getTestDatabaseUrl(await startPostgresContainer()),
-    max: 8,
-  });
+  const container = await startPostgresContainer();
+  const databaseUrl = getTestDatabaseUrl(container);
+  pool = createPool({ connectionString: databaseUrl, max: 8 });
   await pool.query('DROP SCHEMA IF EXISTS qc CASCADE');
   await pool
     .query(
@@ -50,7 +52,8 @@ beforeAll(async () => {
     )
     .catch(() => undefined);
   await migrate({ pool });
-  db = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) });
+  readerPool = createPool({ connectionString: databaseUrl, max: 8 });
+  db = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: readerPool }) });
   await pool.query(
     `INSERT INTO qc.users (id, login_identity, display_name, password_hash)
      VALUES ($1, 'identity-admin', 'Identity Admin', 'hash:admin'),
@@ -67,6 +70,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db?.destroy();
+  await readerPool?.end().catch(() => undefined);
   await pool?.end().catch(() => undefined);
   await stopPostgresContainer();
 });
@@ -249,6 +253,64 @@ describe('identity and RBAC PostgreSQL contracts', () => {
     await expect(sessions.resolve(third.token)).rejects.toMatchObject({
       code: 'AUTH_SESSION_REVOKED',
     });
+  });
+
+  it('leaves no half-committed grant when the audit write fails inside the transaction', async () => {
+    const repository = new PostgresAuthorizationRepository(db, new PostgresAuditRepository(db));
+    const role = await pool!.query<{ id: string }>(
+      `INSERT INTO qc.roles (code, name, is_system_role)
+       VALUES ('ATOMIC_AUDIT_TEST', 'Atomic audit test role', false)
+       RETURNING id`,
+    );
+    const requestId = 'rbac-atomic-audit-failure';
+
+    // The grant and its audit event are written in one transaction. Failing the
+    // audit must roll the grant back, not leave an unaudited privilege change.
+    await pool!.query(`
+      CREATE OR REPLACE FUNCTION qc.test_fail_atomic_role_audit() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.request_id = 'rbac-atomic-audit-failure' THEN
+          RAISE EXCEPTION 'injected audit failure';
+        END IF;
+        RETURN NEW;
+      END $$ LANGUAGE plpgsql;
+      CREATE TRIGGER test_fail_atomic_role_audit
+        BEFORE INSERT ON qc.audit_events
+        FOR EACH ROW EXECUTE FUNCTION qc.test_fail_atomic_role_audit();
+    `);
+
+    try {
+      await expect(
+        repository.assignUserRole({
+          userId: MEMBER_ID,
+          roleId: role.rows[0].id,
+          actorId: ADMIN_ID,
+          requestId,
+        }),
+        // Proves the abort happened at the injected audit step, after the
+        // user_roles grant row had already been written in the transaction.
+      ).rejects.toThrow(/injected audit failure/);
+
+      const active = await db
+        .selectFrom('user_roles')
+        .select(({ fn }) => fn.countAll<number>().as('count'))
+        .where('user_id', '=', MEMBER_ID)
+        .where('role_id', '=', role.rows[0].id)
+        .where('revoked_at', 'is', null)
+        .executeTakeFirstOrThrow();
+      expect(Number(active.count)).toBe(0);
+
+      const audits = await pool!.query<{ count: number }>(
+        'SELECT count(*)::int AS count FROM qc.audit_events WHERE request_id = $1',
+        [requestId],
+      );
+      expect(audits.rows[0].count).toBe(0);
+    } finally {
+      await pool!.query(`
+        DROP TRIGGER IF EXISTS test_fail_atomic_role_audit ON qc.audit_events;
+        DROP FUNCTION IF EXISTS qc.test_fail_atomic_role_audit();
+      `);
+    }
   });
 
   it.each(['OWN', 'ASSIGNED', 'GLOBAL'] as const)(

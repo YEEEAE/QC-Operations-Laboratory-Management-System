@@ -98,6 +98,7 @@ function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = tr
   return {
     getCandidate: vi.fn(async () => current),
     getEvidence: vi.fn(async () => evidence),
+    resolveReplay: vi.fn(async () => undefined),
     approve: vi.fn(async (input: Parameters<ReleaseGovernanceRepository['approve']>[0]) => ({
       id: 'approval-1',
       releaseId: current.releaseId,
@@ -118,8 +119,25 @@ function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = tr
   } as unknown as ReleaseGovernanceRepository & {
     getCandidate: ReturnType<typeof vi.fn>;
     approve: ReturnType<typeof vi.fn>;
+    resolveReplay: ReturnType<typeof vi.fn>;
   };
 }
+
+const storedApproval = {
+  id: 'approval-replayed',
+  releaseId: RELEASE_ID,
+  approvedBy: 'mgr-1',
+  authority: 'MANAGER' as const,
+  gitSha: GIT_SHA,
+  buildId: candidate.buildId,
+  applicationVersion: candidate.applicationVersion,
+  migrationHead: candidate.migrationHead,
+  uatStatus: 'ACCEPTED',
+  residualRiskStatus: 'ACCEPTED',
+  signatureEvidenceId: 'signature-replayed',
+  approvedAt: new Date('2026-09-10T00:00:00Z'),
+  requestId: 'req-replay',
+};
 
 const verifier: ReauthenticationVerifier = { verify: vi.fn(async () => true) };
 
@@ -413,6 +431,39 @@ describe('reauthentication and signature ceremony', () => {
         requestId: 'req-badsecret',
       }),
     ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
+    expect(repo.approve).not.toHaveBeenCalled();
+  });
+
+  it('replays an already-committed approval instead of re-evaluating its state', async () => {
+    // The candidate has already transitioned, so a state-first implementation
+    // would reject the retry with DOMAIN_INVALID_TRANSITION. A retried command
+    // with the same request id must return the committed outcome.
+    const repo = makeRepo({ state: 'RELEASE_APPROVED', version: 4n });
+    repo.resolveReplay.mockResolvedValueOnce(storedApproval);
+    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+      ...baseInput(),
+      expectedVersion: 4n,
+      requestId: 'req-replay',
+    });
+    expect(result).toEqual(storedApproval);
+    expect(repo.resolveReplay).toHaveBeenCalledWith(
+      expect.objectContaining({ requestId: 'req-replay', expectedVersion: 4n }),
+    );
+    expect(repo.approve).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when a reused request id does not match the committed command', async () => {
+    const repo = makeRepo({ state: 'RELEASE_APPROVED', version: 4n });
+    repo.resolveReplay.mockRejectedValueOnce(
+      Object.assign(new Error('duplicate'), { code: 'CONFLICT_DUPLICATE_COMMAND' }),
+    );
+    await expect(
+      new ApproveReleaseUseCase(repo, verifier).execute({
+        ...baseInput(),
+        expectedVersion: 4n,
+        requestId: 'req-replay',
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_DUPLICATE_COMMAND' });
     expect(repo.approve).not.toHaveBeenCalled();
   });
 

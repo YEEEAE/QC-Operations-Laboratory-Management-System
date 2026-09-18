@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createPool } from '../../../src/shared/database/pool.js';
-import { migrate } from '../../../scripts/db/migrate.js';
+import { loadMigrations, migrate } from '../../../scripts/db/migrate.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
@@ -32,8 +32,10 @@ describe('supported migration upgrade path', () => {
     );
     expect(result.applied).toEqual([]);
     expect(after.rows).toEqual(before.rows);
+    // Derived from the migration directory so a new forward migration cannot
+    // silently invalidate this contract.
     expect(
       (await pool!.query('SELECT count(*)::int AS count FROM qc.schema_migrations')).rows[0].count,
-    ).toBe(19);
+    ).toBe((await loadMigrations()).length);
   });
 });

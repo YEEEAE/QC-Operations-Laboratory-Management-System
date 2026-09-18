@@ -135,6 +135,99 @@ describe('release governance PostgreSQL concurrency and idempotency', () => {
     expect(auditsAfter).toBe(1);
   });
 
+  it('fails closed when a reused request id carries different command content', async () => {
+    const releaseId = await createCandidate(`fingerprint-${Date.now()}`);
+    const requestId = `rel-fingerprint-${Date.now()}`;
+    await useCase().execute({
+      actor: manager(),
+      releaseId,
+      expectedVersion: 1n,
+      reauthenticationSecret: 'secret',
+      requestId,
+    });
+    // Same request id, different expected version: the fingerprint no longer
+    // matches the committed command, so the replay must not be returned.
+    await expect(
+      useCase().execute({
+        actor: manager(),
+        releaseId,
+        expectedVersion: 2n,
+        reauthenticationSecret: 'secret',
+        requestId,
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_DUPLICATE_COMMAND' });
+    expect(
+      (
+        await pool!.query<{ count: number }>(
+          'SELECT count(*)::int AS count FROM qc.release_approvals WHERE request_id = $1',
+          [requestId],
+        )
+      ).rows[0].count,
+    ).toBe(1);
+  });
+
+  it('leaves no half-committed state when a later step of the approval transaction fails', async () => {
+    const releaseId = await createCandidate(`atomic-${Date.now()}`);
+    const requestId = `rel-atomic-${Date.now()}`;
+    const count = async (table: string, column: string, value: string): Promise<number> =>
+      Number(
+        (
+          await pool!.query<{ count: number }>(
+            `SELECT count(*)::int AS count FROM ${table} WHERE ${column} = $1`,
+            [value],
+          )
+        ).rows[0].count,
+      );
+
+    // Inject the failure at the audit write: it happens inside the approval
+    // transaction after the signature, the approval row, and the candidate
+    // state transition have all been written. A single atomic transaction must
+    // leave none of them behind.
+    await pool!.query(`
+      CREATE OR REPLACE FUNCTION qc.test_fail_release_approve_audit() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.action = 'RELEASE_APPROVE' THEN
+          RAISE EXCEPTION 'injected audit failure';
+        END IF;
+        RETURN NEW;
+      END $$ LANGUAGE plpgsql;
+      CREATE TRIGGER test_fail_release_approve_audit
+        BEFORE INSERT ON qc.audit_events
+        FOR EACH ROW EXECUTE FUNCTION qc.test_fail_release_approve_audit();
+    `);
+
+    try {
+      await expect(
+        useCase().execute({
+          actor: manager(),
+          releaseId,
+          expectedVersion: 1n,
+          reauthenticationSecret: 'secret',
+          requestId,
+        }),
+        // Proves the abort happened at the injected step, i.e. after the
+        // signature, approval, and state transition had already been written.
+      ).rejects.toThrow(/injected audit failure/);
+
+      const candidate = await pool!.query<{ state: string; version: string }>(
+        'SELECT state, version FROM qc.release_candidates WHERE id = $1',
+        [releaseId],
+      );
+      expect(candidate.rows[0]).toEqual({ state: 'PENDING', version: '1' });
+      expect(await count('qc.release_approvals', 'release_id', releaseId)).toBe(0);
+      expect(await count('qc.electronic_signatures', 'request_id', requestId)).toBe(0);
+      expect(await count('qc.audit_events', 'request_id', requestId)).toBe(0);
+      expect(
+        await count('qc.idempotency_records', 'key', `RELEASE:APPROVE:${releaseId}:${requestId}`),
+      ).toBe(0);
+    } finally {
+      await pool!.query(`
+        DROP TRIGGER IF EXISTS test_fail_release_approve_audit ON qc.audit_events;
+        DROP FUNCTION IF EXISTS qc.test_fail_release_approve_audit();
+      `);
+    }
+  });
+
   it('rejects a stale expected version without mutating the candidate', async () => {
     const releaseId = await createCandidate(`stale-${Date.now()}`);
     await expect(

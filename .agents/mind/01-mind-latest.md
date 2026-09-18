@@ -6,11 +6,18 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `be88fe92d383cc1db91f1e1cb4bee31d11f49adb` on `main`. The working tree contains uncommitted `QC-CLOSURE-004` identity/RBAC integrity changes; no commit, push, or deployment occurred.
-- Fresh local evidence on this HEAD + working tree: typecheck (`736 files`, 0 errors/0 warnings), lint, format, architecture, unit (`76 files / 491 tests`), and `git diff --check` are **PASS**. Migration `0024_identity_rbac_grant_integrity` and real PostgreSQL integration coverage were added but runtime execution is **BLOCKED**; migration-integrity requires an approved disposable `DATABASE_URL` and Testcontainers has no Docker runtime.
-- Node is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker remains **unavailable** (missing `~/.docker/run/docker.sock`), so PostgreSQL/Testcontainers suites and authenticated E2E are **BLOCKED**; UAT remains unexecuted.
+- Exact current HEAD: `587e807619d9b9e606e22d5bce992ee9f2617a20` on `main`. The working tree contains uncommitted `QC-CLOSURE-005` PostgreSQL/migration/transaction changes; no commit, push, or deployment occurred. Migration head is `0024_identity_rbac_grant_integrity` (24 files, committed).
+- Fresh local evidence on this HEAD + working tree: typecheck (`736 files`, 0 errors/0 warnings), lint, format, architecture, build, unit (`76 files / 497 tests`), and `git diff --check` are **PASS**. Database runtime now executes against a disposable PostgreSQL **18.6** cluster: `db:preflight` PASS (0 applied / 24 pending on an empty database), `db:migrate` applied `0001…0024` with `pending []`, `db:schema:check` 24 migrations / 70 tables / **0 orphans**, `test:integration` `80 files / 314 tests` PASS, `test:migrations` `6 files / 22 tests` PASS, `test:concurrency` `2 files / 12 tests` PASS.
+- Node is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker remains **unavailable** (missing `~/.docker/run/docker.sock`), so the **Testcontainers/Docker image path and authenticated E2E remain unexecuted**; UAT remains unexecuted. PostgreSQL suites are no longer blocked: `scripts/db/disposable-postgres.sh` provisions a local PG18 cluster (own `.tmp/` PGDATA, port `55432`, throwaway TLS CA so `sslmode=verify-full` satisfies the canonical policy) and feeds tests via `QC_TEST_DATABASE_URL`.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+
+## [2026-09-18] — QC-CLOSURE-005 / PostgreSQL, migrations, transactions & integrity
+
+- Changed: added `scripts/db/disposable-postgres.sh` (approved equivalent disposable PostgreSQL 18 environment for hosts without Docker) and an opt-in `{ tls: true }` mode on the shared test-container helper; fixed two runtime-proven product defects — `PERM-IDN-REVOKE-SESSIONS` had no policy-registry entry (so administrative session revocation was permanently `AUTHZ_DENIED`), and `ApproveReleaseUseCase` evaluated candidate state before idempotency replay (so retrying a committed approval failed with `DOMAIN_INVALID_TRANSITION` instead of replaying); replaced drifted hard-coded migration counts with expectations derived from `loadMigrations()`; corrected test-harness defects (container bypassing `QC_TEST_DATABASE_URL`, TLS-requiring operator script fed a non-TLS URL, Kysely `destroy()` ending the suite-owned pool); added two injected-failure atomicity proofs (release approval and role grant leave no half-committed state).
+- Evidence: empty PG 18.6 → `0001…0024`, `pending []`, schema check 24/70/0 orphans; integration 80 files / 314 PASS (was 6 failed files), migrations 6 files / 22 PASS (was 3 failed), concurrency 12 PASS; static gates and `build` PASS. Details in `audit/2026-09-18-qc-closure-005-postgres-runtime-integrity.md`.
+- State: PARTIAL — Docker/Testcontainers image path, authenticated E2E, UAT, CI and provider evidence remain unexecuted; Node 22 is outside contract.
+- Key files: `scripts/db/disposable-postgres.sh`, `src/shared/authorization/policy-registry.ts`, `src/modules/release-governance/{ports/repository.ts,application/approve-release.ts,infrastructure/postgres-repository.ts}`, `tests/helpers/postgres-container.ts`.
 
 ## [2026-09-18] — QC-CLOSURE-001 / baseline, CI, and repository hygiene
 
@@ -203,6 +210,7 @@
 - `SCOPE_KINDS` في `src/shared/authorization/types.ts` هو المفردات القانونية الوحيدة (تُستهلك في actions/pages/persistence)؛ `normalizeScopeValue` يفرض القيمة على TEAM/DEPARTMENT/SITE/DOMAIN ويمنعها على GLOBAL.
 - جدولا `user_roles` و`user_scopes` بلا version column، فلا يوجد expectedVersion عليهما؛ optimistic concurrency يبقى على `users` (profile/activate/disable/reset password) ولا يُخترع فحص وهمي.
 - لا يجوز مصادقة use case على permission مسجّل بنوع كيان مختلف؛ `PERM-ADM-ROLE-VIEW`+VIEW مسجّل على `ROLE` (كان bug في `ListUserRolesUseCase`).
+- كل permission معتمد يجب أن يملك سياسة مسجّلة في `policy-registry.ts`؛ `PERM-IDN-REVOKE-SESSIONS` كان غائبًا تمامًا فكان `RevokeUserSessionsUseCase` مرفوضًا دائمًا بـ`AUTHZ_DENIED`. السياسة الحالية: `REVOKE_SESSIONS` على `USER` بحالات `ACTIVE`/`INACTIVE`/`DISABLED`.
 
 ### Operational visibility
 - كل صفحة تطبيق عادية ظاهرة وقابلة للفتح لأي حساب `ACTIVE` ومصادق؛ التنقل يستهلك قرار رؤية المسار نفسه، وليس permissions الخاصة بالـmutation.
@@ -228,6 +236,7 @@
 - الأدلة غير الموثوقة/الناقصة/القديمة/الموقعة لإصدار آخر أو UAT غير الموقع تتحول إلى `UNVERIFIED` fail-closed.
 - صفحة `/governance/releases/[releaseId]` read-only للأدلة؛ لا checkboxes أو risk JSON قابل للتحرير.
 - قبل الاعتماد يعاد القفل والقراءة `FOR UPDATE` وإعادة الاشتقاق داخل transaction؛ أي اختلاف snapshot يرفض العملية.
+- إعادة إرسال نفس `requestId` للاعتماد تُحلّ **قبل** أي فحص state/version/authority وتُعيد النتيجة المخزّنة؛ نفس المعرّف بمحتوى مختلف يفشل بـ`CONFLICT_DUPLICATE_COMMAND`.
 - سلطة الاعتماد النهائي حسب السياسة المنفذة: Manager أو `yazeed`/SYSTEM_OWNER المسمى؛ Admin-only ليس سلطة اعتماد.
 - P-07 هو القرار الحالي المعتمد لهذه السلطة: Manager OR named `yazeed/SYSTEM_OWNER`, one signer; هذا إغلاق لقرار السلطة فقط وليس دليل Production/UAT/provider.
 - لا يوجد حتى الآن provider-ingestion خارجي مكتمل لـCI/Security/E2E/UAT؛ هذه فجوة integration وليست وظيفة المتصفح.
@@ -375,7 +384,7 @@
 ## 14) المشاكل المفتوحة الحالية — لا تعيد فتح المشاكل المغلقة تاريخيًا
 
 ### P0 / blocking evidence
-- Docker/Testcontainers/PostgreSQL runtime غير متوفر على المضيف المحلي.
+- Docker/Testcontainers غير متوفر على المضيف المحلي. (PostgreSQL 18 runtime صار متوفرًا محليًا عبر disposable cluster، لكن مسار Docker/image نفسه و authenticated E2E ما زالا غير منفذين.)
 - authenticated E2E لم يُنفذ فعليًا بعد.
 - GitHub Verification CI exact-HEAD غير مثبت بسبب billing lock.
 - Node المحلي خارج contract.
@@ -383,7 +392,7 @@
 - UAT غير منفذ؛ production readiness غير مثبت.
 
 ### P1 / live validation
-- تشغيل migration status ورأس قاعدة البيانات الفعلي على بيئة مناسبة.
+- تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
 - backup catalog + artifact + isolated restore drill.
@@ -408,6 +417,8 @@
 ## 17) سجل تاريخي مضغوط
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+
+- **2026-09-18 — Project Mind rollover (QC-CLOSURE-005)** — نُقلت 23 من أقدم سجلات `[2026-09-10]` إلى `02-mind-mid.md` للبقاء تحت soft limit؛ تُحقق من وجود كل سجل في الأرشيف قبل حذفه، ولم تُنقل أي قرارات حالية أو مشاكل مفتوحة. الحالة: DONE.
 
 - **2026-09-18 — QC-CLOSURE-004 / Identity, RBAC, roles, scopes, and owner-grant integrity**
   - Changed: added forward migration `0024` for active-role uniqueness and strict canonical scope values; repository now prevents a non-`yazeed` SYSTEM_OWNER grant and validates normalized bulk/provisioned scopes; added PostgreSQL lifecycle/RBAC/concurrency regression suite.
@@ -474,26 +485,3 @@
 - **[2026-09-10] — تدقيق واجهة التفويض والرؤية مقابل AVD (fail-closed)** — denial anonymous والحدود الدلالية الأساسية واضحة، لكن AVD universal operational visibility غير منعكس بالكامل في navigation، والتحقق المصادق لكل الشخصيات ما اكتمل.
 - **[2026-09-10] — إصلاح motion والأداء وتقسيم Three.js في login** — الحركة الزخرفية الثقيلة خرجت من authenticated workspaces، و3D login بقي محفوظًا لكن صار مؤجلًا وlazy وموقوفًا مع reduced motion، مع تثبيت Three.js وإزالة fallback API مكسور.
 - **[2026-09-10] — تدقيق motion/performance للـSystemBackground وThree.js login على الإنتاج** — التصميم الحالي محافظ على fallback آمن وواجهة login قابلة للعمل بدون WebGL، لكن لا يوجد claim أن الحركة حسّنت الأداء. الأولوية التالية: تفسير سبب fallback، pin exact لـThree.js إذا اعتمدت سياسة المستودع، وخفض TTFB على mobile قبل أي إزالة للـ3D.
-- **[2026-09-10] — Standardize complete mutation UX without weakening server controls (ui-ux-pro-max)** — العقد الموحد مطبق محليًا على كل أسطح الـmutation المطلوبة مع بقاء التفويض الخادمي وآلات الحالة والتزامن المتفائل والتدقيق وPOST الاحتياطي، لكن الدليل الحي الكامل (JS/no-JS/bطء/نقر مزدوج/stale/auth/dependency/success) يحتاج نشرًا ثم إعادة فحص Chrome على المرشح المنشور.
-- **[2026-09-10] — WCAG 2.2 AA closure pass: laboratory table scopes (read-only live evidence + one local presentation fix)** — إصلاح عرضي واحد مثبت محليًا، مع إغلاق قراءة فقط موثق، لكن لا يوجد ادعاء امتثال كامل `WCAG 2.2 AA`.
-- **[2026-09-10] — إصلاح بنية التنقل الجامع وحماية الداشبورد من استبدال الشل (universal shell repair)** — بنية الشل الجامع مُصلحة ومحروسة بالاختبارات محليًا بلا تغيير تفويض، لكن الإثبات الحي الكامل للمصفوفة ما زال مفتوحًا.
-- **[2026-09-10] — إضافة سطر حالة تحت كل برومبت + جدول متابعة رئيسي (complete-prompts)** — كل برومبت صار تحته سطر حالة واحد `☐/✅` وجدول متابعة رئيسي بالأعلى؛ الملف سليم البنية.
-- **[2026-09-10] — تدقيق عقد التوكنز البصرية والتباين (visual-token audit, fail-closed)** — عقد التوكنز العام سليم (صفر undefined عامة) والنص المصاحب للحالة وتطابق الوثائق محققان، لكن تباين النص العادي ما زال فاشلًا في 9 تركيبات معروضة (badges released/danger/review/neutral وdanger-on-panel/raised وmuted-on-raised وpill-bad وwhite-buttons) فيحتاج قرار مالك على الباليت قبل أي PASS؛ لم تُدخل عربي ولم يُكسر dark-only ولم يحدث commit/push/deploy.
-- **[2026-09-10] — تدقيق UI/UX Pro Max المستقل + معالجة P0 الآمنة (MASTER + Prompts 1–9 جزئيًا)** — 4/10 Pro Max مغلقة بالكامل و4/10 جزئية و2/10 مفتوحة؛ التباين الستي والعدّادات الحقيقية والتحقق الحي الكامل على نفس SHA المنشور ما زالت تمنع APPROVE.
-- **[2026-09-10] — تنفيذ Prompt 15 (C-07..C-12) بنفس جلسة Chrome وهوية بناء ثابتة: ‏0/6 PASS و1 FAIL** — C-07 ‏NOT VERIFIED‏ وC-08 ‏NOT VERIFIED‏ وC-09 ‏FAIL‏ وC-10 ‏NOT VERIFIED‏ وC-11 ‏NOT VERIFIED‏ وC-12 ‏NOT VERIFIED‏ (‏0/6 PASS‏)؛ كسر واحد يمنع ‏12/12‏ ويمنع أي مقياس حي من بلوغ ‏100%‏.
-- **[2026-09-10] — تنفيذ Prompt 14 (C-01..C-06) في Chrome: الكل NOT VERIFIED لبوابة الهوية** — C-01 وC-02 وC-03 وC-04 وC-05 وC-06 كلها `NOT VERIFIED` (‏0/6 PASS و0 FAIL) لأن هوية Prompt 12 غائبة على المنشور (`UNVERIFIED` ولا تطابق SHA المحلي) ولا توجد fixtures أدوار سالبة/موجبة ولا مصادقة جديدة مشهودة في هذه الجولة؛ الملاحظات السطحية الإيجابية لا تُحتسب PASS.
-- **[2026-09-10] — تجهيز حسابات وفيكستشرز التحقق الآمنة ومصفوفة C-12 (Prompt 13)** — فيكستشرز Prompt 13 والمصفوفة والتحقق السالب/الموجب جاهزة ومحروسة، لكن C-12 نفسه يبقى `NOT VERIFIED` حتى تشغيل البذرة على بيئة non-production وتنفيذ المواصفة المصادقة على نفس هوية البناء المنشورة.
-- **[2026-09-10] — سطح هوية البناء المصادق وتحقق C-11 المقفل على الفشل (Prompt 12)** — آلية C-11 مكتملة ومحروسة (سطح مصادق + متحقق fail-closed + عينتا بداية/نهاية)، لكن C-11 نفسه يبقى `NOT VERIFIED` حتى نشر نفس SHA بهوية محقونة (wiring الـCI/Render اليدوي) وتنفيذ الجزء المصادق من المواصفة.
-- **[2026-09-10] — سجل إغلاق ثابت 15 بندًا على مرشح واحد (Prompt 11: كلها OPEN، ‏0.0%)** — السجل الثابت مكتمل ومربوط بمرشح واحد، لكن الإغلاق ‏0/15‏ لأن الدليل الحي لنفس البناء غائب؛ أي PASS سابق لبناء آخر لم يُرحّل.
-- **[2026-09-10] — تنفيذ حوكمة اعتماد إصدار الإنتاج (fail-closed, Manager أو yazeed)** — حوكمة الإصدار المقفلة على الفشل منفذة ومحروسة بالاختبارات والبناء، لكن الإثبات الحي (PG transaction حقيقي + E2E مصادق على مرشح إصدار حقيقي + migration مطبق على قاعدة اختبار) ما زال مفتوحًا.
-- **[2026-09-10] — تنفيذ P-05 authority matrix inline (دفعة أولى)** — نواة P-05 التنفيذية والمصفوفة الأساسية خضراء محليًا، لكن أدلة transaction/concurrency/rollback وPlaywright المصادق وتوثيق المصفوفات النهائية ما زالت مفتوحة.
-- **[2026-09-10] — إنشاء خطة تنفيذ P-05** — خطة P-05 جاهزة للتنفيذ task-by-task عبر subagent-driven development أو executing-plans، لكن التنفيذ نفسه لم يبدأ.
-- **[2026-09-10] — اعتماد وتصميم P-05 authority matrix** — مواصفة P-05 جاهزة للمراجعة قبل إنشاء خطة التنفيذ؛ التنفيذ لم يبدأ بعد التزامًا ببوابة التصميم.
-- **[2026-09-10] — استكشاف P-05 وتحديد فجوات authority matrix** — اتحدد نطاق P-05 وفجواته بدقة، لكن ما نقدر ننفذ بأمان قبل حسم التعارض بين Prompt 9 والوثائق التي ما زالت تسمي authority/retest/VOID `POLICY-DEPENDENT`.
-- **[2026-09-10] — تنفيذ P-04 لإغلاق CAPA بمسار Supervisor مضبوط** — مسار P-04 منفذ محليًا ومغطى باختبارات unit/domain/build وarchitecture، لكن إثبات PostgreSQL الفعلي وE2E المصادق لم يُنفذ، ولا يوجد commit أو push أو deploy.
-- **[2026-09-10] — تنفيذ الإصلاحات الأربعة لفجوات تحقق الإنتاج محليًا** — الإصلاحات الأربعة مضافة للكود ومحروسة بالاختبارات، لكن C-08/C-09/C-11 تحتاج نشرًا يدويًا ثم تحقق Chrome جديد، وC-12 يحتاج fixtures أدوار منفصلة.
-- **[2026-09-10] — استكمال تحقق Chrome الحي لبنود C-01 إلى C-12** — تم إغلاق C-06 وC-07 بالدليل الحي، لكن لا يزال التحقق الكامل 12/12 محجوبًا بسبب zoom، mobile drawer، fixtures، وdeployed release identity.
-- **[2026-09-10] — تشخيص أخطاء Console في جلسة Dashboard الحية** — الأخطاء ليست من نظام SVG؛ سببها favicon مفقود وCSP تمنع WASM الخاص بخلفية dotLottie.
-- **[2026-09-10] — تحقق حي من نسخة الموقع باستخدام yazeed** — نسخة الموقع الحية تحمل نظام SVG والنصوص الجديدة وتسجيل الدخول يعمل، لكن سلوك mobile drawer عند resize الحي يحتاج متابعة منفصلة قبل اعتباره مثبتًا.
-- **[2026-09-10] — محاولة تشغيل اختبارات الأيقونات ببيانات yazeed** — بيانات الدخول لم تُقبل على البيئة المحلية الحالية؛ يلزم تحديد بيئة/قاعدة تحتوي الحساب أو التحقق من بيانات الدخول قبل إعادة تشغيل المسارات المصادق عليها.
-- **[2026-09-10] — توحيد أيقونات SVG المحلية وتنظيف النسخ التشغيلية** — توحيد الأيقونات والنسخ وعقود الحماية مكتمل محليًا، لكن إثبات shell المصادق في المتصفح ينتظر fixture دخول، وحزمة Playwright العامة ما زالت تتأثر بعائق login headless المعروف.

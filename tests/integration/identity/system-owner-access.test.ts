@@ -19,7 +19,10 @@ describe('exclusive system-owner access', () => {
   let pool: Pool | undefined;
 
   beforeAll(async () => {
-    databaseUrl = getTestDatabaseUrl(await startPostgresContainer());
+    // `grantSystemOwnerAccess` connects through `getDatabaseConnectionConfig`,
+    // which requires an explicit, non-disabled sslmode, so this suite needs a
+    // disposable cluster that terminates TLS.
+    databaseUrl = getTestDatabaseUrl(await startPostgresContainer({ tls: true }));
     pool = createPool({ connectionString: databaseUrl, max: 5 });
     await migrate({ pool });
     await seedFoundationData(pool);
@@ -84,15 +87,24 @@ describe('exclusive system-owner access', () => {
     const row = await pool!.query<{ id: string }>(
       `SELECT id FROM qc.users WHERE login_identity = 'yazeed'`,
     );
-    const database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: pool! }) });
-    const resolved = await resolveActor(database, row.rows[0]!.id);
-    expect(row.rows[0]!.id).toMatch(/^[0-9a-f-]{36}$/i);
-    expect(resolved).toMatchObject({
-      id: row.rows[0]!.id,
-      loginIdentity: 'yazeed',
-      accountState: 'ACTIVE',
+    // Kysely's `destroy()` ends the pool it was given, so this reader gets its
+    // own pool: the suite-owned `pool` above must stay usable for the remaining
+    // tests and for teardown.
+    const readerPool = createPool({ connectionString: databaseUrl, max: 2 });
+    const database = new Kysely<DatabaseSchema>({
+      dialect: new PostgresDialect({ pool: readerPool }),
     });
-    await database.destroy();
+    try {
+      const resolved = await resolveActor(database, row.rows[0]!.id);
+      expect(row.rows[0]!.id).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(resolved).toMatchObject({
+        id: row.rows[0]!.id,
+        loginIdentity: 'yazeed',
+        accountState: 'ACTIVE',
+      });
+    } finally {
+      await database.destroy();
+    }
   });
 
   it('refuses to assign the exclusive role to a second account', async () => {

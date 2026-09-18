@@ -5,6 +5,7 @@ import { AppError } from '../../../shared/errors/app-error.js';
 import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type {
   ReleaseApprovalRecord,
+  ReleaseApprovalReplayInput,
   ReleaseCandidateRecord,
   ReleaseGovernanceRepository,
 } from '../ports/repository.js';
@@ -16,6 +17,73 @@ import {
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+// The idempotency key and command fingerprint are the single source of truth
+// for approval replay. They are shared by the pre-flight replay resolution and
+// the transactional write path so both agree on what "same command" means.
+function approvalIdempotencyKey(releaseId: string, requestId: string): string {
+  return `RELEASE:APPROVE:${releaseId}:${requestId}`;
+}
+
+function approvalFingerprint(input: {
+  releaseId: string;
+  expectedVersion: bigint;
+  actorId: string;
+  gitSha: string;
+  buildId: string;
+  applicationVersion: string;
+  migrationHead: string;
+}): string {
+  return createHash('sha256')
+    .update(
+      stableJson({
+        releaseId: input.releaseId,
+        expectedVersion: String(input.expectedVersion),
+        actorId: input.actorId,
+        gitSha: input.gitSha,
+        buildId: input.buildId,
+        applicationVersion: input.applicationVersion,
+        migrationHead: input.migrationHead,
+      }),
+    )
+    .digest('hex');
+}
+
+interface IdempotencyRecordRow {
+  request_fingerprint: string;
+  status: string;
+  response_payload: unknown;
+}
+
+function replayResult(
+  record: IdempotencyRecordRow | undefined,
+  fingerprint: string,
+): ReleaseApprovalRecord | undefined {
+  if (!record) return undefined;
+  if (record.request_fingerprint !== fingerprint) {
+    throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+  }
+  if (record.status === 'COMPLETED' && record.response_payload) {
+    return record.response_payload as ReleaseApprovalRecord;
+  }
+  throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+}
+
+function approvalReplayIdentity(input: {
+  releaseId: string;
+  requestId: string;
+  expectedVersion: bigint;
+  actorId: string;
+  gitSha: string;
+  buildId: string;
+  applicationVersion: string;
+  migrationHead: string;
+}): { key: string; fingerprint: string } {
+  return {
+    key: approvalIdempotencyKey(input.releaseId, input.requestId),
+    fingerprint: approvalFingerprint(input),
+  };
 }
 
 export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRepository {
@@ -98,38 +166,48 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
     };
   }
 
+  async resolveReplay(
+    input: ReleaseApprovalReplayInput,
+  ): Promise<ReleaseApprovalRecord | undefined> {
+    const { key, fingerprint } = approvalReplayIdentity({
+      releaseId: input.candidate.releaseId,
+      requestId: input.requestId,
+      expectedVersion: input.expectedVersion,
+      actorId: input.actor.id,
+      gitSha: input.candidate.gitSha,
+      buildId: input.candidate.buildId,
+      applicationVersion: input.candidate.applicationVersion,
+      migrationHead: input.candidate.migrationHead,
+    });
+    const record = await this.db
+      .selectFrom('idempotency_records')
+      .select(['request_fingerprint', 'status', 'response_payload'])
+      .where('key', '=', key)
+      .executeTakeFirst();
+    return replayResult(record, fingerprint);
+  }
+
   async approve(
     input: Parameters<ReleaseGovernanceRepository['approve']>[0],
   ): Promise<ReleaseApprovalRecord> {
-    const key = `RELEASE:APPROVE:${input.candidate.releaseId}:${input.requestId}`;
-    const fingerprint = createHash('sha256')
-      .update(
-        stableJson({
-          releaseId: input.candidate.releaseId,
-          expectedVersion: String(input.expectedVersion),
-          actorId: input.actor.id,
-          gitSha: input.candidate.gitSha,
-          buildId: input.candidate.buildId,
-          applicationVersion: input.candidate.applicationVersion,
-          migrationHead: input.candidate.migrationHead,
-        }),
-      )
-      .digest('hex');
+    const { key, fingerprint } = approvalReplayIdentity({
+      releaseId: input.candidate.releaseId,
+      requestId: input.requestId,
+      expectedVersion: input.expectedVersion,
+      actorId: input.actor.id,
+      gitSha: input.candidate.gitSha,
+      buildId: input.candidate.buildId,
+      applicationVersion: input.candidate.applicationVersion,
+      migrationHead: input.candidate.migrationHead,
+    });
     return this.db.transaction().execute(async (trx) => {
       const replay = await trx
         .selectFrom('idempotency_records')
-        .selectAll()
+        .select(['request_fingerprint', 'status', 'response_payload'])
         .where('key', '=', key)
         .executeTakeFirst();
-      if (replay) {
-        if (replay.request_fingerprint !== fingerprint) {
-          throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
-        }
-        if (replay.status === 'COMPLETED' && replay.response_payload) {
-          return replay.response_payload as ReleaseApprovalRecord;
-        }
-        throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
-      }
+      const replayed = replayResult(replay, fingerprint);
+      if (replayed) return replayed;
       await trx
         .insertInto('idempotency_records')
         .values({

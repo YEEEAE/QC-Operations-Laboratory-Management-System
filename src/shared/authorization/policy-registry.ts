@@ -350,6 +350,16 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['ACTIVE', 'INACTIVE', 'DISABLED'],
   },
   {
+    // Administrative session revocation (SECURITY-ARCHITECTURE §20): the
+    // explicit permission gates the action, so every account state remains a
+    // valid target — including INACTIVE/DISABLED accounts whose lingering
+    // sessions must still be killable.
+    permission: 'PERM-IDN-REVOKE-SESSIONS',
+    action: 'REVOKE_SESSIONS',
+    entityType: 'USER',
+    states: ['ACTIVE', 'INACTIVE', 'DISABLED'],
+  },
+  {
     permission: 'PERM-NOT-VIEW-OWN',
     action: 'VIEW',
     entityType: 'NOTIFICATION',

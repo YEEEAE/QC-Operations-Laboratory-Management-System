@@ -28,38 +28,16 @@ describe('database migration engine', () => {
       client.release();
     }
 
+    // The contract is "every migration file applies in lexical order", so the
+    // expectation is derived from the migration directory itself. A hard-coded
+    // version list silently drifts the moment a forward migration is added.
+    const migrations = await loadMigrations();
     const result = await migrate({ pool: pool! });
-    expect(result.applied).toEqual([
-      '0001',
-      '0002',
-      '0003',
-      '0004',
-      '0005',
-      '0006',
-      '0007',
-      '0008',
-      '0009',
-      '0010',
-      '0011',
-      '0012',
-      '0013',
-      '0014',
-      '0015',
-      '0016',
-      '0017',
-      '0018',
-      '0019',
-      '0020',
-      '0021',
-      '0022',
-      '0023',
-    ]);
+    expect(result.applied).toEqual(migrations.map((migration) => migration.version));
     const ledger = await pool!.query('SELECT version, name, checksum FROM qc.schema_migrations');
-    expect(ledger.rows).toHaveLength(23);
+    expect(ledger.rows).toHaveLength(migrations.length);
     expect(ledger.rows[0].checksum).toBe(
-      createHash('sha256')
-        .update((await loadMigrations())[0].sql)
-        .digest('hex'),
+      createHash('sha256').update(migrations[0].sql).digest('hex'),
     );
   });
 
@@ -75,12 +53,13 @@ describe('database migration engine', () => {
   });
 
   it('serializes concurrent migration runners with the advisory lock', async () => {
+    const expected = (await loadMigrations()).length;
     const [first, second] = await Promise.all([migrate({ pool }), migrate({ pool })]);
     expect(first.pending).toEqual([]);
     expect(second.pending).toEqual([]);
     expect(
       (await pool!.query('SELECT count(*)::int AS count FROM qc.schema_migrations')).rows[0].count,
-    ).toBe(23);
+    ).toBe(expected);
   });
 
   it('supports the current upgrade path as a no-op after the latest migration', async () => {

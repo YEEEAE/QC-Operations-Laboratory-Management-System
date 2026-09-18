@@ -73,3 +73,45 @@ describe('central authorization', () => {
     ).toMatchObject({ allowed: false, code: 'AUTHZ_SCOPE_DENIED' });
   });
 });
+
+// PERM-IDN-REVOKE-SESSIONS is an approved identity permission and
+// SECURITY-ARCHITECTURE §20 requires administrative revocation, including for
+// disabled accounts. A permission registered without a policy makes
+// RevokeUserSessionsUseCase permanently unreachable, so the contract is pinned
+// here as well as in the PostgreSQL suite.
+describe('administrative session revocation', () => {
+  const revokeActor = {
+    id: 'admin-1',
+    accountState: 'ACTIVE' as const,
+    roles: ['ADMIN'],
+    permissions: [{ code: 'PERM-IDN-REVOKE-SESSIONS' as const, scopes: ['GLOBAL' as const] }],
+  };
+  const revokeInput = (state: string, permissions = revokeActor.permissions) => ({
+    actor: { ...revokeActor, permissions },
+    permission: 'PERM-IDN-REVOKE-SESSIONS' as const,
+    action: 'REVOKE_SESSIONS' as const,
+    entity: { type: 'USER', id: 'member-1', state },
+    scope: {},
+    currentVersion: 1,
+    expectedVersion: 1,
+    businessCondition: true,
+  });
+
+  it.each(['ACTIVE', 'INACTIVE', 'DISABLED'])(
+    'allows an explicitly permitted revocation for an %s account',
+    (state) => {
+      expect(authorize(revokeInput(state))).toMatchObject({ allowed: true });
+    },
+  );
+
+  it('denies revocation without the explicit permission or with a stale version', () => {
+    expect(authorize(revokeInput('ACTIVE', []))).toMatchObject({
+      allowed: false,
+      code: 'AUTHZ_PERMISSION_MISSING',
+    });
+    expect(authorize({ ...revokeInput('ACTIVE'), expectedVersion: 2 })).toMatchObject({
+      allowed: false,
+      code: 'CONFLICT_STALE_VERSION',
+    });
+  });
+});
