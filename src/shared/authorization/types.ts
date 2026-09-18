@@ -27,8 +27,12 @@ export const NAMED_SCOPE_KINDS = [
   'DOMAIN',
 ] as const satisfies readonly ScopeKind[];
 
-/** GLOBAL is the whole-system grant: it is never qualified by a value. */
-export const VALUELESS_SCOPE_KINDS = ['GLOBAL'] as const satisfies readonly ScopeKind[];
+/** These scopes derive their target from actor/entity, so stored values are invalid. */
+export const VALUELESS_SCOPE_KINDS = [
+  'OWN',
+  'ASSIGNED',
+  'GLOBAL',
+] as const satisfies readonly ScopeKind[];
 
 export function isScopeKind(value: unknown): value is ScopeKind {
   return typeof value === 'string' && (SCOPE_KINDS as readonly string[]).includes(value);
@@ -49,7 +53,7 @@ export function normalizeScopeValue(
 ): { ok: true; value?: string } | { ok: false } {
   const trimmed = value?.trim() ?? '';
   if (scopeRequiresValue(kind)) return trimmed ? { ok: true, value: trimmed } : { ok: false };
-  if (kind === 'GLOBAL' && trimmed) return { ok: false };
+  if ((VALUELESS_SCOPE_KINDS as readonly string[]).includes(kind) && trimmed) return { ok: false };
   return trimmed ? { ok: true, value: trimmed } : { ok: true };
 }
 export type DecisionAction = string;

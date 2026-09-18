@@ -11,8 +11,15 @@ import type {
   UserScopeRecord,
 } from '../ports/authorization-repository.js';
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
-import { isProtectedOwnerScope } from '../../../shared/authorization/p05-authority.js';
-import { normalizeScopeValue, type ScopeKind } from '../../../shared/authorization/types.js';
+import {
+  isProtectedOwnerRoleGrant,
+  isProtectedOwnerScope,
+} from '../../../shared/authorization/p05-authority.js';
+import {
+  isScopeKind,
+  normalizeScopeValue,
+  type ScopeKind,
+} from '../../../shared/authorization/types.js';
 
 const role = (r: DatabaseRow<'roles'>): RoleRecord => ({
   id: r.id,
@@ -125,6 +132,25 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
     reason?: string;
   }) {
     await this.db.transaction().execute(async (tx) => {
+      const [target, assignedRole] = await Promise.all([
+        tx
+          .selectFrom('users')
+          .select(['id', 'login_identity'])
+          .where('id', '=', input.userId)
+          .executeTakeFirst(),
+        tx
+          .selectFrom('roles')
+          .select(['id', 'code', 'active'])
+          .where('id', '=', input.roleId)
+          .executeTakeFirst(),
+      ]);
+      if (!target || !assignedRole || !assignedRole.active)
+        throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      if (
+        assignedRole.code === 'SYSTEM_OWNER' &&
+        !isProtectedOwnerRoleGrant(target.login_identity, assignedRole.code)
+      )
+        throw new AppError('AUTHZ_DENIED', { userSafe: true });
       const result = await tx
         .insertInto('user_roles')
         .values({
@@ -133,7 +159,9 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
           assigned_by: input.actorId,
           reason: input.reason ?? null,
         })
-        .onConflict((oc) => oc.doNothing())
+        .onConflict((oc) =>
+          oc.columns(['user_id', 'role_id']).where('revoked_at', 'is', null).doNothing(),
+        )
         .executeTakeFirst();
       if ((result.numInsertedOrUpdatedRows ?? 0n) > 0n && this.audit)
         await this.auditFor(tx).append({
@@ -239,13 +267,23 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
   }
   async replaceUserScopes(input: Parameters<AuthorizationRepository['replaceUserScopes']>[0]) {
     return this.db.transaction().execute(async (tx) => {
+      const scopes = input.scopes.map((scope) => {
+        if (!isScopeKind(scope.kind)) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        const normalized = normalizeScopeValue(scope.kind, scope.value);
+        if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        return { kind: scope.kind, ...(normalized.value ? { value: normalized.value } : {}) };
+      });
+      if (
+        new Set(scopes.map((scope) => `${scope.kind}:${scope.value ?? ''}`)).size !== scopes.length
+      )
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
       const target = await tx
         .selectFrom('users')
         .select(['id', 'login_identity'])
         .where('id', '=', input.userId)
         .executeTakeFirst();
       if (!target) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-      if (target.login_identity === 'yazeed' && !input.scopes.some((s) => s.kind === 'GLOBAL'))
+      if (target.login_identity === 'yazeed' && !scopes.some((scope) => scope.kind === 'GLOBAL'))
         throw new AppError('AUTHZ_DENIED', { userSafe: true });
       await tx
         .updateTable('user_scopes')
@@ -253,11 +291,11 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
         .where('user_id', '=', input.userId)
         .where('revoked_at', 'is', null)
         .execute();
-      if (input.scopes.length)
+      if (scopes.length)
         await tx
           .insertInto('user_scopes')
           .values(
-            input.scopes.map((s) => ({
+            scopes.map((s) => ({
               id: uuidv7(),
               user_id: input.userId,
               scope_kind: s.kind,
@@ -275,7 +313,7 @@ export class PostgresAuthorizationRepository implements AuthorizationRepository 
           subjectId: input.userId,
           action: 'UPDATE_USER_SCOPES',
           requestId: input.requestId,
-          payload: { scopes: input.scopes },
+          payload: { scopes },
         });
       return (
         await tx

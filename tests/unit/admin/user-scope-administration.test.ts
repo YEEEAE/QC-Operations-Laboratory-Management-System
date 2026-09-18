@@ -252,6 +252,8 @@ describe('canonical scope vocabulary and owner protections', () => {
     expect(normalizeScopeValue('SITE', '')).toEqual({ ok: false });
     expect(normalizeScopeValue('GLOBAL', '')).toEqual({ ok: true });
     expect(normalizeScopeValue('GLOBAL', 'site-1')).toEqual({ ok: false });
+    expect(normalizeScopeValue('OWN', 'member-1')).toEqual({ ok: false });
+    expect(normalizeScopeValue('ASSIGNED', 'member-1')).toEqual({ ok: false });
   });
 
   it('protects the canonical owner role and GLOBAL scope only', () => {

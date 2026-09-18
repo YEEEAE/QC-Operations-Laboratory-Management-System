@@ -5,6 +5,7 @@ import type { User } from '../domain/user.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
+import { isScopeKind, normalizeScopeValue } from '../../../shared/authorization/types.js';
 const map = (r: DatabaseRow<'users'>): User => ({
   id: r.id as string,
   loginIdentity: r.login_identity,
@@ -36,16 +37,16 @@ export class PostgresUserRepository implements UserRepository {
         .execute();
       if (roles.length !== new Set(input.roleCodes).size)
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
-      for (const scope of input.scopes) {
-        if (
-          !['OWN', 'ASSIGNED', 'TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN', 'GLOBAL'].includes(
-            scope.kind,
-          ) ||
-          (['TEAM', 'DEPARTMENT', 'SITE', 'DOMAIN'].includes(scope.kind) && !scope.value?.trim()) ||
-          (scope.kind === 'GLOBAL' && scope.value)
-        )
-          throw new AppError('VALIDATION_FAILED', { userSafe: true });
-      }
+      const scopes = input.scopes.map((scope) => {
+        if (!isScopeKind(scope.kind)) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        const normalized = normalizeScopeValue(scope.kind, scope.value);
+        if (!normalized.ok) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        return { kind: scope.kind, ...(normalized.value ? { value: normalized.value } : {}) };
+      });
+      if (
+        new Set(scopes.map((scope) => `${scope.kind}:${scope.value ?? ''}`)).size !== scopes.length
+      )
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
       const row = await tx
         .insertInto('users')
         .values({
@@ -76,11 +77,11 @@ export class PostgresUserRepository implements UserRepository {
             })),
           )
           .execute();
-      if (input.scopes.length)
+      if (scopes.length)
         await tx
           .insertInto('user_scopes')
           .values(
-            input.scopes.map((s) => ({
+            scopes.map((s) => ({
               id: uuidv7(),
               user_id: input.id,
               scope_kind: s.kind,
@@ -97,7 +98,7 @@ export class PostgresUserRepository implements UserRepository {
         subjectId: input.id,
         action: 'CREATE_USER_PROVISIONED',
         requestId: input.requestId,
-        payload: { roleCodes: input.roleCodes, scopes: input.scopes },
+        payload: { roleCodes: input.roleCodes, scopes },
       });
       return map(row);
     });

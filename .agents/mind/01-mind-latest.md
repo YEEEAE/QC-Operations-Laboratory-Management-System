@@ -6,8 +6,8 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `5b1b7466d49e275eb655d6252ef9f1eb911d8426` on `main`. The working tree contains Task `QC-CLOSURE-001` fixes (format/lint and staged removal of four tracked `.DS_Store` files); no commit, push, or deployment occurred.
-- Fresh local evidence on this HEAD + working tree: frozen install, format, lint, typecheck (`732 files`, 0 errors/0 warnings), architecture, technical-debt contract, unit (`75 files / 485 tests`), build, and staged/unstaged `git diff --check` are all **PASS**. Release identity/verification is **PASS** for `rel-bdb926bef313c5c0`, build `qc-closure-001-5b1b7466`, source migration head `0023_uat_evidence` (checksum `a1ff60a7dbffbc8906b3f648f88a50bbeb96e63e45de8d4b8169f4235d1b2fd6`), and dirty working tree.
+- Exact current HEAD: `be88fe92d383cc1db91f1e1cb4bee31d11f49adb` on `main`. The working tree contains uncommitted `QC-CLOSURE-004` identity/RBAC integrity changes; no commit, push, or deployment occurred.
+- Fresh local evidence on this HEAD + working tree: typecheck (`736 files`, 0 errors/0 warnings), lint, format, architecture, unit (`76 files / 491 tests`), and `git diff --check` are **PASS**. Migration `0024_identity_rbac_grant_integrity` and real PostgreSQL integration coverage were added but runtime execution is **BLOCKED**; migration-integrity requires an approved disposable `DATABASE_URL` and Testcontainers has no Docker runtime.
 - Node is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence. Docker remains **unavailable** (missing `~/.docker/run/docker.sock`), so PostgreSQL/Testcontainers suites and authenticated E2E are **BLOCKED**; UAT remains unexecuted.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
@@ -409,6 +409,16 @@
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
 
+- **2026-09-18 — QC-CLOSURE-004 / Identity, RBAC, roles, scopes, and owner-grant integrity**
+  - Changed: added forward migration `0024` for active-role uniqueness and strict canonical scope values; repository now prevents a non-`yazeed` SYSTEM_OWNER grant and validates normalized bulk/provisioned scopes; added PostgreSQL lifecycle/RBAC/concurrency regression suite.
+  - Evidence: typecheck 0 errors; focused identity/RBAC unit 32/32, full unit 76/491, lint, format, architecture, and diff check PASS. PostgreSQL suite and live migration remain BLOCKED (Docker/runtime and approved disposable DATABASE_URL unavailable).
+  - State: PARTIAL / BLOCKED.
+
+- **2026-09-18 — Project Mind rollover**
+  - Changed: moved ten oldest ledger records to `02-mind-mid.md` to retain the live mind at its operating limit.
+  - Evidence: archived records were copied before removal.
+  - State: DONE.
+
 - **2026-09-18 — QC-CLOSURE-002 / Extensible Route, Module & Page Architecture**
   - Changed: introduced typed page visibility and canonical route integrity checks; registered existing orphaned pages and bound navigation references to canonical route IDs.
   - Evidence: targeted routing/navigation unit tests, route-file architecture gate, and typecheck PASS (Node 22 is outside the runtime contract).
@@ -487,13 +497,3 @@
 - **[2026-09-10] — تحقق حي من نسخة الموقع باستخدام yazeed** — نسخة الموقع الحية تحمل نظام SVG والنصوص الجديدة وتسجيل الدخول يعمل، لكن سلوك mobile drawer عند resize الحي يحتاج متابعة منفصلة قبل اعتباره مثبتًا.
 - **[2026-09-10] — محاولة تشغيل اختبارات الأيقونات ببيانات yazeed** — بيانات الدخول لم تُقبل على البيئة المحلية الحالية؛ يلزم تحديد بيئة/قاعدة تحتوي الحساب أو التحقق من بيانات الدخول قبل إعادة تشغيل المسارات المصادق عليها.
 - **[2026-09-10] — توحيد أيقونات SVG المحلية وتنظيف النسخ التشغيلية** — توحيد الأيقونات والنسخ وعقود الحماية مكتمل محليًا، لكن إثبات shell المصادق في المتصفح ينتظر fixture دخول، وحزمة Playwright العامة ما زالت تتأثر بعائق login headless المعروف.
-- **[2026-09-10] — استمرار تنفيذ F-11: تشغيل النسخ المحلي وتوثيق RPO/RTO** — زادت تغطية التنفيذ المحلي والتوثيق والواجهة، لكن F-11 ما زال `OPEN / PARTIAL` لأن catalog wiring الكامل، restore drill المعزول، وartifact حي بنفس deployed release لم تُثبت بعد.
-- **[2026-09-10] — تنفيذ Prompt 3 (F-10): دورة حياة قوالب الحجر بسياسة P-06** — دورة حياة القوالب كاملة بسياسة P-06 ومحروسة بالاختبارات السالبة/الموجبة وSoD والتزامن، لكن F-10 يبقى OPEN حتى دليل حي على نفس الـbuild المنشور.
-- **[2026-09-10] — تنفيذ Prompt 2: مسار سياقي مصرح به لإنشاء Change Request (DOCUMENT_VERSION)** — فورم Change Request صار سياقيًا مصرحًا بلا UUID/JSON ظاهرين، والقيم الحرجة تُشتق خادميًا مع فحص تزامن ذري، والقائمة المسموحة محروسة من المسارين الخام والسياقي.
-- **[2026-09-10] — تنفيذ BI-01: عزل خلفية درج الجوال في AppLayout** — عزل الدرج مطبق ومغطى ومثبت سلوكيًا على البناء المحلي، لكن الإغلاق الحي للإيجاد (C-09 على الإنتاج) ما زال `NOT VERIFIED` — يحتاج fixture مصادقة وbuild منشور.
-- **[2026-09-10] — استكمال برومبتات الوصول المثبت إلى 100% في تدقيق الإنتاج** — التقرير يغطي الآن كامل مسار جعل المقاييس الأربعة 100% بشكل قابل للإثبات، لكنه ما يدّعي تحققها قبل التنفيذ والنشر والفحص الحي.
-- **[2026-09-10] — تثبيت قرارات السياسة داخل تقرير التدقيق كبرومبتات فقط** — التقرير صار يحتوي القرارات النهائية وبرومبتات تنفيذية دقيقة بدون تطبيق تغييرات على النظام، وبقيت النسب كما هي لأنها ما زالت مرتبطة بأدلة التنفيذ الحقيقية.
-- **[2026-09-09] — إعادة تدقيق واجهة الإنتاج بنسب قابلة لإعادة الحساب** — التقرير صار صادقًا حسابيًا وقابلًا لإعادة الإنتاج، والجولة الحية أكدت الواقع بدل الاعتماد على تقدير؛ الحكم بقي `Needs changes` ولا توجد مطالبة 100% أو Production Ready.
-- **[2026-09-09] — دمج خلفية QC ثلاثية الأبعاد في صفحة /login فقط** — خلفية الدخول ثلاثية الأبعاد تعمل على `/login` فقط (desktop وmobile) مع بقاء المصادقة والعزل والتنظيف، وبلا commit أو push.
-- **[2026-09-09] — حزمة F-10 وF-11: سياسة ونشر مضبوطة بلا تغيير جاهزية** — الحزمة المضبوطة جاهزة كـ blocker متتبع: الجرد والفصل والرفض موثقة بدليل طازج، ولا مزود اختُرع ولا جاهزية تغيّرت.
-- **[2026-09-09] — إصلاح F-07: توحيد استعلام التدقيق بين Dashboard و/audit** — السطحان يقرآن الآن نفس العقد المعتمد بترتيب وmapping وترقيم موحد، وحدث GRANT المؤهل يظهر متطابقًا عليهما لنفس الفاعل المخوّل، مع بقاء حماية عدم التسريب وبلا payload/أسرار.
