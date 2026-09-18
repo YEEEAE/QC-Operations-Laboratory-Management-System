@@ -885,6 +885,52 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['CREATED', 'VERIFIED'],
   },
   { permission: 'PERM-HLTH-VIEW', action: 'VIEW', entityType: 'SYSTEM_HEALTH', states: ['ACTIVE'] },
+  // QC-REJECT-REPORTS-001: Reject Reports is a normal operational module.
+  // Every ACTIVE authenticated user can view (universal read) and create
+  // (baseline operational grant). Edits stay creator-owned while editable.
+  {
+    permission: 'PERM-RREJ-VIEW',
+    action: 'VIEW',
+    entityType: 'REJECT_REPORT',
+    states: ['DRAFT', 'ISSUED', 'APPROVAL_TRACKING', 'COMPLETED', 'FINALIZED', 'VOID'],
+  },
+  {
+    permission: 'PERM-RREJ-CREATE',
+    action: 'CREATE',
+    entityType: 'REJECT_REPORT',
+    states: ['DRAFT'],
+  },
+  {
+    permission: 'PERM-RREJ-EDIT',
+    action: 'UPDATE_DRAFT',
+    entityType: 'REJECT_REPORT',
+    states: ['DRAFT'],
+  },
+  { permission: 'PERM-RREJ-EDIT', action: 'ISSUE', entityType: 'REJECT_REPORT', states: ['DRAFT'] },
+  {
+    permission: 'PERM-RREJ-FINALIZE',
+    action: 'FINALIZE',
+    entityType: 'REJECT_REPORT',
+    states: ['DRAFT'],
+  },
+  {
+    permission: 'PERM-RREJ-VOID',
+    action: 'VOID',
+    entityType: 'REJECT_REPORT',
+    states: ['DRAFT', 'ISSUED', 'APPROVAL_TRACKING', 'FINALIZED'],
+  },
+  {
+    permission: 'PERM-RREJ-CONFIRM-APPROVAL',
+    action: 'CONFIRM',
+    entityType: 'ISSUE_SLIP_APPROVAL',
+    states: ['PENDING'],
+  },
+  {
+    permission: 'PERM-RREJ-ADMIN-CORRECT',
+    action: 'CORRECT',
+    entityType: 'ISSUE_SLIP_APPROVAL',
+    states: ['CONFIRMED'],
+  },
   ...(
     [
       { permission: 'PERM-AI-USE', action: 'USE' },

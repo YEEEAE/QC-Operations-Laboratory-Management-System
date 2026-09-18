@@ -58,6 +58,12 @@ const declaredNavigationGroups: Array<
         href: '/quality/capa',
         icon: 'capa',
       },
+      {
+        id: 'reject-reports',
+        label: 'Reject Reports',
+        href: '/reject-reports',
+        icon: 'reject-reports',
+      },
     ],
   },
   {
@@ -290,6 +296,7 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
   const sectionLabels: Record<string, { label: string; href?: string }> = {
     quality: { label: 'Quality', href: '/quality' },
     quarantine: { label: 'Quarantine', href: '/quarantine' },
+    'reject-reports': { label: 'Reject Reports', href: '/reject-reports' },
     laboratory: { label: 'Laboratory', href: '/laboratory' },
     assets: { label: 'Assets', href: '/assets' },
     documents: { label: 'Controlled documents', href: '/documents' },

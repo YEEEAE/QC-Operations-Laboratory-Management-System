@@ -1,0 +1,296 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
+import { dailyRejectTotals } from '../../../modules/reject-reports/application/view-model.js';
+
+const actor = Astro.locals.actor;
+if (!actor)
+  return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const reportId = Astro.params.reportId ?? '';
+const record = await rejectReportReadDependencies().getDailyReject.execute({ actor, reportId });
+const hasPermission = (code: string) =>
+  actor.permissions.some((grant) => grant.code === code && grant.active !== false);
+const isCreator = record.createdBy === actor.id;
+const canManage = isCreator && record.status === 'DRAFT';
+const totals = dailyRejectTotals(record.entries);
+const fmtDate = (d?: Date) =>
+  d ? d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+const fmtDateTime = (d?: Date) =>
+  d ? d.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+---
+
+<AppLayout title={`${record.reportNo} · Daily Reject Record`} locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">DAILY PRODUCTION &amp; REJECTION RECORD</p>
+      <h1>{record.reportNo}</h1>
+      <p class="lede">
+        Status: <strong class={`status status-${record.status.toLowerCase()}`}>{record.status}</strong>
+        · Version {record.version.toString()} · No approval confirmation is required for this record type.
+      </p>
+    </div>
+    <div class="head-actions">
+      <a href="/reject-reports">Back to Reject Reports</a>
+      <a href={`${Astro.url.pathname}?print=1`} target="_blank" rel="noopener">Print view</a>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Header</h2>
+      <dl>
+        <dt>Record date</dt><dd>{fmtDate(record.reportDate)}</dd>
+        <dt>Department / section</dt><dd>{record.department}</dd>
+        <dt>Shift</dt><dd>{record.shift ?? '—'}</dd>
+        <dt>Created by</dt><dd>{record.createdBy}</dd>
+        <dt>Created at</dt><dd>{fmtDateTime(record.createdAt)}</dd>
+        <dt>Finalized at</dt><dd>{fmtDateTime(record.finalizedAt)}</dd>
+        {record.voidedAt && (<><dt>Voided</dt><dd>{fmtDateTime(record.voidedAt)} · {record.voidReason}</dd></>)}
+      </dl>
+    </section>
+    <section class="panel">
+      <h2>Totals</h2>
+      <dl>
+        <dt>Aggregate reject quantity</dt><dd>{totals.totalRejectQty}</dd>
+        <dt>Aggregate good quantity</dt><dd>{totals.totalGoodQty}</dd>
+        <dt>Reject %</dt><dd>{totals.rejectPct === null ? '—' : `${totals.rejectPct}%`}</dd>
+        <dt>Entries</dt><dd>{record.entries.length}</dd>
+      </dl>
+      <p class="hint">Reject % = total reject quantity ÷ total good production quantity × 100 (computed server-side).</p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Entries</h2>
+    {record.entries.length ? (
+      <div class="table-wrap">
+        <table>
+          <caption>Production and rejection entries</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Machine</th>
+              <th scope="col">Item code</th>
+              <th scope="col">Description</th>
+              <th scope="col">Lot</th>
+              <th scope="col">BU/RM product</th>
+              <th scope="col">RM details</th>
+              <th scope="col">Pump out</th>
+              <th scope="col">Reject qty</th>
+              <th scope="col">Good qty</th>
+              <th scope="col">Reject %</th>
+              <th scope="col">Limit</th>
+              <th scope="col">Formula/BOM</th>
+              <th scope="col">Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {record.entries.map((entry) => (
+              <tr
+                class={entry.rejectPct !== null && entry.rejectLimit && entry.rejectPct > Number(entry.rejectLimit) ? 'over-limit' : ''}
+                data-entry={JSON.stringify({
+                  machineName: entry.machineName,
+                  itemCode: entry.itemCode,
+                  itemDescription: entry.itemDescription,
+                  lotNo: entry.lotNo,
+                  buRmProductName: entry.buRmProductName,
+                  rmDescription: entry.rmDescription,
+                  rmUnit: entry.rmUnit,
+                  rmLotNo: entry.rmLotNo,
+                  rmType: entry.rmType,
+                  pumpOutQty: entry.pumpOutQty,
+                  rejectQty: entry.rejectQty,
+                  goodQty: entry.goodQty,
+                  rejectLimit: entry.rejectLimit,
+                  productionFormula: entry.productionFormula,
+                  rejectReason: entry.rejectReason,
+                  analysis: entry.analysis,
+                })}
+              >
+                <td>{entry.position}</td>
+                <td>{entry.machineName ?? '—'}</td>
+                <td>{entry.itemCode ?? '—'}</td>
+                <td>{entry.itemDescription}</td>
+                <td>{entry.lotNo ?? '—'}</td>
+                <td>{entry.buRmProductName ?? '—'}</td>
+                <td>
+                  {[entry.rmDescription, entry.rmType, entry.rmLotNo, entry.rmUnit].filter(Boolean).join(' · ') || '—'}
+                </td>
+                <td>{entry.pumpOutQty ?? '—'}</td>
+                <td>{entry.rejectQty}</td>
+                <td>{entry.goodQty}</td>
+                <td>{entry.rejectPct === null ? '—' : `${entry.rejectPct}%`}</td>
+                <td>{entry.rejectLimit ?? '—'}</td>
+                <td>{entry.productionFormula ?? '—'}</td>
+                <td>{entry.rejectReason}{entry.analysis ? ` — ${entry.analysis}` : ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : <p class="empty">No entries yet. Add at least one entry before finalizing.</p>}
+  </section>
+
+  {canManage && (
+    <section class="panel">
+      <h2>Add entry</h2>
+      <form
+        class="form"
+        data-add-entry
+        data-version={record.version.toString()}
+        data-report-date={record.reportDate.toISOString()}
+        data-department={record.department}
+        data-shift={record.shift ?? ''}
+      >
+        <div class="fields">
+          <div><label for="machineName">Machine name<input id="machineName" name="machineName" maxlength="200" /></label></div>
+          <div><label for="itemCode">Item code<input id="itemCode" name="itemCode" maxlength="100" /></label></div>
+          <div class="wide"><label for="itemDescription">Material / product description<input id="itemDescription" name="itemDescription" required maxlength="1000" /></label></div>
+          <div><label for="lotNo">Lot number<input id="lotNo" name="lotNo" maxlength="100" /></label></div>
+          <div><label for="buRmProductName">BU &amp; RM product name<input id="buRmProductName" name="buRmProductName" maxlength="500" /></label></div>
+          <div><label for="rmDescription">Raw-material description<input id="rmDescription" name="rmDescription" maxlength="1000" /></label></div>
+          <div><label for="rmUnit">RM unit<input id="rmUnit" name="rmUnit" maxlength="50" /></label></div>
+          <div><label for="rmLotNo">RM lot number<input id="rmLotNo" name="rmLotNo" maxlength="100" /></label></div>
+          <div><label for="rmType">RM type<input id="rmType" name="rmType" maxlength="100" /></label></div>
+          <div><label for="pumpOutQty">Pump out qty<input id="pumpOutQty" name="pumpOutQty" type="number" min="0" step="any" /></label></div>
+          <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="number" min="0" step="any" required /></label></div>
+          <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="number" min="0" step="any" required /></label></div>
+          <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="number" min="0" step="any" /></label></div>
+          <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" /></label></div>
+          <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" /></label></div>
+          <div class="wide"><label for="analysis">Analysis / notes<textarea id="analysis" name="analysis" maxlength="4000"></textarea></label></div>
+        </div>
+        <div class="actions">
+          <button type="submit" data-submit>Add entry</button>
+          {record.entries.length > 0 && (
+            <button type="button" class="secondary" data-finalize data-version={record.version.toString()}>
+              Finalize record
+            </button>
+          )}
+        </div>
+        <p role="status" data-result tabindex="-1"></p>
+      </form>
+    </section>
+  )}
+
+  {record.status !== 'VOID' && record.status !== 'DRAFT' ? null : null}
+  {record.status !== 'VOID' && isCreator && hasPermission('PERM-RREJ-VOID') && (
+    <section class="panel actions">
+      <h2>Correction</h2>
+      <form class="inline-form" data-void-form data-version={record.version.toString()}>
+        <label class="sr-only" for="voidReason">Void reason</label>
+        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" />
+        <button type="submit" class="danger">Void record</button>
+      </form>
+      <p class="hint">Voiding never deletes history; the record stays visible as VOID with its reason and audit trail.</p>
+    </section>
+  )}
+</AppLayout>
+
+<script>
+  import { actions } from 'astro:actions';
+  const reportId = location.pathname.split('/').filter(Boolean).pop() ?? '';
+  const output = document.querySelector<HTMLElement>('[data-result]');
+  const fail = (message: string) => {
+    if (output) { output.textContent = message; output.focus?.(); }
+  };
+  const run = async (work: Promise<{ error?: unknown }>) => {
+    try {
+      const result = await work;
+      if (result.error) fail('The action was not applied. The record may have changed or authorization may have changed — refresh and try again if authorized.');
+      else location.reload();
+    } catch {
+      fail('The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.');
+    }
+  };
+  const addForm = document.querySelector<HTMLFormElement>('[data-add-entry]');
+  addForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(addForm);
+    const text = (key: string) => String(data.get(key) ?? '');
+    const opt = (key: string) => text(key) || undefined;
+    // Re-read current entries from the rendered table is fragile; instead the
+    // server replaces the entry set on draft update. We send the existing
+    // entries (hydrated from the DOM) plus the new one.
+    const existing: {
+      machineName?: string; itemCode?: string; itemDescription: string; lotNo?: string;
+      buRmProductName?: string; rmDescription?: string; rmUnit?: string; rmLotNo?: string;
+      rmType?: string; pumpOutQty?: string; rejectQty: string; goodQty: string;
+      rejectLimit?: string; productionFormula?: string; rejectReason: string; analysis?: string;
+    }[] = [];
+    document.querySelectorAll<HTMLTableRowElement>('[data-entry]').forEach((row) => {
+      existing.push(JSON.parse(row.dataset.entry ?? '{}'));
+    });
+    const entry = {
+      machineName: opt('machineName'), itemCode: opt('itemCode'),
+      itemDescription: text('itemDescription'), lotNo: opt('lotNo'),
+      buRmProductName: opt('buRmProductName'), rmDescription: opt('rmDescription'),
+      rmUnit: opt('rmUnit'), rmLotNo: opt('rmLotNo'), rmType: opt('rmType'),
+      pumpOutQty: opt('pumpOutQty'), rejectQty: text('rejectQty'),
+      goodQty: text('goodQty'), rejectLimit: opt('rejectLimit'),
+      productionFormula: opt('productionFormula'), rejectReason: text('rejectReason'),
+      analysis: opt('analysis'),
+    };
+    run(
+      actions.rejectReports.updateDailyRejectDraft({
+        reportId,
+        expectedVersion: BigInt(addForm.dataset.version || '0'),
+        reportDate: new Date(addForm.dataset.reportDate ?? Date.now()),
+        department: addForm.dataset.department ?? '',
+        shift: addForm.dataset.shift ? addForm.dataset.shift : undefined,
+        entries: [...existing, entry],
+      }),
+    );
+  });
+  document.querySelector<HTMLElement>('[data-finalize]')?.addEventListener('click', (event) => {
+    const button = event.currentTarget as HTMLElement;
+    run(actions.rejectReports.finalizeDailyReject({ reportId, expectedVersion: BigInt(button.dataset.version || '0') }));
+  });
+  document.querySelector<HTMLFormElement>('[data-void-form]')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    const reason = String(new FormData(form).get('reason') ?? '').trim();
+    if (!reason) { fail('A void reason is required.'); return; }
+    run(actions.rejectReports.voidReport({ reportId, expectedVersion: BigInt(form.dataset.version || '0'), reason }));
+  });
+</script>
+
+<style>
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);margin-bottom:var(--space-6)}
+  h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
+  .lede,.hint,.empty{color:var(--text-muted);font-size:.86rem}
+  .head-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
+  .panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}
+  h2{font-size:1rem;margin-top:0}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:600}
+  .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.82rem}
+  caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted)}
+  th,td{padding:.6rem;text-align:start;border-top:1px solid var(--color-border-subtle);vertical-align:top}
+  th{font-weight:700}
+  tr.over-limit td{background:color-mix(in srgb, var(--status-danger) 8%, transparent)}
+  .form{display:grid;gap:var(--space-4)}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+  .fields .wide{grid-column:1/-1}
+  label{display:grid;gap:.4rem;font-size:.85rem}
+  input,textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
+  textarea{min-height:5rem}
+  .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
+  .inline-form{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .inline-form input{padding:.5rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);min-width:12rem}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  button{padding:.6rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:#fff;font-weight:700}
+  button.secondary{background:transparent;color:var(--color-accent-primary-hover);border:1px solid var(--color-accent-primary)}
+  button.danger{background:var(--status-danger)}
+  .status{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
+  .status-finalized{color:var(--status-success,#047857)}
+  .status-void{color:var(--status-danger)}
+  a{color:var(--color-accent-primary-hover)}
+  @media(max-width:768px){.page-head,.grid,.fields{display:block}.fields > div{margin-bottom:var(--space-3)}}
+  @media print{
+    .head-actions,form,.actions{display:none!important}
+    body{background:#fff}
+    .panel{border-color:#999;break-inside:avoid}
+    table{font-size:.75rem}
+  }
+</style>

@@ -991,6 +991,82 @@ export interface UatAcceptancesTable {
   signed_at: Generated<Date>;
 }
 
+export interface RejectReportsTable {
+  id: Generated<string>;
+  report_no: string;
+  report_type: string;
+  report_date: Date;
+  department: string;
+  shift: string | null;
+  status: string;
+  issued_at: Date | null;
+  finalized_at: Date | null;
+  completed_at: Date | null;
+  voided_at: Date | null;
+  voided_by: string | null;
+  void_reason: string | null;
+  correction_of: string | null;
+  created_by: string;
+  created_at: Generated<Date>;
+  updated_by: string | null;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+
+export interface RejectIssueSlipsTable {
+  report_id: string;
+  goods_description: string | null;
+  item_code: string;
+  item_name: string;
+  lot_no: string | null;
+  unit: string;
+  rejected_qty: string | number;
+  unit_cost: string | number | null;
+  total_value: string | number | null;
+  reject_reason: string;
+  remarks: string | null;
+}
+
+export interface IssueSlipApprovalConfirmationsTable {
+  id: Generated<string>;
+  report_id: string;
+  approval_role: string;
+  status: Generated<string>;
+  approver_name: string | null;
+  confirmed_by: string | null;
+  confirmed_at: Date | null;
+  note: string | null;
+  evidence_file_id: string | null;
+  reversed_by: string | null;
+  reversed_at: Date | null;
+  reversal_reason: string | null;
+  version: Generated<bigint>;
+}
+
+export interface DailyRejectEntriesTable {
+  id: Generated<string>;
+  report_id: string;
+  position: number;
+  machine_name: string | null;
+  item_code: string | null;
+  item_description: string;
+  lot_no: string | null;
+  bu_rm_product_name: string | null;
+  rm_description: string | null;
+  rm_unit: string | null;
+  rm_lot_no: string | null;
+  rm_type: string | null;
+  pump_out_qty: string | number | null;
+  reject_qty: string | number;
+  good_qty: string | number;
+  reject_pct: string | number | null;
+  reject_limit: string | number | null;
+  production_formula: string | null;
+  reject_reason: string;
+  analysis: string | null;
+  version: Generated<bigint>;
+}
+
 export interface DatabaseSchema {
   schema_migrations: SchemaMigrationsTable;
   users: UsersTable;
@@ -1060,6 +1136,10 @@ export interface DatabaseSchema {
   uat_session_evidence: UatSessionEvidenceTable;
   uat_defects: UatDefectsTable;
   uat_acceptances: UatAcceptancesTable;
+  reject_reports: RejectReportsTable;
+  reject_issue_slips: RejectIssueSlipsTable;
+  issue_slip_approval_confirmations: IssueSlipApprovalConfirmationsTable;
+  daily_reject_entries: DailyRejectEntriesTable;
 }
 
 export type DatabaseRow<T extends keyof DatabaseSchema> = Selectable<DatabaseSchema[T]>;

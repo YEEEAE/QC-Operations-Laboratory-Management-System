@@ -29,6 +29,7 @@ export const UNIVERSAL_OPERATIONAL_READ_PERMISSIONS = [
   'PERM-SRCH-USE',
   'PERM-DASH-VIEW',
   'PERM-ADM-AUDIT-VIEW',
+  'PERM-RREJ-VIEW',
 ] as const satisfies readonly PermissionCode[];
 
 export function addUniversalOperationalReadPermissions(permissions: readonly PermissionGrant[]) {

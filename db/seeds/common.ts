@@ -205,6 +205,13 @@ export const APPROVED_PERMISSION_CODES = [
   'PERM-AI-SUGGEST',
   'PERM-AI-DRAFT',
   'PERM-AI-ADMIN',
+  'PERM-RREJ-VIEW',
+  'PERM-RREJ-CREATE',
+  'PERM-RREJ-EDIT',
+  'PERM-RREJ-CONFIRM-APPROVAL',
+  'PERM-RREJ-FINALIZE',
+  'PERM-RREJ-VOID',
+  'PERM-RREJ-ADMIN-CORRECT',
 ] as const;
 export type ApprovedPermissionCode = (typeof APPROVED_PERMISSION_CODES)[number];
 
@@ -243,6 +250,14 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-CHG-EDIT-DRAFT',
     'PERM-CHG-SUBMIT',
     'PERM-ADM-TEMPLATES',
+    // QC-REJECT-REPORTS-001: baseline operational access — every ACTIVE
+    // authenticated role can view and create both reject report types.
+    'PERM-RREJ-VIEW',
+    'PERM-RREJ-CREATE',
+    'PERM-RREJ-EDIT',
+    'PERM-RREJ-CONFIRM-APPROVAL',
+    'PERM-RREJ-FINALIZE',
+    'PERM-RREJ-VOID',
   ],
   SUPERVISOR: [
     'PERM-IDN-VIEW-SELF',
@@ -316,6 +331,13 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-ESIG-SIGN',
     'PERM-APR-APPROVE',
     'PERM-QUAR-RELEASE',
+    // QC-REJECT-REPORTS-001: baseline operational access (same as EMPLOYEE).
+    'PERM-RREJ-VIEW',
+    'PERM-RREJ-CREATE',
+    'PERM-RREJ-EDIT',
+    'PERM-RREJ-CONFIRM-APPROVAL',
+    'PERM-RREJ-FINALIZE',
+    'PERM-RREJ-VOID',
   ],
   MANAGER: [
     'PERM-IDN-VIEW-SELF',
@@ -367,6 +389,13 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-ESIG-SIGN',
     'PERM-APR-APPROVE',
     'PERM-QUAR-RELEASE',
+    // QC-REJECT-REPORTS-001: baseline operational access (same as EMPLOYEE).
+    'PERM-RREJ-VIEW',
+    'PERM-RREJ-CREATE',
+    'PERM-RREJ-EDIT',
+    'PERM-RREJ-CONFIRM-APPROVAL',
+    'PERM-RREJ-FINALIZE',
+    'PERM-RREJ-VOID',
   ],
   ADMIN: [
     'PERM-IDN-VIEW-SELF',
@@ -412,6 +441,15 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-CHG-EDIT-DRAFT',
     'PERM-CHG-SUBMIT',
     'PERM-RPT-ADMIN',
+    // QC-REJECT-REPORTS-001: baseline operational access plus the audited
+    // administrative recovery capability (never forges approval identity).
+    'PERM-RREJ-VIEW',
+    'PERM-RREJ-CREATE',
+    'PERM-RREJ-EDIT',
+    'PERM-RREJ-CONFIRM-APPROVAL',
+    'PERM-RREJ-FINALIZE',
+    'PERM-RREJ-VOID',
+    'PERM-RREJ-ADMIN-CORRECT',
   ],
 };
 

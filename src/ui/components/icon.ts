@@ -47,6 +47,7 @@ export const iconPaths = {
   'sort-descending': ['M8 6v12', 'M5 15l3 3 3-3', 'M14 18h5', 'M14 12h4', 'M14 6h3'],
   'sort-none': ['M8 6v12', 'M5 9l3-3 3 3', 'M14 18h5', 'M14 12h4', 'M14 6h3'],
   close: ['M6 6l12 12', 'M18 6L6 18'],
+  'reject-reports': ['M5 4h14v16H5z', 'M9 9l6 6', 'M15 9l-6 6'],
 } as const;
 
 export type IconName = keyof typeof iconPaths;

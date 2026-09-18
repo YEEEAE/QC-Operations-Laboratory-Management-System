@@ -1,0 +1,235 @@
+---
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
+import { ISSUE_SLIP_APPROVAL_ROLES } from '../../../modules/reject-reports/application/view-model.js';
+
+const actor = Astro.locals.actor;
+if (!actor)
+  return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const reportId = Astro.params.reportId ?? '';
+const slip = await rejectReportReadDependencies().getIssueSlip.execute({ actor, reportId });
+const hasPermission = (code: string) =>
+  actor.permissions.some((grant) => grant.code === code && grant.active !== false);
+const isCreator = slip.createdBy === actor.id;
+const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
+const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+const approvalLabel: Record<string, string> = {
+  SUPERVISOR: 'Supervisor',
+  QC_MANAGER: 'QC Manager',
+  FACTORY_DIRECTOR: 'Factory Director',
+};
+const fmtDate = (d?: Date) =>
+  d ? d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+const fmtDateTime = (d?: Date) =>
+  d ? d.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+---
+
+<AppLayout title={`${slip.reportNo} · Issue Slip`} locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">REJECTED MATERIAL/PRODUCT ISSUE SLIP</p>
+      <h1>{slip.reportNo}</h1>
+      <p class="lede">
+        Status: <strong class={`status status-${slip.status.toLowerCase()}`}>{slip.status}</strong>
+        · Version {slip.version.toString()}
+      </p>
+    </div>
+    <div class="head-actions">
+      <a href="/reject-reports">Back to Reject Reports</a>
+      <a href={`${Astro.url.pathname}?print=1`} target="_blank" rel="noopener">Print view</a>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Report</h2>
+      <dl>
+        <dt>Report date</dt><dd>{fmtDate(slip.reportDate)}</dd>
+        <dt>Department / section</dt><dd>{slip.department}</dd>
+        <dt>Created by</dt><dd>{slip.createdBy}</dd>
+        <dt>Created at</dt><dd>{fmtDateTime(slip.createdAt)}</dd>
+        <dt>Issued at</dt><dd>{fmtDateTime(slip.issuedAt)}</dd>
+        <dt>Completed at</dt><dd>{fmtDateTime(slip.completedAt)}</dd>
+        {slip.voidedAt && (<><dt>Voided</dt><dd>{fmtDateTime(slip.voidedAt)} · {slip.voidReason}</dd></>)}
+      </dl>
+    </section>
+    <section class="panel">
+      <h2>Item &amp; quantity</h2>
+      <dl>
+        <dt>Item code</dt><dd>{slip.fields.itemCode}</dd>
+        <dt>Item name</dt><dd>{slip.fields.itemName}</dd>
+        <dt>Goods description</dt><dd>{slip.fields.goodsDescription ?? '—'}</dd>
+        <dt>Lot / batch</dt><dd>{slip.fields.lotNo ?? '—'}</dd>
+        <dt>Rejected quantity</dt><dd>{slip.fields.rejectedQty} {slip.fields.unit}</dd>
+        <dt>Unit cost</dt><dd>{slip.fields.unitCost ?? '—'}</dd>
+        <dt>Total value</dt><dd>{slip.fields.totalValue ?? '—'}</dd>
+      </dl>
+    </section>
+    <section class="panel wide">
+      <h2>Reject reason &amp; remarks</h2>
+      <dl>
+        <dt>Reject reason</dt><dd>{slip.fields.rejectReason}</dd>
+        <dt>Remarks</dt><dd>{slip.fields.remarks ?? '—'}</dd>
+      </dl>
+    </section>
+  </div>
+
+  <section class="panel approvals">
+    <h2>Approval confirmations</h2>
+    <p class="hint">
+      The report creator records that each real-world approval was obtained. These are
+      confirmations recorded by the creator — not electronic signatures by the approvers.
+    </p>
+    <ol class="tracker">
+      {ISSUE_SLIP_APPROVAL_ROLES.map((role) => {
+        const confirmation = slip.approvals.find((a) => a.role === role);
+        const state = confirmation?.status ?? 'PENDING';
+        return (
+          <li class={`step step-${state.toLowerCase()}`}>
+            <span class="dot" aria-hidden="true">{state === 'CONFIRMED' ? '✓' : state === 'REVERSED' ? '↺' : '○'}</span>
+            <div class="step-body">
+              <strong>{approvalLabel[role]}</strong>
+              <span class="state">
+                {state === 'CONFIRMED'
+                  ? `Confirmed (recorded ${fmtDateTime(confirmation?.confirmedAt)}${confirmation?.approverName ? ` · approver: ${confirmation.approverName}` : ''})`
+                  : state === 'REVERSED'
+                    ? `Reversed ${fmtDateTime(confirmation?.reversedAt)} — ${confirmation?.reversalReason}`
+                    : 'Pending'}
+              </span>
+              {confirmation?.note && <span class="note">{confirmation.note}</span>}
+            </div>
+            <div class="step-actions">
+              {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && (
+                <form class="inline-form" data-confirm-form={role} data-version={slip.version.toString()}>
+                  <label class="sr-only" for={`approver-${role}`}>Approver name (optional)</label>
+                  <input id={`approver-${role}`} name="approverName" maxlength="200" placeholder="Approver name (optional)" />
+                  <button type="submit">Mark confirmed</button>
+                </form>
+              )}
+              {state === 'CONFIRMED' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT')) && (
+                <form class="inline-form" data-reverse-form={role} data-version={slip.version.toString()}>
+                  <label class="sr-only" for={`reason-${role}`}>Correction reason</label>
+                  <input id={`reason-${role}`} name="reason" required maxlength="2000" placeholder="Correction reason (required)" />
+                  <button type="submit" class="secondary">Reverse (correction)</button>
+                </form>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+    <p role="status" data-result tabindex="-1"></p>
+  </section>
+
+  <section class="panel actions">
+    <h2>Actions</h2>
+    {slip.status === 'DRAFT' && canManage && (
+      <button data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button>
+    )}
+    {slip.status !== 'VOID' && slip.status !== 'COMPLETED' && isCreator && hasPermission('PERM-RREJ-VOID') && (
+      <form class="inline-form" data-void-form data-version={slip.version.toString()}>
+        <label class="sr-only" for="voidReason">Void reason</label>
+        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" />
+        <button type="submit" class="danger">Void report</button>
+      </form>
+    )}
+    {slip.status === 'DRAFT' && !canManage && <p class="hint">Only the creator can issue or edit this draft.</p>}
+  </section>
+</AppLayout>
+
+<script>
+  import { actions } from 'astro:actions';
+  const reportId = location.pathname.split('/').filter(Boolean).pop() ?? '';
+  const output = document.querySelector<HTMLElement>('[data-result]');
+  const fail = (message: string) => {
+    if (output) { output.textContent = message; output.focus?.(); }
+  };
+  const run = async (work: Promise<{ error?: unknown }>) => {
+    try {
+      const result = await work;
+      if (result.error) fail('The action was not applied. The record may have changed or authorization may have changed — refresh and try again if authorized.');
+      else location.reload();
+    } catch {
+      fail('The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.');
+    }
+  };
+  type Role = 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR';
+  document.querySelectorAll<HTMLFormElement>('[data-confirm-form]').forEach((form) =>
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const role = form.dataset.confirmForm as Role;
+      const approverName = String(new FormData(form).get('approverName') ?? '').trim();
+      run(
+        actions.rejectReports.confirmApproval({
+          reportId,
+          expectedVersion: BigInt(form.dataset.version || '0'),
+          role,
+          approverName: approverName || undefined,
+        }),
+      );
+    }),
+  );
+  document.querySelectorAll<HTMLFormElement>('[data-reverse-form]').forEach((form) =>
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const role = form.dataset.reverseForm as Role;
+      const reason = String(new FormData(form).get('reason') ?? '').trim();
+      if (!reason) { fail('A correction reason is required.'); return; }
+      run(
+        actions.rejectReports.reverseApproval({
+          reportId,
+          expectedVersion: BigInt(form.dataset.version || '0'),
+          role,
+          reason,
+        }),
+      );
+    }),
+  );
+  document.querySelector<HTMLElement>('[data-issue]')?.addEventListener('click', (event) => {
+    const button = event.currentTarget as HTMLElement;
+    run(actions.rejectReports.issueIssueSlip({ reportId, expectedVersion: BigInt(button.dataset.version || '0') }));
+  });
+  document.querySelector<HTMLFormElement>('[data-void-form]')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    const reason = String(new FormData(form).get('reason') ?? '').trim();
+    if (!reason) { fail('A void reason is required.'); return; }
+    run(actions.rejectReports.voidReport({ reportId, expectedVersion: BigInt(form.dataset.version || '0'), reason }));
+  });
+</script>
+
+<style>
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);margin-bottom:var(--space-6)}
+  h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
+  .lede,.hint{color:var(--text-muted);font-size:.86rem}
+  .head-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
+  .grid .wide{grid-column:1/-1}
+  .panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}
+  h2{font-size:1rem;margin-top:0}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:600}
+  .tracker{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3)}
+  .step{display:flex;gap:var(--space-3);align-items:center;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  .dot{font-size:1.1rem;width:1.5rem;text-align:center}
+  .step-confirmed .dot{color:var(--status-success,#047857)}
+  .step-reversed .dot{color:var(--status-warning,#b45309)}
+  .step-body{display:grid;gap:.15rem;flex:1}
+  .step-body .state{font-size:.8rem;color:var(--text-muted)}
+  .step-body .note{font-size:.78rem}
+  button{padding:.6rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:#fff;font-weight:700}
+  button.secondary{background:transparent;color:var(--color-accent-primary-hover);border:1px solid var(--color-accent-primary)}
+  button.danger{background:var(--status-danger)}
+  .inline-form{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .inline-form input{padding:.5rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);min-width:12rem}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
+  .actions h2{width:100%}
+  .status{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
+  a{color:var(--color-accent-primary-hover)}
+  @media(max-width:768px){.page-head,.grid{display:block}.step{flex-wrap:wrap}}
+  @media print{
+    .head-actions,.step-actions,.actions,.tabs{display:none!important}
+    body{background:#fff}
+    .panel{border-color:#999;break-inside:avoid}
+  }
+</style>

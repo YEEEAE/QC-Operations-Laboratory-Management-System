@@ -1,0 +1,254 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { rejectReportReadDependencies } from '../../modules/reject-reports/application/dependencies.js';
+import { parsePageInput } from '../../shared/pagination/page.js';
+import type { RejectReportListFilter } from '../../modules/reject-reports/ports/repository.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports');
+
+const params = Astro.url.searchParams;
+const tab = (params.get('tab') ?? 'all') as 'all' | 'slips' | 'daily' | 'awaiting' | 'completed';
+const page = parsePageInput({ page: params.get('page'), pageSize: params.get('pageSize') });
+const filter: RejectReportListFilter = {
+  search: params.get('q')?.slice(0, 200) || undefined,
+  department: params.get('department')?.slice(0, 200) || undefined,
+  status: (params.get('status') as RejectReportListFilter['status']) || undefined,
+  approvalState: tab === 'awaiting' ? 'AWAITING' : tab === 'completed' ? 'COMPLETED' : undefined,
+  from: params.get('from') ? new Date(params.get('from')!) : undefined,
+  to: params.get('to') ? new Date(params.get('to')!) : undefined,
+};
+const deps = rejectReportReadDependencies();
+const showSlips = tab !== 'daily';
+const showDaily = tab === 'all' || tab === 'daily' || tab === 'completed' || tab === 'awaiting';
+const [slips, daily, dashboard] = await Promise.all([
+  showSlips ? deps.listIssueSlips.execute({ actor, filter, page }) : Promise.resolve({ items: [], total: 0 }),
+  showDaily && tab !== 'awaiting'
+    ? deps.listDailyRejects.execute({ actor, filter, page })
+    : Promise.resolve({ items: [], total: 0 }),
+  deps.dashboard.execute({ actor }),
+]);
+const { summary, analytics, recent } = dashboard;
+const canCreate = actor.permissions.some(
+  (grant) => grant.code === 'PERM-RREJ-CREATE' && grant.active !== false,
+);
+const tabs = [
+  { id: 'all', label: 'All' },
+  { id: 'slips', label: 'Issue Slips' },
+  { id: 'daily', label: 'Daily Reject' },
+  { id: 'awaiting', label: 'Awaiting Approvals' },
+  { id: 'completed', label: 'Completed' },
+] as const;
+const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' });
+const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty));
+---
+<AppLayout title="Reject Reports · QC Operations" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">QUALITY · REJECT REPORTING</p>
+      <h1>Reject Reports</h1>
+      <p class="lede">Issue Slips track three real-world approval confirmations. Daily Reject records are finalized without approvals. All analytics derive from PostgreSQL.</p>
+    </div>
+    {canCreate && <a class="button" href="/reject-reports/new">New Report</a>}
+  </section>
+
+  <section class="cards" aria-label="Summary">
+    <div class="card"><span>Reports today</span><strong>{summary.reportsToday}</strong></div>
+    <div class="card"><span>Reports this month</span><strong>{summary.reportsThisMonth}</strong></div>
+    <div class="card"><span>Total rejected quantity</span><strong>{summary.totalRejectedQuantity}</strong></div>
+    <div class="card"><span>Issue Slips</span><strong>{summary.totalIssueSlips}</strong></div>
+    <div class="card"><span>Daily Reject records</span><strong>{summary.totalDailyRejects}</strong></div>
+    <div class="card warn"><span>Awaiting approvals</span><strong>{summary.awaitingApprovals}</strong></div>
+    <div class="card"><span>Completed Issue Slips</span><strong>{summary.completedIssueSlips}</strong></div>
+    <div class="card"><span>Finalized Daily Reject</span><strong>{summary.finalizedDailyRejects}</strong></div>
+  </section>
+
+  <section class="analytics" aria-label="Analytics">
+    <div class="panel">
+      <h2>Reject trend by date</h2>
+      {analytics.trendByDate.length ? (
+        <div class="bars">
+          {analytics.trendByDate.map((point) => (
+            <div class="bar" title={`${point.date}: ${point.rejectedQty}`}>
+              <span style={`height:${Math.max(4, (point.rejectedQty / maxTrend) * 100)}%`}></span>
+              <small>{point.date.slice(5)}</small>
+            </div>
+          ))}
+        </div>
+      ) : <p class="empty">No data in range.</p>}
+    </div>
+    <div class="panel">
+      <h2>Top reject items</h2>
+      {analytics.topRejectItems.length ? (
+        <ol class="rank">
+          {analytics.topRejectItems.map((item) => (
+            <li><span>{item.itemCode} · {item.itemName}</span><strong>{item.rejectedQty}</strong></li>
+          ))}
+        </ol>
+      ) : <p class="empty">No data.</p>}
+    </div>
+    <div class="panel">
+      <h2>Reject reasons</h2>
+      {analytics.byReason.length ? (
+        <ol class="rank">
+          {analytics.byReason.slice(0, 8).map((row) => (
+            <li><span>{row.reason}</span><strong>{row.count}</strong></li>
+          ))}
+        </ol>
+      ) : <p class="empty">No data.</p>}
+    </div>
+    <div class="panel">
+      <h2>By department</h2>
+      {analytics.byDepartment.length ? (
+        <ol class="rank">
+          {analytics.byDepartment.map((row) => (
+            <li><span>{row.department}</span><strong>{row.rejectedQty} ({row.reportCount} reports)</strong></li>
+          ))}
+        </ol>
+      ) : <p class="empty">No data.</p>}
+    </div>
+    <div class="panel">
+      <h2>Issue Slip approval status</h2>
+      {analytics.approvalStatus.length ? (
+        <p class="big">
+          {analytics.approvalStatus[0].completed} confirmed · {analytics.approvalStatus[0].pending} pending
+        </p>
+      ) : <p class="empty">No data.</p>}
+    </div>
+    <div class="panel">
+      <h2>Reject % trend (daily records)</h2>
+      {analytics.rejectPctTrend.length ? (
+        <ol class="rank">
+          {analytics.rejectPctTrend.map((row) => (
+            <li><span>{row.date}</span><strong>{row.rejectPct === null ? '—' : `${row.rejectPct}%`}</strong></li>
+          ))}
+        </ol>
+      ) : <p class="empty">No data.</p>}
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="Report views">
+    {tabs.map((t) => (
+      <a href={`/reject-reports?tab=${t.id}`} aria-current={tab === t.id ? 'page' : undefined}>{t.label}</a>
+    ))}
+  </nav>
+
+  <form class="filters" method="get" action="/reject-reports">
+    <input type="hidden" name="tab" value={tab} />
+    <label>Search<input name="q" value={filter.search ?? ''} maxlength="200" placeholder="Report no, item, lot, reason" /></label>
+    <label>Department<input name="department" value={filter.department ?? ''} maxlength="200" /></label>
+    <label>From<input name="from" type="date" value={params.get('from') ?? ''} /></label>
+    <label>To<input name="to" type="date" value={params.get('to') ?? ''} /></label>
+    <button type="submit">Filter</button>
+  </form>
+
+  {showSlips && (
+    <section class="panel">
+      <h2>Issue Slips ({slips.total})</h2>
+      {slips.items.length ? (
+        <div class="table-wrap">
+          <table>
+            <caption>Rejected material/product issue slips</caption>
+            <thead><tr><th scope="col">Report no</th><th scope="col">Date</th><th scope="col">Item</th><th scope="col">Lot</th><th scope="col">Qty</th><th scope="col">Department</th><th scope="col">Status</th></tr></thead>
+            <tbody>
+              {slips.items.map((slip) => (
+                <tr>
+                  <th scope="row"><a href={`/reject-reports/issue-slips/${slip.id}`}>{slip.reportNo}</a></th>
+                  <td>{fmtDate(slip.reportDate)}</td>
+                  <td>{slip.fields.itemCode} · {slip.fields.itemName}</td>
+                  <td>{slip.fields.lotNo ?? '—'}</td>
+                  <td>{slip.fields.rejectedQty} {slip.fields.unit}</td>
+                  <td>{slip.department}</td>
+                  <td><span class={`status status-${slip.status.toLowerCase()}`}>{slip.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p class="empty">No Issue Slips match the current filters.</p>}
+    </section>
+  )}
+
+  {showDaily && (
+    <section class="panel">
+      <h2>Daily Production &amp; Rejection Records ({daily.total})</h2>
+      {daily.items.length ? (
+        <div class="table-wrap">
+          <table>
+            <caption>Daily production and rejection records</caption>
+            <thead><tr><th scope="col">Record no</th><th scope="col">Date</th><th scope="col">Department</th><th scope="col">Entries</th><th scope="col">Reject qty</th><th scope="col">Status</th></tr></thead>
+            <tbody>
+              {daily.items.map((record) => (
+                <tr>
+                  <th scope="row"><a href={`/reject-reports/daily/${record.id}`}>{record.reportNo}</a></th>
+                  <td>{fmtDate(record.reportDate)}</td>
+                  <td>{record.department}</td>
+                  <td>{record.entries.length}</td>
+                  <td>{record.entries.reduce((sum, e) => sum + Number(e.rejectQty), 0)}</td>
+                  <td><span class={`status status-${record.status.toLowerCase()}`}>{record.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p class="empty">No Daily Reject records match the current filters.</p>}
+    </section>
+  )}
+
+  <section class="panel">
+    <h2>Recent reports</h2>
+    {recent.length ? (
+      <ul class="recent">
+        {recent.map((report) => (
+          <li>
+            <a href={report.reportNo.startsWith('RIS') ? `/reject-reports/issue-slips/${report.id}` : `/reject-reports/daily/${report.id}`}>
+              {report.reportNo}
+            </a>
+            <span>{report.department} · {fmtDate(report.reportDate)} · {report.status}</span>
+          </li>
+        ))}
+      </ul>
+    ) : <p class="empty">No reports yet.</p>}
+  </section>
+</AppLayout>
+
+<style>
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}
+  h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
+  .lede,.empty{color:var(--text-muted);font-size:.86rem}
+  .button,button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-3);margin-bottom:var(--space-6)}
+  .card{padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);display:grid;gap:.25rem}
+  .card span{font-size:.72rem;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase}
+  .card strong{font-size:1.4rem;font-variant-numeric:tabular-nums}
+  .card.warn strong{color:var(--status-warning,#b45309)}
+  .analytics{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-4);margin-bottom:var(--space-6)}
+  .panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}
+  .panel h2{font-size:1rem;margin-top:0}
+  .bars{display:flex;gap:.35rem;align-items:end;min-height:6rem}
+  .bar{flex:1;display:grid;gap:.25rem;justify-items:center}
+  .bar span{display:block;width:100%;background:var(--color-accent-primary);border-radius:2px 2px 0 0;min-height:4px}
+  .bar small{font-size:.6rem;color:var(--text-muted)}
+  .rank{margin:0;padding-left:1.2rem;display:grid;gap:.35rem}
+  .rank li{display:flex;justify-content:space-between;gap:var(--space-3);font-size:.85rem}
+  .rank strong{font-variant-numeric:tabular-nums}
+  .big{font-size:1.1rem;font-weight:700}
+  .tabs{display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4)}
+  .tabs a{padding:.45rem .9rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);text-decoration:none;font-size:.85rem}
+  .tabs a[aria-current='page']{background:var(--color-accent-primary);color:#fff;border-color:var(--color-accent-primary)}
+  .filters{display:flex;gap:var(--space-4);align-items:end;flex-wrap:wrap;margin-bottom:var(--space-5)}
+  label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}
+  input{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
+  .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}
+  caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted)}
+  th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}
+  th{font-weight:700}a{color:var(--color-accent-primary-hover)}
+  .status{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
+  .status-completed,.status-finalized{color:var(--status-success,#047857)}
+  .status-approval_tracking,.status-issued{color:var(--status-warning,#b45309)}
+  .status-void{color:var(--status-danger)}
+  .recent{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+  .recent li{display:flex;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;font-size:.85rem}
+  @media(max-width:768px){.page-head{display:grid}.filters{display:grid}.filters button{width:max-content}}
+  @media(max-width:360px){.cards{grid-template-columns:1fr 1fr}}
+</style>

@@ -33,6 +33,16 @@ export class PostgresSearch implements SearchRepository {
         SELECT 'DOCUMENT', d.id, d.document_no, COALESCE(d.title, d.document_no), d.state, NULL FROM qc.document_identities d WHERE (d.document_no ILIKE ${pattern} ESCAPE '\\' OR COALESCE(d.title, '') ILIKE ${pattern} ESCAPE '\\') AND (d.created_by = ${query.actorId} OR d.owner_id = ${query.actorId})
         UNION ALL
         SELECT 'CHANGE_REQUEST', c.id, c.change_no, c.change_no, c.state, NULL FROM qc.change_requests c WHERE c.change_no ILIKE ${pattern} ESCAPE '\\' AND c.requested_by = ${query.actorId}
+        UNION ALL
+        SELECT 'REJECT_REPORT', r.id, r.report_no, COALESCE(s.item_name, r.report_no), r.status, s.item_code FROM qc.reject_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id
+          WHERE (r.report_no ILIKE ${pattern} ESCAPE '\\' OR s.item_code ILIKE ${pattern} ESCAPE '\\' OR s.item_name ILIKE ${pattern} ESCAPE '\\' OR COALESCE(s.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR s.reject_reason ILIKE ${pattern} ESCAPE '\\') AND r.created_by = ${query.actorId}
+        UNION ALL
+        SELECT 'REJECT_REPORT', r.id, r.report_no, r.department, r.status, NULL FROM qc.reject_reports r
+          WHERE r.report_type = 'DAILY_REJECT' AND (r.report_no ILIKE ${pattern} ESCAPE '\\' OR r.department ILIKE ${pattern} ESCAPE '\\' OR EXISTS (
+            SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id AND (
+              COALESCE(e.item_code, '') ILIKE ${pattern} ESCAPE '\\' OR e.item_description ILIKE ${pattern} ESCAPE '\\' OR COALESCE(e.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR e.reject_reason ILIKE ${pattern} ESCAPE '\\'
+            )
+          )) AND r.created_by = ${query.actorId}
       ) authorized_results ORDER BY "businessId" LIMIT ${limit}
     `.execute(this.database);
     return rows.rows;

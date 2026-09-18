@@ -11,9 +11,20 @@
 - **Render PostgreSQL — VERIFIED (read-only):** `dpg-dadqmsgn74is73b774j0-a` is the Render **database** id (not the web-service id) and is the internal hostname label; app database `qc_operations`, principal `qc_operations_user`, PostgreSQL 18.6, region oregon, **free plan expiring `2026-10-05`**. Canonical pool connects with TLS 1.3 and session `search_path=qc,pg_catalog`, `TimeZone=UTC`; `/api/health/ready` is `200 healthy` both for the built app against this database and for live `https://qclevel.top`. Data is bootstrap-only (1 user, 2 role grants, 4 audit events, 0 lab tests).
 - **Render migration gap (blocker):** the Render database is at applied head `0018` with `0019`–`0025` pending, so `db:schema:check` fails closed there while ledger checksums for all 18 applied rows verify. Applying them is **prohibited** until the credential-rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied (the local Render export credential — the one in `.env` — is documented as compromised).
 - **Render live service DIVERGES from `render.yaml`:** runtime `rust` (not `node`), empty `healthCheckPath` (not `/api/health/ready`), `autoDeployTrigger: commit` (not `checksPass`), and a start command that runs `pnpm access:grant-system-owner` before the server, i.e. authorization mutation during boot. `RELEASE_*` identity variables are absent and every deploy reports `commitId: null`, so the deployed release SHA is **NOT VERIFIED**. The Render subdomain is intentionally blocked (`x-render-routing: blocked-render-subdomain`); `qclevel.top` is the production entrypoint.
-- Node locally is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence (the Render service pins `NODE_VERSION=24.20.0`). Docker/Testcontainers remains **unavailable**, so authenticated Playwright E2E is **NOT VERIFIED**; UAT remains unexecuted.
+- Node locally is `v22.22.3`, outside the declared `>=24.20.0 <25` contract; local results are not runtime-parity evidence (the Render service pins `NODE_VERSION=24.20.0`). Docker-backed authenticated Playwright E2E now executes against a fresh PostgreSQL 18 container with an isolated `yazeed` fixture, but is **PARTIAL/FAIL**: 10 passed, 10 failed, 16 skipped. UAT remains unexecuted.
 - GitHub `Verification CI` run `35284944134` for this exact HEAD is **FAIL** before any step (job `Verify`, 0 steps): GitHub annotation says, “The job was not started because your account is locked due to a billing issue.” This is an external account blocker, not a workflow/test failure; CI/E2E/release evidence remains **NOT VERIFIED**.
 - Final independent audit decision remains `NO-GO`; details in `audit/100-percent/FINAL-100-DOMAIN-AUDIT.md` and `audit/100-percent/RELEASE-GATE-EVIDENCE.md`.
+
+- **2026-09-18 — QC-AUTH-E2E-DOCKER-001 / Docker E2E attempt**
+  - Changed: Docker-only runner now loads allowlisted test secrets, bootstraps a fresh isolated `yazeed` with `SYSTEM_OWNER` + all active permissions + `GLOBAL` scope, and refuses external `QC_TEST_DATABASE_URL`; fixed the Reject Reports migration's invalid `qc.uuidv7()` call and the TEAM fixture's missing scope value.
+  - Evidence: `typecheck` PASS (0 errors); PostgreSQL 18 migration/owner/fixture bootstrap completed; full authenticated Playwright run: 10 PASS / 10 FAIL / 16 SKIPPED. Failures include unsafe `returnTo`, ambiguous Password locator, and parallel rate-limit/timeouts.
+  - State: PARTIAL.
+
+- **2026-09-18 — QC-REJECT-REPORTS-001 / Reject Reports module**
+  - Changed: added the PostgreSQL-backed Issue Slip and Daily Reject module, canonical routes/navigation, authenticated operational authorization, approval-confirmation state model, search integration, printable responsive pages, migration `0026_reject_reports.sql`, and domain/application tests.
+  - Evidence: typecheck `0 errors`; architecture and canonical route checks PASS; Reject Reports unit suite `9/9 PASS`; `git diff --check` PASS. Integration/PostgreSQL suite remains **BLOCKED/NOT VERIFIED** because the disposable test database/migration ledger state was contaminated during repeated runs; no Render migration or deployment occurred.
+  - State: PARTIAL.
+  - Key files: `db/migrations/0026_reject_reports.sql`, `src/modules/reject-reports/`, `src/pages/reject-reports/`, `docs/REJECT-REPORTS.md`.
 
 - **2026-09-18 — QC-YAZEED-CONTROL-CENTER-001 / Canonical owner system control center**
   - Changed: registered `RT-SYSTEM-002 — /system/control-center` as the second explicit `YAZEED_ONLY` route (same `pageAccessDecision` + middleware 404 architecture; no second owner guard), added the owner-only nav item, and built the owner console page (live sanitized system overview with migration-drift + release identity, full account register with server-rendered search/filter/sort/pagination, create-account form reusing `actions.admin.createUser`, roles/permissions read view, documented no-settings posture, sanitized recent audit). New `GetControlCenterOverviewUseCase` + PostgreSQL migration-ledger/audit-readiness probes.
@@ -405,8 +416,7 @@
 ## 14) المشاكل المفتوحة الحالية — لا تعيد فتح المشاكل المغلقة تاريخيًا
 
 ### P0 / blocking evidence
-- Docker/Testcontainers غير متوفر على المضيف المحلي. (PostgreSQL 18 runtime صار متوفرًا محليًا عبر disposable cluster، لكن مسار Docker/image نفسه و authenticated E2E ما زالا غير منفذين.)
-- authenticated E2E لم يُنفذ فعليًا بعد.
+- Docker/Testcontainers متوفران الآن على المضيف المحلي (Docker Engine `29.7.2`) وauthenticated E2E نُفذ على PostgreSQL 18 Docker، لكنه فشل جزئيًا (10 PASS / 10 FAIL / 16 SKIPPED).
 - GitHub Verification CI exact-HEAD غير مثبت بسبب billing lock.
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.

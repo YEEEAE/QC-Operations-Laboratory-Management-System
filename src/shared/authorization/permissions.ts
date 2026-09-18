@@ -198,6 +198,13 @@ export const PERMISSION_CODES = [
   'PERM-AI-SUGGEST',
   'PERM-AI-DRAFT',
   'PERM-AI-ADMIN',
+  'PERM-RREJ-VIEW',
+  'PERM-RREJ-CREATE',
+  'PERM-RREJ-EDIT',
+  'PERM-RREJ-CONFIRM-APPROVAL',
+  'PERM-RREJ-FINALIZE',
+  'PERM-RREJ-VOID',
+  'PERM-RREJ-ADMIN-CORRECT',
 ] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[number];

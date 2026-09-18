@@ -5,9 +5,13 @@ import { dirname, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import process from 'node:process';
 
+import type { Pool } from 'pg';
+
+import { loadLocalEnv } from '../db/load-local-env.js';
 import { createPool } from '../../src/shared/database/pool.js';
 import { loadMigrations, migrate } from '../db/migrate.js';
 import { seedFoundationData } from '../../db/seeds/common.js';
+import { Argon2idPasswordHasher } from '../../src/modules/identity/security/argon2-password-hasher.js';
 import {
   startPostgresContainer,
   stopPostgresContainer,
@@ -29,6 +33,65 @@ const requiredPasswords = [
 
 function fail(message: string): never {
   throw new Error(message);
+}
+
+async function bootstrapDisposableSystemOwner(pool: Pool, password: string): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query<{ id: string }>(
+      `SELECT id FROM qc.users WHERE login_identity = 'yazeed' FOR UPDATE`,
+    );
+    if (existing.rows[0]) {
+      fail('Disposable E2E expected a fresh database; refusing to reset or modify yazeed.');
+    }
+
+    const role = await client.query<{ id: string }>(
+      `INSERT INTO qc.roles (code, name, description, is_system_role, active)
+       VALUES ('SYSTEM_OWNER', 'System Owner', 'Disposable authenticated E2E owner', FALSE, TRUE)
+       RETURNING id`,
+    );
+    const roleId = role.rows[0]?.id;
+    if (!roleId) fail('Disposable E2E could not create the SYSTEM_OWNER role.');
+
+    const passwordHash = await new Argon2idPasswordHasher().hash(password);
+    const userId = randomUUID();
+    await client.query(
+      `INSERT INTO qc.users (id, login_identity, display_name, password_hash, account_state, must_change_password)
+       VALUES ($1, 'yazeed', 'Disposable E2E System Owner', $2, 'ACTIVE', FALSE)`,
+      [userId, passwordHash],
+    );
+    await client.query(
+      `INSERT INTO qc.role_permissions (role_id, permission_id, granted_by)
+       SELECT $1, permission.id, $2
+       FROM qc.permissions permission
+       WHERE permission.active = TRUE`,
+      [roleId, userId],
+    );
+    await client.query(
+      `INSERT INTO qc.user_roles (id, user_id, role_id, assigned_by, reason)
+       VALUES ($1, $2, $3, $2, 'DISPOSABLE_AUTHENTICATED_E2E')`,
+      [randomUUID(), userId, roleId],
+    );
+    await client.query(
+      `INSERT INTO qc.user_scopes (id, user_id, scope_kind, scope_value, assigned_by, reason)
+       VALUES ($1, $2, 'GLOBAL', NULL, $2, 'DISPOSABLE_AUTHENTICATED_E2E')`,
+      [randomUUID(), userId],
+    );
+    await client.query(
+      `INSERT INTO qc.audit_events
+        (actor_type, actor_id, subject_type, subject_id, action, request_id, reason)
+       VALUES ('SYSTEM', NULL, 'USER', $1, 'BOOTSTRAP_DISPOSABLE_SYSTEM_OWNER', $2,
+               'Docker-only authenticated E2E fixture')`,
+      [userId, `authenticated-e2e-owner-${randomUUID()}`],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 function run(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<number> {
@@ -76,6 +139,7 @@ async function writeBlockedEvidence(reason: string, env: NodeJS.ProcessEnv): Pro
 }
 
 async function main(): Promise<void> {
+  loadLocalEnv();
   const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: 'test', E2E_TEST_RUN_ID: runId };
   // The direct Node+tsx loader is needed in this sandbox because the tsx CLI
   // IPC socket is restricted. Do not leak that loader into pnpm/preview child
@@ -93,6 +157,9 @@ async function main(): Promise<void> {
   }
   for (const key of requiredPasswords)
     if (!env[key]) fail(`${key} is required and is never logged.`);
+  if (env.QC_TEST_DATABASE_URL) {
+    fail('Authenticated E2E owner bootstrap is Docker-only; QC_TEST_DATABASE_URL is not allowed.');
+  }
 
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   env.RELEASE_GIT_SHA = sha;
@@ -137,12 +204,21 @@ async function main(): Promise<void> {
     try {
       await migrate({ pool });
       await seedFoundationData(pool);
+      await bootstrapDisposableSystemOwner(pool, env.QC_VERIFY_SYSTEM_OWNER_PASSWORD ?? '');
       const owner = await pool.query(
-        `SELECT u.id FROM qc.users u JOIN qc.user_roles ur ON ur.user_id = u.id JOIN qc.roles r ON r.id = ur.role_id WHERE u.login_identity = 'yazeed' AND u.account_state = 'ACTIVE' AND r.code = 'SYSTEM_OWNER' AND ur.revoked_at IS NULL`,
+        `SELECT u.id
+         FROM qc.users u
+         JOIN qc.user_roles ur ON ur.user_id = u.id AND ur.revoked_at IS NULL
+         JOIN qc.roles r ON r.id = ur.role_id AND r.code = 'SYSTEM_OWNER'
+         JOIN qc.user_scopes scope ON scope.user_id = u.id
+           AND scope.scope_kind = 'GLOBAL'
+           AND scope.scope_value IS NULL
+           AND scope.revoked_at IS NULL
+         WHERE u.login_identity = 'yazeed' AND u.account_state = 'ACTIVE'`,
       );
       if (owner.rowCount !== 1)
         fail(
-          'Disposable E2E requires an existing ACTIVE canonical yazeed SYSTEM_OWNER; it will not create or mutate that account.',
+          'Disposable E2E bootstrap did not create exactly one ACTIVE yazeed SYSTEM_OWNER with GLOBAL scope.',
         );
     } finally {
       await pool.end();

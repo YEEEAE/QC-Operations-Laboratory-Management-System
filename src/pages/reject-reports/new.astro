@@ -1,0 +1,312 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import {
+  extractDetailId,
+  field,
+  toFormFailure,
+  type FormFailure,
+} from '../../ui/forms/mutation-post.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports%2Fnew');
+const canCreate = actor.permissions.some(
+  (grant) => grant.code === 'PERM-RREJ-CREATE' && grant.active !== false,
+);
+
+const LIST_HREF = '/reject-reports';
+const type = Astro.url.searchParams.get('type') === 'daily' ? 'daily' : 'slip';
+
+const REQUIRED_SLIP = [
+  { name: 'reportDate', label: 'Report date' },
+  { name: 'department', label: 'Department / section' },
+  { name: 'itemCode', label: 'Item code' },
+  { name: 'itemName', label: 'Item name' },
+  { name: 'unit', label: 'Unit' },
+  { name: 'rejectedQty', label: 'Rejected quantity' },
+  { name: 'rejectReason', label: 'Reject reason' },
+] as const;
+const REQUIRED_DAILY = [
+  { name: 'reportDate', label: 'Record date' },
+  { name: 'department', label: 'Department / section' },
+] as const;
+
+const EMPTY_SLIP = {
+  reportDate: '', department: '', shift: '', goodsDescription: '', itemCode: '',
+  itemName: '', lotNo: '', unit: '', rejectedQty: '', unitCost: '', totalValue: '',
+  rejectReason: '', remarks: '',
+};
+const EMPTY_DAILY = {
+  reportDate: '', department: '', shift: '',
+  machineName: '', itemCode: '', itemDescription: '', lotNo: '', buRmProductName: '',
+  rmDescription: '', rmUnit: '', rmLotNo: '', rmType: '', pumpOutQty: '',
+  rejectQty: '', goodQty: '', rejectLimit: '', productionFormula: '',
+  rejectReason: '', analysis: '',
+};
+let slipValues = { ...EMPTY_SLIP };
+let dailyValues = { ...EMPTY_DAILY };
+let failure: FormFailure | null = null;
+
+// POST baseline (F-05): without JavaScript the form performs a real POST to
+// this page. The same Astro Action runs via Astro.callAction with the same
+// server-side reauthorization; success redirects (303) to the new record.
+if (Astro.request.method === 'POST' && canCreate) {
+  const formData = await Astro.request.formData();
+  const kind = field(formData, 'reportType');
+  if (kind === 'daily') {
+    dailyValues = {
+      reportDate: field(formData, 'reportDate'), department: field(formData, 'department'),
+      shift: field(formData, 'shift'), machineName: field(formData, 'machineName'),
+      itemCode: field(formData, 'itemCode'), itemDescription: field(formData, 'itemDescription'),
+      lotNo: field(formData, 'lotNo'), buRmProductName: field(formData, 'buRmProductName'),
+      rmDescription: field(formData, 'rmDescription'), rmUnit: field(formData, 'rmUnit'),
+      rmLotNo: field(formData, 'rmLotNo'), rmType: field(formData, 'rmType'),
+      pumpOutQty: field(formData, 'pumpOutQty'), rejectQty: field(formData, 'rejectQty'),
+      goodQty: field(formData, 'goodQty'), rejectLimit: field(formData, 'rejectLimit'),
+      productionFormula: field(formData, 'productionFormula'),
+      rejectReason: field(formData, 'rejectReason'), analysis: field(formData, 'analysis'),
+    };
+    try {
+      const data = await Astro.callAction(actions.rejectReports.createDailyReject, {
+        reportDate: new Date(dailyValues.reportDate),
+        department: dailyValues.department,
+        shift: dailyValues.shift || undefined,
+        entries: [{
+          machineName: dailyValues.machineName || undefined,
+          itemCode: dailyValues.itemCode || undefined,
+          itemDescription: dailyValues.itemDescription,
+          lotNo: dailyValues.lotNo || undefined,
+          buRmProductName: dailyValues.buRmProductName || undefined,
+          rmDescription: dailyValues.rmDescription || undefined,
+          rmUnit: dailyValues.rmUnit || undefined,
+          rmLotNo: dailyValues.rmLotNo || undefined,
+          rmType: dailyValues.rmType || undefined,
+          pumpOutQty: dailyValues.pumpOutQty || undefined,
+          rejectQty: dailyValues.rejectQty,
+          goodQty: dailyValues.goodQty,
+          rejectLimit: dailyValues.rejectLimit || undefined,
+          productionFormula: dailyValues.productionFormula || undefined,
+          rejectReason: dailyValues.rejectReason,
+          analysis: dailyValues.analysis || undefined,
+        }],
+      });
+      const id = extractDetailId(data);
+      if (id) return Astro.redirect(`/reject-reports/daily/${id}`, 303);
+      failure = { kind: 'unknown', summary: 'The record was received but no reference came back.', recovery: 'Check the reject reports list before retrying to avoid a duplicate.', fieldErrors: {}, firstInvalidField: null };
+    } catch (error) {
+      failure = toFormFailure(error, { entity: 'Daily Reject record', requiredFields: REQUIRED_DAILY, values: dailyValues, listHref: LIST_HREF, listLabel: 'reject reports' });
+    }
+  } else {
+    slipValues = {
+      reportDate: field(formData, 'reportDate'), department: field(formData, 'department'),
+      shift: field(formData, 'shift'), goodsDescription: field(formData, 'goodsDescription'),
+      itemCode: field(formData, 'itemCode'), itemName: field(formData, 'itemName'),
+      lotNo: field(formData, 'lotNo'), unit: field(formData, 'unit'),
+      rejectedQty: field(formData, 'rejectedQty'), unitCost: field(formData, 'unitCost'),
+      totalValue: field(formData, 'totalValue'), rejectReason: field(formData, 'rejectReason'),
+      remarks: field(formData, 'remarks'),
+    };
+    try {
+      const data = await Astro.callAction(actions.rejectReports.createIssueSlip, {
+        reportDate: new Date(slipValues.reportDate),
+        department: slipValues.department,
+        shift: slipValues.shift || undefined,
+        fields: {
+          goodsDescription: slipValues.goodsDescription || undefined,
+          itemCode: slipValues.itemCode,
+          itemName: slipValues.itemName,
+          lotNo: slipValues.lotNo || undefined,
+          unit: slipValues.unit,
+          rejectedQty: slipValues.rejectedQty,
+          unitCost: slipValues.unitCost || undefined,
+          totalValue: slipValues.totalValue || undefined,
+          rejectReason: slipValues.rejectReason,
+          remarks: slipValues.remarks || undefined,
+        },
+      });
+      const id = extractDetailId(data);
+      if (id) return Astro.redirect(`/reject-reports/issue-slips/${id}`, 303);
+      failure = { kind: 'unknown', summary: 'The report was received but no reference came back.', recovery: 'Check the reject reports list before retrying to avoid a duplicate.', fieldErrors: {}, firstInvalidField: null };
+    } catch (error) {
+      failure = toFormFailure(error, { entity: 'Issue Slip', requiredFields: REQUIRED_SLIP, values: slipValues, listHref: LIST_HREF, listLabel: 'reject reports' });
+    }
+  }
+}
+
+const err = (name: string) => failure?.fieldErrors[name];
+const invalid = (name: string): 'true' | undefined => (err(name) ? 'true' : undefined);
+const describedBy = (name: string): string | undefined => (err(name) ? `${name}-error` : undefined);
+---
+<AppLayout title="New Reject Report · QC Operations" locale="en" direction="ltr">
+  <section class="page-head">
+    <p class="eyebrow">REJECT REPORTING</p>
+    <h1>New Report</h1>
+    <p class="lede">What do you want to create? The report number is generated server-side.</p>
+  </section>
+
+  <div class="type-select" role="tablist" aria-label="Report type">
+    <a role="tab" aria-selected={type === 'slip'} href="/reject-reports/new?type=slip">
+      <strong>Rejected Material/Product Issue Slip</strong>
+      <span>Requires approval confirmation tracking (Supervisor · QC Manager · Factory Director)</span>
+    </a>
+    <a role="tab" aria-selected={type === 'daily'} href="/reject-reports/new?type=daily">
+      <strong>Daily Production &amp; Rejection Record</strong>
+      <span>No approval confirmation required</span>
+    </a>
+  </div>
+
+  {canCreate ? (
+    failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={LIST_HREF} listLabel="reject reports" />
+    <form class="form" method="post" data-reject-create data-kind={type}>
+      <input type="hidden" name="reportType" value={type} />
+      <fieldset>
+        <legend>{type === 'slip' ? 'Issue Slip header' : 'Daily record header'}</legend>
+        <div class="fields">
+          <div><label for="reportDate">{type === 'slip' ? 'Report date' : 'Record date'}<input id="reportDate" name="reportDate" type="date" required value={type === 'slip' ? slipValues.reportDate : dailyValues.reportDate} aria-invalid={invalid('reportDate')} aria-describedby={describedBy('reportDate')} /></label>{err('reportDate') && <p class="field-error" id="reportDate-error">{err('reportDate')}</p>}</div>
+          <div><label for="department">Department / section<input id="department" name="department" required maxlength="200" value={type === 'slip' ? slipValues.department : dailyValues.department} aria-invalid={invalid('department')} aria-describedby={describedBy('department')} /></label>{err('department') && <p class="field-error" id="department-error">{err('department')}</p>}</div>
+          <div><label for="shift">Shift (optional)<input id="shift" name="shift" maxlength="50" value={type === 'slip' ? slipValues.shift : dailyValues.shift} /></label></div>
+        </div>
+      </fieldset>
+
+      {type === 'slip' ? (
+        <fieldset>
+          <legend>Rejected material / product</legend>
+          <div class="fields">
+            <div><label for="itemCode">Item code<input id="itemCode" name="itemCode" required maxlength="100" value={slipValues.itemCode} aria-invalid={invalid('itemCode')} aria-describedby={describedBy('itemCode')} /></label>{err('itemCode') && <p class="field-error" id="itemCode-error">{err('itemCode')}</p>}</div>
+            <div><label for="itemName">Item name<input id="itemName" name="itemName" required maxlength="500" value={slipValues.itemName} aria-invalid={invalid('itemName')} aria-describedby={describedBy('itemName')} /></label>{err('itemName') && <p class="field-error" id="itemName-error">{err('itemName')}</p>}</div>
+            <div class="wide"><label for="goodsDescription">Goods description<textarea id="goodsDescription" name="goodsDescription" maxlength="2000">{slipValues.goodsDescription}</textarea></label></div>
+            <div><label for="lotNo">Lot / batch<input id="lotNo" name="lotNo" maxlength="100" value={slipValues.lotNo} /></label></div>
+            <div><label for="unit">Unit<input id="unit" name="unit" required maxlength="50" value={slipValues.unit} aria-invalid={invalid('unit')} aria-describedby={describedBy('unit')} /></label>{err('unit') && <p class="field-error" id="unit-error">{err('unit')}</p>}</div>
+            <div><label for="rejectedQty">Rejected quantity<input id="rejectedQty" name="rejectedQty" type="number" min="0" step="any" required value={slipValues.rejectedQty} aria-invalid={invalid('rejectedQty')} aria-describedby={describedBy('rejectedQty')} /></label>{err('rejectedQty') && <p class="field-error" id="rejectedQty-error">{err('rejectedQty')}</p>}</div>
+            <div><label for="unitCost">Unit cost (optional)<input id="unitCost" name="unitCost" type="number" min="0" step="any" value={slipValues.unitCost} /></label></div>
+            <div><label for="totalValue">Total value (optional)<input id="totalValue" name="totalValue" type="number" min="0" step="any" value={slipValues.totalValue} /></label></div>
+            <div class="wide"><label for="rejectReason">Reject reason<input id="rejectReason" name="rejectReason" required maxlength="2000" value={slipValues.rejectReason} aria-invalid={invalid('rejectReason')} aria-describedby={describedBy('rejectReason')} /></label>{err('rejectReason') && <p class="field-error" id="rejectReason-error">{err('rejectReason')}</p>}</div>
+            <div class="wide"><label for="remarks">Detailed remarks<textarea id="remarks" name="remarks" maxlength="4000">{slipValues.remarks}</textarea></label></div>
+          </div>
+          <p class="hint">After creation, issue the slip to start approval tracking: Supervisor, QC Manager, Factory Director. You record each real-world approval as a confirmation — it is not an electronic signature by the approver.</p>
+        </fieldset>
+      ) : (
+        <fieldset>
+          <legend>Production / rejection entry</legend>
+          <div class="fields">
+            <div><label for="machineName">Machine name<input id="machineName" name="machineName" maxlength="200" value={dailyValues.machineName} /></label></div>
+            <div><label for="itemCode">FG / Small FG item code<input id="itemCode" name="itemCode" maxlength="100" value={dailyValues.itemCode} /></label></div>
+            <div class="wide"><label for="itemDescription">Material / product description<input id="itemDescription" name="itemDescription" required maxlength="1000" value={dailyValues.itemDescription} aria-invalid={invalid('itemDescription')} aria-describedby={describedBy('itemDescription')} /></label>{err('itemDescription') && <p class="field-error" id="itemDescription-error">{err('itemDescription')}</p>}</div>
+            <div><label for="lotNo">Lot number<input id="lotNo" name="lotNo" maxlength="100" value={dailyValues.lotNo} /></label></div>
+            <div><label for="buRmProductName">BU &amp; RM product name<input id="buRmProductName" name="buRmProductName" maxlength="500" value={dailyValues.buRmProductName} /></label></div>
+            <div><label for="rmDescription">Raw-material description<input id="rmDescription" name="rmDescription" maxlength="1000" value={dailyValues.rmDescription} /></label></div>
+            <div><label for="rmUnit">Raw-material unit<input id="rmUnit" name="rmUnit" maxlength="50" value={dailyValues.rmUnit} /></label></div>
+            <div><label for="rmLotNo">Raw-material lot number<input id="rmLotNo" name="rmLotNo" maxlength="100" value={dailyValues.rmLotNo} /></label></div>
+            <div><label for="rmType">RM type<input id="rmType" name="rmType" maxlength="100" value={dailyValues.rmType} /></label></div>
+            <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="number" min="0" step="any" value={dailyValues.pumpOutQty} /></label></div>
+            <div><label for="rejectQty">Total reject quantity<input id="rejectQty" name="rejectQty" type="number" min="0" step="any" required value={dailyValues.rejectQty} aria-invalid={invalid('rejectQty')} aria-describedby={describedBy('rejectQty')} /></label>{err('rejectQty') && <p class="field-error" id="rejectQty-error">{err('rejectQty')}</p>}</div>
+            <div><label for="goodQty">Total good production quantity<input id="goodQty" name="goodQty" type="number" min="0" step="any" required value={dailyValues.goodQty} aria-invalid={invalid('goodQty')} aria-describedby={describedBy('goodQty')} /></label>{err('goodQty') && <p class="field-error" id="goodQty-error">{err('goodQty')}</p>}</div>
+            <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="number" min="0" step="any" value={dailyValues.rejectLimit} /></label></div>
+            <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" value={dailyValues.productionFormula} /></label></div>
+            <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" value={dailyValues.rejectReason} aria-invalid={invalid('rejectReason')} aria-describedby={describedBy('rejectReason')} /></label>{err('rejectReason') && <p class="field-error" id="rejectReason-error">{err('rejectReason')}</p>}</div>
+            <div class="wide"><label for="analysis">Analysis / notes<textarea id="analysis" name="analysis" maxlength="4000">{dailyValues.analysis}</textarea></label></div>
+          </div>
+          <p class="hint">Reject % is computed server-side as reject quantity ÷ good production quantity × 100. You can add more rows from the record page while it is a draft.</p>
+        </fieldset>
+      )}
+
+      <div class="actions">
+        <a class="secondary" href="/reject-reports">Cancel</a>
+        <button type="submit" data-submit>{type === 'slip' ? 'Create Issue Slip' : 'Create Daily Reject record'}</button>
+      </div>
+      <p role="status" data-result></p>
+    </form>
+  ) : (
+    <section class="denied" role="alert">
+      <h2>Creation is not available</h2>
+      <p>Your account does not have the Reject Reports create permission.</p>
+    </section>
+  )}
+</AppLayout>
+
+<script>
+  import { actions } from 'astro:actions';
+  const form = document.querySelector<HTMLFormElement>('[data-reject-create]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const kind = form.dataset.kind === 'daily' ? 'daily' : 'slip';
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const output = form.querySelector<HTMLElement>('[data-result]');
+    if (submit) submit.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    if (output) output.textContent = 'Saving…';
+    const text = (key: string) => String(data.get(key) ?? '');
+    const opt = (key: string) => text(key) || undefined;
+    try {
+      const result =
+        kind === 'daily'
+          ? await actions.rejectReports.createDailyReject({
+              reportDate: new Date(text('reportDate')),
+              department: text('department'),
+              shift: opt('shift'),
+              entries: [{
+                machineName: opt('machineName'), itemCode: opt('itemCode'),
+                itemDescription: text('itemDescription'), lotNo: opt('lotNo'),
+                buRmProductName: opt('buRmProductName'), rmDescription: opt('rmDescription'),
+                rmUnit: opt('rmUnit'), rmLotNo: opt('rmLotNo'), rmType: opt('rmType'),
+                pumpOutQty: opt('pumpOutQty'), rejectQty: text('rejectQty'),
+                goodQty: text('goodQty'), rejectLimit: opt('rejectLimit'),
+                productionFormula: opt('productionFormula'), rejectReason: text('rejectReason'),
+                analysis: opt('analysis'),
+              }],
+            })
+          : await actions.rejectReports.createIssueSlip({
+              reportDate: new Date(text('reportDate')),
+              department: text('department'),
+              shift: opt('shift'),
+              fields: {
+                goodsDescription: opt('goodsDescription'), itemCode: text('itemCode'),
+                itemName: text('itemName'), lotNo: opt('lotNo'), unit: text('unit'),
+                rejectedQty: text('rejectedQty'), unitCost: opt('unitCost'),
+                totalValue: opt('totalValue'), rejectReason: text('rejectReason'),
+                remarks: opt('remarks'),
+              },
+            });
+      if (result.data && typeof result.data.id === 'string') {
+        window.location.href = `/reject-reports/${kind === 'daily' ? 'daily' : 'issue-slips'}/${result.data.id}`;
+        return;
+      }
+      if (output) output.textContent = 'Unable to save this report. Review the fields and try again.';
+      const firstInvalid = form.querySelector<HTMLElement>('input:invalid,textarea:invalid');
+      (firstInvalid ?? output)?.focus?.();
+    } catch {
+      if (output) output.textContent = 'The service is temporarily unavailable. Your entries are kept — try again.';
+    } finally {
+      if (submit) submit.disabled = false;
+      form.removeAttribute('aria-busy');
+    }
+  });
+</script>
+
+<style>
+  .page-head{margin-bottom:var(--space-6)}
+  .eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}
+  h1{margin:.25rem 0}.lede,.hint{color:var(--text-muted)}
+  .type-select{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)}
+  .type-select a{display:grid;gap:.4rem;padding:var(--space-4);border:2px solid var(--color-border-subtle);border-radius:var(--radius-lg);text-decoration:none;color:inherit}
+  .type-select a[aria-selected='true']{border-color:var(--color-accent-primary);background:var(--surface-panel)}
+  .type-select span{font-size:.8rem;color:var(--text-muted)}
+  .form{display:grid;gap:var(--space-4);max-width:860px;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  fieldset{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);margin:0}
+  legend{font-size:.85rem;font-weight:700;padding:0 .4rem}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+  .fields .wide{grid-column:1/-1}
+  label{display:grid;gap:.4rem;font-size:.85rem}
+  input,textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
+  input[aria-invalid='true'],textarea[aria-invalid='true']{border-color:var(--status-danger)}
+  .field-error{margin:0;color:var(--status-danger);font-size:.8rem}
+  textarea{min-height:6rem}
+  .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
+  button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:#fff;border-radius:var(--radius-md);font-weight:700}
+  button[disabled]{opacity:.6}
+  a{color:var(--color-accent-primary-hover)}
+  .denied{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  @media(max-width:768px){.type-select,.fields{grid-template-columns:1fr}}
+</style>

@@ -119,8 +119,14 @@ async function ensureScope(
   if (existing.rows[0]) return;
   await client.query(
     `INSERT INTO qc.user_scopes (id, user_id, scope_kind, scope_value, assigned_by, reason)
-     VALUES ($1, $2, $3, NULL, $4, 'PROMPT-13 VERIFICATION FIXTURE (24H EXPIRY)')`,
-    [randomUUID(), userId, scopeKind, userId],
+     VALUES ($1, $2, $3, $4, $5, 'PROMPT-13 VERIFICATION FIXTURE (24H EXPIRY)')`,
+    [
+      randomUUID(),
+      userId,
+      scopeKind,
+      scopeKind === 'TEAM' ? 'QC-VERIFY-TEAM' : null,
+      userId,
+    ],
   );
 }
 
