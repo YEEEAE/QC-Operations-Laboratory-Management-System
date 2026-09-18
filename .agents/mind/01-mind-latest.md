@@ -5,7 +5,8 @@
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
 ## Current audit reality — 2026-09-18
-- **QC-MIDPOINT-REBASE-001 current authority:** HEAD298e307721af97d9c1bd22279d0c784fbf5b62a8/main dirty tree preserved; source0029,18 modules,85 routes(2/81/2),83 pages,32 navigation destinations. Mechanical coverage1048 first-party files plus targeted semantic review; exhaustive manual coverage NOT VERIFIED. Earlier snapshots below are HISTORICAL where superseded here.
+- **Editorial revision:** 20e6ead8f397d02ac2de807a273795dfac47a703. Reports and the15-prompt HTML were rewritten for clarity; prior operational results remain tied to298e307721af97d9c1bd22279d0c784fbf5b62a8, not revalidated for this newer HEAD. Scores unchanged; operational status must be rechecked before use.
+- **QC-MIDPOINT-REBASE-001 evidence baseline (historical after subsequent commits):** HEAD298e307721af97d9c1bd22279d0c784fbf5b62a8/main dirty tree preserved; source0029,18 modules,85 routes(2/81/2),83 pages,32 navigation destinations. Mechanical coverage1048 first-party files plus targeted semantic review; exhaustive manual coverage NOT VERIFIED. Earlier snapshots below are HISTORICAL where superseded here.
 - **Fresh local:** install/typecheck/architecture/build/release PASS; unit83 files/564 PASS; integration350 PASS/3 FAIL; migrations29 PASS; concurrency11 PASS/1 FAIL; security52 PASS; schema77 tables/0 orphans. Node22.22.3 outside24 contract. Format/lint FAIL; lint37=19 source/script+18 existing ignored operational helpers. E2E48 PASS/19 FAIL/107 SKIP; closure11 PASS/7 FAIL/18 SKIP. Timeout left child alive; runner lifecycle needs closure. Empty local owner check FAIL=fixture absence, not production failure.
 - **Fresh authorized live owner read:** login/dashboard/system-health/control-center200; live/readiness200 healthy; migration projection0018/pending11, expected console0018 misleading versus source0029; internal release/build/Git/environment UNVERIFIED; Reject500. Explicit axe35 rulesPASS/3 incomplete/1 serious label-in-name node; narrower zero-violation scan superseded. Not six-persona E2E or human UAT. No password saved in deliverables.
 - **Audit/plan:** overall46.7%(previous52.6); production mandatory-gate completion1/19=5.3%(previous30.0), NO-GO/PARTIAL. Disclosed rubric judgment, not statistical feature completion.16 findings(7P0/7P1/2P2); existing bilingual36-section/80-domain reports and15-prompt HTML refreshed, closure tasks not executed. Copy/Copied/expand-collapse and320/768/1440 light/dark UI PASS.
@@ -416,6 +417,10 @@
 ## 17) سجل تاريخي مضغوط
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
+- **2026-09-18 — QC-MIDPOINT-REWRITE-001 / إعادة كتابة التقرير والخطة**
+  - Changed: clearer bilingual reports;15 independently copyable prompts with objective, dependencies, work, acceptance and handoff; separated editorial HEAD from evidence SHA.
+  - Evidence:36 sections/80 matching domain rows; all15 clipboard/Copied checks and copy-failure recovery PASS;320/768/1440 light/dark overflow checks PASS. No application tests rerun.
+  - State: DONE (editorial scope); historical release decision unchanged.
 - **2026-09-18 — QC-MIDPOINT-REBASE-001 / Evidence rebase and adaptive plan**
   - Changed: refreshed existing bilingual80-domain reports and15-prompt HTML; compressed duplicated historical context, archives unchanged.
   - Evidence: local PG suites and authorized owner reads; independent arithmetic/bilingual review and pack UI PASS;46.7% overall/5.3% production gate completion/NO-GO.

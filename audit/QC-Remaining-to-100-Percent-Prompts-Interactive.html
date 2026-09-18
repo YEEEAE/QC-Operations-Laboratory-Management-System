@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>QC Remaining-to-100% Prompt Pack</title>
+    <title>QC remaining-work prompts</title>
     <style>
       :root {
         color-scheme: light dark;
@@ -182,673 +182,698 @@
         overflow: hidden;
         clip-path: inset(50%);
       }
+
+      .dependencies {
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .hero p + p {
+        margin-top: 12px;
+      }
+      .toolbar {
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      a {
+        color: var(--text);
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        line-height: 1.65;
+      }
+      .head > div {
+        min-width: 0;
+      }
+      .code {
+        overflow-wrap: anywhere;
+      }
+      .copy {
+        flex-shrink: 0;
+      }
+      .copy:disabled {
+        opacity: 0.7;
+      }
+      .phase {
+        font-weight: 600;
+      }
+      .scoregrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .scorebox {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: var(--panel2);
+      }
+      .scorebox strong { display:block; margin-bottom:4px; }
+      .scorebox span { color: var(--muted); font-size: 13px; }
+      @media (max-width: 540px) {
+        .head {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .copy {
+          width: 100%;
+        }
+      }
     </style>
   </head>
   <body>
     <main class="wrap">
       <header class="hero">
-        <h1>QC Remaining-to-100% Prompt Pack</h1>
+        <h1>QC remaining-work prompts</h1>
         <p>
-          QC-MIDPOINT-REBASE-001 · 15 remaining tasks. Execute in the displayed order. Local
-          implementation and verification first; external operations require explicit authorization.
-          Final audit follows production proof and signed human UAT.
+          18 independently copyable tasks. Each prompt states its objective, evidence to recheck,
+          dependencies, work, acceptance criteria and handoff.
         </p>
-        <p class="notice">
-          Current evidence maturity 46.7%; production gate completion 5.3%; NO-GO. These are audit
-          inputs, never targets to edit. No closure task was executed by this refresh.
+        <p>
+          Evidence baseline: 18 September 2026, commit <code>298e307721af</code>. The editorial
+          rewrite was made at <code>20e6ead8f397</code>; application checks were not repeated for
+          that revision. Baseline scores: 46.7% evidence maturity and 5.3% mandatory production-gate
+          completion. Decision: NO-GO.
         </p>
+        <p>
+          Start local work with task 002 while the operator handles task 015. Run task 016 before final UI closure; task 005 repairs the current UI, task 017 expands dashboard intelligence, and task 018 humanizes copy. Follow the displayed handoffs; repeat final CI after all code changes. Task 001 requires a closed production connection gate. Human UAT and the final audit follow the approved candidate. Selecting or copying a prompt does not execute it or authorize external changes.
+        </p>
+        <div class="scoregrid" aria-label="Supplementary product-experience indicators">
+          <div class="scorebox"><strong>Live Product UX — 29.0%</strong><span>Target 100% · gap 71.0 pp · task 016</span></div>
+          <div class="scorebox"><strong>Dashboard Intelligence — 43.3%</strong><span>Target 100% · gap 56.7 pp · task 017</span></div>
+          <div class="scorebox"><strong>UX Writing — 43.7%</strong><span>Target 100% · gap 56.3 pp · task 018</span></div>
+        </div>
+        <nav class="links" aria-label="Audit reports">
+          <a href="2026-09-18-ULTIMATE-COMPREHENSIVE-SYSTEM-AUDIT.md">English audit</a
+          ><a href="2026-09-18-ULTIMATE-COMPREHENSIVE-SYSTEM-AUDIT-AR.md" lang="ar"
+            >التقرير العربي</a
+          >
+        </nav>
       </header>
       <div class="toolbar">
-        <button id="ea">Expand All</button><button id="ca">Collapse All</button
+        <button id="ea" type="button">Expand all</button
+        ><button id="ca" type="button">Collapse all</button
         ><span id="copy-status" role="status" aria-live="polite"></span>
       </div>
-      <section class="card">
+      <section class="card" aria-labelledby="title-015">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-015 · Order 1</div>
-            <h2>Credential Rotation &amp; Canonical Connection Safety Gate</h2>
+            <div class="code">QC-100-FINAL-015 · 1 of 18</div>
+            <h2 id="title-015">Close the production connection safety gate</h2>
+            <p class="purpose">
+              Prepare and, when explicitly authorized, complete credential rotation and establish a
+              trusted canonical production connection.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> No local task depends on completing external rotation.
+              Task 001 must wait for this gate before a direct production database connection.
+            </p>
             <p class="purpose">Domain ownership: 57, 80</p>
           </div>
-          <button class="copy" data-id="p015" aria-label="Copy Prompt QC-100-FINAL-015">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p015"
+            aria-label="Copy prompt QC-100-FINAL-015"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-015</summary>
+          <summary>Read prompt QC-100-FINAL-015</summary>
           <pre id="p015">
-# Execution order 1 of 15
+# QC-100-FINAL-015 — Close the production connection safety gate
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Prepare and, when explicitly authorized, complete credential rotation and establish a trusted canonical production connection.
 
-# QC-100-FINAL-015 — Credential Rotation &amp; Canonical Connection Safety Gate
-This is an operator-dependent prerequisite, not permission to change provider secrets. Re-read docs/operations/RENDER-DATABASE-CONNECTION.md. The prior provider task confirmed the service still used the documented compromised export credential; the current local canonical preflight fails because DATABASE_URL is missing. Current audit has not accessed production PostgreSQL directly.
-Prepare a concrete rotation sequence and target inventory without copying secrets. Obtain explicit user authorization for provider rotation, environment updates and old-credential revocation before executing any such external action. Use provider secret management, a new credential, approved canonical DATABASE_URL privately, internal service networking where supported, read-only verified connectivity and old-credential revocation. Preserve service availability, plan rollback safely, and never print digest inputs/URLs/keys. Never source the provider display export, reuse the compromised credential or bypass the parser. Confirm access restrictions and public ipAllowList against approved topology.
-Acceptance: rotation completed by an authorized operator, canonical connection works with verified TLS/schema/session contract, old credential revoked, service uses the approved connection, zero secret exposure, production connection safety gate closed. If any external authorization or credential is missing, report BLOCKED and complete only the local preparation. Task 001 cannot connect/migrate production until this gate is truly closed.
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
+
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
+
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
+
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+The prior provider review documented reuse of an exposed credential. The audit could not use canonical DATABASE_URL. Read docs/operations/RENDER-DATABASE-CONNECTION.md and recheck whether this blocker still exists.
+
+## Dependencies and sequencing
+No local task depends on completing external rotation. Task 001 must wait for this gate before a direct production database connection.
+
+## Required work
+1. Inventory affected credentials, services and connection settings without printing secret values. Prepare a concrete rotation, verification, revocation and rollback sequence.
+2. Use existing explicit authorization only within its scope. Otherwise complete the reviewable preparation and identify the exact provider operations requiring user authorization. Never reconstruct the compromised URL from an export.
+3. An authorized operator must provision the replacement secret, update the approved service connection, verify service continuity and revoke the old credential. Verify network allowlists and internal networking against approved topology.
+4. After rotation, verify the canonical pool with read-only checks for TLS, database, principal, qc schema, search_path and UTC. Store redacted evidence only.
+
+## Acceptance
+Close this gate only with verified rotation, revoked old credentials, approved service connectivity and no secret exposure. Missing authorization or access means BLOCKED; preparation may still be DONE.
+
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-002">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-002 · Order 2</div>
-            <h2>Zero-Defect Toolchain, Lint, Format &amp; Exact-HEAD CI</h2>
+            <div class="code">QC-100-FINAL-002 · 2 of 18</div>
+            <h2 id="title-002">Repair verification gates and prove the final candidate in CI</h2>
+            <p class="purpose">
+              Make the declared toolchain and required verification commands pass without weakening
+              application contracts.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Start local repair now. Task 014 owns Reject SQL. Repeat
+              all affected checks and final CI after every source task, including changes from 003,
+              006 and 007. Billing is an operator dependency, not a reason to stop local work.
+            </p>
             <p class="purpose">
               Domain ownership: 14, 15, 16, 17, 18, 19, 43, 44, 53, 54, 55, 56, 58, 65, 78, 79, 80
             </p>
           </div>
-          <button class="copy" data-id="p002" aria-label="Copy Prompt QC-100-FINAL-002">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p002"
+            aria-label="Copy prompt QC-100-FINAL-002"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-002</summary>
+          <summary>Read prompt QC-100-FINAL-002</summary>
           <pre id="p002">
-# Execution order 2 of 15
+# QC-100-FINAL-002 — Repair verification gates and prove the final candidate in CI
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Make the declared toolchain and required verification commands pass without weakening application contracts.
 
-# Prompt 02 — QC-100-FINAL-002
-## Zero-Defect Toolchain, Lint, Format &amp; Exact-HEAD CI
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-002 — Zero-Defect Toolchain, Lint, Format &amp; Exact-HEAD CI`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Baseline: Node 22.22.3 was outside &gt;=24.20.0 &lt;25; pnpm 11.25.0 matched. Unit 564 passed; integration 350 passed/3 failed; migrations 29 passed; concurrency 11 passed/1 failed; security 52 passed. Format initially failed in 4 files, then 3 unrelated files after pack formatting. Lint had 37 errors: 19 source/script and 18 prior operational-helper errors. CI run 35325572254 had zero steps because of billing lock.
 
-Close all deterministic engineering gates and produce a green exact-HEAD GitHub CI result.
+## Dependencies and sequencing
+Start local repair now. Task 014 owns Reject SQL. Repeat all affected checks and final CI after every source task, including changes from 003, 006 and 007. Billing is an operator dependency, not a reason to stop local work.
 
-### Local runtime parity
+## Required work
+1. Read package.json, lockfile and .github/workflows before choosing commands. Use the declared Node and pnpm versions; preserve the lockfile and fail closed on mismatch.
+2. Fix formatting and lint causes. Resolve generated/helper-file scope deliberately; do not add broad exclusions to hide application errors.
+3. Correct the Reject synchronous .rejects harness and stale control-center migration-head assertion using current contracts. Investigate the losing inspection-approval result, committed state and audit effects before changing either product or concurrency assertion.
+4. Run frozen install, format, lint, typecheck, architecture, unit, integration, migrations, concurrency, security, build and release checks. Use isolated PostgreSQL 18 and also prove the required CI container path.
+5. Configure candidate-bound authenticated fixtures so mandatory CI tests cannot silently skip. After an authorized operator resolves billing, inspect a run for the final exact SHA and record jobs, steps and results. A zero-step run is BLOCKED.
 
-Use the repository-declared Node and pnpm versions.
+## Acceptance
+Required gates pass on the final tree and declared runtime; failures/skips are explained without relabeling them PASS. Exact-SHA CI must actually execute. Report local completion separately if external CI remains blocked.
 
-Run:
-
-```bash
-corepack enable
-pnpm install --frozen-lockfile
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test:architecture
-pnpm test:unit
-pnpm build
-pnpm release:identity
-pnpm release:verify
-pnpm release:tech-debt:check
-git diff --check
-```
-
-Fix every warning/error that is part of the release contract.
-
-No ignored lint debt. No formatter exceptions merely to get green output.
-
-### CI
-
-Audit `.github/workflows/ci.yml`.
-
-The exact-head workflow must actually start and execute.
-
-If GitHub account/billing state prevents the workflow from starting:
-
-```text
-CI = BLOCKED BY EXTERNAL ACCOUNT CONDITION
-```
-
-Resolve the account/workflow execution blocker first; do not label it PASS.
-
-### Required CI jobs
-
-The canonical workflow must cover, as appropriate:
-
-```text
-install
-format
-lint
-typecheck
-architecture
-unit
-PostgreSQL integration
-migrations
-concurrency
-security
-build
-authenticated E2E
-release verification
-```
-
-Do not silently skip required jobs.
-
-### Acceptance criteria
-
-- format: PASS
-- lint: PASS
-- typecheck: PASS
-- architecture: PASS
-- unit: PASS
-- build: PASS
-- release verification: PASS
-- exact current HEAD GitHub CI: PASS
-- zero release-gate failures
-- zero unexplained/skipped mandatory jobs
-
----
-
-### Rebase defects and dependencies
-Current frozen install, typecheck, architecture, 83-file / 564-test unit suite, build, release identity, release verify and technical-debt check passed locally under Node 22.22.3, which is outside &gt;=24.20.0 &lt;25. Current format failed on four files and lint reported 37 errors (including operational helper scripts and Reject Reports). Re-run on the declared runtime; repair actual defects without blanket exclusions. Run 353 integration cases and investigate the three failures: synchronous rejection asserted with rejects, ambiguous Reject analytics SQL (owned by 014), and hardcoded control-center head 0027 (actual 0029). Concurrency has one failure (11 pass) in controlled inspection approval: inspect the actual losing result and state/audit effects before deciding whether product or assertion is wrong. Security 52/52 and migrations 29/29 passed on approved equivalent local PG18, not the CI Testcontainers path.
-Exact-head CI run 35325572254 / Verify job 105537703598 had zero steps because of account billing lock. Billing remediation is an external account action requiring the operator. Do not rewrite workflow semantics to label it green. Baseline repair can run first, but final exact-candidate CI closure must be repeated after all source tasks (013/014/005/011/010) and browser fixture task 003. Configure CI to provision the declared disposable auth fixtures so mandatory tests cannot silently skip.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-013">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-013 · Order 3</div>
-            <h2>Approved Policies &amp; Remaining Controlled Workflow Closure</h2>
+            <div class="code">QC-100-FINAL-013 · 3 of 18</div>
+            <h2 id="title-013">Complete approved policies and controlled workflows</h2>
+            <p class="purpose">
+              Turn approved business requirements into complete controlled workflows and identify
+              decisions that require the real business authority.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Read approved Documents and
+              audit/100-percent/POLICY-CLOSURE-MATRIX.md first. Supply policy decisions and test
+              scenarios to 011, 010, 003 and 004. Implement independent approved work while specific
+              decisions remain blocked.
+            </p>
             <p class="purpose">
               Domain ownership: 1, 2, 3, 6, 7, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
               34, 35, 36, 42, 60, 61, 62, 63, 64, 70, 71, 72, 73, 74
             </p>
           </div>
-          <button class="copy" data-id="p013" aria-label="Copy Prompt QC-100-FINAL-013">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p013"
+            aria-label="Copy prompt QC-100-FINAL-013"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-013</summary>
+          <summary>Read prompt QC-100-FINAL-013</summary>
           <pre id="p013">
-# Execution order 3 of 15
+# QC-100-FINAL-013 — Complete approved policies and controlled workflows
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Turn approved business requirements into complete controlled workflows and identify decisions that require the real business authority.
 
-# QC-100-FINAL-013 — Approved Policies &amp; Remaining Controlled Workflow Closure
-Establish a requirement-to-evidence inventory for all quality, QC, laboratory, equipment, document, approval, signature, correction/deletion and localization capabilities still below 100. Read POLICY-CLOSURE-MATRIX.md and approved Documents before implementation; preserve closed P-04/P-05/P-06/P-07 decisions. Do not reopen them merely because runtime proof is missing.
-Resolve OPEN policy/source inputs with the actual business authority. Explicitly cover the default laboratory evaluator that throws AUTHZ_DENIED, PD-38 laboratory reject authority, laboratory VOID (TR-LAB-008), controlled limits/units/methods/tolerances, signature action scope, approval reason scope, CAPA effectiveness, calibration interval/overdue rules, record retention/archival, controlled reference masters and import/bulk/correction strategy. No invented scientific or authority decision. Unsupplied approval is BLOCKED; time passing is not consent.
-For each supplied approved policy, implement the smallest complete domain/application/port/repository/Action/page path, with server authority, frozen sources, state/version/SoD/idempotency, transactional audit/outbox and immutable historical evidence. Prove happy, boundary, wrong-role/scope/state/stale/tamper/rollback cases on PostgreSQL 18, then hand scenarios to tasks 003/004. Preserve PASS != RELEASED and fail-closed behavior while sources remain missing.
-Domain 70 remains in the 80-domain matrix. Current delivery is intentionally English/LTR. Obtain the authority&#x27;s explicit requirement for Arabic/RTL versus approved scope first; do not label missing localization 100 or silently remove the domain. If required, implement and verify real localized text, RTL reflow, dates/numbers, keyboard and human acceptance; if scope excludes it, record the approved applicability decision and apply the proportional scoring rule transparently in the final audit.
-Acceptance: every relevant open requirement has approved source, implementation or a truthful blocker, meaningful tests, PostgreSQL proof, browser/UAT scenario, and production proof plan. No controlled evaluator/VOID/action is considered closed from scaffolding. All other missing required features found during inventory must receive concrete implementation ownership rather than being deferred to task 012&#x27;s audit.
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
+
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
+
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
+
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+The default laboratory evaluator denies execution; PD-38 reject authority is unresolved; laboratory VOID/TR-LAB-008 is missing and policy-denied. QMS, calibration, signature scope, retention and reference-data decisions remain open. Closed P-04/P-05/P-06/P-07 decisions remain authoritative.
+
+## Dependencies and sequencing
+Read approved Documents and audit/100-percent/POLICY-CLOSURE-MATRIX.md first. Supply policy decisions and test scenarios to 011, 010, 003 and 004. Implement independent approved work while specific decisions remain blocked.
+
+## Required work
+1. Inventory remaining requirements for QC, QMS, laboratory, equipment, templates, documents, approvals, signatures, correction, retention and localization. Give every requirement a source, owner, implementation path and acceptance evidence.
+2. Obtain missing scientific methods, limits, units, tolerances and evaluator sources from the authorized business source. Resolve PD-38 and VOID behavior explicitly; never invent scientific or approval policy.
+3. Implement approved paths through domain, application, ports, repository, Action and page. Preserve server authority, scope, state, version, SoD, idempotency, transactional audit/outbox and immutable source snapshots.
+4. Prove normal, boundary, wrong-role, wrong-scope, invalid-state, stale, tamper and rollback cases on populated disposable PostgreSQL. Preserve PASS != RELEASED and fail-closed defaults until approved sources exist.
+5. Retain domain 70. Current delivery is English/LTR. Obtain an explicit applicability decision for Arabic/RTL; implement required localization with human acceptance, or document an approved exclusion and transparent scoring denominator. Do not silently drop the domain.
+
+## Acceptance
+Every requirement is implemented and evidenced or has a specific unresolved authority/source blocker. Scaffolding and denied default evaluators do not count as completed operational workflows.
+
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-014">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-014 · Order 4</div>
-            <h2>Reject Reports SQL, Lifecycle, Access &amp; Analytics Closure</h2>
+            <div class="code">QC-100-FINAL-014 · 4 of 18</div>
+            <h2 id="title-014">Fix Reject Reports and prove its lifecycle and analytics</h2>
+            <p class="purpose">
+              Correct the demonstrated Reject analytics error and verify both report types from
+              creation through persisted history and reporting.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use the current source and approved report contract. Hand
+              verified aggregates to 005/011, persona scenarios to 003/004 and release smoke
+              criteria to 001.
+            </p>
             <p class="purpose">Domain ownership: 1, 3, 18, 39, 41, 64</p>
           </div>
-          <button class="copy" data-id="p014" aria-label="Copy Prompt QC-100-FINAL-014">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p014"
+            aria-label="Copy prompt QC-100-FINAL-014"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-014</summary>
+          <summary>Read prompt QC-100-FINAL-014</summary>
           <pre id="p014">
-# Execution order 4 of 15
+# QC-100-FINAL-014 — Fix Reject Reports and prove its lifecycle and analytics
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Correct the demonstrated Reject analytics error and verify both report types from creation through persisted history and reporting.
 
-# QC-100-FINAL-014 — Reject Reports SQL, Lifecycle, Access &amp; Analytics Closure
-Repair the newly demonstrated product error before any production parity closure: analytics() counts unqualified status while joining issue_slip_approval_confirmations a and reject_reports r, so PostgreSQL 18 reports ambiguous column reference status even at complete head 0029. Qualify the intended state correctly and add a regression with real confirmations and report rows; do not hide the error behind empty output. Inspect every aggregate&#x27;s grain, date bounds, VOID exclusion, percentages and totals.
-Distinguish this source SQL error from live migration drift: the live /reject-reports route currently returns 500, the owner page reports 0018/11 pending, and no production schema query was authorized. Source fix plus approved migration parity plus live smoke are all needed. Production mutation requires explicit authorization and task 015&#x27;s rotation gate.
-Verify every ACTIVE authenticated persona can see/open/create Issue Slip and Daily Reject. Issue Slip requires Supervisor, QC Manager, Factory Director confirmations, cannot complete early, and creator attestations never impersonate the real approver&#x27;s e-signature. Verify controlled reversal/VOID/history/version/idempotency/rollback/audit. Daily Reject has multiple entries, server-derived reject/good percentage including zero denominator, DRAFT/FINALIZED, and no approval workflow.
-Repair the synchronous-negative-test harness without weakening denial, and prove repository/search/navigation/print/export/dashboard/trend/by-item/by-department/by-reason against populated disposable PostgreSQL. Ensure page failures are safely classified. Browser/persona and production smoke are owned with tasks 003/001; hand actual scenarios to 004.
-Acceptance: all Reject unit/integration regressions PASS, analytics and totals correct at 0029, no false approvals/signatures, authorized creation for all personas, controlled rejection/tamper negatives preserved, live route 200 only after approved release/parity, and sanitized exact-candidate evidence.
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
+
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
+
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
+
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+At fully migrated local head 0029, analytics failed because status was ambiguous between joined report and confirmation tables. Live /reject-reports independently returned 500; its exact server exception was not established. Production migration drift is a separate blocker.
+
+## Dependencies and sequencing
+Use the current source and approved report contract. Hand verified aggregates to 005/011, persona scenarios to 003/004 and release smoke criteria to 001.
+
+## Required work
+1. Locate the analytics query in src/modules/reject-reports/infrastructure/postgres-repository.ts. Qualify the intended status and add populated PostgreSQL regression data containing both report and confirmation rows.
+2. Check aggregate grain, joins, date boundaries, VOID exclusions, totals and trend/by-item/by-department/by-reason output. Verify server percentage semantics, including a zero denominator. Do not replace SQL errors with empty data.
+3. Prove every ACTIVE authenticated persona can open and create Issue Slip and Daily Reject while preserving server-side mutation policy. Test anonymous/inactive denial correctly when authorization throws synchronously.
+4. Verify Issue Slip Supervisor, QC Manager and Factory Director confirmations, completion prerequisites, reversal/VOID/history/version/idempotency and rollback. Creator attestations must never impersonate approver electronic signatures.
+5. Verify multi-entry Daily Reject, DRAFT/FINALIZED, server-calculated good/reject quantities and the absence of an approval workflow. Reconcile search, print, export and dashboard output with persisted records.
+6. Keep local SQL correction, authorized production migration parity and live HTTP smoke as distinct acceptance items. A migration-only change cannot close the local query defect.
+
+## Acceptance
+Reject unit/integration and populated aggregate regressions pass; denial, integrity and history remain intact. Browser, live release and human evidence must be supplied by their owners before overall closure.
+
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-011">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-011 · Order 5</div>
-            <h2>Data Governance, MDM, Reporting, Export &amp; Lineage Closure</h2>
-            <p class="purpose">Domain ownership: 37, 38, 39, 40</p>
+            <div class="code">QC-100-FINAL-011 · 5 of 18</div>
+            <h2 id="title-011">Complete data governance, reports, exports and imports</h2>
+            <p class="purpose">
+              Close domains 37–40, 64 and 71–74 with concrete data behavior and traceable outputs.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Consume approved reference-data, correction and import
+              policies from 013 and verified Reject aggregates from 014. Provide browser and human
+              scenarios to 003/004.
+            </p>
+            <p class="purpose">Domain ownership: 37, 38, 39, 40, 64, 71, 72, 73, 74</p>
           </div>
-          <button class="copy" data-id="p011" aria-label="Copy Prompt QC-100-FINAL-011">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p011"
+            aria-label="Copy prompt QC-100-FINAL-011"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-011</summary>
+          <summary>Read prompt QC-100-FINAL-011</summary>
           <pre id="p011">
-# Execution order 5 of 15
+# QC-100-FINAL-011 — Complete data governance, reports, exports and imports
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Close domains 37–40, 64 and 71–74 with concrete data behavior and traceable outputs.
 
-# Prompt 11 — QC-100-FINAL-011
-## Data Governance, MDM, Reporting, Export &amp; Lineage Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-011 — Data Governance, MDM, Reporting, Export &amp; Lineage Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Search, reports, notification outbox and export paths exist; accepted end-to-end lineage, required master data, import and bulk-operation evidence remain incomplete.
 
-Close the remaining data-governance, reporting, export, MDM, and lineage domains.
+## Dependencies and sequencing
+Consume approved reference-data, correction and import policies from 013 and verified Reject aggregates from 014. Provide browser and human scenarios to 003/004.
 
-### Master data
+## Required work
+1. Inventory required reference masters, data owners, validation, uniqueness, lifecycle, correction, archival, import and bulk operations. Implement only approved missing capabilities, preserving identifiers and history.
+2. Prove recipient-scoped notification delivery and outbox replay/deduplication, authorized cross-domain search, stable pagination and valid links.
+3. Reconcile each report on screen, in print/PDF and spreadsheet exports with the same server query, scope, filters, date/timezone boundaries, totals and lineage.
+4. Verify spreadsheet formula defense, export privacy, empty/error states and large datasets. Test unauthorized scope, duplicates, invalid rows and rollback.
+5. Implement the approved atomic or partial import strategy with explicit row results and idempotency. Do not invent a master-data catalog or reinterpret free-text fields without an approved requirement.
 
-Define governed ownership and lifecycle for:
+## Acceptance
+Required operations work with populated PostgreSQL and browser artifacts; screen/export totals agree; replay, privacy and negative cases pass. Missing policy or human/provider evidence remains explicitly open.
 
-- items/products
-- suppliers if modeled
-- departments/sites
-- units
-- reject reasons
-- equipment types
-- test methods/templates
-- roles/scopes
-- reference states
-
-Prevent uncontrolled free-text proliferation where controlled reference data is required.
-
-### Data quality
-
-Add runtime checks for:
-
-- duplicate business identifiers
-- invalid references
-- missing mandatory controlled values
-- impossible quantities
-- invalid dates
-- stale records
-- orphaned relationships
-
-### Lineage
-
-For critical records, prove traceability from:
-
-```text
-source/input
--&gt; workflow
--&gt; approval
--&gt; audit/evidence
--&gt; report/export
-```
-
-### Reporting
-
-Verify every report:
-
-- server-side authorization
-- filter correctness
-- same data set for screen/export
-- pagination
-- CSV/XLSX correctness
-- date/time correctness
-- no hidden sensitive columns
-- deterministic totals
-
-### Print/PDF
-
-Verify controlled forms and Reject Reports in print layout.
-
-### Acceptance criteria
-
-- governed reference data ownership exists
-- critical lineage paths are queryable
-- report/export correctness is PostgreSQL-backed
-- CSV/XLSX/print evidence is browser verified
-- no unexplained data-quality exceptions remain
-
----
-
-### Additional domains requiring concrete closure
-Explicitly own domains 37–40, 64, 71–74: notification delivery/outbox replay, scoped search, every report&#x27;s screen/export equality, print/PDF/spreadsheet formula defense, timezone boundaries, reference-data ownership, imports and bulk operations. Obtain approved import atomic/partial strategy and controlled reference data from task 013 before implementation; do not invent required masters or silently redefine free-text semantics. Inventory each existing operation and implement only required missing capabilities. Task 014 owns Reject aggregate correctness; task 005 consumes it in dashboard. Require PostgreSQL negatives, browser artifacts, human scenarios and production/provider evidence where applicable; a document-only re-audit cannot close these domains.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-016">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-005 · Order 6</div>
-            <h2>Dashboard UX, Live Data &amp; Decision-Support Closure</h2>
+            <div class="code">QC-100-FINAL-016 · 6 of 18</div>
+            <h2 id="title-016">Run live product UX &amp; human-centered page review</h2>
+            <p class="purpose">Review the real authenticated product read-only and turn observed friction into traceable work. Indicator: 29.0% → 100%.</p>
+            <p class="dependencies"><strong>Sequencing:</strong> Run before final shared UI/copy closure; use a user-established authenticated session and never mutate production.</p>
+            <p class="purpose">Domain ownership: 4, 5, 20, 41, 47, 65, 66, 67, 68, 69</p>
+          </div>
+          <button type="button" class="copy" data-id="p016" aria-label="Copy prompt QC-100-FINAL-016">Copy prompt</button>
+        </div>
+        <details>
+          <summary>Read prompt QC-100-FINAL-016</summary>
+          <pre id="p016">
+# QC-100-FINAL-016 — Live product UX &amp; human-centered application review
+
+## Objective
+Perform a real authenticated, read-only product and UX review of the deployed application and convert observed friction into candidate-bound implementation evidence. Planning indicator baseline: 29.0%; target: 100%.
+
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Re-freeze the actual candidate. Use current source and approved requirements; audit observations are historical inputs, not proof for the new candidate.
+
+Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit authorization covering that operation. Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit and PASS != RELEASED. Do not invent business/scientific rules or alter scores to claim completion.
+
+## Evidence to recheck
+Baseline findings include Times font fallback, broken KPI drill-down semantics, actor-vs-scope ambiguity, UUID identity exposure, decision-queue mismatch, dense/technical copy, small targets/text and incomplete live accessibility/usability coverage. Reproduce findings on the current candidate; do not assume they remain open.
+
+## Dependencies and sequencing
+Run after core Reject/data-query repairs needed for meaningful live pages and before final shared UI/copy closure. Use an authorized authenticated session. If authentication is not already established, require the user/operator to sign in manually; never capture or store credentials. This task is read-only and is not human UAT.
+
+## Required work
+1. Review Dashboard, Tasks, Quality/Findings/NCR/RCA/CAPA, Quarantine/Receiving/Inspections, Laboratory, Assets, Documents/Approvals/Changes, Reports, Reject Reports, AI Advisory, Search, Notifications, Audit, Health and Control Center where accessible.
+2. For every page ask: what is this for, what needs attention, what should happen next, what text can be removed, what internal terminology/IDs leak into the UI, and whether primary actions/empty/error/loading states are clear.
+3. Record humanized Before → After copy suggestions, navigation/drill-down issues, visual-density problems, responsive hierarchy issues and backend/read-model needs.
+4. Distinguish copy-only, frontend, backend/read-model and policy findings. Classify P1/P2/P3. Do not mutate production data.
+5. Create/update `audit/2026-09-18-LIVE-PRODUCT-UX-AUDIT.md` with pages reviewed, evidence limitations and traceability to tasks 005/017/018/006/004.
+
+## Acceptance
+Representative major page families are reviewed on the current candidate; P1/P2/P3 findings are traceable; copy replacements and read-model needs are explicit; no production mutation occurred. The 29.0% indicator may increase only if underlying domain evidence actually improves in a later audit.
+
+## Required handoff
+Report DONE/PARTIAL/BLOCKED separately from PASS/FAIL/NOT VERIFIED evidence. Include candidate identity, pages reviewed, finding counts, artifact path and downstream tasks.
+
+</pre>
+        </details>
+      </section>
+      <section class="card" aria-labelledby="title-005">
+        <div class="head">
+          <div>
+            <div class="code">QC-100-FINAL-005 · 7 of 18</div>
+            <h2 id="title-005">Repair the dashboard and shared user experience</h2>
+            <p class="purpose">
+              Make the dashboard readable, correctly scoped and connected to working filtered views.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Consume correct report queries from 014/011 and live product findings from 016. Task 017 owns dashboard intelligence expansion, 018 owns copy simplification, 006 verifies cross-application accessibility, and 007 measures performance. Keep the current application English/LTR unless 013 supplies an approved change.
+            </p>
             <p class="purpose">Domain ownership: 4, 5, 20, 41, 66, 67, 68, 69</p>
           </div>
-          <button class="copy" data-id="p005" aria-label="Copy Prompt QC-100-FINAL-005">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p005"
+            aria-label="Copy prompt QC-100-FINAL-005"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-005</summary>
+          <summary>Read prompt QC-100-FINAL-005</summary>
           <pre id="p005">
-# Execution order 6 of 15
+# QC-100-FINAL-005 — Repair the dashboard and shared user experience
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Make the dashboard readable, correctly scoped and connected to working filtered views.
 
-# Prompt 05 — QC-100-FINAL-005
-## Dashboard UX, Live Data &amp; Decision-Support Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-005 — Dashboard UX, Live Data &amp; Decision-Support Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+The audit observed Times font, ignored inspectionResult/workflowState filters, UUID user identity, inconsistent count/scope definitions, H2 navigation before H1, small metadata, 46 interactives below the project 44px dimension and repeated WASM/CSP errors. These are baseline observations requiring reproduction. Consume the current live-product findings from task 016 and coordinate dashboard intelligence/copy ownership with 017/018.
 
-Close every finding from the live dashboard review and turn `/dashboard` into a precise, fast, role-aware operational command center backed only by real server data.
+## Dependencies and sequencing
+Consume correct report queries from 014/011. Task 006 verifies cross-application accessibility; 007 measures performance. Keep the current application English/LTR unless 013 supplies an approved change.
 
-### Mandatory defects to close
+## Required work
+1. Trace global font inheritance and repair the shared typography cause. Present a human-readable authorized user identity and a coherent heading structure.
+2. Define each KPI numerator, state, actor scope and time window. Make count, label, attention list and destination query agree. Fix unsupported query parameters at their owning boundary.
+3. Use real approved server series for charts. Show loading, empty, unavailable and error states accurately; never fabricate trend data or convert unavailable data into zero.
+4. Repair accessible search names, target sizes, metadata readability, table/form/dialog behavior and responsive layouts. Preserve meaningful keyboard focus and status/error announcements.
+5. Resolve repeated decorative WASM loading and CSP failures with a safe fallback. Preserve reduced motion and existing CSP protections; do not add unsafe-eval to make decoration run.
+6. Verify real populated dashboard links, role-relevant next actions, error recovery and mobile layouts. Record before/after evidence tied to the candidate.
 
-#### 1. Global font defect
+## Acceptance
+Dashboard values and drill-downs agree, shared defects are repaired, and focused regression/browser checks pass. Performance and full accessibility acceptance remain with 007/006.
 
-The authenticated application must not fall back to Times/serif because of the `font: inherit` reset.
-
-Fix the root CSS order/selector issue and verify computed styles in the built/live application.
-
-#### 2. Broken KPI drill-down filters
-
-Every KPI link must point to a destination that actually supports and visibly applies its filter.
-
-Do not send unsupported query parameters.
-
-#### 3. KPI scope semantics
-
-The number calculated must match the copy shown to the user.
-
-If KPIs are actor-personal, label them clearly as personal.
-
-If the design says authorized operational scope, query the authorized operational scope.
-
-#### 4. Decision queue consistency
-
-The `Pending review` count and `Items needing a decision` list must derive from compatible business definitions.
-
-Build one coherent decision queue using real approval work items and relevant HOLD/attention items.
-
-Remove fake/unreachable priority states.
-
-#### 5. User identity in topbar
-
-Never show internal UUID as the human identity.
-
-Show safe user-facing identity:
-
-```text
-display name or login identity
-actual role/scope summary
-```
-
-#### 6. Accessibility label-in-name
-
-Fix the Search/Ctrl-K accessible-name mismatch.
-
-#### 7. Lottie/CSP
-
-Choose one secure solution:
-
-- make the animation compatible with production CSP after security review, or
-- remove the broken Lottie runtime and use the lightweight fallback
-
-Do not keep downloading unusable WASM.
-
-#### 8. Typography readability
-
-Raise 10px operational metadata text to a usable size, generally 11–12px minimum under the design system.
-
-#### 9. Heading hierarchy
-
-Navigation group labels must not create a page heading hierarchy where H2 elements appear before the page H1.
-
-#### 10. Touch targets
-
-Meet the project&#x27;s documented 44px interactive target where applicable.
-
-#### 11. Remove empty duplicate trend panels
-
-Do not reserve large empty dashboard space for unavailable data.
-
-#### 12. Error classification
-
-Differentiate:
-
-```text
-AUTHORIZATION DENIED
-DEPENDENCY/PROVIDER UNAVAILABLE
-EMPTY DATA
-```
-
-Never tell a user there is a provider outage when the real issue is missing permission.
-
-#### 13. Performance
-
-Measure and improve:
-
-```text
-TTFB
-FCP
-LCP
-JS/WASM transfer
-server query time
-```
-
-Remove known unnecessary network cost.
-
-#### 14. Copy/date/refresh
-
-Clean duplicate text such as `Updated current snapshot`.
-
-Use intentional Saudi/local date formatting.
-
-Add a clear refresh action if the dashboard is snapshot-based.
-
-### Dashboard additions using real data
-
-Add or improve these only when backed by an approved read model:
-
-#### Operational actions
-
-Top action row:
-
-```text
-approvals waiting for me
-unread notifications
-tasks due soon
-```
-
-#### Quarantine flow
-
-Show real stages:
-
-```text
-received today
-awaiting inspection
-under inspection
-HOLD
-PASS but not released
-released
-```
-
-Use the existing quarantine overview/distribution data.
-
-#### Decision attention
-
-Use the richer server `attention` model where available and show a human-readable reason for each item.
-
-#### Real charts
-
-Use only real backend time series/distributions:
-
-- receiving-state distribution
-- Reject Reports daily trend
-- rejects by item
-- rejects by department
-- rejects by reason
-- total rejected quantity
-
-Do not draw a Findings/NCR/CAPA trend unless a real approved time-series read model exists.
-
-#### Quality/Lab/Assets
-
-Provide concise live summaries with useful drill-down links, for example:
-
-```text
-open Findings/NCR/RCA/CAPA
-laboratory work requiring action
-overdue calibration
-maintenance attention
-```
-
-#### System status
-
-Only canonical yazeed may see owner system-health/control-center status cards.
-
-### Responsive verification
-
-Prove no horizontal overflow and usable hierarchy at:
-
-```text
-320
-360
-500
-768
-1024
-1200
-1440
-```
-
-### Acceptance criteria
-
-- every live-review finding is resolved or explicitly retired with evidence
-- all KPI numbers and labels mean the same thing
-- every drill-down works
-- no broken CSP animation
-- no internal UUID identity in normal UI
-- dashboard uses only real server data
-- accessibility issues from the review are closed
-- measured performance is recorded before/after
-
----
-
-### Source prerequisites and current observations
-Task 014 owns Reject analytics SQL repair and lifecycle/access proof; consume its verified read model rather than duplicate it here. Current owner live read confirms Times font, unsupported inspectionResult/workflowState receiving filters, UUID identity, navigation H2s before H1, 46 visible interactive elements below a 44px bounding-box dimension, and three WASM/CSP errors with repeated 1,238,072-byte decoded WASM. Explicit Label in Name axe rule still reports one serious violation. Scope/count/list definitions remain inconsistent in current source. A repeat dashboard navigation measured TTFB 1991.6ms, FCP/LCP 2740ms, JS decoded 170075 bytes; these are single observations with cache effects, not capacity budgets. Keep intentionally unavailable unapproved charts honest; fix space/layout and introduce charts only with approved real server series.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-017">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-010 · Order 7</div>
-            <h2>Security, Privacy, Secure SDLC &amp; Compliance Evidence Closure</h2>
+            <div class="code">QC-100-FINAL-017 · 8 of 18</div>
+            <h2 id="title-017">Expand dashboard intelligence with real data</h2>
+            <p class="purpose">Build a human operational dashboard using traceable read models, real trends/distributions and working drill-downs. Indicator: 43.3% → 100%.</p>
+            <p class="dependencies"><strong>Sequencing:</strong> Consume 014/011 data fixes and 016 findings; stabilize shared UI with 005; measure with 007.</p>
+            <p class="purpose">Domain ownership: 8, 37, 38, 39, 41, 50, 51, 64, 69</p>
+          </div>
+          <button type="button" class="copy" data-id="p017" aria-label="Copy prompt QC-100-FINAL-017">Copy prompt</button>
+        </div>
+        <details>
+          <summary>Read prompt QC-100-FINAL-017</summary>
+          <pre id="p017">
+# QC-100-FINAL-017 — Dashboard intelligence &amp; real-data visualization expansion
+
+## Objective
+Turn the dashboard into a human operational command center using only real, authorized server data and working drill-downs. Planning indicator baseline: 43.3%; target: 100%.
+
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Re-freeze the actual candidate. Use current source and approved requirements; audit observations are historical inputs, not proof for the new candidate.
+
+Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit authorization covering that operation. Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit and PASS != RELEASED. Do not invent business/scientific rules or alter scores to claim completion.
+
+## Evidence to recheck
+Current dashboard evidence shows count/list mismatches, unsupported query parameters, scope wording that can disagree with actor-filtered queries, empty/unavailable trend space and limited real-data visualization. Reject analytics must be stable before it is surfaced.
+
+## Dependencies and sequencing
+Consume verified query/report outputs from 014/011 and findings from 016. Apply shared UI repair from 005 first or in the same controlled change set. Task 007 measures performance after dashboard changes.
+
+## Required work
+1. Make the dashboard answer: What needs my attention now? What changed today? What is waiting? Where are bottlenecks? What needs a decision?
+2. Add traceable action counts for approvals, unread notifications, due/overdue tasks and returned work where real read models exist.
+3. Add a quarantine flow from Received → Awaiting Inspection → Under Inspection → HOLD → PASS not released → Released using one coherent server definition and working filters.
+4. Build a unified attention queue from real approval/HOLD/inspection/lab/calibration/maintenance/document sources; every item needs a human reason, age/status and direct working link.
+5. Surface Reject analytics only after its SQL/runtime defects close: rejected quantity, top items/reasons/departments and daily trend where mathematically valid.
+6. Add concise Quality/Lab/Assets summaries and owner-only system-health cards where authorized.
+7. Charts must declare source, unit, period and freshness; never invent a time series, never show an empty major chart, and never use an unsupported filter link.
+8. Verify SSR/read-model aggregation, pagination/bounds and no N+1/duplicate heavy calls.
+
+## Acceptance
+Every displayed number is traceable to a server read model; every drill-down applies a visible supported filter; no contradictory count/list semantics; no fake chart; no owner-only data leakage; responsive layout and performance remain within approved budgets.
+
+## Required handoff
+Report implemented data sources, query/read-model changes, dashboard cards/charts, links/filters, before/after measurements and any remaining NOT VERIFIED data products.
+
+</pre>
+        </details>
+      </section>
+      <section class="card" aria-labelledby="title-018">
+        <div class="head">
+          <div>
+            <div class="code">QC-100-FINAL-018 · 9 of 18</div>
+            <h2 id="title-018">Humanize and simplify application-wide UX copy</h2>
+            <p class="purpose">Shorten and humanize user-facing language while preserving regulated QC meaning. Indicator: 43.7% → 100%.</p>
+            <p class="dependencies"><strong>Sequencing:</strong> Consume 016 findings and stabilized dashboard/UI from 005/017; rerun accessibility after copy changes.</p>
+            <p class="purpose">Domain ownership: 4, 20, 41, 65, 66, 67, 68, 69</p>
+          </div>
+          <button type="button" class="copy" data-id="p018" aria-label="Copy prompt QC-100-FINAL-018">Copy prompt</button>
+        </div>
+        <details>
+          <summary>Read prompt QC-100-FINAL-018</summary>
+          <pre id="p018">
+# QC-100-FINAL-018 — Humanized UX writing &amp; application-wide content simplification
+
+## Objective
+Make user-facing language concise, natural, operational and understandable to real QC staff without weakening controlled terminology or regulated meaning. Planning indicator baseline: 43.7%; target: 100%.
+
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Re-freeze the actual candidate. Use current source and approved requirements; audit observations are historical inputs, not proof for the new candidate.
+
+Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit authorization covering that operation. Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit and PASS != RELEASED. Do not invent business/scientific rules or alter scores to claim completion.
+
+## Evidence to recheck
+The live/source review contains dense descriptions, developer/system language, repeated scope/freshness text, generic errors, raw/internal action names and opportunities to shorten headings, helper text, tables, empty states and dashboard copy. Re-audit the current candidate before editing.
+
+## Dependencies and sequencing
+Consume findings from 016 and the stabilized dashboard structure from 005/017. Keep the approved application language/localization policy from 013; do not introduce an unapproved Arabic/RTL scope change. Run accessibility checks after copy changes because accessible names and label-in-name can change.
+
+## Required work
+1. Review user-facing copy in `src/pages/**`, `src/ui/**` and module-produced UI text: titles, subtitles, buttons, labels, tables, badges, errors, empty/loading states, confirmations, tooltips, breadcrumbs, notifications and audit descriptions.
+2. Prefer short action-oriented wording. Remove duplicated explanation, architecture terms, unnecessary uppercase and internal IDs/enums when a human identifier/status exists. Preserve controlled terms such as HOLD, PASS, REJECTED and RELEASED where business meaning requires them.
+3. Differentiate permission, validation, conflict, dependency-unavailable and not-found errors instead of generic system messages.
+4. Standardize canonical UX vocabulary and create/update `docs/ui/UX-WRITING-GUIDE.md`.
+5. Produce a before/after table by page/surface and add regression tests for critical/shared copy and accessible names.
+
+## Acceptance
+No significant user-facing copy exposes unnecessary backend implementation detail, duplicates avoidable prose, contradicts business behavior or weakens regulated terminology. Shared copy is consistent; accessibility names remain valid; the 43.7% indicator changes only through verified underlying domain improvement.
+
+## Required handoff
+Report changed surfaces, shared vocabulary, before/after examples, tests, unresolved policy/localization decisions and downstream accessibility/E2E/UAT work.
+
+</pre>
+        </details>
+      </section>
+      <section class="card" aria-labelledby="title-010">
+        <div class="head">
+          <div>
+            <div class="code">QC-100-FINAL-010 · 10 of 18</div>
+            <h2 id="title-010">Verify runtime security, privacy and software supply chain</h2>
+            <p class="purpose">
+              Close remaining security and privacy gaps with candidate-specific negative tests and
+              approved data-handling rules.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use disposable test data and explicit target
+              authorization. Coordinate credential safety with 015, policy with 013, fixtures with
+              003 and AI transmission with 009.
+            </p>
             <p class="purpose">
               Domain ownership: 9, 10, 11, 12, 13, 21, 57, 59, 60, 75, 76, 77, 80
             </p>
           </div>
-          <button class="copy" data-id="p010" aria-label="Copy Prompt QC-100-FINAL-010">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p010"
+            aria-label="Copy prompt QC-100-FINAL-010"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-010</summary>
+          <summary>Read prompt QC-100-FINAL-010</summary>
           <pre id="p010">
-# Execution order 7 of 15
+# QC-100-FINAL-010 — Verify runtime security, privacy and software supply chain
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Close remaining security and privacy gaps with candidate-specific negative tests and approved data-handling rules.
 
-# Prompt 10 — QC-100-FINAL-010
-## Security, Privacy, Secure SDLC &amp; Compliance Evidence Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-010 — Security, Privacy, Secure SDLC &amp; Compliance Evidence Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+The baseline local security suite passed 52 tests. This does not establish full runtime security, production credential safety, privacy approval or regulatory certification.
 
-Close all remaining security/privacy/compliance evidence gaps.
+## Dependencies and sequencing
+Use disposable test data and explicit target authorization. Coordinate credential safety with 015, policy with 013, fixtures with 003 and AI transmission with 009.
 
-### Runtime security testing
+## Required work
+1. Exercise authentication, session expiry/revocation, CSRF, XSS, IDOR, privilege escalation, mass assignment, SQL injection, file upload abuse, path traversal, rate limits, brute force, unsafe returnTo, headers, CSP, secure cookies and redaction.
+2. Run the full role/scope/state/SoD negative matrix through PostgreSQL and browser boundaries. Verify named-owner identity, protected SYSTEM_OWNER/GLOBAL grants and denial for noncanonical owner identities.
+3. Obtain approved classification, retention, deletion/correction, log retention, export/audit privacy and AI transmission rules. Preserve legally required controlled history.
+4. Generate current dependency audit, SBOM, lockfile-integrity, secret-scanning and CI supply-chain evidence. Resolve real high/critical findings without suppressing them.
+5. Trace each regulated workflow from approved rule through state machine, authorization, audit, evidence, tests and human acceptance. Do not claim external certification from internal checks.
 
-Verify against the candidate environment:
+## Acceptance
+Runtime negative cases pass; no unresolved high/critical security finding remains in the accepted scope; privacy decisions are approved and supply-chain evidence matches the candidate. External or human evidence still missing is BLOCKED/NOT VERIFIED.
 
-- authentication/session handling
-- CSRF
-- XSS
-- IDOR
-- privilege escalation
-- mass assignment
-- SQL injection
-- file upload abuse
-- path traversal
-- rate limiting
-- brute force
-- open redirects / unsafe returnTo
-- header policy
-- CSP
-- secure cookies
-- error redaction
-
-### RBAC/SoD
-
-Execute the complete role/scope negative matrix on PostgreSQL/browser.
-
-### Privacy
-
-Define and verify:
-
-- data classification
-- retention
-- deletion/correction semantics
-- log retention
-- export privacy
-- audit privacy
-- AI transmission privacy
-
-### Secure SDLC
-
-Add/verify:
-
-- dependency audit
-- SBOM
-- lockfile integrity
-- secret scanning
-- vulnerable dependency policy
-- CI supply-chain controls
-
-### QMS/compliance
-
-For every regulated workflow, ensure:
-
-```text
-approved business rule
-implemented state machine
-authorization
-audit
-evidence
-test
-UAT
-```
-
-Do not claim a regulatory certification that has not been externally assessed.
-
-### Acceptance criteria
-
-- no unresolved critical/high security finding
-- runtime negative tests pass
-- privacy/retention decisions are documented and approved
-- secure-SDLC evidence is current
-- QMS workflow traceability is complete
-
----</pre>
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
+</pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-003">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-003 · Order 8</div>
-            <h2>Authenticated E2E &amp; Complete Role Matrix Closure</h2>
+            <div class="code">QC-100-FINAL-003 · 11 of 18</div>
+            <h2 id="title-003">Prove authenticated workflows for all six personas</h2>
+            <p class="purpose">
+              Produce reliable authenticated E2E evidence for critical workflows, authorized actions
+              and denied actions.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use completed applicable source fixes from
+              013/014/011/005/010. Read the current verification runner before deciding whether
+              Docker or an approved equivalent disposable runtime is supported.
+            </p>
             <p class="purpose">
               Domain ownership: 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
               22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,
@@ -856,1059 +881,548 @@ Do not claim a regulatory certification that has not been externally assessed.
               74, 77, 78, 79, 80
             </p>
           </div>
-          <button class="copy" data-id="p003" aria-label="Copy Prompt QC-100-FINAL-003">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p003"
+            aria-label="Copy prompt QC-100-FINAL-003"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-003</summary>
+          <summary>Read prompt QC-100-FINAL-003</summary>
           <pre id="p003">
-# Execution order 8 of 15
+# QC-100-FINAL-003 — Prove authenticated workflows for all six personas
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Produce reliable authenticated E2E evidence for critical workflows, authorized actions and denied actions.
 
-# Prompt 03 — QC-100-FINAL-003
-## Authenticated E2E &amp; Complete Role Matrix Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-003 — Authenticated E2E &amp; Complete Role Matrix Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Baseline built-server E2E: 48 PASS / 19 FAIL / 107 SKIP; closure: 11 PASS / 7 FAIL / 18 SKIP. The full-run supervisor timed out while its child continued. These results do not prove authenticated closure.
 
-Prove the full application in a real browser against PostgreSQL with zero unexpected failures and zero unjustified skips.
+## Dependencies and sequencing
+Use completed applicable source fixes from 013/014/011/005/010. Read the current verification runner before deciding whether Docker or an approved equivalent disposable runtime is supported.
 
-### Required personas
+## Required work
+1. Create an isolated fully migrated PostgreSQL 18 database, seed Employee, Inspector, Supervisor, Manager, Administrator and named yazeed/SYSTEM_OWNER plus representative records. Use disposable credentials only.
+2. Build the exact candidate, start it, wait for readiness, and bind tests to that build and database. Manage process groups so timeout cleanup completes before the next suite starts.
+3. Exercise receiving, inspection, HOLD/reject, release, laboratory, calibration/maintenance, documents, approvals, signatures, files, reports, notifications, search, recovery and owner controls. Verify persisted state and audit evidence.
+4. Test direct URLs to both owner-private pages, absent owner navigation for other personas, wrong-scope and stale-version mutations, SoD, session expiry and safe error recovery. Ordinary ACTIVE-page visibility does not grant mutation authority.
+5. Prove permitted creation of both Reject types for all ACTIVE personas. Correct ambiguous locators, unsafe returnTo, fixture collisions and rate-limit contention from observed causes.
+6. Emit machine-readable results with pass/fail/skip/retry/flaky counts, duration, candidate identity and sanitized traces. Required scenarios must fail explicitly when fixtures are absent.
 
-```text
-Employee
-Inspector
-Supervisor
-Manager
-Administrator
-canonical yazeed / SYSTEM_OWNER
-```
+## Acceptance
+Every required persona/workflow and denial case executes successfully on the same candidate; mandatory skips are zero; child processes stop cleanly. Agent browser tests do not constitute human UAT.
 
-Use deterministic non-production fixtures. Never use production credentials in test code.
-
-### Required page-access contract
-
-Prove:
-
-```text
-ACTIVE authenticated user -&gt; can open every normal AUTHENTICATED page
-non-yazeed -&gt; cannot open YAZEED_ONLY pages
-yazeed -&gt; can open YAZEED_ONLY pages
-page visibility != mutation authority
-```
-
-### Critical workflows
-
-Cover end-to-end:
-
-- login/logout
-- session expiry/recovery
-- dashboard
-- tasks
-- receiving
-- quarantine
-- inspection execution/review
-- PASS but not released
-- release
-- findings/NCR/RCA/CAPA
-- laboratory test creation/execution/review/retest
-- equipment/calibration/maintenance
-- controlled documents/version/review
-- approvals
-- change requests
-- reports/export
-- Reject Reports Issue Slip
-- Reject Reports Daily Reject
-- Issue Slip approval-confirmation tracking
-- account administration
-- Yazeed Control Center
-- AI Advisory normal/fallback state
-- search
-- notifications
-- audit
-- backup/restore UI read paths
-
-### Negative flows
-
-Prove:
-
-- unauthorized mutation denied
-- direct URL owner-page denial
-- stale version conflict
-- duplicate command
-- invalid state transition
-- expired session
-- disabled user
-- unsafe returnTo blocked
-- rate-limit behavior
-- provider unavailable
-- database temporary failure
-
-### Browser stability
-
-Fix:
-
-- ambiguous locators
-- race conditions
-- parallel rate-limit interference
-- timeout flakiness
-- test-order dependence
-- shared mutable fixture contamination
-
-### Acceptance criteria
-
-```text
-unexpected FAIL = 0
-unexpected SKIP = 0
-flaky retry-only pass = 0
-```
-
-All role/visibility/mutation assertions must be server-proven, not only UI-hidden.
-
----
-
-### Rebase browser evidence
-The initial CLI run without a local server is invalid product evidence. With a built server, the full suite emitted 48 PASS / 19 FAIL / 107 SKIP; the supervising command timed out at 180 seconds and the child runner later printed a 4.5-minute summary. The built-server closure suite completed 11 PASS / 7 FAIL / 18 SKIP in 118.35 seconds. These runs are NOT authenticated closure. Recreate an isolated fully migrated database, seed all six real test personas and critical records, start and health-check the exact build, and manage runner process groups so timeouts stop children before another suite starts. Record final machine-readable counts, retries/flaky outcomes, duration and environment. Never reuse this audit&#x27;s live owner credential as a fixture. Fix ambiguous Password locators, returnTo and parallel rate-limit/timeout issues based on actual final runs. Add direct non-owner URLs for both owner-private pages and permitted creation of both Reject Report types for every ACTIVE persona.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-006">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-006 · Order 9</div>
-            <h2>WCAG 2.2 AA &amp; Cross-Application Accessibility Closure</h2>
+            <div class="code">QC-100-FINAL-006 · 12 of 18</div>
+            <h2 id="title-006">Verify accessibility across the application</h2>
+            <p class="purpose">
+              Repair and verify accessibility across representative authenticated page families and
+              critical workflows.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use shared UI fixes from 005/017/018 and authenticated fixtures from 003. Domain 70 localization scope comes from 013; do not assume an unapproved language change.
+            </p>
             <p class="purpose">Domain ownership: 4, 5, 6, 7, 20, 41, 66, 67, 68, 69, 70, 80</p>
           </div>
-          <button class="copy" data-id="p006" aria-label="Copy Prompt QC-100-FINAL-006">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p006"
+            aria-label="Copy prompt QC-100-FINAL-006"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-006</summary>
+          <summary>Read prompt QC-100-FINAL-006</summary>
           <pre id="p006">
-# Execution order 9 of 15
+# QC-100-FINAL-006 — Verify accessibility across the application
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Repair and verify accessibility across representative authenticated page families and critical workflows.
 
-# Prompt 06 — QC-100-FINAL-006
-## WCAG 2.2 AA &amp; Cross-Application Accessibility Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-006 — WCAG 2.2 AA &amp; Cross-Application Accessibility Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+The explicit live axe scan found 35 passing rules, 3 incomplete checks and one serious label-content-name-mismatch node. A narrower zero-violation scan omitted that rule and was superseded.
 
-Move accessibility from source-level confidence to browser-verified WCAG 2.2 AA coverage across the application.
+## Dependencies and sequencing
+Use shared UI fixes from 005 and authenticated fixtures from 003. Domain 70 localization scope comes from 013; do not assume an unapproved language change.
 
-### Scope
+## Required work
+1. Include the relevant WCAG 2/2.1/2.2 A/AA tags and explicitly test label-content-name-mismatch. Investigate incomplete results instead of treating them as passing.
+2. Check keyboard-only navigation, skip links, focus visibility/order/return, dialogs, validation, live status, table semantics, accessible names and session/error recovery.
+3. Exercise representative pages at 320/375/414/768/1024/1440, landscape, 200% and 400% zoom, text spacing, contrast, forced colors and reduced motion. Verify the separate project target-size requirement.
+4. Run real VoiceOver or NVDA checks and document the environment, scenario, expected/actual result and evidence. Never infer assistive-technology success from static markup.
+5. Fix remaining defects at their shared cause, rerun affected E2E after changes and hand human accessibility scenarios to 004.
 
-Test every major page family:
+## Acceptance
+Critical automated/manual findings are resolved in the tested scope and the matrix is complete. State uncovered surfaces explicitly; an axe score alone cannot establish full WCAG conformance.
 
-```text
-login/auth
-dashboard
-tables/lists
-forms
-dialogs
-detail pages
-admin
-quality
-quarantine
-laboratory
-assets
-documents
-approvals
-reports
-Reject Reports
-Yazeed Control Center
-AI Advisory
-```
-
-### Automated browser checks
-
-Use axe/Lighthouse or equivalent against authenticated pages.
-
-Zero serious/critical automated accessibility violations.
-
-### Manual keyboard checks
-
-Verify:
-
-- full keyboard navigation
-- visible focus
-- logical focus order
-- dialog focus trap
-- focus return
-- escape behavior
-- skip links
-- no keyboard traps
-
-### Screen-reader checks
-
-Use VoiceOver on macOS or another real screen reader.
-
-Verify:
-
-- landmarks
-- headings
-- labels
-- names/roles/values
-- status announcements
-- table semantics
-- validation errors
-- dialog announcements
-
-### Additional WCAG checks
-
-- 200%/400% zoom
-- reflow
-- 320px layout
-- contrast
-- non-text contrast
-- target size
-- label in name
-- error identification
-- instructions
-- status messages
-- reduced motion
-
-### Acceptance criteria
-
-- automated serious/critical violations = 0
-- keyboard blockers = 0
-- screen-reader blockers = 0
-- all critical workflows usable without mouse
-- documented human accessibility evidence exists
-
----
-
-### Current accessibility evidence
-Current live dashboard axe with WCAG 2/2.1/2.2 tags plus explicitly enabled label-content-name-mismatch reports 35 rules passing, 3 incomplete checks and 1 serious violation. A narrower initial scan omitted WCAG21A/that rule and returned zero violations; it is superseded. No claim of comprehensive accessibility follows from either scan. Re-run this exact rule as well as keyboard, focus dialogs, VoiceOver/NVDA, 320px, 200%/400%, contrast, 44px project targets, reduced motion and every persona/page family. Task 005 owns shared typography, headings, search name and background source fixes; this task owns cross-application verification and remaining accessibility fixes.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-007">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-007 · Order 10</div>
-            <h2>Performance, Capacity, Reliability &amp; Observability Closure</h2>
+            <div class="code">QC-100-FINAL-007 · 13 of 18</div>
+            <h2 id="title-007">Measure performance, capacity and operational monitoring</h2>
+            <p class="purpose">
+              Replace performance and reliability assumptions with reproducible measurements and
+              approved budgets.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use stable queries and UI from 014/011/005/017/018 plus fixtures from 003. Load testing must target an isolated approved environment; production load needs explicit authorization.
+            </p>
             <p class="purpose">Domain ownership: 8, 50, 51, 52</p>
           </div>
-          <button class="copy" data-id="p007" aria-label="Copy Prompt QC-100-FINAL-007">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p007"
+            aria-label="Copy prompt QC-100-FINAL-007"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-007</summary>
+          <summary>Read prompt QC-100-FINAL-007</summary>
           <pre id="p007">
-# Execution order 10 of 15
+# QC-100-FINAL-007 — Measure performance, capacity and operational monitoring
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Replace performance and reliability assumptions with reproducible measurements and approved budgets.
 
-# Prompt 07 — QC-100-FINAL-007
-## Performance, Capacity, Reliability &amp; Observability Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-007 — Performance, Capacity, Reliability &amp; Observability Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Migration 0029 indexes, batched authorization reads, request IDs and structured logs exist. Two dashboard observations are not capacity proof; valid session INP/CLS, representative EXPLAIN and provider alert delivery remain unverified.
 
-Replace performance assumptions with measured evidence.
+## Dependencies and sequencing
+Use stable queries and UI from 014/011/005 plus fixtures from 003. Load testing must target an isolated approved environment; production load needs explicit authorization.
 
-### Database performance
+## Required work
+1. Create representative synthetic users, tasks, receiving, inspections, laboratory, Reject, audit, document and notification data. Record dataset size and distribution.
+2. Run EXPLAIN (ANALYZE, BUFFERS) for critical reads. Measure N+1, pagination bounds, scans, indexes and duplicate dashboard queries before making targeted changes.
+3. Measure TTFB, FCP, LCP, session-valid INP/CLS, transferred bytes, decoded JS/WASM and server render time on dashboard, large tables, reports, Reject and owner control center. Distinguish cold/warm cache and decoded/transfer size.
+4. Exercise approved concurrency levels, pool limits, rate limits, transaction contention, outbox pressure and dependency failures. Establish budgets from measured baseline and operational requirements.
+5. Prove structured logs, request/error correlation, database/AI dependency states, metrics export, alert delivery and health/readiness. Ensure telemetry contains no secrets.
 
-Create representative synthetic datasets for:
+## Acceptance
+Publish reproducible measurements, tested capacity limits, approved budgets and failure behavior. Revalidate after performance code changes; missing provider alerts or critical measurements remain open.
 
-```text
-users
-tasks
-receiving
-inspections
-lab tests
-reject reports
-audit events
-documents
-notifications
-```
-
-Run `EXPLAIN (ANALYZE, BUFFERS)` on critical queries.
-
-Eliminate:
-
-- N+1
-- full scans where inappropriate
-- unbounded list queries
-- missing indexes
-- expensive duplicate dashboard queries
-
-### Browser performance
-
-Measure production-like authenticated pages:
-
-```text
-TTFB
-FCP
-LCP
-INP
-CLS
-total transferred bytes
-JS/WASM
-server render duration
-```
-
-Test dashboard, large tables, reports, Reject Reports, and owner control center.
-
-### Load/capacity
-
-Define reasonable concurrency scenarios and verify:
-
-- connection pool
-- rate limits
-- transaction contention
-- queue/outbox behavior
-- report queries
-- dashboard reads
-
-### Observability
-
-Prove:
-
-- structured logs
-- request IDs
-- user-safe error IDs
-- database dependency state
-- AI dependency state
-- metrics export
-- alerting path
-- health/readiness
-- no secrets in telemetry
-
-### Acceptance criteria
-
-Set explicit budgets from measured baselines.
-
-No critical query or page may remain `NOT VERIFIED`.
-
-Document production-like capacity limits and failure behavior.
-
----</pre>
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
+</pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-009">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-009 · Order 11</div>
-            <h2>Groq + Gemini Live Production Verification &amp; AI Safety Closure</h2>
+            <div class="code">QC-100-FINAL-009 · 14 of 18</div>
+            <h2 id="title-009">Verify live AI providers and safe failure handling</h2>
+            <p class="purpose">
+              Verify the implemented Groq/Gemini path, approved data handling and safe application
+              behavior under provider failure.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Obtain approved external-processing scope and provision
+              secrets privately. Coordinate privacy with 010 and actual human review with 004.
+              Missing approval or keys blocks transmission, not offline preparation.
+            </p>
             <p class="purpose">Domain ownership: 75, 76, 80</p>
           </div>
-          <button class="copy" data-id="p009" aria-label="Copy Prompt QC-100-FINAL-009">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p009"
+            aria-label="Copy prompt QC-100-FINAL-009"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-009</summary>
+          <summary>Read prompt QC-100-FINAL-009</summary>
           <pre id="p009">
-# Execution order 11 of 15
+# QC-100-FINAL-009 — Verify live AI providers and safe failure handling
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Verify the implemented Groq/Gemini path, approved data handling and safe application behavior under provider failure.
 
-# Prompt 09 — QC-100-FINAL-009
-## Groq + Gemini Live Production Verification &amp; AI Safety Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-009 — Groq + Gemini Live Production Verification &amp; AI Safety Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Groq, Gemini, bounded 12-second HTTP calls, failover and Disabled fallback exist. Deterministic checks passed; availability() demonstrates configuration, not live connectivity. GetAdvisoryUseCase catches provider failures and returns UNAVAILABLE.
 
-Move AI from implemented source code to verified live provider behavior while preserving the advisory-only boundary.
+## Dependencies and sequencing
+Obtain approved external-processing scope and provision secrets privately. Coordinate privacy with 010 and actual human review with 004. Missing approval or keys blocks transmission, not offline preparation.
 
-### Secret safety
+## Required work
+1. Inspect current adapters and configuration; retain implemented behavior. Test both adapter and application boundaries, including fallback exceptions.
+2. After authorization and privacy approval, use minimal non-sensitive synthetic prompts to verify each provider and configured model independently, then verify real failover.
+3. Exercise timeout, 429, authentication/model errors, malformed JSON, invalid response and both-provider failure. Verify error classification, bounded retries, sanitized diagnostics and no core workflow mutation.
+4. Verify advisory-only output, source identity/citations, unsupported scientific claims, PII/secret prevention and authority-claim refusal. Record provider/model/time/candidate identity without sensitive prompts or keys.
+5. Distinguish offline fixture success, configured availability, live connectivity and approved human use in the evidence.
 
-Rotate any AI credentials that have previously appeared in shared files/screenshots.
+## Acceptance
+Both required providers and failure paths have accepted live evidence; privacy approval and reviewer evidence are recorded. Never label an uncalled provider LIVE VERIFIED.
 
-Use new secrets only through the approved secret manager/Render environment.
-
-Never print them.
-
-### Live tests
-
-Verify independently:
-
-```text
-Groq success
-Gemini success
-Groq unavailable -&gt; Gemini fallback
-Groq rate-limited -&gt; Gemini fallback
-both unavailable -&gt; safe degraded AI
-```
-
-Core readiness must stay healthy when AI is unavailable.
-
-### Safety
-
-Prove the AI cannot:
-
-- approve
-- release
-- sign
-- change controlled limits
-- mutate regulated records
-- change RBAC/scopes
-- expose secrets
-
-Run prompt-injection and malicious-context tests.
-
-### Privacy
-
-Verify exactly what context leaves the application.
-
-No hidden/global database context. No credentials/tokens.
-
-### Observability
-
-Record sanitized:
-
-```text
-provider
-model
-latency
-fallback used
-outcome
-request ID
-```
-
-### Acceptance criteria
-
-- both live providers verified
-- fallback verified
-- degraded mode verified
-- advisory-only enforcement verified
-- prompt injection cannot trigger privileged action
-- secret leakage tests pass
-
----
-
-### Implemented boundary, remaining verification
-Groq/Gemini adapters, bounded 12-second HTTP timeout, sanitized error mapping, advisory-only validation, and failover are implemented and deterministic tests pass. The application catches provider errors and degrades safely; the raw Failover adapter propagates fallback errors, so test through the real application boundary as well as adapter. availability() currently proves configuration, not live connectivity. Do not reimplement providers. Verify both live providers with minimal non-sensitive synthetic prompts only after business privacy approval and secret provisioning. Record timeout, 429, malformed JSON, authentication/model errors and both-provider failure. All transmission approval and human reviewer evidence remain required; absence of live keys/configuration is BLOCKED, not provider PASS.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-008">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-008 · Order 12</div>
-            <h2>Backup, Restore, DR, RPO/RTO &amp; Provider Evidence Closure</h2>
-            <p class="purpose">Domain ownership: 31, 33, 34, 35, 36, 42, 48, 49, 80</p>
+            <div class="code">QC-100-FINAL-008 · 15 of 18</div>
+            <h2 id="title-008">Prove populated backup, isolated restore and disaster recovery</h2>
+            <p class="purpose">
+              Demonstrate that populated controlled records and their dependencies survive backup
+              and isolated recovery.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use completed relevant source paths and non-production
+              synthetic data. Task 015 gates production connections. Production restore, provider
+              changes and paid plans require explicit authorization.
+            </p>
+            <p class="purpose">Domain ownership: 31, 33, 34, 35, 36, 42, 48, 49, 77, 80</p>
           </div>
-          <button class="copy" data-id="p008" aria-label="Copy Prompt QC-100-FINAL-008">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p008"
+            aria-label="Copy prompt QC-100-FINAL-008"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-008</summary>
+          <summary>Read prompt QC-100-FINAL-008</summary>
           <pre id="p008">
-# Execution order 12 of 15
+# QC-100-FINAL-008 — Prove populated backup, isolated restore and disaster recovery
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Demonstrate that populated controlled records and their dependencies survive backup and isolated recovery.
 
-# Prompt 08 — QC-100-FINAL-008
-## Backup, Restore, DR, RPO/RTO &amp; Provider Evidence Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-008 — Backup, Restore, DR, RPO/RTO &amp; Provider Evidence Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Historical PG18.6 restore matched 77 tables and 29 ledger rows, but controlled tables were empty. This is structural evidence only; no new populated restore was executed in the midpoint audit.
 
-Turn the existing local restore proof into full recovery evidence with populated controlled records and provider capability evidence.
+## Dependencies and sequencing
+Use completed relevant source paths and non-production synthetic data. Task 015 gates production connections. Production restore, provider changes and paid plans require explicit authorization.
 
-### Build a populated recovery fixture
+## Required work
+1. Populate audit, signatures, files, releases, Reject reports, sessions, roles/scopes and representative business records. Capture counts, relationships, hashes, migration ledger and candidate identity.
+2. Create a real backup artifact with manifest/checksum. Restore into an explicitly isolated target, preserving the source and failing closed on unsafe target selection.
+3. Verify schema/ledger/FKs, record and file hashes, immutable history, session/grant behavior, owner protections and application read/write compatibility through approved disposable scenarios.
+4. Exercise corrupt/missing artifact, wrong candidate, incomplete files and unsafe-target negatives. Measure recovery times and data-loss boundaries against approved RPO/RTO; the UI 24h/4h values are targets until measured.
+5. Inspect provider backup, retention, PITR/WAL, storage and disaster-recovery capabilities separately. Record unsupported capabilities honestly and present required external changes for authorization.
 
-The backup source must include non-zero representative records for:
+## Acceptance
+A populated candidate-bound artifact restores correctly with application/security evidence and measured recovery results. Empty-table parity, tooling tests and provider claims alone cannot close recovery.
 
-- audit events
-- e-signatures
-- evidence links/files
-- sessions
-- release candidates/approvals
-- QC records
-- lab records
-- Reject Reports
-- documents
-- role/scope grants
-
-### Backup
-
-Capture:
-
-```text
-backup ID
-timestamp
-PostgreSQL version
-migration head
-size
-checksum
-source release identity
-```
-
-### Isolated restore
-
-Restore to a separate target.
-
-Verify:
-
-- table counts
-- row counts
-- FK integrity
-- migration ledger
-- controlled-history immutability
-- audit continuity
-- e-signature relationships
-- file/evidence checksums
-- release governance
-- user/role/scope integrity
-- Reject Reports data
-
-### Provider evidence
-
-Obtain authoritative Render/provider evidence for:
-
-```text
-managed backup availability
-schedule
-retention
-PITR
-WAL behavior
-RPO
-RTO
-restore process
-```
-
-If the provider plan lacks a required capability, document the gap and implement an approved alternative strategy.
-
-### Disaster recovery drill
-
-Measure actual:
-
-```text
-RPO achieved
-RTO achieved
-time to restore
-time to validate
-```
-
-### Acceptance criteria
-
-- populated restore parity = PASS
-- checksum integrity = PASS
-- controlled evidence survives restore = PASS
-- provider backup posture = VERIFIED
-- RPO/RTO = measured, not guessed
-- documented recovery runbook works end to end
-
----
-
-### Proof scope
-Existing 77-table local logical restore had zero populated controlled rows, so it is partial historical structural parity. Current audit reran tooling tests but did not create a new populated artifact/restore. Do not reimplement working mechanics; add a genuinely populated, non-production dataset and prove restoration of audit/signatures/files/release/Reject/sessions/grants. Include checksums, exact source identity and elapsed recovery timing. Provider availability, retention, PITR/WAL and approved RPO/RTO remain independent. Do not mutate production or choose a paid plan without explicit authorization.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-001">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-001 · Order 13</div>
-            <h2>Production PostgreSQL &amp; Render Parity Closure</h2>
+            <div class="code">QC-100-FINAL-001 · 16 of 18</div>
+            <h2 id="title-001">Verify production database, Render and release parity</h2>
+            <p class="purpose">
+              Establish exact-candidate production parity after approved local closure and the
+              connection safety gate.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Complete 015 before direct production DB access, 014
+              before Reject acceptance, and applicable local security/recovery/source gates. Recheck
+              final CI from 002 after all candidate changes. Treat prior provider facts as evidence
+              to reverify.
+            </p>
             <p class="purpose">
               Domain ownership: 14, 15, 16, 17, 18, 19, 48, 49, 50, 51, 52, 56, 57, 58, 78, 79, 80
             </p>
           </div>
-          <button class="copy" data-id="p001" aria-label="Copy Prompt QC-100-FINAL-001">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p001"
+            aria-label="Copy prompt QC-100-FINAL-001"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-001</summary>
+          <summary>Read prompt QC-100-FINAL-001</summary>
           <pre id="p001">
-# Execution order 13 of 15
+# QC-100-FINAL-001 — Verify production database, Render and release parity
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Establish exact-candidate production parity after approved local closure and the connection safety gate.
 
-# Prompt 01 — QC-100-FINAL-001
-## Production PostgreSQL &amp; Render Parity Closure
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-001 — Production PostgreSQL &amp; Render Parity Closure`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Audit source head was 0029; owner projection showed applied 0018 and 11 pending while expected head misleadingly showed 0018. Internal release/build/Git/environment identity was UNVERIFIED. An earlier provider deployment bound the audit SHA, but that does not prove current deployment or internal identity.
 
-Close the highest-priority production gap: make the live Render application, live PostgreSQL database, source migration head, runtime configuration, and release identity agree exactly.
+## Dependencies and sequencing
+Complete 015 before direct production DB access, 014 before Reject acceptance, and applicable local security/recovery/source gates. Recheck final CI from 002 after all candidate changes. Treat prior provider facts as evidence to reverify.
 
-The last known evidence showed the source ahead of the Render database. Re-verify current reality before doing anything.
+## Required work
+1. Read render.yaml and approved deployment/connection documents. Freeze actual source, build, provider deployment and migration identities independently.
+2. With the approved canonical connection, run read-only preflight, status, checksum and schema checks. Compare applied head, pending migrations, tables/orphans and session/TLS contract with the candidate.
+3. Re-read provider runtime, Node version, health path, deploy trigger, subdomain/domain configuration, start command and required RELEASE_*/AI/OTEL variable presence without exposing values. Review the previously observed startup owner-grant mutation.
+4. Prepare concrete migration/configuration/deployment changes and rollback evidence. Execute external changes only under explicit authorization covering their targets and impact; otherwise report the exact blocked operation.
+5. After authorized release changes, verify application identity, expected migration head, health/readiness, dashboard, both owner pages and Reject read smoke. Migration parity and SQL repair must both be satisfied.
+6. Record provider and app evidence against the final candidate. Deliver a release suitable for human validation under the approved environment strategy.
 
-### Phase 1 — Freeze database truth
+## Acceptance
+Accepted source/build/provider/app identities agree, canonical DB parity is proven, critical smoke passes and configuration drift is resolved. A provider SHA match or health 200 alone cannot close this task.
 
-Determine:
-
-```text
-source migration head
-applied Render migration head
-source table count
-Render qc table count
-pending migrations
-PostgreSQL server version
-search_path used by the application
-database name
-database principal
-TLS status
-```
-
-Run safe checks first:
-
-```bash
-pnpm db:preflight
-pnpm db:migrate:check
-pnpm db:migrate:status
-pnpm db:schema:check
-```
-
-If the live database has pending migrations, inspect every pending migration before applying anything.
-
-### Phase 2 — Pre-migration safety gate
-
-Before any production migration:
-
-- create and verify a current logical backup
-- record checksum
-- record current migration head
-- verify restore command
-- confirm database connectivity
-- confirm there is no credential-rotation blocker
-- confirm target database identity
-- confirm the migration sequence is forward-only
-- confirm no destructive migration exists without an approved recovery path
-
-If any safety gate is unresolved:
-
-```text
-PRODUCTION MIGRATION = BLOCKED
-```
-
-Do not continue.
-
-### Phase 3 — Apply migration parity
-
-When all safety gates are satisfied, apply only the canonical repository migrations in order.
-
-Never manually create missing tables as a shortcut.
-
-Afterward prove:
-
-```text
-applied migration head == source migration head
-pending migrations == 0
-schema integrity == PASS
-orphan count == 0
-```
-
-Verify new domains such as Reject Reports exist in PostgreSQL.
-
-### Phase 4 — Render service configuration parity
-
-Compare the actual Render service configuration against `render.yaml`.
-
-Verify:
-
-- runtime is Node
-- Node version matches the repository engine contract
-- build command
-- start command
-- health check path
-- auto-deploy policy
-- custom domain
-- environment variable names
-- `DATABASE_URL`
-- release identity variables
-- AI provider variables
-- no authorization mutation is performed during server startup
-
-Any provider-side drift must be documented and corrected through the approved Render configuration path.
-
-### Phase 5 — Release identity
-
-Prove the live service exposes or internally records:
-
-```text
-deployed Git SHA
-build ID
-release ID
-migration head
-environment
-build timestamp
-```
-
-The deployed SHA must match the intended release commit exactly.
-
-### Phase 6 — Live functional smoke
-
-Verify on `qclevel.top`:
-
-```text
-/api/health/live
-/api/health/ready
-/login
-/dashboard
-/reject-reports
-/system/health as yazeed
-/system/control-center as yazeed
-```
-
-`/reject-reports` must not return 500.
-
-### Acceptance criteria
-
-- source and production migration heads match
-- zero pending migrations
-- live schema integrity passes
-- Render service configuration matches the repository contract
-- release identity binds the exact deployed SHA
-- health/live and readiness are healthy
-- Reject Reports works on the live database
-- no startup-time privilege mutation
-- backup exists before migration and is restorable
-- all evidence is sanitized
-
----
-
-### Midpoint rebase: verify remaining production work
-Current source freeze is 298e307721af97d9c1bd22279d0c784fbf5b62a8; source head 0029_performance_query_indexes. These are historical inputs for this future run: re-freeze them. The authenticated owner control center currently reports applied head 0018, 11 pending, and UNVERIFIED application release identity. The earlier provider record binds the source SHA, but this does not prove internal RELEASE_* identity or configuration parity. Local PG 18.6 proves 29 migrations / 77 tables / 0 orphans; do not reimplement the migration engine. Production DB table count, wire TLS and search_path still require approved canonical read-only evidence. Credential rotation and new canonical DATABASE_URL must be completed under task 015 before any direct production connection.
-The current live Reject Reports route returns 500 and the fully migrated local analytics query ALSO fails with ambiguous status; task 014 must fix source before production smoke can close. Applying migrations alone is not acceptance. Validate rendered expected migration head against source; the owner page currently displays expected 0018 despite 11 pending.
-Provider-reported runtime rust, blank health check, commit deploy trigger, startup owner-grant mutation, missing RELEASE_*/AI/OTEL variables, and disabled Render subdomain remain parity questions. Re-read the provider, compare with render.yaml, and require explicit authorization before external correction. Task 001 runs only after local fixes and recovery/security proofs; then re-run read-only parity and approved live smoke.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-004">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-004 · Order 14</div>
-            <h2>Real UAT, Usability &amp; Human Sign-Off</h2>
+            <div class="code">QC-100-FINAL-004 · 17 of 18</div>
+            <h2 id="title-004">Run real human UAT and obtain authorized sign-off</h2>
+            <p class="purpose">
+              Replace template-only acceptance with real participant results and authorized
+              candidate-bound sign-off.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Use a stable approved candidate with applicable workflow,
+              security, accessibility and recovery proof. Agree the test/staging/production
+              validation strategy with the authority; do not mutate production merely to run UAT.
+            </p>
             <p class="purpose">
               Domain ownership: 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 20, 21, 22, 23, 24, 25, 26,
               27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 46, 47, 59, 60, 61,
               62, 63, 64, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 80
             </p>
           </div>
-          <button class="copy" data-id="p004" aria-label="Copy Prompt QC-100-FINAL-004">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p004"
+            aria-label="Copy prompt QC-100-FINAL-004"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-004</summary>
+          <summary>Read prompt QC-100-FINAL-004</summary>
           <pre id="p004">
-# Execution order 14 of 15
+# QC-100-FINAL-004 — Run real human UAT and obtain authorized sign-off
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Replace template-only acceptance with real participant results and authorized candidate-bound sign-off.
 
-# Prompt 04 — QC-100-FINAL-004
-## Real UAT, Usability &amp; Human Sign-Off
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-004 — Real UAT, Usability &amp; Human Sign-Off`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+No accepted signed human sessions existed at the audit baseline. Automated owner login and E2E cannot satisfy this requirement.
 
-Replace template-only UAT with real, signed, representative human validation.
+## Dependencies and sequencing
+Use a stable approved candidate with applicable workflow, security, accessibility and recovery proof. Agree the test/staging/production validation strategy with the authority; do not mutate production merely to run UAT.
 
-Automated tests do not satisfy this task.
+## Required work
+1. Recruit real Employee, Inspector, Supervisor, Manager, Administrator and yazeed/SYSTEM_OWNER participants. Preserve actual roles and authority; the agent must not impersonate a participant or signer.
+2. Run sign-in, work discovery, receiving, inspection, HOLD/reject, lab execution/review, calibration/maintenance, documents, approvals, both Reject types, reports/exports, owner controls, mobile use and error/stale recovery as applicable.
+3. Record expected/actual outcome, task success, time, errors, confusion, severity, feedback, accessibility issues and evidence for each participant/scenario.
+4. Triage defects, implement authorized fixes through their owning task, invalidate affected prior evidence and retest the final candidate.
+5. Obtain authorized reauthenticated sign-off through the controlled UAT process, bound to release identity and evidence snapshot. Templates or CSV alone do not create SIGNED_UAT_CYCLE.
 
-### Required participants
+## Acceptance
+Required participants and critical scenarios have real evidence; no unresolved P0/P1 workflow/usability defect remains; authorized sign-off matches the candidate. If humans are unavailable, UAT remains BLOCKED.
 
-Run real sessions with at least:
-
-```text
-Employee
-Inspector
-Supervisor
-Manager
-Administrator
-yazeed / SYSTEM_OWNER
-```
-
-### Required scenarios
-
-Each relevant participant must execute realistic tasks such as:
-
-- sign in
-- find work from dashboard/navigation
-- receive material
-- inspect material
-- record HOLD/Reject
-- lab execution/review
-- manage calibration/maintenance
-- controlled-document workflow
-- approval workflow
-- Reject Report Issue Slip
-- Daily Reject
-- report/export
-- error recovery
-- stale/conflict recovery
-- mobile/responsive use
-- owner controls where applicable
-
-### Measure
-
-Record:
-
-```text
-task success
-time on task
-errors
-misclicks/confusion
-severity
-participant feedback
-accessibility issues
-expected vs actual
-evidence
-sign-off
-```
-
-### Acceptance criteria
-
-- no unresolved P0/P1 usability or workflow defect
-- every critical workflow has human evidence
-- all required participants/signers are present
-
-If real participants are unavailable:
-
-```text
-UAT = BLOCKED
-```
-
-Do not substitute browser automation.
-
----</pre>
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
+</pre>
         </details>
       </section>
-      <section class="card">
+      <section class="card" aria-labelledby="title-012">
         <div class="head">
           <div>
-            <div class="code">QC-100-FINAL-012 · Order 15</div>
-            <h2>Final 80-Domain 100% Evidence Audit &amp; Documentation Truth Sync</h2>
+            <div class="code">QC-100-FINAL-012 · 18 of 18</div>
+            <h2 id="title-012">Re-audit all 80 domains and reconcile the documentation</h2>
+            <p class="purpose">
+              Issue a defensible final decision from fresh evidence and keep the two living reports
+              and remaining-work plan consistent.
+            </p>
+            <p class="dependencies">
+              <strong>Sequencing:</strong> Consume final candidate evidence from all applicable
+              tasks. Re-run affected evidence after every material source or environment change.
+              Missing mandatory human/external evidence still prevents GO.
+            </p>
             <p class="purpose">Domain ownership: 44, 53, 54, 55, 65, 80</p>
           </div>
-          <button class="copy" data-id="p012" aria-label="Copy Prompt QC-100-FINAL-012">
-            Copy Prompt
+          <button
+            type="button"
+            class="copy"
+            data-id="p012"
+            aria-label="Copy prompt QC-100-FINAL-012"
+          >
+            Copy prompt
           </button>
         </div>
         <details>
-          <summary>Expand / collapse QC-100-FINAL-012</summary>
+          <summary>Read prompt QC-100-FINAL-012</summary>
           <pre id="p012">
-# Execution order 15 of 15
+# QC-100-FINAL-012 — Re-audit all 80 domains and reconcile the documentation
 
-### Project authorization and evidence contract
-Read AGENTS.md and the entire current Project Mind before work. Preserve existing changes. No commit, push, merge, deployment, production migration, provider mutation, credential rotation, paid-plan change, or message to another person without an explicit user request covering that operation. This plan is not authorization. Complete reviewable local work first; if external execution is required and not authorized, report the exact remaining operation and remain BLOCKED.
-Never put production passwords or provider secrets into fixtures, files, reports, screenshots, command output, or logs. Use disposable credentials for automated persona tests. Freeze actual SHA, dirty-tree fingerprint, migration head and toolchain. Evidence must bind the final candidate. Missing evidence earns no credit; no test removal, blanket skip, weakened rule, invented policy, or score editing. Implement missing requirements, verify them, produce evidence, then re-audit.
+## Objective
+Issue a defensible final decision from fresh evidence and keep the two living reports and remaining-work plan consistent.
 
-# Prompt 12 — QC-100-FINAL-012
-## Final 80-Domain 100% Evidence Audit &amp; Documentation Truth Sync
+## Working rules
+Read the applicable AGENTS.md and the complete .agents/mind/01-mind-latest.md before work. Use current source and approved requirements; the audit observations below are historical inputs, not proof for your new candidate.
 
-You are executing the final task:
+Work locally within the selected task. Preserve unrelated changes. Do not commit, push, merge, deploy, migrate production, rotate provider credentials, change paid services or contact other people without explicit user authorization covering that operation. Existing scoped authorization remains valid; do not request it again unnecessarily. Complete independent local preparation while a specific external dependency is blocked.
 
-`QC-100-FINAL-012 — Final 80-Domain 100% Evidence Audit &amp; Documentation Truth Sync`
+Keep passwords, URLs containing credentials, session secrets and provider keys out of files, fixtures, screenshots, reports and logs. Use disposable test identities. Preserve server authorization, scope/state/version/SoD, idempotency, immutable audit, PASS != RELEASED and approved policy decisions. Do not invent business/scientific rules, delete failing tests, blanket-skip required scenarios or alter scores to claim completion.
 
-### Objective
+## Evidence to recheck
+Audit baseline: 298e307721af97d9c1bd22279d0c784fbf5b62a8, dated 2026-09-18. Re-freeze the actual candidate before execution.
+Midpoint baseline: evidence maturity 46.7%; production gate completion 1/19 = 5.3%; NO-GO; 7 P0, 7 P1 and 2 P2 findings. These are comparison values, never target scores to edit.
 
-Independently re-audit the final repository and live candidate from scratch.
+## Dependencies and sequencing
+Consume final candidate evidence from all applicable tasks. Re-run affected evidence after every material source or environment change. Missing mandatory human/external evidence still prevents GO.
 
-Do not inherit old percentages.
+## Required work
+1. Freeze actual SHA, dirty-tree fingerprint, build, migrations, runtime, deployment and evidence timestamps. Distinguish source checks, runtime execution, historical observations and missing proof.
+2. Preserve all 80 domain IDs. Recalculate transparent layer credits from requirement-specific evidence and record approved applicability decisions. Explain method changes before interpreting score deltas.
+3. Calculate production mandatory-gate completion separately from domain maturity. Do not infer statistical feature completion or availability from judgment scores.
+4. Update audit/2026-09-18-ULTIMATE-COMPREHENSIVE-SYSTEM-AUDIT.md and its -AR.md counterpart in place, retaining all 36 sections and identical metrics. Reconcile claims, findings, previous/current deltas and documentation.
+5. Update audit/QC-Remaining-to-100-Percent-Prompts-Interactive.html in place. Every open required domain and P0/P1 finding needs concrete implementation/verification ownership; remove a task only when its purpose is evidenced closed.
+6. Validate arithmetic, bilingual consistency, traceability, links, copy/expand controls and responsive display. Update current Mind facts and a concise ledger entry last.
 
-Do not assume prior prompt completion means PASS.
+## Acceptance
+GO requires all mandatory gates accepted, no unresolved P0/P1 or mandatory skips, and all required domains fully evidenced. Otherwise publish an honest PARTIAL/NO-GO report and an actionable remaining-work plan.
 
-### Evidence ladder
-
-For every relevant requirement/domain, use:
-
-```text
-Implemented
-Unit verified
-Integration verified
-PostgreSQL verified
-Browser/E2E verified
-Accessibility/UX verified
-UAT verified
-Production/provider verified
-```
-
-A required missing layer prevents 100%.
-
-### Re-run all gates
-
-At minimum:
-
-```bash
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test:architecture
-pnpm test:unit
-pnpm test:integration
-pnpm test:migrations
-pnpm test:concurrency
-pnpm test:security
-pnpm build
-pnpm test:e2e
-pnpm test:e2e:closure
-pnpm system-owner:check
-pnpm release:verify
-pnpm release:tech-debt:check
-git diff --check
-```
-
-Verify exact-head CI separately.
-
-### Production verification
-
-Prove:
-
-```text
-deployed SHA
-migration head
-readiness
-database parity
-Render config parity
-AI providers
-backup/restore
-observability
-```
-
-### Human evidence
-
-Require:
-
-- signed UAT
-- usability evidence
-- accessibility evidence
-
-### Re-score all 80 domains
-
-Create a complete table:
-
-```text
-Domain
-Previous score
-Final score
-Evidence
-Open gap
-```
-
-### Hard 100% rule
-
-Only output:
-
-```text
-Overall maturity = 100%
-Production readiness = 100%
-GO
-```
-
-when:
-
-```text
-80/80 domains = 100
-FAIL = 0
-BLOCKED = 0
-NOT VERIFIED = 0
-P0 = 0
-P1 = 0
-mandatory skipped tests = 0
-```
-
-Otherwise report the truthful percentage.
-
-### Documentation synchronization
-
-After the final audit only:
-
-- read the whole repository again
-- update current authoritative documents
-- preserve historical audits unchanged
-- update route matrix
-- update migration head
-- update test counts
-- update production evidence
-- update `.agents/mind/01-mind-latest.md` last
-- make the Mind exact HEAD current
-
-Do not rewrite history to make previous audits appear current.
-
-### Authoritative outputs and coverage
-Update the two exact living 2026-09-18-ULTIMATE-COMPREHENSIVE-SYSTEM-AUDIT English/Arabic paths in place. Preserve all 80 IDs and use the current report as comparison only. Recalculate all seven evidence-layer contributions with explicit applicable scope; disclose any scoring-method change so delta is not mistaken for a measured regression. Production readiness uses mandatory release-gate completion separately from the arithmetic domain mean. Require every below-100 domain to map to concrete closure work and every P0/P1 to a task: no orphan domain/finding and no purposeless prompt. Rebind every passing evidence item after source changes. No GO while mandatory FAIL/BLOCKED/NOT VERIFIED or skips remain. Update the existing interactive HTML only as needed; do not create competing pack versions.
+## Required handoff
+Report DONE, PARTIAL or BLOCKED separately from evidence PASS, FAIL, NOT RUN, BLOCKED or HISTORICAL. Include the exact candidate and environment, changes made, commands and counts, relevant redacted evidence paths, unresolved dependencies and affected downstream tasks. Update current Mind facts only when they change. Do not mark another task complete by implication.
 </pre>
         </details>
       </section>
     </main>
     <script>
-      async function cp(b) {
-        const t = document.getElementById(b.dataset.id).textContent;
-        let ok = false;
+      const status = document.getElementById('copy-status');
+      const timers = new WeakMap();
+      async function copyPrompt(button) {
+        button.disabled = true;
+        let copied = false;
+        const text = document.getElementById(button.dataset.id).textContent;
         try {
-          await navigator.clipboard.writeText(t);
-          ok = true;
-        } catch (e) {
-          const x = document.createElement('textarea');
-          x.value = t;
-          x.className = 'sr';
-          document.body.appendChild(x);
-          x.select();
-          ok = document.execCommand('copy');
-          x.remove();
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        } catch {
+          const field = document.createElement('textarea');
+          field.value = text;
+          field.className = 'sr';
+          document.body.append(field);
+          field.select();
+          try {
+            copied = document.execCommand('copy');
+          } catch {
+            copied = false;
+          }
+          field.remove();
         }
-        document.getElementById('copy-status').textContent = ok
-          ? 'Copied ' + b.getAttribute('aria-label').replace('Copy Prompt ', '')
-          : 'Copy failed. Expand the prompt and select its text.';
-        if (ok) {
-          b.textContent = 'Copied';
-          b.classList.add('done');
-          setTimeout(() => {
-            b.textContent = 'Copy Prompt';
-            b.classList.remove('done');
-          }, 1500);
+        button.disabled = false;
+        button.focus({ preventScroll: true });
+        clearTimeout(timers.get(button));
+        if (copied) {
+          button.textContent = 'Copied';
+          button.classList.add('done');
+          status.textContent = 'Copied QC-100-FINAL-' + button.dataset.id.slice(1);
+          timers.set(
+            button,
+            setTimeout(() => {
+              button.textContent = 'Copy prompt';
+              button.classList.remove('done');
+            }, 1800),
+          );
+        } else {
+          button.textContent = 'Copy prompt';
+          button.classList.remove('done');
+          status.textContent = 'Copy failed. Open the prompt and select its text to copy manually.';
+          button.closest('section').querySelector('details').open = true;
         }
       }
-      document.querySelectorAll('.copy').forEach((b) => b.addEventListener('click', () => cp(b)));
       document
-        .getElementById('ea')
-        .addEventListener('click', () =>
-          document.querySelectorAll('details').forEach((d) => (d.open = true)),
-        );
-      document
-        .getElementById('ca')
-        .addEventListener('click', () =>
-          document.querySelectorAll('details').forEach((d) => (d.open = false)),
-        );
+        .querySelectorAll('.copy')
+        .forEach((button) => button.addEventListener('click', () => copyPrompt(button)));
+      document.getElementById('ea').addEventListener('click', () => {
+        document.querySelectorAll('details').forEach((d) => (d.open = true));
+        status.textContent = 'All 15 prompts expanded.';
+      });
+      document.getElementById('ca').addEventListener('click', () => {
+        document.querySelectorAll('details').forEach((d) => (d.open = false));
+        status.textContent = 'All 15 prompts collapsed.';
+      });
     </script>
   </body>
 </html>
