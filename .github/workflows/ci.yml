@@ -100,6 +100,26 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
+      # Candidate-bound authenticated journeys: one-time disposable passwords are
+      # generated for this run and injected only into the runner environment. The
+      # runner provisions a disposable PostgreSQL 18 database, migrates it to the
+      # candidate head, seeds the QC_VERIFY_* fixtures and the disposable owner,
+      # starts the built server and executes the mandatory closure specs. It
+      # fails closed (exit 2 + blocked evidence) when it cannot run, so missing
+      # coverage can never look like a green skip.
+      - name: Authenticated closure E2E with candidate-bound fixtures
+        env:
+          QC_MANDATORY_VERIFY_FIXTURES: 'true'
+          QC_VERIFY_BASE_URL: http://127.0.0.1:4321
+        run: |
+          QC_VERIFY_SYSTEM_OWNER_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
+          QC_VERIFY_SUPERVISOR_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
+          QC_VERIFY_MANAGER_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
+          QC_VERIFY_ADMIN_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
+          QC_VERIFY_EMPLOYEE_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
+          QC_VERIFY_LEAST_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
+          pnpm verify:e2e:authenticated
+
       - name: Start built server for E2E
         run: |
           HOST=127.0.0.1 PORT=4321 node dist/server/entry.mjs > "$RUNNER_TEMP/qc-server.log" 2>&1 &

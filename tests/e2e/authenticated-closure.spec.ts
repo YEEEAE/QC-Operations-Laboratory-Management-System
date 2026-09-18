@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { assertMandatoryVerificationFixtures } from './verify-fixtures.js';
+
 const hasRoleFixtures = Boolean(
   process.env.QC_VERIFY_SYSTEM_OWNER_PASSWORD &&
   process.env.QC_VERIFY_SUPERVISOR_PASSWORD &&
@@ -10,6 +12,7 @@ const hasRoleFixtures = Boolean(
   process.env.QC_VERIFY_LEAST_PASSWORD,
 );
 const base = process.env.QC_VERIFY_BASE_URL;
+assertMandatoryVerificationFixtures();
 const invalidUuid = '01900000-0000-7000-0000-0000000000f1';
 const noLeak = /password_hash|session_token|DATABASE_URL|storage_key|select .* from/i;
 

@@ -193,6 +193,10 @@ async function main(): Promise<void> {
     env.QC_SEED_ALLOW_NON_PRODUCTION = 'true';
     env.QC_VERIFICATION_SEED_ALLOW = 'true';
     env.QC_VERIFICATION_OPERATOR_IDENTITY = 'yazeed';
+    // Declares the fixture-gated journeys as mandatory for this run, so a
+    // missing fixture fails the pipeline instead of reporting a silent skip.
+    env.QC_MANDATORY_VERIFY_FIXTURES = 'true';
+    env.QC_VERIFY_BASE_URL = env.QC_VERIFY_BASE_URL ?? 'http://127.0.0.1:4321';
     env.SESSION_SECRET = env.SESSION_SECRET ?? 'closure-test-session-secret-0123456789';
     env.RATE_LIMIT_LOGIN_MAX = env.RATE_LIMIT_LOGIN_MAX ?? '8';
     env.RATE_LIMIT_LOGIN_WINDOW_SECONDS = env.RATE_LIMIT_LOGIN_WINDOW_SECONDS ?? '60';

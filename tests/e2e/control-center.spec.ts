@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import {
+  assertMandatoryVerificationFixtures,
+  verificationFixturesPresent,
+} from './verify-fixtures.js';
+
 /**
  * QC-YAZEED-CONTROL-CENTER-001 authenticated E2E (gated).
  *
@@ -16,8 +21,10 @@ const REQUIRED_ENV = [
   'QC_VERIFY_ADMIN_PASSWORD',
 ] as const;
 
-const hasFixtures = REQUIRED_ENV.every((name) => Boolean(process.env[name]));
+const hasFixtures =
+  REQUIRED_ENV.every((name) => Boolean(process.env[name])) || verificationFixturesPresent();
 const CONTROL_CENTER = '/system/control-center';
+assertMandatoryVerificationFixtures();
 
 async function signIn(page: Page, identity: string, password: string) {
   await page.goto(`${process.env.QC_VERIFY_BASE_URL}/login`);

@@ -381,21 +381,25 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     filter: RejectReportListFilter;
     page: Page;
   }): Promise<PagedResult<IssueSlip>> {
-    const applyFilter = <Q extends { where: Function }>(query: Q, f: RejectReportListFilter): Q => {
-      let q = query.where('r.report_type', '=', 'ISSUE_SLIP') as Q;
-      if (f.status) q = q.where('r.status', '=', f.status) as Q;
-      if (f.from) q = q.where('r.report_date', '>=', f.from) as Q;
-      if (f.to) q = q.where('r.report_date', '<=', f.to) as Q;
-      if (f.department) q = q.where('r.department', '=', f.department) as Q;
-      if (f.createdBy && isUuid(f.createdBy)) q = q.where('r.created_by', '=', f.createdBy) as Q;
-      if (f.itemCode) q = q.where('s.item_code', 'ilike', `%${f.itemCode}%`) as Q;
-      if (f.itemName) q = q.where('s.item_name', 'ilike', `%${f.itemName}%`) as Q;
-      if (f.lot) q = q.where('s.lot_no', 'ilike', `%${f.lot}%`) as Q;
+    const base = () =>
+      this.database
+        .selectFrom('reject_reports as r')
+        .innerJoin('reject_issue_slips as s', 's.report_id', 'r.id');
+    const applyFilter = (query: ReturnType<typeof base>, f: RejectReportListFilter) => {
+      let q = query.where('r.report_type', '=', 'ISSUE_SLIP');
+      if (f.status) q = q.where('r.status', '=', f.status);
+      if (f.from) q = q.where('r.report_date', '>=', f.from);
+      if (f.to) q = q.where('r.report_date', '<=', f.to);
+      if (f.department) q = q.where('r.department', '=', f.department);
+      if (f.createdBy && isUuid(f.createdBy)) q = q.where('r.created_by', '=', f.createdBy);
+      if (f.itemCode) q = q.where('s.item_code', 'ilike', `%${f.itemCode}%`);
+      if (f.itemName) q = q.where('s.item_name', 'ilike', `%${f.itemName}%`);
+      if (f.lot) q = q.where('s.lot_no', 'ilike', `%${f.lot}%`);
       if (f.approvalState === 'AWAITING')
-        q = q.where('r.status', 'in', ['ISSUED', 'APPROVAL_TRACKING']) as Q;
-      if (f.approvalState === 'COMPLETED') q = q.where('r.status', '=', 'COMPLETED') as Q;
+        q = q.where('r.status', 'in', ['ISSUED', 'APPROVAL_TRACKING']);
+      if (f.approvalState === 'COMPLETED') q = q.where('r.status', '=', 'COMPLETED');
       if (f.search)
-        q = q.where((eb: any) =>
+        q = q.where((eb) =>
           eb.or([
             eb('r.report_no', 'ilike', `%${f.search}%`),
             eb('s.item_code', 'ilike', `%${f.search}%`),
@@ -403,15 +407,11 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
             eb('s.lot_no', 'ilike', `%${f.search}%`),
             eb('s.reject_reason', 'ilike', `%${f.search}%`),
           ]),
-        ) as Q;
+        );
       return q;
     };
-    const base = () =>
-      this.database
-        .selectFrom('reject_reports as r')
-        .innerJoin('reject_issue_slips as s', 's.report_id', 'r.id');
     const countRow = await applyFilter(base(), input.filter)
-      .select(({ fn }: any) => fn.countAll().as('count'))
+      .select(({ fn }) => fn.countAll().as('count'))
       .executeTakeFirst();
     const rows = await applyFilter(base(), input.filter)
       .select(['r.id'])
@@ -738,50 +738,58 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     filter: RejectReportListFilter;
     page: Page;
   }): Promise<PagedResult<DailyReject>> {
-    const applyFilter = <Q extends { where: Function }>(query: Q, f: RejectReportListFilter): Q => {
-      let q = query.where('r.report_type', '=', 'DAILY_REJECT') as Q;
-      if (f.status) q = q.where('r.status', '=', f.status) as Q;
-      if (f.from) q = q.where('r.report_date', '>=', f.from) as Q;
-      if (f.to) q = q.where('r.report_date', '<=', f.to) as Q;
-      if (f.department) q = q.where('r.department', '=', f.department) as Q;
-      if (f.createdBy && isUuid(f.createdBy)) q = q.where('r.created_by', '=', f.createdBy) as Q;
+    const base = () => this.database.selectFrom('reject_reports as r');
+    const applyFilter = (query: ReturnType<typeof base>, f: RejectReportListFilter) => {
+      let q = query.where('r.report_type', '=', 'DAILY_REJECT');
+      if (f.status) q = q.where('r.status', '=', f.status);
+      if (f.from) q = q.where('r.report_date', '>=', f.from);
+      if (f.to) q = q.where('r.report_date', '<=', f.to);
+      if (f.department) q = q.where('r.department', '=', f.department);
+      if (f.createdBy && isUuid(f.createdBy)) q = q.where('r.created_by', '=', f.createdBy);
       if (f.itemCode || f.itemName || f.lot || f.search) {
-        q = q.where(({ exists, selectFrom, or, fn }: any) => {
-          const inner = selectFrom('daily_reject_entries as e')
-            .select(fn.lit(1).as('one'))
-            .whereRef('e.report_id', '=', 'r.id');
-          const conditions: any[] = [];
-          if (f.itemCode)
-            conditions.push((eb: any) => eb('e.item_code', 'ilike', `%${f.itemCode}%`));
-          if (f.itemName)
-            conditions.push((eb: any) => eb('e.item_description', 'ilike', `%${f.itemName}%`));
-          if (f.lot) conditions.push((eb: any) => eb('e.lot_no', 'ilike', `%${f.lot}%`));
-          if (f.search) {
-            conditions.push((eb: any) => eb('e.item_code', 'ilike', `%${f.search}%`));
-            conditions.push((eb: any) => eb('e.item_description', 'ilike', `%${f.search}%`));
-            conditions.push((eb: any) => eb('e.lot_no', 'ilike', `%${f.search}%`));
-            conditions.push((eb: any) => eb('e.reject_reason', 'ilike', `%${f.search}%`));
-          }
-          return exists(inner.where((eb: any) => eb.or(conditions.map((c) => c(eb)))));
-        }) as Q;
+        // Detail filters live on the entry rows, so they become a correlated
+        // EXISTS on the parent report — a report matches when one of its
+        // entries matches the supplied detail filters.
+        q = q.where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom('daily_reject_entries as e')
+              .select(sql`1`.as('one'))
+              .whereRef('e.report_id', '=', 'r.id')
+              .where((inner) =>
+                inner.or([
+                  ...(f.itemCode ? [inner('e.item_code', 'ilike', `%${f.itemCode}%`)] : []),
+                  ...(f.itemName ? [inner('e.item_description', 'ilike', `%${f.itemName}%`)] : []),
+                  ...(f.lot ? [inner('e.lot_no', 'ilike', `%${f.lot}%`)] : []),
+                  ...(f.search
+                    ? [
+                        inner('e.item_code', 'ilike', `%${f.search}%`),
+                        inner('e.item_description', 'ilike', `%${f.search}%`),
+                        inner('e.lot_no', 'ilike', `%${f.search}%`),
+                        inner('e.reject_reason', 'ilike', `%${f.search}%`),
+                      ]
+                    : []),
+                ]),
+              ),
+          ),
+        );
         if (f.search)
-          q = q.where((eb: any) =>
+          q = q.where((eb) =>
             eb.or([
               eb('r.report_no', 'ilike', `%${f.search}%`),
               eb.exists(
                 eb
                   .selectFrom('daily_reject_entries as e')
-                  .select(eb.fn.lit(1).as('one'))
+                  .select(sql`1`.as('one'))
                   .whereRef('e.report_id', '=', 'r.id'),
               ),
             ]),
-          ) as Q;
+          );
       }
       return q;
     };
-    const base = () => this.database.selectFrom('reject_reports as r');
     const countRow = await applyFilter(base(), input.filter)
-      .select(({ fn }: any) => fn.countAll().as('count'))
+      .select(({ fn }) => fn.countAll().as('count'))
       .executeTakeFirst();
     const rows = await applyFilter(base(), input.filter)
       .select(['r.id'])
@@ -1047,8 +1055,8 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         `.execute(this.database),
         sql<{ pending: string; completed: string }>`
           SELECT
-            COUNT(*) FILTER (WHERE status IN ('PENDING', 'REVERSED')) AS pending,
-            COUNT(*) FILTER (WHERE status = 'CONFIRMED') AS completed
+            COUNT(*) FILTER (WHERE a.status IN ('PENDING', 'REVERSED')) AS pending,
+            COUNT(*) FILTER (WHERE a.status = 'CONFIRMED') AS completed
           FROM qc.issue_slip_approval_confirmations a
           JOIN qc.reject_reports r ON r.id = a.report_id AND r.status <> 'VOID' ${b}
         `.execute(this.database),

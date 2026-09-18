@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import {
+  assertMandatoryVerificationFixtures,
+  verificationFixturesPresent,
+} from './verify-fixtures.js';
+
 /**
  * Prompt 13 / C-12 authenticated verification (gated).
  *
@@ -10,18 +15,9 @@ import { expect, test, type Page } from '@playwright/test';
  * forged action posts that must be rejected server-side.
  */
 
-const REQUIRED_ENV = [
-  'QC_VERIFY_BASE_URL',
-  'QC_VERIFY_SYSTEM_OWNER_PASSWORD',
-  'QC_VERIFY_SUPERVISOR_PASSWORD',
-  'QC_VERIFY_MANAGER_PASSWORD',
-  'QC_VERIFY_ADMIN_PASSWORD',
-  'QC_VERIFY_EMPLOYEE_PASSWORD',
-  'QC_VERIFY_LEAST_PASSWORD',
-] as const;
-
 const SUBSTITUTED_UUID = '01900000-0000-7000-0000-0000000000f1';
-const hasFixtures = REQUIRED_ENV.every((name) => Boolean(process.env[name]));
+const hasFixtures = verificationFixturesPresent();
+assertMandatoryVerificationFixtures();
 
 async function signIn(page: Page, identity: string, password: string) {
   await page.goto(`${process.env.QC_VERIFY_BASE_URL}/login`);

@@ -26,6 +26,9 @@ function assertSafeFileUpload(input: FileUploadInput): void {
     filename === '.' ||
     filename === '..' ||
     filename.length > 255 ||
+    // Rejecting C0/DEL control characters is the intent of this check, so the
+    // control-character range is deliberate (not an accidental literal).
+    // eslint-disable-next-line no-control-regex
     /[\\/\0\r\n\u0000-\u001f\u007f]/.test(filename) ||
     EXECUTABLE_FILENAME_EXTENSION.test(filename) ||
     !MIME_TYPE.test(input.mimeType) ||

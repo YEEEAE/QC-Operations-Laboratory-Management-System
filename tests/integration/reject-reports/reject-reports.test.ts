@@ -348,13 +348,21 @@ describe('Reject Reports PostgreSQL integration', () => {
         }
       ).__rejectWiring!.outbox,
     );
-    await expect(
+    // `authorize()` denies before any repository promise exists, so this denial
+    // is thrown synchronously — assert the throw itself instead of awaiting a
+    // rejection that can never be produced.
+    let denial: unknown;
+    try {
       new CreateIssueSlipUseCase(repository).execute({
         actor: anonymous,
         ...slipInput,
         requestId: 'req-anon-1',
-      }),
-    ).rejects.toThrow(AppError);
+      });
+    } catch (error) {
+      denial = error;
+    }
+    expect(denial).toBeInstanceOf(AppError);
+    expect((denial as AppError).code).toBe('AUTHZ_DENIED');
 
     const slip = await new CreateIssueSlipUseCase(repository).execute({
       actor: creator,

@@ -120,13 +120,7 @@ async function ensureScope(
   await client.query(
     `INSERT INTO qc.user_scopes (id, user_id, scope_kind, scope_value, assigned_by, reason)
      VALUES ($1, $2, $3, $4, $5, 'PROMPT-13 VERIFICATION FIXTURE (24H EXPIRY)')`,
-    [
-      randomUUID(),
-      userId,
-      scopeKind,
-      scopeKind === 'TEAM' ? 'QC-VERIFY-TEAM' : null,
-      userId,
-    ],
+    [randomUUID(), userId, scopeKind, scopeKind === 'TEAM' ? 'QC-VERIFY-TEAM' : null, userId],
   );
 }
 

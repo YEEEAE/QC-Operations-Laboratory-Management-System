@@ -19,6 +19,12 @@
 #   pnpm test:integration && pnpm test:migrations && pnpm test:concurrency
 set -euo pipefail
 
+# macOS refuses to start a postmaster whose locale is unset/invalid
+# ("postmaster became multithreaded during startup"), so pin the C locale the
+# cluster is initialised with. Callers may still override it explicitly.
+export LC_ALL="${LC_ALL:-C}"
+export LANG="${LANG:-C}"
+
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP_ROOT="$ROOT/.tmp/pg18"
 DATA="$TMP_ROOT/data"

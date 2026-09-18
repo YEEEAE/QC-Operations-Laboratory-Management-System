@@ -1,7 +1,7 @@
 import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { migrate } from '../../../scripts/db/migrate.js';
+import { loadMigrations, migrate } from '../../../scripts/db/migrate.js';
 import { PostgresAuthorizationRepository } from '../../../src/modules/administration/infrastructure/postgres-authorization-repository.js';
 import { ManageUserRoleUseCase } from '../../../src/modules/administration/application/manage-user-role.js';
 import { AssignUserScopeUseCase } from '../../../src/modules/administration/application/assign-user-scope.js';
@@ -134,7 +134,13 @@ describe('owner control center PostgreSQL contracts', () => {
     const view = await overview().execute({ actor: ownerActor() });
     expect(view.databaseStatus).toBe('HEALTHY');
     expect(view.auditStatus).toBe('HEALTHY');
-    expect(view.migration.appliedHead).toBe('0027');
+    // Derived from the shipped migration files instead of a hard-coded number,
+    // so adding a migration cannot silently stale this contract assertion.
+    const shippedMigrations = await loadMigrations();
+    const shippedHead = shippedMigrations.at(-1)?.version;
+    expect(shippedHead).toBeDefined();
+    expect(view.migration.appliedHead).toBe(shippedHead);
+    expect(view.migration.pendingCount).toBe(0);
     expect(view.migration.drift).toBe(false);
     expect(JSON.stringify(view)).not.toMatch(/password|postgres:\/\//i);
   });

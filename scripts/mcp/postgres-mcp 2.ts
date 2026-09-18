@@ -13,24 +13,20 @@ if (!databaseUrl) {
   process.exit(78);
 }
 
-const {
-  DATABASE_URL: _databaseUrl,
-  ...inheritedEnvironment
-} = process.env;
+// DATABASE_URL is removed from the child environment on purpose: the MCP server
+// receives its connection string through POSTGRES_MCP_CONNECTION_STRING only.
+const inheritedEnvironment: NodeJS.ProcessEnv = { ...process.env };
+delete inheritedEnvironment.DATABASE_URL;
 
-const server = spawn(
-  'npx',
-  ['--yes', '@microsoft/postgres-mcp', 'run', '--no-telemetry'],
-  {
-    env: {
-      ...inheritedEnvironment,
-      POSTGRES_MCP_CONNECTION_STRING: databaseUrl,
-      POSTGRES_MCP_PROFILE_NAME: 'qc-project',
-      POSTGRES_MCP_DISABLE_CWD_ACCESS: '1',
-    },
-    stdio: 'inherit',
+const server = spawn('npx', ['--yes', '@microsoft/postgres-mcp', 'run', '--no-telemetry'], {
+  env: {
+    ...inheritedEnvironment,
+    POSTGRES_MCP_CONNECTION_STRING: databaseUrl,
+    POSTGRES_MCP_PROFILE_NAME: 'qc-project',
+    POSTGRES_MCP_DISABLE_CWD_ACCESS: '1',
   },
-);
+  stdio: 'inherit',
+});
 
 server.on('error', (error) => {
   process.stderr.write(`Postgres MCP failed to start: ${error.message}\n`);

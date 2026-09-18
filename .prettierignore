@@ -10,3 +10,7 @@ dist/
 coverage/
 node_modules/
 pnpm-lock.yaml
+# Interactive audit report packs: reviewed evidence deliverables with inline
+# scripts and clipboard behaviour. They are not application source, and
+# reformatting them rewrites frozen evidence (markdown is already excluded).
+audit/**/*.html

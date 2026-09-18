@@ -150,16 +150,22 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       outcomes.filter((o) => o.status === 'fulfilled'),
       rejectionSummary(outcomes),
     ).toHaveLength(1);
-    // The loser observes the row either before the winner commits (stale
-    // version) or after it (already RELEASED, so release policy denies).
-    // Both are safe rejections: neither overwrites silently. The row, audit,
-    // and outbox assertions below prove exactly-once deterministically.
+    // The loser can be denied at three mutually exclusive points, depending on
+    // when it re-read the row relative to the winner's commit:
+    //   - AUTHZ_DENIED: the use-case/policy gate saw the committed RELEASED
+    //     row, so the release business condition no longer holds.
+    //   - DOMAIN_INVALID_TRANSITION: transition()'s own fresh read saw
+    //     RELEASED, and the receiving state machine has no RELEASE transition
+    //     from RELEASED.
+    //   - CONFLICT_STALE_VERSION: both re-reads raced on the un-released row,
+    //     but only one UPDATE matched the expected version.
+    // All three are safe rejections — none silently overwrites the committed
+    // release. The row, audit and outbox assertions below prove exactly-once
+    // deterministically.
+    const safeLoserCodes = ['AUTHZ_DENIED', 'DOMAIN_INVALID_TRANSITION', 'CONFLICT_STALE_VERSION'];
     const loserCodes = outcomes.map(rejectedCode).filter((code) => code !== undefined);
     expect(loserCodes, rejectionSummary(outcomes)).toHaveLength(1);
-    expect(
-      loserCodes[0] === 'CONFLICT_STALE_VERSION' || loserCodes[0] === 'AUTHZ_DENIED',
-      rejectionSummary(outcomes),
-    ).toBe(true);
+    expect(safeLoserCodes, rejectionSummary(outcomes)).toContain(loserCodes[0]);
 
     const row = (
       await pool!.query(
@@ -221,9 +227,22 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     ]);
 
     expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
-    expect(
-      outcomes.map(rejectedCode).filter((code) => code === 'CONFLICT_STALE_VERSION'),
-    ).toHaveLength(1);
+    // The loser can be denied at three mutually exclusive points, depending on
+    // when it re-read the report relative to the winner's commit:
+    //   - AUTHZ_DENIED: the use-case state gate saw the committed APPROVED state
+    //     (APPROVED is not an approvable state).
+    //   - DOMAIN_INVALID_TRANSITION: transition()'s own fresh read saw APPROVED,
+    //     and the domain state machine has no APPROVE transition from APPROVED.
+    //   - CONFLICT_STALE_VERSION: both re-reads raced as UNDER_REVIEW, but only
+    //     one UPDATE matched version 3, so the optimistic guard rejected the
+    //     loser.
+    // All three are safe rejections — none silently overwrites the committed
+    // approval. The row, audit and outbox records asserted below prove
+    // exactly-once behaviour deterministically.
+    const safeLoserCodes = ['AUTHZ_DENIED', 'DOMAIN_INVALID_TRANSITION', 'CONFLICT_STALE_VERSION'];
+    const loserCodes = outcomes.map(rejectedCode).filter((code) => code !== undefined);
+    expect(loserCodes, rejectionSummary(outcomes)).toHaveLength(1);
+    expect(safeLoserCodes, rejectionSummary(outcomes)).toContain(loserCodes[0]);
     const row = (
       await pool!.query('SELECT state, version FROM qc.inspection_reports WHERE id = $1', [
         reportId,
