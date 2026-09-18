@@ -6,7 +6,15 @@
 
 ## Current audit reality — 2026-09-18
 
-- Exact current HEAD: `a3ff2d14d196511e1a948ace89d638638f8f8fe8` on `main` (verified 2026-09-18). The working tree was clean at task start; current uncommitted changes are limited to `QC-AI-PROVIDERS-001`, with no commit, push, or deployment. Migration source head remains `0028_qc_closure_009_controlled_records` and is applied only to the disposable local PostgreSQL database, **not** to Render.
+- QC-CLOSURE-013 evidence snapshot is recorded in audit/2026-09-18-qc-closure-013-testing-evidence.md for current HEAD ef1ec1aeb29e660a1455e88fbfe040bff19aa17d. It maps 15 critical requirements across implementation, unit, integration, PostgreSQL, security/negative, E2E, and UAT. The result is **PARTIAL / NO-GO**: typecheck, architecture, build, tech-debt, diff check, and the focused Issue Slip UI regression pass; full format/lint/unit, PostgreSQL-backed suites, browser E2E, system-owner check, exact-head CI, and UAT are not closed in this host. Test estate inventory: 83 unit files, 87 integration files, 29 E2E files, 28 skip markers, and 23 source-reading test/support files.
+- QC-CLOSURE-013 fixed the presentation-contract regression in src/pages/reject-reports/issue-slips/[reportId].astro by replacing placeholder glyphs with CSS status dots; focused tests/unit/ui/icon-and-copy-contract.test.ts is 3/3 PASS. This is a local regression fix only and does not change the release decision.
+- **2026-09-18 — QC-CLOSURE-013 / Testing architecture & evidence closure**
+  - Changed: added the current requirement-to-evidence traceability register and test-estate audit; replaced Issue Slip placeholder glyphs with semantic CSS status dots.
+  - Evidence: focused UI contract 3/3 PASS; typecheck, architecture, build, release tech-debt, and git diff --check PASS. Full gates remain PARTIAL/BLOCKED: format and lint fail on existing files/errors; unit was 563/564 before the focused fix; PostgreSQL suites cannot start without a container runtime; Chromium and system-owner:check are denied by host sandbox; UAT/CI remain unavailable.
+  - State: PARTIAL / NO-GO.
+  - Key files: audit/2026-09-18-qc-closure-013-testing-evidence.md, src/pages/reject-reports/issue-slips/[reportId].astro.
+
+- Exact current HEAD: `ef1ec1aeb29e660a1455e88fbfe040bff19aa17d` on `main` (verified 2026-09-18). Working tree changes are local QC-CLOSURE-013 evidence/mind updates plus the Issue Slip presentation fix; no commit, push, or deployment. Migration source head remains `0028_qc_closure_009_controlled_records` and is applied only to the disposable local PostgreSQL database, **not** to Render.
 - Fresh QC-CLOSURE-008 evidence: closure PostgreSQL suite `3/3 PASS`; focused asset suite `17/17 PASS`; migration/database suite `7 files / 26 tests PASS`; typecheck `0 errors / 68 hints`; build and architecture PASS; targeted ESLint PASS; `git diff --check` PASS. Full lint remains **BLOCKED** by existing Reject Reports errors outside this task. PostgreSQL verification used the approved disposable PostgreSQL 18 cluster (`scripts/db/disposable-postgres.sh`), not Testcontainers.
 - **Render PostgreSQL — VERIFIED (read-only):** `dpg-dadqmsgn74is73b774j0-a` is the Render **database** id (not the web-service id) and is the internal hostname label; app database `qc_operations`, principal `qc_operations_user`, PostgreSQL 18.6, region oregon, **free plan expiring `2026-10-05`**. Canonical pool connects with TLS 1.3 and session `search_path=qc,pg_catalog`, `TimeZone=UTC`; `/api/health/ready` is `200 healthy` both for the built app against this database and for live `https://qclevel.top`. Data is bootstrap-only (1 user, 2 role grants, 4 audit events, 0 lab tests).
 - **Render migration gap (blocker):** the Render database is at applied head `0018` with `0019`–`0025` pending, so `db:schema:check` fails closed there while ledger checksums for all 18 applied rows verify. Applying them is **prohibited** until the credential-rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied (the local Render export credential — the one in `.env` — is documented as compromised).
@@ -443,7 +451,7 @@
 ## 14) المشاكل المفتوحة الحالية — لا تعيد فتح المشاكل المغلقة تاريخيًا
 
 ### P0 / blocking evidence
-- Docker/Testcontainers متوفران الآن على المضيف المحلي (Docker Engine `29.7.2`) وauthenticated E2E نُفذ على PostgreSQL 18 Docker، لكنه فشل جزئيًا (10 PASS / 10 FAIL / 16 SKIPPED).
+- Docker/Testcontainers is not available to the current test process: the required suites fail at Testcontainers startup with “Could not find a working container runtime strategy”; the prior authenticated E2E attempt remains historical at 10 PASS / 10 FAIL / 16 SKIPPED and is not current-head closure.
 - GitHub Verification CI exact-HEAD غير مثبت بسبب billing lock.
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.

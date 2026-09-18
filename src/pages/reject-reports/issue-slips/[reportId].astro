@@ -86,7 +86,7 @@ const fmtDateTime = (d?: Date) =>
         const state = confirmation?.status ?? 'PENDING';
         return (
           <li class={`step step-${state.toLowerCase()}`}>
-            <span class="dot" aria-hidden="true">{state === 'CONFIRMED' ? '✓' : state === 'REVERSED' ? '↺' : '○'}</span>
+            <span class={`dot dot-${state.toLowerCase()}`} aria-hidden="true"></span>
             <div class="step-body">
               <strong>{approvalLabel[role]}</strong>
               <span class="state">
@@ -210,9 +210,9 @@ const fmtDateTime = (d?: Date) =>
   dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:600}
   .tracker{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3)}
   .step{display:flex;gap:var(--space-3);align-items:center;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
-  .dot{font-size:1.1rem;width:1.5rem;text-align:center}
-  .step-confirmed .dot{color:var(--status-success,#047857)}
-  .step-reversed .dot{color:var(--status-warning,#b45309)}
+  .dot{width:.8rem;height:.8rem;flex:0 0 .8rem;border-radius:50%;background:var(--text-muted)}
+  .dot-confirmed{background:var(--status-success,#047857)}
+  .dot-reversed{background:var(--status-warning,#b45309)}
   .step-body{display:grid;gap:.15rem;flex:1}
   .step-body .state{font-size:.8rem;color:var(--text-muted)}
   .step-body .note{font-size:.78rem}
