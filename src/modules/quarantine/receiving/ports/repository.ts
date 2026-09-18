@@ -15,6 +15,8 @@ export interface ReceivingRepository {
     inspectionResult?: ReceivingItem['inspectionResult'];
     /** Canonical release-system filter: RELEASED or NOT_RELEASED. */
     releaseState?: 'RELEASED' | 'NOT_RELEASED';
+    /** Ownership filter: 'mine' restricts to records the actor created. */
+    ownership?: 'mine';
   }): Promise<readonly ReceivingItem[]>;
   updateDraft(i: {
     id: string;

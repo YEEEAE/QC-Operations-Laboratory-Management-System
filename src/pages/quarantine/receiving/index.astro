@@ -30,6 +30,9 @@ const releaseState = ['RELEASED', 'YES', 'TRUE'].includes(requestedRelease)
   : ['NOT_RELEASED', 'NO', 'FALSE'].includes(requestedRelease)
     ? ('NOT_RELEASED' as const)
     : undefined;
+// Ownership is the same dimension the dashboard KPIs count, so a personal KPI
+// drill-down lands on exactly its own set instead of the whole authorized scope.
+const ownership = params.get('ownership') === 'mine' ? ('mine' as const) : undefined;
 
 /** One link per filter that drops only that filter and keeps the rest. */
 const chipHref = (drop: string) => {
@@ -50,13 +53,20 @@ const appliedFilters = [
     value: releaseStateLabel(releaseState === 'RELEASED'),
     href: chipHref('releaseState'),
   },
+  ownership && { label: 'Ownership', value: 'Only mine', href: chipHref('ownership') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
 const hasFilters = appliedFilters.length > 0;
 
 let items: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['list']['execute']>> = [];
 let providerUnavailable = false;
 try {
-  items = await receivingReadDependencies().list.execute({ actor, state, inspectionResult, releaseState });
+  items = await receivingReadDependencies().list.execute({
+    actor,
+    state,
+    inspectionResult,
+    releaseState,
+    ownership,
+  });
 } catch {
   providerUnavailable = true;
 }
@@ -93,6 +103,10 @@ try {
         <option value="">Any release state</option>
         <option value="RELEASED" selected={releaseState === 'RELEASED'}>RELEASED</option>
         <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>Not released</option>
+      </select></label>
+    <label for="ownership">Ownership<select id="ownership" name="ownership">
+        <option value="">All records</option>
+        <option value="mine" selected={ownership === 'mine'}>Only mine</option>
       </select></label>
     <button class="button secondary" type="submit">Apply filters</button>
   </form>

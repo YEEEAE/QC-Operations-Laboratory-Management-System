@@ -15,6 +15,8 @@ export interface InspectionRepository {
     state?: Inspection['state'];
     /** Canonical scientific-result filter (PASS | FAIL | HOLD). */
     finalResult?: FinalResult;
+    /** Ownership filter: 'mine' restricts to reports the actor authored. */
+    ownership?: 'mine';
   }): Promise<readonly Inspection[]>;
   saveDraft(i: {
     id: string;

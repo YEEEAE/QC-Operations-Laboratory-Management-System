@@ -9,6 +9,7 @@ export class ListInspectionsUseCase {
     assignedTo?: string;
     state?: Inspection['state'];
     finalResult?: Inspection['finalResult'];
+    ownership?: 'mine';
   }) {
     authorize(
       {

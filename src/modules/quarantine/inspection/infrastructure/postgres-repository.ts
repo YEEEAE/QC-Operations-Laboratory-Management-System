@@ -153,6 +153,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
     assignedTo?: string;
     state?: Inspection['state'];
     finalResult?: Inspection['finalResult'];
+    ownership?: 'mine';
   }) {
     const rows = await this.db
       .selectFrom('inspection_reports')
@@ -167,7 +168,8 @@ export class PostgresInspectionRepository implements InspectionRepository {
         item &&
         (!i.state || item.state === i.state) &&
         (!i.finalResult || item.finalResult === i.finalResult) &&
-        (!i.assignedTo || item.assignedTo === i.assignedTo)
+        (!i.assignedTo || item.assignedTo === i.assignedTo) &&
+        (i.ownership !== 'mine' || item.authorId === i.actor.id)
       )
         result.push(item);
     }

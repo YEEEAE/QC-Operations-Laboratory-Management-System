@@ -9,6 +9,7 @@ export class ListReceivingUseCase {
     state?: ReceivingItem['workflowState'];
     inspectionResult?: ReceivingItem['inspectionResult'];
     releaseState?: 'RELEASED' | 'NOT_RELEASED';
+    ownership?: 'mine';
   }) {
     authorize(
       {

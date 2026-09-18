@@ -3,7 +3,7 @@ import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import { inspectionReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
-import { FINAL_RESULTS } from '../../../modules/quarantine/inspection/domain/inspection-result.js';
+import { FINAL_RESULTS } from '../../../modules/quarantine/inspection/application/inspection-result-options.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Finspections');
@@ -13,6 +13,9 @@ const requestedState = params.get('state') ?? params.get('workflowState');
 const state = states.find((value) => value === requestedState);
 const requestedResult = params.get('finalResult') ?? params.get('inspectionResult');
 const finalResult = FINAL_RESULTS.find((value) => value === requestedResult);
+// Ownership is the same dimension the dashboard KPIs count, so a personal KPI
+// drill-down lands on exactly its own set instead of the whole authorized scope.
+const ownership = params.get('ownership') === 'mine' ? ('mine' as const) : undefined;
 
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
@@ -27,13 +30,19 @@ const appliedFilters = [
     value: stateLabel(finalResult),
     href: chipHref('finalResult'),
   },
+  ownership && { label: 'Ownership', value: 'Only mine', href: chipHref('ownership') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
 const hasFilters = appliedFilters.length > 0;
 
 let inspections: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['list']['execute']>> = [];
 let providerUnavailable = false;
 try {
-  inspections = await inspectionReadDependencies().list.execute({ actor, state, finalResult });
+  inspections = await inspectionReadDependencies().list.execute({
+    actor,
+    state,
+    finalResult,
+    ownership,
+  });
 } catch {
   providerUnavailable = true;
 }
@@ -66,6 +75,10 @@ try {
             {stateLabel(value)}
           </option>
         ))}
+      </select></label>
+    <label for="ownership">Ownership<select id="ownership" name="ownership">
+        <option value="">All records</option>
+        <option value="mine" selected={ownership === 'mine'}>Only mine</option>
       </select></label>
     <button type="submit">Apply filters</button>
   </form>

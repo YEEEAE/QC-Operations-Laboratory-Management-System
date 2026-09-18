@@ -164,6 +164,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
     state?: ReceivingItem['workflowState'];
     inspectionResult?: ReceivingItem['inspectionResult'];
     releaseState?: 'RELEASED' | 'NOT_RELEASED';
+    ownership?: 'mine';
   }) {
     let query = this.db
       .selectFrom('receiving_items')
@@ -178,6 +179,9 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       query = query.where('inspection_result', '=', i.inspectionResult) as typeof query;
     if (i.releaseState)
       query = query.where('release_system', '=', i.releaseState === 'RELEASED') as typeof query;
+    // Ownership is a display/verification filter on the same owner dimension the
+    // dashboard KPIs use, so a personal KPI can link to exactly its own set.
+    if (i.ownership === 'mine') query = query.where('created_by', '=', i.actor.id) as typeof query;
     const rows = await query.execute();
     const grant = i.actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');
     return rows
