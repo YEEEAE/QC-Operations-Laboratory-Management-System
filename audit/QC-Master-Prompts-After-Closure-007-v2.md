@@ -1911,6 +1911,565 @@ Avoid layout assumptions that block future Arabic/RTL support.
 
 ---
 
+---
+
+# Prompt — QC-AI-PROVIDERS-001
+## Groq + Gemini Production AI Provider Integration
+
+You are executing:
+
+`QC-AI-PROVIDERS-001 — Groq + Gemini Production AI Provider Integration`
+
+### Objective
+
+Replace the current disabled-only AI runtime with a secure, production-grade multi-provider architecture:
+
+```text
+Primary provider: Groq
+Secondary/fallback provider: Gemini
+Final fallback: Disabled / Degraded AI mode
+```
+
+Integrate both providers into the existing `src/modules/ai-advisory/` architecture and the existing `AIProvider` port. Do not create a parallel AI subsystem.
+
+AI must remain optional and must never block core QC/Laboratory workflows.
+
+---
+
+### 1. Mandatory Project Protocol
+
+Before implementation:
+
+1. Read `AGENTS.md` completely.
+2. Read `.agents/mind/01-mind-latest.md` completely.
+3. Capture:
+   ```bash
+   git rev-parse HEAD
+   git branch --show-current
+   git status --short
+   git diff --stat
+   git diff --name-status
+   ```
+4. Preserve all current uncommitted work.
+5. Never run destructive Git commands.
+6. Read relevant `.agents/skills/**/SKILL.md`.
+7. Never commit, push, merge, or deploy unless the user explicitly requests it.
+
+---
+
+### 2. Existing Architecture to Preserve
+
+Reuse:
+
+```text
+src/modules/ai-advisory/application/
+src/modules/ai-advisory/domain/
+src/modules/ai-advisory/infrastructure/
+src/modules/ai-advisory/ports/ai-provider.ts
+src/modules/ai-advisory/infrastructure/disabled-ai-provider.ts
+src/pages/ai-advisory.astro
+tests/integration/ai-advisory/
+```
+
+Do not call Groq or Gemini directly from Astro page/UI code.
+
+All provider access must remain behind the Application/Infrastructure boundary.
+
+---
+
+### 3. Environment & Secret Handling
+
+The user supplied local `.env` values for Groq and Gemini.
+
+Read them locally, but never print, log, audit, expose, document, or commit their values.
+
+Normalize application configuration to canonical names such as:
+
+```text
+AI_PRIMARY_PROVIDER=groq
+AI_FALLBACK_PROVIDER=gemini
+
+GROQ_API_KEY=
+GROQ_MODEL=
+GROQ_BASE_URL=
+
+GEMINI_API_KEY=
+GEMINI_MODEL=
+GEMINI_BASE_URL=
+```
+
+If the local `.env` currently uses legacy names such as:
+
+```text
+API_groq_Key
+groq_model
+URL_groq
+API_gemini_Key
+gemini_model
+```
+
+support a safe transition, but use one canonical internal configuration contract.
+
+Create a single validated server-side AI configuration loader.
+
+Use Zod or the repository's existing configuration validation pattern.
+
+Never store API keys in PostgreSQL.
+
+---
+
+### 4. Groq Provider
+
+Implement:
+
+```text
+GroqAiProvider
+```
+
+behind the existing `AIProvider` port.
+
+Use the configured Groq OpenAI-compatible endpoint.
+
+Requirements:
+
+- server-side HTTP only
+- configured model
+- configured endpoint
+- secure bearer authentication
+- `AbortController`
+- bounded timeout
+- strict response validation
+- normalized provider output
+- canonical error mapping
+- no raw provider errors returned to the browser
+
+Handle at minimum:
+
+```text
+200 success
+400 invalid request
+401 invalid credentials
+403 forbidden
+404 model/endpoint error
+408/timeout
+429 rate limit
+5xx provider failure
+network/DNS failure
+invalid JSON
+missing content
+unexpected response shape
+```
+
+---
+
+### 5. Gemini Provider
+
+Implement:
+
+```text
+GeminiAiProvider
+```
+
+behind the same `AIProvider` port.
+
+Requirements:
+
+- configured model
+- configured API endpoint
+- secure server-side authentication
+- timeout + abort
+- strict response validation
+- normalized output matching the existing advisory domain
+- safe provider-safety handling
+- canonical error mapping
+
+Handle at minimum:
+
+```text
+success
+authentication failure
+quota/rate limit
+model unavailable
+provider safety block
+timeout
+network failure
+invalid response
+5xx
+```
+
+Avoid introducing a large SDK unless clearly justified by the current architecture.
+
+---
+
+### 6. Multi-Provider Failover
+
+Create one provider composition/failover layer:
+
+```text
+Groq
+  ↓ retriable failure
+Gemini
+  ↓ retriable failure
+Disabled / Degraded AI
+```
+
+Fallback is appropriate for:
+
+```text
+timeout
+network error
+429
+5xx
+temporary provider unavailability
+```
+
+Do not retry indefinitely.
+
+Use deterministic bounded retry/fallback behavior.
+
+Permanent configuration failures must create a sanitized operational signal instead of being silently hidden.
+
+---
+
+### 7. Core System Must Not Depend on AI
+
+If both providers are unavailable:
+
+```text
+core QC system = READY
+AI capability = DEGRADED / UNAVAILABLE
+```
+
+The AI page should show a safe message such as:
+
+```text
+AI advisory is temporarily unavailable.
+Core QC workflows are unaffected.
+```
+
+Never fail application startup or core readiness solely because AI is unavailable.
+
+---
+
+### 8. Advisory-Only Governance
+
+Preserve and strengthen:
+
+```text
+AI = advisory only
+```
+
+AI must never autonomously:
+
+- APPROVE
+- RELEASE
+- SIGN
+- perform e-signature
+- reject/close controlled records
+- modify scientific acceptance criteria
+- change controlled documents
+- assign roles/scopes
+- modify authorization
+- perform regulated database mutations as authority
+
+Allowed uses remain limited to:
+
+- summaries
+- suggestions
+- questions
+- analysis
+- draft text
+
+Any official action must continue through the normal authorized human workflow.
+
+---
+
+### 9. Context Minimization
+
+Send only explicitly authorized and minimized context.
+
+Never automatically transmit:
+
+- all database records
+- hidden/global context
+- unrelated records
+- API keys/secrets
+- sessions/tokens
+- password data
+- authorization credentials
+- entire audit history without explicit authorization
+
+Treat record/user content as untrusted data, not system instructions.
+
+---
+
+### 10. Prompt-Injection & Unsafe-Input Controls
+
+Add and test controls for:
+
+- instruction override attempts
+- secret-exfiltration requests
+- attempts to bypass authorization
+- requests to auto-approve or release
+- malicious record/context text
+- encoded injection attempts
+
+Provider output must always be treated as untrusted advisory text.
+
+It must never be executed as code or interpreted as authority.
+
+---
+
+### 11. Provider Metadata
+
+Normalized AI results may safely include metadata such as:
+
+```text
+provider
+model
+latency
+result class
+fallback used
+```
+
+Never expose:
+
+- API keys
+- Authorization headers
+- raw sensitive provider request bodies
+- unnecessary infrastructure internals
+
+---
+
+### 12. Health & Observability
+
+Integrate with the existing system-health architecture.
+
+Use the repository's health vocabulary and support sanitized states equivalent to:
+
+```text
+HEALTHY
+DEGRADED
+UNAVAILABLE
+NOT CONFIGURED
+```
+
+If Groq fails and Gemini succeeds, report the AI capability truthfully and record safe fallback metadata.
+
+Structured logs may include:
+
+```text
+provider
+model
+duration
+result class
+fallback used
+request ID
+```
+
+Do not log secrets or full sensitive prompts by default.
+
+---
+
+### 13. Timeouts, Limits & Resilience
+
+Implement:
+
+- bounded timeout
+- abort support
+- bounded retry/fallback
+- safe 429 handling
+- maximum input size
+- maximum output size
+- server-side validation
+- no infinite loops/retries
+
+One AI request must never consume unbounded server runtime.
+
+---
+
+### 14. `.env.example` and Render
+
+Update `.env.example` with variable names only.
+
+Update `render.yaml` with safe environment declarations.
+
+Secret values must use provider-managed environment variables and `sync: false` where appropriate.
+
+Production must not require a committed `.env`.
+
+AI configuration errors must degrade AI only, not the core application.
+
+---
+
+### 15. Dependency Wiring
+
+Update the existing AI dependency composition so the Application layer receives the selected/failover provider.
+
+Provider selection must be dependency-injectable and testable without live network calls.
+
+Do not instantiate providers in page/UI code.
+
+---
+
+### 16. Required Tests
+
+Add unit, integration, and security tests for:
+
+- canonical AI configuration parsing
+- Groq success
+- Groq 401/429/5xx/timeout/malformed response
+- Gemini success
+- Gemini authentication/quota/safety/5xx/timeout/malformed response
+- provider selection
+- fallback logic
+- both providers unavailable
+- advisory-only rules
+- prompt injection
+- secret non-disclosure
+
+Required fallback proofs:
+
+```text
+Groq success -> Gemini not called
+Groq retriable failure -> Gemini called
+Groq + Gemini unavailable -> safe degraded response
+```
+
+Preserve and extend:
+
+```text
+tests/integration/ai-advisory/evals.test.ts
+tests/integration/ai-advisory/security.test.ts
+```
+
+Never weaken existing AI safety tests.
+
+---
+
+### 17. Security Tests
+
+Explicitly prove:
+
+- API keys are never returned to the browser
+- API keys never appear in rendered HTML
+- API keys never appear in health output
+- API keys never appear in captured logs
+- malicious prompts cannot trigger privileged mutations
+- AI output cannot invoke approval/release/signature workflows
+
+---
+
+### 18. Optional Live Provider Verification
+
+If network access is available and credentials are valid, perform harmless live smoke tests for both providers.
+
+Use a harmless prompt.
+
+Record only sanitized evidence:
+
+```text
+provider
+model
+success/failure class
+latency
+response validation
+```
+
+Never print credentials.
+
+If live provider access is unavailable:
+
+```text
+LIVE GROQ VERIFICATION: NOT VERIFIED
+LIVE GEMINI VERIFICATION: NOT VERIFIED
+```
+
+Do not fake PASS.
+
+---
+
+### 19. UI Behavior
+
+Keep the existing AI Advisory workspace and improve only where required.
+
+Support:
+
+- requesting state
+- success
+- fallback
+- unavailable/degraded state
+- copy response
+- use as draft
+
+Never display raw provider errors.
+
+---
+
+### 20. Verification Commands
+
+Run all applicable checks:
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test:architecture
+pnpm test:unit
+pnpm test:integration
+pnpm test:security
+pnpm build
+git diff --check
+```
+
+Also run focused AI provider/fallback tests explicitly.
+
+---
+
+### 21. Documentation
+
+Update authoritative documentation for:
+
+- AI architecture
+- Groq
+- Gemini
+- provider configuration
+- failover policy
+- advisory-only boundary
+- privacy/context minimization
+- health behavior
+- Render variables
+- provider failure behavior
+
+Never document actual secret values.
+
+Update `.agents/mind/01-mind-latest.md` only with durable current-state facts after verification.
+
+---
+
+### Acceptance Criteria
+
+The task is complete only when:
+
+- Groq is implemented behind the existing `AIProvider`
+- Gemini is implemented behind the same port
+- provider selection is environment-driven
+- Groq → Gemini fallback is proven
+- both unavailable → safe degraded AI
+- core QC readiness does not depend on AI
+- AI remains advisory-only
+- prompt injection cannot trigger privileged mutation
+- secrets never reach browser/logs/health/audit/docs
+- `.env.example` contains names only
+- `render.yaml` contains safe declarations
+- existing AI security tests remain green
+- new provider/fallback tests pass
+- live-provider verification status is reported truthfully
+
+Do not claim production AI readiness if live provider or Render evidence remains `NOT VERIFIED` or `BLOCKED`.
+
+---
+
 # Prompt 12 — QC-CLOSURE-012
 ## Security, Privacy & AI Safety Closure
 

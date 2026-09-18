@@ -54,7 +54,17 @@ describe('non-production foundation seeds', () => {
         'SELECT count(*)::int AS count FROM qc.roles WHERE is_system_role',
       ),
       pool!.query<{ count: number }>('SELECT count(*)::int AS count FROM qc.permissions'),
-      pool!.query<{ count: number }>('SELECT count(*)::int AS count FROM qc.role_permissions'),
+      pool!.query<{ count: number }>(
+        // Foundation grants only. The shared disposable database persists
+        // across suites, so test-created roles (for example a non-system
+        // SYSTEM_OWNER role) legitimately add `role_permissions` rows; counting
+        // all of them makes this assertion depend on file ordering instead of
+        // on the foundation contract.
+        `SELECT count(*)::int AS count
+         FROM qc.role_permissions rp
+         JOIN qc.roles r ON r.id = rp.role_id
+         WHERE r.is_system_role`,
+      ),
     ]);
     return {
       roleCount: roles.rows[0].count,

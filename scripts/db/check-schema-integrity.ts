@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { getPool } from '../../src/shared/database/pool.js';
 import { loadMigrations, verifyMigrationIntegrity } from './migrate.js';
 
-import './load-local-env.js';
+import { loadLocalEnv } from './load-local-env.js';
 
 // Canonical actor-lineage column per table. DATA-DICTIONARY/DATA-MODEL define
 // `requested_by` (not `created_by`) as the actor lineage for change_requests.
@@ -146,6 +146,9 @@ export async function checkSchemaIntegrity(): Promise<{
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // Load the ignored local `.env` through the allowlisted parser before the
+  // canonical pool resolves `DATABASE_URL`.
+  loadLocalEnv();
   checkSchemaIntegrity()
     .then((result) => console.log(JSON.stringify({ status: 'ok', ...result })))
     .catch((error: unknown) => {

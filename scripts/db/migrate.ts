@@ -8,7 +8,7 @@ import { InvalidEnvironmentError } from '../../src/config/env.js';
 import { getPool } from '../../src/shared/database/pool.js';
 import { DatabaseConfigurationError } from '../../src/shared/database/pool.js';
 
-import './load-local-env.js';
+import { loadLocalEnv } from './load-local-env.js';
 
 export interface MigrationFile {
   version: string;
@@ -226,6 +226,11 @@ export function formatMigrationError(error: unknown): string {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // Load the ignored local `.env` through the allowlisted parser before the
+  // canonical pool resolves `DATABASE_URL`. Only the CLI entrypoint does this:
+  // `migrate()` is imported directly by the PostgreSQL integration suites and
+  // must never mutate their process environment.
+  loadLocalEnv();
   const check = process.argv.includes('--check');
   migrate({ check })
     .then((result) => {

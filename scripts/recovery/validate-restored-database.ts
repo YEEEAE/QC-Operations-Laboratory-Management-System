@@ -2,7 +2,7 @@ import { Client } from 'pg';
 import { fileURLToPath } from 'node:url';
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { readRecoveryManifest, type RecoveryManifest } from './verify-recovery-manifest.js';
-import '../db/load-local-env.js';
+import { loadLocalEnv } from '../db/load-local-env.js';
 
 export interface RestoredDatabaseReport {
   status: 'PASS' | 'FAIL';
@@ -103,6 +103,9 @@ export async function validateRestoredDatabase(
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // Load the ignored local `.env` before the `--database-url` fallback reads
+  // `process.env.DATABASE_URL`.
+  loadLocalEnv();
   const manifestPath = process.argv[process.argv.indexOf('--manifest') + 1];
   const databaseUrl =
     process.argv[process.argv.indexOf('--database-url') + 1] ?? process.env.DATABASE_URL;

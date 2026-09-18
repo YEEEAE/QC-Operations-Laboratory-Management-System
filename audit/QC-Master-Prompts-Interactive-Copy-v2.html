@@ -1,158 +1,52 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>QC Master Implementation Prompts</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QC Master Implementation Prompts V2</title>
 <style>
-:root {
-  color-scheme: light dark;
-  --bg: #0b0d10;
-  --panel: #12161b;
-  --panel2: #171c22;
-  --text: #eef3f7;
-  --muted: #9ba7b2;
-  --line: #2a3139;
-  --accent: #2ea66a;
-  --accent2: #238352;
-  --code: #0d1117;
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f5f7f8;
-    --panel: #ffffff;
-    --panel2: #f8fafb;
-    --text: #172026;
-    --muted: #5f6c76;
-    --line: #d9e0e5;
-    --accent: #17894f;
-    --accent2: #0f6d3d;
-    --code: #f4f6f7;
-  }
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-.wrap {
-  width: min(1180px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 36px 0 80px;
-}
-.hero {
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--panel);
-  margin-bottom: 24px;
-}
-.hero h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 44px); }
-.hero p { margin: 0; color: var(--muted); line-height: 1.7; }
-.toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  gap: 10px;
-  padding: 12px 0;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(12px);
-}
-.toolbar button {
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-weight: 700;
-}
-.prompt-card {
-  margin: 18px 0;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--panel);
-  overflow: hidden;
-}
-.prompt-head {
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 22px;
-  border-bottom: 1px solid var(--line);
-}
-.prompt-head h2 { margin: 4px 0 0; font-size: 20px; }
-.kicker { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
-.copy-btn {
-  flex: 0 0 auto;
-  border: 0;
-  background: var(--accent);
-  color: white;
-  border-radius: 10px;
-  padding: 11px 15px;
-  cursor: pointer;
-  font-weight: 800;
-}
-.copy-btn:hover { background: var(--accent2); }
-.copy-btn.copied { background: #246e9f; }
-details { background: var(--panel2); }
-summary {
-  cursor: pointer;
-  padding: 14px 22px;
-  color: var(--muted);
-  font-weight: 700;
-  user-select: none;
-}
-pre {
-  margin: 0;
-  padding: 22px;
-  background: var(--code);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.6;
-  font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  border-top: 1px solid var(--line);
-}
-@media (max-width: 680px) {
-  .prompt-head { align-items: stretch; flex-direction: column; }
-  .copy-btn { width: 100%; }
-  .wrap { width: min(100% - 20px, 1180px); }
-}
+:root{color-scheme:light dark;--bg:#0b0d10;--panel:#12161b;--panel2:#171c22;--text:#eef3f7;--muted:#9ba7b2;--line:#2a3139;--accent:#2ea66a;--code:#0d1117}
+@media(prefers-color-scheme:light){:root{--bg:#f5f7f8;--panel:#fff;--panel2:#f8fafb;--text:#172026;--muted:#5f6c76;--line:#d9e0e5;--accent:#17894f;--code:#f4f6f7}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{width:min(1180px,calc(100% - 32px));margin:auto;padding:36px 0 80px}
+.hero,.prompt-card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.hero{padding:28px;margin-bottom:20px}.hero h1{margin:0 0 10px}.hero p{margin:0;color:var(--muted);line-height:1.65}
+.toolbar{position:sticky;top:0;z-index:10;padding:12px 0;display:flex;gap:10px;background:var(--bg)}
+.toolbar button,.copy-btn{cursor:pointer;border-radius:10px;font-weight:700;padding:10px 14px}
+.toolbar button{border:1px solid var(--line);background:var(--panel);color:var(--text)}
+.prompt-card{margin:18px 0;overflow:hidden}
+.prompt-head{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line)}
+.kicker{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.08em}
+.prompt-head h2{font-size:20px;margin:4px 0 0}
+.copy-btn{border:0;background:var(--accent);color:#fff}.copy-btn.copied{background:#246e9f}
+details{background:var(--panel2)}summary{padding:14px 22px;cursor:pointer;color:var(--muted);font-weight:700}
+pre{margin:0;padding:22px;background:var(--code);white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;border-top:1px solid var(--line)}
+@media(max-width:680px){.prompt-head{flex-direction:column;align-items:stretch}.copy-btn{width:100%}.wrap{width:calc(100% - 20px)}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="hero">
-    <h1>QC Master Implementation Prompts</h1>
-    <p>
-      Includes the three new implementation prompts plus QC-CLOSURE-008 through QC-CLOSURE-018.
-      Use the Copy Prompt button on each card to copy the full prompt exactly.
-    </p>
-  </header>
+<header class="hero">
+<h1>QC Master Implementation Prompts V2</h1>
+<p>Includes the additional owner/PostgreSQL/Reject Reports tasks, closure prompts 008–018, and the Groq + Gemini provider integration inserted before Security & AI Safety.</p>
+</header>
+<div class="toolbar">
+<button id="expand">Expand all</button>
+<button id="collapse">Collapse all</button>
+</div>
 
-  <div class="toolbar">
-    <button id="expand-all">Expand all</button>
-    <button id="collapse-all">Collapse all</button>
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-RENDER-POSTGRES-VERIFY-001</div>
+      <h2>QC-RENDER-POSTGRES-VERIFY-001</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-1">Copy Prompt</button>
   </div>
-
-  
-    <section class="prompt-card" id="prompt-1">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-RENDER-POSTGRES-VERIFY-001</div>
-          <h2>Render PostgreSQL Verification</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-1" aria-label="Copy QC-RENDER-POSTGRES-VERIFY-001">
-          Copy Prompt
-        </button>
-      </div>
-      <details open>
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-1"># Prompt 1 — QC-RENDER-POSTGRES-VERIFY-001
+  <details open>
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-1"># Prompt 1 — QC-RENDER-POSTGRES-VERIFY-001
 ## Verify and Close the Render PostgreSQL Connection
 
 You are executing:
@@ -474,22 +368,20 @@ The task is complete only when:
 Do not claim full production connectivity if provider runtime evidence was not actually obtained.
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-2">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-YAZEED-CONTROL-CENTER-001</div>
-          <h2>Yazeed Control Center</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-2" aria-label="Copy QC-YAZEED-CONTROL-CENTER-001">
-          Copy Prompt
-        </button>
-      </div>
-      <details open>
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-2"># Prompt 2 — QC-YAZEED-CONTROL-CENTER-001
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-YAZEED-CONTROL-CENTER-001</div>
+      <h2>QC-YAZEED-CONTROL-CENTER-001</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-2">Copy Prompt</button>
+  </div>
+  <details open>
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-2"># Prompt 2 — QC-YAZEED-CONTROL-CENTER-001
 ## Create a Yazeed-Only Full System Control Center
 
 You are executing:
@@ -840,22 +732,20 @@ The task is complete only when:
 - all relevant tests pass
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-3">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-REJECT-REPORTS-001</div>
-          <h2>Reject Reports Module</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-3" aria-label="Copy QC-REJECT-REPORTS-001">
-          Copy Prompt
-        </button>
-      </div>
-      <details open>
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-3"># Prompt 3 — QC-REJECT-REPORTS-001
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-REJECT-REPORTS-001</div>
+      <h2>QC-REJECT-REPORTS-001</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-3">Copy Prompt</button>
+  </div>
+  <details open>
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-3"># Prompt 3 — QC-REJECT-REPORTS-001
 ## Build the Complete Reject Reports Module
 
 You are executing:
@@ -1714,23 +1604,25 @@ The module is complete only when:
 - navigation/search/reporting integration is complete
 - responsive/accessibility patterns match the system
 - unit/integration/E2E evidence is present
-- no historical controlled report is silently deleted or rewritten</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-4">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-008</div>
-          <h2>Closure 008</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-4" aria-label="Copy QC-CLOSURE-008">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-4"># Prompt 08 — QC-CLOSURE-008
+- no historical controlled report is silently deleted or rewritten
+
+---
+
+# Remaining Closure Prompts — QC-CLOSURE-008 to QC-CLOSURE-018</pre>
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-008</div>
+      <h2>QC-CLOSURE-008</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-4">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-4"># Prompt 08 — QC-CLOSURE-008
 ## Equipment, Calibration &amp; Maintenance Closure
 
 You are executing task:
@@ -1799,22 +1691,20 @@ Cover:
 - history access
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-5">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-009</div>
-          <h2>Closure 009</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-5" aria-label="Copy QC-CLOSURE-009">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-5"># Prompt 09 — QC-CLOSURE-009
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-009</div>
+      <h2>QC-CLOSURE-009</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-5">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-5"># Prompt 09 — QC-CLOSURE-009
 ## Controlled Documents, Templates, Change Control, Approvals &amp; E-Signatures
 
 You are executing task:
@@ -1883,22 +1773,20 @@ Never store the password itself as evidence.
 Add tamper and invalid-history tests for controlled records.
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-6">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-010</div>
-          <h2>Closure 010</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-6" aria-label="Copy QC-CLOSURE-010">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-6"># Prompt 10 — QC-CLOSURE-010
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-010</div>
+      <h2>QC-CLOSURE-010</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-6">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-6"># Prompt 10 — QC-CLOSURE-010
 ## Cross-Domain Integration, Search, Audit, Files, Notifications &amp; Reports
 
 You are executing task:
@@ -1982,22 +1870,20 @@ Verify:
 - no hidden mutation authority
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-7">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-011</div>
-          <h2>Closure 011</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-7" aria-label="Copy QC-CLOSURE-011">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-7"># Prompt 11 — QC-CLOSURE-011
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-011</div>
+      <h2>QC-CLOSURE-011</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-7">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-7"># Prompt 11 — QC-CLOSURE-011
 ## Enterprise UI/UX, Design System, Responsive &amp; Accessibility
 
 You are executing task:
@@ -2095,23 +1981,592 @@ RTL
 
 Avoid layout assumptions that block future Arabic/RTL support.
 
+---
+
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-8">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-012</div>
-          <h2>Closure 012</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-8" aria-label="Copy QC-CLOSURE-012">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-8"># Prompt 12 — QC-CLOSURE-012
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-AI-PROVIDERS-001</div>
+      <h2>QC-AI-PROVIDERS-001</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-8">Copy Prompt</button>
+  </div>
+  <details open>
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-8"># Prompt — QC-AI-PROVIDERS-001
+## Groq + Gemini Production AI Provider Integration
+
+You are executing:
+
+`QC-AI-PROVIDERS-001 — Groq + Gemini Production AI Provider Integration`
+
+### Objective
+
+Replace the current disabled-only AI runtime with a secure, production-grade multi-provider architecture:
+
+```text
+Primary provider: Groq
+Secondary/fallback provider: Gemini
+Final fallback: Disabled / Degraded AI mode
+```
+
+Integrate both providers into the existing `src/modules/ai-advisory/` architecture and the existing `AIProvider` port. Do not create a parallel AI subsystem.
+
+AI must remain optional and must never block core QC/Laboratory workflows.
+
+---
+
+### 1. Mandatory Project Protocol
+
+Before implementation:
+
+1. Read `AGENTS.md` completely.
+2. Read `.agents/mind/01-mind-latest.md` completely.
+3. Capture:
+   ```bash
+   git rev-parse HEAD
+   git branch --show-current
+   git status --short
+   git diff --stat
+   git diff --name-status
+   ```
+4. Preserve all current uncommitted work.
+5. Never run destructive Git commands.
+6. Read relevant `.agents/skills/**/SKILL.md`.
+7. Never commit, push, merge, or deploy unless the user explicitly requests it.
+
+---
+
+### 2. Existing Architecture to Preserve
+
+Reuse:
+
+```text
+src/modules/ai-advisory/application/
+src/modules/ai-advisory/domain/
+src/modules/ai-advisory/infrastructure/
+src/modules/ai-advisory/ports/ai-provider.ts
+src/modules/ai-advisory/infrastructure/disabled-ai-provider.ts
+src/pages/ai-advisory.astro
+tests/integration/ai-advisory/
+```
+
+Do not call Groq or Gemini directly from Astro page/UI code.
+
+All provider access must remain behind the Application/Infrastructure boundary.
+
+---
+
+### 3. Environment &amp; Secret Handling
+
+The user supplied local `.env` values for Groq and Gemini.
+
+Read them locally, but never print, log, audit, expose, document, or commit their values.
+
+Normalize application configuration to canonical names such as:
+
+```text
+AI_PRIMARY_PROVIDER=groq
+AI_FALLBACK_PROVIDER=gemini
+
+GROQ_API_KEY=
+GROQ_MODEL=
+GROQ_BASE_URL=
+
+GEMINI_API_KEY=
+GEMINI_MODEL=
+GEMINI_BASE_URL=
+```
+
+If the local `.env` currently uses legacy names such as:
+
+```text
+API_groq_Key
+groq_model
+URL_groq
+API_gemini_Key
+gemini_model
+```
+
+support a safe transition, but use one canonical internal configuration contract.
+
+Create a single validated server-side AI configuration loader.
+
+Use Zod or the repository&#x27;s existing configuration validation pattern.
+
+Never store API keys in PostgreSQL.
+
+---
+
+### 4. Groq Provider
+
+Implement:
+
+```text
+GroqAiProvider
+```
+
+behind the existing `AIProvider` port.
+
+Use the configured Groq OpenAI-compatible endpoint.
+
+Requirements:
+
+- server-side HTTP only
+- configured model
+- configured endpoint
+- secure bearer authentication
+- `AbortController`
+- bounded timeout
+- strict response validation
+- normalized provider output
+- canonical error mapping
+- no raw provider errors returned to the browser
+
+Handle at minimum:
+
+```text
+200 success
+400 invalid request
+401 invalid credentials
+403 forbidden
+404 model/endpoint error
+408/timeout
+429 rate limit
+5xx provider failure
+network/DNS failure
+invalid JSON
+missing content
+unexpected response shape
+```
+
+---
+
+### 5. Gemini Provider
+
+Implement:
+
+```text
+GeminiAiProvider
+```
+
+behind the same `AIProvider` port.
+
+Requirements:
+
+- configured model
+- configured API endpoint
+- secure server-side authentication
+- timeout + abort
+- strict response validation
+- normalized output matching the existing advisory domain
+- safe provider-safety handling
+- canonical error mapping
+
+Handle at minimum:
+
+```text
+success
+authentication failure
+quota/rate limit
+model unavailable
+provider safety block
+timeout
+network failure
+invalid response
+5xx
+```
+
+Avoid introducing a large SDK unless clearly justified by the current architecture.
+
+---
+
+### 6. Multi-Provider Failover
+
+Create one provider composition/failover layer:
+
+```text
+Groq
+  ↓ retriable failure
+Gemini
+  ↓ retriable failure
+Disabled / Degraded AI
+```
+
+Fallback is appropriate for:
+
+```text
+timeout
+network error
+429
+5xx
+temporary provider unavailability
+```
+
+Do not retry indefinitely.
+
+Use deterministic bounded retry/fallback behavior.
+
+Permanent configuration failures must create a sanitized operational signal instead of being silently hidden.
+
+---
+
+### 7. Core System Must Not Depend on AI
+
+If both providers are unavailable:
+
+```text
+core QC system = READY
+AI capability = DEGRADED / UNAVAILABLE
+```
+
+The AI page should show a safe message such as:
+
+```text
+AI advisory is temporarily unavailable.
+Core QC workflows are unaffected.
+```
+
+Never fail application startup or core readiness solely because AI is unavailable.
+
+---
+
+### 8. Advisory-Only Governance
+
+Preserve and strengthen:
+
+```text
+AI = advisory only
+```
+
+AI must never autonomously:
+
+- APPROVE
+- RELEASE
+- SIGN
+- perform e-signature
+- reject/close controlled records
+- modify scientific acceptance criteria
+- change controlled documents
+- assign roles/scopes
+- modify authorization
+- perform regulated database mutations as authority
+
+Allowed uses remain limited to:
+
+- summaries
+- suggestions
+- questions
+- analysis
+- draft text
+
+Any official action must continue through the normal authorized human workflow.
+
+---
+
+### 9. Context Minimization
+
+Send only explicitly authorized and minimized context.
+
+Never automatically transmit:
+
+- all database records
+- hidden/global context
+- unrelated records
+- API keys/secrets
+- sessions/tokens
+- password data
+- authorization credentials
+- entire audit history without explicit authorization
+
+Treat record/user content as untrusted data, not system instructions.
+
+---
+
+### 10. Prompt-Injection &amp; Unsafe-Input Controls
+
+Add and test controls for:
+
+- instruction override attempts
+- secret-exfiltration requests
+- attempts to bypass authorization
+- requests to auto-approve or release
+- malicious record/context text
+- encoded injection attempts
+
+Provider output must always be treated as untrusted advisory text.
+
+It must never be executed as code or interpreted as authority.
+
+---
+
+### 11. Provider Metadata
+
+Normalized AI results may safely include metadata such as:
+
+```text
+provider
+model
+latency
+result class
+fallback used
+```
+
+Never expose:
+
+- API keys
+- Authorization headers
+- raw sensitive provider request bodies
+- unnecessary infrastructure internals
+
+---
+
+### 12. Health &amp; Observability
+
+Integrate with the existing system-health architecture.
+
+Use the repository&#x27;s health vocabulary and support sanitized states equivalent to:
+
+```text
+HEALTHY
+DEGRADED
+UNAVAILABLE
+NOT CONFIGURED
+```
+
+If Groq fails and Gemini succeeds, report the AI capability truthfully and record safe fallback metadata.
+
+Structured logs may include:
+
+```text
+provider
+model
+duration
+result class
+fallback used
+request ID
+```
+
+Do not log secrets or full sensitive prompts by default.
+
+---
+
+### 13. Timeouts, Limits &amp; Resilience
+
+Implement:
+
+- bounded timeout
+- abort support
+- bounded retry/fallback
+- safe 429 handling
+- maximum input size
+- maximum output size
+- server-side validation
+- no infinite loops/retries
+
+One AI request must never consume unbounded server runtime.
+
+---
+
+### 14. `.env.example` and Render
+
+Update `.env.example` with variable names only.
+
+Update `render.yaml` with safe environment declarations.
+
+Secret values must use provider-managed environment variables and `sync: false` where appropriate.
+
+Production must not require a committed `.env`.
+
+AI configuration errors must degrade AI only, not the core application.
+
+---
+
+### 15. Dependency Wiring
+
+Update the existing AI dependency composition so the Application layer receives the selected/failover provider.
+
+Provider selection must be dependency-injectable and testable without live network calls.
+
+Do not instantiate providers in page/UI code.
+
+---
+
+### 16. Required Tests
+
+Add unit, integration, and security tests for:
+
+- canonical AI configuration parsing
+- Groq success
+- Groq 401/429/5xx/timeout/malformed response
+- Gemini success
+- Gemini authentication/quota/safety/5xx/timeout/malformed response
+- provider selection
+- fallback logic
+- both providers unavailable
+- advisory-only rules
+- prompt injection
+- secret non-disclosure
+
+Required fallback proofs:
+
+```text
+Groq success -&gt; Gemini not called
+Groq retriable failure -&gt; Gemini called
+Groq + Gemini unavailable -&gt; safe degraded response
+```
+
+Preserve and extend:
+
+```text
+tests/integration/ai-advisory/evals.test.ts
+tests/integration/ai-advisory/security.test.ts
+```
+
+Never weaken existing AI safety tests.
+
+---
+
+### 17. Security Tests
+
+Explicitly prove:
+
+- API keys are never returned to the browser
+- API keys never appear in rendered HTML
+- API keys never appear in health output
+- API keys never appear in captured logs
+- malicious prompts cannot trigger privileged mutations
+- AI output cannot invoke approval/release/signature workflows
+
+---
+
+### 18. Optional Live Provider Verification
+
+If network access is available and credentials are valid, perform harmless live smoke tests for both providers.
+
+Use a harmless prompt.
+
+Record only sanitized evidence:
+
+```text
+provider
+model
+success/failure class
+latency
+response validation
+```
+
+Never print credentials.
+
+If live provider access is unavailable:
+
+```text
+LIVE GROQ VERIFICATION: NOT VERIFIED
+LIVE GEMINI VERIFICATION: NOT VERIFIED
+```
+
+Do not fake PASS.
+
+---
+
+### 19. UI Behavior
+
+Keep the existing AI Advisory workspace and improve only where required.
+
+Support:
+
+- requesting state
+- success
+- fallback
+- unavailable/degraded state
+- copy response
+- use as draft
+
+Never display raw provider errors.
+
+---
+
+### 20. Verification Commands
+
+Run all applicable checks:
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test:architecture
+pnpm test:unit
+pnpm test:integration
+pnpm test:security
+pnpm build
+git diff --check
+```
+
+Also run focused AI provider/fallback tests explicitly.
+
+---
+
+### 21. Documentation
+
+Update authoritative documentation for:
+
+- AI architecture
+- Groq
+- Gemini
+- provider configuration
+- failover policy
+- advisory-only boundary
+- privacy/context minimization
+- health behavior
+- Render variables
+- provider failure behavior
+
+Never document actual secret values.
+
+Update `.agents/mind/01-mind-latest.md` only with durable current-state facts after verification.
+
+---
+
+### Acceptance Criteria
+
+The task is complete only when:
+
+- Groq is implemented behind the existing `AIProvider`
+- Gemini is implemented behind the same port
+- provider selection is environment-driven
+- Groq → Gemini fallback is proven
+- both unavailable → safe degraded AI
+- core QC readiness does not depend on AI
+- AI remains advisory-only
+- prompt injection cannot trigger privileged mutation
+- secrets never reach browser/logs/health/audit/docs
+- `.env.example` contains names only
+- `render.yaml` contains safe declarations
+- existing AI security tests remain green
+- new provider/fallback tests pass
+- live-provider verification status is reported truthfully
+
+Do not claim production AI readiness if live provider or Render evidence remains `NOT VERIFIED` or `BLOCKED`.
+
+---</pre>
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-012</div>
+      <h2>QC-CLOSURE-012</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-9">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-9"># Prompt 12 — QC-CLOSURE-012
 ## Security, Privacy &amp; AI Safety Closure
 
 You are executing task:
@@ -2200,22 +2655,20 @@ Test:
 - human override / human authority
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-9">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-013</div>
-          <h2>Closure 013</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-9" aria-label="Copy QC-CLOSURE-013">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-9"># Prompt 13 — QC-CLOSURE-013
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-013</div>
+      <h2>QC-CLOSURE-013</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-10">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-10"># Prompt 13 — QC-CLOSURE-013
 ## Testing Architecture &amp; Evidence Closure
 
 You are executing task:
@@ -2291,22 +2744,20 @@ Explicitly test:
 - invalid state transition
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-10">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-014</div>
-          <h2>Closure 014</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-10" aria-label="Copy QC-CLOSURE-014">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-10"># Prompt 14 — QC-CLOSURE-014
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-014</div>
+      <h2>QC-CLOSURE-014</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-11">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-11"># Prompt 14 — QC-CLOSURE-014
 ## Performance, Reliability &amp; Observability
 
 You are executing task:
@@ -2369,22 +2820,20 @@ Never log:
 - secrets
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-11">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-015</div>
-          <h2>Closure 015</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-11" aria-label="Copy QC-CLOSURE-015">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-11"># Prompt 15 — QC-CLOSURE-015
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-015</div>
+      <h2>QC-CLOSURE-015</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-12">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-12"># Prompt 15 — QC-CLOSURE-015
 ## Backup, Restore, Deployment &amp; Production Evidence
 
 You are executing task:
@@ -2470,22 +2919,20 @@ BLOCKED / POLICY DECISION REQUIRED
 Do not invent provider capabilities.
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-12">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-016</div>
-          <h2>Closure 016</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-12" aria-label="Copy QC-CLOSURE-016">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-12"># Prompt 16 — QC-CLOSURE-016
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-016</div>
+      <h2>QC-CLOSURE-016</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-13">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-13"># Prompt 16 — QC-CLOSURE-016
 ## Real UAT, Usability &amp; Human Validation
 
 You are executing task:
@@ -2550,22 +2997,20 @@ An empty UAT template is not UAT evidence.
 Automated E2E is not a replacement for real UAT.
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-13">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-017</div>
-          <h2>Closure 017</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-13" aria-label="Copy QC-CLOSURE-017">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-13"># Prompt 17 — QC-CLOSURE-017
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-017</div>
+      <h2>QC-CLOSURE-017</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-14">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-14"># Prompt 17 — QC-CLOSURE-017
 ## Independent Final 100% Closure Audit
 
 You are executing task:
@@ -2654,22 +3099,20 @@ Remaining gap
 If the system is not actually 100%, report the truthful score.
 
 ---</pre>
-      </details>
-    </section>
-    
-    <section class="prompt-card" id="prompt-14">
-      <div class="prompt-head">
-        <div>
-          <div class="kicker">QC-CLOSURE-018</div>
-          <h2>Closure 018</h2>
-        </div>
-        <button class="copy-btn" data-target="prompt-text-14" aria-label="Copy QC-CLOSURE-018">
-          Copy Prompt
-        </button>
-      </div>
-      <details >
-        <summary>Show / hide prompt</summary>
-        <pre id="prompt-text-14"># Prompt 18 — QC-CLOSURE-018
+  </details>
+</section>
+
+<section class="prompt-card">
+  <div class="prompt-head">
+    <div>
+      <div class="kicker">QC-CLOSURE-018</div>
+      <h2>QC-CLOSURE-018</h2>
+    </div>
+    <button class="copy-btn" data-target="prompt-15">Copy Prompt</button>
+  </div>
+  <details >
+    <summary>Show / hide prompt</summary>
+    <pre id="prompt-15"># Prompt 18 — QC-CLOSURE-018
 ## Full Repository Read + Complete Documentation Synchronization
 
 You are executing the final task:
@@ -3185,47 +3628,25 @@ If any blocker remains, do not claim:
 ```text
 100% complete
 ```</pre>
-      </details>
-    </section>
-    
+  </details>
+</section>
+
 </div>
-
 <script>
-async function copyPrompt(button) {
-  const id = button.dataset.target;
-  const el = document.getElementById(id);
-  const text = el.innerText;
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (e) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
+async function copyPrompt(btn){
+  const el=document.getElementById(btn.dataset.target);
+  const value=el.innerText;
+  try{await navigator.clipboard.writeText(value)}
+  catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=value;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
   }
-  const old = button.textContent;
-  button.textContent = 'Copied';
-  button.classList.add('copied');
-  setTimeout(() => {
-    button.textContent = old;
-    button.classList.remove('copied');
-  }, 1200);
+  const old=btn.textContent;btn.textContent='Copied';btn.classList.add('copied');
+  setTimeout(()=>{btn.textContent=old;btn.classList.remove('copied')},1200);
 }
-
-document.querySelectorAll('.copy-btn').forEach(btn => {
-  btn.addEventListener('click', () => copyPrompt(btn));
-});
-
-document.getElementById('expand-all').addEventListener('click', () => {
-  document.querySelectorAll('details').forEach(d => d.open = true);
-});
-document.getElementById('collapse-all').addEventListener('click', () => {
-  document.querySelectorAll('details').forEach(d => d.open = false);
-});
+document.querySelectorAll('.copy-btn').forEach(btn=>btn.addEventListener('click',()=>copyPrompt(btn)));
+document.getElementById('expand').addEventListener('click',()=>document.querySelectorAll('details').forEach(d=>d.open=true));
+document.getElementById('collapse').addEventListener('click',()=>document.querySelectorAll('details').forEach(d=>d.open=false));
 </script>
-</body>
-</html>
+</body></html>

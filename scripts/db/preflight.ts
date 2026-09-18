@@ -7,7 +7,7 @@ import {
   getDatabaseConnectionConfig,
 } from '../../src/shared/database/pool.js';
 
-import './load-local-env.js';
+import { loadLocalEnv } from './load-local-env.js';
 
 export interface DatabasePreflightReport {
   connectivity: 'PASS' | 'FAIL';
@@ -114,6 +114,11 @@ export function formatPreflightError(error: unknown): string {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // The documented operator workflow is: an ignored local `.env` file is loaded
+  // through the allowlisted, non-shell parser; explicit environment variables win.
+  // This happens only at the CLI boundary so importing `runDatabasePreflight`
+  // from a test can never mutate the test process environment.
+  loadLocalEnv();
   runDatabasePreflight()
     .then((report) => {
       console.log(JSON.stringify(report));
