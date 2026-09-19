@@ -3,11 +3,39 @@
 ## Status
 
 The repository Blueprint is the source configuration baseline, not proof of the
-live deployment. As of the 2026-09-18 evidence freeze, the live Render service
-exists but diverges from this file: its runtime/health-check/deploy-trigger
-settings and boot command require reconciliation, release variables are absent,
-and the deployed commit identity is not verified. This is `NOT VERIFIED / NO-GO`
-for a production-readiness claim.
+live deployment. The latest exact-candidate evidence is recorded below. The
+service is still divergent from this file and production migration parity and
+readiness are `NOT VERIFIED / NO-GO`.
+
+### Latest exact-candidate observation — 2026-09-19
+
+QC-100-FINAL-001 re-froze local `main` at
+`31ab21a70ca479e8735d04835b5df62cafc9bc5a` with a clean working tree. Render's
+latest deployment `dep-dan2jvfavr4c73a29r50` completed as `live` from that exact
+SHA. Public `/api/health/live` and `/api/health/ready` both returned HTTP 200;
+unauthenticated `/api/system/release-identity` returned 401 and `/reject-reports`
+redirected to login. This does not establish application release identity,
+authenticated owner-page/Reject behavior, or database migration parity.
+
+The Render service Settings page confirmed runtime/env `rust`, an empty health
+path, `autoDeployTrigger=commit`, disabled Render subdomain, and the startup
+command that runs `access:grant-system-owner` before Node. The Environment page
+showed `DATABASE_URL`, `HOST`, `NODE_ENV`, `NODE_VERSION`, both login rate-limit
+keys, `SERVICE_VERSION`, and `SESSION_SECRET`; all values remained masked. The
+six `RELEASE_*`, eight AI-provider, and two OTEL keys are absent. The URL list
+contains `qclevel.top`, `www.qclevel.top`, and the Render hostname; domain
+verification/DNS state was not checked. `NODE_VERSION` is present but its value
+was not revealed (Blueprint expects `24.20.0`); the Render runtime label is
+`rust`. The database Recovery page shows PITR and exports unavailable on Free,
+zero exports, one default credential, and an expiry date of `2026-10-05`. The
+Production environment is unprotected.
+
+The canonical production database preflight/status/checksum/schema checks were
+not run: the documented credential-rotation gate remains open and local `.env`
+still lacks the canonical `DATABASE_URL` name. Production connection and all
+migrations remain blocked. Exact-head GitHub Verification CI run `35426396304`
+failed before any step because the account is billing locked. Evidence and
+limits: `audit/2026-09-19-QC-100-FINAL-001-production-parity-recheck.md`.
 
 ## Service
 

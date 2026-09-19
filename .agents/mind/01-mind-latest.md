@@ -5,6 +5,8 @@
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
 ## Current audit reality — 2026-09-18
+- **QC-100-FINAL-004 human UAT + sign-off (2026-09-19):** `BLOCKED` — no real participants, no approved staging/UAT environment, no frozen release candidate, UAT-DD-001 signer unresolved; no `SIGNED_UAT_CYCLE` exists and none can be fabricated (release-gate evidence is server-derived, fail-closed, candidate-bound). New finding: codebase has **no writer path** for `qc.uat_*` tables or `release_gate_evidence(source='SIGNED_UAT_CYCLE')`; a controlled UAT evidence-ingestion path must be implemented under its own authorized task before the `uat` gate can ever pass. Evidence: `audit/2026-09-19/QC-100-FINAL-004-human-uat-signoff.md`.
+- **Fresh QC-100-FINAL-001 recheck (2026-09-19, candidate `31ab21a70ca479e8735d04835b5df62cafc9bc5a`, clean `main`):** Render deploy `dep-dan2jvfavr4c73a29r50` is `live` on exact SHA; live/ready 200, release identity 401, Reject unauthenticated 303. Config diverges (rust, empty health path, commit trigger, disabled subdomain, startup owner grant); RELEASE(0/6), AI(0/8), OTEL(0/2) absent; NODE_VERSION key present but value not revealed (Blueprint expects 24.20.0). Domain names present; verification not checked. DB Free expiry `2026-10-05`; PITR/exports unavailable, zero exports, one default credential; Production unprotected. No production DB access; canonical checks BLOCKED by rotation gate and absent local canonical URL. CI `35426396304` failed before steps due billing lock. PARTIAL / BLOCKED; `audit/2026-09-19/QC-100-FINAL-001-production-parity-recheck.md`.
 - **Fresh local QC-100-FINAL-007 (2026-09-19, candidate `daf513ea3f2620f88cee1041bb8cf4ca04273fde` + untracked `scripts/performance/` harness):** representative PERF- dataset re-seeded (25 users / 3000 tasks / 8000 receiving / 2500 inspections / 1800 lab / 1200 reject / 2500 notifications / 12000 audit); EXPLAIN (ANALYZE, BUFFERS) 9 statements all <30 ms, batched reads not N+1, no duplicate dashboard SQL, seq-scan risks on unbounded `/tasks` + receiving scan; authenticated vitals 8 routes (LCP ≤360 ms, CLS 0, JS ~2.9 KB, WASM 0; INP NOT VERIFIED); smoke 11 paths TTFB p95 ≤168 ms except `/tasks` 1.26 MB unbounded; read concurrency to c=24 p95 ≈538 ms zero errors (single shared pool max-10 saturation signature); concurrency suite 12/12 PASS; rate-limit mechanism 5/60s→THROTTLED in-process, production values deferred; outbox single-drain PASS, pressure NOT RUN; logs+correlation+secret-scan PASS; metrics export NOT VERIFIED (no-op providers, no /metrics); alert delivery NOT RUN (OPEN); §6 budgets PROPOSED only (PRD-DD-004/005 still deferred). State: PARTIAL. Evidence: `audit/2026-09-19-QC-100-FINAL-007-performance-capacity-monitoring.md`.
 - **Fresh QC-100-FINAL-003 candidate run (2026-09-19):** exact built candidate `bb42d6b51dc2754901dca6f84c4351c6ed36b766`, build `qc-closure-bb42d6b51dc2`, migration head `0030_reject_reports_role_parity`, disposable local PG18.6 equivalent, five `verify-*` personas plus untouched `yazeed`; machine evidence `11 PASS / 10 FAIL / 16 SKIP`. Authenticated closure remains **NOT VERIFIED / PARTIAL**. The run reproduced unsafe login `returnTo`; candidate fix is now in `src/pages/login.astro`. Full representative workflow records were not seeded, so required domain IDs were absent. Evidence: `audit/2026-09-19-QC-100-FINAL-003-authenticated-e2e.md` and `.ci-results/qc-100-final-003-authenticated-e2e-evidence.json`.
 - **Fresh local QC-100-FINAL-010 (2026-09-19, candidate `f87ffe107426bc988e1e1e88eed3c5945ce3cb8d` + dirty tree):** focused authorization/security negative matrix `63/63 PASS`; `pnpm test:security` `51 PASS + 1 SKIP`, with the PostgreSQL rate-limit case BLOCKED by unavailable Testcontainers and an existing local PostgreSQL process preventing the disposable fallback. Frozen offline install/lock integrity PASS. Dependency audit produced no network result; SBOM tool and dedicated secret scanner unavailable. Privacy classification/retention/deletion/correction/export/AI-processing approvals remain NOT VERIFIED/open. Evidence: `audit/2026-09-19-QC-100-FINAL-010-security-privacy-supply-chain.md`.
@@ -164,7 +166,6 @@
 - Key files: `src/modules/administration/application/{assign-user-scope,remove-user-scope}.ts`, `src/modules/administration/infrastructure/postgres-authorization-repository.ts`, `src/actions/admin.ts`, `src/pages/admin/users/[userId].astro`, `src/ui/components/feedback/ConfirmDialog.astro`, `src/ui/client/dialog.ts`, `src/ui/forms/admin-mutation-copy.ts`, `src/shared/errors/action-error-code.ts`.
 - Not done in this task: dedicated Playwright spec, accessibility-spec extension, PostgreSQL integration tests, `SYSTEM-OWNER-DATA-CONTROL-MATRIX.md` classification refresh.
 
-
 > ## 1) قواعد القراءة والتنفيذ
 
 >- اقرأ هذا الملف أولًا لفهم الوضع الحالي، ثم ارجع إلى الكود والوثائق المعتمدة عند التنفيذ.
@@ -182,7 +183,6 @@
 - حُذفت الحالات الميتة المقابلة من BUSINESS-RULES/PERMISSION-MATRIX/ROLE-MATRIX/STATE-MACHINES/REQUIREMENTS-TRACEABILITY/PRODUCTION-READINESS-CHECKLIST، مع إبقاء التوقيع العام وSoD/QMS/scientific/provider decisions مفتوحة.
 - التحقق: targeted unit `43/43 PASS` (3 ملفات)، و`test:architecture` PASS؛ Node المحلي `v22.22.3` ما زال خارج العقد `>=24.20.0 <25`.
 - الحالة: PARTIAL — matrix/document closure completed; R-007 remains OPEN for unresolved QMS/provider/data-instance items and live evidence.
-
 
 ## Historical DR / UAT context — superseded by fresh evidence
 - DR-008's old Docker blocker is superseded by local PG18.6 execution and structural restore; populated recovery/provider DR remain unverified. Historical detail: audit/100-percent/{RESTORE-DRILL-RESULT,DR-EVIDENCE-MATRIX}.md.
@@ -399,8 +399,8 @@
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
-- Render’s last verified applied migration head is `0018`; source head `0030_reject_reports_role_parity` is not a production claim and must not be applied before the credential-rotation gate.
-- **Live defect — fresh FAIL 2026-09-18:** authorized read-only yazeed GET /reject-reports500; owner pages200 and migration projection0018/pending11. Direct production SQL exception unproven. Fully migrated local analytics independently fails with ambiguous status near postgres-repository.ts:1050; migration alone is insufficient closure.
+- Render’s last verified applied migration head is `0018` (historical; not reverified on the current candidate); source head `0030_reject_reports_role_parity` is not a production claim and must not be applied before the credential-rotation gate. Fresh QC-100-FINAL-001 confirmed the gate remains open and no direct production DB access occurred.
+- **Historical live defect (2026-09-18):** authorized yazeed GET `/reject-reports` returned 500 with Render migration projection `0018`. QC-100-FINAL-014 verified the candidate SQL ambiguity fix and populated regression on disposable PostgreSQL; production result remains NOT VERIFIED because current production migration state is blocked.
 
 ### P1 / live validation / pre-existing test estate
 - **Full `pnpm test:integration` على PostgreSQL المصرفي المشترك يفشل في 4–5 ملفات قائمة قبل هذا العمل (وليست انحدارًا منه؛ أُثبت بالاستبعاد على cluster جديد):** `identity/system-owner-upgrade-parity` (Migration checksum mismatch for 0030 — الsuite يسجّل DB كـ`migrations` بدون 0030 فيفشل `verifyMigrationIntegrity` متى سبقه أي ملف آخر إلى الـmigration)، `system/control-center` (`drift=true`)، `reporting/report-export-parity`، `shared/search-scope` (LIKE wildcard row count)، و`shared/notification-outbox-delivery` (dedupe، متقطع). السبب: مسار الخارجي يشارك قاعدة واحدة بين كل الملفات؛ هذه المضيفات تعوّل على قاعدة بكر. الأصل: تصميم اختبارات/migration `0030` في QC-100-FINAL-016، ولم يُغلق بعد.
@@ -427,6 +427,8 @@
 - Groq is the default primary adapter, Gemini is the default fallback, and `DisabledAiProvider` remains the final safe fallback. Configuration is server-only with canonical names plus legacy-name transition support; provider metadata is sanitized and advisory-only. Live provider smoke tests, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. No production/provider approval is inferred.
 
 ## 17) سجل تاريخي مضغوط
+- **2026-09-19 — QC-100-FINAL-001 / Production parity recheck**
+  - Changed/Evidence/State: ثبت deploy Render على `31ab21a…`؛ health/live/readiness `200`, release identity `401`, Reject unauthenticated redirect؛ applied DB state NOT VERIFIED بسبب rotation gate؛ PARTIAL / BLOCKED. `audit/2026-09-19/QC-100-FINAL-001-production-parity-recheck.md`.
 - **2026-09-19 — QC-100-FINAL-008 / Populated backup and isolated recovery**
   - Changed: fail-closed loopback/empty `qc_restore*` target, full archive preflight, and release migration/version-context manifest verification.
   - Evidence: candidate fingerprint `89f4bc13763d10b98ab86efc2c66a7a1faec253071c9c2e7b2a8a8c76cc101a1`; bundle SHA `e7832c6051c4b14f8430251bdd759dc7e62c19fae684283fc2d45627c4ecc483`; 77 tables / 487 snapshot rows / 30 migrations / 154 validated FKs; archived file and app/security probes PASS; wrong candidate denied; pre/post-probe hashes captured; local recovery 435 ms; +92s marker absent. Provider recovery/RPO policy remain NOT VERIFIED.
@@ -449,7 +451,6 @@
   - Evidence: on candidate `eab4e341` + Node 24.20.0/pnpm 11.25.0 + disposable TLS PG 18.6 at source head 0029: reject-reports unit 9 + integration 6 = 15/15 PASS; eslint on the touched test file PASS. Mutation check confirmed the regression catches the historical defect: de-qualifying `a.status` reproduces `column reference "status" is ambiguous` and fails the test; source reverted. Live /reject-reports HTTP smoke and production migration parity remain separate unproven acceptance items (owner-supplied).
   - State: DONE (local source + disposable-PG scope only).
   - Key files: `tests/integration/reject-reports/reject-reports.test.ts`.
-
 
 > هذا السجل يحتفظ بسبب القرارات وتسلسل العمل فقط. إذا تعارض مع الأقسام 1–16، استخدم الأقسام 1–16.
 - **2026-09-18 — QC-100-FINAL-013 / Controlled-workflow inventory + disposable-PG evidence refresh**
