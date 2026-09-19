@@ -59,7 +59,7 @@ export function createInspection(i: {
   };
 }
 export function applyInspectionAction(x: Inspection, a: InspectionAction, reason?: string) {
-  if (['RETURN', 'REJECT', 'VOID'].includes(a)) requireReason(reason);
+  if (['RETURN', 'REJECT', 'VOID', 'REOPEN'].includes(a)) requireReason(reason);
   if (a === 'SUBMIT' && x.results.length === 0)
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   return {

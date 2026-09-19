@@ -38,3 +38,22 @@ export function isP05Authority(actor: ActorContext): boolean {
   if (actor.roles.includes('SUPERVISOR') || actor.roles.includes('MANAGER')) return true;
   return isNamedSystemOwner(actor);
 }
+
+/**
+ * QC-100-FINAL-004 two-stage approval: the final (QCM) approval authority.
+ *
+ * Owner-approved policy: Supervisor supplies the first-stage approval only.
+ * The final approval that makes a record APPROVED/locked belongs to the QCM
+ * (role `MANAGER`) or the named `yazeed/SYSTEM_OWNER` — never to Supervisor
+ * alone, and never to Admin.
+ */
+export function isFinalApprovalAuthority(actor: ActorContext): boolean {
+  if (actor.accountState !== 'ACTIVE') return false;
+  if (actor.roles.includes('MANAGER')) return true;
+  return isNamedSystemOwner(actor);
+}
+
+/** QC-100-FINAL-004: first-stage (Supervisor) review/approval authority. */
+export function isStageOneApprovalAuthority(actor: ActorContext): boolean {
+  return isP05Authority(actor);
+}

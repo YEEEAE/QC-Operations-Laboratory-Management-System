@@ -228,16 +228,32 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-IDN-VIEW-SELF',
     'PERM-IDN-CHANGE-OWN-PASSWORD',
     'PERM-INSP-VIEW',
+    // QC-100-FINAL-004: QC data-entry parity — QC employees create every
+    // report/form type. Approval/sign grants stay denied (item 5).
+    'PERM-INSP-CREATE',
     'PERM-INSP-EDIT-DRAFT',
     'PERM-INSP-ENTER-RESULT',
     'PERM-INSP-UPLOAD-EVIDENCE',
     'PERM-INSP-SUBMIT',
+    'PERM-INSP-PRINT',
+    'PERM-INSP-EXPORT',
     'PERM-LAB-VIEW',
+    'PERM-LAB-CREATE',
     'PERM-LAB-EDIT-DRAFT',
     'PERM-LAB-ENTER-SAMPLE',
     'PERM-LAB-ENTER-MEASUREMENT',
     'PERM-LAB-UPLOAD-EVIDENCE',
     'PERM-LAB-SUBMIT',
+    'PERM-LAB-PRINT',
+    'PERM-LAB-EXPORT',
+    'PERM-QUAR-VIEW',
+    'PERM-QUAR-CREATE',
+    'PERM-QUAR-EDIT',
+    'PERM-EQP-VIEW',
+    'PERM-CAL-VIEW',
+    'PERM-RPT-VIEW',
+    'PERM-RPT-RUN',
+    'PERM-RPT-EXPORT-CSV',
     'PERM-DOC-VIEW',
     'PERM-DOC-DOWNLOAD',
     'PERM-NOT-VIEW-OWN',
@@ -249,6 +265,17 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-CHG-CREATE',
     'PERM-CHG-EDIT-DRAFT',
     'PERM-CHG-SUBMIT',
+    // QC-100-FINAL-004 (owner-approved policy): QC user as creator may raise
+    // Findings and NCRs. RCA/CAPA stay investigator-owned; review/approve/
+    // close grants remain denied.
+    'PERM-FIND-VIEW',
+    'PERM-FIND-CREATE',
+    'PERM-FIND-EDIT',
+    'PERM-FIND-SUBMIT',
+    'PERM-NCR-VIEW',
+    'PERM-NCR-CREATE',
+    'PERM-NCR-EDIT',
+    'PERM-NCR-SUBMIT',
     'PERM-ADM-TEMPLATES',
     // QC-REJECT-REPORTS-001: baseline operational access — every ACTIVE
     // authenticated role can view and create both reject report types.
@@ -291,6 +318,17 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-INSP-EDIT-DRAFT',
     'PERM-INSP-ENTER-RESULT',
     'PERM-INSP-UPLOAD-EVIDENCE',
+    // QC-100-FINAL-004: Supervisor holds the first-level review / return /
+    // reject decisions. These grants were missing from every bundle, so the
+    // existing use cases (which require the domain permission plus the
+    // matching approval-module permission) could never succeed outside the
+    // named owner. Grants only — final approval stays with the QCM.
+    'PERM-INSP-REVIEW',
+    'PERM-INSP-RETURN',
+    'PERM-INSP-REJECT',
+    'PERM-APR-REVIEW',
+    'PERM-APR-RETURN',
+    'PERM-APR-REJECT',
     'PERM-INSP-SUBMIT',
     'PERM-INSP-PRINT',
     'PERM-INSP-EXPORT',
@@ -305,6 +343,9 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-LAB-SUBMIT',
     'PERM-LAB-PRINT',
     'PERM-LAB-EXPORT',
+    'PERM-LAB-REVIEW',
+    'PERM-LAB-RETURN',
+    'PERM-LAB-REJECT',
     'PERM-LAB-APPROVE',
     'PERM-LAB-RETEST',
     'PERM-LAB-AUTHORIZE-RETEST',
@@ -329,7 +370,10 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-CHG-SUBMIT',
     'PERM-ADM-TEMPLATES',
     'PERM-ESIG-SIGN',
-    'PERM-APR-APPROVE',
+    // QC-100-FINAL-004: Supervisor is first-level approval only (stage
+    // approval UNDER_REVIEW → PENDING_QCM_APPROVAL via PERM-INSP-APPROVE /
+    // PERM-LAB-APPROVE). The final-approval ceremony grant PERM-APR-APPROVE
+    // is held by MANAGER / the named owner only.
     'PERM-QUAR-RELEASE',
     // QC-REJECT-REPORTS-001: baseline operational access (same as EMPLOYEE).
     'PERM-RREJ-VIEW',
@@ -357,11 +401,22 @@ export const FOUNDATION_ROLE_PERMISSIONS: Record<
     'PERM-INSP-VIEW',
     'PERM-INSP-PRINT',
     'PERM-INSP-EXPORT',
+    // QC-100-FINAL-004: QCM (MANAGER) reviews, returns and rejects at its own
+    // stage. The return decision is required from PENDING_QCM_APPROVAL.
+    'PERM-INSP-REVIEW',
+    'PERM-INSP-RETURN',
+    'PERM-INSP-REJECT',
+    'PERM-APR-REVIEW',
+    'PERM-APR-RETURN',
+    'PERM-APR-REJECT',
     'PERM-INSP-APPROVE',
     'PERM-INSP-VOID',
     'PERM-LAB-VIEW',
     'PERM-LAB-PRINT',
     'PERM-LAB-EXPORT',
+    'PERM-LAB-REVIEW',
+    'PERM-LAB-RETURN',
+    'PERM-LAB-REJECT',
     'PERM-LAB-APPROVE',
     'PERM-LAB-RETEST',
     'PERM-LAB-AUTHORIZE-RETEST',

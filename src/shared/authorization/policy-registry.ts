@@ -6,7 +6,7 @@ export interface AuthorizationPolicy {
   states: readonly string[];
 }
 const policies: readonly AuthorizationPolicy[] = [
-  ...(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'].flatMap(
+  ...(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'].flatMap(
     (state) => [
       { permission: 'PERM-LAB-VIEW', action: 'VIEW', entityType: 'LAB_TEST', states: [state] },
     ],
@@ -42,7 +42,7 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-LAB-RETURN',
     action: 'RETURN',
     entityType: 'LAB_TEST',
-    states: ['SUBMITTED', 'UNDER_REVIEW'],
+    states: ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-LAB-EDIT-DRAFT',
@@ -52,19 +52,24 @@ const policies: readonly AuthorizationPolicy[] = [
   },
   // TR-LAB-007: UNDER_REVIEW → REJECTED, reason required, SoD enforced; the
   // final reject decision authority itself is policy-gated fail-closed
-  // (POLICY_SOURCE_REQUIRED) inside RejectLabTestUseCase.
+  // (POLICY_SOURCE_REQUIRED) inside RejectLabTestUseCase. QC-100-FINAL-004
+  // extends the checkpoint to the QCM stage (PENDING_QCM_APPROVAL).
   {
     permission: 'PERM-LAB-REJECT',
     action: 'REJECT',
     entityType: 'LAB_TEST',
-    states: ['UNDER_REVIEW'],
+    states: ['UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-APR-REJECT',
     action: 'REJECT',
     entityType: 'LAB_TEST',
-    states: ['UNDER_REVIEW'],
+    states: ['UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
+  // QC-100-FINAL-004: two-stage chain. Stage-1 (Supervisor) approve stays on
+  // UNDER_REVIEW and lands on PENDING_QCM_APPROVAL. The final approve
+  // (PERM-APR-APPROVE, MANAGER/named owner, binding e-signature) only exists
+  // on PENDING_QCM_APPROVAL — no approval path UNDER_REVIEW → APPROVED.
   {
     permission: 'PERM-LAB-APPROVE',
     action: 'APPROVE',
@@ -75,19 +80,7 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-APR-APPROVE',
     action: 'APPROVE',
     entityType: 'LAB_TEST',
-    states: ['UNDER_REVIEW'],
-  },
-  {
-    permission: 'PERM-LAB-REJECT',
-    action: 'REJECT',
-    entityType: 'LAB_TEST',
-    states: ['UNDER_REVIEW'],
-  },
-  {
-    permission: 'PERM-APR-REJECT',
-    action: 'REJECT',
-    entityType: 'LAB_TEST',
-    states: ['UNDER_REVIEW'],
+    states: ['PENDING_QCM_APPROVAL'],
   },
   ...(['FINDING', 'NCR', 'RCA', 'CAPA'].flatMap((entityType) => [
     {
@@ -325,7 +318,7 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-INSP-VIEW',
     action: 'VIEW',
     entityType: 'INSPECTION_REPORT',
-    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'],
+    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'],
   },
   {
     permission: 'PERM-INSP-EDIT-DRAFT',
@@ -422,31 +415,31 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-INSP-REVIEW',
     action: 'REVIEW',
     entityType: 'INSPECTION_REPORT',
-    states: ['SUBMITTED', 'UNDER_REVIEW'],
+    states: ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-APR-REVIEW',
     action: 'REVIEW',
     entityType: 'INSPECTION_REPORT',
-    states: ['SUBMITTED', 'UNDER_REVIEW'],
+    states: ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-INSP-RETURN',
     action: 'RETURN',
     entityType: 'INSPECTION_REPORT',
-    states: ['SUBMITTED', 'UNDER_REVIEW'],
+    states: ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-APR-RETURN',
     action: 'RETURN',
     entityType: 'INSPECTION_REPORT',
-    states: ['SUBMITTED', 'UNDER_REVIEW'],
+    states: ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-INSP-REJECT',
     action: 'REJECT',
     entityType: 'INSPECTION_REPORT',
-    states: ['UNDER_REVIEW'],
+    states: ['UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-INSP-APPROVE',
@@ -458,19 +451,36 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-INSP-VOID',
     action: 'VOID',
     entityType: 'INSPECTION_REPORT',
-    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'],
+    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'APPROVED', 'REJECTED'],
   },
+  // QC-100-FINAL-004: final approval exists only at PENDING_QCM_APPROVAL and
+  // requires the ceremony grant (MANAGER / named owner). No UNDER_REVIEW →
+  // APPROVED path remains.
   {
     permission: 'PERM-APR-APPROVE',
     action: 'APPROVE',
     entityType: 'INSPECTION_REPORT',
-    states: ['UNDER_REVIEW'],
+    states: ['PENDING_QCM_APPROVAL'],
+  },
+  // QC-100-FINAL-004: REOPEN is the audited controlled path out of the
+  // locked APPROVED state, reserved to the final-approval authority.
+  {
+    permission: 'PERM-APR-APPROVE',
+    action: 'REOPEN',
+    entityType: 'INSPECTION_REPORT',
+    states: ['APPROVED'],
+  },
+  {
+    permission: 'PERM-APR-APPROVE',
+    action: 'REOPEN',
+    entityType: 'LAB_TEST',
+    states: ['APPROVED'],
   },
   {
     permission: 'PERM-APR-REJECT',
     action: 'REJECT',
     entityType: 'INSPECTION_REPORT',
-    states: ['UNDER_REVIEW'],
+    states: ['UNDER_REVIEW', 'PENDING_QCM_APPROVAL'],
   },
   {
     permission: 'PERM-ADM-TEMPLATES',

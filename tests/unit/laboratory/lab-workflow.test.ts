@@ -236,7 +236,7 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
     expect(repository.mutations.at(-1)?.reason).toBe('Measurement remarks incomplete');
   });
 
-  it('approve: UNDER_REVIEW → APPROVED stores the provider-evaluated result (HOLD included)', async () => {
+  it('approve (stage-1): UNDER_REVIEW → PENDING_QCM_APPROVAL stores the provider-evaluated result without locking (QC-100-FINAL-004)', async () => {
     const repository = new MemoryRepository(labTest('UNDER_REVIEW'));
     const saved = await new ApproveLabTestUseCase(repository, matchingSources).execute({
       actor: approverActor(),
@@ -244,9 +244,11 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
       expectedVersion: 1n,
       requestId: 'r-approve',
     });
-    expect(saved.state).toBe('APPROVED');
+    expect(saved.state).toBe('PENDING_QCM_APPROVAL');
     expect(saved.scientificResult).toBe('HOLD');
-    expect(saved.approvedAt).not.toBeNull();
+    // Stage-1 is a workflow event, not the final approval: approvedAt stays
+    // empty until the QCM final approval with the binding e-signature.
+    expect(saved.approvedAt).toBeNull();
   });
 
   it('approve denies a non-P-05 authority even with both permissions', async () => {

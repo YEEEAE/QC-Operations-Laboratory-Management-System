@@ -154,7 +154,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
   });
 
-  it('lab approval proceeds only with an explicitly supplied approval policy', async () => {
+  it('lab approval proceeds only with an explicitly supplied approval policy (stage-1, QC-100-FINAL-004)', async () => {
     const allow: LabApprovalPolicy = { authorize: async () => {} };
     const saved = await new ApproveLabTestUseCase(
       labRepository(labTest()),
@@ -166,7 +166,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       expectedVersion: 3n,
       requestId: 'req-lab-approve-allow',
     });
-    expect(saved.state).toBe('APPROVED');
+    expect(saved.state).toBe('PENDING_QCM_APPROVAL');
     expect(saved.scientificResult).toBe('PASS');
   });
 

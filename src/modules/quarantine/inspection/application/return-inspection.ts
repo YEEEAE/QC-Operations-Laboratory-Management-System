@@ -35,7 +35,10 @@ export class ReturnInspectionUseCase {
         authorId: inspection.authorId,
         executorId: inspection.authorId,
       },
-      businessCondition: inspection.state === 'SUBMITTED' || inspection.state === 'UNDER_REVIEW',
+      businessCondition:
+        inspection.state === 'SUBMITTED' ||
+        inspection.state === 'UNDER_REVIEW' ||
+        inspection.state === 'PENDING_QCM_APPROVAL',
     };
     authorize(
       { ...common, permission: 'PERM-INSP-RETURN', action: 'RETURN' },

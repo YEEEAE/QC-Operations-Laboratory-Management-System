@@ -3,13 +3,22 @@ import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Inspection } from '../domain/inspection.js';
 import type { InspectionRepository } from '../ports/repository.js';
-import { isP05Authority } from '../../../../shared/authorization/p05-authority.js';
+import { isStageOneApprovalAuthority } from '../../../../shared/authorization/p05-authority.js';
 
 export interface InspectionApprovalPolicy {
   canApprove(input: { inspection: Inspection; actor: ActorContext }): boolean | Promise<boolean>;
 }
 const p05ApprovalPolicy: InspectionApprovalPolicy = { canApprove: () => true };
 
+/**
+ * QC-100-FINAL-004 stage-1 (Supervisor) approval.
+ *
+ * Owner-approved policy: this action is NOT the final approval. It records the
+ * Supervisor stage approval as a workflow event (no formal e-signature) and
+ * moves the report UNDER_REVIEW → PENDING_QCM_APPROVAL. The record only becomes
+ * APPROVED/locked through `FinalApproveInspectionUseCase`, which requires the
+ * QCM (MANAGER) or named owner and produces the binding e-signature.
+ */
 export class ApproveInspectionUseCase {
   constructor(
     private readonly repository: InspectionRepository,
@@ -23,7 +32,8 @@ export class ApproveInspectionUseCase {
   }) {
     const inspection = await this.repository.get(input.id, input.actor);
     if (!inspection) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (!isStageOneApprovalAuthority(input.actor))
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const policyApproved = await this.policy.canApprove({ inspection, actor: input.actor });
     const common = {
       actor: input.actor,
@@ -50,10 +60,6 @@ export class ApproveInspectionUseCase {
     };
     authorize(
       { ...common, permission: 'PERM-INSP-APPROVE', action: 'APPROVE' },
-      { throwOnDeny: true },
-    );
-    authorize(
-      { ...common, permission: 'PERM-APR-APPROVE', action: 'APPROVE' },
       { throwOnDeny: true },
     );
     return this.repository.transition({

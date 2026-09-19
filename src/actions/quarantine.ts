@@ -174,6 +174,36 @@ const approveInspection = defineAction({
       }),
     ),
 });
+/**
+ * QC-100-FINAL-004: the final (QCM) approval is a controlled signature event,
+ * so the action requires the reauthentication secret. Without it the ceremony
+ * fails closed with AUTH_REAUTH_REQUIRED, and the record can never reach
+ * APPROVED.
+ */
+const finalApproveInspection = defineAction({
+  accept: 'json',
+  input: inspectionVersion.extend({ reauthenticationSecret: z.string().min(1) }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().inspection.finalApprove.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+const reopenInspection = defineAction({
+  accept: 'json',
+  input: inspectionVersion.extend({ reason: z.string().trim().min(1) }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().inspection.reopen.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
 const returnInspection = defineAction({
   accept: 'json',
   input: inspectionVersion.extend({ reason: z.string().trim().min(1) }),
@@ -221,6 +251,8 @@ export const quarantine = {
   submitInspection,
   reviewInspection,
   approveInspection,
+  finalApproveInspection,
+  reopenInspection,
   returnInspection,
   rejectInspection,
   resumeInspection,

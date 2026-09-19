@@ -1,6 +1,12 @@
 import { getDatabase } from '../../../shared/database/database.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
+import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
+import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
+import { Argon2idPasswordHasher } from '../../identity/security/argon2-password-hasher.js';
+import { PostgresUserRepository } from '../../identity/infrastructure/postgres-user-repository.js';
+import { FinalApproveLabTestUseCase } from './final-approve-lab-test.js';
+import { ReopenLabTestUseCase } from './reopen-lab-test.js';
 import { PostgresLabRepository } from '../infrastructure/postgres-repository.js';
 import { PostgresControlledLabSources } from '../infrastructure/postgres-controlled-sources.js';
 import { assetsEligibilityDependencies } from '../../assets/application/dependencies.js';
@@ -14,8 +20,13 @@ import { ReviewLabTestUseCase } from './review-lab-test.js';
 import { ReturnLabTestUseCase } from './return-lab-test.js';
 import { ResumeLabTestUseCase } from './resume-lab-test.js';
 import { ApproveLabTestUseCase } from './approve-lab-test.js';
+import { FinalApproveLabTestUseCase } from './final-approve-lab-test.js';
+import { ReopenLabTestUseCase } from './reopen-lab-test.js';
 import { RejectLabTestUseCase } from './reject-lab-test.js';
 import { CreateRetestUseCase } from './create-retest.js';
+import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
+import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
+import { createPasswordReauthenticationVerifier } from '../../e-signatures/application/reauthentication-verifier.js';
 export function laboratoryReadDependencies() {
   const repository = new PostgresLabRepository(getDatabase());
   const sources = new PostgresControlledLabSources(getDatabase());
@@ -33,6 +44,12 @@ export function laboratoryActionDependencies() {
     new PostgresOutboxRepository(db),
   );
   const sources = new PostgresControlledLabSources(db);
+  // QC-100-FINAL-004: the final (QCM) lab approval carries the binding
+  // e-signature; the Supervisor stage approval above it does not.
+  const finalApprovalCeremony = createFinalApprovalCeremony(
+    new PostgresSignatureEvidenceRepository(db),
+    createPasswordReauthenticationVerifier(db),
+  );
   return {
     create: new CreateLabTestUseCase(repository, sources),
     saveMeasurements: new SaveMeasurementsUseCase(repository),
@@ -40,7 +57,11 @@ export function laboratoryActionDependencies() {
     review: new ReviewLabTestUseCase(repository),
     return: new ReturnLabTestUseCase(repository),
     resume: new ResumeLabTestUseCase(repository),
+    // Stage-1 (Supervisor): validates the evaluated scientific result.
     approve: new ApproveLabTestUseCase(repository, sources),
+    // Stage-2 (QCM / named owner): final approval + binding e-signature.
+    finalApprove: new FinalApproveLabTestUseCase(repository, finalApprovalCeremony),
+    reopen: new ReopenLabTestUseCase(repository),
     // TR-LAB-007 reject decision authority is POLICY SOURCE REQUIRED:
     // the use case is wired with the default fail-closed policy.
     reject: new RejectLabTestUseCase(repository),

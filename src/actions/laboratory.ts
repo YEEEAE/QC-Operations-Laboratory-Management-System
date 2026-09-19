@@ -119,6 +119,34 @@ const approve = defineAction({
       }),
     ),
 });
+/**
+ * QC-100-FINAL-004: the final (QCM) lab approval is a controlled signature
+ * event and requires the reauthentication secret.
+ */
+const finalApprove = defineAction({
+  accept: 'json',
+  input: id.extend({ reauthenticationSecret: z.string().min(1) }),
+  handler: (input, context) =>
+    run(() =>
+      laboratoryActionDependencies().finalApprove.execute({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+const reopen = defineAction({
+  accept: 'json',
+  input: id.extend({ reason: z.string().trim().min(1) }),
+  handler: (input, context) =>
+    run(() =>
+      laboratoryActionDependencies().reopen.execute({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
 const reject = defineAction({
   accept: 'json',
   input: id.extend({ reason: z.string().trim().min(1) }),
@@ -151,6 +179,8 @@ export const laboratory = {
   returnTest,
   resume,
   approve,
+  finalApprove,
+  reopen,
   reject,
   createRetest,
 };

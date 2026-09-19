@@ -401,10 +401,13 @@ export class PostgresInspectionRepository implements InspectionRepository {
         const changes = {
           state: next,
           ...(i.action === 'BEGIN_REVIEW' ? { review_started_at: now } : {}),
-          ...(i.action === 'APPROVE' ? { approved_at: now } : {}),
+          // QC-100-FINAL-004 two-stage chain: only the QCM final approval
+          // stamps approved_at and completes the receiving consequence. The
+          // Supervisor stage approval never reaches APPROVED.
+          ...(i.action === 'FINAL_APPROVE' ? { approved_at: now } : {}),
           ...(i.action === 'REJECT' ? { rejected_at: now } : {}),
           ...(i.action === 'VOID' ? { voided_at: now } : {}),
-          ...(i.action === 'RETURN' || i.action === 'REJECT' || i.action === 'VOID'
+          ...(['RETURN', 'REJECT', 'VOID', 'REOPEN'].includes(i.action)
             ? { void_reason: i.reason ?? null }
             : {}),
           updated_by: i.actor.id,
@@ -443,7 +446,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             .where('id', '=', i.id)
             .execute();
         }
-        if (i.action === 'APPROVE' && old.finalResult) {
+        if (i.action === 'FINAL_APPROVE' && old.finalResult) {
           const receiving = await tx
             .updateTable('receiving_items')
             .set({
@@ -473,7 +476,9 @@ export class PostgresInspectionRepository implements InspectionRepository {
           reason: i.reason,
           requestId: i.requestId,
           payload:
-            i.action === 'APPROVE' ? { finalResult: old.finalResult ?? 'UNDETERMINED' } : undefined,
+            i.action === 'FINAL_APPROVE'
+              ? { finalResult: old.finalResult ?? 'UNDETERMINED' }
+              : undefined,
         });
         await this.outboxFor(tx)?.enqueue({
           eventType: 'INSPECTION_CHANGED',

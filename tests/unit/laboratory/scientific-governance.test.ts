@@ -310,7 +310,7 @@ describe('retest governance (TR-RETEST-003, BR-LAB-014..018 guards)', () => {
 });
 
 describe('scientific result boundary on approval (BR-LAB-003)', () => {
-  it('approval stores only the server-side evaluated result, never a client-supplied verdict', async () => {
+  it('stage-1 approval stores only the server-side evaluated result, never a client-supplied verdict (QC-100-FINAL-004)', async () => {
     const repository = labRepository(labTest());
     const allow: LabApprovalPolicy = { authorize: async () => {} };
     const holdSources: ControlledLabSources = {
@@ -329,7 +329,7 @@ describe('scientific result boundary on approval (BR-LAB-003)', () => {
       expectedVersion: 3n,
       requestId: 'req-lab-approve-hold',
     });
-    expect(saved.state).toBe('APPROVED');
+    expect(saved.state).toBe('PENDING_QCM_APPROVAL');
     expect(saved.scientificResult).toBe('HOLD');
   });
 });

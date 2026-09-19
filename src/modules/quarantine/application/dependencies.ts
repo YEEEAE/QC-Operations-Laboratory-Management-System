@@ -18,12 +18,17 @@ import { SaveInspectionDraftUseCase } from '../inspection/application/save-inspe
 import { SubmitInspectionUseCase } from '../inspection/application/submit-inspection.js';
 import { ReviewInspectionUseCase } from '../inspection/application/review-inspection.js';
 import { ApproveInspectionUseCase } from '../inspection/application/approve-inspection.js';
+import { FinalApproveInspectionUseCase } from '../inspection/application/final-approve-inspection.js';
+import { ReopenInspectionUseCase } from '../inspection/application/reopen-inspection.js';
 import { ReturnInspectionUseCase } from '../inspection/application/return-inspection.js';
 import { RejectInspectionUseCase } from '../inspection/application/reject-inspection.js';
 import { ResumeInspectionUseCase } from '../inspection/application/resume-inspection.js';
 import { VoidInspectionUseCase } from '../inspection/application/void-inspection.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
+import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
+import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
+import { createPasswordReauthenticationVerifier } from '../../e-signatures/application/reauthentication-verifier.js';
 
 export function quarantineReadDependencies() {
   const database = getDatabase();
@@ -55,6 +60,13 @@ export function quarantineActionDependencies() {
   const outbox = new PostgresOutboxRepository(database);
   const receivingRepository = new PostgresReceivingRepository(database, audit, outbox);
   const inspectionRepository = new PostgresInspectionRepository(database, audit, outbox);
+  // QC-100-FINAL-004: the final (QCM) approval carries the binding
+  // e-signature, so the inspection action graph needs the signature store and
+  // a reauthentication verifier.
+  const finalApprovalCeremony = createFinalApprovalCeremony(
+    new PostgresSignatureEvidenceRepository(database),
+    createPasswordReauthenticationVerifier(database),
+  );
   return {
     receiving: {
       create: new CreateReceivingUseCase(receivingRepository),
@@ -67,7 +79,11 @@ export function quarantineActionDependencies() {
       saveDraft: new SaveInspectionDraftUseCase(inspectionRepository),
       submit: new SubmitInspectionUseCase(inspectionRepository),
       review: new ReviewInspectionUseCase(inspectionRepository),
+      // Stage-1 (Supervisor) approval: workflow event, no e-signature.
       approve: new ApproveInspectionUseCase(inspectionRepository),
+      // Stage-2 (QCM / named owner) approval: the binding e-signature.
+      finalApprove: new FinalApproveInspectionUseCase(inspectionRepository, finalApprovalCeremony),
+      reopen: new ReopenInspectionUseCase(inspectionRepository),
       return: new ReturnInspectionUseCase(inspectionRepository),
       reject: new RejectInspectionUseCase(inspectionRepository),
       resume: new ResumeInspectionUseCase(inspectionRepository),
