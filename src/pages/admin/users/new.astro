@@ -4,6 +4,7 @@ import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspa
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -25,8 +26,8 @@ if (canCreate) {
       <p class="eyebrow">New member</p>
       <h1>Create user</h1>
       <p class="lede">
-        New members start ACTIVE with a temporary password they must change at first sign-in.
-        Creation is audited.
+        New members start active with a temporary password they must change at first sign-in.
+        Creation is recorded in the audit trail.
       </p>
     </div>
     <a href="/admin/users">Back to users</a>
@@ -67,14 +68,14 @@ if (canCreate) {
             <div class="scope-row">
               <label class="check">
                 <input type="checkbox" name="scopeKind" value={kind} />
-                {kind}
+                {uxVocabulary.scopeKindLabels[kind] ?? kind}
               </label>
               {scopeRequiresValue(kind) ? (
                 <input
                   name={`scopeValue-${kind}`}
                   maxlength="200"
-                  placeholder={`${kind} value`}
-                  aria-label={`${kind} scope value`}
+                  placeholder={`${uxVocabulary.scopeKindLabels[kind] ?? kind} value`}
+                  aria-label={`${uxVocabulary.scopeKindLabels[kind] ?? kind} scope value`}
                 />
               ) : (
                 <span class="note">No value</span>

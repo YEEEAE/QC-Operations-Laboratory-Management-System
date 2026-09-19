@@ -1,7 +1,13 @@
 # Documentation inventory
 
-**Freeze:** 2026-09-18 — `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7`  
+**Freeze:** 2026-09-19 — working tree after docs consolidation into `Documents/`  
 **Status:** CURRENT / AUTHORITATIVE inventory of repository documentation
+
+Note: the legacy `docs/` tree (development, operations, architecture, and
+top-level references) was consolidated into `Documents/` as a flat set.
+`docs/superpowers/plans/` and `docs/superpowers/specs/` were removed and no
+longer exist under `Documents/`; their historical content is represented by the
+audit records referenced below.
 
 Classification describes how a document may be used as evidence. Historical and
 audit documents are preserved and must not be used as current implementation
@@ -13,8 +19,11 @@ truth without checking the source code and current documents.
 | --- | --- |
 | Product entry point | `README.md` |
 | Normative product documents | All files under `Documents/` |
-| Development and operations | `docs/development/LOCAL-DEVELOPMENT.md`, `docs/development/TESTING.md`, current runbooks under `docs/operations/`, and `docs/architecture/*` |
-| Architecture additions | `docs/architecture/EXTENDING-THE-SYSTEM.md`, `docs/architecture/ROUTE-MATRIX.md`, `docs/REJECT-REPORTS.md` |
+| System design / architecture | `Documents/ARCHITECTURE-SPECIFICATION.md`, `Documents/DATABASE-ARCHITECTURE.md`, `Documents/DEPLOYMENT-ARCHITECTURE.md`, `Documents/DATA-MODEL.md`, `Documents/DATA-DICTIONARY.md`, `Documents/DOMAIN-MAP.md`, `Documents/STATE-MACHINES.md`, `Documents/ERROR-ARCHITECTURE.md`, `Documents/OBSERVABILITY-ARCHITECTURE.md`, `Documents/SECURITY-ARCHITECTURE.md` |
+| Product and requirements | `Documents/BUSINESS-RULES.md`, `Documents/SYSTEM-INVARIANTS.md`, `Documents/REQUIREMENTS-TRACEABILITY.md`, `Documents/ROLE-MATRIX.md`, `Documents/PERMISSION-MATRIX.md`, `Documents/ROUTE-MANIFEST-SPECIFICATION.md`, `Documents/UAT-ACCEPTANCE-PLAN.md`, `Documents/RISK-REGISTER.md`, `Documents/PRODUCTION-READINESS-CHECKLIST.md`, `Documents/PRODUCT-ANALYTICS-MEASUREMENT-PLAN.md`, `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md` |
+| UX and design | `Documents/DESIGN-SYSTEM.md`, `Documents/UI-UX-SPECIFICATION.md`, `Documents/UX-WRITING-GUIDE.md`, `Documents/AUTHORIZATION-VISIBILITY-DECISION.md` |
+| Development and operations | `Documents/LOCAL-DEVELOPMENT.md`, `Documents/TESTING.md`, `Documents/TESTING-STRATEGY.md`, current runbooks under `Documents/` (`AI-PROVIDERS.md`, `F11-BACKUP-RECOVERY-RUNBOOK.md`, `INCIDENT-QUICK-REFERENCE.md`, `INITIAL-ADMIN-BOOTSTRAP.md`, `RELEASE-RUNBOOK.md`, `RENDER-DATABASE-CONNECTION.md`, `RENDER-DEPLOYMENT.md`, `RENDER-MIGRATION-RUNBOOK.md`, `RESTORE-DRILL-RUNBOOK.md`, `BACKUP-RECOVERY-PLAN.md`) |
+| Architecture additions | `Documents/EXTENDING-THE-SYSTEM.md`, `Documents/ROUTE-MATRIX.md`, `Documents/REJECT-REPORTS.md` |
 | Database contract | `db/migrations/README.md` |
 | Project operating instructions | `AGENTS.md`, `.agents/AGENTS.md`, `.agents/mind/01-mind-latest.md` |
 | Executable contracts | `.github/workflows/ci.yml`, `render.yaml`, `package.json`, `astro.config.mjs`, `playwright.config.ts`, `vitest.config.ts`, `tsconfig.json` |
@@ -23,14 +32,13 @@ truth without checking the source code and current documents.
 
 | Scope | Files |
 | --- | --- |
-| Design plans and specifications | All files under `docs/superpowers/plans/` and `docs/superpowers/specs/` |
-| Retained duplicate | `docs/operations/POSTGRES-MCP 2.md` |
+| Retained duplicates | `Documents/POSTGRES-MCP.md`, `Documents/POSTGRES-MCP 2.md` |
 
 Reference files explain intent or historical implementation work. Current code,
 migrations, and the authoritative documents above decide present behavior.
 
-`docs/operations/RENDER-POSTGRES-RECOVERY-AUDIT.md` is explicitly historical
-and superseded; `docs/verification/PERFORMANCE-BASELINE.md` is a historical
+`Documents/RENDER-POSTGRES-RECOVERY-AUDIT.md` is explicitly historical
+and superseded; `Documents/PERFORMANCE-BASELINE.md` is a historical
 observational baseline, not current release evidence.
 
 ## Audit evidence

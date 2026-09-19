@@ -21,7 +21,7 @@ The source freeze is `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7` on `main`.
 The repository contains 18 modules, 83 physical Astro page files, and 85
 canonical route declarations. Route visibility is `PUBLIC`, `AUTHENTICATED`,
 or `YAZEED_ONLY`; the only owner-only pages are `/system/health` and
-`/system/control-center`. See `docs/architecture/ROUTE-MATRIX.md` for the
+`/system/control-center`. See `Documents/ROUTE-MATRIX.md` for the
 reconciled matrix. Local typecheck, architecture, unit, and build checks pass,
 but the current release posture remains `PARTIAL / NO-GO` because format/lint,
 PostgreSQL-backed gates, CI, authenticated E2E, UAT, and provider evidence are

@@ -46,7 +46,7 @@ export async function runRecoveryChecklist(input: {
     },
     blocked(
       'render-physical-restore',
-      'BLOCKED: Render/provider restore execution and provider evidence are outside this repository. Follow docs/operations/RESTORE-DRILL-RUNBOOK.md and record the provider reference.',
+      'BLOCKED: Render/provider restore execution and provider evidence are outside this repository. Follow Documents/RESTORE-DRILL-RUNBOOK.md and record the provider reference.',
     ),
   ];
 

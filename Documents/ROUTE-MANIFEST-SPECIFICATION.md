@@ -47,7 +47,7 @@ visibility, mutationCapabilities, fileExpectation
 4. أضف unit regression للـcontract ثم شغّل `pnpm test:architecture`.
 
 الحالة الحالية المفصلة لكل route موجودة في
-`docs/architecture/ROUTE-MATRIX.md`: 85 route declarations، منها 2 `PUBLIC`،
+`Documents/ROUTE-MATRIX.md`: 85 route declarations، منها 2 `PUBLIC`،
 81 `AUTHENTICATED`، و2 `YAZEED_ONLY`. صفحتا `/auth/recovery` و`/auth/reset/[requestId]`
 مسجلتان كـ`AUTHENTICATED` و`deferred` في registry؛ لا تُعاملان كصفحات عامة.
 

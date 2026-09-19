@@ -61,7 +61,7 @@ The root domain is the canonical custom domain in the Render service; Render pai
   PostgreSQL over the public internet; the service `ipAllowList` is `0.0.0.0/0`.
 - **Security gate:** the credential in the live service `DATABASE_URL` is byte-identical
   to the documented-compromised credential in the local Render export, so the
-  rotation gate in `docs/operations/RENDER-DATABASE-CONNECTION.md` is still open and
+  rotation gate in `Documents/RENDER-DATABASE-CONNECTION.md` is still open and
   the exposure is currently active.
 
 `HOST=0.0.0.0` is required by the Render web-service platform. The Astro Node standalone output starts with `node dist/server/entry.mjs`; the service must use the platform-provided `PORT`. Node `24.20.0` is pinned in `render.yaml` and `.node-version`.
@@ -80,7 +80,7 @@ The Render `onrender.com` subdomain remains enabled until the custom domain is v
 - **Render Web Service:** use the Render **Internal Database URL** when the service and database topology/region permit it. Keep it in Render Environment Variables. Do not hardcode or infer an `onrender.com` or database hostname in this repository.
 
 The exact operator workflow, read-only validation, and safe error handling are documented in
-`docs/operations/RENDER-DATABASE-CONNECTION.md`.
+`Documents/RENDER-DATABASE-CONNECTION.md`.
 
 ## Explicitly not verified
 
@@ -89,7 +89,7 @@ The exact operator workflow, read-only validation, and safe error handling are d
   release identity.
 - Source migrations `0019`–`0029` have not been applied to the live database.
   Applying them is blocked until the credential-rotation gate in
-  `docs/operations/RENDER-DATABASE-CONNECTION.md` is satisfied.
+  `Documents/RENDER-DATABASE-CONNECTION.md` is satisfied.
 - Production readiness, formal UAT, exact-head CI, provider backup/retention/PITR,
   and a populated controlled-record restore remain separate unverified gates.
 

@@ -59,6 +59,39 @@ export const uxVocabulary = {
     authorizationChanged: 'Your authorization changed. Refresh the page before trying again.',
     staleRecord: 'Your action was not applied. Review the latest version before continuing.',
   },
+  /**
+   * Failure copy per canonical server error class. Every mutation form picks
+   * the message for its class so operators can tell a validation problem from
+   * a permission denial, a stale record, a missing dependency, or a service
+   * outage — never one generic "something failed".
+   */
+  errorClasses: {
+    VALIDATION_ERROR:
+      'Your entries were not accepted. Review the highlighted fields and try again. Your entries are preserved.',
+    AUTHORIZATION_CHANGED:
+      'This action needs permission you no longer hold. Your entries are preserved — return to the list or contact an administrator.',
+    CONFLICT_STALE:
+      'Someone changed this record after you opened it. Reload the latest data before trying again. Nothing was resubmitted.',
+    DEPENDENCY_UNAVAILABLE:
+      'A referenced record is unavailable, so the action was not applied. Reload the record and check the current state.',
+    DUPLICATE_COMMAND:
+      'This action was already applied. Reload the record to see the current state — nothing was duplicated.',
+    UNKNOWN_SAFE_ERROR:
+      'The action did not complete. Nothing was changed — try again, or return to the record.',
+  },
+  /**
+   * Human labels for authorization scope kinds. Raw codes stay in the server
+   * contract; operators read the human label first, with the code in parens.
+   */
+  scopeKindLabels: {
+    OWN: 'Own records',
+    ASSIGNED: 'Assigned records',
+    TEAM: 'Team records',
+    DEPARTMENT: 'Department records',
+    SITE: 'Site records',
+    DOMAIN: 'Domain records',
+    GLOBAL: 'Whole system',
+  } as Record<string, string>,
   boundaries: {
     backupNotRestoreProof: 'A backup created or verified here is not proof of a verified restore.',
     passNotRelease: 'PASS is a scientific result. It does not release the item.',
@@ -119,6 +152,12 @@ export const stateLabels: Readonly<Record<string, string>> = {
   UNREAD: 'Unread',
   READ: 'Read',
 };
+
+/** Severity labels — human words first, no raw codes. */
+export function severityLabel(severity: string | null | undefined): string {
+  if (!severity) return 'Not classified';
+  return severity.charAt(0).toUpperCase() + severity.slice(1).toLowerCase();
+}
 
 /** Sentence-case label for a controlled state code; never invents a state. */
 export function stateLabel(code: string | null | undefined): string {

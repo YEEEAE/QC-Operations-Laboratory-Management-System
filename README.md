@@ -46,8 +46,8 @@ Build and deployment, or remove the Pages source/workflow from repository settin
 ## Current implementation snapshot — 2026-09-18
 
 This snapshot is synchronized with the current source freeze. See the
-[canonical route matrix](docs/architecture/ROUTE-MATRIX.md) and the
-[documentation inventory](docs/DOCUMENTATION-INVENTORY.md) for the detailed
+[canonical route matrix](Documents/ROUTE-MATRIX.md) and the
+[documentation inventory](Documents/DOCUMENTATION-INVENTORY.md) for the detailed
 contracts and document classifications.
 
 | Item | Current truth |

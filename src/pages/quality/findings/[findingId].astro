@@ -1,4 +1,9 @@
 ---
-import AppLayout from '../../../ui/layouts/AppLayout.astro';import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login');const finding=await findingsReadDependencies().get.execute({actor,id:Astro.params.findingId!});
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
+import { stateLabel, severityLabel } from '../../../shared/copy/ux-vocabulary.js';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login');
+const finding = await findingsReadDependencies().get.execute({ actor, id: Astro.params.findingId! });
 ---
-<AppLayout title={`${finding.findingNo} · Quality`} locale="en" direction="ltr"><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p><dl><dt>State</dt><dd>{finding.state}</dd><dt>Version</dt><dd>{finding.version.toString()}</dd><dt>Source context</dt><dd>{finding.sourceContext?'Recorded':'Not provided'}</dd></dl><h2>History and related NCR</h2><p class="lede">Controlled history and related records are resolved by authorized server-side queries.</p></AppLayout><style>.eyebrow,.lede{color:var(--text-muted)}dl{display:grid;grid-template-columns:max-content 1fr;gap:.65rem 1rem;background:var(--surface-panel);padding:1rem}dt{font-weight:700}dd{margin:0}</style>
+<AppLayout title={`${finding.findingNo} · Quality`} locale="en" direction="ltr"><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p><dl><dt>State</dt><dd>{stateLabel(finding.state)}</dd><dt>Severity</dt><dd>{finding.severity ? severityLabel(finding.severity) : 'Not classified'}</dd><dt>Version</dt><dd>{finding.version.toString()}</dd><dt>Source context</dt><dd>{finding.sourceContext?'Recorded':'Not provided'}</dd></dl><h2>History and related records</h2><p class="lede">The audit history and any related NCR open from the record’s own links.</p></AppLayout><style>.eyebrow,.lede{color:var(--text-muted)}dl{display:grid;grid-template-columns:max-content 1fr;gap:.65rem 1rem;background:var(--surface-panel);padding:1rem}dt{font-weight:700}dd{margin:0}</style>

@@ -7,7 +7,7 @@ Current source head at the 2026-09-18 documentation freeze is
 evidence separately reports Render applied head `0018`; this is migration drift,
 not a reason to rewrite history or to claim production parity. Pending provider
 migrations remain blocked by the credential-rotation gate documented in
-`docs/operations/RENDER-DATABASE-CONNECTION.md`.
+`Documents/RENDER-DATABASE-CONNECTION.md`.
 
 - Files are forward-only SQL and are immutable after application to a shared environment.
 - `scripts/db/migrate.ts` applies them in lexical order and records SHA-256 checksums in `qc.schema_migrations`.

@@ -158,7 +158,7 @@ describe('runtime connection contract', () => {
     // for a side effect that never ran, so `pnpm db:preflight`, `db:migrate`,
     // `db:migrate:status`, `db:migrate:check`, `db:schema:check` and the
     // recovery validator silently ignored the local `.env` that
-    // docs/operations/RENDER-DATABASE-CONNECTION.md documents them as loading.
+    // Documents/RENDER-DATABASE-CONNECTION.md documents them as loading.
     const entrypoints = [
       'scripts/db/preflight.ts',
       'scripts/db/migrate.ts',

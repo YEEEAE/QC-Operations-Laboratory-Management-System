@@ -13,7 +13,7 @@ The server starts with `--access-mode=restricted`, which keeps SQL execution in
 read-only transactions. Codex also prompts before MCP tool calls by default.
 
 Before connecting to Render, complete the credential-rotation gate documented in
-`docs/operations/RENDER-DATABASE-CONNECTION.md`. Do not use provider-export
+`Documents/RENDER-DATABASE-CONNECTION.md`. Do not use provider-export
 fields such as `External_Database_URL` as a substitute for the canonical
 `DATABASE_URL`.
 

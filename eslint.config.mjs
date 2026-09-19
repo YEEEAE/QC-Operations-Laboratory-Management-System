@@ -14,7 +14,6 @@ export default tseslint.config(
       '.opencode/**',
       '.playwright-mcp/**',
       'Documents/**',
-      'docs/**',
       // Local, gitignored scratch tooling (`.tmp/` also stays out of the Git
       // index). Prettier already skips it through `.gitignore`; the lint scope
       // is aligned here so ad-hoc probe scripts cannot fail the code gate.

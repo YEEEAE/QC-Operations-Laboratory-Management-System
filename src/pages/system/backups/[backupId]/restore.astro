@@ -2,6 +2,7 @@
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import { backupCatalogReadDependencies } from '../../../../modules/backup-recovery/application/dependencies.js';
 import { isUuid } from '../../../../shared/id/uuid.js';
+import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -30,19 +31,19 @@ const verificationLabel =
 const productionBlocked = true; // Production restore authority/e-signature (RD-020, BKP-DD-014/016) unresolved: DENY.
 ---
 <AppLayout title={`Restore ${backup.id} · QC Operations`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Restore request</p><h1>Restore request</h1><p class="lede">This page records a controlled restore intent. It never executes a restore: no recovery provider, production authority, or e-signature ceremony is approved in this baseline, so every recorded request stays PLANNED.</p></div><a href={`/system/backups/${backup.id}`}>Back to backup</a></section>
+  <section class="page-head"><div><p class="eyebrow">Restore request</p><h1>Restore request</h1><p class="lede">This page records a controlled restore request. It never executes a restore: no recovery provider, production authority, or e-signature ceremony is approved in this baseline, so every recorded request stays planned.</p></div><a href={`/system/backups/${backup.id}`}>Back to backup</a></section>
   <section class="panel"><h2>Backup and recovery context</h2><dl>
     <div><dt>Backup set ID</dt><dd><code>{backup.id}</code></dd></div>
-    <div><dt>Backup job state</dt><dd>{backup.state} — job execution result only, never restore evidence (BKP-001)</dd></div>
-    <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'YES' : 'NO'}</dd></div>
+    <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — job result only, never restore evidence</dd></div>
+    <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
     <div><dt>Backup requested at</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh (UTC internally)</dd></div>
     <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{verificationLabel}</dd></div>
     <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>
-    <div><dt>Application version / Git SHA binding</dt><dd>NOT RECORDED in catalog</dd></div>
+    <div><dt>Application version / Git SHA binding</dt><dd>Not recorded in catalog</dd></div>
     <div><dt>Known gaps</dt><dd>{restoreVerification !== 'VERIFIED' ? 'No verified restore exists for this backup set' : 'None recorded'}</dd></div>
     <div><dt>Display timezone</dt><dd>Asia/Riyadh — all recovery timestamps are shown with explicit timezone to prevent target ambiguity</dd></div>
   </dl></section>
-  {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Only backup sets whose artifact exists (CREATED or VERIFIED) can be selected as a recovery set candidate. This backup set is {backup.state}.</p></section>}
+  {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Only backup sets whose artifact exists and is verified can be selected as a recovery set candidate. This set is {stateLabel(backup.state)}.</p></section>}
   {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
   {restorable && (canRequestDrill || canRequestProduction) && (
     <form class="decision" method="post" data-backup-id={backup.id}>
