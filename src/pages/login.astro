@@ -4,7 +4,7 @@ import { actions } from 'astro:actions';
 import { safeReturnTo } from '../shared/http/safe-return-to.js';
 import AuthLayout from '../ui/layouts/AuthLayout.astro';
 import QCLogin3DBackground from '../ui/components/QCLogin3DBackground.astro';
-const returnTo = Astro.url.searchParams.get('returnTo') ?? '/dashboard';
+const returnTo = safeReturnTo(Astro.url.searchParams.get('returnTo'));
 const actionResult = Astro.getActionResult(actions.login);
 if (actionResult?.data?.ok) return Astro.redirect(safeReturnTo(actionResult.data.redirectTo), 303);
 const error = Astro.url.searchParams.get('error') ?? actionResult?.error?.message;

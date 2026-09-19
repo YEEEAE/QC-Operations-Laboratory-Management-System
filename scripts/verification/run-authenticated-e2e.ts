@@ -198,6 +198,17 @@ async function main(): Promise<void> {
     // missing fixture fails the pipeline instead of reporting a silent skip.
     env.QC_MANDATORY_VERIFY_FIXTURES = 'true';
     env.QC_VERIFY_BASE_URL = env.QC_VERIFY_BASE_URL ?? 'http://127.0.0.1:4321';
+    // The broader closure suites use the single disposable employee as their
+    // read-only actor. Keep the aliases candidate-bound and never source a
+    // password from a file or print it.
+    env.QC_E2E_LOGIN_IDENTITY = env.QC_E2E_LOGIN_IDENTITY ?? 'verify-employee';
+    env.QC_E2E_PASSWORD = env.QC_E2E_PASSWORD ?? env.QC_VERIFY_EMPLOYEE_PASSWORD;
+    env.QC_E2E_LOGIN_PASSWORD = env.QC_E2E_LOGIN_PASSWORD ?? env.QC_VERIFY_EMPLOYEE_PASSWORD;
+    // QC-100-FINAL-006: the accessibility suite needs the Admin persona to reach
+    // the administration surfaces (dialog/focus coverage) without weakening any
+    // authorization rule; the persona is disposable and candidate-bound.
+    env.QC_E2E_ADMIN_LOGIN_IDENTITY = env.QC_E2E_ADMIN_LOGIN_IDENTITY ?? 'verify-admin';
+    env.QC_E2E_ADMIN_PASSWORD = env.QC_E2E_ADMIN_PASSWORD ?? env.QC_VERIFY_ADMIN_PASSWORD;
     env.SESSION_SECRET = env.SESSION_SECRET ?? 'closure-test-session-secret-0123456789';
     env.RATE_LIMIT_LOGIN_MAX = env.RATE_LIMIT_LOGIN_MAX ?? '8';
     env.RATE_LIMIT_LOGIN_WINDOW_SECONDS = env.RATE_LIMIT_LOGIN_WINDOW_SECONDS ?? '60';
@@ -260,6 +271,7 @@ async function main(): Promise<void> {
         'tests/e2e/critical-workflows.spec.ts',
         'tests/e2e/error-recovery.spec.ts',
         'tests/e2e/files-reports.spec.ts',
+        '--workers=1',
       ],
       env,
     );

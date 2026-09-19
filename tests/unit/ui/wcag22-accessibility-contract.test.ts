@@ -49,7 +49,12 @@ describe('WCAG 2.2 AA accessibility contracts', () => {
 
     expect(iconButton).toContain('aria-label={label}');
     expect(iconButton).toContain('title={label}');
-    expect(topbar).toContain('aria-label="Search authorized records (Control K)"');
+    // QC-100-FINAL-006: the accessible name must contain the visible "Search" label
+    // text so label-content-name-mismatch passes (WCAG 2.5.3 Label in Name), and it
+    // must also cover the visible "Ctrl K" hint (comma-separated inside the name
+    // instead of the parenthetical form that broke the match).
+    expect(topbar).toContain('aria-label="Search authorized records, Control K"');
+    expect(topbar).not.toContain('aria-label="Search authorized records (Control K)"');
     expect(sidebar).toContain('aria-label="Collapse navigation"');
     expect(sidebar).toContain('aria-label="Close navigation"');
   });

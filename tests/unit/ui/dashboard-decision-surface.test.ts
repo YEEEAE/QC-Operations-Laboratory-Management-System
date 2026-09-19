@@ -134,8 +134,12 @@ describe('dashboard decision surface', () => {
     // contained in the accessible name (WCAG 2.5.3 label in name).
     expect(kpiCard).toContain('<span aria-hidden="true">i</span>');
     // The global search keeps its visible label inside the accessible name.
+    // QC-100-FINAL-006: the name must contain every visible label text; the
+    // parenthetical Control K aria-label broke label-content-name-mismatch
+    // (WCAG 2.5.3), so the hint is folded into the name with a comma.
     const topbar = read('src/ui/shell/Topbar.astro');
-    expect(topbar).toContain('aria-label="Search authorized records (Control K)"');
+    expect(topbar).toContain('aria-label="Search authorized records, Control K"');
+    expect(topbar).not.toContain('aria-label="Search authorized records (Control K)"');
     expect(topbar).toContain('<span>Search</span>');
   });
 
