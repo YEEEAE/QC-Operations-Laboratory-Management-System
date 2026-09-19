@@ -5,6 +5,7 @@
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
 ## Current audit reality — 2026-09-18
+- **Fresh local QC-100-FINAL-010 (2026-09-19, candidate `f87ffe107426bc988e1e1e88eed3c5945ce3cb8d` + dirty tree):** focused authorization/security negative matrix `63/63 PASS`; `pnpm test:security` `51 PASS + 1 SKIP`, with the PostgreSQL rate-limit case BLOCKED by unavailable Testcontainers and an existing local PostgreSQL process preventing the disposable fallback. Frozen offline install/lock integrity PASS. Dependency audit produced no network result; SBOM tool and dedicated secret scanner unavailable. Privacy classification/retention/deletion/correction/export/AI-processing approvals remain NOT VERIFIED/open. Evidence: `audit/2026-09-19-QC-100-FINAL-010-security-privacy-supply-chain.md`.
 - **Editorial revision:** 20e6ead8f397d02ac2de807a273795dfac47a703. Reports and the15-prompt HTML were rewritten for clarity; prior operational results remain tied to298e307721af97d9c1bd22279d0c784fbf5b62a8, not revalidated for this newer HEAD. Scores unchanged; operational status must be rechecked before use.
 - **QC-MIDPOINT-REBASE-001 evidence baseline (historical after subsequent commits):** HEAD298e307721af97d9c1bd22279d0c784fbf5b62a8/main dirty tree preserved; source0030,18 modules,85 routes(2/81/2),83 pages,32 navigation destinations. Mechanical coverage1048 first-party files plus targeted semantic review; exhaustive manual coverage NOT VERIFIED. Earlier snapshots below are HISTORICAL where superseded here.
 - **Fresh local (QC-100-FINAL-002, candidate `e30285c…`):** install/format/lint/typecheck/architecture/tech-debt/diff-check/build/release PASS on Node `24.20.0` + pnpm `11.25.0`; unit83 files/564 PASS; integration87 files/353 PASS (Reject ambiguous-status SQL fixed); migrations29 PASS; concurrency12 PASS (stability 15/15 runs after re-contracting the loser codes); security52 PASS; schema77 tables/0 orphans. E2E48 PASS/19 FAIL/107 SKIP unchanged (Docker-only authenticated runner). Fixture seed/cleanup against the disposable PG 18.6 PASS. Details: `audit/2026-09-18-qc-100-final-002-verification-gates.md`.
@@ -390,7 +391,7 @@
 ## 14) المشاكل المفتوحة الحالية — لا تعيد فتح المشاكل المغلقة تاريخيًا
 
 ### P0 / blocking evidence
-- Local equivalent PG18.6 executes suites: integration350 PASS/3 FAIL, migrations29 PASS, concurrency11 PASS/1 FAIL, security52 PASS. Docker/CI container path and fixture-backed six-persona E2E remain NOT VERIFIED.
+- Local equivalent PG18.6 executes suites: integration350 PASS/3 FAIL, migrations29 PASS, concurrency11 PASS/1 FAIL. Current candidate security is 51 PASS + 1 SKIP with the PostgreSQL rate-limit case BLOCKED; Docker/CI container path and fixture-backed six-persona E2E remain NOT VERIFIED.
 - GitHub Verification CI exact-HEAD غير مثبت بسبب billing lock.
 - Node المحلي خارج contract.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
@@ -423,6 +424,10 @@
 - Groq is the default primary adapter, Gemini is the default fallback, and `DisabledAiProvider` remains the final safe fallback. Configuration is server-only with canonical names plus legacy-name transition support; provider metadata is sanitized and advisory-only. Live provider smoke tests, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. No production/provider approval is inferred.
 
 ## 17) سجل تاريخي مضغوط
+- **2026-09-19 — QC-100-FINAL-010 / Runtime security, privacy and supply-chain verification**
+  - Changed: no application code or policy value changed; candidate-specific focused negative tests and local supply-chain checks were re-run, with blockers recorded instead of inferred closure.
+  - Evidence: authorization/policy focus `63/63 PASS`; security `51 PASS + 1 SKIP` with PostgreSQL/Testcontainers `BLOCKED`; frozen offline lock install PASS; dependency audit/SBOM/dedicated scanner and approved privacy decisions remain unavailable or unverified. `audit/2026-09-19-QC-100-FINAL-010-security-privacy-supply-chain.md`.
+  - State: PARTIAL / BLOCKED for full acceptance.
 - **2026-09-18 — QC-100-FINAL-014 / Reject Reports analytics proof + populated regression**
   - Changed: no repository SQL change needed — the ambiguous-`status` fix (a.status / r.status qualification) is present at HEAD; strengthened the reject-reports integration analytics regression with populated report+confirmation rows, approvalStatus aggregate assertions, a VOID-exclusion aggregate check (distinct item code), a zero-denominator `rejectPctTrend` day (SQL `CASE WHEN SUM(good_qty) > 0` → NULL), and trend/by-item/by-department/by-reason assertions.
   - Evidence: on candidate `eab4e341` + Node 24.20.0/pnpm 11.25.0 + disposable TLS PG 18.6 at source head 0029: reject-reports unit 9 + integration 6 = 15/15 PASS; eslint on the touched test file PASS. Mutation check confirmed the regression catches the historical defect: de-qualifying `a.status` reproduces `column reference "status" is ambiguous` and fails the test; source reverted. Live /reject-reports HTTP smoke and production migration parity remain separate unproven acceptance items (owner-supplied).

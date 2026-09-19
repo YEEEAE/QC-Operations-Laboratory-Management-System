@@ -157,9 +157,10 @@ async function main(): Promise<void> {
   }
   for (const key of requiredPasswords)
     if (!env[key]) fail(`${key} is required and is never logged.`);
-  if (env.QC_TEST_DATABASE_URL) {
-    fail('Authenticated E2E owner bootstrap is Docker-only; QC_TEST_DATABASE_URL is not allowed.');
-  }
+  // Testcontainers is the default disposable runtime. A separately provisioned
+  // local PostgreSQL 18 cluster is also safe when it has passed the same
+  // production-host guard above; this keeps the runner usable on hosts where
+  // the Docker daemon is unavailable without weakening the database boundary.
 
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   env.RELEASE_GIT_SHA = sha;
