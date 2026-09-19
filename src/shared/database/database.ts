@@ -32,6 +32,11 @@ export async function destroyDatabase(): Promise<void> {
 }
 
 export function translateDatabaseError(error: unknown): AppError {
+  // An AppError raised inside a transaction (e.g. a guarded write that found
+  // no matching row) is already a classified domain error, not a database
+  // failure; re-wrapping it as SYSTEM_DATABASE_UNAVAILABLE hid the real code
+  // from callers (QC-100-FINAL-014).
+  if (error instanceof AppError) return error;
   const code =
     typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined;
   switch (code) {

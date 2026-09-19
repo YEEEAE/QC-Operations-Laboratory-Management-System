@@ -270,7 +270,13 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         .selectFrom('issue_slip_approval_confirmations')
         .selectAll()
         .where('report_id', '=', id)
-        .orderBy('approval_role')
+        // Canonical checkpoint order (SUPERVISOR -> QC_MANAGER ->
+        // FACTORY_DIRECTOR). Alphabetical SQL ordering puts FACTORY_DIRECTOR
+        // first, which scrambled the domain queue and denied the correct
+        // re-confirmation after a reversal (QC-100-FINAL-014).
+        .orderBy(
+          sql`array_position(array['SUPERVISOR','QC_MANAGER','FACTORY_DIRECTOR'], approval_role)`,
+        )
         .execute(),
     ]);
     return mapSlip(report, slip, approvals);
@@ -579,7 +585,11 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           } as never)
           .where('report_id', '=', input.id)
           .where('approval_role', '=', input.role)
-          .where('status', '=', 'PENDING')
+          // A REVERSED checkpoint is re-confirmed through this same guarded
+          // write: the domain queue puts it at the front, so only the reversed
+          // checkpoint can reach here, and the guard keeps the row
+          // single-transition (PENDING or REVERSED -> CONFIRMED, never twice).
+          .where('status', 'in', ['PENDING', 'REVERSED'])
           .returningAll()
           .executeTakeFirst();
         if (!confirmation) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
