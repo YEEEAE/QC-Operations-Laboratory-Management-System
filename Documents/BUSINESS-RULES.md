@@ -1816,6 +1816,26 @@ Approver
 
 ---
 
+## BR-APR-012 — Two-Stage Controlled Approval for Inspection and Laboratory
+
+**Status:** APPROVED (owner decision 2026-09-19; migration `0031_qc_creation_parity_two_stage_approval`)
+
+اعتماد تقرير التفتيش واختبار المختبر يمرّ بمرحلتين إلزاميتين:
+
+```text
+UNDER_REVIEW --[stage-1: Supervisor, PERM-INSP-APPROVE / PERM-LAB-APPROVE]--> PENDING_QCM_APPROVAL
+PENDING_QCM_APPROVAL --[stage-2: QCM, PERM-APR-APPROVE + PERM-ESIG-SIGN]--> APPROVED (locked)
+```
+
+* stage-1 حدث سير عمل موثّق بالتدقيق ولا يحمل توقيعًا إلكترونيًا رسميًا.
+* stage-2 هو الانتقال الوحيد الذي يقفل السجل، ويتطلب reauthentication + توقيعًا إلكترونيًا ملزمًا بمعنى `FINAL_APPROVE`.
+* لا يوجد مسار `UNDER_REVIEW → APPROVED` مباشر، ولا يجوز تجاوز مرحلة.
+* المرحلة الوسطى اعتماد داخلي وليست إفراجًا ماديًا: `PASS != RELEASED`.
+* `REOPEN` من `APPROVED` مسار مدقّق بسبب مطلوب ومحصور في سلطة الاعتماد النهائي، ولا يمحو سجل التوقيع.
+* اعتماد تقرير تفتيش نتيجة إفراج Receiving يحتاج نتيجة `PASS`؛ `FAIL`/`HOLD` لا تفرج، وعنصر Receiving في `HOLD` لا يُستعاد بحجة الاعتماد.
+
+---
+
 ## BR-APR-008 — Reviewer Does Not Become Record Author
 
 **Status:** APPROVED

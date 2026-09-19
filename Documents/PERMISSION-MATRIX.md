@@ -1187,6 +1187,35 @@ PERM-ESIG-SIGN
 
 ---
 
+# 61A. Two-Stage Approval Permission Split (2026-09-19)
+
+```text
+Stage 1 (Supervisor, P-05)
+  INSPECTION_REPORT: UNDER_REVIEW      PERM-INSP-APPROVE
+  LAB_TEST:          UNDER_REVIEW      PERM-LAB-APPROVE
+  -> PENDING_QCM_APPROVAL (no formal e-signature)
+
+Stage 2 (QCM = MANAGER, or named yazeed/SYSTEM_OWNER)
+  INSPECTION_REPORT: PENDING_QCM_APPROVAL   PERM-APR-APPROVE + PERM-ESIG-SIGN
+  LAB_TEST:          PENDING_QCM_APPROVAL   PERM-APR-APPROVE + PERM-ESIG-SIGN
+  -> APPROVED (locked) with a binding signature (meaning FINAL_APPROVE)
+
+REOPEN (audited, reason required)
+  INSPECTION_REPORT: APPROVED   PERM-APR-APPROVE (action REOPEN)
+  LAB_TEST:          APPROVED   PERM-APR-APPROVE (action REOPEN)
+```
+
+قواعد ثابتة:
+
+* `PERM-APR-APPROVE` مطلوب فقط على `PENDING_QCM_APPROVAL` للاعتماد النهائي،
+  و`PERM-INSP-APPROVE` / `PERM-LAB-APPROVE` مطلوبان فقط على `UNDER_REVIEW`.
+* migration `0031` تسحب `PERM-APR-APPROVE` من دور `SUPERVISOR`؛ Supervisor لا يعتمد نهائيًا.
+* `PERM-ESIG-SIGN` لا يمنح Approve، لكنه شرط تنفيذ مراسم التوقيع، وسياسة الحالة يجب أن
+  تسمح بـ`SIGN` على `PENDING_QCM_APPROVAL` وإلا فالاعتماد النهائي غير قابل للتنفيذ.
+* Admin وحده ليس سلطة اعتماد في أي من المرحلتين.
+
+---
+
 # 62. Change Request Permissions
 
 ```text

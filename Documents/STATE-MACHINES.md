@@ -1564,11 +1564,15 @@ POLICY-DEPENDENT
 DRAFT
 SUBMITTED
 UNDER_REVIEW
+PENDING_QCM_APPROVAL
 RETURNED
 APPROVED
 REJECTED
 VOID
 ```
+
+`PENDING_QCM_APPROVAL` هي المحطة الوسطى المعتمدة لقرار المرحلتين
+(owner decision 2026-09-19، migration `0031_qc_creation_parity_two_stage_approval`).
 
 ---
 
@@ -1584,14 +1588,23 @@ UNDER_REVIEW
  │             ↓
  │           DRAFT
  │
- ├────────→ APPROVED
+ ├──[stage-1: Supervisor]──→ PENDING_QCM_APPROVAL
+ │                                    ├──[stage-2: QCM final]──→ APPROVED
+ │                                    └──→ RETURNED
  │
  └────────→ REJECTED
+
+APPROVED ──[REOPEN]──→ UNDER_REVIEW
 
 APPROVED / REJECTED
         ↓
        VOID
 ```
+
+لا يوجد مسار `UNDER_REVIEW → APPROVED` مباشر: القفل يحدث فقط عبر موافقة QCM النهائية.
+
+`PENDING_QCM_APPROVAL` مرحلة اعتماد داخلية وليست إفراجًا أو نتيجة علمية:
+الإفراج عن Receiving يبقى قرارًا منفصلًا.
 
 `RETURNED → DRAFT` يعني editable working state مع history محفوظ، وليس إنشاء record جديد.
 
@@ -1744,27 +1757,25 @@ This does not erase prior submission.
 
 ---
 
-## TR-INSP-006 — Approve Inspection
+## TR-INSP-006 — Stage-1 (Supervisor) Approve Inspection
 
 ```text
 UNDER_REVIEW
 →
-APPROVED
+PENDING_QCM_APPROVAL
 ```
 
 Permission:
 
 ```text
 PERM-INSP-APPROVE
-+
-PERM-APR-APPROVE
 ```
 
-Current role policy:
+Current role policy (P-05 approved slice, PD-10):
 
 ```text
-POLICY-DEPENDENT
-RUNTIME DEFAULT = DENY
+Supervisor / Manager / named yazeed (SYSTEM_OWNER)
+Admin alone = DENY
 ```
 
 Preconditions:
@@ -1775,7 +1786,7 @@ Current record version
 No SoD conflict
 Required evidence still valid
 Controlled source references valid
-Final result determinable
+Final result supplied by the approved controlled source
 ```
 
 SoD default:
@@ -1783,15 +1794,12 @@ SoD default:
 ```text
 Author != Approver
 Executor != Approver
-Reviewer != Approver
 ```
 
-Reviewer/Approver combination remains policy-dependent.
-
-Snapshot:
+E-Signature:
 
 ```text
-FINAL CONTROLLED SNAPSHOT REQUIRED
+NOT REQUIRED (owner decision 2026-09-19: stage-1 is a workflow event)
 ```
 
 Audit:
@@ -1806,14 +1814,83 @@ Transaction:
 REQUIRED
 ```
 
-Cross-domain effects may include:
+Open dependency: the official inspection result must come from an approved controlled
+source (PD-01 / PD-02 / PD-07). `SaveInspectionDraftUseCase` refuses a browser-supplied
+official result, so an application-created report currently cannot satisfy this
+precondition and the transition stays fail-closed. No result, limit or tolerance may be
+inferred in the meantime.
+
+---
+
+## TR-INSP-006B — Stage-2 (QCM) Final Approve Inspection
+
+```text
+PENDING_QCM_APPROVAL
+→
+APPROVED (locked)
+```
+
+Permission:
+
+```text
+PERM-APR-APPROVE
++
+PERM-ESIG-SIGN
+```
+
+Current role policy (P-05 approved slice, PD-10):
+
+```text
+Manager (QCM) or named yazeed (SYSTEM_OWNER)
+Supervisor alone = DENY
+Admin alone = DENY
+```
+
+Preconditions:
+
+```text
+State is exactly PENDING_QCM_APPROVAL (named owner may act as the explicit exception)
+Current record version
+No SoD conflict with author/executor
+Server-side reauthentication succeeds
+Binding electronic signature with meaning FINAL_APPROVE is stored
+```
+
+Snapshot:
+
+```text
+FINAL CONTROLLED SNAPSHOT REQUIRED
+```
+
+E-Signature:
+
+```text
+REQUIRED
+registry state policy must allow SIGN at PENDING_QCM_APPROVAL
+```
+
+Audit:
+
+```text
+REQUIRED
+```
+
+Transaction:
+
+```text
+REQUIRED
+```
+
+Cross-domain effects:
 
 ```text
 Update Receiving inspection result
-Update Receiving workflow
-Generate Finding/NCR trigger if applicable
+Update Receiving workflow to INSPECTION_COMPLETE
 Create notification
 ```
+
+A receiving item that is on HOLD is never overwritten by an approval: the approval is
+refused instead. Approval never releases an item; `PASS != RELEASED`.
 
 All required synchronous business consequences must be transactionally consistent.
 
@@ -1877,6 +1954,45 @@ Receiving consequence must be explicitly defined before implementation.
 
 ---
 
+## TR-INSP-009 — Reopen Approved Inspection
+
+```text
+APPROVED
+→
+UNDER_REVIEW
+```
+
+Permission:
+
+```text
+PERM-APR-APPROVE (action REOPEN)
+```
+
+Current role policy:
+
+```text
+Manager (QCM) or named yazeed (SYSTEM_OWNER)
+Supervisor alone = DENY
+```
+
+Reason:
+
+```text
+REQUIRED
+```
+
+Effects:
+
+```text
+Audited transition with the reason
+Signature history preserved (the approval is never erased)
+Stage order applies again: UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED
+```
+
+Ordinary editing of an APPROVED record stays denied.
+
+---
+
 # 29. Inspection Result State
 
 داخل التقرير نفسه يمكن Final Result أن يكون:
@@ -1911,6 +2027,7 @@ FAIL
 DRAFT
 SUBMITTED
 UNDER_REVIEW
+PENDING_QCM_APPROVAL
 RETURNED
 APPROVED
 REJECTED
@@ -1928,13 +2045,19 @@ SUBMITTED
  ↓
 UNDER_REVIEW
  ├────→ RETURNED → DRAFT
- ├────→ APPROVED
+ ├──[stage-1: Supervisor]──→ PENDING_QCM_APPROVAL
+ │                                    ├──[stage-2: QCM final]──→ APPROVED
+ │                                    └──→ RETURNED
  └────→ REJECTED
+
+APPROVED ──[REOPEN]──→ UNDER_REVIEW
 
 APPROVED / REJECTED
         ↓
        VOID
 ```
+
+لا يوجد مسار `UNDER_REVIEW → APPROVED` مباشر، والموافقة النهائية تحمل التوقيع الإلكتروني الملزم.
 
 ---
 
@@ -2058,27 +2181,25 @@ Preserve review/submission history.
 
 ---
 
-## TR-LAB-006 — Approve Lab Test
+## TR-LAB-006 — Stage-1 (Supervisor) Approve Lab Test
 
 ```text
 UNDER_REVIEW
 →
-APPROVED
+PENDING_QCM_APPROVAL
 ```
 
 Permission:
 
 ```text
 PERM-LAB-APPROVE
-+
-PERM-APR-APPROVE
 ```
 
-Role assignment:
+Role assignment (P-05 approved slice, PD-09):
 
 ```text
-POLICY-DEPENDENT
-RUNTIME DEFAULT = DENY
+Supervisor / Manager / named yazeed (SYSTEM_OWNER)
+Admin alone = DENY
 ```
 
 Preconditions:
@@ -2087,7 +2208,8 @@ Preconditions:
 Current version
 No SoD conflict
 Required review complete
-Scientific rules traceable
+Scientific result produced by the approved controlled source and matching the frozen
+context source reference + content hash (drift is refused)
 Required equipment/calibration context valid
 Required evidence complete
 ```
@@ -2113,7 +2235,93 @@ REQUIRED
 E-Signature:
 
 ```text
-POLICY-DEPENDENT
+NOT REQUIRED (owner decision 2026-09-19)
+```
+
+---
+
+## TR-LAB-006B — Stage-2 (QCM) Final Approve Lab Test
+
+```text
+PENDING_QCM_APPROVAL
+→
+APPROVED (locked)
+```
+
+Permission:
+
+```text
+PERM-APR-APPROVE
++
+PERM-ESIG-SIGN
+```
+
+Role assignment:
+
+```text
+Manager (QCM) or named yazeed (SYSTEM_OWNER)
+Supervisor alone = DENY
+Admin alone = DENY
+```
+
+Preconditions:
+
+```text
+State is exactly PENDING_QCM_APPROVAL
+Current version
+No SoD conflict with the author
+Server-side reauthentication succeeds
+Binding electronic signature with meaning FINAL_APPROVE is stored
+```
+
+E-Signature:
+
+```text
+REQUIRED
+registry state policy must allow SIGN at PENDING_QCM_APPROVAL
+```
+
+Audit:
+
+```text
+REQUIRED
+```
+
+---
+
+## TR-LAB-009 — Reopen Approved Lab Test
+
+```text
+APPROVED
+→
+UNDER_REVIEW
+```
+
+Permission:
+
+```text
+PERM-APR-APPROVE (action REOPEN)
+```
+
+Role assignment:
+
+```text
+Manager (QCM) or named yazeed (SYSTEM_OWNER)
+```
+
+Reason:
+
+```text
+REQUIRED
+```
+
+Effects:
+
+```text
+Audited transition with the reason
+Signature history preserved
+Measurements preserved
+Stage order applies again
 ```
 
 ---

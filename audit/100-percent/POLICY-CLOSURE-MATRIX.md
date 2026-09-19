@@ -157,6 +157,34 @@ This is the only permitted path for supplying decisions such as limits, methods,
 - `Documents/PRODUCTION-READINESS-CHECKLIST.md`: final authority is P-07 Manager/yazeed; deferred readiness authority item is removed, while evidence/UAT/provider gates remain.
 - `Documents/REQUIREMENTS-TRACEABILITY.md`, `DATA-DICTIONARY.md`, `DATABASE-ARCHITECTURE.md`, and `RISK-REGISTER.md`: unresolved records continue to point to this matrix; no source-dependent value is promoted to PASS.
 
+## QC-100-FINAL-013 reconciliation — 2026-09-19
+
+Candidate: `84bdf249dc74062a62cd69a132a326ea2b3f2d82` + working tree (see the FINAL-013 report for the frozen fingerprint). P-04/P-05/P-06/P-07 were **not** reopened; nothing below invents a formula, limit, method, unit, tolerance, retention period or signer.
+
+**What the reconciliation changed**
+
+- `PD-09`/`PD-10` (P-05 inspection/laboratory approval): the approved two-stage decision is now implemented and runtime-proven per the records below, including a real defect fix — `PERM-ESIG-SIGN`/`SIGN` previously had no `PENDING_QCM_APPROVAL` state, so the binding signature (and therefore any final approval) was unreachable. Evidence: `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts` (16 cases, 4 consecutive green runs).
+- **New blocking dependency inside the already-approved inspection chain:** `ApproveInspectionUseCase` requires an official `final_result`, but no application path can write it — `SaveInspectionDraftUseCase` refuses a browser-supplied result (`errors.official_result_must_come_from_approved_source`) and no inspection controlled-source evaluator exists (unlike laboratory). `StartInspectionUseCase` is also not wired into the quarantine action graph, so a report cannot be created from the application. Consequence: `TR-INSP-006` is fail-closed for any application-created report. These are implementation gaps whose *decision inputs* are `PD-01`/`PD-02`/`PD-07`.
+
+**Unresolved decisions that block FINAL-013 item 2/3 (owner / question / dependent behavior / evidence needed)**
+
+| ID | Decision owner | Exact question | Dependent behavior | Evidence needed to close |
+|---|---|---|---|---|
+| PD-01 | QC WI/SOP/spec per method | What are the per-parameter PASS/FAIL limits? | `inspection_report_points.acceptance_rule_payload` evaluation and the official inspection result | Approved criteria document + version/hash bound to each template |
+| PD-02 | Document-control approved version | Which exact approved source/version/hash binds judgment to criteria (inspection and lab)? | Source-drift guard; frozen execution snapshot validity | Approved source reference + content hash per template version |
+| PD-07 | QC manual-judgment procedure | May a human record a manual PASS/FAIL judgment for an inspection point, and who? | Whether any non-automatic inspection-result path may exist | Approved manual-judgment procedure with signer and scope |
+| PD-16 | QC FAIL-handling procedure | Does a FAIL inspection auto-create an NCR, or is it a user action? | Post-approval QMS consequence (currently: no automatic NCR) | Approved FAIL-handling rule |
+| PD-11 | QMS SoD matrix | Exact author/reviewer/approver/executor incompatibilities beyond self-approval | Whether reopen/final-approve combinations need extra separation | Approved SoD matrix |
+| PD-32 | QMS scope list | Complete action list requiring an electronic signature | Which transitions must sign (currently final approval only, per owner decision) | Approved scope list |
+| PD-24/PD-25 | QMS retention/archival schedule | Retention per record class; archival timing | Purge/archive jobs and evidence lifecycle | Approved retention + archival schedule |
+| PD-38 | QC/QMS reject-authority source | Who may apply the TR-LAB-007 reject decision? | `RejectLabTestUseCase` stays `POLICY_SOURCE_REQUIRED` | Approved reject-authority source |
+
+**Applicability decision — domain 70**
+
+Domain 70 in `01-100-DOMAIN-SCORECARD.md` is **Security UX**; its applicability stands (runtime denial/enumeration evidence is pending), and it is **not** a localization domain. Arabic/RTL is a separate approved capability requirement (`Documents/UI-UX-SPECIFICATION.md §42`, `Documents/DESIGN-SYSTEM.md §16`, `Documents/PRODUCTION-READINESS-CHECKLIST.md §31`, `Documents/UAT-ACCEPTANCE-PLAN.md §57`) and is **not implemented** (the interface is English-only, `lang="en"`, LTR). The domain ID is retained, implementation is handed to 005/018 and verification to 006, and no unapproved `N/A` is recorded.
+
+**Unchanged by this reconciliation:** all `OPEN`/`BLOCKED` provider, recovery, CI, UAT and production-evidence records remain open; `PASS` is still not `RELEASED`.
+
 ## Closure rule
 
 `CLOSED` is not a release certificate. For every closed policy, code and tests may prove the guard exists, but only current evidence on the exact candidate can prove a live release. R-007 remains open for the unresolved records; provider and recovery records remain blocked until external evidence exists.

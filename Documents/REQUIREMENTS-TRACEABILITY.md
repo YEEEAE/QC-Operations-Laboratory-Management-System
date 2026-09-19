@@ -2192,3 +2192,33 @@ Evidence-Based Only
 Status:
 FOUNDATION — APPROVED REQUIREMENTS TRACEABILITY MODEL
 ```
+
+---
+
+# 103. Two-Stage Controlled Approval Trace (QC-100-FINAL-013)
+
+**Requirement:** اعتماد تقرير التفتيش واختبار المختبر مرحلتان
+(`UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`) مع توقيع إلكتروني ملزم على
+المرحلة النهائية و`REOPEN` مدقّق بسبب — BR-APR-012، PD-09/PD-10 (P-05)، P-07.
+
+| الطبقة | الدليل |
+| --- | --- |
+| Policy | migration `0031_qc_creation_parity_two_stage_approval`؛ `policy-registry` (PERM-INSP-APPROVE / PERM-LAB-APPROVE على `UNDER_REVIEW`، PERM-APR-APPROVE على `PENDING_QCM_APPROVAL`، PERM-ESIG-SIGN يحمل `PENDING_QCM_APPROVAL`) |
+| Domain | `inspection-state.ts` و`lab-state.ts`: APPROVE → `PENDING_QCM_APPROVAL`، FINAL_APPROVE → `APPROVED`، REOPEN → `UNDER_REVIEW` بلا مسار تجاوز |
+| Application | `Approve*` (stage-1)، `FinalApprove*` (stage-2 + ceremony)، `Reopen*`، `Return*`، `Resume*` |
+| Signature | `createFinalApprovalCeremony` + `qc.electronic_signatures` بمعنى `FINAL_APPROVE` و`request_id` |
+| Integration | `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts` (16 حالة) + `controlled-workflow-proof-matrix.test.ts` (15 حالة) |
+| Unit | `tests/unit/authorization/two-stage-approval-contract.test.ts` |
+
+**Open dependency (معلنة، لا مُخفاة):** النتيجة الرسمية لتقرير التفتيش يجب أن تأتي من
+controlled source معتمد (PD-01/PD-02/PD-07 مفتوحة)؛ لا يوجد مسار تطبيقي يكتب
+`inspection_reports.final_result`، لذلك stage-1 لتقرير مُنشأ من التطبيق يبقى fail-closed.
+مسار المختبر مكتمل لأن `PostgresControlledLabSources.evaluate()` هو نقطة الإدخال الوحيدة
+المعتمدة وتبقى رافضة حتى توفّر المصدر المعتمد.
+
+**Applicability decision (domain 70):** المجال 70 في سجل المجالات هو **Security UX**
+وخضوعه للتطبيق قائم (runtime denial/enumeration أدلة معلّقة)، وليس Localization.
+الأرشفة العربية وRTL متطلب معتمد منفصل (`UI-UX-SPECIFICATION.md §42`،
+`DESIGN-SYSTEM.md §16`، `PRODUCTION-READINESS-CHECKLIST.md §31`،
+`UAT-ACCEPTANCE-PLAN.md §57`) وغير منفذ: الواجهة English-only/LTR. لذلك يُبقى معرّف
+المجال كما هو، ويُحال التنفيذ إلى 005/018 والتحقق إلى 006، ولا يجوز تسجيل N/A غير معتمد.

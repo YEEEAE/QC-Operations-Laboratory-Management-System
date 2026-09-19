@@ -1038,6 +1038,24 @@ Directly modify historical records through admin UI
 
 ---
 
+# 55A. Two-Stage Approval (2026-09-19)
+
+اعتماد تقرير التفتيش واختبار المختبر مرحلتان معتمدتان:
+
+```text
+Supervisor  →  stage-1 only  (PERM-INSP-APPROVE / PERM-LAB-APPROVE, UNDER_REVIEW)
+Manager/QCM →  final approval (PERM-APR-APPROVE + PERM-ESIG-SIGN, PENDING_QCM_APPROVAL)
+named yazeed/SYSTEM_OWNER → final approval
+Admin alone → DENY in both stages
+```
+
+migration `0031` تسحب `PERM-APR-APPROVE` من `SUPERVISOR`، فـ"Approve controlled records"
+لدى Supervisor تعني stage-1 فقط. الاعتماد النهائي يقفل السجل ويحمل التوقيع الإلكتروني
+الملزم (معنى `FINAL_APPROVE`) ويمكن أن ينتهي بـ`REOPEN` مدقّق بسبب مطلوب من سلطة
+الاعتماد النهائي.
+
+---
+
 # 56. Role Comparison Summary
 
 | Area                       | Employee            | Supervisor         | Manager                       | Admin                                 |

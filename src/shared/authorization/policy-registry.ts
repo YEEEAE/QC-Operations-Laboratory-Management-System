@@ -1037,6 +1037,11 @@ const policies: readonly AuthorizationPolicy[] = [
         'DRAFT',
         'SUBMITTED',
         'UNDER_REVIEW',
+        // QC-100-FINAL-013: the approved two-stage chain signs the record at the
+        // QCM checkpoint. `FinalApprove*UseCase` hands the ceremony the
+        // pre-transition state (PENDING_QCM_APPROVAL), so the binding signature
+        // was unreachable while this state was missing from the registry.
+        'PENDING_QCM_APPROVAL',
         'IN_REVIEW',
         'RETURNED',
         'APPROVED',

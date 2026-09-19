@@ -5,6 +5,29 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-013 — two-stage controlled workflows)
+
+> نُقلت أقدم سجلات الـHistorical Ledger من `01` (ملف الأدلة التاريخي لـNFR، وسجلَا `QC-AI-PROVIDERS-001` و`QC-CLOSURE-010`) إلى هنا بعد التحقق من غيابها في هذا الأرشيف، لأن `01` بلغ 509 سطرًا (فوق الحد الناعم 500). لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة أو أدلة إصدار سارية؛ كل ما نُقل تاريخي لمرشّحات سابقة.
+
+## 15) Historical evidence snapshot — Production NFR evidence
+- `QC-CLOSURE-NFR-010` أضاف سجل أدلة موحدًا على exact source `313bdfcc031abc18d3e55e75a025d880b9d16450` وbuild `rel-d740622fc9010566`، مع فصل الأدلة المحلية عن claims الإنتاج/UAT.
+- frozen install/lock integrity، 37 focused security/observability tests، typecheck، architecture، build، release identity/verification، source-map scan، local CSP/CSRF/safe-error HTTP checks: **VERIFIED/PASS** ضمن Node `v22.23.1` فقط، وهو خارج contract `>=24.20.0 <25`.
+- local smoke: login/live 200، readiness 503 بسبب PostgreSQL unavailable، cross-origin mutation 403؛ هذه أدلة runtime محلي لا production.
+- accessibility selected browser run: 6/8 PASS؛ login tests unstable/NOT VERIFIED، وكل authenticated keyboard/AT/manual workflows NOT EXECUTED.
+- dependency audit لم يرجع بسبب network، CI exact-head ما زال غير مثبت، Docker/PostgreSQL 18/authenticated E2E/provider/exporter/live performance ما زالت **BLOCKED/UNVERIFIED**.
+- privacy data-flow inventory موجود في evidence file؛ مدد retention وdeletion/correction الدقيقة غير مخترعة وتبقى pending policy.
+
+- **2026-09-18 — QC-AI-PROVIDERS-001 / Groq + Gemini provider integration**
+  - Changed: added server-only validated Groq/Gemini adapters behind the existing `AiProvider`, bounded failover to Disabled, sanitized provider metadata, optional AI health reporting, canonical/legacy environment transition, Render declarations, and advisory/provider security coverage.
+  - Evidence: focused AI `53/53 PASS`; typecheck `0 errors`; architecture/build/targeted lint/format/diff check PASS. Full unit has one pre-existing Reject Reports UI failure; security has one Docker/Testcontainers-blocked case. Live providers/Render/UAT remain NOT VERIFIED.
+  - State: PARTIAL / BLOCKED.
+  - Key files: `src/modules/ai-advisory/infrastructure/`, `src/modules/ai-advisory/application/dependencies.ts`, `docs/operations/AI-PROVIDERS.md`.
+- **2026-09-18 — QC-CLOSURE-010 / Cross-domain integration, search, notifications & reports**
+  - Changed: wired approval-event outbox handling to recipient-scoped, replay-safe notifications; expanded authorized search identifiers and canonical report filters.
+  - Evidence: focused `8 files / 29 tests PASS`; typecheck `0 errors`; architecture/build/diff checks PASS. PostgreSQL/outbox runtime blocked by local shared-memory permission and unavailable Docker daemon.
+  - State: PARTIAL.
+  - Key files: `src/shared/outbox/qc-event-handler.ts`, `src/shared/search/postgres-search.ts`, `src/modules/reporting/infrastructure/postgres-report-query.ts`, `audit/2026-09-18-qc-closure-010-cross-domain-integration.md`.
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-015 — credential/canonical-connection safety gate)
 
 > نُقلت أقدم ثلاثة سجلات تاريخية (2026-09-18: QC-100-FINAL-013، QC-100-FINAL-002، QC-100-FINAL-016 live UX review) إلى هنا بعد التحقق من عدم وجودها في هذا الأرشيف، لإبقاء `01` قرب حدّه الناعم بعد سجل 015. لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة؛ أرقامها تاريخية لمرشّحات سابقة.
