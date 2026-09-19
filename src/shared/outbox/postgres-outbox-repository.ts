@@ -27,7 +27,10 @@ export class PostgresOutboxRepository implements OutboxRepository {
         .selectAll()
         .where('processed_at', 'is', null)
         .where('available_at', '<=', new Date())
+        // created_at is not unique; the id tie-break keeps claim order
+        // deterministic for events sharing one timestamp.
         .orderBy('created_at')
+        .orderBy('id')
         .limit(limit)
         .forUpdate()
         .skipLocked()

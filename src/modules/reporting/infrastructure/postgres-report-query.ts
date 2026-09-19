@@ -5,6 +5,15 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { ReportDefinition, ReportFilters } from '../domain/report-definition.js';
 import type { ReportDataset, ReportQuery } from '../ports/report-query.js';
 
+/**
+ * Substring filters stay substring filters (approved report contract), but a
+ * user-supplied `%`/`_`/`\` is literal business data, never a pattern
+ * metacharacter — the same rule the global search applies (BR-SRCH-001/003).
+ */
+function literalLikeContains(value: string): string {
+  return `%${value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}%`;
+}
+
 export class PostgresReportQuery implements ReportQuery {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
   async run(
@@ -31,8 +40,8 @@ export class PostgresReportQuery implements ReportQuery {
        WHERE created_by = ${actor.id}
          AND (${filters.from ?? null}::date IS NULL OR receiving_date >= ${filters.from ?? null}::date)
          AND (${filters.to ?? null}::date IS NULL OR receiving_date <= ${filters.to ?? null}::date)
-         AND (${filters.lot ?? null}::text IS NULL OR lot ILIKE ${filters.lot ? `%${filters.lot}%` : null})
-         AND (${filters.itemCode ?? null}::text IS NULL OR item_code ILIKE ${filters.itemCode ? `%${filters.itemCode}%` : null})
+         AND (${filters.lot ?? null}::text IS NULL OR lot ILIKE ${filters.lot ? literalLikeContains(filters.lot) : null} ESCAPE '\\')
+         AND (${filters.itemCode ?? null}::text IS NULL OR item_code ILIKE ${filters.itemCode ? literalLikeContains(filters.itemCode) : null} ESCAPE '\\')
          AND (${filters.workflowState ?? null}::text IS NULL OR workflow_state = ${filters.workflowState ?? null})
          AND (${filters.inspectionResult ?? null}::text IS NULL OR inspection_result = ${filters.inspectionResult ?? null})
          AND (${filters.releaseSystem ?? null}::boolean IS NULL OR release_system = ${filters.releaseSystem ?? null})

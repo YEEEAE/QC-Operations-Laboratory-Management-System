@@ -217,6 +217,40 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
     expect(xlsx.rowCount).toBe(LARGE_ROW_COUNT + 1);
   });
 
+  it('treats LIKE wildcards inside lot/itemCode filters as literal data on screen and export', async () => {
+    await insertReceiving(pool!, {
+      id: '01900000-0000-7000-8000-000000000d11',
+      receivingNo: 'RPT-PARITY-A-WILD',
+      description: 'Literal wildcard item',
+      itemCode: 'ITEM-WILD',
+      createdBy: ownerId,
+      receivingDate: '2026-03-15',
+    });
+    await pool!.query(
+      `UPDATE qc.receiving_items SET lot = 'LOT-100' WHERE receiving_no = 'RPT-PARITY-A-WILD'`,
+    );
+    // '%' is literal business data, not a pattern: LOT-% matches no row, and
+    // LOT-1_0 matches no row because '_' must not stand in for the '0'.
+    const wildcardScreen = await runReport.execute(reportActor(ownerId), 'quarantine-aging', {
+      lot: 'LOT-%',
+    });
+    expect(wildcardScreen.rows).toHaveLength(0);
+    expect(
+      (await runReport.execute(reportActor(ownerId), 'quarantine-aging', { lot: 'LOT-1_0' })).rows,
+    ).toHaveLength(0);
+    // The same literal prefix still matches its own row, on screen and export.
+    const literalScreen = await runReport.execute(reportActor(ownerId), 'quarantine-aging', {
+      lot: 'LOT-100',
+    });
+    expect(literalScreen.rows).toHaveLength(1);
+    expect(literalScreen.rows[0]).toMatchObject({ receivingNo: 'RPT-PARITY-A-WILD' });
+    const literalCsv = await exportReport.execute(reportActor(ownerId), 'quarantine-aging', 'CSV', {
+      lot: 'LOT-100',
+    });
+    expect(literalCsv.rowCount).toBe(1);
+    expect(literalCsv.bytes.toString('utf8')).toContain('RPT-PARITY-A-WILD');
+  });
+
   it('denies exports without the format-specific export permission', async () => {
     await expect(
       exportReport.execute(viewOnlyActor(ownerId), 'quarantine-aging', 'CSV', {}),

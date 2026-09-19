@@ -155,6 +155,43 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
     expect(stillUnread.some((notification) => notification.id === created.id)).toBe(true);
   });
 
+  it('claims events in a deterministic order even when created_at ties', async () => {
+    // created_at is not unique; claim order must still be total and stable so a
+    // limited batch never re-serves or skips events across identical runs.
+    const keys = ['ord-1', 'ord-2', 'ord-3', 'ord-4', 'ord-5'];
+    for (const key of keys) {
+      await outbox.enqueue({
+        eventType: 'TASK_ASSIGNED',
+        aggregateType: 'TASK',
+        aggregateId: recipientA,
+        payload: { recipientUserId: recipientA, title: `Order ${key}`, message: 'M' },
+        dedupeKey: `notif-test:order:${key}`,
+      });
+    }
+    await pool!.query(
+      `UPDATE qc.outbox_events
+          SET created_at = TIMESTAMPTZ '2026-01-01 00:00:00+00',
+              available_at = now() - interval '1 second'
+        WHERE dedupe_key LIKE 'notif-test:order:%'`,
+    );
+    const firstRun = (await outbox.claim(3)).map((event) => event.dedupeKey);
+    const secondRun = (await outbox.claim(3)).map((event) => event.dedupeKey);
+    expect(firstRun).toHaveLength(3);
+    expect(secondRun).toHaveLength(2);
+    expect([...firstRun, ...secondRun]).toHaveLength(5);
+    expect(new Set([...firstRun, ...secondRun]).size).toBe(5);
+    // The two runs together must follow one stable total order (id tie-break):
+    // no event reappears and none is skipped between the bounded claims.
+    const orderedIds = await pool!.query(
+      `SELECT dedupe_key FROM qc.outbox_events
+        WHERE dedupe_key LIKE 'notif-test:order:%'
+        ORDER BY created_at, id`,
+    );
+    expect([...firstRun, ...secondRun]).toEqual(
+      orderedIds.rows.map((row: { dedupe_key: string }) => row.dedupe_key),
+    );
+  });
+
   it('keeps recipient listing and mark-read replays stable and idempotent', async () => {
     const first = await service.create({
       recipientUserId: recipientB,
