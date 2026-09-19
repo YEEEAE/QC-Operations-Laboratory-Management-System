@@ -1005,6 +1005,7 @@ const policies: readonly AuthorizationPolicy[] = [
     'FINDING',
     'INSPECTION_TEMPLATE_VERSION',
     'RELEASE_CANDIDATE',
+    'UAT_CYCLE',
   ].flatMap((entityType) => [
     {
       permission: 'PERM-APR-REVIEW',
@@ -1029,9 +1030,26 @@ const policies: readonly AuthorizationPolicy[] = [
         'IN_PROGRESS',
         'CLOSED',
         'READY_FOR_CLOSURE',
+        'UNVERIFIED',
+        'BLOCKED',
       ],
     },
   ]) as unknown as AuthorizationPolicy[]),
+  // QC-100-FINAL-004 Task 5: UAT acceptance authorization. The final-approval
+  // ceremony grant (PERM-APR-APPROVE, MANAGER / named owner) authorizes the
+  // ACCEPT action on a signed cycle; report viewers may read the evidence.
+  {
+    permission: 'PERM-APR-APPROVE',
+    action: 'APPROVE',
+    entityType: 'UAT_CYCLE',
+    states: ['UNVERIFIED', 'IN_PROGRESS', 'BLOCKED'],
+  },
+  {
+    permission: 'PERM-RPT-VIEW',
+    action: 'VIEW',
+    entityType: 'UAT_CYCLE',
+    states: ['UNVERIFIED', 'IN_PROGRESS', 'ACCEPTED', 'REJECTED', 'BLOCKED'],
+  },
   ...([
     'INSPECTION_REPORT',
     'LAB_TEST',
@@ -1043,6 +1061,7 @@ const policies: readonly AuthorizationPolicy[] = [
     'NCR',
     'FINDING',
     'RELEASE_CANDIDATE',
+    'UAT_CYCLE',
   ].flatMap((entityType) => [
     {
       permission: 'PERM-APR-APPROVE',

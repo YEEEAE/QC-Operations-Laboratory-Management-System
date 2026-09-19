@@ -79,3 +79,32 @@ export interface ReleaseGovernanceRepository {
     requestId: string;
   }): Promise<ReleaseApprovalRecord>;
 }
+
+/**
+ * QC-100-FINAL-004 Task 5: the single controlled writer for
+ * `qc.release_gate_evidence` rows of `evidence_type='uat'` with trusted source
+ * `SIGNED_UAT_CYCLE`. The write is intended to run inside the UAT acceptance
+ * transaction so an acceptance and its gate evidence commit atomically.
+ */
+export interface RecordUatGateEvidenceCommand {
+  releaseId: string;
+  /** qc.uat_cycles.id (UUID) of the signed cycle. */
+  uatCycleId: string;
+  /** Human-readable cycle identifier bound in the cycle row. */
+  cycleReference: string;
+  status: 'PASS' | 'FAIL' | 'PARTIAL' | 'UNVERIFIED';
+  immutableReference: string;
+  observedAt: Date;
+  gitSha: string;
+  buildId: string;
+  applicationVersion: string;
+  migrationHead: string;
+  releaseVersion: bigint;
+  evidenceVersion: bigint;
+  recordedBy: string;
+  auditInfo: unknown;
+}
+
+export interface ReleaseGateEvidenceWriter {
+  recordUatGateEvidence(command: RecordUatGateEvidenceCommand): Promise<void>;
+}

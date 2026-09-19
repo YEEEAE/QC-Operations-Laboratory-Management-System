@@ -31,6 +31,11 @@ const LOCAL_ENV_KEYS = new Set([
   'QC_UAT_QC03_PASSWORD',
   'QC_UAT_SEED_ALLOW',
   'QC_UAT_OPERATOR_IDENTITY',
+  // QC-100-FINAL-004 Task 5: evidence ingestion guards + acceptance ceremony.
+  'QC_UAT_INGEST_ALLOW',
+  'QC_UAT_PINNED_RELEASE_SHA',
+  'QC_UAT_ACCEPT_PASSWORD',
+  'QC_UAT_ACCEPT_SIGNER_IDENTITY',
 ]);
 
 function parseValue(value: string): string {

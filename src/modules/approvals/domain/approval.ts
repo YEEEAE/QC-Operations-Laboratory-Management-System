@@ -35,6 +35,8 @@ export const APPROVAL_SUBJECT_TYPES = [
   'FINDING',
   'INSPECTION_TEMPLATE_VERSION',
   'RELEASE_CANDIDATE',
+  // QC-100-FINAL-004 Task 5: UAT acceptance ceremonies sign the cycle.
+  'UAT_CYCLE',
 ] as const;
 export type ApprovalSubjectType = (typeof APPROVAL_SUBJECT_TYPES)[number];
 
