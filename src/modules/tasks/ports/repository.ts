@@ -1,4 +1,5 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import type { Page } from '../../../shared/pagination/page.js';
 import type { Task } from '../domain/model.js';
 import type { TaskAction } from '../domain/state.js';
 
@@ -17,10 +18,19 @@ export interface TaskListFilter {
    */
   due?: 'overdue' | 'today';
 }
+export interface TaskListPage {
+  items: readonly Task[];
+  total: number;
+}
 export interface TaskRepository {
   create(input: { task: Task; actor: ActorContext; requestId: string }): Promise<Task>;
   get(id: string, actor: ActorContext): Promise<Task | undefined>;
-  list(input: { actor: ActorContext; filter?: TaskListFilter }): Promise<readonly Task[]>;
+  /**
+   * Bounded register read. `page` is required: the register never returns an
+   * unbounded row set. `total` is the full authorized match count for the same
+   * filter, so a UI page control can navigate without a second count query.
+   */
+  list(input: { actor: ActorContext; filter?: TaskListFilter; page: Page }): Promise<TaskListPage>;
   updateDraft(input: {
     id: string;
     expectedVersion: bigint;

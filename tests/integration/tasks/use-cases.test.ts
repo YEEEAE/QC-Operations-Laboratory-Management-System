@@ -25,7 +25,8 @@ function repo(): TaskRepository & { task?: Task } {
       return state.task;
     },
     async list() {
-      return state.task ? [state.task] : [];
+      const items = state.task ? [state.task] : [];
+      return { items, total: items.length };
     },
     async updateDraft() {
       throw new Error('not used');

@@ -61,6 +61,15 @@ export interface DashboardMetricResult {
   source: DashboardAttentionSource;
 }
 
+/** Narrowing guard: a bounded register read carries `{ total, rows }`; an
+ * unbounded one is the row array itself. `Array.isArray` alone does not
+ * narrow the union member for the compiler, so the guard is explicit. */
+function isBoundedRead(
+  read: readonly DashboardAttentionRow[] | { total: number; rows: readonly DashboardAttentionRow[] },
+): read is { total: number; rows: readonly DashboardAttentionRow[] } {
+  return !Array.isArray(read);
+}
+
 /**
  * Reads one metric source.
  *
@@ -75,9 +84,15 @@ export async function readMetricSource(
 ): Promise<DashboardMetricResult> {
   const { metric } = source;
   try {
-    const rows = await source.read(actor);
+    const read = await source.read(actor);
+    // Bounded registers report their own full match count (`total`) while the
+    // attention queue samples the bounded page (`rows`); unbounded sources
+    // return the rows directly and the count is the row count. Either way the
+    // number is the register's own, never a second query's.
+    const rows = isBoundedRead(read) ? read.rows : read;
+    const value = isBoundedRead(read) ? read.total : read.length;
     return {
-      metric: { ...metric, value: rows.length },
+      metric: { ...metric, value },
       rows,
       source: { key: metric.key, label: metric.label, state: 'AVAILABLE', message: '' },
     };

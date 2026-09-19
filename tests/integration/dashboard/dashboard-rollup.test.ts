@@ -51,6 +51,7 @@ import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
+import { parsePageInput } from '../../../src/shared/pagination/page.js';
 
 const MINE = '01900000-0000-7000-8000-00000000d601';
 const OTHER = '01900000-0000-7000-8000-00000000d602';
@@ -133,7 +134,9 @@ function sourceDependencies(
     notifications: { listOwn: (actor, unreadOnly) => notifications.listOwn(actor, unreadOnly) },
     receiving: { execute: (input) => receiving.execute(input) },
     inspections: { execute: (input) => inspections.execute(input) },
-    tasks: { execute: (input) => tasks.execute(input) },
+    tasks: {
+      execute: (input) => tasks.execute({ ...input, page: parsePageInput({ pageSize: 25 }) }),
+    },
     calibrations: { execute: (input) => calibrations.execute(input) },
     ...overrides,
   };
@@ -191,16 +194,24 @@ async function rowsForHref(href: string, actor: ActorContext): Promise<number> {
           ownership,
         })
       ).length;
-    case '/tasks':
-      return (
-        await tasks.execute({
-          actor,
-          filter: {
-            assigneeId: params.get('assignee') === 'mine' ? actor.id : undefined,
-            due: (params.get('due') ?? undefined) as 'overdue' | 'today' | undefined,
-          },
-        })
-      ).length;
+    case '/tasks': {
+      // The parity harness reproduces the *register*, not one page: it reads
+      // every page with the same filter until the register's own total is met.
+      const filter = {
+        assigneeId: params.get('assignee') === 'mine' ? actor.id : undefined,
+        due: (params.get('due') ?? undefined) as 'overdue' | 'today' | undefined,
+      };
+      let seen = 0;
+      let total = Number.POSITIVE_INFINITY;
+      for (let pageNumber = 1; seen < total; pageNumber += 1) {
+        const page = parsePageInput({ page: pageNumber, pageSize: 25 });
+        const result = await tasks.execute({ actor, filter, page });
+        total = result.total;
+        seen += result.items.length;
+        if (!result.items.length) break;
+      }
+      return seen;
+    }
     case '/assets/calibrations':
       return (
         await calibrations.execute({

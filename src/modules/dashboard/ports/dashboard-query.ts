@@ -104,15 +104,19 @@ export interface DashboardAttentionSource {
  *
  * `read` returns the exact rows of a register the actor is allowed to read; the
  * displayed count is that array's length and the drill-down `href` is the same
- * register with the same supported filters. A missing permission yields an
- * explicit `unavailable` state instead of a zero, while any other read failure
- * propagates and withholds the whole snapshot.
+ * register with the same supported filters. A bounded register instead returns
+ * `{ total, rows }`: the register's own full match count for the displayed
+ * number and its bounded page for the queue — never a second count query. A
+ * missing permission yields an explicit `unavailable` state instead of a zero,
+ * while any other read failure propagates and withholds the whole snapshot.
  */
 export interface DashboardMetricSource {
   metric: DashboardMetricDefinition;
   /** Projecting the rows into the attention queue is optional per source. */
   attention?: { severity: DashboardAttention['severity']; reason: string };
-  read(actor: ActorContext): Promise<readonly DashboardAttentionRow[]>;
+  read(
+    actor: ActorContext,
+  ): Promise<readonly DashboardAttentionRow[] | { total: number; rows: readonly DashboardAttentionRow[] }>;
 }
 
 /**

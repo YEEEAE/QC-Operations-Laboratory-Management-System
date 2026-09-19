@@ -8,6 +8,8 @@ import {
   quarantineReadDependencies,
   receivingReadDependencies,
 } from '../../quarantine/application/dependencies.js';
+import { DEFAULT_PAGE_SIZE } from '../../../config/constants.js';
+import { parsePageInput } from '../../../shared/pagination/page.js';
 import { taskReadDependencies } from '../../tasks/application/dependencies.js';
 import { PostgresDashboardQuery } from '../infrastructure/postgres-dashboard-query.js';
 import { GetDashboardUseCase } from './get-dashboard.js';
@@ -45,7 +47,16 @@ export function dashboardDependencies() {
           },
           receiving: { execute: (input) => receiving.execute(input) },
           inspections: { execute: (input) => inspections.execute(input) },
-          tasks: { execute: (input) => tasks.execute(input) },
+          // The task register is bounded, so the dashboard samples the same
+          // first page the register page opens; the count stays the register's
+          // own `total` (see readTaskSource), never a sampled length.
+          tasks: {
+            execute: (input) =>
+              tasks.execute({
+                ...input,
+                page: parsePageInput({ pageSize: DEFAULT_PAGE_SIZE }),
+              }),
+          },
           calibrations: { execute: (input) => calibrations.execute(input) },
         }),
         dashboardFlowSource({ execute: (input) => overview.execute(input) }),

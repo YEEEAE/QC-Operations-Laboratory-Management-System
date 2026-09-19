@@ -8,9 +8,10 @@ import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-re
 import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import type { Page } from '../../../shared/pagination/page.js';
 import type { Task } from '../domain/model.js';
 import type { TaskAction } from '../domain/state.js';
-import type { TaskListFilter, TaskRepository } from '../ports/repository.js';
+import type { TaskListFilter, TaskListPage, TaskRepository } from '../ports/repository.js';
 
 function mapTask(
   row: DatabaseRow<'tasks'>,
@@ -167,36 +168,46 @@ export class PostgresTaskRepository implements TaskRepository {
       .executeTakeFirst();
     return mapTask(row, checklist, Boolean(evidence));
   }
-  async list(input: { actor: ActorContext; filter?: TaskListFilter }): Promise<readonly Task[]> {
-    let query = this.database
-      .selectFrom('tasks')
+  async list(input: {
+    actor: ActorContext;
+    filter?: TaskListFilter;
+    page: Page;
+  }): Promise<TaskListPage> {
+    const base = () => this.database.selectFrom('tasks');
+    const applyFilter = (query: ReturnType<typeof base>, filter?: TaskListFilter) => {
+      let q = query;
+      if (filter?.state) q = q.where('state', '=', filter.state);
+      if (filter?.assigneeId) q = q.where('current_assignee_id', '=', filter.assigneeId);
+      if (filter?.search)
+        q = q.where((eb) =>
+          eb.or([eb('title', 'ilike', `%${filter.search}%`), eb('task_no', 'ilike', `%${filter.search}%`)]),
+        );
+      if (filter?.due) {
+        // The whole day window is computed once, in UTC, and applied in SQL, so
+        // the register a dashboard counter links to returns exactly the rows the
+        // counter counted — including across a host time zone.
+        const start = utcDayStart(this.now());
+        const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+        q =
+          filter.due === 'overdue'
+            ? q.where('due_at', '<', start)
+            : q.where('due_at', '>=', start).where('due_at', '<', end);
+        q = q.where('state', 'not in', CLOSED_TASK_STATES);
+      }
+      return q;
+    };
+    const countRow = await applyFilter(base(), input.filter)
+      .select(({ fn }) => fn.countAll().as('count'))
+      .executeTakeFirst();
+    const rows = await applyFilter(base(), input.filter)
       .selectAll()
       .orderBy('updated_at', 'desc')
-      .orderBy('id', 'desc');
-    if (input.filter?.state) query = query.where('state', '=', input.filter.state) as typeof query;
-    if (input.filter?.assigneeId)
-      query = query.where('current_assignee_id', '=', input.filter.assigneeId) as typeof query;
-    if (input.filter?.search)
-      query = query.where((eb) =>
-        eb.or([
-          eb('title', 'ilike', `%${input.filter!.search}%`),
-          eb('task_no', 'ilike', `%${input.filter!.search}%`),
-        ]),
-      ) as typeof query;
-    if (input.filter?.due) {
-      // The whole day window is computed once, in UTC, and applied in SQL, so
-      // the register a dashboard counter links to returns exactly the rows the
-      // counter counted — including across a host time zone.
-      const start = utcDayStart(this.now());
-      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-      query =
-        input.filter.due === 'overdue'
-          ? (query.where('due_at', '<', start) as typeof query)
-          : (query.where('due_at', '>=', start).where('due_at', '<', end) as typeof query);
-      query = query.where('state', 'not in', CLOSED_TASK_STATES) as typeof query;
-    }
-    const rows = await query.execute();
-    if (!rows.length) return [];
+      .orderBy('id', 'desc')
+      .limit(input.page.pageSize)
+      .offset(input.page.offset)
+      .execute();
+    const total = Number((countRow as { count?: unknown } | undefined)?.count ?? 0);
+    if (!rows.length) return { items: [], total };
     // Batched related reads: one query per relation for the whole page instead
     // of three per task, which is what made the register quadratic in rows.
     const ids = rows.map((row) => row.id);
@@ -222,9 +233,12 @@ export class PostgresTaskRepository implements TaskRepository {
       else checklistByTask.set(item.task_id, [item]);
     }
     const tasksWithEvidence = new Set(evidenceRows.map((row) => row.subject_id));
-    return rows.map((row) =>
-      mapTask(row, checklistByTask.get(row.id) ?? [], tasksWithEvidence.has(row.id)),
-    );
+    return {
+      items: rows.map((row) =>
+        mapTask(row, checklistByTask.get(row.id) ?? [], tasksWithEvidence.has(row.id)),
+      ),
+      total,
+    };
   }
   async updateDraft(input: {
     id: string;

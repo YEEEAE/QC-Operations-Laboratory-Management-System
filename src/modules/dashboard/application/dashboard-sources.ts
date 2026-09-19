@@ -70,7 +70,7 @@ export interface DashboardTaskReader {
   execute(input: {
     actor: ActorContext;
     filter?: { assigneeId?: string; due?: 'overdue' | 'today' };
-  }): Promise<readonly { id: string; taskNo: string; state: string; dueAt?: Date }[]>;
+  }): Promise<{ items: readonly { id: string; taskNo: string; state: string; dueAt?: Date }[]; total: number }>;
 }
 
 export interface DashboardCalibrationReader {
@@ -87,6 +87,34 @@ export interface DashboardSourceDependencies {
   inspections: DashboardInspectionReader;
   tasks: DashboardTaskReader;
   calibrations: DashboardCalibrationReader;
+}
+
+/**
+ * One task-metric read. The register is bounded, so the source returns the
+ * register's own full match count (`total`) for the displayed number and the
+ * bounded first page for the attention queue — the same first page the
+ * register page opens. Parity is count↔register, never count↔sampled-page.
+ */
+async function readTaskSource(
+  dependencies: DashboardSourceDependencies,
+  actor: ActorContext,
+  due: 'overdue' | 'today',
+): Promise<{ total: number; rows: readonly DashboardAttentionRow[] }> {
+  const page = await dependencies.tasks.execute({
+    actor,
+    filter: { assigneeId: actor.id, due },
+  });
+  return {
+    total: page.total,
+    rows: page.items.map((task): DashboardAttentionRow => ({
+      id: task.id,
+      title: task.taskNo,
+      state: task.state,
+      href: `/tasks/${task.id}`,
+      anchorAt: task.dueAt,
+      anchor: 'due',
+    })),
+  };
 }
 
 /** Human label for an approval subject, falling back to the subject type. */
@@ -266,20 +294,7 @@ export function dashboardMetricSources(
         tone: 'danger',
       },
       attention: { severity: 'CRITICAL', reason: 'Task is past its due date' },
-      read: async (actor) => {
-        const rows = await dependencies.tasks.execute({
-          actor,
-          filter: { assigneeId: actor.id, due: 'overdue' },
-        });
-        return rows.map((task): DashboardAttentionRow => ({
-          id: task.id,
-          title: task.taskNo,
-          state: task.state,
-          href: `/tasks/${task.id}`,
-          anchorAt: task.dueAt,
-          anchor: 'due',
-        }));
-      },
+      read: (actor) => readTaskSource(dependencies, actor, 'overdue'),
     },
     {
       metric: {
@@ -299,20 +314,7 @@ export function dashboardMetricSources(
         tone: 'warning',
       },
       attention: { severity: 'WARNING', reason: 'Task is due today' },
-      read: async (actor) => {
-        const rows = await dependencies.tasks.execute({
-          actor,
-          filter: { assigneeId: actor.id, due: 'today' },
-        });
-        return rows.map((task): DashboardAttentionRow => ({
-          id: task.id,
-          title: task.taskNo,
-          state: task.state,
-          href: `/tasks/${task.id}`,
-          anchorAt: task.dueAt,
-          anchor: 'due',
-        }));
-      },
+      read: (actor) => readTaskSource(dependencies, actor, 'today'),
     },
     {
       metric: {

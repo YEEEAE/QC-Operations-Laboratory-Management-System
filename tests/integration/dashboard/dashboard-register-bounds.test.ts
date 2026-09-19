@@ -39,6 +39,7 @@ import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
+import { parsePageInput } from '../../../src/shared/pagination/page.js';
 
 const MINE = '01900000-0000-7000-8000-00000000d701';
 const OTHER = '01900000-0000-7000-8000-00000000d702';
@@ -95,7 +96,11 @@ function dashboardOver(db: Kysely<DatabaseSchema>) {
           new ListInspectionsUseCase(new PostgresInspectionRepository(db)).execute(input),
       },
       tasks: {
-        execute: (input) => new ListTasksUseCase(new PostgresTaskRepository(db)).execute(input),
+        execute: (input) =>
+          new ListTasksUseCase(new PostgresTaskRepository(db)).execute({
+            ...input,
+            page: parsePageInput({ pageSize: 25 }),
+          }),
       },
       calibrations: {
         execute: (input) =>
@@ -165,10 +170,13 @@ describe('dashboard register query bounds', () => {
     const overdue = await tasks.execute({
       actor: mine(),
       filter: { assigneeId: MINE, due: 'overdue' },
+      page: parsePageInput({ pageSize: 25 }),
     });
     // Only this actor's open overdue task counts: the completed task and the
     // other account's task are excluded by the same predicate the link uses.
-    expect(overdue.map((task) => task.taskNo)).toEqual([`BND-${RUN}-overdue-open`]);
+    // The count is the register's own total, not the sampled page length.
+    expect(overdue.items.map((task) => task.taskNo)).toEqual([`BND-${RUN}-overdue-open`]);
+    expect(overdue.total).toBe(1);
     const baseline = first.statements.length;
 
     for (let index = 0; index < 6; index += 1) {
@@ -178,8 +186,10 @@ describe('dashboard register query bounds', () => {
     const after = await new ListTasksUseCase(new PostgresTaskRepository(second.db)).execute({
       actor: mine(),
       filter: { assigneeId: MINE, due: 'overdue' },
+      page: parsePageInput({ pageSize: 25 }),
     });
-    expect(after).toHaveLength(overdue.length);
+    expect(after.total).toBe(overdue.total);
+    expect(after.items).toHaveLength(overdue.items.length);
     expect(second.statements.length).toBe(baseline);
   });
 
