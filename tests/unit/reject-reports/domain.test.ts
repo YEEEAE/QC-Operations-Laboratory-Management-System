@@ -8,6 +8,8 @@ import { validateIssueSlipFields } from '../../../src/modules/reject-reports/dom
 import {
   pendingApprovalRoles,
   allApprovalsConfirmed,
+  nextPendingApprovalRole,
+  assertApprovalRoleIsNext,
 } from '../../../src/modules/reject-reports/domain/issue-slip.js';
 import { computeRejectPercent } from '../../../src/modules/reject-reports/domain/reject-percentage.js';
 import {
@@ -108,6 +110,68 @@ describe('Reject Reports — approval completeness', () => {
       confirmation('FACTORY_DIRECTOR', 'CONFIRMED'),
     ];
     expect(allApprovalsConfirmed(complete)).toBe(true);
+  });
+});
+
+describe('Reject Reports — checkpoint ordering gate (QC-100-FINAL-004 Task 3)', () => {
+  const allPending = () => [
+    confirmation('SUPERVISOR', 'PENDING'),
+    confirmation('QC_MANAGER', 'PENDING'),
+    confirmation('FACTORY_DIRECTOR', 'PENDING'),
+  ];
+
+  it('exposes only the next pending checkpoint and walks SUPERVISOR → QC_MANAGER → FACTORY_DIRECTOR', () => {
+    expect(nextPendingApprovalRole(allPending())).toBe('SUPERVISOR');
+    expect(
+      nextPendingApprovalRole([
+        confirmation('SUPERVISOR', 'CONFIRMED'),
+        confirmation('QC_MANAGER', 'PENDING'),
+        confirmation('FACTORY_DIRECTOR', 'PENDING'),
+      ]),
+    ).toBe('QC_MANAGER');
+    expect(
+      nextPendingApprovalRole([
+        confirmation('SUPERVISOR', 'CONFIRMED'),
+        confirmation('QC_MANAGER', 'CONFIRMED'),
+        confirmation('FACTORY_DIRECTOR', 'PENDING'),
+      ]),
+    ).toBe('FACTORY_DIRECTOR');
+    expect(
+      nextPendingApprovalRole([
+        confirmation('SUPERVISOR', 'CONFIRMED'),
+        confirmation('QC_MANAGER', 'CONFIRMED'),
+        confirmation('FACTORY_DIRECTOR', 'CONFIRMED'),
+      ]),
+    ).toBeUndefined();
+  });
+
+  it('denies confirming a checkpoint before its predecessors', () => {
+    expect(() => assertApprovalRoleIsNext(allPending(), 'SUPERVISOR')).not.toThrow();
+    expect(() => assertApprovalRoleIsNext(allPending(), 'QC_MANAGER')).toThrow(AppError);
+    expect(() => assertApprovalRoleIsNext(allPending(), 'FACTORY_DIRECTOR')).toThrow(AppError);
+    const afterSupervisor = [
+      confirmation('SUPERVISOR', 'CONFIRMED'),
+      confirmation('QC_MANAGER', 'PENDING'),
+      confirmation('FACTORY_DIRECTOR', 'PENDING'),
+    ];
+    expect(() => assertApprovalRoleIsNext(afterSupervisor, 'FACTORY_DIRECTOR')).toThrow(AppError);
+    expect(() => assertApprovalRoleIsNext(afterSupervisor, 'QC_MANAGER')).not.toThrow();
+  });
+
+  it('treats a missing confirmation row as pending and denies the later checkpoint', () => {
+    const onlyDirectorRow = [confirmation('FACTORY_DIRECTOR', 'PENDING')];
+    expect(nextPendingApprovalRole(onlyDirectorRow)).toBe('SUPERVISOR');
+    expect(() => assertApprovalRoleIsNext(onlyDirectorRow, 'FACTORY_DIRECTOR')).toThrow(AppError);
+  });
+
+  it('returns a reversed checkpoint to the front of the queue', () => {
+    const reversed = [
+      confirmation('SUPERVISOR', 'REVERSED'),
+      confirmation('QC_MANAGER', 'CONFIRMED'),
+      confirmation('FACTORY_DIRECTOR', 'PENDING'),
+    ];
+    expect(nextPendingApprovalRole(reversed)).toBe('SUPERVISOR');
+    expect(() => assertApprovalRoleIsNext(reversed, 'FACTORY_DIRECTOR')).toThrow(AppError);
   });
 });
 

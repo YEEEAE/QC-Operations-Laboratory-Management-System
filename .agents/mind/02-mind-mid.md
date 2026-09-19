@@ -5,6 +5,21 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-004 / Task 3 — Reject checkpoint order gating)
+
+> نُقلت هنا أقدم سجلات `2026-09-18` (QC-CLOSURE-005 وQC-CLOSURE-001) بعد التحقق من أن محتواها أما زال مرجعًا في أقسام الحالة الحالية (`Key files`/disposable PostgreSQL) وإما صار موثّقًا في قسم المشاكل المفتوحة. لم تُنقل أي قرارات أو invariants أو blockers ما زالت سارية.
+
+## [2026-09-18] — QC-CLOSURE-005 / PostgreSQL, migrations, transactions & integrity
+- Changed: added `scripts/db/disposable-postgres.sh` (approved equivalent disposable PostgreSQL 18 environment for hosts without Docker) and an opt-in `{ tls: true }` mode on the shared test-container helper; fixed two runtime-proven product defects — `PERM-IDN-REVOKE-SESSIONS` had no policy-registry entry (so administrative session revocation was permanently `AUTHZ_DENIED`), and `ApproveReleaseUseCase` evaluated candidate state before idempotency replay (so retrying a committed approval failed with `DOMAIN_INVALID_TRANSITION` instead of replaying); replaced drifted hard-coded migration counts with expectations derived from `loadMigrations()`; corrected test-harness defects (container bypassing `QC_TEST_DATABASE_URL`, TLS-requiring operator script fed a non-TLS URL, Kysely `destroy()` ending the suite-owned pool); added two injected-failure atomicity proofs (release approval and role grant leave no half-committed state).
+- Evidence: empty PG 18.6 → `0001…0024`, `pending []`, schema check 24/70/0 orphans; integration 80 files / 314 PASS (was 6 failed files), migrations 6 files / 22 PASS (was 3 failed), concurrency 12 PASS; static gates and `build` PASS. Details in `audit/2026-09-18-qc-closure-005-postgres-runtime-integrity.md`.
+- State: PARTIAL — Docker/Testcontainers image path, authenticated E2E, UAT, CI and provider evidence remain unexecuted; Node 22 is outside contract.
+- Key files: `scripts/db/disposable-postgres.sh`, `src/shared/authorization/policy-registry.ts`, `src/modules/release-governance/{ports/repository.ts,application/approve-release.ts,infrastructure/postgres-repository.ts}`, `tests/helpers/postgres-container.ts`.
+
+## [2026-09-18] — QC-CLOSURE-001 / baseline, CI, and repository hygiene
+- Changed: removed four tracked `.DS_Store` files; applied canonical Prettier output; removed two unused assignments/imports that made ESLint fail; added the required Git whitespace gate to canonical CI.
+- Evidence: frozen install, format, lint, typecheck, architecture, tech-debt, unit `75/485`, build, release identity/verification, and both diff checks PASS; no tracked `.DS_Store` remains. Exact-head GitHub CI run `35284944134` has zero steps because the account is billing-locked.
+- State: PARTIAL / BLOCKED (local repository defects closed; Node 22 mismatch, Docker-backed suites, authenticated E2E, and remote CI cannot be closed locally).
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-017 / Dashboard command center)
 
 > نُقلت هنا أقدم سجلات `2026-09-17` بعد أن صارت حالتها التاريخية ممثّلة في أقسام الحالة الحالية (`Current State`, `الهوية والتفويض`). لم تُنقل أي invariants أو قرارات أو blockers ما زالت سارية.

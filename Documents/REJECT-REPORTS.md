@@ -16,6 +16,8 @@ Migration `0026_reject_reports.sql` adds `qc.reject_reports`, `qc.reject_issue_s
 
 Issue Slips use `DRAFT → APPROVAL_TRACKING → COMPLETED` (with controlled `VOID`). The three relational checkpoints are `SUPERVISOR`, `QC_MANAGER`, and `FACTORY_DIRECTOR`. A confirmation means the creator recorded that the real-world approval was obtained; it is not an electronic signature by the named approver. Completion is atomic only after all three are confirmed. Reversal requires a reason and remains in the audit trail.
 
+The checkpoints are strictly sequential (`SUPERVISOR → QC_MANAGER → FACTORY_DIRECTOR`). Only the first checkpoint that is not `CONFIRMED` may be recorded next, so a later checkpoint can never be confirmed while an earlier one is still pending — a QC data-entry (EMPLOYEE) creator holding `PERM-RREJ-CONFIRM-APPROVAL` cannot record a checkpoint above the one the slip is currently at, and the ordering rule applies regardless of the actor's role (no role skips a checkpoint). A `REVERSED` checkpoint returns to the front of the queue, so re-confirmation restarts from that checkpoint and the following checkpoints apply in order again. Out-of-order confirmations are denied server-side and the detail page only offers the confirm action for the next pending checkpoint.
+
 Daily Reject records use `DRAFT → FINALIZED` (with controlled `VOID`) and require no approval stage. Each record supports multiple production/rejection rows.
 
 ## Calculation and evidence

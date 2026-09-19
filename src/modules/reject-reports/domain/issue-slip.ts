@@ -94,6 +94,35 @@ export function allApprovalsConfirmed(approvals: readonly ApprovalConfirmation[]
   return pendingApprovalRoles(approvals).length === 0;
 }
 
+/**
+ * Ordering gate (QC-100-FINAL-004 Task 3).
+ *
+ * The three checkpoints are sequential — `SUPERVISOR → QC_MANAGER →
+ * FACTORY_DIRECTOR`. Only the first checkpoint that is not `CONFIRMED` may be
+ * recorded next, so a later checkpoint can never be confirmed while an earlier
+ * one is still pending. A `REVERSED` row is not `CONFIRMED`, so reversing a
+ * checkpoint returns it to the front of the queue and re-confirmation restarts
+ * from that checkpoint (the following checkpoints still apply in order).
+ */
+export function nextPendingApprovalRole(
+  approvals: readonly ApprovalConfirmation[],
+): IssueSlipApprovalRole | undefined {
+  return pendingApprovalRoles(approvals)[0];
+}
+
+/**
+ * Rejects a confirmation that is out of order, whatever the actor's role:
+ * a QC data-entry (EMPLOYEE) creator who holds `PERM-RREJ-CONFIRM-APPROVAL`
+ * cannot record a checkpoint above the one the slip is currently at.
+ */
+export function assertApprovalRoleIsNext(
+  approvals: readonly ApprovalConfirmation[],
+  role: IssueSlipApprovalRole,
+): void {
+  if (nextPendingApprovalRole(approvals) !== role)
+    throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+}
+
 /** Confirmation is only possible while the slip tracks approvals. */
 export function assertConfirmable(slip: IssueSlip): void {
   if (slip.status !== 'APPROVAL_TRACKING' && slip.status !== 'ISSUED')

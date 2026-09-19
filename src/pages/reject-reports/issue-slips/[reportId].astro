@@ -1,7 +1,10 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
-import { ISSUE_SLIP_APPROVAL_ROLES } from '../../../modules/reject-reports/application/view-model.js';
+import {
+  ISSUE_SLIP_APPROVAL_ROLES,
+  nextPendingApprovalRole,
+} from '../../../modules/reject-reports/application/view-model.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
@@ -22,6 +25,10 @@ const hasPermission = (code: string) =>
 const isCreator = slip.createdBy === actor.id;
 const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
 const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+// Checkpoints are sequential (SUPERVISOR → QC_MANAGER → FACTORY_DIRECTOR), so
+// only the next pending checkpoint is confirmable; the server enforces the
+// same rule and denies an out-of-order confirmation.
+const nextApprovalRole = nextPendingApprovalRole(slip.approvals);
 const approvalLabel: Record<string, string> = {
   SUPERVISOR: 'Supervisor',
   QC_MANAGER: 'QC Manager',
@@ -107,12 +114,15 @@ const fmtDateTime = (d?: Date) =>
               {confirmation?.note && <span class="note">{confirmation.note}</span>}
             </div>
             <div class="step-actions">
-              {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && (
+              {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role === nextApprovalRole && (
                 <form class="inline-form" data-confirm-form={role} data-version={slip.version.toString()}>
                   <label class="sr-only" for={`approver-${role}`}>Approver name (optional)</label>
                   <input id={`approver-${role}`} name="approverName" maxlength="200" placeholder="Approver name (optional)" />
                   <button type="submit">Mark confirmed</button>
                 </form>
+              )}
+              {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role !== nextApprovalRole && (
+                <span class="hint">Confirm the earlier checkpoint first.</span>
               )}
               {state === 'CONFIRMED' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT')) && (
                 <form class="inline-form" data-reverse-form={role} data-version={slip.version.toString()}>
