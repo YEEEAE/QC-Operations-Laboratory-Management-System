@@ -22,7 +22,11 @@ import { hash } from 'argon2';
 import { randomUUID } from 'node:crypto';
 
 import { stableSeedUuid, FOUNDATION_ROLE_PERMISSIONS } from '../../db/seeds/common.js';
-import { UAT_PERSONAS, UAT_TEAM_VALUE } from '../../tests/fixtures/uat-personas.js';
+import {
+  UAT_PERSONAS,
+  UAT_TEAM_VALUE,
+  type UatScopeKind,
+} from '../../tests/fixtures/uat-personas.js';
 
 const MIN_PASSWORD_LENGTH = 16;
 const EXPIRY_HOURS = 72;
@@ -130,7 +134,7 @@ async function ensureRole(
 async function ensureScope(
   client: PoolClient,
   userId: string,
-  scopeKind: 'TEAM' | 'GLOBAL',
+  scopeKind: UatScopeKind,
   teamValue: string | null,
 ): Promise<void> {
   const existing = await client.query(
@@ -141,7 +145,7 @@ async function ensureScope(
   await client.query(
     `INSERT INTO qc.user_scopes (id, user_id, scope_kind, scope_value, assigned_by, reason)
      VALUES ($1, $2, $3, $4, $5, $6)`,
-    [randomUUID(), userId, scopeKind, teamValue, userId, REASON],
+    [randomUUID(), userId, scopeKind, scopeKind === 'TEAM' ? teamValue : null, userId, REASON],
   );
 }
 
@@ -157,7 +161,7 @@ async function assertPersonaAuthorization(
   userId: string,
   loginIdentity: string,
   roleCode: string,
-  expectedScope: 'TEAM' | 'GLOBAL',
+  expectedScopes: readonly UatScopeKind[],
   expectedTeamValue: string | null,
 ): Promise<void> {
   const account = await client.query<{ account_state: string }>(
@@ -216,15 +220,19 @@ async function assertPersonaAuthorization(
      WHERE user_id = $1 AND revoked_at IS NULL`,
     [userId],
   );
-  const hasExpectedScope = scopes.rows.some(
-    (row) =>
-      row.scope_kind === expectedScope &&
-      (expectedScope === 'GLOBAL' || row.scope_value === expectedTeamValue),
+  const missingScopes = expectedScopes.filter(
+    (scopeKind) =>
+      !scopes.rows.some(
+        (row) =>
+          row.scope_kind === scopeKind &&
+          (scopeKind !== 'TEAM' || row.scope_value === expectedTeamValue),
+      ),
   );
-  if (!hasExpectedScope) {
+  if (missingScopes.length > 0) {
     fail(
-      `UAT assertion failed: ${loginIdentity} lacks expected ${expectedScope} scope` +
-        (expectedTeamValue ? ` with value ${expectedTeamValue}` : '') +
+      `UAT assertion failed: ${loginIdentity} lacks expected scope grant(s): ` +
+        `${missingScopes.join(', ')}` +
+        (missingScopes.includes('TEAM') ? ` (TEAM value ${expectedTeamValue})` : '') +
         '.',
     );
   }
@@ -260,7 +268,9 @@ async function main(): Promise<void> {
         password,
       );
       await ensureRole(client, userId, persona.foundationRole, assignedBy);
-      await ensureScope(client, userId, persona.scope, persona.teamValue);
+      for (const scopeKind of persona.scopes) {
+        await ensureScope(client, userId, scopeKind, persona.teamValue);
+      }
       await client.query(
         `INSERT INTO qc.audit_events (actor_type, actor_id, subject_type, subject_id, action, request_id, reason)
          VALUES ('SYSTEM', NULL, 'USER', $1, 'UAT_FIXTURE_PROVISIONED', $2, $3)`,
@@ -311,7 +321,7 @@ async function main(): Promise<void> {
         row.rows[0].id,
         persona.loginIdentity,
         persona.foundationRole,
-        persona.scope,
+        persona.scopes,
         UAT_TEAM_VALUE,
       );
     }

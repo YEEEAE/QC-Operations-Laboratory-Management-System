@@ -49,7 +49,8 @@
     "verify:fixtures:clean": "tsx scripts/verification/cleanup-verification-fixtures.ts",
     "uat:seed": "tsx scripts/uat/seed-uat-personas.ts",
     "uat:clean": "tsx scripts/uat/cleanup-uat-personas.ts",
-    "uat:ingest": "tsx scripts/uat/ingest-uat-evidence.ts"
+    "uat:ingest": "tsx scripts/uat/ingest-uat-evidence.ts",
+    "uat:scenarios": "tsx scripts/uat/run-uat-scenarios.ts"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",

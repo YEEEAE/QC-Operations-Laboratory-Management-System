@@ -38,7 +38,7 @@ describe('QC-100-FINAL-004 Task 4 UAT persona contract', () => {
     const owner = UAT_PERSONAS.find((persona) => persona.loginIdentity === 'yazeed');
     expect(owner?.seedManaged).toBe(false);
     expect(owner?.foundationRole).toBe('SYSTEM_OWNER');
-    expect(owner?.scope).toBe('GLOBAL');
+    expect(owner?.scopes).toEqual(['GLOBAL']);
   });
 
   it('has no secrets in source; passwords arrive only via QC_UAT_* env-var names', () => {
@@ -59,9 +59,23 @@ describe('QC-100-FINAL-004 Task 4 UAT persona contract', () => {
       expect(byId.get(id)?.foundationRole).toBe('EMPLOYEE');
     }
     for (const id of ['qcm', 'supervisor', 'qc-01', 'qc-02', 'qc-03'] as const) {
-      expect(byId.get(id)?.scope).toBe('TEAM');
+      expect(byId.get(id)?.scopes).toContain('TEAM');
       expect(byId.get(id)?.teamValue).toBe(UAT_TEAM_VALUE);
     }
+  });
+
+  it('grants the scope kinds each UAT role actually needs (measured against authorize)', () => {
+    const byId = new Map(UAT_PERSONAS.map((persona) => [persona.id, persona]));
+    // Data entry creates records through `scope: { ownerId }`, which only an
+    // OWN (or GLOBAL) grant satisfies.
+    for (const id of ['qc-01', 'qc-02', 'qc-03'] as const) {
+      expect(byId.get(id)?.scopes).toContain('OWN');
+      expect(byId.get(id)?.scopes).not.toContain('GLOBAL');
+    }
+    // Both approval stages authorize for a record the approver neither owns nor
+    // is assigned, so only GLOBAL satisfies them today.
+    expect(byId.get('supervisor')?.scopes).toContain('GLOBAL');
+    expect(byId.get('qcm')?.scopes).toContain('GLOBAL');
   });
 
   it('grants every EMPLOYEE persona zero approval/sign authority', () => {

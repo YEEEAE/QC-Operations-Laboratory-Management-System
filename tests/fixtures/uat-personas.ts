@@ -22,6 +22,9 @@
 
 export type UatPersonaId = 'system-owner' | 'qcm' | 'supervisor' | 'qc-01' | 'qc-02' | 'qc-03';
 
+/** Scope kinds the seed may grant to a disposable UAT persona. */
+export type UatScopeKind = 'GLOBAL' | 'TEAM' | 'OWN';
+
 export interface UatPersona {
   id: UatPersonaId;
   /** Display name shown in UAT evidence only. */
@@ -32,8 +35,17 @@ export interface UatPersona {
   foundationRole: 'SYSTEM_OWNER' | 'SUPERVISOR' | 'MANAGER' | 'EMPLOYEE';
   /** Environment variable holding the one-time UAT password. */
   passwordEnvVar: string;
-  /** Scope granted at seed time. QC personas share one TEAM work queue. */
-  scope: 'GLOBAL' | 'TEAM';
+  /**
+   * Scope grants provisioned at seed time. Derived from the authorization
+   * contexts the UAT journeys actually execute (measured, not assumed):
+   * creating a receiving/inspection authorizes against
+   * `scope: { ownerId }` with no team context, so data entry needs `OWN`;
+   * the two approval stages and the release actions authorize against
+   * `scope: { ownerId, assigneeId }` for a record the approver neither owns
+   * nor is assigned, so only `GLOBAL` satisfies them today. `TEAM` keeps the
+   * shared `QC-UAT-TEAM` work-queue intent from Task 4.
+   */
+  scopes: readonly UatScopeKind[];
   /** TEAM scope value for the shared UAT work queue. */
   teamValue: string | null;
   /** Whether the seed script may create this account (false for yazeed). */
@@ -53,7 +65,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
     loginIdentity: 'yazeed',
     foundationRole: 'SYSTEM_OWNER',
     passwordEnvVar: 'QC_UAT_SYSTEM_OWNER_PASSWORD',
-    scope: 'GLOBAL',
+    scopes: ['GLOBAL'],
     teamValue: null,
     seedManaged: false,
     expiresAfterHours: 0,
@@ -64,7 +76,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
     loginIdentity: 'uat-qcm',
     foundationRole: 'MANAGER',
     passwordEnvVar: 'QC_UAT_QCM_PASSWORD',
-    scope: 'TEAM',
+    scopes: ['GLOBAL', 'TEAM'],
     teamValue: UAT_TEAM_VALUE,
     seedManaged: true,
     expiresAfterHours: 72,
@@ -75,7 +87,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
     loginIdentity: 'uat-supervisor',
     foundationRole: 'SUPERVISOR',
     passwordEnvVar: 'QC_UAT_SUPERVISOR_PASSWORD',
-    scope: 'TEAM',
+    scopes: ['GLOBAL', 'TEAM'],
     teamValue: UAT_TEAM_VALUE,
     seedManaged: true,
     expiresAfterHours: 72,
@@ -86,7 +98,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
     loginIdentity: 'uat-qc-01',
     foundationRole: 'EMPLOYEE',
     passwordEnvVar: 'QC_UAT_QC01_PASSWORD',
-    scope: 'TEAM',
+    scopes: ['OWN', 'TEAM'],
     teamValue: UAT_TEAM_VALUE,
     seedManaged: true,
     expiresAfterHours: 72,
@@ -97,7 +109,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
     loginIdentity: 'uat-qc-02',
     foundationRole: 'EMPLOYEE',
     passwordEnvVar: 'QC_UAT_QC02_PASSWORD',
-    scope: 'TEAM',
+    scopes: ['OWN', 'TEAM'],
     teamValue: UAT_TEAM_VALUE,
     seedManaged: true,
     expiresAfterHours: 72,
@@ -108,7 +120,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
     loginIdentity: 'uat-qc-03',
     foundationRole: 'EMPLOYEE',
     passwordEnvVar: 'QC_UAT_QC03_PASSWORD',
-    scope: 'TEAM',
+    scopes: ['OWN', 'TEAM'],
     teamValue: UAT_TEAM_VALUE,
     seedManaged: true,
     expiresAfterHours: 72,

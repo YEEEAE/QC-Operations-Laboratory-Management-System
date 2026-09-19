@@ -5,6 +5,13 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-004 / Task 7 — automated UAT scenario suite)
+
+> نُقل هنا سجلا التدقيق التحريري القديمان بعد التحقق من عدم وجودهما في هذا الأرشيف: كلاهما معلَّم تاريخيًا في `01` ("not revalidated for this newer HEAD" و"historical after subsequent commits")، ولا يحمل أي قرار ساري أو blocker مفتوح. لم يُنقل أي invariant أو مشكلة مفتوحة.
+
+- **Editorial revision:** `20e6ead8f397d02ac2de807a273795dfac47a703`. Reports and the 15-prompt HTML were rewritten for clarity; prior operational results remain tied to `298e307721af97d9c1bd22279d0c784fbf5b62a8`, not revalidated for this newer HEAD. Scores unchanged; operational status must be rechecked before use.
+- **QC-MIDPOINT-REBASE-001 evidence baseline (historical after subsequent commits):** HEAD `298e307721af97d9c1bd22279d0c784fbf5b62a8`/main dirty tree preserved; source 0030, 18 modules, 85 routes (2/81/2), 83 pages, 32 navigation destinations. Mechanical coverage 1048 first-party files plus targeted semantic review; exhaustive manual coverage NOT VERIFIED.
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-004 / Task 6 — local UAT bring-up)
 
 > نُقل هنا أقدم سجلين متبقيين في `01` (QC-MCP-POSTGRES-001 وCODEX-PLUGIN-SYNC) بعد التحقق من عدم وجودهما في هذا الأرشيف، وبعد التأكد أن حالتهما الحالية ما زالت ممثلة في أقسام الحالة (إعداد MCP المحلي وحالة الـhandshake غير المتحقق). لم تُنقل أي قرارات أو blockers سارية.
