@@ -22,6 +22,15 @@ const LOCAL_ENV_KEYS = new Set([
   'QC_VERIFY_ADMIN_PASSWORD',
   'QC_VERIFY_EMPLOYEE_PASSWORD',
   'QC_VERIFY_LEAST_PASSWORD',
+  // QC-100-FINAL-004 Task 4: UAT persona passwords (uat-* disposable accounts).
+  'QC_UAT_SYSTEM_OWNER_PASSWORD',
+  'QC_UAT_QCM_PASSWORD',
+  'QC_UAT_SUPERVISOR_PASSWORD',
+  'QC_UAT_QC01_PASSWORD',
+  'QC_UAT_QC02_PASSWORD',
+  'QC_UAT_QC03_PASSWORD',
+  'QC_UAT_SEED_ALLOW',
+  'QC_UAT_OPERATOR_IDENTITY',
 ]);
 
 function parseValue(value: string): string {
