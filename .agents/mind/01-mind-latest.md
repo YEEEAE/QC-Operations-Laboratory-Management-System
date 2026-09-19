@@ -425,6 +425,10 @@
 - Groq is the default primary adapter, Gemini is the default fallback, and `DisabledAiProvider` remains the final safe fallback. Configuration is server-only with canonical names plus legacy-name transition support; provider metadata is sanitized and advisory-only. Live provider smoke tests, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. No production/provider approval is inferred.
 
 ## 17) سجل تاريخي مضغوط
+- **2026-09-19 — RENDER-BUILD-FIX / duplicate lab dependencies imports**
+  - Changed: حذف 4 استيرادات مكررة من `src/modules/laboratory/application/dependencies.ts` كانت تكسر build على Render (`Identifier already declared`).
+  - Evidence: `astro build` PASS محليًا بعد الإصلاح؛ Render deploy build نجح.
+  - State: DONE.
 - **2026-09-19 — QC-100-FINAL-001 / Production parity recheck**
   - Changed/Evidence/State: ثبت deploy Render على `31ab21a…`؛ health/live/readiness `200`, release identity `401`, Reject unauthenticated redirect؛ applied DB state NOT VERIFIED بسبب rotation gate؛ PARTIAL / BLOCKED. `audit/2026-09-19/QC-100-FINAL-001-production-parity-recheck.md`.
 - **2026-09-19 — QC-100-FINAL-008 / Populated backup and isolated recovery**

@@ -20,12 +20,8 @@ import { ReviewLabTestUseCase } from './review-lab-test.js';
 import { ReturnLabTestUseCase } from './return-lab-test.js';
 import { ResumeLabTestUseCase } from './resume-lab-test.js';
 import { ApproveLabTestUseCase } from './approve-lab-test.js';
-import { FinalApproveLabTestUseCase } from './final-approve-lab-test.js';
-import { ReopenLabTestUseCase } from './reopen-lab-test.js';
 import { RejectLabTestUseCase } from './reject-lab-test.js';
 import { CreateRetestUseCase } from './create-retest.js';
-import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
-import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
 import { createPasswordReauthenticationVerifier } from '../../e-signatures/application/reauthentication-verifier.js';
 export function laboratoryReadDependencies() {
   const repository = new PostgresLabRepository(getDatabase());
