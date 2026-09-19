@@ -174,7 +174,10 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
       `SELECT count(*)::text AS count FROM qc.audit_events
        WHERE subject_type IN ('UAT_CYCLE','UAT_SESSION_EVIDENCE','UAT_DEFECT') AND action LIKE 'UAT_%'`,
     );
-    expect(Number(audits.rows[0].count)).toBeGreaterThanOrEqual(5);
+    // Exactly: 1 cycle creation + 2 session writes + 1 defect write. The
+    // rejected duplicate session above is denied before any write, so it adds
+    // no audit row.
+    expect(Number(audits.rows[0].count)).toBe(4);
   });
 
   it('fails closed: acceptance without a real cycle-bound e-signature is denied', async () => {
@@ -228,7 +231,7 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
       session: sessionInput('INT-AUTO-SES-1', AUTOMATED_PARTICIPANT_CODE),
       requestId: 'int-auto-ses-1',
     });
-    const signatureId = '01900000-0000-7000-8000-00000000bs01';
+    const signatureId = '01900000-0000-7000-8000-00000000ab01';
     await pool.query(
       `INSERT INTO qc.electronic_signatures (id, actor_id, subject_type, subject_id, subject_version, action, meaning, snapshot_hash, reauth_method, request_id)
        VALUES ($1, $2, 'UAT_CYCLE', (SELECT id FROM qc.uat_cycles WHERE cycle_id = $3), 1, 'UAT_ACCEPT', 'test meaning', $4, 'PASSWORD', 'int-auto-sig')`,
@@ -272,7 +275,7 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
   });
 
   it('commits gate evidence (SIGNED_UAT_CYCLE) atomically with an ACCEPTED human cycle', async () => {
-    const signatureId = '01900000-0000-7000-8000-00000000bs02';
+    const signatureId = '01900000-0000-7000-8000-00000000ab02';
     await pool.query(
       `INSERT INTO qc.electronic_signatures (id, actor_id, subject_type, subject_id, subject_version, action, meaning, snapshot_hash, reauth_method, request_id)
        VALUES ($1, $2, 'UAT_CYCLE', (SELECT id FROM qc.uat_cycles WHERE cycle_id = $3), 1, 'UAT_ACCEPT', 'accept UAT-INT-001', $4, 'PASSWORD', 'int-accept-sig')`,
@@ -381,7 +384,7 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
       session: sessionInput('INT-REJ-SES-1', 'uat-qc-02'),
       requestId: 'int-rej-ses-1',
     });
-    const signatureId = '01900000-0000-7000-8000-00000000bs03';
+    const signatureId = '01900000-0000-7000-8000-00000000ab03';
     await pool.query(
       `INSERT INTO qc.electronic_signatures (id, actor_id, subject_type, subject_id, subject_version, action, meaning, snapshot_hash, reauth_method, request_id)
        VALUES ($1, $2, 'UAT_CYCLE', (SELECT id FROM qc.uat_cycles WHERE cycle_id = $3), 1, 'UAT_ACCEPT', 'reject UAT-INT-REJ', $4, 'PASSWORD', 'int-rej-sig')`,

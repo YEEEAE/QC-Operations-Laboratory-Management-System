@@ -5,6 +5,30 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-004 / Task 6 — local UAT bring-up)
+
+> نُقل هنا أقدم سجلين متبقيين في `01` (QC-MCP-POSTGRES-001 وCODEX-PLUGIN-SYNC) بعد التحقق من عدم وجودهما في هذا الأرشيف، وبعد التأكد أن حالتهما الحالية ما زالت ممثلة في أقسام الحالة (إعداد MCP المحلي وحالة الـhandshake غير المتحقق). لم تُنقل أي قرارات أو blockers سارية.
+
+- **2026-09-18 — QC-MCP-POSTGRES-001 / Project-local PostgreSQL MCP server**
+  - Changed: added a Codex project-scoped `postgres-mcp` STDIO configuration and a fail-closed launcher that loads the allowlisted local `DATABASE_URL`, maps it to `DATABASE_URI`, and forces restricted read-only mode; documented the credential-rotation requirement.
+  - Evidence: TOML parse PASS; project typecheck `0 errors`; launcher missing-URL guard PASS; live database handshake **NOT VERIFIED** by design while the Render credential-rotation gate is open.
+  - State: PARTIAL.
+  - Key files: `.codex/config.toml`, `scripts/mcp/postgres-mcp.ts`, `docs/operations/POSTGRES-MCP.md`.
+- **2026-09-18 — CODEX-PLUGIN-SYNC / Codex plugin cache into project**
+  - Changed: copied 49 installed Codex plugin packages into `.agents/plugins/codex-cache/`, excluding internal `.git` directories and `.DS_Store` files.
+  - Evidence: source/destination `rsync` dry-run clean; 49 plugin roots / 2,685 files / 88 MB.
+  - State: DONE.
+  - Key files: `.agents/plugins/codex-cache/`.
+- **2026-09-18 — QC-MIDPOINT-REWRITE-001 / إعادة كتابة التقرير والخطة**
+  - Changed: clearer bilingual reports;15 independently copyable prompts with objective, dependencies, work, acceptance and handoff; separated editorial HEAD from evidence SHA.
+  - Evidence:36 sections/80 matching domain rows; all15 clipboard/Copied checks and copy-failure recovery PASS;320/768/1440 light/dark overflow checks PASS. No application tests rerun.
+  - State: DONE (editorial scope); historical release decision unchanged.
+- **2026-09-18 — QC-MIDPOINT-REBASE-001 / Evidence rebase and adaptive plan**
+  - Changed: refreshed existing bilingual80-domain reports and15-prompt HTML; compressed duplicated historical context, archives unchanged.
+  - Evidence: local PG suites and authorized owner reads; independent arithmetic/bilingual review and pack UI PASS;46.7% overall/5.3% production gate completion/NO-GO.
+  - State: PARTIAL — external/human and exhaustive manual coverage open; closure tasks not executed.
+  - Key files: audit/2026-09-18-ULTIMATE-COMPREHENSIVE-SYSTEM-AUDIT{,-AR}.md, audit/QC-Remaining-to-100-Percent-Prompts-Interactive.html.
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-004 / Task 3 — Reject checkpoint order gating)
 
 > نُقلت هنا أقدم سجلات `2026-09-18` (QC-CLOSURE-005 وQC-CLOSURE-001) بعد التحقق من أن محتواها أما زال مرجعًا في أقسام الحالة الحالية (`Key files`/disposable PostgreSQL) وإما صار موثّقًا في قسم المشاكل المفتوحة. لم تُنقل أي قرارات أو invariants أو blockers ما زالت سارية.

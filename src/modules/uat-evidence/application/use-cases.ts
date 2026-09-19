@@ -206,8 +206,8 @@ export class AcceptUatCycleUseCase {
     if (!valid) throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
 
     const [summary, sessions] = await Promise.all([
-      this.repository.getEvidenceSummary(cycle.id),
-      this.repository.listSessions(cycle.id),
+      this.repository.getEvidenceSummary(cycle.cycleId),
+      this.repository.listSessions(cycle.cycleId),
     ]);
     evaluateAcceptancePreconditions({
       cycleStatus: cycle.status,
@@ -312,9 +312,9 @@ export class GetUatCycleEvidenceUseCase {
       { throwOnDeny: true },
     );
     const [summary, sessions, defects] = await Promise.all([
-      this.repository.getEvidenceSummary(cycle.id),
-      this.repository.listSessions(cycle.id),
-      this.repository.listDefects(cycle.id),
+      this.repository.getEvidenceSummary(cycle.cycleId),
+      this.repository.listSessions(cycle.cycleId),
+      this.repository.listDefects(cycle.cycleId),
     ]);
     return {
       cycle,

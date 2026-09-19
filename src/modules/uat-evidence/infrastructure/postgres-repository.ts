@@ -102,15 +102,6 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
     return row ? mapCycle(row) : undefined;
   }
 
-  async getCycle(id: string): Promise<UatCycleRecord | undefined> {
-    const row = await this.database
-      .selectFrom('uat_cycles')
-      .selectAll()
-      .where('id', '=', id)
-      .executeTakeFirst();
-    return row ? mapCycle(row) : undefined;
-  }
-
   async createCycle(input: {
     identity: UatCycleIdentityBinding;
     evidenceSnapshotHash: string;
@@ -160,7 +151,7 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
   }
 
   async recordSession(command: RecordSessionCommand): Promise<UatSessionRecord> {
-    const cycle = await this.getCycle(command.cycleId);
+    const cycle = await this.findCycleByCycleId(command.cycleId);
     if (!cycle) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (cycle.status === 'ACCEPTED' || cycle.status === 'REJECTED') {
       throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
@@ -221,7 +212,7 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
   }
 
   async recordDefect(command: RecordDefectCommand): Promise<UatDefectRecord> {
-    const cycle = await this.getCycle(command.cycleId);
+    const cycle = await this.findCycleByCycleId(command.cycleId);
     if (!cycle) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const id = uuidv7();
     const defect = command.defect;
@@ -268,7 +259,7 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
   }
 
   async getEvidenceSummary(cycleId: string): Promise<UatCycleEvidenceSummary> {
-    const cycle = await this.getCycle(cycleId);
+    const cycle = await this.findCycleByCycleId(cycleId);
     if (!cycle) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const [sessions, critical] = await Promise.all([
       this.listSessions(cycleId),
@@ -286,7 +277,7 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
   }
 
   async listSessions(cycleId: string): Promise<UatSessionRecord[]> {
-    const cycle = await this.getCycle(cycleId);
+    const cycle = await this.findCycleByCycleId(cycleId);
     if (!cycle) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const rows = await this.database
       .selectFrom('uat_session_evidence')
@@ -301,7 +292,7 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
     cycleId: string,
     statuses?: readonly UatDefectStatus[],
   ): Promise<UatDefectRecord[]> {
-    const cycle = await this.getCycle(cycleId);
+    const cycle = await this.findCycleByCycleId(cycleId);
     if (!cycle) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     let query = this.database
       .selectFrom('uat_defects')
@@ -363,7 +354,7 @@ export async function executeUatAcceptance(
 
     const sessions = await trx
       .selectFrom('uat_session_evidence')
-      .select(['id', 'participant_code'])
+      .select(['id', 'participant_code', 'started_at'])
       .where('cycle_id', '=', cycle.id)
       .execute();
     if (sessions.length === 0) {
@@ -439,9 +430,24 @@ export async function executeUatAcceptance(
         .execute();
     }
 
+    // Closing the execution window requires a start: `qc.uat_cycles` rejects an
+    // end without one (`execution_ended_at >= execution_started_at`). When the
+    // cycle never recorded a start, its execution begins with the earliest
+    // recorded session — real evidence, not an invented timestamp.
+    const earliestSessionStart = sessions.reduce<Date | undefined>(
+      (earliest, session) =>
+        earliest === undefined || session.started_at < earliest ? session.started_at : earliest,
+      undefined,
+    );
+
     await trx
       .updateTable('uat_cycles')
-      .set({ status: input.acceptance.outcome, execution_ended_at: new Date() })
+      .set({
+        status: input.acceptance.outcome,
+        execution_started_at:
+          cycle.execution_started_at ?? earliestSessionStart ?? input.acceptance.reauthenticatedAt,
+        execution_ended_at: new Date(),
+      })
       .where('id', '=', cycle.id)
       .execute();
 

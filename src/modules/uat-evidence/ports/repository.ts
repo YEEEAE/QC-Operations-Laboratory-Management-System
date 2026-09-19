@@ -56,8 +56,13 @@ export interface RecordDefectCommand {
 }
 
 export interface UatEvidenceRepository {
+  /**
+   * Every public method addresses a cycle by its business identifier
+   * (`qc.uat_cycles.cycle_id`, e.g. `UAT-2026-09-19-001`). The internal UUID
+   * primary key (`qc.uat_cycles.id`) is never an input: mixing the two is how
+   * the ingestion path silently failed closed on a bogus UUID lookup.
+   */
   findCycleByCycleId(cycleId: string): Promise<UatCycleRecord | undefined>;
-  getCycle(id: string): Promise<UatCycleRecord | undefined>;
   createCycle(input: {
     identity: UatCycleIdentityBinding;
     evidenceSnapshotHash: string;

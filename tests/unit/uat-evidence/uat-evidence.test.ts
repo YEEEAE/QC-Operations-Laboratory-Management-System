@@ -81,7 +81,6 @@ function makeRepo(): UatEvidenceRepository &
   return {
     cycles,
     findCycleByCycleId: vi.fn(async () => undefined),
-    getCycle: vi.fn(async () => undefined),
     createCycle: vi.fn(async (input: { identity: typeof identity; evidenceSnapshotHash: string; status?: string; requestId: string }) => ({
       id: 'cycle-1',
       ...input.identity,
