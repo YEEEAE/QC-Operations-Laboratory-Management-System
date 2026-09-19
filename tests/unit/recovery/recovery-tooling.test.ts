@@ -63,6 +63,28 @@ describe('recovery manifest verification', () => {
       /database|file|application/i,
     );
   });
+
+  it('accepts the candidate release migration name as its migration head', () => {
+    const candidate = manifest({
+      database: {
+        ...manifest().database,
+        migrationLedger: [
+          {
+            version: '0030',
+            name: '0030_reject_reports_role_parity',
+            checksum: 'c'.repeat(64),
+          },
+        ],
+      },
+      appContext: {
+        ...manifest().appContext,
+        migrationHead: '0030_reject_reports_role_parity',
+      },
+    });
+    expect(validateRecoveryManifest(candidate).appContext.migrationHead).toBe(
+      '0030_reject_reports_role_parity',
+    );
+  });
 });
 
 describe('restored file validation', () => {

@@ -20,6 +20,7 @@ export interface PostgresBackupExecutor {
   restoreLogicalBackup(input: {
     bytes: Uint8Array;
     targetDatabaseUrl: string;
+    sourceDatabaseName: string;
     requestId: string;
   }): Promise<RestoreExecutionResult>;
 }

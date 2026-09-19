@@ -1,0 +1,11 @@
+{
+  "gitCommitSha": "95d1380f2f463bad911d6ee041ae6a7f45cbf897",
+  "gitTreeSha": "8564646449aabd7692d79c58461494ba1037c0c2",
+  "sourceDeltaSha256": "03b47284c246cef9ce8641940138eb3d58208fb7986574813869c4055a7a19bb",
+  "focusedTestSha256": "3244fa349a160c14944862f0c00c7be749647807d2900050ff8258ecba17dc9a",
+  "candidateFingerprintSha256": "89f4bc13763d10b98ab86efc2c66a7a1faec253071c9c2e7b2a8a8c76cc101a1",
+  "backupSetFingerprintSha256": "3568d2461c3600369777766adfbaecf82f1b8c5aac80144bd3eb4b010e50f9bf",
+  "backupArtifactSha256": "4fedf18cfe2b8816a6c4c8e622970ac1810cb45e30558653a8994eb0217dfc8e",
+  "releaseId": "rel-a4ef156eaceb0dbf",
+  "migrationHead": "0030_reject_reports_role_parity"
+}

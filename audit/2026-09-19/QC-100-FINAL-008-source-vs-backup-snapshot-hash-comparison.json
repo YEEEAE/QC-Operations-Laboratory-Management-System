@@ -1,0 +1,21 @@
+{
+  "tableCount": 77,
+  "equalTables": 74,
+  "expectedPostBackupDifferences": [
+    {
+      "table": "audit_events",
+      "sourceCurrentRows": 4,
+      "backupSnapshotRows": 3
+    },
+    {
+      "table": "outbox_events",
+      "sourceCurrentRows": 1,
+      "backupSnapshotRows": 0
+    },
+    {
+      "table": "tasks",
+      "sourceCurrentRows": 2,
+      "backupSnapshotRows": 1
+    }
+  ]
+}

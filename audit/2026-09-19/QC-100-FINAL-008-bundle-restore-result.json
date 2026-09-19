@@ -1,0 +1,59 @@
+{
+  "status": "PASS",
+  "candidate": {
+    "gitCommitSha": "95d1380f2f463bad911d6ee041ae6a7f45cbf897",
+    "candidateFingerprintSha256": "89f4bc13763d10b98ab86efc2f66a7a1faec253071c9c2e7b2a8a8c76cc101a1",
+    "releaseId": "rel-a4ef156eaceb0dbf",
+    "migrationHead": "0030_reject_reports_role_parity"
+  },
+  "bundle": {
+    "path": ".tmp/qc-dr008/qc-dr008-candidate-95d1380-backup-set-v3.tar.gz",
+    "bytes": 54404,
+    "sha256": "e7832c6051c4b14f8430251bdd759dc7e62c19fae684283fc2d45627c4ecc483",
+    "verifiedComponents": 5
+  },
+  "environment": {
+    "postgresql": "18.6 local isolated cluster",
+    "node": "24.20.0",
+    "restoreDatabase": "qc_restore_dr008_final6"
+  },
+  "restore": {
+    "baseTables": 77,
+    "historyRelations": 13,
+    "snapshotRows": 487,
+    "populatedTables": 24,
+    "migrationRows": 30,
+    "validatedForeignKeys": "154/154",
+    "foreignKeyCatalogEvidence": "QC-100-FINAL-008-foreign-key-validation.json",
+    "orphanReferences": 0,
+    "baselineTableCountsMatch": true,
+    "preProbeRowHashesCaptured": 77,
+    "preProbeRowHashEvidence": "QC-100-FINAL-008-restore-preprobe-row-hashes.tsv",
+    "sourceCurrentTableDigestsMatchingSnapshot": "74/77",
+    "expectedPostBackupDifferenceEvidence": "QC-100-FINAL-008-source-vs-backup-snapshot-hash-comparison.json",
+    "postProbeChangedTables": ["audit_events", "outbox_events", "sessions", "tasks"],
+    "postProbeRowHashEvidence": "QC-100-FINAL-008-restore-postprobe-row-hashes.tsv",
+    "postProbeDeltaEvidence": "QC-100-FINAL-008-restore-probe-delta.json",
+    "applicationReadWrite": "PASS",
+    "sessionResolveRevokeAuthorization": "PASS",
+    "ownerRoleAndScopeProtection": "PASS",
+    "immutableAuditMutationDenial": "PASS",
+    "fileObjectsRestoredFromBundle": 1,
+    "fileObjectSha256": "06b761ce8b599edb43132eed1a84e6b65c6f4986851a1b71c0a8207000b748be",
+    "candidateIdentityMatch": true,
+    "wrongCandidateRejectedBeforeTargetRestore": true,
+    "negativeChecks": {
+      "emptyArtifact": "PASS",
+      "truncatedArtifact": "PASS",
+      "missingArtifact": "PASS",
+      "missingFileObject": "PASS",
+      "tamperedFileObject": "PASS",
+      "sourceTarget": "PASS",
+      "remoteTarget": "PASS",
+      "nonRestoreName": "PASS",
+      "nonEmptyTargetUnchanged": "PASS"
+    }
+  },
+  "measuredLocalRecoveryMs": 435,
+  "providerRecoveryAndApprovedRpoRto": "NOT VERIFIED / BLOCKED"
+}

@@ -47,6 +47,8 @@ pnpm exec tsx scripts/recovery/verify-recovery-manifest.ts \
 
 ينفذ Database/Platform Owner الاستعادة الفعلية عبر tooling الاستضافة المعتمد، مع تسجيل `restoreReference` في الـmanifest. لا يوجد provider أو PITR implementation داخل هذه الأدوات.
 
+عند استخدام `PostgresLogicalBackupExecutor` المحلي، يجب تمرير اسم قاعدة المصدر صراحةً، ويقبل المنفّذ فقط هدفًا محليًا اسمه `qc_restore` أو يبدأ بـ`qc_restore_`. يتحقق من تطابق اسم قاعدة الاتصال ومن خلو الهدف من الجداول/العروض/sequences قبل الاستعادة، ويرفض المصدر نفسه أو أي هدف بعيد/غير معزول. لا يستخدم `pg_restore --clean`؛ أنشئ قاعدة هدف فارغة جديدة بدل استبدال بيانات موجودة.
+
 ### 3. Validate the restored database
 
 ```bash

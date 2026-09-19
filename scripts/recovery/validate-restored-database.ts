@@ -33,7 +33,14 @@ export async function validateRestoredDatabase(
     await client.query('BEGIN');
     await client.query('SET TRANSACTION READ ONLY');
     const version = await client.query<{ version: string }>('SELECT version() AS version');
-    if (!version.rows[0]?.version.includes(`PostgreSQL ${manifest.database.postgresqlVersion}.`))
+    const expectedVersion = manifest.database.postgresqlVersion;
+    const versionPrefix = `PostgreSQL ${expectedVersion}`;
+    const actualVersion = version.rows[0]?.version ?? '';
+    const versionBoundary = actualVersion[versionPrefix.length] ?? '';
+    if (
+      !actualVersion.startsWith(versionPrefix) ||
+      !['.', ' ', '('].includes(versionBoundary)
+    )
       failures.push('PostgreSQL version context mismatch');
     const schema = await client.query<{ schema: string | null }>(
       `SELECT current_schema() AS schema`,
@@ -72,7 +79,7 @@ export async function validateRestoredDatabase(
       if (result.rows[0]?.exists !== true) failures.push(`missing history relation: ${relation}`);
       else historyRelations.push(relation);
     }
-    if (ledger.rows.at(-1)?.version !== manifest.appContext.migrationHead)
+    if (ledger.rows.at(-1)?.name !== manifest.appContext.migrationHead)
       failures.push('application migration head mismatch');
     await client.query('ROLLBACK');
     return {

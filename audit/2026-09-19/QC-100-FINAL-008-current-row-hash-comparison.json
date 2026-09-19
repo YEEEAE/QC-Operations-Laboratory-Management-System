@@ -1,0 +1,25 @@
+{
+  "tableCount": 77,
+  "expectedPostSnapshotDifferences": [
+    {
+      "table": "audit_events",
+      "sourceCurrentRows": 4,
+      "restoreCurrentRows": 5
+    },
+    {
+      "table": "outbox_events",
+      "sourceCurrentRows": 1,
+      "restoreCurrentRows": 1
+    },
+    {
+      "table": "sessions",
+      "sourceCurrentRows": 1,
+      "restoreCurrentRows": 2
+    },
+    {
+      "table": "tasks",
+      "sourceCurrentRows": 2,
+      "restoreCurrentRows": 2
+    }
+  ]
+}
