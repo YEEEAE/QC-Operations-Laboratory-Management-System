@@ -232,7 +232,7 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
       requestId: 'int-auto-ses-1',
     });
     const signatureId = '01900000-0000-7000-8000-00000000ab01';
-    await pool.query(
+    await pool!.query(
       `INSERT INTO qc.electronic_signatures (id, actor_id, subject_type, subject_id, subject_version, action, meaning, snapshot_hash, reauth_method, request_id)
        VALUES ($1, $2, 'UAT_CYCLE', (SELECT id FROM qc.uat_cycles WHERE cycle_id = $3), 1, 'UAT_ACCEPT', 'test meaning', $4, 'PASSWORD', 'int-auto-sig')`,
       [signatureId, MANAGER_ID, autoIdentity.cycleId, '0'.repeat(64)],
@@ -276,7 +276,7 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
 
   it('commits gate evidence (SIGNED_UAT_CYCLE) atomically with an ACCEPTED human cycle', async () => {
     const signatureId = '01900000-0000-7000-8000-00000000ab02';
-    await pool.query(
+    await pool!.query(
       `INSERT INTO qc.electronic_signatures (id, actor_id, subject_type, subject_id, subject_version, action, meaning, snapshot_hash, reauth_method, request_id)
        VALUES ($1, $2, 'UAT_CYCLE', (SELECT id FROM qc.uat_cycles WHERE cycle_id = $3), 1, 'UAT_ACCEPT', 'accept UAT-INT-001', $4, 'PASSWORD', 'int-accept-sig')`,
       [signatureId, MANAGER_ID, identity.cycleId, '1'.repeat(64)],
@@ -385,7 +385,7 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
       requestId: 'int-rej-ses-1',
     });
     const signatureId = '01900000-0000-7000-8000-00000000ab03';
-    await pool.query(
+    await pool!.query(
       `INSERT INTO qc.electronic_signatures (id, actor_id, subject_type, subject_id, subject_version, action, meaning, snapshot_hash, reauth_method, request_id)
        VALUES ($1, $2, 'UAT_CYCLE', (SELECT id FROM qc.uat_cycles WHERE cycle_id = $3), 1, 'UAT_ACCEPT', 'reject UAT-INT-REJ', $4, 'PASSWORD', 'int-rej-sig')`,
       [signatureId, MANAGER_ID, rejectIdentity.cycleId, '2'.repeat(64)],

@@ -3,19 +3,19 @@
   "evidenceKind": "AUTOMATED_UAT_SCENARIO_RUN",
   "uatClaim": false,
   "automatedFacilitator": true,
-  "runId": "uat-scenarios-39a5a13f-2359-402e-9548-88bf75d1abbd",
-  "startedAt": "2026-09-19T11:31:24.870Z",
-  "completedAt": "2026-09-19T11:31:29.849Z",
+  "runId": "uat-scenarios-26711914-3425-4b86-8989-b66c3ff19b67",
+  "startedAt": "2026-09-19T12:12:00.806Z",
+  "completedAt": "2026-09-19T12:12:05.883Z",
   "baseUrl": "http://127.0.0.1:4399",
   "database": {
     "name": "qc_uat_bringup",
     "migrationHead": "0031"
   },
-  "cycleId": "UAT-2026-09-19-AUTO-75D1ABBD",
+  "cycleId": "UAT-2026-09-19-AUTO-3FF19B67",
   "identity": {
-    "gitSha": "fa724dec9e2ce6c4f61addd2e5060837633ffd1c",
-    "buildId": "uat-scenarios-fa724dec9e2c",
-    "releaseId": "rel-fa724dec9e2ce6c4",
+    "gitSha": "9e258276a0f851a35c58d150f474bc962e38e12d",
+    "buildId": "uat-scenarios-9e258276a0f8",
+    "releaseId": "rel-9e258276a0f851a3",
     "applicationVersion": "0.1.0"
   },
   "totals": {
@@ -83,7 +83,7 @@
       "scenarioId": "T-UAT-03",
       "family": "quarantine receiving create: uat-qc-01",
       "status": "PASS",
-      "detail": "receiving 01a0b96f-83c7-7a0a-b1b8-310cecc73c70 (UAT-SCN-RCV-qc-01-5ea1bee4) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
+      "detail": "receiving 01a0b994-af55-73a6-94c3-3f9cec25ed27 (UAT-SCN-RCV-qc-01-443375f6) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
       "participants": [
         "uat-qc-01"
       ]
@@ -92,7 +92,7 @@
       "scenarioId": "T-UAT-03",
       "family": "quarantine receiving create: uat-qc-02",
       "status": "PASS",
-      "detail": "receiving 01a0b96f-8493-7022-8cb3-0cfd14dee190 (UAT-SCN-RCV-qc-02-61f1fe18) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
+      "detail": "receiving 01a0b994-b033-7e23-97ef-fa60ae8a849f (UAT-SCN-RCV-qc-02-406b741e) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
       "participants": [
         "uat-qc-02"
       ]
@@ -101,7 +101,7 @@
       "scenarioId": "T-UAT-03",
       "family": "quarantine receiving create: uat-qc-03",
       "status": "PASS",
-      "detail": "receiving 01a0b96f-8543-7dca-8e31-b21876700803 (UAT-SCN-RCV-qc-03-0e669af7) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
+      "detail": "receiving 01a0b994-b0ee-7f99-ba7a-93521dc267fd (UAT-SCN-RCV-qc-03-574c40b3) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
       "participants": [
         "uat-qc-03"
       ]
@@ -159,7 +159,7 @@
       "scenarioId": "N-UAT-02",
       "family": "cross-scope draft mutation (owner self-edit control + outsider attempt)",
       "status": "NOT RUN",
-      "detail": "owner self-edit allowed=true; qc-02 cross-edit=INCONCLUSIVE (BAD_REQUEST); stored record after attempt: receiving_no=UAT-SCN-RCV-cross-b5d23892 version=2 (outsider mutation=false)",
+      "detail": "owner self-edit allowed=true; qc-02 cross-edit=INCONCLUSIVE (BAD_REQUEST); stored record after attempt: receiving_no=UAT-SCN-RCV-cross-40518c30 version=2 (outsider mutation=false)",
       "participants": [
         "uat-qc-01",
         "uat-qc-02"
@@ -169,7 +169,7 @@
       "scenarioId": "T-UAT-03",
       "family": "audit trail for controlled writes",
       "status": "PASS",
-      "detail": "audit rows observed: CREATE_RECEIVING=29, UAT_CYCLE_CREATED=5",
+      "detail": "audit rows observed: CREATE_RECEIVING=33, UAT_CYCLE_CREATED=6",
       "participants": [
         "uat-qc-01",
         "uat-qc-02",
@@ -180,7 +180,7 @@
       "scenarioId": "T-UAT-03",
       "family": "session evidence ingestion + retrieval round-trip (Task 5)",
       "status": "PASS",
-      "detail": "cycle UAT-2026-09-19-AUTO-75D1ABBD status=IN_PROGRESS; sessions written=13; uat gate rows=0 (must stay 0 for automated-only evidence)",
+      "detail": "cycle UAT-2026-09-19-AUTO-3FF19B67 status=IN_PROGRESS; sessions written=13; uat gate rows=0 (must stay 0 for automated-only evidence)",
       "participants": [
         "(automated facilitator)"
       ]
