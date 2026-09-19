@@ -5,6 +5,25 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-015 — credential/canonical-connection safety gate)
+
+> نُقلت أقدم ثلاثة سجلات تاريخية (2026-09-18: QC-100-FINAL-013، QC-100-FINAL-002، QC-100-FINAL-016 live UX review) إلى هنا بعد التحقق من عدم وجودها في هذا الأرشيف، لإبقاء `01` قرب حدّه الناعم بعد سجل 015. لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة؛ أرقامها تاريخية لمرشّحات سابقة.
+
+- **2026-09-18 — QC-100-FINAL-013 / Controlled-workflow inventory + disposable-PG evidence refresh**
+  - Changed: built the remaining-requirements inventory with source/owner/path/acceptance-evidence per item and a controlled-source request pack (PD-01..38 opens, TR-LAB-008 VOID, Domain-70 Arabic/RTL applicability decision); no code/policy/scientific value changed; fail-closed defaults preserved.
+  - Evidence: on candidate `eab4e341` + Node 24.20.0/pnpm 11.25.0 with a local disposable PostgreSQL 18.6 (TLS, throwaway cert, `LC_ALL=en_US.UTF-8` needed for Homebrew startup): unit 83 files/564 PASS, integration 87 files/353 PASS, concurrency 12/12 PASS on live PG, migrations 29/29 + zero-op re-run, preflight/migration-integrity PASS, schema 77 tables/0 orphans; browser E2E still BLOCKED (host Chromium/localhost restriction); cluster destroyed after the run.
+  - State: PARTIAL / BLOCKED (external authority sources remain open; G-001/G-002/G-004 closed for local disposable-PG scope only).
+  - Key files: `audit/2026-09-18/QC-100-FINAL-013-remaining-requirements-inventory.md`.
+- **2026-09-18 — QC-100-FINAL-002 / Verification gates repaired, candidate proven locally**
+  - Changed: fixed the Reject analytics ambiguous-`status` SQL (root cause of the live `/reject-reports` 500 on a fully migrated schema), replaced the reject-reports `Function`/`any` filter helpers with typed Kysely builders, corrected the synchronous `.rejects` harness (asserts the throw + `AUTHZ_DENIED` now), derived the control-center expected migration head from `loadMigrations()`, re-contracted both concurrency race assertions to the three verified safe loser codes (`AUTHZ_DENIED` / `DOMAIN_INVALID_TRANSITION` / `CONFLICT_STALE_VERSION`), wired candidate-bound authenticated fixtures into CI (`QC_MANDATORY_VERIFY_FIXTURES` + new workflow step running `verify:e2e:authenticated` with one-time generated passwords), and pinned `LC_ALL=C` in `disposable-postgres.sh`.
+  - Evidence: on candidate `e30285c39695defcaaa9a12ce517e6831f5bc8f7` + Node `24.20.0`/pnpm `11.25.0` and isolated disposable PG 18.6: format/lint/typecheck/architecture/tech-debt/diff-check/unit 83 files/564, integration 87/353, migrations 8/29, concurrency 2/12 (stability 15/15 runs), security 7/52, build, release identity, fixture seed/cleanup — all PASS. `audit/2026-09-18-qc-100-final-002-verification-gates.md`.
+  - State: DONE (local). Exact-SHA CI remains BLOCKED (billing lock; push needs explicit authorization); CI Testcontainers path NOT RUN locally (no Docker).
+- **2026-09-18 — QC-100-FINAL-016 / Live product UX & human-centered application review (read-only)**
+  - Changed: no product code changed; live page-family review of the deployed product using an operator-typed session, recorded as `audit/2026-09-18-LIVE-PRODUCT-UX-AUDIT.md` (36 route families + 18 targeted URL probes; 5 P1 / 16 P2 / 10 P3, each with type, source pointer and copy replacement).
+  - Evidence: live reproductions of the serif fallback, the ignored KPI drill-down params, the UUID topbar identity, `/reject-reports` 500, CSP-blocked inline scripts (`/ai-advisory` flow dead, `/account` toggle inert), `/account` outside the shell, the two phantom `/quality/*/new` routes, the self-contradicting migration card and the self-view role contradiction; strengths re-confirmed (fail-closed states, 404 semantics, keyboard/focus, no overflow on 34/35 routes, no unlabelled controls).
+  - State: PARTIAL — review DONE; indicator unchanged at `29.0%`; consumers are 005/017/018/006. Not human UAT; single role; bootstrap-only data; deployed SHA `UNVERIFIED`.
+  - Key files: `audit/2026-09-18-LIVE-PRODUCT-UX-AUDIT.md`.
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-004 / Task 7 — automated UAT scenario suite)
 
 > نُقل هنا سجلا التدقيق التحريري القديمان بعد التحقق من عدم وجودهما في هذا الأرشيف: كلاهما معلَّم تاريخيًا في `01` ("not revalidated for this newer HEAD" و"historical after subsequent commits")، ولا يحمل أي قرار ساري أو blocker مفتوح. لم يُنقل أي invariant أو مشكلة مفتوحة.
