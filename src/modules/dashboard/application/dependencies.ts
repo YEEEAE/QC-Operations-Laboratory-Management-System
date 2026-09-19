@@ -8,6 +8,7 @@ import {
   quarantineReadDependencies,
   receivingReadDependencies,
 } from '../../quarantine/application/dependencies.js';
+import { laboratoryReadDependencies } from '../../laboratory/application/dependencies.js';
 import { DEFAULT_PAGE_SIZE } from '../../../config/constants.js';
 import { parsePageInput } from '../../../shared/pagination/page.js';
 import { taskReadDependencies } from '../../tasks/application/dependencies.js';
@@ -30,6 +31,9 @@ export function dashboardDependencies() {
   const inspections = inspectionReadDependencies().list;
   const tasks = taskReadDependencies().list;
   const calibrations = assetsReadDependencies().calibration.list;
+  // The laboratory register's bounded workload read: one count plus one bounded
+  // page, so the laboratory counter and its queue come from a single read.
+  const laboratory = laboratoryReadDependencies().workload;
   const overview = quarantineReadDependencies().overview;
   // The only approved dashboard time series is the Quarantine receiving trend.
   // It is narrowed to records this actor created so the chart declares the same
@@ -58,6 +62,7 @@ export function dashboardDependencies() {
               }),
           },
           calibrations: { execute: (input) => calibrations.execute(input) },
+          laboratory: { execute: (input) => laboratory.execute(input) },
         }),
         dashboardFlowSource({ execute: (input) => overview.execute(input) }),
         {

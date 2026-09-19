@@ -11,10 +11,19 @@ interface Props {
   definition: string;
   source?: string;
   timeRange?: string;
-  /** Exact numerator, state and actor scope behind the number (audit §8). */
+  /**
+   * Exact numerator/denominator, grain, state, actor scope, time window,
+   * server clock, freshness and drill-down filter behind the number
+   * (audit §8 and the dashboard metric contract).
+   */
   numerator?: string;
+  denominator?: string;
+  grain?: string;
   state?: string;
   actorScope?: string;
+  timezone?: string;
+  metricFreshness?: string;
+  drilldown?: string;
   href?: string;
   drilldownLabel?: string;
   freshness?: string;
@@ -30,8 +39,13 @@ const {
   source,
   timeRange = 'current snapshot',
   numerator,
+  denominator,
+  grain,
   state,
   actorScope,
+  timezone,
+  metricFreshness,
+  drilldown,
   href,
   drilldownLabel = 'View records',
   freshness,
@@ -46,12 +60,16 @@ const {
       <p>
         {definition}
         {
-          (numerator || state || actorScope) && (
+          (numerator || denominator || state || actorScope) && (
             <span class="definition-meta">
               {numerator && <span><strong>Counts:</strong> {numerator}</span>}
+              {denominator && <span><strong>Of:</strong> {denominator}</span>}
+              {grain && <span><strong>Grain:</strong> {grain}</span>}
               {state && <span><strong>Condition:</strong> {state}</span>}
               {actorScope && <span><strong>Scope:</strong> {actorScope}</span>}
-              <span><strong>Window:</strong> {timeRange}</span>
+              <span><strong>Window:</strong> {timeRange}{timezone ? ` (${timezone})` : ''}</span>
+              {metricFreshness && <span><strong>Freshness:</strong> {metricFreshness}</span>}
+              {drilldown && <span><strong>Drill-down:</strong> {drilldown}</span>}
             </span>
           )
         }

@@ -26,6 +26,8 @@ import { ListCalibrationsUseCase } from '../../../src/modules/assets/calibration
 import { PostgresCalibrationRepository } from '../../../src/modules/assets/calibration/infrastructure/postgres-repository.js';
 import { ListTasksUseCase } from '../../../src/modules/tasks/application/list.js';
 import { PostgresTaskRepository } from '../../../src/modules/tasks/infrastructure/postgres-repository.js';
+import { GetLabWorkloadUseCase } from '../../../src/modules/laboratory/application/get-lab-workload.js';
+import { PostgresLabRepository } from '../../../src/modules/laboratory/infrastructure/postgres-repository.js';
 import { PostgresDashboardQuery } from '../../../src/modules/dashboard/infrastructure/postgres-dashboard-query.js';
 import type { DashboardSeriesProvider } from '../../../src/modules/dashboard/ports/dashboard-query.js';
 import {
@@ -105,6 +107,11 @@ function dashboardOver(db: Kysely<DatabaseSchema>) {
       calibrations: {
         execute: (input) =>
           new ListCalibrationsUseCase(new PostgresCalibrationRepository(db)).execute(input),
+      },
+      // The laboratory counter reads the owning register's bounded workload
+      // read, so the snapshot's query count stays constant as the table grows.
+      laboratory: {
+        execute: (input) => new GetLabWorkloadUseCase(new PostgresLabRepository(db)).execute(input),
       },
     }),
     dashboardFlowSource({
@@ -218,7 +225,7 @@ describe('dashboard register query bounds', () => {
   it('keeps the whole dashboard snapshot inside a bounded, constant query count', async () => {
     const first = countingDatabase();
     const model = await dashboardOver(first.db).get(mine());
-    expect(model.metrics).toHaveLength(7);
+    expect(model.metrics).toHaveLength(8);
     const baseline = first.statements.length;
     expect(baseline).toBeGreaterThan(0);
     expect(baseline).toBeLessThanOrEqual(DASHBOARD_STATEMENT_CEILING);

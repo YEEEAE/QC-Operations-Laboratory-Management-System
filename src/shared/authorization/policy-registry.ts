@@ -5,19 +5,34 @@ export interface AuthorizationPolicy {
   entityType: string;
   states: readonly string[];
 }
+/**
+ * Every laboratory workflow state.
+ *
+ * QC-100-FINAL-017: the laboratory VIEW policy used to be published as one row
+ * per state, but `getAuthorizationPolicy` resolves a permission by its first
+ * matching row — so it could only ever see `['DRAFT']` and denied every other
+ * state as if the policy were undefined. One row carrying all states is both
+ * the intended semantics and the shape every other permission in this registry
+ * uses.
+ */
+const LABORATORY_TEST_STATES = [
+  'DRAFT',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'PENDING_QCM_APPROVAL',
+  'RETURNED',
+  'APPROVED',
+  'REJECTED',
+  'VOID',
+] as const;
+
 const policies: readonly AuthorizationPolicy[] = [
-  ...([
-    'DRAFT',
-    'SUBMITTED',
-    'UNDER_REVIEW',
-    'PENDING_QCM_APPROVAL',
-    'RETURNED',
-    'APPROVED',
-    'REJECTED',
-    'VOID',
-  ].flatMap((state) => [
-    { permission: 'PERM-LAB-VIEW', action: 'VIEW', entityType: 'LAB_TEST', states: [state] },
-  ]) as unknown as AuthorizationPolicy[]),
+  {
+    permission: 'PERM-LAB-VIEW',
+    action: 'VIEW',
+    entityType: 'LAB_TEST',
+    states: LABORATORY_TEST_STATES,
+  },
   { permission: 'PERM-LAB-CREATE', action: 'CREATE', entityType: 'LAB_TEST', states: ['DRAFT'] },
   { permission: 'PERM-LAB-EDIT-DRAFT', action: 'SAVE', entityType: 'LAB_TEST', states: ['DRAFT'] },
   {

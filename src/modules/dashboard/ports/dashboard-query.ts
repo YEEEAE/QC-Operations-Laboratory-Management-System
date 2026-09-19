@@ -5,14 +5,22 @@ export type DashboardMetricTone = 'neutral' | 'warning' | 'danger' | 'success';
 /**
  * Everything a displayed count must declare so it can be reconciled with the
  * register it links to:
- * - `numerator` says exactly what is counted;
+ * - `numerator` says exactly what is counted and `denominator` names the
+ *   population it is drawn from, so a count can never be read as a share of a
+ *   population the reader cannot see;
+ * - `grain` says what one counted row is, so two cards over the same table
+ *   cannot mean different rows under the same word;
  * - `state` names the exact domain/workflow condition the count is filtered by;
  * - `actorScope` says whose records the numerator covers ("assigned to you",
  *   "authorized scope", …). A personal count is never presented under an
  *   authorized-scope label, or the reverse;
- * - `timeRange` is the observation window. This surface only ever reports the
+ * - `timeRange` is the observation window and `timezone` is the server clock
+ *   every time window on this surface is resolved in. Non-UTC windows (for
+ *   example "due today") are resolved once, server-side, in this clock;
+ * - `freshness` says when the value is read. This surface only ever reports the
  *   current server snapshot; it never renders a historical or projected value;
- * - `href` must open a register whose supported filters reproduce the same
+ * - `drilldown` names the exact register filter the link applies, and `href`
+ *   must open a register whose supported filters reproduce the same
  *   numerator/state/actorScope. A drill-down that cannot reproduce the count is
  *   a defect, not a presentation choice.
  */
@@ -20,12 +28,22 @@ export interface DashboardMetricDefinition {
   key: string;
   label: string;
   unit: 'records';
+  /** The population the numerator is taken from. */
+  denominator: string;
+  /** What one counted row is. */
+  grain: string;
   timeRange: 'current snapshot';
+  /** The server clock every window on this surface is resolved in. */
+  timezone: 'UTC';
+  /** When the value is re-read, stated on the surface rather than assumed. */
+  freshness: string;
   source: string;
   definition: string;
   numerator: string;
   state: string;
   actorScope: string;
+  /** The exact register filter the drill-down applies, in query form. */
+  drilldown: string;
   href: string;
   drilldownLabel: string;
   tone: DashboardMetricTone;

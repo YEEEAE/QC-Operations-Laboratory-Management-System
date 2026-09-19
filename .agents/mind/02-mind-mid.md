@@ -5,6 +5,21 @@
 
 
 
+## Rollover from 01 — 2026-09-20 (QC-100-FINAL-017 — dashboard intelligence & operational read models)
+
+> نُقلت ثلاثة سجلات تاريخية (`RENDER-BUILD-FIX`، `QC-100-FINAL-001 / Production parity recheck`، `QC-100-FINAL-008 / Populated backup`) إلى هنا بعد التحقق من غيابها في هذا الأرشيف، لأن `01` بلغ 498 سطرًا قبل إضافة سجل FINAL-017. لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة أو أدلة إصدار سارية.
+
+- **2026-09-19 — RENDER-BUILD-FIX / duplicate lab dependencies imports**
+  - Changed: حذف 4 استيرادات مكررة من `src/modules/laboratory/application/dependencies.ts` كانت تكسر build على Render (`Identifier already declared`).
+  - Evidence: `astro build` PASS محليًا بعد الإصلاح؛ Render deploy build نجح.
+  - State: DONE.
+- **2026-09-19 — QC-100-FINAL-001 / Production parity recheck**
+  - Changed/Evidence/State: ثبت deploy Render على `31ab21a…`؛ health/live/readiness `200`, release identity `401`, Reject unauthenticated redirect؛ applied DB state NOT VERIFIED بسبب rotation gate؛ PARTIAL / BLOCKED. `audit/2026-09-19/QC-100-FINAL-001-production-parity-recheck.md`.
+- **2026-09-19 — QC-100-FINAL-008 / Populated backup and isolated recovery**
+  - Changed: fail-closed loopback/empty `qc_restore*` target, full archive preflight, and release migration/version-context manifest verification.
+  - Evidence: candidate fingerprint `89f4bc13763d10b98ab86efc2c66a7a1faec253071c9c2e7b2a8a8c76cc101a1`; bundle SHA `e7832c6051c4b14f8430251bdd759dc7e62c19fae684283fc2d45627c4ecc483`; 77 tables / 487 snapshot rows / 30 migrations / 154 validated FKs; archived file and app/security probes PASS; wrong candidate denied; pre/post-probe hashes captured; local recovery 435 ms; +92s marker absent. Provider recovery/RPO policy remain NOT VERIFIED.
+  - State: PARTIAL.
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-005 — shared UI/navigation/forms/grids/recovery)
 
 > نُقلت أربعة سجلات تاريخية (`QC-100-FINAL-009`, `QC-100-FINAL-007`, `QC-100-FINAL-010` وسجل FINAL-014 المرشّح 2026-09-18) إلى هنا بعد التحقق من غيابها في هذا الأرشيف، لأن `01` بلغ 503 سطرًا (فوق الحد الناعم 500) قبل إضافة سجل FINAL-005. لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة أو أدلة إصدار سارية.

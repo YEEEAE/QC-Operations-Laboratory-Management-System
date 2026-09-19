@@ -86,6 +86,26 @@ const APPROVALS = [
   },
 ];
 
+// One laboratory test is returned to this actor. The bounded workload read
+// below samples it exactly as the register page would: the count is the
+// register's own total and the queue is its bounded newest-first page.
+const LAB_RETURNED = {
+  id: '01900000-0000-7000-8000-00000000c601',
+  labTestNo: `LAB-CMD-${RUN}-returned`,
+  state: 'RETURNED',
+  updatedAt: new Date(Date.now() - 2 * DAY),
+};
+
+const laboratorySource = {
+  execute: async (input: {
+    filter?: { state?: 'RETURNED'; ownership?: 'mine' };
+    limit: number;
+  }) => ({
+    total: LAB_RETURNED.state === input.filter?.state ? 1 : 0,
+    rows: [LAB_RETURNED].slice(0, input.limit),
+  }),
+};
+
 const NO_SERIES: DashboardSeries = {
   key: 'receiving-records-per-day',
   title: 'Receiving records per day',
@@ -138,6 +158,7 @@ function sourceDependencies(
       execute: (input) => tasks.execute({ ...input, page: parsePageInput({ pageSize: 25 }) }),
     },
     calibrations: { execute: (input) => calibrations.execute(input) },
+    laboratory: laboratorySource,
     ...overrides,
   };
 }
@@ -219,6 +240,19 @@ async function rowsForHref(href: string, actor: ActorContext): Promise<number> {
           filter: { state: (params.get('state') ?? undefined) as 'OVERDUE' | undefined },
         })
       ).length;
+    case '/laboratory/tests': {
+      // The laboratory register is bounded, so the harness reproduces the
+      // *population*, not the page: it reads the register with the link's own
+      // filter (state + ownership) and returns that register's total.
+      const page = await laboratorySource.execute({
+        filter: {
+          state: (params.get('state') ?? undefined) as 'RETURNED' | undefined,
+          ownership: ownership === 'mine' ? 'mine' : undefined,
+        },
+        limit: 25,
+      });
+      return page.total;
+    }
     default:
       throw new Error(`dashboard link is not mapped to a register: ${href}`);
   }
@@ -328,12 +362,18 @@ describe('dashboard command center', () => {
       'tasks-overdue',
       'tasks-due-today',
       'calibrations-overdue',
+      'lab-tests-returned',
     ]);
     for (const metric of model.metrics) {
       expect(metric.numerator.length, metric.key).toBeGreaterThan(0);
+      expect(metric.denominator.length, metric.key).toBeGreaterThan(0);
+      expect(metric.grain.length, metric.key).toBeGreaterThan(0);
       expect(metric.state.length, metric.key).toBeGreaterThan(0);
       expect(metric.actorScope.length, metric.key).toBeGreaterThan(0);
+      expect(metric.drilldown.length, metric.key).toBeGreaterThan(0);
+      expect(metric.freshness.length, metric.key).toBeGreaterThan(0);
       expect(metric.timeRange).toBe('current snapshot');
+      expect(metric.timezone).toBe('UTC');
       expect(metric.href, metric.key).toBeTruthy();
     }
   });
@@ -362,6 +402,9 @@ describe('dashboard command center', () => {
     // The calibration register is authorized scope, so both OVERDUE records are
     // counted while the CURRENT record is not.
     expect(value('calibrations-overdue')).toBe(2);
+    // The laboratory counter reads the register's own total for the same filter
+    // its link carries (state = RETURNED, authored by this actor).
+    expect(value('lab-tests-returned')).toBe(1);
   });
 
   it('reproduces every quarantine flow stage from the receiving register', async () => {
@@ -399,7 +442,9 @@ describe('dashboard command center', () => {
       expect(item.state.length, item.id).toBeGreaterThan(0);
       // A direct link to the record itself, or the notifications register when
       // the notification carries no subject (never a guessed route).
-      expect(item.href, item.id).toMatch(/^\/(approvals|quarantine|tasks|assets|notifications)/);
+      expect(item.href, item.id).toMatch(
+        /^\/(approvals|quarantine|tasks|assets|laboratory|notifications)/,
+      );
     }
     const ranks = model.attention.map((item) =>
       item.severity === 'CRITICAL' ? 0 : item.severity === 'WARNING' ? 1 : 2,
@@ -478,7 +523,6 @@ describe('dashboard command center', () => {
     const model = await dashboard().get(mine());
     const missing = model.coverage.filter((item) => item.state === 'NOT_SUPPLIED');
     expect(missing.map((item) => item.key)).toEqual([
-      'laboratory-workload',
       'document-review',
       'blocked-reasons',
       'reject-analytics',
@@ -487,6 +531,11 @@ describe('dashboard command center', () => {
     ]);
     for (const item of missing) expect(item.reason.length, item.key).toBeGreaterThan(0);
     expect(model.coverage.some((item) => item.state === 'AVAILABLE')).toBe(true);
+    // The laboratory workload is now an available, state-filtered read model:
+    // the coverage row states what is delivered instead of withholding it.
+    const lab = model.coverage.find((item) => item.key === 'laboratory-workload');
+    expect(lab?.state).toBe('AVAILABLE');
+    expect(lab?.reason).toContain('bounded workload read');
   });
 });
 

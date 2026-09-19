@@ -127,7 +127,20 @@ class MemoryRepository implements LabRepository {
     return this.value;
   }
   async list() {
-    return [this.value];
+    return { items: [this.value], total: 1 };
+  }
+  async workload() {
+    return {
+      total: 1,
+      rows: [
+        {
+          id: this.value.id,
+          labTestNo: this.value.labTestNo,
+          state: this.value.state,
+          updatedAt: new Date(this.value.updatedAt),
+        },
+      ],
+    };
   }
   async create(test: LabTest, mutation: PersistedMutation) {
     this.mutations.push(mutation);

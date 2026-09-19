@@ -1,4 +1,5 @@
 import { AppError } from '../../../shared/errors/app-error.js';
+import { DEFAULT_PAGE_SIZE } from '../../../config/constants.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { notificationDestination } from '../../../shared/notifications/notification-destination.js';
 import type { QuarantineOverview } from '../../quarantine/application/get-quarantine-overview.js';
@@ -83,6 +84,20 @@ export interface DashboardCalibrationReader {
   }): Promise<readonly { id: string; calibrationNo: string; state: string; dueDate?: Date }[]>;
 }
 
+// The laboratory register is bounded: it returns the register's own full match
+// count for the displayed number plus its bounded newest-first page for the
+// attention queue, exactly like the tasks register.
+export interface DashboardLaboratoryReader {
+  execute(input: {
+    actor: ActorContext;
+    filter?: { state?: 'RETURNED'; ownership?: 'mine' };
+    limit: number;
+  }): Promise<{
+    total: number;
+    rows: readonly { id: string; labTestNo: string; state: string; updatedAt: Date }[];
+  }>;
+}
+
 export interface DashboardSourceDependencies {
   approvals: DashboardApprovalReader;
   notifications: DashboardNotificationReader;
@@ -90,7 +105,53 @@ export interface DashboardSourceDependencies {
   inspections: DashboardInspectionReader;
   tasks: DashboardTaskReader;
   calibrations: DashboardCalibrationReader;
+  laboratory: DashboardLaboratoryReader;
 }
+
+/**
+ * The freshness statement every counter carries.
+ *
+ * A count is read from its owning register while the snapshot is rendered, so
+ * the value on screen is the register's value at that moment; nothing is cached
+ * or aged between renders and no earlier read is presented as current.
+ */
+const SNAPSHOT_FRESHNESS =
+  'Read from the owning register while this snapshot renders; no cached or earlier value is shown.';
+
+/**
+ * A bounded laboratory workload read, shared by the laboratory counter and its
+ * queue so both come from one register read.
+ */
+async function readLaboratorySource(
+  dependencies: DashboardSourceDependencies,
+  actor: ActorContext,
+): Promise<{ total: number; rows: readonly DashboardAttentionRow[] }> {
+  const page = await dependencies.laboratory.execute({
+    actor,
+    filter: { state: 'RETURNED', ownership: 'mine' },
+    limit: LABORATORY_ATTENTION_PAGE,
+  });
+  return {
+    total: page.total,
+    rows: page.rows.map((test): DashboardAttentionRow => ({
+      id: test.id,
+      title: test.labTestNo,
+      state: test.state,
+      href: `/laboratory/tests/${test.id}`,
+      anchorAt: test.updatedAt,
+      anchor: 'waiting',
+    })),
+  };
+}
+
+/**
+ * The bound on the laboratory page this surface samples.
+ *
+ * It matches the register page's own first page, both in size and ordering
+ * (newest first by last update), so the queue shows the same rows the register
+ * opens instead of a separately-chosen slice.
+ */
+export const LABORATORY_ATTENTION_PAGE = DEFAULT_PAGE_SIZE;
 
 /**
  * One task-metric read. The register is bounded, so the source returns the
@@ -149,13 +210,19 @@ export function dashboardMetricSources(
         key: 'pending-review',
         label: 'Pending review',
         unit: 'records',
+        denominator: 'Every approval work item your account may read',
+        grain: 'One actionable approval work item',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'My approvals queue',
         numerator: 'Actionable approval work items returned by the approvals queue',
         state: 'PENDING or IN_PROGRESS work item',
         actorScope: 'Assigned to you or your role',
         definition:
           'Approval work assigned to you or your role that is still actionable. This is the same set the approvals register lists.',
+        drilldown:
+          '/approvals — the queue already lists your own actionable work items, so it carries no extra filter',
         href: '/approvals',
         drilldownLabel: 'Open my approvals',
         tone: 'warning',
@@ -178,7 +245,11 @@ export function dashboardMetricSources(
         key: 'unread-notifications',
         label: 'Unread notifications',
         unit: 'records',
+        denominator: 'Every notification addressed to your authenticated account',
+        grain: 'One notification addressed to you',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'Notifications addressed to your account',
         numerator:
           'Unread notifications addressed to your authenticated account, newest first within the register’s bounded page',
@@ -186,6 +257,7 @@ export function dashboardMetricSources(
         actorScope: 'Addressed to you',
         definition:
           'Notifications addressed to your authenticated account that have not been marked read, newest first within the register’s bounded page. This is the same set the unread view lists.',
+        drilldown: '?unread=1 on the notifications register',
         href: '/notifications?unread=1',
         drilldownLabel: 'Open unread notifications',
         tone: 'neutral',
@@ -212,13 +284,18 @@ export function dashboardMetricSources(
         key: 'hold-items',
         label: 'My HOLD items',
         unit: 'records',
+        denominator: 'Every receiving item you recorded',
+        grain: 'One receiving item',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'Quarantine receiving register',
         numerator: 'Receiving items you recorded whose inspection result is HOLD',
         state: 'inspection result = HOLD',
         actorScope: 'Created by you',
         definition:
           'Receiving items you recorded whose scientific inspection result is HOLD. Read through the receiving register itself, so the count and its link are the same set.',
+        drilldown: '?inspectionResult=HOLD&ownership=mine on the receiving register',
         href: '/quarantine/receiving?inspectionResult=HOLD&ownership=mine',
         drilldownLabel: 'Open my HOLD records',
         tone: 'danger',
@@ -248,13 +325,18 @@ export function dashboardMetricSources(
         key: 'returned-inspections',
         label: 'Returned to me',
         unit: 'records',
+        denominator: 'Every inspection report you authored',
+        grain: 'One inspection report',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'Inspection reports register',
         numerator: 'Inspection reports you authored whose workflow state is RETURNED',
         state: 'workflow state = RETURNED',
         actorScope: 'Authored by you',
         definition:
           'Inspection reports you authored that were returned for rework and are waiting for you to resume them.',
+        drilldown: '?state=RETURNED&ownership=mine on the inspection register',
         href: '/quarantine/inspections?state=RETURNED&ownership=mine',
         drilldownLabel: 'Open my returned reports',
         tone: 'warning',
@@ -284,7 +366,11 @@ export function dashboardMetricSources(
         key: 'tasks-overdue',
         label: 'Tasks overdue',
         unit: 'records',
+        denominator: 'Every task assigned to you',
+        grain: 'One task',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'Tasks register',
         numerator:
           'Tasks assigned to you with a due date before the current UTC server date whose state is not COMPLETED or CANCELLED',
@@ -292,6 +378,7 @@ export function dashboardMetricSources(
         actorScope: 'Assigned to you',
         definition:
           'Open work assigned to you whose due date has already passed. The same filter is available in the tasks register.',
+        drilldown: '?assignee=mine&due=overdue on the tasks register',
         href: '/tasks?assignee=mine&due=overdue',
         drilldownLabel: 'Open my overdue tasks',
         tone: 'danger',
@@ -304,7 +391,11 @@ export function dashboardMetricSources(
         key: 'tasks-due-today',
         label: 'Tasks due today',
         unit: 'records',
+        denominator: 'Every task assigned to you',
+        grain: 'One task',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'Tasks register',
         numerator:
           'Tasks assigned to you whose due date falls on the current UTC server date and whose state is not COMPLETED or CANCELLED',
@@ -312,6 +403,7 @@ export function dashboardMetricSources(
         actorScope: 'Assigned to you',
         definition:
           'Open work assigned to you that is due on the current UTC server date. The same filter is available in the tasks register.',
+        drilldown: '?assignee=mine&due=today on the tasks register',
         href: '/tasks?assignee=mine&due=today',
         drilldownLabel: 'Open my tasks due today',
         tone: 'warning',
@@ -324,13 +416,18 @@ export function dashboardMetricSources(
         key: 'calibrations-overdue',
         label: 'Calibrations overdue',
         unit: 'records',
+        denominator: 'Every calibration record readable in your authorized scope',
+        grain: 'One calibration record',
         timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
         source: 'Calibration register',
         numerator: 'Calibration records in your authorized scope whose recorded state is OVERDUE',
         state: 'calibration state = OVERDUE',
         actorScope: 'Your authorized scope — every equipment record you are allowed to read',
         definition:
           'Records whose explicit calibration state is OVERDUE. Equipment eligibility is verified fail-closed against a CURRENT, not-overdue calibration, so an overdue record blocks the equipment.',
+        drilldown: '?state=OVERDUE on the calibration register',
         href: '/assets/calibrations?state=OVERDUE',
         drilldownLabel: 'Open overdue calibrations',
         tone: 'danger',
@@ -353,6 +450,30 @@ export function dashboardMetricSources(
           anchor: 'due',
         }));
       },
+    },
+    {
+      metric: {
+        key: 'lab-tests-returned',
+        label: 'Lab tests returned to me',
+        unit: 'records',
+        denominator: 'Every laboratory test you authored',
+        grain: 'One laboratory test',
+        timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
+        source: 'Laboratory register',
+        numerator: 'Laboratory tests you authored whose workflow state is RETURNED',
+        state: 'workflow state = RETURNED',
+        actorScope: 'Authored by you',
+        definition:
+          'Laboratory tests you authored that were returned for rework and are waiting for you to resume them. Read through the laboratory register’s own bounded workload read, so the count is the register’s full filtered population and the queue is its bounded newest-first page.',
+        drilldown: '?state=RETURNED&ownership=mine on the laboratory register',
+        href: '/laboratory/tests?state=RETURNED&ownership=mine',
+        drilldownLabel: 'Open my returned lab tests',
+        tone: 'warning',
+      },
+      attention: { severity: 'WARNING', reason: 'Laboratory test was returned to you for rework' },
+      read: (actor) => readLaboratorySource(dependencies, actor),
     },
   ];
 }
@@ -433,42 +554,44 @@ export const DASHBOARD_COVERAGE: readonly DashboardCoverageItem[] = [
   },
   {
     key: 'laboratory-workload',
-    label: 'Laboratory workload',
-    state: 'NOT_SUPPLIED',
+    label: 'Laboratory workload (state-filtered, owner-scoped)',
+    state: 'AVAILABLE',
     reason:
-      'The laboratory register exposes no server-side state filter or bounded workload read model yet, so no laboratory workload count is presented here.',
+      'Read through the laboratory register’s own bounded workload read: the count is the register’s full filtered population for one workflow state and the queue samples its bounded newest-first page. The multi-state workload chart from the chart pool is not drawn; each state is queryable on the register instead.',
   },
   {
     key: 'document-review',
     label: 'Document review queue',
     state: 'NOT_SUPPLIED',
-    reason: 'No composed document-review read model is wired to this shared surface.',
+    reason:
+      'The documents module exposes document identities and their version history, but no reviewer-scoped review-queue read model: versions awaiting review are only reachable by opening each document, so no queue count could be reproduced by a link. Owner: 017-B with the documents module.',
   },
   {
     key: 'blocked-reasons',
     label: 'Blocked reasons',
     state: 'NOT_SUPPLIED',
-    reason: 'No composed blocked-reason read model is wired to this shared surface.',
+    reason:
+      'No register records a blocked reason as a field, so no blocked-reason read model exists. The recorded facts are quarantine HOLD items and fail-closed equipment eligibility, and each is already its own panel or counter with its own stated reason. Owner: 017-B with 011/013 if a source is approved.',
   },
   {
     key: 'reject-analytics',
     label: 'Reject quantity, top items/reasons/departments and daily trend',
     state: 'NOT_SUPPLIED',
     reason:
-      'Reject analytics stay off this surface until their SQL/runtime defects close and an authorized read path defines the scope: no rejected quantity or trend is estimated here.',
+      'The reject analytics read model aggregates the whole register with no actor-scope predicate, and /reject-reports is declared an authenticated route rather than a permission-bound one, so a global reject aggregate placed on a scope-aware dashboard would be an unauthorized aggregate: no rejected quantity or trend is estimated here. Owner: 017-B with 013/014 to define the read scope.',
   },
   {
     key: 'quality-summary',
     label: 'Quality record summary',
     state: 'NOT_SUPPLIED',
     reason:
-      'The quality registers expose no ownership-scoped filter yet, so a quality count could not be reconciled from the link it would carry.',
+      'The quality registers support a state filter only — no ownership filter exists server-side — so a quality count could not be reproduced by the link it would carry. Owner: 017-B.',
   },
   {
     key: 'system-health',
     label: 'System health cards',
     state: 'NOT_SUPPLIED',
     reason:
-      'System health is owner-only and stays on /system/health; it is deliberately not mixed into a shared dashboard surface.',
+      'System health is deliberately not a dashboard data product: /system/health is gated by the system-health read use case, which redirects non-owners to 404, so it is excluded from this shared surface rather than missing.',
   },
 ];

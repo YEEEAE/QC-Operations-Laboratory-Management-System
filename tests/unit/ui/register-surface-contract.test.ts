@@ -70,6 +70,9 @@ const BOUNDED_REGISTERS = [
   'src/pages/tasks/index.astro',
   'src/pages/audit.astro',
   'src/pages/reject-reports/index.astro',
+  // QC-100-FINAL-017: the laboratory register reads a bounded newest-first page
+  // plus the readable total, so it no longer loads the whole table to count it.
+  'src/pages/laboratory/tests/index.astro',
 ];
 
 /**
@@ -105,15 +108,25 @@ const FILTER_CHIP_SURFACES = [
   'src/pages/assets/calibrations/index.astro',
   'src/pages/assets/equipment/index.astro',
   'src/pages/assets/maintenance/index.astro',
+  'src/pages/laboratory/tests/index.astro',
   'src/pages/quarantine/inspections/index.astro',
   'src/pages/quarantine/receiving/index.astro',
   'src/pages/tasks/index.astro',
 ];
 
 const tablePages = pages.filter((page) => read(page).includes('<table'));
+/**
+ * A register is bounded when its read carries a server-side bound, either a
+ * page/offset parsed from the query string or an explicit fixed page size the
+ * owning read model enforces.
+ */
 const isBounded = (page: string): boolean => {
   const source = read(page);
-  return source.includes('parsePageInput') || source.includes('result.offset');
+  return (
+    source.includes('parsePageInput') ||
+    source.includes('result.offset') ||
+    source.includes('limit: DEFAULT_PAGE_SIZE')
+  );
 };
 
 describe('route inventory — shared shell, navigation, dialogs', () => {

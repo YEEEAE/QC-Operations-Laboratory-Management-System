@@ -91,7 +91,20 @@ function labRepository(current: LabTest): LabRepository {
       return current;
     },
     async list() {
-      return [current];
+      return { items: [current], total: 1 };
+    },
+    async workload() {
+      return {
+        total: 1,
+        rows: [
+          {
+            id: current.id,
+            labTestNo: current.labTestNo,
+            state: current.state,
+            updatedAt: new Date(current.updatedAt),
+          },
+        ],
+      };
     },
     async create(test: LabTest) {
       return test;

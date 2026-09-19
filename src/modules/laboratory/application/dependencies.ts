@@ -10,6 +10,7 @@ import { PostgresControlledLabSources } from '../infrastructure/postgres-control
 import { assetsEligibilityDependencies } from '../../assets/application/dependencies.js';
 import { CreateLabTestUseCase } from './create-lab-test.js';
 import { GetLabTestUseCase } from './get-lab-test.js';
+import { GetLabWorkloadUseCase } from './get-lab-workload.js';
 import { ListApprovedLabTemplatesUseCase } from './list-approved-templates.js';
 import { ListLabTestsUseCase } from './list-lab-tests.js';
 import { SaveMeasurementsUseCase } from './save-measurements.js';
@@ -27,6 +28,7 @@ export function laboratoryReadDependencies() {
   return {
     get: new GetLabTestUseCase(repository),
     list: new ListLabTestsUseCase(repository),
+    workload: new GetLabWorkloadUseCase(repository),
     listApprovedTemplates: new ListApprovedLabTemplatesUseCase(sources),
   };
 }

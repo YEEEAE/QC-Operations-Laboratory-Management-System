@@ -25,24 +25,56 @@ describe('dashboard decision surface', () => {
   const port = read('src/modules/dashboard/ports/dashboard-query.ts');
 
   it('defines the KPI contract on the read model, not in the page', () => {
-    for (const field of ['numerator: string', 'state: string', 'actorScope: string']) {
+    for (const field of [
+      'numerator: string',
+      'denominator: string',
+      'grain: string',
+      'state: string',
+      'actorScope: string',
+      'drilldown: string',
+      'freshness: string',
+    ]) {
       expect(port, field).toContain(field);
     }
     expect(port).toContain("unit: 'records'");
     expect(port).toContain("timeRange: 'current snapshot'");
+    expect(port).toContain("timezone: 'UTC'");
+    // Every declared metric must carry the fields, so a new KPI cannot ship with
+    // only a numerator.
+    const sources = read('src/modules/dashboard/application/dashboard-sources.ts');
+    const count = (pattern: RegExp) => sources.match(pattern)?.length ?? 0;
+    const metrics = count(/denominator:/g);
+    expect(metrics).toBeGreaterThanOrEqual(8);
+    expect(count(/grain:/g)).toBe(metrics);
+    expect(count(/drilldown:/g)).toBe(metrics);
+    expect(count(/freshness: SNAPSHOT_FRESHNESS/g)).toBe(metrics);
+    expect(count(/timezone: 'UTC'/g)).toBe(metrics);
   });
 
   it('forwards the whole contract to the KPI card', () => {
     for (const prop of [
       'numerator={metric.numerator}',
+      'denominator={metric.denominator}',
+      'grain={metric.grain}',
       'state={metric.state}',
       'actorScope={metric.actorScope}',
+      'timezone={metric.timezone}',
+      'metricFreshness={metric.freshness}',
+      'drilldown={metric.drilldown}',
     ]) {
       expect(dashboard, prop).toContain(prop);
     }
     expect(kpiCard).toContain('numerator?: string');
+    expect(kpiCard).toContain('denominator?: string');
+    expect(kpiCard).toContain('grain?: string');
+    expect(kpiCard).toContain('drilldown?: string');
+    expect(kpiCard).toContain('metricFreshness?: string');
     expect(kpiCard).toContain('Counts:');
     expect(kpiCard).toContain('Condition:');
+    expect(kpiCard).toContain('Of:');
+    expect(kpiCard).toContain('Grain:');
+    expect(kpiCard).toContain('Freshness:');
+    expect(kpiCard).toContain('Drill-down:');
   });
 
   it('separates an authorization failure from a provider outage', () => {
@@ -61,6 +93,7 @@ describe('dashboard decision surface', () => {
     expect(sources).toContain('state=RETURNED&ownership=mine');
     expect(sources).toContain('assignee=mine&due=overdue');
     expect(sources).toContain('assignee=mine&due=today');
+    expect(sources).toContain("'?state=RETURNED&ownership=mine on the laboratory register'");
     for (const page of [
       'src/pages/quarantine/receiving/index.astro',
       'src/pages/quarantine/inspections/index.astro',
@@ -70,6 +103,13 @@ describe('dashboard decision surface', () => {
       expect(source, page).toContain('ownership,');
       expect(source, page).toContain('Only mine');
     }
+    // The laboratory register implements the same two server-side dimensions its
+    // KPI link carries, and passes them to the owning read model as a filter.
+    const laboratoryPage = read('src/pages/laboratory/tests/index.astro');
+    expect(laboratoryPage).toContain("params.get('ownership') === 'mine'");
+    expect(laboratoryPage).toContain("params.get('state')");
+    expect(laboratoryPage).toContain('filter: { state, ownership }');
+    expect(laboratoryPage).toContain('Only mine');
     const tasksPage = read('src/pages/tasks/index.astro');
     expect(tasksPage).toContain("params.get('assignee') === 'mine'");
     expect(tasksPage).toContain("params.get('due')");
@@ -85,6 +125,7 @@ describe('dashboard decision surface', () => {
       '/quarantine/inspections': 'src/pages/quarantine/inspections/index.astro',
       '/tasks': 'src/pages/tasks/index.astro',
       '/assets/calibrations': 'src/pages/assets/calibrations/index.astro',
+      '/laboratory/tests': 'src/pages/laboratory/tests/index.astro',
     };
     const hrefs = [...sources.matchAll(/href: '([^']+)'/g)].map((match) => match[1]!);
     expect(hrefs.length).toBeGreaterThan(0);
@@ -202,6 +243,14 @@ describe('dashboard decision surface', () => {
     }
     expect(sources).toContain("state: 'NOT_SUPPLIED'");
     expect(sources).toContain('no rejected quantity or trend is estimated here');
+    // The laboratory workload is no longer one of them: its bounded, state-
+    // filtered read model exists and the coverage row states exactly what is
+    // delivered. The remaining gaps stay honest, each with its own reason.
+    expect(sources).toContain("label: 'Laboratory workload (state-filtered, owner-scoped)'");
+    expect(sources).toContain('bounded workload read');
+    expect(sources).toContain("label: 'Document review queue'");
+    expect(sources).toContain("label: 'Blocked reasons'");
+    expect(sources).toContain("label: 'System health cards'");
   });
 
   it('keeps the icon-only shell controls at the 44px target size', () => {
