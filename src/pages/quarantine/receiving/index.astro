@@ -105,8 +105,8 @@ try {
       </select></label>
     <label for="releaseState">Release state<select id="releaseState" name="releaseState">
         <option value="">Any release state</option>
-        <option value="RELEASED" selected={releaseState === 'RELEASED'}>RELEASED</option>
-        <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>Not released</option>
+        <option value="RELEASED" selected={releaseState === 'RELEASED'}>{releaseStateLabel(true)}</option>
+        <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>{releaseStateLabel(false)}</option>
       </select></label>
     <label for="ownership">Ownership<select id="ownership" name="ownership">
         <option value="">All records</option>

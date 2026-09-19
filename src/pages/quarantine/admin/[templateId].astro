@@ -4,6 +4,7 @@ import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { field, toFormFailure, type FormFailure } from '../../../ui/forms/mutation-post.js';
 import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
@@ -81,11 +82,11 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   <p class="crumb"><a href="/quarantine/admin">Quarantine administration</a> / {template.templateCode} {template.versionNo}</p>
   <section class="head">
     <div>
-      <p class="eyebrow">CONTROLLED TEMPLATE · {template.state}</p>
+      <p class="eyebrow">CONTROLLED TEMPLATE · {stateLabel(template.state)}</p>
       <h1>{template.templateCode} · {template.versionNo}</h1>
       <p class="lede">{template.name} · version {template.version.toString()}</p>
     </div>
-    <span class="state">{template.state}</span>
+    <span class="state">{stateLabel(template.state)}</span>
   </section>
 
   {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
@@ -142,7 +143,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     <aside>
       <section class="panel">
         <h2>Record context</h2>
-        <dl><div><dt>Code</dt><dd>{template.templateCode}</dd></div><div><dt>Version</dt><dd>{template.versionNo}</dd></div><div><dt>State</dt><dd>{template.state}</dd></div><div><dt>Record version</dt><dd>{template.version.toString()}</dd></div></dl>
+        <dl><div><dt>Code</dt><dd>{template.templateCode}</dd></div><div><dt>Version</dt><dd>{template.versionNo}</dd></div><div><dt>State</dt><dd>{stateLabel(template.state)}</dd></div><div><dt>Record version</dt><dd>{template.version.toString()}</dd></div></dl>
       </section>
     </aside>
   </section>

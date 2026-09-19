@@ -12,7 +12,7 @@ import {
   isProtectedOwnerScope,
 } from '../../../shared/authorization/p05-authority.js';
 import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
-import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { stateLabel, uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 
 const actor = Astro.locals.actor;
@@ -93,8 +93,10 @@ const protectedRole = (roleCode: string) =>
   Boolean(user) && isProtectedOwnerRoleGrant(user!.loginIdentity, roleCode);
 const protectedScope = (kind: (typeof SCOPE_KINDS)[number]) =>
   Boolean(user) && isProtectedOwnerScope(user!.loginIdentity, kind);
-const scopeLabel = (scope: { kind: string; value: string | null }) =>
-  scope.value ? `${scope.kind}:${scope.value}` : scope.kind;
+const scopeLabel = (scope: { kind: string; value: string | null }) => {
+  const kindLabel = uxVocabulary.scopeKindLabels[scope.kind] ?? scope.kind;
+  return scope.value ? `${kindLabel}: ${scope.value}` : kindLabel;
+};
 ---
 
 <AppLayout title="User detail · Administration" locale="en" direction="ltr">
@@ -484,7 +486,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) =>
                           placeholder="Value (optional)"
                           maxlength="200"
                           value={scopes?.find((scope) => scope.kind === kind)?.value ?? ''}
-                          aria-label={`${kind} scope value`}
+                          aria-label={`${uxVocabulary.scopeKindLabels[kind] ?? kind} scope value`}
                         />
                       </div>
                     ))}
