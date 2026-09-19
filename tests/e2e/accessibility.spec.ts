@@ -106,7 +106,9 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     await page.goto('/definitely-not-a-page-master034');
     await expect(page).toHaveTitle(/Page not found/i);
     await expect(page.getByRole('heading', { name: /could not find/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /continue safely/i })).toBeVisible();
+    // QC-100-FINAL-018: the 404 keeps one clear recovery action (label updated
+    // from the duplicated "Continue safely"/"Go back" pair).
+    await expect(page.getByRole('link', { name: /go to dashboard/i })).toBeVisible();
     await expectNoAxeViolations(page, 'safe 404');
   });
 
