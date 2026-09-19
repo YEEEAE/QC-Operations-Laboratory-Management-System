@@ -9,6 +9,8 @@
 import { readFileSync } from 'node:fs';
 import { Pool } from 'pg';
 
+/* global URL, console, fetch, process */
+
 const baseUrl = process.env.QC_PERF_BASE_URL ?? 'http://127.0.0.1:4321';
 if (!['localhost', '127.0.0.1'].includes(new URL(baseUrl).hostname)) {
   throw new Error('Refusing: QC_PERF_BASE_URL must be local.');
@@ -16,7 +18,8 @@ if (!['localhost', '127.0.0.1'].includes(new URL(baseUrl).hostname)) {
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL required for pool observation.');
 const u = new URL(databaseUrl);
-if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') throw new Error('Refusing: non-local DATABASE_URL.');
+if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1')
+  throw new Error('Refusing: non-local DATABASE_URL.');
 
 const cookie = readFileSync('.tmp/perf007-cookie.txt', 'utf8').trim();
 const rungs = (process.env.QC_PERF_RUNGS ?? '1,4,8,16,24').split(',').map(Number);
@@ -79,7 +82,8 @@ console.log(
       baseUrl,
       identity: 'perf-measure (disposable)',
       poolConfig: 'default node-postgres pool (max 10), single shared pool via getPool()',
-      writePath: 'NOT EXERCISED by this probe — covered by tests/integration/concurrency (see §4 evidence)',
+      writePath:
+        'NOT EXERCISED by this probe — covered by tests/integration/concurrency (see §4 evidence)',
       rungs: rungsOut,
     },
     null,

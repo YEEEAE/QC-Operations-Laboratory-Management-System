@@ -30,160 +30,119 @@
       "family": "login: QCM (quality control manager) (MANAGER)",
       "status": "PASS",
       "detail": "session established; /dashboard served 200",
-      "participants": [
-        "uat-qcm"
-      ]
+      "participants": ["uat-qcm"]
     },
     {
       "scenarioId": "T-UAT-01",
       "family": "login: Production supervisor (SUPERVISOR)",
       "status": "PASS",
       "detail": "session established; /dashboard served 200",
-      "participants": [
-        "uat-supervisor"
-      ]
+      "participants": ["uat-supervisor"]
     },
     {
       "scenarioId": "T-UAT-01",
       "family": "login: QC data-entry user 01 (EMPLOYEE)",
       "status": "PASS",
       "detail": "session established; /dashboard served 200",
-      "participants": [
-        "uat-qc-01"
-      ]
+      "participants": ["uat-qc-01"]
     },
     {
       "scenarioId": "T-UAT-01",
       "family": "login: QC data-entry user 02 (EMPLOYEE)",
       "status": "PASS",
       "detail": "session established; /dashboard served 200",
-      "participants": [
-        "uat-qc-02"
-      ]
+      "participants": ["uat-qc-02"]
     },
     {
       "scenarioId": "T-UAT-01",
       "family": "login: QC data-entry user 03 (EMPLOYEE)",
       "status": "PASS",
       "detail": "session established; /dashboard served 200",
-      "participants": [
-        "uat-qc-03"
-      ]
+      "participants": ["uat-qc-03"]
     },
     {
       "scenarioId": "T-UAT-01",
       "family": "wrong-password recovery",
       "status": "PASS",
       "detail": "rejected password produced no session and the sign-in page reported the refusal",
-      "participants": [
-        "uat-qc-01"
-      ]
+      "participants": ["uat-qc-01"]
     },
     {
       "scenarioId": "T-UAT-03",
       "family": "quarantine receiving create: uat-qc-01",
       "status": "PASS",
       "detail": "receiving 01a0b994-af55-73a6-94c3-3f9cec25ed27 (UAT-SCN-RCV-qc-01-443375f6) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
-      "participants": [
-        "uat-qc-01"
-      ]
+      "participants": ["uat-qc-01"]
     },
     {
       "scenarioId": "T-UAT-03",
       "family": "quarantine receiving create: uat-qc-02",
       "status": "PASS",
       "detail": "receiving 01a0b994-b033-7e23-97ef-fa60ae8a849f (UAT-SCN-RCV-qc-02-406b741e) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
-      "participants": [
-        "uat-qc-02"
-      ]
+      "participants": ["uat-qc-02"]
     },
     {
       "scenarioId": "T-UAT-03",
       "family": "quarantine receiving create: uat-qc-03",
       "status": "PASS",
       "detail": "receiving 01a0b994-b0ee-7f99-ba7a-93521dc267fd (UAT-SCN-RCV-qc-03-574c40b3) created over the real action endpoint; register shows it=true; admin surface /admin/users/new=200",
-      "participants": [
-        "uat-qc-03"
-      ]
+      "participants": ["uat-qc-03"]
     },
     {
       "scenarioId": "T-UAT-03",
       "family": "identical creation capability sets across QC-01/02/03",
       "status": "PASS",
       "detail": "uat-qc-01: /quarantine/receiving/new=200 /laboratory/tests/new=200 /quality/ncr/new=200 /quality/capa/new=200 /quality/findings/new=200 /change-requests/new=200 /documents/new=200 /reject-reports/new=200 /tasks/new=200 /assets/equipment/new=200 /assets/calibrations/new=200 /assets/maintenance/new=200 | uat-qc-02: /quarantine/receiving/new=200 /laboratory/tests/new=200 /quality/ncr/new=200 /quality/capa/new=200 /quality/findings/new=200 /change-requests/new=200 /documents/new=200 /reject-reports/new=200 /tasks/new=200 /assets/equipment/new=200 /assets/calibrations/new=200 /assets/maintenance/new=200 | uat-qc-03: /quarantine/receiving/new=200 /laboratory/tests/new=200 /quality/ncr/new=200 /quality/capa/new=200 /quality/findings/new=200 /change-requests/new=200 /documents/new=200 /reject-reports/new=200 /tasks/new=200 /assets/equipment/new=200 /assets/calibrations/new=200 /assets/maintenance/new=200",
-      "participants": [
-        "uat-qc-01",
-        "uat-qc-02",
-        "uat-qc-03"
-      ]
+      "participants": ["uat-qc-01", "uat-qc-02", "uat-qc-03"]
     },
     {
       "scenarioId": "N-UAT-02",
       "family": "admin-only surface and user creation stay closed to QC data-entry personas",
       "status": "PASS",
       "detail": "all 6 surfaces refused for auth reasons: /admin/users/new shell (uat-qc-01)=DENIED(200), admin.createUser (uat-qc-01)=DENIED(FORBIDDEN), /admin/users/new shell (uat-qc-02)=DENIED(200), admin.createUser (uat-qc-02)=DENIED(FORBIDDEN), /admin/users/new shell (uat-qc-03)=DENIED(200), admin.createUser (uat-qc-03)=DENIED(FORBIDDEN); accounts created in the database=0",
-      "participants": [
-        "uat-qc-01",
-        "uat-qc-02",
-        "uat-qc-03"
-      ]
+      "participants": ["uat-qc-01", "uat-qc-02", "uat-qc-03"]
     },
     {
       "scenarioId": "N-UAT-01",
       "family": "unauthenticated direct action invocation",
       "status": "NOT RUN",
       "detail": "4 auth-denied, 5 refused before authorization (no proof): quarantine.approveInspection=DENIED(UNAUTHORIZED), quarantine.finalApproveInspection=INCONCLUSIVE(BAD_REQUEST), quarantine.releaseReceiving=DENIED(UNAUTHORIZED), laboratory.approve=INCONCLUSIVE(BAD_REQUEST), documents.approve=INCONCLUSIVE(BAD_REQUEST), admin.createUser=INCONCLUSIVE(BAD_REQUEST), releaseGovernance.approveRelease=INCONCLUSIVE(BAD_REQUEST), quarantine.releaseReceiving=DENIED(UNAUTHORIZED), quarantine.holdReceiving=DENIED(UNAUTHORIZED)",
-      "participants": [
-        "(anonymous)"
-      ]
+      "participants": ["(anonymous)"]
     },
     {
       "scenarioId": "N-UAT-01",
       "family": "EMPLOYEE denied on authority actions over a real record",
       "status": "PASS",
       "detail": "all 2 surfaces refused for auth reasons: quarantine.releaseReceiving (real record)=DENIED(FORBIDDEN), quarantine.holdReceiving (real record)=DENIED(FORBIDDEN)",
-      "participants": [
-        "uat-qc-01"
-      ]
+      "participants": ["uat-qc-01"]
     },
     {
       "scenarioId": "N-UAT-01",
       "family": "EMPLOYEE authority actions probed with a non-existent record",
       "status": "NOT RUN",
       "detail": "0 auth-denied, 6 refused before authorization (no proof): quarantine.approveInspection=INCONCLUSIVE(BAD_REQUEST), quarantine.finalApproveInspection=INCONCLUSIVE(BAD_REQUEST), laboratory.approve=INCONCLUSIVE(BAD_REQUEST), documents.approve=INCONCLUSIVE(BAD_REQUEST), releaseGovernance.approveRelease=INCONCLUSIVE(BAD_REQUEST), admin.createUser=INCONCLUSIVE(BAD_REQUEST)",
-      "participants": [
-        "uat-qc-01"
-      ]
+      "participants": ["uat-qc-01"]
     },
     {
       "scenarioId": "N-UAT-02",
       "family": "cross-scope draft mutation (owner self-edit control + outsider attempt)",
       "status": "NOT RUN",
       "detail": "owner self-edit allowed=true; qc-02 cross-edit=INCONCLUSIVE (BAD_REQUEST); stored record after attempt: receiving_no=UAT-SCN-RCV-cross-40518c30 version=2 (outsider mutation=false)",
-      "participants": [
-        "uat-qc-01",
-        "uat-qc-02"
-      ]
+      "participants": ["uat-qc-01", "uat-qc-02"]
     },
     {
       "scenarioId": "T-UAT-03",
       "family": "audit trail for controlled writes",
       "status": "PASS",
       "detail": "audit rows observed: CREATE_RECEIVING=33, UAT_CYCLE_CREATED=6",
-      "participants": [
-        "uat-qc-01",
-        "uat-qc-02",
-        "uat-qc-03"
-      ]
+      "participants": ["uat-qc-01", "uat-qc-02", "uat-qc-03"]
     },
     {
       "scenarioId": "T-UAT-03",
       "family": "session evidence ingestion + retrieval round-trip (Task 5)",
       "status": "PASS",
       "detail": "cycle UAT-2026-09-19-AUTO-3FF19B67 status=IN_PROGRESS; sessions written=13; uat gate rows=0 (must stay 0 for automated-only evidence)",
-      "participants": [
-        "(automated facilitator)"
-      ]
+      "participants": ["(automated facilitator)"]
     }
   ],
   "coverage": [

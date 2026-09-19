@@ -116,7 +116,9 @@ export interface DashboardMetricSource {
   attention?: { severity: DashboardAttention['severity']; reason: string };
   read(
     actor: ActorContext,
-  ): Promise<readonly DashboardAttentionRow[] | { total: number; rows: readonly DashboardAttentionRow[] }>;
+  ): Promise<
+    readonly DashboardAttentionRow[] | { total: number; rows: readonly DashboardAttentionRow[] }
+  >;
 }
 
 /**

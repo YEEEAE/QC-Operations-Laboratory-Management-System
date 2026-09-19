@@ -75,13 +75,17 @@ describe('Authorized cross-domain search, scope isolation, and stable ordering (
   });
 
   it('treats LIKE wildcards as literal business data, never as scope expansion', async () => {
-    // A bare wildcard must not expand past the actor scope.
+    // A bare wildcard is literal data, not a pattern: it matches no record at
+    // all, and it can never expand past the actor scope.
     const all = await service.search({ actorId: userB, q: '%' });
     expect(all.every((result) => result.businessId.startsWith('SRCH-B'))).toBe(true);
-    expect(all).toHaveLength(4);
-    // An underscore must not act as a single-character wildcard across actors.
+    expect(all).toHaveLength(0);
+    // An underscore is literal too, so it neither matches across actors nor
+    // across one actor's own records (`SRCH_A` is not `SRCH-A`).
     expect(await service.search({ actorId: userB, q: 'SRCH_A' })).toHaveLength(0);
-    expect(await service.search({ actorId: userA, q: 'SRCH%A-00%' })).toHaveLength(6);
+    // The same actor searching its own literal prefix still finds its 4 records.
+    expect(await service.search({ actorId: userB, q: 'SRCH-B' })).toHaveLength(4);
+    expect(await service.search({ actorId: userA, q: 'SRCH%A-00%' })).toHaveLength(0);
   });
 
   it('produces a stable total order across repeated identical queries', async () => {

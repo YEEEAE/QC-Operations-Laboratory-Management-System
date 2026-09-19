@@ -59,7 +59,10 @@ export function summarizeProbes(probes: readonly ProbeResult[]): {
       detail: `${denied.length} auth-denied, ${inconclusive.length} refused before authorization (no proof): ${table}`,
     };
   }
-  return { status: 'PASS', detail: `all ${denied.length} surfaces refused for auth reasons: ${table}` };
+  return {
+    status: 'PASS',
+    detail: `all ${denied.length} surfaces refused for auth reasons: ${table}`,
+  };
 }
 
 /**

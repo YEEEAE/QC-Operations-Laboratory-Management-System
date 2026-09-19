@@ -231,9 +231,7 @@ export class AcceptUatCycleUseCase {
           migrationHead: cycle.migrationHead,
           environment: cycle.environment,
           sessionIds: sessions.map((session) => session.id).sort(),
-          sessionHashes: sessions
-            .map((session) => session.evidenceReference.trim())
-            .sort(),
+          sessionHashes: sessions.map((session) => session.evidenceReference.trim()).sort(),
         }),
       )
       .digest('hex');
@@ -286,10 +284,7 @@ export class GetUatCycleEvidenceUseCase {
   constructor(private readonly repository: UatEvidenceRepository) {}
 
   /** Retrieval read model; only cycles the actor is authorized to inspect. */
-  async execute(input: {
-    actor: ActorContext;
-    cycleId: string;
-  }): Promise<{
+  async execute(input: { actor: ActorContext; cycleId: string }): Promise<{
     cycle: UatCycleRecord;
     summary: UatCycleEvidenceSummary;
     sessions: UatSessionRecord[];

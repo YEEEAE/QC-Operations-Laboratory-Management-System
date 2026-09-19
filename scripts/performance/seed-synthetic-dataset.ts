@@ -141,85 +141,69 @@ async function bulkInsert(
     }
     const sql = `INSERT INTO qc.${table} (${columns.join(',')}) VALUES ${placeholders.join(',')}`;
     await client.query(sql, values).catch((error: unknown) => {
-      throw new Error(`bulkInsert(${table}) failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `bulkInsert(${table}) failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     });
   }
 }
 
 /* ------------------------------------------------------------ vocabularies */
 
-const TASK_STATES = ['DRAFT', 'OPEN', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED'] as const;
-const TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
-const RECEIVING_STATES = [
-  'PENDING',
-  'READY_FOR_INSPECTION',
-  'UNDER_INSPECTION',
-  'INSPECTION_COMPLETE',
-  'RELEASE_PENDING',
-  'RELEASED',
-  'HOLD',
-  'EXPIRED',
-  'CANCELLED',
-] as const;
-const INSPECTION_RESULTS = ['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'HOLD'] as const;
+/* State vocabularies used only as types by the generator below (`FINAL_RESULTS`,
+ * `DOC_TYPES` and `FINDING_SEVERITIES` are the value-picked ones). */
+type TaskState = 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+type ReceivingState =
+  | 'PENDING'
+  | 'READY_FOR_INSPECTION'
+  | 'UNDER_INSPECTION'
+  | 'INSPECTION_COMPLETE'
+  | 'RELEASE_PENDING'
+  | 'RELEASED'
+  | 'HOLD'
+  | 'EXPIRED'
+  | 'CANCELLED';
+type InspectionResult = 'NOT_STARTED' | 'IN_PROGRESS' | 'PASS' | 'FAIL' | 'HOLD';
 const FINAL_RESULTS = ['PASS', 'FAIL', 'HOLD'] as const;
-const REPORT_STATES = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED'] as const;
-const LAB_STATES = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED'] as const;
-const REJECT_TYPES = ['ISSUE_SLIP', 'DAILY_REJECT'] as const;
-const REJECT_STATUSES = ['DRAFT', 'FINALIZED', 'VOID'] as const;
-const ISSUE_SLIP_STATUSES = [
-  'DRAFT',
-  'ISSUED',
-  'APPROVAL_TRACKING',
-  'COMPLETED',
-  'VOID',
-] as const;
+type ReportState = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'RETURNED' | 'APPROVED' | 'REJECTED';
+type LabState = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'RETURNED' | 'APPROVED' | 'REJECTED';
+type DailyRejectStatus = 'DRAFT' | 'FINALIZED' | 'VOID';
+type IssueSlipStatus = 'DRAFT' | 'ISSUED' | 'APPROVAL_TRACKING' | 'COMPLETED' | 'VOID';
 const DOC_TYPES = ['WI', 'SOP', 'CONTROLLED_PROCEDURE', 'CONTROLLED_FORM', 'INSTRUCTION'] as const;
-const DOC_VERSION_STATES = [
-  'CATALOG_ONLY',
-  'DRAFT',
-  'IN_REVIEW',
-  'RETURNED',
-  'APPROVED',
-  'EFFECTIVE',
-  'SUPERSEDED',
-  'ARCHIVED',
-  'VOID',
-] as const;
-const EQUIPMENT_STATES = ['ACTIVE', 'OUT_OF_SERVICE', 'UNDER_MAINTENANCE', 'DECOMMISSIONED'] as const;
-const CALIBRATION_STATES = [
-  'SCHEDULED',
-  'SUBMITTED',
-  'APPROVED',
-  'CURRENT',
-  'DUE',
-  'OVERDUE',
-  'COMPLETED',
-  'FAILED',
-] as const;
-const SEVERITIES = ['INFO', 'WARNING', 'CRITICAL'] as const;
-const FINDING_STATES = ['DRAFT', 'OPEN', 'UNDER_REVIEW', 'CLOSED', 'VOID'] as const;
+type DocVersionState =
+  | 'CATALOG_ONLY'
+  | 'DRAFT'
+  | 'IN_REVIEW'
+  | 'RETURNED'
+  | 'APPROVED'
+  | 'EFFECTIVE'
+  | 'SUPERSEDED'
+  | 'ARCHIVED'
+  | 'VOID';
+type EquipmentState = 'ACTIVE' | 'OUT_OF_SERVICE' | 'UNDER_MAINTENANCE' | 'DECOMMISSIONED';
+type CalibrationState =
+  'SCHEDULED' | 'SUBMITTED' | 'APPROVED' | 'CURRENT' | 'DUE' | 'OVERDUE' | 'COMPLETED' | 'FAILED';
+type Severity = 'INFO' | 'WARNING' | 'CRITICAL';
+type FindingState = 'DRAFT' | 'OPEN' | 'UNDER_REVIEW' | 'CLOSED' | 'VOID';
 const FINDING_SEVERITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
-const NCR_STATES = [
-  'DRAFT',
-  'OPEN',
-  'UNDER_INVESTIGATION',
-  'RCA_IN_PROGRESS',
-  'CAPA_IN_PROGRESS',
-  'READY_FOR_CLOSURE',
-  'CLOSED',
-  'VOID',
-] as const;
-const CAPA_STATES = [
-  'DRAFT',
-  'OPEN',
-  'IN_PROGRESS',
-  'AWAITING_VERIFICATION',
-  'EFFECTIVENESS_REVIEW',
-  'READY_FOR_CLOSURE',
-  'CLOSED',
-  'VOID',
-] as const;
+type NcrState =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'UNDER_INVESTIGATION'
+  | 'RCA_IN_PROGRESS'
+  | 'CAPA_IN_PROGRESS'
+  | 'READY_FOR_CLOSURE'
+  | 'CLOSED'
+  | 'VOID';
+type CapaState =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'IN_PROGRESS'
+  | 'AWAITING_VERIFICATION'
+  | 'EFFECTIVENESS_REVIEW'
+  | 'READY_FOR_CLOSURE'
+  | 'CLOSED'
+  | 'VOID';
 const APPROVAL_WORK_TYPES = ['REVIEW', 'APPROVAL'] as const;
 const DEPARTMENTS = ['RAW_MATERIALS', 'PACKAGING', 'FILLING', 'LABORATORY', 'WAREHOUSE'] as const;
 const SHIFTS = ['MORNING', 'EVENING', 'NIGHT'] as const;
@@ -307,42 +291,80 @@ async function main(): Promise<void> {
      * qc.audit_events is append-only by trigger (immutable audit), so it is
      * never deleted; the PERF-SEED- prefixed rows are instead skipped on
      * re-runs below. */
-    await client.query("DELETE FROM qc.notification_deliveries WHERE notification_id IN (SELECT id FROM qc.notifications WHERE recipient_user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%'))");
-    await client.query("DELETE FROM qc.notifications WHERE recipient_user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')");
+    await client.query(
+      "DELETE FROM qc.notification_deliveries WHERE notification_id IN (SELECT id FROM qc.notifications WHERE recipient_user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%'))",
+    );
+    await client.query(
+      "DELETE FROM qc.notifications WHERE recipient_user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')",
+    );
     await client.query('DELETE FROM qc.outbox_events WHERE dedupe_key LIKE $$PERF-%$$');
-    await client.query('DELETE FROM qc.document_versions WHERE document_id IN (SELECT id FROM qc.document_identities WHERE document_no LIKE $$PERF-%$$)');
+    await client.query(
+      'DELETE FROM qc.document_versions WHERE document_id IN (SELECT id FROM qc.document_identities WHERE document_no LIKE $$PERF-%$$)',
+    );
     await client.query("DELETE FROM qc.document_identities WHERE document_no LIKE 'PERF-%'");
-    await client.query('DELETE FROM qc.approval_work_items WHERE approval_case_id IN (SELECT id FROM qc.approval_cases WHERE subject_id::text IN (SELECT id::text FROM qc.findings WHERE finding_no LIKE $$PERF-%$$))');
-    await client.query('DELETE FROM qc.approval_cases WHERE subject_id::text IN (SELECT id::text FROM qc.findings WHERE finding_no LIKE $$PERF-%$$)');
+    await client.query(
+      'DELETE FROM qc.approval_work_items WHERE approval_case_id IN (SELECT id FROM qc.approval_cases WHERE subject_id::text IN (SELECT id::text FROM qc.findings WHERE finding_no LIKE $$PERF-%$$))',
+    );
+    await client.query(
+      'DELETE FROM qc.approval_cases WHERE subject_id::text IN (SELECT id::text FROM qc.findings WHERE finding_no LIKE $$PERF-%$$)',
+    );
     await client.query('DELETE FROM qc.capas WHERE capa_no LIKE $$PERF-%$$');
     await client.query('DELETE FROM qc.ncrs WHERE ncr_no LIKE $$PERF-%$$');
     await client.query('DELETE FROM qc.findings WHERE finding_no LIKE $$PERF-%$$');
-    await client.query('DELETE FROM qc.lab_measurements WHERE lab_test_id IN (SELECT id FROM qc.lab_tests WHERE lab_test_no LIKE $$PERF-%$$)');
-    await client.query('DELETE FROM qc.lab_samples WHERE lab_test_id IN (SELECT id FROM qc.lab_tests WHERE lab_test_no LIKE $$PERF-%$$)');
+    await client.query(
+      'DELETE FROM qc.lab_measurements WHERE lab_test_id IN (SELECT id FROM qc.lab_tests WHERE lab_test_no LIKE $$PERF-%$$)',
+    );
+    await client.query(
+      'DELETE FROM qc.lab_samples WHERE lab_test_id IN (SELECT id FROM qc.lab_tests WHERE lab_test_no LIKE $$PERF-%$$)',
+    );
     await client.query('DELETE FROM qc.lab_tests WHERE lab_test_no LIKE $$PERF-%$$');
-    await client.query('DELETE FROM qc.inspection_report_results WHERE inspection_report_id IN (SELECT id FROM qc.inspection_reports WHERE inspection_no LIKE $$PERF-%$$)');
+    await client.query(
+      'DELETE FROM qc.inspection_report_results WHERE inspection_report_id IN (SELECT id FROM qc.inspection_reports WHERE inspection_no LIKE $$PERF-%$$)',
+    );
     await client.query('DELETE FROM qc.inspection_reports WHERE inspection_no LIKE $$PERF-%$$');
     // Synthetic templates (safe once reports no longer reference the versions).
     await client.query('DELETE FROM qc.inspection_template_points WHERE point_code LIKE $$PT-%$$');
-    await client.query('DELETE FROM qc.inspection_template_sections WHERE section_code LIKE $$SEC-%$$');
-    await client.query("DELETE FROM qc.inspection_template_versions WHERE version_no = '1.0' AND created_by IN (SELECT id FROM qc.users WHERE login_identity = 'yazeed')");
+    await client.query(
+      'DELETE FROM qc.inspection_template_sections WHERE section_code LIKE $$SEC-%$$',
+    );
+    await client.query(
+      "DELETE FROM qc.inspection_template_versions WHERE version_no = '1.0' AND created_by IN (SELECT id FROM qc.users WHERE login_identity = 'yazeed')",
+    );
     await client.query("DELETE FROM qc.inspection_templates WHERE template_code LIKE 'PERF-IT-%'");
-    await client.query('DELETE FROM qc.lab_test_template_parameters WHERE parameter_code LIKE $$PR-%$$');
-    await client.query('DELETE FROM qc.lab_test_template_sections WHERE section_code LIKE $$SEC-%$$');
-    await client.query("DELETE FROM qc.lab_test_template_versions WHERE version_no = '1.0' AND created_by IN (SELECT id FROM qc.users WHERE login_identity = 'yazeed')");
+    await client.query(
+      'DELETE FROM qc.lab_test_template_parameters WHERE parameter_code LIKE $$PR-%$$',
+    );
+    await client.query(
+      'DELETE FROM qc.lab_test_template_sections WHERE section_code LIKE $$SEC-%$$',
+    );
+    await client.query(
+      "DELETE FROM qc.lab_test_template_versions WHERE version_no = '1.0' AND created_by IN (SELECT id FROM qc.users WHERE login_identity = 'yazeed')",
+    );
     await client.query("DELETE FROM qc.lab_test_templates WHERE test_code LIKE 'PERF-LT-%'");
-    await client.query('DELETE FROM qc.daily_reject_entries WHERE report_id IN (SELECT id FROM qc.reject_reports WHERE report_no LIKE $$PERF-%$$)');
-    await client.query('DELETE FROM qc.reject_issue_slips WHERE report_id IN (SELECT id FROM qc.reject_reports WHERE report_no LIKE $$PERF-%$$)');
+    await client.query(
+      'DELETE FROM qc.daily_reject_entries WHERE report_id IN (SELECT id FROM qc.reject_reports WHERE report_no LIKE $$PERF-%$$)',
+    );
+    await client.query(
+      'DELETE FROM qc.reject_issue_slips WHERE report_id IN (SELECT id FROM qc.reject_reports WHERE report_no LIKE $$PERF-%$$)',
+    );
     await client.query('DELETE FROM qc.reject_reports WHERE report_no LIKE $$PERF-%$$');
-    await client.query('DELETE FROM qc.task_assignments WHERE task_id IN (SELECT id FROM qc.tasks WHERE task_no LIKE $$PERF-%$$)');
+    await client.query(
+      'DELETE FROM qc.task_assignments WHERE task_id IN (SELECT id FROM qc.tasks WHERE task_no LIKE $$PERF-%$$)',
+    );
     await client.query('DELETE FROM qc.tasks WHERE task_no LIKE $$PERF-%$$');
     await client.query('DELETE FROM qc.receiving_items WHERE receiving_no LIKE $$PERF-%$$');
     // equipment.current_calibration_id RESTRICTs calibration deletion.
-    await client.query("UPDATE qc.equipment SET current_calibration_id = NULL WHERE equipment_no LIKE 'PERF-%'");
+    await client.query(
+      "UPDATE qc.equipment SET current_calibration_id = NULL WHERE equipment_no LIKE 'PERF-%'",
+    );
     await client.query('DELETE FROM qc.calibration_records WHERE calibration_no LIKE $$PERF-%$$');
     await client.query('DELETE FROM qc.equipment WHERE equipment_no LIKE $$PERF-%$$');
-    await client.query("DELETE FROM qc.user_scopes WHERE user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')");
-    await client.query("DELETE FROM qc.user_roles WHERE user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')");
+    await client.query(
+      "DELETE FROM qc.user_scopes WHERE user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')",
+    );
+    await client.query(
+      "DELETE FROM qc.user_roles WHERE user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')",
+    );
     // qc.users cannot be deleted: audit_events is append-only and RESTRICTs
     // actor deletion. Re-runs therefore reuse existing perf- users by their
     // stable IDs instead of recreating them.
@@ -358,7 +380,8 @@ async function main(): Promise<void> {
     const owner = await client.query<{ id: string }>(
       "SELECT id FROM qc.users WHERE login_identity = 'yazeed'",
     );
-    const ownerId = owner.rows[0]?.id ?? fail('Refusing perf seed: yazeed owner account is missing.');
+    const ownerId =
+      owner.rows[0]?.id ?? fail('Refusing perf seed: yazeed owner account is missing.');
 
     type SyntheticUser = {
       id: string;
@@ -378,7 +401,11 @@ async function main(): Promise<void> {
     await writeFile(
       credentialPath,
       JSON.stringify(
-        { loginIdentity: 'perf-measure', password: measurementPassword, generatedAt: new Date().toISOString() },
+        {
+          loginIdentity: 'perf-measure',
+          password: measurementPassword,
+          generatedAt: new Date().toISOString(),
+        },
         null,
         2,
       ),
@@ -427,16 +454,21 @@ async function main(): Promise<void> {
       false,
       ownerId,
     ]);
-    await bulkInsert(client, 'users', [
-      'id',
-      'login_identity',
-      'email',
-      'display_name',
-      'password_hash',
-      'account_state',
-      'must_change_password',
-      'created_by',
-    ], userRows);
+    await bulkInsert(
+      client,
+      'users',
+      [
+        'id',
+        'login_identity',
+        'email',
+        'display_name',
+        'password_hash',
+        'account_state',
+        'must_change_password',
+        'created_by',
+      ],
+      userRows,
+    );
     inserted.users = allUsers.length;
     record('users', 'MANAGER+TEAM measurement identity (perf-measure)');
     for (const user of syntheticUsers) record('users', user.roleCode);
@@ -548,14 +580,7 @@ async function main(): Promise<void> {
       await bulkInsert(
         client,
         'inspection_templates',
-        [
-          'id',
-          'template_code',
-          'name',
-          'description',
-          'active',
-          'created_by',
-        ],
+        ['id', 'template_code', 'name', 'description', 'active', 'created_by'],
         templateRows,
       );
       await bulkInsert(
@@ -834,10 +859,10 @@ async function main(): Promise<void> {
         calibrationRows,
       );
       for (const [equipmentId, calibrationId] of currentCalibrationByEquipment) {
-        await client.query(
-          'UPDATE qc.equipment SET current_calibration_id = $1 WHERE id = $2',
-          [calibrationId, equipmentId],
-        );
+        await client.query('UPDATE qc.equipment SET current_calibration_id = $1 WHERE id = $2', [
+          calibrationId,
+          equipmentId,
+        ]);
       }
       inserted.equipment = SIZES.equipment;
       inserted.calibration_records = calibrationRows.length;
@@ -1207,7 +1232,16 @@ async function main(): Promise<void> {
       await bulkInsert(
         client,
         'lab_samples',
-        ['id', 'lab_test_id', 'sample_no', 'sample_identifier', 'position', 'sample_source', 'state', 'created_by'],
+        [
+          'id',
+          'lab_test_id',
+          'sample_no',
+          'sample_identifier',
+          'position',
+          'sample_source',
+          'state',
+          'created_by',
+        ],
         sampleRows,
       );
       await bulkInsert(
@@ -1879,7 +1913,13 @@ async function main(): Promise<void> {
         'UPDATE',
         'VOID',
       ];
-      const subjectTypes = ['TASK', 'RECEIVING_ITEM', 'INSPECTION_REPORT', 'LAB_TEST', 'REJECT_REPORT'];
+      const subjectTypes = [
+        'TASK',
+        'RECEIVING_ITEM',
+        'INSPECTION_REPORT',
+        'LAB_TEST',
+        'REJECT_REPORT',
+      ];
       for (let i = 0; i < remaining; i += 1) {
         const actor = pick(allUsers);
         const action = pick(actions);
@@ -1956,8 +1996,7 @@ async function main(): Promise<void> {
       verifiedPerfPrefixedRows: verified,
       distributions,
       credentials: {
-        note:
-          'Measurement identity perf-measure uses a generated disposable password; it is never logged or written to any file.',
+        note: 'Measurement identity perf-measure uses a generated disposable password; it is never logged or written to any file.',
       },
     };
     console.log(JSON.stringify(manifest, null, 2));
@@ -1970,22 +2009,9 @@ async function main(): Promise<void> {
   }
 }
 
-type TaskState = (typeof TASK_STATES)[number];
-type ReceivingState = (typeof RECEIVING_STATES)[number];
-type InspectionResult = (typeof INSPECTION_RESULTS)[number];
-type ReportState = (typeof REPORT_STATES)[number];
-type LabState = (typeof LAB_STATES)[number];
-type DailyRejectStatus = (typeof REJECT_STATUSES)[number];
-type IssueSlipStatus = (typeof ISSUE_SLIP_STATUSES)[number];
-type DocVersionState = (typeof DOC_VERSION_STATES)[number];
-type EquipmentState = (typeof EQUIPMENT_STATES)[number];
-type CalibrationState = (typeof CALIBRATION_STATES)[number];
-type Severity = (typeof SEVERITIES)[number];
-type FindingState = (typeof FINDING_STATES)[number];
-type NcrState = (typeof NCR_STATES)[number];
-type CapaState = (typeof CAPA_STATES)[number];
-
 main().catch((error: unknown) => {
-  console.error(error instanceof Error ? `Perf seed failed: ${error.message}` : 'Perf seed failed.');
+  console.error(
+    error instanceof Error ? `Perf seed failed: ${error.message}` : 'Perf seed failed.',
+  );
   process.exitCode = 1;
 });

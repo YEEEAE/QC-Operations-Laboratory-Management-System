@@ -44,7 +44,10 @@ import {
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const port = Number(process.env.UAT_SCENARIO_PORT ?? '4399');
-const baseUrl = (process.env.UAT_SCENARIO_BASE_URL ?? `http://127.0.0.1:${port}`).replace(/\/$/, '');
+const baseUrl = (process.env.UAT_SCENARIO_BASE_URL ?? `http://127.0.0.1:${port}`).replace(
+  /\/$/,
+  '',
+);
 const evidencePath = resolve(
   process.env.UAT_SCENARIO_EVIDENCE ??
     'audit/2026-09-19/QC-100-FINAL-004-task7-uat-scenarios-evidence.json',
@@ -261,7 +264,7 @@ async function main(): Promise<void> {
   const coverage: CoverageRow[] = [];
   const startedAt = new Date();
   let server: ChildProcess | undefined;
-  let migrationHead = 'unknown';
+  let migrationHead: string;
 
   try {
     const ledger = await pool.query<{ version: string }>(
@@ -318,7 +321,8 @@ async function main(): Promise<void> {
     scenarios.push({
       scenarioId: 'T-UAT-01',
       family: 'wrong-password recovery',
-      status: !badLogin && /Sign-in could not be completed|invalid/i.test(badBody) ? 'PASS' : 'FAIL',
+      status:
+        !badLogin && /Sign-in could not be completed|invalid/i.test(badBody) ? 'PASS' : 'FAIL',
       detail: badLogin
         ? 'a rejected password produced a session (defect)'
         : 'rejected password produced no session and the sign-in page reported the refusal',
@@ -402,7 +406,10 @@ async function main(): Promise<void> {
     // the result is verified against the database.
     const adminProbes: ProbeResult[] = [];
     const attemptedIdentities: string[] = [];
-    const scenarioToken = runId.replace(/[^0-9a-z]/gi, '').slice(-8).toLowerCase();
+    const scenarioToken = runId
+      .replace(/[^0-9a-z]/gi, '')
+      .slice(-8)
+      .toLowerCase();
     for (const persona of QC_PERSONAS) {
       const client = clients.get(persona.id);
       if (!client?.authenticated) continue;
@@ -438,14 +445,13 @@ async function main(): Promise<void> {
       scenarios.push({
         scenarioId: 'N-UAT-02',
         family: 'admin-only surface and user creation stay closed to QC data-entry personas',
-        status:
-          leaked.rowCount
-            ? 'FAIL'
-            : adminSummary.status === 'PASS'
-              ? 'PASS'
-              : adminSummary.status === 'FAIL'
-                ? 'FAIL'
-                : 'NOT RUN',
+        status: leaked.rowCount
+          ? 'FAIL'
+          : adminSummary.status === 'PASS'
+            ? 'PASS'
+            : adminSummary.status === 'FAIL'
+              ? 'FAIL'
+              : 'NOT RUN',
         detail: `${adminSummary.detail}; accounts created in the database=${leaked.rowCount ?? 0}`,
         participants: QC_PERSONAS.map((persona) => persona.loginIdentity),
       });
@@ -466,16 +472,26 @@ async function main(): Promise<void> {
     const realRecordActions: Array<{ action: string; payload: Record<string, unknown> }> =
       realReceivingId
         ? [
-            { action: 'quarantine.releaseReceiving', payload: { id: realReceivingId, expectedVersion: 1 } },
+            {
+              action: 'quarantine.releaseReceiving',
+              payload: { id: realReceivingId, expectedVersion: 1 },
+            },
             {
               action: 'quarantine.holdReceiving',
-              payload: { id: realReceivingId, expectedVersion: 1, reason: 'Automated UAT negative probe' },
+              payload: {
+                id: realReceivingId,
+                expectedVersion: 1,
+                reason: 'Automated UAT negative probe',
+              },
             },
           ]
         : [];
     const anonymousProbes: ProbeResult[] = [];
     for (const probe of [
-      ...sensitiveActions.map((action) => ({ action, payload: { id: fabricatedId, expectedVersion: 1 } })),
+      ...sensitiveActions.map((action) => ({
+        action,
+        payload: { id: fabricatedId, expectedVersion: 1 },
+      })),
       ...realRecordActions,
     ]) {
       const outcome = await unauthenticatedAction(probe.action, probe.payload);
@@ -647,7 +663,10 @@ async function main(): Promise<void> {
     // Task 5 round-trip: record this run as automated facilitator session evidence.
     // Each run writes its own append-only cycle: evidence tables are immutable,
     // so re-running the suite must not collide with an earlier run's rows.
-    const runToken = runId.replace(/[^0-9a-z]/gi, '').slice(-8).toUpperCase();
+    const runToken = runId
+      .replace(/[^0-9a-z]/gi, '')
+      .slice(-8)
+      .toUpperCase();
     const cycleId = `UAT-${new Date().toISOString().slice(0, 10)}-AUTO-${runToken}`;
     const gitSha = candidate.gitSha;
     const scenarioSessions = scenarios.filter((entry) => entry.status !== 'NOT RUN');
@@ -677,7 +696,10 @@ async function main(): Promise<void> {
         '7',
         entry.family.slice(0, 120),
         'NONE',
-        (passed ? 'Automated scenario passed' : `Automated scenario ${entry.status}: ${entry.detail}`)
+        (passed
+          ? 'Automated scenario passed'
+          : `Automated scenario ${entry.status}: ${entry.detail}`
+        )
           .slice(0, 160)
           .replaceAll(',', ';'),
         passed ? 'PASS' : 'BLOCKED',
@@ -738,7 +760,8 @@ async function main(): Promise<void> {
         ],
         env,
       );
-      if (createCode !== 0) fail(`Automated UAT cycle creation failed with exit code ${createCode}.`);
+      if (createCode !== 0)
+        fail(`Automated UAT cycle creation failed with exit code ${createCode}.`);
     }
     if (rows.length > 0) {
       await writeFile(csvPath, `${header}\n${rows.join('\n')}\n`, 'utf8');
@@ -818,8 +841,16 @@ async function main(): Promise<void> {
 
     for (const entry of scenarios) {
       const mark =
-        entry.status === 'PASS' ? '✓' : entry.status === 'FAIL' ? '✗' : entry.status === 'BLOCKED' ? '!' : '·';
-      console.log(`${mark} [${entry.status}] ${entry.scenarioId} ${entry.family} — ${entry.detail}`);
+        entry.status === 'PASS'
+          ? '✓'
+          : entry.status === 'FAIL'
+            ? '✗'
+            : entry.status === 'BLOCKED'
+              ? '!'
+              : '·';
+      console.log(
+        `${mark} [${entry.status}] ${entry.scenarioId} ${entry.family} — ${entry.detail}`,
+      );
     }
     console.log(
       `\nAUTOMATED UAT SCENARIOS: ${totals.pass} PASS / ${totals.fail} FAIL / ${totals.notRun} NOT RUN / ${totals.blocked} BLOCKED`,

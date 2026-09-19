@@ -342,9 +342,13 @@ describe('laboratory evidence delivery wiring (QC-CLOSURE-007)', () => {
     );
     expect(source).toContain('POLICY / SCIENTIFIC SOURCE REQUIRED');
     expect(source).toContain('TR-LAB-007');
-    // The page renders no actionable reject control: enforcement stays server-side.
-    expect(source).not.toContain('astro:actions');
-    expect(source).not.toContain('<form');
+    // The page renders no reject control and accepts no scientific verdict from
+    // the client: reject enforcement and the official result stay server-side.
+    // QC-100-FINAL-004 adds the two-stage approval/return rail to this page;
+    // its authority is asserted against src/actions/laboratory.ts below, so the
+    // workspace still cannot fake client authority.
+    expect(source).not.toContain('laboratory.reject');
+    expect(source).not.toContain('scientificResult');
   });
 
   it('the laboratory actions surface exposes the policy-gated reject transition', () => {

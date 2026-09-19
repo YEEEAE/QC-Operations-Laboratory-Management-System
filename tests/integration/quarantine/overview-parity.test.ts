@@ -65,6 +65,11 @@ describe('Quarantine counters agree with the registers they link to', () => {
   beforeAll(async () => {
     const databaseUrl = getTestDatabaseUrl(await startPostgresContainer({ tls: true }));
     pool = createPool({ connectionString: databaseUrl, max: 5 });
+    // Per-suite schema isolation: the counters are compared against the register
+    // the same actor can read, so leftover rows from another suite would make the
+    // register larger than this suite's own trend (same pattern as the
+    // control-center and controlled-mutation suites).
+    await pool.query('DROP SCHEMA IF EXISTS qc CASCADE');
     await migrate({ pool });
     db = new Kysely<DatabaseSchema>({
       dialect: new PostgresDialect({

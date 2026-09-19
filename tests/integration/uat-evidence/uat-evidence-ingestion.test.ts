@@ -17,14 +17,20 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
-import { PostgresUatEvidenceRepository, executeUatAcceptance } from '../../../src/modules/uat-evidence/infrastructure/postgres-repository.js';
+import {
+  PostgresUatEvidenceRepository,
+  executeUatAcceptance,
+} from '../../../src/modules/uat-evidence/infrastructure/postgres-repository.js';
 import {
   CreateUatCycleUseCase,
   GetUatCycleEvidenceUseCase,
   RecordUatDefectUseCase,
   RecordUatSessionUseCase,
 } from '../../../src/modules/uat-evidence/application/use-cases.js';
-import { uatCycleSnapshotHash, AUTOMATED_PARTICIPANT_CODE } from '../../../src/modules/uat-evidence/domain/uat-evidence.js';
+import {
+  uatCycleSnapshotHash,
+  AUTOMATED_PARTICIPANT_CODE,
+} from '../../../src/modules/uat-evidence/domain/uat-evidence.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
@@ -85,7 +91,13 @@ beforeAll(async () => {
     `INSERT INTO qc.release_candidates (id, git_sha, build_id, application_version, migration_head, uat_cycle_id, uat_status, residual_risk_status, state)
      VALUES ($1, $2, $3, $4, $5, 'UAT-INT-001', 'UNVERIFIED', 'OPEN', 'PENDING')
      ON CONFLICT (id) DO NOTHING`,
-    [RELEASE_ROW_ID, GIT_SHA, identity.buildId, identity.applicationVersion, identity.migrationHead],
+    [
+      RELEASE_ROW_ID,
+      GIT_SHA,
+      identity.buildId,
+      identity.applicationVersion,
+      identity.migrationHead,
+    ],
   );
 }, 180000);
 
@@ -208,7 +220,12 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
           recordedBy: MANAGER_ID,
           auditInfo: {},
         },
-        signer: { id: MANAGER_ID, loginIdentity: 'uat-int-mgr', accountState: 'ACTIVE', roles: ['MANAGER'] },
+        signer: {
+          id: MANAGER_ID,
+          loginIdentity: 'uat-int-mgr',
+          accountState: 'ACTIVE',
+          roles: ['MANAGER'],
+        },
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     const gateRows = await pool!.query<{ count: string }>(
@@ -264,7 +281,12 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
           recordedBy: MANAGER_ID,
           auditInfo: {},
         },
-        signer: { id: MANAGER_ID, loginIdentity: 'uat-int-mgr', accountState: 'ACTIVE', roles: ['MANAGER'] },
+        signer: {
+          id: MANAGER_ID,
+          loginIdentity: 'uat-int-mgr',
+          accountState: 'ACTIVE',
+          roles: ['MANAGER'],
+        },
       }),
     ).rejects.toMatchObject({ code: 'DOMAIN_INVALID_TRANSITION' });
     const gateRows = await pool!.query<{ count: string }>(
@@ -307,7 +329,12 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
         recordedBy: MANAGER_ID,
         auditInfo: { outcome: 'ACCEPTED' },
       },
-      signer: { id: MANAGER_ID, loginIdentity: 'uat-int-mgr', accountState: 'ACTIVE', roles: ['MANAGER'] },
+      signer: {
+        id: MANAGER_ID,
+        loginIdentity: 'uat-int-mgr',
+        accountState: 'ACTIVE',
+        roles: ['MANAGER'],
+      },
     });
     expect(result.outcome).toBe('ACCEPTED');
     const gate = await pool!.query<{ status: string; source: string }>(
@@ -324,9 +351,8 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
   });
 
   it('derives the trusted-source gate as PASS only via domain deriveReleaseEvidence', async () => {
-    const { deriveReleaseEvidence } = await import(
-      '../../../src/modules/release-governance/domain/release-approval.js'
-    );
+    const { deriveReleaseEvidence } =
+      await import('../../../src/modules/release-governance/domain/release-approval.js');
     const candidate = {
       releaseId: RELEASE_ROW_ID,
       gitSha: GIT_SHA,
@@ -416,7 +442,12 @@ describe('UAT evidence ingestion on PostgreSQL', () => {
         recordedBy: MANAGER_ID,
         auditInfo: {},
       },
-      signer: { id: MANAGER_ID, loginIdentity: 'uat-int-mgr', accountState: 'ACTIVE', roles: ['MANAGER'] },
+      signer: {
+        id: MANAGER_ID,
+        loginIdentity: 'uat-int-mgr',
+        accountState: 'ACTIVE',
+        roles: ['MANAGER'],
+      },
     });
     const gateRows = await pool!.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM qc.release_gate_evidence WHERE uat_cycle_id = $1`,

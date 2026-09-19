@@ -73,9 +73,7 @@ describe('QC-100-FINAL-004 — final-approval authority separation', () => {
   it('accepts the QCM (Manager) and the named owner', () => {
     expect(isFinalApprovalAuthority(stageActor({ roles: ['MANAGER'] }))).toBe(true);
     expect(
-      isFinalApprovalAuthority(
-        stageActor({ loginIdentity: 'yazeed', roles: ['SYSTEM_OWNER'] }),
-      ),
+      isFinalApprovalAuthority(stageActor({ loginIdentity: 'yazeed', roles: ['SYSTEM_OWNER'] })),
     ).toBe(true);
   });
 });

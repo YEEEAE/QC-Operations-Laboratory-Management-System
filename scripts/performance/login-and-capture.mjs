@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync, chmodSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
-/* global PerformanceObserver, performance, window */
+/* global URL, console, performance, process, window */
 
 const baseUrl = process.env.QC_PERF_BASE_URL ?? 'http://127.0.0.1:4321';
 if (!['localhost', '127.0.0.1'].includes(new URL(baseUrl).hostname)) {
@@ -28,8 +28,6 @@ const { loginIdentity, password } = JSON.parse(readFileSync('.tmp/perf-credentia
 const browser = await chromium.launch();
 const context = await browser.newContext({ baseURL: baseUrl, ignoreHTTPSErrors: true });
 const page = await context.newPage();
-
-
 
 // Intercept the login action response to persist the session cookie value
 // for the HTTP harness (the browser itself stores the Secure __Host- cookie
@@ -58,9 +56,7 @@ if (!cookies.some((c) => c.name.includes('qc_session'))) {
   // The action endpoint may set the cookie on the bare URL scope; query all.
   cookies = await context.cookies();
 }
-console.error(
-  `[debug] cookies after login: ${cookies.map((c) => c.name).join(',') || '(none)'}`,
-);
+console.error(`[debug] cookies after login: ${cookies.map((c) => c.name).join(',') || '(none)'}`);
 if (!cookies.some((c) => c.name.includes('qc_session'))) {
   throw new Error('Session cookie missing after login.');
 }
@@ -98,11 +94,18 @@ for (const route of routes) {
       const data = await p.evaluate(() => {
         const nav = performance.getEntriesByType('navigation')[0];
         const resources = performance.getEntriesByType('resource');
-        let transfer = 0, decoded = 0, jsTransfer = 0, jsDecoded = 0, wasmTransfer = 0;
+        let transfer = 0,
+          decoded = 0,
+          jsTransfer = 0,
+          jsDecoded = 0,
+          wasmTransfer = 0;
         for (const r of resources) {
           transfer += r.transferSize || 0;
           decoded += r.decodedBodySize || 0;
-          if (r.name.endsWith('.js')) { jsTransfer += r.transferSize || 0; jsDecoded += r.decodedBodySize || 0; }
+          if (r.name.endsWith('.js')) {
+            jsTransfer += r.transferSize || 0;
+            jsDecoded += r.decodedBodySize || 0;
+          }
           if (r.name.endsWith('.wasm')) wasmTransfer += r.transferSize || 0;
         }
         const v = window.__vitals ?? {};
@@ -135,5 +138,11 @@ for (const route of routes) {
   results.push(out);
 }
 
-console.log(JSON.stringify({ measuredAt: new Date().toISOString(), baseUrl, identity: loginIdentity, routes: results }, null, 2));
+console.log(
+  JSON.stringify(
+    { measuredAt: new Date().toISOString(), baseUrl, identity: loginIdentity, routes: results },
+    null,
+    2,
+  ),
+);
 await browser.close();

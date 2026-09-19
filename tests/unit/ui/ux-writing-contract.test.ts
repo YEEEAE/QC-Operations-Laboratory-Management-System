@@ -56,16 +56,24 @@ describe('ux vocabulary module', () => {
     const classes = Object.values(uxVocabulary.errorClasses);
     expect(new Set(classes).size).toBe(classes.length);
     for (const message of classes) {
-      expect(message.toLowerCase()).not.toMatch(/something went wrong|unexpected error|an error occurred/);
+      expect(message.toLowerCase()).not.toMatch(
+        /something went wrong|unexpected error|an error occurred/,
+      );
     }
   });
 });
 
 describe('pages render humanized states instead of raw enums', () => {
   it('finding detail and register use stateLabel/severityLabel', () => {
-    expect(read('src/pages/quality/findings/[findingId].astro')).toContain('stateLabel(finding.state)');
-    expect(read('src/pages/quality/findings/index.astro')).toContain('severityLabel(finding.severity)');
-    expect(read('src/pages/quality/findings/index.astro')).not.toMatch(/<td>\{finding\.state\}<\/td>/);
+    expect(read('src/pages/quality/findings/[findingId].astro')).toContain(
+      'stateLabel(finding.state)',
+    );
+    expect(read('src/pages/quality/findings/index.astro')).toContain(
+      'severityLabel(finding.severity)',
+    );
+    expect(read('src/pages/quality/findings/index.astro')).not.toMatch(
+      /<td>\{finding\.state\}<\/td>/,
+    );
   });
 
   it('asset registers and details humanize state cells and filter options', () => {
@@ -122,9 +130,14 @@ describe('error and empty-state copy hygiene', () => {
   });
 
   it('mutation forms never show a generic system failure', () => {
-    for (const page of ['src/pages/admin/users/new.astro', 'src/pages/system/backups/[backupId]/restore.astro']) {
+    for (const page of [
+      'src/pages/admin/users/new.astro',
+      'src/pages/system/backups/[backupId]/restore.astro',
+    ]) {
       const source = read(page);
-      expect(source.toLowerCase()).not.toMatch(/something went wrong|unexpected error|an error occurred/);
+      expect(source.toLowerCase()).not.toMatch(
+        /something went wrong|unexpected error|an error occurred/,
+      );
     }
   });
 

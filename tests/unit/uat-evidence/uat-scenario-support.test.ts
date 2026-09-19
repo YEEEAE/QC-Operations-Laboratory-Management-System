@@ -30,11 +30,15 @@ describe('classifyProbe', () => {
   });
 
   it('treats auth status codes and auth error codes as proven denials', () => {
-    expect(classifyProbe(outcome({ status: 403, ok: false, errorCode: 'FORBIDDEN' }))).toBe('DENIED');
+    expect(classifyProbe(outcome({ status: 403, ok: false, errorCode: 'FORBIDDEN' }))).toBe(
+      'DENIED',
+    );
     expect(classifyProbe(outcome({ status: 401, ok: false, errorCode: 'UNAUTHORIZED' }))).toBe(
       'DENIED',
     );
-    expect(classifyProbe(outcome({ status: 200, ok: false, errorCode: 'FORBIDDEN' }))).toBe('DENIED');
+    expect(classifyProbe(outcome({ status: 200, ok: false, errorCode: 'FORBIDDEN' }))).toBe(
+      'DENIED',
+    );
   });
 
   it('treats a refusal that happened before authorization as inconclusive', () => {
@@ -101,7 +105,9 @@ describe('devalue payload reading', () => {
   it('reads a plain JSON body and ignores undefined slots', () => {
     expect(recordId({ status: 200, ok: true, body: { id: 'abc' } })).toBe('abc');
     expect(devalueField([{ expiryDate: -1 }, 'x'], 'expiryDate')).toBeUndefined();
-    expect(recordId({ status: 400, ok: false, body: { type: 'AstroActionError' } })).toBeUndefined();
+    expect(
+      recordId({ status: 400, ok: false, body: { type: 'AstroActionError' } }),
+    ).toBeUndefined();
   });
 
   it('truncates response excerpts for evidence', () => {

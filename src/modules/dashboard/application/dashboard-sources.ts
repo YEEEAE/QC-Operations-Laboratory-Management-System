@@ -70,7 +70,10 @@ export interface DashboardTaskReader {
   execute(input: {
     actor: ActorContext;
     filter?: { assigneeId?: string; due?: 'overdue' | 'today' };
-  }): Promise<{ items: readonly { id: string; taskNo: string; state: string; dueAt?: Date }[]; total: number }>;
+  }): Promise<{
+    items: readonly { id: string; taskNo: string; state: string; dueAt?: Date }[];
+    total: number;
+  }>;
 }
 
 export interface DashboardCalibrationReader {

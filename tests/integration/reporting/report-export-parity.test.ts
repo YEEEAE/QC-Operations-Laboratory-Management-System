@@ -161,8 +161,18 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
   });
 
   it('exports stay scoped to the authorized owner and never disclose other users rows', async () => {
-    const ownerCsv = await exportReport.execute(reportActor(ownerId), 'quarantine-aging', 'CSV', {});
-    const otherCsv = await exportReport.execute(reportActor(otherId), 'quarantine-aging', 'CSV', {});
+    const ownerCsv = await exportReport.execute(
+      reportActor(ownerId),
+      'quarantine-aging',
+      'CSV',
+      {},
+    );
+    const otherCsv = await exportReport.execute(
+      reportActor(otherId),
+      'quarantine-aging',
+      'CSV',
+      {},
+    );
     expect(otherCsv.rowCount).toBe(3);
     expect(ownerCsv.bytes.toString('utf8')).not.toContain('RPT-PARITY-B');
     expect(otherCsv.bytes.toString('utf8')).not.toContain('RPT-PARITY-A');
@@ -211,9 +221,9 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
     await expect(
       exportReport.execute(viewOnlyActor(ownerId), 'quarantine-aging', 'CSV', {}),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
-    await expect(
-      runReport.execute(viewOnlyActor(otherId), 'quarantine-aging', {}),
-    ).resolves.toMatchObject({ rows: new Array(3) });
+    // Viewing is not exporting: a view-only actor keeps the on-screen report
+    // (including another owner's authorized rows) while the export is refused.
+    const screen = await runReport.execute(viewOnlyActor(otherId), 'quarantine-aging', {});
+    expect(screen.rows).toHaveLength(3);
   });
 });
-

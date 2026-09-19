@@ -37,10 +37,7 @@ export async function validateRestoredDatabase(
     const versionPrefix = `PostgreSQL ${expectedVersion}`;
     const actualVersion = version.rows[0]?.version ?? '';
     const versionBoundary = actualVersion[versionPrefix.length] ?? '';
-    if (
-      !actualVersion.startsWith(versionPrefix) ||
-      !['.', ' ', '('].includes(versionBoundary)
-    )
+    if (!actualVersion.startsWith(versionPrefix) || !['.', ' ', '('].includes(versionBoundary))
       failures.push('PostgreSQL version context mismatch');
     const schema = await client.query<{ schema: string | null }>(
       `SELECT current_schema() AS schema`,

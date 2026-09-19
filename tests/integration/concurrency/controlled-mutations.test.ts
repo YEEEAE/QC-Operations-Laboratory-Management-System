@@ -19,6 +19,7 @@ import { createPool } from '../../../src/shared/database/pool.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
 import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
 import { ApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/approve-inspection.js';
+import { FinalApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/final-approve-inspection.js';
 import { PostgresInspectionRepository } from '../../../src/modules/quarantine/inspection/infrastructure/postgres-repository.js';
 import { ReleaseReceivingUseCase } from '../../../src/modules/quarantine/receiving/application/release-receiving.js';
 import { PostgresReceivingRepository } from '../../../src/modules/quarantine/receiving/infrastructure/postgres-repository.js';
@@ -229,10 +230,11 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
     // The loser can be denied at three mutually exclusive points, depending on
     // when it re-read the report relative to the winner's commit:
-    //   - AUTHZ_DENIED: the use-case state gate saw the committed APPROVED state
-    //     (APPROVED is not an approvable state).
-    //   - DOMAIN_INVALID_TRANSITION: transition()'s own fresh read saw APPROVED,
-    //     and the domain state machine has no APPROVE transition from APPROVED.
+    //   - AUTHZ_DENIED: the use-case state gate saw the committed
+    //     PENDING_QCM_APPROVAL state (not an approvable stage-1 state).
+    //   - DOMAIN_INVALID_TRANSITION: transition()'s own fresh read saw
+    //     PENDING_QCM_APPROVAL, and the state machine has no APPROVE transition
+    //     from it.
     //   - CONFLICT_STALE_VERSION: both re-reads raced as UNDER_REVIEW, but only
     //     one UPDATE matched version 3, so the optimistic guard rejected the
     //     loser.
@@ -248,7 +250,10 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
         reportId,
       ])
     ).rows[0];
-    expect(row.state).toBe('APPROVED');
+    // QC-100-FINAL-004: stage-1 (Supervisor) approval records the workflow
+    // event and waits for the QCM signature; it never reaches APPROVED, so the
+    // receiving consequence stays pending with it.
+    expect(row.state).toBe('PENDING_QCM_APPROVAL');
     expect(Number(row.version)).toBe(4);
     const approverRecorded = (
       await pool!.query(
@@ -265,11 +270,12 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
         [receivingId],
       )
     ).rows[0];
-    expect(receiving.workflow_state).toBe('INSPECTION_COMPLETE');
-    expect(receiving.inspection_result).toBe('PASS');
+    expect(receiving.workflow_state).toBe('UNDER_INSPECTION');
+    expect(receiving.inspection_result).toBe('IN_PROGRESS');
 
-    // Replay is denied before any mutation: the state gate (APPROVED is not an
-    // approvable state) fires earlier in the authorize chain than the version gate.
+    // Replay is denied before any mutation: the state gate
+    // (PENDING_QCM_APPROVAL is not an approvable stage-1 state) fires earlier in
+    // the authorize chain than the version gate.
     await expect(
       useCase.execute({
         actor: approver(),
@@ -311,11 +317,26 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       new PostgresOutboxRepository(db),
     );
 
+    // Stage-1 (Supervisor) approval does not touch the receiving item, so it
+    // succeeds and leaves the report waiting for the QCM stage.
+    await new ApproveInspectionUseCase(repository, { canApprove: () => true }).execute({
+      actor: approver(),
+      id: reportId,
+      expectedVersion: 3n,
+      requestId: 'cm-insp-held-stage1',
+    });
+
+    // The HOLD guard lives on the final approval — the action that would
+    // complete the receiving consequence. It must refuse to overwrite the
+    // independently controlled HOLD state and roll the whole transaction back.
     await expect(
-      new ApproveInspectionUseCase(repository, { canApprove: () => true }).execute({
+      new FinalApproveInspectionUseCase(repository, {
+        signFinalApproval: async () => 'signature-test-only-not-evidence',
+      }).execute({
         actor: approver(),
         id: reportId,
-        expectedVersion: 3n,
+        expectedVersion: 4n,
+        reauthenticationSecret: 'test-only-reauthentication-secret',
         requestId: 'cm-insp-held',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
@@ -337,9 +358,11 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
         reportId,
       ])
     ).rows[0];
-    expect(inspection).toMatchObject({ state: 'UNDER_REVIEW', version: '3' });
-    expect(await countAudit(reportId, 'APPROVE')).toBe(0);
-    expect(await countOutbox('inspection:' + reportId + ':v4')).toBe(0);
+    expect(inspection).toMatchObject({ state: 'PENDING_QCM_APPROVAL', version: '4' });
+    expect(await countAudit(reportId, 'APPROVE')).toBe(1);
+    expect(await countAudit(reportId, 'FINAL_APPROVE')).toBe(0);
+    expect(await countOutbox('inspection:' + reportId + ':v4')).toBe(1);
+    expect(await countOutbox('inspection:' + reportId + ':v5')).toBe(0);
   });
 
   it('executes exactly one of two concurrent laboratory approvals on the same version', async () => {
@@ -452,9 +475,12 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
         [testId],
       )
     ).rows[0];
-    expect(row.state).toBe('APPROVED');
+    // QC-100-FINAL-004: the stage-1 laboratory approval validates and stores the
+    // provider-evaluated result but does not approve/lock the record — that is
+    // the QCM final approval, which is the only action that stamps approved_at.
+    expect(row.state).toBe('PENDING_QCM_APPROVAL');
     expect(row.scientific_result).toBe('PASS');
-    expect(row.approved_at).not.toBeNull();
+    expect(row.approved_at).toBeNull();
     expect(Number(row.version)).toBe(3);
     expect(await countAudit(testId, 'APPROVE')).toBe(1);
     expect(await countOutbox(`lab:${testId}:v3`)).toBe(1);

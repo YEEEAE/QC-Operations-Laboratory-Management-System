@@ -28,7 +28,8 @@ export class ReopenLabTestUseCase {
     if (!test) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isFinalApprovalAuthority(input.actor))
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    if (test.state !== 'APPROVED') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (test.state !== 'APPROVED')
+      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     authorizeLab(input.actor, test, 'PERM-APR-APPROVE', 'REOPEN', input.expectedVersion);
     return this.repository.save(
       test,

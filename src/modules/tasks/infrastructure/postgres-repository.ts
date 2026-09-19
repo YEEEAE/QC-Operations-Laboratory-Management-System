@@ -180,7 +180,10 @@ export class PostgresTaskRepository implements TaskRepository {
       if (filter?.assigneeId) q = q.where('current_assignee_id', '=', filter.assigneeId);
       if (filter?.search)
         q = q.where((eb) =>
-          eb.or([eb('title', 'ilike', `%${filter.search}%`), eb('task_no', 'ilike', `%${filter.search}%`)]),
+          eb.or([
+            eb('title', 'ilike', `%${filter.search}%`),
+            eb('task_no', 'ilike', `%${filter.search}%`),
+          ]),
         );
       if (filter?.due) {
         // The whole day window is computed once, in UTC, and applied in SQL, so

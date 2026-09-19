@@ -109,7 +109,11 @@ export function validateRecoveryManifest(value: unknown): RecoveryManifest {
   if (typeof value.restoreVerificationStatus !== 'string')
     throw new Error('Manifest restoreVerificationStatus is required.');
   const migrationHead = text(appContext.migrationHead, 'appContext.migrationHead');
-  if (!migrationLedger.some((entry) => entry.version === migrationHead || entry.name === migrationHead))
+  if (
+    !migrationLedger.some(
+      (entry) => entry.version === migrationHead || entry.name === migrationHead,
+    )
+  )
     throw new Error('Manifest appContext.migrationHead is not in the migration ledger.');
   return {
     manifestVersion: 1,

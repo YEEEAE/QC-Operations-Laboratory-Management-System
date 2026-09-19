@@ -75,19 +75,26 @@ const sessionInput = (): UatSessionInput => ({
 
 function makeRepo(): UatEvidenceRepository &
   Record<string, ReturnType<typeof vi.fn>> & {
-  cycles: Map<string, unknown>;
-} {
+    cycles: Map<string, unknown>;
+  } {
   const cycles = new Map<string, unknown>();
   return {
     cycles,
     findCycleByCycleId: vi.fn(async () => undefined),
-    createCycle: vi.fn(async (input: { identity: typeof identity; evidenceSnapshotHash: string; status?: string; requestId: string }) => ({
-      id: 'cycle-1',
-      ...input.identity,
-      status: input.status ?? 'UNVERIFIED',
-      evidenceSnapshotHash: input.evidenceSnapshotHash,
-      createdAt: new Date(),
-    })),
+    createCycle: vi.fn(
+      async (input: {
+        identity: typeof identity;
+        evidenceSnapshotHash: string;
+        status?: string;
+        requestId: string;
+      }) => ({
+        id: 'cycle-1',
+        ...input.identity,
+        status: input.status ?? 'UNVERIFIED',
+        evidenceSnapshotHash: input.evidenceSnapshotHash,
+        createdAt: new Date(),
+      }),
+    ),
     recordSession: vi.fn(async () => ({
       id: 'session-1',
       cycleId: 'cycle-1',
@@ -131,7 +138,9 @@ describe('UAT cycle identity binding', () => {
 
   it('fails closed on wrong SHA length, bad environment, or missing plan reference', () => {
     expect(() => assertUatCycleIdentity({ ...identity, gitSha: 'abc' })).toThrow();
-    expect(() => assertUatCycleIdentity({ ...identity, environment: 'production' as never })).toThrow();
+    expect(() =>
+      assertUatCycleIdentity({ ...identity, environment: 'production' as never }),
+    ).toThrow();
     expect(() => assertUatCycleIdentity({ ...identity, planReference: ' ' })).toThrow();
     expect(() => assertUatCycleIdentity({ ...identity, cycleId: 'x' })).toThrow();
   });
@@ -170,9 +179,7 @@ describe('session and defect validation (controlled kit rules)', () => {
     expect(() => assertUatSession({ ...sessionInput(), confidence1To5: 6 })).toThrow();
     expect(() => assertUatSession({ ...sessionInput(), seq1To7: 0 })).toThrow();
     expect(() => assertUatSession({ ...sessionInput(), assistance: 'unsure' as never })).toThrow();
-    expect(() =>
-      assertUatSession({ ...sessionInput(), participantRole: 'Superuser' }),
-    ).toThrow();
+    expect(() => assertUatSession({ ...sessionInput(), participantRole: 'Superuser' })).toThrow();
     expect(() => assertUatSession({ ...sessionInput(), observations: ' ' })).toThrow();
   });
 
@@ -243,7 +250,9 @@ describe('acceptance preconditions (fail-closed)', () => {
   });
 
   it('rejects open critical defects, hash drift, and double acceptance', () => {
-    expect(() => evaluateAcceptancePreconditions({ ...base, openCriticalDefectCount: 1 })).toThrow();
+    expect(() =>
+      evaluateAcceptancePreconditions({ ...base, openCriticalDefectCount: 1 }),
+    ).toThrow();
     expect(() => evaluateAcceptancePreconditions({ ...base, cycleSnapshotHash: 'x' })).toThrow();
     expect(() =>
       evaluateAcceptancePreconditions({ ...base, cycleStatus: 'ACCEPTED' as never }),
@@ -448,7 +457,9 @@ describe('retrieval read model authorization', () => {
         cycleId: identity.cycleId,
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
-    const view = await new GetUatCycleEvidenceUseCase(repo as unknown as UatEvidenceRepository).execute({
+    const view = await new GetUatCycleEvidenceUseCase(
+      repo as unknown as UatEvidenceRepository,
+    ).execute({
       actor: actor('mgr', ['MANAGER'], ['PERM-RPT-VIEW']),
       cycleId: identity.cycleId,
     });

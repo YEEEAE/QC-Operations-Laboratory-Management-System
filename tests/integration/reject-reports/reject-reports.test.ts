@@ -434,9 +434,7 @@ describe('Reject Reports PostgreSQL integration', () => {
     expect(trendRow?.reportCount).toBeGreaterThanOrEqual(1);
     expect(analytics.byItem.length).toBeGreaterThanOrEqual(1);
     expect(analytics.byDepartment.some((d) => d.department === 'Production A')).toBe(true);
-    expect(
-      analytics.byReason.some((r) => r.reason === 'Dimensional defect'),
-    ).toBe(true);
+    expect(analytics.byReason.some((r) => r.reason === 'Dimensional defect')).toBe(true);
 
     // Server percentage semantics: day with a zero good-quantity denominator
     // yields null (never Infinity), and a populated day yields a finite ratio.
@@ -463,10 +461,11 @@ describe('Reject Reports PostgreSQL integration', () => {
       reason: 'analytics exclusion check',
       requestId: 'req-analytics-void',
     });
-    const afterVoid = await repository.analytics({ from: new Date('2026-09-01'), to: new Date('2026-09-30') });
-    expect(
-      afterVoid.byItem.some((i) => i.itemCode === 'VOID-EXCL-001'),
-    ).toBe(false);
+    const afterVoid = await repository.analytics({
+      from: new Date('2026-09-01'),
+      to: new Date('2026-09-30'),
+    });
+    expect(afterVoid.byItem.some((i) => i.itemCode === 'VOID-EXCL-001')).toBe(false);
     const voidDay = afterVoid.rejectPctTrend.find((p) => p.date === '2026-09-18');
     expect(voidDay).toBeDefined();
     // A day whose only entries have good_qty = 0 must produce null, not a crash.
@@ -484,7 +483,10 @@ describe('Reject Reports PostgreSQL integration', () => {
       ],
       requestId: 'req-analytics-zero-den',
     });
-    const withZero = await repository.analytics({ from: new Date('2026-09-01'), to: new Date('2026-09-30') });
+    const withZero = await repository.analytics({
+      from: new Date('2026-09-01'),
+      to: new Date('2026-09-30'),
+    });
     const zeroDay = withZero.rejectPctTrend.find((p) => p.date === '2026-09-17');
     expect(zeroDay?.rejectPct).toBeNull();
     const pctDay = withZero.rejectPctTrend.find((p) => p.date === '2026-09-18');

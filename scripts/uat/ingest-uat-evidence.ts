@@ -77,20 +77,30 @@ const DEFECT_HEADER = [
   'request_id_or_ref',
   'status',
 ] as const;
-const KIT_TASK_IDS = new Set(
-  [
-    ...Array.from({ length: 19 }, (_, index) => `T-UAT-${String(index + 1).padStart(2, '0')}`),
-    ...Array.from({ length: 7 }, (_, index) => `N-UAT-${String(index + 1).padStart(2, '0')}`),
-    ...Array.from({ length: 4 }, (_, index) => `A-UAT-${String(index + 1).padStart(2, '0')}`),
-  ],
-);
+const KIT_TASK_IDS = new Set([
+  ...Array.from({ length: 19 }, (_, index) => `T-UAT-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 7 }, (_, index) => `N-UAT-${String(index + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 4 }, (_, index) => `A-UAT-${String(index + 1).padStart(2, '0')}`),
+]);
 const KIT_ENVIRONMENTS = new Set(['test', 'staging', 'staging-uastest']);
 const KIT_SEVERITIES = new Set(['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'COSMETIC', 'NONE']);
 const KIT_DEFECT_SEVERITIES = new Set(['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'COSMETIC']);
-const KIT_SCENARIO_STATUSES = new Set(['PASS', 'FAIL', 'BLOCKED', 'NOT EXECUTED', 'NOT APPLICABLE']);
+const KIT_SCENARIO_STATUSES = new Set([
+  'PASS',
+  'FAIL',
+  'BLOCKED',
+  'NOT EXECUTED',
+  'NOT APPLICABLE',
+]);
 const KIT_ACCEPT_REJECT = new Set(['ACCEPT', 'REJECT', 'BLOCKED', 'NOT EXECUTED']);
 const KIT_ASSISTANCE = new Set(['none', 'clarification', 'coaching']);
-const KIT_DEFECT_STATUSES = new Set(['OPEN', 'ACCEPTED_RISK', 'FIXED', 'RETEST_REQUIRED', 'CLOSED']);
+const KIT_DEFECT_STATUSES = new Set([
+  'OPEN',
+  'ACCEPTED_RISK',
+  'FIXED',
+  'RETEST_REQUIRED',
+  'CLOSED',
+]);
 const SHA_40 = /^[0-9a-f]{40}$/i;
 const INT = /^\d+$/;
 
@@ -152,7 +162,10 @@ function parseCsv(text: string, expectedHeader: readonly string[]): Record<strin
     rows.push(row);
   }
   if (rows.length === 0) fail('empty CSV: header row is required');
-  if (rows[0].length !== expectedHeader.length || rows[0].some((value, i) => value !== expectedHeader[i])) {
+  if (
+    rows[0].length !== expectedHeader.length ||
+    rows[0].some((value, i) => value !== expectedHeader[i])
+  ) {
     fail(`invalid CSV header: expected exactly ${expectedHeader.join(',')}`);
   }
   return rows.slice(1).map((cells, line) => {
@@ -195,7 +208,8 @@ function parseSessionRow(record: Record<string, string>, line: number): UatSessi
   if (!KIT_ENVIRONMENTS.has(record.environment)) {
     fail(`CSV line ${line}: environment is not a UAT environment`);
   }
-  if (!KIT_TASK_IDS.has(record.task_id)) fail(`CSV line ${line}: unknown task_id ${record.task_id}`);
+  if (!KIT_TASK_IDS.has(record.task_id))
+    fail(`CSV line ${line}: unknown task_id ${record.task_id}`);
   const startedAt = new Date(record.start_time);
   const endedAt = new Date(record.end_time);
   if (Number.isNaN(startedAt.getTime()) || Number.isNaN(endedAt.getTime())) {
@@ -217,17 +231,23 @@ function parseSessionRow(record: Record<string, string>, line: number): UatSessi
     if (value < 0) fail(`CSV line ${line}: ${field} must be a non-negative integer`);
   }
   if (
-    Number(record.time_on_task_seconds) !== Math.round((endedAt.getTime() - startedAt.getTime()) / 1000)
+    Number(record.time_on_task_seconds) !==
+    Math.round((endedAt.getTime() - startedAt.getTime()) / 1000)
   ) {
     fail(`CSV line ${line}: time_on_task_seconds must match start/end timestamps`);
   }
-  if (!INT.test(record.confidence_1_to_5) || +record.confidence_1_to_5 < 1 || +record.confidence_1_to_5 > 5) {
+  if (
+    !INT.test(record.confidence_1_to_5) ||
+    +record.confidence_1_to_5 < 1 ||
+    +record.confidence_1_to_5 > 5
+  ) {
     fail(`CSV line ${line}: confidence_1_to_5 must be 1..5`);
   }
   if (!INT.test(record.seq_1_to_7) || +record.seq_1_to_7 < 1 || +record.seq_1_to_7 > 7) {
     fail(`CSV line ${line}: seq_1_to_7 must be 1..7`);
   }
-  if (!KIT_ASSISTANCE.has(record.assistance)) fail(`CSV line ${line}: assistance has invalid value`);
+  if (!KIT_ASSISTANCE.has(record.assistance))
+    fail(`CSV line ${line}: assistance has invalid value`);
   if (!KIT_SEVERITIES.has(record.severity)) fail(`CSV line ${line}: severity has invalid value`);
   if (!KIT_SCENARIO_STATUSES.has(record.scenario_status)) {
     fail(`CSV line ${line}: scenario_status has invalid value`);
@@ -239,7 +259,10 @@ function parseSessionRow(record: Record<string, string>, line: number): UatSessi
   if (!['yes', 'no'].includes(record.task_success)) {
     fail(`CSV line ${line}: task_success must be yes|no`);
   }
-  if (record.scenario_status === 'PASS' && (record.task_success !== 'yes' || record.task_accept_reject !== 'ACCEPT')) {
+  if (
+    record.scenario_status === 'PASS' &&
+    (record.task_success !== 'yes' || record.task_accept_reject !== 'ACCEPT')
+  ) {
     fail(`CSV line ${line}: PASS requires success=yes and acceptance=ACCEPT`);
   }
   if (record.scenario_status === 'FAIL' && record.task_accept_reject !== 'REJECT') {
@@ -252,8 +275,12 @@ function parseSessionRow(record: Record<string, string>, line: number): UatSessi
   return {
     sessionId: record.session_id,
     taskId: record.task_id,
-    participantRole: automated ? 'AUTOMATED_FACILITATOR' : kitParticipantRole(record.participant_role, line),
-    participantCode: automated ? AUTOMATED_PARTICIPANT_CODE : record.participant_code || record.session_id,
+    participantRole: automated
+      ? 'AUTOMATED_FACILITATOR'
+      : kitParticipantRole(record.participant_role, line),
+    participantCode: automated
+      ? AUTOMATED_PARTICIPANT_CODE
+      : record.participant_code || record.session_id,
     startedAt,
     endedAt,
     timeOnTaskSeconds: Number(record.time_on_task_seconds),
@@ -290,7 +317,8 @@ function parseDefectRow(record: Record<string, string>, line: number): UatDefect
     fail(`CSV line ${line}: severity has invalid value`);
   }
   if (!KIT_DEFECT_STATUSES.has(record.status)) fail(`CSV line ${line}: status has invalid value`);
-  if (!KIT_TASK_IDS.has(record.task_id)) fail(`CSV line ${line}: unknown task_id ${record.task_id}`);
+  if (!KIT_TASK_IDS.has(record.task_id))
+    fail(`CSV line ${line}: unknown task_id ${record.task_id}`);
   return {
     defectId: record.defect_id,
     sessionId: record.session_id,
@@ -314,6 +342,7 @@ function valueAfter(args: string[], flag: string): string | undefined {
 }
 
 async function main(): Promise<void> {
+  loadLocalEnv();
   requireGuard();
   const [command, ...rest] = process.argv.slice(2);
   const dependencies = uatEvidenceActionDependencies();
@@ -328,7 +357,15 @@ async function main(): Promise<void> {
     const environment = valueAfter(rest, '--environment');
     const planReference = valueAfter(rest, '--plan-reference');
     const requestId = valueAfter(rest, '--request-id') ?? `uat-ingest-${Date.now()}`;
-    if (!releaseId || !gitSha || !buildId || !applicationVersion || !migrationHead || !environment || !planReference) {
+    if (
+      !releaseId ||
+      !gitSha ||
+      !buildId ||
+      !applicationVersion ||
+      !migrationHead ||
+      !environment ||
+      !planReference
+    ) {
       fail(
         'create-cycle requires --release-id --sha --build-id --app-version --migration-head --environment --plan-reference',
       );
@@ -421,7 +458,14 @@ async function main(): Promise<void> {
     const requestId = valueAfter(rest, '--request-id');
     const secret = process.env.QC_UAT_ACCEPT_PASSWORD;
     const signerIdentity = process.env.QC_UAT_ACCEPT_SIGNER_IDENTITY ?? 'yazeed';
-    if (!cycleId || !outcome || !releaseRowId || !releaseVersion || !evidenceVersion || !requestId) {
+    if (
+      !cycleId ||
+      !outcome ||
+      !releaseRowId ||
+      !releaseVersion ||
+      !evidenceVersion ||
+      !requestId
+    ) {
       fail(
         'accept requires --cycle-id --outcome --release-row-id --release-version --evidence-version --request-id',
       );
@@ -429,9 +473,8 @@ async function main(): Promise<void> {
     if (!['ACCEPTED', 'REJECTED', 'BLOCKED'].includes(outcome)) fail('--outcome is not controlled');
     if (!secret) fail('QC_UAT_ACCEPT_PASSWORD is required for the reauthentication ceremony.');
     // Resolve the signer server-side; identity never comes from the command line.
-    const { identityDependencies, resolveActor } = await import(
-      '../../src/modules/identity/application/identity-dependencies.js'
-    );
+    const { identityDependencies, resolveActor } =
+      await import('../../src/modules/identity/application/identity-dependencies.js');
     const { getDatabase } = await import('../../src/shared/database/database.js');
     const identity = identityDependencies(getDatabase());
     const user = await identity.users.findByLoginIdentity(signerIdentity);
@@ -465,9 +508,7 @@ async function main(): Promise<void> {
       console.log('No gate evidence written: only ACCEPTED outcomes feed the uat release gate.');
     }
   } else {
-    fail(
-      'Unknown command. Use create-cycle | record-sessions | record-defects | show | accept.',
-    );
+    fail('Unknown command. Use create-cycle | record-sessions | record-defects | show | accept.');
   }
 }
 

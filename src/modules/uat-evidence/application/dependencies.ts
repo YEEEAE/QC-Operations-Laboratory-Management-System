@@ -7,7 +7,10 @@ import { getDatabase } from '../../../shared/database/database.js';
 import { Argon2idPasswordHasher } from '../../identity/security/argon2-password-hasher.js';
 import { PostgresUserRepository } from '../../identity/infrastructure/postgres-user-repository.js';
 import type { ReauthenticationVerifier } from '../../e-signatures/ports/repository.js';
-import { PostgresUatEvidenceRepository, executeUatAcceptance } from '../infrastructure/postgres-repository.js';
+import {
+  PostgresUatEvidenceRepository,
+  executeUatAcceptance,
+} from '../infrastructure/postgres-repository.js';
 import {
   AcceptUatCycleUseCase,
   CreateUatCycleUseCase,
@@ -28,8 +31,8 @@ export function uatEvidenceActionDependencies() {
       const user = await users.findById(input.actorId);
       return Boolean(
         user &&
-          user.accountState === 'ACTIVE' &&
-          (await passwords.verify(input.secret, user.passwordHash)),
+        user.accountState === 'ACTIVE' &&
+        (await passwords.verify(input.secret, user.passwordHash)),
       );
     },
   };

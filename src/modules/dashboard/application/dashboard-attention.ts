@@ -65,7 +65,8 @@ export interface DashboardMetricResult {
  * unbounded one is the row array itself. `Array.isArray` alone does not
  * narrow the union member for the compiler, so the guard is explicit. */
 function isBoundedRead(
-  read: readonly DashboardAttentionRow[] | { total: number; rows: readonly DashboardAttentionRow[] },
+  read:
+    readonly DashboardAttentionRow[] | { total: number; rows: readonly DashboardAttentionRow[] },
 ): read is { total: number; rows: readonly DashboardAttentionRow[] } {
   return !Array.isArray(read);
 }

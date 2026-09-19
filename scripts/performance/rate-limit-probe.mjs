@@ -5,6 +5,8 @@
  * credential is exercised and nothing is printed.
  * Prints one JSON document: per-policy outcome at N sequential attempts.
  */
+/* global URL, URLSearchParams, console, fetch, process */
+
 const baseUrl = process.env.QC_PERF_BASE_URL ?? 'http://127.0.0.1:4321';
 if (!['localhost', '127.0.0.1'].includes(new URL(baseUrl).hostname)) {
   throw new Error('Refusing: QC_PERF_BASE_URL must be local.');
@@ -19,7 +21,11 @@ async function attempt(i) {
   });
   const res = await fetch(`${baseUrl}/_actions/login`, {
     method: 'POST',
-    headers: { Origin: baseUrl, Referer: `${baseUrl}/login`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      Origin: baseUrl,
+      Referer: `${baseUrl}/login`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
     body: form.toString(),
   });
   const text = await res.text();
@@ -28,10 +34,19 @@ async function attempt(i) {
 
 const outcomes = [];
 for (let i = 1; i <= attempts; i += 1) outcomes.push(await attempt(i));
-const throttled = outcomes.filter((o) => o.status === 429 || o.bodyHead.includes('AUTH_RATE_LIMITED')).length;
+const throttled = outcomes.filter(
+  (o) => o.status === 429 || o.bodyHead.includes('AUTH_RATE_LIMITED'),
+).length;
 console.log(
   JSON.stringify(
-    { measuredAt: new Date().toISOString(), baseUrl, attempts, throttled, policyConfigured: process.env.RATE_LIMIT_LOGIN_MAX ?? '(unset → no limit in development)', outcomes },
+    {
+      measuredAt: new Date().toISOString(),
+      baseUrl,
+      attempts,
+      throttled,
+      policyConfigured: process.env.RATE_LIMIT_LOGIN_MAX ?? '(unset → no limit in development)',
+      outcomes,
+    },
     null,
     2,
   ),

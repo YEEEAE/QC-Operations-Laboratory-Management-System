@@ -24,6 +24,11 @@ describe('system-owner bundle upgrade path', () => {
       connectionString: getTestDatabaseUrl(await startPostgresContainer()),
       max: 2,
     });
+    // Per-suite schema isolation: this suite reproduces a *pre-0030* release, so
+    // it must start from an empty schema. Required when QC_TEST_DATABASE_URL
+    // points at a reused local cluster that another suite already migrated (the
+    // same pattern used by the control-center and controlled-mutation suites).
+    await pool.query('DROP SCHEMA IF EXISTS qc CASCADE');
     const migrations = await loadMigrations();
     const legacy = migrations.filter((migration) => migration.version !== '0030');
     await migrate({ pool, migrations: legacy });

@@ -6,7 +6,6 @@ import {
   isNamedSystemOwner,
 } from '../../../../shared/authorization/p05-authority.js';
 import type { FinalApprovalCeremony } from '../../../e-signatures/application/final-approval-ceremony.js';
-import type { Inspection } from '../domain/inspection.js';
 import type { InspectionRepository } from '../ports/repository.js';
 
 /**

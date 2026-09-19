@@ -5,10 +5,10 @@ import { reportingDependencies } from '../../../modules/reporting/application/de
 const EXPORT_FORMATS = new Set(['csv', 'xlsx']);
 
 function problem(status: number, title: string): Response {
-  return new Response(
-    JSON.stringify({ type: 'about:blank', title, status }),
-    { status, headers: { 'content-type': 'application/json; charset=utf-8' } },
-  );
+  return new Response(JSON.stringify({ type: 'about:blank', title, status }), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  });
 }
 
 /**

@@ -109,9 +109,9 @@ function dashboardOver(db: Kysely<DatabaseSchema>) {
     }),
     dashboardFlowSource({
       execute: (input) =>
-        new GetQuarantineOverviewUseCase({ list: (listInput) => receiving.execute(listInput) }).execute(
-          input,
-        ),
+        new GetQuarantineOverviewUseCase({
+          list: (listInput) => receiving.execute(listInput),
+        }).execute(input),
     }),
     noSeries,
     DASHBOARD_COVERAGE,
@@ -320,6 +320,13 @@ async function seedTask(
     `INSERT INTO qc.tasks
        (id, task_no, title, priority, state, due_at, current_assignee_id, created_by, updated_by, completed_at)
      VALUES ($1, $2, 'Bounds task', 'HIGH', $3, $4, $5, $5, $5, $6)`,
-    [randomUUID(), `BND-${RUN}-${tag}`, state, dueAt, actorId, state === 'COMPLETED' ? dueAt : null],
+    [
+      randomUUID(),
+      `BND-${RUN}-${tag}`,
+      state,
+      dueAt,
+      actorId,
+      state === 'COMPLETED' ? dueAt : null,
+    ],
   );
 }

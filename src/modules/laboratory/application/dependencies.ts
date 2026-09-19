@@ -3,8 +3,6 @@ import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-re
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
 import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
-import { Argon2idPasswordHasher } from '../../identity/security/argon2-password-hasher.js';
-import { PostgresUserRepository } from '../../identity/infrastructure/postgres-user-repository.js';
 import { FinalApproveLabTestUseCase } from './final-approve-lab-test.js';
 import { ReopenLabTestUseCase } from './reopen-lab-test.js';
 import { PostgresLabRepository } from '../infrastructure/postgres-repository.js';

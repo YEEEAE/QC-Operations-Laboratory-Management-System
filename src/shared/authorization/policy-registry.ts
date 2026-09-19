@@ -6,11 +6,18 @@ export interface AuthorizationPolicy {
   states: readonly string[];
 }
 const policies: readonly AuthorizationPolicy[] = [
-  ...(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'].flatMap(
-    (state) => [
-      { permission: 'PERM-LAB-VIEW', action: 'VIEW', entityType: 'LAB_TEST', states: [state] },
-    ],
-  ) as unknown as AuthorizationPolicy[]),
+  ...([
+    'DRAFT',
+    'SUBMITTED',
+    'UNDER_REVIEW',
+    'PENDING_QCM_APPROVAL',
+    'RETURNED',
+    'APPROVED',
+    'REJECTED',
+    'VOID',
+  ].flatMap((state) => [
+    { permission: 'PERM-LAB-VIEW', action: 'VIEW', entityType: 'LAB_TEST', states: [state] },
+  ]) as unknown as AuthorizationPolicy[]),
   { permission: 'PERM-LAB-CREATE', action: 'CREATE', entityType: 'LAB_TEST', states: ['DRAFT'] },
   { permission: 'PERM-LAB-EDIT-DRAFT', action: 'SAVE', entityType: 'LAB_TEST', states: ['DRAFT'] },
   {
@@ -318,7 +325,16 @@ const policies: readonly AuthorizationPolicy[] = [
     permission: 'PERM-INSP-VIEW',
     action: 'VIEW',
     entityType: 'INSPECTION_REPORT',
-    states: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'],
+    states: [
+      'DRAFT',
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'PENDING_QCM_APPROVAL',
+      'RETURNED',
+      'APPROVED',
+      'REJECTED',
+      'VOID',
+    ],
   },
   {
     permission: 'PERM-INSP-EDIT-DRAFT',

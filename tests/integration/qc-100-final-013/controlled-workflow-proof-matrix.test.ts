@@ -75,20 +75,32 @@ const manager = () => actor(MANAGER_ID, ['MANAGER'], globalGrants);
 const employeeWithEveryPermission = () => actor(EMPLOYEE_ID, ['EMPLOYEE'], globalGrants);
 /** May release, but its read grant is limited to its own records. */
 const ownScopeManager = () =>
-  actor(MANAGER_ID, ['MANAGER'], [
-    { code: 'PERM-QUAR-VIEW', scopes: ['OWN'] },
-    { code: 'PERM-QUAR-RELEASE', scopes: ['GLOBAL'] },
-  ]);
+  actor(
+    MANAGER_ID,
+    ['MANAGER'],
+    [
+      { code: 'PERM-QUAR-VIEW', scopes: ['OWN'] },
+      { code: 'PERM-QUAR-RELEASE', scopes: ['GLOBAL'] },
+    ],
+  );
 const documentApprover = () =>
-  actor(SUPERVISOR_ID, ['SUPERVISOR'], [
-    { code: 'PERM-DOC-APPROVE', scopes: ['GLOBAL'] },
-    { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
-  ]);
+  actor(
+    SUPERVISOR_ID,
+    ['SUPERVISOR'],
+    [
+      { code: 'PERM-DOC-APPROVE', scopes: ['GLOBAL'] },
+      { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
+    ],
+  );
 const adminOnly = () =>
-  actor(ADMIN_ID, ['ADMIN'], [
-    { code: 'PERM-DOC-APPROVE', scopes: ['GLOBAL'] },
-    { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
-  ]);
+  actor(
+    ADMIN_ID,
+    ['ADMIN'],
+    [
+      { code: 'PERM-DOC-APPROVE', scopes: ['GLOBAL'] },
+      { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
+    ],
+  );
 
 let pool: ReturnType<typeof createPool> | undefined;
 let db: Kysely<DatabaseSchema>;
@@ -113,18 +125,20 @@ const auditCount = async (subjectId: string, action: string): Promise<number> =>
 const auditCountByRequest = async (requestId: string): Promise<number> =>
   Number(
     (
-      await pool!.query('SELECT count(*)::int AS count FROM qc.audit_events WHERE request_id = $1', [
-        requestId,
-      ])
+      await pool!.query(
+        'SELECT count(*)::int AS count FROM qc.audit_events WHERE request_id = $1',
+        [requestId],
+      )
     ).rows[0].count,
   );
 
 const outboxCount = async (dedupeKey: string): Promise<number> =>
   Number(
     (
-      await pool!.query('SELECT count(*)::int AS count FROM qc.outbox_events WHERE dedupe_key = $1', [
-        dedupeKey,
-      ])
+      await pool!.query(
+        'SELECT count(*)::int AS count FROM qc.outbox_events WHERE dedupe_key = $1',
+        [dedupeKey],
+      )
     ).rows[0].count,
   );
 
@@ -137,15 +151,13 @@ const receivingRow = async (id: string) =>
   ).rows[0];
 
 /** Populates one receiving item plus the approved inspection it depends on. */
-async function seedReceiving(
-  options: {
-    id: string;
-    inspectionResult: 'PASS' | 'FAIL' | 'HOLD';
-    workflowState: 'RELEASE_PENDING' | 'RELEASED';
-    version?: number;
-    createdBy?: string;
-  },
-): Promise<{ id: string; templateVersionId: string }> {
+async function seedReceiving(options: {
+  id: string;
+  inspectionResult: 'PASS' | 'FAIL' | 'HOLD';
+  workflowState: 'RELEASE_PENDING' | 'RELEASED';
+  version?: number;
+  createdBy?: string;
+}): Promise<{ id: string; templateVersionId: string }> {
   const templateId = crypto.randomUUID();
   const templateVersionId = crypto.randomUUID();
   const inspectionId = crypto.randomUUID();
@@ -184,7 +196,14 @@ async function seedReceiving(
     `INSERT INTO qc.inspection_reports
        (id, inspection_no, receiving_item_id, template_version_id, state, final_result, author_id, created_by, version)
      VALUES ($1, $2, $3, $4, 'APPROVED', $5, $6, $6, 3)`,
-    [inspectionId, `INSP-PROOF-${tag}`, options.id, templateVersionId, options.inspectionResult, INSPECTOR_ID],
+    [
+      inspectionId,
+      `INSP-PROOF-${tag}`,
+      options.id,
+      templateVersionId,
+      options.inspectionResult,
+      INSPECTOR_ID,
+    ],
   );
   return { id: options.id, templateVersionId };
 }
@@ -369,7 +388,10 @@ describe('QC-100-FINAL-013 · receiving release on populated PostgreSQL', () => 
         requestId: 'proof-stale-release',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
-    expect(await receivingRow(id)).toMatchObject({ workflow_state: 'RELEASE_PENDING', version: '4' });
+    expect(await receivingRow(id)).toMatchObject({
+      workflow_state: 'RELEASE_PENDING',
+      version: '4',
+    });
     expect(await auditCountByRequest('proof-stale-release')).toBe(0);
   });
 
@@ -577,9 +599,10 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       requestId: 'proof-document-approve',
     });
     const row = (
-      await pool!.query('SELECT state, version, approved_by FROM qc.document_versions WHERE id = $1', [
-        versionId,
-      ])
+      await pool!.query(
+        'SELECT state, version, approved_by FROM qc.document_versions WHERE id = $1',
+        [versionId],
+      )
     ).rows[0];
     expect(row).toMatchObject({ state: 'APPROVED', approved_by: SUPERVISOR_ID, version: '2' });
     expect(await auditCount(versionId, 'APPROVE')).toBe(1);
@@ -633,7 +656,9 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     const row = (
-      await pool!.query('SELECT state, version FROM qc.document_versions WHERE id = $1', [versionId])
+      await pool!.query('SELECT state, version FROM qc.document_versions WHERE id = $1', [
+        versionId,
+      ])
     ).rows[0];
     expect(row).toMatchObject({ state: 'IN_REVIEW', version: '1' });
     expect(await auditCountByRequest('proof-document-approve-admin')).toBe(0);
@@ -684,7 +709,7 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       Number(
         (
           await pool!.query(
-            "SELECT count(*)::int AS count FROM qc.electronic_signatures WHERE subject_id = $1",
+            'SELECT count(*)::int AS count FROM qc.electronic_signatures WHERE subject_id = $1',
             [versionId],
           )
         ).rows[0].count,

@@ -58,6 +58,11 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
       connectionString: getTestDatabaseUrl(await startPostgresContainer({ tls: true })),
       max: 2,
     });
+    // Per-suite schema isolation: `outbox.claim(10)` consumes the oldest
+    // unclaimed events, so events left behind by another suite on a reused
+    // cluster would starve this suite's own keys (same pattern as the
+    // control-center and controlled-mutation suites).
+    await pool.query('DROP SCHEMA IF EXISTS qc CASCADE');
     await migrate({ pool: pool! });
     for (const [id, identity] of [
       [recipientA, 'notification-recipient-a'],
@@ -170,11 +175,17 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
     expect(page1.map((notification) => notification.id)).toEqual(
       page2.map((notification) => notification.id),
     );
+    // Both rows share one timestamp, so the listing falls back to its declared
+    // tie-break (`created_at DESC, id DESC`). PostgreSQL 18's `uuidv7()` is time
+    // ordered but not monotonic inside a millisecond, so creation order is not
+    // recoverable from the id — the assertion pins the rule the query actually
+    // implements instead of assuming one.
     const positions = page1.map((notification) => notification.id);
-    expect(positions.indexOf(second.id)).toBeLessThan(positions.indexOf(first.id));
+    expect(positions).toContain(second.id);
+    expect(positions).toContain(first.id);
+    expect(positions).toEqual([...positions].sort().reverse());
     const markedOnce = await service.markOwnRead(actorFor(recipientB), first.id);
     const markedTwice = await service.markOwnRead(actorFor(recipientB), first.id);
     expect(markedOnce?.readAt).toEqual(markedTwice?.readAt);
   });
 });
-

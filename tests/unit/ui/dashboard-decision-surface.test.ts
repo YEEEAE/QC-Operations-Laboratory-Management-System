@@ -110,7 +110,13 @@ describe('dashboard decision surface', () => {
     // The count is the source's own row count, so no second query can disagree
     // with what the queue lists, and a read failure is not a zero.
     const attention = read('src/modules/dashboard/application/dashboard-attention.ts');
-    expect(attention).toContain('metric: { ...metric, value: rows.length }');
+    // One read feeds both the counter and the queue: a bounded register reports
+    // its own full match total in the same read that returns the queue page,
+    // and an unbounded register's count is its own row count. The queue stays a
+    // bounded, severity-ordered slice of those same rows.
+    expect(attention).toContain('const rows = isBoundedRead(read) ? read.rows : read;');
+    expect(attention).toContain('const value = isBoundedRead(read) ? read.total : read.length;');
+    expect(attention).toContain('metric: { ...metric, value },');
     expect(attention).toContain('NOT_AUTHORIZED');
     expect(attention).toContain('throw error;');
     const query = read('src/modules/dashboard/infrastructure/postgres-dashboard-query.ts');

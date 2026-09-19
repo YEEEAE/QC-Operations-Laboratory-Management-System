@@ -215,7 +215,12 @@ export function assertUatSession(input: UatSessionInput): void {
     if (!Number.isInteger(value) || value < 0)
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
   }
-  if (input.confidence1To5 < 1 || input.confidence1To5 > 5 || input.seq1To7 < 1 || input.seq1To7 > 7)
+  if (
+    input.confidence1To5 < 1 ||
+    input.confidence1To5 > 5 ||
+    input.seq1To7 < 1 ||
+    input.seq1To7 > 7
+  )
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   if (!UAT_ASSISTANCE.includes(input.assistance))
     throw new AppError('VALIDATION_FAILED', { userSafe: true });

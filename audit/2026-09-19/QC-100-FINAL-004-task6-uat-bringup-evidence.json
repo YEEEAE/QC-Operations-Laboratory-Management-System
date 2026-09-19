@@ -28,28 +28,108 @@
     "note": "Created new + migrated from zero to avoid disturbing prior evidence databases on the same cluster (qc_disposable, qc_dr008_*, qc_restore_dr008_*)."
   },
   "steps": [
-    {"step": "db:preflight", "result": "PASS", "detail": "connectivity PASS; migrationCountApplied 0; migrationCountPending 31"},
-    {"step": "db:migrate", "result": "PASS", "detail": "applied 0001..0031; pending []"},
-    {"step": "db:seed:foundation", "result": "PASS", "detail": "roles 4; permissions 205; role_permissions 252"},
-    {"step": "db:seed:foundation:check", "result": "PASS"},
-    {"step": "bootstrap:admin", "result": "PASS", "detail": "initial administrator 'yazeed' created (ACTIVE)"},
-    {"step": "access:grant-system-owner", "result": "PASS", "detail": "205 permissions available for yazeed; GLOBAL scope"},
-    {"step": "system-owner:check", "result": "PASS", "detail": "205 canonical permissions, GLOBAL scope, active yazeed account"},
-    {"step": "uat:seed", "result": "PASS", "detail": "5 disposable uat-* accounts ACTIVE with TEAM:QC-UAT-TEAM and 72h expiry; yazeed untouched"},
-    {"step": "uat:seed (re-run)", "result": "PASS", "detail": "idempotent: still 5 disposable accounts, no duplicates"},
-    {"step": "db:migrate:check", "result": "PASS", "detail": "{\"status\":\"ok\",\"migrations\":31}"},
-    {"step": "db:schema:check", "result": "PASS", "detail": "{\"status\":\"ok\",\"migrationCount\":31,\"tableCount\":77,\"orphanCount\":0}"},
-    {"step": "pnpm dev (against qc_uat_bringup)", "result": "PASS", "detail": "Astro dev on 127.0.0.1:4399 serving the bring-up database"}
+    {
+      "step": "db:preflight",
+      "result": "PASS",
+      "detail": "connectivity PASS; migrationCountApplied 0; migrationCountPending 31"
+    },
+    { "step": "db:migrate", "result": "PASS", "detail": "applied 0001..0031; pending []" },
+    {
+      "step": "db:seed:foundation",
+      "result": "PASS",
+      "detail": "roles 4; permissions 205; role_permissions 252"
+    },
+    { "step": "db:seed:foundation:check", "result": "PASS" },
+    {
+      "step": "bootstrap:admin",
+      "result": "PASS",
+      "detail": "initial administrator 'yazeed' created (ACTIVE)"
+    },
+    {
+      "step": "access:grant-system-owner",
+      "result": "PASS",
+      "detail": "205 permissions available for yazeed; GLOBAL scope"
+    },
+    {
+      "step": "system-owner:check",
+      "result": "PASS",
+      "detail": "205 canonical permissions, GLOBAL scope, active yazeed account"
+    },
+    {
+      "step": "uat:seed",
+      "result": "PASS",
+      "detail": "5 disposable uat-* accounts ACTIVE with TEAM:QC-UAT-TEAM and 72h expiry; yazeed untouched"
+    },
+    {
+      "step": "uat:seed (re-run)",
+      "result": "PASS",
+      "detail": "idempotent: still 5 disposable accounts, no duplicates"
+    },
+    {
+      "step": "db:migrate:check",
+      "result": "PASS",
+      "detail": "{\"status\":\"ok\",\"migrations\":31}"
+    },
+    {
+      "step": "db:schema:check",
+      "result": "PASS",
+      "detail": "{\"status\":\"ok\",\"migrationCount\":31,\"tableCount\":77,\"orphanCount\":0}"
+    },
+    {
+      "step": "pnpm dev (against qc_uat_bringup)",
+      "result": "PASS",
+      "detail": "Astro dev on 127.0.0.1:4399 serving the bring-up database"
+    }
   ],
   "personas": {
     "expiry": "2026-09-22T13:52:36+03:00",
     "accounts": [
-      {"loginIdentity": "yazeed", "roles": ["SYSTEM_OWNER", "ADMIN"], "scope": "GLOBAL", "state": "ACTIVE", "effectivePermissions": 205, "seedManaged": false},
-      {"loginIdentity": "uat-qcm", "roles": ["MANAGER"], "scope": "TEAM:QC-UAT-TEAM", "state": "ACTIVE", "effectivePermissions": 64},
-      {"loginIdentity": "uat-supervisor", "roles": ["SUPERVISOR"], "scope": "TEAM:QC-UAT-TEAM", "state": "ACTIVE", "effectivePermissions": 85},
-      {"loginIdentity": "uat-qc-01", "roles": ["EMPLOYEE"], "scope": "TEAM:QC-UAT-TEAM", "state": "ACTIVE", "effectivePermissions": 53, "approveOrSignPermissions": 0},
-      {"loginIdentity": "uat-qc-02", "roles": ["EMPLOYEE"], "scope": "TEAM:QC-UAT-TEAM", "state": "ACTIVE", "effectivePermissions": 53, "approveOrSignPermissions": 0},
-      {"loginIdentity": "uat-qc-03", "roles": ["EMPLOYEE"], "scope": "TEAM:QC-UAT-TEAM", "state": "ACTIVE", "effectivePermissions": 53, "approveOrSignPermissions": 0}
+      {
+        "loginIdentity": "yazeed",
+        "roles": ["SYSTEM_OWNER", "ADMIN"],
+        "scope": "GLOBAL",
+        "state": "ACTIVE",
+        "effectivePermissions": 205,
+        "seedManaged": false
+      },
+      {
+        "loginIdentity": "uat-qcm",
+        "roles": ["MANAGER"],
+        "scope": "TEAM:QC-UAT-TEAM",
+        "state": "ACTIVE",
+        "effectivePermissions": 64
+      },
+      {
+        "loginIdentity": "uat-supervisor",
+        "roles": ["SUPERVISOR"],
+        "scope": "TEAM:QC-UAT-TEAM",
+        "state": "ACTIVE",
+        "effectivePermissions": 85
+      },
+      {
+        "loginIdentity": "uat-qc-01",
+        "roles": ["EMPLOYEE"],
+        "scope": "TEAM:QC-UAT-TEAM",
+        "state": "ACTIVE",
+        "effectivePermissions": 53,
+        "approveOrSignPermissions": 0
+      },
+      {
+        "loginIdentity": "uat-qc-02",
+        "roles": ["EMPLOYEE"],
+        "scope": "TEAM:QC-UAT-TEAM",
+        "state": "ACTIVE",
+        "effectivePermissions": 53,
+        "approveOrSignPermissions": 0
+      },
+      {
+        "loginIdentity": "uat-qc-03",
+        "roles": ["EMPLOYEE"],
+        "scope": "TEAM:QC-UAT-TEAM",
+        "state": "ACTIVE",
+        "effectivePermissions": 53,
+        "approveOrSignPermissions": 0
+      }
     ]
   },
   "http": {
@@ -63,22 +143,34 @@
       "/system/health": 303
     },
     "healthBodies": {
-      "/api/health/live": {"status": "healthy"},
-      "/api/health/ready": {"status": "healthy"}
+      "/api/health/live": { "status": "healthy" },
+      "/api/health/ready": { "status": "healthy" }
     },
     "authenticatedSmoke": {
       "persona": "uat-qcm",
       "action": "POST /login?_astroAction=login",
       "sessionRowCreated": true,
       "sessionsInDatabase": 1,
-      "reads": {"/dashboard": 200, "/approvals": 200, "/quarantine/receiving": 200},
+      "reads": { "/dashboard": 200, "/approvals": 200, "/quarantine/receiving": 200 },
       "renderedIdentity": "uat-qcm / Manager"
     }
   },
   "guardsReproduced": [
-    {"case": "production-looking DATABASE_URL (render.com host)", "result": "REFUSED", "message": "Refusing UAT seed: DATABASE_URL looks like production."},
-    {"case": "NODE_ENV=production", "result": "REFUSED", "message": "Refusing UAT seed: NODE_ENV must be development or test."},
-    {"case": "QC_SEED_ALLOW_NON_PRODUCTION missing", "result": "REFUSED", "message": "Refusing UAT seed: QC_SEED_ALLOW_NON_PRODUCTION=true is required."}
+    {
+      "case": "production-looking DATABASE_URL (render.com host)",
+      "result": "REFUSED",
+      "message": "Refusing UAT seed: DATABASE_URL looks like production."
+    },
+    {
+      "case": "NODE_ENV=production",
+      "result": "REFUSED",
+      "message": "Refusing UAT seed: NODE_ENV must be development or test."
+    },
+    {
+      "case": "QC_SEED_ALLOW_NON_PRODUCTION missing",
+      "result": "REFUSED",
+      "message": "Refusing UAT seed: QC_SEED_ALLOW_NON_PRODUCTION=true is required."
+    }
   ],
   "limits": [
     "Local Node is v22.22.3, outside the declared >=24.20.0 <25 contract; this is local bring-up evidence, not Node runtime-parity proof.",

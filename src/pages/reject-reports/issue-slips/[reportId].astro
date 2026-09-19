@@ -25,7 +25,7 @@ const hasPermission = (code: string) =>
 const isCreator = slip.createdBy === actor.id;
 const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
 const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
-// Checkpoints are sequential (SUPERVISOR → QC_MANAGER → FACTORY_DIRECTOR), so
+// Checkpoints are sequential (SUPERVISOR -> QC_MANAGER -> FACTORY_DIRECTOR), so
 // only the next pending checkpoint is confirmable; the server enforces the
 // same rule and denies an out-of-order confirmation.
 const nextApprovalRole = nextPendingApprovalRole(slip.approvals);

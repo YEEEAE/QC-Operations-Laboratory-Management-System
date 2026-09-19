@@ -6,11 +6,15 @@
  */
 import { Pool } from 'pg';
 
+/* global URL, console, process */
+
 function guard(url) {
   const u = new URL(url);
-  if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') throw new Error('Refusing: non-local DATABASE_URL.');
+  if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1')
+    throw new Error('Refusing: non-local DATABASE_URL.');
   const db = decodeURIComponent(u.pathname.replace(/^\//, ''));
-  if (!['qc_disposable', 'qc_test', 'qc_perf'].includes(db)) throw new Error(`Refusing: not a disposable database (${db}).`);
+  if (!['qc_disposable', 'qc_test', 'qc_perf'].includes(db))
+    throw new Error(`Refusing: not a disposable database (${db}).`);
 }
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -133,4 +137,3 @@ try {
   client.release();
   await pool.end();
 }
-

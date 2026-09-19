@@ -17,7 +17,9 @@ export interface SystemOwnerGrantConfig {
 export function parseSystemOwnerGrantConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): SystemOwnerGrantConfig {
-  loadLocalEnv(environment);
+  // Configuration isolation: this parser reads only the environment it is
+  // given. The local `.env` file is merged at the CLI boundary below, never
+  // inside a reusable function (same rule as the migrate entrypoints).
   const databaseUrl = environment.DATABASE_URL?.trim();
   const loginIdentity = environment.SYSTEM_OWNER_LOGIN_IDENTITY?.trim();
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
@@ -174,6 +176,7 @@ export async function grantSystemOwnerAccess(
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  loadLocalEnv();
   grantSystemOwnerAccess()
     .then((result) => {
       console.log(
