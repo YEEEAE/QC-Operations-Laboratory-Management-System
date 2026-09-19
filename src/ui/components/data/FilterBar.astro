@@ -1,5 +1,74 @@
 ---
-interface Props { action?: string; }
-const { action = 'Apply filters' } = Astro.props;
+import { copy } from '../../../shared/copy/ux-vocabulary';
+interface Props {
+  /** Submit button label. Defaults to the shared action vocabulary. */
+  action?: string;
+  /** Reset link that drops every filter. Omit when the register has no filters. */
+  clearHref?: string;
+  /** Accessible name for the filter landmark. */
+  label?: string;
+}
+const { action = copy.actions.applyFilters, clearHref, label = 'Register filters' } = Astro.props;
 ---
-<form class="filters" method="get"><slot /><button type="submit">{action}</button></form><style>.filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-3);width:100%}.filters :global(label){display:grid;gap:5px;color:var(--text-muted);font-size:11px}.filters :global(input),.filters :global(select){min-width:130px;padding:8px 10px;border:1px solid var(--border-default);border-radius:7px;background:var(--surface-panel);color:var(--text-primary);font:inherit;font-size:12px}.filters button{padding:8px 12px;border:1px solid var(--color-accent-primary);border-radius:7px;background:transparent;color:var(--color-accent-primary-hover);font:inherit;font-size:12px;font-weight:600;cursor:pointer}</style>
+
+<form class="filters" method="get" role="search" aria-label={label}>
+  <slot />
+  <div class="filters-actions">
+    <button type="submit">{action}</button>
+    {clearHref && <a class="clear" href={clearHref}>{copy.actions.clearFilters}</a>}
+  </div>
+</form>
+<style>
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+    width: 100%;
+  }
+  .filters :global(label) {
+    display: grid;
+    gap: 5px;
+    color: var(--text-secondary);
+    /* 12px readable floor (tokens.css --font-size-xs), never 11px. */
+    font-size: var(--font-size-xs);
+  }
+  .filters :global(input),
+  .filters :global(select) {
+    min-width: 130px;
+    min-height: var(--control-height);
+    padding: 8px 10px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--surface-panel);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--font-size-xs);
+  }
+  .filters-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .filters button,
+  .filters .clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--control-height);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-accent-primary-hover);
+    font: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .filters .clear {
+    border-color: var(--border-default);
+    color: var(--text-secondary);
+  }
+</style>

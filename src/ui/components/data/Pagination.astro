@@ -1,6 +1,82 @@
 ---
-interface Props { page?: number; totalPages?: number; baseUrl?: string; }
-const { page = 1, totalPages = 1, baseUrl = Astro.url.pathname } = Astro.props;
-const link = (next: number) => `${baseUrl}?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), page: String(next) })}`;
+interface Props {
+  page?: number;
+  totalPages?: number;
+  /** Authorized total for the current filter set. Omit when the read is not counted. */
+  total?: number;
+  baseUrl?: string;
+  /** Noun for the counted rows, e.g. "tasks". */
+  itemLabel?: string;
+}
+const { page = 1, totalPages = 1, total, baseUrl = Astro.url.pathname, itemLabel } = Astro.props;
+const link = (next: number) =>
+  `${baseUrl}?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), page: String(next) })}`;
+const counted =
+  typeof total === 'number' && itemLabel
+    ? `Page ${page} of ${totalPages} — ${total} ${itemLabel}`
+    : `Page ${page} of ${totalPages}`;
 ---
-<nav class="pagination" aria-label="Pagination"><span aria-live="polite">Page {page} of {totalPages}</span><div>{page > 1 ? <a class="page-link" rel="prev" aria-label={`Go to page ${page - 1}`} href={link(page - 1)}>Previous</a> : <span class="page-link disabled" aria-disabled="true">Previous</span>}{page < totalPages ? <a class="page-link" rel="next" aria-label={`Go to page ${page + 1}`} href={link(page + 1)}>Next</a> : <span class="page-link disabled" aria-disabled="true">Next</span>}</div></nav><style>.pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:var(--space-4) var(--space-5);color:var(--text-muted);font-size:12px}.pagination div{display:flex;gap:8px}.pagination a,.pagination .page-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;color:var(--text-secondary);text-decoration:none}.pagination a:not(.disabled):hover{border-color:var(--color-accent-primary);color:var(--text-primary)}.pagination .disabled{opacity:.45;cursor:not-allowed}</style>
+
+<nav class="pagination" aria-label="Pagination">
+  <span aria-live="polite">{counted}</span>
+  <div>
+    {
+      page > 1 ? (
+        <a class="page-link" rel="prev" aria-label={`Go to page ${page - 1}`} href={link(page - 1)}>
+          Previous
+        </a>
+      ) : (
+        <span class="page-link disabled" aria-disabled="true">
+          Previous
+        </span>
+      )
+    }
+    {
+      page < totalPages ? (
+        <a class="page-link" rel="next" aria-label={`Go to page ${page + 1}`} href={link(page + 1)}>
+          Next
+        </a>
+      ) : (
+        <span class="page-link disabled" aria-disabled="true">
+          Next
+        </span>
+      )
+    }
+  </div>
+</nav>
+<style>
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .pagination div {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .pagination a,
+  .pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--control-height);
+    padding: 7px 10px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    text-decoration: none;
+  }
+  .pagination a:not(.disabled):hover {
+    border-color: var(--color-accent-primary);
+    color: var(--text-primary);
+  }
+  .pagination .disabled {
+    opacity: var(--disabled-opacity);
+    cursor: not-allowed;
+  }
+</style>

@@ -5,6 +5,29 @@
 
 
 
+## Rollover from 01 — 2026-09-19 (QC-100-FINAL-005 — shared UI/navigation/forms/grids/recovery)
+
+> نُقلت أربعة سجلات تاريخية (`QC-100-FINAL-009`, `QC-100-FINAL-007`, `QC-100-FINAL-010` وسجل FINAL-014 المرشّح 2026-09-18) إلى هنا بعد التحقق من غيابها في هذا الأرشيف، لأن `01` بلغ 503 سطرًا (فوق الحد الناعم 500) قبل إضافة سجل FINAL-005. لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة أو أدلة إصدار سارية.
+
+- **2026-09-19 — QC-100-FINAL-009 / AI provider verification**
+  - Changed: added deterministic coverage for provider error mapping, 12-second timeout, adapter-level failover, and sanitized application handling of primary/fallback exceptions; no application behavior or policy changed.
+  - Evidence: candidate `95d1380f2f463bad911d6ee041ae6a7f45cbf897`, focused AI `66/66 PASS`, typecheck 0 errors/72 hints on Node 24.19.0 (outside contract); live calls, privacy approval and reviewer evidence remain NOT RUN/BLOCKED. `audit/2026-09-19/QC-100-FINAL-009-ai-provider-verification.md`.
+  - State: PARTIAL.
+- **2026-09-19 — QC-100-FINAL-007 / Performance, capacity & operational monitoring**
+  - Changed: re-seeded the representative PERF- dataset on the disposable PG 18.6 cluster; ran EXPLAIN (ANALYZE, BUFFERS) on 9 critical reads, authenticated Chromium vitals on 8 routes, 11-path HTTP smoke, read concurrency to c=24, rate-limit mechanism check, outbox single-drain, and log/correlation/secret-scan verification; proposed (not approved) budgets; no source/migration/policy change.
+  - Evidence: EXPLAIN all <30 ms with batched reads and no duplicate dashboard SQL; LCP ≤360 ms / CLS 0 / JS ~2.9 KB; TTFB p95 ≤168 ms except unbounded `/tasks` (1.26 MB); concurrency 200/200 to c=24 with p95 ≈538 ms; concurrency suite 12/12 PASS; secret scan 0 hits; metrics export NOT VERIFIED; alert delivery NOT RUN. `audit/2026-09-19-QC-100-FINAL-007-performance-capacity-monitoring.md`.
+  - State: PARTIAL (provider alerts, session-valid INP, write-path load, outbox pressure, production capacity remain open).
+  - Key files: `scripts/performance/{login-and-capture,explain-critical-reads,concurrency-probe,rate-limit-probe}.mjs`.
+- **2026-09-19 — QC-100-FINAL-010 / Runtime security, privacy and supply-chain verification**
+  - Changed: no application code or policy value changed; candidate-specific focused negative tests and local supply-chain checks were re-run, with blockers recorded instead of inferred closure.
+  - Evidence: authorization/policy focus `63/63 PASS`; security `51 PASS + 1 SKIP` with PostgreSQL/Testcontainers `BLOCKED`; frozen offline lock install PASS; dependency audit/SBOM/dedicated scanner and approved privacy decisions remain unavailable or unverified. `audit/2026-09-19-QC-100-FINAL-010-security-privacy-supply-chain.md`.
+  - State: PARTIAL / BLOCKED for full acceptance.
+- **2026-09-18 — QC-100-FINAL-014 / Reject Reports analytics proof + populated regression**
+  - Changed: no repository SQL change needed — the ambiguous-`status` fix (a.status / r.status qualification) is present at HEAD; strengthened the reject-reports integration analytics regression with populated report+confirmation rows, approvalStatus aggregate assertions, a VOID-exclusion aggregate check (distinct item code), a zero-denominator `rejectPctTrend` day (SQL `CASE WHEN SUM(good_qty) > 0` → NULL), and trend/by-item/by-department/by-reason assertions.
+  - Evidence: on candidate `eab4e341` + Node 24.20.0/pnpm 11.25.0 + disposable TLS PG 18.6 at source head 0029: reject-reports unit 9 + integration 6 = 15/15 PASS; eslint on the touched test file PASS. Mutation check confirmed the regression catches the historical defect: de-qualifying `a.status` reproduces `column reference "status" is ambiguous` and fails the test; source reverted. Live /reject-reports HTTP smoke and production migration parity remain separate unproven acceptance items (owner-supplied).
+  - State: DONE (local source + disposable-PG scope only).
+  - Key files: `tests/integration/reject-reports/reject-reports.test.ts`.
+
 ## Rollover from 01 — 2026-09-19 (QC-100-FINAL-013 — two-stage controlled workflows)
 
 > نُقلت أقدم سجلات الـHistorical Ledger من `01` (ملف الأدلة التاريخي لـNFR، وسجلَا `QC-AI-PROVIDERS-001` و`QC-CLOSURE-010`) إلى هنا بعد التحقق من غيابها في هذا الأرشيف، لأن `01` بلغ 509 سطرًا (فوق الحد الناعم 500). لم تُنقل أي قرارات حالية أو invariants أو مشاكل مفتوحة أو أدلة إصدار سارية؛ كل ما نُقل تاريخي لمرشّحات سابقة.

@@ -138,7 +138,8 @@ const coords = points
     width: 100%;
     margin-top: 12px;
     border-collapse: collapse;
-    font-size: 11px;
+    /* 12px readable floor for the accessible data table under the chart. */
+    font-size: var(--font-size-xs);
   }
   .data-alt caption {
     position: absolute;

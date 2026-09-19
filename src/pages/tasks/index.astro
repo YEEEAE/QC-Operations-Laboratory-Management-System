@@ -1,8 +1,11 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import AppliedFilters from '../../ui/components/data/AppliedFilters.astro';
+import Pagination from '../../ui/components/data/Pagination.astro';
+import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
+import { formatDate } from '../../shared/copy/format.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Ftasks');
 const params = Astro.url.searchParams;
@@ -17,24 +20,28 @@ const requestedDue = params.get('due');
 const due = requestedDue === 'overdue' || requestedDue === 'today' ? requestedDue : undefined;
 const ownership = params.get('assignee') === 'mine' ? ('mine' as const) : undefined;
 const dueLabels = { overdue: 'Overdue', today: 'Due today' } as const;
-const result = await taskReadDependencies().list.execute({
-  actor,
-  filter: {
-    state,
-    search,
-    due,
-    assigneeId: ownership === 'mine' ? actor.id : undefined,
-  },
-  page,
-});
+// A dependency outage is UNAVAILABLE, not an empty queue and not a zero count.
+let providerUnavailable = false;
+let result: Awaited<ReturnType<ReturnType<typeof taskReadDependencies>['list']['execute']>> = {
+  items: [],
+  total: 0,
+};
+try {
+  result = await taskReadDependencies().list.execute({
+    actor,
+    filter: {
+      state,
+      search,
+      due,
+      assigneeId: ownership === 'mine' ? actor.id : undefined,
+    },
+    page,
+  });
+} catch {
+  providerUnavailable = true;
+}
 const tasks = result.items;
 const totalPages = Math.max(1, Math.ceil(result.total / page.pageSize));
-const pageHref = (next: number) => {
-  const paging = new URLSearchParams(params);
-  paging.set('page', String(next));
-  paging.set('pageSize', String(page.pageSize));
-  return `/tasks?${paging.toString()}`;
-};
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
   next.delete(drop);
@@ -64,10 +71,12 @@ const canCreate = actor.permissions.some(
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/tasks' : undefined}
-    note={`Showing ${tasks.length} of ${result.total} in your authorized scope — page ${page.page} of ${totalPages}.`}
+    note={providerUnavailable
+      ? 'The task read is unavailable, so no count is shown.'
+      : `Showing ${tasks.length} of ${result.total} in your authorized scope — page ${page.page} of ${totalPages}.`}
   />
-  {tasks.length ? <div class="table-wrap"><table><caption>{tasks.length} task{tasks.length === 1 ? '' : 's'}{hasFilters ? ' matching the current filters' : ''} — page {page.page} of {totalPages}</caption><thead><tr><th scope="col">Task ID</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.priority}</td><td>{task.state}</td><td>{task.currentAssigneeId ?? 'Unassigned'}</td><td>{task.dueAt?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? '—'}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters && <a href="/tasks">Clear all filters</a>}</section>}
-  {totalPages > 1 && <nav class="pagination" aria-label="Tasks pages"><span aria-live="polite">Page {page.page} of {totalPages} — {result.total} tasks</span><div>{page.page > 1 ? <a class="page-link" rel="prev" aria-label={`Go to page ${page.page - 1}`} href={pageHref(page.page - 1)}>Previous</a> : <span class="page-link disabled" aria-disabled="true">Previous</span>}{page.page < totalPages ? <a class="page-link" rel="next" aria-label={`Go to page ${page.page + 1}`} href={pageHref(page.page + 1)}>Next</a> : <span class="page-link disabled" aria-disabled="true">Next</span>}</div></nav>}
+  {providerUnavailable ? <ProviderUnavailableState title="Tasks are temporarily unavailable" description="The task read did not return a confirmed result, so this queue is not treated as empty and no count is shown." retryHref="/tasks" /> : tasks.length ? <div class="table-wrap"><table><caption>{tasks.length} task{tasks.length === 1 ? '' : 's'}{hasFilters ? ' matching the current filters' : ''} — page {page.page} of {totalPages}</caption><thead><tr><th scope="col">Task ID</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.priority}</td><td>{task.state}</td><td>{task.currentAssigneeId ?? 'Unassigned'}</td><td>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDate(task.dueAt)}</time> : '—'}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters && <a href="/tasks">Clear all filters</a>}</section>}
+  {!providerUnavailable && totalPages > 1 && <Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="tasks" baseUrl="/tasks" />}
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5);flex-wrap:wrap}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem;font-size:1.1rem}@media(max-width:600px){.page-head,.filters{display:grid}.filters button{width:max-content}}
+<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--color-text-inverse);padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700;cursor:pointer}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5);flex-wrap:wrap}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem;font-size:1.1rem}@media(max-width:600px){.page-head,.filters{display:grid}.filters button{width:max-content}}
 </style>
