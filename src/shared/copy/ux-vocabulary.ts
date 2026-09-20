@@ -196,6 +196,11 @@ export const stateLabels: Readonly<Record<string, string>> = {
   // Notifications
   UNREAD: 'Unread',
   READ: 'Read',
+  // NCR / CAPA lifecycle (QC-100-FINAL-024)
+  UNDER_INVESTIGATION: 'Under investigation',
+  RCA_IN_PROGRESS: 'RCA in progress',
+  CAPA_IN_PROGRESS: 'CAPA in progress',
+  READY_FOR_CLOSURE: 'Ready for closure',
 };
 
 /** Severity labels — human words first, no raw codes. */

@@ -1,19 +1,31 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
+import { getDatabase } from '../../../shared/database/database.js';
+import { PostgresNcrRepository } from '../../../modules/quality/ncr/infrastructure/postgres-repository.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import type { Ncr } from '../../../modules/quality/ncr/domain/ncr.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 const capaId = Astro.params.capaId ?? '';
 const capaRead = capaReadDependencies();
 const capa = /^[0-9a-f-]{36}$/i.test(capaId) ? await capaRead.get.execute({ id: capaId, actor }).catch(() => undefined) : undefined;
 const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
+// The source NCR is resolved server-side through the NCR domain's own
+// scope-limited read (QC-100-FINAL-024). The CAPA page holds no mutation
+// authority over NCR state — the linkage is presentation only.
+const sourceNcr = capa?.ncrId
+  ? await new PostgresNcrRepository(getDatabase()).get(capa.ncrId, actor).catch(() => undefined)
+  : undefined;
 ---
 <AppLayout title="CAPA detail · Quality" locale="en" direction="ltr">
   <main class="capa-shell">
     <h1>CAPA detail</h1>
     {capa ? <>
-      <p class="lede">{capa.capaNo} · State: {capa.state} · Version: {capa.version}</p>
-      <p class="lede">Related NCR/RCA, action owners, evidence, verification, closure, and history belong to the server-authorized aggregate.</p>
+      <p class="lede">{capa.capaNo} · State: {stateLabel(capa.state)} · Version: {capa.version}</p>
+      <JourneyContextPanel ownerDomain="Quality / CAPA" currentState={stateLabel(capa.state)} nextOwner={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'CAPA action owner' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'CAPA verifier' : undefined} whyUnavailable={capa.state === 'READY_FOR_CLOSURE' ? 'policy: closure requires the approved closure authority (P-04)' : capa.state === 'CLOSED' ? 'state: controlled closure is complete and evidence is preserved' : undefined} waitingOn={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'Action execution' : capa.state === 'AWAITING_VERIFICATION' ? 'Verification' : capa.state === 'EFFECTIVENESS_REVIEW' ? 'Effectiveness review' : undefined} expectedEvent={capa.state === 'IN_PROGRESS' ? 'Action completion' : ['AWAITING_VERIFICATION', 'EFFECTIVENESS_REVIEW'].includes(capa.state) ? 'Verification progress' : capa.state === 'READY_FOR_CLOSURE' ? 'Controlled closure with e-signature' : undefined} controlledContext={`CAPA ${capa.capaNo} · record version ${capa.version.toString()}`} evidenceSummary={`Actions: ${capa.actions.length} · verification ${capa.verificationRequired ? 'required' : 'not required'} · effectiveness ${capa.effectivenessRequired ? 'required' : 'not required'}`} auditHref={`/audit?subjectType=CAPA&subjectId=${encodeURIComponent(capa.id)}`} relatedLinks={[{ label: sourceNcr ? `Source NCR ${sourceNcr.ncrNo}` : 'NCR register', href: sourceNcr ? `/quality/ncr/${sourceNcr.id}` : '/quality/ncr', detail: 'Owning non-conformance record' }]} />
+      <p class="lede">Related RCA, action owners, evidence, verification, closure, and history belong to the server-authorized aggregate.</p>
       {canClose && <section aria-labelledby="close-heading" class="close-panel">
         <h2 id="close-heading">Close CAPA</h2>
         <p>Approved P-04 closure does not require incomplete actions or effectiveness acceptance to be complete.</p>

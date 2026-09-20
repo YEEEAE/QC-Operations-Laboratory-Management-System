@@ -1,9 +1,25 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
+import { listRelatedNcrsForFinding } from '../../../modules/quality/findings/application/list-related-ncrs.js';
 import { stateLabel, severityLabel } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
-const finding = await findingsReadDependencies().get.execute({ actor, id: Astro.params.findingId! });
+// F-05 baseline: a read failure renders the unavailable state, never a 500.
+const read = findingsReadDependencies();
+const findingId = Astro.params.findingId ?? '';
+const finding = /^[0-9a-f-]{36}$/i.test(findingId)
+  ? await read.get.execute({ actor, id: findingId }).catch(() => undefined)
+  : undefined;
+if (!finding) return Astro.redirect('/404');
+// Related NCRs are resolved server-side through the NCR domain's own
+// scope-limited read; a finding page never queries the NCR table directly and
+// never links a record this account cannot open.
+const relatedNcrs = await listRelatedNcrsForFinding(actor, finding.id).catch(() => []);
 ---
-<AppLayout title={`${finding.findingNo} · Quality`} locale="en" direction="ltr"><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p><dl><dt>State</dt><dd>{stateLabel(finding.state)}</dd><dt>Severity</dt><dd>{finding.severity ? severityLabel(finding.severity) : 'Not classified'}</dd><dt>Version</dt><dd>{finding.version.toString()}</dd><dt>Source context</dt><dd>{finding.sourceContext?'Recorded':'Not provided'}</dd></dl><h2>History and related records</h2><p class="lede">The audit history and any related NCR open from the record’s own links.</p></AppLayout><style>.eyebrow,.lede{color:var(--text-muted)}dl{display:grid;grid-template-columns:max-content 1fr;gap:.65rem 1rem;background:var(--surface-panel);padding:1rem}dt{font-weight:700}dd{margin:0}</style>
+<AppLayout title={`${finding.findingNo} · Quality`} locale="en" direction="ltr"><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p>
+<JourneyContextPanel ownerDomain="Quality / Findings" currentState={stateLabel(finding.state)} nextAction={finding.state === 'DRAFT' ? 'Open the finding for review' : finding.state === 'OPEN' ? 'Submit the finding for review' : undefined} nextActionHref={finding.state === 'DRAFT' ? '/quality/findings' : finding.state === 'OPEN' ? '/quality/findings' : undefined} nextOwner={finding.state === 'DRAFT' || finding.state === 'OPEN' ? 'Quality owner' : finding.state === 'UNDER_REVIEW' ? 'Finding reviewer' : undefined} whyUnavailable={finding.state === 'UNDER_REVIEW' ? 'state: this record is waiting for an authorized review decision' : finding.state === 'CLOSED' ? 'state: controlled closure is complete and the record is immutable' : undefined} waitingOn={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} expectedEvent={finding.state === 'OPEN' ? 'Submit for review' : finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} controlledContext={`Finding ${finding.findingNo} · record version ${finding.version.toString()}`} evidenceSummary={finding.sourceContext ? 'Source context recorded by the owning workflow' : 'No source context was recorded for this finding'} auditHref={`/audit?subjectType=FINDING&subjectId=${encodeURIComponent(finding.id)}`} relatedLinks={[{ label: 'Findings register', href: '/quality/findings', detail: 'Quality-owned records' }]} />
+<dl><dt>State</dt><dd>{stateLabel(finding.state)}</dd><dt>Severity</dt><dd>{finding.severity ? severityLabel(finding.severity) : 'Not classified'}</dd><dt>Version</dt><dd>{finding.version.toString()}</dd><dt>Source context</dt><dd>{finding.sourceContext?'Recorded':'Not provided'}</dd></dl>
+<section class="related"><h2>Related NCRs</h2>{relatedNcrs.length ? <ul>{relatedNcrs.map((ncr) => <li><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a><span>{stateLabel(ncr.state)}</span></li>)}</ul> : <p class="muted">No NCR linked to this finding is visible in your authorized scope.</p>}<p class="note">NCR creation and lifecycle remain owned by the NCR workflow; this list is a read-only linkage.</p></section></AppLayout>
+<style>.eyebrow,.lede{color:var(--text-muted)}dl{display:grid;grid-template-columns:max-content 1fr;gap:.65rem 1rem;background:var(--surface-panel);padding:1rem}dt{font-weight:700}dd{margin:0}.related{margin-top:1rem;padding:1rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle)}.related ul{list-style:none;padding:0;margin:0;display:grid;gap:.4rem}.related a{color:var(--color-accent-primary-hover)}.related span{color:var(--text-muted);margin-inline-start:.5rem}.note{color:var(--text-muted);font-size:.8rem}</style>
