@@ -50,7 +50,8 @@
     "uat:seed": "tsx scripts/uat/seed-uat-personas.ts",
     "uat:clean": "tsx scripts/uat/cleanup-uat-personas.ts",
     "uat:ingest": "tsx scripts/uat/ingest-uat-evidence.ts",
-    "uat:scenarios": "tsx scripts/uat/run-uat-scenarios.ts"
+    "uat:scenarios": "tsx scripts/uat/run-uat-scenarios.ts",
+    "data:master-data:preflight": "tsx scripts/data/run-master-data-import.ts --entity equipment --dataset tests/fixtures/master-data/equipment-starting-set.json"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",

@@ -475,6 +475,7 @@ const routeTuples = [
   ['RT-SHARED-002', '/notifications', 'src/pages/notifications.astro', 'authenticated', 'required'],
   ['RT-SHARED-003', '/account', 'src/pages/account.astro', 'authenticated', 'required'],
   ['RT-SHARED-004', '/audit', 'src/pages/audit.astro', 'permission-bound', 'required'],
+  ['RT-HELP-001', '/help', 'src/pages/help/index.astro', 'permission-bound', 'required'],
   [
     'RT-QUAR-003',
     '/quarantine/admin/[templateId]',
@@ -520,6 +521,7 @@ const DOMAIN_BY_PREFIX: Record<string, string> = {
   tasks: 'tasks',
   account: 'identity',
   auth: 'identity',
+  help: 'shared',
 };
 function titleFor(path: string): string {
   const leaf = path.split('/').filter(Boolean).at(-1) ?? 'Page';

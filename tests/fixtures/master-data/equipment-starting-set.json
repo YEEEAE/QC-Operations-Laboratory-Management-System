@@ -1,0 +1,25 @@
+{
+  "entityKey": "equipment",
+  "records": [
+    {
+      "equipment_no": "FIX-EQP-0001",
+      "name": "Disposable balance",
+      "manufacturer": "Example Instruments",
+      "model": "EX-100",
+      "serial_no": "SN-0001",
+      "location": "QC-UAT-ROOM",
+      "state": "ACTIVE",
+      "created_by": "01900000-0000-7000-8000-000000000019"
+    },
+    {
+      "equipment_no": "FIX-EQP-0002",
+      "name": "Disposable oven",
+      "manufacturer": "Example Instruments",
+      "model": "EX-200",
+      "serial_no": "SN-0002",
+      "location": "QC-UAT-ROOM",
+      "state": "DRAFT",
+      "created_by": "01900000-0000-7000-8000-000000000019"
+    }
+  ]
+}

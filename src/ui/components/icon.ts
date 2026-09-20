@@ -47,6 +47,11 @@ export const iconPaths = {
   'sort-descending': ['M8 6v12', 'M5 15l3 3 3-3', 'M14 18h5', 'M14 12h4', 'M14 6h3'],
   'sort-none': ['M8 6v12', 'M5 9l3-3 3 3', 'M14 18h5', 'M14 12h4', 'M14 6h3'],
   close: ['M6 6l12 12', 'M18 6L6 18'],
+  help: [
+    'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+    'M9.5 9a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1.9-1.1 1.7',
+    'M12 17h.01',
+  ],
   'reject-reports': ['M5 4h14v16H5z', 'M9 9l6 6', 'M15 9l-6 6'],
 } as const;
 

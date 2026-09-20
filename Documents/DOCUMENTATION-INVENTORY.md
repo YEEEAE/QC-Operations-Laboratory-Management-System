@@ -22,9 +22,11 @@ truth without checking the source code and current documents.
 | System design / architecture | `Documents/ARCHITECTURE-SPECIFICATION.md`, `Documents/DATABASE-ARCHITECTURE.md`, `Documents/DEPLOYMENT-ARCHITECTURE.md`, `Documents/DATA-MODEL.md`, `Documents/DATA-DICTIONARY.md`, `Documents/DOMAIN-MAP.md`, `Documents/STATE-MACHINES.md`, `Documents/ERROR-ARCHITECTURE.md`, `Documents/OBSERVABILITY-ARCHITECTURE.md`, `Documents/SECURITY-ARCHITECTURE.md` |
 | Product and requirements | `Documents/BUSINESS-RULES.md`, `Documents/SYSTEM-INVARIANTS.md`, `Documents/REQUIREMENTS-TRACEABILITY.md`, `Documents/ROLE-MATRIX.md`, `Documents/PERMISSION-MATRIX.md`, `Documents/ROUTE-MANIFEST-SPECIFICATION.md`, `Documents/UAT-ACCEPTANCE-PLAN.md`, `Documents/RISK-REGISTER.md`, `Documents/PRODUCTION-READINESS-CHECKLIST.md`, `Documents/PRODUCT-ANALYTICS-MEASUREMENT-PLAN.md`, `Documents/QC-SYSTEM-DESIGN-CONSTITUTION.md` |
 | UX and design | `Documents/DESIGN-SYSTEM.md`, `Documents/UI-UX-SPECIFICATION.md`, `Documents/UX-WRITING-GUIDE.md`, `Documents/AUTHORIZATION-VISIBILITY-DECISION.md` |
+| Role operating & support | `Documents/ROLE-OPERATING-GUIDES.md`, `Documents/SUPPORT-OWNERSHIP-REGISTER.md` (derived layer; canonical policy stays in ROLE-MATRIX/PERMISSION-MATRIX) |
 | Development and operations | `Documents/LOCAL-DEVELOPMENT.md`, `Documents/TESTING.md`, `Documents/TESTING-STRATEGY.md`, current runbooks under `Documents/` (`AI-PROVIDERS.md`, `F11-BACKUP-RECOVERY-RUNBOOK.md`, `INCIDENT-QUICK-REFERENCE.md`, `INITIAL-ADMIN-BOOTSTRAP.md`, `RELEASE-RUNBOOK.md`, `RENDER-DATABASE-CONNECTION.md`, `RENDER-DEPLOYMENT.md`, `RENDER-MIGRATION-RUNBOOK.md`, `RESTORE-DRILL-RUNBOOK.md`, `BACKUP-RECOVERY-PLAN.md`) |
 | Architecture additions | `Documents/EXTENDING-THE-SYSTEM.md`, `Documents/ROUTE-MATRIX.md`, `Documents/REJECT-REPORTS.md` |
 | Database contract | `db/migrations/README.md` |
+| Starting data preparation | `Documents/MASTER-DATA-STARTING-DATA.md`, `Documents/FIRST-USE-DATA-MANIFEST.md` (inventory derived from `scripts/data/`) |
 | Project operating instructions | `AGENTS.md`, `.agents/AGENTS.md`, `.agents/mind/01-mind-latest.md` |
 | Executable contracts | `.github/workflows/ci.yml`, `render.yaml`, `package.json`, `astro.config.mjs`, `playwright.config.ts`, `vitest.config.ts`, `tsconfig.json` |
 

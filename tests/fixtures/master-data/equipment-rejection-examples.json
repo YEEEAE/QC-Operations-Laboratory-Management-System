@@ -1,0 +1,35 @@
+{
+  "entityKey": "equipment",
+  "records": [
+    {
+      "equipment_no": "FIX-EQP-0001",
+      "name": "Disposable balance",
+      "state": "ACTIVE",
+      "created_by": "01900000-0000-7000-8000-000000000019"
+    },
+    {
+      "equipment_no": "FIX-EQP-0001",
+      "name": "Disposable balance (duplicate in batch)",
+      "state": "ACTIVE",
+      "created_by": "01900000-0000-7000-8000-000000000019"
+    },
+    {
+      "equipment_no": "FIX-EQP-0004",
+      "name": "",
+      "state": "ACTIVE",
+      "created_by": "01900000-0000-7000-8000-000000000019"
+    },
+    {
+      "equipment_no": "FIX-EQP-0005",
+      "name": "Disposable meter",
+      "state": "RETIRED",
+      "created_by": "01900000-0000-7000-8000-000000000019"
+    },
+    {
+      "equipment_no": "FIX-EQP-0006",
+      "name": "Disposable meter",
+      "state": "ACTIVE",
+      "created_by": "01900000-0000-7000-8000-000000000099"
+    }
+  ]
+}

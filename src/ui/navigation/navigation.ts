@@ -263,6 +263,12 @@ const declaredNavigationGroups: Array<
         href: '/account',
         icon: 'account',
       },
+      {
+        id: 'help',
+        label: 'Operating guides',
+        href: '/help',
+        icon: 'help',
+      },
     ],
   },
 ];

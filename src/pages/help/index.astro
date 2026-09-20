@@ -1,0 +1,364 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { getRouteById } from '../../shared/routing/routes.js';
+import {
+  HELP_ROLE_GUIDES,
+  HELP_ROUTE_LINKS,
+  HELP_STATE_NOTES,
+} from '../../shared/copy/help-content.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+
+/**
+ * Resolve a canonical route ID to its live path. A missing ID is a build-time
+ * defect, not a silent empty link, so the help surface can never drift from the
+ * route registry.
+ */
+const routeHref = (routeId: string): string => {
+  const route = getRouteById(routeId);
+  if (!route) throw new Error(`Help guide references an unregistered route: ${routeId}`);
+  return route.path;
+};
+
+const labelFor = (routeId: string): string => {
+  const route = getRouteById(routeId);
+  if (!route) throw new Error(`Help guide references an unregistered route: ${routeId}`);
+  return route.title;
+};
+
+const quickLinks = HELP_ROUTE_LINKS.map((link) => ({
+  ...link,
+  href: routeHref(link.routeId),
+}));
+---
+
+<AppLayout title="Operating guides · QC Operations" locale="en" direction="ltr">
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">Support</p>
+      <h1>Operating guides</h1>
+      <p class="lede">
+        A short daily guide for each operational role, with the real routes you use and what to do
+        when something is blocked or refuses. This page never shows secrets or raw diagnostics.
+      </p>
+    </div>
+    <button type="button" class="print-button" data-print-guide>Print this guide</button>
+  </section>
+
+  <nav class="toc panel" aria-labelledby="help-toc">
+    <h2 id="help-toc">On this page</h2>
+    <ul>
+      <li><a href="#start-of-day">Start of day by role</a></li>
+      <li><a href="#quick-links">Everyday routes</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#escalation">Escalation and handoff</a></li>
+      <li><a href="#interruption">Service interruption</a></li>
+    </ul>
+  </nav>
+
+  <section class="panel" id="start-of-day" aria-labelledby="start-of-day-h">
+    <h2 id="start-of-day-h">Start of day by role</h2>
+    <p class="muted">
+      Your role decides what you usually start with — not what you are allowed to do. Every action is
+      still authorized server-side by permission, scope, state, version, separation of duties and
+      signature.
+    </p>
+    <div class="role-grid">
+      {
+        HELP_ROLE_GUIDES.map((guide) => (
+          <article class="role-card" aria-labelledby={`role-${guide.role}`}>
+            <h3 id={`role-${guide.role}`}>{guide.title}</h3>
+            <p class="focus">{guide.focus}</p>
+            <ol>
+              {guide.startOfDay.map((routeId) => (
+                <li>
+                  <a href={routeHref(routeId)}>
+                    {labelFor(routeId)}
+                  </a>
+                </li>
+              ))}
+            </ol>
+            <p class="escalate">
+              <span class="tag">Escalate to</span> {guide.escalateTo}
+            </p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="panel" id="quick-links" aria-labelledby="quick-links-h">
+    <h2 id="quick-links-h">Everyday routes</h2>
+    <ul class="link-list">
+      {
+        quickLinks.map((link) => (
+          <li>
+            <a href={link.href}>{link.label}</a>
+            <span class="purpose">{link.purpose}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="panel" id="troubleshooting" aria-labelledby="troubleshooting-h">
+    <h2 id="troubleshooting-h">Troubleshooting</h2>
+    <table>
+      <caption>What a state or refusal means and what to do next</caption>
+      <thead>
+        <tr>
+          <th scope="col">You see</th>
+          <th scope="col">What it means and what to do</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          HELP_STATE_NOTES.map((note) => (
+            <tr>
+              <th scope="row">{note.situation}</th>
+              <td>{note.meaning}</td>
+            </tr>
+          ))
+        }
+        <tr>
+          <th scope="row">Work returned for correction</th>
+          <td>Fix the draft and resubmit; the same review path resumes from the returned state.</td>
+        </tr>
+        <tr>
+          <th scope="row">A required source is missing (for example no official inspection result)</th>
+          <td>
+            Fail-closed. Do not invent a limit, criterion or result. Record the blocker and escalate.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="escalation" aria-labelledby="escalation-h">
+    <h2 id="escalation-h">Escalation and handoff</h2>
+    <p class="muted">
+      Escalation is by function, not by a named person. Organizational names are recorded (or left
+      unresolved) in the support ownership register, never invented here.
+    </p>
+    <ul class="handoff">
+      <li><strong>Employee to Supervisor:</strong> blocked work, missing instruction, equipment ineligible, template invalid.</li>
+      <li><strong>Supervisor to QCM:</strong> critical FAIL, recurring failure, unresolved HOLD, major NCR, CAPA escalation.</li>
+      <li><strong>QCM to named system owner:</strong> compliance concern, cross-domain risk, release risk, production decision.</li>
+      <li><strong>Admin to named system owner:</strong> security, authentication, database, migration, backup or outage incident.</li>
+    </ul>
+    <p class="muted">
+      Who acts next after a submit: the review is owned by the <strong>Supervisor</strong> (stage 1),
+      and final approval by the <strong>QCM or the named owner</strong>. Admin is never the approver.
+    </p>
+  </section>
+
+  <section class="panel" id="interruption" aria-labelledby="interruption-h">
+    <h2 id="interruption-h">Service interruption</h2>
+    <ol class="interruption">
+      <li>Do not re-enter controlled data into a second channel; there is no valid offline path.</li>
+      <li>Do not treat a failed read as an empty table — “Not available” is not zero.</li>
+      <li>Do not attempt a release, approval or signature while a dependency outage is shown.</li>
+      <li>Report the incident to the technical owner (Admin); production decisions go to the named owner.</li>
+    </ol>
+  </section>
+
+  <section class="panel muted-panel" aria-labelledby="limits-h">
+    <h2 id="limits-h">What this guide does not claim</h2>
+    <p>
+      This is a derived operational summary. It does not replace the role matrix, permission matrix,
+      state machines or business rules, and a page opening here does not mean an action is allowed.
+      <strong>PASS ≠ RELEASED.</strong>
+    </p>
+  </section>
+</AppLayout>
+
+<script>
+  const printButton = document.querySelector<HTMLButtonElement>('[data-print-guide]');
+  printButton?.addEventListener('click', () => window.print());
+</script>
+
+<style>
+  .page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  h1 {
+    margin: 0.25rem 0 0.4rem;
+  }
+  .lede,
+  .muted,
+  .focus,
+  .purpose {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+  .print-button {
+    min-height: var(--control-height);
+    padding-inline: 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .panel {
+    padding: var(--space-5);
+    margin-bottom: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    max-width: 960px;
+  }
+  .panel h2 {
+    margin-top: 0;
+    font-size: 1.05rem;
+  }
+  .toc ul {
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+  }
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+  }
+  .role-card {
+    padding: var(--space-4);
+    background: var(--surface-raised);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+  .role-card h3 {
+    margin-top: 0;
+    font-size: 0.95rem;
+  }
+  .role-card ol {
+    margin: 0 0 var(--space-3);
+    padding-inline-start: 1.1rem;
+    font-size: 0.85rem;
+    display: grid;
+    gap: 0.3rem;
+  }
+  .escalate {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--color-surface-selected);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .link-list,
+  .handoff,
+  .interruption {
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    display: grid;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+  }
+  .link-list {
+    list-style: none;
+    padding-inline-start: 0;
+  }
+  .link-list li {
+    display: grid;
+    gap: 0.15rem;
+    padding-block: 0.4rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+  .link-list li:last-child {
+    border-bottom: 0;
+  }
+  .purpose {
+    display: block;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  caption {
+    text-align: start;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding-bottom: var(--space-2);
+  }
+  th,
+  td {
+    text-align: start;
+    vertical-align: top;
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+  tbody th {
+    font-weight: 600;
+    inline-size: 38%;
+  }
+  .muted-panel p {
+    margin: 0;
+  }
+  @media (max-width: 640px) {
+    tbody th {
+      inline-size: auto;
+    }
+    th,
+    td {
+      display: block;
+      border-bottom: 0;
+    }
+    tbody tr {
+      display: block;
+      border-bottom: 1px solid var(--color-border-subtle);
+      padding-block: var(--space-2);
+    }
+  }
+  @media print {
+    :global(.app-sidebar),
+    :global(.app-topbar),
+    .toc,
+    .print-button {
+      display: none !important;
+    }
+    :global(.app-main) {
+      width: 100% !important;
+      padding-block: 0 !important;
+    }
+    .panel {
+      break-inside: avoid;
+      border-color: #999;
+      max-width: none;
+    }
+    a[href]::after {
+      content: ' (' attr(href) ')';
+      font-size: 0.75em;
+      color: #444;
+    }
+  }
+</style>

@@ -2,9 +2,13 @@
 
 **Freeze:** 2026-09-18 — `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7`  
 **Source:** `src/shared/routing/routes.ts` and `src/ui/navigation/navigation.ts`  
-**Counts:** 85 registered routes; 83 physical Astro page files; 77 required
+**Counts:** 86 registered routes; 84 physical Astro page files; 78 required
 registered page files; 2 deferred auth route declarations; 6 conditional
-creation routes; 32 navigation destinations.
+creation routes; 33 navigation destinations.
+
+> 2026-09-20 (QC-100-FINAL-020): added `RT-HELP-001` `/help`
+> (`src/pages/help/index.astro`) — the in-app role operating & support guide,
+> `AUTHENTICATED` visibility with a printable surface.
 
 ## Decision rules
 
@@ -107,6 +111,7 @@ creation routes; 32 navigation destinations.
 | RT-SHARED-002 | `/notifications` | `src/pages/notifications.astro` | identity | AUTHENTICATED | System / Notifications | recipient-scoped notifications | notification service; not business completion | NO | R/D/E |
 | RT-SHARED-003 | `/account` | `src/pages/account.astro` | identity | AUTHENTICATED | System / Account | own account projection | account use cases + optimistic version | NO | R/D/E |
 | RT-SHARED-004 | `/audit` | `src/pages/audit.astro` | audit | AUTHENTICATED | System / Audit | mapped/sanitized audit read model | no raw payload mutation | NO | R/D/E |
+| RT-HELP-001 | `/help` | `src/pages/help/index.astro` | shared | AUTHENTICATED | System / Operating guides | derived role/support guide; route IDs resolved from the registry | none (read-only guidance) | NO | R/E |
 | RT-QUAR-003 | `/quarantine/admin/[templateId]` | `src/pages/quarantine/admin/[templateId].astro` | quarantine | AUTHENTICATED | — | template/version snapshot | P-06 lifecycle + signature/audit | NO | R/D/E |
 | RT-DOC-007 | `/documents/[documentId]/versions/[versionId]/edit` | `src/pages/documents/[documentId]/versions/[versionId]/edit.astro` | documents | AUTHENTICATED | — | editable draft/context only | revision/change-request use case | NO | R/D/E |
 | RT-REL-001 | `/governance/releases/[releaseId]` | `src/pages/governance/releases/[releaseId].astro` | release-governance | AUTHENTICATED | — | read-only server-derived release evidence | approval authority + evidence gate/SoD | NO | R/D/E |
@@ -115,6 +120,6 @@ creation routes; 32 navigation destinations.
 
 The physical page count includes `404.astro` and `500.astro`, which are error
 surfaces and do not have canonical browser-route declarations. The registry has
-85 entries: 77 required files, 6 conditional files, and 2 deferred auth
+86 entries: 78 required files, 6 conditional files, and 2 deferred auth
 declarations. The architecture check is the executable authority for registry
 coverage and currently passes.
