@@ -21,6 +21,10 @@ const search = params.get('q')?.slice(0, 200) || undefined;
 const requestedDue = params.get('due');
 const due = requestedDue === 'overdue' || requestedDue === 'today' ? requestedDue : undefined;
 const ownership = params.get('assignee') === 'mine' ? ('mine' as const) : undefined;
+// "Still open" is the same predicate the count uses, so "everything assigned to
+// me" is one link instead of one per state and an assigned task with no due
+// date is never invisible.
+const openOnly = params.get('open') === '1';
 // The register shows a human name, never a raw user identifier.
 let assigneeNames = new Map<string, string>();
 try {
@@ -49,6 +53,7 @@ try {
       state,
       search,
       due,
+      open: openOnly || undefined,
       assigneeId: ownership === 'mine' ? actor.id : undefined,
     },
     page,
@@ -65,8 +70,9 @@ const chipHref = (drop: string) => {
   return `/tasks${query ? `?${query}` : ''}`;
 };
 const appliedFilters = [
-  state && { label: 'State', value: state, href: chipHref('state') },
+  state && { label: 'State', value: stateLabel(state), href: chipHref('state') },
   due && { label: 'Due', value: dueLabels[due], href: chipHref('due') },
+  openOnly && { label: 'Show', value: 'Open work only', href: chipHref('open') },
   ownership && { label: 'Assignee', value: 'Only mine', href: chipHref('assignee') },
   search && { label: 'Search', value: search, href: chipHref('q') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
@@ -79,9 +85,10 @@ const canCreate = actor.permissions.some(
   <section class="page-head"><div><p class="eyebrow">Work queue</p><h1>Tasks</h1><p class="lede">View operational work. Actions remain limited to your explicit permissions.</p></div>{canCreate && <a class="button" href="/tasks/new">Create task</a>}</section>
   <form class="filters" method="get">
     <label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label>
-    <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{value}</option>)}</select></label>
+    <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
     <label for="due">Due<select id="due" name="due"><option value="">Any due date</option><option value="overdue" selected={due === 'overdue'}>Overdue</option><option value="today" selected={due === 'today'}>Due today</option></select></label>
     <label for="assignee">Assignee<select id="assignee" name="assignee"><option value="">All assignees</option><option value="mine" selected={ownership === 'mine'}>Only mine</option></select></label>
+    <label for="open">Show<select id="open" name="open"><option value="">All tasks</option><option value="1" selected={openOnly}>Open work only</option></select></label>
     <button type="submit">Filter</button>
   </form>
   <AppliedFilters

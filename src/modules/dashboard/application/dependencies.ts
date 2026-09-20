@@ -14,26 +14,51 @@ import { parsePageInput } from '../../../shared/pagination/page.js';
 import { taskReadDependencies } from '../../tasks/application/dependencies.js';
 import { PostgresDashboardQuery } from '../infrastructure/postgres-dashboard-query.js';
 import { GetDashboardUseCase } from './get-dashboard.js';
+import { GetMyWorkUseCase } from './get-my-work.js';
+import { readMetricSource } from './dashboard-attention.js';
+import { createMyWorkQuery } from './my-work-queue.js';
 import { projectReceivingTrend, seriesNotSupplied, seriesUnavailable } from './dashboard-series.js';
 import {
   DASHBOARD_COVERAGE,
   dashboardFlowSource,
   dashboardMetricSources,
+  type DashboardSourceDependencies,
 } from './dashboard-sources.js';
 
+/**
+ * The owning module's read use cases, composed once.
+ *
+ * Both surfaces below (the dashboard and "My work today") read through this
+ * composition, so they cannot diverge into two definitions of the same count
+ * and neither writes SQL over another domain's tables.
+ */
+function composedSources(): DashboardSourceDependencies {
+  return {
+    approvals: { execute: (input) => approvalsReadDependencies().list.execute(input) },
+    notifications: {
+      listOwn: (actor, unreadOnly) => notificationDependencies().listOwn.listOwn(actor, unreadOnly),
+    },
+    receiving: { execute: (input) => receivingReadDependencies().list.execute(input) },
+    inspections: { execute: (input) => inspectionReadDependencies().list.execute(input) },
+    // The task register is bounded, so both surfaces sample the same first page
+    // the register page opens; the count stays the register's own `total`
+    // (see readTaskSource), never a sampled length.
+    tasks: {
+      execute: (input) =>
+        taskReadDependencies().list.execute({
+          ...input,
+          page: parsePageInput({ pageSize: DEFAULT_PAGE_SIZE }),
+        }),
+    },
+    calibrations: { execute: (input) => assetsReadDependencies().calibration.list.execute(input) },
+    // The laboratory register's bounded workload read: one count plus one bounded
+    // page, so the laboratory counter and its queue come from a single read.
+    laboratory: { execute: (input) => laboratoryReadDependencies().workload.execute(input) },
+  };
+}
+
 export function dashboardDependencies() {
-  // Every source below is the owning module's own read use case, so this
-  // surface never writes SQL over another domain's tables and a displayed
-  // count is always the register's own row count.
-  const approvals = approvalsReadDependencies().list;
-  const notifications = notificationDependencies().listOwn;
-  const receiving = receivingReadDependencies().list;
-  const inspections = inspectionReadDependencies().list;
-  const tasks = taskReadDependencies().list;
-  const calibrations = assetsReadDependencies().calibration.list;
-  // The laboratory register's bounded workload read: one count plus one bounded
-  // page, so the laboratory counter and its queue come from a single read.
-  const laboratory = laboratoryReadDependencies().workload;
+  const sources = composedSources();
   const overview = quarantineReadDependencies().overview;
   // The only approved dashboard time series is the Quarantine receiving trend.
   // It is narrowed to records this actor created so the chart declares the same
@@ -44,26 +69,7 @@ export function dashboardDependencies() {
     get: new GetDashboardUseCase(
       new PostgresDashboardQuery(
         getDatabase(),
-        dashboardMetricSources({
-          approvals: { execute: (input) => approvals.execute(input) },
-          notifications: {
-            listOwn: (actor, unreadOnly) => notifications.listOwn(actor, unreadOnly),
-          },
-          receiving: { execute: (input) => receiving.execute(input) },
-          inspections: { execute: (input) => inspections.execute(input) },
-          // The task register is bounded, so the dashboard samples the same
-          // first page the register page opens; the count stays the register's
-          // own `total` (see readTaskSource), never a sampled length.
-          tasks: {
-            execute: (input) =>
-              tasks.execute({
-                ...input,
-                page: parsePageInput({ pageSize: DEFAULT_PAGE_SIZE }),
-              }),
-          },
-          calibrations: { execute: (input) => calibrations.execute(input) },
-          laboratory: { execute: (input) => laboratory.execute(input) },
-        }),
+        dashboardMetricSources(sources),
         dashboardFlowSource({ execute: (input) => overview.execute(input) }),
         {
           get: async (actor) => {
@@ -82,6 +88,25 @@ export function dashboardDependencies() {
         },
         DASHBOARD_COVERAGE,
       ),
+    ),
+  };
+}
+
+/**
+ * The "My work today" workspace.
+ *
+ * It reads exactly the same register sources as the dashboard and adds no SQL
+ * of its own: the queue is a bounded, deduplicated projection of registers that
+ * already exist, so nothing here can become a second definition of a count.
+ */
+export function myWorkDependencies() {
+  const sources = dashboardMetricSources(composedSources());
+  return {
+    get: new GetMyWorkUseCase(
+      createMyWorkQuery(sources, async (source, actor) => {
+        const result = await readMetricSource(source, actor);
+        return { value: result.metric.value, rows: result.rows };
+      }),
     ),
   };
 }

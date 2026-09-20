@@ -1,4 +1,5 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import type { MyWorkCategory } from './my-work.js';
 
 export type DashboardMetricTone = 'neutral' | 'warning' | 'danger' | 'success';
 
@@ -92,6 +93,12 @@ export interface DashboardAttentionRow {
   severity?: DashboardAttention['severity'];
   /** Row-level override when the row itself carries the human reason. */
   reason?: string;
+  /**
+   * Row-level override when the record itself names the role that owns the next
+   * step (an approval work item carries its role requirement). Declared here, in
+   * the register's own vocabulary, rather than assumed per source.
+   */
+  responsibleRole?: string;
 }
 
 export interface DashboardAttention {
@@ -132,6 +139,24 @@ export interface DashboardMetricSource {
   metric: DashboardMetricDefinition;
   /** Projecting the rows into the attention queue is optional per source. */
   attention?: { severity: DashboardAttention['severity']; reason: string };
+  /**
+   * Membership in the "My work today" queue (QC-100-FINAL-022).
+   *
+   * A source without it is a dashboard counter only: it is never presented as
+   * the reader's personal work. `category` places the source's rows in exactly
+   * one approved group, `nextAction` says what the reader does next, and
+   * `responsibleRole` names the role that owns that step when the row itself
+   * does not record one.
+   */
+  queue?: {
+    category: MyWorkCategory;
+    /** Why the row is in the queue when the row does not carry its own reason. */
+    reason: string;
+    /** What the reader does next. Guidance only: the mutation stays server-checked. */
+    nextAction: string;
+    /** The role that owns the next step unless the row records a more precise one. */
+    responsibleRole: string;
+  };
   read(
     actor: ActorContext,
   ): Promise<

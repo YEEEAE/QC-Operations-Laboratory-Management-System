@@ -20,6 +20,7 @@ const routeTuples = [
     'deferred',
   ],
   ['RT-DASH-001', '/dashboard', 'src/pages/dashboard/index.astro', 'permission-bound', 'required'],
+  ['RT-WORK-001', '/work', 'src/pages/work/index.astro', 'authenticated', 'required'],
   ['RT-TASK-001', '/tasks', 'src/pages/tasks/index.astro', 'permission-bound', 'required'],
   ['RT-TASK-002', '/tasks/new', 'src/pages/tasks/new.astro', 'permission-bound', 'required'],
   [
@@ -501,6 +502,7 @@ const routeTuples = [
 
 const DOMAIN_BY_PREFIX: Record<string, string> = {
   admin: 'administration',
+  work: 'dashboard',
   'ai-advisory': 'ai-advisory',
   approvals: 'approvals',
   assets: 'assets',

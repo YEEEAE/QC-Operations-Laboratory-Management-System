@@ -17,6 +17,12 @@ export interface TaskListFilter {
    * not outstanding work whatever its due date says.
    */
   due?: 'overdue' | 'today';
+  /**
+   * Outstanding work only. `true` excludes COMPLETED and CANCELLED, so a queue
+   * can ask "everything assigned to me that is still open" with one filter
+   * instead of one link per state.
+   */
+  open?: boolean;
 }
 export interface TaskListPage {
   items: readonly Task[];

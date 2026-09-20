@@ -38,7 +38,10 @@ const declaredNavigationGroups: Array<
   {
     id: 'work',
     label: 'Work',
-    items: [{ id: 'tasks', label: 'Tasks', href: '/tasks', icon: 'tasks' }],
+    items: [
+      { id: 'my-work', label: 'My work today', href: '/work', icon: 'dashboard' },
+      { id: 'tasks', label: 'Tasks', href: '/tasks', icon: 'tasks' },
+    ],
   },
   {
     id: 'quality',
@@ -300,6 +303,7 @@ export function visibleNavigation(actor: ActorContext | undefined) {
 
 export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?: string }> {
   const sectionLabels: Record<string, { label: string; href?: string }> = {
+    work: { label: 'Work', href: '/tasks' },
     quality: { label: 'Quality', href: '/quality' },
     quarantine: { label: 'Quarantine', href: '/quarantine' },
     'reject-reports': { label: 'Reject Reports', href: '/reject-reports' },

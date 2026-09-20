@@ -25,6 +25,15 @@ const SCOPE_KIND_LABELS: Readonly<Record<string, string>> = {
   TEAM: 'One team',
 };
 
+/**
+ * Human label for one recorded role code. Used where a register records a role
+ * requirement (for example an approval work item) and the reader needs the same
+ * word the rest of the product uses for that role, not the raw code.
+ */
+export function roleLabel(role: string): string {
+  return ROLE_LABELS[role] ?? role;
+}
+
 export function actorRoleLabel(actor?: ActorContext): string {
   if (!actor) return 'Signed in';
   const labels = actor.roles.map((role) => ROLE_LABELS[role] ?? role);

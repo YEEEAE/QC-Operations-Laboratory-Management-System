@@ -197,6 +197,10 @@ export class PostgresTaskRepository implements TaskRepository {
             : q.where('due_at', '>=', start).where('due_at', '<', end);
         q = q.where('state', 'not in', CLOSED_TASK_STATES);
       }
+      // Outstanding work is one predicate, applied in the same place the due
+      // windows are, so "everything assigned to me that is still open" is one
+      // register link and not one link per state.
+      if (filter?.open) q = q.where('state', 'not in', CLOSED_TASK_STATES);
       return q;
     };
     const countRow = await applyFilter(base(), input.filter)

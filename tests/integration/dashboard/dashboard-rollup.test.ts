@@ -221,6 +221,10 @@ async function rowsForHref(href: string, actor: ActorContext): Promise<number> {
       const filter = {
         assigneeId: params.get('assignee') === 'mine' ? actor.id : undefined,
         due: (params.get('due') ?? undefined) as 'overdue' | 'today' | undefined,
+        // QC-100-FINAL-022: the register's own single-state and still-open
+        // filters, so "assigned to me" and "on hold" reproduce exactly too.
+        state: (params.get('state') ?? undefined) as never,
+        open: params.get('open') === '1' || undefined,
       };
       let seen = 0;
       let total = Number.POSITIVE_INFINITY;
@@ -361,6 +365,8 @@ describe('dashboard command center', () => {
       'returned-inspections',
       'tasks-overdue',
       'tasks-due-today',
+      'tasks-assigned',
+      'tasks-on-hold',
       'calibrations-overdue',
       'lab-tests-returned',
     ]);

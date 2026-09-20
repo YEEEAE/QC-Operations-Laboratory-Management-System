@@ -1,0 +1,155 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import StatusBadge from '../../ui/components/StatusBadge.astro';
+import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
+import { myWorkDependencies } from '../../modules/dashboard/application/dependencies.js';
+import { AppError } from '../../shared/errors/app-error.js';
+import { formatDateTime } from '../../shared/copy/format.js';
+import { actorRoleLabel } from '../../shared/authorization/scope-description.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fwork');
+// Nothing is rendered until the server confirms the queue: a failed read
+// withholds the whole workspace instead of drawing an empty "all clear", and an
+// authorization refusal is a different fact from a provider outage.
+let queue: Awaited<ReturnType<ReturnType<typeof myWorkDependencies>['get']['execute']>> | undefined;
+let providerUnavailable = false;
+try {
+  queue = await myWorkDependencies().get.execute(actor);
+} catch (error) {
+  providerUnavailable = true;
+  if (error instanceof AppError && error.category !== 'AUTHORIZATION') queue = undefined;
+}
+const groups = queue?.groups ?? [];
+const unresolved = queue?.unresolvedSources ?? [];
+---
+<AppLayout title="My work today · QC Operations" locale="en" direction="ltr" scope={queue?.scopeLabel}>
+  <section class="page-head">
+    <div>
+      <p class="eyebrow">YOUR QUEUE</p>
+      <h1>My work today</h1>
+      <p class="lede">Work the registers record as yours, grouped by the question you are asking: what is assigned to me, what is due today, what is past due, and what is blocked. Every group names the register it was read from, the reason the record is waiting, the next action and the role that owns it. Opening a record changes nothing — the server still decides whether you may act.</p>
+    </div>
+    {queue && <p class="snapshot"><time datetime={queue.generatedAt.toISOString()}>Server snapshot · {formatDateTime(queue.generatedAt)}</time><span>All windows in {queue.timezone}</span><a href="/work">Refresh</a></p>}
+  </section>
+
+  <section class="identity" aria-label="Your authenticated identity">
+    <p><span>Signed in as</span> <strong>{actor.loginIdentity ?? 'Your account'}</strong></p>
+    <p><span>Role</span> <strong>{actorRoleLabel(actor)}</strong></p>
+    <p><span>Scope</span> <strong>{queue?.scopeLabel ?? 'Not confirmed'}</strong></p>
+  </section>
+
+  {providerUnavailable && <ProviderUnavailableState title="Your work queue is unavailable" description="A register did not return a confirmed read, so every group is withheld instead of being shown as empty or as zero." retryHref="/work" />}
+
+  {!providerUnavailable && queue && (
+    <>
+      <p class="explainer">A record can belong to more than one group — one task can be both assigned to you and past its due date — so a group count is that group's own question, not a share of a total. Each record is listed once, under its most urgent group.</p>
+      {groups.map((group) => (
+        <section class="panel" aria-labelledby={`group-${group.definition.category}`}>
+          <div class="panel-head">
+            <div>
+              <h2 id={`group-${group.definition.category}`}>{group.definition.label}</h2>
+              <p class="membership">{group.definition.membership}</p>
+            </div>
+            <p class="group-count">
+              {group.count === null ? <span class="no-count">No total for your account</span> : <><strong>{group.count}</strong><span>record{group.count === 1 ? '' : 's'}</span></>}
+            </p>
+          </div>
+          <p class="state-message" role="status">{group.message}</p>
+          <dl class="definition">
+            <div><dt>Ownership</dt><dd>{group.definition.ownership}</dd></div>
+            <div><dt>Actor scope</dt><dd>{group.definition.actorScope}</dd></div>
+            <div><dt>Clock</dt><dd>{group.definition.timezone}</dd></div>
+            <div><dt>Source timestamp</dt><dd>{group.definition.sourceTimestamp}</dd></div>
+            <div><dt>Predicate</dt><dd>{group.definition.predicate}</dd></div>
+          </dl>
+          {group.registerLinks.length > 0 && (
+            <p class="links">
+              <span>Registers behind this group:</span>
+              {group.registerLinks.map((link) => <a href={link.href}>{link.label} ({link.count})</a>)}
+            </p>
+          )}
+          {group.items.length > 0 ? (
+            <ul class="queue">
+              {group.items.map((item) => (
+                <li>
+                  <a class="item" href={item.href}>
+                    <span class="item-main">
+                      <strong>{item.title}</strong>
+                      <small>{item.reason}</small>
+                    </span>
+                    <span class="item-meta">
+                      <small class="age">{item.ageLabel} · {item.state}</small>
+                      <small>Next: {item.nextAction}</small>
+                      <small>Owner: {item.responsibleRole}</small>
+                      <small class="source">From: {item.sourceLabel}</small>
+                    </span>
+                    <StatusBadge status={item.severity} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="empty" role="status">{group.state === 'AVAILABLE' && group.count === 0 ? 'Nothing in this group right now.' : 'No record in this group is listed for your account — the group total above is still the register’s own count.'}</p>
+          )}
+        </section>
+      ))}
+
+      <section class="panel unresolved" aria-labelledby="unresolved-title">
+        <div class="panel-head"><div><h2 id="unresolved-title">What this queue cannot answer yet</h2><p class="membership">Each entry names the real missing piece and who owns it.</p></div></div>
+        <ul>
+          {unresolved.map((source) => (
+            <li>
+              <strong>{source.label}</strong>
+              <span>{source.reason}</span>
+              <small>Owner: {source.owner}</small>
+            </li>
+          ))}
+        </ul>
+        <p class="empty">Missing evidence is never converted into completion: a group with no source says so rather than showing a zero.</p>
+      </section>
+
+      <section class="panel note"><strong>PASS and Released are separate</strong><p>A scientific PASS is an inspection result, not a release decision. A receiving item on HOLD cannot be released by any of these links.</p></section>
+    </>
+  )}
+</AppLayout>
+<style>
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}
+  .page-head h1{margin:.2rem 0 .4rem;font-size:clamp(1.7rem,3vw,2.3rem)}
+  .eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.1em;font-weight:700}
+  .lede,.explainer,.membership,.state-message,.empty{color:var(--text-muted);font-size:var(--font-size-sm)}
+  .snapshot{display:grid;gap:.25rem;justify-items:end;text-align:end;color:var(--text-muted);font-size:var(--font-size-xs)}
+  .snapshot a{font-size:var(--font-size-xs);font-weight:600}
+  .identity{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-bottom:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .identity p{margin:0;font-size:var(--font-size-xs);color:var(--text-muted)}
+  .identity span{display:block;font-size:var(--font-size-xs)}
+  .explainer{margin:0 0 var(--space-4)}
+  .panel{margin-bottom:var(--space-5);padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .panel-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}
+  .panel h2{margin:0;font-size:1rem}
+  .membership{margin:.35rem 0 0}
+  .group-count{display:flex;align-items:baseline;gap:.35rem;margin:0;color:var(--text-muted);font-size:var(--font-size-xs);white-space:nowrap}
+  .group-count strong{color:var(--color-accent-primary-hover);font-size:24px;font-variant-numeric:tabular-nums}
+  .no-count{color:var(--status-warning);font-weight:700}
+  .state-message{margin:var(--space-3) 0 0}
+  .definition{display:grid;gap:2px;margin:var(--space-3) 0 0;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.45}
+  .definition div{display:grid;grid-template-columns:auto 1fr;gap:2px var(--space-2)}
+  .definition dt{color:var(--text-secondary);font-weight:700}
+  .definition dd{margin:0;min-width:0;overflow-wrap:anywhere}
+  .links{display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:center;margin:var(--space-3) 0 0;font-size:var(--font-size-xs);color:var(--text-muted)}
+  .links a{color:var(--color-accent-primary-hover)}
+  .queue{list-style:none;margin:var(--space-4) 0 0;padding:0}
+  .queue li{border-block-start:1px solid var(--color-border-subtle)}
+  .item{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto;gap:var(--space-4);align-items:start;padding:var(--space-3) 0;color:inherit;text-decoration:none;min-block-size:44px}
+  .item-main strong,.item-main small,.item-meta small{display:block}
+  .item-main small,.item-meta small{color:var(--text-muted);font-size:var(--font-size-xs);margin-top:4px}
+  .item-meta .age{color:var(--text-secondary);font-weight:600}
+  .item-meta .source{color:var(--text-secondary)}
+  .unresolved ul{list-style:none;margin:var(--space-4) 0 0;padding:0}
+  .unresolved li{display:grid;gap:4px;padding:var(--space-3) 0;border-block-start:1px solid var(--color-border-subtle);font-size:var(--font-size-sm);color:var(--text-secondary)}
+  .unresolved li small{color:var(--text-muted);font-size:var(--font-size-xs)}
+  .unresolved li.denied strong{color:var(--status-warning)}
+  .note{border-inline-start:3px solid var(--status-warning)}
+  .note p{margin:.35rem 0 0}
+  @media(max-width:760px){.page-head,.panel-head{display:grid}.snapshot{justify-items:start;text-align:start}.item{grid-template-columns:1fr}}
+</style>

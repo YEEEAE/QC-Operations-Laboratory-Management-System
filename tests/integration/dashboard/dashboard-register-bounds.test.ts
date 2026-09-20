@@ -225,7 +225,9 @@ describe('dashboard register query bounds', () => {
   it('keeps the whole dashboard snapshot inside a bounded, constant query count', async () => {
     const first = countingDatabase();
     const model = await dashboardOver(first.db).get(mine());
-    expect(model.metrics).toHaveLength(8);
+    // QC-100-FINAL-022 added the still-open "assigned to me" counter and the
+    // recorded "on hold" counter, so the shared registry grew from 8 to 10.
+    expect(model.metrics).toHaveLength(10);
     const baseline = first.statements.length;
     expect(baseline).toBeGreaterThan(0);
     expect(baseline).toBeLessThanOrEqual(DASHBOARD_STATEMENT_CEILING);

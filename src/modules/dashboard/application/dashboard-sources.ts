@@ -1,6 +1,7 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import { DEFAULT_PAGE_SIZE } from '../../../config/constants.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { roleLabel } from '../../../shared/authorization/scope-description.js';
 import { notificationDestination } from '../../../shared/notifications/notification-destination.js';
 import type { QuarantineOverview } from '../../quarantine/application/get-quarantine-overview.js';
 import { projectQuarantineFlow, quarantineFlowNotAuthorized } from './dashboard-flow.js';
@@ -23,7 +24,16 @@ export interface DashboardApprovalReader {
   execute(input: { actor: ActorContext }): Promise<
     readonly {
       approvalCase: { id: string; subjectType: string };
-      workItem: { state: string; assignedAt?: Date };
+      workItem: {
+        state: string;
+        assignedAt?: Date;
+        /**
+         * The role requirement the approval register records for this work
+         * item. It names the responsible role in the register's own words, so
+         * the queue never guesses an approver role.
+         */
+        assignedRoleRequirement?: string;
+      };
       subject: { reviewContext: Readonly<Record<string, unknown>> };
     }[]
   >;
@@ -67,10 +77,19 @@ export interface DashboardInspectionReader {
   }): Promise<readonly { id: string; inspectionNo: string; state: string; updatedAt: Date }[]>;
 }
 
+/** The tasks register's own state vocabulary, repeated only as a type alias. */
+type TaskStateFilter = 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+
 export interface DashboardTaskReader {
   execute(input: {
     actor: ActorContext;
-    filter?: { assigneeId?: string; due?: 'overdue' | 'today' };
+    filter?: {
+      assigneeId?: string;
+      due?: 'overdue' | 'today';
+      /** The register's own task-state vocabulary, so no new vocabulary is declared here. */
+      state?: TaskStateFilter;
+      open?: boolean;
+    };
   }): Promise<{
     items: readonly { id: string; taskNo: string; state: string; dueAt?: Date }[];
     total: number;
@@ -159,14 +178,22 @@ export const LABORATORY_ATTENTION_PAGE = DEFAULT_PAGE_SIZE;
  * bounded first page for the attention queue — the same first page the
  * register page opens. Parity is count↔register, never count↔sampled-page.
  */
+/**
+ * One task-metric read over the tasks register, always narrowed to the reader.
+ *
+ * Every task filter the queue declares is one the register itself supports, so
+ * the number on screen and the register the link opens are the same set — the
+ * due windows, the single state, and "still open" all resolve in the register's
+ * own SQL, not here.
+ */
 async function readTaskSource(
   dependencies: DashboardSourceDependencies,
   actor: ActorContext,
-  due: 'overdue' | 'today',
+  filter: { due?: 'overdue' | 'today'; state?: TaskStateFilter; open?: boolean },
 ): Promise<{ total: number; rows: readonly DashboardAttentionRow[] }> {
   const page = await dependencies.tasks.execute({
     actor,
-    filter: { assigneeId: actor.id, due },
+    filter: { assigneeId: actor.id, ...filter },
   });
   return {
     total: page.total,
@@ -228,6 +255,12 @@ export function dashboardMetricSources(
         tone: 'warning',
       },
       attention: { severity: 'WARNING', reason: 'Approval is waiting for your decision' },
+      queue: {
+        category: 'ASSIGNED',
+        reason: 'Approval is waiting for your decision',
+        nextAction: 'Open the approval case and record your decision there.',
+        responsibleRole: 'The approval authority recorded on the work item',
+      },
       read: async (actor) => {
         const records = await dependencies.approvals.execute({ actor });
         return records.map((record): DashboardAttentionRow => ({
@@ -237,6 +270,11 @@ export function dashboardMetricSources(
           href: `/approvals/${record.approvalCase.id}`,
           anchorAt: record.workItem.assignedAt,
           anchor: 'waiting',
+          // The role requirement is recorded by the approval register, so the
+          // queue names the responsible role it can read instead of guessing.
+          responsibleRole: record.workItem.assignedRoleRequirement
+            ? roleLabel(record.workItem.assignedRoleRequirement)
+            : undefined,
         }));
       },
     },
@@ -304,6 +342,13 @@ export function dashboardMetricSources(
         severity: 'CRITICAL',
         reason: 'Receiving item is on HOLD and cannot be released',
       },
+      queue: {
+        category: 'BLOCKED',
+        reason: 'Receiving item is on HOLD and cannot be released',
+        nextAction:
+          'Open the receiving item and follow the controlled decision. A scientific PASS does not release it.',
+        responsibleRole: 'The account that recorded the item, with the QC release authority',
+      },
       read: async (actor) => {
         const rows = await dependencies.receiving.execute({
           actor,
@@ -345,6 +390,12 @@ export function dashboardMetricSources(
         severity: 'WARNING',
         reason: 'Inspection report was returned to you for rework',
       },
+      queue: {
+        category: 'ASSIGNED',
+        reason: 'Inspection report was returned to you for rework',
+        nextAction: 'Open the returned report and resume it as its author.',
+        responsibleRole: 'You, as the report author',
+      },
       read: async (actor) => {
         const rows = await dependencies.inspections.execute({
           actor,
@@ -384,7 +435,13 @@ export function dashboardMetricSources(
         tone: 'danger',
       },
       attention: { severity: 'CRITICAL', reason: 'Task is past its due date' },
-      read: (actor) => readTaskSource(dependencies, actor, 'overdue'),
+      queue: {
+        category: 'OVERDUE',
+        reason: 'Task is past its due date',
+        nextAction: 'Open the task and complete it, or move its due date with a reason.',
+        responsibleRole: 'You, as the named assignee',
+      },
+      read: (actor) => readTaskSource(dependencies, actor, { due: 'overdue' }),
     },
     {
       metric: {
@@ -409,7 +466,78 @@ export function dashboardMetricSources(
         tone: 'warning',
       },
       attention: { severity: 'WARNING', reason: 'Task is due today' },
-      read: (actor) => readTaskSource(dependencies, actor, 'today'),
+      queue: {
+        category: 'DUE_TODAY',
+        reason: 'Task is due today',
+        nextAction: 'Open the task and complete it, or move its due date with a reason.',
+        responsibleRole: 'You, as the named assignee',
+      },
+      read: (actor) => readTaskSource(dependencies, actor, { due: 'today' }),
+    },
+    {
+      metric: {
+        key: 'tasks-assigned',
+        label: 'Tasks assigned to me',
+        unit: 'records',
+        denominator: 'Every task assigned to you',
+        grain: 'One task',
+        timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
+        source: 'Tasks register',
+        numerator:
+          'Tasks whose current assignee is you and whose state is not COMPLETED or CANCELLED',
+        state: 'current assignee = you AND state not COMPLETED/CANCELLED',
+        actorScope: 'Assigned to you',
+        definition:
+          'Everything currently assigned to you that is still open, whether or not it carries a due date. This is the same filter the tasks register opens, so an assigned task with no due date is never invisible.',
+        drilldown: '?assignee=mine&open=1 on the tasks register',
+        href: '/tasks?assignee=mine&open=1',
+        drilldownLabel: 'Open everything assigned to me',
+        tone: 'neutral',
+      },
+      attention: { severity: 'INFO', reason: 'Task is assigned to you and still open' },
+      queue: {
+        category: 'ASSIGNED',
+        reason: 'Task is assigned to you and still open',
+        nextAction: 'Open the task and start, complete or hand it on.',
+        responsibleRole: 'You, as the named assignee',
+      },
+      read: (actor) => readTaskSource(dependencies, actor, { open: true }),
+    },
+    {
+      metric: {
+        key: 'tasks-on-hold',
+        label: 'Tasks on hold',
+        unit: 'records',
+        denominator: 'Every task assigned to you',
+        grain: 'One task',
+        timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
+        source: 'Tasks register',
+        numerator: 'Tasks assigned to you whose recorded state is ON_HOLD',
+        state: 'state = ON_HOLD',
+        actorScope: 'Assigned to you',
+        definition:
+          'Work you have deliberately held. The state machine requires a recorded reason both to hold a task and to resume it, so a held task is a recorded blocking fact rather than an inferred one.',
+        drilldown: '?assignee=mine&state=ON_HOLD on the tasks register',
+        href: '/tasks?assignee=mine&state=ON_HOLD',
+        drilldownLabel: 'Open my held tasks',
+        tone: 'warning',
+      },
+      attention: {
+        severity: 'WARNING',
+        reason: 'Task is on hold and needs a recorded reason to resume',
+      },
+      queue: {
+        category: 'BLOCKED',
+        reason: 'Task is on hold and needs a recorded reason to resume',
+        nextAction:
+          'Open the task and resume it, or cancel it. Resuming requires the reason the transition records.',
+        responsibleRole: 'You, as the named assignee',
+      },
+      read: (actor) => readTaskSource(dependencies, actor, { state: 'ON_HOLD' }),
     },
     {
       metric: {
@@ -473,6 +601,12 @@ export function dashboardMetricSources(
         tone: 'warning',
       },
       attention: { severity: 'WARNING', reason: 'Laboratory test was returned to you for rework' },
+      queue: {
+        category: 'ASSIGNED',
+        reason: 'Laboratory test was returned to you for rework',
+        nextAction: 'Open the returned test and resume it as its author.',
+        responsibleRole: 'You, as the test author',
+      },
       read: (actor) => readLaboratorySource(dependencies, actor),
     },
   ];
@@ -530,9 +664,10 @@ export const DASHBOARD_COVERAGE: readonly DashboardCoverageItem[] = [
   },
   {
     key: 'tasks',
-    label: 'Your due and overdue tasks',
+    label: 'Your assigned, due, overdue and held tasks',
     state: 'AVAILABLE',
-    reason: 'Read through the tasks register with the same due-date filter the links apply.',
+    reason:
+      'Read through the tasks register: the same assignee, still-open, due-date and single-state filters the links apply are implemented in the register, so assigned work with no due date is counted rather than invisible.',
   },
   {
     key: 'inspections',
@@ -571,7 +706,7 @@ export const DASHBOARD_COVERAGE: readonly DashboardCoverageItem[] = [
     label: 'Blocked reasons',
     state: 'NOT_SUPPLIED',
     reason:
-      'No register records a blocked reason as a field, so no blocked-reason read model exists. The recorded facts are quarantine HOLD items and fail-closed equipment eligibility, and each is already its own panel or counter with its own stated reason. Owner: 017-B with 011/013 if a source is approved.',
+      'Blocked work is readable (held tasks and HOLD receiving items each have their own counter, and "My work today" groups them as blocked), but no register stores a blocked reason as a field: a task records its reason in the immutable audit trail at the transition. A queue column of blocked reasons therefore cannot be read, and none is inferred. Owner: 013/026 if a reason column is approved.',
   },
   {
     key: 'reject-analytics',
