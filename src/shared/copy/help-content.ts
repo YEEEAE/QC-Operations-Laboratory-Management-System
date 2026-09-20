@@ -251,13 +251,16 @@ export const HELP_GUIDANCE_MATRIX: readonly {
       },
       {
         state: 'RELEASE_PENDING',
-        meaning: 'Approved inspection consequence recorded; release is a separate authorized transition.',
-        nextAction: 'Release authority executes the release; others wait — visibility is not authority.',
+        meaning:
+          'Approved inspection consequence recorded; release is a separate authorized transition.',
+        nextAction:
+          'Release authority executes the release; others wait — visibility is not authority.',
       },
       {
         state: 'PASS result but not released',
         meaning: 'Inspection result and release system state are separate controlled states.',
-        nextAction: 'Release remains a distinct action for the release authority — PASS ≠ RELEASED.',
+        nextAction:
+          'Release remains a distinct action for the release authority — PASS ≠ RELEASED.',
       },
     ],
   },
@@ -278,7 +281,8 @@ export const HELP_GUIDANCE_MATRIX: readonly {
       {
         state: 'PENDING_QCM_APPROVAL',
         meaning: 'Stage 2 of 2 — QCM final approval with binding e-signature and reauthentication.',
-        nextAction: 'QCM (Manager) or the named owner performs the final approval; Admin is denied.',
+        nextAction:
+          'QCM (Manager) or the named owner performs the final approval; Admin is denied.',
       },
       {
         state: 'APPROVED',

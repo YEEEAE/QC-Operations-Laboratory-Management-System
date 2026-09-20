@@ -5,6 +5,7 @@ import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import { inspectionReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
 import { FINAL_RESULTS } from '../../../modules/quarantine/inspection/application/inspection-result-options.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Finspections');
 const states = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'] as const;
@@ -33,6 +34,22 @@ const appliedFilters = [
   ownership && { label: 'Ownership', value: 'Only mine', href: chipHref('ownership') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
 const hasFilters = appliedFilters.length > 0;
+
+// The register names the inspector, never a raw account identifier. Resolution
+// is presentation-only and failure-tolerant.
+let inspectorNames = new Map<string, string>();
+try {
+  inspectorNames = new Map(
+    (await identityAdminReadDependencies().listUsers.execute({ actor })).map((user) => [
+      user.id,
+      user.displayName,
+    ]),
+  );
+} catch {
+  // Presentation-only; fall back to a named-account label below.
+}
+const inspectorLabel = (inspectorId: string | null | undefined) =>
+  inspectorId ? (inspectorNames.get(inspectorId) ?? 'Named account') : 'Not recorded';
 
 let inspections: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['list']['execute']>> = [];
 let providerUnavailable = false;
@@ -99,7 +116,7 @@ try {
           </caption>
           <thead>
             <tr>
-              <th scope="col">Inspection ID</th>
+              <th scope="col">Inspection number</th>
               <th scope="col">Receiving item</th>
               <th scope="col">Inspector</th>
               <th scope="col">Workflow state</th>
@@ -115,7 +132,7 @@ try {
                 <td>
                   {inspection.receiving.receivingNo} · {inspection.receiving.itemCode}
                 </td>
-                <td>{inspection.authorId}</td>
+                <td>{inspectorLabel(inspection.authorId)}</td>
                 <td>
                   <span class="state">{stateLabel(inspection.state)}</span>
                 </td>

@@ -3,6 +3,7 @@ import AppLayout from '../../ui/layouts/AppLayout.astro';
 import ErrorState from '../../ui/components/feedback/ErrorState.astro';
 import { rejectReportReadDependencies } from '../../modules/reject-reports/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
+import { stateLabel } from '../../shared/copy/ux-vocabulary.js';
 import type { RejectReportListFilter } from '../../modules/reject-reports/ports/repository.js';
 
 const actor = Astro.locals.actor;
@@ -199,7 +200,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
                   <td>{slip.fields.lotNo ?? '—'}</td>
                   <td>{slip.fields.rejectedQty} {slip.fields.unit}</td>
                   <td>{slip.department}</td>
-                  <td><span class={`status status-${slip.status.toLowerCase()}`}>{slip.status}</span></td>
+                  <td><span class={`status status-${slip.status.toLowerCase()}`}>{stateLabel(slip.status)}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -225,7 +226,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
                   <td>{record.department}</td>
                   <td>{record.entries.length}</td>
                   <td>{record.entries.reduce((sum, e) => sum + Number(e.rejectQty), 0)}</td>
-                  <td><span class={`status status-${record.status.toLowerCase()}`}>{record.status}</span></td>
+                  <td><span class={`status status-${record.status.toLowerCase()}`}>{stateLabel(record.status)}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -244,7 +245,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
             <a href={report.reportNo.startsWith('RIS') ? `/reject-reports/issue-slips/${report.id}` : `/reject-reports/daily/${report.id}`}>
               {report.reportNo}
             </a>
-            <span>{report.department} · {fmtDate(report.reportDate)} · {report.status}</span>
+            <span>{report.department} · {fmtDate(report.reportDate)} · {stateLabel(report.status)}</span>
           </li>
         ))}
       </ul>

@@ -4,6 +4,10 @@ Applies to all user-facing text in `src/pages/**`, `src/ui/**`, and module-produ
 strings. It governs presentation wording only; it never changes server authorization,
 state machines, SoD, or the audit contract.
 
+> Terminology governance lives in `Documents/COPY-GLOSSARY.md` (regulated terms, the five
+> distinct lifecycle words, and the state-code→label table). Route-level copy surfaces are
+> inventoried in `Documents/COPY-INVENTORY.md`. This guide remains the writing standard.
+
 ## 1. Principles
 
 1. **Operational, not architectural.** Operators read outcomes and next actions, not

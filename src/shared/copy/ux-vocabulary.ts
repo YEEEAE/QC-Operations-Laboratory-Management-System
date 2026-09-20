@@ -80,6 +80,34 @@ export const uxVocabulary = {
       'The action did not complete. Nothing was changed — try again, or return to the record.',
   },
   /**
+   * Human labels for change-request target types and approval workflow types.
+   * Raw codes stay in the server contract; operators read the human label.
+   */
+  targetTypeLabels: {
+    DOCUMENT_VERSION: 'Controlled document version',
+  } as Record<string, string>,
+  /** Human labels for approval workflow types. Unknown codes fall back verbatim. */
+  workflowTypeLabels: {
+    DOCUMENT_VERSION_APPROVAL: 'Controlled document version approval',
+    INSPECTION_APPROVAL: 'Inspection approval',
+    LAB_TEST_APPROVAL: 'Laboratory test approval',
+    CHANGE_REQUEST_APPROVAL: 'Change request approval',
+  } as Record<string, string>,
+  /**
+   * The controlled lifecycle words keep four distinct meanings. Copy never
+   * collapses them: saved is not submitted, review is not approval, approval
+   * is not release, and approval is not application (change requests).
+   */
+  lifecycle: {
+    saved: 'Saved as a draft. Nothing was submitted, reviewed, approved, or released.',
+    submitted: 'Submitted for review. No review, approval, or release has happened yet.',
+    reviewed:
+      'Reviewed. A reviewer examined the record; review alone does not approve or release it.',
+    approved:
+      'Approved. The controlled approval decision was accepted. Approval does not release the item.',
+    released: 'RELEASED. A separate policy-controlled release action was accepted by the server.',
+  },
+  /**
    * Human labels for authorization scope kinds. Raw codes stay in the server
    * contract; operators read the human label first, with the code in parens.
    */
@@ -130,6 +158,23 @@ export const stateLabels: Readonly<Record<string, string>> = {
   REJECTED: 'Rejected',
   RETURNED: 'Returned',
   VOID: 'VOID',
+  // Document lifecycle (controlled documents)
+  IN_REVIEW: 'In review',
+  EFFECTIVE: 'Effective',
+  SUPERSEDED: 'Superseded',
+  // Reject-report lifecycle
+  ISSUED: 'Issued',
+  APPROVAL_TRACKING: 'Awaiting approvals',
+  FINALIZED: 'Finalized',
+  // Change-request lifecycle
+  APPLYING: 'Applying',
+  APPLIED: 'Applied',
+  APPLICATION_FAILED: 'Application failed',
+  CLOSED: 'Closed',
+  // Two-stage approval + result values
+  PENDING_QCM_APPROVAL: 'Pending QCM approval',
+  NOT_DETERMINED: 'Not determined',
+  NOT_RELEASED: 'Not released',
   // Task
   OPEN: 'Open',
   IN_PROGRESS: 'In progress',
@@ -170,6 +215,18 @@ export function stateLabel(code: string | null | undefined): string {
 
 export function releaseStateLabel(released: boolean): string {
   return released ? 'RELEASED' : 'Not released';
+}
+
+/** Human label for a change-request target type; never invents a mapping. */
+export function targetTypeLabel(code: string | null | undefined): string {
+  if (!code) return 'Not supplied';
+  return uxVocabulary.targetTypeLabels[code] ?? code;
+}
+
+/** Human label for an approval workflow type; never invents a mapping. */
+export function workflowTypeLabel(code: string | null | undefined): string {
+  if (!code) return 'Not supplied';
+  return uxVocabulary.workflowTypeLabels[code] ?? code;
 }
 
 /** Audit transition display: never renders “Not set to Not set”. */

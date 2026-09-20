@@ -75,9 +75,9 @@ describe('help route registry integrity', () => {
     for (const state of ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'APPROVED']) {
       expect(inspection!.entries.some((entry) => entry.state === state)).toBe(true);
     }
-    expect(
-      inspection!.entries.some((entry) => entry.nextAction.includes('PASS ≠ RELEASED')),
-    ).toBe(true);
+    expect(inspection!.entries.some((entry) => entry.nextAction.includes('PASS ≠ RELEASED'))).toBe(
+      true,
+    );
   });
 
   it('cites only canonical permission codes', () => {
@@ -134,7 +134,9 @@ describe('printable help surface contract', () => {
     expect(page).toContain('id="guidance-matrix"');
     expect(page).toContain('HELP_GUIDANCE_MATRIX');
     expect(page).toContain('Informational steps');
-    expect(page).toContain('authorized mutations (approve, release, sign) commit only when the server accepts');
+    expect(page).toContain(
+      'authorized mutations (approve, release, sign) commit only when the server accepts',
+    );
     expect(page).toContain('scope="row"');
   });
 
