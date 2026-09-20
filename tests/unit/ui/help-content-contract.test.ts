@@ -7,6 +7,7 @@ import {
   isPermissionCode,
 } from '../../../src/shared/authorization/permissions.js';
 import {
+  HELP_GUIDANCE_MATRIX,
   HELP_PERMISSION_CITATIONS,
   HELP_ROLE_GUIDES,
   HELP_ROUTE_LINKS,
@@ -62,6 +63,23 @@ describe('help route registry integrity', () => {
     expect(unresolved).toEqual([]);
   });
 
+  it('resolves every guidance matrix route and names only known states', () => {
+    const unresolved = HELP_GUIDANCE_MATRIX.filter(
+      (block) => !getRouteById(block.routeId) || block.entries.length === 0,
+    ).map((block) => block.routeId);
+    expect(unresolved).toEqual([]);
+    // Guidance is derived from approved state machines, not invented promises:
+    // every two-stage row must keep the release distinction explicit.
+    const inspection = HELP_GUIDANCE_MATRIX.find((block) => block.routeId === 'RT-INSP-004');
+    expect(inspection).toBeDefined();
+    for (const state of ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'APPROVED']) {
+      expect(inspection!.entries.some((entry) => entry.state === state)).toBe(true);
+    }
+    expect(
+      inspection!.entries.some((entry) => entry.nextAction.includes('PASS ≠ RELEASED')),
+    ).toBe(true);
+  });
+
   it('cites only canonical permission codes', () => {
     const unknown = HELP_PERMISSION_CITATIONS.filter((code) => !isPermissionCode(code));
     expect(unknown).toEqual([]);
@@ -110,6 +128,14 @@ describe('printable help surface contract', () => {
   it('states the read-only and separation-of-duty facts without inventing authority', () => {
     expect(page).toContain('PASS ≠ RELEASED');
     expect(page).toContain('Admin is never the approver');
+  });
+
+  it('renders the screen/state guidance matrix with an informational-vs-mutation boundary (QC-100-FINAL-021)', () => {
+    expect(page).toContain('id="guidance-matrix"');
+    expect(page).toContain('HELP_GUIDANCE_MATRIX');
+    expect(page).toContain('Informational steps');
+    expect(page).toContain('authorized mutations (approve, release, sign) commit only when the server accepts');
+    expect(page).toContain('scope="row"');
   });
 
   it('keeps the mutation-authority disclaimer in the shared content module', () => {

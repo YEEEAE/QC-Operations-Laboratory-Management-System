@@ -31,6 +31,23 @@ describe('journey handoff presentation contract', () => {
     expect(timeline).not.toContain('business transition');
   });
 
+  it('distinguishes informational navigation from authorized mutation (QC-100-FINAL-021)', () => {
+    const panel = read('src/ui/components/workflow/JourneyContextPanel.astro');
+    expect(panel).toContain('Links on this panel only open workspaces');
+    expect(panel).toContain('mutation commits solely when the server accepts it');
+    expect(panel).toContain('Approval stage');
+    expect(panel).toContain('Prerequisites');
+    expect(panel).toContain("data-met={item.met ? 'yes' : 'no'}");
+  });
+
+  it('keeps prerequisite state derived per record, not hardcoded promises', () => {
+    const panel = read('src/ui/components/workflow/JourneyContextPanel.astro');
+    // Prerequisite entries must come through props (read-model derived), and
+    // met/not-met is data-driven so the same panel serves denied/stale states.
+    expect(panel).toMatch(/prerequisites\?\s*\.length/);
+    expect(panel).toMatch(/item\.met \? 'Met/);
+  });
+
   it('wires the handoff panel to every requested remaining workspace', () => {
     const pages = [
       'src/pages/documents/[documentId]/versions/[versionId]/index.astro',

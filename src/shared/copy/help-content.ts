@@ -220,6 +220,106 @@ export const HELP_PERMISSION_CITATIONS: readonly PermissionCode[] = [
   'PERM-HLTH-VIEW',
 ];
 
+/**
+ * Screen/state guidance matrix (QC-100-FINAL-021): for each major workspace,
+ * what the operator can identify in each state and where the real next action
+ * lives. Route IDs are resolved against the registry; state names mirror the
+ * approved state machines. This is derived guidance, not authority.
+ */
+export const HELP_GUIDANCE_MATRIX: readonly {
+  readonly routeId: string;
+  readonly screen: string;
+  readonly entries: readonly {
+    readonly state: string;
+    readonly meaning: string;
+    readonly nextAction: string;
+  }[];
+}[] = [
+  {
+    routeId: 'RT-REC-003',
+    screen: 'Receiving item',
+    entries: [
+      {
+        state: 'READY_FOR_INSPECTION',
+        meaning: 'Item registered and waiting for inspection.',
+        nextAction: 'Start inspection (inspectors with the inspection permission).',
+      },
+      {
+        state: 'HOLD',
+        meaning: 'A controlled HOLD is active; the item is blocked pending disposition.',
+        nextAction: 'Resolve the HOLD with the quality owner; do not release around it.',
+      },
+      {
+        state: 'RELEASE_PENDING',
+        meaning: 'Approved inspection consequence recorded; release is a separate authorized transition.',
+        nextAction: 'Release authority executes the release; others wait — visibility is not authority.',
+      },
+      {
+        state: 'PASS result but not released',
+        meaning: 'Inspection result and release system state are separate controlled states.',
+        nextAction: 'Release remains a distinct action for the release authority — PASS ≠ RELEASED.',
+      },
+    ],
+  },
+  {
+    routeId: 'RT-INSP-004',
+    screen: 'Inspection review (two-stage)',
+    entries: [
+      {
+        state: 'SUBMITTED',
+        meaning: 'Stage 1 of 2 — waiting for a reviewer to begin review.',
+        nextAction: 'Reviewer opens the review workspace.',
+      },
+      {
+        state: 'UNDER_REVIEW',
+        meaning: 'Stage 1 decision pending — Supervisor approval sends the report to QCM.',
+        nextAction: 'Supervisor approves/returns/rejects; this is not the final approval.',
+      },
+      {
+        state: 'PENDING_QCM_APPROVAL',
+        meaning: 'Stage 2 of 2 — QCM final approval with binding e-signature and reauthentication.',
+        nextAction: 'QCM (Manager) or the named owner performs the final approval; Admin is denied.',
+      },
+      {
+        state: 'APPROVED',
+        meaning: 'Approval chain complete — an approval state, not a release command.',
+        nextAction: 'Return to the receiving item for any release step. PASS ≠ RELEASED.',
+      },
+      {
+        state: 'RETURNED',
+        meaning: 'Sent back for correction; the submission path is preserved.',
+        nextAction: 'Executor fixes the draft and resubmits; the same two-stage path resumes.',
+      },
+    ],
+  },
+  {
+    routeId: 'RT-DOC-005',
+    screen: 'Document version',
+    entries: [
+      {
+        state: 'DRAFT',
+        meaning: 'Draft content; not under review.',
+        nextAction: 'Owner edits and submits for review.',
+      },
+      {
+        state: 'IN_REVIEW',
+        meaning: 'Under reviewer decision.',
+        nextAction: 'Reviewer opens the review workspace; others wait.',
+      },
+      {
+        state: 'APPROVED',
+        meaning: 'Approved but not yet effective.',
+        nextAction: 'Effective-date/activation stays policy-controlled.',
+      },
+      {
+        state: 'EFFECTIVE / SUPERSEDED',
+        meaning: 'Approved content is immutable.',
+        nextAction: 'Use a new revision or a controlled change request.',
+      },
+    ],
+  },
+];
+
 /** Read-only/denied statements the help page makes, tied to their evidence. */
 export const HELP_STATE_NOTES: readonly { readonly situation: string; readonly meaning: string }[] =
   [

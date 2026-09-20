@@ -2,6 +2,7 @@
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { getRouteById } from '../../shared/routing/routes.js';
 import {
+  HELP_GUIDANCE_MATRIX,
   HELP_ROLE_GUIDES,
   HELP_ROUTE_LINKS,
   HELP_STATE_NOTES,
@@ -51,6 +52,7 @@ const quickLinks = HELP_ROUTE_LINKS.map((link) => ({
     <ul>
       <li><a href="#start-of-day">Start of day by role</a></li>
       <li><a href="#quick-links">Everyday routes</a></li>
+      <li><a href="#guidance-matrix">Screen and state guidance</a></li>
       <li><a href="#troubleshooting">Troubleshooting</a></li>
       <li><a href="#escalation">Escalation and handoff</a></li>
       <li><a href="#interruption">Service interruption</a></li>
@@ -100,6 +102,48 @@ const quickLinks = HELP_ROUTE_LINKS.map((link) => ({
         ))
       }
     </ul>
+  </section>
+
+  <section class="panel" id="guidance-matrix" aria-labelledby="guidance-matrix-h">
+    <h2 id="guidance-matrix-h">Screen and state guidance</h2>
+    <p class="muted">
+      What each major workspace means in each state, and where the real next action lives. Guidance
+      is derived from the approved state machines and read models; it never grants authority — every
+      mutation is re-authorized server-side. Informational steps (open a workspace, read a register)
+      are links; authorized mutations (approve, release, sign) commit only when the server accepts
+      them.
+    </p>
+    {
+      HELP_GUIDANCE_MATRIX.map((matrix) => (
+        <div class="matrix-block">
+          <h3>{matrix.screen}</h3>
+          <table>
+            <caption>{`States and next actions on ${matrix.screen}`}</caption>
+            <thead>
+              <tr>
+                <th scope="col">State you see</th>
+                <th scope="col">What it means</th>
+                <th scope="col">Next action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {matrix.entries.map((entry) => (
+                <tr>
+                  <th scope="row">{entry.state}</th>
+                  <td>{entry.meaning}</td>
+                  <td>{entry.nextAction}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))
+    }
+    <p class="muted">
+      Awaiting an approval stage means the record is readable but the decision belongs to another
+      role. If your row shows a stage but your account lacks the permission, the action buttons are
+      not rendered and the server refuses the mutation — this is fail-closed by design.
+    </p>
   </section>
 
   <section class="panel" id="troubleshooting" aria-labelledby="troubleshooting-h">
@@ -227,6 +271,13 @@ const quickLinks = HELP_ROUTE_LINKS.map((link) => ({
   .panel h2 {
     margin-top: 0;
     font-size: 1.05rem;
+  }
+  .matrix-block {
+    margin-top: var(--space-4);
+  }
+  .matrix-block h3 {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
   }
   .toc ul {
     margin: 0;
