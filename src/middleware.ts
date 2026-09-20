@@ -17,6 +17,7 @@ import {
 import { createRequestLogger } from './shared/observability/logger';
 import { cleanAstroPagePath } from './shared/routing/clean-page-path';
 import { pageAccessDecision } from './shared/routing/page-access';
+import { AppError } from './shared/errors/app-error';
 import { getServerEnv } from './config/env';
 import { PROBLEM_CONTENT_TYPE } from './config/constants';
 import {
@@ -183,15 +184,23 @@ export const onRequest = defineMiddleware(
     }
 
     const token = cookies.get('__Host-qc_session')?.value;
+    let sessionRecovery: 'SESSION_ENDED' | 'ACCOUNT_UNAVAILABLE' | undefined;
     if (token) {
       try {
         const deps = identityDependencies();
         const resolved = await new ResolveSessionUseCase(deps.sessionService).execute(token);
         locals.user = resolved.user;
         locals.actor = await resolveActor(deps.database, resolved.user.id);
-      } catch {
+      } catch (error) {
         locals.user = undefined;
         locals.actor = undefined;
+        if (
+          error instanceof AppError &&
+          ['AUTH_SESSION_EXPIRED', 'AUTH_SESSION_REVOKED'].includes(error.code)
+        )
+          sessionRecovery = 'SESSION_ENDED';
+        else if (error instanceof AppError && error.code === 'AUTH_ACCOUNT_DISABLED')
+          sessionRecovery = 'ACCOUNT_UNAVAILABLE';
       }
     }
 
@@ -270,10 +279,9 @@ export const onRequest = defineMiddleware(
       !url.pathname.startsWith('/api/') &&
       response.status < 400
     ) {
-      response = redirect(
-        `/login?returnTo=${encodeURIComponent(`${url.pathname}${url.search}`)}`,
-        303,
-      );
+      const recovery = new URLSearchParams({ returnTo: `${url.pathname}${url.search}` });
+      if (sessionRecovery) recovery.set('session', sessionRecovery);
+      response = redirect(`/login?${recovery.toString()}`, 303);
     }
     if (url.pathname === '/login' && locals.user) response = redirect('/dashboard', 303);
 
