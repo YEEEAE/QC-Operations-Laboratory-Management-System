@@ -17,6 +17,7 @@ import type { OutboxRepository } from '../../../../shared/outbox/outbox-reposito
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
 import { stableJson } from '../../../../shared/json/stable-stringify.js';
 import { createHash } from 'node:crypto';
+import { insertSignatureEvidence } from '../../../../shared/e-signatures/insert-signature-evidence.js';
 
 const map = (
   r: DatabaseRow<'inspection_reports'>,
@@ -389,8 +390,25 @@ export class PostgresInspectionRepository implements InspectionRepository {
     actor: ActorContext;
     action: InspectionAction;
     reason?: string;
+    signatureEvidence?: import('../../../e-signatures/domain/signature-evidence.js').SignatureEvidence;
     requestId: string;
   }) {
+    if (i.action === 'FINAL_APPROVE') {
+      const evidence = i.signatureEvidence;
+      if (
+        !evidence ||
+        evidence.subjectType !== 'INSPECTION_REPORT' ||
+        evidence.subjectId !== i.id ||
+        evidence.subjectVersion !== i.expectedVersion ||
+        evidence.actorId !== i.actor.id ||
+        evidence.action !== 'FINAL_APPROVE' ||
+        evidence.meaning !== 'FINAL_APPROVE' ||
+        evidence.requestId !== i.requestId
+      )
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    } else if (i.signatureEvidence) {
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    }
     const old = await this.get(i.id, i.actor);
     if (!old) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const next = transitionInspection(old.state, i.action);
@@ -423,6 +441,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
           .returningAll()
           .executeTakeFirst();
         if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        if (i.action === 'FINAL_APPROVE') await insertSignatureEvidence(tx, i.signatureEvidence!);
         if (i.action === 'SUBMIT') {
           const snapshot = await tx
             .insertInto('inspection_report_snapshots')

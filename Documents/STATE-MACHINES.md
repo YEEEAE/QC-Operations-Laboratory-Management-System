@@ -164,6 +164,40 @@ Idempotency Requirement
 Failure Behavior
 ```
 
+## 5A. Approved lifecycle transition index (QC-100-FINAL-028-A)
+
+This index reconciles the controlled lifecycle families with their detailed
+`TR-*` definitions below. The cited permission/role matrices are authoritative
+for the actor and scope; this index does not grant authority or resolve an open
+policy/source decision. Every repository mutation must re-read the entity and
+enforce its expected version in the owning transaction. UI state is a
+projection only.
+
+| Lifecycle / transition IDs | Source → destination | Authority and scope | Version / SoD | Required evidence and committed effects | Unresolved source |
+|---|---|---|---|---|---|
+| QMS Finding `TR-FIND-001..005` | `DRAFT → OPEN → UNDER_REVIEW`; return `UNDER_REVIEW → OPEN`; close `UNDER_REVIEW → CLOSED`; void only `DRAFT/OPEN/UNDER_REVIEW → VOID` | Action permission and entity scope in `PERMISSION-MATRIX.md` / `ROLE-MATRIX.md`; no UI role label grants mutation | Expected entity version; author/reviewer separation where specified per transition | Required reason/evidence preserved; append audit and owning-domain effects; `VOID` retains history | Any edge marked source/policy-dependent in the referenced transition remains DENY |
+| QMS NCR `TR-NCR-001..007` | `DRAFT → OPEN → UNDER_INVESTIGATION → RCA_IN_PROGRESS → CAPA_IN_PROGRESS → READY_FOR_CLOSURE → CLOSED`; void only `DRAFT/OPEN/UNDER_INVESTIGATION → VOID` | NCR action permission plus record scope; closure authority follows the per-edge rules below | Expected version; RCA/CAPA completion and verification guards enforced at each named edge | Reasons and linked quality records remain auditable; closure/outbox effects commit with the state | No additional closure criteria may be inferred beyond the approved rules |
+| QMS RCA `TR-RCA-001..006` | `DRAFT/RETURNED → IN_PROGRESS → SUBMITTED → APPROVED` or `RETURNED`; void only `DRAFT/IN_PROGRESS/SUBMITTED → VOID` | RCA action permission and record scope | Expected version; author/reviewer separation where required | RCA evidence/history retained; audit records each accepted edge | Unknown transition is denied |
+| QMS CAPA `TR-CAPA-001..007` | `DRAFT → OPEN → IN_PROGRESS → AWAITING_VERIFICATION → EFFECTIVENESS_REVIEW → READY_FOR_CLOSURE`; `AWAITING_VERIFICATION → READY_FOR_CLOSURE` when effectiveness is not required; `DRAFT/OPEN/IN_PROGRESS/AWAITING_VERIFICATION/EFFECTIVENESS_REVIEW/READY_FOR_CLOSURE → CLOSED`; void only `DRAFT/OPEN/IN_PROGRESS → VOID` | CAPA permissions and record scope; close requires `PERM-CAPA-CLOSE` | Expected version; close requires reason, reauthentication, SoD and explicit CLOSE signature | Exact pre-transition snapshot, immutable signature/audit, replay-safe idempotency; all close effects transactional | Effectiveness/closure source requirements remain those explicitly approved for each edge |
+| Receiving `TR-RCV-001..010` | `PENDING → READY_FOR_INSPECTION → UNDER_INSPECTION → INSPECTION_COMPLETE → RELEASE_PENDING → RELEASED`; `HOLD`, `EXPIRED`, `CANCELLED` only through named edges | Explicit receiving permission + server-derived scope; release authority is Supervisor/Manager/named `yazeed` under P-05 | Expected version; release SoD against inspection actor; successful retry is idempotent | Audit/outbox and inspection-result consequences commit with transition; release is explicit; `PASS ≠ RELEASED`; `HOLD` is terminal in the implemented workflow | Duplicate/intake policy remains REQ-QUAR-010 source-dependent; release signature scope remains PD-32 |
+| Inspection `TR-INSP-001..009` | `DRAFT → SUBMITTED → UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`; return/resume/reopen/void/reject only by named edges | Stage 1: `PERM-INSP-APPROVE`, P-05 eligible authority and report scope. Stage 2: `PERM-APR-APPROVE + PERM-ESIG-SIGN`, Manager/QCM or named `yazeed`; ordinary scope still applies | Expected version; author/executor SoD; stage order enforced except the named-owner exception | Stage 1 has no signature. Stage 2 has reauthentication and a signature bound to the pre-transition version; signature, report, Receiving consequence, audit and outbox commit atomically. Receiving HOLD is preserved; approval never releases | Official result/evaluator and create-action input remain blocked by PD-01/02/07; absent source fails closed |
+| Laboratory `TR-LAB-001..009` | `DRAFT → SUBMITTED → UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`; return/resume/reopen/reject/void only by named edges | Stage 1: `PERM-LAB-APPROVE` + P-05 authority/scope. Stage 2: `PERM-APR-APPROVE + PERM-ESIG-SIGN`, Manager/QCM or named `yazeed` | Expected version; author/executor SoD; stage order, except named-owner exception | Server evaluator/source hash and frozen context; Stage 1 no signature; Stage 2 reauthentication and version-bound signature; immutable measurements/snapshots and audit | `VOID` policy TR-LAB-008 and reject decision authority PD-38 remain denied; no scientific evaluator/source is inferred |
+| Retest `TR-RETEST-001..003` | Request → approved request → new linked execution; never reuse the prior execution as a retest | Lab retest permissions and explicit policy scope | Expected original/request version; authority and SoD as defined by the approved retest policy | Link original and new execution; preserve prior measurements/results and reason | Retest count/effect policy remains open under REQ-LAB-018; deny unsupported requests |
+| Equipment `TR-EQP-001..005` | `DRAFT → ACTIVE ↔ OUT_OF_SERVICE/UNDER_MAINTENANCE → DECOMMISSIONED` only by named edges | Equipment action permissions and record scope from the asset matrices | Expected version; controlled reasons on high-risk edges; history retained | Append-only status/maintenance history; maintenance lock and downtime effects | Activation/return eligibility follows approved commissioning/calibration policy; no automatic overdue consequence inferred |
+| Calibration `TR-CAL-001..007` | Explicit edges: `DRAFT → SCHEDULED/SUBMITTED/VOID`; `SCHEDULED → SUBMITTED/VOID`; `SUBMITTED → APPROVED/FAILED/VOID`; `APPROVED → COMPLETED/CURRENT/FAILED/VOID`; `COMPLETED → CURRENT/FAILED/VOID`; `CURRENT → COMPLETED/DUE/OVERDUE/FAILED/SUPERSEDED/VOID`; `DUE → OVERDUE/FAILED/SUPERSEDED/VOID`; `OVERDUE → FAILED/SUPERSEDED/VOID`; `FAILED → SUPERSEDED` | Calibration action permission and scope; approval and current-setting remain policy-dependent where stated | Expected version; authority checks remain edge-specific | Source/certificate and append-only status history retained; new CURRENT supersedes prior calibration transactionally | Authority for approval/current-setting and void behavior remain source-dependent where marked |
+| Maintenance `TR-MNT-001..004` | `DRAFT → PLANNED → IN_PROGRESS → COMPLETED`; `DRAFT/PLANNED → CANCELLED`; `VOID` has no approved edge and is denied | Maintenance permissions and equipment scope | Expected version; cancel reason required | Equipment downtime/lock and maintenance history follow the defined transaction; completion does not imply calibration validity | Any future VOID authority needs an approved transition/source; current domain and use case deny it |
+| Inspection templates `TR-TMPL-001..006` | `DRAFT → UNDER_REVIEW/APPROVED → STOPPED/VOID/SUPERSEDED` only by named edges | P-06 template authorities and scope; Admin/unlisted owner alone denied | Expected version; required reasons, reauthentication, signature and SoD per P-06 edge | Template/version/context/hash snapshot is immutable for historical execution; audit and notification follow the transition | RD-019 WI/SOP approval remains open; a STOP/SUPERSEDE never rewrites an execution snapshot |
+| Controlled documents `TR-DOC-001..011` | `CATALOG_ONLY → DRAFT → IN_REVIEW → APPROVED → EFFECTIVE → SUPERSEDED → ARCHIVED`; return/resume/void only by named edges | Document-specific permission and scope; generic approval authority remains policy-dependent | Expected version; SoD and signature only where the approved edge requires them | Content hash required before approval; new revision creates a new version; old effective version remains until atomic supersession | Generic document approval and effective-date policy remain open (PD/RD references in traceability) |
+| Change requests `TR-CHG-001..010` | `DRAFT → UNDER_REVIEW → APPROVED → APPLYING → APPLIED/APPLICATION_FAILED`; return/resume/reject/cancel only by named edges | Change-request and target-domain permission/scope; approval alone does not mutate target | Expected request and target versions; SoD per approved change policy | Target is re-read by owning domain; apply + target mutation are transactional; failure is audited without partial target mutation | Per-use-case import/apply policy is not inferred |
+| Approval assignment/decision `TR-APR-*` | Assignment and append-only decision states are separate from the owning domain state | Approval permission and scoped subject; domain transition remains owned by its use case | Expected subject/decision version; applicable SoD | Decision evidence links to the domain transition; no direct status update; signatures are version-bound and are committed with final domain approval | Signature-required action list remains PD-32 |
+| Backup/restore `TR-BKP-* / TR-RST-*` | `REQUESTED → RUNNING → CREATED → VERIFYING → VERIFIED` or FAILED; restore only via explicit isolated-target path | Named recovery authority, server-derived target scope and environment; no implicit Admin grant | Expected catalog/candidate version and idempotency where the operation is retryable | Immutable manifest, verification evidence and audit; restore target must be isolated | Provider DR/RPO/RTO and production authorization remain NOT VERIFIED; no production action is authorized here |
+
+The detailed transition sections remain normative for the exact individual
+edges and their edge-specific preconditions. Any edge missing from those
+sections, or lacking its approved source/authority, is denied. The lifecycle
+index is not a new scored audit domain and does not change the 80-domain
+denominator.
+
 ---
 
 # 6. Global State Machine Rules
@@ -2608,11 +2642,14 @@ Cannot be ordinary delete.
 
 ```text
 DRAFT
+SCHEDULED
 SUBMITTED
 APPROVED
 CURRENT
 DUE
 OVERDUE
+COMPLETED
+FAILED
 SUPERSEDED
 VOID
 ```
@@ -2636,23 +2673,16 @@ CURRENT
 # 41. Calibration Lifecycle
 
 ```text
-DRAFT
- ↓
-SUBMITTED
- ↓
-APPROVED
- ↓
-CURRENT
- ↓
-DUE
- ↓
-OVERDUE
+DRAFT → SCHEDULED (optional) → SUBMITTED → APPROVED → CURRENT
+APPROVED / CURRENT → COMPLETED → CURRENT (per explicit transition)
+SUBMITTED / APPROVED / COMPLETED / CURRENT / DUE / OVERDUE → FAILED
+CURRENT → DUE → OVERDUE
 ```
 
 When a newer calibration becomes current:
 
 ```text
-Previous CURRENT/DUE/OVERDUE
+Previous CURRENT/DUE/OVERDUE/FAILED
 →
 SUPERSEDED
 ```
@@ -2860,6 +2890,10 @@ DRAFT / PLANNED → CANCELLED
 ```
 
 Reason required.
+
+`VOID` is present only as a historical state value. No `TR-MNT-VOID` transition
+is approved; the application use case and domain reject the request until an
+approved source defines its authority, reason, version, SoD and evidence rules.
 
 ---
 
@@ -3373,18 +3407,16 @@ Reauthentication
  ↓
 Reauthorization
  ↓
-Version check
+Version and state revalidated
  ↓
-State check
+Signature evidence prepared (not persisted)
  ↓
-Signature evidence generated
- ↓
-Controlled transition committed
+Signature + controlled transition + synchronous domain effects + audit/outbox
+committed in the owning transaction
 ```
 
-إذا transition يفشل:
-
-> لا يعتبر E-Signature دليلًا على Action ناجح.
+إذا تعذر أي جزء من transaction، تتراجع كل كتابات الحالة والأثر والتوقيع؛ لا
+يبقى توقيع لمحاولة لم تنجح. لا تحذف أو تعدل signature evidence بعد الالتزام.
 
 ---
 

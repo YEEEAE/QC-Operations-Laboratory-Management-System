@@ -1973,6 +1973,23 @@ CAPA closure
 Change Request approval
 ```
 
+## BR-ESIG-009 — Signature Evidence Commits With Its Controlled Transition
+
+**Status:** APPROVED
+
+For an approved signature-required action, the owning Domain prepares evidence
+after reauthentication, current permission, scope, state, version, and SoD checks.
+It persists that immutable evidence in the same database transaction as the
+state transition and all required synchronous consequences. If any write or
+precondition fails, the transaction rolls back and no signature for the failed
+action remains. A signature record is never edited or deleted after commit.
+
+The UI may display the action's meaning and the result returned by the server;
+it cannot create or infer signature evidence. A signature is bound to the
+pre-transition subject version and snapshot. This rule does not expand the list
+of actions requiring signature; that list remains controlled by its approved
+signature-scope source (PD-32).
+
 ---
 
 # 18. Change Request Rules

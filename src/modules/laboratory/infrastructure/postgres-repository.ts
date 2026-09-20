@@ -9,6 +9,7 @@ import type { AuditRepository } from '../../../shared/audit/audit-repository.js'
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.js';
 import { stableJson } from '../../../shared/json/stable-stringify.js';
+import { insertSignatureEvidence } from '../../../shared/e-signatures/insert-signature-evidence.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import type { LabListFilter, LabRepository, Mutation } from '../ports/repository.js';
 import type { LabState } from '../domain/lab-state.js';
@@ -272,6 +273,22 @@ export class PostgresLabRepository implements LabRepository {
     }));
   }
   private async persist(previous: LabTest | undefined, next: LabTest, mutation: Mutation) {
+    if (mutation.action === 'FINAL_APPROVE') {
+      const evidence = mutation.signatureEvidence;
+      if (
+        !evidence ||
+        evidence.subjectType !== 'LAB_TEST' ||
+        evidence.subjectId !== next.id ||
+        evidence.subjectVersion !== previous?.version ||
+        evidence.actorId !== mutation.actor.id ||
+        evidence.action !== 'FINAL_APPROVE' ||
+        evidence.meaning !== 'FINAL_APPROVE' ||
+        evidence.requestId !== mutation.requestId
+      )
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    } else if (mutation.signatureEvidence) {
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    }
     return this.db.transaction().execute(async (tx) => {
       if (!previous)
         await tx
@@ -320,6 +337,8 @@ export class PostgresLabRepository implements LabRepository {
           .executeTakeFirst();
         if (!changed.numUpdatedRows)
           throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        if (mutation.action === 'FINAL_APPROVE')
+          await insertSignatureEvidence(tx, mutation.signatureEvidence!);
         await tx.deleteFrom('lab_measurements').where('lab_test_id', '=', next.id).execute();
       }
       if (previous) {

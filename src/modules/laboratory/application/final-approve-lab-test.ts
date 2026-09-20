@@ -48,7 +48,7 @@ export class FinalApproveLabTestUseCase {
       input.expectedVersion,
       !isNamedSystemOwner(input.actor),
     );
-    const signatureId = await this.ceremony.signFinalApproval({
+    const signatureEvidence = await this.ceremony.createFinalApprovalEvidence({
       actor: input.actor,
       subjectType: 'LAB_TEST',
       subjectId: test.id,
@@ -69,8 +69,13 @@ export class FinalApproveLabTestUseCase {
         updatedAt: at,
         approvedAt: at,
       },
-      { actor: input.actor, requestId: input.requestId, action: 'FINAL_APPROVE' },
+      {
+        actor: input.actor,
+        requestId: input.requestId,
+        action: 'FINAL_APPROVE',
+        signatureEvidence,
+      },
     );
-    return { signatureId };
+    return { signatureId: signatureEvidence.id };
   }
 }

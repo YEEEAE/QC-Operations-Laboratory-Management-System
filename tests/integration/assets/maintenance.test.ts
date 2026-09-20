@@ -47,6 +47,9 @@ describe('Assets maintenance controls', () => {
       'CANCELLED',
     );
   });
+  it('denies VOID at the domain boundary until a controlled transition is approved', () => {
+    expect(() => transitionMaintenance(make(), 'VOID', new Date(), 'retire record')).toThrow();
+  });
   it('rejects a transition from the wrong state and checks permission', async () => {
     const repo = new FakeMaintenanceRepository();
     const useCase = new TransitionMaintenanceUseCase(repo);

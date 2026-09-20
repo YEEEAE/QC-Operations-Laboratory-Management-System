@@ -82,8 +82,7 @@ const transitions: Record<MaintenanceAction, readonly [MaintenanceState, Mainten
     ['PLANNED', 'CANCELLED'],
   ],
   VOID: [
-    ['DRAFT', 'VOID'],
-    ['PLANNED', 'VOID'],
+    // VOID has no approved TR-MNT edge. The use case and domain both fail closed.
   ],
 };
 export function transitionMaintenance(

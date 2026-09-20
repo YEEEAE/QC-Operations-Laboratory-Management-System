@@ -1,7 +1,6 @@
 import { getDatabase } from '../../../shared/database/database.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
-import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
 import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
 import { FinalApproveLabTestUseCase } from './final-approve-lab-test.js';
 import { ReopenLabTestUseCase } from './reopen-lab-test.js';
@@ -43,7 +42,6 @@ export function laboratoryActionDependencies() {
   // QC-100-FINAL-004: the final (QCM) lab approval carries the binding
   // e-signature; the Supervisor stage approval above it does not.
   const finalApprovalCeremony = createFinalApprovalCeremony(
-    new PostgresSignatureEvidenceRepository(db),
     createPasswordReauthenticationVerifier(db),
   );
   return {

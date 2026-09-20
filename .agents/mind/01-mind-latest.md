@@ -5,10 +5,22 @@
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
 ## Current audit reality — 2026-09-18
+- **2026-09-21 — QC-100-FINAL-028-A / core contracts and controls (candidate `0f25de0f54dbaf3249d56a25a863ec52a42b2f28`, source fingerprint `91ec238d37e2653fbe77dd3e6673199462a610889e72e68f3e176fb76465e3f0`, release `rel-5543d7477e453b02`)**
+  - Changed: lifecycle transition index added/reconciled; inspection/lab final-approval signature evidence now commits in the owning transaction; maintenance VOID denied at domain and use-case boundaries absent approved transition.
+  - Evidence: focused 9/9 tests, typecheck 883/0/0/74 hints, targeted format/lint and local build/release PASS on unsupported Node 22.22.3. PG18 integration BLOCKED (no container runtime); disposable PG14 fallback BLOCKED by sandbox System V shared-memory EPERM; migration CLI BLOCKED (tsx IPC EPERM); architecture gate retains known NCR/CAPA violations.
+  - State: PARTIAL; PG18 verification 002/027, E2E 003, accessibility 006/040, policy/source decisions 013/026, human evidence 004 and reconciliation 012 remain dependencies. Human acceptance excluded; denominator 80 and scores unchanged.
+  - Key files: `audit/2026-09-21/QC-100-FINAL-028-A-core-contracts.md`, `Documents/STATE-MACHINES.md`, `Documents/BUSINESS-RULES.md`, `src/shared/e-signatures/insert-signature-evidence.ts`.
+
+- **2026-09-21 — QC-100-FINAL-027-B / تكامل الأدلة الفنية (candidate `0f25de0f54dbaf3249d56a25a863ec52a42b2f28`, dirty fingerprint `ce83e6fa0a7ec51078776381bbe20878aceff8ca7cc5aac6850fa0cd741adff6`)**
+  - Changed: تصحيح fixture/teardown لاختبار QC-024، وتثبيت locator/مهلة اختبار login؛ لا تغيير runtime أو سياسة صلاحيات.
+  - Evidence: unit 785/785، PG integration 470/470، UI contracts 44/44، migrations 29/29، concurrency 12/12، security 52/52، typecheck 0 أخطاء، build/release identity PASS؛ authenticated E2E الواسع PARTIAL/FAIL (27 فشلًا، 12 skip بالتقرير) مع focused login 2/2 PASS؛ architecture gate FAIL بانتهاكات NCR/CAPA السابقة. PostgreSQL محلي disposable 18.6/schema 77 جدولًا؛ التفاصيل والتوقيت في التقرير.
+  - State: PARTIAL؛ 003 يصلح E2E fixtures/session، 006/040 يكملان فحوص الوصول، 004 يحتفظ بدليل القبول البشري؛ 012 يجمع الأدلة. لا تغيير للمقام 80 أو الدرجات.
+  - Key files: `audit/2026-09-21/QC-100-FINAL-027-B-integration-technical-evidence.md`.
+
 - **2026-09-20 — QC-100-FINAL-027-A / عقود جودة الاختبار الأساسية (candidate `2f0cfeff2d5f70d8a8b17b0cfedf07408ece70fd`, fingerprint `d8fe4e18a2686f1ec0e44828bbdd1d627c0dc2324e8b9c101fdf82d259eeb659`)**
   - Changed: عزل cleanup للـunit globals، clock/random وfixture IDs حتمية، وعقود رفض الصلاحية على مستوى action/use case بلا كتابة؛ تقرير item-by-item.
   - Evidence: unit 105/785 PASS، build/release identity محلي PASS؛ PostgreSQL contracts BLOCKED لعدم توفر container/`QC_TEST_DATABASE_URL`؛ typecheck وarchitecture gate FAIL كما بالتقرير.
-  - State: PARTIAL؛ 027-B يحتاج هدف PostgreSQL disposable للتحقق من عزل 21 reset sites وتشغيل عقود DB؛ E2E 003، accessibility 006/040، ومصالحة 012 تبقى مطلوبة. denominator 80 وgates 0/19 دون تغيير.
+  - State وقت A: PARTIAL؛ تحققت عقود PostgreSQL لاحقًا محليًا ضمن 027-B؛ بقي هدف Docker/Testcontainers والعزل العام لـ21 reset sites غير محسوم، وE2E 003 وaccessibility 006/040 ومصالحة 012 مطلوبة. denominator 80 وgates 0/19 دون تغيير.
   - Key files: `audit/2026-09-20/QC-100-FINAL-027-A-quality-engineering-core-contracts.md`.
 
 - **2026-09-20 — Mind rollover (QC-100-FINAL-026):** تجاوز `01` الحد الصلب (121,894 بايت)؛ نُقلت أقدم سجلات 2026-09-18 إلى أعلى `02-mind-mid.md` بعد التحقق من غيابها فيه، مع تثبيت ثوابت `NO-GO`/gates وانحراف Render في أقسام الحالة الحالية. لم تُمس القرارات الحالية ولا الـinvariants ولا المشاكل المفتوحة. الحالة: DONE.
@@ -224,6 +236,7 @@
 - مسار release يفرض SoD مشتقًا خادميًا بين منفذ التفتيش ومنفذ الإفراج، ويعيد الطلب المكرر بعد نجاحه عبر idempotency؛ لا يوجد بعد دليل runtime مطبق للـmigration الجديدة.
 - Laboratory retest يخضع للسياسة/السلطة المطبقة ولا تُخترع limits غير موجودة في الوثائق.
 - Finding/NCR/CAPA/VOID تبقى مرتبطة بآلات الحالة والأدلة والتوقيعات المعتمدة.
+- E-signature الخاصة بالاعتماد النهائي تُحضّر بعد reauthentication/authorization وتُكتب داخل معاملة الدومين نفسها مع الانتقال والآثار المتزامنة؛ الفشل يتراجع عن التوقيع. Maintenance `VOID` يبقى deny-by-default لغياب انتقال/مصدر معتمد.
 - أي handoff أو Journey Context هو read context؛ لا ينقل ملكية mutation بين الدومينات.
 
 ## 7) Change Requests / Documents
@@ -382,13 +395,13 @@
 - **Historical live defect (2026-09-18):** authorized yazeed GET `/reject-reports` returned 500 with Render migration projection `0018`. QC-100-FINAL-014 verified the candidate SQL ambiguity fix and populated regression on disposable PostgreSQL; production result remains NOT VERIFIED because current production migration state is blocked.
 
 ### P1 / live validation / pre-existing test estate
-- **F-013-3 (QC-100-FINAL-013، مُقاس وموثّق):** مراسم التوقيع تُكتب قبل انتقال الـrepository، فإذا رُفض الانتقال بشكل مشروع (مثل Receiving في `HOLD`) يبقى دليل التوقيع بينما لا يتغير state/version/audit/outbox. مثبّت صراحة في حالة `[boundary]`، ولم يُغيّر لأن نقل المراسم داخل transaction الـrepository يمسّ عقدًا مشتركًا مع release governance.
+- **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
 - **ملف تكامل مخصص للمرحلتين موجود الآن** (كان مفتوحًا في تقرير FINAL-004): `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.
 - **أُغلق 2026-09-19 (QC-100-FINAL-002):** كل ملفات `pnpm test:integration` التي كانت تفشل السابقة (`identity/system-owner-upgrade-parity`, `system/control-center`, `reporting/report-export-parity`, `shared/search-scope`, `shared/notification-outbox-delivery`, `quarantine/overview-parity`) صارت PASS بجذور مُثبتة: عزل schema لكل suite كانت تعوّل على قاعدة بكر، probed migration-dir في `createPostgresMigrationStatus` (العملة الواحدة كانت تُبلغ drift زائفًا تحت Vitest)، وعقود اختبار متقادمة (literal LIKE، bounded queue مقابل total، `uuidv7` غير مونوتونية داخل المللي ثانية، sparse-array matcher).
 - read models المطلوبة لاستكمال لوحة القيادة (QC-100-FINAL-017): **DONE 2026-09-20** bounded lab workload مع state/ownership filter (KPI `lab-tests-returned` + readiness read)؛ **DONE 2026-09-20 (022)** عدّادا `tasks-assigned` (`open`) و`tasks-on-hold` وفلتر `open` خادميًا في سجل المهام — فالعمل المُسنَد صار مرئيًا حتى بلا تاريخ استحقاق، والعمل المحجوز له عدّاد مسجّل بدل استنتاج؛ **متبقٍ لـ017-B:** document review queue (لا يوجد read model لطابور المراجعة في وحدة documents)، quality ownership filters (سجلات findings/NCR/RCA/CAPA تدعم state فقط)، وblocked reason كنصّ حرّ (لا حقل في المخطط؛ إدخال audit لكل انتقال)، وreject analytics معلّق على قرار نطاق (النموذج يجمّع globally و`/reject-reports` مصرّح `authenticated` لا permission-bound، فنشر تجميعة عامة على سطح scope-aware ممنوع). بدونها تبقى هذه المنتجات `NOT_SUPPLIED` معلنة بأسباب تسمّي المصدر والمالك، ولا تُقدَّر بأرقام.
 - **مكتشف 2026-09-19 (QC-100-FINAL-002):** ست صفحات `.astro` محفوظة كسطر مضغوط واحد (`assets/equipment|[calibrationId]|[maintenanceId]` + `laboratory/tests/[labTestId]/{review,index,execute}`) ولا بوابة تكشفها (Prettier لا ينسّق `.astro`)؛ تحتاج إعادة تنسيق محافظة على المخرجات. كذلك `.env` المحلي يضبط `NODE_ENV=production` فيرفض كل CLI قاعدة بيانات العمل محليًا حتى تتوفر `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` أو يُتجاوَز NODE_ENV، و`audit/**` داخل نطاق Prettier العام، و`.tmp-check/check-bundles.ts` ملف scratch متتبَّع.
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
-- **QC-100-FINAL-027-A audit (2026-09-20):** 21 integration location explicitly resets shared `qc` schema and trusts its configured target to be disposable; current QC_TEST_DATABASE_URL/container runtime unavailable, so disposable-target isolation and PostgreSQL API denial/authorized paths remain NOT VERIFIED/BLOCKED for 027-B. `pnpm test:architecture` reports pre-existing direct DB/infrastructure imports in NCR/CAPA detail routes; see QC-100-FINAL-027-A audit report.
+- **QC-100-FINAL-027 audit (2026-09-21):** 027-B أثبت unit 785/785 وPG18.6 integration 470/470 وserver contracts على قاعدة محلية disposable صريحة؛ التشغيل عبر Docker/Testcontainers ما زال NOT RUN، والثقة العامة بقيمة `QC_TEST_DATABASE_URL` عبر 21 reset site ما زالت غير محسومة. authenticated E2E واسع PARTIAL/FAIL بسبب fixture/session state وأخطاء workflows؛ focused login 2/2 PASS. `pnpm test:architecture` ما زال FAIL بانتهاكات imports السابقة في NCR/CAPA. التفاصيل في تقريري 027-A و027-B.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
 - provider backup/PITR/WAL/object-store DR and approved RPO/RTO validation; QC-100-FINAL-008 verifies the local populated archive bundle and isolated restore, while application backup-catalog integration remains open.

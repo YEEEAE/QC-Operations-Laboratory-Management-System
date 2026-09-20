@@ -3,7 +3,8 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import { authorize } from '../../../shared/authorization/authorize.js';
 import type { ApprovalSubjectType } from '../../approvals/domain/approval.js';
 import { createSignatureEvidence } from '../domain/signature-evidence.js';
-import type { ReauthenticationVerifier, SignatureEvidenceRepository } from '../ports/repository.js';
+import type { SignatureEvidence } from '../domain/signature-evidence.js';
+import type { ReauthenticationVerifier } from '../ports/repository.js';
 
 /**
  * QC-100-FINAL-004 — final (QCM) approval ceremony.
@@ -21,7 +22,7 @@ import type { ReauthenticationVerifier, SignatureEvidenceRepository } from '../p
  * that skips it cannot reach the APPROVED state.
  */
 export interface FinalApprovalCeremony {
-  signFinalApproval(input: {
+  createFinalApprovalEvidence(input: {
     actor: ActorContext;
     subjectType: Extract<ApprovalSubjectType, 'INSPECTION_REPORT' | 'LAB_TEST'>;
     subjectId: string;
@@ -32,15 +33,14 @@ export interface FinalApprovalCeremony {
     reason?: string;
     reauthenticationSecret: string;
     requestId: string;
-  }): Promise<string>;
+  }): Promise<SignatureEvidence>;
 }
 
 export function createFinalApprovalCeremony(
-  signatures: SignatureEvidenceRepository,
   verifier: ReauthenticationVerifier,
 ): FinalApprovalCeremony {
   return {
-    async signFinalApproval(input) {
+    async createFinalApprovalEvidence(input) {
       if (!input.reauthenticationSecret?.trim())
         throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
       const valid = await verifier.verify({
@@ -79,8 +79,9 @@ export function createFinalApprovalCeremony(
         reauthMethod: 'PASSWORD',
         requestId: input.requestId,
       });
-      const saved = await signatures.create(evidence);
-      return saved.id;
+      // Persist only inside the owning domain transaction: signature evidence
+      // represents a committed transition, never an attempted one.
+      return evidence;
     },
   };
 }

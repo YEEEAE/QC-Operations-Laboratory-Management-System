@@ -21,7 +21,6 @@ export class FinalApproveInspectionUseCase {
   constructor(
     private readonly repository: InspectionRepository,
     private readonly ceremony: FinalApprovalCeremony,
-    private readonly now = () => new Date(),
   ) {}
 
   async execute(input: {
@@ -69,7 +68,7 @@ export class FinalApproveInspectionUseCase {
         { throwOnDeny: true },
       );
     authorizeFinal('APPROVE');
-    const signatureId = await this.ceremony.signFinalApproval({
+    const signatureEvidence = await this.ceremony.createFinalApprovalEvidence({
       actor: input.actor,
       subjectType: 'INSPECTION_REPORT',
       subjectId: inspection.id,
@@ -85,8 +84,9 @@ export class FinalApproveInspectionUseCase {
       expectedVersion: input.expectedVersion,
       actor: input.actor,
       action: 'FINAL_APPROVE',
+      signatureEvidence,
       requestId: input.requestId,
     });
-    return { signatureId };
+    return { signatureId: signatureEvidence.id };
   }
 }

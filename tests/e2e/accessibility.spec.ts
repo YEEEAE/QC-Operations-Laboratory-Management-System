@@ -96,7 +96,10 @@ async function assertKeyboardOrder(
   // contains the word "Password"; match the field exactly so the assertion
   // stays about the labelled input instead of tripping Playwright strict mode.
   const credential = page.getByLabel(labels.password, { exact: true });
-  const toggle = page.getByRole('button', { name: 'Show password' });
+  // The accessible name deliberately changes to "Hide password" after the
+  // toggle is activated, so keep a stable element locator for assertions on
+  // both states and assert the state-specific accessible name separately.
+  const toggle = page.locator('[data-password-toggle]');
   const submit = page.getByRole('button', { name: labels.submit, exact: true });
 
   await identity.focus();
@@ -118,6 +121,7 @@ async function assertKeyboardOrder(
   await page.keyboard.press('Enter');
   await expect(credential, 'the toggle must flip the field type').toHaveAttribute('type', 'text');
   await expect(toggle).toHaveAttribute('aria-label', 'Hide password');
+  await expect(page.getByRole('button', { name: 'Hide password' })).toBeVisible();
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Enter');
   await expect(credential).toHaveAttribute('type', 'password');
@@ -180,6 +184,9 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
   test('English login form has an accessible name, keyboard path, and no axe violations', async ({
     page,
   }) => {
+    // The Three.js login shell plus axe scan takes about 36 seconds in the
+    // local production build; keep the full assertion set without timing out.
+    test.setTimeout(60_000);
     await page.goto('/login');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
@@ -196,6 +203,7 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
   test('Login ignores the locale parameter and stays English LTR (F-12 English-only)', async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     await page.goto('/login?locale=ar');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');

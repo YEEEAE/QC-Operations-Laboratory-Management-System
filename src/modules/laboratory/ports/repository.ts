@@ -1,11 +1,14 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { LabTest } from '../domain/lab-test.js';
 import type { LabState } from '../domain/lab-state.js';
+import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 export interface Mutation {
   actor: ActorContext;
   requestId: string;
   action: string;
   reason?: string;
+  /** Final-approval evidence is committed atomically with the state transition. */
+  signatureEvidence?: SignatureEvidence;
 }
 
 /**

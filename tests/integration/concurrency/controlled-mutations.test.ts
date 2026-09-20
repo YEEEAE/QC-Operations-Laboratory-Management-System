@@ -331,7 +331,19 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     // independently controlled HOLD state and roll the whole transaction back.
     await expect(
       new FinalApproveInspectionUseCase(repository, {
-        signFinalApproval: async () => 'signature-test-only-not-evidence',
+        createFinalApprovalEvidence: async (input) => ({
+          id: '01900000-0000-7000-8000-000000000001',
+          actorId: input.actor.id,
+          subjectType: 'INSPECTION_REPORT',
+          subjectId: input.subjectId,
+          subjectVersion: input.subjectVersion,
+          action: 'FINAL_APPROVE',
+          meaning: 'FINAL_APPROVE',
+          signedAt: new Date(),
+          snapshotHash: 'test-snapshot',
+          reauthMethod: 'PASSWORD',
+          requestId: input.requestId,
+        }),
       }).execute({
         actor: approver(),
         id: reportId,

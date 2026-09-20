@@ -2,6 +2,7 @@ import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Inspection } from '../domain/inspection.js';
 import type { InspectionAction } from '../domain/inspection-state.js';
 import type { FinalResult, InspectionResultEntry } from '../domain/inspection-result.js';
+import type { SignatureEvidence } from '../../../e-signatures/domain/signature-evidence.js';
 export interface InspectionRepository {
   create(i: {
     inspection: Inspection;
@@ -32,6 +33,8 @@ export interface InspectionRepository {
     actor: ActorContext;
     action: InspectionAction;
     reason?: string;
+    /** Final-approval evidence is committed atomically with the state transition. */
+    signatureEvidence?: SignatureEvidence;
     requestId: string;
   }): Promise<Inspection>;
 }

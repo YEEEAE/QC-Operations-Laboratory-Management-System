@@ -14,7 +14,6 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { createPool } from '../../../src/shared/database/pool.js';
-import { PostgresNcrRepository } from '../../../src/modules/quality/ncr/infrastructure/postgres-repository.js';
 import { listRelatedNcrsForFinding } from '../../../src/modules/quality/findings/application/list-related-ncrs.js';
 import { listFindingsForActor } from '../../../src/modules/quality/findings/application/list-findings-for-actor.js';
 import { getSourceReceivingForLabTest } from '../../../src/modules/laboratory/application/get-source-receiving.js';
@@ -63,8 +62,8 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-  await db?.destroy();
-  await pool?.end();
+  if (db) await db.destroy();
+  else await pool?.end();
   await stopPostgresContainer();
 });
 
@@ -131,13 +130,13 @@ describe('lab test -> source receiving provenance', () => {
       [receivingId, OWNER_ID],
     );
     await pool!.query(
-      `INSERT INTO qc.inspection_templates (id, template_code, name, active, created_by, updated_at, version)
+      `INSERT INTO qc.lab_test_templates (id, test_code, name, active, created_by, updated_at, version)
        VALUES ($1, 'TPL-J24', 'Journey template', true, $2, now(), 1)
        ON CONFLICT (id) DO NOTHING`,
       [templateId, LAB_AUTHOR_ID],
     );
     await pool!.query(
-      `INSERT INTO qc.inspection_template_versions (id, template_id, version_no, state, created_by)
+      `INSERT INTO qc.lab_test_template_versions (id, template_id, version_no, state, created_by)
        VALUES ($1, $2, 'v1', 'APPROVED', $3)
        ON CONFLICT (id) DO NOTHING`,
       [templateVersionId, templateId, LAB_AUTHOR_ID],
@@ -167,7 +166,6 @@ describe('audit reason exposure without payload leakage', () => {
   it('returns reason in the view and never carries payload', async () => {
     const repo = new PostgresAuditRepository(db!);
     await repo.append({
-      occurredAt: new Date(),
       actorType: 'USER',
       actorId: OWNER_ID,
       subjectType: 'FINDING',

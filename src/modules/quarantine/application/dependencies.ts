@@ -26,7 +26,6 @@ import { ResumeInspectionUseCase } from '../inspection/application/resume-inspec
 import { VoidInspectionUseCase } from '../inspection/application/void-inspection.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
-import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastructure/postgres-repository.js';
 import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
 import { createPasswordReauthenticationVerifier } from '../../e-signatures/application/reauthentication-verifier.js';
 
@@ -60,11 +59,8 @@ export function quarantineActionDependencies() {
   const outbox = new PostgresOutboxRepository(database);
   const receivingRepository = new PostgresReceivingRepository(database, audit, outbox);
   const inspectionRepository = new PostgresInspectionRepository(database, audit, outbox);
-  // QC-100-FINAL-004: the final (QCM) approval carries the binding
-  // e-signature, so the inspection action graph needs the signature store and
-  // a reauthentication verifier.
+  // Final-approval evidence is persisted by the owning domain transaction.
   const finalApprovalCeremony = createFinalApprovalCeremony(
-    new PostgresSignatureEvidenceRepository(database),
     createPasswordReauthenticationVerifier(database),
   );
   return {

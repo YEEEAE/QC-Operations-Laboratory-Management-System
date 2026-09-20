@@ -34,7 +34,6 @@ import { GetEquipmentEligibilityUseCase } from '../../../src/modules/assets/equi
 import { PostgresEquipmentEligibilityReader } from '../../../src/modules/assets/equipment/infrastructure/eligibility-reader.js';
 import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 import { createPasswordReauthenticationVerifier } from '../../../src/modules/e-signatures/application/reauthentication-verifier.js';
-import { PostgresSignatureEvidenceRepository } from '../../../src/modules/e-signatures/infrastructure/postgres-repository.js';
 import { Argon2idPasswordHasher } from '../../../src/modules/identity/security/argon2-password-hasher.js';
 import { ApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/approve-inspection.js';
 import { FinalApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/final-approve-inspection.js';
@@ -279,11 +278,7 @@ const receivingRepository = () =>
   );
 
 /** The real ceremony: real signature evidence + real server-side reauthentication. */
-const ceremony = () =>
-  createFinalApprovalCeremony(
-    new PostgresSignatureEvidenceRepository(db),
-    createPasswordReauthenticationVerifier(db),
-  );
+const ceremony = () => createFinalApprovalCeremony(createPasswordReauthenticationVerifier(db));
 
 /**
  * TEST-ONLY server evaluator.
@@ -1057,11 +1052,6 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
   });
 
   it('[boundary] never treats HOLD as PASS and never overwrites a receiving HOLD', async () => {
-    // NOTE — measured ordering recorded as a finding in the FINAL-013 evidence
-    // report: the binding signature is written by the ceremony before the
-    // repository transition, so a refused transition (the HOLD guard below)
-    // leaves the signing evidence behind while the record keeps its state, its
-    // version and its audit history. No state/audit/outbox effect is applied.
     // A HOLD result completes the inspection chain but must not release the item.
     const holdReport = '01900000-0000-7000-8000-000000000e21';
     const { receivingId } = await seedInspection({
@@ -1130,7 +1120,7 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       version: '4',
     });
     expect(await auditCount(protectedReport, 'FINAL_APPROVE')).toBe(0);
-    expect(await signatures(protectedReport)).toHaveLength(1);
+    expect(await signatures(protectedReport)).toHaveLength(0);
   });
 });
 
