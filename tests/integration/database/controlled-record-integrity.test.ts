@@ -7,6 +7,8 @@ import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 const ACTOR_ID = '01900000-0000-7000-8000-00000000e001';
 const DOCUMENT_ID = '01900000-0000-7000-8000-00000000e002';
 const DOCUMENT_VERSION_ID = '01900000-0000-7000-8000-00000000e003';
+const DRAFT_DOCUMENT_VERSION_ID = '01900000-0000-7000-8000-00000000e006';
+const DOCUMENT_FILE_ID = '01900000-0000-7000-8000-00000000e007';
 const TEMPLATE_ID = '01900000-0000-7000-8000-00000000e004';
 const TEMPLATE_VERSION_ID = '01900000-0000-7000-8000-00000000e005';
 
@@ -34,6 +36,17 @@ describe('QC-CLOSURE-009 controlled-record integrity', () => {
       `INSERT INTO qc.document_versions (id, document_id, revision, state, content_hash, created_by)
        VALUES ($1, $2, '1', 'APPROVED', 'hash-1', $3)`,
       [DOCUMENT_VERSION_ID, DOCUMENT_ID, ACTOR_ID],
+    );
+    await pool.query(
+      `INSERT INTO qc.document_versions (id, document_id, revision, state, content_hash, created_by)
+       VALUES ($1, $2, '2', 'DRAFT', 'hash-2', $3)`,
+      [DRAFT_DOCUMENT_VERSION_ID, DOCUMENT_ID, ACTOR_ID],
+    );
+    await pool.query(
+      `INSERT INTO qc.files
+        (id, original_filename, storage_key, storage_provider, mime_type, size_bytes, sha256, uploaded_by, state)
+       VALUES ($1, 'procedure.pdf', 'qc-029/document-v2.pdf', 'OBJECT_STORAGE', 'application/pdf', 12, repeat('b', 64), $2, 'ACTIVE')`,
+      [DOCUMENT_FILE_ID, ACTOR_ID],
     );
     await pool.query(
       `INSERT INTO qc.inspection_templates (id, template_code, name, active, created_by)
@@ -88,6 +101,33 @@ describe('QC-CLOSURE-009 controlled-record integrity', () => {
         TEMPLATE_VERSION_ID,
       ]),
     ).rejects.toThrow(/immutable/);
+  });
+
+  it('allows draft file linkage and preserves file linkage as append-only evidence', async () => {
+    await pool.query(
+      `INSERT INTO qc.document_version_files (document_version_id, file_id, file_role, linked_by)
+       VALUES ($1, $2, 'CONTROLLED_COPY', $3)`,
+      [DRAFT_DOCUMENT_VERSION_ID, DOCUMENT_FILE_ID, ACTOR_ID],
+    );
+    const linkage = await pool.query(
+      `SELECT id FROM qc.document_version_files WHERE document_version_id = $1`,
+      [DRAFT_DOCUMENT_VERSION_ID],
+    );
+    await expect(
+      pool.query(`UPDATE qc.document_version_files SET file_role = 'TAMPERED' WHERE id = $1`, [
+        linkage.rows[0].id,
+      ]),
+    ).rejects.toThrow(/append-only/);
+    await expect(
+      pool.query(`DELETE FROM qc.document_version_files WHERE id = $1`, [linkage.rows[0].id]),
+    ).rejects.toThrow(/append-only/);
+    await expect(
+      pool.query(
+        `INSERT INTO qc.document_version_files (document_version_id, file_id, file_role, linked_by)
+         VALUES ($1, $2, 'CONTROLLED_COPY', $3)`,
+        [DOCUMENT_VERSION_ID, DOCUMENT_FILE_ID, ACTOR_ID],
+      ),
+    ).rejects.toThrow(/only be linked while the version is DRAFT/);
   });
 
   it('rejects invalid controlled template history at the database boundary', async () => {
