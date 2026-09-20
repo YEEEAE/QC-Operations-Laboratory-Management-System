@@ -65,4 +65,26 @@ describe('QC-100-FINAL-026 requirements reconciliation contract', () => {
       'no required feature was or may be reclassified as OPTIONAL',
     );
   });
+
+  it('phase B carries every open/partial policy decision with owner and evidence fields', () => {
+    const out = execFileSync('node', ['scripts/requirements/check-reconciliation.mjs'], {
+      encoding: 'utf8',
+    });
+    expect(out).toContain('decisions=33');
+    expect(out).toContain('assumptions=5');
+    expect(out).toContain('mappedDomains=7');
+    const register = read('Documents/DECISION-ASSUMPTION-REGISTER-026.md');
+    expect(register).toContain('PD-01');
+    expect(register).toContain('PD-38');
+    expect(register).toContain('Evidence required to resolve');
+  });
+
+  it('extended disciplines map only to the seven supplied existing domains', () => {
+    const register = read('Documents/DECISION-ASSUMPTION-REGISTER-026.md');
+    const crosswalk = register.split('## 4. Extended discipline crosswalk')[1]?.split('## 5.')[0];
+    expect(crosswalk).toBeDefined();
+    const domains = [...(crosswalk ?? '').matchAll(/#(\d{1,2})\b/g)].map((m) => Number(m[1]));
+    expect([...new Set(domains)].sort((a, b) => a - b)).toEqual([1, 21, 42, 53, 60, 61, 80]);
+    expect(register).toContain('does not create or score these disciplines as additional domains');
+  });
 });

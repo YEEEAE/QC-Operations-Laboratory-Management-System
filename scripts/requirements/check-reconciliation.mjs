@@ -19,6 +19,8 @@ const trace = read('Documents/REQUIREMENTS-TRACEABILITY.md');
 const recon = read('Documents/REQUIREMENTS-RECONCILIATION.md');
 const risk = read('Documents/RISK-REGISTER.md');
 const prio = read('Documents/GAP-RISK-PRIORITY-MATRIX.md');
+const policy = read('audit/100-percent/POLICY-CLOSURE-MATRIX.md');
+const decisions = read('Documents/DECISION-ASSUMPTION-REGISTER-026.md');
 
 const failures = [];
 const check = (ok, message) => {
@@ -139,6 +141,96 @@ check(recon.includes('D61'), 'covered audit domain D61 not cited in register');
 check(recon.includes('D80'), 'covered audit domain D80 not cited in register');
 check(/80-domain scoring denominator is unchanged/.test(recon), 'denominator statement missing');
 
+// --- Phase B decision/assumption integration -----------------------------------
+const decisionSection = decisions.match(/## 3\. Open decision register([\s\S]*?)(?=\n## 4\.)/)?.[1];
+check(Boolean(decisionSection), 'phase-B open decision section missing');
+const decisionRows = (decisionSection ?? '')
+  .split('\n')
+  .filter((line) => line.trimStart().startsWith('| PD-'));
+const decisionIds = new Set();
+for (const line of decisionRows) {
+  const cols = line
+    .split('|')
+    .map((c) => c.trim())
+    .filter(Boolean);
+  check(cols.length === 8, `decision row has ${cols.length} columns (expected 8)`);
+  const ids = [...line.matchAll(/PD-\d{2}/g)].map((m) => m[0]);
+  for (const id of ids) decisionIds.add(id);
+  check(
+    /^(OPEN|PARTIAL)$/.test(cols[1] ?? ''),
+    `decision row has invalid current state: ${cols[0]}`,
+  );
+  check(
+    Boolean(cols[2]) && (cols[3] ?? '').includes('?'),
+    `decision row missing owner question: ${cols[0]}`,
+  );
+  check(
+    Boolean(cols[4]) && Boolean(cols[5]) && Boolean(cols[6]),
+    `decision row missing behavior/dependency/evidence: ${cols[0]}`,
+  );
+  const linkedRequirements = [...line.matchAll(/REQ-[A-Z]+-\d{3}/g)].map((m) => m[0]);
+  check(linkedRequirements.length > 0, `decision row missing requirement linkage: ${cols[0]}`);
+  for (const id of linkedRequirements)
+    check(idSet.has(id), `decision ${cols[0]} references unknown requirement ${id}`);
+}
+const canonicalIndex = policy.match(/## Canonical index([\s\S]*?)(?=\n## )/)?.[1] ?? '';
+const unresolvedDecisions = new Set();
+for (const line of canonicalIndex.split('\n')) {
+  if (!line.trimStart().startsWith('| PD-')) continue;
+  const cols = line
+    .split('|')
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const id = cols[0]?.match(/PD-\d{2}/)?.[0];
+  if (id && ['OPEN', 'PARTIAL'].includes(cols[3] ?? '')) unresolvedDecisions.add(id);
+}
+for (const id of unresolvedDecisions)
+  check(decisionIds.has(id), `unresolved policy decision ${id} missing from phase-B register`);
+for (const id of decisionIds)
+  check(
+    unresolvedDecisions.has(id),
+    `phase-B register includes non-open/non-partial decision ${id}`,
+  );
+check(decisionRows.length === 33, `expected 33 decision rows, found ${decisionRows.length}`);
+
+const assumptions = (decisions.match(/^\| A026-\d{2} \|/gm) ?? []).length;
+check(assumptions === 5, `expected 5 scoped assumptions, found ${assumptions}`);
+const mappingSection =
+  decisions.match(
+    /## 4\. Extended discipline crosswalk \(traceability only\)([\s\S]*?)(?=\n## 5\.)/,
+  )?.[1] ?? '';
+const mappingRows = mappingSection
+  .split('\n')
+  .filter((line) => /^\| (Requirements Engineering|Product Design|Risk Management)/.test(line));
+check(
+  mappingRows.length === 3,
+  `expected 3 extended discipline mappings, found ${mappingRows.length}`,
+);
+const mappedDomains = new Set();
+for (const line of mappingRows) {
+  const cols = line
+    .split('|')
+    .map((c) => c.trim())
+    .filter(Boolean);
+  check(cols.length === 6, `discipline mapping row has ${cols.length} columns (expected 6)`);
+  for (const m of line.matchAll(/#(\d{1,2})\b/g)) mappedDomains.add(Number(m[1]));
+  const linkedRisks = [...line.matchAll(/RISK-\d{3}/g)].map((m) => m[0]);
+  check(linkedRisks.length > 0, `discipline mapping missing risk linkage: ${cols[0]}`);
+  const knownRiskIds = new Set([...risk.matchAll(/RISK-\d{3}/g)].map((m) => m[0]));
+  for (const id of linkedRisks)
+    check(knownRiskIds.has(id), `discipline mapping references unknown risk ${id}`);
+}
+const expectedMappedDomains = new Set([1, 21, 42, 53, 60, 61, 80]);
+check(
+  [...mappedDomains].sort((a, b) => a - b).join(',') ===
+    [...expectedMappedDomains].sort((a, b) => a - b).join(','),
+  `phase-B discipline crosswalk must use only domains 1,21,42,53,60,61,80; found ${[...mappedDomains].join(',')}`,
+);
+check(
+  /denominator invariant[\s\S]*?80 domains/i.test(decisions),
+  'phase-B mapping must explicitly preserve the 80-domain denominator',
+);
+
 // --- Gap / risk priority matrix --------------------------------------------------
 const gapRows = [];
 for (const line of prio.split('\n')) {
@@ -226,5 +318,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `reconciliation guard: PASS (requirements=${totalRows}, risks=${riskRows.length}, gaps=${gapRows.length}, domains=80)`,
+  `reconciliation guard: PASS (requirements=${totalRows}, risks=${riskRows.length}, gaps=${gapRows.length}, decisions=${decisionRows.length}, assumptions=${assumptions}, mappedDomains=${mappedDomains.size}, domains=80)`,
 );
