@@ -36,14 +36,14 @@
 
 ولا تحتوي SQL schema نهائيًا.
 
-## Current schema reconciliation — 2026-09-18
+## Current schema reconciliation — 2026-09-21
 
-The source migration set contains 29 forward-only files through
-`0029_performance_query_indexes`. The current source head is not the same as
-the live Render applied head (`0018` in the latest read-only evidence). The
-model therefore documents source truth while deployment docs separately record
-provider drift; no pending migration is a production claim until the credential
-rotation and migration gates are open.
+The source migration set contains 33 forward-only files through
+`0033_controlled_document_execution_context`. Applied provider schema identity
+is **NOT VERIFIED** for this candidate. The last recorded Render applied head
+(`0018`) is historical evidence, not a current-state claim. Source migration
+head and provider-applied schema remain separate facts; no pending migration is
+a production claim until the credential-rotation and migration gates are open.
 
 التفصيل النهائي للحقول والأنواع والـvalidation سيكون في:
 
@@ -435,6 +435,12 @@ DISABLED
 | Report Runs                        | Reporting                      |
 | Backup / Restore Metadata          | Backup & Recovery              |
 | AI Interaction Metadata            | AI Advisory                    |
+
+The table-level ownership, lineage, data-classification routing, stewardship,
+and correction-control map for the current source schema is maintained in
+`Documents/DATA-GOVERNANCE-REGISTER-032.md`. It is derived from this model,
+`DOMAIN-MAP.md`, `DATA-DICTIONARY.md`, approved business rules, and migrations;
+it does not grant permissions or close policy/source decisions.
 
 ---
 

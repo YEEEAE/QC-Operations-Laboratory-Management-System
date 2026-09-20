@@ -98,12 +98,13 @@ export class PostgresCapaRepository implements CapaRepository {
         state: next[i.action],
         updated_at: new Date(),
         closed_at: null,
+        version: i.expectedVersion + 1n,
       })
       .where('id', '=', i.id)
       .where('version', '=', i.expectedVersion)
       .returningAll()
       .executeTakeFirst();
-    if (!r) throw new Error('stale');
+    if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     return this.map(r);
   }
 

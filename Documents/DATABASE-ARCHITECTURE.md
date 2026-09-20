@@ -17,13 +17,16 @@
 **Concurrency:** Optimistic versioning first; row locking where justified  
 **Authorization:** Application-layer, server-side; PostgreSQL RLS deferred  
 
-## Current database reconciliation — 2026-09-18
+## Current database reconciliation — 2026-09-21
 
-Source truth is the 29-file migration set ending at
-`0029_performance_query_indexes`. The live Render evidence remains at applied
-head `0018`; migrations `0019`–`0029` are pending and must not be applied until
-the credential-rotation gate is satisfied. Source migration head, applied
-provider head, and release readiness are separate facts.
+Source truth is the 33-file migration set ending at
+`0033_controlled_document_execution_context`. Applied provider schema identity
+is **NOT VERIFIED** for this candidate. The last recorded Render applied head
+(`0018`) is historical evidence; migrations after it are not asserted as
+currently pending without a fresh provider read. Source migration head,
+applied provider head, and release readiness are separate facts. The table
+ownership and correction routing is summarized in
+`Documents/DATA-GOVERNANCE-REGISTER-032.md`.
 
 ---
 

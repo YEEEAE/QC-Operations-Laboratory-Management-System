@@ -3,6 +3,7 @@ import type { DatabaseRow, DatabaseSchema } from '../../../../shared/database/db
 import type { FindingRepository } from '../ports/repository.js';
 import type { Finding, FindingAction } from '../domain/finding.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
+import { AppError } from '../../../../shared/errors/app-error.js';
 export class PostgresFindingRepository implements FindingRepository {
   constructor(private db: Kysely<DatabaseSchema>) {}
   private map(r: DatabaseRow<'findings'>): Finding {
@@ -79,12 +80,13 @@ export class PostgresFindingRepository implements FindingRepository {
         state: next[i.action],
         updated_at: new Date(),
         closed_at: i.action === 'CLOSE' ? new Date() : null,
+        version: i.expectedVersion + 1n,
       })
       .where('id', '=', i.id)
       .where('version', '=', i.expectedVersion)
       .returningAll()
       .executeTakeFirst();
-    if (!r) throw new Error('stale');
+    if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     return this.map(r);
   }
 }

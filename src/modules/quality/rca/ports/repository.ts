@@ -3,7 +3,12 @@ import type { Rca, RcaAction } from '../domain/rca.js';
 export interface RcaRepository {
   get(id: string, actor: ActorContext): Promise<Rca | undefined>;
   list(i: { actor: ActorContext; ncrId?: string }): Promise<readonly Rca[]>;
-  update(i: { rca: Rca; actor: ActorContext; requestId: string }): Promise<Rca>;
+  update(i: {
+    rca: Rca;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+  }): Promise<Rca>;
   transition(i: {
     id: string;
     expectedVersion: bigint;

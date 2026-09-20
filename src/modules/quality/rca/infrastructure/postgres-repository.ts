@@ -3,6 +3,7 @@ import type { DatabaseRow, DatabaseSchema } from '../../../../shared/database/db
 import type { RcaRepository } from '../ports/repository.js';
 import type { Rca, RcaAction } from '../domain/rca.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
+import { AppError } from '../../../../shared/errors/app-error.js';
 export class PostgresRcaRepository implements RcaRepository {
   constructor(private db: Kysely<DatabaseSchema>) {}
   private map(r: DatabaseRow<'rcas'>): Rca {
@@ -44,12 +45,14 @@ export class PostgresRcaRepository implements RcaRepository {
         method: i.rca.method ?? null,
         analysis: i.rca.analysis ?? null,
         root_cause: i.rca.rootCause ?? null,
-        version: i.rca.version,
+        version: i.expectedVersion + 1n,
         updated_at: i.rca.updatedAt,
       })
       .where('id', '=', i.rca.id)
+      .where('version', '=', i.expectedVersion)
       .returningAll()
-      .executeTakeFirstOrThrow();
+      .executeTakeFirst();
+    if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     return this.map(r);
   }
   async transition(i: Parameters<RcaRepository['transition']>[0]) {
@@ -67,12 +70,13 @@ export class PostgresRcaRepository implements RcaRepository {
         updated_at: new Date(),
         submitted_at: i.action === 'SUBMIT' ? new Date() : null,
         approved_at: i.action === 'APPROVE' ? new Date() : null,
+        version: i.expectedVersion + 1n,
       })
       .where('id', '=', i.id)
       .where('version', '=', i.expectedVersion)
       .returningAll()
       .executeTakeFirst();
-    if (!r) throw new Error('stale');
+    if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     return this.map(r);
   }
 }

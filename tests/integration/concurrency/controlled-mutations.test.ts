@@ -23,6 +23,10 @@ import { FinalApproveInspectionUseCase } from '../../../src/modules/quarantine/i
 import { PostgresInspectionRepository } from '../../../src/modules/quarantine/inspection/infrastructure/postgres-repository.js';
 import { ReleaseReceivingUseCase } from '../../../src/modules/quarantine/receiving/application/release-receiving.js';
 import { PostgresReceivingRepository } from '../../../src/modules/quarantine/receiving/infrastructure/postgres-repository.js';
+import { PostgresFindingRepository } from '../../../src/modules/quality/findings/infrastructure/postgres-repository.js';
+import { PostgresNcrRepository } from '../../../src/modules/quality/ncr/infrastructure/postgres-repository.js';
+import { PostgresCapaRepository } from '../../../src/modules/quality/capa/infrastructure/postgres-repository.js';
+import { PostgresRcaRepository } from '../../../src/modules/quality/rca/infrastructure/postgres-repository.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
@@ -126,6 +130,108 @@ const countOutbox = async (dedupeKey: string): Promise<number> =>
   );
 
 describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => {
+  it('advances quality aggregate versions so concurrent same-version transitions cannot both commit', async () => {
+    const findingId = '01900000-0000-7000-8000-00000000b080';
+    const ncrId = '01900000-0000-7000-8000-00000000b081';
+    const capaId = '01900000-0000-7000-8000-00000000b082';
+    const rcaId = '01900000-0000-7000-8000-00000000b083';
+    const rcaDraftId = '01900000-0000-7000-8000-00000000b084';
+    await pool!.query(
+      `INSERT INTO qc.findings (id, finding_no, title, description, state, created_by)
+       VALUES ($1, 'F-CM-001', 'Finding concurrency', 'Task-owned concurrency fixture', 'DRAFT', $2)`,
+      [findingId, AUTHOR_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.ncrs (id, ncr_no, title, description, state, created_by)
+       VALUES ($1, 'NCR-CM-001', 'NCR concurrency', 'Task-owned concurrency fixture', 'DRAFT', $2)`,
+      [ncrId, AUTHOR_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.capas (id, capa_no, state, title, description, verification_required, effectiveness_required, created_by)
+       VALUES ($1, 'CAPA-CM-001', 'DRAFT', 'CAPA concurrency', 'Task-owned concurrency fixture', true, false, $2)`,
+      [capaId, AUTHOR_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.rcas (id, rca_no, ncr_id, state, created_by)
+       VALUES ($1, 'RCA-CM-001', $2, 'DRAFT', $3), ($4, 'RCA-CM-002', $2, 'DRAFT', $3)`,
+      [rcaId, ncrId, AUTHOR_ID, rcaDraftId],
+    );
+
+    const transitions = [
+      () =>
+        new PostgresFindingRepository(db).transition({
+          id: findingId,
+          expectedVersion: 1n,
+          actor: approver(),
+          action: 'OPEN',
+          requestId: 'cm-find-1',
+        }),
+      () =>
+        new PostgresNcrRepository(db).transition({
+          id: ncrId,
+          expectedVersion: 1n,
+          actor: approver(),
+          action: 'OPEN',
+          requestId: 'cm-ncr-1',
+        }),
+      () =>
+        new PostgresCapaRepository(db).transition({
+          id: capaId,
+          expectedVersion: 1n,
+          actor: approver(),
+          action: 'OPEN',
+          requestId: 'cm-capa-1',
+        }),
+      () =>
+        new PostgresRcaRepository(db).transition({
+          id: rcaId,
+          expectedVersion: 1n,
+          actor: approver(),
+          action: 'START',
+          requestId: 'cm-rca-1',
+        }),
+    ];
+    for (const transition of transitions) {
+      const outcomes = await Promise.allSettled([transition(), transition()]);
+      expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+      const rejection = outcomes.find((outcome) => outcome.status === 'rejected');
+      expect((rejection as PromiseRejectedResult).reason).toMatchObject({
+        code: 'CONFLICT_STALE_VERSION',
+      });
+    }
+    const rcaRepository = new PostgresRcaRepository(db);
+    const draftRca = await rcaRepository.get(rcaDraftId, actor(AUTHOR_ID, []));
+    expect(draftRca).toBeDefined();
+    const updateOutcomes = await Promise.allSettled([
+      rcaRepository.update({
+        rca: { ...draftRca!, method: 'method A', version: 2n },
+        expectedVersion: 1n,
+        actor: actor(AUTHOR_ID, []),
+        requestId: 'cm-rca-update-1',
+      }),
+      rcaRepository.update({
+        rca: { ...draftRca!, method: 'method B', version: 2n },
+        expectedVersion: 1n,
+        actor: actor(AUTHOR_ID, []),
+        requestId: 'cm-rca-update-2',
+      }),
+    ]);
+    expect(updateOutcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+    expect(
+      (updateOutcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult)
+        .reason,
+    ).toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    const versions = await pool!.query(
+      `SELECT version FROM qc.findings WHERE id = $1
+       UNION ALL SELECT version FROM qc.ncrs WHERE id = $2
+       UNION ALL SELECT version FROM qc.capas WHERE id = $3
+       UNION ALL SELECT version FROM qc.rcas WHERE id = $4
+       UNION ALL SELECT version FROM qc.rcas WHERE id = $5`,
+      [findingId, ncrId, capaId, rcaId, rcaDraftId],
+    );
+    expect(versions.rows.map((row) => Number(row.version))).toEqual([2, 2, 2, 2, 2]);
+  });
+
   it('executes exactly one of two concurrent receiving releases and never overwrites silently', async () => {
     const id = '01900000-0000-7000-8000-00000000b001';
     await pool!.query(

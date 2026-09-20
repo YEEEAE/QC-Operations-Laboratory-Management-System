@@ -37,6 +37,7 @@ export class UpdateRcaUseCase {
         rootCause: i.rootCause,
         now: this.now(),
       }),
+      expectedVersion: r.version,
       actor: i.actor,
       requestId: i.requestId,
     });
