@@ -31,6 +31,7 @@ describe('object stores', () => {
         calls.push(input);
       },
       getObject: async () => undefined,
+      deleteObject: async () => undefined,
     };
     await new S3ObjectStore(client, 'private-bucket').put('files/a', {
       bytes: new Uint8Array([1]),

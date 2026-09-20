@@ -7,13 +7,11 @@ import type { ObjectStore, StoredObject } from '../../../src/shared/files/object
 class MemoryFiles implements FileRepository {
   files = new Map<string, FileRecord>();
   links = new Map<string, EvidenceLink>();
-  async create(row: FileRecord) {
+  failCreateWithEvidence = false;
+  async createWithEvidence(row: FileRecord, link: EvidenceLink) {
+    if (this.failCreateWithEvidence) throw new Error('database failure');
     this.files.set(row.id, row);
-    return row;
-  }
-  async linkEvidence(row: EvidenceLink) {
-    this.links.set(row.id, row);
-    return row;
+    this.links.set(link.id, link);
   }
   async findById(id: string) {
     return this.files.get(id);
@@ -24,11 +22,16 @@ class MemoryFiles implements FileRepository {
 }
 class MemoryStore implements ObjectStore {
   objects = new Map<string, StoredObject>();
+  failDelete = false;
   async put(key: string, object: StoredObject) {
     this.objects.set(key, object);
   }
   async get(key: string) {
     return this.objects.get(key);
+  }
+  async delete(key: string) {
+    if (this.failDelete) throw new Error('storage failure');
+    this.objects.delete(key);
   }
 }
 
@@ -154,6 +157,7 @@ describe('files and evidence', () => {
       subjectType: 'LAB_TEST',
       subjectId: 'subject-1',
     });
+    expect([...repository.links.keys()]).toContain(uploaded.evidence.id);
 
     await expect(service.downloadByEvidenceId('u1', uploaded.evidence.id)).resolves.toMatchObject({
       file: { id: uploaded.file.id },
@@ -161,5 +165,47 @@ describe('files and evidence', () => {
     await expect(service.downloadByEvidenceId('u1', 'missing-evidence')).rejects.toMatchObject({
       code: 'RESOURCE_NOT_FOUND',
     });
+  });
+
+  it('compensates the private object when atomic metadata and evidence persistence fails', async () => {
+    const repository = new MemoryFiles();
+    repository.failCreateWithEvidence = true;
+    const store = new MemoryStore();
+    const service = new FileService(repository, store, async () => undefined);
+
+    await expect(
+      service.upload({
+        originalFilename: 'evidence.txt',
+        mimeType: 'text/plain',
+        bytes: new TextEncoder().encode('evidence'),
+        uploadedBy: 'u1',
+        subjectType: 'LAB_TEST',
+        subjectId: 'test-1',
+      }),
+    ).rejects.toThrow('database failure');
+    expect(store.objects.size).toBe(0);
+    expect(repository.files.size).toBe(0);
+    expect(repository.links.size).toBe(0);
+  });
+
+  it('surfaces failed object compensation without replacing it with a false rollback result', async () => {
+    const repository = new MemoryFiles();
+    repository.failCreateWithEvidence = true;
+    const store = new MemoryStore();
+    store.failDelete = true;
+    const service = new FileService(repository, store, async () => undefined);
+
+    await expect(
+      service.upload({
+        originalFilename: 'evidence.txt',
+        mimeType: 'text/plain',
+        bytes: new TextEncoder().encode('evidence'),
+        uploadedBy: 'u1',
+        subjectType: 'LAB_TEST',
+        subjectId: 'test-1',
+      }),
+    ).rejects.toBeInstanceOf(AggregateError);
+    expect(repository.files.size).toBe(0);
+    expect(repository.links.size).toBe(0);
   });
 });

@@ -123,7 +123,7 @@ export class FileService {
     const fileId = uuidv7();
     const storageKey = `files/${fileId}`;
     await this.store.put(storageKey, { bytes: input.bytes, contentType: input.mimeType });
-    const file = await this.repository.create({
+    const file: FileRecord = {
       id: fileId,
       originalFilename: input.originalFilename,
       storageKey,
@@ -135,8 +135,8 @@ export class FileService {
       uploadedBy: input.uploadedBy,
       uploadedAt: new Date(),
       state: 'ACTIVE',
-    });
-    const evidence = await this.repository.linkEvidence({
+    };
+    const evidence: EvidenceLink = {
       id: uuidv7(),
       fileId,
       subjectType: input.subjectType,
@@ -145,7 +145,25 @@ export class FileService {
       ...(input.description ? { description: input.description } : {}),
       linkedBy: input.uploadedBy,
       linkedAt: new Date(),
-    });
+    };
+    try {
+      await this.repository.createWithEvidence(file, evidence);
+    } catch (error) {
+      // The object is private and has no committed metadata/link yet. Attempt
+      // compensation without hiding the original database failure.
+      try {
+        await this.store.delete(storageKey);
+      } catch (cleanupError) {
+        // Preserve both failures so an orphan cannot be mistaken for a fully
+        // handled rollback. The caller still receives a sanitized boundary error.
+        throw new AggregateError(
+          [error, cleanupError],
+          'File persistence failed and temporary object cleanup also failed.',
+          { cause: cleanupError },
+        );
+      }
+      throw error;
+    }
     return { file, evidence };
   }
 

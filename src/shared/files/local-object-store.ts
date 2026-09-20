@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { AppError } from '../errors/app-error';
 import type { ObjectStore, StoredObject } from './object-store';
@@ -41,5 +41,10 @@ export class LocalObjectStore implements ObjectStore {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
       throw error;
     }
+  }
+
+  async delete(key: string): Promise<void> {
+    const path = safePath(this.root, key);
+    await Promise.all([rm(path, { force: true }), rm(`${path}.content-type`, { force: true })]);
   }
 }

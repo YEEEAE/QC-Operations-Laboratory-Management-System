@@ -32,44 +32,40 @@ const toLink = (r: DatabaseRow<'evidence_links'>): EvidenceLink => ({
 
 export class PostgresFileRepository implements FileRepository {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
-  async create(record: FileRecord): Promise<FileRecord> {
-    const row = await this.database
-      .insertInto('files')
-      .values({
-        id: record.id,
-        original_filename: record.originalFilename,
-        storage_key: record.storageKey,
-        storage_provider: record.storageProvider,
-        mime_type: record.mimeType,
-        extension: record.extension ?? null,
-        size_bytes: record.sizeBytes,
-        sha256: record.sha256,
-        uploaded_by: record.uploadedBy,
-        uploaded_at: record.uploadedAt,
-        state: record.state,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return toFile(row);
-  }
-  async linkEvidence(link: EvidenceLink): Promise<EvidenceLink> {
-    const row = await this.database
-      .insertInto('evidence_links')
-      .values({
-        id: link.id ?? uuidv7(),
-        file_id: link.fileId,
-        subject_type: link.subjectType,
-        subject_id: link.subjectId,
-        evidence_type: link.evidenceType ?? null,
-        description: link.description ?? null,
-        linked_by: link.linkedBy,
-        linked_at: link.linkedAt,
-        removed_at: link.removedAt ?? null,
-        removal_reason: link.removalReason ?? null,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return toLink(row);
+  async createWithEvidence(record: FileRecord, link: EvidenceLink): Promise<void> {
+    await this.database.transaction().execute(async (trx) => {
+      await trx
+        .insertInto('files')
+        .values({
+          id: record.id,
+          original_filename: record.originalFilename,
+          storage_key: record.storageKey,
+          storage_provider: record.storageProvider,
+          mime_type: record.mimeType,
+          extension: record.extension ?? null,
+          size_bytes: record.sizeBytes,
+          sha256: record.sha256,
+          uploaded_by: record.uploadedBy,
+          uploaded_at: record.uploadedAt,
+          state: record.state,
+        })
+        .execute();
+      await trx
+        .insertInto('evidence_links')
+        .values({
+          id: link.id ?? uuidv7(),
+          file_id: link.fileId,
+          subject_type: link.subjectType,
+          subject_id: link.subjectId,
+          evidence_type: link.evidenceType ?? null,
+          description: link.description ?? null,
+          linked_by: link.linkedBy,
+          linked_at: link.linkedAt,
+          removed_at: link.removedAt ?? null,
+          removal_reason: link.removalReason ?? null,
+        })
+        .execute();
+    });
   }
   async findById(id: string) {
     const row = await this.database

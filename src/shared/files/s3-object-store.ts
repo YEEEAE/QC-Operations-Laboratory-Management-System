@@ -9,6 +9,7 @@ export interface S3CompatibleClient {
     acl: 'private';
   }): Promise<void>;
   getObject(input: { bucket: string; key: string }): Promise<StoredObject | undefined>;
+  deleteObject(input: { bucket: string; key: string }): Promise<void>;
 }
 
 export class S3ObjectStore implements ObjectStore {
@@ -27,5 +28,8 @@ export class S3ObjectStore implements ObjectStore {
   }
   get(key: string): Promise<StoredObject | undefined> {
     return this.client.getObject({ bucket: this.bucket, key });
+  }
+  delete(key: string): Promise<void> {
+    return this.client.deleteObject({ bucket: this.bucket, key });
   }
 }

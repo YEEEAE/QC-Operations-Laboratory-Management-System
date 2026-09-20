@@ -46,6 +46,9 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
+      - name: Dependency vulnerability audit
+        run: pnpm audit --audit-level high
+
       - name: Format
         run: pnpm format:check
 
