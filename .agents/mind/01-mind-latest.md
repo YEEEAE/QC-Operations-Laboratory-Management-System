@@ -5,6 +5,12 @@
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
 ## Current audit reality — 2026-09-18
+- **2026-09-20 — QC-100-FINAL-027-A / عقود جودة الاختبار الأساسية (candidate `2f0cfeff2d5f70d8a8b17b0cfedf07408ece70fd`, fingerprint `d8fe4e18a2686f1ec0e44828bbdd1d627c0dc2324e8b9c101fdf82d259eeb659`)**
+  - Changed: عزل cleanup للـunit globals، clock/random وfixture IDs حتمية، وعقود رفض الصلاحية على مستوى action/use case بلا كتابة؛ تقرير item-by-item.
+  - Evidence: unit 105/785 PASS، build/release identity محلي PASS؛ PostgreSQL contracts BLOCKED لعدم توفر container/`QC_TEST_DATABASE_URL`؛ typecheck وarchitecture gate FAIL كما بالتقرير.
+  - State: PARTIAL؛ 027-B يحتاج هدف PostgreSQL disposable للتحقق من عزل 21 reset sites وتشغيل عقود DB؛ E2E 003، accessibility 006/040، ومصالحة 012 تبقى مطلوبة. denominator 80 وgates 0/19 دون تغيير.
+  - Key files: `audit/2026-09-20/QC-100-FINAL-027-A-quality-engineering-core-contracts.md`.
+
 - **2026-09-20 — Mind rollover (QC-100-FINAL-026):** تجاوز `01` الحد الصلب (121,894 بايت)؛ نُقلت أقدم سجلات 2026-09-18 إلى أعلى `02-mind-mid.md` بعد التحقق من غيابها فيه، مع تثبيت ثوابت `NO-GO`/gates وانحراف Render في أقسام الحالة الحالية. لم تُمس القرارات الحالية ولا الـinvariants ولا المشاكل المفتوحة. الحالة: DONE.
 
 - **2026-09-20 — QC-100-FINAL-026-B / تكامل سجل القرار والدليل الفني (مرشح `802de981a6dcaf9a4bde7ed6fa155c23b7726ee3`، بصمة التنفيذ `43771dc773e7cf2a73a3851ff9cea3298c19b57ceaad6e7df665c32fc4ff4c27`)**
@@ -382,6 +388,7 @@
 - read models المطلوبة لاستكمال لوحة القيادة (QC-100-FINAL-017): **DONE 2026-09-20** bounded lab workload مع state/ownership filter (KPI `lab-tests-returned` + readiness read)؛ **DONE 2026-09-20 (022)** عدّادا `tasks-assigned` (`open`) و`tasks-on-hold` وفلتر `open` خادميًا في سجل المهام — فالعمل المُسنَد صار مرئيًا حتى بلا تاريخ استحقاق، والعمل المحجوز له عدّاد مسجّل بدل استنتاج؛ **متبقٍ لـ017-B:** document review queue (لا يوجد read model لطابور المراجعة في وحدة documents)، quality ownership filters (سجلات findings/NCR/RCA/CAPA تدعم state فقط)، وblocked reason كنصّ حرّ (لا حقل في المخطط؛ إدخال audit لكل انتقال)، وreject analytics معلّق على قرار نطاق (النموذج يجمّع globally و`/reject-reports` مصرّح `authenticated` لا permission-bound، فنشر تجميعة عامة على سطح scope-aware ممنوع). بدونها تبقى هذه المنتجات `NOT_SUPPLIED` معلنة بأسباب تسمّي المصدر والمالك، ولا تُقدَّر بأرقام.
 - **مكتشف 2026-09-19 (QC-100-FINAL-002):** ست صفحات `.astro` محفوظة كسطر مضغوط واحد (`assets/equipment|[calibrationId]|[maintenanceId]` + `laboratory/tests/[labTestId]/{review,index,execute}`) ولا بوابة تكشفها (Prettier لا ينسّق `.astro`)؛ تحتاج إعادة تنسيق محافظة على المخرجات. كذلك `.env` المحلي يضبط `NODE_ENV=production` فيرفض كل CLI قاعدة بيانات العمل محليًا حتى تتوفر `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` أو يُتجاوَز NODE_ENV، و`audit/**` داخل نطاق Prettier العام، و`.tmp-check/check-bundles.ts` ملف scratch متتبَّع.
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
+- **QC-100-FINAL-027-A audit (2026-09-20):** 21 integration location explicitly resets shared `qc` schema and trusts its configured target to be disposable; current QC_TEST_DATABASE_URL/container runtime unavailable, so disposable-target isolation and PostgreSQL API denial/authorized paths remain NOT VERIFIED/BLOCKED for 027-B. `pnpm test:architecture` reports pre-existing direct DB/infrastructure imports in NCR/CAPA detail routes; see QC-100-FINAL-027-A audit report.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
 - provider backup/PITR/WAL/object-store DR and approved RPO/RTO validation; QC-100-FINAL-008 verifies the local populated archive bundle and isolated restore, while application backup-catalog integration remains open.

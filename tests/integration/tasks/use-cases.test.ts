@@ -72,4 +72,23 @@ describe('Tasks use cases', () => {
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
   });
+
+  it('denies task creation without create permission before writing', async () => {
+    const repository = repo();
+    const actorWithoutCreate: ActorContext = {
+      ...actor,
+      permissions: [{ code: 'PERM-TASK-COMPLETE', scopes: ['OWN'] }],
+    };
+
+    expect(() =>
+      new CreateTaskUseCase(repository).execute({
+        actor: actorWithoutCreate,
+        taskNo: 'TASK-DENIED-CREATE',
+        title: 'Must not be persisted',
+        priority: 'HIGH',
+        requestId: 'denied-create',
+      }),
+    ).toThrow(expect.objectContaining({ code: 'AUTHZ_PERMISSION_MISSING' }));
+    expect(repository.task).toBeUndefined();
+  });
 });

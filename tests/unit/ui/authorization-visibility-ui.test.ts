@@ -52,7 +52,7 @@ describe('authorization visibility presentation contract', () => {
     expect(detail).toContain("const canExecute = test.state === 'DRAFT'");
     expect(detail).toContain("const canReview = ['SUBMITTED', 'UNDER_REVIEW']");
     expect(detail).not.toMatch(/href=\{`\/laboratory\/tests\/\$\{test\.id\}\/retests\/new`\}/);
-    expect(detail).toContain('approved laboratory retest policy');
+    expect(detail).toContain('Retest authorization follows the approved P-05 policy');
     expect(execute).toContain('explicit laboratory submission permission');
   });
 });

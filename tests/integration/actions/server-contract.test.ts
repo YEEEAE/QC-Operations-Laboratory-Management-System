@@ -213,4 +213,24 @@ describe('actions authorized path on a disposable database', () => {
     expect(outcome.data?.taskNo).toBe('TASK-CONTRACT-1');
     expect(outcome.data?.state).toBe('DRAFT');
   });
+
+  it('rejects an authenticated caller without task-create permission before writing', async () => {
+    const context = actionContext({
+      id: PROBE_ACTOR_ID,
+      accountState: 'ACTIVE',
+      roles: ['EMPLOYEE'],
+      permissions: [],
+    });
+    const outcome = await (
+      server.tasks.createTask as unknown as (input: unknown) => Promise<{
+        data?: unknown;
+        error?: unknown;
+      }>
+    ).bind(context)({ taskNo: 'TASK-ACTION-DENIED', title: 'Denied probe', priority: 'HIGH' });
+
+    expect(outcome.data).toBeUndefined();
+    expect(outcome.error).toBeInstanceOf(ActionError);
+    expect((outcome.error as ActionError).code).toBe('BAD_REQUEST');
+    expect((outcome.error as ActionError).message).toBe('errors.authz_permission_missing');
+  });
 });
