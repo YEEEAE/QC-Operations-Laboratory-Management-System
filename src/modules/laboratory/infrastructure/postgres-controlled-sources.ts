@@ -46,6 +46,27 @@ export class PostgresControlledLabSources implements ControlledLabSources {
       .where('template_version_id', '=', version.id)
       .orderBy('position')
       .execute();
+    const linkedDocuments = await this.database
+      .selectFrom('lab_test_template_document_sources as source')
+      .innerJoin('document_versions as version', 'version.id', 'source.document_version_id')
+      .innerJoin('document_identities as identity', 'identity.id', 'version.document_id')
+      .select([
+        'source.document_version_id as documentVersionId',
+        'source.usage_type as usageType',
+        'identity.document_no as documentNo',
+        'identity.document_type as documentType',
+        'identity.title as title',
+        'version.revision as revision',
+        'version.effective_at as effectiveAt',
+        'version.content_hash as contentHash',
+        'version.state as state',
+      ])
+      .where('source.template_version_id', '=', version.id)
+      .orderBy('identity.document_no')
+      .orderBy('version.id')
+      .execute();
+    if (linkedDocuments.some((document) => document.state !== 'EFFECTIVE'))
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     if (
       !parameters.length ||
       parameters.some(
@@ -66,7 +87,18 @@ export class PostgresControlledLabSources implements ControlledLabSources {
         versionNo: version.version_no,
         contentHash: version.content_hash,
       },
-      documents: [],
+      documents: linkedDocuments.map((document) => ({
+        documentVersionId: document.documentVersionId,
+        usageType: document.usageType,
+        snapshot: {
+          documentNo: document.documentNo,
+          documentType: document.documentType,
+          title: document.title,
+          revision: document.revision,
+          effectiveAt: document.effectiveAt?.toISOString() ?? null,
+          contentHash: document.contentHash,
+        },
+      })),
       equipment: [],
       parameters: parameters.map((parameter) => ({
         id: parameter.id,

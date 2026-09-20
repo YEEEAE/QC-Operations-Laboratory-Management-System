@@ -440,8 +440,25 @@ export interface InspectionReportSnapshotsTable {
   template_snapshot: unknown;
   controlled_source_snapshot: unknown | null;
   criteria_snapshot: unknown | null;
+  results_snapshot: unknown;
   created_at: Generated<Date>;
   snapshot_hash: string;
+}
+export interface InspectionTemplateDocumentSourcesTable {
+  id: Generated<string>;
+  template_version_id: string;
+  document_version_id: string;
+  usage_type: string;
+  linked_by: string;
+  linked_at: Generated<Date>;
+}
+export interface LabTestTemplateDocumentSourcesTable {
+  id: Generated<string>;
+  template_version_id: string;
+  document_version_id: string;
+  usage_type: string;
+  linked_by: string;
+  linked_at: Generated<Date>;
 }
 export interface LabTestTemplatesTable {
   id: Generated<string>;
@@ -1140,6 +1157,7 @@ export interface DatabaseSchema {
   inspection_reports: InspectionReportsTable;
   inspection_report_results: InspectionReportResultsTable;
   inspection_report_snapshots: InspectionReportSnapshotsTable;
+  inspection_template_document_sources: InspectionTemplateDocumentSourcesTable;
   lab_test_templates: LabTestTemplatesTable;
   lab_test_template_versions: LabTestTemplateVersionsTable;
   lab_test_template_parameters: LabTestTemplateParametersTable;
@@ -1149,6 +1167,7 @@ export interface DatabaseSchema {
   lab_test_snapshots: LabTestSnapshotsTable;
   lab_equipment_usage: LabEquipmentUsageTable;
   lab_document_usage: LabDocumentUsageTable;
+  lab_test_template_document_sources: LabTestTemplateDocumentSourcesTable;
   findings: FindingsTable;
   ncrs: NcrsTable;
   rcas: RcasTable;

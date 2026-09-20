@@ -2,7 +2,7 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current source head is `0032_document_version_file_integrity` (32 migration
+Current source head is `0033_controlled_document_execution_context` (33 migration
 files). Historical documentation freezes may cite earlier source heads. The latest provider
 evidence separately reports Render applied head `0018`; this is migration drift,
 not a reason to rewrite history or to claim production parity. Pending provider

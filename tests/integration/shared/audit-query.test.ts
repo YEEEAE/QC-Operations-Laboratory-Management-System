@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AuditQueryService,
+  mapAuditRowToView,
   type AuditQuery,
   type AuditQueryFilter,
   type AuditQueryResult,
@@ -53,5 +54,32 @@ describe('explicit-permission audit query', () => {
     await expect(
       new AuditQueryService(repository).list({ ...actor([]), roles: ['ADMIN'] }, {}),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+  });
+
+  it('projects allowlisted audit fields and structurally drops the raw payload', () => {
+    const projected = mapAuditRowToView({
+      id: 'event-2',
+      event_no: 2n,
+      occurred_at: new Date('2026-09-21T00:00:00Z'),
+      actor_type: 'USER',
+      actor_id: 'u1',
+      subject_type: 'DOCUMENT_VERSION',
+      subject_id: 'doc-version-1',
+      action: 'CORRECT',
+      old_state: 'EFFECTIVE',
+      new_state: 'SUPERSEDED',
+      reason: 'Authorized correction with retained history',
+      request_id: 'req-correction',
+      signature_id: null,
+      payload: { secret: 'must-not-escape' },
+    } as Parameters<typeof mapAuditRowToView>[0]);
+    expect(projected).toMatchObject({
+      subjectType: 'DOCUMENT_VERSION',
+      action: 'CORRECT',
+      oldState: 'EFFECTIVE',
+      newState: 'SUPERSEDED',
+    });
+    expect(projected).not.toHaveProperty('payload');
+    expect(Object.values(projected).join(' ')).not.toContain('must-not-escape');
   });
 });

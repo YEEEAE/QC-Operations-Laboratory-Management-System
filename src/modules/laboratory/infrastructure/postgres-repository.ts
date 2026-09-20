@@ -290,7 +290,7 @@ export class PostgresLabRepository implements LabRepository {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     }
     return this.db.transaction().execute(async (tx) => {
-      if (!previous)
+      if (!previous) {
         await tx
           .insertInto('lab_tests')
           .values({
@@ -317,7 +317,23 @@ export class PostgresLabRepository implements LabRepository {
             version: next.version,
           })
           .execute();
-      else {
+        if (next.context.documents.length)
+          await tx
+            .insertInto('lab_document_usage')
+            .values(
+              next.context.documents.map((document) => ({
+                lab_test_id: next.id,
+                document_version_id: document.documentVersionId,
+                usage_type: document.usageType,
+                document_snapshot: stableJson({
+                  documentVersionId: document.documentVersionId,
+                  usageType: document.usageType,
+                  ...document.snapshot,
+                }),
+              })),
+            )
+            .execute();
+      } else {
         const changed = await tx
           .updateTable('lab_tests')
           .set({

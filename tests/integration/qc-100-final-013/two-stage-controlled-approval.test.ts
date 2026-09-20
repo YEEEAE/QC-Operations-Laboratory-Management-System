@@ -414,6 +414,26 @@ async function seedInspection(options: {
        VALUES ($1, 'INSPECTION_REPORT', $2, 'INSPECTION_EVIDENCE', $3)`,
       [fileId, options.reportId, authorId],
     );
+    if (options.state === 'SUBMITTED') {
+      const snapshot = await pool!.query(
+        `INSERT INTO qc.inspection_report_snapshots
+           (inspection_report_id, snapshot_version, snapshot_stage, receiving_snapshot, template_snapshot,
+            controlled_source_snapshot, criteria_snapshot, results_snapshot, snapshot_hash)
+         VALUES ($1, $2, 'SUBMISSION', '{}'::jsonb, $3::jsonb, '[]'::jsonb, '[]'::jsonb, $4::jsonb, $5)
+         RETURNING id`,
+        [
+          options.reportId,
+          options.version ?? 3,
+          JSON.stringify({ templateVersionId: versionId }),
+          JSON.stringify([{ pointId, value: 'recorded by the author' }]),
+          `seed-submission-${options.tag}`,
+        ],
+      );
+      await pool!.query(`UPDATE qc.inspection_reports SET snapshot_id = $2 WHERE id = $1`, [
+        options.reportId,
+        snapshot.rows[0]!.id,
+      ]);
+    }
   }
   return { reportId: options.reportId, receivingId, templateVersionId: versionId };
 }
@@ -628,10 +648,21 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       requestId: 'f013-insp-resume-e12',
     });
     expect((await record('inspection_reports', reportId)).state).toBe('DRAFT');
-    await new SubmitInspectionUseCase(inspectionRepository()).execute({
+    const returnedDraft = await inspectionRepository().get(reportId, author());
+    await new SaveInspectionDraftUseCase(inspectionRepository()).execute({
       actor: author(),
       id: reportId,
       expectedVersion: 9n,
+      results: (returnedDraft?.results ?? []).map((result) => ({
+        ...result,
+        value: 'corrected by the author',
+      })),
+      requestId: 'f013-insp-correct-e12',
+    });
+    await new SubmitInspectionUseCase(inspectionRepository()).execute({
+      actor: author(),
+      id: reportId,
+      expectedVersion: 10n,
       requestId: 'f013-insp-resubmit-e12',
     });
     expect((await record('inspection_reports', reportId)).state).toBe('SUBMITTED');
@@ -639,26 +670,38 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
     await new ReviewInspectionUseCase(inspectionRepository()).execute({
       actor: supervisor(),
       id: reportId,
-      expectedVersion: 10n,
+      expectedVersion: 11n,
       requestId: 'f013-insp-review2-e12',
     });
     await new ApproveInspectionUseCase(inspectionRepository()).execute({
       actor: supervisor(),
       id: reportId,
-      expectedVersion: 11n,
+      expectedVersion: 12n,
       requestId: 'f013-insp-stage1b-e12',
     });
     await new FinalApproveInspectionUseCase(inspectionRepository(), ceremony()).execute({
       actor: qcm(),
       id: reportId,
-      expectedVersion: 12n,
+      expectedVersion: 13n,
       reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-final-e12',
     });
     expect(await record('inspection_reports', reportId)).toMatchObject({
       state: 'APPROVED',
-      version: '13',
+      version: '14',
     });
+    const executionHistory = await pool!.query(
+      `SELECT results_snapshot FROM qc.inspection_report_snapshots
+       WHERE inspection_report_id = $1 AND snapshot_stage = 'SUBMISSION' ORDER BY snapshot_version`,
+      [reportId],
+    );
+    expect(executionHistory.rows).toHaveLength(2);
+    expect(executionHistory.rows[0]?.results_snapshot).toMatchObject([
+      { pointId: expect.any(String), value: 'recorded by the author' },
+    ]);
+    expect(executionHistory.rows[1]?.results_snapshot).toMatchObject([
+      { value: 'corrected by the author' },
+    ]);
     // The whole correction cycle produced exactly one binding signature, on the
     // final approval, and one audit row per controlled transition.
     expect(await signatures(reportId)).toHaveLength(1);

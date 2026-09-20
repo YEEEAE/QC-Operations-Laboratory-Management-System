@@ -303,12 +303,55 @@ export class PostgresInspectionRepository implements InspectionRepository {
             version: 1n,
           })
           .execute();
-        const templateSnapshot = {
+        const templateSnapshot: Record<string, unknown> = {
           ...x.template.templateSnapshot,
           templateId: x.template.templateId,
           templateVersionId: x.template.templateVersionId,
           versionNo: x.template.versionNo,
         };
+        const controlledSources = await tx
+          .selectFrom('inspection_template_document_sources as source')
+          .innerJoin('document_versions as version', 'version.id', 'source.document_version_id')
+          .innerJoin('document_identities as identity', 'identity.id', 'version.document_id')
+          .select([
+            'source.document_version_id as documentVersionId',
+            'source.usage_type as usageType',
+            'identity.document_no as documentNo',
+            'identity.document_type as documentType',
+            'identity.title as title',
+            'version.revision as revision',
+            'version.effective_at as effectiveAt',
+            'version.content_hash as contentHash',
+            'version.state as state',
+          ])
+          .where('source.template_version_id', '=', x.template.templateVersionId)
+          .orderBy('identity.document_no')
+          .orderBy('version.id')
+          .execute();
+        if (controlledSources.some((source) => source.state !== 'EFFECTIVE'))
+          throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        const criteria = await tx
+          .selectFrom('inspection_template_sections as section')
+          .innerJoin('inspection_template_points as point', 'point.section_id', 'section.id')
+          .select([
+            'section.section_code as sectionCode',
+            'section.title as sectionTitle',
+            'point.id as pointId',
+            'point.point_code as pointCode',
+            'point.label as label',
+            'point.requirement_text as requirementText',
+            'point.data_type as dataType',
+            'point.unit as unit',
+            'point.required as required',
+            'point.acceptance_rule_type as acceptanceRuleType',
+            'point.acceptance_rule_payload as acceptanceRulePayload',
+            'point.source_reference as sourceReference',
+          ])
+          .where('section.template_version_id', '=', x.template.templateVersionId)
+          .orderBy('section.position')
+          .orderBy('point.position')
+          .execute();
+        templateSnapshot.controlledDocumentVersions = controlledSources;
         const snapshot = await tx
           .insertInto('inspection_report_snapshots')
           .values({
@@ -318,10 +361,21 @@ export class PostgresInspectionRepository implements InspectionRepository {
             snapshot_stage: 'CREATION',
             receiving_snapshot: stableJson(x.receiving),
             template_snapshot: stableJson(templateSnapshot),
-            controlled_source_snapshot: null,
-            criteria_snapshot: null,
+            controlled_source_snapshot: stableJson(controlledSources),
+            criteria_snapshot: stableJson(criteria),
+            results_snapshot: stableJson([]),
             created_at: new Date(x.createdAt),
-            snapshot_hash: createHash('sha256').update(stableJson(templateSnapshot)).digest('hex'),
+            snapshot_hash: createHash('sha256')
+              .update(
+                stableJson({
+                  receiving: x.receiving,
+                  template: templateSnapshot,
+                  controlledSources,
+                  criteria,
+                  results: [],
+                }),
+              )
+              .digest('hex'),
           })
           .returning('id')
           .executeTakeFirstOrThrow();
@@ -443,6 +497,31 @@ export class PostgresInspectionRepository implements InspectionRepository {
         if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         if (i.action === 'FINAL_APPROVE') await insertSignatureEvidence(tx, i.signatureEvidence!);
         if (i.action === 'SUBMIT') {
+          const creationSnapshot = await tx
+            .selectFrom('inspection_report_snapshots')
+            .select(['controlled_source_snapshot', 'criteria_snapshot'])
+            .where('inspection_report_id', '=', i.id)
+            .where('snapshot_stage', '=', 'CREATION')
+            .orderBy('snapshot_version')
+            .executeTakeFirst();
+          const resultsSnapshot = old.results.map((entry) => ({
+            id: entry.id,
+            pointId: entry.pointId,
+            value: entry.value,
+            unit: entry.unit ?? null,
+            result: entry.result ?? null,
+            remarks: entry.remarks ?? null,
+            version: String(entry.version),
+          }));
+          const controlledSources = creationSnapshot?.controlled_source_snapshot ?? [];
+          const criteria = creationSnapshot?.criteria_snapshot ?? [];
+          const submission = {
+            receiving: old.receiving,
+            template: old.template.templateSnapshot,
+            controlledSources,
+            criteria,
+            results: resultsSnapshot,
+          };
           const snapshot = await tx
             .insertInto('inspection_report_snapshots')
             .values({
@@ -452,10 +531,11 @@ export class PostgresInspectionRepository implements InspectionRepository {
               snapshot_stage: 'SUBMISSION',
               receiving_snapshot: old.receiving,
               template_snapshot: old.template.templateSnapshot,
-              controlled_source_snapshot: null,
-              criteria_snapshot: null,
+              controlled_source_snapshot: stableJson(controlledSources),
+              criteria_snapshot: stableJson(criteria),
+              results_snapshot: stableJson(resultsSnapshot),
               created_at: now,
-              snapshot_hash: `inspection:${i.id}:v${i.expectedVersion}`,
+              snapshot_hash: createHash('sha256').update(stableJson(submission)).digest('hex'),
             })
             .returningAll()
             .executeTakeFirstOrThrow();

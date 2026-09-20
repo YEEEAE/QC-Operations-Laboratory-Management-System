@@ -74,20 +74,41 @@ afterAll(async () => {
 async function seedApprovedTemplate(): Promise<string> {
   const templateId = crypto.randomUUID();
   const versionId = crypto.randomUUID();
+  const documentId = crypto.randomUUID();
+  const documentVersionId = crypto.randomUUID();
+  const documentNo = `WI-${crypto.randomUUID()}`;
   await pool!.query(
     `INSERT INTO qc.lab_test_templates (id, test_code, name, active, created_by) VALUES ($1, $2, $3, true, $4)`,
     [templateId, `TPL-${crypto.randomUUID()}`, 'Test-only governed template', AUTHOR_ID],
   );
   await pool!.query(
     `INSERT INTO qc.lab_test_template_versions (id, template_id, version_no, state, method_reference, content_hash, created_by)
-     VALUES ($1, $2, 'v1', 'APPROVED', 'TEST-ONLY-METHOD', $3, $4)`,
+     VALUES ($1, $2, 'v1', 'DRAFT', 'TEST-ONLY-METHOD', $3, $4)`,
     [versionId, templateId, 'a'.repeat(64), AUTHOR_ID],
   );
   await pool!.query(
-    `INSERT INTO qc.lab_test_template_parameters (id, template_version_id, parameter_code, label, data_type, unit, required, position, acceptance_rule_payload, controlled_source_reference)
-     VALUES ($1, $2, 'obs', 'Observation', 'NUMERIC', 'mg', true, 1, $3::jsonb, 'TEST-ONLY-SOURCE')`,
-    [crypto.randomUUID(), versionId, JSON.stringify({ reference: 'fixture-only' })],
+    `INSERT INTO qc.document_identities (id, document_no, document_type, title, active, created_by)
+     VALUES ($1, $2, 'WI', 'Fixture controlled work instruction', true, $3)`,
+    [documentId, documentNo, AUTHOR_ID],
   );
+  await pool!.query(
+    `INSERT INTO qc.document_versions (id, document_id, revision, state, effective_at, content_hash, created_by)
+     VALUES ($1, $2, '7', 'EFFECTIVE', CURRENT_TIMESTAMP, $3, $4)`,
+    [documentVersionId, documentId, 'document-content-hash-v7', AUTHOR_ID],
+  );
+  await pool!.query(
+    `INSERT INTO qc.lab_test_template_document_sources (template_version_id, document_version_id, usage_type, linked_by)
+     VALUES ($1, $2, 'WI', $3)`,
+    [versionId, documentVersionId, AUTHOR_ID],
+  );
+  await pool!.query(
+    `INSERT INTO qc.lab_test_template_parameters (id, template_version_id, parameter_code, label, data_type, unit, required, position, acceptance_rule_payload, controlled_source_reference)
+     VALUES ($1, $2, 'obs', 'Observation', 'NUMERIC', 'mg', true, 1, $3::jsonb, $4)`,
+    [crypto.randomUUID(), versionId, JSON.stringify({ reference: 'fixture-only' }), documentNo],
+  );
+  await pool!.query(`UPDATE qc.lab_test_template_versions SET state = 'APPROVED' WHERE id = $1`, [
+    versionId,
+  ]);
   return versionId;
 }
 
@@ -193,6 +214,60 @@ describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
       action: 'REJECT',
       state: 'REJECTED',
     });
+  });
+
+  it('freezes linked WI revision and hash in execution rows when the document is superseded', async () => {
+    const templateVersionId = await seedApprovedTemplate();
+    const testId = await seedUnderReviewTest(templateVersionId);
+    const context = await new PostgresControlledLabSources(db).resolve(templateVersionId);
+    expect(context.documents).toHaveLength(1);
+    expect(context.documents[0]).toMatchObject({
+      usageType: 'WI',
+      snapshot: { revision: '7', contentHash: 'document-content-hash-v7' },
+    });
+    const linkedBefore = await pool!.query(
+      `SELECT usage.document_version_id, usage.usage_type, usage.document_snapshot,
+              snapshot.document_snapshot AS execution_snapshot
+       FROM qc.lab_document_usage usage
+       JOIN qc.lab_test_snapshots snapshot ON snapshot.lab_test_id = usage.lab_test_id
+       WHERE usage.lab_test_id = $1 ORDER BY snapshot.snapshot_version DESC LIMIT 1`,
+      [testId],
+    );
+    expect(linkedBefore.rows[0]?.document_snapshot).toMatchObject({
+      revision: '7',
+      contentHash: 'document-content-hash-v7',
+    });
+
+    const oldDocumentVersionId = context.documents[0]!.documentVersionId;
+    const newDocumentVersionId = crypto.randomUUID();
+    const oldVersion = await pool!.query(
+      `SELECT document_id FROM qc.document_versions WHERE id = $1`,
+      [oldDocumentVersionId],
+    );
+    await pool!.query(`UPDATE qc.document_versions SET state = 'SUPERSEDED' WHERE id = $1`, [
+      oldDocumentVersionId,
+    ]);
+    await pool!.query(
+      `INSERT INTO qc.document_versions (id, document_id, revision, state, effective_at, content_hash, created_by)
+       VALUES ($1, $2, '8', 'EFFECTIVE', CURRENT_TIMESTAMP, 'document-content-hash-v8', $3)`,
+      [newDocumentVersionId, oldVersion.rows[0]!.document_id, AUTHOR_ID],
+    );
+    const linkedAfter = await pool!.query(
+      `SELECT usage.document_version_id, usage.document_snapshot,
+              snapshot.document_snapshot AS execution_snapshot
+       FROM qc.lab_document_usage usage
+       JOIN qc.lab_test_snapshots snapshot ON snapshot.lab_test_id = usage.lab_test_id
+       WHERE usage.lab_test_id = $1 ORDER BY snapshot.snapshot_version DESC LIMIT 1`,
+      [testId],
+    );
+    expect(linkedAfter.rows[0]?.document_version_id).toBe(oldDocumentVersionId);
+    expect(linkedAfter.rows[0]?.document_snapshot).toMatchObject({
+      revision: '7',
+      contentHash: 'document-content-hash-v7',
+    });
+    expect(linkedAfter.rows[0]?.execution_snapshot).toMatchObject([
+      { documentVersionId: oldDocumentVersionId, snapshot: { revision: '7' } },
+    ]);
   });
 
   it('a supplied retest policy links a new DRAFT to the original and preserves history', async () => {
