@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ENV_KEYS } from './constants';
+import { ENV_KEYS, R2_ENV_KEYS, SERVER_LOG_LEVELS } from './constants';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -17,6 +17,7 @@ const envSchema = z.object({
     .optional(),
   SESSION_SECRET: z.string().min(32).optional(),
   SERVICE_VERSION: z.string().trim().min(1).default('0.1.0'),
+  LOG_LEVEL: z.enum(SERVER_LOG_LEVELS).optional(),
   RELEASE_ID: z.string().trim().min(1).optional(),
   RELEASE_BUILD_ID: z.string().trim().min(1).optional(),
   RELEASE_BUILD_TIMESTAMP: z.string().trim().min(1).optional(),
@@ -69,6 +70,18 @@ export function parseServerEnv(input: Record<string, string | undefined>): Serve
       (!result.data.OTEL_EXPORTER_OTLP_ENDPOINT && result.data.OTEL_EXPORTER_OTLP_HEADERS)
     ) {
       throw new InvalidEnvironmentError([], [ENV_KEYS.otelEndpoint, ENV_KEYS.otelHeaders]);
+    }
+    // Backup artifact storage is all-or-none: a partial R2 configuration must
+    // fail at validation time instead of surfacing at the first backup attempt
+    // (.env.example documents "configure all four together").
+    const configuredR2 = [
+      result.data.R2_ENDPOINT,
+      result.data.R2_ACCESS_KEY_ID,
+      result.data.R2_SECRET_ACCESS_KEY,
+      result.data.R2_BUCKET,
+    ].filter(Boolean).length;
+    if (configuredR2 > 0 && configuredR2 < R2_ENV_KEYS.length) {
+      throw new InvalidEnvironmentError([], [...R2_ENV_KEYS]);
     }
     if (missing.length === 0) return result.data;
     throw new InvalidEnvironmentError(missing, []);

@@ -12,6 +12,7 @@ export const ENV_KEYS = {
   databaseUrl: 'DATABASE_URL',
   sessionSecret: 'SESSION_SECRET',
   serviceVersion: 'SERVICE_VERSION',
+  logLevel: 'LOG_LEVEL',
   releaseId: 'RELEASE_ID',
   releaseBuildId: 'RELEASE_BUILD_ID',
   releaseBuildTimestamp: 'RELEASE_BUILD_TIMESTAMP',
@@ -40,6 +41,7 @@ export const ENV_KEYS = {
 export const CRITICAL_ENV_KEYS = [ENV_KEYS.databaseUrl, ENV_KEYS.sessionSecret] as const;
 export const OPTIONAL_ENV_KEYS = [
   ENV_KEYS.serviceVersion,
+  ENV_KEYS.logLevel,
   ENV_KEYS.releaseId,
   ENV_KEYS.releaseBuildId,
   ENV_KEYS.releaseBuildTimestamp,
@@ -50,6 +52,28 @@ export const OPTIONAL_ENV_KEYS = [
   ENV_KEYS.otelHeaders,
   ENV_KEYS.rateLimitLoginMax,
   ENV_KEYS.rateLimitLoginWindowSeconds,
+  ENV_KEYS.r2Endpoint,
+  ENV_KEYS.r2AccessKeyId,
+  ENV_KEYS.r2SecretAccessKey,
+  ENV_KEYS.r2Bucket,
+] as const;
+
+// Structured logging levels accepted by the pino sink. `src/config/env.ts`
+// rejects any other value at validation time; the logger itself resolves an
+// unexpected value to `info` because logging must never break a request.
+export const SERVER_LOG_LEVELS = [
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+  'silent',
+] as const;
+export type ServerLogLevel = (typeof SERVER_LOG_LEVELS)[number];
+export const DEFAULT_LOG_LEVEL: ServerLogLevel = 'info';
+
+export const R2_ENV_KEYS = [
   ENV_KEYS.r2Endpoint,
   ENV_KEYS.r2AccessKeyId,
   ENV_KEYS.r2SecretAccessKey,

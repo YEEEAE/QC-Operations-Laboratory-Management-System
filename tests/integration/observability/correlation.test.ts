@@ -455,13 +455,13 @@ describe('file telemetry', () => {
       linkedAt: new Date(),
     };
     const repository = {
-      async create() {
-        return file;
+      async createWithEvidence() {
+        return undefined;
       },
       async findById() {
         return file;
       },
-      async linkEvidence() {
+      async findEvidence() {
         return evidence;
       },
     } as unknown as FileRepository;
@@ -471,6 +471,9 @@ describe('file telemetry', () => {
       },
       async get() {
         return { bytes: new Uint8Array([1]), contentType: 'application/pdf' };
+      },
+      async delete() {
+        return undefined;
       },
     } as unknown as ObjectStore;
     const service = new FileService(repository, store, async () => undefined);

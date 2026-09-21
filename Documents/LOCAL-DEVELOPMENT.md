@@ -33,6 +33,24 @@ Node to satisfy an older local installation.
 
 The frozen install must fail if `pnpm-lock.yaml` and `package.json` disagree. Do not “fix” the lockfile during a normal verification run.
 
+## Diagnose the local environment
+
+`pnpm diagnose` is a read-only, fail-closed environment report: Node and pnpm
+versions against the `package.json` contract, repository identity and dirty
+state, migration source head, and configuration validation through the typed
+`parseServerEnv` layer — including the same allowlisted `.env` merge the local
+database scripts apply, so a fail-closed local configuration is reported here
+first. It prints variable **names** only — never values — and exits non-zero
+when a declared contract is violated, so it can gate a local bring-up
+checklist.
+
+```bash
+pnpm diagnose
+```
+
+Configuration defaults, pairing rules, and change impacts are documented in
+`Documents/CONFIGURATION-REFERENCE.md`.
+
 ## Run the application
 
 ```bash
@@ -57,6 +75,8 @@ pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test:architecture
+pnpm requirements:check
+pnpm release:tech-debt:check
 pnpm test:unit
 ```
 
@@ -91,6 +111,15 @@ pnpm run release:verify -- --environment local --build-id local-check --artifact
 ```
 
 The metadata binds the exact Git SHA, build ID, application/service version, migration head and checksum, working-tree state, and generated server artifact checksum. A local dirty tree is explicitly non-production evidence and must not be reused as production evidence.
+
+## Technical debt ownership
+
+Technical debt is tracked in `audit/100-percent/TECH-DEBT-REGISTER.md` with a
+named owner, priority, status, and exit evidence per item. The register is
+fail-closed: `pnpm release:tech-debt:check` rejects malformed rows, duplicate
+IDs, missing owners, and `P0` items marked `DONE` without explicit evidence.
+Debt is never closed by a passing local test alone; missing external evidence
+stays `OPEN`/`BLOCKED` with its owner.
 
 ## Boundaries
 

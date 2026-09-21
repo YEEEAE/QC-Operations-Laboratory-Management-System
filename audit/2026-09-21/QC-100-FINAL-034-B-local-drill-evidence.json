@@ -1,0 +1,80 @@
+{
+  "task": "QC-100-FINAL-034-B",
+  "capturedAt": "2026-09-21T00:50:14.042Z",
+  "candidate": {
+    "gitSha": "4fa6ac3b3bdf2330335ba1d26d019c83af7c8876",
+    "dirtyFingerprint": "b8feaa9e5457318e5caa907444e2d2ea349f5c47ef6483ead0806457ea9712db",
+    "runtime": "Node v24.20.0",
+    "schemaHead": "0034_template_document_link_variable_scope",
+    "releaseId": "rel-0e889c54aa21f576",
+    "buildId": "local-4fa6ac3b3bdf"
+  },
+  "sourceFixture": {
+    "origin": "QC-100-FINAL-008 task-owned local backup fixture; copied read-only",
+    "sourceMigrationHead": "0030_reject_reports_role_parity",
+    "sourceDumpSha256": "4fedf18cfe2b8816a6c4c8e622970ac1810cb45e30558653a8994eb0217dfc8e"
+  },
+  "restore": {
+    "environment": "Disposable local PostgreSQL 18.6 (Homebrew), TLS enabled; no provider/production service",
+    "migrationsApplied": ["0031", "0032", "0033", "0034"],
+    "migrationLedgerEntries": 34,
+    "migrationHead": "0034_template_document_link_variable_scope",
+    "currentHeadDumpSha256": "4b9e45bf97f6388988c82bd59e5ade4847e2339355c1c0a010eee7d3ce477a4a",
+    "dumpDurationMs": 74.612,
+    "technicalRestoreAndValidationMs": 573.956,
+    "applicationTables": 79,
+    "taskOwnedProbeTables": 1,
+    "restoredTables": 80,
+    "restoredRows": 531,
+    "sourceRowsAfterPostBackupCommit": 532,
+    "allPreBackupRelationCountsMatch": true,
+    "preBackupMarkerPresent": true,
+    "postBackupMarkerAbsent": true,
+    "postBackupInsertRequestOffsetFromDumpStartMs": 74.623,
+    "rpoInterpretation": "Single known lost marker after snapshot; measured lower bound for that scenario, not maximum or approved RPO.",
+    "rtoInterpretation": "pg_restore start through DB and file validation; technical local recovery time, not end-to-end service RTO.",
+    "databaseValidator": "PASS",
+    "coreRelationChecks": 77,
+    "historyRelationChecks": 13,
+    "fileValidator": "PASS",
+    "fileObjectsChecked": 1,
+    "fileBytes": 43,
+    "fileSha256": "06b761ce8b599edb43132eed1a84e6b65c6f4986851a1b71c0a8207000b748be",
+    "manifestStatus": "NOT_VERIFIED (validator output is separate evidence; manifest does not self-assert verification)",
+    "artifacts": {
+      "temporaryRoot": "/private/tmp/qc034b.DimkDL",
+      "dump": "current-head.dump",
+      "manifest": "manifest.json",
+      "fileObject": "objects/recovery/sample.txt"
+    },
+    "databaseServiceStoppedAfterCapture": true
+  },
+  "capacityProfile": {
+    "measuredAt": "2026-09-21T00:50:14.042Z",
+    "host": "Darwin 25.6.0 arm64, 8 CPU cores, 8 GiB RAM",
+    "postgres": "18.6",
+    "postgresSettings": {
+      "max_connections": "100",
+      "shared_buffers": "128MB",
+      "work_mem": "4MB"
+    },
+    "dataset": "Restored fixture: 531 rows across 79 application tables plus the task-owned probe table; one 43-byte file",
+    "poolMax": 10,
+    "query": "SELECT count(*)::int AS task_count FROM qc.tasks",
+    "readOnly": true,
+    "warmup": false,
+    "requestsPerConcurrency": 400,
+    "profiles": [
+      { "concurrency": 1, "errors": 0, "elapsedMs": 46.78, "throughputPerSec": 8550.6, "p50Ms": 0.075, "p95Ms": 0.109, "maxMs": 16.182, "maxPoolWaiting": 0 },
+      { "concurrency": 4, "errors": 0, "elapsedMs": 13.27, "throughputPerSec": 30149.5, "p50Ms": 0.074, "p95Ms": 0.216, "maxMs": 4.935, "maxPoolWaiting": 0 },
+      { "concurrency": 10, "errors": 0, "elapsedMs": 11.97, "throughputPerSec": 33429.0, "p50Ms": 0.156, "p95Ms": 0.710, "maxMs": 7.856, "maxPoolWaiting": 0 },
+      { "concurrency": 20, "errors": 0, "elapsedMs": 5.53, "throughputPerSec": 72352.4, "p50Ms": 0.250, "p95Ms": 0.369, "maxMs": 0.481, "maxPoolWaiting": 10 },
+      { "concurrency": 40, "errors": 0, "elapsedMs": 5.25, "throughputPerSec": 76257.7, "p50Ms": 0.510, "p95Ms": 0.636, "maxMs": 0.715, "maxPoolWaiting": 30 }
+    ],
+    "totalRequests": 2000,
+    "successfulRequests": 2000,
+    "postLoadWaiters": 0,
+    "postLoadSelect1": "PASS",
+    "interpretation": "Observational synthetic local envelope only; no approved target or production capacity limit."
+  }
+}

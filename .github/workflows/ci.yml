@@ -67,6 +67,9 @@ jobs:
       - name: Technical debt register contract
         run: pnpm release:tech-debt:check
 
+      - name: Environment parity and isolation guard
+        run: pnpm release:parity:check
+
       - name: Unit tests
         run: pnpm test:unit
 
@@ -99,6 +102,21 @@ jobs:
           --build-id "github-${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}"
           --expected-git-sha "$GITHUB_SHA"
           --artifact dist/server/entry.mjs
+
+      # Fails closed when a mandatory suite produced no machine-readable
+      # report, reported a failure, skipped mandatory coverage, or when the
+      # candidate-bound release evidence is missing or bound to another SHA.
+      - name: Verification evidence completeness
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: >-
+          pnpm release:evidence:check --
+          --require-release
+          --fail-on-skip
+          --expect integration
+          --expect migrations
+          --expect concurrency
+          --expect security
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium

@@ -23,6 +23,18 @@ function requireGuard(env: NodeJS.ProcessEnv): void {
     fail('Refusing verification cleanup: QC_VERIFICATION_SEED_ALLOW=true is required.');
   }
   if (!env.DATABASE_URL) fail('Refusing verification cleanup: DATABASE_URL is required.');
+  const lowered = env.DATABASE_URL.toLowerCase();
+  const looksProduction =
+    lowered.includes('qclevel.top') ||
+    lowered.includes('render.com') ||
+    (lowered.includes('prod') &&
+      !lowered.includes('test') &&
+      !lowered.includes('dev') &&
+      !lowered.includes('localhost') &&
+      !lowered.includes('127.0.0.1'));
+  if (looksProduction) {
+    fail('Refusing verification cleanup: DATABASE_URL looks like production.');
+  }
 }
 
 async function main(): Promise<void> {

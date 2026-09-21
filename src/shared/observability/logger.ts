@@ -1,6 +1,23 @@
 import { Writable } from 'node:stream';
 import pino, { type Logger } from 'pino';
 import { SERVICE_NAME, getServiceVersion } from '../../config/release.js';
+import {
+  DEFAULT_LOG_LEVEL,
+  SERVER_LOG_LEVELS,
+  type ServerLogLevel,
+} from '../../config/constants.js';
+
+/**
+ * Resolve the configured log level. Startup validation (`parseServerEnv`)
+ * rejects an unknown `LOG_LEVEL`; at the request path the logger itself must
+ * never break a request, so an unexpected value degrades to `info`.
+ */
+export function resolveLogLevel(candidate: string | undefined): ServerLogLevel {
+  const normalized = candidate?.trim().toLowerCase();
+  return (SERVER_LOG_LEVELS as readonly string[]).includes(normalized ?? '')
+    ? (normalized as ServerLogLevel)
+    : DEFAULT_LOG_LEVEL;
+}
 
 /**
  * Structured JSON application logging (OBSERVABILITY-ARCHITECTURE §15).
@@ -75,7 +92,7 @@ export function createRequestLogger(
 ): StructuredLogger {
   const base = pino(
     {
-      level: process.env.LOG_LEVEL ?? 'info',
+      level: resolveLogLevel(process.env.LOG_LEVEL),
       base: {
         service_name: SERVICE_NAME,
         service_version: getServiceVersion(process.env, '0.1.0'),
