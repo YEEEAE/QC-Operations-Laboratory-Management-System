@@ -1,4 +1,4 @@
-/* global console, process */
+/* global console */
 
 /**
  * Environment parity and isolation guard (QC-100-FINAL-036-A).
@@ -70,10 +70,7 @@ export function parseEnvExample(source) {
 
 export function findSecretValuedEntries(entries) {
   return entries
-    .filter(
-      (entry) =>
-        !entry.malformed && SECRET_KEY_PATTERN.test(entry.key) && entry.value !== '',
-    )
+    .filter((entry) => !entry.malformed && SECRET_KEY_PATTERN.test(entry.key) && entry.value !== '')
     .map((entry) => entry.key);
 }
 
@@ -213,7 +210,7 @@ export async function runChecks(root = repositoryRoot, env = process.env) {
   const malformed = entries.filter((entry) => entry.malformed).map((entry) => entry.key);
   const secretValued = findSecretValuedEntries(entries);
   const undocumented = findUndocumentedKeys(entries, Object.values(ENV_KEYS));
-  let dotEnvTracked = false;
+  let dotEnvTracked;
   try {
     execFileSync('git', ['ls-files', '--error-unmatch', '.env'], { cwd: root, stdio: 'pipe' });
     dotEnvTracked = true;

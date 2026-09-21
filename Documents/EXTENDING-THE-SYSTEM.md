@@ -71,7 +71,7 @@ permission, scope, entity state, version, SoD, signature, and business rules.
 ## A new migration
 
 1. Add `db/migrations/NNNN_descriptive_name.sql` after the current head
-   (`0034_template_document_link_variable_scope` at the 2026-09-21 update).
+   (`0035_receiving_normalization` at the 2026-09-21 update).
 2. Keep migrations forward-only, lexically ordered, checksummed, and immutable
    after application to a shared environment. A correction is a new migration.
 3. Keep controlled history append-only and avoid destructive cascades. Add

@@ -1,4 +1,4 @@
-/* global console, process */
+/* global console */
 
 /**
  * Verification-evidence completeness gate (QC-100-FINAL-036-A).
@@ -49,8 +49,7 @@ export function evaluateReports(reports, { failOnSkip = false } = {}) {
     }
     const summary = summarizeVitestReport(report);
     summaries[suite] = summary;
-    if (summary.failed > 0)
-      failures.push(`suite "${suite}" has ${summary.failed} failed test(s)`);
+    if (summary.failed > 0) failures.push(`suite "${suite}" has ${summary.failed} failed test(s)`);
     if (failOnSkip && summary.pending + summary.todo > 0)
       failures.push(
         `suite "${suite}" reports ${summary.pending} pending and ${summary.todo} todo test(s); mandatory coverage may not be skipped`,
@@ -65,7 +64,11 @@ export function evaluateReleaseEvidence(metadata, { expectedGitSha } = {}) {
     throw new Error(
       `Release evidence is not bound to the expected checkout: expected ${expectedGitSha}, actual ${metadata.gitSha}.`,
     );
-  return { releaseId: metadata.releaseId, gitSha: metadata.gitSha, environment: metadata.environment };
+  return {
+    releaseId: metadata.releaseId,
+    gitSha: metadata.gitSha,
+    environment: metadata.environment,
+  };
 }
 
 function valueAfter(args, flag) {
@@ -93,10 +96,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const summary = { suites: {}, release: undefined };
   try {
     const args = process.argv.slice(2).filter((arg) => arg !== '--');
-    const resultsDir = resolve(
-      repositoryRoot,
-      valueAfter(args, '--results-dir') ?? '.ci-results',
-    );
+    const resultsDir = resolve(repositoryRoot, valueAfter(args, '--results-dir') ?? '.ci-results');
     const expectedSuites = valuesAfter(args, '--expect');
     const failOnSkip = args.includes('--fail-on-skip');
     const requireRelease = args.includes('--require-release');
@@ -108,9 +108,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const reports = {};
     for (const suite of expectedSuites) {
       try {
-        reports[suite] = JSON.parse(
-          await readFile(resolve(resultsDir, `${suite}.json`), 'utf8'),
-        );
+        reports[suite] = JSON.parse(await readFile(resolve(resultsDir, `${suite}.json`), 'utf8'));
       } catch {
         reports[suite] = undefined;
       }

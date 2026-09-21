@@ -16,14 +16,22 @@ type Run = { status: number; stdout: string; stderr: string };
 
 function run(args: string[]): Run {
   try {
-    const stdout = execFileSync('node', ['scripts/release/check-verification-evidence.mjs', ...args], {
-      encoding: 'utf8',
-      env: process.env,
-    });
+    const stdout = execFileSync(
+      'node',
+      ['scripts/release/check-verification-evidence.mjs', ...args],
+      {
+        encoding: 'utf8',
+        env: process.env,
+      },
+    );
     return { status: 0, stdout, stderr: '' };
   } catch (error) {
     const failure = error as { stdout?: string; stderr?: string; status?: number };
-    return { status: failure.status ?? 1, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+    return {
+      status: failure.status ?? 1,
+      stdout: failure.stdout ?? '',
+      stderr: failure.stderr ?? '',
+    };
   }
 }
 

@@ -19,7 +19,7 @@ type GuardResult = {
 };
 
 function runGuard(): { result: GuardResult; exitCode: number } {
-  let stdout = '';
+  let stdout: string;
   let exitCode = 0;
   try {
     stdout = execFileSync(

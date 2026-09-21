@@ -44,7 +44,8 @@ function buildTree(name: string, files: Record<string, string>): string {
 
 // Manifests are always stored outside the hashed tree so the evidence file
 // itself can never show up as an added artifact.
-const manifestPath = (name: string) => join(mkdtempSync(join(tmpdir(), 'qc-manifest-out-')), `${name}.json`);
+const manifestPath = (name: string) =>
+  join(mkdtempSync(join(tmpdir(), 'qc-manifest-out-')), `${name}.json`);
 
 const baseFiles = {
   'server/entry.mjs': 'console.log("entry");\n',

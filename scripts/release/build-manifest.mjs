@@ -1,4 +1,4 @@
-/* global console, process */
+/* global console, URL */
 
 /**
  * Deterministic build-artifact content manifest (QC-100-FINAL-036-A).
@@ -40,7 +40,9 @@ export async function hashFileTree(rootDirectory) {
   const paths = (await walk(root)).sort((a, b) => a.localeCompare(b, 'en'));
   const files = [];
   for (const path of paths) {
-    const sha256 = createHash('sha256').update(await readFile(path)).digest('hex');
+    const sha256 = createHash('sha256')
+      .update(await readFile(path))
+      .digest('hex');
     files.push({ path: relative(root, path).split(sep).join('/'), sha256 });
   }
   const digest = createHash('sha256')
@@ -91,12 +93,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         'utf8',
       );
       console.log(
-        JSON.stringify({ wrote: writeTarget, files: manifest.files.length, digest: manifest.digest }),
+        JSON.stringify({
+          wrote: writeTarget,
+          files: manifest.files.length,
+          digest: manifest.digest,
+        }),
       );
     } else if (verifyTarget) {
-      const expected = JSON.parse(
-        await readFile(resolve(repositoryRoot, verifyTarget), 'utf8'),
-      );
+      const expected = JSON.parse(await readFile(resolve(repositoryRoot, verifyTarget), 'utf8'));
       const problems = diffManifests(expected, manifest);
       if (problems.length > 0) {
         console.error(
@@ -114,13 +118,21 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         );
         process.exitCode = 1;
       } else {
-        console.log(JSON.stringify({ reproducible: true, files: manifest.files.length, digest: manifest.digest }));
+        console.log(
+          JSON.stringify({
+            reproducible: true,
+            files: manifest.files.length,
+            digest: manifest.digest,
+          }),
+        );
       }
     } else {
       console.log(JSON.stringify({ files: manifest.files.length, digest: manifest.digest }));
     }
   } catch (error) {
-    console.error(error instanceof Error ? error.message : 'Unable to build the artifact manifest.');
+    console.error(
+      error instanceof Error ? error.message : 'Unable to build the artifact manifest.',
+    );
     process.exitCode = 1;
   }
 }

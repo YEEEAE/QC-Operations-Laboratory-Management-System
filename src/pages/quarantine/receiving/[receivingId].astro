@@ -103,10 +103,6 @@ const describedBy = (name: string): string | undefined =>
   failure?.fieldErrors[name] ? `${name}-error` : undefined;
 const invalid = (name: string): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
-const describedBy = (name: string): string | undefined =>
-  failure?.fieldErrors[name] ? `${name}-error` : undefined;
-const invalid = (name: string): 'true' | undefined =>
-  failure?.fieldErrors[name] ? 'true' : undefined;
 const day = (value: Date | undefined): string =>
   value ? value.toISOString().slice(0, 10) : '';
 const nextAction = item.workflowState === 'READY_FOR_INSPECTION' ? 'Start inspection' : item.workflowState === 'RELEASE_PENDING' ? 'Release item' : item.workflowState === 'HOLD' ? 'Resolve HOLD disposition' : undefined;

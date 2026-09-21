@@ -88,6 +88,15 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Byte-level identity of the artifact this candidate verified, recorded
+      # outside dist/ so the manifest never becomes part of the tree it
+      # describes. A later stage consumes it to prove it promoted the same
+      # artifact instead of a rebuild (DEP-003).
+      - name: Record build-artifact manifest
+        run: |
+          mkdir -p .ci-results
+          pnpm release:manifest -- --dir dist --write .ci-results/build-manifest.json
+
       - name: Create release-candidate evidence
         run: >-
           pnpm run release:identity --

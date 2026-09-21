@@ -33,6 +33,7 @@
     "release:verify": "node scripts/release/verify-release.mjs --input dist/release-identity.json",
     "release:tech-debt:check": "node scripts/release/check-tech-debt.mjs",
     "release:parity:check": "node --import=tsx scripts/release/check-environment-parity.mjs",
+    "release:promotion:check": "node --import=tsx scripts/release/check-staged-promotion.mjs",
     "release:evidence:check": "node scripts/release/check-verification-evidence.mjs",
     "release:manifest": "node scripts/release/build-manifest.mjs",
     "db:migrate": "tsx scripts/db/migrate.ts",

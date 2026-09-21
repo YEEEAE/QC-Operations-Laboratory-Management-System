@@ -65,6 +65,40 @@ Production evidence refuses a dirty or unknown working tree and requires an expl
 
 6. Keep the identity JSON and test artifacts together. Any code/build/config change invalidates affected evidence and requires a fresh run.
 
+## Deterministic build output
+
+`pnpm build` pins a fixed, **non-secret** build key (`ASTRO_KEY`) and, after the
+build, renames Astro's generated `server/manifest_<hash>.mjs` chunk to a stable
+`server/manifest.mjs`, rewriting only the references that point at it. Without
+this, the chunk embedded its own generated name and `dist/server/entry.mjs`
+changed on every rebuild, so a promoted artifact could never be proven identical
+to the verified one.
+
+Verified locally (2026-09-21): four consecutive builds from a clean `dist/`
+produced an identical build tree — `pnpm release:manifest --dir dist --verify`
+reported `reproducible: true`, 325 files, digest
+`da6fc6bb5458fc0ca0fd25e5f6321a022b68c44c6765dfa544bb4c3d50281c99` — with an
+identical `dist/server/entry.mjs` (`sha256 a12fcb45…5f816`) and the same release
+identity `rel-e33e895d19e5b3bc` for a fixed build ID and timestamp. Record the
+manifest digest as candidate evidence and re-verify it at promotion time.
+Before this change the same check failed on every rebuild; the open finding and
+its history are tracked as `ENVIRONMENT-DRIFT-REGISTER.md` DRIFT-036-B-05.
+
+## Staged promotion gate
+
+```bash
+pnpm release:promotion:check -- --plan <promotion-plan.json>
+```
+
+Fails closed on: a promotion environment order that leaves the canonical flow, a
+candidate that is not bound to the expected checkout, an artifact whose bytes do
+not hash to the digest the candidate declares, a target environment whose
+identity was **rebuilt** instead of promoted, a migration step that is not
+forward-only, an incomplete rollback plan for the declared failure mode, and a
+high-risk migration without a schema-valid recovery manifest whose starting head
+is the pre-migration head. A running health endpoint is not accepted as evidence
+for any of these.
+
 ## CI behavior
 
 `.github/workflows/ci.yml` runs frozen install, format, lint, typecheck, architecture, unit, integration, migration, concurrency, security, build, release identity verification, and E2E. It uploads release-candidate evidence and failure diagnostics only. It has no deployment job, production secret, or production migration step.
