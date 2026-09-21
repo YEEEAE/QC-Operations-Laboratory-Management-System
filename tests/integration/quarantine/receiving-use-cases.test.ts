@@ -53,6 +53,7 @@ describe('quarantine receiving use cases', () => {
       description: 'Material',
       lot: 'LOT-1',
       qty: '2',
+      quantityUnit: 'PCS',
       receivingDate: new Date('2026-01-01'),
       requestId: 'req',
     });
@@ -71,6 +72,7 @@ describe('quarantine receiving use cases', () => {
       description: 'Material',
       lot: 'LOT-1',
       qty: '2',
+      quantityUnit: 'PCS',
       receivingDate: new Date(),
       requestId: 'req',
     });

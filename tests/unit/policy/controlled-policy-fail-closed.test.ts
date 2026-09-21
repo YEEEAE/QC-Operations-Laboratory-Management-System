@@ -254,6 +254,9 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       async updateDraft() {
         return item;
       },
+      async correct() {
+        return item;
+      },
       async transition() {
         throw new Error('must not transition when policy denies');
       },
@@ -359,8 +362,8 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       async listVersions() {
         return [];
       },
-      async updateDraft() {
-        throw new Error('must not be called when policy denies');
+      async correct() {
+        return undefined;
       },
       async recordReview() {
         throw new Error('must not be called when policy denies');
@@ -411,8 +414,8 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       async listVersions() {
         return [];
       },
-      async updateDraft() {
-        throw new Error('not used');
+      async correct() {
+        return undefined;
       },
       async recordReview() {
         throw new Error('not used');

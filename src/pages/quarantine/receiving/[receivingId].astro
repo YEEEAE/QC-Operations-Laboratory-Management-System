@@ -2,8 +2,13 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../../ui/components/StatusBadge.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { receivingReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
+import { templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
+import { isReceivingCorrectable } from '../../../modules/quarantine/receiving/domain/receiving-state.js';
 import { transitionLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { extractDetailId, field } from '../../../ui/forms/mutation-post.js';
+import { actions } from 'astro:actions';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 let item: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['get']['execute']>> | undefined;
@@ -11,6 +16,99 @@ try { item = await receivingReadDependencies().get.execute({ actor, id: Astro.pa
 if (!item) return Astro.redirect('/404');
 const canHold = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-HOLD');
 const canRelease = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-RELEASE');
+const canEdit = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-EDIT');
+const canCreateInspection = actor.permissions.some((permission) => permission.code === 'PERM-INSP-CREATE');
+const correctable = isReceivingCorrectable(item.workflowState);
+const inspectionStartable = ['READY_FOR_INSPECTION', 'UNDER_INSPECTION'].includes(item.workflowState);
+const inFlightInspection = item.linkedInspections?.some((report) =>
+  ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL'].includes(report.state),
+) ?? false;
+const inspectionStateReason = !inspectionStartable
+  ? 'This item is not waiting for inspection, so no inspection can be created from it.'
+  : inFlightInspection
+    ? 'An inspection report is already open for this item. Finish or return it before starting another.'
+    : undefined;
+
+/** Approved template versions, read server-side; the browser never claims one. */
+let approvedTemplates: Awaited<
+  ReturnType<ReturnType<typeof templateReadDependencies>['list']['execute']>
+> = [];
+let templateOptionsUnavailable = false;
+try {
+  approvedTemplates = (await templateReadDependencies().list.execute({ actor, state: 'APPROVED' })).slice(0, 20);
+} catch {
+  templateOptionsUnavailable = true;
+}
+
+let failure: { summary: string; recovery: string | null; fieldErrors: Record<string, string> } | null = null;
+let correcting = false;
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const intent = field(formData, 'intent');
+  try {
+    if (intent === 'hold' && canHold) {
+      await Astro.callAction(actions.quarantine.holdReceiving, {
+        id: item.id,
+        expectedVersion: item.version,
+        reason: field(formData, 'reason'),
+      });
+    } else if (intent === 'correct' && canEdit && correctable) {
+      correcting = true;
+      await Astro.callAction(actions.quarantine.correctReceiving, {
+        id: item.id,
+        expectedVersion: item.version,
+        reason: field(formData, 'reason'),
+        receivingNo: field(formData, 'receivingNo') || item.receivingNo,
+        supplier: field(formData, 'supplier') || item.supplier,
+        docNo: field(formData, 'docNo') || item.docNo,
+        itemCode: field(formData, 'itemCode') || item.itemCode,
+        description: field(formData, 'description') || item.description,
+        lot: field(formData, 'lot') || item.lot,
+        qty: field(formData, 'qty') || item.qty,
+        quantityUnit: (field(formData, 'quantityUnit') || item.quantityUnit || '') as never,
+        ...(field(formData, 'purchaseOrderNo') ? { purchaseOrderNo: field(formData, 'purchaseOrderNo') } : {}),
+        receivingDate: new Date(field(formData, 'receivingDate') || item.receivingDate.toISOString().slice(0, 10)),
+        ...(field(formData, 'expiryDate') ? { expiryDate: new Date(field(formData, 'expiryDate')) } : {}),
+      });
+    } else if (intent === 'void' && canEdit) {
+      // Voiding is the approved CANCEL transition; the reason is mandatory and
+      // audited by the transition use case.
+      await Astro.callAction(actions.quarantine.transitionReceiving, {
+        id: item.id,
+        expectedVersion: item.version,
+        action: 'CANCEL' as never,
+      });
+    } else if (intent === 'create-inspection' && canCreateInspection) {
+      const created = await Astro.callAction(actions.quarantine.createInspectionFromReceiving, {
+        receivingId: item.id,
+        templateVersionId: field(formData, 'templateVersionId'),
+        inspectionNo: field(formData, 'inspectionNo'),
+      });
+      const inspectionId = extractDetailId(created.data);
+      if (inspectionId) return Astro.redirect(`/quarantine/inspections/${inspectionId}`, 303);
+    } else {
+      return Astro.redirect(`/quarantine/receiving/${item.id}`, 303);
+    }
+    return Astro.redirect(`/quarantine/receiving/${item.id}`, 303);
+  } catch {
+    failure = {
+      summary: 'The action was not applied. Review the highlighted fields and try again.',
+      recovery: 'The record may have changed after you opened it. Reload the latest version before trying again.',
+      fieldErrors: field(formData, 'reason') ? {} : { reason: 'A reason is required for this action.' },
+    };
+    correcting = intent === 'correct';
+  }
+}
+const describedBy = (name: string): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: string): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
+const describedBy = (name: string): string | undefined =>
+  failure?.fieldErrors[name] ? `${name}-error` : undefined;
+const invalid = (name: string): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
+const day = (value: Date | undefined): string =>
+  value ? value.toISOString().slice(0, 10) : '';
 const nextAction = item.workflowState === 'READY_FOR_INSPECTION' ? 'Start inspection' : item.workflowState === 'RELEASE_PENDING' ? 'Release item' : item.workflowState === 'HOLD' ? 'Resolve HOLD disposition' : undefined;
 const nextOwner = item.workflowState === 'READY_FOR_INSPECTION' ? 'Inspector' : item.workflowState === 'RELEASE_PENDING' ? 'Quarantine release authority' : item.workflowState === 'HOLD' ? 'Quarantine / Quality owner' : undefined;
 const whyUnavailable = item.workflowState === 'RELEASE_PENDING' && !canRelease ? 'permission: release authority is not available to this account' : item.workflowState === 'INSPECTION_COMPLETE' ? 'dependency: approved inspection consequence is required before release pending' : undefined;
@@ -26,12 +124,29 @@ const releasePrereqs = [
   <div class="crumb"><a href="/quarantine">Quarantine</a><span aria-hidden="true">/</span><a href="/quarantine/receiving">Receiving items</a><span aria-hidden="true">/</span><span>{item.receivingNo}</span></div>
   <section class="record-head" data-record-id={item.id} data-version={item.version.toString()}><div><p class="eyebrow">RECEIVING RECORD</p><h1>{item.receivingNo}</h1><p class="lede">{item.itemCode} · {item.description} · Lot {item.lot} · Supplier {item.supplier}</p></div><div class="version">Version <strong>{item.version.toString()}</strong></div></section>
   <p role="status" data-result tabindex="-1" class="action-status"></p>
+  {failure && (
+    <FormErrorSummary
+      summary={failure.summary}
+      recovery={failure.recovery}
+      errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+      listHref="/quarantine/receiving"
+      listLabel="receiving register"
+    />
+  )}
    <section class="facts" aria-label="Separate controlled states"><div><span>Receiving state</span><strong>{item.workflowState}</strong></div><div><span>Inspection result</span>{item.inspectionResult === 'PASS' ? <StatusBadge status="PASS" /> : item.inspectionResult === 'FAIL' || item.inspectionResult === 'HOLD' ? <StatusBadge status={item.inspectionResult === 'FAIL' ? 'FAIL' : 'HOLD'} /> : <strong>{item.inspectionResult}</strong>}</div><div><span>Release System State</span>{item.releaseSystem ? <StatusBadge status="RELEASED" label="RELEASED" /> : <strong class="not-released">NOT_RELEASED</strong>}</div></section>
   <JourneyContextPanel ownerDomain="Quarantine" currentState={`${item.workflowState} · Inspection ${item.inspectionResult} · Release ${item.releaseSystem ? 'YES' : 'NO'}`} nextAction={nextAction} nextOwner={nextOwner} whyUnavailable={whyUnavailable} prerequisites={releasePrereqs} stageNote={item.releaseSystem ? 'Release system state is RELEASED — a controlled receiving transition, not the inspection result.' : item.inspectionResult === 'PASS' ? 'PASS is recorded on the inspection; it does not release this item — PASS ≠ RELEASED.' : undefined} waitingOn={item.workflowState === 'UNDER_INSPECTION' ? 'Inspection executor' : item.workflowState === 'RELEASE_PENDING' ? 'Release decision' : undefined} expectedEvent={item.workflowState === 'READY_FOR_INSPECTION' ? 'Inspection start' : item.workflowState === 'RELEASE_PENDING' ? 'Release transition' : undefined} controlledContext="Receiving identity and current record version" evidenceSummary="Receiving record, inspection result, and release state remain separate" auditHref={`/audit?subjectType=RECEIVING_ITEM&subjectId=${encodeURIComponent(item.id)}`} relatedLinks={[{ label: 'Inspection register', href: '/quarantine/inspections', detail: 'Quarantine-owned workflow' }]} />
-  <div class="layout"><main><section class="panel"><h2>Receiving details</h2><dl><div><dt>Supplier</dt><dd>{item.supplier}</dd></div><div><dt>Document</dt><dd>{item.docNo}</dd></div><div><dt>Quantity</dt><dd>{item.qty}</dd></div><div><dt>Received</dt><dd>{item.receivingDate.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</dd></div><div><dt>Expiry</dt><dd>{item.expiryDate?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not supplied'}</dd></div><div><dt>Evidence links</dt><dd>{item.evidenceCount ?? 0}</dd></div></dl></section><section class="panel"><div class="panel-head"><h2>Inspection</h2><a href="/quarantine/inspections">Inspection register</a></div><p class="muted">Inspection execution and approval are separate controlled workflows. No result is accepted from this page.</p></section><section class="panel"><h2>History</h2>{item.history?.length ? <ol class="history">{item.history.map((event) => <li><strong>{event.action}</strong><span>{transitionLabel(event.oldState, event.newState)} · {event.occurredAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</span>{event.reason ? <small>{event.reason}</small> : null}</li>)}</ol> : <p class="muted">No controlled transitions recorded yet.</p>}</section></main><aside class="rail"><section class="panel"><h2>Primary actions</h2><div class="actions">{item.workflowState === 'READY_FOR_INSPECTION' ? <button data-action="quarantine.transitionReceiving" data-transition="START_INSPECTION" data-submit>Start inspection</button> : null}{canHold && !['RELEASED','EXPIRED','CANCELLED'].includes(item.workflowState) ? <button class="secondary" data-action="quarantine.holdReceiving" data-submit>Place on HOLD</button> : null}{canRelease && item.workflowState === 'RELEASE_PENDING' ? <button class="controlled" data-action="quarantine.releaseReceiving" data-submit>Release item</button> : null}<a class="secondary link-button" href={`/quarantine/receiving/${item.id}`}>Refresh latest</a></div>{canRelease && item.inspectionResult === 'PASS' && !item.releaseSystem ? <p class="note">PASS is recorded, but this item is not released. Release remains a separate policy-controlled action.</p> : null}</section><section class="panel"><h2>Context</h2><dl class="compact"><div><dt>Created by</dt><dd>{item.createdBy}</dd></div><div><dt>Last updated</dt><dd>{item.updatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</dd></div><div><dt>Version</dt><dd>{item.version.toString()}</dd></div></dl></section></aside></div>
+  <div class="layout"><main><section class="panel"><h2>Receiving details</h2><dl><div><dt>Supplier</dt><dd>{item.supplier}</dd></div><div><dt>Document</dt><dd>{item.docNo}</dd></div><div><dt>Purchase order</dt><dd>{item.purchaseOrderNo ?? 'Not supplied'}</dd></div><div><dt>Quantity</dt><dd>{item.quantityUnit ? `${item.qty} ${item.quantityUnit}` : `${item.qty} — unit not recorded`}</dd></div><div><dt>Received</dt><dd>{item.receivingDate.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</dd></div><div><dt>Expiry</dt><dd>{item.expiryDate?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not supplied'}</dd></div><div><dt>Evidence links</dt><dd>{item.evidenceCount ?? 0}</dd></div>{item.sourceReference ? <div><dt>Imported from</dt><dd>{item.sourceSystem ?? 'legacy source'} · {item.sourceReference}</dd></div> : null}</dl></section><section class="panel"><div class="panel-head"><h2>Inspection</h2><a href="/quarantine/inspections">Inspection register</a></div><p class="muted">Inspection execution and approval are separate controlled workflows. No result is accepted from this page.</p>{item.linkedInspections?.length ? <ul class="linked">{item.linkedInspections.map((report) => <li><a href={`/quarantine/inspections/${report.id}`}>{report.inspectionNo}</a><span>{report.state}{report.finalResult ? ` · ${report.finalResult}` : ''}</span></li>)}</ul> : <p class="muted">No inspection report has been created from this item yet.</p>}</section>{canCreateInspection && (<section class="panel"><div class="panel-head"><h2>Create an inspection</h2></div>{inspectionStateReason ? <p class="muted">{inspectionStateReason}</p> : templateOptionsUnavailable ? <p class="muted">Approved templates are unavailable, so an inspection cannot be started. Try reloading.</p> : approvedTemplates.length ? (<form method="post"><input type="hidden" name="intent" value="create-inspection" /><div class="form-fields"><label for="templateVersionId">Inspection template<select id="templateVersionId" name="templateVersionId" required>{approvedTemplates.map((template) => (<option value={template.id}>{template.name} · v{template.versionNo}</option>))}</select></label><label for="inspectionNo">Inspection number<input id="inspectionNo" name="inspectionNo" required maxlength="80" placeholder="From your approved source" /><span class="hint">Registered from the approved source; the system does not invent it. Item, lot, supplier and quantity arrive prefilled.</span></label></div><button type="submit" data-submit>Create inspection</button></form>) : <p class="muted">No approved inspection template exists yet, so an inspection cannot be created. Approval of a template is a separate controlled workflow.</p>}</section>)}<section class="panel"><h2>History</h2>{item.history?.length ? <ol class="history">{item.history.map((event) => <li><strong>{event.action}</strong><span>{transitionLabel(event.oldState, event.newState)} · {event.occurredAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</span>{event.reason ? <small>{event.reason}</small> : null}</li>)}</ol> : <p class="muted">No controlled transitions recorded yet.</p>}</section></main><aside class="rail"><section class="panel"><h2>Primary actions</h2><div class="actions">{item.workflowState === 'READY_FOR_INSPECTION' ? <button data-action="quarantine.transitionReceiving" data-transition="START_INSPECTION" data-submit>Start inspection</button> : null}{canRelease && item.workflowState === 'RELEASE_PENDING' ? <button class="controlled" data-action="quarantine.releaseReceiving" data-submit>Release item</button> : null}<a class="secondary link-button" href={`/quarantine/receiving/${item.id}`}>Refresh latest</a></div>{canHold && !['RELEASED','EXPIRED','CANCELLED'].includes(item.workflowState) ? <form method="post" class="stacked"><input type="hidden" name="intent" value="hold" /><label for="hold-reason">HOLD reason<input id="hold-reason" name="reason" required maxlength="500" aria-invalid={invalid('reason')} aria-describedby={describedBy('reason')} /></label>{failure?.fieldErrors.reason && (<p class="field-error" id="reason-error">{failure.fieldErrors.reason}</p>)}<button class="secondary" type="submit" data-submit>Place on HOLD</button></form> : null}{canEdit && item.workflowState === 'PENDING' && !['RELEASED','CANCELLED'].includes(item.workflowState) ? <form method="post" class="stacked"><input type="hidden" name="intent" value="void" /><label for="void-reason">Void reason<input id="void-reason" name="reason" required maxlength="500" aria-invalid={invalid('reason')} aria-describedby={describedBy('reason')} /></label><button class="secondary" type="submit" data-transition="CANCEL" data-submit>Void this receiving item</button></form> : null}{canRelease && item.inspectionResult === 'PASS' && !item.releaseSystem ? <p class="note">PASS is recorded, but this item is not released. Release remains a separate policy-controlled action.</p> : null}</section>{canEdit && correctable ? (<section class="panel"><h2>Correct this record</h2>{correcting ? (<form method="post" class="stacked"><input type="hidden" name="intent" value="correct" /><div class="form-fields"><label for="correct-supplier">Supplier<input id="correct-supplier" name="supplier" required value={item.supplier} /></label><label for="correct-docNo">Document number<input id="correct-docNo" name="docNo" required value={item.docNo} /></label><label for="correct-itemCode">Item code<input id="correct-itemCode" name="itemCode" required value={item.itemCode} /></label><label for="correct-description">Description<input id="correct-description" name="description" required value={item.description} /></label><label for="correct-lot">Lot / batch<input id="correct-lot" name="lot" required value={item.lot} /></label><label for="correct-qty">Quantity<input id="correct-qty" name="qty" type="number" min="0" step="any" required value={item.qty} /></label><label for="correct-receivingDate">Receiving date<input id="correct-receivingDate" name="receivingDate" type="date" required value={day(item.receivingDate)} /></label><label for="correct-expiryDate">Expiry date<input id="correct-expiryDate" name="expiryDate" type="date" value={day(item.expiryDate)} /></label><label for="correct-reason">Correction reason<textarea id="correct-reason" name="reason" required maxlength="500" aria-invalid={invalid('reason')} aria-describedby={describedBy('reason')}></textarea></label></div><button type="submit" data-submit>Apply correction</button></form>) : (<p class="muted">Corrections are recorded with a reason and an audit entry. Identity changes after inspection starts need the disposition path instead.</p><button class="secondary" data-show-correct type="button">Start correction</button>)}</section>) : null}<section class="panel"><h2>Context</h2><dl class="compact"><div><dt>Created by</dt><dd>{item.createdBy}</dd></div><div><dt>Last updated</dt><dd>{item.updatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' })}</dd></div><div><dt>Version</dt><dd>{item.version.toString()}</dd></div></dl></section></aside></div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
+  // The correction form starts collapsed so the record stays readable; the
+  // POST baseline still works with JavaScript disabled (the form renders when a
+  // correction attempt failed).
+  document.querySelector<HTMLButtonElement>('[data-show-correct]')?.addEventListener('click', () => {
+    const panel = document.querySelector<HTMLElement>('[data-show-correct]')?.closest('section');
+    const hiddenForm = panel?.querySelector<HTMLFormElement>('form');
+    if (hiddenForm) hiddenForm.hidden = false;
+  });
   const context = document.querySelector<HTMLElement>('[data-record-id]');
   const itemId = context?.dataset.recordId ?? '';
   const version = context?.dataset.version ?? '0';
@@ -66,4 +181,16 @@ const releasePrereqs = [
 </script>
 <style>
   .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a{color:var(--color-accent-primary-hover)}.record-head,.panel-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.record-head{margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.version,.panel p{color:var(--text-muted);font-size:.84rem}.version{padding:.5rem .75rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-bottom:var(--space-5)}.facts>div{display:grid;gap:.45rem;padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.facts span{color:var(--text-muted);font-size:.75rem}.facts strong{font-size:1rem}.not-released{color:var(--text-muted)}.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--space-5)}main,.rail{display:grid;gap:var(--space-5);align-content:start}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:0;font-size:1rem}.panel-head a{color:var(--color-accent-primary-hover);font-size:.8rem}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);margin:var(--space-5) 0 0}dt{color:var(--text-muted);font-size:.75rem}dd{margin:.3rem 0 0;color:var(--text-primary);font-weight:600}.action-status{margin:0 0 var(--space-4);color:var(--text-secondary);font-size:.85rem;min-height:1.25rem}.actions{display:grid;gap:.6rem;margin-top:var(--space-4)}button,.link-button{min-height:var(--control-height);padding:.65rem .8rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary)}.controlled{border-color:var(--status-released);background:var(--status-released-bg);color:var(--status-released)}.link-button{text-align:center;text-decoration:none}.note{padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.compact{grid-template-columns:1fr;margin-top:var(--space-4)}@media(max-width:820px){.layout{grid-template-columns:1fr}}@media(max-width:560px){.record-head{display:grid}.facts{grid-template-columns:1fr}dl{grid-template-columns:1fr}.panel{padding:var(--space-4)}}
+/* QC-DATA-001: linked inspections, correction/HOLD forms. */
+.stacked{display:grid;gap:var(--space-3);margin-top:var(--space-4)}
+.form-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);margin-block:var(--space-3)}
+.form-fields label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:var(--font-size-xs)}
+.form-fields input,.form-fields select,.form-fields textarea{min-height:var(--control-height);padding:.55rem .6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}
+.field-error{margin:.2rem 0 0;color:var(--status-danger);font-size:var(--font-size-xs)}
+.hint{color:var(--text-muted);font-size:var(--font-size-xs)}
+.linked{list-style:none;margin:var(--space-3) 0 0;padding:0;display:grid;gap:.35rem}
+.linked li{display:flex;gap:.6rem;align-items:baseline;font-size:.85rem}
+.linked a{color:var(--color-accent-primary-hover)}
+.linked span{color:var(--text-muted);font-size:var(--font-size-xs)}
+@media(max-width:560px){.form-fields{grid-template-columns:1fr}}
 </style>

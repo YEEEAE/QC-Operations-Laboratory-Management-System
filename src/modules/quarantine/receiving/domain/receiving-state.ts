@@ -57,3 +57,28 @@ export function transitionReceiving(
 export function assertReason(reason: string | undefined) {
   if (!reason?.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
 }
+
+/**
+ * QC-DATA-001 — where a recorded receiving fact may still be corrected.
+ *
+ * A received record is evidence: from `UNDER_INSPECTION` onward the inspection
+ * snapshot references it, so the fields that snapshot captured are frozen and a
+ * correction must go through the inspection/HOLD disposition path instead of
+ * silently rewriting history. Terminal states are history and never corrected.
+ */
+export const RECEIVING_CORRECTABLE_STATES: readonly ReceivingWorkflowState[] = [
+  'PENDING',
+  'READY_FOR_INSPECTION',
+  'HOLD',
+  'EXPIRED',
+];
+
+export function isReceivingCorrectable(state: ReceivingWorkflowState): boolean {
+  return RECEIVING_CORRECTABLE_STATES.includes(state);
+}
+
+export function assertReceivingCorrectable(state: ReceivingWorkflowState): void {
+  if (!isReceivingCorrectable(state)) {
+    throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+  }
+}

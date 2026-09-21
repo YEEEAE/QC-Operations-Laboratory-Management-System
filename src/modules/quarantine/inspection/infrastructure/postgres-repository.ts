@@ -275,7 +275,17 @@ export class PostgresInspectionRepository implements InspectionRepository {
     }
     return result;
   }
-  async create(i: { inspection: Inspection; actor: ActorContext; requestId: string }) {
+  async create(i: {
+    inspection: Inspection;
+    actor: ActorContext;
+    requestId: string;
+    /**
+     * QC-DATA-001: when the report originates from a receiving record, the link
+     * event is written inside the same transaction, so the receiving record's
+     * audit history can never miss the inspection that was started from it.
+     */
+    originAudit?: { receivingItemId: string };
+  }) {
     try {
       const x = i.inspection;
       await this.db.transaction().execute(async (tx) => {
@@ -384,6 +394,25 @@ export class PostgresInspectionRepository implements InspectionRepository {
           .set({ snapshot_id: snapshot.id })
           .where('id', '=', x.id)
           .execute();
+        if (i.originAudit) {
+          await this.auditFor(tx)?.append({
+            actorType: 'USER',
+            actorId: i.actor.id,
+            subjectType: 'RECEIVING_ITEM',
+            subjectId: i.originAudit.receivingItemId,
+            action: 'INSPECTION_CREATED_FROM_RECEIVING',
+            newState: 'DRAFT',
+            requestId: i.requestId,
+            payload: { inspectionReportId: x.id, inspectionNo: x.inspectionNo },
+          });
+          await this.outboxFor(tx)?.enqueue({
+            eventType: 'RECEIVING_INSPECTION_LINKED',
+            aggregateType: 'RECEIVING_ITEM',
+            aggregateId: i.originAudit.receivingItemId,
+            payload: { inspectionReportId: x.id, state: 'DRAFT' },
+            dedupeKey: `receiving-inspection-linked:${x.id}`,
+          });
+        }
       });
       return x;
     } catch (e) {

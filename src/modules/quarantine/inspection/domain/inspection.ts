@@ -11,6 +11,9 @@ export interface ReceivingContext {
   description: string;
   lot: string;
   qty: string;
+  /** Controlled unit captured at receiving (QC-DATA-001); absent on legacy rows. */
+  quantityUnit?: string;
+  purchaseOrderNo?: string;
   receivingDate: Date;
   expiryDate?: Date;
 }

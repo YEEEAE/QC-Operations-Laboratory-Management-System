@@ -8,6 +8,8 @@ export interface InspectionRepository {
     inspection: Inspection;
     actor: ActorContext;
     requestId: string;
+    /** Set when the report is created from its receiving record (QC-DATA-001). */
+    originAudit?: { receivingItemId: string };
   }): Promise<Inspection>;
   get(id: string, actor: ActorContext): Promise<Inspection | undefined>;
   list(i: {

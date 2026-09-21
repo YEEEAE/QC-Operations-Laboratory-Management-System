@@ -331,6 +331,13 @@ export interface ReceivingItemsTable {
   description: string;
   lot: string;
   qty: string | number;
+  /** Controlled receiving quantity unit (migration 0035); NULL only for legacy rows. */
+  quantity_unit: string | null;
+  purchase_order_no: string | null;
+  /** Import traceability (migration 0035); NULL for records created in the app. */
+  source_system: string | null;
+  source_reference: string | null;
+  imported_at: Date | null;
   receiving_date: string | Date;
   expiry_date: string | Date | null;
   workflow_state: string;

@@ -14,6 +14,9 @@ import { UpdateReceivingDraftUseCase } from '../receiving/application/update-rec
 import { TransitionReceivingUseCase } from '../receiving/application/transition-receiving.js';
 import { HoldReceivingUseCase } from '../receiving/application/hold-receiving.js';
 import { ReleaseReceivingUseCase } from '../receiving/application/release-receiving.js';
+import { CorrectReceivingUseCase } from '../receiving/application/correct-receiving.js';
+import { CreateInspectionFromReceivingUseCase } from '../receiving/application/create-inspection-from-receiving.js';
+import { PostgresTemplateRepository } from '../templates/infrastructure/postgres-repository.js';
 import { SaveInspectionDraftUseCase } from '../inspection/application/save-inspection-draft.js';
 import { SubmitInspectionUseCase } from '../inspection/application/submit-inspection.js';
 import { ReviewInspectionUseCase } from '../inspection/application/review-inspection.js';
@@ -59,6 +62,7 @@ export function quarantineActionDependencies() {
   const outbox = new PostgresOutboxRepository(database);
   const receivingRepository = new PostgresReceivingRepository(database, audit, outbox);
   const inspectionRepository = new PostgresInspectionRepository(database, audit, outbox);
+  const templateRepository = new PostgresTemplateRepository(database);
   // Final-approval evidence is persisted by the owning domain transaction.
   const finalApprovalCeremony = createFinalApprovalCeremony(
     createPasswordReauthenticationVerifier(database),
@@ -70,6 +74,13 @@ export function quarantineActionDependencies() {
       transition: new TransitionReceivingUseCase(receivingRepository),
       hold: new HoldReceivingUseCase(receivingRepository),
       release: new ReleaseReceivingUseCase(receivingRepository),
+      // QC-DATA-001: controlled correction and the receiving-origin inspection.
+      correct: new CorrectReceivingUseCase(receivingRepository),
+      createInspection: new CreateInspectionFromReceivingUseCase({
+        receiving: receivingRepository,
+        inspection: inspectionRepository,
+        template: templateRepository,
+      }),
     },
     inspection: {
       saveDraft: new SaveInspectionDraftUseCase(inspectionRepository),

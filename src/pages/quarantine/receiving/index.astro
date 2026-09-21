@@ -2,79 +2,103 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
+import FilterBar from '../../../ui/components/data/FilterBar.astro';
 import { receivingReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
+import {
+  parseReceivingFilters,
+} from '../../../modules/quarantine/receiving/application/receiving-filters.js';
+import {
+  RECEIVING_INSPECTION_STATUSES,
+  RECEIVING_QUARANTINE_STATUSES,
+} from '../../../modules/quarantine/receiving/domain/receiving-status.js';
+import { RECEIVING_WORKFLOW_STATES, INSPECTION_RESULTS } from '../../../modules/quarantine/receiving/domain/receiving-state.js';
+import { deriveQuarantineStatus } from '../../../modules/quarantine/receiving/domain/receiving-status.js';
 import { stateLabel, releaseStateLabel, copy } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving');
-const states = [
-  'PENDING',
-  'READY_FOR_INSPECTION',
-  'UNDER_INSPECTION',
-  'INSPECTION_COMPLETE',
-  'RELEASE_PENDING',
-  'RELEASED',
-  'HOLD',
-  'EXPIRED',
-  'CANCELLED',
-] as const;
-const inspectionResults = ['NOT_STARTED', 'PASS', 'FAIL', 'HOLD'] as const;
 
-const params = Astro.url.searchParams;
-const requestedState = params.get('state') ?? params.get('workflowState');
-const state = states.find((value) => value === requestedState);
-const requestedResult = params.get('inspectionResult');
-const inspectionResult = inspectionResults.find((value) => value === requestedResult);
-const requestedRelease = (params.get('releaseState') ?? '').toUpperCase();
-const releaseState = ['RELEASED', 'YES', 'TRUE'].includes(requestedRelease)
-  ? ('RELEASED' as const)
-  : ['NOT_RELEASED', 'NO', 'FALSE'].includes(requestedRelease)
-    ? ('NOT_RELEASED' as const)
-    : undefined;
-// Ownership is the same dimension the dashboard KPIs count, so a personal KPI
-// drill-down lands on exactly its own set instead of the whole authorized scope.
-const ownership = params.get('ownership') === 'mine' ? ('mine' as const) : undefined;
-// Time-window filter, resolved to the current UTC server date by the use case.
-const receivedOn = params.get('receivedOn') === 'today' ? ('today' as const) : undefined;
+// One parser owns the filter contract: every parameter is either applied by the
+// server or reported below — never silently ignored.
+const { filters, rejected } = parseReceivingFilters(Astro.url.searchParams);
+const state = filters.state;
+const inspectionResult = filters.inspectionResult;
+const releaseState = filters.releaseState;
+const ownership = filters.ownership;
+const receivedOn = filters.receivedOn;
+const inspectionStatus = filters.inspectionStatus;
+const quarantine = filters.quarantine;
 
 /** One link per filter that drops only that filter and keeps the rest. */
 const chipHref = (drop: string) => {
-  const next = new URLSearchParams(params);
+  const next = new URLSearchParams(Astro.url.searchParams);
   next.delete(drop);
   const search = next.toString();
   return `/quarantine/receiving${search ? `?${search}` : ''}`;
 };
 const appliedFilters = [
+  filters.q && { label: 'Search', value: filters.q, href: chipHref('q') },
+  filters.itemCode && { label: 'Item code', value: filters.itemCode, href: chipHref('itemCode') },
+  filters.lot && { label: 'Lot', value: filters.lot, href: chipHref('lot') },
+  filters.supplier && { label: 'Supplier', value: filters.supplier, href: chipHref('supplier') },
+  filters.purchaseOrderNo && {
+    label: 'Purchase order',
+    value: filters.purchaseOrderNo,
+    href: chipHref('purchaseOrderNo'),
+  },
   state && { label: 'Workflow state', value: stateLabel(state), href: chipHref('state') },
   inspectionResult && {
     label: 'Inspection result',
     value: stateLabel(inspectionResult),
     href: chipHref('inspectionResult'),
   },
+  inspectionStatus && {
+    label: 'Inspection status',
+    value: stateLabel(inspectionStatus),
+    href: chipHref('inspectionStatus'),
+  },
+  quarantine && {
+    label: 'Quarantine',
+    value: stateLabel(quarantine),
+    href: chipHref('quarantine'),
+  },
   releaseState && {
     label: 'Release state',
-    value: releaseStateLabel(releaseState === 'RELEASED'),
+    value: stateLabel(releaseState),
     href: chipHref('releaseState'),
   },
   ownership && { label: 'Ownership', value: 'Only mine', href: chipHref('ownership') },
   receivedOn && { label: 'Received on', value: 'Today', href: chipHref('receivedOn') },
+  filters.receivedFrom && {
+    label: 'Received from',
+    value: filters.receivedFrom,
+    href: chipHref('receivedFrom'),
+  },
+  filters.receivedTo && { label: 'Received to', value: filters.receivedTo, href: chipHref('receivedTo') },
+  filters.expiryFrom && { label: 'Expiry from', value: filters.expiryFrom, href: chipHref('expiryFrom') },
+  filters.expiryTo && { label: 'Expiry to', value: filters.expiryTo, href: chipHref('expiryTo') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
 const hasFilters = appliedFilters.length > 0;
+const rejectedNotice = rejected
+  .map((entry) =>
+    entry.reason === 'UNKNOWN_PARAMETER'
+      ? `“${entry.parameter}” is not a filter this register supports`
+      : `“${entry.parameter}” does not accept the value “${entry.value}”`,
+  )
+  .join(' and ');
 
 let items: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['list']['execute']>> = [];
 let providerUnavailable = false;
 try {
-  items = await receivingReadDependencies().list.execute({
-    actor,
-    state,
-    inspectionResult,
-    releaseState,
-    ownership,
-    receivedOn,
-  });
+  items = await receivingReadDependencies().list.execute({ actor, ...filters });
 } catch {
   providerUnavailable = true;
 }
+const day = (value: Date | undefined): string =>
+  value ? value.toISOString().slice(0, 10) : '—';
+const quantity = (item: (typeof items)[number]): string =>
+  item.quantityUnit ? `${item.qty} ${item.quantityUnit}` : `${item.qty} (unit not recorded)`;
 ---
+
 <AppLayout title="Receiving Items · Quarantine" locale="en" direction="ltr">
   <section class="page-head">
     <div>
@@ -86,18 +110,44 @@ try {
     </div>
     <a class="button" href="/quarantine/receiving/new">Create receiving item</a>
   </section>
-  <form class="filters" method="get">
+  {rejectedNotice && (
+    <p class="rejected" role="status">
+      Not applied: {rejectedNotice}. Nothing was filtered by these values.
+    </p>
+  )}
+  <FilterBar clearHref={hasFilters ? '/quarantine/receiving' : undefined}>
+    <label for="q">Search<input id="q" name="q" type="search" value={filters.q ?? ''} maxlength="200" placeholder="Receiving number, item, lot, supplier, PO" /></label>
+    <label for="itemCode">Item code<input id="itemCode" name="itemCode" value={filters.itemCode ?? ''} maxlength="120" /></label>
+    <label for="lot">Lot<input id="lot" name="lot" value={filters.lot ?? ''} maxlength="120" /></label>
+    <label for="supplier">Supplier<input id="supplier" name="supplier" value={filters.supplier ?? ''} maxlength="200" /></label>
+    <label for="purchaseOrderNo">Purchase order<input id="purchaseOrderNo" name="purchaseOrderNo" value={filters.purchaseOrderNo ?? ''} maxlength="120" /></label>
     <label for="state">Workflow state<select id="state" name="state">
         <option value="">All states</option>
-        {states.map((value) => (
+        {RECEIVING_WORKFLOW_STATES.map((value) => (
           <option value={value} selected={state === value}>
+            {stateLabel(value)}
+          </option>
+        ))}
+      </select></label>
+    <label for="inspectionStatus">Inspection status<select id="inspectionStatus" name="inspectionStatus">
+        <option value="">All statuses</option>
+        {RECEIVING_INSPECTION_STATUSES.map((value) => (
+          <option value={value} selected={inspectionStatus === value}>
+            {stateLabel(value)}
+          </option>
+        ))}
+      </select></label>
+    <label for="quarantine">Quarantine status<select id="quarantine" name="quarantine">
+        <option value="">All statuses</option>
+        {RECEIVING_QUARANTINE_STATUSES.map((value) => (
+          <option value={value} selected={quarantine === value}>
             {stateLabel(value)}
           </option>
         ))}
       </select></label>
     <label for="inspectionResult">Inspection result<select id="inspectionResult" name="inspectionResult">
         <option value="">All results</option>
-        {inspectionResults.map((value) => (
+        {INSPECTION_RESULTS.map((value) => (
           <option value={value} selected={inspectionResult === value}>
             {stateLabel(value)}
           </option>
@@ -105,9 +155,14 @@ try {
       </select></label>
     <label for="releaseState">Release state<select id="releaseState" name="releaseState">
         <option value="">Any release state</option>
-        <option value="RELEASED" selected={releaseState === 'RELEASED'}>{releaseStateLabel(true)}</option>
         <option value="NOT_RELEASED" selected={releaseState === 'NOT_RELEASED'}>{releaseStateLabel(false)}</option>
+        <option value="RELEASE_PENDING" selected={releaseState === 'RELEASE_PENDING'}>{stateLabel('RELEASE_PENDING')}</option>
+        <option value="RELEASED" selected={releaseState === 'RELEASED'}>{releaseStateLabel(true)}</option>
       </select></label>
+    <label for="receivedFrom">Received from<input id="receivedFrom" name="receivedFrom" type="date" value={filters.receivedFrom ?? ''} /></label>
+    <label for="receivedTo">Received to<input id="receivedTo" name="receivedTo" type="date" value={filters.receivedTo ?? ''} /></label>
+    <label for="expiryFrom">Expiry from<input id="expiryFrom" name="expiryFrom" type="date" value={filters.expiryFrom ?? ''} /></label>
+    <label for="expiryTo">Expiry to<input id="expiryTo" name="expiryTo" type="date" value={filters.expiryTo ?? ''} /></label>
     <label for="ownership">Ownership<select id="ownership" name="ownership">
         <option value="">All records</option>
         <option value="mine" selected={ownership === 'mine'}>Only mine</option>
@@ -116,8 +171,7 @@ try {
         <option value="">Any date</option>
         <option value="today" selected={receivedOn === 'today'}>Today</option>
       </select></label>
-    <button class="button secondary" type="submit">Apply filters</button>
-  </form>
+  </FilterBar>
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/quarantine/receiving' : undefined}
@@ -136,12 +190,16 @@ try {
           <thead>
             <tr>
               <th scope="col">Receiving number</th>
-              <th scope="col">Item / description</th>
+              <th scope="col">Item code</th>
+              <th scope="col">Description</th>
               <th scope="col">Lot</th>
               <th scope="col">Quantity</th>
-              <th scope="col">Workflow state</th>
-              <th scope="col">Inspection result</th>
-              <th scope="col">Release state</th>
+              <th scope="col">Received</th>
+              <th scope="col">Expiry</th>
+              <th scope="col">Inspection</th>
+              <th scope="col">Quarantine</th>
+              <th scope="col">Release</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -150,23 +208,29 @@ try {
                 <th scope="row">
                   <a href={`/quarantine/receiving/${item.id}`}>{item.receivingNo}</a>
                 </th>
-                <td>
-                  {item.itemCode} · {item.description}
-                </td>
+                <td>{item.itemCode}</td>
+                <td>{item.description}</td>
                 <td>{item.lot}</td>
-                <td>{item.qty}</td>
-                <td>
-                  <span class="state-pill">{stateLabel(item.workflowState)}</span>
-                </td>
+                <td>{quantity(item)}</td>
+                <td>{day(item.receivingDate)}</td>
+                <td>{item.expiryDate ? day(item.expiryDate) : '—'}</td>
                 <td>
                   <span class:list={['result', item.inspectionResult.toLowerCase()]}>
                     {stateLabel(item.inspectionResult)}
                   </span>
                 </td>
                 <td>
+                  <span class:list={['quarantine', { danger: deriveQuarantineStatus(item) === 'HOLD' }]}>
+                    {stateLabel(deriveQuarantineStatus(item))}
+                  </span>
+                </td>
+                <td>
                   <span class:list={['release', { yes: item.releaseSystem }]}>
                     {releaseStateLabel(item.releaseSystem)}
                   </span>
+                </td>
+                <td>
+                  <a class="row-action" href={`/quarantine/receiving/${item.id}`}>Open</a>
                 </td>
               </tr>
             ))}
@@ -191,5 +255,5 @@ try {
   }
 </AppLayout>
 <style>
-  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty-state p{color:var(--text-muted);font-size:.85rem}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700;text-decoration:none}.button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding-inline:.7rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:880px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.state-pill,.result,.release{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.75rem;font-weight:700}.result.pass{color:var(--status-pass);background:var(--status-pass-bg)}.result.fail,.result.hold{color:var(--status-danger);background:var(--status-danger-bg)}.result.not_started{color:var(--text-muted)}.release{color:var(--text-muted)}.release.yes{color:var(--status-released);background:var(--status-released-bg);border-color:var(--status-released)}.empty-state{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty-state h2{margin:.5rem 0}.empty-state a{font-weight:700}@media(max-width:650px){.page-head,.filters{display:grid}.button{width:max-content}}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty-state p{color:var(--text-muted);font-size:.85rem}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700;text-decoration:none}.button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding-inline:.7rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:880px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.state-pill,.result,.release{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.75rem;font-weight:700}.result.pass{color:var(--status-pass);background:var(--status-pass-bg)}.result.fail,.result.hold{color:var(--status-danger);background:var(--status-danger-bg)}.result.not_started{color:var(--text-muted)}.release{color:var(--text-muted)}.release.yes{color:var(--status-released);background:var(--status-released-bg);border-color:var(--status-released)}.quarantine{display:inline-flex;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--color-border-subtle);font-size:.75rem;font-weight:700;color:var(--text-muted)}.quarantine.danger{color:var(--status-danger);background:var(--status-danger-bg);border-color:var(--status-danger)}.rejected{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel);color:var(--text-secondary);font-size:var(--font-size-xs)}.row-action{font-weight:700}.empty-state{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty-state h2{margin:.5rem 0}.empty-state a{font-weight:700}@media(max-width:650px){.page-head,.filters{display:grid}.button{width:max-content}}
 </style>

@@ -1,6 +1,7 @@
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
+import { assertExpiryNotBeforeReceiving } from '../domain/receiving-item.js';
 import type { ReceivingRepository } from '../ports/repository.js';
 export class UpdateReceivingDraftUseCase {
   constructor(private repo: ReceivingRepository) {}
@@ -14,12 +15,15 @@ export class UpdateReceivingDraftUseCase {
     description: string;
     lot: string;
     qty: string;
+    quantityUnit: string;
+    purchaseOrderNo?: string;
     receivingDate: Date;
     expiryDate?: Date;
     requestId: string;
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    assertExpiryNotBeforeReceiving(i.receivingDate, i.expiryDate);
     authorize(
       {
         actor: i.actor,

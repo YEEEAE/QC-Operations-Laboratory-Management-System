@@ -11,6 +11,7 @@ describe('receiving repository contract inputs', () => {
       description: 'M',
       lot: 'L',
       qty: 1,
+      quantityUnit: 'PCS',
       receivingDate: new Date(),
       createdBy: 'u',
       now: new Date(),

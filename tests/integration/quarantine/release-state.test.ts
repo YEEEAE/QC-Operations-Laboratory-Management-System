@@ -43,6 +43,9 @@ function repository(initial: ReceivingItem): ReceivingRepository {
     async updateDraft() {
       return current;
     },
+    async correct() {
+      return current;
+    },
     async transition(input) {
       current = {
         ...current,

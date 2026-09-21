@@ -2,6 +2,7 @@ import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { AppError } from '../shared/errors/app-error.js';
 import { quarantineActionDependencies } from '../modules/quarantine/application/dependencies.js';
+import { RECEIVING_QUANTITY_UNITS } from '../modules/quarantine/receiving/domain/receiving-units.js';
 
 const requestId = (context: { locals: App.Locals }) =>
   context.locals.requestContext?.requestId ?? 'unknown';
@@ -36,7 +37,11 @@ const receivingInput = z.object({
   itemCode: z.string().trim().min(1),
   description: z.string().trim().min(1),
   lot: z.string().trim().min(1),
+  // Quantity and unit are two facts; the unit must come from the controlled
+  // vocabulary and the quantity is validated as a positive decimal server-side.
   qty: z.coerce.string().min(1),
+  quantityUnit: z.enum(RECEIVING_QUANTITY_UNITS),
+  purchaseOrderNo: z.string().trim().max(120).optional(),
   receivingDate: z.coerce.date(),
   expiryDate: z.coerce.date().optional(),
 });
@@ -50,6 +55,38 @@ const transitionInput = idVersion.extend({
     'MARK_EXPIRED',
     'CANCEL',
   ]),
+});
+const correctionInput = idVersion.merge(receivingInput).extend({
+  reason: z.string().trim().min(1),
+});
+const createInspectionFromReceiving = defineAction({
+  accept: 'json',
+  input: z.object({
+    receivingId: z.string().uuid(),
+    templateVersionId: z.string().uuid(),
+    inspectionNo: z.string().trim().min(1).max(80),
+    assignedTo: z.string().uuid().optional(),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().receiving.createInspection.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+const correctReceiving = defineAction({
+  accept: 'json',
+  input: correctionInput,
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().receiving.correct.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
 });
 
 const createReceiving = defineAction({
@@ -247,6 +284,8 @@ export const quarantine = {
   transitionReceiving,
   holdReceiving,
   releaseReceiving,
+  correctReceiving,
+  createInspectionFromReceiving,
   saveInspectionDraft,
   submitInspection,
   reviewInspection,

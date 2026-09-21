@@ -2,6 +2,7 @@ import { authorize } from '../../../../shared/authorization/authorize.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { createReceivingItem } from '../domain/receiving-item.js';
+import { assertExpiryNotBeforeReceiving } from '../domain/receiving-item.js';
 import type { ReceivingRepository } from '../ports/repository.js';
 export class CreateReceivingUseCase {
   constructor(
@@ -17,6 +18,8 @@ export class CreateReceivingUseCase {
     description: string;
     lot: string;
     qty: string | number;
+    quantityUnit: string;
+    purchaseOrderNo?: string;
     receivingDate: Date;
     expiryDate?: Date;
     requestId: string;
@@ -34,6 +37,9 @@ export class CreateReceivingUseCase {
       },
       { throwOnDeny: true },
     );
+    // Date rules are enforced before persistence so the operator sees the field
+    // that must change (PostgreSQL enforces the same rule for every new row).
+    assertExpiryNotBeforeReceiving(i.receivingDate, i.expiryDate);
     return this.repo.create({
       item: createReceivingItem({ id: uuidv7(), ...i, createdBy: i.actor.id, now: this.now() }),
       actor: i.actor,
@@ -41,3 +47,4 @@ export class CreateReceivingUseCase {
     });
   }
 }
+
