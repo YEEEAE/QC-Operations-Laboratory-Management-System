@@ -26,6 +26,7 @@ Server-only variables are declared in `.env.example` and `render.yaml`:
 
 | Variable | Purpose |
 | --- | --- |
+| `AI_EXTERNAL_PROCESSING_APPROVED` | Must be exactly `true` before any configured provider can receive a request; defaults to `false`. Set only after the required processing decision is approved. |
 | `AI_PRIMARY_PROVIDER` | `groq` or `gemini`; defaults to `groq` |
 | `AI_FALLBACK_PROVIDER` | `groq` or `gemini`; defaults to `gemini` |
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | Groq adapter configuration |
@@ -39,6 +40,12 @@ browser, returned in health output, or written to logs/audit/docs.
 Both adapters use server-side `fetch`, HTTPS endpoints, bounded abort timeouts,
 strict response validation, and sanitized provider error classes. The Gemini key
 is sent through the server-side `x-goog-api-key` header, not a URL query string.
+
+Until external processing approval is recorded, configured credentials alone do
+not enable either adapter. The advisory page explains when a question and its
+user-entered excerpt will be sent to a configured provider. Approval of the gate
+does not define provider retention, permitted data classes, or deletion rights;
+those remain governed by the approved privacy/QMS decisions.
 
 ## Context and safety
 

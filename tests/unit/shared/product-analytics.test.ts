@@ -26,19 +26,32 @@ describe('privacy-conscious product analytics', () => {
       ...baseEvent,
       attributes: {
         ...baseEvent.attributes,
-        query: 'private controlled content',
+        result_count_bucket: 'person@example.test',
+        resolution: 'This contains a private query',
         userId: 'user-1',
         operation: 'search',
       },
     });
     expect(safe?.attributes).toEqual({
       search_surface: 'global',
-      result_count_bucket: '1-9',
-      operation: 'search',
     });
     expect(
       sanitizeProductAnalyticsEvent({ ...baseEvent, name: 'arbitrary.event' }),
     ).toBeUndefined();
+  });
+
+  it('drops free-form values and query strings from event metadata', () => {
+    const safe = sanitizeProductAnalyticsEvent({
+      ...baseEvent,
+      routeTemplate: '/search?q=private@example.test',
+      domain: 'private@example.test',
+      operation: 'search?query=private',
+      attributes: { search_surface: 'private record 123' },
+    });
+    expect(safe).toMatchObject({ attributes: {} });
+    expect(safe).not.toHaveProperty('routeTemplate');
+    expect(safe).not.toHaveProperty('domain');
+    expect(safe).not.toHaveProperty('operation');
   });
 
   it('hands safe analytics to the outbox without business identifiers', async () => {

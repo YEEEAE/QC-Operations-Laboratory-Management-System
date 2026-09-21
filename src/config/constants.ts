@@ -28,6 +28,7 @@ export const ENV_KEYS = {
   r2Bucket: 'R2_BUCKET',
   aiPrimaryProvider: 'AI_PRIMARY_PROVIDER',
   aiFallbackProvider: 'AI_FALLBACK_PROVIDER',
+  aiExternalProcessingApproved: 'AI_EXTERNAL_PROCESSING_APPROVED',
   groqApiKey: 'GROQ_API_KEY',
   groqModel: 'GROQ_MODEL',
   groqBaseUrl: 'GROQ_BASE_URL',

@@ -15,6 +15,7 @@ const optionalUrl = z
   .optional();
 
 const configurationSchema = z.object({
+  externalProcessingApproved: z.enum(['true', 'false']).default('false'),
   primaryProvider: providerSchema.default('groq'),
   fallbackProvider: providerSchema.default('gemini'),
   groqApiKey: z.string().trim().min(1).optional(),
@@ -33,6 +34,7 @@ export interface AiProviderConfig {
 }
 
 export interface AiConfiguration {
+  externalProcessingApproved: boolean;
   primaryProvider: 'groq' | 'gemini';
   fallbackProvider: 'groq' | 'gemini';
   providers: Partial<Record<'groq' | 'gemini', AiProviderConfig>>;
@@ -47,6 +49,7 @@ const defaultGeminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
 
 function parseCandidate(input: Record<string, string | undefined>) {
   const parsed = configurationSchema.safeParse({
+    externalProcessingApproved: input[ENV_KEYS.aiExternalProcessingApproved] || undefined,
     primaryProvider: input[ENV_KEYS.aiPrimaryProvider] || undefined,
     fallbackProvider: input[ENV_KEYS.aiFallbackProvider] || undefined,
     groqApiKey: value(input, ENV_KEYS.groqApiKey, 'API_groq_Key'),
@@ -64,6 +67,7 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
   if (!parsed.success) {
     const invalidFields = [...new Set(parsed.error.issues.map((issue) => String(issue.path[0])))];
     return {
+      externalProcessingApproved: false,
       primaryProvider: 'groq',
       fallbackProvider: 'gemini',
       providers: {},
@@ -73,7 +77,7 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
 
   const data = parsed.data;
   const providers: Partial<Record<'groq' | 'gemini', AiProviderConfig>> = {};
-  if (data.groqApiKey && data.groqModel) {
+  if (data.externalProcessingApproved === 'true' && data.groqApiKey && data.groqModel) {
     providers.groq = {
       kind: 'groq',
       apiKey: data.groqApiKey,
@@ -81,7 +85,7 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
       baseUrl: data.groqBaseUrl || defaultGroqBaseUrl,
     };
   }
-  if (data.geminiApiKey && data.geminiModel) {
+  if (data.externalProcessingApproved === 'true' && data.geminiApiKey && data.geminiModel) {
     providers.gemini = {
       kind: 'gemini',
       apiKey: data.geminiApiKey,
@@ -90,6 +94,7 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
     };
   }
   return {
+    externalProcessingApproved: data.externalProcessingApproved === 'true',
     primaryProvider: data.primaryProvider,
     fallbackProvider: data.fallbackProvider,
     providers,

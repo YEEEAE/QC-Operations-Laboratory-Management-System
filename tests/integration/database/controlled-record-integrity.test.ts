@@ -140,7 +140,9 @@ describe('QC-CLOSURE-009 controlled-record integrity', () => {
     await expect(
       pool.query(`DELETE FROM qc.electronic_signatures WHERE id = $1`, [signature.rows[0].id]),
     ).rejects.toThrow(/append-only/);
-    await expect(pool.query(`TRUNCATE qc.electronic_signatures`)).rejects.toThrow(/append-only/);
+    await expect(pool.query(`TRUNCATE qc.electronic_signatures CASCADE`)).rejects.toThrow(
+      /append-only/,
+    );
   });
 
   it('rejects editing approved document and template content in place', async () => {
@@ -305,7 +307,7 @@ describe('QC-CLOSURE-009 controlled-record integrity', () => {
         [submission.rows[0].id],
       ),
     ).rejects.toThrow(/append-only/);
-    await expect(pool.query(`TRUNCATE qc.inspection_report_snapshots`)).rejects.toThrow(
+    await expect(pool.query(`TRUNCATE qc.inspection_report_snapshots CASCADE`)).rejects.toThrow(
       /append-only/,
     );
   });

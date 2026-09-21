@@ -80,26 +80,52 @@ const ATTRIBUTE_NAMES = new Set([
   'status_class',
 ]);
 
-const MAX_STRING_LENGTH = 64;
-const MAX_ATTRIBUTES = 16;
+const MAX_ATTRIBUTES = 4;
 
-function safeValue(value: ProductAnalyticsValue): ProductAnalyticsValue | undefined {
+const SAFE_SEARCH_VALUES: Record<string, ReadonlySet<string>> = {
+  search_surface: new Set(['global']),
+  query_length_bucket: new Set(['0-3', '4-20', '21-200']),
+  result_count_bucket: new Set(['0', '1-9', '10+']),
+  resolution: new Set(['unresolved', 'results_available']),
+  form_key: new Set(['global-search']),
+  field_group: new Set(['query']),
+  error_family: new Set(['invalid_query']),
+};
+
+const SAFE_ROOT_VALUES = {
+  domain: new Set(['search']),
+  operation: new Set(['search']),
+} as const;
+
+function safeValue(name: string, value: ProductAnalyticsValue): ProductAnalyticsValue | undefined {
   if (typeof value === 'string') {
-    if (value.length === 0 || value.length > MAX_STRING_LENGTH) return undefined;
+    if (!SAFE_SEARCH_VALUES[name]?.has(value)) return undefined;
     return value;
   }
-  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
-  return value;
+  return undefined;
 }
 
 export function sanitizeProductAnalyticsEvent(
   event: ProductAnalyticsEvent,
 ): ProductAnalyticsEvent | undefined {
   if (!EVENT_NAMES.has(event.name)) return undefined;
+  if (
+    !Number.isFinite(Date.parse(event.occurredAt)) ||
+    !['test', 'staging', 'production'].includes(event.environment) ||
+    (event.outcome !== undefined &&
+      !['started', 'completed', 'failed', 'abandoned', 'unavailable'].includes(event.outcome))
+  ) {
+    return undefined;
+  }
   const attributes: Record<string, ProductAnalyticsValue> = {};
   for (const [name, value] of Object.entries(event.attributes)) {
-    if (!ATTRIBUTE_NAMES.has(name) || Object.hasOwn(attributes, name)) continue;
-    const safe = safeValue(value);
+    if (
+      !ATTRIBUTE_NAMES.has(name) ||
+      !Object.hasOwn(SAFE_SEARCH_VALUES, name) ||
+      Object.hasOwn(attributes, name)
+    )
+      continue;
+    const safe = safeValue(name, value);
     if (safe !== undefined) attributes[name] = safe;
     if (Object.keys(attributes).length >= MAX_ATTRIBUTES) break;
   }
@@ -107,11 +133,14 @@ export function sanitizeProductAnalyticsEvent(
     name: event.name,
     occurredAt: event.occurredAt,
     environment: event.environment,
-    ...(event.routeTemplate
-      ? { routeTemplate: event.routeTemplate.slice(0, MAX_STRING_LENGTH) }
+    ...(event.routeTemplate &&
+    /^\/(?:[a-z][a-z0-9-]*)(?:\/[a-z][a-z0-9-]*)*$/.test(event.routeTemplate)
+      ? { routeTemplate: event.routeTemplate }
       : {}),
-    ...(event.domain ? { domain: event.domain.slice(0, MAX_STRING_LENGTH) } : {}),
-    ...(event.operation ? { operation: event.operation.slice(0, MAX_STRING_LENGTH) } : {}),
+    ...(event.domain && SAFE_ROOT_VALUES.domain.has(event.domain) ? { domain: event.domain } : {}),
+    ...(event.operation && SAFE_ROOT_VALUES.operation.has(event.operation)
+      ? { operation: event.operation }
+      : {}),
     ...(event.outcome ? { outcome: event.outcome } : {}),
     attributes,
   };

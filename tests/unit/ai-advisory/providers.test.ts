@@ -41,6 +41,7 @@ afterEach(() => {
 describe('AI provider configuration', () => {
   it('uses canonical names and defaults without exposing secret values', () => {
     const result = parseAiConfiguration({
+      AI_EXTERNAL_PROCESSING_APPROVED: 'true',
       AI_PRIMARY_PROVIDER: 'groq',
       AI_FALLBACK_PROVIDER: 'gemini',
       GROQ_API_KEY: 'canonical-groq-secret',
@@ -56,6 +57,7 @@ describe('AI provider configuration', () => {
 
   it('supports legacy names during transition and rejects non-HTTPS endpoints', () => {
     const legacy = parseAiConfiguration({
+      AI_EXTERNAL_PROCESSING_APPROVED: 'true',
       API_groq_Key: 'legacy-groq-secret',
       groq_model: 'legacy-model',
       URL_groq: 'https://legacy.test/chat/completions',
@@ -67,6 +69,22 @@ describe('AI provider configuration', () => {
     expect(parseAiConfiguration({ GROQ_BASE_URL: 'http://unsafe.test' }).invalidFields).toContain(
       'groqBaseUrl',
     );
+  });
+
+  it('keeps providers disabled when external processing approval is absent or invalid', () => {
+    const credentials = {
+      GROQ_API_KEY: 'groq-test-key',
+      GROQ_MODEL: 'test-model',
+      GEMINI_API_KEY: 'gemini-test-key',
+      GEMINI_MODEL: 'gemini-test-model',
+    };
+    expect(parseAiConfiguration(credentials).providers).toEqual({});
+    expect(
+      parseAiConfiguration({ ...credentials, AI_EXTERNAL_PROCESSING_APPROVED: 'yes' }).providers,
+    ).toEqual({});
+    expect(
+      parseAiConfiguration({ ...credentials, AI_EXTERNAL_PROCESSING_APPROVED: 'true' }).providers,
+    ).toHaveProperty('groq');
   });
 });
 

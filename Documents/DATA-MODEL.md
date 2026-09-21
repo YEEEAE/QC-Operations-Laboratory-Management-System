@@ -38,8 +38,8 @@
 
 ## Current schema reconciliation — 2026-09-21
 
-The source migration set contains 33 forward-only files through
-`0033_controlled_document_execution_context`. Applied provider schema identity
+The source migration set contains 34 forward-only files through
+`0034_template_document_link_variable_scope`. Applied provider schema identity
 is **NOT VERIFIED** for this candidate. The last recorded Render applied head
 (`0018`) is historical evidence, not a current-state claim. Source migration
 head and provider-applied schema remain separate facts; no pending migration is

@@ -1,5 +1,6 @@
 import type { OutboxRepository } from './outbox-repository';
 import { withSpan, recordCounter } from '../observability/telemetry';
+import { outboxRetryDelayMs, safeFailureSummary } from '../errors/failure-classification.js';
 
 export type OutboxHandler = (
   event: Awaited<ReturnType<OutboxRepository['claim']>>[number],
@@ -33,8 +34,8 @@ export async function processOutboxBatch(
     } catch (error) {
       await repository.markRetry(
         event.id,
-        error instanceof Error ? error.message : 'outbox handler failed',
-        new Date(Date.now() + 30_000),
+        safeFailureSummary(error),
+        new Date(Date.now() + outboxRetryDelayMs(event.attemptCount)),
       );
       recordCounter('qc_outbox_events_total', 1, {
         domain: 'outbox',
