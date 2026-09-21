@@ -40,6 +40,11 @@ const uiFiles = walk('src/ui').filter((path) => /\.(astro|ts)$/.test(path));
  * baseline (`method="post"`) and no Astro action form (`action={actions.x}`).
  * Every entry needs a real POST baseline plus retained values and a read-only
  * safe summary for the no-JS path. Owner: 005-B with 003/006 verification.
+ *
+ * QC-100-FINAL-037-A register update: `quarantine/receiving/[receivingId]`
+ * gained full POST baselines for inspection creation, HOLD, VOID, and
+ * correction forms (verified against commit 5470a2e — 4 `method="post"`
+ * forms), so it leaves this register. The register can only shrink.
  */
 const NO_JS_BASELINE_OPEN = [
   'src/pages/admin/roles/[roleId].astro',
@@ -49,7 +54,6 @@ const NO_JS_BASELINE_OPEN = [
   'src/pages/laboratory/tests/[labTestId]/execute.astro',
   'src/pages/laboratory/tests/[labTestId]/review.astro',
   'src/pages/quality/capa/[capaId].astro',
-  'src/pages/quarantine/receiving/[receivingId].astro',
   'src/pages/reject-reports/daily/[reportId].astro',
 ];
 
@@ -142,7 +146,12 @@ describe('control surfaces and the JavaScript-only gap register', () => {
     const withoutGuard = pages.filter((page) => {
       const source = read(page);
       if (!source.includes('data-submit')) return false;
-      return !source.includes('aria-busy') && !source.includes('enhanceMutationForm');
+      // Both shared enhancement contracts count as an in-flight guard.
+      return (
+        !source.includes('aria-busy') &&
+        !source.includes('enhanceMutationForm') &&
+        !source.includes('enhanceClassifiedForm')
+      );
     });
     expect(withoutGuard).toEqual(PENDING_GUARD_OPEN);
   });
@@ -161,11 +170,15 @@ describe('control surfaces and the JavaScript-only gap register', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('keeps the shared enhancement idempotent and form-scoped', () => {
+  it('keeps the shared enhancements idempotent and form-scoped', () => {
     for (const file of uiFiles.filter((path) => path.endsWith('.ts'))) {
       const source = read(file);
-      // Only the shared contract may disable a submit control.
-      if (file === 'src/ui/forms/mutation-interaction.ts') continue;
+      // Only the shared contracts may disable a submit control.
+      if (
+        file === 'src/ui/forms/mutation-interaction.ts' ||
+        file === 'src/ui/forms/enhance-with-classification.ts'
+      )
+        continue;
       expect(source, file).not.toContain('submit.disabled = true');
     }
   });

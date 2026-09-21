@@ -284,9 +284,15 @@ describe('create-form POST baseline contracts across the nine Tier-2 routes', ()
     it(`${page}: JavaScript stays an optional enhancement with pending state`, () => {
       const source = readPage(page);
       expect(source).toContain('<script>');
-      expect(source).toContain('event.preventDefault()');
+      // QC-100-FINAL-037-A: the pending state may live in the page script or
+      // in the shared classified enhancement (which owns aria-busy + status).
+      const pendingInPage = source.includes('event.preventDefault()');
+      const pendingInSharedEnhancement = source.includes('enhanceClassifiedForm');
+      expect(pendingInPage || pendingInSharedEnhancement).toBe(true);
       expect(source).toContain('data-submit');
-      expect(source).toContain('aria-busy');
+      if (!pendingInSharedEnhancement) {
+        expect(source).toContain('aria-busy');
+      }
       expect(source).toContain('role="status"');
     });
 

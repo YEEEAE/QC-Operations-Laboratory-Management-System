@@ -302,13 +302,17 @@ describe('selector and navigation contracts across the touched create forms (F-0
       expect(source).not.toContain('role="combobox"');
     }
     // Pending (loading) state stays announced; Cancel stays a real link.
+    // QC-100-FINAL-037-A: aria-busy may live in the page script or in the
+    // shared classified enhancement the page wires (enhanceClassifiedForm).
     for (const page of [
       'laboratory/tests/new.astro',
       'assets/calibrations/new.astro',
       'assets/maintenance/new.astro',
     ]) {
       const source = readPage(page);
-      expect(source).toContain('aria-busy');
+      expect(
+        source.includes('aria-busy') || source.includes('enhanceClassifiedForm'),
+      ).toBe(true);
       expect(source).toContain('role="status"');
     }
   });
