@@ -187,6 +187,81 @@ const submitInspection = defineAction({
       }),
     ),
 });
+// QC-DATA-002: record observed point values. PASS/FAIL is computed
+// server-side from the approved acceptance rules; the client can only ever
+// declare REMARK/NA (enforced again inside the use case).
+const recordInspectionResults = defineAction({
+  accept: 'json',
+  input: inspectionVersion.extend({
+    results: z.array(
+      z.object({
+        id: z.string().uuid(),
+        pointId: z.string().uuid(),
+        value: z.union([z.string(), z.number(), z.boolean()]),
+        unit: z.string().optional(),
+        result: z.enum(['REMARK', 'NA']).optional(),
+        remarks: z.string().optional(),
+        version: z.coerce.bigint(),
+      }),
+    ),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().inspection.recordResults.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+// QC-DATA-002 §8: structured AQL / sampling facts (never free text).
+const recordInspectionAql = defineAction({
+  accept: 'json',
+  input: inspectionVersion.extend({
+    aql: z.object({
+      aql: z.string().trim().min(1).max(40),
+      codeLetter: z.string().trim().max(20).optional(),
+      inspectionLevel: z.string().trim().max(40).optional(),
+      sampleSize: z.string().trim().min(1).max(40),
+      acceptNumber: z.string().trim().min(1).max(40),
+      rejectNumber: z.string().trim().min(1).max(40),
+      observedDefects: z.string().trim().max(40).optional(),
+      samplingResult: z.enum(['ACCEPT', 'REJECT', 'NOT_APPLICABLE']),
+      sourceReference: z.string().trim().min(1).max(200),
+    }),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().inspection.recordAql.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+// QC-DATA-002 §10/§11: link calibrated equipment with its calibration
+// snapshot; eligibility is re-verified server-side through the assets policy.
+const linkInspectionEquipment = defineAction({
+  accept: 'json',
+  input: inspectionVersion.extend({
+    usage: z.object({
+      equipmentId: z.string().uuid(),
+      calibrationRecordId: z.string().uuid(),
+      usedAt: z.string().min(4).max(64),
+      equipmentSnapshot: z.record(z.unknown()),
+      calibrationSnapshot: z.record(z.unknown()),
+      usageRole: z.string().trim().max(80).optional(),
+    }),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      quarantineActionDependencies().inspection.linkEquipment.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
 const reviewInspection = defineAction({
   accept: 'json',
   input: inspectionVersion,
@@ -288,6 +363,9 @@ export const quarantine = {
   createInspectionFromReceiving,
   saveInspectionDraft,
   submitInspection,
+  recordInspectionResults,
+  recordInspectionAql,
+  linkInspectionEquipment,
   reviewInspection,
   approveInspection,
   finalApproveInspection,

@@ -416,11 +416,47 @@ export interface InspectionReportsTable {
   voided_at: Date | null;
   void_reason: string | null;
   snapshot_id: string | null;
+  aql: string | null;
+  aql_code_letter: string | null;
+  aql_inspection_level: string | null;
+  aql_sample_size: string | number | null;
+  aql_accept_number: string | number | null;
+  aql_reject_number: string | number | null;
+  aql_observed_defects: string | number | null;
+  aql_sampling_result: string | null;
+  aql_source_reference: string | null;
+  aql_recorded_by: string | null;
+  aql_recorded_at: Date | null;
   created_at: Generated<Date>;
   created_by: string;
   updated_at: Generated<Date>;
   updated_by: string | null;
   version: Generated<bigint>;
+}
+export interface InspectionItemTemplatesTable {
+  id: Generated<string>;
+  item_code: string;
+  template_id: string;
+  state: string;
+  effective_from: string | Date;
+  effective_to: string | Date | null;
+  created_by: string;
+  created_at: Generated<Date>;
+  updated_by: string | null;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+export interface InspectionEquipmentUsageTable {
+  id: Generated<string>;
+  inspection_report_id: string;
+  equipment_id: string;
+  calibration_record_id: string | null;
+  usage_role: string | null;
+  used_at: Date | null;
+  equipment_snapshot: unknown;
+  calibration_snapshot: unknown | null;
+  created_by: string;
+  created_at: Generated<Date>;
 }
 export interface InspectionReportResultsTable {
   id: Generated<string>;
@@ -1164,6 +1200,8 @@ export interface DatabaseSchema {
   inspection_reports: InspectionReportsTable;
   inspection_report_results: InspectionReportResultsTable;
   inspection_report_snapshots: InspectionReportSnapshotsTable;
+  inspection_item_templates: InspectionItemTemplatesTable;
+  inspection_equipment_usage: InspectionEquipmentUsageTable;
   inspection_template_document_sources: InspectionTemplateDocumentSourcesTable;
   lab_test_templates: LabTestTemplatesTable;
   lab_test_template_versions: LabTestTemplateVersionsTable;

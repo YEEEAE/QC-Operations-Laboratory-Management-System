@@ -307,6 +307,11 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       updatedAt: new Date('2026-01-01T00:00:00Z'),
     } as Inspection;
     const repository: InspectionRepository = {
+      // QC-DATA-002: policy suite only; criteria/AQL methods unused here.
+      async listPointCriteria() {
+        return [];
+      },
+      async saveAql() {},
       async get() {
         return inspection;
       },

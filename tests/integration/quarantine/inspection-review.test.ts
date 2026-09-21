@@ -59,6 +59,12 @@ const actor = (id: string): ActorContext => ({
 function repository(initial: Inspection): InspectionRepository {
   let current = initial;
   return {
+    // QC-DATA-002: the review suite exercises workflow transitions, not
+    // point evaluation; the criteria/AQL methods are no-ops here.
+    async listPointCriteria() {
+      return [];
+    },
+    async saveAql() {},
     async get() {
       return current;
     },

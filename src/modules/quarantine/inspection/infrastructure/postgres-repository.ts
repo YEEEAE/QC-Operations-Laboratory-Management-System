@@ -9,6 +9,9 @@ import type { InspectionRepository } from '../ports/repository.js';
 import type { Inspection } from '../domain/inspection.js';
 import type { InspectionAction } from '../domain/inspection-state.js';
 import type { FinalResult, InspectionResultEntry } from '../domain/inspection-result.js';
+import type { AqlSampling } from '../domain/inspection-aql.js';
+import type { InspectionEquipmentRepository } from '../ports/inspection-equipment-repository.js';
+import type { EquipmentContext } from '../application/inspection-equipment.js';
 import { applyInspectionAction } from '../domain/inspection.js';
 import { transitionInspection } from '../domain/inspection-state.js';
 import type { AuditRepository } from '../../../../shared/audit/audit-repository.js';
@@ -84,6 +87,13 @@ const map = (
 });
 
 export class PostgresInspectionRepository implements InspectionRepository {
+  /** QC-DATA-002: the repository doubles as the equipment-usage port. */
+  get equipmentUsage(): InspectionEquipmentRepository {
+    return {
+      link: (i) => this.linkEquipment(i),
+      listForReport: (id) => this.listEquipment(id),
+    };
+  }
   constructor(
     private readonly db: Kysely<DatabaseSchema>,
     private readonly audit?: AuditRepository,
@@ -419,6 +429,130 @@ export class PostgresInspectionRepository implements InspectionRepository {
       throw translateDatabaseError(e);
     }
   }
+  /**
+   * QC-DATA-002: approved point criteria for the bound template version —
+   * the server-side source for deterministic numeric/enum evaluation. Read
+   * from the live template rows (which are immutable once approved), never
+   * from client input.
+   */
+  async listPointCriteria(templateVersionId: string) {
+    const rows = await this.db
+      .selectFrom('inspection_template_sections as section')
+      .innerJoin('inspection_template_points as point', 'point.section_id', 'section.id')
+      .select([
+        'point.id as pointId',
+        'point.data_type as dataType',
+        'point.acceptance_rule_type as acceptanceRuleType',
+        'point.acceptance_rule_payload as acceptanceRulePayload',
+      ])
+      .where('section.template_version_id', '=', templateVersionId)
+      .orderBy('section.position')
+      .orderBy('point.position')
+      .execute();
+    return rows.map((row) => ({
+      pointId: row.pointId,
+      dataType: row.dataType,
+      acceptanceRuleType: row.acceptanceRuleType,
+      acceptanceRulePayload: row.acceptanceRulePayload,
+    }));
+  }
+  /**
+   * QC-DATA-002 §8: persist the operator-supplied structured AQL block.
+   * Draft-only, optimistic-version guarded, audited like every mutation.
+   */
+  async linkEquipment(i: {
+    id: string;
+    inspectionReportId: string;
+    usage: EquipmentContext;
+    actor: ActorContext;
+    requestId: string;
+  }) {
+    await this.db.transaction().execute(async (tx) => {
+      await tx
+        .insertInto('inspection_equipment_usage')
+        .values({
+          id: i.id,
+          inspection_report_id: i.inspectionReportId,
+          equipment_id: i.usage.equipmentId,
+          calibration_record_id: i.usage.calibrationRecordId,
+          usage_role: i.usage.usageRole ?? null,
+          used_at: new Date(i.usage.usedAt),
+          equipment_snapshot: i.usage.equipmentSnapshot,
+          calibration_snapshot: i.usage.calibrationSnapshot,
+          created_by: i.actor.id,
+        })
+        .execute();
+      await this.auditFor(tx)?.append({
+        actorType: 'USER',
+        actorId: i.actor.id,
+        subjectType: 'INSPECTION_REPORT',
+        subjectId: i.inspectionReportId,
+        action: 'EQUIPMENT_LINKED',
+        requestId: i.requestId,
+        payload: { equipmentId: i.usage.equipmentId, calibrationRecordId: i.usage.calibrationRecordId },
+      });
+    });
+  }
+  async listEquipment(inspectionReportId: string): Promise<EquipmentContext[]> {
+    const rows = await this.db
+      .selectFrom('inspection_equipment_usage')
+      .selectAll()
+      .where('inspection_report_id', '=', inspectionReportId)
+      .orderBy('created_at')
+      .execute();
+    return rows.map((row) => ({
+      equipmentId: row.equipment_id,
+      calibrationRecordId: row.calibration_record_id ?? '',
+      usedAt: (row.used_at ?? row.created_at).toISOString(),
+      equipmentSnapshot: (row.equipment_snapshot ?? {}) as Record<string, unknown>,
+      calibrationSnapshot: (row.calibration_snapshot ?? {}) as Record<string, unknown>,
+      usageRole: row.usage_role ?? undefined,
+    }));
+  }
+  async saveAql(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    aql: AqlSampling;
+    requestId: string;
+  }) {
+    const r = await this.db.transaction().execute(async (tx) => {
+      const updated = await tx
+        .updateTable('inspection_reports')
+        .set({
+          aql: i.aql.aql,
+          aql_code_letter: i.aql.codeLetter ?? null,
+          aql_inspection_level: i.aql.inspectionLevel ?? null,
+          aql_sample_size: i.aql.sampleSize,
+          aql_accept_number: i.aql.acceptNumber,
+          aql_reject_number: i.aql.rejectNumber,
+          aql_observed_defects: i.aql.observedDefects ?? null,
+          aql_sampling_result: i.aql.samplingResult,
+          aql_source_reference: i.aql.sourceReference,
+          aql_recorded_by: i.actor.id,
+          aql_recorded_at: new Date(),
+          updated_by: i.actor.id,
+          updated_at: new Date(),
+          version: i.expectedVersion + 1n,
+        })
+        .where('id', '=', i.id)
+        .where('version', '=', i.expectedVersion)
+        .where('state', '=', 'DRAFT')
+        .returning('id')
+        .executeTakeFirst();
+      if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+      await this.auditFor(tx)?.append({
+        actorType: 'USER',
+        actorId: i.actor.id,
+        subjectType: 'INSPECTION_REPORT',
+        subjectId: i.id,
+        action: 'MEASUREMENT_RECORDED',
+        requestId: i.requestId,
+        payload: { kind: 'AQL_SAMPLING', samplingResult: i.aql.samplingResult },
+      });
+      return updated;
+    });
+  }
   async saveDraft(i: {
     id: string;
     expectedVersion: bigint;
@@ -453,7 +587,9 @@ export class PostgresInspectionRepository implements InspectionRepository {
             boolean_value: typeof result.value === 'boolean' ? result.value : null,
             selected_value: null,
             unit: result.unit ?? null,
-            result: null,
+            // QC-DATA-002: the official result is the server-evaluated fact
+            // (or the client-declared REMARK/NA); never a browser PASS/FAIL.
+            result: result.result ?? null,
             remarks: result.remarks ?? null,
             entered_by: i.actor.id,
             entered_at: new Date(),

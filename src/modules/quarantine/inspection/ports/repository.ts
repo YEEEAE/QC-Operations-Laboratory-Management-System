@@ -3,7 +3,24 @@ import type { Inspection } from '../domain/inspection.js';
 import type { InspectionAction } from '../domain/inspection-state.js';
 import type { FinalResult, InspectionResultEntry } from '../domain/inspection-result.js';
 import type { SignatureEvidence } from '../../../e-signatures/domain/signature-evidence.js';
+import type { PointCriteria } from '../application/record-inspection-results.js';
+import type { AqlSampling } from '../domain/inspection-aql.js';
 export interface InspectionRepository {
+  /**
+   * QC-DATA-002: approved point criteria of the bound template version for
+   * server-side deterministic evaluation (BR-INSP-006).
+   */
+  listPointCriteria(templateVersionId: string): Promise<PointCriteria[]>;
+  /**
+   * QC-DATA-002 §8: store the structured AQL/sampling block (draft only).
+   */
+  saveAql(i: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    aql: AqlSampling;
+    requestId: string;
+  }): Promise<void>;
   create(i: {
     inspection: Inspection;
     actor: ActorContext;

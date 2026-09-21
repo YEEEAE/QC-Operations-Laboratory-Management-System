@@ -31,6 +31,17 @@ import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-re
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import { createFinalApprovalCeremony } from '../../e-signatures/application/final-approval-ceremony.js';
 import { createPasswordReauthenticationVerifier } from '../../e-signatures/application/reauthentication-verifier.js';
+import { RecordInspectionResultsUseCase } from '../inspection/application/record-inspection-results.js';
+import {
+  LinkInspectionEquipmentUseCase,
+  RecordInspectionAqlUseCase,
+} from '../inspection/application/inspection-aql-equipment.js';
+import { assetsEligibilityDependencies } from '../../assets/application/dependencies.js';
+import {
+  ManageItemTemplateMappingUseCase,
+  PostgresItemMappingReader,
+  ResolveInspectionTemplateUseCase,
+} from '../inspection/application/resolve-inspection-template.js';
 
 export function quarantineReadDependencies() {
   const database = getDatabase();
@@ -84,6 +95,17 @@ export function quarantineActionDependencies() {
     },
     inspection: {
       saveDraft: new SaveInspectionDraftUseCase(inspectionRepository),
+      // QC-DATA-002: server-side evaluation of approved acceptance rules.
+      recordResults: new RecordInspectionResultsUseCase(
+        inspectionRepository,
+        inspectionRepository,
+      ),
+      recordAql: new RecordInspectionAqlUseCase(inspectionRepository),
+      linkEquipment: new LinkInspectionEquipmentUseCase(
+        inspectionRepository,
+        inspectionRepository.equipmentUsage,
+        assetsEligibilityDependencies(),
+      ),
       submit: new SubmitInspectionUseCase(inspectionRepository),
       review: new ReviewInspectionUseCase(inspectionRepository),
       // Stage-1 (Supervisor) approval: workflow event, no e-signature.
@@ -96,5 +118,13 @@ export function quarantineActionDependencies() {
       resume: new ResumeInspectionUseCase(inspectionRepository),
       void: new VoidInspectionUseCase(inspectionRepository),
     },
+  };
+}
+
+export function inspectionMappingDependencies() {
+  const database = getDatabase();
+  return {
+    resolve: new ResolveInspectionTemplateUseCase(new PostgresItemMappingReader(database)),
+    manageMapping: new ManageItemTemplateMappingUseCase(database),
   };
 }

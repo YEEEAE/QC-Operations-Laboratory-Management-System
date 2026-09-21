@@ -16,6 +16,11 @@ const actor: ActorContext = {
 function repo() {
   let x: Inspection | undefined;
   return {
+    // QC-DATA-002: execution suite exercises lifecycle; criteria/AQL no-ops.
+    async listPointCriteria() {
+      return [];
+    },
+    async saveAql() {},
     async create(input: { inspection: Inspection }) {
       x = input.inspection;
       return x;

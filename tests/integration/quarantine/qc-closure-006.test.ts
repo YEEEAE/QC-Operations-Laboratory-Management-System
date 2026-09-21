@@ -60,6 +60,11 @@ const actor = (id: string, permissions: ActorContext['permissions']): ActorConte
 function repository(initial: Inspection): InspectionRepository {
   let current = initial;
   return {
+    // QC-DATA-002: workflow-only suite; criteria/AQL methods are no-ops.
+    async listPointCriteria() {
+      return [];
+    },
+    async saveAql() {},
     async create() {
       return current;
     },
