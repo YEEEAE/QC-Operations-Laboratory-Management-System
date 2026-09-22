@@ -4,6 +4,12 @@
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
+- **2026-09-22 — Independent 100-discipline source audit + live read-only review**
+  - Changed: أُنشئ تقرير HTML مستقل لـ100 مجال بسلم أدلة خاص به (55.0%، وليس مقام/درجة تدقيق المشروع ذي 80 مجالًا). مراجعة `qclevel.top` المصادقة كانت للقراءة فقط؛ لا تغيير في سجلات التطبيق.
+  - Evidence: typecheck/lint/format PASS على Node 24.20.0؛ HTML يحوي 100 مجال ومرجعًا موجودًا لكل صف. المتصفح الحي: النواة READY وDB HEALTHY، لكن `/reject-reports` غير متاح لغياب migrations النشر؛ release SHA/head UNVERIFIED؛ backup catalog فارغ وrestore NOT VERIFIED. اختبارات الوحدة/التكامل/E2E لم تُشغّل لهذه المهمة.
+  - State: PARTIAL — التحليل والتسليم المحلي DONE؛ التحقق الحي لا يرتبط بـSHA المستودع، والتغطية الديناميكية محدودة.
+  - Key files: `audit/2026-09-22-repository-comprehensive-audit-ar.html`.
+
 - **2026-09-22 — PR-A1 / مواءمة Node المحلي وإصلاح `.env` المحلي**
   - Changed: Node المحلي لتشغيلات التحقق إلى `v24.20.0` عبر `nvm use` + `.nvmrc` جديد؛ `.env` المحلي: `NODE_ENV=production` → `development` وإضافة `SERVICE_VERSION=0.1.0` و`RATE_LIMIT_LOGIN_MAX=8` و`RATE_LIMIT_LOGIN_WINDOW_SECONDS=60` (قيم معتمدة من harness المحلي/`package.json`، الأسماء فقط دون طباعة أي قيمة). عقد `package.json` engines/`.node-version`/CI كان مطابقًا مسبقًا — الفجوة كانت محلية.
   - Evidence: `pnpm diagnose` PASS (node-runtime + dotenv-configuration)؛ `pnpm release:parity:check` PASS (runtime-contract)؛ `pnpm typecheck` PASS (0 أخطاء)؛ `pnpm build` PASS — كلها على `node -v` = v24.20.0. صفر طباعة أسرار.
@@ -359,6 +365,7 @@
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
 
 ## 12) Architecture / Deployment / Assets
+- **مشاهدة حية جديدة 2026-09-22، قراءة فقط:** حساب المالك فتح `/dashboard` و`/system/health`؛ ظهرت النواة READY، التطبيق وDB HEALTHY، storage وAI UNAVAILABLE، outbox به رسالة معلقة، ولا backup catalog/restore verification. هوية الإصدار (SHA/head) UNVERIFIED؛ `/reject-reports` يعرض أن migrations اللازمة غير مطبقة. هذه مشاهدة النشر فقط، وليست دليلًا على المرشح المحلي `6c505e65f410ae7ce4384c2d314578d821a53457` أو جاهزية إنتاج شاملة.
 - **`pnpm test:architecture` FAILs على المرشح `4fa6ac3` (مُثبت 2026-09-21 في 035-B):** انتهاكات delivery-boundary قائمة في `src/pages/quality/{ncr,capa}/[id].astro` و`src/pages/ai-advisory.astro` (استيراد infrastructure/SQL مباشر في الصفحات). ليست من أي diff حديث؛ خط الأساس الحالي لخريطة الحدود المملوكة لـ035-A المفقود.
 - `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. **فجوة `.env` المحلية أُغلقت 2026-09-22 (PR-A1):** `NODE_ENV=development` + `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` مكتملة؛ diagnose/parity/typecheck/build كلها PASS على Node `v24.20.0` مع `.nvmrc`.
 - **المرشّح المجمّد الحالي `5470a2ecbbd9da7593fe511e86da2e7c49bf80e1` (036-B):** كان **لا يُبنى** (تكرار تعريف `describedBy`/`invalid` في `src/pages/quarantine/receiving/[receivingId].astro`) وأُصلح؛ و`pnpm test:architecture` يفشل أيضًا بانتهاكات جديدة من نفس الـcommit في `quarantine/receiving/{index,new,[receivingId]}.astro` و`src/actions/quarantine.ts` (استيراد domain مباشر). المالك: عمل receiving/002 ثم 035-A/026 لخريطة الحدود.
