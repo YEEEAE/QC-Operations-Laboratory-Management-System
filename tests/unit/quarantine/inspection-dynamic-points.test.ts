@@ -195,7 +195,9 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
         },
       ],
     });
-    expect((capture.capture.saved as { pointId: string; result?: string }[])[0]?.result).toBe('PASS');
+    expect((capture.capture.saved as { pointId: string; result?: string }[])[0]?.result).toBe(
+      'PASS',
+    );
   });
 
   it('computes FAIL server-side when the observation breaches the approved limits', async () => {
@@ -226,9 +228,7 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
       id: draftInspection.id,
       expectedVersion: 3n,
       requestId: 'req-eval-enum',
-      results: [
-        { id: 'r2', pointId: criteria[1]!.pointId, value: 'Acceptable', version: 1n },
-      ],
+      results: [{ id: 'r2', pointId: criteria[1]!.pointId, value: 'Acceptable', version: 1n }],
     });
     expect((capture.capture.saved as { result?: string }[])[0]?.result).toBe('PASS');
   });
@@ -241,7 +241,9 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
       id: draftInspection.id,
       expectedVersion: 3n,
       requestId: 'req-eval-none',
-      results: [{ id: 'r3', pointId: criteria[2]!.pointId, value: 'clear, no irregularities', version: 1n }],
+      results: [
+        { id: 'r3', pointId: criteria[2]!.pointId, value: 'clear, no irregularities', version: 1n },
+      ],
     });
     expect((capture.capture.saved as { result?: string }[])[0]?.result).toBeUndefined();
   });

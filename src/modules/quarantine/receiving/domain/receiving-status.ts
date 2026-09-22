@@ -37,11 +37,7 @@ export const RECEIVING_QUARANTINE_STATUSES = [
 export type ReceivingQuarantineStatus = (typeof RECEIVING_QUARANTINE_STATUSES)[number];
 
 /** Release status, projected from `workflow_state` + `release_system`. */
-export const RECEIVING_RELEASE_STATUSES = [
-  'NOT_RELEASED',
-  'RELEASE_PENDING',
-  'RELEASED',
-] as const;
+export const RECEIVING_RELEASE_STATUSES = ['NOT_RELEASED', 'RELEASE_PENDING', 'RELEASED'] as const;
 export type ReceivingReleaseStatus = (typeof RECEIVING_RELEASE_STATUSES)[number];
 
 /** The three facts a projection needs; never a UI concern. */
@@ -109,7 +105,8 @@ export function inspectionAcceptanceReleasesMaterial(): false {
 
 export function isReceivingInspectionStatus(value: unknown): value is ReceivingInspectionStatus {
   return (
-    typeof value === 'string' && (RECEIVING_INSPECTION_STATUSES as readonly string[]).includes(value)
+    typeof value === 'string' &&
+    (RECEIVING_INSPECTION_STATUSES as readonly string[]).includes(value)
   );
 }
 

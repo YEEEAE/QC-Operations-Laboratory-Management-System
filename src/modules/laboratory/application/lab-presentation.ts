@@ -72,7 +72,6 @@ export function criteriaText(parameter: Parameter): string {
   return json && json !== '{}' ? `Approved criteria: ${json}` : 'No approved criteria recorded';
 }
 
-
 /** Entry-surface descriptor for one controlled parameter (unit + guidance at the point of entry). */
 export interface EntryParameter {
   id: string;
@@ -118,9 +117,10 @@ export interface ComparisonRow {
   outcome: ComparisonOutcome;
 }
 
-function observedOf(
-  measurement: Measurement | undefined,
-): { observed: string | null; calculated: boolean } {
+function observedOf(measurement: Measurement | undefined): {
+  observed: string | null;
+  calculated: boolean;
+} {
   if (!measurement) return { observed: null, calculated: false };
   if (measurement.calculatedValue !== null && measurement.calculatedValue !== undefined)
     return { observed: measurement.calculatedValue, calculated: true };

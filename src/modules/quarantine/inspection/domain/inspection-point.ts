@@ -44,7 +44,5 @@ export const ACCEPTANCE_RULE_TYPES = [
 export type AcceptanceRuleType = (typeof ACCEPTANCE_RULE_TYPES)[number];
 
 export function isAcceptanceRuleType(value: unknown): value is AcceptanceRuleType {
-  return (
-    typeof value === 'string' && (ACCEPTANCE_RULE_TYPES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (ACCEPTANCE_RULE_TYPES as readonly string[]).includes(value);
 }

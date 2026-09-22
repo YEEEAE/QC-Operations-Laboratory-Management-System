@@ -88,8 +88,7 @@ export class RecordLabRunUseCase {
     if (!test) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     // The state is checked first so a record that is no longer a draft reports
     // the real reason instead of a permission denial it would also have.
-    if (test.state !== 'DRAFT')
-      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (test.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     authorizeLab(input.actor, test, 'PERM-LAB-EDIT-DRAFT', 'SAVE', input.expectedVersion);
     authorizeLab(input.actor, test, 'PERM-LAB-ENTER-MEASUREMENT', 'SAVE', input.expectedVersion);
 

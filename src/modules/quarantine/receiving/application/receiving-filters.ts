@@ -134,40 +134,54 @@ export function parseReceivingFilters(params: URLSearchParams): ParsedReceivingF
   if (rawResult !== null) {
     const inspectionResult = oneOf(INSPECTION_RESULTS, rawResult);
     if (inspectionResult) filters.inspectionResult = inspectionResult;
-    else rejected.push({ parameter: 'inspectionResult', value: rawResult, reason: 'UNSUPPORTED_VALUE' });
+    else
+      rejected.push({
+        parameter: 'inspectionResult',
+        value: rawResult,
+        reason: 'UNSUPPORTED_VALUE',
+      });
   }
 
   const rawInspection = params.get('inspectionStatus');
   if (rawInspection !== null) {
     const inspectionStatus = oneOf(RECEIVING_INSPECTION_STATUSES, rawInspection);
     if (inspectionStatus) filters.inspectionStatus = inspectionStatus;
-    else rejected.push({ parameter: 'inspectionStatus', value: rawInspection, reason: 'UNSUPPORTED_VALUE' });
+    else
+      rejected.push({
+        parameter: 'inspectionStatus',
+        value: rawInspection,
+        reason: 'UNSUPPORTED_VALUE',
+      });
   }
 
   const rawQuarantine = params.get('quarantine');
   if (rawQuarantine !== null) {
     const quarantine = oneOf(RECEIVING_QUARANTINE_STATUSES, rawQuarantine);
     if (quarantine) filters.quarantine = quarantine;
-    else rejected.push({ parameter: 'quarantine', value: rawQuarantine, reason: 'UNSUPPORTED_VALUE' });
+    else
+      rejected.push({ parameter: 'quarantine', value: rawQuarantine, reason: 'UNSUPPORTED_VALUE' });
   }
 
   const rawRelease = params.get('releaseState');
   if (rawRelease !== null) {
     const releaseState = oneOf(RECEIVING_RELEASE_STATUSES, rawRelease);
     if (releaseState) filters.releaseState = releaseState;
-    else rejected.push({ parameter: 'releaseState', value: rawRelease, reason: 'UNSUPPORTED_VALUE' });
+    else
+      rejected.push({ parameter: 'releaseState', value: rawRelease, reason: 'UNSUPPORTED_VALUE' });
   }
 
   const rawOwnership = params.get('ownership');
   if (rawOwnership !== null) {
     if (rawOwnership.toLowerCase() === 'mine') filters.ownership = 'mine';
-    else rejected.push({ parameter: 'ownership', value: rawOwnership, reason: 'UNSUPPORTED_VALUE' });
+    else
+      rejected.push({ parameter: 'ownership', value: rawOwnership, reason: 'UNSUPPORTED_VALUE' });
   }
 
   const rawReceivedOn = params.get('receivedOn');
   if (rawReceivedOn !== null) {
     if (rawReceivedOn.toLowerCase() === 'today') filters.receivedOn = 'today';
-    else rejected.push({ parameter: 'receivedOn', value: rawReceivedOn, reason: 'UNSUPPORTED_VALUE' });
+    else
+      rejected.push({ parameter: 'receivedOn', value: rawReceivedOn, reason: 'UNSUPPORTED_VALUE' });
   }
 
   const bounds: Array<[keyof ReceivingListFilters, string]> = [
@@ -196,10 +210,13 @@ export function parseReceivingFilters(params: URLSearchParams): ParsedReceivingF
     delete filters.receivedFrom;
   }
   if (filters.expiryFrom && filters.expiryTo && filters.expiryFrom > filters.expiryTo) {
-    rejected.push({ parameter: 'expiryFrom', value: filters.expiryFrom, reason: 'UNSUPPORTED_VALUE' });
+    rejected.push({
+      parameter: 'expiryFrom',
+      value: filters.expiryFrom,
+      reason: 'UNSUPPORTED_VALUE',
+    });
     delete filters.expiryFrom;
   }
 
   return { filters, rejected };
 }
-

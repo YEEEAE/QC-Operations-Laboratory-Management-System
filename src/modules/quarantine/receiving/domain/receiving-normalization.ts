@@ -56,7 +56,8 @@ export interface ReceivingRowClassification {
   source: Readonly<Record<string, unknown>>;
 }
 
-const text = (value: unknown): string => (value === null || value === undefined ? '' : String(value)).trim();
+const text = (value: unknown): string =>
+  (value === null || value === undefined ? '' : String(value)).trim();
 
 const textIssue = (
   field: string,
@@ -139,7 +140,12 @@ export function classifyReceivingSourceRow(row: ReceivingSourceRow): ReceivingRo
     if (!value) {
       add(
         'REQUIRES_REVIEW',
-        textIssue(String(field), 'MISSING_REQUIRED_FIELD', null, `${label} is missing in the source row.`),
+        textIssue(
+          String(field),
+          'MISSING_REQUIRED_FIELD',
+          null,
+          `${label} is missing in the source row.`,
+        ),
       );
     }
   }

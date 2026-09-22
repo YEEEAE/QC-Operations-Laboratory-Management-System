@@ -1,6 +1,10 @@
 import { AppError } from '../../../../shared/errors/app-error.js';
 import { assertReason, transitionReceiving } from './receiving-state.js';
-import type { InspectionResult, ReceivingAction, ReceivingWorkflowState } from './receiving-state.js';
+import type {
+  InspectionResult,
+  ReceivingAction,
+  ReceivingWorkflowState,
+} from './receiving-state.js';
 import { assertReceivingQuantityUnit, type ReceivingQuantityUnit } from './receiving-units.js';
 export interface ReceivingItem {
   id: string;
@@ -50,7 +54,6 @@ export interface ReceivingLinkedInspection {
   assignedTo?: string;
   updatedAt: Date;
 }
-
 
 export interface ReceivingHistoryEvent {
   action: string;

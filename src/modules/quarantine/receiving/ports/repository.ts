@@ -1,7 +1,11 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { ReceivingAction } from '../domain/receiving-state.js';
 import type { ReceivingItem } from '../domain/receiving-item.js';
-import type { ReceivingInspectionStatus, ReceivingQuarantineStatus, ReceivingReleaseStatus } from '../domain/receiving-status.js';
+import type {
+  ReceivingInspectionStatus,
+  ReceivingQuarantineStatus,
+  ReceivingReleaseStatus,
+} from '../domain/receiving-status.js';
 
 /**
  * The canonical register query. Every field is applied in SQL; a field that is
@@ -104,4 +108,3 @@ export interface ReceivingRepository {
     requestId: string;
   }): Promise<ReceivingItem>;
 }
-

@@ -489,7 +489,10 @@ export class PostgresInspectionRepository implements InspectionRepository {
         subjectId: i.inspectionReportId,
         action: 'EQUIPMENT_LINKED',
         requestId: i.requestId,
-        payload: { equipmentId: i.usage.equipmentId, calibrationRecordId: i.usage.calibrationRecordId },
+        payload: {
+          equipmentId: i.usage.equipmentId,
+          calibrationRecordId: i.usage.calibrationRecordId,
+        },
       });
     });
   }
@@ -516,7 +519,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
     aql: AqlSampling;
     requestId: string;
   }) {
-    const r = await this.db.transaction().execute(async (tx) => {
+    await this.db.transaction().execute(async (tx) => {
       const updated = await tx
         .updateTable('inspection_reports')
         .set({

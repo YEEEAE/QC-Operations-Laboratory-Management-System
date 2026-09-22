@@ -15,9 +15,7 @@ import type { OutboxRepository } from '../../../../shared/outbox/outbox-reposito
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
 import { createHash } from 'node:crypto';
 import { stableJson } from '../../../../shared/json/stable-stringify.js';
-import type {
-  ReceivingListQuery,
-} from '../ports/repository.js';
+import type { ReceivingListQuery } from '../ports/repository.js';
 import type {
   ReceivingInspectionStatus,
   ReceivingQuarantineStatus,
@@ -64,7 +62,6 @@ const QUARANTINE_STATUS_PREDICATES: Record<ReceivingQuarantineStatus, RawSql> = 
   EXPIRED: sql`workflow_state = 'EXPIRED'`,
 };
 
-
 const map = (r: DatabaseRow<'receiving_items'>): ReceivingItem => ({
   id: r.id,
   receivingNo: r.receiving_no,
@@ -99,7 +96,8 @@ const map = (r: DatabaseRow<'receiving_items'>): ReceivingItem => ({
 type RawSql = ReturnType<typeof sql>;
 
 /** Escapes LIKE wildcards so a register search always means a literal search. */
-const likePattern = (value: string): string => `%${value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}%`;
+const likePattern = (value: string): string =>
+  `%${value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}%`;
 
 export class PostgresReceivingRepository implements ReceivingRepository {
   constructor(
@@ -185,14 +183,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       // inspection reports without loading an unbounded relation.
       this.db
         .selectFrom('inspection_reports')
-        .select([
-          'id',
-          'inspection_no',
-          'state',
-          'final_result',
-          'assigned_user_id',
-          'updated_at',
-        ])
+        .select(['id', 'inspection_no', 'state', 'final_result', 'assigned_user_id', 'updated_at'])
         .where('receiving_item_id', '=', id)
         .orderBy('updated_at', 'desc')
         .orderBy('id', 'desc')

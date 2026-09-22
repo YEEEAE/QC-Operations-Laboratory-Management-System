@@ -65,11 +65,56 @@
     "warmup": false,
     "requestsPerConcurrency": 400,
     "profiles": [
-      { "concurrency": 1, "errors": 0, "elapsedMs": 46.78, "throughputPerSec": 8550.6, "p50Ms": 0.075, "p95Ms": 0.109, "maxMs": 16.182, "maxPoolWaiting": 0 },
-      { "concurrency": 4, "errors": 0, "elapsedMs": 13.27, "throughputPerSec": 30149.5, "p50Ms": 0.074, "p95Ms": 0.216, "maxMs": 4.935, "maxPoolWaiting": 0 },
-      { "concurrency": 10, "errors": 0, "elapsedMs": 11.97, "throughputPerSec": 33429.0, "p50Ms": 0.156, "p95Ms": 0.710, "maxMs": 7.856, "maxPoolWaiting": 0 },
-      { "concurrency": 20, "errors": 0, "elapsedMs": 5.53, "throughputPerSec": 72352.4, "p50Ms": 0.250, "p95Ms": 0.369, "maxMs": 0.481, "maxPoolWaiting": 10 },
-      { "concurrency": 40, "errors": 0, "elapsedMs": 5.25, "throughputPerSec": 76257.7, "p50Ms": 0.510, "p95Ms": 0.636, "maxMs": 0.715, "maxPoolWaiting": 30 }
+      {
+        "concurrency": 1,
+        "errors": 0,
+        "elapsedMs": 46.78,
+        "throughputPerSec": 8550.6,
+        "p50Ms": 0.075,
+        "p95Ms": 0.109,
+        "maxMs": 16.182,
+        "maxPoolWaiting": 0
+      },
+      {
+        "concurrency": 4,
+        "errors": 0,
+        "elapsedMs": 13.27,
+        "throughputPerSec": 30149.5,
+        "p50Ms": 0.074,
+        "p95Ms": 0.216,
+        "maxMs": 4.935,
+        "maxPoolWaiting": 0
+      },
+      {
+        "concurrency": 10,
+        "errors": 0,
+        "elapsedMs": 11.97,
+        "throughputPerSec": 33429.0,
+        "p50Ms": 0.156,
+        "p95Ms": 0.71,
+        "maxMs": 7.856,
+        "maxPoolWaiting": 0
+      },
+      {
+        "concurrency": 20,
+        "errors": 0,
+        "elapsedMs": 5.53,
+        "throughputPerSec": 72352.4,
+        "p50Ms": 0.25,
+        "p95Ms": 0.369,
+        "maxMs": 0.481,
+        "maxPoolWaiting": 10
+      },
+      {
+        "concurrency": 40,
+        "errors": 0,
+        "elapsedMs": 5.25,
+        "throughputPerSec": 76257.7,
+        "p50Ms": 0.51,
+        "p95Ms": 0.636,
+        "maxMs": 0.715,
+        "maxPoolWaiting": 30
+      }
     ],
     "totalRequests": 2000,
     "successfulRequests": 2000,

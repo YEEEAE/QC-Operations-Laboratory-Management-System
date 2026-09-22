@@ -39,7 +39,11 @@ describe('quantity and unit contract', () => {
   });
 
   it('normalises unit aliases and decimal commas', () => {
-    expect(parseReceivingQuantity('29 KGS')).toMatchObject({ classification: 'NORMALIZABLE', quantity: '29', unit: 'KG' });
+    expect(parseReceivingQuantity('29 KGS')).toMatchObject({
+      classification: 'NORMALIZABLE',
+      quantity: '29',
+      unit: 'KG',
+    });
     expect(parseReceivingQuantity('1,5 KG')).toMatchObject({ quantity: '1.5', unit: 'KG' });
     expect(parseReceivingQuantity('12 LITERS')).toMatchObject({ unit: 'L' });
     expect(parseReceivingQuantity('3 EACH')).toMatchObject({ unit: 'PCS' });
@@ -47,8 +51,13 @@ describe('quantity and unit contract', () => {
   });
 
   it('never guesses: a bare number is missing its unit, not assumed PCS', () => {
-    expect(parseReceivingQuantity('250')).toMatchObject({ classification: 'REQUIRES_REVIEW', quantity: '250' });
-    expect(parseReceivingQuantity('3 FURLONGS')).toMatchObject({ classification: 'REQUIRES_REVIEW' });
+    expect(parseReceivingQuantity('250')).toMatchObject({
+      classification: 'REQUIRES_REVIEW',
+      quantity: '250',
+    });
+    expect(parseReceivingQuantity('3 FURLONGS')).toMatchObject({
+      classification: 'REQUIRES_REVIEW',
+    });
   });
 
   it('rejects missing, multiple, or non-positive quantities', () => {
@@ -75,8 +84,12 @@ describe('quantity and unit contract', () => {
 
   it('rejects an expiry date that precedes the receiving date', () => {
     const receiving = new Date('2026-09-01T00:00:00Z');
-    expect(() => assertExpiryNotBeforeReceiving(receiving, new Date('2026-08-31T00:00:00Z'))).toThrow(AppError);
-    expect(() => assertExpiryNotBeforeReceiving(receiving, new Date('2026-09-01T00:00:00Z'))).not.toThrow();
+    expect(() =>
+      assertExpiryNotBeforeReceiving(receiving, new Date('2026-08-31T00:00:00Z')),
+    ).toThrow(AppError);
+    expect(() =>
+      assertExpiryNotBeforeReceiving(receiving, new Date('2026-09-01T00:00:00Z')),
+    ).not.toThrow();
   });
 });
 
@@ -147,7 +160,9 @@ describe('derived status projections', () => {
 
   it('projects the quarantine decision status without a second state machine', () => {
     expect(deriveQuarantineStatus(facts({ workflowState: 'PENDING' }))).toBe('PENDING_INSPECTION');
-    expect(deriveQuarantineStatus(facts({ workflowState: 'UNDER_INSPECTION' }))).toBe('UNDER_INSPECTION');
+    expect(deriveQuarantineStatus(facts({ workflowState: 'UNDER_INSPECTION' }))).toBe(
+      'UNDER_INSPECTION',
+    );
     expect(deriveQuarantineStatus(facts({ workflowState: 'HOLD' }))).toBe('HOLD');
     expect(deriveQuarantineStatus(facts({ inspectionResult: 'HOLD' }))).toBe('HOLD');
     expect(deriveQuarantineStatus(facts({ inspectionResult: 'FAIL' }))).toBe('REJECTED');
@@ -169,11 +184,17 @@ describe('derived status projections', () => {
 
   it('projects the inspection status including RETURNED from the linked report', () => {
     expect(deriveInspectionStatus(facts({ workflowState: 'PENDING' }))).toBe('NOT_STARTED');
-    expect(deriveInspectionStatus(facts({ workflowState: 'UNDER_INSPECTION' }))).toBe('IN_PROGRESS');
+    expect(deriveInspectionStatus(facts({ workflowState: 'UNDER_INSPECTION' }))).toBe(
+      'IN_PROGRESS',
+    );
     expect(
-      deriveInspectionStatus(facts({ workflowState: 'INSPECTION_COMPLETE', inspectionResult: 'PASS' })),
+      deriveInspectionStatus(
+        facts({ workflowState: 'INSPECTION_COMPLETE', inspectionResult: 'PASS' }),
+      ),
     ).toBe('COMPLETED');
-    expect(deriveInspectionStatus(facts({ latestInspectionReportState: 'RETURNED' }))).toBe('RETURNED');
+    expect(deriveInspectionStatus(facts({ latestInspectionReportState: 'RETURNED' }))).toBe(
+      'RETURNED',
+    );
   });
 });
 
@@ -222,4 +243,3 @@ describe('register filter parser', () => {
     ]);
   });
 });
-

@@ -47,10 +47,12 @@ beforeAll(async () => {
   const databaseUrl = getTestDatabaseUrl(await startPostgresContainer());
   pool = createPool({ connectionString: databaseUrl, max: 10 });
   await pool.query('DROP SCHEMA IF EXISTS qc CASCADE');
-  await pool.query(
-    `CREATE SCHEMA IF NOT EXISTS qc;
+  await pool
+    .query(
+      `CREATE SCHEMA IF NOT EXISTS qc;
      CREATE OR REPLACE FUNCTION qc.uuidv7() RETURNS uuid AS $f$ BEGIN RETURN gen_random_uuid(); END $f$ LANGUAGE plpgsql`,
-  ).catch(() => undefined);
+    )
+    .catch(() => undefined);
   await migrate({ pool });
   db = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) });
   await pool.query(
@@ -167,10 +169,22 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
         { sampleIdentifier: 'S-1', parameterId: phId, readingIndex: 1, raw: '5.4', unit: 'pH' },
         { sampleIdentifier: 'S-1', parameterId: phId, readingIndex: 2, raw: '5.6', unit: 'pH' },
         { sampleIdentifier: 'S-1', parameterId: assayId, readingIndex: 1, raw: '0.5', unit: '%' },
-        { sampleIdentifier: 'S-1', parameterId: appearanceId, readingIndex: 1, raw: 'Clear', unit: null },
+        {
+          sampleIdentifier: 'S-1',
+          parameterId: appearanceId,
+          readingIndex: 1,
+          raw: 'Clear',
+          unit: null,
+        },
         { sampleIdentifier: 'S-2', parameterId: phId, readingIndex: 1, raw: '5.4', unit: 'pH' },
         { sampleIdentifier: 'S-2', parameterId: assayId, readingIndex: 1, raw: '1.5', unit: '%' },
-        { sampleIdentifier: 'S-2', parameterId: appearanceId, readingIndex: 1, raw: 'Cloudy', unit: null },
+        {
+          sampleIdentifier: 'S-2',
+          parameterId: appearanceId,
+          readingIndex: 1,
+          raw: 'Cloudy',
+          unit: null,
+        },
       ],
       requestId: `req-run1-${stamp}`,
     });
@@ -284,7 +298,11 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
       new PostgresEquipmentEligibilityReader(db),
       () => new Date('2026-09-21T02:30:00.000Z'),
     );
-    await new RecordRunEquipmentUseCase(repo, eligibility, () => new Date('2026-09-21T02:30:00.000Z')).execute({
+    await new RecordRunEquipmentUseCase(
+      repo,
+      eligibility,
+      () => new Date('2026-09-21T02:30:00.000Z'),
+    ).execute({
       actor: actor(),
       id: testId,
       expectedVersion: afterReentry.version,
@@ -327,18 +345,22 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
     // 6. Submission freezes the derived overall result as review evidence; the
     // official result still comes only from the approved evaluation source.
     const current = (await repo.get(testId, actor()))!;
-    const submitted = await new SubmitLabTestUseCase(repo, {
-      async resolve() {
-        throw new Error('not used');
+    const submitted = await new SubmitLabTestUseCase(
+      repo,
+      {
+        async resolve() {
+          throw new Error('not used');
+        },
+        async listApprovedTemplates() {
+          return [];
+        },
+        async validateExecution() {},
+        async evaluate() {
+          throw new Error('not used');
+        },
       },
-      async listApprovedTemplates() {
-        return [];
-      },
-      async validateExecution() {},
-      async evaluate() {
-        throw new Error('not used');
-      },
-    }, { async verify() {} }).execute({
+      { async verify() {} },
+    ).execute({
       actor: actor(),
       id: testId,
       expectedVersion: current.version,
@@ -351,10 +373,9 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
     const storedDerived = await pool!.query<{
       derived_result: string;
       derived_result_inputs_hash: string;
-    }>(
-      `SELECT derived_result, derived_result_inputs_hash FROM qc.lab_tests WHERE id = $1`,
-      [testId],
-    );
+    }>(`SELECT derived_result, derived_result_inputs_hash FROM qc.lab_tests WHERE id = $1`, [
+      testId,
+    ]);
     expect(storedDerived.rows[0]?.derived_result).toBe('FAIL');
 
     // The snapshot recorded at submission still carries the run evidence.
@@ -424,9 +445,7 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
       expectedVersion: 1n,
       run: { batchNo: 'RUN-1' },
       samples: [{ identifier: 'S-1' }],
-      readings: [
-        { sampleIdentifier: 'S-1', parameterId, readingIndex: 1, raw: '5.4', unit: 'pH' },
-      ],
+      readings: [{ sampleIdentifier: 'S-1', parameterId, readingIndex: 1, raw: '5.4', unit: 'pH' }],
       requestId: `req-run-b-${stamp}`,
     });
     const batchId = recorded.batches![0]!.id;
@@ -463,18 +482,22 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
 
     // A state transition keeps the run's samples, readings and results attached.
     const current = (await repo.get(testId, actor()))!;
-    const submitted = await new SubmitLabTestUseCase(repo, {
-      async resolve() {
-        throw new Error('not used');
+    const submitted = await new SubmitLabTestUseCase(
+      repo,
+      {
+        async resolve() {
+          throw new Error('not used');
+        },
+        async listApprovedTemplates() {
+          return [];
+        },
+        async validateExecution() {},
+        async evaluate() {
+          throw new Error('not used');
+        },
       },
-      async listApprovedTemplates() {
-        return [];
-      },
-      async validateExecution() {},
-      async evaluate() {
-        throw new Error('not used');
-      },
-    }, { async verify() {} }).execute({
+      { async verify() {} },
+    ).execute({
       actor: actor(),
       id: testId,
       expectedVersion: current.version,

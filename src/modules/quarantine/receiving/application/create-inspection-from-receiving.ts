@@ -2,10 +2,7 @@ import { authorize } from '../../../../shared/authorization/authorize.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
-import type {
-  ReceivingContext,
-  TemplateContext,
-} from '../../inspection/domain/inspection.js';
+import type { ReceivingContext, TemplateContext } from '../../inspection/domain/inspection.js';
 import { createInspection } from '../../inspection/domain/inspection.js';
 import type { InspectionRepository } from '../../inspection/ports/repository.js';
 import type { TemplateRepository } from '../../templates/ports/repository.js';
@@ -77,7 +74,10 @@ export class CreateInspectionFromReceivingUseCase {
 
     const item = await this.deps.receiving.get(i.receivingId, i.actor);
     if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (item.workflowState !== 'READY_FOR_INSPECTION' && item.workflowState !== 'UNDER_INSPECTION') {
+    if (
+      item.workflowState !== 'READY_FOR_INSPECTION' &&
+      item.workflowState !== 'UNDER_INSPECTION'
+    ) {
       throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     }
     const inFlight = item.linkedInspections?.some((report) =>

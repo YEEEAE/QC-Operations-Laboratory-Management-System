@@ -5,13 +5,30 @@ import {
   observationValue,
   parseCalculationRule,
 } from '../../../src/modules/laboratory/domain/calculation.js';
-import { compareDecimals, sumDecimals } from '../../../src/modules/laboratory/domain/exact-decimal.js';
-import { assertBatchSamples, assertBatches } from '../../../src/modules/laboratory/domain/lab-batch.js';
+import {
+  compareDecimals,
+  sumDecimals,
+} from '../../../src/modules/laboratory/domain/exact-decimal.js';
+import {
+  assertBatchSamples,
+  assertBatches,
+} from '../../../src/modules/laboratory/domain/lab-batch.js';
 import { evaluateParameterAcceptance } from '../../../src/modules/laboratory/domain/parameter-acceptance.js';
-import { assertUniqueReadings, numericReadingValue, validateReading } from '../../../src/modules/laboratory/domain/reading.js';
-import { deriveSampleResult, deriveTestResult } from '../../../src/modules/laboratory/domain/sample-result.js';
+import {
+  assertUniqueReadings,
+  numericReadingValue,
+  validateReading,
+} from '../../../src/modules/laboratory/domain/reading.js';
+import {
+  deriveSampleResult,
+  deriveTestResult,
+} from '../../../src/modules/laboratory/domain/sample-result.js';
 import type { LabBatch } from '../../../src/modules/laboratory/domain/lab-batch.js';
-import type { EquipmentContext, LabSample, LabTest } from '../../../src/modules/laboratory/domain/lab-test.js';
+import type {
+  EquipmentContext,
+  LabSample,
+  LabTest,
+} from '../../../src/modules/laboratory/domain/lab-test.js';
 import type { Parameter } from '../../../src/modules/laboratory/domain/measurement.js';
 import { RecordLabRunUseCase } from '../../../src/modules/laboratory/application/record-lab-run.js';
 import type { LabRepository } from '../../../src/modules/laboratory/ports/repository.js';
@@ -63,7 +80,9 @@ describe('approved calculation rules (QC-DATA-003)', () => {
   it('rejects unknown rule types and yields no rule without a source reference', () => {
     expect(isCalculationRuleType('MEAN')).toBe(true);
     expect(isCalculationRuleType('AVERAGE')).toBe(false);
-    expect(parseCalculationRule({ ruleType: 'MEAN', rulePayload: { decimals: 1 } }, '')).toBeUndefined();
+    expect(
+      parseCalculationRule({ ruleType: 'MEAN', rulePayload: { decimals: 1 } }, ''),
+    ).toBeUndefined();
     expect(parseCalculationRule(null, 'TEST-ONLY-SOURCE')).toBeUndefined();
   });
 
@@ -95,10 +114,7 @@ describe('approved calculation rules (QC-DATA-003)', () => {
   });
 
   it('returns no value for empty or non-numeric readings', () => {
-    const rule = parseCalculationRule(
-      { ruleType: 'SUM', rulePayload: {} },
-      'TEST-ONLY-SOURCE',
-    )!;
+    const rule = parseCalculationRule({ ruleType: 'SUM', rulePayload: {} }, 'TEST-ONLY-SOURCE')!;
     expect(computeCalculation(rule, [])).toBeUndefined();
     expect(computeCalculation(rule, ['1', 'not-a-number'])).toBeUndefined();
   });
@@ -263,13 +279,13 @@ describe('runs, samples and replicates (QC-DATA-003)', () => {
     expect(() => assertBatches([batch(), batch({ id: 'x', batchNo: 'RUN-2' })])).toThrowError(
       AppError,
     );
-    expect(() =>
-      assertBatches([
-        batch({ completedAt: '2026-09-20T00:00:00.000Z' }),
-      ]),
-    ).toThrowError(AppError);
+    expect(() => assertBatches([batch({ completedAt: '2026-09-20T00:00:00.000Z' })])).toThrowError(
+      AppError,
+    );
     expect(() => assertBatches([batch({ batchNo: '  ' })])).toThrowError(AppError);
-    expect(() => assertBatches([batch(), batch({ id: 'y', batchNo: 'RUN-2', sequence: 2 })])).not.toThrow();
+    expect(() =>
+      assertBatches([batch(), batch({ id: 'y', batchNo: 'RUN-2', sequence: 2 })]),
+    ).not.toThrow();
   });
 
   it('rejects a sample that names a run the record does not carry', () => {
@@ -342,10 +358,7 @@ class MemoryRepository implements LabRepository {
     return next;
   }
   equipment: (EquipmentContext & { batchId: string | null })[] = [];
-  async linkRunEquipment(input: {
-    batchId: string;
-    usage: EquipmentContext;
-  }) {
+  async linkRunEquipment(input: { batchId: string; usage: EquipmentContext }) {
     this.equipment.push({ ...input.usage, batchId: input.batchId });
   }
   async listRunEquipment() {
@@ -425,11 +438,20 @@ function recordInput(overrides: Record<string, unknown> = {}) {
 describe('record a laboratory run (QC-DATA-003)', () => {
   it('stores replicates, the approved calculation and the derived sample result', async () => {
     const repository = new MemoryRepository(runTest());
-    const saved = await new RecordLabRunUseCase(repository, () => new Date('2026-09-21T01:00:00.000Z')).execute(
+    const saved = await new RecordLabRunUseCase(
+      repository,
+      () => new Date('2026-09-21T01:00:00.000Z'),
+    ).execute(
       recordInput({
         readings: [
           { sampleIdentifier: 'S-1', parameterId: PH!.id, readingIndex: 1, raw: '5.4', unit: 'pH' },
-          { sampleIdentifier: 'S-1', parameterId: ASSAY!.id, readingIndex: 1, raw: '0.5', unit: '%' },
+          {
+            sampleIdentifier: 'S-1',
+            parameterId: ASSAY!.id,
+            readingIndex: 1,
+            raw: '0.5',
+            unit: '%',
+          },
         ],
       }) as never,
     );
@@ -470,7 +492,13 @@ describe('record a laboratory run (QC-DATA-003)', () => {
         samples: [{ identifier: 'S-1' }],
         readings: [
           { sampleIdentifier: 'S-1', parameterId: PH!.id, readingIndex: 1, raw: '5.4', unit: 'pH' },
-          { sampleIdentifier: 'S-1', parameterId: ASSAY!.id, readingIndex: 1, raw: '1.5', unit: '%' },
+          {
+            sampleIdentifier: 'S-1',
+            parameterId: ASSAY!.id,
+            readingIndex: 1,
+            raw: '1.5',
+            unit: '%',
+          },
         ],
       }) as never,
     );
@@ -611,8 +639,20 @@ describe('record a laboratory run (QC-DATA-003)', () => {
           run: { batchNo: 'RUN-1' },
           samples: [{ identifier: 'S-1' }],
           readings: [
-            { sampleIdentifier: 'S-1', parameterId: PH!.id, readingIndex: 1, raw: '5.4', unit: 'pH' },
-            { sampleIdentifier: 'S-1', parameterId: PH!.id, readingIndex: 1, raw: '5.5', unit: 'pH' },
+            {
+              sampleIdentifier: 'S-1',
+              parameterId: PH!.id,
+              readingIndex: 1,
+              raw: '5.4',
+              unit: 'pH',
+            },
+            {
+              sampleIdentifier: 'S-1',
+              parameterId: PH!.id,
+              readingIndex: 1,
+              raw: '5.5',
+              unit: 'pH',
+            },
           ],
         }) as never,
       ),
@@ -626,7 +666,13 @@ describe('record a laboratory run (QC-DATA-003)', () => {
           run: { batchNo: 'RUN-2' },
           samples: [{ identifier: 'S-2' }],
           readings: [
-            { sampleIdentifier: 'S-1', parameterId: PH!.id, readingIndex: 1, raw: '5.4', unit: 'pH' },
+            {
+              sampleIdentifier: 'S-1',
+              parameterId: PH!.id,
+              readingIndex: 1,
+              raw: '5.4',
+              unit: 'pH',
+            },
           ],
         }) as never,
       ),
@@ -638,7 +684,13 @@ describe('record a laboratory run (QC-DATA-003)', () => {
       new RecordLabRunUseCase(new MemoryRepository(runTest())).execute(
         recordInput({
           readings: [
-            { sampleIdentifier: 'S-1', parameterId: PH!.id, readingIndex: 1, raw: '5.4', unit: 'mg' },
+            {
+              sampleIdentifier: 'S-1',
+              parameterId: PH!.id,
+              readingIndex: 1,
+              raw: '5.4',
+              unit: 'mg',
+            },
           ],
         }) as never,
       ),

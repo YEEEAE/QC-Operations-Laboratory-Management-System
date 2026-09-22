@@ -5,9 +5,7 @@ import {
   evaluateNumericAcceptance,
   evaluateEquipmentVerification,
 } from '../../../src/modules/quarantine/inspection/domain/acceptance-evaluation.js';
-import {
-  isAcceptanceRuleType,
-} from '../../../src/modules/quarantine/inspection/domain/inspection-point.js';
+import { isAcceptanceRuleType } from '../../../src/modules/quarantine/inspection/domain/inspection-point.js';
 
 /**
  * QC-DATA-002 5/7 — numeric evaluation against approved machine-readable

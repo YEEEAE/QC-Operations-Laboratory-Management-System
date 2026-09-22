@@ -76,9 +76,7 @@ export function deriveSampleResult(
  * `scientific_result`, which still comes from the approved evaluation source at
  * stage-1 approval.
  */
-export function deriveTestResult(
-  results: readonly SampleResult[],
-): SampleResult | undefined {
+export function deriveTestResult(results: readonly SampleResult[]): SampleResult | undefined {
   if (!results.length) return undefined;
   if (results.some((result) => result === 'FAIL')) return 'FAIL';
   if (results.every((result) => result === 'PASS')) return 'PASS';

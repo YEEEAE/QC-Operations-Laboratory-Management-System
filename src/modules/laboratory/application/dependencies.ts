@@ -53,10 +53,7 @@ export function laboratoryActionDependencies() {
     // derived sample results.
     recordRun: new RecordLabRunUseCase(repository),
     // Run-level equipment evidence, verified by the approved Assets policy.
-    recordRunEquipment: new RecordRunEquipmentUseCase(
-      repository,
-      assetsEligibilityDependencies(),
-    ),
+    recordRunEquipment: new RecordRunEquipmentUseCase(repository, assetsEligibilityDependencies()),
     submit: new SubmitLabTestUseCase(repository, sources, assetsEligibilityDependencies()),
     review: new ReviewLabTestUseCase(repository),
     return: new ReturnLabTestUseCase(repository),

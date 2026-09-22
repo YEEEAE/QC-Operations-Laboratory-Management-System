@@ -15,12 +15,7 @@
  */
 
 export type AcceptanceRuleType =
-  | 'RANGE_INCLUSIVE'
-  | 'RANGE_EXCLUSIVE'
-  | 'MAX_LIMIT'
-  | 'MIN_LIMIT'
-  | 'ENUM_ALLOWED'
-  | 'EQUALS';
+  'RANGE_INCLUSIVE' | 'RANGE_EXCLUSIVE' | 'MAX_LIMIT' | 'MIN_LIMIT' | 'ENUM_ALLOWED' | 'EQUALS';
 
 const NUMERIC_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
 
@@ -51,8 +46,7 @@ export function compareDecimal(a: string, b: string): -1 | 0 | 1 {
   // one exact BigInt subtraction, no floating point anywhere.
   const scaleTo = (parts: string[]): bigint => {
     const negative = parts[0]!.trim().startsWith('-');
-    const digits =
-      (parts[0]!.replace(/^[+-]/, '') || '0') + (parts[1] ?? '').padEnd(scale, '0');
+    const digits = (parts[0]!.replace(/^[+-]/, '') || '0') + (parts[1] ?? '').padEnd(scale, '0');
     const value = BigInt(digits === '' ? '0' : digits);
     return negative ? -value : value;
   };
@@ -170,10 +164,6 @@ function decimalScale(value: string): number {
   return (value.trim().replace(/^[+-]/, '').split('.')[1] ?? '').length;
 }
 
-function isNegative(value: string): boolean {
-  return value.trim().startsWith('-') && decimalDigits(value) !== 0n;
-}
-
 export function evaluateEquipmentVerification(
   input: EquipmentVerificationInput,
 ): EquipmentVerification | undefined {
@@ -189,7 +179,9 @@ export function evaluateEquipmentVerification(
     decimalDigits(equipmentReading) * 10n ** BigInt(scale - decimalScale(equipmentReading)) -
     decimalDigits(standardReading) * 10n ** BigInt(scale - decimalScale(standardReading));
   const sign = diffDigits < 0n ? '-' : '';
-  const magnitude = (diffDigits < 0n ? -diffDigits : diffDigits).toString().padStart(scale + 1, '0');
+  const magnitude = (diffDigits < 0n ? -diffDigits : diffDigits)
+    .toString()
+    .padStart(scale + 1, '0');
   const intPart = magnitude.slice(0, magnitude.length - scale) || '0';
   const fracPart = scale > 0 ? `.${magnitude.slice(magnitude.length - scale)}` : '';
   const difference = `${sign}${intPart}${fracPart}`;

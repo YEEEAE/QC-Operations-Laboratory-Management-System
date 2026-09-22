@@ -63,7 +63,5 @@ export function validateAqlSampling(input: AqlSampling): AqlSampling {
 }
 
 export function isAqlSamplingResult(value: unknown): value is AqlSamplingResult {
-  return (
-    typeof value === 'string' && (AQL_SAMPLING_RESULTS as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (AQL_SAMPLING_RESULTS as readonly string[]).includes(value);
 }

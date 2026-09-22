@@ -32,11 +32,7 @@ export class PostgresItemMappingReader implements ItemMappingReader {
     const rows = await this.db
       .selectFrom('inspection_item_templates as mapping')
       .innerJoin('inspection_templates as template', 'template.id', 'mapping.template_id')
-      .innerJoin(
-        'inspection_template_versions as version',
-        'version.template_id',
-        'template.id',
-      )
+      .innerJoin('inspection_template_versions as version', 'version.template_id', 'template.id')
       .select([
         'template.id as templateId',
         'template.template_code as templateCode',

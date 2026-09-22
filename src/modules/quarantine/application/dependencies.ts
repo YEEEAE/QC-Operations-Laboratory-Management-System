@@ -96,10 +96,7 @@ export function quarantineActionDependencies() {
     inspection: {
       saveDraft: new SaveInspectionDraftUseCase(inspectionRepository),
       // QC-DATA-002: server-side evaluation of approved acceptance rules.
-      recordResults: new RecordInspectionResultsUseCase(
-        inspectionRepository,
-        inspectionRepository,
-      ),
+      recordResults: new RecordInspectionResultsUseCase(inspectionRepository, inspectionRepository),
       recordAql: new RecordInspectionAqlUseCase(inspectionRepository),
       linkEquipment: new LinkInspectionEquipmentUseCase(
         inspectionRepository,

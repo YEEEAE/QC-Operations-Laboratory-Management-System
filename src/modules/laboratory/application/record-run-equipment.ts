@@ -34,8 +34,7 @@ export class RecordRunEquipmentUseCase {
   }): Promise<EquipmentContext> {
     const test = await this.repository.get(input.id, input.actor);
     if (!test) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (test.state !== 'DRAFT')
-      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (test.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     if (!(test.batches ?? []).some((batch) => batch.id === input.batchId))
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     if (!isUuid(input.usage.equipmentId) || !isUuid(input.usage.calibrationRecordId))

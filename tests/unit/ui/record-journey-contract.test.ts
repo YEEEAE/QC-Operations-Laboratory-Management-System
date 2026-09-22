@@ -19,9 +19,7 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
   });
 
   it('resolves finding -> NCR linkage through the NCR domain scoped read', () => {
-    const helper = read(
-      'src/modules/quality/findings/application/list-related-ncrs.ts',
-    );
+    const helper = read('src/modules/quality/findings/application/list-related-ncrs.ts');
     expect(helper).toContain('PostgresNcrRepository');
     expect(helper).toContain('repository.list({ actor })');
     // Provenance stays with the owning domain; no direct table access here.
@@ -51,9 +49,7 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
   });
 
   it('links the lab test to its source receiving record with scope preserved', () => {
-    const helper = read(
-      'src/modules/laboratory/application/get-source-receiving.ts',
-    );
+    const helper = read('src/modules/laboratory/application/get-source-receiving.ts');
     expect(helper).toContain('source_receiving_item_id');
     expect(helper).toContain('PERM-LAB-VIEW');
     expect(helper).toContain('testRow.author_id !== actor.id');

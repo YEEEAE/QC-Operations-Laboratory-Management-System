@@ -5,7 +5,10 @@ import { PostgresInspectionRepository } from '../../../src/modules/quarantine/in
 import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
 import { RecordInspectionResultsUseCase } from '../../../src/modules/quarantine/inspection/application/record-inspection-results.js';
-import { PostgresItemMappingReader, ResolveInspectionTemplateUseCase } from '../../../src/modules/quarantine/inspection/application/resolve-inspection-template.js';
+import {
+  PostgresItemMappingReader,
+  ResolveInspectionTemplateUseCase,
+} from '../../../src/modules/quarantine/inspection/application/resolve-inspection-template.js';
 import { RecordInspectionAqlUseCase } from '../../../src/modules/quarantine/inspection/application/inspection-aql-equipment.js';
 import { StartInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/start-inspection.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
@@ -30,10 +33,12 @@ beforeAll(async () => {
   const databaseUrl = getTestDatabaseUrl(await startPostgresContainer());
   pool = createPool({ connectionString: databaseUrl, max: 10 });
   await pool!.query('DROP SCHEMA IF EXISTS qc CASCADE');
-  await pool!.query(
-    `CREATE SCHEMA IF NOT EXISTS qc;
+  await pool!
+    .query(
+      `CREATE SCHEMA IF NOT EXISTS qc;
      CREATE OR REPLACE FUNCTION qc.uuidv7() RETURNS uuid AS $f$ BEGIN RETURN gen_random_uuid(); END $f$ LANGUAGE plpgsql`,
-  ).catch(() => undefined);
+    )
+    .catch(() => undefined);
   await migrate({ pool: pool! });
   db = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: pool! }) });
   await pool!.query(
@@ -133,9 +138,7 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       id: inspection.id,
       expectedVersion: 1n,
       requestId: `req-eval-${stamp}`,
-      results: [
-        { id: '01900000-0000-7000-8000-00000000e031', pointId, value: 5.4, version: 1n },
-      ],
+      results: [{ id: '01900000-0000-7000-8000-00000000e031', pointId, value: 5.4, version: 1n }],
     });
 
     const stored = await pool!.query(
@@ -150,15 +153,15 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       id: inspection.id,
       expectedVersion: 2n,
       aql: {
-      aql: '1.0',
-      codeLetter: 'H',
-      inspectionLevel: 'II',
-      sampleSize: '50',
-      acceptNumber: '1',
-      rejectNumber: '2',
-      observedDefects: '0',
-      samplingResult: 'ACCEPT',
-      sourceReference: 'ANSI/ASQ Z1.4 (approved copy), plan H',
+        aql: '1.0',
+        codeLetter: 'H',
+        inspectionLevel: 'II',
+        sampleSize: '50',
+        acceptNumber: '1',
+        rejectNumber: '2',
+        observedDefects: '0',
+        samplingResult: 'ACCEPT',
+        sourceReference: 'ANSI/ASQ Z1.4 (approved copy), plan H',
       },
       requestId: `req-aql-${stamp}`,
     });

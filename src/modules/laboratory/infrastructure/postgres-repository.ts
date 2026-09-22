@@ -808,13 +808,11 @@ export class PostgresLabRepository implements LabRepository {
             template_parameter_id: reading.parameterId,
             reading_index: reading.readingIndex,
             raw_numeric_value:
-              typeof reading.raw === 'string' &&
-              /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
+              typeof reading.raw === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
                 ? reading.raw
                 : null,
             raw_text_value:
-              typeof reading.raw === 'string' &&
-              !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
+              typeof reading.raw === 'string' && !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
                 ? reading.raw
                 : null,
             raw_boolean_value: typeof reading.raw === 'boolean' ? reading.raw : null,

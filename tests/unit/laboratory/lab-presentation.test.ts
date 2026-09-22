@@ -67,7 +67,11 @@ describe('criteriaText — verbatim rendering of approved acceptance payloads (Q
     ).toBe('Must equal Clear');
     expect(
       criteriaText(
-        parameter({ dataType: 'BOOLEAN', acceptanceRuleType: 'EQUALS', criteria: { expected: true } }),
+        parameter({
+          dataType: 'BOOLEAN',
+          acceptanceRuleType: 'EQUALS',
+          criteria: { expected: true },
+        }),
       ),
     ).toBe('Must be Yes');
     expect(
@@ -195,4 +199,3 @@ describe('comparisonRows — observed vs approved criteria (QC-100-FINAL-038)', 
     expect(rows[0]).toMatchObject({ observed: 'Yes', outcome: 'PASS' });
   });
 });
-

@@ -31,7 +31,10 @@ const actor: ActorContext = {
 };
 
 /** Minimal in-memory repository mirroring the approved repository contract. */
-function memoryRepository(): { repository: ReceivingRepository; current: () => ReceivingItem | undefined } {
+function memoryRepository(): {
+  repository: ReceivingRepository;
+  current: () => ReceivingItem | undefined;
+} {
   let item: ReceivingItem | undefined;
   const repository = {
     async create(i: { item: ReceivingItem }) {
@@ -72,7 +75,10 @@ function memoryRepository(): { repository: ReceivingRepository; current: () => R
 describe('receiving release chain', () => {
   it('reaches RELEASED only through the explicit release action', async () => {
     const { repository, current } = memoryRepository();
-    const created = await new CreateReceivingUseCase(repository, () => new Date('2026-09-01')).execute({
+    const created = await new CreateReceivingUseCase(
+      repository,
+      () => new Date('2026-09-01'),
+    ).execute({
       actor,
       receivingNo: 'RCV-DATA-1',
       supplier: 'Supplier',
@@ -88,9 +94,27 @@ describe('receiving release chain', () => {
     expect(created.releaseSystem).toBe(false);
 
     const transitions = new TransitionReceivingUseCase(repository);
-    await transitions.execute({ actor, id: created.id, expectedVersion: 1n, action: 'MARK_READY', requestId: 'r2' });
-    await transitions.execute({ actor, id: created.id, expectedVersion: 2n, action: 'START_INSPECTION', requestId: 'r3' });
-    await transitions.execute({ actor, id: created.id, expectedVersion: 3n, action: 'COMPLETE_INSPECTION', requestId: 'r4' });
+    await transitions.execute({
+      actor,
+      id: created.id,
+      expectedVersion: 1n,
+      action: 'MARK_READY',
+      requestId: 'r2',
+    });
+    await transitions.execute({
+      actor,
+      id: created.id,
+      expectedVersion: 2n,
+      action: 'START_INSPECTION',
+      requestId: 'r3',
+    });
+    await transitions.execute({
+      actor,
+      id: created.id,
+      expectedVersion: 3n,
+      action: 'COMPLETE_INSPECTION',
+      requestId: 'r4',
+    });
     await transitions.execute({
       actor,
       id: created.id,
@@ -185,4 +209,3 @@ describe('receiving release chain', () => {
     expect(current()?.workflowState).toBe('READY_FOR_INSPECTION');
   });
 });
-

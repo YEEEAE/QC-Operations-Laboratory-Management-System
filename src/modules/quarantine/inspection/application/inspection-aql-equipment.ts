@@ -28,8 +28,7 @@ export class RecordInspectionAqlUseCase {
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (x.state !== 'DRAFT')
-      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (x.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     authorize(
       {
         actor: i.actor,
@@ -93,8 +92,7 @@ export class LinkInspectionEquipmentUseCase {
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (x.state !== 'DRAFT')
-      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (x.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     if (!isUuid(i.usage.equipmentId) || !isUuid(i.usage.calibrationRecordId))
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     // Approved eligibility policy (assets domain): ACTIVE equipment + CURRENT

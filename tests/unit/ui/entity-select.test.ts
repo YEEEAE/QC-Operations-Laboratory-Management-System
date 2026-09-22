@@ -310,9 +310,7 @@ describe('selector and navigation contracts across the touched create forms (F-0
       'assets/maintenance/new.astro',
     ]) {
       const source = readPage(page);
-      expect(
-        source.includes('aria-busy') || source.includes('enhanceClassifiedForm'),
-      ).toBe(true);
+      expect(source.includes('aria-busy') || source.includes('enhanceClassifiedForm')).toBe(true);
       expect(source).toContain('role="status"');
     }
   });

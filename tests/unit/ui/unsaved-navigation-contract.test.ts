@@ -204,4 +204,3 @@ describe('consequence-specific confirmation, focus return, and recovery links (0
     }
   });
 });
-

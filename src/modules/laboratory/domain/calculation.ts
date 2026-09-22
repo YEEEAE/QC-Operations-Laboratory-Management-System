@@ -36,9 +36,7 @@ export type CalculationRuleType = (typeof CALCULATION_RULE_TYPES)[number];
 const MAX_DECIMALS = 18;
 
 export function isCalculationRuleType(value: unknown): value is CalculationRuleType {
-  return (
-    typeof value === 'string' && (CALCULATION_RULE_TYPES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (CALCULATION_RULE_TYPES as readonly string[]).includes(value);
 }
 
 /** The approved, source-controlled rule as stored on the template parameter. */
@@ -173,10 +171,7 @@ export function observationValue(
  * Numeric observations are the only ones a calculation can run over. A rule on
  * a non-numeric parameter is a controlled-source defect, not a silent skip.
  */
-export function assertCalculationApplicable(parameter: {
-  dataType: string;
-  code: string;
-}): void {
+export function assertCalculationApplicable(parameter: { dataType: string; code: string }): void {
   if (parameter.dataType !== 'NUMERIC')
     throw new AppError('VALIDATION_FAILED', {
       userSafe: true,

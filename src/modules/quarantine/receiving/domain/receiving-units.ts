@@ -104,8 +104,7 @@ const UNIT_ALIASES: Readonly<Record<string, ReceivingQuantityUnit>> = {
 
 export function isReceivingQuantityUnit(value: unknown): value is ReceivingQuantityUnit {
   return (
-    typeof value === 'string' &&
-    (RECEIVING_QUANTITY_UNITS as readonly string[]).includes(value)
+    typeof value === 'string' && (RECEIVING_QUANTITY_UNITS as readonly string[]).includes(value)
   );
 }
 
@@ -117,7 +116,9 @@ export function canonicalReceivingUnit(raw: string): ReceivingQuantityUnit | und
 }
 
 /** Server-side unit check for a write path: never falls back to a default. */
-export function assertReceivingQuantityUnit(value: string | null | undefined): ReceivingQuantityUnit {
+export function assertReceivingQuantityUnit(
+  value: string | null | undefined,
+): ReceivingQuantityUnit {
   const unit = value?.trim().toUpperCase() ?? '';
   if (!isReceivingQuantityUnit(unit)) {
     throw new Error(`Unsupported receiving quantity unit: ${JSON.stringify(value ?? null)}`);

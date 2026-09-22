@@ -64,7 +64,10 @@ export function parseReceivingQuantity(raw: unknown): ReceivingQuantityParse {
     };
   }
 
-  const compact = sourceValue.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  const compact = sourceValue
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   // Several numbers in one cell ("250 PCS 10 BOX") cannot be normalised safely.
   const numbers = compact.match(/\d+(?:[.,]\d+)?/g) ?? [];

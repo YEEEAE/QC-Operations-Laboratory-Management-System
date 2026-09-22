@@ -51,8 +51,7 @@ export class RecordInspectionResultsUseCase {
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (x.state !== 'DRAFT')
-      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (x.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
 
     // Client result claims: only REMARK / NA may come from the browser.
     if (i.results.some((r) => r.result !== undefined && !isClientAllowedPointResult(r.result)))
