@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>QC-ULTIMATE-ZERO-ASSUMPTION-ADAPTIVE-AUDIT-001 — تحليل الحالة الراهنة وخطة التنفيذ التكيفية</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#121a2b;--panel2:#0f1626;--ink:#e8eefc;--muted:#9fb0cc;
+  --line:#24314a;--accent:#5b9dff;--ok:#2fbf71;--bad:#ff5d73;--warn:#f5a524;
+  --p0:#ff4d6a;--p1:#ff8a4c;--p2:#f5c542;--p3:#7dd3fc;--code:#0a0f1a;
+  --radius:12px;--shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:ui-sans-serif,system-ui,"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;
+  background:radial-gradient(1200px 600px at 90% -10%,#1a2744 0%,transparent 50%),
+             radial-gradient(900px 500px at -10% 20%,#132033 0%,transparent 45%),var(--bg);
+  color:var(--ink);line-height:1.7;direction:rtl;
+}
+.ltr{direction:ltr;unicode-bidi:isolate}
+code,pre,.mono{direction:ltr;unicode-bidi:isolate;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+header.hero{
+  background:linear-gradient(145deg,#152238,#0d1526 60%);
+  border:1px solid var(--line);border-radius:16px;padding:28px 24px;box-shadow:var(--shadow);
+  margin-bottom:20px;position:relative;overflow:hidden;
+}
+header.hero:after{
+  content:"";position:absolute;inset:auto -40px -60px auto;width:220px;height:220px;
+  background:radial-gradient(circle,rgba(91,157,255,.25),transparent 70%);
+}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);
+  background:#0e1626;border-radius:999px;padding:4px 12px;font-size:12px;color:var(--muted);margin:0 0 10px;
+}
+.badge.ok{border-color:#1e5c40;color:#7dewb0;color:#8ee0b8}
+.badge.bad{border-color:#5c1e2a;color:#ffb3bf}
+.badge.warn{border-color:#5c4a1e;color:#ffd79a}
+h1{font-size:clamp(22px,3vw,32px);margin:0 0 8px;letter-spacing:-.02em}
+h2{font-size:20px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:16px 0 8px}
+.lead{color:var(--muted);margin:0 0 8px;max-width:70ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.kpi{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 14px 12px;
+}
+.kpi .label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.kpi .value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.kpi .value.bad{color:var(--bad)}
+.kpi .value.ok{color:var(--ok)}
+.kpi .value.warn{color:var(--warn)}
+.kpi .sub{font-size:12px;color:var(--muted);margin-top:2px}
+section.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:20px 18px;margin:16px 0;box-shadow:var(--shadow);
+}
+.section-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+button,.btn{
+  appearance:none;border:1px solid var(--line);background:#162238;color:var(--ink);
+  border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;
+}
+button:hover,.btn:hover{border-color:var(--accent);color:#fff}
+button:focus-visible,.btn:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:#1d4ed8;border-color:#2563eb}
+button.ghost{background:transparent}
+button.copied{background:#14532d;border-color:#16a34a;color:#bbf7d0}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th{background:#101a2c;color:#c9d7f2;font-weight:600;position:sticky;top:0;z-index:1}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:rgba(91,157,255,.04)}
+.tag{
+  display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;
+  border:1px solid transparent;white-space:nowrap;
+}
+.tag.PASS{background:#0d3b28;color:#8ee0b8;border-color:#1e5c40}
+.tag.FAIL,.tag.FAIL-PARTIAL,.tag.FAILPARTIAL{background:#4a1520;color:#ffb3bf;border-color:#7a2433}
+.tag.BLOCKED,.tag.INFO,.tag.INFO-BLOCKED,.tag.INFOBLOCKED{background:#3b2e0d;color:#ffe0a3;border-color:#7a5a1e}
+.tag.NOT-VERIFIED{background:#2a2f3a;color:#c5cede;border-color:#4a5160}
+.tag.PARTIAL{background:#1a2f4a;color:#a8c8ff;border-color:#2f4f7a}
+.tag.BLOCKED-PARTIAL{background:#3b2e0d;color:#ffe0a3;border-color:#7a5a1e}
+.tag.P0{background:#4a0d18;color:#ff8fa3;border-color:#7a1f33}
+.tag.P1{background:#4a240d;color:#ffc39a;border-color:#7a3f1e}
+.tag.P2{background:#3f360d;color:#ffe89a;border-color:#6e5f1e}
+.tag.P3{background:#0d334a;color:#9ad9ff;border-color:#1e5c7a}
+.tag.external{background:#2d1b4a;color:#d4b8ff;border-color:#5a3a8a}
+.tag.code{background:#0d2f4a;color:#9ad9ff;border-color:#1e5c7a}
+.tag.ops{background:#1b2d0d;color:#c8f09a;border-color:#3f6e1e}
+.tag.governance{background:#0d3b35;color:#8ee0d8;border-color:#1e7a6a}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+.finding{
+  background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;
+}
+.finding .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.finding h3{margin:0;font-size:15px}
+.finding p{margin:8px 0 4px;color:#d5deef;font-size:14px}
+.meta{font-size:12.5px;color:var(--muted)}
+.prompt-card{
+  background:linear-gradient(180deg,#101a2c,#0e1524);border:1px solid var(--line);
+  border-radius:14px;margin:12px 0;overflow:hidden;
+}
+.prompt-head{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-bottom:1px solid var(--line);background:#0f1830;
+}
+.prompt-body{
+  padding:14px;border:0;margin:0;white-space:pre-wrap;word-break:break-word;
+  font-size:13px;line-height:1.75;color:#dbe6ff;background:#0a0f1a;max-height:280px;overflow:auto;
+}
+.prompt-card.expanded .prompt-body{max-height:none}
+.accept{
+  padding:10px 14px;border-top:1px dashed var(--line);font-size:13px;color:#cfe0ff;background:#0d1524;
+}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.rc{
+  background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;
+}
+.rc h3{margin:0 0 6px;color:#9ec1ff}
+.rc ul{margin:8px 0 0;padding-inline-start:18px;color:#d0dbf0;font-size:13.5px}
+ul.tight{margin:6px 0;padding-inline-start:18px}
+ul.tight li{margin:4px 0}
+.callout{
+  border:1px solid #5c1e2a;background:#2a0f16;color:#ffd0d8;border-radius:12px;
+  padding:12px 14px;margin:12px 0;font-size:14px;
+}
+.callout.info{border-color:#1e3f6e;background:#0f1b33;color:#cfe0ff}
+.callout.warn{border-color:#5c4a1e;background:#2a220f;color:#ffe6b3}
+.score-bar{
+  height:10px;background:#0a0f1a;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0;
+}
+.score-bar > i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-top:8px}
+footer{
+  margin-top:28px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;
+}
+details.gate{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px 12px;margin:8px 0}
+details.gate summary{cursor:pointer;font-weight:600}
+.vhidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media print{
+  body{background:#fff;color:#111}
+  .actions,.no-print{display:none!important}
+  section.card,header.hero,.prompt-card,.finding,.kpi{box-shadow:none;border-color:#ccc;background:#fff;color:#111}
+  .prompt-body{max-height:none;background:#f7f7f7;color:#111}
+  th{background:#eee;position:static}
+  a{color:#111}
+  .tag{border:1px solid #999;background:#fff!important;color:#111!important}
+}
+@media (max-width:640px){
+  .kpis{grid-template-columns:1fr 1fr}
+  h1{font-size:22px}
+  th,td{padding:8px}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="badge">QC-ULTIMATE-ZERO-ASSUMPTION-ADAPTIVE-AUDIT-001</div>
+  <div class="badge bad">NO-GO — 0/19 gates</div>
+  <div class="badge warn">PASS ≠ RELEASED</div>
+  <h1>تحليل الحالة الراهنة وخطة التنفيذ التكيفية</h1>
+  <p class="lead">إعادة تدقيق صفر افتراضات على المرشح المجمّد — إعادة تدقيق صفر افتراضات مقابل خط الأساس <code class="ltr">653b58d22d4a17994db7376a3bd691ca6e789f1a</code> على المرشح <code class="ltr">c4998fa4007ce2234c9f48940a0f48f56aa5930c</code>.</p>
+  <p class="meta ltr" id="meta-line"></p>
+</header>
+
+<section class="card" aria-labelledby="exec-h">
+  <div class="section-head"><h2 id="exec-h">الملخص التنفيذي</h2></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="score-bar" aria-hidden="true"><i id="score-fill" style="width:45.3%"></i></div>
+  <p class="meta" id="score-note"></p>
+  <ul class="tight" id="statements"></ul>
+  <div class="callout">القرار التدقيقي: <strong>NO-GO</strong>. PASS ≠ RELEASED — نجاح build/unit محلي لا يساوي جاهزية إنتاج، ولا تُحتسب أدلة ancestor كقبول للمرشح.</div>
+</section>
+
+<section class="card" aria-labelledby="meth-h">
+  <div class="section-head"><h2 id="meth-h">المنهج والقيود</h2></div>
+  <div class="grid2">
+    <div>
+      <h3>قواعد القياس</h3>
+      <ul class="tight" id="method"></ul>
+      <h3>الأوزان</h3>
+      <p class="ltr meta">S20 / U15 / I15 / D15 / B15 / H10 / P10 · B,H,P = 0 on candidate · denominator 80 fixed</p>
+    </div>
+    <div>
+      <h3>قيود التنفيذ</h3>
+      <ul class="tight" id="constraints"></ul>
+    </div>
+  </div>
+  <p class="meta">الأمثلة الأربعة من خطة 67 بطاقة التاريخية كانت مرجعًا بصريًا فقط وليست سلطة توليد.</p>
+</section>
+
+<section class="card" aria-labelledby="ev-h">
+  <div class="section-head"><h2 id="ev-h">جدول أدلة التحقق</h2></div>
+  <div class="table-wrap">
+    <table>
+      <caption class="vhidden">Evidence table for candidate verification commands</caption>
+      <thead><tr><th>الأمر/الفحص</th><th>النتيجة</th><th>التفصيل</th></tr></thead>
+      <tbody id="evidence-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="gates-h">
+  <div class="section-head"><h2 id="gates-h">بوابات الإنتاج 19</h2></div>
+  <p id="gates-summary" class="callout warn"></p>
+  <div class="table-wrap">
+    <table>
+      <caption class="vhidden">Nineteen production release gates</caption>
+      <thead><tr><th>#</th><th>البوابة</th><th>الحالة</th><th>الدليل على المرشح</th><th>مالك</th></tr></thead>
+      <tbody id="gates-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="find-h">
+  <div class="section-head"><h2 id="find-h">النتائج (17)</h2></div>
+  <div class="pill-row" id="sev-legend">
+    <span class="tag P0">P0 ×7</span>
+    <span class="tag P1">P1 ×7</span>
+    <span class="tag P2">P2 ×2</span>
+    <span class="tag P3">P3 ×1</span>
+  </div>
+  <div id="findings"></div>
+</section>
+
+<section class="card" aria-labelledby="dom-h">
+  <div class="section-head"><h2 id="dom-h">مصفوفة المجالات 80 — إعادة قياس طازجة</h2></div>
+  <p id="domain-sum" class="meta"></p>
+  <div class="legend">
+    <span class="tag PARTIAL">PARTIAL ×62</span>
+    <span class="tag FAIL-PARTIAL">FAIL / PARTIAL ×11</span>
+    <span class="tag BLOCKED-PARTIAL">BLOCKED / PARTIAL ×6</span>
+    <span class="tag NOT-VERIFIED">NOT VERIFIED ×1</span>
+  </div>
+  <div class="table-wrap" style="margin-top:10px">
+    <table>
+      <caption class="vhidden">Eighty-domain rescore matrix</caption>
+      <thead><tr>
+        <th>#</th><th>المجال</th><th>أساس</th><th>تاريخي</th><th>طازج</th><th>Δ</th><th>الحالة</th><th>الدليل</th><th>مالك</th>
+      </tr></thead>
+      <tbody id="domains-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="plan-h">
+  <div class="section-head"><h2 id="plan-h">الاستراتيجية التكيفية — تجميع السبب الجذري</h2></div>
+  <p class="lead">تُولَّد البرومبتات بعد اكتمال التدقيق فقط؛ النتائج ≠ برومبت تلقائي؛ الأفعال الخارجية (سياسة/بشري/مزود/إنتاج) منفصلة.</p>
+  <div class="rc-grid" id="plan"></div>
+</section>
+
+<section class="card" aria-labelledby="pr-h">
+  <div class="section-head">
+    <h2 id="pr-h">البرومبتات الكاملة (16)</h2>
+    <div class="actions no-print">
+      <button type="button" id="expand-all" class="ghost">توسيع الكل</button>
+    </div>
+  </div>
+  <div id="prompts"></div>
+</section>
+
+<section class="card" aria-labelledby="unk-h">
+  <div class="section-head"><h2 id="unk-h">المجهولات Unknown Unknowns</h2></div>
+  <div class="table-wrap">
+    <table>
+      <caption class="vhidden">Unknown unknowns register</caption>
+      <thead><tr><th>ID</th><th>السؤال</th><th>الحالة</th><th>ملاحظة</th></tr></thead>
+      <tbody id="unknowns"></tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>ملف واحد تفاعلي · مصدَّر من <code class="ltr">AUDIT_DATA</code> داخل الصفحة · لا commit/push · لا deployment claims.</p>
+  <p class="ltr">QC-ULTIMATE-ZERO-ASSUMPTION-ADAPTIVE-AUDIT-001 · 2026-09-22 · decision NO-GO · fresh 45.3% · gates 0/19</p>
+</footer>
+</div>
+
+<script type="application/json" id="audit-data">{"meta":{"auditId":"QC-ULTIMATE-ZERO-ASSUMPTION-ADAPTIVE-AUDIT-001","titleAr":"تحليل الحالة الراهنة وخطة التنفيذ التكيفية","subtitleAr":"إعادة تدقيق صفر افتراضات على المرشح المجمّد","date":"2026-09-22","candidate":"c4998fa4007ce2234c9f48940a0f48f56aa5930c","tree":"5598720618f2045bc3bbbf6b68e81d6600d3bee4","baseline":"653b58d22d4a17994db7376a3bd691ca6e789f1a","previous":"f64960b0803e3b2493b96d926a90d0e8c713977a","branch":"main","node":"v22.22.3","nodeContract":">=24.20.0 <25","pnpm":"11.25.0","platform":"macOS arm64","delta":{"commits":33,"files":373,"added":159,"modified":214,"plus":45271,"minus":3040},"score":{"fresh":3624.0,"hist":3661.0,"base":3739.3,"freshPct":45.3,"histPct":45.8,"basePct":46.7,"denom":80},"gates":{"pass":0,"total":19,"pct":0.0},"weights":{"S":20,"U":15,"I":15,"D":15,"B":15,"H":10,"P":10},"decision":"NO-GO","passNotReleased":"PASS ≠ RELEASED","stateCounts":{"PARTIAL":62,"FAIL / PARTIAL":11,"BLOCKED / PARTIAL":6,"NOT VERIFIED":1},"sevCounts":{"P0":7,"P1":7,"P2":2,"P3":1},"gateCounts":{"NOT VERIFIED":12,"FAIL":6,"BLOCKED":1}},"evidence":[{"cmd":"git freeze","result":"PASS","detail":"HEAD c4998fa tree 5598720 clean == origin/main"},{"cmd":"delta vs 653b58d","result":"INFO","detail":"33 commits, 373 files, +45271/-3040, 159A/214M"},{"cmd":"pnpm typecheck","result":"PASS","detail":"937 files, 0 errors, 0 warnings, 87 hints"},{"cmd":"pnpm format:check","result":"FAIL","detail":"38 files (quarantine/laboratory heavy)"},{"cmd":"pnpm lint","result":"FAIL","detail":"2 errors unused vars"},{"cmd":"pnpm test:architecture","result":"FAIL","detail":"17 boundary violations; route integrity PASS"},{"cmd":"pnpm requirements:check","result":"PASS","detail":"req=100 risks=34 gaps=20 decisions=33 assumptions=5 domains=80"},{"cmd":"pnpm test:unit","result":"FAIL","detail":"948/957 pass, 9 fail, 7 files"},{"cmd":"pnpm test:integration","result":"BLOCKED","detail":"278 pass, 0 fail, 205 skip — Docker unavailable; 39 suites failed setup"},{"cmd":"pnpm test:migrations","result":"BLOCKED","detail":"33 skip — Docker"},{"cmd":"pnpm test:concurrency","result":"BLOCKED","detail":"13 skip — Docker"},{"cmd":"pnpm test:security","result":"FAIL/PARTIAL","detail":"51 pass, 1 skip (rate-limit container); suite exit 1"},{"cmd":"pnpm build","result":"PASS","detail":"server+client built; large chunk warning three.js"},{"cmd":"pnpm diagnose","result":"FAIL","detail":"node-runtime, dotenv-configuration (SERVICE_VERSION, RATE_LIMIT_LOGIN_*)"},{"cmd":"pnpm release:parity:check","result":"FAIL","detail":"runtime-contract Node v22.22.3"},{"cmd":"pnpm release:tech-debt:check","result":"PASS","detail":"TD register 6 items"},{"cmd":"pnpm release:evidence:check","result":"PASS","detail":"suites {} (no required release flag)"},{"cmd":"pnpm audit --audit-level high","result":"FAIL","detail":"30 vulns: 1 critical GHSA-26w7-cxv4-gfx2, 6 high, 18 moderate, 5 low"},{"cmd":"git diff --check","result":"PASS","detail":"0"},{"cmd":"docker info","result":"FAIL","detail":"daemon not running"},{"cmd":"PG read-only DATABASE_URL","result":"INFO/BLOCKED","detail":"Render PG 18.6 connected; public tables=0; no writes/migrations"},{"cmd":"gh Verification CI","result":"FAIL","detail":"multiple runs failure 2026-09-22"},{"cmd":"e2e evidence file","result":"FAIL","detail":"status FAIL, gitSha f64960b ≠ HEAD, 1 pass/67 fail/127 skip"},{"cmd":"auth unit authorize/p05","result":"PASS","detail":"authorization core unit green"}],"gates":[{"n":1,"name":"Authentication","nameAr":"المصادقة","status":"NOT VERIFIED","ev":"Owner/session unit PASS؛ E2E شخصيات ست على SHA الحالي غير مُنفَّذ","owner":"003,010,004"},{"n":2,"name":"Authorization","nameAr":"التفويض","status":"NOT VERIFIED","ev":"authorize/p05 unit PASS؛ مصفوفة personas سلبية حية على c4998fa NOT RUN","owner":"003,010"},{"n":3,"name":"Data Integrity","nameAr":"سلامة البيانات","status":"NOT VERIFIED","ev":"local PG suite محجوبة Docker؛ public schema فارغة على DATABASE_URL","owner":"001,003,015"},{"n":4,"name":"Migrations","nameAr":"الترحيلات","status":"FAIL","ev":"DATABASE_URL public=0؛ source head ≠ applied؛ لا تطبيق مُصرَّح","owner":"015,001"},{"n":5,"name":"Critical Workflows","nameAr":"المسارات الحرجة","status":"FAIL","ev":"unit 9/957 FAIL؛ E2E stale ancestor FAIL؛ PD علمية مفتوحة","owner":"013,003,004"},{"n":6,"name":"Audit Durability","nameAr":"متانة التدقيق","status":"NOT VERIFIED","ev":"local guards PASS historically؛ continuity on candidate NOT RUN","owner":"008,001"},{"n":7,"name":"Security","nameAr":"الأمن","status":"FAIL","ev":"pnpm audit 30 vulns (1 critical GHSA-26w7-cxv4-gfx2)؛ security suite exit 1","owner":"002,015,010"},{"n":8,"name":"PostgreSQL Runtime","nameAr":"تشغيل PostgreSQL","status":"NOT VERIFIED","ev":"Docker BLOCKED؛ read-only probe only، public tables=0","owner":"015,001,002"},{"n":9,"name":"Authenticated E2E","nameAr":"E2E مصادق","status":"FAIL","ev":"e2e evidence FAIL gitSha=f64960b ≠ c4998fa؛ 1/67/127","owner":"003"},{"n":10,"name":"Backup","nameAr":"النسخ الاحتياطي","status":"NOT VERIFIED","ev":"لا artifact نسخ مولّد على هذا المرشح في هذه الجلسة","owner":"008"},{"n":11,"name":"Restore / DR","nameAr":"الاستعادة/DR","status":"NOT VERIFIED","ev":"provider DR/RPO/RTO مفتوح PD-26/27/28؛ drill محلي تاريخي فقط","owner":"008,001,015"},{"n":12,"name":"Deployment Identity","nameAr":"هوية النشر","status":"NOT VERIFIED","ev":"no accepted deploy of c4998fa؛ release identity local only","owner":"001"},{"n":13,"name":"Render Parity","nameAr":"تعادل Render","status":"NOT VERIFIED","ev":"انحراف render.yaml تاريخي لم يُعاد فحصه live","owner":"001"},{"n":14,"name":"Groq Live","nameAr":"Groq حي","status":"NOT VERIFIED","ev":"no accepted live call on candidate","owner":"009"},{"n":15,"name":"Gemini Live","nameAr":"Gemini حي","status":"NOT VERIFIED","ev":"no accepted live call on candidate","owner":"009"},{"n":16,"name":"UAT","nameAr":"قبول المستخدم UAT","status":"BLOCKED","ev":"0 جلسات بشرية؛ uatClaim=false؛ automation لا يُحتسب","owner":"004"},{"n":17,"name":"Accessibility","nameAr":"إمكانية الوصول","status":"FAIL","ev":"axe/matrix/AT NOT RUN على c4998fa؛ historical serious issues unmet","owner":"005,006"},{"n":18,"name":"Health / Readiness","nameAr":"الصحة/الجاهزية","status":"NOT VERIFIED","ev":"health local historically PASS؛ live re-check على SHA الحالي NOT RUN هذه الجلسة","owner":"001,007"},{"n":19,"name":"Exact-HEAD CI","nameAr":"CI على SHA الدقيق","status":"FAIL","ev":"Verification CI runs failure 2026-09-22 (billing/runner) لـ c4998fa","owner":"002"}],"findings":[{"id":"QC-ULT-001","sev":"P0","title":"بوابات إلزامية للمرشح الحالي 0/19","detail":"لا يزال المرشح c4998fa بعيدًا عن GO؛ CI يفشل، E2E للمصادقة لا يخص هذا SHA، UAT بشري معدوم، نشر إنتاجي غير متحقق.","ev":"gates 0/19؛ gh runs failure؛ e2e evidence FAIL@f64960b","owner":"015,001,002,003,004,012"},{"id":"QC-ULT-002","sev":"P0","title":"CI على main يفشل","detail":"ثلاث مرات اليوم: Verification CI وpages-build-deployment failure؛ لا يوجد نجاح CI مرتبط بالمرشح الحالي.","ev":"gh run 35761670876/35756324963/35730427290 failure","owner":"002"},{"id":"QC-ULT-003","sev":"P0","title":"E2E مصادق غير صالح للمرشح الحالي","detail":"authenticated-e2e-evidence.json status=FAIL و gitSha=f64960b وليس c4998fa؛ totals 1/67/127؛ uatClaim=false.","ev":".ci-results/authenticated-e2e-evidence.json","owner":"003"},{"id":"QC-ULT-004","sev":"P0","title":"UAT بشري موقّع غير موجود","detail":"لا جلسات بشرية ولا توقيعات؛ بوابة UAT UNVERIFIED.","ev":"uatClaim=false؛ لا أدلة جلسات","owner":"004"},{"id":"QC-ULT-005","sev":"P0","title":"قاعدة البيانات على DATABASE_URL فارغة من جداول التطبيق","detail":"اتصال read-only ناجح إلى Render PG 18.6 لكن public tables=0؛ لم تُطبَّق migrations على هذا الهدف أو هو قاعدة مختلفة/فارغة. لا كتابة/تشغيل migration.","ev":"information_schema.tables public=0","owner":"015,001,002"},{"id":"QC-ULT-006","sev":"P0","title":"ثغرة حرجة RCE في astro AVIF غير مُصلَحة","detail":"GHSA-26w7-cxv4-gfx2؛ astro 4.16.19 يحتاج >=7.2.8؛ pnpm audit: 1 critical + 6 high.","ev":"pnpm audit exit 1","owner":"002"},{"id":"QC-ULT-007","sev":"P0","title":"اختبارات PostgreSQL محجوبة (Docker)","detail":"integration/migrations/concurrency/security rate-limit: 205+33+13+1 skipped؛ لا دليل تنفيذ على هذا المرشح لهذه الحزم.","ev":"Could not find a working container runtime strategy","owner":"002,027"},{"id":"QC-ULT-008","sev":"P1","title":"فحص المعمارية FAIL 17 انتهاكًا","detail":"domain-import في receiving pages/actions، NCR/CAPA delivery imports، ai-advisory infrastructure import.","ev":"check-boundaries exit 1","owner":"002,013"},{"id":"QC-ULT-009","sev":"P1","title":"وحدة اختبار FAIL 9/957 في 7 ملفات","detail":"receiving-data-contract ×2؛ UI contracts ×7 (type-floor 74>71، caption×2، row identity، ownership mine، retest policy، form labels، receivedOn today).","ev":"pnpm test:unit exit 1","owner":"002,005,013"},{"id":"QC-ULT-010","sev":"P1","title":"format 38 ملفًا + lint 2 أخطاء","detail":"quarantine/laboratory الجديدة غير منسقة؛ unused vars في acceptance-evaluation وpostgres-repository.","ev":"format:check/lint exit 1","owner":"002"},{"id":"QC-ULT-011","sev":"P1","title":"Node خارج العقد + diagnose/parity FAIL","detail":"v22.22.3 مقابل >=24.20.0<25؛ dotenv يفشل SERVICE_VERSION وRATE_LIMIT_LOGIN_*؛ .env NODE_ENV=production محليًا.","ev":"diagnose/parity exit 1","owner":"015,002"},{"id":"QC-ULT-012","sev":"P1","title":"قرار سياسة علمية/تشغيلية مفتوح يبقى fail-closed","detail":"PD-01..PD-38 OPEN؛ لا استنتاج قواعد AQL/سماحية/تكرار/احتفاظ.","ev":"DECISION-ASSUMPTION-REGISTER-026","owner":"013"},{"id":"QC-ULT-013","sev":"P1","title":"استرداد مزود/DR وRPO/RTO غير مثبت","detail":"لا دليل provider recovery على المرشح؛ مسترد محلي تاريخي فقط.","ev":"PD-26/27/28 OPEN","owner":"008,001,015"},{"id":"QC-ULT-014","sev":"P1","title":"ADE/AT/matrix متصفح غير مُنفَّذ للمرشح","detail":"لا axe/browser matrix/session AT على c4998fa؛ دليل E2E السابق FAIL/ancestor.","ev":"NOT RUN","owner":"006,040,003"},{"id":"QC-ULT-015","sev":"P2","title":"قرار التوطين العربي/RTL غير محسوم","detail":"Domain 70 يبقى 7%؛ English/LTR فقط.","ev":"قرار 013/006","owner":"013,006"},{"id":"QC-ULT-016","sev":"P2","title":"تعارض domain IDs في سجل tech-debt مقابل مصفوفة 80","detail":"TD يشير domains 78-87 خارج/متداخل مع مصفوفة التدقيق 1-80 دون جدول تحويل.","ev":"TECH-DEBT-REGISTER.md","owner":"012,002"},{"id":"QC-ULT-017","sev":"P3","title":"تحذيرات typecheck deprecated toThrowError","detail":"87 hints لا أخطاء؛ لا يمنع النجاح لكنه دين صغير.","ev":"typecheck exit 0","owner":"002"}],"domains":[{"n":1,"name":"Functional Correctness","base":51.0,"hist":49.0,"fresh":47.0,"delta":-2.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"الصحة الوظيفية"},{"n":2,"name":"End-to-End Workflows","base":44.0,"hist":44.0,"fresh":44.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"مسارات العمل End-to-End"},{"n":3,"name":"System Integration","base":49.0,"hist":49.0,"fresh":49.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"تكامل النظام"},{"n":4,"name":"User Experience / Usability","base":28.0,"hist":26.0,"fresh":26.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"تجربة المستخدم وقابلية الاستخدام"},{"n":5,"name":"UI / Visual Design","base":29.0,"hist":26.0,"fresh":26.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"تصميم الواجهة البصري"},{"n":6,"name":"Responsive Design","base":32.0,"hist":26.0,"fresh":26.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"التصميم المتجاوب"},{"n":7,"name":"Accessibility","base":32.0,"hist":26.0,"fresh":24.0,"delta":-2.0,"state":"FAIL / PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"إمكانية الوصول"},{"n":8,"name":"Performance","base":37.0,"hist":40.0,"fresh":40.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"الأداء"},{"n":9,"name":"Authentication & Identity","base":63.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"المصادقة والهوية"},{"n":10,"name":"Authorization / RBAC / Scopes / SoD","base":60.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"Authorization / RBAC / Scopes / SoD"},{"n":11,"name":"SYSTEM_OWNER / yazeed Control","base":65.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"التحكم في SYSTEM_OWNER / yazeed"},{"n":12,"name":"User Administration","base":60.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"إدارة المستخدمين"},{"n":13,"name":"Security","base":60.0,"hist":57.0,"fresh":55.0,"delta":-2.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"الأمن"},{"n":14,"name":"Database Architecture","base":65.0,"hist":65.0,"fresh":65.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"معمارية قاعدة البيانات"},{"n":15,"name":"Data Integrity","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"سلامة البيانات"},{"n":16,"name":"Transactions & Atomicity","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"المعاملات والذرية"},{"n":17,"name":"Concurrency & Idempotency","base":53.0,"hist":48.0,"fresh":48.0,"delta":0.0,"state":"FAIL / PARTIAL","ev":"PG 18.6 concurrency 9 PASS / 3 FAIL; idempotency retained, two-stage/hold cases fail.","owner":"002,003,004,012","nameAr":"التزامن وIdempotency"},{"n":18,"name":"Persistence","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"الاستمرارية Persistence"},{"n":19,"name":"Audit Trail & Traceability","base":60.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"سجل التدقيق والتتبع"},{"n":20,"name":"Error Handling & Recovery UX","base":55.0,"hist":53.0,"fresh":53.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"معالجة الأخطاء وتجربة التعافي"},{"n":21,"name":"Quality Management","base":49.0,"hist":49.0,"fresh":49.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"إدارة الجودة"},{"n":22,"name":"Receiving & Quarantine","base":57.0,"hist":57.0,"fresh":54.0,"delta":-3.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"الاستلام والحجر"},{"n":23,"name":"Inspection Management","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"إدارة الفحص"},{"n":24,"name":"Release Control","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"التحكم في Release"},{"n":25,"name":"Laboratory Management","base":55.0,"hist":55.0,"fresh":53.0,"delta":-2.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"إدارة المختبر"},{"n":26,"name":"Scientific Data Governance","base":47.0,"hist":47.0,"fresh":47.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"حوكمة البيانات العلمية"},{"n":27,"name":"Retest Management","base":47.0,"hist":47.0,"fresh":47.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"إدارة إعادة الاختبار"},{"n":28,"name":"Equipment Management","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"إدارة المعدات"},{"n":29,"name":"Calibration","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"المعايرة"},{"n":30,"name":"Maintenance","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"الصيانة"},{"n":31,"name":"Controlled Documents","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"المستندات الخاضعة للتحكم"},{"n":32,"name":"Templates","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"القوالب Templates"},{"n":33,"name":"Change Requests","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"طلبات التغيير"},{"n":34,"name":"Approvals","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"الموافقات"},{"n":35,"name":"E-Signatures / Reauthentication","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"التوقيع الإلكتروني / إعادة المصادقة"},{"n":36,"name":"Files & Evidence","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"الملفات والأدلة"},{"n":37,"name":"Notifications","base":49.0,"hist":41.0,"fresh":41.0,"delta":0.0,"state":"FAIL / PARTIAL","ev":"Fresh integration failures in notification ordering, literal-wildcard search, or report export parity.","owner":"011,002,003,004","nameAr":"الإشعارات"},{"n":38,"name":"Search","base":49.0,"hist":41.0,"fresh":41.0,"delta":0.0,"state":"FAIL / PARTIAL","ev":"Fresh integration failures in notification ordering, literal-wildcard search, or report export parity.","owner":"011,002,003,004","nameAr":"البحث"},{"n":39,"name":"Reports","base":49.0,"hist":45.0,"fresh":45.0,"delta":0.0,"state":"FAIL / PARTIAL","ev":"Fresh integration failures in notification ordering, literal-wildcard search, or report export parity.","owner":"011,002,003,004","nameAr":"التقارير"},{"n":40,"name":"Export / Print","base":42.0,"hist":42.0,"fresh":42.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"011,002,003,004","nameAr":"التصدير والطباعة"},{"n":41,"name":"Dashboard","base":38.0,"hist":42.0,"fresh":40.0,"delta":-2.0,"state":"FAIL / PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"لوحة المعلومات"},{"n":42,"name":"Release Governance","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"حوكمة الإصدارات"},{"n":43,"name":"CI/CD","base":29.0,"hist":29.0,"fresh":27.0,"delta":-2.0,"state":"FAIL / PARTIAL","ev":"Architecture PASS; unit 672/677; integration 410/419; no exact-candidate browser or CI run.","owner":"002,003","nameAr":"CI/CD"},{"n":44,"name":"Automated Testing","base":60.0,"hist":45.0,"fresh":42.0,"delta":-3.0,"state":"FAIL / PARTIAL","ev":"Architecture PASS; unit 672/677; integration 410/419; no exact-candidate browser or CI run.","owner":"002,003","nameAr":"الاختبارات الآلية"},{"n":45,"name":"Browser / Playwright E2E","base":31.0,"hist":28.0,"fresh":26.0,"delta":-2.0,"state":"FAIL / PARTIAL","ev":"Architecture PASS; unit 672/677; integration 410/419; no exact-candidate browser or CI run.","owner":"002,003","nameAr":"Browser / Playwright E2E"},{"n":46,"name":"Real UAT","base":11.0,"hist":40.0,"fresh":40.0,"delta":0.0,"state":"BLOCKED / PARTIAL","ev":"UAT ingestion 8/8 and automated HTTP 14/0/3 on an ancestor; zero human sessions/signatures on the final candidate.","owner":"004","nameAr":"UAT حقيقي"},{"n":47,"name":"Usability Testing","base":4.0,"hist":14.0,"fresh":14.0,"delta":0.0,"state":"BLOCKED / PARTIAL","ev":"No real participant usability session; automation is not human evidence.","owner":"004","nameAr":"اختبار قابلية الاستخدام"},{"n":48,"name":"Backup","base":39.0,"hist":39.0,"fresh":39.0,"delta":0.0,"state":"PARTIAL","ev":"Populated isolated restore is candidate-bound to an ancestor; provider recovery remains BLOCKED.","owner":"008,001,015","nameAr":"النسخ الاحتياطي"},{"n":49,"name":"Restore / Disaster Recovery","base":39.0,"hist":39.0,"fresh":39.0,"delta":0.0,"state":"PARTIAL","ev":"Populated isolated restore is candidate-bound to an ancestor; provider recovery remains BLOCKED.","owner":"008,001,015","nameAr":"الاستعادة والتعافي من الكوارث"},{"n":50,"name":"Health & Readiness","base":69.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Local health/observability source and tests; production metrics/alerts and exact-candidate deployment absent.","owner":"007,001","nameAr":"الصحة والجاهزية"},{"n":51,"name":"Observability","base":53.0,"hist":51.0,"fresh":51.0,"delta":0.0,"state":"PARTIAL","ev":"Local health/observability source and tests; production metrics/alerts and exact-candidate deployment absent.","owner":"007,001","nameAr":"Observability"},{"n":52,"name":"Operational Supportability","base":47.0,"hist":45.0,"fresh":45.0,"delta":0.0,"state":"PARTIAL","ev":"Local health/observability source and tests; production metrics/alerts and exact-candidate deployment absent.","owner":"007,001","nameAr":"القابلية للدعم التشغيلي"},{"n":53,"name":"Architecture","base":35.0,"hist":35.0,"fresh":34.0,"delta":-1.0,"state":"PARTIAL","ev":"Typecheck/architecture/build PASS; format 39 files, lint 55 errors, unit 5 failures.","owner":"002,003,004,012","nameAr":"المعمارية"},{"n":54,"name":"Maintainability","base":31.0,"hist":31.0,"fresh":30.0,"delta":-1.0,"state":"PARTIAL","ev":"Typecheck/architecture/build PASS; format 39 files, lint 55 errors, unit 5 failures.","owner":"002,003,004,012","nameAr":"قابلية الصيانة"},{"n":55,"name":"Code Quality","base":24.0,"hist":22.0,"fresh":20.0,"delta":-2.0,"state":"FAIL / PARTIAL","ev":"Typecheck/architecture/build PASS; format 39 files, lint 55 errors, unit 5 failures.","owner":"002,003,004,012","nameAr":"جودة الكود"},{"n":56,"name":"Migration Management","base":65.0,"hist":65.0,"fresh":63.0,"delta":-2.0,"state":"FAIL / PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"إدارة Migrations"},{"n":57,"name":"Configuration & Secrets","base":38.0,"hist":38.0,"fresh":35.0,"delta":-3.0,"state":"BLOCKED / PARTIAL","ev":"Exact candidate not deployed; production DB blocked by credential gate; mandatory gates 0/19.","owner":"015,001,002,003,004","nameAr":"الإعدادات والأسرار"},{"n":58,"name":"Deployment / Runtime","base":33.0,"hist":31.0,"fresh":28.0,"delta":-3.0,"state":"BLOCKED / PARTIAL","ev":"Exact candidate not deployed; production DB blocked by credential gate; mandatory gates 0/19.","owner":"015,001,002,003,004","nameAr":"النشر وRuntime"},{"n":59,"name":"Data Privacy","base":43.0,"hist":43.0,"fresh":43.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"خصوصية البيانات"},{"n":60,"name":"Compliance / QMS Governance","base":40.0,"hist":40.0,"fresh":40.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"الامتثال وحوكمة QMS"},{"n":61,"name":"Business Rules Consistency","base":51.0,"hist":51.0,"fresh":51.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"اتساق Business Rules"},{"n":62,"name":"State Machines","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"State Machines"},{"n":63,"name":"Deletion / Correction Semantics","base":47.0,"hist":47.0,"fresh":47.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"013,002,003,004","nameAr":"دلالات الحذف والتصحيح"},{"n":64,"name":"Data Consistency Across Modules","base":49.0,"hist":49.0,"fresh":49.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"011,002,003,004","nameAr":"اتساق البيانات بين الـModules"},{"n":65,"name":"Navigation & Information Architecture","base":40.0,"hist":35.0,"fresh":35.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"Navigation & Information Architecture"},{"n":66,"name":"Forms Quality","base":51.0,"hist":49.0,"fresh":47.0,"delta":-2.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"جودة Forms"},{"n":67,"name":"Tables & Data Grids","base":47.0,"hist":45.0,"fresh":42.0,"delta":-3.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"الجداول وData Grids"},{"n":68,"name":"Dialogs & Confirmations","base":49.0,"hist":49.0,"fresh":49.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"Dialogs والتأكيدات"},{"n":69,"name":"Empty / Loading / Error States","base":47.0,"hist":45.0,"fresh":45.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"حالات Empty / Loading / Error"},{"n":70,"name":"Localization / Arabic / RTL","base":7.0,"hist":7.0,"fresh":7.0,"delta":0.0,"state":"PARTIAL","ev":"Current source/static review only; exact-candidate authenticated responsive/AT/browser evidence NOT RUN.","owner":"005,006,016,017,018,003,004","nameAr":"Localization / Arabic / RTL"},{"n":71,"name":"Time / Date Handling","base":49.0,"hist":49.0,"fresh":49.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"011,002,003,004","nameAr":"التعامل مع الوقت والتاريخ"},{"n":72,"name":"Reference Data","base":38.0,"hist":38.0,"fresh":38.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"011,002,003,004","nameAr":"Reference Data"},{"n":73,"name":"Import","base":28.0,"hist":28.0,"fresh":28.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"011,002,003,004","nameAr":"الاستيراد"},{"n":74,"name":"Bulk Operations","base":28.0,"hist":28.0,"fresh":28.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"011,002,003,004","nameAr":"Bulk Operations"},{"n":75,"name":"AI Advisory","base":45.0,"hist":45.0,"fresh":45.0,"delta":0.0,"state":"BLOCKED / PARTIAL","ev":"Offline AI suite evidence retained in source; no live provider/privacy approval/human review.","owner":"009,010,004","nameAr":"AI Advisory"},{"n":76,"name":"AI Safety / Governance","base":45.0,"hist":45.0,"fresh":45.0,"delta":0.0,"state":"BLOCKED / PARTIAL","ev":"Offline AI suite evidence retained in source; no live provider/privacy approval/human review.","owner":"009,010,004","nameAr":"AI Safety / Governance"},{"n":77,"name":"System Owner Recovery","base":57.0,"hist":57.0,"fresh":57.0,"delta":0.0,"state":"PARTIAL","ev":"Exact-candidate source review plus fresh unit/integration/PG evidence where applicable; no browser/human/production credit.","owner":"002,003,004,012","nameAr":"استعادة System Owner"},{"n":78,"name":"Audit Immutability","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"عدم قابلية Audit للتعديل"},{"n":79,"name":"Controlled Evidence Immutability","base":59.0,"hist":59.0,"fresh":59.0,"delta":0.0,"state":"PARTIAL","ev":"Node 24.20.0; PG 18.6; migration suite 29/29 PASS; exact-candidate source inspection.","owner":"002,003,004,012","nameAr":"عدم قابلية الأدلة الخاضعة للتحكم للتعديل"},{"n":80,"name":"Production Readiness","base":5.3,"hist":0.0,"fresh":0.0,"delta":0.0,"state":"NOT VERIFIED","ev":"Exact candidate not deployed; production DB blocked by credential gate; mandatory gates 0/19.","owner":"015,001,002,003,004","nameAr":"الجاهزية للإنتاج"}],"domainsAr":{"1":"الصحة الوظيفية","2":"مسارات العمل End-to-End","3":"تكامل النظام","4":"تجربة المستخدم وقابلية الاستخدام","5":"تصميم الواجهة البصري","6":"التصميم المتجاوب","7":"إمكانية الوصول","8":"الأداء","9":"المصادقة والهوية","10":"Authorization / RBAC / Scopes / SoD","11":"التحكم في SYSTEM_OWNER / yazeed","12":"إدارة المستخدمين","13":"الأمن","14":"معمارية قاعدة البيانات","15":"سلامة البيانات","16":"المعاملات والذرية","17":"التزامن وIdempotency","18":"الاستمرارية Persistence","19":"سجل التدقيق والتتبع","20":"معالجة الأخطاء وتجربة التعافي","21":"إدارة الجودة","22":"الاستلام والحجر","23":"إدارة الفحص","24":"التحكم في Release","25":"إدارة المختبر","26":"حوكمة البيانات العلمية","27":"إدارة إعادة الاختبار","28":"إدارة المعدات","29":"المعايرة","30":"الصيانة","31":"المستندات الخاضعة للتحكم","32":"القوالب Templates","33":"طلبات التغيير","34":"الموافقات","35":"التوقيع الإلكتروني / إعادة المصادقة","36":"الملفات والأدلة","37":"الإشعارات","38":"البحث","39":"التقارير","40":"التصدير والطباعة","41":"لوحة المعلومات","42":"حوكمة الإصدارات","43":"CI/CD","44":"الاختبارات الآلية","45":"Browser / Playwright E2E","46":"UAT حقيقي","47":"اختبار قابلية الاستخدام","48":"النسخ الاحتياطي","49":"الاستعادة والتعافي من الكوارث","50":"الصحة والجاهزية","51":"Observability","52":"القابلية للدعم التشغيلي","53":"المعمارية","54":"قابلية الصيانة","55":"جودة الكود","56":"إدارة Migrations","57":"الإعدادات والأسرار","58":"النشر وRuntime","59":"خصوصية البيانات","60":"الامتثال وحوكمة QMS","61":"اتساق Business Rules","62":"State Machines","63":"دلالات الحذف والتصحيح","64":"اتساق البيانات بين الـModules","65":"Navigation & Information Architecture","66":"جودة Forms","67":"الجداول وData Grids","68":"Dialogs والتأكيدات","69":"حالات Empty / Loading / Error","70":"Localization / Arabic / RTL","71":"التعامل مع الوقت والتاريخ","72":"Reference Data","73":"الاستيراد","74":"Bulk Operations","75":"AI Advisory","76":"AI Safety / Governance","77":"استعادة System Owner","78":"عدم قابلية Audit للتعديل","79":"عدم قابلية الأدلة الخاضعة للتحكم للتعديل","80":"الجاهزية للإنتاج"},"plan":{"principle":"البرومبتات تُولَّد بعد اكتمال التدقيق فقط؛ النتائج ≠ برومبت تلقائي؛ تجميع من السبب الجذري؛ فصل الأفعال الخارجية (سياسة/بشري/مزود/إنتاج) عن أعمال الكود؛ لا سلطة لخطة تاريخية.","groups":[{"id":"RC-A","title":"تثبيت بيئة العقد وCI","kind":"code+ops","findings":["QC-ULT-011","QC-ULT-002"],"actions":["محاذاة Node 24.20.0 محليًا/CI","إصلاح أسرار diagnose المفقودة بأسماء فقط دون طباعة قيم","إعادة Verification CI green على SHA جديد"]},{"id":"RC-B","title":"إصلاحات الجودة المحلية القابلة للكود","kind":"code","findings":["QC-ULT-009","QC-ULT-010","QC-ULT-008"],"actions":["prettier على 38 ملفًا","إزالة unused vars ×2","إصلاح 9 فشلات unit (contracts)","إزالة انتهاكات domain-import في receiving/NCR/CAPA/ai-advisory أو رفع استثناء موثق"]},{"id":"RC-C","title":"أمن التبعيات","kind":"code+release","findings":["QC-ULT-006"],"actions":["ترقية astro/@astrojs/node/sharp/vite ضمن توافق","إعادة audit --audit-level high","SBOM/attestation إن فُتح CI"]},{"id":"RC-D","title":"استعادة حزم PostgreSQL على Docker/Testcontainers","kind":"ops","findings":["QC-ULT-007"],"actions":["تشغيل Docker Desktop ثم test:integration|migrations|concurrency|security","تسجيل JSON جديد مرتبط بالمرشح"]},{"id":"RC-E","title":"إثبات E2E مصادق على SHA الحالي","kind":"ops+code","findings":["QC-ULT-003","QC-ULT-014"],"actions":["تشغيل verify:e2e:authenticated على c4998fa+ بعد رفع fixtures","رفض أي دليل ancestor كقبول"]},{"id":"RC-F","title":"بوابة الاتصال الآمن وmigrations الإنتاجية","kind":"external","findings":["QC-ULT-005","QC-ULT-001","QC-ULT-013"],"actions":["مناولة أمنية: فحص preflight read-only على هدف معتمد","قرار: هل DATABASE_URL الحالي هو الهدف الصحيح أم فارغ متعمد","طبقة migrations تحتاج تفويض صريح — لا تنفيذ ضمن هذا التدقيق"]},{"id":"RC-G","title":"سياسات علمية/تشغيلية fail-closed","kind":"external-policy","findings":["QC-ULT-012","QC-ULT-015"],"actions":["أغلِ PD-01..38 بوثائق معتمدة","قرار RTL/توطين","لا اختراع AQL/سماحية"]},{"id":"RC-H","title":"UAT بشري وقبول","kind":"external-human","findings":["QC-ULT-004","QC-ULT-014"],"actions":["جلسات بشرية موقعة","لا احتساب أتمتة كبديل"]},{"id":"RC-I","title":"إغلاق المصفوفات والأدلة النهائية","kind":"governance","findings":["QC-ULT-016","QC-ULT-001"],"actions":["جدول domain IDs للtech-debt","إعادة تدقيق 012 بعد غلق A–H"]}]},"prompts":[{"id":"PR-A1","rc":"RC-A","title":"محاذاة Node إلى العقد 24.20.0 وإصلاح diagnose/parity","kind":"code+local","findings":["QC-ULT-011"],"accept":"diagnose PASS node-runtime; parity PASS runtime-contract; typecheck/build PASS على Node 24.20.0","body":"# PR-A1 — محاذاة Node إلى العقد 24.20.0 وإصلاح diagnose/parity\nالسبب الجذري: RC-A (تثبيت بيئة العقد وCI)\nالنوع: code+local\nالنتائج المرتبطة: QC-ULT-011\n\n## المهمة\n1. فعّل Node 24.20.0 (أو أي 24.x ضمن `>=24.20.0 <25`) للتشغيل المحلي وCI بنفس المسار (`package.json` engines + `.nvmrc`/`.node-version` إن وُجد + workflow `node-version`).\n2. أصلح `.env` المحلي **بأسماء متغيرات فقط** (لا تطبع أي قيمة):\n   - يلزم `SERVICE_VERSION`\n   - يلزم `RATE_LIMIT_LOGIN_MAX` و`RATE_LIMIT_LOGIN_WINDOW_SECONDS`\n   - راجع `NODE_ENV=production` المحلي: إما ضبطه للبيئة المحلية أو توثيق لماذا هو production محليًا (لا تغيّر سلوك الإنتاج).\n3. شغّل `pnpm diagnose` و`pnpm release:parity:check` و`pnpm typecheck` و`pnpm build`.\n\n## معايير القبول\n- diagnose PASS node-runtime\n- parity PASS runtime-contract\n- typecheck/build PASS على Node 24.20.0\n- لا سر يُطبع أو يُسجَّل\n- لا commit/push إلا بطلب صريح من المستخدم\n\n## منع الاحتيال\n- لا تعدّل اختبارات العقد لتجزئة النتيجة.\n- لا تدّعي Node 24 دون `node -v` فعلي."},{"id":"PR-A2","rc":"RC-A","title":"استعادة CI green على main للمرشح","kind":"external-github","findings":["QC-ULT-002"],"accept":"آخر run لـ Verification CI success مرتبط بـ SHA بعد إصلاحات A/B/C؛ pages-build failure مفسَّر أو مُصلَح","body":"# PR-A2 — استعادة CI green على main للمرشح\nالسبب الجذري: RC-A\nالنوع: external-github\nالنتائج المرتبطة: QC-ULT-002\n\n## المهمة\n1. أصلح سبب فشل Verification CI (billing/runner lock أو أي job لم يبدأ) عبر مالك الحساب/المستودع.\n2. أعد تشغيل CI على SHA بعد إصلاحات الجودة المحلية (B) والترقية الأمنية (C) إن لزمت.\n3. وثّق pages-build-deployment failure (Jekyll) كغير صالح كمسار نشر للتطبيق.\n\n## معايير القبول\n- آخر run لـ Verification CI = success مرتبط بالـ SHA الفعلي\n- pages-build failure مُفسَّر أو مُصلَح\n- لا احتساب run بلا steps كنجاح\n\n## منع الاحتيال\n- نجاح run فارغ أو غير مرتبط بالـ SHA = FAIL.\n- لا تعطيل jobs لتجنّب الفشل."},{"id":"PR-B1","rc":"RC-B","title":"prettier على 38 ملف format:check","kind":"code","findings":["QC-ULT-010"],"accept":"format:check exit 0","body":"# PR-B1 — prettier على 38 ملف format:check\nالسبب الجذري: RC-B (جودة محلية)\nالنوع: code\nالنتائج المرتبطة: QC-ULT-010\n\n## المهمة\nشغّل `pnpm exec prettier --write` على الملفات المُبلَّغ عنها فقط في `pnpm format:check` (ثقيل في quarantine/laboratory)، ثم أعد `pnpm format:check`.\n\n## معايير القبول\n- `pnpm format:check` exit 0\n- لا تغيير سلوكي غير قصد التنسيق\n- لا تعديل `.opencode/**` أو `.playwright-mcp/**`\n\n## منع الاحتيال\n- لا توسيع نطاق prettier لملفات غير مُبلَّغ عنها إلا لضرورة تبعية."},{"id":"PR-B2","rc":"RC-B","title":"إصلاح lint unused ×2","kind":"code","findings":["QC-ULT-010"],"accept":"lint exit 0","body":"# PR-B2 — إصلاح lint unused ×2\nالسبب الجذري: RC-B\nالنوع: code\nالنتائج المرتبطة: QC-ULT-010\n\n## المهمة\nأصلح unused vars:\n- `src/**/acceptance-evaluation.ts:173` → `isNegative`\n- `src/**/postgres-repository.ts:519` → `r`\nثم `pnpm lint`.\n\n## معايير القبول\n- lint exit 0\n- لا إخفاء استخدام حقيقي بـ prefix `_` بلا داعٍ إن كان الكود يجب أن يستخدم المتغير\n\n## منع الاحتيال\n- لا تعطّل قاعدة lint أو تضييق نطاقها."},{"id":"PR-B3","rc":"RC-B","title":"إصلاح 9 فشلات عقد الوحدة (استلام/مختبر/واجهة)","kind":"code","findings":["QC-ULT-009"],"accept":"test:unit exit 0 أو توثيق استثناء مثبت لا يُخفّي فشلًا؛ دون خفض سقف type-floor إلا بقرار تصميم موثق","body":"# PR-B3 — إصلاح 9 فشلات عقد الوحدة (استلام/مختبر/واجهة)\nالسبب الجذري: RC-B\nالنوع: code\nالنتائج المرتبطة: QC-ULT-009\n\n## المهمة\nعالج فشلات `pnpm test:unit` (948/957، 9 فشلات في 7 ملفات):\n1. receiving-data-contract ×2\n2. authorization-visibility-ui\n3. dashboard-decision-surface\n4. design-governance-contract (type-floor **74>71**)\n5. form-ux-contract\n6. quarantine-decision-surface\n7. register-surface-contract ×2 (lab caption / row-identity)\n\nلكل فشل: حدّد هل هو regression على هذا HEAD أم contract خاطئ؛ أصلح **المصدر أو العقد بقرار تصميم موثّق**.\n\n## معايير القبول\n- `pnpm test:unit` exit 0 — أو استثناء مثبت لا يُخفي فشلًا\n- **لا خفض سقف type-floor إلا بقرار تصميم موثّق** (74 vs 71)\n- لا حذف اختبارات\n\n## منع الاحتيال\n- skip/only = FAIL.\n- تعديل assertion ليطابق سلوكًا معيبًا دون مصدر = FAIL."},{"id":"PR-B4","rc":"RC-B","title":"إزالة/عزل 17 انتهاك حدود المعمارية","kind":"code","findings":["QC-ULT-008"],"accept":"test:architecture exit 0؛ route integrity يبقى PASS؛ لا نقل قواعد علمية إلى الصفحات","body":"# PR-B4 — إزالة/عزل 17 انتهاك حدود المعمارية\nالسبب الجذري: RC-B\nالنوع: code\nالنتائج المرتبطة: QC-ULT-008\n\n## المهمة\nشغّل `pnpm test:architecture` وأصلح انتهاكات delivery/domain boundary (أبرزها):\n- `src/pages/quarantine/receiving/{index,new,[receivingId]}.astro`\n- `src/actions/quarantine.ts`\n- `src/pages/quality/{ncr,capa}/[ncrId|capaId].astro`\n- `src/pages/ai-advisory.astro`\nنقل الاستيرادات عبر use case / ports بدل infrastructure/SQL في الصفحات؛ لا تنقل قواعد علمية إلى الصفحات.\n\n## معايير القبول\n- `pnpm test:architecture` exit 0\n- route integrity يبقى PASS\n- لا اختراع قواعد AQL/سماحية\n\n## منع الاحتيال\n- إضافة استثناء واسع غير مبرّر = FAIL."},{"id":"PR-C1","rc":"RC-C","title":"ترقية astro/sharp/vite/@astrojs-node لسد critical/high","kind":"code+release","findings":["QC-ULT-006"],"accept":"pnpm audit --audit-level high exit 0 أو exception موثق بصلاحية أمنية؛ build/unit/pass؛ لا كسر SSR","body":"# PR-C1 — ترقية astro/sharp/vite/@astrojs-node لسد critical/high\nالسبب الجذري: RC-C (أمن التبعيات)\nالنوع: code+release\nالنتائج المرتبطة: QC-ULT-006\n\n## المهمة\n1. اقرأ `pnpm audit --audit-level high` (30 ثغرة: **1 critical GHSA-26w7-cxv4-gfx2** astro <7.2.8، 6 high).\n2. رقِّ `astro` (وتوابعه sharp/vite/@astrojs-node) ضمن توافق SSR/Astro 4→7 إن أمكن أو المسار الآمن الأدنى الذي يسد critical/high.\n3. أعد unit + build + audit.\n\n## معايير القبول\n- `pnpm audit --audit-level high` exit 0 — أو exception موثوق بصلاحية أمنية صريحة\n- build/unit pass؛ لا كسر SSR\n- لا رفع عشوائي بلا اختبار\n\n## منع الاحتيال\n- خفض `--audit-level` أو تعطيل audit = FAIL.\n- إخفاء advisory بلا إصلاح/استثناء معتمد = FAIL."},{"id":"PR-D1","rc":"RC-D","title":"تشغيل Docker وتشغيل حزم PostgreSQL الأربع وحفظ JSON للمرشح","kind":"ops","findings":["QC-ULT-007"],"accept":"integration/migrations/concurrency/security exit 0 دون skips إلزامية؛ مرتبط بـ c4998fa أو SHA التالي","body":"# PR-D1 — تشغيل Docker وحزم PostgreSQL الأربع وحفظ JSON للمرشح\nالسبب الجذري: RC-D\nالنوع: ops\nالنتائج المرتبطة: QC-ULT-007\n\n## المهمة\n1. شغّل Docker Desktop / container runtime.\n2. شغّل: `pnpm test:integration` · `pnpm test:migrations` · `pnpm test:concurrency` · `pnpm test:security`.\n3. احفظ JSON/تقارير اليوم مرتبطة بالـ SHA.\n\n## معايير القبول\n- الحزم الأربع exit 0 دون skips إلزامية\n- التقارير مربوطة بـ c4998fa أو SHA اللاحق\n- لا ادعاء regression/acceptance بلا تشغيل\n\n## منع الاحتيال\n- احتساب تقارير ancestor كقبول = FAIL.\n- skips بلا سجل = FAIL."},{"id":"PR-E1","rc":"RC-E","title":"E2E مصادق على SHA الحالي بعد رفع fixtures","kind":"ops+code","findings":["QC-ULT-003","QC-ULT-014"],"accept":"authenticated-e2e-evidence.json status PASS/PARTIAL موثق، gitSha==HEAD، uatClaim يبقى false ما لم يُوقَّع بشريًا","body":"# PR-E1 — E2E مصادق على SHA الحالي بعد رفع fixtures\nالسبب الجذري: RC-E\nالنتائج المرتبطة: QC-ULT-003, QC-ULT-014\n\n## المهمة\n1. رقِّ/أصلح fixtures (الست شخصيات / session lifecycle).\n2. شغّل `verify:e2e:authenticated` على المرشح الحالي.\n3. حدّث `.ci-results/authenticated-e2e-evidence.json`.\n\n## معايير القبول\n- status PASS أو PARTIAL موثّق\n- **gitSha == HEAD**\n- uatClaim يبقى false ما لم يُوقَّع بشريًا\n- لا قبول دليل f64960b/ancestor كقبول للمرشح\n\n## منع الاحتيال\n- نسخ JSON قديم = FAIL.\n- automation ≠ UAT."},{"id":"PR-F1","rc":"RC-F","title":"بوابة اتصال canonical: تحقق read-only فقط وقرار هدف قاعدة البيانات","kind":"external-operator","findings":["QC-ULT-005","QC-ULT-001"],"accept":"قرار موثق: DATABASE_URL الحالي صحيح أم لا؛ إن كان هدفًا معتمدًا فهل 0 جدول متوقع (قاعدة جديدة) أم فجوة؛ لا migrate دون تفويض","body":"# PR-F1 — بوابة اتصال canonical: تحقق read-only فقط وقرار هدف قاعدة البيانات\nالسبب الجذري: RC-F (خارجي — مشغّل)\nالنوع: external-operator\nالنتائج المرتبطة: QC-ULT-005, QC-ULT-001\n\n## المهمة\n1. read-only فقط: افحص `information_schema` على `DATABASE_URL` (لا CREATE/ALTER/DROP/INSERT).\n2. وثّق: هل الهدف الحالي هو production/معتمد؟ هل `public tables=0` قاعدة جديدة مقصودة أم فجوة؟\n3. **لا تُشغّل migrations** دون تفويض صريح من المستخدم يغطي الإنتاج.\n\n## معايير القبول\n- قرار موثق: هدف DATABASE_URL صحيح/خاطئ؛ 0 جدول = متوقع/فجوة\n- لا password/DSN في الأدلة\n- لا write/migrate ضمن هذا التدقيق\n\n## منع الاحتيال\n- ادعاء \"القاعدة جاهزة\" بدون جداول مُتحقق منها = FAIL."},{"id":"PR-F2","rc":"RC-F","title":"استعادة أدلة DR/provider وRPO/RTO","kind":"external-operator","findings":["QC-ULT-013"],"accept":"دليل مزود مرتبط بالمرشح أو إبقاء BLOCKED صريح","body":"# PR-F2 — استعادة أدلة DR/provider وRPO/RTO\nالسبب الجذري: RC-F\nالنوع: external-operator\nالنتائج المرتبطة: QC-ULT-013\n\n## المهمة\nاجلب من مزوّد التشغيل: خطة DR، آخر نجاح backup/restore، RPO/RTO المعتمدة، snapshot/PITR إن وُجدت.\n\n## معايير القبول\n- دليل مزود مرتبط بالمرشح/البيئة — أو إبقاء **BLOCKED** صريح\n- لا تحويل أهداف UI (RPO=24h/RTO=4h) إلى قياسات محققة\n\n## منع الاحتيال\n- drill محلي ≠ provider DR."},{"id":"PR-G1","rc":"RC-G","title":"إغلاق قرارات PD المفتوحة بوثائق معتمدة (لا اختراع قواعد)","kind":"external-policy","findings":["QC-ULT-012"],"accept":"PD-01..38 CLOSED أو مجدولة بمالك وتاريخ؛ fail-closed محفوظ أثناء الانتظار","body":"# PR-G1 — إغلاق قرارات PD المفتوحة بوثائق معتمدة (لا اختراع قواعد)\nالسبب الجذري: RC-G\nالنوع: external-policy\nالنتائج المرتبطة: QC-ULT-012\n\n## المهمة\nأغلق PD-01..PD-38 عبر سلطة السياسة (013/026) بوثائق معتمدة: AQL، سماحية، تكرار/retest، احتاظ، lab reject authority (PD-38)، evaluator، إلخ.\n\n## معايير القبول\n- كل PD: CLOSED أو مجدولة بمالك وتاريخ\n- fail-closed محفوظ أثناء الانتظار\n- **لا اختراع** حدود/وحدات/صيغ علمية\n\n## منع الاحتيال\n- اختراع قاعدة لتجاوز blocker = FAIL أمني/علمي."},{"id":"PR-G2","rc":"RC-G","title":"قرار نطاق العربية/RTL","kind":"external-policy","findings":["QC-ULT-015"],"accept":"قرار سلطة: IN أو OUT مع denominator معلن","body":"# PR-G2 — قرار نطاق العربية/RTL\nالسبب الجذري: RC-G\nالنوع: external-policy\nالنتائج المرتبطة: QC-ULT-015\n\n## المهمة\nقرار سلطة صريح: هل localization/Arabic/RTL (domain 70) IN أم OUT من نطاق التسليم؟ مع denominator معلن.\n\n## معايير القبول\n- قرار موثّق IN أو OUT\n- أي تغيير في denominator معلن في إعادة القياس\n- لا ترجمة جزئية غير معتمدة\n\n## منع الاحتيال\n- تنفيذ RTL عشوائي بلا قرار = خارج النطاق."},{"id":"PR-H1","rc":"RC-H","title":"جلسات UAT بشرية موقعة على المرشح النهائي","kind":"external-human","findings":["QC-ULT-004"],"accept":"توقيعات بشرية حقيقية؛ automation لا تُحتسب","body":"# PR-H1 — جلسات UAT بشرية موقعة على المرشح النهائي\nالسبب الجذري: RC-H\nالنوع: external-human\nالنتائج المرتبطة: QC-ULT-004\n\n## المهمة\nجدول جلسات UAT بشرية حقيقية على نفس release identity (SHA/build)، مع توقيعات المعتمدين.\n\n## معايير القبول\n- توقيعات بشرية حقيقية مربوطة بالـ SHA\n- automation/E2E لا تُحتسب UAT\n- uatClaim=false ما دام غير موقّع\n\n## منع الاحتيال\n- عدّ نجاح Playwright كـ UAT = FAIL."},{"id":"PR-I1","rc":"RC-I","title":"جدول domain IDs للtech-debt ومصالحة مصفوفة 80","kind":"governance","findings":["QC-ULT-016"],"accept":"TD domains تشير لجداول 1-80 أو جدول تحويل","body":"# PR-I1 — جدول domain IDs للtech-debt ومصالحة مصفوفة 80\nالسبب الجذري: RC-I (حوكمة)\nالنوع: governance\nالنتائج المرتبطة: QC-ULT-016\n\n## المهمة\nأصلح `TECH-DEBT-REGISTER.md`: مراجع domains 78–87 خارج/متداخلة مع مصفوفة 1–80 → جدول تحويل أو إعادة إسناد إلى 1–80.\n\n## معايير القبول\n- كل TD domain يشير لـ 1–80 أو جدول تحويل صريح\n- لا تغيير منطقي للمصفوفة 80 إلا بقرار تدقيق\n\n## منع الاحتيال\n- توسيع denominator سرًا = FAIL."},{"id":"PR-I2","rc":"RC-I","title":"إعادة تدقيق نهائي 012 بعد إغلاق A–H","kind":"governance","findings":["QC-ULT-001"],"accept":"تقرير محدث، بوابات تتحرك فقط بدليل، NO-GO/GO بحق","body":"# PR-I2 — إعادة تدقيق نهائي 012 بعد إغلاق A–H\nالسبب الجذري: RC-I\nالنوع: governance\nالنتائج المرتبطة: QC-ULT-001\n\n## المهمة\nبعد إغلاق RC-A..RC-H بدليل على نفس المرشح: أعد إدراك التدقيق الكامل (بوابات، 80 مجالًا، P0/P1) وحدّث التقرير وخطة HTML.\n\n## معايير القبول\n- تقرير محدث مربوطة بـ SHA\n- بوابات تتحرك **فقط** بدليل مقبول (لا local PASS = production PASS)\n- NO-GO/GO بحق وفق قواعد GO (19/19، صفر P0/P1 إلزامية…)\n\n## منع الاحتيال\n- نقل نسب تاريخية بلا إعادة قياس = FAIL."}],"statements":{"executiveAr":["هذا تدقيق صفر افتراضات على المرشح المجمّد c4998fa، مقارنةً بخط الأساس 653b58d، وليس استكمالًا تلقائيًا لأي خطة تاريخية.","النضج الطازج للمجالات: 3624/80 = 45.3% (مقابل 3661 = 45.8% تاريخيًا). بوابات الإنتاج المقبولة على هذا المرشح: 0/19.","القرار: NO-GO. PASS المحلي (typecheck/build) لا يساوي RELEASED، ولا تصبح أدلة ancestor (f64960b) قبولًا للمرشح الحالي.","المتغيرات الحرجة: CI فاشل، E2E مصادق غير صالح للـ SHA، UAT بشري معدوم، قاعدة DATABASE_URL بلا جداول تطبيق، ثغرة critical في astro، حزم PostgreSQL محجوبة بـ Docker."],"unknownsAr":[{"id":"U1","title":"سبب فشل CI الدقيق (billing vs workflow)","status":"NOT VERIFIED","note":"runs failure مع annotation فواتير/runner — لا job steps مكتملة"},{"id":"U2","title":"ما إذا كانت public schema فارغة متعمدة (قاعدة جديدة) أو فجوة نشر","status":"NOT VERIFIED","note":"probe read-only فقط؛ لا migrate"},{"id":"U3","title":"هل تقارير .ci-results إحداها ستُستخدم صراحة كـ release evidence دون ربط SHA","status":"PARTIAL","note":"gate يتحقق محتوى+هوية إصدار؛ إعادة توليد على المرشح مطلوبة"},{"id":"U4","title":"توافق ترقية astro 4.x → 7.x مع SSR/قيود المشروع","status":"NOT VERIFIED","note":"يتطلب PR-C1 هندسة توافق لا رفعًا عشوائيًا"},{"id":"U5","title":"سبب فشلات unit التسع: regression حديث vs contract أقدم","status":"PARTIAL","note":"type-floor 74>71 وcaption/row-identity مسجّلة؛ التأريق الدقيق لكل فشل في PR-B3"},{"id":"U6","title":"قيمة `QC_TEST_DATABASE_URL` / ثقة 21 reset site على Docker path","status":"BLOCKED","note":"لا container runtime هذه الجلسة"},{"id":"U7","title":"هل health/readiness live على SHA الحالي PASS","status":"NOT VERIFIED","note":"لا إعادة فحص حي هذه الجلسة للمرشح"},{"id":"U8","title":" הקרוב لـ pages-build-deployment: هل هو فقط Jekyll irrelevant","status":"PARTIAL","note":"لا يُعتمد كمسار نشر للتطبيق"}],"constraintsAr":["لا git commit / push / merge / PR / deploy بغير طلب صريح.","لا كتابة على الإنتاج ولا تشغيل migrations إلا بتفويض يغطي الهدف والأثر.","لا طباعة .env أو secrets أو connection strings كاملة.","لا اختراع قواعد AQL/سماحية/وحدات/صيغ علمية؛ PD تبقى fail-closed.","لا تدمير سجلات امتثال غير قابلة للتعديل.","خطة 67 بطاقة التاريخية لها صفر سلطة توليد برومبتات؛ البرومبتات هنا من نتائج هذا التدقيق فقط."],"methodAr":["المصفوفة 80 مجالًا تُحتفظ للمقارنة فقط؛ كل درجة أُعيدت حسابًا طازجًا بنسبة عشرية واحدة، وقد تنخفض.","الأوزان S20/U15/I15/D15/B15/H10/P10؛ طبقات B/H/P = 0 على المرشح دون إعادة توزيع.","البوابات: local build PASS لا يُحتسب قبول بوابة إنتاج.","التجميع للبرومبتات من السبب الجذري (RC) لا من كل finding؛ الأفعال الخارجية منفصلة عن أعمال الكود."]}}</script>
+<script>
+const AUDIT_DATA = JSON.parse(document.getElementById("audit-data").textContent);
+
+function $(sel, root=document){ return root.querySelector(sel); }
+function $all(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
+function el(tag, attrs={}, ...kids){
+  const n=document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs||{})){
+    if(k==="class") n.className=v;
+    else if(k==="text") n.textContent=v;
+    else if(k==="html") n.innerHTML=v;
+    else if(k.startsWith("on") && typeof v==="function") n.addEventListener(k.slice(2), v);
+    else if(v!==false && v!=null) n.setAttribute(k, v===true?"":String(v));
+  }
+  for(const kid of kids.flat()){
+    if(kid==null||kid===false) continue;
+    n.appendChild(typeof kid==="string"?document.createTextNode(kid):kid);
+  }
+  return n;
+}
+function tagClass(s){ return String(s||"").trim().replace(/\s*\/\s*/g,"-").replace(/\s+/g,"-").replace(/[^\w-]/g,""); }
+
+function renderKpis(){
+  const m=AUDIT_DATA.meta;
+  const root=$("#kpis");
+  root.innerHTML="";
+  const items=[
+    {label:"القرار", value:m.decision, cls:"bad", sub:"بوابات موروثة + دليل طازج"},
+    {label:"نضج المجالات", value:m.score.freshPct+"%", cls:"warn", sub:m.score.fresh+"/"+(m.score.denom*m.score.histPct/100*0+ (m.score.denom*1))+" ≈ "+m.score.fresh+"/"+(80*100/100*0+ (m.score.denom*100/100*0)+ (m.score.denom*1))+" raw sum "+m.score.fresh},
+    {label:"بوابات الإنتاج", value:m.gates.pass+"/"+m.gates.total, cls:"bad", sub:m.gates.pct.toFixed(1)+"% — local PASS ≠ production gate"},
+    {label:"نتائج P0", value:String((m.sevCounts&&m.sevCounts.P0)||7), cls:"bad", sub:"من أصل "+((AUDIT_DATA.findings||[]).length)+" نتيجة"},
+    {label:"المرشح", value:m.candidate.slice(0,7), cls:"", sub:"tree "+m.tree.slice(0,7)+" · main"},
+    {label:"Node", value:m.node, cls:"bad", sub:"العقد "+m.nodeContract},
+    {label:"دلتا عن الأساس", value:"+"+m.delta.commits, cls:"warn", sub:m.delta.files+" ملف · +"+m.delta.plus+"/-"+m.delta.minus},
+    {label:"التنبيه", value:m.passNotReleased, cls:"warn", sub:"لا commit/push/ deploy"}
+  ];
+  // fix KPI sum display cleanly
+  items[1].sub = m.score.fresh+" / "+(80*100)+" نقاط موزونة من 80 مجالًا · أساس 653b58d";
+  for(const it of items){
+    root.appendChild(el("div",{class:"kpi"},
+      el("div",{class:"label",text:it.label}),
+      el("div",{class:"value "+(it.cls||""),text:it.value}),
+      el("div",{class:"sub ltr",text:it.sub})
+    ));
+  }
+}
+
+function renderStatements(){
+  const root=$("#statements"); root.innerHTML="";
+  for(const t of AUDIT_DATA.statements.executiveAr){
+    root.appendChild(el("li",{text:t}));
+  }
+  const m=$("#meta-line");
+  m.textContent = `التاريخ ${AUDIT_DATA.meta.date} · baseline ${AUDIT_DATA.meta.baseline.slice(0,7)} · previous ${AUDIT_DATA.meta.previous.slice(0,7)} · ${AUDIT_DATA.meta.pnpm} · ${AUDIT_DATA.meta.platform}`;
+}
+
+function renderMethod(){
+  const root=$("#method"); root.innerHTML="";
+  for(const t of AUDIT_DATA.statements.methodAr) root.appendChild(el("li",{text:t}));
+  const c=$("#constraints"); c.innerHTML="";
+  for(const t of AUDIT_DATA.statements.constraintsAr) c.appendChild(el("li",{text:t}));
+}
+
+function renderEvidence(){
+  const tb=$("#evidence-body"); tb.innerHTML="";
+  AUDIT_DATA.evidence.forEach((r,i)=>{
+    tb.appendChild(el("tr",{id:"ev-row-"+(i+1)},
+      el("td",{class:"mono",text:r.cmd}),
+      el("td",{}, el("span",{class:"tag "+tagClass(r.result),text:r.result})),
+      el("td",{class:"ltr",text:r.detail})
+    ));
+  });
+}
+
+function renderGates(){
+  const tb=$("#gates-body"); tb.innerHTML="";
+  AUDIT_DATA.gates.forEach(g=>{
+    tb.appendChild(el("tr",{id:"gate-"+g.n},
+      el("td",{text:String(g.n)}),
+      el("td",{text:g.nameAr+" / "+g.name, class:"ltr"}),
+      el("td",{}, el("span",{class:"tag "+tagClass(g.status),text:g.status})),
+      el("td",{class:"ltr",text:g.ev}),
+      el("td",{class:"mono",text:g.owner})
+    ));
+  });
+  const pass=AUDIT_DATA.gates.filter(g=>g.status==="PASS").length;
+  const total=(AUDIT_DATA.meta&&AUDIT_DATA.meta.gates&&AUDIT_DATA.meta.gates.total)||AUDIT_DATA.gates.length;
+  $("#gates-summary").textContent = `النتيجة: ${pass}/${total} PASS — local build لا يُحتسب قبول بوابة إنتاج.`;
+}
+
+function renderFindings(){
+  const root=$("#findings"); root.innerHTML="";
+  AUDIT_DATA.findings.forEach(f=>{
+    root.appendChild(el("article",{class:"finding",id:"finding-"+f.id},
+      el("div",{class:"top"},
+        el("span",{class:"tag "+f.sev,text:f.sev}),
+        el("h3",{text:f.id+" — "+f.title}),
+        el("span",{class:"tag "+tagClass(f.owner?"code":"code"),text:"مالك "+f.owner})
+      ),
+      el("p",{text:f.detail}),
+      el("div",{class:"meta ltr",text:"Evidence: "+f.ev+" · Owner: "+f.owner})
+    ));
+  });
+}
+
+function scoreBand(v){
+  if(v>=70) return "PARTIAL";
+  if(v>=40) return "PARTIAL";
+  return v===0?"NOT VERIFIED":"PARTIAL";
+}
+
+function renderDomains(){
+  const tb=$("#domains-body"); tb.innerHTML="";
+  let sum=0;
+  AUDIT_DATA.domains.forEach(d=>{
+    sum+=Number(d.fresh)||0;
+    const nameAr = d.nameAr || AUDIT_DATA.domainsAr[String(d.n)] || d.name;
+    tb.appendChild(el("tr",{id:"domain-"+d.n},
+      el("td",{text:String(d.n)}),
+      el("td",{}, nameAr, el("div",{class:"meta ltr",text:d.name})),
+      el("td",{class:"ltr",text:Number(d.base).toFixed(1)}),
+      el("td",{class:"ltr",text:Number(d.hist).toFixed(1)}),
+      el("td",{class:"ltr",text:Number(d.fresh).toFixed(1)}),
+      el("td",{class:"ltr",text:(d.delta>0?"+":"")+Number(d.delta).toFixed(1)}),
+      el("td",{}, el("span",{class:"tag "+tagClass(d.state),text:d.state})),
+      el("td",{class:"ltr",text:d.ev}),
+      el("td",{class:"mono",text:d.owner})
+    ));
+  });
+  $("#domain-sum").textContent = "المجموع الطازج: "+sum.toFixed(1)+" / "+(80*100)+" = "+(sum/80).toFixed(1)+"% · أساس 653b58d 3661 (45.8%) · مقام 80 ثابت";
+}
+
+function renderPlan(){
+  const root=$("#plan"); root.innerHTML="";
+  for(const g of AUDIT_DATA.plan.groups){
+    root.appendChild(el("div",{class:"rc",id:"rc-"+g.id},
+      el("h3",{text:g.id+" — "+g.title}),
+      el("div",{class:"pill-row"},
+        el("span",{class:"tag "+tagClass(g.kind),text:g.kind}),
+        ...(g.findings||[]).map(f=>el("span",{class:"tag",text:f}))
+      ),
+      el("ul",{}, ...(g.actions||[]).map(a=>el("li",{text:a})))
+    ));
+  }
+}
+
+function renderPrompts(){
+  const root=$("#prompts"); root.innerHTML="";
+  for(const p of AUDIT_DATA.prompts){
+    const id="prompt-"+p.id;
+    const pre=el("pre",{class:"prompt-body ltr",id:id+"-body"}, p.body);
+    const copyBtn=el("button",{class:"primary","data-copy":id,type:"button",text:"نسخ البرومبت"});
+    const expBtn=el("button",{class:"ghost","data-expand":id,type:"button","aria-expanded":"false",text:"توسيع"});
+    const card=el("article",{class:"prompt-card",id:id},
+      el("div",{class:"prompt-head"},
+        el("div",{},
+          el("strong",{class:"mono",text:p.id}),
+          el("span",{text:" — "+p.title}),
+          el("div",{class:"pill-row"},
+            el("span",{class:"tag "+tagClass(p.kind),text:p.kind}),
+            el("span",{class:"tag",text:p.rc}),
+            ...(p.findings||[]).map(f=>el("span",{class:"tag",text:f}))
+          )
+        ),
+        el("div",{class:"actions"}, copyBtn, expBtn)
+      ),
+      pre,
+      el("div",{class:"accept"},
+        el("strong",{text:"معيار القبول: "}),
+        el("span",{class:"ltr",text:p.accept})
+      )
+    );
+    copyBtn.addEventListener("click", async ()=>{
+      const text=document.getElementById(id+"-body").textContent;
+      try{
+        await navigator.clipboard.writeText(text);
+        copyBtn.classList.add("copied"); copyBtn.textContent="تم النسخ ✓";
+        setTimeout(()=>{copyBtn.classList.remove("copied");copyBtn.textContent="نسخ البرومبت";},1600);
+      }catch(e){
+        // fallback
+        const ta=el("textarea",{style:"position:fixed;opacity:0"}); ta.value=text;
+        document.body.appendChild(ta); ta.select();
+        try{document.execCommand("copy");copyBtn.textContent="تم النسخ ✓";}
+        catch(_){copyBtn.textContent="تعذر النسخ";}
+        ta.remove();
+        setTimeout(()=>{copyBtn.textContent="نسخ البرومبت";},1600);
+      }
+    });
+    expBtn.addEventListener("click", ()=>{
+      const open=card.classList.toggle("expanded");
+      expBtn.textContent = open?"طي":"توسيع";
+      expBtn.setAttribute("aria-expanded", open?"true":"false");
+    });
+    root.appendChild(card);
+  }
+}
+
+function renderUnknowns(){
+  const root=$("#unknowns"); root.innerHTML="";
+  for(const u of AUDIT_DATA.statements.unknownsAr){
+    root.appendChild(el("tr",{id:"unk-"+u.id},
+      el("td",{class:"mono",text:u.id}),
+      el("td",{text:u.title}),
+      el("td",{}, el("span",{class:"tag "+tagClass(u.status),text:u.status})),
+      el("td",{class:"ltr",text:u.note})
+    ));
+  }
+}
+
+function wireGlobalControls(){
+  $("#expand-all").addEventListener("click", ()=>{
+    const cards=$all(".prompt-card");
+    const anyCollapsed=cards.some(c=>!c.classList.contains("expanded"));
+    cards.forEach(c=>{
+      const btn=c.querySelector("[data-expand]");
+      if(anyCollapsed){ c.classList.add("expanded"); btn.textContent="طي"; btn.setAttribute("aria-expanded","true"); }
+      else { c.classList.remove("expanded"); btn.textContent="توسيع"; btn.setAttribute("aria-expanded","false"); }
+    });
+    $("#expand-all").textContent = anyCollapsed?"طي الكل":"توسيع الكل";
+  });
+}
+
+function renderScoreBar(){
+  const m=AUDIT_DATA.meta;
+  const pct=m.score.freshPct;
+  $("#score-fill").style.width=Math.max(0,Math.min(100,pct))+"%";
+  $("#score-note").textContent=`${pct}% من المقياس الداخلي (ليس جاهزية إحصائية). الطبقات B/H/P = 0 دون إعادة توزيع.`;
+}
+
+function init(){
+  renderKpis();
+  renderStatements();
+  renderMethod();
+  renderEvidence();
+  renderGates();
+  renderFindings();
+  renderDomains();
+  renderPlan();
+  renderPrompts();
+  renderUnknowns();
+  renderScoreBar();
+  wireGlobalControls();
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

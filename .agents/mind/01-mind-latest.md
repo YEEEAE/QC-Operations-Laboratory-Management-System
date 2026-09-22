@@ -4,6 +4,18 @@
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
+- **2026-09-22 — PR-A1 / مواءمة Node المحلي وإصلاح `.env` المحلي**
+  - Changed: Node المحلي لتشغيلات التحقق إلى `v24.20.0` عبر `nvm use` + `.nvmrc` جديد؛ `.env` المحلي: `NODE_ENV=production` → `development` وإضافة `SERVICE_VERSION=0.1.0` و`RATE_LIMIT_LOGIN_MAX=8` و`RATE_LIMIT_LOGIN_WINDOW_SECONDS=60` (قيم معتمدة من harness المحلي/`package.json`، الأسماء فقط دون طباعة أي قيمة). عقد `package.json` engines/`.node-version`/CI كان مطابقًا مسبقًا — الفجوة كانت محلية.
+  - Evidence: `pnpm diagnose` PASS (node-runtime + dotenv-configuration)؛ `pnpm release:parity:check` PASS (runtime-contract)؛ `pnpm typecheck` PASS (0 أخطاء)؛ `pnpm build` PASS — كلها على `node -v` = v24.20.0. صفر طباعة أسرار.
+  - State: DONE — بلا commit/push.
+  - Key files: `.nvmrc`، `.env` (untracked)، `Documents/ENVIRONMENT-DRIFT-REGISTER.md` (DRIFT-036-B-10).
+
+- **2026-09-22 — QC-ULTIMATE-ZERO-ASSUMPTION-ADAPTIVE-AUDIT-001 / تحليل الحالة + خطة HTML تفاعلية**
+  - Changed: تسليم عربي RTL واحد `audit/QC-ULTIMATE-CURRENT-STATE-ANALYSIS-AND-ACTION-PLAN.html` (KPIs، أدلة، بوابات 19، 17 نتيجة، مصفوفة 80 طازجة، 9 مجموعات RC، 16 برومبتًا كاملًا بنسخ/توسيع من `AUDIT_DATA` مصدّر واحد، مجهولات، قيود) على المرشح المجمّد `c4998fa4007ce2234c9f48940a0f48f56aa5930c` (tree `55987206…`، main == origin). دلتا من `653b58d`: 33 commit / 373 ملف. إعادة قياس: مجموع **3624 = 45.3%** (أساس 3739.3/تاريخي 3661=45.8%)، مقام 80 ثابت؛ بوابات **0/19**؛ NO-GO. خطة 67 بطاقة لها صفر سلطة توليد.
+  - Evidence: typecheck/build/requirements:check/diff-check PASS؛ format FAIL 38؛ lint FAIL 2؛ architecture FAIL 17؛ unit FAIL 948/957 (9/7)؛ audit FAIL 30 (1 critical GHSA-26w7-cxv4-gfx2)؛ diagnose/parity FAIL (Node v22.22.3 خارج العقد، SERVICE_VERSION/RATE_LIMIT_LOGIN_* names only)؛ Docker-less PG suites BLOCKED؛ e2e evidence FAIL@f64960b ≠ HEAD؛ Render PG read-only public=0؛ GH runs failure. HTML مُتحقَّق متصفحًا: 80 صف/16 بطاقة/0 تكرار id/expand+copy يعمل.
+  - State: DONE (تسليم وثائقي محلي) — بلا commit/push. `PASS ≠ RELEASED`.
+  - Key files: `audit/QC-ULTIMATE-CURRENT-STATE-ANALYSIS-AND-ACTION-PLAN.html`.
+
 - **2026-09-22 — Mind rollover (QC-P44-REAUDIT):** تجاوز `01` الحد الصلب (123,474 بايت)؛ نُقلت أقدم سجلات Historical Ledger (012، تفاصيل 004 UAT، live re-verification 016، كتلة 2026-09-19 candidate-side، Historical DR/UAT، rollover-020) إلى أعلى `02-mind-mid.md` بعد التحقق من غياب محتواها، وحُذفت مكرّرات §17. بقيت invariants وقواعد القياس السلبية والقرارات السارية و§14 المشاكل المفتوحة. الحالة: DONE.
 
 - **2026-09-22 — QC-P44-REAUDIT / إعادة تدقيق الحالة الراهنة + خطة HTML محدَّثة (المرحلة 44)**
@@ -348,7 +360,7 @@
 
 ## 12) Architecture / Deployment / Assets
 - **`pnpm test:architecture` FAILs على المرشح `4fa6ac3` (مُثبت 2026-09-21 في 035-B):** انتهاكات delivery-boundary قائمة في `src/pages/quality/{ncr,capa}/[id].astro` و`src/pages/ai-advisory.astro` (استيراد infrastructure/SQL مباشر في الصفحات). ليست من أي diff حديث؛ خط الأساس الحالي لخريطة الحدود المملوكة لـ035-A المفقود.
-- `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. فجوة `.env` المحلية الحالية (NODE_ENV=production بلا SERVICE_VERSION/rate-limit) تجعل سكربتات `db:*` تفشل بإغلاق — تُشخَّص بالأسماء فقط وتخص المشغّل المحلي.
+- `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. **فجوة `.env` المحلية أُغلقت 2026-09-22 (PR-A1):** `NODE_ENV=development` + `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` مكتملة؛ diagnose/parity/typecheck/build كلها PASS على Node `v24.20.0` مع `.nvmrc`.
 - **المرشّح المجمّد الحالي `5470a2ecbbd9da7593fe511e86da2e7c49bf80e1` (036-B):** كان **لا يُبنى** (تكرار تعريف `describedBy`/`invalid` في `src/pages/quarantine/receiving/[receivingId].astro`) وأُصلح؛ و`pnpm test:architecture` يفشل أيضًا بانتهاكات جديدة من نفس الـcommit في `quarantine/receiving/{index,new,[receivingId]}.astro` و`src/actions/quarantine.ts` (استيراد domain مباشر). المالك: عمل receiving/002 ثم 035-A/026 لخريطة الحدود.
 - **هوية البناء صارت حتمية (036-B):** `astro.config.mjs` يثبّت `ASTRO_KEY` غير سرّي (لا `astro:env getSecret` في هذا التطبيق) و`scripts/release/normalize-server-manifest.mjs` يعيد تسمية `server/manifest_<hash>.mjs` → `server/manifest.mjs` بعد البناء. 4 عمليات build متتالية من `dist/` نظيف أنتجت نفس الشجرة (325 ملفًا، `da6fc6bb…81c99`) ونفس `entry.mjs` (`a12fcb45…5f816`)؛ إضافة ملف الأدلة داخل `dist/` تغيّر الشجرة بطبيعتها (325→326) ولهذا يسجّل CI المانيفست في `.ci-results/`.
 - **بوابة الترقية المرحلية (036-B):** `pnpm release:promotion:check -- --plan <file>` بسبعة فحوص fail-closed (ترتيب بيئات DEP-001، ربط الـcheckout، digest الملف مقابل `artifactSha256`، parity الترقية عبر البيئات حيث **إعادة البناء ≠ الأثر المتحقَّق**، migration forward-only، شروط rollback حسب نمط الفشل، recovery posture لخطر `HIGH`). الدليل: 7/7 PASS على المرشّح وFAIL مغلق عند التلاعب. **`/api/health/*` ليس دليلًا على أي من هذه الشروط ولا على بوابات القبول البشري.**
@@ -397,7 +409,7 @@
 - **تقارير `.ci-results/*.json` غير مربوطة بالمرشّح (036-B):** بوابة الأدلة تتحقق من محتوى التقرير ومن هوية الإصدار فقط، فقد قُدّمت تقارير قديمة (integration 470/470، concurrency 12/12، security 52/52) كأنها حالية وفشلت فقط على `migrations 30/33` القديم. يجب إعادة توليد كل التقارير على المرشّح المجمّد قبل أي ادعاء تغطية. المالك: 002/027.
 - Local equivalent PG18.6 (QC-100-FINAL-002, candidate `84bdf249`): unit 677/677، integration 419/419 (0 skips، مرتين)، migrations 29/29، concurrency 12/12 (5 تكرارات exit 0)، security 52/52 بلا skips، format/lint/typecheck/architecture/build/release PASS. Docker/CI container path وfixture-backed six-persona E2E تبقى NOT VERIFIED.
 - GitHub Verification CI exact-HEAD غير مثبت بسبب billing lock.
-- Node المحلي خارج contract.
+- Node المحلي: عقد التحقق المحلي صار `v24.20.0` عبر `nvm use` + `.nvmrc` (PR-A1)؛ قد تبدأ أقواس جديدة على alias افتراضي أقدم ما لم يُستدعَ `nvm use` في جذر المشروع.
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
 - **قرار مالك مفتوح (QC-100-FINAL-004 Task 5/7): نطاق موقّع UAT.** قبول الدورة يصرّح بـ`scope: {}` على `UAT_CYCLE` مثل `ApproveReleaseUseCase`، وGLOBAL وحدها تمر مع scope فارغ؛ فمدير بنطاق TEAM (شخصية `uat-qcm`) يُرفض بـ`AUTHZ_SCOPE_DENIED`. لذلك العلامة البشرية ستكون من المالك المسمّى ما لم يُعتمد منح GLOBAL للـQCM — السلوك متسق ومقصود ولم يُغيَر. أدلة: `audit/2026-09-19/QC-100-FINAL-004-task5-uat-ingestion-closure.md`.
