@@ -1,5 +1,347 @@
 ---
-import AppLayout from '../../../../ui/layouts/AppLayout.astro'; import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';const actor=Astro.locals.actor;if(!actor)return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);let test;try{test=await laboratoryReadDependencies().get.execute({actor,id:Astro.params.labTestId??''});}catch{return Astro.redirect('/404');}const stateEditable=test.state==='DRAFT';const hasPermission=(code:string)=>actor.permissions.some((permission)=>permission.code===code&&permission.active!==false);const canEdit=stateEditable&&hasPermission('PERM-LAB-EDIT-DRAFT');const canSubmit=canEdit&&hasPermission('PERM-LAB-SUBMIT');
+import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';
+import { entryParameters } from '../../../../modules/laboratory/application/lab-presentation.js';
+
+const actor = Astro.locals.actor;
+if (!actor)
+  return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+let test;
+try {
+  test = await laboratoryReadDependencies().get.execute({ actor, id: Astro.params.labTestId ?? '' });
+} catch {
+  return Astro.redirect('/404');
+}
+const stateEditable = test.state === 'DRAFT';
+const hasPermission = (code: string) =>
+  actor.permissions.some((permission) => permission.code === code && permission.active !== false);
+const canEdit = stateEditable && hasPermission('PERM-LAB-EDIT-DRAFT');
+const canSubmit = canEdit && hasPermission('PERM-LAB-SUBMIT');
+
+// QC-100-FINAL-038 R1/R2: the entry grid is built from the frozen controlled
+// context — units, precision guidance, approved criteria and sample
+// identifiers are rendered, never re-typed. The server still validates every
+// value against the same controlled context on save.
+const parameters = entryParameters(test);
+const measurementOf = (sampleId: string, parameterId: string) =>
+  test.measurements.find((m) => m.sampleId === sampleId && m.parameterId === parameterId);
+const cellValue = (sampleId: string, parameterId: string): string => {
+  const raw = measurementOf(sampleId, parameterId)?.raw;
+  if (raw === null || raw === undefined) return '';
+  return typeof raw === 'boolean' ? String(raw) : raw;
+};
+const documents = test.context.documents;
+const equipment = test.context.equipment;
 ---
-<AppLayout title={`Execute ${test.labTestNo}`}><h1>Laboratory execution</h1><p>{test.labTestNo} · {test.context.methodReference} · Version {test.version.toString()}</p>{!canEdit?<p role="status">This record is read-only. {stateEditable ? 'Your account lacks the explicit draft-edit permission.' : 'This state cannot be edited here; returned records need a controlled resume before editing.'}</p>:<section><h2>Raw observations</h2><p>Raw values, units, precision guidance, and acceptance criteria are validated on the server from the controlled method.</p><p>Samples: {test.samples.length}; measurements: {test.measurements.length}</p>{canSubmit?<button data-submit data-expected-version={test.version.toString()}>Submit for review</button>:<p class="muted">Submission is unavailable because your account lacks the explicit laboratory submission permission.</p>}<p data-result role="status" tabindex="-1"></p></section>}<aside><h2>Frozen context</h2><p>Criteria source: {test.context.sourceReference}</p><p>Equipment records: {test.context.equipment.length}</p><p>Controlled documents: {test.context.documents.length}</p></aside></AppLayout>
-<script>import{actions}from'astro:actions';const btn=document.querySelector<HTMLButtonElement>('[data-submit]');const el=document.querySelector<HTMLElement>('[data-result]');btn?.addEventListener('click',async()=>{if(!btn||btn.disabled||btn.closest('[aria-busy="true"]'))return;btn.disabled=true;btn.setAttribute('aria-busy','true');if(el)el.textContent='Submitting for review…';try{const result=await actions.laboratory.submit({id:location.pathname.split('/')[3]||'',expectedVersion:BigInt(btn.dataset.expectedVersion||'0')});if(result.data)location.reload();else{if(el){el.textContent='Submission is blocked until controlled sources and required context are verified, or the record changed — refresh and try again if permitted.';el.focus?.();}btn.disabled=false;}}catch{if(el){el.textContent='The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.';el.focus?.();}btn.disabled=false;}finally{btn.removeAttribute('aria-busy');}});</script><style>section,aside{padding:1rem;margin-top:1rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle)}button{padding:.7rem;background:var(--color-accent-primary);color:white;border:0;border-radius:var(--radius-md)}</style>
+<AppLayout title={`Execute ${test.labTestNo}`}>
+  <h1>Laboratory execution</h1>
+  <p>{test.labTestNo} · {test.context.methodReference} · Version {test.version.toString()}</p>
+  {
+    !canEdit ? (
+      <p role="status">
+        This record is read-only. {stateEditable
+          ? 'Your account lacks the explicit draft-edit permission.'
+          : 'This state cannot be edited here; returned records need a controlled resume before editing.'}
+      </p>
+    ) : (
+      <section>
+        <h2>Raw observations</h2>
+        <p>
+          Raw values are validated on the server against the controlled method. Units and approved
+          criteria below come from the frozen method context — enter each value in the unit shown.
+        </p>
+        <h3>Samples in this record</h3>
+        <ul class="samples">
+          {test.samples.map((sample) => (
+            <li>{sample.identifier}</li>
+          ))}
+        </ul>
+        <form data-lab-measurements data-expected-version={test.version.toString()}>
+          {test.samples.map((sample) => (
+            <input
+              type="hidden"
+              data-sample
+              data-sample-id={sample.id}
+              value={sample.identifier}
+            />
+          ))}
+          <table class="measurements">
+            <thead>
+              <tr>
+                <th scope="col">Sample</th>
+                {parameters.map((parameter) => (
+                  <th scope="col">
+                    {parameter.label}
+                    {parameter.required ? <span aria-hidden="true"> *</span> : null}
+                    {parameter.unit ? <span class="unit"> ({parameter.unit})</span> : null}
+                    <span class="param-meta">
+                      {parameter.criteriaText}
+                      {parameter.precisionGuidance ? ` · Precision: ${parameter.precisionGuidance}` : null}
+                      {` · Source: ${parameter.sourceReference}`}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {test.samples.map((sample) => (
+                <tr>
+                  <th scope="row">{sample.identifier}</th>
+                  {parameters.map((parameter) => (
+                    <td>
+                      {parameter.dataType === 'BOOLEAN' ? (
+                        <select
+                          data-measurement
+                          data-sample-id={sample.id}
+                          data-parameter-id={parameter.id}
+                          data-unit={parameter.unit ?? ''}
+                          aria-label={`${parameter.label} for sample ${sample.identifier}`}
+                        >
+                          <option value="" selected={cellValue(sample.id, parameter.id) === ''}>
+                            —
+                          </option>
+                          <option value="true" selected={cellValue(sample.id, parameter.id) === 'true'}>
+                            Yes
+                          </option>
+                          <option value="false" selected={cellValue(sample.id, parameter.id) === 'false'}>
+                            No
+                          </option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          inputmode={parameter.dataType === 'NUMERIC' ? 'decimal' : undefined}
+                          data-measurement
+                          data-sample-id={sample.id}
+                          data-parameter-id={parameter.id}
+                          data-unit={parameter.unit ?? ''}
+                          value={cellValue(sample.id, parameter.id)}
+                          aria-label={`${parameter.label}${parameter.unit ? ` (${parameter.unit})` : ''} for sample ${sample.identifier}`}
+                        />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button type="submit" data-save-measurements>Save observations</button>
+          <p data-save-result role="status" tabindex="-1"></p>
+        </form>
+        {
+          canSubmit ? (
+            <button data-submit data-expected-version={test.version.toString()}>
+              Submit for review
+            </button>
+          ) : (
+            <p class="muted">
+              Submission is unavailable because your account lacks the explicit laboratory
+              submission permission.
+            </p>
+          )
+        }
+        <p data-result role="status" tabindex="-1"></p>
+      </section>
+    )
+  }
+  <aside>
+    <h2>Frozen context</h2>
+    <p>Method: {test.context.methodReference} · Template version {test.context.versionNo}</p>
+    <p>Criteria source: {test.context.sourceReference}</p>
+    <h3>Controlled documents</h3>
+    {
+      documents.length ? (
+        <ul>
+          {documents.map((document) => (
+            <li>
+              {String(document.snapshot.documentNo ?? '')} — {String(document.snapshot.title ?? '')}
+              {document.snapshot.revision ? ` (rev. ${String(document.snapshot.revision)})` : ''} ·{' '}
+              {document.usageType}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="muted">No controlled documents are linked to this method context.</p>
+      )
+    }
+    <h3>Equipment records</h3>
+    {
+      equipment.length ? (
+        <ul>
+          {equipment.map((item) => (
+            <li>
+              {String(item.equipmentSnapshot.equipmentNo ?? item.equipmentId)} · used at{' '}
+              {item.usedAt}
+              {item.usageRole ? ` · ${item.usageRole}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="muted">
+          No equipment is recorded against this test yet. Equipment eligibility is verified by the
+          approved Assets policy at submission.
+        </p>
+      )
+    }
+  </aside>
+</AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  import { guardUnsavedChanges, FORM_COMMITTED_EVENT } from '../../../../ui/forms/unsaved-changes';
+
+  const labId = location.pathname.split('/')[3] || '';
+  const form = document.querySelector<HTMLFormElement>('form[data-lab-measurements]');
+  const saveOut = document.querySelector<HTMLElement>('[data-save-result]');
+  if (form) guardUnsavedChanges(form);
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (form.getAttribute('aria-busy') === 'true') return;
+    const button = form.querySelector<HTMLButtonElement>('[data-save-measurements]');
+    if (button) button.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    if (saveOut) saveOut.textContent = 'Saving observations…';
+    const samples = Array.from(form.querySelectorAll<HTMLInputElement>('[data-sample]')).map(
+      (el) => ({ id: el.dataset.sampleId ?? '', identifier: el.value }),
+    );
+    const measurements = Array.from(form.querySelectorAll<HTMLElement>('[data-measurement]'))
+      .map((el) => {
+        const element = el as HTMLInputElement | HTMLSelectElement;
+        const value = element.value;
+        if (value === '') return null;
+        return {
+          sampleId: element.dataset.sampleId ?? '',
+          parameterId: element.dataset.parameterId ?? '',
+          raw: value === 'true' ? true : value === 'false' ? false : value,
+          unit: element.dataset.unit ? element.dataset.unit : null,
+        };
+      })
+      .filter((m) => m !== null);
+    try {
+      const result = await actions.laboratory.saveMeasurements({
+        id: labId,
+        expectedVersion: BigInt(form.dataset.expectedVersion || '0'),
+        samples,
+        measurements,
+      });
+      if (result.data) {
+        form.dispatchEvent(new CustomEvent(FORM_COMMITTED_EVENT));
+        location.reload();
+      } else {
+        if (saveOut) {
+          saveOut.textContent =
+            'Observations were not saved. Check every required value uses the unit shown and the record has not changed — refresh and try again if permitted.';
+          saveOut.focus?.();
+        }
+        if (button) button.disabled = false;
+      }
+    } catch {
+      if (saveOut) {
+        saveOut.textContent =
+          'The service is temporarily unavailable. Your entries are kept on this page — try again if permitted.';
+        saveOut.focus?.();
+      }
+      if (button) button.disabled = false;
+    } finally {
+      form.removeAttribute('aria-busy');
+    }
+  });
+
+  const btn = document.querySelector<HTMLButtonElement>('[data-submit]');
+  const el = document.querySelector<HTMLElement>('[data-result]');
+  btn?.addEventListener('click', async () => {
+    if (!btn || btn.disabled || btn.closest('[aria-busy="true"]')) return;
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    if (el) el.textContent = 'Submitting for review…';
+    try {
+      const result = await actions.laboratory.submit({
+        id: labId,
+        expectedVersion: BigInt(btn.dataset.expectedVersion || '0'),
+      });
+      if (result.data) location.reload();
+      else {
+        if (el) {
+          el.textContent =
+            'Submission is blocked until controlled sources and required context are verified, or the record changed — refresh and try again if permitted.';
+          el.focus?.();
+        }
+        btn.disabled = false;
+      }
+    } catch {
+      if (el) {
+        el.textContent =
+          'The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.';
+        el.focus?.();
+      }
+      btn.disabled = false;
+    } finally {
+      btn.removeAttribute('aria-busy');
+    }
+  });
+</script>
+<style>
+  section,
+  aside {
+    padding: 1rem;
+    margin-top: 1rem;
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+  }
+  button {
+    padding: 0.7rem;
+    background: var(--color-accent-primary);
+    color: white;
+    border: 0;
+    border-radius: var(--radius-md);
+  }
+  button[disabled] {
+    opacity: 0.6;
+  }
+  .measurements {
+    border-collapse: collapse;
+    margin: 1rem 0;
+    width: 100%;
+  }
+  .measurements th,
+  .measurements td {
+    border: 1px solid var(--color-border-subtle);
+    padding: 0.5rem;
+    text-align: start;
+    vertical-align: top;
+  }
+  .measurements input,
+  .measurements select {
+    padding: 0.5rem;
+    font: inherit;
+    min-width: 8rem;
+  }
+  .param-meta {
+    display: block;
+    font-weight: normal;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .unit {
+    font-weight: normal;
+  }
+  .samples {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+  }
+  .samples li {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+  form[data-lab-measurements] {
+    margin-bottom: 1rem;
+  }
+  form[data-lab-measurements] > button {
+    margin-top: 0.5rem;
+  }
+</style>
+

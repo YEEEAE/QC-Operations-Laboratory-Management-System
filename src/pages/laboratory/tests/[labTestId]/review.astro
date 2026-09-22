@@ -1,12 +1,185 @@
 ---
-import AppLayout from '../../../../ui/layouts/AppLayout.astro'; import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';const actor=Astro.locals.actor;if(!actor)return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);let test;try{test=await laboratoryReadDependencies().get.execute({actor,id:Astro.params.labTestId??''});}catch{return Astro.redirect('/404');}
+import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';
+import { comparisonRows } from '../../../../modules/laboratory/application/lab-presentation.js';
+
+const actor = Astro.locals.actor;
+if (!actor)
+  return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+let test;
+try {
+  test = await laboratoryReadDependencies().get.execute({ actor, id: Astro.params.labTestId ?? '' });
+} catch {
+  return Astro.redirect('/404');
+}
 // QC-100-FINAL-004 two-stage chain: stage-1 (Supervisor) approval needs
 // PERM-LAB-APPROVE; the QCM final approval needs PERM-APR-APPROVE plus
 // PERM-ESIG-SIGN and a reauthentication password in the request body.
-const hasPermission=(code:string)=>actor.permissions.some((permission)=>permission.code===code&&permission.active!==false);
-const canStageApprove=hasPermission('PERM-LAB-APPROVE');const canFinalApprove=hasPermission('PERM-APR-APPROVE')&&hasPermission('PERM-ESIG-SIGN');const canReturn=hasPermission('PERM-LAB-RETURN');const atSupervisorStage=test.state==='UNDER_REVIEW';const atQcmStage=test.state==='PENDING_QCM_APPROVAL';
+const hasPermission = (code: string) =>
+  actor.permissions.some((permission) => permission.code === code && permission.active !== false);
+const canStageApprove = hasPermission('PERM-LAB-APPROVE');
+const canFinalApprove = hasPermission('PERM-APR-APPROVE') && hasPermission('PERM-ESIG-SIGN');
+const canReturn = hasPermission('PERM-LAB-RETURN');
+const atSupervisorStage = test.state === 'UNDER_REVIEW';
+const atQcmStage = test.state === 'PENDING_QCM_APPROVAL';
+
+// QC-100-FINAL-038 R5/R6: observed values are shown side-by-side with the
+// approved criteria so the reviewer compares evidence instead of recalling
+// limits. Pass/Fail badges come only from approved acceptance rules frozen
+// with the record; rows without an approved rule are the reviewer's decision,
+// never an invented threshold.
+const rows = comparisonRows(test);
+const outcomeLabels: Record<string, string> = {
+  PASS: 'Pass',
+  FAIL: 'Fail',
+  REVIEWER_DECISION: 'Reviewer decision',
+  NOT_RECORDED: 'Not recorded',
+};
+const documents = test.context.documents;
 ---
-<AppLayout title={`Review ${test.labTestNo}`}><h1>Laboratory review</h1><p>{test.labTestNo} · Submitted context version {test.version.toString()}</p><section><h2>Read-only submission context</h2><p>Measurements: {test.measurements.length}; samples: {test.samples.length}</p><p>Reviewers cannot edit submitted measurements. Review and approval require server-side permissions, SoD, current version, and approved policy.</p><p>Reject (TR-LAB-007) is a controlled workflow decision with a required reason and separation of duties. It is not a scientific FAIL result: the official result is evaluated only by the approved source. Reject decision authority itself requires an approved policy source (POLICY / SCIENTIFIC SOURCE REQUIRED) and is denied by default.</p></section><aside class="decision" data-lab-id={test.id} data-version={test.version.toString()}><h2>Decision rail</h2>{atSupervisorStage&&canStageApprove?<button data-action="laboratory.approve" data-submit>Supervisor approval — send to QCM</button>:null}{atSupervisorStage&&canReturn?<form data-action="laboratory.returnTest"><label for="lab-return-reason">Return reason<textarea id="lab-return-reason" name="reason" required></textarea></label><button class="secondary" type="submit" data-submit>Return for correction</button><p data-result role="status" tabindex="-1" class="action-status"></p></form>:null}{atQcmStage&&canFinalApprove?<form data-action="laboratory.finalApprove"><label for="lab-final-approval-password">Reauthentication password (final approval signature)<input id="lab-final-approval-password" name="reauthenticationSecret" type="password" autocomplete="current-password" required></input></label><button type="submit" data-submit>QCM final approval — approve and lock</button><p data-result role="status" tabindex="-1" class="action-status"></p></form>:null}{atQcmStage&&canReturn?<form data-action="laboratory.returnTest"><label for="lab-qcm-return-reason">QCM return reason<textarea id="lab-qcm-return-reason" name="reason" required></textarea></label><button class="secondary" type="submit" data-submit>Return at QCM stage</button><p data-result role="status" tabindex="-1" class="action-status"></p></form>:null}<p class="muted">Only the QCM final approval carries the binding electronic signature. PASS is never a release command.</p></aside></AppLayout><style>section,aside{padding:1rem;margin-top:1rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle)}button{padding:.7rem;background:var(--color-accent-primary);color:white;border:0;border-radius:var(--radius-md)}button.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary)}label{display:block;margin-top:.75rem}textarea,input{width:100%;margin-top:.25rem}</style>
+<AppLayout title={`Review ${test.labTestNo}`}>
+  <h1>Laboratory review</h1>
+  <p>{test.labTestNo} · Submitted context version {test.version.toString()}</p>
+  <section>
+    <h2>Observed results vs approved criteria</h2>
+    <p>
+      Pass and Fail badges are evaluated only from the approved acceptance rules frozen with this
+      record. Rows marked “Reviewer decision” have no approved rule and are decided by the
+      reviewer; the system never invents thresholds. Values marked “calculated” come from the
+      approved calculation rule.
+    </p>
+    {
+      rows.length ? (
+        <table class="comparison">
+          <thead>
+            <tr>
+              <th scope="col">Sample</th>
+              <th scope="col">Parameter</th>
+              <th scope="col">Observed</th>
+              <th scope="col">Unit</th>
+              <th scope="col">Approved criteria</th>
+              <th scope="col">Outcome</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr>
+                <td>{row.sampleIdentifier}</td>
+                <td>
+                  {row.parameterLabel}
+                  {row.required ? <span aria-hidden="true"> *</span> : null}
+                </td>
+                <td>
+                  {row.observed ?? '—'}
+                  {row.calculated ? <span class="calc-note"> (calculated)</span> : null}
+                </td>
+                <td>{row.unit ?? '—'}</td>
+                <td class="criteria">{row.criteriaText}</td>
+                <td>
+                  <span class={`outcome outcome-${row.outcome.toLowerCase().replace('_', '-')}`}>
+                    {outcomeLabels[row.outcome]}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p class="muted">No controlled parameters are attached to this record.</p>
+      )
+    }
+  </section>
+  <section>
+    <h2>Read-only submission context</h2>
+    <p>Measurements: {test.measurements.length}; samples: {test.samples.length}</p>
+    <p>
+      Reviewers cannot edit submitted measurements. Review and approval require server-side
+      permissions, SoD, current version, and approved policy.
+    </p>
+    <p>
+      Reject (TR-LAB-007) is a controlled workflow decision with a required reason and separation
+      of duties. It is not a scientific FAIL result: the official result is evaluated only by the
+      approved source. Reject decision authority itself requires an approved policy source
+      (POLICY / SCIENTIFIC SOURCE REQUIRED) and is denied by default.
+    </p>
+    <h3>Controlled documents</h3>
+    {
+      documents.length ? (
+        <ul>
+          {documents.map((document) => (
+            <li>
+              {String(document.snapshot.documentNo ?? '')} — {String(document.snapshot.title ?? '')}
+              {document.snapshot.revision ? ` (rev. ${String(document.snapshot.revision)})` : ''} ·{' '}
+              {document.usageType}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="muted">No controlled documents are linked to this method context.</p>
+      )
+    }
+  </section>
+  <aside class="decision" data-lab-id={test.id} data-version={test.version.toString()}>
+    <h2>Decision rail</h2>
+    {
+      atSupervisorStage && canStageApprove ? (
+        <button data-action="laboratory.approve" data-submit>
+          Supervisor approval — send to QCM
+        </button>
+      ) : null
+    }
+    {
+      atSupervisorStage && canReturn ? (
+        <form data-action="laboratory.returnTest">
+          <label for="lab-return-reason">
+            Return reason<textarea id="lab-return-reason" name="reason" required></textarea>
+          </label>
+          <button class="secondary" type="submit" data-submit>
+            Return for correction
+          </button>
+          <p data-result role="status" tabindex="-1" class="action-status"></p>
+        </form>
+      ) : null
+    }
+    {
+      atQcmStage && canFinalApprove ? (
+        <form data-action="laboratory.finalApprove">
+          <label for="lab-final-approval-password">
+            Reauthentication password (final approval signature)
+            <input
+              id="lab-final-approval-password"
+              name="reauthenticationSecret"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <button type="submit" data-submit>
+            QCM final approval — approve and lock
+          </button>
+          <p data-result role="status" tabindex="-1" class="action-status"></p>
+        </form>
+      ) : null
+    }
+    {
+      atQcmStage && canReturn ? (
+        <form data-action="laboratory.returnTest">
+          <label for="lab-qcm-return-reason">
+            QCM return reason<textarea id="lab-qcm-return-reason" name="reason" required></textarea>
+          </label>
+          <button class="secondary" type="submit" data-submit>
+            Return at QCM stage
+          </button>
+          <p data-result role="status" tabindex="-1" class="action-status"></p>
+        </form>
+      ) : null
+    }
+    <p class="muted">
+      Only the QCM final approval carries the binding electronic signature. PASS is never a release
+      command.
+    </p>
+  </aside>
+</AppLayout>
 <script>
 import{actions}from'astro:actions';
 const context=document.querySelector<HTMLElement>('[data-lab-id]');const id=context?.dataset.labId??'';const version=context?.dataset.version??'0';
@@ -15,3 +188,69 @@ document.querySelectorAll<HTMLButtonElement>('[data-action="laboratory.approve"]
 document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.returnTest"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();if(form.getAttribute('aria-busy')==='true')return;const btn=form.querySelector<HTMLButtonElement>('[data-submit]');const out=form.querySelector<HTMLElement>('[data-result]');const reason=String(new FormData(form).get('reason')??'');if(btn)btn.disabled=true;busy(form,true);if(out)out.textContent='Returning for correction…';try{const result=await actions.laboratory.returnTest({id,expectedVersion:BigInt(version),reason});if(result.data)location.reload();else if(out){out.textContent='Return was not applied. Refresh and verify the current version.';out.focus?.();}}catch{if(out){out.textContent='The service is temporarily unavailable. Your reason was kept — try again if permitted.';out.focus?.();}}finally{busy(form,false);if(btn)btn.disabled=false;}}));
 document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.finalApprove"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();if(form.getAttribute('aria-busy')==='true')return;const btn=form.querySelector<HTMLButtonElement>('[data-submit]');const out=form.querySelector<HTMLElement>('[data-result]');const reauthenticationSecret=String(new FormData(form).get('reauthenticationSecret')??'');if(btn)btn.disabled=true;busy(form,true);if(out)out.textContent='Applying QCM final approval with signature…';try{const result=await actions.laboratory.finalApprove({id,expectedVersion:BigInt(version),reauthenticationSecret});form.reset();if(result.data)location.reload();else if(out){out.textContent='The final approval was not applied. Verify your reauthentication password and the current version, then try again.';out.focus?.();}}catch{form.reset();if(out){out.textContent='The service is temporarily unavailable. Nothing was changed — try again if permitted.';out.focus?.();}}finally{busy(form,false);if(btn)btn.disabled=false;}}));
 </script>
+<style>
+  section,
+  aside {
+    padding: 1rem;
+    margin-top: 1rem;
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+  }
+  button {
+    padding: 0.7rem;
+    background: var(--color-accent-primary);
+    color: white;
+    border: 0;
+    border-radius: var(--radius-md);
+  }
+  button.secondary {
+    border-color: var(--border-default);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+  }
+  label {
+    display: block;
+    margin-top: 0.75rem;
+  }
+  textarea,
+  input {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+  .comparison {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  .comparison th,
+  .comparison td {
+    border: 1px solid var(--color-border-subtle);
+    padding: 0.5rem;
+    text-align: start;
+    vertical-align: top;
+  }
+  .criteria {
+    font-size: 0.85rem;
+  }
+  .calc-note {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .outcome {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    border: 1px solid var(--color-border-subtle);
+  }
+  .outcome-pass {
+    border-color: var(--status-success, green);
+  }
+  .outcome-fail {
+    border-color: var(--status-danger, red);
+  }
+  .outcome-reviewer-decision,
+  .outcome-not-recorded {
+    border-style: dashed;
+  }
+</style>

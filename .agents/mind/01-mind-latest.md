@@ -4,6 +4,12 @@
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
+
+- **2026-09-22 — QC-100-FINAL-038 / laboratory ergonomics: measurement entry, context visibility, review comparison + research-ready usability definitions**
+  - Changed: `lab-presentation.ts` جديد (criteriaText حرفي من payload المعتمد، entryParameters، comparisonRows بمخرجات PASS/FAIL عبر القاعدة المعتمدة فقط أو REVIEWER_DECISION/NOT_RECORDED)؛ إعادة بناء `execute.astro` (شبكة قياس عينات×معاملات بقيم مسبقة، وحدات/معايير/dashboards دليل السياق المجمد، حارس تغييرات غير محفوظة) و`review.astro` (جدول مقارنة observed مقابل approved criteria مع شارات outcome وسلامة سكة القرار). اختبار `lab-presentation.test.ts` 9/9.
+  - Evidence: laboratory unit 57/57 PASS؛ astro check 0 أخطاء (937 ملفًا)؛ عقد POLICY/SCIENTIFIC SOURCE REQUIRED في review.astro محفوظ. E2E/a11y 003/006/040 وintegration 002/027 NOT RUN. تعريفات القياس والبروتوكولات وسجل الفجوات البحثية: `audit/2026-09-22/task-038-usability-measurement-and-research-protocols.md` — لا نتائج استخدام بشرية (مستبعدة بالتعليمات).
+  - State: DONE (تنفيذًا) / PARTIAL (تحققًا). `PASS ≠ RELEASED`، gates 0/19 بلا تغيير، بلا commit/push.
+
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
   - Changed: وحدة `src/ui/forms/unsaved-changes.ts` جديدة (حارس beforeunload للحقول المتسخة فقط، يُمسح بحدث `qc:form-committed` الذي يبثّه enhance-with-classification داخل فرع SUCCESS فقط، أو بـPOST أصلي غير معترض) موصولة بصفحات الإنشاء الست المعتمدة فقط — لا توقيعات/اعتمادات/سجلات مقفلة. **Autosave غير منفذ عمدًا**: لا عقد draft معتمد (تفويض/نسخة/احتفاظ) — القرار POLICY-DEPENDENT لـ013/026، ولا بيانات حساسة في تخزين المتصفح. البند 2 تحقق عقدي لآليات قائمة: focus return وEscape-أمان وstale-refresh في dialog.ts، استرداد الجلسة SESSION_ENDED→login/returnTo (031)، حارس التكرار، مسار الطلب المقاطع بمفردات UNKNOWN_SAFE_ERROR.
