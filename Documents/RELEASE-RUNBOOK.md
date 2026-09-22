@@ -44,7 +44,13 @@ Production evidence refuses a dirty or unknown working tree and requires an expl
    pnpm test:concurrency
    pnpm test:security
    pnpm build
+   pnpm run release:identity -- --environment ci --build-id <ci-build-id> --artifact dist/server/entry.mjs
+   pnpm run release:verify -- --environment ci --build-id <ci-build-id> --artifact dist/server/entry.mjs
+   pnpm verify:e2e:authenticated
+   pnpm release:evidence:check -- --require-release --fail-on-skip --expect unit --expect integration --expect migrations --expect concurrency --expect security --expect build --expect e2e
    ```
+
+   Begin with `pnpm verification:begin`. It creates a fresh candidate-bound run ID and does not remove or relabel prior `.ci-results` reports. The gate rejects reports with a different run ID, SHA, dirty-source fingerprint, migration head, Node version, or execution environment.
 
 4. Create and verify candidate evidence using a build ID supplied by the CI system or release authority:
 
@@ -55,11 +61,9 @@ Production evidence refuses a dirty or unknown working tree and requires an expl
 
    `<ci-build-id>` is a placeholder for a real CI-provided value; do not copy it as a secret or treat the placeholder as evidence.
 
-5. Install Chromium, start the exact built server, and run E2E from another terminal:
+5. The authenticated closure runner installs the browser dependency in CI, starts PostgreSQL 18 in a disposable TLS-enabled Testcontainer, seeds guarded candidate fixtures, verifies the exact built server artifact, runs `tests/e2e/authenticated-closure.spec.ts`, and tears down the server and database. Use the general `pnpm test:e2e` command separately only when a production-like server and database are already provisioned:
 
    ```bash
-   pnpm exec playwright install chromium
-   HOST=127.0.0.1 PORT=4321 node dist/server/entry.mjs
    pnpm test:e2e
    ```
 

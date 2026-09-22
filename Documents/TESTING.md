@@ -32,6 +32,7 @@ current-head E2E evidence without the required server, fixtures, and database.
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+pnpm verification:begin
 pnpm format:check
 pnpm lint
 pnpm typecheck
@@ -42,11 +43,13 @@ pnpm test:integration
 pnpm test:concurrency
 pnpm test:security
 pnpm build
-pnpm exec playwright install chromium
-HOST=127.0.0.1 PORT=4321 node dist/server/entry.mjs
+pnpm run release:identity -- --environment local --build-id local-verification --artifact dist/server/entry.mjs
+pnpm run release:verify -- --environment local --build-id local-verification --artifact dist/server/entry.mjs
+pnpm verify:e2e:authenticated
+pnpm release:evidence:check -- --require-release --fail-on-skip --expect unit --expect integration --expect migrations --expect concurrency --expect security --expect build --expect e2e
 ```
 
-Run `pnpm test:e2e` from a second terminal after the server is accepting requests. CI starts the same generated Node entrypoint before E2E.
+`pnpm verify:e2e:authenticated` starts PostgreSQL 18 in a disposable TLS-enabled Testcontainer, seeds guarded fixtures, verifies the exact built server artifact, runs `tests/e2e/authenticated-closure.spec.ts`, then tears the server and container down. The closure marks its repeated-login browser stress case skipped with an explicit reason; the PostgreSQL-backed rate-limit behavior is exercised by `pnpm test:security`. `pnpm test:e2e` remains available for a separately provisioned production-like server and database.
 
 ## Test data and infrastructure
 
@@ -66,6 +69,24 @@ pnpm run release:verify -- --environment ci --build-id local-ci-check --artifact
 ```
 
 The identity file is evidence metadata, not an approval or deployment command. It must stay bound to the same build and Git SHA as the test evidence.
+
+Start a fresh local evidence run before running any suite. This creates a new run context and leaves old `.ci-results` reports untouched; the gate rejects reports that do not match the new run ID and source fingerprint:
+
+```bash
+pnpm verification:begin
+pnpm test:unit
+pnpm test:integration
+pnpm test:migrations
+pnpm test:concurrency
+pnpm test:security
+pnpm build
+pnpm run release:identity -- --environment local --build-id local-verification --artifact dist/server/entry.mjs
+pnpm run release:verify -- --environment local --build-id local-verification --artifact dist/server/entry.mjs
+pnpm verify:e2e:authenticated
+pnpm release:evidence:check -- --require-release --fail-on-skip --expect unit --expect integration --expect migrations --expect concurrency --expect security --expect build --expect e2e
+```
+
+The run context binds all reports to one random run ID, current Git SHA, source-tree fingerprint, migration head, Node version, and execution environment. Suite reports include explicit pass/fail/skip counts and a SHA-256 digest. The gate rejects reports from an earlier run or a different working tree and compares the build manifest with the bytes still in `dist/`. All skips fail this mandatory evidence gate; no undocumented skip is counted as a pass.
 
 ## Interpreting results
 

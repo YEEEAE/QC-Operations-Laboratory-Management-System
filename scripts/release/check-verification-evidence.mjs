@@ -21,13 +21,26 @@ import { execFileSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 import { assertReleaseMetadataShape } from './release-id.mjs';
+import { evidenceIdentity } from '../verification/evidence-identity.mjs';
+import { readFile as readFileForManifest } from 'node:fs/promises';
+import { hashFileTree } from './build-manifest.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, '../..');
 
 export function summarizeVitestReport(report) {
+  if (report?.schemaVersion === 2 && report.totals && report.candidate) {
+    return {
+      total:
+        report.totals.total ?? report.totals.passed + report.totals.failed + report.totals.skipped,
+      passed: report.totals.passed,
+      failed: report.totals.failed,
+      skipped: report.totals.skipped,
+    };
+  }
   if (!report || typeof report !== 'object' || !Array.isArray(report.testResults))
     throw new Error('Invalid Vitest JSON report: missing testResults.');
   return {
@@ -39,7 +52,7 @@ export function summarizeVitestReport(report) {
   };
 }
 
-export function evaluateReports(reports, { failOnSkip = false } = {}) {
+export function evaluateReports(reports, { failOnSkip = false, expectedCandidate } = {}) {
   const failures = [];
   const summaries = {};
   for (const [suite, report] of Object.entries(reports)) {
@@ -49,10 +62,63 @@ export function evaluateReports(reports, { failOnSkip = false } = {}) {
     }
     const summary = summarizeVitestReport(report);
     summaries[suite] = summary;
+    if (
+      report.schemaVersion !== 2 ||
+      !report.candidate ||
+      !/^[a-f0-9]{64}$/.test(report.artifactDigest ?? '')
+    ) {
+      failures.push(`suite "${suite}" evidence is missing candidate identity or artifact digest`);
+    } else if (expectedCandidate) {
+      for (const field of ['gitSha', 'sourceFingerprint', 'migrationHead', 'nodeVersion']) {
+        if (report.candidate[field] !== expectedCandidate[field])
+          failures.push(`suite "${suite}" belongs to a different candidate (${field})`);
+      }
+      if (
+        report.candidate.executionEnvironment?.kind !== expectedCandidate.executionEnvironment.kind
+      )
+        failures.push(`suite "${suite}" execution environment is incomplete or mismatched`);
+      if (!report.candidate.generatedAt || Number.isNaN(Date.parse(report.candidate.generatedAt)))
+        failures.push(`suite "${suite}" generation time is missing`);
+    }
+    if (report.runId !== expectedCandidate?.runId)
+      failures.push(`suite "${suite}" is stale or belongs to another verification run`);
+    if (suite === 'build' && report.artifactDigest !== expectedCandidate?.buildArtifactDigest)
+      failures.push('build evidence does not match the current build artifact');
+    if (suite === 'e2e') {
+      if (!['PASS', 'PARTIAL'].includes(report.status) || report.totals.failed > 0)
+        failures.push('E2E evidence is blocked or contains failed scenarios');
+      const unjustifiedSkips = (report.scenarios ?? []).filter(
+        (scenario) => scenario.status === 'SKIPPED' && !scenario.skipReason?.trim(),
+      );
+      if (unjustifiedSkips.length > 0)
+        failures.push(
+          `E2E evidence contains ${unjustifiedSkips.length} skipped scenario(s) without a documented reason`,
+        );
+      if ((report.scenarios ?? []).length !== summary.total)
+        failures.push('E2E scenario count does not match its pass/fail/skip totals');
+    }
+    if (
+      report.report &&
+      report.artifactDigest !==
+        createHash('sha256').update(JSON.stringify(report.report)).digest('hex')
+    )
+      failures.push(`suite "${suite}" report digest does not match its contents`);
+    if (
+      suite === 'e2e' &&
+      report.artifactDigest !==
+        createHash('sha256')
+          .update(JSON.stringify({ scenarios: report.scenarios, totals: report.totals }))
+          .digest('hex')
+    )
+      failures.push('E2E artifact digest does not match its scenarios');
     if (summary.failed > 0) failures.push(`suite "${suite}" has ${summary.failed} failed test(s)`);
-    if (failOnSkip && summary.pending + summary.todo > 0)
+    if (
+      failOnSkip &&
+      suite !== 'e2e' &&
+      (summary.skipped ?? (summary.pending ?? 0) + (summary.todo ?? 0)) > 0
+    )
       failures.push(
-        `suite "${suite}" reports ${summary.pending} pending and ${summary.todo} todo test(s); mandatory coverage may not be skipped`,
+        `suite "${suite}" reports skipped tests; mandatory coverage may not be skipped`,
       );
   }
   return { failures, summaries };
@@ -108,12 +174,37 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const reports = {};
     for (const suite of expectedSuites) {
       try {
-        reports[suite] = JSON.parse(await readFile(resolve(resultsDir, `${suite}.json`), 'utf8'));
+        const reportName = suite === 'e2e' ? 'authenticated-e2e-evidence.json' : `${suite}.json`;
+        reports[suite] = JSON.parse(await readFile(resolve(resultsDir, reportName), 'utf8'));
       } catch {
         reports[suite] = undefined;
       }
     }
-    const evaluation = evaluateReports(reports, { failOnSkip });
+    const runContext = JSON.parse(
+      await readFile(
+        resolve(
+          repositoryRoot,
+          valueAfter(args, '--run-context') ?? '.ci-results/run-context.json',
+        ),
+        'utf8',
+      ),
+    );
+    const expectedCandidate = { ...(await evidenceIdentity()), runId: runContext.runId };
+    if (
+      runContext.candidate?.gitSha !== expectedCandidate.gitSha ||
+      runContext.candidate?.sourceFingerprint !== expectedCandidate.sourceFingerprint
+    )
+      failures.push('verification run context is stale or bound to another candidate');
+    if (expectedSuites.includes('build')) {
+      const buildManifest = JSON.parse(
+        await readFileForManifest(resolve(resultsDir, 'build-manifest.json'), 'utf8'),
+      );
+      const currentBuildManifest = await hashFileTree(resolve(repositoryRoot, 'dist'));
+      if (buildManifest.digest !== currentBuildManifest.digest)
+        failures.push('build manifest does not match the current build output');
+      expectedCandidate.buildArtifactDigest = buildManifest.digest;
+    }
+    const evaluation = evaluateReports(reports, { failOnSkip, expectedCandidate });
     failures.push(...evaluation.failures);
     summary.suites = evaluation.summaries;
 

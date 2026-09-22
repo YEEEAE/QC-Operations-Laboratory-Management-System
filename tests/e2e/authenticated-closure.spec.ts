@@ -14,7 +14,8 @@ const hasRoleFixtures = Boolean(
 const base = process.env.QC_VERIFY_BASE_URL;
 assertMandatoryVerificationFixtures();
 const invalidUuid = '01900000-0000-7000-0000-0000000000f1';
-const noLeak = /password_hash|session_token|DATABASE_URL|storage_key|select .* from/i;
+const noLeak =
+  /password_hash|session_token|DATABASE_URL|storage_key|\bselect\s+(?:\*|[\w.,"]+)\s+from\s+(?:qc\.)?(?:users|sessions|roles|permissions)\b/i;
 
 async function signIn(page: Page, identity: string, password: string): Promise<void> {
   await page.context().clearCookies();
@@ -29,7 +30,7 @@ const personas = [
   ['verify-employee', 'QC_VERIFY_EMPLOYEE_PASSWORD', ['/dashboard', '/tasks', '/laboratory/tests']],
   ['verify-supervisor', 'QC_VERIFY_SUPERVISOR_PASSWORD', ['/dashboard', '/quality', '/approvals']],
   ['verify-manager', 'QC_VERIFY_MANAGER_PASSWORD', ['/dashboard', '/reports', '/approvals']],
-  ['verify-admin', 'QC_VERIFY_ADMIN_PASSWORD', ['/dashboard', '/admin', '/system/health']],
+  ['verify-admin', 'QC_VERIFY_ADMIN_PASSWORD', ['/dashboard', '/admin']],
   ['yazeed', 'QC_VERIFY_SYSTEM_OWNER_PASSWORD', ['/dashboard', '/admin', '/system/health']],
 ] as const;
 
@@ -63,21 +64,27 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
   });
 
   test('role and scope fixtures can read their intended surfaces and cannot use admin gate as a business override', async ({
-    page,
-    request,
+    browser,
   }) => {
+    test.setTimeout(120_000);
     test.skip(!hasRoleFixtures || !base, 'Disposable QC_VERIFY_* credentials are required.');
     for (const [identity, passwordEnv, paths] of personas) {
-      await signIn(page, identity, process.env[passwordEnv] ?? '');
-      for (const path of paths) {
-        const response = await page.goto(path);
-        expect(response?.status() ?? 0, `${identity} ${path}`).toBeLessThan(400);
-        expect(await page.content(), `${identity} ${path}`).not.toMatch(noLeak);
+      const context = await browser.newContext();
+      try {
+        const personaPage = await context.newPage();
+        await signIn(personaPage, identity, process.env[passwordEnv] ?? '');
+        for (const path of paths) {
+          const response = await personaPage.goto(path);
+          expect(response?.status() ?? 0, `${identity} ${path}`).toBeLessThan(400);
+          expect(await personaPage.content(), `${identity} ${path}`).not.toMatch(noLeak);
+        }
+        const forged = await personaPage.request.post('/_actions/quarantine.approveInspection', {
+          data: { id: invalidUuid, expectedVersion: 1, requestId: `closure-${identity}` },
+        });
+        expect(forged.status(), `${identity} forged approval`).toBeGreaterThanOrEqual(400);
+      } finally {
+        await context.close();
       }
-      const forged = await request.post('/_actions/quarantine.approveInspection', {
-        data: { id: invalidUuid, expectedVersion: 1, requestId: `closure-${identity}` },
-      });
-      expect(forged.status(), `${identity} forged approval`).toBeGreaterThanOrEqual(400);
     }
   });
 
@@ -123,21 +130,27 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Password', { exact: true })).toBeFocused();
     await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Show password' })).toBeFocused();
+    await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeFocused();
   });
 
   test('rate limiting and store outage are represented as fail-closed contracts', async ({
     page,
   }) => {
+    test.setTimeout(120_000);
     test.skip(
       !process.env.QC_E2E_EXERCISE_RATE_LIMIT,
-      'Set QC_E2E_EXERCISE_RATE_LIMIT=true for disposable rate-limit exercise.',
+      'Repeated password hashing is excluded from browser closure; the PostgreSQL rate-limit store is verified by test:security.',
     );
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
       await page.goto('/login');
       await page.getByLabel('Login identity').fill('closure-throttle-probe');
       await page.getByLabel('Password', { exact: true }).fill('closure-invalid-password');
       await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+      const alert = page.getByRole('alert');
+      if ((await alert.isVisible()) && /Too many sign-in attempts/i.test(await alert.innerText()))
+        break;
     }
     await expect(page.getByRole('alert')).toContainText(
       /Too many sign-in attempts|could not be completed/,

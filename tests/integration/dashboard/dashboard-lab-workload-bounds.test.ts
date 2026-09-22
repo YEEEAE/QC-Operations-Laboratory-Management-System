@@ -315,6 +315,16 @@ describe('bounded laboratory workload read', () => {
       limit: DEFAULT_PAGE_SIZE,
     });
     const baseline = first.statements.length;
+    await first.db.destroy();
+    const baselinePage = countingDatabase();
+    const baselinePageRead = await new ListLabTestsUseCase(repository(baselinePage.db)).execute({
+      actor: globalMine(),
+      filter: { state: 'RETURNED', ownership: 'mine' },
+      limit: DEFAULT_PAGE_SIZE,
+    });
+    expect(baselinePageRead.items.length).toBeGreaterThan(1);
+    const pageQueryBaseline = baselinePage.statements.length;
+    await baselinePage.db.destroy();
     // A bounded workload read is a count plus one page, never one query per row.
     expect(baseline).toBeLessThanOrEqual(4);
     for (let index = 0; index < 12; index += 1)
@@ -332,6 +342,7 @@ describe('bounded laboratory workload read', () => {
     });
     expect(after.total).toBe(RETURNED_MINE + 12);
     expect(second.statements.length).toBe(baseline);
+    await second.db.destroy();
 
     // The register page hydrates a bounded page in a constant number of reads:
     // batched statements, not one `get()` per listed test.
@@ -342,7 +353,8 @@ describe('bounded laboratory workload read', () => {
       limit: DEFAULT_PAGE_SIZE,
     });
     expect(pageRead.items.length).toBeGreaterThan(1);
-    expect(page.statements.length).toBeLessThanOrEqual(8);
+    expect(page.statements.length).toBe(pageQueryBaseline);
+    await page.db.destroy();
   });
 
   it('feeds the dashboard counter the register’s population, not its page length', async () => {

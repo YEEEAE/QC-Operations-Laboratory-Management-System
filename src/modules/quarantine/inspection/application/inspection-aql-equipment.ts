@@ -32,7 +32,7 @@ export class RecordInspectionAqlUseCase {
     authorize(
       {
         actor: i.actor,
-        permission: 'PERM-INSP-ENTER-RESULT',
+        permission: 'PERM-INSP-EDIT-DRAFT',
         action: 'EDIT',
         entity: {
           type: 'INSPECTION_REPORT',

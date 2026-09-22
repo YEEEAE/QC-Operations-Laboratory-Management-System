@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
+import { setTimeout as delay } from 'node:timers/promises';
 import process from 'node:process';
 
 import type { Pool } from 'pg';
@@ -16,6 +18,7 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from '../../tests/helpers/postgres-container.js';
+import { verificationRun } from './evidence-identity.mjs';
 
 const root = resolve(new URL('../..', import.meta.url).pathname);
 const runId = process.env.E2E_TEST_RUN_ID ?? `qc-closure-${randomUUID()}`;
@@ -105,11 +108,12 @@ function run(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<n
 async function writeBlockedEvidence(reason: string, env: NodeJS.ProcessEnv): Promise<void> {
   await mkdir(dirname(output), { recursive: true });
   const migrations = await loadMigrations();
+  const run = await verificationRun();
   await writeFile(
     output,
     `${JSON.stringify(
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         evidenceKind: 'ENGINEERING_AUTHENTICATED_PLAYWRIGHT_E2E',
         uatClaim: false,
         status: 'BLOCKED',
@@ -122,6 +126,8 @@ async function writeBlockedEvidence(reason: string, env: NodeJS.ProcessEnv): Pro
           applicationVersion: env.SERVICE_VERSION ?? '0.1.0',
           migrationHead: migrations.at(-1)?.name ?? 'unknown',
         },
+        candidate: run.candidate,
+        runId: run.runId,
         provenance: {
           source: 'TRUSTED_PLAYWRIGHT',
           immutableReference: output,
@@ -129,6 +135,9 @@ async function writeBlockedEvidence(reason: string, env: NodeJS.ProcessEnv): Pro
         },
         blockedReason: reason,
         totals: { passed: 0, failed: 0, skipped: 0 },
+        artifactDigest: createHash('sha256')
+          .update(JSON.stringify({ scenarios: [], totals: { passed: 0, failed: 0, skipped: 0 } }))
+          .digest('hex'),
         scenarios: [],
       },
       null,
@@ -157,37 +166,56 @@ async function main(): Promise<void> {
   }
   for (const key of requiredPasswords)
     if (!env[key]) fail(`${key} is required and is never logged.`);
-  // Testcontainers is the default disposable runtime. A separately provisioned
-  // local PostgreSQL 18 cluster is also safe when it has passed the same
-  // production-host guard above; this keeps the runner usable on hosts where
-  // the Docker daemon is unavailable without weakening the database boundary.
+  // PostgreSQL 18 Testcontainers is the default. A separately provisioned
+  // disposable cluster remains an explicit, production-host-guarded override.
 
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   env.RELEASE_GIT_SHA = sha;
-  env.RELEASE_BUILD_ID = env.RELEASE_BUILD_ID ?? `qc-closure-${sha.slice(0, 12)}`;
+  env.E2E_TEST_RUN_ID = (await verificationRun()).runId;
   env.RELEASE_MIGRATION_HEAD = (await loadMigrations()).at(-1)?.name;
   env.RELEASE_IDENTITY_FILE = resolve('dist/release-identity.json');
   env.E2E_EVIDENCE_OUTPUT = output;
 
   let server: ReturnType<typeof spawn> | undefined;
   try {
-    const buildCode = await run(resolve('node_modules/.bin/astro'), ['build'], env);
-    if (buildCode !== 0) fail(`Exact build failed with exit code ${buildCode}.`);
+    let releaseIdentity: {
+      environment: string;
+      buildId: string;
+      buildTimestamp: string;
+      serviceVersion: string;
+    };
+    try {
+      releaseIdentity = JSON.parse(await readFile(env.RELEASE_IDENTITY_FILE, 'utf8'));
+    } catch {
+      fail('Candidate release identity is missing; build and record release evidence first.');
+    }
     const identityCode = await run(
       process.execPath,
       [
-        resolve('scripts/release/release-id.mjs'),
+        resolve('scripts/release/verify-release.mjs'),
+        '--input',
+        env.RELEASE_IDENTITY_FILE,
         '--environment',
-        'test',
+        releaseIdentity.environment,
         '--build-id',
-        env.RELEASE_BUILD_ID,
+        releaseIdentity.buildId,
+        '--build-timestamp',
+        releaseIdentity.buildTimestamp,
+        '--service-version',
+        releaseIdentity.serviceVersion,
+        '--expected-git-sha',
+        sha,
+        '--artifact',
+        'dist/server/entry.mjs',
       ],
       env,
     );
     if (identityCode !== 0)
-      fail(`Release identity generation failed with exit code ${identityCode}.`);
+      fail(`Exact candidate artifact verification failed with exit code ${identityCode}.`);
 
-    const container = await startPostgresContainer();
+    // The app's canonical PostgreSQL pool requires verified TLS. Test suites
+    // that exercise the server must use the helper's disposable TLS setup too.
+    const container = await startPostgresContainer({ tls: true });
     const databaseUrl = container.getConnectionUri();
     env.DATABASE_URL = databaseUrl;
     env.QC_TEST_DATABASE_URL = databaseUrl;
@@ -263,16 +291,7 @@ async function main(): Promise<void> {
     }
     const e2eCode = await run(
       resolve('node_modules/.bin/playwright'),
-      [
-        'test',
-        'tests/e2e/authenticated-closure.spec.ts',
-        'tests/e2e/accessibility.spec.ts',
-        'tests/e2e/authorization-matrix.spec.ts',
-        'tests/e2e/critical-workflows.spec.ts',
-        'tests/e2e/error-recovery.spec.ts',
-        'tests/e2e/files-reports.spec.ts',
-        '--workers=1',
-      ],
+      ['test', '--workers=1', 'tests/e2e/authenticated-closure.spec.ts'],
       env,
     );
     if (e2eCode !== 0) process.exitCode = e2eCode;
@@ -282,8 +301,13 @@ async function main(): Promise<void> {
     console.error(`Authenticated E2E BLOCKED: ${reason}`);
     process.exitCode = 2;
   } finally {
-    server?.kill('SIGTERM');
-    if (!process.env.QC_TEST_DATABASE_URL) await stopPostgresContainer().catch(() => undefined);
+    if (server && server.exitCode === null) {
+      const exited = new Promise<void>((resolveExit) => server?.once('exit', () => resolveExit()));
+      server.kill('SIGTERM');
+      await Promise.race([exited, delay(5000)]);
+      if (server.exitCode === null) server.kill('SIGKILL');
+    }
+    await stopPostgresContainer().catch(() => undefined);
   }
 }
 

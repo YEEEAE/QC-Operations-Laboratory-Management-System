@@ -64,18 +64,21 @@ const mine = (): ActorContext => ({
 let pool: Pool | undefined;
 let databaseUrl: string;
 let db: Kysely<DatabaseSchema>;
+const countingDatabases = new Set<Kysely<DatabaseSchema>>();
 
 /** A Kysely instance that records every statement it executes. */
 function countingDatabase(): { db: Kysely<DatabaseSchema>; statements: string[] } {
   const statements: string[] = [];
+  const countedDb = new Kysely<DatabaseSchema>({
+    dialect: new PostgresDialect({ pool: createPool({ connectionString: databaseUrl, max: 3 }) }),
+    log(event) {
+      if (event.level === 'query') statements.push(event.query.sql);
+    },
+  });
+  countingDatabases.add(countedDb);
   return {
     statements,
-    db: new Kysely<DatabaseSchema>({
-      dialect: new PostgresDialect({ pool: createPool({ connectionString: databaseUrl, max: 3 }) }),
-      log(event) {
-        if (event.level === 'query') statements.push(event.query.sql);
-      },
-    }),
+    db: countedDb,
   };
 }
 
@@ -151,6 +154,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await Promise.all([...countingDatabases].map((countedDb) => countedDb.destroy()));
   await pool?.query('DELETE FROM qc.calibration_records WHERE calibration_no LIKE $1', [
     `BND-${RUN}%`,
   ]);

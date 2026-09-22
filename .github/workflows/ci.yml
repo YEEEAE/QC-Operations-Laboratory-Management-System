@@ -46,6 +46,9 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
+      - name: Begin fresh candidate verification run
+        run: pnpm verification:begin
+
       - name: Dependency vulnerability audit
         run: pnpm audit --audit-level high
 
@@ -112,31 +115,12 @@ jobs:
           --expected-git-sha "$GITHUB_SHA"
           --artifact dist/server/entry.mjs
 
-      # Fails closed when a mandatory suite produced no machine-readable
-      # report, reported a failure, skipped mandatory coverage, or when the
-      # candidate-bound release evidence is missing or bound to another SHA.
-      - name: Verification evidence completeness
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-        run: >-
-          pnpm release:evidence:check --
-          --require-release
-          --fail-on-skip
-          --expect integration
-          --expect migrations
-          --expect concurrency
-          --expect security
-
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      # Candidate-bound authenticated journeys: one-time disposable passwords are
-      # generated for this run and injected only into the runner environment. The
-      # runner provisions a disposable PostgreSQL 18 database, migrates it to the
-      # candidate head, seeds the QC_VERIFY_* fixtures and the disposable owner,
-      # starts the built server and executes the mandatory closure specs. It
-      # fails closed (exit 2 + blocked evidence) when it cannot run, so missing
-      # coverage can never look like a green skip.
+      # The runner provisions PostgreSQL 18, migrates and seeds candidate-bound
+      # fixtures, starts the exact built server, and runs the authenticated
+      # closure suite before tearing down the server and database.
       - name: Authenticated closure E2E with candidate-bound fixtures
         env:
           QC_MANDATORY_VERIFY_FIXTURES: 'true'
@@ -150,21 +134,22 @@ jobs:
           QC_VERIFY_LEAST_PASSWORD="qc-verify-$(openssl rand -hex 20)" \
           pnpm verify:e2e:authenticated
 
-      - name: Start built server for E2E
-        run: |
-          HOST=127.0.0.1 PORT=4321 node dist/server/entry.mjs > "$RUNNER_TEMP/qc-server.log" 2>&1 &
-          echo $! > "$RUNNER_TEMP/qc-server.pid"
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error http://127.0.0.1:4321/login > /dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          cat "$RUNNER_TEMP/qc-server.log"
-          exit 1
-
-      - name: E2E tests
-        run: pnpm test:e2e
+      # Every report must carry the same source fingerprint and this run's nonce.
+      # The gate also compares the build digest with the bytes still in dist/.
+      - name: Verification evidence completeness
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: >-
+          pnpm release:evidence:check --
+          --require-release
+          --fail-on-skip
+          --expect unit
+          --expect integration
+          --expect migrations
+          --expect concurrency
+          --expect security
+          --expect build
+          --expect e2e
 
       - name: Upload release-candidate evidence
         if: always() && hashFiles('dist/release-identity.json') != ''

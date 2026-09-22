@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPool } from '../../../src/shared/database/pool.js';
-import { migrate } from '../../../scripts/db/migrate.js';
+import { loadMigrations, migrate } from '../../../scripts/db/migrate.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
@@ -55,7 +55,8 @@ describe('managed PostgreSQL migration principal', () => {
     if (!managedPool) return;
 
     const result = await migrate({ pool: managedPool });
-    expect(result.applied).toHaveLength(19);
+    const expectedMigrationCount = (await loadMigrations()).length;
+    expect(result.applied).toHaveLength(expectedMigrationCount);
     expect(
       (
         await managedPool.query(
@@ -76,7 +77,7 @@ describe('managed PostgreSQL migration principal', () => {
     expect(
       (await managedPool.query('SELECT count(*)::int AS count FROM qc.schema_migrations')).rows[0]
         .count,
-    ).toBe(19);
+    ).toBe(expectedMigrationCount);
     expect(
       (
         await managedPool.query(

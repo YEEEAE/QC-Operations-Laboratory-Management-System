@@ -79,17 +79,20 @@ const TASKS_ONLY_ACTOR = actorWith(['PERM-TASK-VIEW']);
 let pool: Pool | undefined;
 let databaseUrl: string;
 let db: Kysely<DatabaseSchema>;
+const countingDatabases = new Set<Kysely<DatabaseSchema>>();
 
 function countingDatabase(): { db: Kysely<DatabaseSchema>; statements: string[] } {
   const statements: string[] = [];
+  const countedDb = new Kysely<DatabaseSchema>({
+    dialect: new PostgresDialect({ pool: createPool({ connectionString: databaseUrl, max: 3 }) }),
+    log(event) {
+      if (event.level === 'query') statements.push(event.query.sql);
+    },
+  });
+  countingDatabases.add(countedDb);
   return {
     statements,
-    db: new Kysely<DatabaseSchema>({
-      dialect: new PostgresDialect({ pool: createPool({ connectionString: databaseUrl, max: 3 }) }),
-      log(event) {
-        if (event.level === 'query') statements.push(event.query.sql);
-      },
-    }),
+    db: countedDb,
   };
 }
 
@@ -188,6 +191,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await Promise.all([...countingDatabases].map((countedDb) => countedDb.destroy()));
   await pool?.query('DELETE FROM qc.task_assignments WHERE assignee_id IN ($1, $2)', [MINE, OTHER]);
   await pool?.query('DELETE FROM qc.tasks WHERE task_no LIKE $1', [`MYW-${RUN}%`]);
   await pool?.query('DELETE FROM qc.inspection_reports WHERE inspection_no LIKE $1', [

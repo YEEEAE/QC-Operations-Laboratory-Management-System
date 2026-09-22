@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "gotalab-uxaudit": {
+      "source": {
+        "source": "github",
+        "repo": "gotalab/uxaudit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "uxaudit@gotalab-uxaudit": true
+  }
+}

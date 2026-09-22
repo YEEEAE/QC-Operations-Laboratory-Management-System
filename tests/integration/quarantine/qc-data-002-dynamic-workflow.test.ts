@@ -23,7 +23,11 @@ const systemOwner = (): ActorContext => ({
   id: OWNER_ID,
   accountState: 'ACTIVE',
   roles: ['SYSTEM_OWNER'],
-  permissions: [{ code: 'PERM-INSP-ENTER-RESULT', scopes: ['GLOBAL'] }],
+  permissions: [
+    { code: 'PERM-INSP-CREATE', scopes: ['GLOBAL'] },
+    { code: 'PERM-INSP-EDIT-DRAFT', scopes: ['GLOBAL'] },
+    { code: 'PERM-INSP-ENTER-RESULT', scopes: ['GLOBAL'] },
+  ],
 });
 
 let pool: ReturnType<typeof createPool> | undefined;
@@ -79,8 +83,10 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
 
     // 2. Deterministic item → template mapping.
     await pool!.query(
-      `INSERT INTO qc.inspection_item_templates (id, item_code, template_id, state, effective_from, created_by, created_at)       VALUES (qc.uuidv7(), $1, '01900000-0000-7000-8000-00000000e011', $2, CURRENT_DATE, $3, now())`,
-      [`ITEM-DATA002-${stamp}`, templateVersionId, OWNER_ID],
+      `INSERT INTO qc.inspection_item_templates
+         (id, item_code, template_id, state, effective_from, created_by, created_at)
+       VALUES (qc.uuidv7(), $1, '01900000-0000-7000-8000-00000000e011', 'ACTIVE', CURRENT_DATE, $2, now())`,
+      [`ITEM-DATA002-${stamp}`, OWNER_ID],
     );
 
     const resolution = await new ResolveInspectionTemplateUseCase(
@@ -88,12 +94,27 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
     ).resolve({ actor: systemOwner(), itemCode: `ITEM-DATA002-${stamp}` });
     expect(resolution.unique?.templateVersionId).toBe(templateVersionId);
 
-    // 3. Start inspection from receiving (pre-filled header).
+    // 3. Start inspection from an existing receiving row (pre-filled header).
+    const receivingId = '01900000-0000-7000-8000-00000000e020';
+    await pool!.query(
+      `INSERT INTO qc.receiving_items
+         (id, receiving_no, doc_no, item_code, description, lot, qty, receiving_date,
+          workflow_state, inspection_result, release_system, created_by)
+       VALUES ($1, $2, $3, $4, 'Nasal oxygen cannula', 'LOT-DATA002', 1200,
+               CURRENT_DATE, 'UNDER_INSPECTION', 'IN_PROGRESS', FALSE, $5)`,
+      [
+        receivingId,
+        `RCV-DATA002-${stamp}`,
+        `DOC-DATA002-${stamp}`,
+        `ITEM-DATA002-${stamp}`,
+        OWNER_ID,
+      ],
+    );
     const inspection = await new StartInspectionUseCase(repo, () => new Date()).execute({
       actor: systemOwner(),
       inspectionNo: `INSP-DATA002-${stamp}`,
       receiving: {
-        receivingId: '01900000-0000-7000-8000-00000000e020',
+        receivingId,
         receivingNo: `RCV-${stamp}`,
         docNo: `DOC-${stamp}`,
         itemCode: `ITEM-DATA002-${stamp}`,
@@ -112,13 +133,25 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       requestId: `req-start-${stamp}`,
     });
 
-    // 4. Approved point with machine-readable limits (pH 5.0–6.0).
+    // 4. Synthetic engineering range fixture; this is not a laboratory criterion.
+    const sectionId = '01900000-0000-7000-8000-00000000e032';
     const pointId = '01900000-0000-7000-8000-00000000e030';
     await pool!.query(
-      `INSERT INTO qc.inspection_template_points (id, template_version_id, section_id, point_code, title, data_type, requirement_text, unit, sort_order, acceptance_rule_type, acceptance_rule_payload, created_at, updated_at)
-       VALUES ($1, $2, null, 'PH', 'pH Determination', 'NUMERIC_MEASUREMENT', '5.0 – 6.0', 'pH', 1, 'RANGE_INCLUSIVE', '{"lower":"5.0","upper":"6.0"}'::jsonb, now(), now())
+      `INSERT INTO qc.inspection_template_sections
+         (id, template_version_id, section_code, title, position)
+       VALUES ($1, $2, 'SYNTHETIC', 'Synthetic engineering fixture', 1)
        ON CONFLICT (id) DO NOTHING`,
-      [pointId, templateVersionId],
+      [sectionId, templateVersionId],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_template_points
+         (id, section_id, point_code, label, data_type, requirement_text, unit,
+          required, position, acceptance_rule_type, acceptance_rule_payload)
+       VALUES ($1, $2, 'SYNTHETIC-RANGE', 'Synthetic numeric fixture', 'NUMERIC_MEASUREMENT',
+               'Synthetic test range 5.0–6.0', 'test-unit', TRUE, 1, 'RANGE_INCLUSIVE',
+               '{"lower":"5.0","upper":"6.0"}'::jsonb)
+       ON CONFLICT (id) DO NOTHING`,
+      [pointId, sectionId],
     );
 
     // 5. Server-side evaluation: numeric value inside range → PASS.
@@ -142,12 +175,14 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
     });
 
     const stored = await pool!.query(
-      `SELECT result, numeric_value FROM qc.inspection_report_results WHERE inspection_id = $1`,
+      `SELECT result, numeric_value FROM qc.inspection_report_results WHERE inspection_report_id = $1`,
       [inspection.id],
     );
     expect(stored.rows[0]?.result).toBe('PASS');
 
-    // 6. Structured AQL with its approved source reference.
+    // 6. Structured AQL persistence with an explicitly synthetic source label.
+    // Synthetic persistence values only; they do not represent an approved
+    // operational AQL source or sampling plan.
     await new RecordInspectionAqlUseCase(repo).execute({
       actor: systemOwner(),
       id: inspection.id,
@@ -161,16 +196,17 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
         rejectNumber: '2',
         observedDefects: '0',
         samplingResult: 'ACCEPT',
-        sourceReference: 'ANSI/ASQ Z1.4 (approved copy), plan H',
+        sourceReference: 'SYNTHETIC_TEST_FIXTURE_NOT_AN_APPROVED_AQL_SOURCE',
       },
       requestId: `req-aql-${stamp}`,
     });
     const aqlRow = await pool!.query(
-      `SELECT aql, code_letter, sample_size, sampling_result FROM qc.inspection_reports WHERE id = $1`,
+      `SELECT aql, aql_code_letter, aql_sample_size, aql_sampling_result
+       FROM qc.inspection_reports WHERE id = $1`,
       [inspection.id],
     );
     expect(aqlRow.rows[0]?.aql).toBe('1.0');
-    expect(aqlRow.rows[0]?.code_letter).toBe('H');
-    expect(aqlRow.rows[0]?.sampling_result).toBe('ACCEPT');
+    expect(aqlRow.rows[0]?.aql_code_letter).toBe('H');
+    expect(aqlRow.rows[0]?.aql_sampling_result).toBe('ACCEPT');
   });
 });

@@ -1,5 +1,30 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — TOOLING / تثبيت uxaudit لـClaude Code**
+  - Changed: إضافة سوق `gotalab-uxaudit` وتثبيت `uxaudit` بالإصدار `0.1.0` وتمكينه على نطاق المشروع.
+  - Evidence: `claude plugin list` يعرض `uxaudit@gotalab-uxaudit` بحالة enabled؛ إعدادات `.claude/settings.json` صالحة.
+  - State: DONE — إضافة Claude Code؛ المستودع يذكر أن دعم Codex غير متاح بعد.
+
+- **2026-09-23 — TOOLING / تثبيت إضافة 21st لـCodex**
+  - Changed: إضافة سوق `21st` وتثبيت الإضافة العالمية `21st@21st` إصدار `0.4.1`؛ MCP مربوط بمتغير `API_KEY_21ST` دون حفظ المفتاح في المشروع.
+  - Evidence: حالة الإضافة `installed, enabled`؛ المتغير غير متاح لعمليات Codex التي تبدأ من الواجهة، لذلك مصادقة MCP لم تُتحقق وتتطلب توفيره ثم إعادة تشغيل Codex.
+  - State: PARTIAL.
+
+- **2026-09-23 — TOOLING / إضافة Impeccable لـCodex**
+  - Changed: تثبيت المهارة الرسمية محليًا للمشروع (v4.3.1) ومحركها (v0.1.5) عبر `npx impeccable install --providers=codex --scope=project`.
+  - Evidence: ملفات `.agents/skills/impeccable/` و`.codex/hooks.json` موجودة؛ Codex يتطلب مراجعة/اعتماد hook من `/hooks` قبل تفعيله.
+  - State: DONE — التثبيت فقط؛ لم يُشغّل `impeccable init`.
+
+- **2026-09-23 — QC-100-FINAL-036-B / ربط أدلة التحقق بالمرشح وتشغيل PG18 المحلي**
+  - Changed: أدلة suites والبناء أصبحت مرتبطة بـSHA وبصمة المصدر وmigration head وNode والبيئة والتوقيت؛ runner E2E يستخدم Testcontainers PostgreSQL 18 عبر TLS ويعزل جلسات personas.
+  - Evidence: رفضت البوابة SHA متغيرًا وتقريرًا قديمًا. على run `95969f8f` وfingerprint `06305aec…`: PG18 integration `487/487`، migrations `33/33`، security `52/52`، build `1/1`؛ unit `953/962` (9 FAIL). لم يُعَد concurrency بطلب المستخدم، وE2E أُوقف قبل إكماله. البوابة رفضت التقريرين الأقدمين، كما كشفت عدم تطابق manifest البناء بعد إضافة release identity إلى `dist/`.
+  - State: PARTIAL — gate النهائي يفشل؛ إصلاح manifest، concurrency/E2E بأدلة حديثة، CI الخارجي، والقبول/UAT ما زالت غير متحققة.
+
+- **2026-09-23 — QMD-CODEX-INTEGRATION-001 / وصل QMD بـCodex**
+  - Changed: إعداد QMD 2.8.3 كـMCP عالمي عبر Node 24.20.0، تثبيت مهارته عالميًا، وإنشاء مجموعة `qc-operations` لفهرسة 73 ملف Markdown من الوثائق وذاكرة المشروع.
+  - Evidence: MCP initialize/tools-list PASS (`query`, `get`, `multi_get`, `status`)؛ بحث lexical محلي PASS. نماذج GGUF غير منزلة، لذا vectors=0 والبحث الدلالي غير جاهز. أدوات MCP تحتاج إعادة تحميل Codex لتظهر في الجلسات.
+  - State: PARTIAL — الإعداد والفهرس المحليان جاهزان؛ إعادة تحميل Codex مطلوبة لإتاحة الأدوات.
+
 > آخر دمج: 2026-09-22  
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
@@ -416,6 +441,8 @@
 - `tests/e2e/authenticated-closure.spec.ts`
 - `scripts/verification/run-authenticated-e2e.ts`
 - `audit/2026-09-17-authenticated-e2e-closure.md`
+- QMD local knowledge search: MCP `qmd` + skill at user scope; collection `qc-operations` indexes project Markdown documentation and mind. Keyword search is verified; local semantic models remain uninstalled.
+- 21st.dev Codex plugin is installed and enabled globally (`21st@21st`, 0.4.1); its MCP reads `API_KEY_21ST`. The variable was not available to GUI-launched Codex during installation, so authenticated MCP use remains NOT VERIFIED until the variable is available and Codex is restarted.
 
 ## 14) المشاكل المفتوحة الحالية — لا تعيد فتح المشاكل المغلقة تاريخيًا
 

@@ -14,6 +14,8 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { createPool } from '../../../src/shared/database/pool.js';
+import { closePool } from '../../../src/shared/database/pool.js';
+import { resetServerEnvForTests } from '../../../src/config/env.js';
 import { listRelatedNcrsForFinding } from '../../../src/modules/quality/findings/application/list-related-ncrs.js';
 import { listFindingsForActor } from '../../../src/modules/quality/findings/application/list-findings-for-actor.js';
 import { getSourceReceivingForLabTest } from '../../../src/modules/laboratory/application/get-source-receiving.js';
@@ -29,6 +31,8 @@ import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 const OWNER_ID = '01900000-0000-7000-8000-000000000e01';
 const OTHER_ID = '01900000-0000-7000-8000-000000000e02';
 const LAB_AUTHOR_ID = '01900000-0000-7000-8000-000000000e03';
+const originalDatabaseUrl = process.env.DATABASE_URL;
+const originalTestDatabaseUrl = process.env.QC_TEST_DATABASE_URL;
 
 const actorFor = (id: string, scope: 'OWN' | 'GLOBAL' = 'OWN'): ActorContext => ({
   id,
@@ -44,6 +48,11 @@ const actorFor = (id: string, scope: 'OWN' | 'GLOBAL' = 'OWN'): ActorContext => 
 
 beforeAll(async () => {
   const databaseUrl = getTestDatabaseUrl(await startPostgresContainer({ tls: true }));
+  // The domain functions below use the shared pool singleton, while this suite
+  // owns a separate Kysely pool. Bind both to the same disposable database.
+  process.env.DATABASE_URL = databaseUrl;
+  process.env.QC_TEST_DATABASE_URL = databaseUrl;
+  resetServerEnvForTests();
   pool = createPool({ connectionString: databaseUrl, max: 10 });
   await pool.query('DROP SCHEMA IF EXISTS qc CASCADE');
   await migrate({ pool });
@@ -64,6 +73,12 @@ beforeAll(async () => {
 afterAll(async () => {
   if (db) await db.destroy();
   else await pool?.end();
+  await closePool();
+  if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+  else process.env.DATABASE_URL = originalDatabaseUrl;
+  if (originalTestDatabaseUrl === undefined) delete process.env.QC_TEST_DATABASE_URL;
+  else process.env.QC_TEST_DATABASE_URL = originalTestDatabaseUrl;
+  resetServerEnvForTests();
   await stopPostgresContainer();
 });
 
