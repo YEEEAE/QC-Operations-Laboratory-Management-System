@@ -134,7 +134,7 @@ describe('system health view', () => {
     ).rejects.toThrowError(AppError);
   });
 
-  it('reports core READY with healthy critical dependencies and UNKNOWN backup posture when no backups exist', async () => {
+  it('reports dependency readiness READY with healthy critical dependencies and UNKNOWN backup posture when no backups exist', async () => {
     const view = await new GetSystemHealthUseCase(probes(), catalog(), readiness()).execute({
       actor: fullViewer,
     });
@@ -146,7 +146,7 @@ describe('system health view', () => {
     expect(view.backupPosture?.restoreVerification).toBe('NOT_VERIFIED');
   });
 
-  it('keeps core READY when the optional AI provider is degraded', async () => {
+  it('keeps dependency readiness READY when the optional AI provider is degraded', async () => {
     const view = await new GetSystemHealthUseCase(
       probes({ aiProvider: check('ai-provider', 'DEGRADED') }),
       catalog(),
@@ -159,7 +159,7 @@ describe('system health view', () => {
     expect(view.rejectReportsReadiness).toBe('READY');
   });
 
-  it('reports core NOT READY when PostgreSQL is unavailable', async () => {
+  it('reports dependency readiness NOT READY when PostgreSQL is unavailable', async () => {
     const view = await new GetSystemHealthUseCase(
       probes({ database: check('database', 'UNAVAILABLE') }),
       catalog(),
@@ -188,9 +188,11 @@ describe('system health view', () => {
   });
 
   it('returns UNKNOWN backup posture instead of a green state when the catalog read fails', async () => {
-    const view = await new GetSystemHealthUseCase(probes(), catalog([], true), readiness()).execute({
-      actor: fullViewer,
-    });
+    const view = await new GetSystemHealthUseCase(probes(), catalog([], true), readiness()).execute(
+      {
+        actor: fullViewer,
+      },
+    );
     expect(view.backupPosture?.postureStatus).toBe('UNKNOWN');
     expect(view.backupPosture?.restoreVerification).toBe('UNKNOWN');
   });

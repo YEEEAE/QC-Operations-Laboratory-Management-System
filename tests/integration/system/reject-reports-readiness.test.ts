@@ -68,7 +68,11 @@ describe('Reject Reports readiness against disposable PostgreSQL', () => {
     const migrationStatus = createPostgresMigrationStatus(database);
     const oldStatus = await migrationStatus();
     const readinessProbe = new RequiredWorkflowReadinessProbe(
-      { async isReady() { return true; } },
+      {
+        async isReady() {
+          return true;
+        },
+      },
       [repository],
     );
     const response = await createReadinessResponse(readinessProbe);
@@ -93,10 +97,12 @@ describe('Reject Reports readiness against disposable PostgreSQL', () => {
     expect(health.dependencyReadiness).toBe('READY');
     expect(health.rejectReportsReadiness).toBe('NOT_READY');
     expect(health.qcReleaseReadiness).toBe('BLOCKED');
-    expect(health.checks.find(({ dependency }) => dependency === 'migration-schema')).toMatchObject({
-      status: 'DEGRADED',
-      detail: `0018 applied; ${migrations.at(-1)?.version} shipped; ${migrations.length - 18} pending`,
-    });
+    expect(health.checks.find(({ dependency }) => dependency === 'migration-schema')).toMatchObject(
+      {
+        status: 'DEGRADED',
+        detail: `0018 applied; ${migrations.at(-1)?.version} shipped; ${migrations.length - 18} pending`,
+      },
+    );
   });
 
   it('reports workflow available after forward migrations but leaves QC release evidence unverified', async () => {
@@ -107,7 +113,11 @@ describe('Reject Reports readiness against disposable PostgreSQL', () => {
     const migrationStatus = createPostgresMigrationStatus(database);
     const status = await migrationStatus();
     const readinessProbe = new RequiredWorkflowReadinessProbe(
-      { async isReady() { return true; } },
+      {
+        async isReady() {
+          return true;
+        },
+      },
       [repository],
     );
     const response = await createReadinessResponse(readinessProbe);

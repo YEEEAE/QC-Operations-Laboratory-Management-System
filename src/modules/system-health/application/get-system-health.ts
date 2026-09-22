@@ -140,7 +140,8 @@ export class GetSystemHealthUseCase {
         ? { dependency: 'reject-reports', status: 'HEALTHY', checkedAt: generatedAt }
         : {
             dependency: 'reject-reports',
-            status: rejectReportsResult.result.reason === 'CHECK_FAILED' ? 'UNKNOWN' : 'UNAVAILABLE',
+            status:
+              rejectReportsResult.result.reason === 'CHECK_FAILED' ? 'UNKNOWN' : 'UNAVAILABLE',
             checkedAt: generatedAt,
             detail: rejectReportsResult.result.reason ?? 'SCHEMA_NOT_READY',
           };
@@ -195,7 +196,9 @@ export class GetSystemHealthUseCase {
     checks.push({
       dependency: migrationStatus.dependency,
       status: migrationStatus.status,
-      ...(readinessDetailVisible && migrationStatus.detail ? { detail: migrationStatus.detail } : {}),
+      ...(readinessDetailVisible && migrationStatus.detail
+        ? { detail: migrationStatus.detail }
+        : {}),
     });
 
     const view: SystemHealthView = {

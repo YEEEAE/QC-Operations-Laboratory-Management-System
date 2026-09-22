@@ -6,7 +6,8 @@ import type { BackupCatalogRepository } from '../../../src/modules/backup-recove
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { readinessDependencies } from '../../../src/shared/health/health-dependencies.js';
 
-const { connectMock, endMock, queryMock } = vi.hoisted(() => ({
+const { availabilityMock, connectMock, endMock, queryMock } = vi.hoisted(() => ({
+  availabilityMock: vi.fn(),
   connectMock: vi.fn(),
   endMock: vi.fn(),
   queryMock: vi.fn(),
@@ -19,6 +20,16 @@ vi.mock('pg', () => ({
     query = queryMock;
 
     end = endMock;
+  },
+}));
+
+vi.mock('../../../src/shared/database/database.js', () => ({
+  getDatabase: () => ({}),
+}));
+
+vi.mock('../../../src/modules/reject-reports/infrastructure/postgres-repository.js', () => ({
+  PostgresRejectReportRepository: class {
+    availability = availabilityMock;
   },
 }));
 
@@ -53,18 +64,14 @@ async function readinessOutcome() {
 }
 
 async function systemHealthOutcome() {
-  const view = await new GetSystemHealthUseCase(
-    new PostgresSystemHealthProbes(),
-    emptyCatalog,
-    {
-      async migrationStatus() {
-        return { appliedHead: '0037', buildHead: '0037', pending: [] };
-      },
-      async rejectReportsAvailability() {
-        return { available: true };
-      },
+  const view = await new GetSystemHealthUseCase(new PostgresSystemHealthProbes(), emptyCatalog, {
+    async migrationStatus() {
+      return { appliedHead: '0037', buildHead: '0037', pending: [] };
     },
-  ).execute({ actor: viewer });
+    async rejectReportsAvailability() {
+      return { available: true };
+    },
+  }).execute({ actor: viewer });
   return {
     dependencyReadiness: view.dependencyReadiness,
     rejectReportsReadiness: view.rejectReportsReadiness,
@@ -76,6 +83,7 @@ async function systemHealthOutcome() {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv('NODE_ENV', 'test');
+  availabilityMock.mockResolvedValue({ available: true });
 });
 
 describe('health surface agreement (F-01 integration)', () => {
