@@ -59,6 +59,70 @@ const saveMeasurements = defineAction({
       }),
     ),
 });
+/**
+ * QC-DATA-003: record one Test Batch / Run — its samples, every replicated
+ * reading, the approved calculations over them and the derived sample results.
+ * The browser never sends a calculated value, an acceptance outcome or a sample
+ * result; the server derives all three from the approved template context.
+ */
+const recordRun = defineAction({
+  accept: 'json',
+  input: id.extend({
+    run: z.object({
+      batchId: z.string().uuid().optional(),
+      batchNo: z.string().trim().min(1),
+      label: z.string().trim().min(1).nullable().optional(),
+      startedAt: z.string().datetime().optional(),
+      completedAt: z.string().datetime().nullable().optional(),
+    }),
+    samples: z.array(z.object({ identifier: z.string().trim().min(1) })).min(1),
+    readings: z.array(
+      z.object({
+        sampleIdentifier: z.string().trim().min(1),
+        parameterId: z.string().uuid(),
+        readingIndex: z.number().int().min(1),
+        raw: z.union([z.string(), z.boolean()]),
+        unit: z.string().nullable(),
+        remarks: z.string().optional(),
+      }),
+    ),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      laboratoryActionDependencies().recordRun.execute({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+/**
+ * QC-DATA-003: record which instrument and calibration produced a run's
+ * readings. Eligibility is verified server-side by the approved Assets policy;
+ * the snapshots are captured at usage time and never rebuilt later.
+ */
+const recordRunEquipment = defineAction({
+  accept: 'json',
+  input: id.extend({
+    batchId: z.string().uuid(),
+    usage: z.object({
+      equipmentId: z.string().uuid(),
+      calibrationRecordId: z.string().uuid(),
+      usedAt: z.string().datetime(),
+      usageRole: z.string().trim().min(1).optional(),
+      equipmentSnapshot: z.record(z.unknown()),
+      calibrationSnapshot: z.record(z.unknown()),
+    }),
+  }),
+  handler: (input, context) =>
+    run(() =>
+      laboratoryActionDependencies().recordRunEquipment.execute({
+        ...input,
+        actor: actor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
 const submit = defineAction({
   accept: 'json',
   input: id,
@@ -174,6 +238,8 @@ const createRetest = defineAction({
 export const laboratory = {
   create,
   saveMeasurements,
+  recordRun,
+  recordRunEquipment,
   submit,
   review,
   returnTest,

@@ -24,6 +24,7 @@ import {
   type MutationOutcome,
   type MutationState,
 } from './mutation-interaction';
+import { FORM_COMMITTED_EVENT } from './unsaved-changes';
 import { copy } from '../../shared/copy/ux-vocabulary';
 
 export interface FormEnhanceConfig<TData> {
@@ -84,6 +85,9 @@ export function enhanceClassifiedForm<TData>(
       const outcome = classifyActionResult(result);
 
       if (outcome.state === 'SUCCESS') {
+        // The record was committed: notify unsaved-change guards before the
+        // intentional navigation so they do not warn about a successful save.
+        form.dispatchEvent(new CustomEvent(FORM_COMMITTED_EVENT));
         if (config.onSuccess) {
           config.onSuccess(outcome, form);
           return;

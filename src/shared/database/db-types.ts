@@ -539,6 +539,9 @@ export interface LabTestTemplateParametersTable {
   acceptance_rule_type: string | null;
   acceptance_rule_payload: unknown | null;
   controlled_source_reference: string | null;
+  /** QC-DATA-003 approved calculation rule (migration 0037); NULL when the reviewer owns the value. */
+  calculation_rule_type: string | null;
+  calculation_rule_payload: unknown | null;
   position: number;
 }
 export interface LabTestsTable {
@@ -559,6 +562,25 @@ export interface LabTestsTable {
   voided_at: Date | null;
   void_reason: string | null;
   snapshot_id: string | null;
+  /** QC-DATA-003 derived overall result evidence (migration 0037), not the official outcome. */
+  derived_result: string | null;
+  derived_result_source: string | null;
+  derived_result_inputs_hash: string | null;
+  derived_result_computed_at: Date | null;
+  created_by: string;
+  created_at: Generated<Date>;
+  updated_by: string | null;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+export interface LabTestBatchesTable {
+  id: Generated<string>;
+  lab_test_id: string;
+  batch_no: string;
+  label: string | null;
+  sequence: number;
+  started_at: Date | null;
+  completed_at: Date | null;
   created_by: string;
   created_at: Generated<Date>;
   updated_by: string | null;
@@ -568,6 +590,8 @@ export interface LabTestsTable {
 export interface LabSamplesTable {
   id: Generated<string>;
   lab_test_id: string;
+  /** QC-DATA-003 run this sample belongs to; NULL for legacy test-level samples. */
+  batch_id: string | null;
   sample_no: string | null;
   sample_identifier: string;
   position: number | null;
@@ -577,9 +601,27 @@ export interface LabSamplesTable {
   created_at: Generated<Date>;
   version: Generated<bigint>;
 }
+export interface LabReadingsTable {
+  id: Generated<string>;
+  lab_test_id: string;
+  batch_id: string;
+  sample_id: string;
+  template_parameter_id: string;
+  reading_index: number;
+  raw_numeric_value: string | null;
+  raw_text_value: string | null;
+  raw_boolean_value: boolean | null;
+  unit: string | null;
+  remarks: string | null;
+  entered_by: string;
+  entered_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
 export interface LabMeasurementsTable {
   id: Generated<string>;
   lab_test_id: string;
+  batch_id: string | null;
   sample_id: string | null;
   template_parameter_id: string;
   raw_numeric_value: string | null;
@@ -588,11 +630,29 @@ export interface LabMeasurementsTable {
   unit: string | null;
   calculated_value: string | null;
   calculated_unit: string | null;
+  /** QC-DATA-003 calculation traceability (migration 0037). */
+  calculation_rule_reference: string | null;
+  calculation_rule_version: string | null;
+  calculation_inputs: unknown | null;
   result: string | null;
   remarks: string | null;
   entered_by: string;
   entered_at: Generated<Date>;
   updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
+export interface LabSampleResultsTable {
+  id: Generated<string>;
+  lab_test_id: string;
+  batch_id: string;
+  sample_id: string;
+  result: string;
+  source: string;
+  source_reference: string | null;
+  content_hash: string | null;
+  derived_from: unknown | null;
+  evaluated_at: Generated<Date>;
+  evaluated_by: string;
   version: Generated<bigint>;
 }
 export interface LabTestSnapshotsTable {
@@ -613,6 +673,8 @@ export interface LabTestSnapshotsTable {
 export interface LabEquipmentUsageTable {
   id: Generated<string>;
   lab_test_id: string;
+  /** QC-DATA-003 run-level equipment evidence (migration 0037); NULL for legacy test-level usage. */
+  batch_id: string | null;
   equipment_id: string;
   calibration_record_id: string | null;
   usage_role: string | null;
@@ -1207,8 +1269,11 @@ export interface DatabaseSchema {
   lab_test_template_versions: LabTestTemplateVersionsTable;
   lab_test_template_parameters: LabTestTemplateParametersTable;
   lab_tests: LabTestsTable;
+  lab_test_batches: LabTestBatchesTable;
   lab_samples: LabSamplesTable;
+  lab_readings: LabReadingsTable;
   lab_measurements: LabMeasurementsTable;
+  lab_sample_results: LabSampleResultsTable;
   lab_test_snapshots: LabTestSnapshotsTable;
   lab_equipment_usage: LabEquipmentUsageTable;
   lab_document_usage: LabDocumentUsageTable;

@@ -1,5 +1,5 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import type { LabTest } from '../domain/lab-test.js';
+import type { EquipmentContext, LabTest } from '../domain/lab-test.js';
 import type { LabState } from '../domain/lab-state.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 export interface Mutation {
@@ -72,6 +72,24 @@ export interface LabRepository {
   }): Promise<LabWorkloadRead>;
   create(test: LabTest, mutation: Mutation): Promise<LabTest>;
   save(previous: LabTest, next: LabTest, mutation: Mutation): Promise<LabTest>;
+  /**
+   * QC-DATA-003: persist one run's equipment usage with the snapshots taken at
+   * usage time. Eligibility is verified by the caller through the approved
+   * Assets capability; this only records the verified fact.
+   */
+  linkRunEquipment(input: {
+    id: string;
+    labTestId: string;
+    batchId: string;
+    usage: EquipmentContext;
+    actor: ActorContext;
+    requestId: string;
+    recordedAt: Date;
+  }): Promise<void>;
+  /** Every equipment usage row of a test, run-level and legacy test-level. */
+  listRunEquipment(
+    labTestId: string,
+  ): Promise<readonly (EquipmentContext & { batchId: string | null })[]>;
   history(
     id: string,
     actor: ActorContext,

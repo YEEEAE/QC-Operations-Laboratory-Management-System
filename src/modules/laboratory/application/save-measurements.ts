@@ -30,6 +30,12 @@ export class SaveMeasurementsUseCase {
     )
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const at = this.now().toISOString();
+    // QC-DATA-003: a sample keeps the run it already belongs to. This path only
+    // edits identifiers, so it never detaches a sample from its batch.
+    const samples = input.samples.map((sample) => ({
+      ...sample,
+      batchId: test.samples.find((existing) => existing.id === sample.id)?.batchId ?? null,
+    }));
     const measurements = input.measurements.map((m) => ({
       ...validateMeasurement(
         m,
@@ -44,7 +50,7 @@ export class SaveMeasurementsUseCase {
     }));
     const next = {
       ...test,
-      samples: input.samples,
+      samples,
       measurements,
       version: test.version + 1n,
       updatedAt: at,

@@ -79,13 +79,14 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
 <script>
 import { actions } from 'astro:actions';
 import { enhanceClassifiedForm } from '../../ui/forms/enhance-with-classification';
+import { guardUnsavedChanges } from '../../ui/forms/unsaved-changes';
 const form=document.querySelector<HTMLFormElement>('[data-action="documents.create"]');
-if(form) enhanceClassifiedForm(form,{
+if(form){enhanceClassifiedForm(form,{
   invoke:(payload)=>actions.documents.create(payload as Parameters<typeof actions.documents.create>[0]),
   payload:(data)=>({documentNo:String(data.get('documentNo')),documentType:String(data.get('documentType')),title:String(data.get('title'))}),
   progressText:'Saving…',
   detailBaseHref:'/documents',
-});
+});guardUnsavedChanges(form);}
 </script>
 <style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.denied p{color:var(--text-muted);font-size:.85rem}.hint{color:var(--text-muted);font-size:.78rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}.fields>div{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}.fields>div:last-child{grid-column:1/-1}label{display:grid;gap:.4rem}input,select{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}.fields>div:last-child{grid-column:auto}.actions{justify-content:stretch;display:grid}}
 </style>

@@ -12,6 +12,8 @@ import { GetLabTestUseCase } from './get-lab-test.js';
 import { GetLabWorkloadUseCase } from './get-lab-workload.js';
 import { ListApprovedLabTemplatesUseCase } from './list-approved-templates.js';
 import { ListLabTestsUseCase } from './list-lab-tests.js';
+import { RecordLabRunUseCase } from './record-lab-run.js';
+import { RecordRunEquipmentUseCase } from './record-run-equipment.js';
 import { SaveMeasurementsUseCase } from './save-measurements.js';
 import { SubmitLabTestUseCase } from './submit-lab-test.js';
 import { ReviewLabTestUseCase } from './review-lab-test.js';
@@ -47,6 +49,14 @@ export function laboratoryActionDependencies() {
   return {
     create: new CreateLabTestUseCase(repository, sources),
     saveMeasurements: new SaveMeasurementsUseCase(repository),
+    // QC-DATA-003: run/batch, replicated readings, approved calculations and
+    // derived sample results.
+    recordRun: new RecordLabRunUseCase(repository),
+    // Run-level equipment evidence, verified by the approved Assets policy.
+    recordRunEquipment: new RecordRunEquipmentUseCase(
+      repository,
+      assetsEligibilityDependencies(),
+    ),
     submit: new SubmitLabTestUseCase(repository, sources, assetsEligibilityDependencies()),
     review: new ReviewLabTestUseCase(repository),
     return: new ReturnLabTestUseCase(repository),

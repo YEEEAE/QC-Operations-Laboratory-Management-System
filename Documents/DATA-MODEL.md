@@ -38,8 +38,8 @@
 
 ## Current schema reconciliation — 2026-09-21
 
-The source migration set contains 34 forward-only files through
-`0034_template_document_link_variable_scope`. Applied provider schema identity
+The source migration set contains 37 forward-only files through
+`0037_qc_data_003_lab_batches_samples_readings`. Applied provider schema identity
 is **NOT VERIFIED** for this candidate. The last recorded Render applied head
 (`0018`) is historical evidence, not a current-state claim. Source migration
 head and provider-applied schema remain separate facts; no pending migration is
@@ -1630,6 +1630,7 @@ Logical:
 ```text
 id
 lab_test_id
+batch_id where applicable
 sample_no
 sample_identifier
 position
@@ -1640,7 +1641,43 @@ created_by
 version
 ```
 
-Exact sample model depends on real lab workflows.
+A sample belongs to the test, and — from migration `0037` — to exactly one
+`lab_test_batches` run. The run is where the readings, the derived sample result
+and the equipment evidence attach.
+
+---
+
+# 72-A. lab_test_batches — Test Batch / Run
+
+The QC laboratory form treats one test as a sequence of runs (batches). A run is
+the unit that carries samples, readings and equipment evidence.
+
+```text
+id
+lab_test_id
+batch_no
+label
+sequence
+started_at
+completed_at
+created_by
+created_at
+updated_by
+updated_at
+version
+```
+
+Unique: `(lab_test_id, batch_no)`, `(lab_test_id, sequence)`.
+
+Relationship:
+
+```text
+Lab Test
+1
+↕
+N
+Lab Test Batch
+```
 
 ---
 
@@ -1651,6 +1688,7 @@ Logical:
 ```text
 id
 lab_test_id
+batch_id where applicable
 sample_id where applicable
 template_parameter_id
 raw_value
@@ -1658,6 +1696,8 @@ raw_text
 unit
 calculated_value
 calculated_unit
+calculation_rule_type
+calculation_inputs JSONB
 result
 remarks
 entered_by
@@ -1665,6 +1705,116 @@ entered_at
 updated_at
 version
 ```
+
+From `0037` the value contract is: at least one of raw-or-calculated, and at most
+one raw value. A calculated measurement therefore never fabricates a raw value,
+and the legacy "two raw values" rejection is preserved.
+
+`result` is restricted to `PASS` │ `FAIL` │ `HOLD` │ `NOT_APPLICABLE`.
+
+---
+
+# 73-A. lab_readings — one row per replicate
+
+The raw capture layer. A reading is one replicate of one parameter for one sample
+of one run. Multiple readings per parameter are the normal case, not an
+exception.
+
+```text
+id
+lab_test_id
+batch_id
+sample_id
+template_parameter_id
+reading_index
+raw_numeric_value
+raw_text_value
+raw_boolean_value
+unit
+remarks
+entered_by
+entered_at
+updated_at
+version
+```
+
+Rules:
+
+```text
+num_nonnulls(raw_numeric_value, raw_text_value, raw_boolean_value) = 1
+unique (batch_id, sample_id, template_parameter_id, reading_index)
+```
+
+So a re-submission of replicate 3 replaces replicate 3 instead of silently
+appending a fourth reading.
+
+Relationship:
+
+```text
+Lab Test Batch
+1
+↕
+N
+Lab Reading
+```
+
+---
+
+# 73-B. lab_sample_results — derived result per run sample
+
+```text
+id
+lab_test_id
+batch_id
+sample_id
+result
+source
+source_reference
+content_hash
+derived_from JSONB
+evaluated_at
+evaluated_by
+version
+```
+
+Unique: `(batch_id, sample_id)`.
+
+`result` ∈ `PASS` │ `FAIL` │ `HOLD` │ `NOT_APPLICABLE`; `source` ∈
+`SYSTEM_EVALUATION` │ `HUMAN`.
+
+---
+
+# 73-C. Sample Result Derivation Rule
+
+Derivation is deterministic and never invents a verdict from missing data:
+
+```text
+any FAIL                  → FAIL
+all required PASS         → PASS
+incomplete / otherwise    → HOLD
+no outcome at all          → no derived result
+```
+
+Acceptance comes only from the approved template version's parameter rules. The
+derived lot is evidence for the reviewer — it is not the official
+`scientific_result`.
+
+---
+
+# 73-D. Overall Test Result
+
+`lab_tests.derived_result` is the aggregate of the run sample results, frozen at
+submission.
+
+```text
+Lab Test
+└── derived_result            aggregate, submission-time evidence
+└── scientific_result         official, from the approved evaluation source
+```
+
+The two are deliberately separate. Freezing the derived aggregate must not be
+mistaken for granting the scientific verdict; stage-1 approval remains the only
+writer of `scientific_result`.
 
 ---
 
@@ -1679,6 +1829,9 @@ raw_value
 raw_unit
 ```
 
+...or, when the calculated value is derived from readings rather than a raw
+field, preserve `calculation_inputs` and the readings themselves.
+
 Do not only persist:
 
 ```text
@@ -1691,15 +1844,21 @@ PASS
 
 If automated formulas exist, capture enough context to reproduce or explain them.
 
-Potential:
-
 ```text
-calculation_rule_version
-calculation_inputs
+calculation_rule_type
+calculation_inputs JSONB
 calculated_value
+calculated_unit
 ```
 
-Exact strategy to be defined after real test workflows are modeled.
+Rules so far:
+
+- A calculation runs only when `lab_test_template_parameters.calculation_rule_type`
+  is present on the approved version; the application never invents a formula.
+- `MEAN` requires an integer `decimals` in the rule payload; a missing or
+  malformed payload fails closed instead of rounding by guess.
+- Arithmetic is exact decimal (BigInt-scaled), never binary floating point, so a
+  reproduced value matches the stored one digit for digit.
 
 ---
 
@@ -1710,6 +1869,7 @@ Explicit N:N bridge.
 ```text
 id
 lab_test_id
+batch_id where applicable
 equipment_id
 calibration_record_id where applicable
 usage_role
@@ -1728,6 +1888,9 @@ N
 N
 Equipment
 ```
+
+From `0037` the link may be scoped to a single run, so equipment evidence
+attaches to the exact batch it was used for rather than to the test as a whole.
 
 ---
 

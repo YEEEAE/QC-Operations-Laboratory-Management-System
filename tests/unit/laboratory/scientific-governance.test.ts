@@ -134,6 +134,11 @@ function labRepository(current: LabTest): LabRepository & {
       mutations.push(mutation);
       return next;
     },
+    // QC-DATA-003 run evidence is not exercised by this policy suite.
+    async linkRunEquipment() {},
+    async listRunEquipment() {
+      return [];
+    },
   };
 }
 

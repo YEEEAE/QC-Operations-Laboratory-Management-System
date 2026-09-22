@@ -19,8 +19,8 @@
 
 ## Current database reconciliation — 2026-09-21
 
-Source truth is the 34-file migration set ending at
-`0034_template_document_link_variable_scope`. Applied provider schema identity
+Source truth is the 37-file migration set ending at
+`0037_qc_data_003_lab_batches_samples_readings`. Applied provider schema identity
 is **NOT VERIFIED** for this candidate. The last recorded Render applied head
 (`0018`) is historical evidence; migrations after it are not asserted as
 currently pending without a fresh provider read. Source migration head,

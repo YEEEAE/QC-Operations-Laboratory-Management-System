@@ -74,8 +74,7 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
 
     // 2. Deterministic item → template mapping.
     await pool!.query(
-      `INSERT INTO qc.inspection_item_templates (id, item_code, template_id, state, effective_from, created_by, created_at)
-       VALUES (qc.uuidv7(), $1, '01900000-0000-7000-8000-00000000e011', $2, CURRENT_DATE, $3, now())`,
+      `INSERT INTO qc.inspection_item_templates (id, item_code, template_id, state, effective_from, created_by, created_at)       VALUES (qc.uuidv7(), $1, '01900000-0000-7000-8000-00000000e011', $2, CURRENT_DATE, $3, now())`,
       [`ITEM-DATA002-${stamp}`, templateVersionId, OWNER_ID],
     );
 

@@ -109,6 +109,16 @@ export class PostgresControlledLabSources implements ControlledLabSources {
         required: parameter.required,
         sourceReference: parameter.controlled_source_reference!,
         criteria: parameter.acceptance_rule_payload as Record<string, unknown>,
+        acceptanceRuleType: parameter.acceptance_rule_type,
+        // QC-DATA-003: the approved calculation rule travels with the frozen
+        // context, so a calculation is reproducible from the same source the
+        // acceptance criteria came from.
+        calculationRule: parameter.calculation_rule_type
+          ? {
+              ruleType: parameter.calculation_rule_type,
+              rulePayload: parameter.calculation_rule_payload,
+            }
+          : null,
       })),
     };
   }

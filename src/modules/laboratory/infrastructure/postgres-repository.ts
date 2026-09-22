@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { Kysely, Selectable, Transaction } from 'kysely';
+import { sql, type Kysely, type Selectable, type Transaction } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
@@ -13,13 +13,31 @@ import { insertSignatureEvidence } from '../../../shared/e-signatures/insert-sig
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import type { LabListFilter, LabRepository, Mutation } from '../ports/repository.js';
 import type { LabState } from '../domain/lab-state.js';
-import type { ControlledContext, LabTest } from '../domain/lab-test.js';
+import type { ControlledContext, EquipmentContext, LabTest } from '../domain/lab-test.js';
+import type { SampleResult } from '../domain/sample-result.js';
 const hash = (value: unknown) => createHash('sha256').update(stableJson(value)).digest('hex');
+
+/**
+ * One raw value is always stored in exactly one typed column (0009 + 0037).
+ * A missing value on a reading is a database defect, not an empty reading.
+ */
+function storedRaw(row: {
+  raw_numeric_value: string | null;
+  raw_text_value: string | null;
+  raw_boolean_value: boolean | null;
+}): string | boolean {
+  const value = row.raw_numeric_value ?? row.raw_text_value ?? row.raw_boolean_value;
+  if (value === null || value === undefined) throw new AppError('SYSTEM_DATABASE_UNAVAILABLE');
+  return value;
+}
 
 type LabTestRow = Selectable<DatabaseSchema['lab_tests']>;
 type SnapshotRow = Selectable<DatabaseSchema['lab_test_snapshots']>;
+type BatchRow = Selectable<DatabaseSchema['lab_test_batches']>;
 type SampleRow = Selectable<DatabaseSchema['lab_samples']>;
+type ReadingRow = Selectable<DatabaseSchema['lab_readings']>;
 type MeasurementRow = Selectable<DatabaseSchema['lab_measurements']>;
+type SampleResultRow = Selectable<DatabaseSchema['lab_sample_results']>;
 type ParameterRow = Selectable<DatabaseSchema['lab_test_template_parameters']>;
 export class PostgresLabRepository implements LabRepository {
   constructor(
@@ -171,27 +189,53 @@ export class PostgresLabRepository implements LabRepository {
   private async hydrate(rows: readonly LabTestRow[]): Promise<LabTest[]> {
     const ids = rows.map((row) => row.id);
     const versionIds = [...new Set(rows.map((row) => row.template_version_id))];
-    const [snapshots, samples, measurements, parameters] = await Promise.all([
-      this.db
-        .selectFrom('lab_test_snapshots')
-        .selectAll()
-        .where('lab_test_id', 'in', ids)
-        .orderBy('snapshot_version', 'desc')
-        .execute(),
-      this.db.selectFrom('lab_samples').selectAll().where('lab_test_id', 'in', ids).execute(),
-      this.db.selectFrom('lab_measurements').selectAll().where('lab_test_id', 'in', ids).execute(),
-      this.db
-        .selectFrom('lab_test_template_parameters')
-        .selectAll()
-        .where('template_version_id', 'in', versionIds)
-        .execute(),
-    ]);
+    const [snapshots, batches, samples, readings, measurements, sampleResults, parameters] =
+      await Promise.all([
+        this.db
+          .selectFrom('lab_test_snapshots')
+          .selectAll()
+          .where('lab_test_id', 'in', ids)
+          .orderBy('snapshot_version', 'desc')
+          .execute(),
+        this.db
+          .selectFrom('lab_test_batches')
+          .selectAll()
+          .where('lab_test_id', 'in', ids)
+          .orderBy('sequence')
+          .execute(),
+        this.db.selectFrom('lab_samples').selectAll().where('lab_test_id', 'in', ids).execute(),
+        this.db.selectFrom('lab_readings').selectAll().where('lab_test_id', 'in', ids).execute(),
+        this.db
+          .selectFrom('lab_measurements')
+          .selectAll()
+          .where('lab_test_id', 'in', ids)
+          .execute(),
+        this.db
+          .selectFrom('lab_sample_results')
+          .selectAll()
+          .where('lab_test_id', 'in', ids)
+          .execute(),
+        this.db
+          .selectFrom('lab_test_template_parameters')
+          .selectAll()
+          .where('template_version_id', 'in', versionIds)
+          .execute(),
+      ]);
     const latestSnapshot = new Map<string, SnapshotRow>();
     for (const snapshot of snapshots)
       if (!latestSnapshot.has(snapshot.lab_test_id))
         latestSnapshot.set(snapshot.lab_test_id, snapshot);
     return rows.map((row) =>
-      this.map(row, latestSnapshot.get(row.id), samples, measurements, parameters),
+      this.map(
+        row,
+        latestSnapshot.get(row.id),
+        batches,
+        samples,
+        readings,
+        measurements,
+        sampleResults,
+        parameters,
+      ),
     );
   }
 
@@ -199,8 +243,11 @@ export class PostgresLabRepository implements LabRepository {
   private map(
     row: LabTestRow,
     snapshot: SnapshotRow | undefined,
+    batches: readonly BatchRow[],
     samples: readonly SampleRow[],
+    readings: readonly ReadingRow[],
     measurements: readonly MeasurementRow[],
+    sampleResults: readonly SampleResultRow[],
     parameters: readonly ParameterRow[],
   ): LabTest {
     const ctx = snapshot?.template_snapshot as
@@ -215,23 +262,82 @@ export class PostgresLabRepository implements LabRepository {
       state: row.state as LabTest['state'],
       scientificResult: row.scientific_result as LabTest['scientificResult'],
       version: BigInt(row.version),
+      derivedResult: row.derived_result
+        ? {
+            result: row.derived_result as SampleResult,
+            source: row.derived_result_source ?? 'SYSTEM_EVALUATION',
+            inputsHash: row.derived_result_inputs_hash ?? '',
+            computedAt: (row.derived_result_computed_at ?? row.updated_at).toISOString(),
+          }
+        : null,
+      batches: batches
+        .filter((batch) => batch.lab_test_id === row.id)
+        .map((batch) => ({
+          id: batch.id,
+          batchNo: batch.batch_no,
+          label: batch.label,
+          sequence: batch.sequence,
+          startedAt: (batch.started_at ?? batch.created_at).toISOString(),
+          completedAt: batch.completed_at ? batch.completed_at.toISOString() : null,
+        })),
       samples: samples
         .filter((sample) => sample.lab_test_id === row.id)
-        .map((sample) => ({ id: sample.id, identifier: sample.sample_identifier })),
+        .map((sample) => ({
+          id: sample.id,
+          identifier: sample.sample_identifier,
+          batchId: sample.batch_id,
+        })),
+      readings: readings
+        .filter((reading) => reading.lab_test_id === row.id)
+        .map((reading) => ({
+          id: reading.id,
+          batchId: reading.batch_id,
+          sampleId: reading.sample_id,
+          parameterId: reading.template_parameter_id,
+          readingIndex: reading.reading_index,
+          raw: storedRaw(reading),
+          unit: reading.unit,
+          remarks: reading.remarks ?? undefined,
+          enteredBy: reading.entered_by,
+          enteredAt: reading.entered_at.toISOString(),
+        })),
       measurements: measurements
         .filter((measurement) => measurement.lab_test_id === row.id)
         .map((measurement) => ({
           id: measurement.id,
           sampleId: measurement.sample_id!,
           parameterId: measurement.template_parameter_id,
+          batchId: measurement.batch_id,
           raw:
             measurement.raw_numeric_value ??
             measurement.raw_text_value ??
-            measurement.raw_boolean_value!,
+            measurement.raw_boolean_value ??
+            null,
           unit: measurement.unit,
+          calculatedValue: measurement.calculated_value,
+          calculatedUnit: measurement.calculated_unit,
+          calculationRuleReference: measurement.calculation_rule_reference,
+          calculationRuleVersion: measurement.calculation_rule_version,
+          calculationInputs: (measurement.calculation_inputs ?? null) as Readonly<
+            Record<string, unknown>
+          > | null,
           remarks: measurement.remarks ?? undefined,
           enteredBy: measurement.entered_by,
           enteredAt: measurement.entered_at.toISOString(),
+        })),
+      sampleResults: sampleResults
+        .filter((result) => result.lab_test_id === row.id)
+        .map((result) => ({
+          id: result.id,
+          batchId: result.batch_id,
+          sampleId: result.sample_id,
+          result: result.result as SampleResult,
+          source: result.source as 'SYSTEM_EVALUATION' | 'HUMAN',
+          sourceReference: result.source_reference,
+          contentHash: result.content_hash,
+          derivedFrom: (result.derived_from ?? null) as Readonly<Record<string, unknown>> | null,
+          evaluatedAt: result.evaluated_at.toISOString(),
+          evaluatedBy: result.evaluated_by,
         })),
       context: {
         ...ctx.context,
@@ -248,6 +354,14 @@ export class PostgresLabRepository implements LabRepository {
             criteria: (parameter.acceptance_rule_payload ?? {}) as Readonly<
               Record<string, unknown>
             >,
+            acceptanceRuleType: parameter.acceptance_rule_type,
+            // QC-DATA-003 approved calculation rule (migration 0037).
+            calculationRule: parameter.calculation_rule_type
+              ? {
+                  ruleType: parameter.calculation_rule_type,
+                  rulePayload: parameter.calculation_rule_payload,
+                }
+              : null,
           })),
       },
     };
@@ -258,6 +372,74 @@ export class PostgresLabRepository implements LabRepository {
   async save(previous: LabTest, next: LabTest, mutation: Mutation) {
     return this.persist(previous, next, mutation);
   }
+  /**
+   * QC-DATA-003 run-level equipment evidence.
+   *
+   * The usage row stores the equipment/calibration snapshots taken at usage
+   * time (DATA-MODEL §76/§77) so a later calibration change cannot rewrite what
+   * the run actually used. `batch_id` is NULL for a legacy test-level row.
+   */
+  async linkRunEquipment(i: {
+    id: string;
+    labTestId: string;
+    batchId: string;
+    usage: EquipmentContext;
+    actor: ActorContext;
+    requestId: string;
+    recordedAt: Date;
+  }): Promise<void> {
+    await this.db.transaction().execute(async (tx) => {
+      await tx
+        .insertInto('lab_equipment_usage')
+        .values({
+          id: i.id,
+          lab_test_id: i.labTestId,
+          batch_id: i.batchId,
+          equipment_id: i.usage.equipmentId,
+          calibration_record_id: i.usage.calibrationRecordId,
+          usage_role: i.usage.usageRole ?? null,
+          used_at: new Date(i.usage.usedAt),
+          equipment_snapshot: stableJson(i.usage.equipmentSnapshot),
+          calibration_snapshot: stableJson(i.usage.calibrationSnapshot),
+          created_at: i.recordedAt,
+        })
+        .execute();
+      await this.auditFor(tx)?.append({
+        actorType: 'USER',
+        actorId: i.actor.id,
+        subjectType: 'LAB_TEST',
+        subjectId: i.labTestId,
+        action: 'EQUIPMENT_LINKED',
+        requestId: i.requestId,
+        payload: {
+          batchId: i.batchId,
+          equipmentId: i.usage.equipmentId,
+          calibrationRecordId: i.usage.calibrationRecordId,
+        },
+      });
+    });
+  }
+
+  async listRunEquipment(
+    labTestId: string,
+  ): Promise<readonly (EquipmentContext & { batchId: string | null })[]> {
+    const rows = await this.db
+      .selectFrom('lab_equipment_usage')
+      .selectAll()
+      .where('lab_test_id', '=', labTestId)
+      .orderBy('created_at')
+      .execute();
+    return rows.map((row) => ({
+      batchId: row.batch_id,
+      equipmentId: row.equipment_id,
+      calibrationRecordId: row.calibration_record_id ?? '',
+      usedAt: (row.used_at ?? row.created_at).toISOString(),
+      equipmentSnapshot: (row.equipment_snapshot ?? {}) as Readonly<Record<string, unknown>>,
+      calibrationSnapshot: (row.calibration_snapshot ?? {}) as Readonly<Record<string, unknown>>,
+      usageRole: row.usage_role ?? undefined,
+    }));
+  }
+
   async history(id: string, actor: ActorContext) {
     await this.get(id, actor);
     const rows = await this.db
@@ -311,6 +493,12 @@ export class PostgresLabRepository implements LabRepository {
             voided_at: null,
             void_reason: null,
             snapshot_id: null,
+            derived_result: next.derivedResult?.result ?? null,
+            derived_result_source: next.derivedResult?.source ?? null,
+            derived_result_inputs_hash: next.derivedResult?.inputsHash ?? null,
+            derived_result_computed_at: next.derivedResult
+              ? new Date(next.derivedResult.computedAt)
+              : null,
             created_by: next.createdBy,
             updated_by: next.authorId,
             updated_at: new Date(next.updatedAt),
@@ -343,6 +531,12 @@ export class PostgresLabRepository implements LabRepository {
             review_started_at: next.reviewStartedAt ? new Date(next.reviewStartedAt) : null,
             approved_at: next.approvedAt ? new Date(next.approvedAt) : null,
             rejected_at: next.rejectedAt ? new Date(next.rejectedAt) : null,
+            derived_result: next.derivedResult?.result ?? null,
+            derived_result_source: next.derivedResult?.source ?? null,
+            derived_result_inputs_hash: next.derivedResult?.inputsHash ?? null,
+            derived_result_computed_at: next.derivedResult
+              ? new Date(next.derivedResult.computedAt)
+              : null,
             updated_by: mutation.actor.id,
             updated_at: new Date(next.updatedAt),
             version: next.version,
@@ -355,58 +549,8 @@ export class PostgresLabRepository implements LabRepository {
           throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         if (mutation.action === 'FINAL_APPROVE')
           await insertSignatureEvidence(tx, mutation.signatureEvidence!);
-        await tx.deleteFrom('lab_measurements').where('lab_test_id', '=', next.id).execute();
       }
-      if (previous) {
-        await tx.deleteFrom('lab_samples').where('lab_test_id', '=', next.id).execute();
-      }
-      if (next.samples.length)
-        await tx
-          .insertInto('lab_samples')
-          .values(
-            next.samples.map((s, index) => ({
-              id: s.id,
-              lab_test_id: next.id,
-              sample_no: null,
-              sample_identifier: s.identifier,
-              position: index,
-              sample_source: null,
-              state: null,
-              created_by: next.createdBy,
-              version: 1n,
-            })),
-          )
-          .execute();
-      if (next.measurements.length)
-        await tx
-          .insertInto('lab_measurements')
-          .values(
-            next.measurements.map((m) => ({
-              id: m.id,
-              lab_test_id: next.id,
-              sample_id: m.sampleId,
-              template_parameter_id: m.parameterId,
-              raw_numeric_value:
-                typeof m.raw === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(m.raw)
-                  ? m.raw
-                  : null,
-              raw_text_value:
-                typeof m.raw === 'string' && !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(m.raw)
-                  ? m.raw
-                  : null,
-              raw_boolean_value: typeof m.raw === 'boolean' ? m.raw : null,
-              unit: m.unit,
-              calculated_value: null,
-              calculated_unit: null,
-              result: null,
-              remarks: m.remarks ?? null,
-              entered_by: m.enteredBy,
-              entered_at: new Date(m.enteredAt),
-              updated_at: new Date(m.enteredAt),
-              version: 1n,
-            })),
-          )
-          .execute();
+      await this.reconcileRunContent(tx, next, mutation);
       const snapshot = { test: next, context: next.context };
       const snap = await tx
         .insertInto('lab_test_snapshots')
@@ -455,6 +599,269 @@ export class PostgresLabRepository implements LabRepository {
       return next;
     });
   }
+  /**
+   * QC-DATA-003 run content reconcile.
+   *
+   * The aggregate is authoritative, but rows are never rewritten blindly:
+   * children are pruned before their parents (readings → sample results →
+   * measurements → samples → batches) and every surviving row is upserted by its
+   * own id. The previous delete-and-reinsert behaviour destroyed exactly the run
+   * evidence this change depends on, because `lab_readings` and
+   * `lab_sample_results` reference the sample rows it deleted.
+   */
+  private async reconcileRunContent(
+    tx: Transaction<DatabaseSchema>,
+    next: LabTest,
+    mutation: Mutation,
+  ) {
+    const batches = next.batches ?? [];
+    const readings = next.readings ?? [];
+    const sampleResults = next.sampleResults ?? [];
+    const { samples, measurements } = next;
+    const sampleIds = samples.map((sample) => sample.id);
+
+    // A sample removed from the aggregate must not leave an orphaned child
+    // behind: the run's readings, measurements and derived results reference
+    // the sample row directly, so they are pruned before it.
+    let orphanReadings = tx.deleteFrom('lab_readings').where('lab_test_id', '=', next.id);
+    if (sampleIds.length) orphanReadings = orphanReadings.where('sample_id', 'not in', sampleIds);
+    await orphanReadings.execute();
+
+    let orphanResults = tx.deleteFrom('lab_sample_results').where('lab_test_id', '=', next.id);
+    if (sampleIds.length) orphanResults = orphanResults.where('sample_id', 'not in', sampleIds);
+    await orphanResults.execute();
+
+    let orphanMeasurements = tx
+      .deleteFrom('lab_measurements')
+      .where('lab_test_id', '=', next.id)
+      .where('sample_id', 'is not', null);
+    if (sampleIds.length)
+      orphanMeasurements = orphanMeasurements.where('sample_id', 'not in', sampleIds);
+    await orphanMeasurements.execute();
+
+    let readingDelete = tx.deleteFrom('lab_readings').where('lab_test_id', '=', next.id);
+    if (readings.length)
+      readingDelete = readingDelete.where(
+        'id',
+        'not in',
+        readings.map((reading) => reading.id),
+      );
+    await readingDelete.execute();
+
+    let resultDelete = tx.deleteFrom('lab_sample_results').where('lab_test_id', '=', next.id);
+    if (sampleResults.length)
+      resultDelete = resultDelete.where(
+        'id',
+        'not in',
+        sampleResults.map((result) => result.id),
+      );
+    await resultDelete.execute();
+
+    let measurementDelete = tx.deleteFrom('lab_measurements').where('lab_test_id', '=', next.id);
+    if (measurements.length)
+      measurementDelete = measurementDelete.where(
+        'id',
+        'not in',
+        measurements.map((measurement) => measurement.id),
+      );
+    await measurementDelete.execute();
+
+    let sampleDelete = tx.deleteFrom('lab_samples').where('lab_test_id', '=', next.id);
+    if (samples.length)
+      sampleDelete = sampleDelete.where(
+        'id',
+        'not in',
+        samples.map((sample) => sample.id),
+      );
+    await sampleDelete.execute();
+
+    let batchDelete = tx.deleteFrom('lab_test_batches').where('lab_test_id', '=', next.id);
+    if (batches.length)
+      batchDelete = batchDelete.where(
+        'id',
+        'not in',
+        batches.map((batch) => batch.id),
+      );
+    await batchDelete.execute();
+
+    if (batches.length)
+      await tx
+        .insertInto('lab_test_batches')
+        .values(
+          batches.map((batch) => ({
+            id: batch.id,
+            lab_test_id: next.id,
+            batch_no: batch.batchNo,
+            label: batch.label ?? null,
+            sequence: batch.sequence,
+            started_at: new Date(batch.startedAt),
+            completed_at: batch.completedAt ? new Date(batch.completedAt) : null,
+            created_by: next.createdBy,
+            updated_by: mutation.actor.id,
+            updated_at: new Date(),
+            version: 1n,
+          })),
+        )
+        .onConflict((oc) =>
+          oc.column('id').doUpdateSet({
+            batch_no: sql`excluded.batch_no`,
+            label: sql`excluded.label`,
+            sequence: sql`excluded.sequence`,
+            started_at: sql`excluded.started_at`,
+            completed_at: sql`excluded.completed_at`,
+            updated_by: sql`excluded.updated_by`,
+            updated_at: sql`excluded.updated_at`,
+          }),
+        )
+        .execute();
+
+    if (samples.length)
+      await tx
+        .insertInto('lab_samples')
+        .values(
+          samples.map((sample, index) => ({
+            id: sample.id,
+            lab_test_id: next.id,
+            batch_id: sample.batchId ?? null,
+            sample_no: null,
+            sample_identifier: sample.identifier,
+            position: index,
+            sample_source: null,
+            state: null,
+            created_by: next.createdBy,
+            version: 1n,
+          })),
+        )
+        .onConflict((oc) =>
+          oc.column('id').doUpdateSet({
+            batch_id: sql`excluded.batch_id`,
+            sample_identifier: sql`excluded.sample_identifier`,
+            position: sql`excluded.position`,
+          }),
+        )
+        .execute();
+
+    if (measurements.length)
+      await tx
+        .insertInto('lab_measurements')
+        .values(
+          measurements.map((measurement) => ({
+            id: measurement.id,
+            lab_test_id: next.id,
+            batch_id: measurement.batchId ?? null,
+            sample_id: measurement.sampleId,
+            template_parameter_id: measurement.parameterId,
+            raw_numeric_value:
+              typeof measurement.raw === 'string' &&
+              /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(measurement.raw)
+                ? measurement.raw
+                : null,
+            raw_text_value:
+              typeof measurement.raw === 'string' &&
+              !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(measurement.raw)
+                ? measurement.raw
+                : null,
+            raw_boolean_value: typeof measurement.raw === 'boolean' ? measurement.raw : null,
+            unit: measurement.unit,
+            calculated_value: measurement.calculatedValue ?? null,
+            calculated_unit: measurement.calculatedUnit ?? null,
+            calculation_rule_reference: measurement.calculationRuleReference ?? null,
+            calculation_rule_version: measurement.calculationRuleVersion ?? null,
+            calculation_inputs: measurement.calculationInputs
+              ? stableJson(measurement.calculationInputs)
+              : null,
+            result: null,
+            remarks: measurement.remarks ?? null,
+            entered_by: measurement.enteredBy,
+            entered_at: new Date(measurement.enteredAt),
+            updated_at: new Date(measurement.enteredAt),
+            version: 1n,
+          })),
+        )
+        .onConflict((oc) =>
+          oc.column('id').doUpdateSet({
+            batch_id: sql`excluded.batch_id`,
+            raw_numeric_value: sql`excluded.raw_numeric_value`,
+            raw_text_value: sql`excluded.raw_text_value`,
+            raw_boolean_value: sql`excluded.raw_boolean_value`,
+            unit: sql`excluded.unit`,
+            calculated_value: sql`excluded.calculated_value`,
+            calculated_unit: sql`excluded.calculated_unit`,
+            calculation_rule_reference: sql`excluded.calculation_rule_reference`,
+            calculation_rule_version: sql`excluded.calculation_rule_version`,
+            calculation_inputs: sql`excluded.calculation_inputs`,
+            remarks: sql`excluded.remarks`,
+            updated_at: sql`excluded.updated_at`,
+          }),
+        )
+        .execute();
+
+    if (readings.length)
+      await tx
+        .insertInto('lab_readings')
+        .values(
+          readings.map((reading) => ({
+            id: reading.id,
+            lab_test_id: next.id,
+            batch_id: reading.batchId,
+            sample_id: reading.sampleId,
+            template_parameter_id: reading.parameterId,
+            reading_index: reading.readingIndex,
+            raw_numeric_value:
+              typeof reading.raw === 'string' &&
+              /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
+                ? reading.raw
+                : null,
+            raw_text_value:
+              typeof reading.raw === 'string' &&
+              !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
+                ? reading.raw
+                : null,
+            raw_boolean_value: typeof reading.raw === 'boolean' ? reading.raw : null,
+            unit: reading.unit,
+            remarks: reading.remarks ?? null,
+            entered_by: reading.enteredBy,
+            entered_at: new Date(reading.enteredAt),
+            updated_at: new Date(reading.enteredAt),
+            version: 1n,
+          })),
+        )
+        .onConflict((oc) => oc.column('id').doNothing())
+        .execute();
+
+    if (sampleResults.length)
+      await tx
+        .insertInto('lab_sample_results')
+        .values(
+          sampleResults.map((result) => ({
+            id: result.id,
+            lab_test_id: next.id,
+            batch_id: result.batchId,
+            sample_id: result.sampleId,
+            result: result.result,
+            source: result.source,
+            source_reference: result.sourceReference,
+            content_hash: result.contentHash,
+            derived_from: result.derivedFrom ? stableJson(result.derivedFrom) : null,
+            evaluated_at: new Date(result.evaluatedAt),
+            evaluated_by: result.evaluatedBy,
+            version: 1n,
+          })),
+        )
+        .onConflict((oc) =>
+          oc.column('id').doUpdateSet({
+            result: sql`excluded.result`,
+            source: sql`excluded.source`,
+            source_reference: sql`excluded.source_reference`,
+            content_hash: sql`excluded.content_hash`,
+            derived_from: sql`excluded.derived_from`,
+            evaluated_at: sql`excluded.evaluated_at`,
+            evaluated_by: sql`excluded.evaluated_by`,
+          }),
+        )
+        .execute();
+  }
+
   private auditFor(tx: Transaction<DatabaseSchema>) {
     return this.audit instanceof PostgresAuditRepository
       ? new PostgresAuditRepository(tx)

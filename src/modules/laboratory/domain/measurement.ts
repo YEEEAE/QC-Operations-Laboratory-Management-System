@@ -1,4 +1,5 @@
 import { AppError } from '../../../shared/errors/app-error.js';
+import type { CalculationRuleSource } from './calculation.js';
 export interface Parameter {
   id: string;
   code: string;
@@ -8,6 +9,14 @@ export interface Parameter {
   required: boolean;
   sourceReference: string;
   criteria: Readonly<Record<string, unknown>>;
+  /**
+   * Approved acceptance-rule operator for `criteria`. `null`/absent means the
+   * template carries no formal rule, so no automated outcome exists for this
+   * parameter and the reviewer owns it.
+   */
+  acceptanceRuleType?: string | null;
+  /** QC-DATA-003 approved calculation rule; absent when the reviewer owns the value. */
+  calculationRule?: CalculationRuleSource | null;
   precisionGuidance?: string;
   roundingReference?: string;
 }
@@ -18,8 +27,24 @@ export interface MeasurementInput {
   unit: string | null;
   remarks?: string;
 }
-export interface Measurement extends MeasurementInput {
+/**
+ * The persisted observation for one (sample, parameter) of a run.
+ *
+ * `raw` is `null` when the reported value was computed from readings rather
+ * than captured: the raw evidence is never lost because every replicate stays
+ * in the run's readings, and the aggregate stays in `calculatedValue` with the
+ * rule it came from.
+ */
+export interface Measurement extends Omit<MeasurementInput, 'raw'> {
   id: string;
+  raw: string | boolean | null;
+  /** QC-DATA-003 run this observation belongs to; absent/null for legacy test-level rows. */
+  batchId?: string | null;
+  calculatedValue?: string | null;
+  calculatedUnit?: string | null;
+  calculationRuleReference?: string | null;
+  calculationRuleVersion?: string | null;
+  calculationInputs?: Readonly<Record<string, unknown>> | null;
   enteredBy: string;
   enteredAt: string;
 }

@@ -942,7 +942,14 @@ IMMUTABLE
 | `acceptance_rule_type`        | TEXT    |  YES | Comparison/formula type   | SOURCE-DEPENDENT |
 | `acceptance_rule_payload`     | JSONB   |  YES | Scientific limits/formula | SOURCE-DEPENDENT |
 | `controlled_source_reference` | TEXT    |  YES | WI/SOP/method             | SOURCE-DEPENDENT |
+| `calculation_rule_type`       | TEXT    |  YES | Calculation kind          | SOURCE-DEPENDENT |
+| `calculation_rule_payload`    | JSONB   |  YES | Precision/rule version    | SOURCE-DEPENDENT |
 | `position`                    | INTEGER |   NO | Ordering                  | APPROVED         |
+
+QC-DATA-003 `calculation_rule_type` is one of `MEAN`, `SUM`, `MIN`, `MAX`,
+`RANGE`. A parameter without a rule stores readings and no calculated value, and
+the reviewer owns the outcome; `MEAN` additionally requires an integer
+`decimals` in the payload (see `# 185`).
 
 ---
 
@@ -967,6 +974,10 @@ IMMUTABLE
 | `voided_at`                | TIMESTAMPTZ |  YES | Void                  | CRITICAL |
 | `void_reason`              | TEXT        |  YES | Void reason           | CRITICAL |
 | `snapshot_id`              | UUID        |  YES | Final snapshot        | CRITICAL |
+| `derived_result`           | TEXT        |  YES | Derived run aggregate | HIGH     |
+| `derived_result_source`    | TEXT        |  YES | System evaluation     | HIGH     |
+| `derived_result_inputs_hash` | TEXT      |  YES | Sample-result hash    | HIGH     |
+| `derived_result_computed_at` | TIMESTAMPTZ | YES | Derived at submit    | HIGH     |
 | `created_by`               | UUID        |   NO | Creator               | HIGH     |
 | `created_at`               | TIMESTAMPTZ |   NO | Created               | HIGH     |
 | `updated_by`               | UUID        |  YES | Latest actor          | HIGH     |
@@ -994,6 +1005,7 @@ retest_reason IS NOT NULL
 | ------------------- | ----------- | ---: | -------------------------- |
 | `id`                | UUID        |   NO | Sample                     |
 | `lab_test_id`       | UUID        |   NO | Parent test                |
+| `batch_id`          | UUID        |  YES | Run (NULL = legacy sample) |
 | `sample_no`         | TEXT        |  YES | Human sample number        |
 | `sample_identifier` | TEXT        |   NO | Traceable identifier       |
 | `position`          | INTEGER     |  YES | Order                      |
@@ -1017,6 +1029,7 @@ UNCONFIRMED
 | ----------------------- | ------------ | ---: | ----------------- |
 | `id`                    | UUID         |   NO | Measurement       |
 | `lab_test_id`           | UUID         |   NO | Test              |
+| `batch_id`              | UUID         |  YES | Run               |
 | `sample_id`             | UUID         |  YES | Sample            |
 | `template_parameter_id` | UUID         |   NO | Parameter         |
 | `raw_numeric_value`     | NUMERIC(p,s) |  YES | Raw numeric value |
@@ -1025,6 +1038,9 @@ UNCONFIRMED
 | `unit`                  | TEXT         |  YES | Raw unit          |
 | `calculated_value`      | NUMERIC(p,s) |  YES | Calculated output |
 | `calculated_unit`       | TEXT         |  YES | Output unit       |
+| `calculation_rule_reference` | TEXT    |  YES | Approved source   |
+| `calculation_rule_version`   | TEXT    |  YES | Approved revision |
+| `calculation_inputs`    | JSONB        |  YES | Reproducible inputs |
 | `result`                | TEXT         |  YES | Parameter result  |
 | `remarks`               | TEXT         |  YES | Notes             |
 | `entered_by`            | UUID         |   NO | Actor             |
@@ -1046,6 +1062,7 @@ SOURCE-DEPENDENT
 | ----------------------- | ----------- | ---: | ---------------------------- |
 | `id`                    | UUID        |   NO | Usage record                 |
 | `lab_test_id`           | UUID        |   NO | Test                         |
+| `batch_id`              | UUID        |  YES | Run (NULL = legacy usage)    |
 | `equipment_id`          | UUID        |   NO | Equipment                    |
 | `calibration_record_id` | UUID        |  YES | Calibration governing use    |
 | `usage_role`            | TEXT        |  YES | Equipment purpose            |
@@ -3856,3 +3873,91 @@ FOUNDATION — APPROVED CANONICAL DATA DICTIONARY
 Next Foundation Document:
 REQUIREMENTS-TRACEABILITY.md
 ```
+
+---
+
+# 185. Laboratory — QC-DATA-003 additions (2026-09-21)
+
+Migration `0037_qc_data_003_lab_batches_samples_readings` adds the run layer the
+laboratory execution flow needs. Nothing here is scientific content: every
+calculation and acceptance value still comes from the approved template version.
+
+## `lab_test_batches` — Test Batch / Run
+
+| Field          | Type        | Null | Meaning                       |
+| -------------- | ----------- | ---: | ----------------------------- |
+| `id`           | UUID        |   NO | Run                           |
+| `lab_test_id`  | UUID        |   NO | Parent test                   |
+| `batch_no`     | TEXT        |   NO | Operator run number           |
+| `label`        | TEXT        |  YES | Run description               |
+| `sequence`     | INTEGER     |   NO | Run order within the test (≥1) |
+| `started_at`   | TIMESTAMPTZ |  YES | Run start                     |
+| `completed_at` | TIMESTAMPTZ |  YES | Run completion                |
+| `created_by`   | UUID        |   NO | Creator                       |
+| `created_at`   | TIMESTAMPTZ |   NO | Created                       |
+| `updated_by`   | UUID        |  YES | Latest actor                  |
+| `updated_at`   | TIMESTAMPTZ |   NO | Updated                       |
+| `version`      | BIGINT      |   NO | Version                       |
+
+`(lab_test_id, batch_no)` and `(lab_test_id, sequence)` are unique.
+
+## `lab_readings` — one row per replicate
+
+| Field                   | Type        | Null | Meaning                        |
+| ----------------------- | ----------- | ---: | ------------------------------ |
+| `id`                    | UUID        |   NO | Reading                        |
+| `lab_test_id`           | UUID        |   NO | Test                           |
+| `batch_id`              | UUID        |   NO | Run                            |
+| `sample_id`             | UUID        |   NO | Sample of that run             |
+| `template_parameter_id` | UUID        |   NO | Approved parameter             |
+| `reading_index`         | INTEGER     |   NO | Replicate number within the group (≥1) |
+| `raw_numeric_value`     | NUMERIC     |  YES | Captured numeric reading       |
+| `raw_text_value`        | TEXT        |  YES | Captured text reading          |
+| `raw_boolean_value`     | BOOLEAN     |  YES | Captured boolean reading       |
+| `unit`                  | TEXT        |  YES | Captured unit                  |
+| `remarks`               | TEXT        |  YES | Notes                          |
+| `entered_by`            | UUID        |   NO | Actor                          |
+| `entered_at`            | TIMESTAMPTZ |   NO | Entry                          |
+| `updated_at`            | TIMESTAMPTZ |   NO | Updated                        |
+| `version`               | BIGINT      |   NO | Version                        |
+
+`num_nonnulls(raw_numeric_value, raw_text_value, raw_boolean_value) = 1` and
+`(batch_id, sample_id, template_parameter_id, reading_index)` is unique, so
+re-submitting replicate 3 replaces replicate 3 instead of appending a fourth.
+
+## `lab_sample_results` — derived result per run sample
+
+| Field              | Type        | Null | Meaning                          |
+| ------------------ | ----------- | ---: | -------------------------------- |
+| `id`               | UUID        |   NO | Result                           |
+| `lab_test_id`      | UUID        |   NO | Test                             |
+| `batch_id`         | UUID        |   NO | Run                              |
+| `sample_id`        | UUID        |   NO | Sample                           |
+| `result`           | TEXT        |   NO | `PASS` │ `FAIL` │ `HOLD` │ `NOT_APPLICABLE` |
+| `source`           | TEXT        |   NO | `SYSTEM_EVALUATION` │ `HUMAN` |
+| `source_reference` | TEXT        |  YES | Approved source                  |
+| `content_hash`     | TEXT        |  YES | Frozen context hash              |
+| `derived_from`     | JSONB       |  YES | Per-parameter outcomes           |
+| `evaluated_at`     | TIMESTAMPTZ |   NO | Derived at                       |
+| `evaluated_by`     | UUID        |   NO | Actor                            |
+| `version`          | BIGINT      |   NO | Version                          |
+
+`(batch_id, sample_id)` is unique. The derivation is deterministic and
+non-inventing: a `FAIL` outcome dominates; `PASS` requires every required
+parameter to have an approved-rule `PASS`; anything else is `HOLD`; a sample with
+no outcome at all carries no derived result.
+
+## Derivation and calculation rules
+
+- `lab_tests.derived_result` is the aggregate of the run sample results, frozen
+  at submission. It is evidence for the reviewer, **not** the official
+  `scientific_result`, which still comes from the approved evaluation source at
+  stage-1 approval.
+- A calculation runs only when `lab_test_template_parameters.calculation_rule_type`
+  is present; `MEAN` requires an integer `decimals` in the payload. Arithmetic is
+  exact decimal (BigInt-scaled), never binary floating point.
+- `lab_measurements.result` is restricted to
+  `PASS` │ `FAIL` │ `HOLD` │ `NOT_APPLICABLE` for new writes.
+- `lab_measurements` now requires *at least one of raw-or-calculated* with *at
+  most one raw value*, so a value computed from readings can be stored without a
+  fabricated raw value while the original "two raw values" rejection is kept.

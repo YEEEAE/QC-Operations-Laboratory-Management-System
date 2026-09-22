@@ -88,6 +88,10 @@ class MemoryRepository implements LabRepository {
     this.value = next;
     return next;
   }
+  async linkRunEquipment() {}
+  async listRunEquipment() {
+    return [];
+  }
 }
 describe('laboratory draft measurement entry', () => {
   it('preserves raw decimal text and rejects a stale version', async () => {
