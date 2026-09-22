@@ -6,10 +6,10 @@ import {
 } from './canonical-database-readiness.js';
 
 /**
- * Machine readiness probe. Delegates to the canonical database readiness
- * check so `/api/health/ready` observes the same database reachability and
- * TLS configuration as the authenticated System Health view. Output stays a
- * bare boolean; HTTP mapping and sanitization live in `createReadinessResponse`.
+ * Database dependency probe. `/api/health/ready` composes this canonical
+ * connectivity/TLS check with the capability probes required by QC workflows.
+ * Output stays a bare boolean; HTTP mapping and sanitization live in
+ * `createReadinessResponse`.
  */
 export class PostgresReadinessProbe implements ReadinessProbe {
   constructor(

@@ -7,6 +7,34 @@ live deployment. The latest exact-candidate evidence is recorded below. The
 service is still divergent from this file and production migration parity and
 readiness are `NOT VERIFIED / NO-GO`.
 
+### Latest read-only live observation — 2026-09-22
+
+The Render control plane reported the live web deployment as
+`dep-dapeak67bikc73f1poa0`, commit
+`7d7f869d778c850d14e0021d38540831336c3bd1`. That commit matched local `main`
+before this task's uncommitted fixes; no deployment was performed afterward.
+The provider reported runtime `rust`, which differs from the repository's Node
+baseline. The Render deployment ID is provider evidence, not the application's
+release/build ID.
+
+A read-only Render SQL transaction read only `qc.schema_migrations`: applied
+head `0018`. The current source contains 37 migration files through
+`0037_qc_data_003_lab_batches_samples_readings`, leaving 19 source migrations
+pending. Read-only authenticated page checks observed `/reject-reports` returning
+503 because the tables introduced in `0026_reject_reports` were absent. At the
+same observation, `/system/health` showed `READY` with application and database
+`HEALTHY`; the application-internal release/build identity fields were
+`UNVERIFIED`. This explains the misleading status: the health view checked
+connectivity but not the required Reject Reports schema. The local fix now
+separates process liveness, dependency/workflow readiness, migration drift, and
+QC release evidence; the live deployment has not been updated or rechecked
+against that fix.
+
+The authenticated page reads and provider query were read-only. No `.env`
+credential, URL, database address, or database business record was read or
+printed. The separately documented credential-rotation and production
+migration gates remain applicable.
+
 ### Latest exact-candidate observation — 2026-09-19
 
 QC-100-FINAL-001 re-froze local `main` at
@@ -42,7 +70,7 @@ limits: `audit/2026-09-19-QC-100-FINAL-001-production-parity-recheck.md`.
 - Service type: Render Web Service (`type: web`), using Astro SSR with `@astrojs/node` standalone output.
 - Build: Corepack invokes the exact pinned pnpm version and runs a frozen install followed by `pnpm build`.
 - Start: `node dist/server/entry.mjs` (verified against the local Astro build output).
-- Readiness: `/api/health/ready` returns `200` only when PostgreSQL is configured and reachable; it returns a minimal `503` otherwise and never exposes dependency or secret details.
+- Readiness: `/api/health/ready` returns `200` only when PostgreSQL is configured/reachable and required Reject Reports tables are available through the same read-only repository probe as the page; it returns a minimal `503` otherwise and never exposes dependency or secret details. This is not QC release approval.
 - Auto-deploy: `checksPass`, subject to the linked Render/Git integration supporting CI check gating.
 
 ## Domain and DNS
@@ -94,7 +122,7 @@ The root domain is the canonical custom domain in the Render service; Render pai
 
 `HOST=0.0.0.0` is required by the Render web-service platform. The Astro Node standalone output starts with `node dist/server/entry.mjs`; the service must use the platform-provided `PORT`. Node `24.20.0` is pinned in `render.yaml` and `.node-version`.
 
-Render considers a health-check response successful only when it receives a 2xx/3xx response. `/api/health/ready` is deliberately a dependency readiness endpoint: it returns `200` only when PostgreSQL is configured and reachable, otherwise a minimal `503`. Do not configure a production health check until the intended dependency semantics and production database are approved.
+Render considers a health-check response successful only when it receives a 2xx/3xx response. `/api/health/live` is process liveness; `/api/health/ready` includes PostgreSQL connectivity and the required Reject Reports schema probe, otherwise returning a minimal `503`. Do not configure a production health check until the intended semantics and production database are approved.
 
 The Render `onrender.com` subdomain remains enabled until the custom domain is verified and operational. It is intentionally not disabled in `render.yaml`.
 

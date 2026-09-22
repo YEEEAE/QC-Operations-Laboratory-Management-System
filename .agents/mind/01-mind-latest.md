@@ -4,6 +4,16 @@
 > الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
 > **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
 
+- **2026-09-23 — Complete workspace file map, excluding tests**
+  - Changed: ملفات التوجيه الستة في الجذر تحيل إلى فهارس `workspace-map/` التفصيلية؛ مولّد محلي يحافظ على فهرسة ملفات المشروع المتتبعة وغير المتتبعة ذات الصلة، مع استثناء الاختبارات والملفات المؤقتة/المولدة.
+  - Evidence: 2,881 مسارًا فريدًا، كلها موجودة؛ `generate-workspace-map.py --check` و`git diff --check` PASS.
+  - State: DONE.
+
+- **2026-09-22 — Workspace router map**
+  - Changed: أضيفت خمسة ملفات توجيه في الجذر للمنتج والهندسة والبيانات والتشغيل والتحقق، مع قسم `Map` في `AGENTS.md`.
+  - Evidence: جميع المسارات الـ61 المشار إليها موجودة محليًا.
+  - State: DONE.
+
 - **2026-09-22 — Independent 100-discipline source audit + live read-only review**
   - Changed: أُنشئ تقرير HTML مستقل لـ100 مجال بسلم أدلة خاص به (55.0%، وليس مقام/درجة تدقيق المشروع ذي 80 مجالًا). مراجعة `qclevel.top` المصادقة كانت للقراءة فقط؛ لا تغيير في سجلات التطبيق.
   - Evidence: typecheck/lint/format PASS على Node 24.20.0؛ HTML يحوي 100 مجال ومرجعًا موجودًا لكل صف. المتصفح الحي: النواة READY وDB HEALTHY، لكن `/reject-reports` غير متاح لغياب migrations النشر؛ release SHA/head UNVERIFIED؛ backup catalog فارغ وrestore NOT VERIFIED. اختبارات الوحدة/التكامل/E2E لم تُشغّل لهذه المهمة.

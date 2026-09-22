@@ -8,6 +8,7 @@ import type { BackupCatalogRepository } from '../../../src/modules/backup-recove
 import type { BackupRun } from '../../../src/modules/backup-recovery/domain/backup-record.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
+import type { SystemHealthReadinessDependencies } from '../../../src/modules/system-health/application/get-system-health.js';
 
 const viewerId = '01900000-0000-7000-8000-000000000201';
 
@@ -88,18 +89,44 @@ const fullViewer = actor(viewerId, [
   'PERM-HLTH-VIEW',
   'PERM-HLTH-DATABASE',
   'PERM-HLTH-STORAGE',
+  'PERM-HLTH-READINESS',
   'PERM-HLTH-AI',
   'PERM-BKP-VIEW',
 ]);
 
+function readiness(
+  overrides: Partial<{
+    appliedHead: string;
+    buildHead: string;
+    pending: readonly string[];
+    reportsAvailable: boolean;
+    reportReason: 'SCHEMA_NOT_READY' | 'CHECK_FAILED';
+  }> = {},
+): SystemHealthReadinessDependencies {
+  return {
+    async migrationStatus() {
+      return {
+        appliedHead: overrides.appliedHead ?? '0037',
+        buildHead: overrides.buildHead ?? '0037',
+        pending: overrides.pending ?? [],
+      };
+    },
+    async rejectReportsAvailability() {
+      return overrides.reportsAvailable === false
+        ? { available: false, reason: overrides.reportReason ?? 'SCHEMA_NOT_READY' }
+        : { available: true };
+    },
+  };
+}
+
 describe('system health view', () => {
   it('denies a viewer without the explicit health view permission', async () => {
-    const useCase = new GetSystemHealthUseCase(probes(), catalog());
+    const useCase = new GetSystemHealthUseCase(probes(), catalog(), readiness());
     await expect(useCase.execute({ actor: actor(viewerId, []) })).rejects.toThrowError(AppError);
   });
 
   it('denies an Admin whose role does not carry the explicit health view permission', async () => {
-    const useCase = new GetSystemHealthUseCase(probes(), catalog());
+    const useCase = new GetSystemHealthUseCase(probes(), catalog(), readiness());
     await expect(
       useCase.execute({
         actor: { id: viewerId, accountState: 'ACTIVE', roles: ['ADMIN'], permissions: [] },
@@ -108,10 +135,12 @@ describe('system health view', () => {
   });
 
   it('reports core READY with healthy critical dependencies and UNKNOWN backup posture when no backups exist', async () => {
-    const view = await new GetSystemHealthUseCase(probes(), catalog()).execute({
+    const view = await new GetSystemHealthUseCase(probes(), catalog(), readiness()).execute({
       actor: fullViewer,
     });
-    expect(view.coreStatus).toBe('READY');
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.rejectReportsReadiness).toBe('READY');
+    expect(view.qcReleaseReadiness).toBe('NOT_VERIFIED');
     expect(view.checks.find((item) => item.dependency === 'database')?.status).toBe('HEALTHY');
     expect(view.backupPosture?.postureStatus).toBe('UNKNOWN');
     expect(view.backupPosture?.restoreVerification).toBe('NOT_VERIFIED');
@@ -121,21 +150,24 @@ describe('system health view', () => {
     const view = await new GetSystemHealthUseCase(
       probes({ aiProvider: check('ai-provider', 'DEGRADED') }),
       catalog(),
+      readiness(),
     ).execute({
       actor: fullViewer,
     });
     expect(view.aiCapability).toBe('DEGRADED');
-    expect(view.coreStatus).toBe('READY');
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.rejectReportsReadiness).toBe('READY');
   });
 
   it('reports core NOT READY when PostgreSQL is unavailable', async () => {
     const view = await new GetSystemHealthUseCase(
       probes({ database: check('database', 'UNAVAILABLE') }),
       catalog(),
+      readiness(),
     ).execute({
       actor: fullViewer,
     });
-    expect(view.coreStatus).toBe('NOT_READY');
+    expect(view.dependencyReadiness).toBe('NOT_READY');
   });
 
   it('sanitizes a failing dependency probe and never leaks raw infrastructure errors', async () => {
@@ -146,6 +178,7 @@ describe('system health view', () => {
         ),
       }),
       catalog(),
+      readiness(),
     ).execute({ actor: fullViewer });
     const database = view.checks.find((item) => item.dependency === 'database');
     expect(database?.status).toBe('UNAVAILABLE');
@@ -155,7 +188,7 @@ describe('system health view', () => {
   });
 
   it('returns UNKNOWN backup posture instead of a green state when the catalog read fails', async () => {
-    const view = await new GetSystemHealthUseCase(probes(), catalog([], true)).execute({
+    const view = await new GetSystemHealthUseCase(probes(), catalog([], true), readiness()).execute({
       actor: fullViewer,
     });
     expect(view.backupPosture?.postureStatus).toBe('UNKNOWN');
@@ -163,9 +196,11 @@ describe('system health view', () => {
   });
 
   it('separates a succeeded backup job from an unverified restore in the backup posture', async () => {
-    const view = await new GetSystemHealthUseCase(probes(), catalog([backup('CREATED')])).execute({
-      actor: fullViewer,
-    });
+    const view = await new GetSystemHealthUseCase(
+      probes(),
+      catalog([backup('CREATED')]),
+      readiness(),
+    ).execute({ actor: fullViewer });
     expect(view.backupPosture?.lastBackupJobState).toBe('CREATED');
     expect(view.backupPosture?.artifactVerified).toBe(false);
     expect(view.backupPosture?.restoreVerification).toBe('NOT_VERIFIED');
@@ -173,10 +208,52 @@ describe('system health view', () => {
   });
 
   it('omits privileged detail and backup posture for viewers without the granular permissions', async () => {
-    const view = await new GetSystemHealthUseCase(probes(), catalog([backup('VERIFIED')])).execute({
-      actor: healthViewer,
-    });
+    const view = await new GetSystemHealthUseCase(
+      probes(),
+      catalog([backup('VERIFIED')]),
+      readiness(),
+    ).execute({ actor: healthViewer });
     expect(view.checks.find((item) => item.dependency === 'database')?.detail).toBeUndefined();
     expect(view.backupPosture).toBeUndefined();
+  });
+
+  it('blocks service and release readiness when the required workflow and migration head are old', async () => {
+    const view = await new GetSystemHealthUseCase(
+      probes(),
+      catalog(),
+      readiness({
+        appliedHead: '0018',
+        buildHead: '0037',
+        pending: Array.from({ length: 19 }, (_, index) => String(index + 19).padStart(4, '0')),
+        reportsAvailable: false,
+      }),
+    ).execute({ actor: fullViewer });
+
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.rejectReportsReadiness).toBe('NOT_READY');
+    expect(view.qcReleaseReadiness).toBe('BLOCKED');
+    expect(view.checks.find((item) => item.dependency === 'reject-reports')).toMatchObject({
+      status: 'UNAVAILABLE',
+      detail: 'SCHEMA_NOT_READY',
+    });
+    expect(view.checks.find((item) => item.dependency === 'migration-schema')).toMatchObject({
+      status: 'DEGRADED',
+      detail: '0018 applied; 0037 shipped; 19 pending',
+    });
+  });
+
+  it('keeps a failed schema check UNKNOWN instead of claiming a migration gap', async () => {
+    const view = await new GetSystemHealthUseCase(
+      probes(),
+      catalog(),
+      readiness({ reportsAvailable: false, reportReason: 'CHECK_FAILED' }),
+    ).execute({ actor: fullViewer });
+
+    expect(view.rejectReportsReadiness).toBe('UNKNOWN');
+    expect(view.qcReleaseReadiness).toBe('BLOCKED');
+    expect(view.checks.find((item) => item.dependency === 'reject-reports')).toMatchObject({
+      status: 'UNKNOWN',
+      detail: 'CHECK_FAILED',
+    });
   });
 });

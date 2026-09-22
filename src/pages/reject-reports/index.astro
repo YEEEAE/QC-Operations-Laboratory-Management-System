@@ -26,6 +26,15 @@ const deps = rejectReportReadDependencies();
 // behaviour was a generic 500 inviting a retry for a permanent gap (P1-4).
 const availability = await deps.availability.execute({ actor });
 if (!availability.available) Astro.response.status = 503;
+const availabilityError = availability.reason === 'SCHEMA_NOT_READY'
+  ? {
+      title: 'Reject reports are blocked by an incomplete database schema',
+      description: 'The database is missing one or more tables required by Reject Reports. Review the pending migrations and the approved database migration runbook before applying them. Nothing was changed by this request.',
+    }
+  : {
+      title: 'Reject reports availability could not be verified',
+      description: 'The required schema check did not complete. No schema or record was changed by this request. Retry after an operator verifies database connectivity and the deployed schema.',
+    };
 const showSlips = tab !== 'daily';
 const showDaily = tab === 'all' || tab === 'daily' || tab === 'completed' || tab === 'awaiting';
 const emptyPage = { items: [], total: 0 } as const;
@@ -78,10 +87,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
 <AppLayout title="Reject Reports · QC Operations" locale="en" direction="ltr">
   {
     !availability.available ? (
-      <ErrorState
-        title="Reject reports are not available in this environment yet"
-        description="The database behind this deployment has not been provisioned for reject reports. Nothing was changed. An administrator must apply the pending release migrations before this register can be used."
-      />
+      <ErrorState title={availabilityError.title} description={availabilityError.description} />
     ) : (
       <>
   <section class="page-head">

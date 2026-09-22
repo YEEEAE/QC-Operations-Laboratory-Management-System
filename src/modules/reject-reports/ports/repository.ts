@@ -49,12 +49,13 @@ export interface RejectReportAnalytics {
  *
  * The module owns four tables added by migration `0026`. When a deployment's
  * database is behind the deployed build the register fails closed instead of
- * surfacing a database error, and the UI can say so honestly. No internal
- * schema detail is exposed beyond a stable reason code.
+ * surfacing a database error, and the UI can say so honestly. A failed probe
+ * is kept distinct from confirmed missing tables. No internal schema detail
+ * is exposed beyond a stable reason code.
  */
 export interface RejectReportAvailability {
   available: boolean;
-  reason?: 'SCHEMA_NOT_READY';
+  reason?: 'SCHEMA_NOT_READY' | 'CHECK_FAILED';
 }
 
 export interface RejectReportRepository {

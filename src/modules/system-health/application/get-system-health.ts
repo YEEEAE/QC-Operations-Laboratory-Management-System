@@ -9,8 +9,20 @@ import {
 import type { BackupCatalogRepository } from '../../backup-recovery/ports/repository.js';
 import type { DependencyHealth, HealthStatus, SystemHealthProbes } from '../ports/health-probes.js';
 import type { ConfiguredReleaseIdentity } from '../../../config/release.js';
+import type { RejectReportAvailability } from '../../reject-reports/ports/repository.js';
 
 export type CoreSystemStatus = 'READY' | 'NOT_READY';
+export type WorkflowReadiness = 'READY' | 'NOT_READY' | 'UNKNOWN';
+export type QCReleaseReadiness = 'BLOCKED' | 'NOT_VERIFIED';
+
+export interface SystemHealthReadinessDependencies {
+  migrationStatus: () => Promise<{
+    appliedHead: string;
+    buildHead: string;
+    pending: readonly string[];
+  }>;
+  rejectReportsAvailability: () => Promise<RejectReportAvailability>;
+}
 
 export interface SystemHealthCheck {
   dependency: string;
@@ -28,7 +40,12 @@ export interface SystemHealthBackupPosture {
 }
 
 export interface SystemHealthView {
-  coreStatus: CoreSystemStatus;
+  /** Application and PostgreSQL connectivity only; excludes business schemas. */
+  dependencyReadiness: CoreSystemStatus;
+  /** Mirrors the same repository probe used by /reject-reports. */
+  rejectReportsReadiness: WorkflowReadiness;
+  /** This view lacks CI/UAT/recovery evidence and never grants release approval. */
+  qcReleaseReadiness: QCReleaseReadiness;
   aiCapability: HealthStatus;
   checks: readonly SystemHealthCheck[];
   backupPosture?: SystemHealthBackupPosture;
@@ -63,6 +80,7 @@ export class GetSystemHealthUseCase {
   constructor(
     private readonly probes: SystemHealthProbes,
     private readonly catalog: BackupCatalogRepository,
+    private readonly readiness: SystemHealthReadinessDependencies,
     private readonly release: ConfiguredReleaseIdentity = { status: 'UNVERIFIED' },
     private readonly now = () => new Date(),
   ) {}
@@ -97,13 +115,62 @@ export class GetSystemHealthUseCase {
       }),
     );
 
+    const [migrationResult, rejectReportsResult] = await Promise.all([
+      this.readiness
+        .migrationStatus()
+        .then((result) => ({ ok: true as const, result }))
+        .catch(() => ({ ok: false as const })),
+      this.readiness
+        .rejectReportsAvailability()
+        .then((result) => ({ ok: true as const, result }))
+        .catch(() => ({ ok: false as const })),
+    ]);
+
     const byStatus = new Map<string, DependencyHealth>(
       raw.map((item) => [item.gate.dependency, item.health]),
     );
     const database = byStatus.get('database');
     const application = byStatus.get('application');
-    const coreStatus: CoreSystemStatus =
+    const dependencyReadiness: CoreSystemStatus =
       application?.status === 'HEALTHY' && database?.status === 'HEALTHY' ? 'READY' : 'NOT_READY';
+
+    const rejectReportsHealth: DependencyHealth = !rejectReportsResult.ok
+      ? { dependency: 'reject-reports', status: 'UNKNOWN', checkedAt: generatedAt }
+      : rejectReportsResult.result.available
+        ? { dependency: 'reject-reports', status: 'HEALTHY', checkedAt: generatedAt }
+        : {
+            dependency: 'reject-reports',
+            status: rejectReportsResult.result.reason === 'CHECK_FAILED' ? 'UNKNOWN' : 'UNAVAILABLE',
+            checkedAt: generatedAt,
+            detail: rejectReportsResult.result.reason ?? 'SCHEMA_NOT_READY',
+          };
+
+    const migrationStatus = !migrationResult.ok
+      ? { dependency: 'migration-schema', status: 'UNKNOWN' as const, checkedAt: generatedAt }
+      : {
+          dependency: 'migration-schema',
+          status:
+            migrationResult.result.pending.length === 0 &&
+            migrationResult.result.appliedHead === migrationResult.result.buildHead
+              ? ('HEALTHY' as const)
+              : ('DEGRADED' as const),
+          checkedAt: generatedAt,
+          detail: `${migrationResult.result.appliedHead} applied; ${migrationResult.result.buildHead} shipped; ${migrationResult.result.pending.length} pending`,
+        };
+
+    const rejectReportsReadiness: WorkflowReadiness =
+      rejectReportsHealth.status === 'HEALTHY'
+        ? 'READY'
+        : rejectReportsHealth.status === 'UNKNOWN'
+          ? 'UNKNOWN'
+          : 'NOT_READY';
+
+    const qcReleaseReadiness: QCReleaseReadiness =
+      rejectReportsReadiness !== 'READY' ||
+      !migrationResult.ok ||
+      migrationStatus.status !== 'HEALTHY'
+        ? 'BLOCKED'
+        : 'NOT_VERIFIED';
 
     const has = (permission: PermissionCode) =>
       input.actor.permissions.some((grant) => grant.active !== false && grant.code === permission);
@@ -117,9 +184,24 @@ export class GetSystemHealthUseCase {
         ...(includeDetail ? { detail: health.detail } : {}),
       };
     });
+    const readinessDetailVisible = has('PERM-HLTH-READINESS');
+    checks.push({
+      dependency: rejectReportsHealth.dependency,
+      status: rejectReportsHealth.status,
+      ...(readinessDetailVisible && rejectReportsHealth.detail
+        ? { detail: rejectReportsHealth.detail }
+        : {}),
+    });
+    checks.push({
+      dependency: migrationStatus.dependency,
+      status: migrationStatus.status,
+      ...(readinessDetailVisible && migrationStatus.detail ? { detail: migrationStatus.detail } : {}),
+    });
 
     const view: SystemHealthView = {
-      coreStatus,
+      dependencyReadiness,
+      rejectReportsReadiness,
+      qcReleaseReadiness,
       aiCapability: byStatus.get('ai-provider')?.status ?? 'UNKNOWN',
       checks,
       generatedAt,

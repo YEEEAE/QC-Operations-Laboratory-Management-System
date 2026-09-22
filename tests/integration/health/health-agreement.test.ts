@@ -56,9 +56,18 @@ async function systemHealthOutcome() {
   const view = await new GetSystemHealthUseCase(
     new PostgresSystemHealthProbes(),
     emptyCatalog,
+    {
+      async migrationStatus() {
+        return { appliedHead: '0037', buildHead: '0037', pending: [] };
+      },
+      async rejectReportsAvailability() {
+        return { available: true };
+      },
+    },
   ).execute({ actor: viewer });
   return {
-    coreStatus: view.coreStatus,
+    dependencyReadiness: view.dependencyReadiness,
+    rejectReportsReadiness: view.rejectReportsReadiness,
     database: view.checks.find((item) => item.dependency === 'database')?.status,
     serialized: JSON.stringify(view),
   };
@@ -80,7 +89,8 @@ describe('health surface agreement (F-01 integration)', () => {
     const health = await systemHealthOutcome();
 
     expect(readiness).toEqual({ status: 200, body: { status: 'healthy' } });
-    expect(health.coreStatus).toBe('READY');
+    expect(health.dependencyReadiness).toBe('READY');
+    expect(health.rejectReportsReadiness).toBe('READY');
     expect(health.database).toBe('HEALTHY');
   });
 
@@ -93,7 +103,7 @@ describe('health surface agreement (F-01 integration)', () => {
     const health = await systemHealthOutcome();
 
     expect(readiness).toEqual({ status: 503, body: { status: 'unhealthy' } });
-    expect(health.coreStatus).toBe('NOT_READY');
+    expect(health.dependencyReadiness).toBe('NOT_READY');
     expect(health.database).toBe('UNAVAILABLE');
     expect(health.serialized).not.toContain('integration_secret');
     expect(health.serialized).not.toContain('db.internal');
@@ -116,7 +126,7 @@ describe('health surface agreement (F-01 integration)', () => {
     // connection attempt, so the mocked success above must not leak through.
     expect(connectMock).not.toHaveBeenCalled();
     expect(readiness).toEqual({ status: 503, body: { status: 'unhealthy' } });
-    expect(health.coreStatus).toBe('NOT_READY');
+    expect(health.dependencyReadiness).toBe('NOT_READY');
     expect(health.database).toBe('UNAVAILABLE');
     expect(health.serialized).not.toContain('integration_secret');
     expect(health.serialized).not.toContain('db.internal');

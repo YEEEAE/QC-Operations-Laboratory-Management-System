@@ -57,6 +57,15 @@ const emptyCatalog: BackupCatalogRepository = {
   },
 };
 
+const readyWorkflow = {
+  async migrationStatus() {
+    return { appliedHead: '0037', buildHead: '0037', pending: [] };
+  },
+  async rejectReportsAvailability() {
+    return { available: true as const };
+  },
+};
+
 function mockClientSuccess() {
   connectMock.mockResolvedValue(undefined);
   queryMock.mockResolvedValue({ rows: [{ '?column?': 1 }] });
@@ -84,13 +93,15 @@ describe('canonical database readiness agreement (F-01)', () => {
     const view = await new GetSystemHealthUseCase(
       new PostgresSystemHealthProbes(),
       emptyCatalog,
+      readyWorkflow,
     ).execute({ actor: viewer });
 
     expect(await readiness.isReady()).toBe(true);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: 'healthy' });
     expect(view.checks.find((item) => item.dependency === 'database')?.status).toBe('HEALTHY');
-    expect(view.coreStatus).toBe('READY');
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.rejectReportsReadiness).toBe('READY');
     // Canonical TLS: no provider sslmode means the driver must verify the
     // provider certificate instead of silently skipping TLS. Three canonical
     // checks run above (readiness response, explicit isReady, health view).
@@ -112,6 +123,7 @@ describe('canonical database readiness agreement (F-01)', () => {
     const view = await new GetSystemHealthUseCase(
       new PostgresSystemHealthProbes(),
       emptyCatalog,
+      readyWorkflow,
     ).execute({ actor: viewer });
     const serialized = JSON.stringify({
       readiness: await (await createReadinessResponse(new PostgresReadinessProbe())).json(),
@@ -122,7 +134,7 @@ describe('canonical database readiness agreement (F-01)', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ status: 'unhealthy' });
     expect(view.checks.find((item) => item.dependency === 'database')?.status).toBe('UNAVAILABLE');
-    expect(view.coreStatus).toBe('NOT_READY');
+    expect(view.dependencyReadiness).toBe('NOT_READY');
     expect(serialized).not.toContain('probe_secret');
     expect(serialized).not.toContain('db.internal');
     expect(serialized).not.toContain('ECONNREFUSED');
@@ -151,6 +163,7 @@ describe('canonical database readiness agreement (F-01)', () => {
       const view = await new GetSystemHealthUseCase(
         new PostgresSystemHealthProbes(),
         emptyCatalog,
+        readyWorkflow,
       ).execute({ actor: viewer });
       const serialized = JSON.stringify({ readiness: readinessBody, view });
 
@@ -161,7 +174,7 @@ describe('canonical database readiness agreement (F-01)', () => {
       expect(view.checks.find((item) => item.dependency === 'database')?.status).toBe(
         'UNAVAILABLE',
       );
-      expect(view.coreStatus).toBe('NOT_READY');
+      expect(view.dependencyReadiness).toBe('NOT_READY');
       expect(connectMock).not.toHaveBeenCalled();
       expect(serialized).not.toContain('probe_secret');
       expect(serialized).not.toContain('db.internal');

@@ -202,9 +202,9 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         ? { available: true }
         : { available: false, reason: 'SCHEMA_NOT_READY' };
     } catch {
-      // A database that cannot answer the probe is unavailable too; the caller
-      // renders the same fail-closed state rather than a stack trace.
-      return { available: false, reason: 'SCHEMA_NOT_READY' };
+      // A failed query is not evidence that the schema is old. Keep it
+      // fail-closed while reporting a distinct, sanitized check failure.
+      return { available: false, reason: 'CHECK_FAILED' };
     }
   }
 

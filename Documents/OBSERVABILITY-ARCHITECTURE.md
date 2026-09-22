@@ -1038,7 +1038,16 @@ Critical checks may include:
 PostgreSQL connectivity
 required runtime configuration
 critical initialization
+the schema capability probes used by required application workflows
 ```
+
+Liveness is process-only. Readiness is dependency and required-workflow
+availability; it does not claim that a release has passed CI, UAT, recovery,
+security, or promotion gates. A missing required workflow schema means the
+instance is not ready to serve that workflow even if PostgreSQL itself is
+reachable. The authenticated System Health view reports database dependency
+readiness, required workflow availability, migration drift, and release
+evidence as separate facts.
 
 ---
 
@@ -1633,12 +1642,19 @@ PostgreSQL unavailable
 → not ready
 ```
 
+Required workflow schema test:
+
+```text
+PostgreSQL reachable + required workflow schema unavailable
+→ not ready
+```
+
 Optional provider test:
 
 ```text
 AI unavailable
 → degraded AI
-→ core readiness may remain healthy
+→ required workflow readiness is unchanged
 ```
 
 ---

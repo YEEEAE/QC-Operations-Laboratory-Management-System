@@ -1,5 +1,6 @@
 import { getDatabase } from '../../../shared/database/database.js';
 import { PostgresBackupCatalogRepository } from '../../backup-recovery/infrastructure/postgres-repository.js';
+import { PostgresRejectReportRepository } from '../../reject-reports/infrastructure/postgres-repository.js';
 import { PostgresSystemHealthProbes } from '../infrastructure/postgres-health-probes.js';
 import {
   createPostgresAuditReadiness,
@@ -12,10 +13,15 @@ import { getRuntimeConfig } from '../../../config/runtime.js';
 
 export function systemHealthReadDependencies() {
   const database = getDatabase();
+  const rejectReports = new PostgresRejectReportRepository(database);
   return {
     health: new GetSystemHealthUseCase(
       new PostgresSystemHealthProbes(database),
       new PostgresBackupCatalogRepository(database),
+      {
+        migrationStatus: createPostgresMigrationStatus(database),
+        rejectReportsAvailability: () => rejectReports.availability(),
+      },
       getRuntimeConfig().release,
     ),
   };
