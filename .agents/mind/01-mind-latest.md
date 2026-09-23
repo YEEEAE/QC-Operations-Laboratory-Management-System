@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — RELEASE-GATE-RECONCILIATION / exact-SHA readiness review**
+  - Changed: أُنتج قرار بوابات للمرشح `5d591afc29c04d66f1c0a80b9cd24d5accb71527`؛ NO-GO. تأكد غياب مسار ingest موثوق لـCI/security/database/E2E، وبقي signer/scope لـUAT قرار مالك.
+  - Evidence: `release:evidence:check` FAIL على Node `24.20.0`؛ run context والتقارير على SHAs/run IDs أخرى، unit فيها 9 إخفاقات تاريخية، E2E فيه إخفاق، وrelease identity مفقود. GitHub status checks فارغة؛ reconciliation guard PASS (80 domains). لا اختبارات أُجريت.
+  - State: PARTIAL — `audit/2026-09-23/release-gate-reconciliation-5d591af.md`; blocker owners/actions therein. No deploy/promotion/RELEASED.
+
 - **2026-09-23 — P14 / AI advisory governance and offline evaluation**
   - Changed: expanded the synthetic evaluation to dataset 3.0.0 with per-category error reporting; mismatched provider citations now refuse; UI shows source limits, abstention reason, and human handoff; documented drift monitoring and owner-gated activation.
   - Evidence: focused AI eval/security 41/41 PASS and full AI unit/integration suites 80/80 on Node 24.20.0; per-category error 0%, source SHA and evaluated diff fingerprint recorded in `audit/100-percent/ai-evals/results-2026-09-23.json`. No provider calls or business writes.
