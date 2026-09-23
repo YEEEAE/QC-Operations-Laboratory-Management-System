@@ -11,6 +11,10 @@ describe('journey handoff presentation contract', () => {
     const panel = read('src/ui/components/workflow/JourneyContextPanel.astro');
     for (const label of [
       'Current state',
+      'Record owner',
+      'Evidence recorded',
+      'Evidence required',
+      'Not supplied by record source',
       'Next action',
       'Next owner',
       'Why unavailable',
@@ -48,6 +52,16 @@ describe('journey handoff presentation contract', () => {
     expect(panel).toMatch(/item\.met \? 'Met/);
   });
 
+  it('separates the owning domain from the assigned record owner and names missing source fields', () => {
+    const panel = read('src/ui/components/workflow/JourneyContextPanel.astro');
+    expect(panel).toContain('Owning domain: {ownerDomain}');
+    expect(panel).toContain("recordOwner ?? 'Not supplied by record source'");
+    expect(panel).toContain(
+      "requiredEvidence ?? 'Required-evidence list not supplied by record source'",
+    );
+    expect(panel).not.toContain('Owner: {ownerDomain}');
+  });
+
   it('wires the handoff panel to every requested remaining workspace', () => {
     const pages = [
       'src/pages/documents/[documentId]/versions/[versionId]/index.astro',
@@ -63,5 +77,45 @@ describe('journey handoff presentation contract', () => {
     expect(read('src/pages/change-requests/[changeRequestId]/index.astro')).toContain(
       'HandoffTimeline',
     );
+  });
+
+  it('links the dashboard to valid HOLD, review, and PASS-not-released filters', () => {
+    const dashboard = read('src/pages/dashboard/index.astro');
+    const receivingFilter = read(
+      'src/modules/quarantine/receiving/application/receiving-filters.ts',
+    );
+    const receivingStates = read('src/modules/quarantine/receiving/domain/receiving-state.ts');
+    const receivingStatus = read('src/modules/quarantine/receiving/domain/receiving-status.ts');
+    const inspectionPage = read('src/pages/quarantine/inspections/index.astro');
+    const labPage = read('src/pages/laboratory/tests/index.astro');
+
+    expect(receivingStates).toContain("'HOLD'");
+    expect(receivingStatus).toContain("'PASS'");
+    expect(receivingStatus).toContain("'NOT_RELEASED'");
+    expect(receivingFilter).toContain("params.get('inspectionResult')");
+    expect(receivingFilter).toContain("params.get('releaseState')");
+    expect(inspectionPage).toContain("'SUBMITTED'");
+    expect(labPage).toContain("'SUBMITTED'");
+    expect(dashboard).toContain('/quarantine/receiving?state=HOLD');
+    expect(dashboard).toContain('/quarantine/inspections?state=SUBMITTED');
+    expect(dashboard).toContain('/laboratory/tests?state=SUBMITTED');
+    expect(dashboard).toContain(
+      '/quarantine/receiving?inspectionResult=PASS&amp;releaseState=NOT_RELEASED',
+    );
+    expect(dashboard).toContain('PASS and Released are separate');
+  });
+
+  it('retains receiving and lab inputs after rejected or unavailable actions', () => {
+    const receiving = read('src/pages/quarantine/receiving/[receivingId].astro');
+    const labExecution = read('src/pages/laboratory/tests/[labTestId]/execute.astro');
+    const labReview = read('src/pages/laboratory/tests/[labTestId]/review.astro');
+
+    expect(receiving).toContain('retainedValues[name] = value');
+    expect(receiving).toContain("retained('qty', String(item.qty))");
+    expect(receiving).toContain("retained('reason', '', 'correct')");
+    expect(labExecution).toContain('Your entries are kept on this page');
+    expect(labExecution).toContain('Observations were not saved');
+    expect(labReview).not.toContain('form.reset()');
+    expect(labExecution).toContain('the official result is returned by the server');
   });
 });

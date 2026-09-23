@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-**State: PARTIAL.** Source review and synthetic-actor use-case tests were run. Real database-backed actors and HTTP writes were not tested: `QC_UAT_DATABASE_URL` and `QC_TEST_DATABASE_URL` are unset, Docker has no running daemon, and the local PostgreSQL 18 `initdb` attempt failed because the host denies shared-memory segments. The owner RBAC decision prohibits mutating production accounts or data. No production request or write was made.
+**State: PARTIAL.** Docker/Testcontainers was available for isolated verification after startup. PostgreSQL-backed integration and an authenticated disposable HTTP E2E run completed; no production URL, account, request, or write was used. The authenticated E2E report is `FAIL` overall because accessibility checks failed (see below), so it is not a clean suite pass. Real authenticated HTTP write authorization on an existing persisted target, in-flight permission revocation, and a true concurrent business write remain unverified.
 
 `pageAccessDecision` is a page visibility decision only. It does not grant a mutation. `policy-registry` defines permission/action/entity/state tuples; application use cases additionally check the permission grant, scope, current version, business conditions, SoD, and ceremonies as applicable.
 
@@ -10,20 +10,21 @@
 
 | Server-derived persona | Ordinary page/read baseline | High-impact write baseline | Evidence from this run |
 |---|---|---|---|
-| Employee (`EMPLOYEE`) | Allow on ordinary operational pages | Create/data-entry only where the explicit domain grant and business rules allow; deny controlled approval, release, signing, and administrative writes | Synthetic actor contract PASS; no database actor/HTTP write |
-| Supervisor (`SUPERVISOR`) | Allow | P-05 actions only with exact permission/scope/state/version/SoD and required ceremony; P-04 CAPA closure only with its explicit Supervisor grant and full ceremony; P-06 template lifecycle under its specific rules | Synthetic use-case contract PASS; no database actor/HTTP write |
-| Manager/QCM (`MANAGER`) | Allow | P-05 actions only with exact checks; final approval/signature at the approved stage; deny P-04 CAPA closure and inspection/lab stage-1 approval | Synthetic contract PASS; no database actor/HTTP write |
-| Admin (`ADMIN`) | Allow on ordinary pages | Admin permissions do not confer QC approval or receiving release; P-04/P-05/P-06 authority is denied to Admin alone | Synthetic negative controls PASS; no database actor/HTTP write |
-| Unnamed `SYSTEM_OWNER` | Allow on ordinary pages; owner-only health/control-center denied | No named-owner exception; role label alone does not qualify for owner-only paths or P-05/P-06 owner exception | Synthetic negative controls PASS; no database actor/HTTP write |
-| Named `yazeed` + active `SYSTEM_OWNER` | Allow | Only explicit named-owner use cases; required permission, scope/state/version/SoD and ceremonies still apply; no direct history/audit rewrite | Synthetic positive controls PASS; no live account mutation or HTTP write |
+| Employee (`EMPLOYEE`) | Allow on intended operational read pages | Create/data-entry only where explicit domain grant and business rules allow; deny controlled approval/release/signing/admin writes | Disposable authenticated HTTP read PASS; write denial probe used invalid UUID and is INCONCLUSIVE. Use-case tests PASS |
+| Supervisor (`SUPERVISOR`) | Allow on intended operational read pages | P-05 exact permission/scope/state/version/SoD/ceremony; P-04 explicit Supervisor grant and ceremony; P-06 lifecycle rules | Disposable authenticated HTTP read PASS; write denial probe used invalid UUID and is INCONCLUSIVE. Use-case tests PASS |
+| Manager/QCM (`MANAGER`) | Allow on intended operational read pages | P-05 exact checks and approved final stage; deny P-04 closure and stage-1 approval | Disposable authenticated HTTP read PASS; write denial probe used invalid UUID and is INCONCLUSIVE. Use-case tests PASS |
+| Admin (`ADMIN`) | Allow on intended operational read pages | Admin grants do not confer QC approval/release; P-04/P-05/P-06 authority denied to Admin alone | Disposable authenticated HTTP read PASS; write denial probe used invalid UUID and is INCONCLUSIVE. Use-case tests PASS |
+| Unnamed `SYSTEM_OWNER` | No supported actor should be assignable; owner-only exception denied | Role label alone never qualifies for named-owner paths | PostgreSQL persistence test PASS: assigning SYSTEM_OWNER to a persisted non-yazeed user returns `AUTHZ_DENIED`; page/action actor exercise not run because the supported write path refuses to create this actor |
+| Named `yazeed` + active `SYSTEM_OWNER` | Allow on intended operational read pages, including owner-only health | Only explicitly named-owner use cases; remaining scope/state/version/SoD/ceremonies apply | Disposable HTTP persona `yazeed` read PASS; it is a fresh test DB owner, not the production account. Write denial probe used invalid UUID and is INCONCLUSIVE |
 
-The page test covers all six identities for ordinary routes and checks owner-only route denial/allow plus inactive-account denial. These are `ActorContext` unit cases, not proof of database identity resolution.
+The authenticated browser scenario passed for the seeded disposable Employee, Supervisor, Manager, Admin, and `verify-least` identities on their intended pages; the `yazeed` persona passed `/dashboard`, `/admin`, and `/system/health`. The disposable least-privilege actor reads additional operational surfaces. These are real sessions resolved by the server against a temporary PostgreSQL database. They do not cover an HTTP mutation against an existing valid record. The unnamed-owner database negative control proves the persisted grant boundary, but is not an HTTP page test.
 
 ## Positive and negative controls
 
 | Control | Expected server result | Evidence/result |
 |---|---|---|
-| Active Employee/Supervisor/Manager/Admin/unnamed owner/named owner → ordinary page | `ALLOWED` | `tests/unit/routing/page-access.test.ts`: PASS (synthetic actors) |
+| Active Employee/Supervisor/Manager/Admin/named owner → intended pages | HTTP 2xx | `tests/e2e/authenticated-closure.spec.ts` persona/read scenarios: PASS (disposable PostgreSQL-backed sessions) |
+| Unnamed owner candidate account → assign `SYSTEM_OWNER` | `AUTHZ_DENIED` | `tests/integration/identity/identity-rbac-postgres.test.ts`: PASS, persisted non-yazeed user and real PostgreSQL constraint/repository path |
 | Unauthenticated or inactive actor → protected page | `AUTHENTICATION_REQUIRED` | `tests/unit/routing/page-access.test.ts`: PASS |
 | Unnamed `SYSTEM_OWNER` → `/system/health` | `YAZEED_ONLY` | `tests/unit/routing/page-access.test.ts`: PASS |
 | Active named `yazeed` owner → `/system/health` | `ALLOWED` | `tests/unit/routing/page-access.test.ts`: PASS |
@@ -34,10 +35,13 @@ The page test covers all six identities for ordinary routes and checks owner-onl
 | P-06 lifecycle with valid state/reason/version/ceremony | Only defined lifecycle edges accepted | `tests/unit/quarantine/template-state.test.ts` and `tests/unit/quarantine/*`: PASS |
 | Two-stage lab approval and final signature | Stage 1 and final authority separated; final ceremony required | `tests/unit/laboratory/*` and `tests/unit/authorization/*`: PASS |
 | Expiry/logout/revoked sessions | Subsequent resolution rejected; no protected actor is resolved | `tests/unit/identity/session-service.test.ts` and `session-recovery.test.ts`: PASS |
-| Existing/authorized record compared with unknown identifier | Must use a valid persisted record; `BAD_REQUEST` and `RESOURCE_NOT_FOUND` are inconclusive | NOT RUN against PostgreSQL or HTTP; no result counted |
-| Concurrent write / stale version / concurrent permission revoke while request is in flight | At most one current-version write; revocation timing must be observed at the server transaction boundary | PostgreSQL integration BLOCKED; not counted |
+| Employee/Supervisor/Manager/Admin/named owner → direct write against an existing allowed/denied record | Domain-specific success or `AUTHZ_DENIED`; a valid record must exist | NOT RUN. E2E probe used an invalid UUID and its 4xx is explicitly excluded as authorization evidence |
+| Existing/authorized record compared with unknown identifier | Must use a valid persisted record; `BAD_REQUEST` and `RESOURCE_NOT_FOUND` are inconclusive | NOT RUN for authenticated HTTP; no result counted |
+| Concurrent role/scope grants | One effective assignment and preserved audit | `tests/integration/identity/identity-rbac-postgres.test.ts`: PASS with simultaneous persisted writes |
+| Concurrent business write / stale version / permission revoke while a request is in flight | At most one current-version write; revocation timing observed at server transaction boundary | NOT RUN; no result counted |
+| Logout/session revoke/expiry | Subsequent request resolves no protected actor | Authenticated E2E logout PASS; PostgreSQL disable/reset/session-revoke integration PASS; exact HTTP expiry not tested |
 
-Focused synthetic-actor suite after the UX change: **24/24 files, 268/268 tests PASS** on Node `24.20.0`. PostgreSQL suite attempt: **3 suites failed during setup**, 1 suite passed; 19 cases skipped. No skipped/setup-failed case is counted as a permission result.
+Focused synthetic-actor suite after the UX change: **24/24 files, 268/268 tests PASS** on Node `24.20.0`. Docker PostgreSQL run: **4 suites, 21/21 tests PASS**. Playwright reported **15 passed, 21 failed, 1 skipped, 2 did not run**; the evidence wrapper also records its `RUN_CONFIG` check, yielding **16 PASS, 21 FAIL, 3 skipped/not-run**. Role/persona read and logout checks passed, but the accessibility run failed at a missing navigation landmark and subsequent missing saved auth storage state. The authenticated E2E evidence remains `FAIL`, not an overall pass. Failed/skipped cases are not counted as successful authorization results.
 
 ## Findings and changes
 
@@ -48,8 +52,8 @@ Focused synthetic-actor suite after the UX change: **24/24 files, 268/268 tests 
 
 ## Not verified / required to complete
 
-- Real persisted actors and direct authenticated HTTP reads/writes for the six personas.
-- Database-backed ACTIVE/disabled changes, scope changes, permission revocation during an in-flight request, concurrent write races, logout, and expiry against the current migration head.
+- Direct authenticated HTTP write results against valid persisted target records for each relevant persona.
+- Authenticated HTTP tests for permission/scope changes during an in-flight request, current-version business write races, and exact session expiry behavior.
 - A valid persisted target record for every negative control. No malformed-input rejection or missing-record rejection is treated as an authorization denial.
 
-Required environment: isolated PostgreSQL 18 UAT with six actor accounts, valid domain fixtures, and real actor credentials supplied through the established secret mechanism. Do not substitute production.
+Required next fixture: disposable PostgreSQL 18 with valid seeded domain targets (CAPA, inspection/release, template lifecycle and laboratory approval) so each HTTP mutation can prove that the target exists before interpreting a denial. Continue using generated disposable actor credentials; unnamed SYSTEM_OWNER must remain a denied role assignment, not a fabricated authorization grant. Do not substitute production.

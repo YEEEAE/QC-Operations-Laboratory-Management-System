@@ -1,13 +1,20 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — QC-WORKFLOW-REDESIGN / سياق رحلة QC والتسليمات**
+  - Changed: اللوحة المشتركة تفصل مجال العمل عن مالك السجل وتوضح نقص المصدر؛ أضيفت روابط HOLD/review/PASS-not-released، وحُفظت مدخلات Receiving/Lab عند الفشل.
+  - Evidence: focused unit 98/98 PASS؛ build PASS؛ typecheck 0 errors. UAT مع ستة مشاركين فعليين وقياس زمن المهام NOT RUN؛ مصادر evaluator والسياسات المعتمدة ما زالت مفتوحة.
+  - State: PARTIAL — لا تغييرات على mutations أو المخطط أو الموقع الحي.
+
 - **2026-09-23 — ATTACHMENT-SIGNATURE-DOC-AUDIT / lifecycle and traceability review**
   - Changed: added known-signature/text validation and stored-object size/type/hash checks; added document lifecycle and PG rollback fault-injection coverage.
   - Evidence: focused in-memory suites 31/31 PASS; PostgreSQL fault-injection NOT RUN (Docker daemon unavailable); typecheck has 2 existing `.mjs` declaration errors. Report: `audit/2026-09-23/attachment-signature-document-audit.md`.
   - State: PARTIAL — upload/retention authority, end-to-end route scope, database rollback evidence, and document effective-date policy remain open.
 
+- **2026-09-23 — Mind rollover (AUTHZ-SERVER-MATRIX):** نُقلت أقدم سجلات 2026-09-22 إلى أعلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقرارات والقيود.
+
 - **2026-09-23 — AUTHZ-SERVER-MATRIX**
   - Changed: توحيد UX لرفض الصلاحية/السجل غير المتاح.
-  - Evidence: unit 268/268 PASS؛ PG setup BLOCKED.
+  - Evidence: unit 268/268 PASS؛ Docker PG 21/21؛ disposable actor HTTP reads/logout PASS؛ authenticated E2E الإجمالي FAIL (15 passed، 21 accessibility failures، 1 skipped، 2 لم تبدأ). كتابات actor على سجل صالح وتبدل الصلاحية أثناء الطلب NOT RUN؛ لا دليل BAD_REQUEST/ID غير موجود احتُسب كرفض صلاحية.
   - State: PARTIAL — `audit/2026-09-23/authorization-server-matrix.md`.
 
 - **2026-09-23 — QC-100-FINAL-026-C / reconciled open QC and recovery decisions**
@@ -178,19 +185,6 @@
   - Evidence: typecheck/build/requirements:check/diff-check PASS؛ format FAIL 38؛ lint FAIL 2؛ architecture FAIL 17؛ unit FAIL 948/957 (9/7)؛ audit FAIL 30 (1 critical GHSA-26w7-cxv4-gfx2)؛ diagnose/parity FAIL (Node v22.22.3 خارج العقد، SERVICE_VERSION/RATE_LIMIT_LOGIN_* names only)؛ Docker-less PG suites BLOCKED؛ e2e evidence FAIL@f64960b ≠ HEAD؛ Render PG read-only public=0؛ GH runs failure. HTML مُتحقَّق متصفحًا: 80 صف/16 بطاقة/0 تكرار id/expand+copy يعمل.
   - State: DONE (تسليم وثائقي محلي) — بلا commit/push. `PASS ≠ RELEASED`.
   - Key files: `audit/QC-ULTIMATE-CURRENT-STATE-ANALYSIS-AND-ACTION-PLAN.html`.
-
-- **2026-09-22 — Mind rollover (QC-P44-REAUDIT):** تجاوز `01` الحد الصلب (123,474 بايت)؛ نُقلت أقدم سجلات Historical Ledger (012، تفاصيل 004 UAT، live re-verification 016، كتلة 2026-09-19 candidate-side، Historical DR/UAT، rollover-020) إلى أعلى `02-mind-mid.md` بعد التحقق من غياب محتواها، وحُذفت مكرّرات §17. بقيت invariants وقواعد القياس السلبية والقرارات السارية و§14 المشاكل المفتوحة. الحالة: DONE.
-
-- **2026-09-22 — QC-P44-REAUDIT / إعادة تدقيق الحالة الراهنة + خطة HTML محدَّثة (المرحلة 44)**
-  - Changed: تقرير عربي جديد `audit/2026-09-22-ULTIMATE-CURRENT-STATE-SYSTEM-REAUDIT-AR.md` (36 قسمًا) + خطة `audit/QC-Remaining-to-100-Percent-Prompts-Interactive-Phase-44-Refresh.html` (67 بطاقة، خط أساس f64960b، addendum للبرومبتات n≥45، حالات 019–038 صحيحة من Mind، إغلاق F-017 نصّيًا). المرشح المجمّد `f64960b0803e3b2493b96d926a90d0e8c713977a` (شجرة نظيفة، == origin/main)؛ دلتا من 653b58d: 31 commit / 373 ملفًا. إعادة قياس 80 مجالًا: مجموع 3661→3665 (45.8%→45.8%)، بوابات 0/19.
-  - Evidence: typecheck PASS 937/0؛ build PASS؛ requirements:check PASS domains=80؛ release identity `rel-e32e6c0872985579`؛ format FAIL 38؛ lint FAIL 2؛ architecture FAIL 17 (domain-import ×6)؛ unit FAIL 948/957 (9/7) type-floor 74>71؛ pnpm audit 30 (1 critical Astro AVIF RCE GHSA-26w7-cxv4-gfx2)؛ diagnose FAIL node-runtime+dotenv (SERVICE_VERSION/RATE_LIMIT_LOGIN_* names only)؛ Node v22.22.3 خارج العقد؛ container suites BLOCKED. صفر دلة عائلية: 006,012,024,039–042؛ handoff مفقود: 035-A,036-A. نتائج مدمجة: 8 P0 / 12 P1 / 4 P2 / 2 P3.
-  - State: DONE (تسليم وثائقي) — بلا commit/push. `PASS ≠ RELEASED`، NO-GO.
-  - Key files: `audit/2026-09-22-ULTIMATE-CURRENT-STATE-SYSTEM-REAUDIT-AR.md`, `audit/QC-Remaining-to-100-Percent-Prompts-Interactive-Phase-44-Refresh.html`.
-
-- **2026-09-22 — QC-100-FINAL-038 / laboratory ergonomics: measurement entry, context visibility, review comparison + research-ready usability definitions**
-  - Changed: `lab-presentation.ts` جديد (criteriaText حرفي من payload المعتمد، entryParameters، comparisonRows بمخرجات PASS/FAIL عبر القاعدة المعتمدة فقط أو REVIEWER_DECISION/NOT_RECORDED)؛ إعادة بناء `execute.astro` (شبكة قياس عينات×معاملات بقيم مسبقة، وحدات/معايير/dashboards دليل السياق المجمد، حارس تغييرات غير محفوظة) و`review.astro` (جدول مقارنة observed مقابل approved criteria مع شارات outcome وسلامة سكة القرار). اختبار `lab-presentation.test.ts` 9/9.
-  - Evidence: laboratory unit 57/57 PASS؛ astro check 0 أخطاء (937 ملفًا)؛ عقد POLICY/SCIENTIFIC SOURCE REQUIRED في review.astro محفوظ. E2E/a11y 003/006/040 وintegration 002/027 NOT RUN. تعريفات القياس والبروتوكولات وسجل الفجوات البحثية: `audit/2026-09-22/task-038-usability-measurement-and-research-protocols.md` — لا نتائج استخدام بشرية (مستبعدة بالتعليمات).
-  - State: DONE (تنفيذًا) / PARTIAL (تحققًا). `PASS ≠ RELEASED`، gates 0/19 بلا تغيير، بلا commit/push.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -489,8 +483,9 @@
 - exporter/dashboard/retention الرسمي والتغطية خارج البحث ما زالت pending.
 
 ### Journey/Handoffs
-- `JourneyContextPanel` و`HandoffTimeline` يعرضان current state/next action/owner/wait/dependency/evidence/audit links.
-- Receiving, Inspection Review, Lab Test, Calibration, Document Version, Approval, Change Request مرتبطة بالسياق المناسب.
+- `JourneyContextPanel` يفصل record owner عن owning domain، ويعرض مرجع السجل، السبب، الأدلة الموجودة والمطلوبة؛ الحقول الغائبة تظهر صراحة كمصدر غير مسجل.
+- لوحة dashboard تربط المرشحات المدعومة لـHOLD وinspection/lab submission وPASS + NOT_RELEASED؛ document review وNCR/CAPA ownership queues لا تزال غير متاحة كـread models.
+- `HandoffTimeline` يعرض أحداث التسليم؛ Receiving, Inspection Review, Lab Test, Calibration, Document Version, Approval, Change Request مرتبطة بالسياق المناسب.
 - approval decision لا يعني application success؛ notification delivery ليست business completion.
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
 

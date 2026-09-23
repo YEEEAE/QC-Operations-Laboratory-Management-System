@@ -14,6 +14,8 @@ interface Prerequisite {
 interface Props {
   ownerDomain: string;
   currentState: string;
+  recordReference?: string;
+  recordOwner?: string;
   nextAction?: string;
   nextActionHref?: string;
   nextOwner?: string;
@@ -29,6 +31,7 @@ interface Props {
   prerequisites?: readonly Prerequisite[];
   controlledContext?: string;
   evidenceSummary?: string;
+  requiredEvidence?: string;
   lastAction?: string;
   lastUpdated?: string;
   auditHref?: string;
@@ -38,6 +41,8 @@ interface Props {
 const {
   ownerDomain,
   currentState,
+  recordReference,
+  recordOwner,
   nextAction,
   nextActionHref,
   nextOwner,
@@ -51,6 +56,7 @@ const {
   prerequisites,
   controlledContext,
   evidenceSummary,
+  requiredEvidence,
   lastAction,
   lastUpdated,
   auditHref,
@@ -64,21 +70,23 @@ const {
       <p class="eyebrow">SERVICE HANDOFF</p>
       <h2 id="journey-context-title">Journey context</h2>
     </div>
-    <span class="owner">Owner: {ownerDomain}</span>
+    <span class="owner">Owning domain: {ownerDomain}</span>
   </div>
 
   <div class="journey-grid">
     <section class="journey-block state-block" aria-labelledby="journey-state-title">
       <h3 id="journey-state-title">Current state</h3>
+      <p><span class="label">Record</span>{recordReference ?? 'Not supplied by record source'}</p>
       <p class="state-value">{currentState}</p>
+      <p><span class="label">Record owner</span>{recordOwner ?? 'Not supplied by record source'}</p>
       {lastAction ? <p class="muted">Last committed action: {lastAction}</p> : null}
       {lastUpdated ? <p class="muted">Last updated: {lastUpdated}</p> : null}
     </section>
 
     <section class="journey-block" aria-labelledby="journey-next-title">
       <h3 id="journey-next-title">Next action</h3>
-      {nextAction ? nextActionHref ? <a class="next-link" href={nextActionHref}>{nextAction}</a> : <p class="next-action">{nextAction}</p> : <p class="muted">No action is available from this workspace.</p>}
-      {nextOwner ? <p><span class="label">Next owner</span>{nextOwner}</p> : null}
+      {nextAction ? nextActionHref ? <a class="next-link" href={nextActionHref}>{nextAction}</a> : <p class="next-action">{nextAction}</p> : <p class="muted">Next step: Not supplied by record source</p>}
+      <p><span class="label">Next owner / stage</span>{nextOwner ?? 'Not supplied by record source'}</p>
       {stageNote ? <p class="stage-note"><span class="label">Approval stage</span>{stageNote}</p> : null}
       {prerequisites?.length ? (
         <ul class="prereqs" aria-label="Prerequisites">
@@ -90,7 +98,7 @@ const {
         </ul>
       ) : null}
       <p class="mutation-note">Links on this panel only open workspaces. A mutation commits solely when the server accepts it; page visibility never grants authority.</p>
-      {whyUnavailable ? <p class="reason"><span class="label">Why unavailable</span>{whyUnavailable}</p> : null}
+      <p class="reason"><span class="label">Why unavailable</span>{whyUnavailable ?? 'No reason supplied by record source'}</p>
       {recoveryHref ? <a class="recovery-link" href={recoveryHref}>{recoveryLabel}</a> : null}
     </section>
 
@@ -104,7 +112,8 @@ const {
     <section class="journey-block" aria-labelledby="journey-evidence-title">
       <h3 id="journey-evidence-title">Evidence and trace</h3>
       {controlledContext ? <p><span class="label">Controlled context</span>{controlledContext}</p> : null}
-      {evidenceSummary ? <p><span class="label">Evidence</span>{evidenceSummary}</p> : null}
+      <p><span class="label">Evidence recorded</span>{evidenceSummary ?? 'Not supplied by record source'}</p>
+      <p><span class="label">Evidence required</span>{requiredEvidence ?? 'Required-evidence list not supplied by record source'}</p>
       {auditHref ? <a class="recovery-link" href={auditHref}>View audit history for this record</a> : null}
     </section>
   </div>

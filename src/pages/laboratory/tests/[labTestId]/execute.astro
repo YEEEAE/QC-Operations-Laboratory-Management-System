@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import JourneyContextPanel from '../../../../ui/components/workflow/JourneyContextPanel.astro';
 import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';
 import { entryParameters } from '../../../../modules/laboratory/application/lab-presentation.js';
 
@@ -36,6 +37,7 @@ const equipment = test.context.equipment;
 <AppLayout title={`Execute ${test.labTestNo}`}>
   <h1>Laboratory execution</h1>
   <p>{test.labTestNo} · {test.context.methodReference} · Version {test.version.toString()}</p>
+  <JourneyContextPanel ownerDomain="Laboratory" recordReference={`${test.labTestNo} · version ${test.version.toString()}`} currentState={test.state} nextAction={canEdit ? canSubmit ? 'Save observations or submit for review' : 'Save observations' : 'Read-only'} nextOwner={canEdit ? 'Laboratory executor' : undefined} whyUnavailable={!canEdit ? stateEditable ? 'permission: draft editing is not available to this account' : 'state: this record is not editable in its current state' : undefined} controlledContext={`${test.samples.length} sample(s) · ${test.context.methodReference} · version ${test.context.versionNo} · source ${test.context.sourceReference}`} evidenceSummary={`${test.measurements.length} raw measurement(s) · ${equipment.length} equipment/calibration usage snapshot(s)`} auditHref={`/audit?subjectType=LAB_TEST&subjectId=${encodeURIComponent(test.id)}`} relatedLinks={[{label:'Laboratory test record',href:`/laboratory/tests/${test.id}`,detail:'Read-only record overview'}]} />
   {
     !canEdit ? (
       <p role="status">
@@ -49,6 +51,7 @@ const equipment = test.context.equipment;
         <p>
           Raw values are validated on the server against the controlled method. Units and approved
           criteria below come from the frozen method context — enter each value in the unit shown.
+          The browser collects raw inputs only; the official result is returned by the server.
         </p>
         <h3>Samples in this record</h3>
         <ul class="samples">
@@ -149,6 +152,8 @@ const equipment = test.context.equipment;
     <h2>Frozen context</h2>
     <p>Method: {test.context.methodReference} · Template version {test.context.versionNo}</p>
     <p>Criteria source: {test.context.sourceReference}</p>
+    <p>Official result from server: <strong>{test.scientificResult ?? 'Not determined by the server yet'}</strong></p>
+    <p>Result source: {test.context.sourceReference || 'Not supplied by record source'}</p>
     <h3>Controlled documents</h3>
     {
       documents.length ? (
@@ -171,9 +176,13 @@ const equipment = test.context.equipment;
         <ul>
           {equipment.map((item) => (
             <li>
-              {String(item.equipmentSnapshot.equipmentNo ?? item.equipmentId)} · used at{' '}
-              {item.usedAt}
+              <strong>{String(item.equipmentSnapshot.equipmentNo ?? item.equipmentId)}</strong> · used at {item.usedAt}
               {item.usageRole ? ` · ${item.usageRole}` : ''}
+              <dl class="snapshot-facts">
+                <div><dt>Calibration record</dt><dd>{item.calibrationRecordId || 'Not supplied by source'}</dd></div>
+                <div><dt>Calibration snapshot at use</dt><dd><pre>{JSON.stringify(item.calibrationSnapshot, null, 2)}</pre></dd></div>
+                <div><dt>Equipment snapshot at use</dt><dd><pre>{JSON.stringify(item.equipmentSnapshot, null, 2)}</pre></dd></div>
+              </dl>
             </li>
           ))}
         </ul>
@@ -323,6 +332,7 @@ const equipment = test.context.equipment;
     font-size: 0.75rem;
     color: var(--text-muted);
   }
+  .snapshot-facts{display:grid;gap:.5rem;margin:.65rem 0}.snapshot-facts div{display:grid;grid-template-columns:minmax(10rem,auto) 1fr;gap:.4rem}.snapshot-facts dt{font-weight:700}.snapshot-facts dd{margin:0;min-width:0;overflow-wrap:anywhere}.snapshot-facts pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font:inherit;color:var(--text-muted)}
   .unit {
     font-weight: normal;
   }
