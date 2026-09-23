@@ -1,38 +1,30 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
-import { getDatabase } from '../../../shared/database/database.js';
-import { PostgresNcrRepository } from '../../../modules/quality/ncr/infrastructure/postgres-repository.js';
-import { PostgresCapaRepository } from '../../../modules/quality/capa/infrastructure/postgres-repository.js';
+import { ncrReadDependencies } from '../../../modules/quality/ncr/application/dependencies.js';
+import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
 import { listFindingsForActor } from '../../../modules/quality/findings/application/list-findings-for-actor.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { formatDateTime } from '../../../shared/copy/format.js';
-import type { Finding } from '../../../modules/quality/findings/domain/finding.js';
-import type { Capa } from '../../../modules/quality/capa/domain/capa.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 // F-05 baseline: a read failure renders the unavailable state, never a 500.
 const ncrId = Astro.params.ncrId ?? '';
 const ncr = /^[0-9a-f-]{36}$/i.test(ncrId)
-  ? await new Promise<ReturnType<typeof resolveNcr>>((resolve) => resolve(resolveNcr(ncrId, actor))).catch(() => undefined)
+  ? await ncrReadDependencies().get.execute({ id: ncrId, actor }).catch(() => undefined)
   : undefined;
-async function resolveNcr(id: string, a: NonNullable<typeof actor>) {
-  const repository = new PostgresNcrRepository(getDatabase());
-  return repository.get(id, a);
-}
 if (!ncr) return Astro.redirect('/404');
 // Related records are resolved server-side through each owning domain's own
 // scope-limited reads; this page never queries another domain's table directly
 // and holds no mutation authority over finding or CAPA state.
 const [sourceFinding, relatedCapas] = await Promise.all([
-  (async (): Promise<Finding | undefined> => {
+  (async () => {
     if (!ncr.findingId) return undefined;
-    const findings = await listFindingsForActor(actor).catch(() => [] as readonly Finding[]);
+    const findings = await listFindingsForActor(actor).catch(() => []);
     return findings.find((f) => f.id === ncr.findingId);
   })(),
-  (async (): Promise<readonly Capa[]> => {
-    const repository = new PostgresCapaRepository(getDatabase());
-    const all = await repository.list({ actor }).catch(() => [] as readonly Capa[]);
+  (async () => {
+    const all = await capaReadDependencies().list.execute({ actor }).catch(() => []);
     return all.filter((capa) => capa.ncrId === ncr.id);
   })(),
 ]);

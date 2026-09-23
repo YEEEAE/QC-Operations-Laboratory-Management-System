@@ -4,7 +4,10 @@ import { PostgresUserRepository } from '../../../identity/infrastructure/postgre
 import { PostgresCapaRepository } from '../infrastructure/postgres-repository.js';
 import { CloseCapaUseCase } from './close-capa.js';
 import { GetCapaUseCase } from './get-capa.js';
+import { ListCapaUseCase } from './list-capa.js';
 import { CAPA_CLOSE_ELIGIBLE_STATES } from '../domain/capa.js';
+import { PostgresNcrRepository } from '../../ncr/infrastructure/postgres-repository.js';
+import { ListRelatedNcrsForCapaUseCase } from './related-ncrs.js';
 
 export function capaActionDependencies() {
   const database = getDatabase();
@@ -24,8 +27,11 @@ export function capaActionDependencies() {
 }
 
 export function capaReadDependencies() {
+  const database = getDatabase();
   return {
-    get: new GetCapaUseCase(new PostgresCapaRepository(getDatabase())),
+    get: new GetCapaUseCase(new PostgresCapaRepository(database)),
+    list: new ListCapaUseCase(new PostgresCapaRepository(database)),
+    listRelatedNcrs: new ListRelatedNcrsForCapaUseCase(new PostgresNcrRepository(database)),
     canClose: (
       actor: {
         accountState: string;

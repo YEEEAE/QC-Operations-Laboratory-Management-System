@@ -10,9 +10,8 @@ import {
 import {
   RECEIVING_INSPECTION_STATUSES,
   RECEIVING_QUARANTINE_STATUSES,
-} from '../../../modules/quarantine/receiving/domain/receiving-status.js';
-import { RECEIVING_WORKFLOW_STATES, INSPECTION_RESULTS } from '../../../modules/quarantine/receiving/domain/receiving-state.js';
-import { deriveQuarantineStatus } from '../../../modules/quarantine/receiving/domain/receiving-status.js';
+} from '../../../modules/quarantine/receiving/application/presentation.js';
+import { RECEIVING_WORKFLOW_STATES, INSPECTION_RESULTS, deriveQuarantineStatus } from '../../../modules/quarantine/receiving/application/presentation.js';
 import { stateLabel, releaseStateLabel, copy } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving');

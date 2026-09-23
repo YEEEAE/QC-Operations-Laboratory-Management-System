@@ -41,9 +41,6 @@
 ----
 
 
-## P10 — رصد فشل قاعدة البيانات والخدمات التابعة
-
-> راجع `src/shared/database/pool.ts` و`src/shared/observability/` و`src/shared/health/` و`src/pages/system/health.astro` و`Documents/OBSERVABILITY-ARCHITECTURE.md`. معالج `sharedPool.on('error')` يصنع `AppError` ثم يهمله؛ صِل فشل الاتصال غير المتزامن إلى telemetry/log آمن مع correlation، دون URL أو استعلام أو بيانات صفوف. فرّق في العرض والتنبيه بين liveness وreadiness وcapability degradation: storage/AI غير متاح، outbox pending أو backlog متنامٍ، backup catalog فارغ، restore غير مثبت. استخرج العتبات والجهة المستقبلة للتنبيه من قرار معتمد؛ إن غابت، وفّر المقاييس والتشخيص مع `NOT CONFIGURED` واضح. معايير القبول: حقن فشل pool وخدمة تابعة يظهر إشارة قابلة للبحث ولا يخرج سرًا؛ الصحة لا تعلن اكتمال QC أو جاهزية إصدار من probe DB وحده؛ اختبار الضوضاء/تكرار التنبيه وفق السياسة إن وجدت.
 
 ## P11 — الجداول والطوابير والبحث في سياق الأدوار
 

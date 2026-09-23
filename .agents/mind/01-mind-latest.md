@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — ARCH-DELIVERY-BOUNDARY / نقل قراءات العرض إلى application**
+  - Changed: قراءات NCR/CAPA وربطهما، وإعداد توفر AI، ومفردات receiving/UAT أصبحت تمر عبر واجهات application؛ لا تغييرات صلاحيات أو نتائج قراءة مقصودة.
+  - Evidence: Node 24.20.0؛ `pnpm test:architecture` PASS؛ typecheck 948 ملفًا / 0 أخطاء / 88 hints؛ suites المركزة 20/20 PASS؛ التحقق مربوط بالـHEAD `0ba087ca653c1f7d6855454f469716b52dc32307`.
+  - State: PARTIAL — صفحات Astro المصادق عليها ونتائجها/صلاحياتها runtime ما زالت NOT VERIFIED؛ لا commit/push.
+  - Key files: application dependencies/use case في quality NCR/CAPA.
+
 - **2026-09-23 — AUDIT-PAYLOAD-BOUNDARY / تحقق قراءات audit المباشرة**
   - Changed: مسار idempotency في change requests يتحقق من payload المحفوظ قبل قراءة `expectedVersion`؛ الإسقاطات تواصل التحقق وتُبقي request ID دون تصدير payload.
   - Evidence: Node 24.20.0؛ اختبارات audit/read-model/change requests 26/26 PASS؛ typecheck 942 ملفًا و0 أخطاء؛ Prettier و`git diff --check` PASS.
@@ -451,9 +457,9 @@
 ## 12) Architecture / Deployment / Assets
 - **مشاهدة حية مأذونة للقراءة فقط 2026-09-23 عبر جلسة `yazeed` قائمة:** `/system/health` عرض `NOT READY` و`BLOCKED`; التطبيق وقاعدة البيانات HEALTHY، Reject Reports غير متاح بسبب schema readiness، وهوية الإصدار غير متحققة، وrestore غير متحقق. Snapshot للبيئة في ذلك الوقت فقط؛ لا يثبت حالة مرشح محلي ولا جاهزية UAT/الإصدار. المرجع التفصيلي: `audit/2026-09-23/ui-baseline/interface-state-inventory.md`.
 - **مشاهدة حية جديدة 2026-09-22، قراءة فقط:** حساب المالك فتح `/dashboard` و`/system/health`؛ ظهرت النواة READY، التطبيق وDB HEALTHY، storage وAI UNAVAILABLE، outbox به رسالة معلقة، ولا backup catalog/restore verification. هوية الإصدار (SHA/head) UNVERIFIED؛ `/reject-reports` يعرض أن migrations اللازمة غير مطبقة. هذه مشاهدة النشر فقط، وليست دليلًا على المرشح المحلي `6c505e65f410ae7ce4384c2d314578d821a53457` أو جاهزية إنتاج شاملة.
-- **`pnpm test:architecture` FAILs على المرشح `4fa6ac3` (مُثبت 2026-09-21 في 035-B):** انتهاكات delivery-boundary قائمة في `src/pages/quality/{ncr,capa}/[id].astro` و`src/pages/ai-advisory.astro` (استيراد infrastructure/SQL مباشر في الصفحات). ليست من أي diff حديث؛ خط الأساس الحالي لخريطة الحدود المملوكة لـ035-A المفقود.
+- **Historical — 2026-09-21 (035-B):** فشل architecture على المرشح `4fa6ac3` بسبب استيرادات delivery مباشرة؛ أُعيد التحقق وأُغلقت محليًا على HEAD `0ba087c` بتاريخ 2026-09-23 (انظر ARCH-DELIVERY-BOUNDARY أعلاه).
 - `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. **فجوة `.env` المحلية أُغلقت 2026-09-22 (PR-A1):** `NODE_ENV=development` + `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` مكتملة؛ diagnose/parity/typecheck/build كلها PASS على Node `v24.20.0` مع `.nvmrc`.
-- **المرشّح المجمّد الحالي `5470a2ecbbd9da7593fe511e86da2e7c49bf80e1` (036-B):** كان **لا يُبنى** (تكرار تعريف `describedBy`/`invalid` في `src/pages/quarantine/receiving/[receivingId].astro`) وأُصلح؛ و`pnpm test:architecture` يفشل أيضًا بانتهاكات جديدة من نفس الـcommit في `quarantine/receiving/{index,new,[receivingId]}.astro` و`src/actions/quarantine.ts` (استيراد domain مباشر). المالك: عمل receiving/002 ثم 035-A/026 لخريطة الحدود.
+- **Historical — candidate `5470a2e` (036-B):** سجل سابق عن build/receiving والـarchitecture؛ انتهاكات delivery/domain المرتبطة أُغلقت محليًا على HEAD `0ba087c` بتاريخ 2026-09-23 (انظر ARCH-DELIVERY-BOUNDARY).
 - **هوية البناء صارت حتمية (036-B):** `astro.config.mjs` يثبّت `ASTRO_KEY` غير سرّي (لا `astro:env getSecret` في هذا التطبيق) و`scripts/release/normalize-server-manifest.mjs` يعيد تسمية `server/manifest_<hash>.mjs` → `server/manifest.mjs` بعد البناء. 4 عمليات build متتالية من `dist/` نظيف أنتجت نفس الشجرة (325 ملفًا، `da6fc6bb…81c99`) ونفس `entry.mjs` (`a12fcb45…5f816`)؛ إضافة ملف الأدلة داخل `dist/` تغيّر الشجرة بطبيعتها (325→326) ولهذا يسجّل CI المانيفست في `.ci-results/`.
 - **بوابة الترقية المرحلية (036-B):** `pnpm release:promotion:check -- --plan <file>` بسبعة فحوص fail-closed (ترتيب بيئات DEP-001، ربط الـcheckout، digest الملف مقابل `artifactSha256`، parity الترقية عبر البيئات حيث **إعادة البناء ≠ الأثر المتحقَّق**، migration forward-only، شروط rollback حسب نمط الفشل، recovery posture لخطر `HIGH`). الدليل: 7/7 PASS على المرشّح وFAIL مغلق عند التلاعب. **`/api/health/*` ليس دليلًا على أي من هذه الشروط ولا على بوابات القبول البشري.**
 - التطبيق Astro SSR ونشره المستهدف Render.

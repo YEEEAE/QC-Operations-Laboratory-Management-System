@@ -10,7 +10,7 @@ import {
   UAT_SCENARIO_STATUSES,
   UAT_SEVERITIES,
   UAT_TASK_ACCEPT_REJECT,
-} from '../modules/uat-evidence/domain/uat-evidence.js';
+} from '../modules/uat-evidence/application/input-vocabulary.js';
 import { uatEvidenceActionDependencies } from '../modules/uat-evidence/application/dependencies.js';
 import { isNamedSystemOwner } from '../shared/authorization/p05-authority.js';
 import { AppError } from '../shared/errors/app-error.js';

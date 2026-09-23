@@ -2,10 +2,7 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
-import { getDatabase } from '../../../shared/database/database.js';
-import { PostgresNcrRepository } from '../../../modules/quality/ncr/infrastructure/postgres-repository.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
-import type { Ncr } from '../../../modules/quality/ncr/domain/ncr.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 const capaId = Astro.params.capaId ?? '';
@@ -16,7 +13,7 @@ const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
 // scope-limited read (QC-100-FINAL-024). The CAPA page holds no mutation
 // authority over NCR state — the linkage is presentation only.
 const sourceNcr = capa?.ncrId
-  ? await new PostgresNcrRepository(getDatabase()).get(capa.ncrId, actor).catch(() => undefined)
+  ? await capaRead.listRelatedNcrs.execute({ ncrId: capa.ncrId, actor }).then((ncrs) => ncrs[0]).catch(() => undefined)
   : undefined;
 ---
 <AppLayout title="CAPA detail · Quality" locale="en" direction="ltr">

@@ -11,7 +11,7 @@ import {
 } from '../../../ui/forms/mutation-post.js';
 import {
   RECEIVING_QUANTITY_UNITS,
-} from '../../../modules/quarantine/receiving/domain/receiving-units.js';
+} from '../../../modules/quarantine/receiving/application/presentation.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Freceiving%2Fnew');
@@ -103,7 +103,7 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
-  import { RECEIVING_QUANTITY_UNITS } from '../../../modules/quarantine/receiving/domain/receiving-units.js';
+  import { RECEIVING_QUANTITY_UNITS } from '../../../modules/quarantine/receiving/application/presentation.js';
   const form = document.querySelector<HTMLFormElement>('[data-action="quarantine.createReceiving"]');
   form?.addEventListener('submit', async (event) => { event.preventDefault(); const data = new FormData(form); const submit = form.querySelector<HTMLButtonElement>('[data-submit]'); const output = form.querySelector<HTMLElement>('[data-result]'); if (submit) submit.disabled = true; form.setAttribute('aria-busy', 'true'); if (output) output.textContent = 'Saving…'; try { const result = await actions.quarantine.createReceiving({ receivingNo: String(data.get('receivingNo')), supplier: String(data.get('supplier')), docNo: String(data.get('docNo')), itemCode: String(data.get('itemCode')), description: String(data.get('description')), lot: String(data.get('lot')), qty: String(data.get('qty')), quantityUnit: String(data.get('quantityUnit')) as (typeof RECEIVING_QUANTITY_UNITS)[number], purchaseOrderNo: String(data.get('purchaseOrderNo')) || undefined, receivingDate: new Date(String(data.get('receivingDate'))), expiryDate: data.get('expiryDate') ? new Date(String(data.get('expiryDate'))) : undefined }); if (result.data && typeof result.data.id === 'string') { window.location.href = `/quarantine/receiving/${result.data.id}`; return; } if (output) output.textContent = 'Unable to create this receiving item. Review the fields and try again.'; const firstInvalid = form.querySelector<HTMLElement>('input:invalid,textarea:invalid'); (firstInvalid ?? output)?.focus?.(); } catch { if (output) output.textContent = 'The service is temporarily unavailable. Your entries are kept — try again.'; } finally { if (submit) submit.disabled = false; form.removeAttribute('aria-busy'); } });
 </script>

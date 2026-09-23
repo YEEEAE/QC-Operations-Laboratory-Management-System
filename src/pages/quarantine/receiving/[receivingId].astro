@@ -4,7 +4,7 @@ import StatusBadge from '../../../ui/components/StatusBadge.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { receivingReadDependencies, inspectionMappingDependencies } from '../../../modules/quarantine/application/dependencies.js';
-import { isReceivingCorrectable } from '../../../modules/quarantine/receiving/domain/receiving-state.js';
+import { isReceivingCorrectable } from '../../../modules/quarantine/receiving/application/presentation.js';
 import { transitionLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { extractDetailId, field } from '../../../ui/forms/mutation-post.js';
 import { actions } from 'astro:actions';

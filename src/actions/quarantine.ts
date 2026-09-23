@@ -2,7 +2,7 @@ import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { AppError } from '../shared/errors/app-error.js';
 import { quarantineActionDependencies } from '../modules/quarantine/application/dependencies.js';
-import { RECEIVING_QUANTITY_UNITS } from '../modules/quarantine/receiving/domain/receiving-units.js';
+import { RECEIVING_QUANTITY_UNITS } from '../modules/quarantine/receiving/application/presentation.js';
 
 const requestId = (context: { locals: App.Locals }) =>
   context.locals.requestContext?.requestId ?? 'unknown';

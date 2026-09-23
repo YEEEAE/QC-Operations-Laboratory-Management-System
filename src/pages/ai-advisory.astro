@@ -1,7 +1,7 @@
 ---
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import { copy } from '../shared/copy/ux-vocabulary';
-import { getAiConfiguration } from '../modules/ai-advisory/infrastructure/ai-configuration.js';
+import { aiAdvisoryPageAvailability } from '../modules/ai-advisory/application/page-availability.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -9,8 +9,8 @@ const canUse = actor.permissions.some((grant) => grant.code === 'PERM-AI-USE' &&
 const canSummarize = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUMMARIZE' && grant.active !== false);
 const canSuggest = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUGGEST' && grant.active !== false);
 const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT' && grant.active !== false);
-const aiConfiguration = getAiConfiguration();
-const configuredProviders = Object.keys(aiConfiguration.providers).join(' and ');
+const aiAvailability = aiAdvisoryPageAvailability();
+const configuredProviders = aiAvailability.configuredProviders;
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
@@ -21,7 +21,7 @@ const configuredProviders = Object.keys(aiConfiguration.providers).join(' and ')
         <strong>About your request</strong>
         {configuredProviders ? (
           <span>Your question and any excerpt you enter are sent to the configured external AI provider ({configuredProviders}) to generate this advisory. Do not include personal data, credentials, or information you are not authorized to share. The provider may process the request under its own service terms. This page does not offer a deletion control for provider-side copies.</span>
-        ) : aiConfiguration.externalProcessingApproved ? (
+        ) : aiAvailability.externalProcessingApproved ? (
           <span>External processing is marked approved, but no provider is configured. Your question and excerpt will not be sent. Contact your system administrator if this should be available.</span>
         ) : (
           <span>External AI processing is disabled until an approved processing decision is configured. Your question and excerpt will not be sent to an AI provider while this notice appears.</span>
