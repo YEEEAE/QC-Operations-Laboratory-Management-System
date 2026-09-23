@@ -47,10 +47,6 @@ const createVersion = defineAction({
     revision: z.string().trim().min(1),
     changeSummary: z.string().optional(),
     contentHash: z.string().optional(),
-    files: z
-      .array(z.object({ fileId: id, fileRole: z.string().trim().min(1) }))
-      .max(20)
-      .optional(),
   }),
   handler: (input, context) =>
     run(

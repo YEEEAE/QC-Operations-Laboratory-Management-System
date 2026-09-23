@@ -37,35 +37,8 @@
 | P22 | P0 للتجربة | P16–P21 | قرار بدء/إيقاف التجربة ونظام التشغيل اليومي |
 | P15 | P0 للإطلاق الأوسع | P01–P14 وP16–P22 حسب الانطباق | مصالحة المتطلبات والمخاطر وبوابات الإصدار وUAT |
 
----
 
-## P01 — هوية النشر وفجوة مخطط `/reject-reports`
-
-> افحص سبب ظهور `/reject-reports` في النظام الحي برسالة أن migrations اللازمة غير مطبقة، بينما `/system/health` يعرض `READY` وDB `HEALTHY` وهوية SHA/head `UNVERIFIED`. ابدأ من `src/pages/reject-reports/index.astro` و`src/actions/reject-reports.ts` و`src/modules/reject-reports/infrastructure/postgres-repository.ts` و`src/modules/system-health/infrastructure/postgres-migration-status.ts` و`db/migrations/` و`render.yaml` و`Documents/DEPLOYMENT-ARCHITECTURE.md`. نفّذ تشخيصًا للقراءة فقط يربط نسخة التطبيق الفعلية، build/release ID، migration head المطبق، وhead المصدر؛ لا تطبع عنوان قاعدة البيانات أو أي سر. أصلح في الكود أو واجهة الصحة أي ادعاء `READY` مضلل إذا كان مسار عمل مطلوب محجوبًا بمخطط قديم، مع فصل liveness عن readiness وعن جاهزية إصدار QC. حضّر خطة ترقية forward-only قابلة للمراجعة تتضمن النسخ والاستعادة والتحقق والرجوع التشغيلي وأثر التوقف. معايير القبول: عرض سبب الفجوة وحالتها صراحة، تماثل فحص المخطط مع الاعتماد الفعلي للصفحة، وضابطة سلبية لرأس migration قديم، وتوثيق ما يحتاج موافقة المشغل. شغّل فحوص الحالة والمخطط والتكامل المناسبة على قاعدة قابلة للتلف. **لا تنفّذ migration على الإنتاج في هذه المهمة.**
-
-## P02 — أدلة مرشح واحدة عبر CI وPostgreSQL وE2E
-
-> راجع `.github/workflows/ci.yml` و`scripts/release/check-verification-evidence.mjs` و`scripts/verification/run-authenticated-e2e.ts` و`tests/e2e/authenticated-closure.spec.ts` و`package.json`. اجعل مخرجات unit/integration/migrations/concurrency/security/build/E2E تحمل SHA، بصمة الشجرة أو artifact digest، migration head، نسخة Node، تاريخ التوليد، وبيئة التنفيذ. ارفض تلقائيًا تقريرًا ناقصًا أو من مرشح آخر أو نتيجة فيها skips غير مبررة؛ لا تعيد وسم `.ci-results` قديمة. شغّل Postgres 18 في Testcontainers أو بيئة disposable مكافئة موثقة، واعزل fixtures وteardown لكل suite؛ عالج فشل fixture/session من جذره. معايير القبول: بوابة الأدلة تفشل عمدًا مع SHA متغير أو تقرير قديم، وتمر فقط بعد إعادة توليد كل الأدلة المطلوبة لنفس المرشح، مع أعداد pass/fail/skip صريحة. إذا تعذر Docker أو CI، سجّل `BLOCKED` للطبقة المتأثرة ولا تعوضها بنجاح typecheck أو build.
-
-## P03 — أمن أمر النسخ الاحتياطي وحد الذاكرة
-
-> أصلح `src/modules/backup-recovery/infrastructure/postgres-logical-backup-executor.ts`: `pg_dump` يستقبل `databaseUrl` ضمن argv، و`pg_restore --dbname` يستقبل `targetDatabaseUrl` ضمن argv؛ صمّم تمرير الاتصال بحيث لا يظهر سر محتمل في قائمة العمليات أو الأخطاء. حافظ على TLS والتحقق من هدف الاستعادة المعزول وعلى رسائل الخطأ الآمنة. أزل `readFile(output)` والنقل الكامل للـdump في الذاكرة عبر عقد streaming أو ملف مرحلي محمي وحد حجم معلوم على جميع طبقات `ports/artifact-store.ts` و`local-artifact-store.ts` و`cloudflare-r2-artifact-store.ts` حسب الحاجة؛ لا تغيّر الصيغة دون مسار توافق. أضف حالات تحقق لكلمة مرور في URL وهمي لا تظهر في args/logs، نسخة كبيرة محدودة الذاكرة، فشل وسط النقل، وتنظيف الملف المؤقت. لا تكتب بيانات اعتماد فعلية في الاختبارات أو التقرير. قِس حد الذاكرة قبل/بعد على بيانات تركيبية واذكر حجم العينة.
-
-## P04 — إثبات النسخ والاستعادة والتعافي
-
-> بعد P03، افحص `src/modules/backup-recovery/application/request-restore.ts` و`validate-restore-request.ts` و`scripts/recovery/run-daily-backup.ts` و`run-monthly-restore-drill.ts` و`Documents/BACKUP-RECOVERY-PLAN.md`. الواجهة الحالية تحفظ طلب الاستعادة `PLANNED` وتعيد `executed:false/NOT_AVAILABLE`؛ لا تعرضه كاستعادة ناجحة. صِل جدولة النسخ وفهرسها والتحقق من سلامة artifact باستعادة فعلية إلى قاعدة معزولة وملفات أدلة معزولة، ثم تحقق من المخطط وعدد/ترابط السجلات والبصمات والصلاحيات وقابلية تشغيل التطبيق. سجّل زمن الاستعادة وفقد البيانات المقاس وقارنه **فقط** بهدف RPO/RTO معتمد؛ أبق الهدف `POLICY-DEPENDENT` إذا لم يوجد اعتماد. معايير القبول: نسخة حديثة تظهر بالفهرس، تمرين restore ناجح قابل للإعادة، فشل واضح للنسخة التالفة/الناقصة، ودليل يربط backup ID وSHA وmigration head. أبق استعادة الإنتاج fail-closed إلى حين قرار صلاحية وتشغيل صريح؛ لا تشغّلها هنا.
-
-## P05 — سير QC كامل بصلاحيات وسلوك فشل حقيقي
-
-> ابنِ تحققًا مصادقًا من الاستلام إلى التفتيش والمختبر والمراجعة والاعتماد والإفراج في `tests/e2e/critical-workflows.spec.ts` و`authorization-matrix.spec.ts` و`authenticated-closure.spec.ts` مع fixtures منعزلة. استخرج انتقالات الحالات والصلاحيات وفصل الواجبات من `Documents/STATE-MACHINES.md` و`BUSINESS-RULES.md` و`ROLE-MATRIX.md` و`PERMISSION-MATRIX.md`، ولا تجعل نجاح الواجهة يساوي نجاح انتقال الخادم. غطِّ الأدوار المصرح وغير المصرح، scope، رفض الاعتماد الذاتي، التكرار، stale version، انقطاع الجلسة، والفشل بين الالتزام وإرسال الإشعار؛ أثبت أن `PASS` لا يعني `RELEASED`. افحص audit/signature/record linkage في PostgreSQL disposable بعد الخطوات. معايير القبول: حالات النجاح والرفض والتزام الحالة النهائية مثبتة لنفس SHA دون skips؛ أي قرار علمي أو سياسة غير معتمدة يبقى اختبارًا محجوبًا موثقًا لا قيمة وهمية في fixture.
-
-## P06 — إغلاق مدخل قرار التفتيش المعتمد
-
-> تتبع العقد المفقود لسلسلة اعتماد التفتيش في `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts` ووحدات `src/modules/quarantine/inspection/` و`Documents/REQUIREMENTS-TRACEABILITY.md` و`Documents/DECISION-ASSUMPTION-REGISTER-026.md`. حدّد بالضبط أين يلزم مصدر نتيجة رسمي أو معيار PD-01/PD-02/PD-07 ومن يملكه في QC/QMS؛ اعرض نموذج قرار محدد الحقول ومخرجاته المطلوبة للمالك. بعد وصول قرار معتمد فقط، نفّذ create/action والتحقق الخادمي وانتقالات SUBMITTED→UNDER_REVIEW→PENDING_QCM_APPROVAL→APPROVED وفق العقد، مع فصل الدور والتوقيع ونسخة السجل والتدقيق. معايير القبول: مسار إيجابي ومجموعة رفض التفويض/المعيار/التزامن تمر على PostgreSQL disposable وE2E؛ لا تستنتج معيار قبول من الكود الحالي أو من بيانات اختبار. إن لم يصل القرار، سلّم الجزء الممكن وحالة `BLOCKED` الدقيقة بدل فتح المسار بقيمة افتراضية.
-
-## P07 — دمج الملفات والأدلة مع سياسة نوع ملف واضحة
-
-> `src/shared/files/file-service.ts` يملك فحوص حجم وتوقيع وتفويض، لكن تتبع استعماله في صفحات/actions لم يُظهر مسار رفع حقيقي. افحص `src/shared/files/` و`Documents/SECURITY-ARCHITECTURE.md` و`Documents/REQUIREMENTS-TRACEABILITY.md` وعقود الأدلة في الوحدات. اربط رفع/عرض/تنزيل الملف بسجل العمل المناسب مع تفويض خادمي لكل عملية، مخزن خاص، hash، ربط دليل immutable حيث يلزم، ومعالجة orphan والفشل الجزئي وidempotency. أخرج قرارًا مطلوبًا لسياسة allowlist/MIME والفحص الخبيث والاحتفاظ/الحذف إن لم تكن معتمدة؛ حافظ على الرفض الآمن حتى اعتمادها. معايير القبول: اختبار صلاحية إيجابي وسلبي، ملف تنفيذي/توقيع مزيف/oversize، مسار فشل تخزين بعد DB والعكس، تنزيل لا يكشف رابطًا عامًا أو سجلًا خارج النطاق. لا تستخدم ملف مستخدم حقيقي في الاختبارات.
+----
 
 ## P08 — حمولة Audit متداخلة وخصوصية السجلات
 

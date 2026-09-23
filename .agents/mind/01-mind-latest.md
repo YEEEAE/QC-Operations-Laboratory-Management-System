@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — FILE-EVIDENCE-01 / fail-closed upload boundaries**
+  - Changed: `FileService` now requires explicit MIME/size/scanner policy; document-version actions no longer accept browser-supplied file IDs; evidence downloads resolve canonical links and authorize before object reads. Added draft decisions for unresolved file policy.
+  - Evidence: Node 24.20.0 targeted file/telemetry tests 29/29 PASS; typecheck 942 files, 0 errors; build and release:verify PASS. Upload/download application routes and parent authorization wiring, approved scanner/policy, idempotency, and orphan reconciliation remain NOT VERIFIED/BLOCKED.
+  - State: PARTIAL — allowlist/size/scanning/retention and per-domain policy decisions remain open; no production or provider writes.
+  - Key files: `src/shared/files/file-service.ts`, `audit/2026-09-23/file-upload-policy-decision-request.md`.
+
 - **2026-09-23 — OD-2026-09-23-RBAC-01 / قرار أدوار QC والاعتماد**
   - Changed: وثّق قرار Yazeed للأدوار ومصفوفة إنشاء 12 surface؛ QC متساوون بلا اعتماد/توقيع، Supervisor مرحلة أولى وQCM نهائي. أضيف API أدلة UAT الموثّق بالدورة/الفاعل/الدور، وترحيل 0038 لمنح QC وسحب اعتماد المرحلة الأولى من MANAGER.
   - Evidence: Node 24.20.0؛ authorization/UAT unit 47/47 PASS، typecheck 942 ملفًا بلا أخطاء، requirements:check PASS. PostgreSQL 18 integration/UAT وE2E BLOCKED لغياب container runtime؛ لم تُنشأ حسابات على أي قاعدة.

@@ -11,14 +11,20 @@ const EXECUTABLE_FILENAME_EXTENSION =
 const MIME_TYPE =
   /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*(?:;\s*charset=[a-z0-9._-]+)?$/i;
 const SAFE_EXTENSION = /^[a-z0-9]{1,10}$/i;
-/** Defensive default until a per-evidence-type upload policy is approved. */
-export const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+export interface FileSecurityPolicy {
+  /** Explicitly approved MIME allowlist for the target evidence type. */
+  allowedMimeTypes: readonly string[];
+  /** Explicitly approved maximum for the target evidence type. */
+  maxSizeBytes: number;
+  /** Must fail closed when the configured scanner is unavailable. */
+  scan(bytes: Uint8Array, mimeType: string): Promise<'CLEAN' | 'MALICIOUS'>;
+}
 
 function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
   return signature.every((value, index) => bytes[index] === value);
 }
 
-function assertSafeFileUpload(input: FileUploadInput): void {
+function assertSafeFileUpload(input: FileUploadInput, policy: FileSecurityPolicy): void {
   const filename = input.originalFilename.trim();
   const extension = input.extension?.trim().replace(/^\./, '');
   if (
@@ -32,7 +38,10 @@ function assertSafeFileUpload(input: FileUploadInput): void {
     /[\\/\0\r\n\u0000-\u001f\u007f]/.test(filename) ||
     EXECUTABLE_FILENAME_EXTENSION.test(filename) ||
     !MIME_TYPE.test(input.mimeType) ||
-    input.bytes.byteLength > MAX_FILE_SIZE_BYTES ||
+    !Number.isSafeInteger(policy.maxSizeBytes) ||
+    policy.maxSizeBytes <= 0 ||
+    input.bytes.byteLength > policy.maxSizeBytes ||
+    !policy.allowedMimeTypes.includes(input.mimeType) ||
     (extension !== undefined &&
       (!SAFE_EXTENSION.test(extension) ||
         (filename.includes('.') &&
@@ -45,8 +54,7 @@ function assertSafeFileUpload(input: FileUploadInput): void {
   if (startsWith(input.bytes, [0x4d, 0x5a])) throw new AppError('VALIDATION_FAILED');
 
   // Validate a client-declared type whenever that format has an unambiguous
-  // signature. The allowlist remains policy-dependent; this service still
-  // applies a defensive size ceiling before any storage write.
+  // signature. The policy's MIME allowlist remains required.
   const expectedSignature =
     input.mimeType === 'application/pdf'
       ? [0x25, 0x50, 0x44, 0x46, 0x2d]
@@ -78,6 +86,7 @@ export class FileService {
     private readonly repository: FileRepository,
     private readonly store: ObjectStore,
     private readonly authorizeAccess: FileAccessAuthorizer,
+    private readonly securityPolicy?: FileSecurityPolicy,
   ) {}
 
   async upload(input: FileUploadInput): Promise<{ file: FileRecord; evidence: EvidenceLink }> {
@@ -118,7 +127,10 @@ export class FileService {
       subjectType: input.subjectType,
       subjectId: input.subjectId,
     });
-    assertSafeFileUpload(input);
+    if (!this.securityPolicy) throw new AppError('POLICY_SOURCE_REQUIRED');
+    assertSafeFileUpload(input, this.securityPolicy);
+    if ((await this.securityPolicy.scan(input.bytes, input.mimeType)) !== 'CLEAN')
+      throw new AppError('VALIDATION_FAILED');
     const digest = sha256(input.bytes);
     const fileId = uuidv7();
     const storageKey = `files/${fileId}`;
@@ -167,7 +179,7 @@ export class FileService {
     return { file, evidence };
   }
 
-  async download(
+  private async download(
     actorId: string,
     link: EvidenceLink,
   ): Promise<{ file: FileRecord; object: { bytes: Uint8Array; contentType: string } }> {
@@ -224,10 +236,10 @@ export class FileService {
       subjectId: link.subjectId,
     });
     const file = await this.repository.findById(link.fileId);
-    if (!file) throw new AppError('RESOURCE_NOT_FOUND');
+    if (!file || file.state !== 'ACTIVE') throw new AppError('RESOURCE_NOT_FOUND');
     const object = await this.store.get(file.storageKey);
     if (!object) throw new AppError('RESOURCE_NOT_FOUND');
     if (sha256(object.bytes) !== file.sha256) throw new AppError('VALIDATION_FAILED');
-    return { file, object };
+    return { file, object: { bytes: object.bytes, contentType: file.mimeType } };
   }
 }

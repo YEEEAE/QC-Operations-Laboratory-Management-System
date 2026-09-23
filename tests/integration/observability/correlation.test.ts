@@ -20,7 +20,7 @@ import {
 } from '../../../src/shared/observability/logger';
 import { processOutboxBatch } from '../../../src/shared/outbox/worker';
 import type { OutboxRepository } from '../../../src/shared/outbox/outbox-repository';
-import { FileService } from '../../../src/shared/files/file-service';
+import { FileService, type FileSecurityPolicy } from '../../../src/shared/files/file-service';
 import type {
   EvidenceLink,
   FileRecord,
@@ -476,7 +476,14 @@ describe('file telemetry', () => {
         return undefined;
       },
     } as unknown as ObjectStore;
-    const service = new FileService(repository, store, async () => undefined);
+    const service = new FileService(repository, store, async () => undefined, {
+      allowedMimeTypes: [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ],
+      maxSizeBytes: 1024,
+      scan: async () => 'CLEAN',
+    } satisfies FileSecurityPolicy);
     return { service, repository, store };
   }
 
@@ -494,14 +501,7 @@ describe('file telemetry', () => {
       uploadedBy: 'u-1',
     };
     await service.upload(input);
-    await service.download('u-1', {
-      id: 'l-1',
-      fileId: 'f-1',
-      subjectType: 'TASK',
-      subjectId: 't-1',
-      linkedBy: 'u-1',
-      linkedAt: new Date(),
-    });
+    await service.downloadByEvidenceId('u-1', 'l-1');
     const operations = meter.counters.filter((c) => c.name === 'qc_file_operations_total');
     expect(operations.map((c) => c.attributes['operation']).sort()).toEqual(['download', 'upload']);
     expect(operations.every((c) => c.attributes['outcome'] === 'success')).toBe(true);
