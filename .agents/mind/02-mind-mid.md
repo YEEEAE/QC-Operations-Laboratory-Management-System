@@ -2,6 +2,11 @@
 
 > نُقلت أقدم سجلات 2026-09-22 بعد التحقق من غيابها في الأرشيف؛ لم تتغير الحالة الحالية أو القرارات والقيود.
 
+- **2026-09-21 — QC-100-FINAL-037-A / توحيد أنماط التفاعل وحالات المكوّنات المشتقة من الخادم (المرشّح المجمّد `a022722c64a9a226c0c9b78aa11b944117cd52b4` شجرة نظيفة عند البداية، بصمة dirty-fingerprint `71b36ad55f4b1945d6ad452e56dcd81441686931a11ec56fcb1f8a8ec85231cb`، release محلي `rel-cdb037f20025ac48` verified)**
+  - Changed: وحدة دمج عميلة جديدة `src/ui/forms/enhance-with-classification.ts` تربط نماذج الإنشاء بعقد `classifyActionResult` القائم من 005: تصنيف نتيجة الخادم الفعلية (exact error code → صنف) وكتابة نص `errorClasses` المعتمد فقط — لم تعد حجب الصلاحية تُعرض كخطأ إدخال. أُعيد توصيل ست صفحات إنشاء (equipment/maintenance/calibrations/documents/laboratory tests/change-requests) وأُلغيت سكربتاتها inline المكررة. حارس الإرسال المكرر وaria-busy وno-JS POST baseline بلا تغيير سلوكي. عقود: `interaction-state-contract` جديد (8)، تحديث سجلات ratchet في `mutation-safety-contract` (إزالة receiving/[id] من NO_JS_BASELINE_OPEN — **كانت قديمة**: 4 نماذج POST موجودة منذ 5470a2e، والاختبار كان فاشلًا سابقًا عند HEAD) و`mutation-post`/`entity-select` تقبل الحارس المشترك الجديد. لا تغيير على تفويض الخادم ولا policy ولا schema.
+  - Evidence: العقود الخمسة المتأثرة 86/86 PASS؛ astro check 911 ملفًا/0 أخطاء؛ build exit 0 مع normalization؛ release:verify PASS؛ requirements:check PASS (domains=80). Unit الكامل 876/881 — 4 فشلات سابقة مثبتة بـgit stash (receiving-data-contract ×2 + decision-surface ×2، ملك عائلة receiving-normalization) خارج هذا الـdiff. Browser/E2E/AT/PG NOT RUN (003/006/040/002-027)؛ 037-B يملك التكامل. `PASS ≠ RELEASED`، gates 0/19 بلا تغيير.
+  - State: DONE (بالبندَين محليًا على المرشّح). Report: `audit/2026-09-21/QC-100-FINAL-037-A-core-contracts.md`.
+
 - **2026-09-22 — Mind rollover (QC-P44-REAUDIT):** تجاوز `01` الحد الصلب (123,474 بايت)؛ نُقلت أقدم سجلات Historical Ledger (012، تفاصيل 004 UAT، live re-verification 016، كتلة 2026-09-19 candidate-side، Historical DR/UAT، rollover-020) إلى أعلى `02-mind-mid.md` بعد التحقق من غياب محتواها، وحُذفت مكرّرات §17. بقيت invariants وقواعد القياس السلبية والقرارات السارية و§14 المشاكل المفتوحة. الحالة: DONE.
 
 - **2026-09-22 — QC-P44-REAUDIT / إعادة تدقيق الحالة الراهنة + خطة HTML محدَّثة (المرحلة 44)**
