@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — QC-100-FINAL-013 / inspection source decision gap traced**
+  - Changed: documented approved fail-closed guardrails and added a draft-only QC/QMS/Document Control decision request; PD-01/02/07 remain OPEN. Existing create-from-receiving action is present; official result/source mapping blocks a valid positive approval path.
+  - Evidence: requirements/state-machine/code trace reviewed on Node 24.20.0; focused PG integration BLOCKED because Testcontainers has no working runtime. No approval values or criteria inferred.
+  - State: BLOCKED — positive PostgreSQL/E2E acceptance awaits approved owner decision and disposable PostgreSQL runtime.
+  - Key file: `audit/2026-09-23/qc-100-final-013/owner-decision-request.md`.
+
 - **2026-09-23 — UI-ROUTE-BASELINE / route visibility and task-first inventory**
   - Changed: reconciled stale `/admin` visibility denial with the current page guard/navigation; added current route × role and route copy-context matrices plus English task/state/measurement review.
   - Evidence: current source exports 87 routes/34 navigation destinations; Node 24.20.0 generation produced 435 role rows and 87 copy-context rows. Human task metrics and authenticated 1440/390 captures remain NOT VERIFIED.

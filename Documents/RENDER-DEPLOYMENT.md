@@ -68,7 +68,7 @@ limits: `audit/2026-09-19-QC-100-FINAL-001-production-parity-recheck.md`.
 ## Service
 
 - Service type: Render Web Service (`type: web`), using Astro SSR with `@astrojs/node` standalone output.
-- Build: Corepack invokes the exact pinned pnpm version and runs a frozen install followed by `pnpm build`.
+- Build: Corepack invokes the exact pinned pnpm version, runs a frozen install, begins a fresh candidate-bound verification run (`pnpm verification:begin` — required because `pnpm run build` ends with the fail-closed build-evidence gate and `.ci-results/` is gitignored), then runs `pnpm build`.
 - Start: `node dist/server/entry.mjs` (verified against the local Astro build output).
 - Readiness: `/api/health/ready` returns `200` only when PostgreSQL is configured/reachable and required Reject Reports tables are available through the same read-only repository probe as the page; it returns a minimal `503` otherwise and never exposes dependency or secret details. This is not QC release approval.
 - Auto-deploy: `checksPass`, subject to the linked Render/Git integration supporting CI check gating.
@@ -154,7 +154,7 @@ The exact operator workflow, read-only validation, and safe error handling are d
 Live GET `https://qclevel.top/` returned HTTP 404, `text/plain`, `Not Found`, and a Render `rndr-id` header. The request reaches Render, but this does not prove every DNS/custom-domain setting is correct. The user reports the deployed service as **Static Site** at commit `a5eb734`; local `astro.config.mjs` explicitly uses `output: 'server'` and the Node standalone adapter. Static hosting cannot execute this application. Local Blueprint edits do not change an existing manually created Static Site.
 
 1. Create **New > Web Service**, connect the same repository and `main`, choose Node, and leave Root Directory empty.
-2. Build Command: `corepack pnpm install --frozen-lockfile && corepack pnpm run build`.
+2. Build Command: `corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build`.
 3. Start Command: `node dist/server/entry.mjs`. There is no Publish Directory for this Node service.
 4. Set `HOST=0.0.0.0`, `NODE_ENV=production`, and `NODE_VERSION=24.20.0`, matching the repository. Render supplies `PORT`.
 5. Supply `DATABASE_URL`, `SESSION_SECRET` (at least 32 characters), `RATE_LIMIT_LOGIN_MAX`, and `RATE_LIMIT_LOGIN_WINDOW_SECONDS` privately in Render. Use approved positive rate-limit settings. PostgreSQL schema/migrations must be prepared explicitly; do not run development seeds in production.

@@ -4,7 +4,10 @@ services:
     runtime: node
     # Astro SSR serves every file-based route under src/pages through the
     # standalone Node entrypoint; Render does not need a page allowlist.
-    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm run build
+    # `pnpm run build` ends with the build-evidence gate, which fail-closes
+    # unless a fresh candidate-bound run exists; `.ci-results/` is gitignored,
+    # so a clean checkout must begin one first (same contract as Verification CI).
+    buildCommand: corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build
     startCommand: node dist/server/entry.mjs
     autoDeployTrigger: checksPass
     domains:
