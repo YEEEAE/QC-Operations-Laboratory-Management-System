@@ -1,5 +1,16 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — UI-LANGUAGE / تصحيح نطاق إعادة التصميم**
+  - Changed: خطة إعادة التصميم English-only/LTR وبنصوص قصيرة وطبيعية؛ أُزيل شرط العربية/RTL.
+  - Evidence: تصحيح المستخدم المباشر وملفا التقرير والبرومبتات في `audit/`.
+  - State: DONE — المواصفة القديمة تحتاج مصالحة منفصلة.
+
+- **2026-09-23 — P04 / visual directions decision aid**
+  - Changed: added three original, synthetic-data directions for four workflows; current approved design reference remains unchanged pending Product Owner and QC/QMS.
+  - Evidence: Node 24.20.0 static checks; local browser preview was blocked by browser URL policy.
+  - State: PARTIAL — comparison artifact complete; owner/QC-QMS decision and visual browser review pending.
+  - Key files: `audit/2026-09-23/p04-visual-directions.html`.
+
 - **2026-09-23 — UI-BASELINE / inventory and visual baseline**
   - Changed: added a source-linked screen/role/state inventory and repeatable three-task usability protocol; authorized live reads via an existing `yazeed` browser session confirmed current empty/no-actionable states in several registers. No synthetic fixture or login credentials used against production.
   - Evidence: Node 24.20.0 `diagnose` and `typecheck` PASS; live route read-only; 1440/390 captures cover only local unauthenticated gate; authenticated production screenshots were not persisted.
@@ -347,7 +358,7 @@
 ## 10) UI / UX / Accessibility
 
 ### Language/copy
-- الواجهة الحالية English-only, `lang="en"`, LTR.
+- الواجهة الحالية English-only, `lang="en"`, LTR؛ قرار المستخدم (2026-09-23) يؤكد ذلك لإعادة التصميم مع نصوص قصيرة وطبيعية. لا تشترط العربية/RTL في هذه الخطة؛ ذكرهما في `Documents/UI-UX-SPECIFICATION.md` أقدم ويحتاج مصالحة مستقلة.
 - الأفعال والعناوين تستخدم sentence case.
 - المصطلحات المنظمة مثل NCR/CAPA/PASS/RELEASED لا يُعاد تعريف معناها.
 - UX vocabulary المشترك موجود في `src/shared/copy/ux-vocabulary.ts`؛ دليل الكتابة المعتمد: `Documents/UX-WRITING-GUIDE.md`.
@@ -369,7 +380,7 @@
 - **أسطح السجل الموحّدة:** Assets family + tasks + change-requests تستعمل `FilterBar` (GET + `role=search` + Clear)، `AppliedFilters` (شرائح بدلالة stateLabel)، و`EmptyTableState` (فصل EMPTY عن FILTERED EMPTY)؛ `/tasks` يستعمل `Pagination` المشتركة. `DataTable` ما زال غير مستهلك (slot contract يغيّر markup/العناوين المثبتة) — فجوة governance معلنة.
 - **bounded registers = 3 فقط** (`/tasks`، `/audit`، `/reject-reports`) عبر `page`/`offset`؛ الباقي 15 سجلًا unbounded لأن كل واحد يصرّح صفًّا بعد الجلب (scope filter in memory) فيلزم دفع predicate النطاق إلى SQL قبل الحد — مملوك لـ005-B مع 010.
 - **توكنز/اتجاه:** لا hex خام في UI chrome، و12px حد أدنى داخل `src/ui` (أُصلح FilterBar/ErrorState/ESignatureDialog/Chart/HandoffTimeline/JourneyContextPanel)، وخصائص logical فقط (أُصلح `padding-left` في reject-reports)؛ أرضية `src/pages` دين مُقاس: 71 موضعًا في 51 ملفًا، مسجّل سقفًا لا يزيد وليس إنجازًا. مرجع: `tests/unit/ui/design-governance-contract.test.ts`.
-- **التاريخ/التعريب:** العرض عبر `src/shared/copy/format.ts` (en-GB + Asia/Riyadh بصيغة «18 Sep 2026, 18:43») و20 صفحة ما زالت `toLocale*` مسجّلة كـratchet متقلّص. **قرار applicability لـdomain 70 محفوظ ولا يُحتسب credit:** 70 في سجل الـ100 = Security UX (أدلة الرفض/التعداد runtime معلّقة)، والعربية/RTL متطلب معتمد غير منفّذ (`audit/100-percent/POLICY-CLOSURE-MATRIX.md` سطر 184) — نُفِّذت الأساسيات فقط (logical properties + `[dir=rtl]` font mapping) وسُلِّم المحتوى لـ018 والتحقق المرآتي لـ006.
+- **التاريخ/التعريب:** العرض عبر `src/shared/copy/format.ts` (en-GB + Asia/Riyadh بصيغة «18 Sep 2026, 18:43») و20 صفحة ما زالت `toLocale*` مسجّلة كـratchet متقلّص. **قرار applicability لـdomain 70 محفوظ ولا يُحتسب credit:** 70 في سجل الـ100 = Security UX (أدلة الرفض/التعداد runtime معلّقة). مستندات أقدم ذكرت العربية/RTL كمتطلب غير منفّذ (`audit/100-percent/POLICY-CLOSURE-MATRIX.md` سطر 184)، ونُفِّذت أساسيات فقط (logical properties + `[dir=rtl]` font mapping)؛ نطاق إعادة التصميم الحالي English-only وفق قرار المستخدم أعلاه، وتحتاج المستندات القديمة مصالحة مستقلة.
 
 ### Accessibility / responsive
 - توجد حراسة static/unit لـWCAG fundamentals: landmarks/skip nav/focus/error summary/status semantics/drawer isolation/reduced motion/forced colors وغيرها.
