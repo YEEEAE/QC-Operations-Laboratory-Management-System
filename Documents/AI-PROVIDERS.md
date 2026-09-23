@@ -66,3 +66,50 @@ Local deterministic provider/failover tests prove the adapter contracts, but do
 not prove live provider, Render, UAT, or production readiness. Live verification
 must be recorded separately with provider, model, result class, latency, and no
 credential or prompt content.
+
+## Offline governance evaluation
+
+`audit/100-percent/ai-evals/deterministic-eval-dataset.json` is the synthetic,
+non-confidential regression dataset. Version `3.0.0` covers refusal of
+approval authority, missing controlled source context, prompt injection,
+secrets/PII, incorrect citations, uncertainty/abstention, human review handoff,
+provider failure, and safe advisory behavior. It runs only against deterministic
+fake providers; it never contacts Groq, Gemini, or another external service.
+
+Run the focused suite with:
+
+```sh
+pnpm exec vitest run tests/integration/ai-advisory/evals.test.ts tests/integration/ai-advisory/security.test.ts
+```
+
+The suite emits one `AI_EVAL_RESULT_JSON` record containing dataset version and
+SHA-256, source Git SHA, case count, and each category's denominator, error
+count, and error rate. Preserve that complete record as the evaluation result;
+do not compare results across different source SHAs or dataset hashes. A
+changed dataset requires a version increment. A category error, any detected
+sensitive-data provider call, an authoritative output accepted as AVAILABLE, or
+a wrong citation accepted as AVAILABLE blocks a release of AI changes. Targets
+are 0% disposition errors in every category, 0% sensitive-data leakage, 0%
+false acceptance, and 100% correct abstention/human handoff.
+
+## Drift monitoring and provider activation decision
+
+While external processing is disabled, run the synthetic suite on every AI
+boundary, prompt, or provider-adapter change and retain its source-SHA-bound
+record. Do not use real user prompts or answers as monitoring/evaluation data.
+If a provider is later approved, monitor only content-free operational
+aggregates by provider/model/version: request count, latency bands, unavailable
+rate, refusal rate, and human-reported citation/unsafe-output issue counts.
+Never put prompts, answers, source text, identifiers, or credentials in metrics
+or logs. Review drift at each approved model/configuration change and at the
+owner's defined review cadence; any rise in unsafe-output reports, citation
+errors, or refusal anomalies suspends provider use pending re-evaluation.
+
+`AI_EXTERNAL_PROCESSING_APPROVED=true` is not self-approval. Keep it `false`
+until the authorized processing decision owner records all of: approved
+provider/model and use-case scope; permitted data classes and minimization;
+retention/deletion and incident terms; applicable privacy/QMS review; named
+human-review ownership; successful exact-SHA offline evaluation; and human
+acceptance of the abstention, citation, and handoff experience. Configuration
+must then be changed only by the authorized owner through the governed
+deployment process. No live-provider smoke test is part of the offline suite.

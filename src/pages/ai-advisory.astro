@@ -17,6 +17,7 @@ const configuredProviders = aiAvailability.configuredProviders;
   {canUse ? (
     <>
       <section class="notice" role="note"><strong>Advisory boundary</strong><span>{copy.boundaries.aiNotAuthority} Response actions are limited to copying text or using it as your own draft.</span></section>
+      <section class="notice" role="note" aria-label="Human review path"><strong>Human review path</strong><span>AI output is not entered into a QC record. Verify every statement against the cited controlled source, then take uncertainty, missing sources, or suspected incorrect citations to your Supervisor or QCM (Manager) through the normal authorized review workflow.</span></section>
       <section class="notice privacy-notice" role="note" aria-label="AI data use">
         <strong>About your request</strong>
         {configuredProviders ? (
@@ -39,7 +40,7 @@ const configuredProviders = aiAvailability.configuredProviders;
           </label>
           <label>Question for analysis<textarea name="question" required maxlength="4000" placeholder="What should the advisory review?"></textarea></label>
           <fieldset class="context"><legend>Optional context (minimized)</legend>
-            <p class="muted">Only text you enter here is submitted; this form cannot verify where an excerpt came from or whether you may share it. Do not paste information you are not authorized to share.</p>
+            <p class="muted">Only text you enter here is submitted. Add the source identity and citation in the label (for example, WI-001 v3, §4). This form cannot verify that source or your right to share it. Do not paste personal data, credentials, or information you are not authorized to share. Missing or unverified source context can make the advisory abstain.</p>
             <label>Source label<input name="contextLabel" maxlength="120" placeholder="e.g. Receiving item summary" /></label>
             <label>Excerpt<textarea name="contextContent" maxlength="4000"></textarea></label>
           </fieldset>
@@ -52,7 +53,9 @@ const configuredProviders = aiAvailability.configuredProviders;
         <p class="advisory-label" data-advisory-label>AI-generated advisory content — suggestions and analysis only, not an approval authority.</p>
         <p class="status" data-status></p>
         <div class="advisory-text" data-advisory-text></div>
+        <p class="muted" data-source-context hidden></p>
         <p class="muted" data-source-references hidden></p>
+        <p class="muted" data-review-guidance hidden></p>
         <div class="actions">
           <button type="button" data-copy disabled>Copy</button>
           <button type="button" data-use-draft disabled>Use as Draft</button>
@@ -80,6 +83,8 @@ const configuredProviders = aiAvailability.configuredProviders;
   const copyButton = document.querySelector<HTMLButtonElement>('[data-copy]');
   const draftButton = document.querySelector<HTMLButtonElement>('[data-use-draft]');
   const sourceReferencesEl = document.querySelector<HTMLElement>('[data-source-references]');
+  const sourceContextEl = document.querySelector<HTMLElement>('[data-source-context]');
+  const reviewGuidanceEl = document.querySelector<HTMLElement>('[data-review-guidance]');
   let advisoryText = '';
   const resetButtons = () => {
     if (copyButton) copyButton.disabled = true;
@@ -104,20 +109,43 @@ const configuredProviders = aiAvailability.configuredProviders;
     if (panel) panel.hidden = false;
     if (statusEl && textEl && labelEl) {
       if (response.error) {
-        statusEl.textContent = 'Advisory unavailable.';
+        statusEl.textContent = 'Request blocked or unavailable.';
         textEl.textContent = '';
         labelEl.textContent = 'AI advisory is optional: core QC workflows are unaffected.';
+        if (sourceContextEl) {
+          sourceContextEl.textContent = 'The request was not returned as an advisory. Check authorization and remove sensitive or unsupported input before trying again.';
+          sourceContextEl.hidden = false;
+        }
+        if (reviewGuidanceEl) {
+          reviewGuidanceEl.textContent = 'If the source is missing or uncertainty remains, take the original controlled record to your Supervisor or QCM (Manager) through the normal authorized review workflow.';
+          reviewGuidanceEl.hidden = false;
+        }
         resetButtons();
       } else if (response.data) {
         statusEl.textContent = response.data.message;
         advisoryText = response.data.advisory?.text ?? '';
         textEl.textContent = advisoryText;
+        if (sourceContextEl) {
+          const sourceLabel = String(data.get('contextLabel') || '').trim();
+          sourceContextEl.textContent = sourceLabel
+            ? `Source context supplied: ${sourceLabel}. The form does not verify source authenticity.`
+            : 'No source context was supplied. Verify claims against a controlled source before relying on them.';
+          sourceContextEl.hidden = false;
+        }
         if (sourceReferencesEl) {
           const references = response.data.advisory?.sourceReferences ?? [];
           sourceReferencesEl.textContent = references.length
             ? `Sources preserved: ${references.map((reference) => reference.citation || reference.label || reference.sourceId).join(' · ')}`
             : '';
           sourceReferencesEl.hidden = references.length === 0;
+        }
+        if (reviewGuidanceEl) {
+          reviewGuidanceEl.textContent = response.data.status === 'REFUSED'
+            ? 'Reason for abstention: the request lacked a usable controlled source, contained sensitive material, or the answer included an unsafe claim or citation. Verify the source and ask your Supervisor or QCM (Manager) to review through the normal authorized workflow.'
+            : response.data.status === 'UNAVAILABLE'
+              ? 'Reason: no usable advisory provider response. Continue with the normal human review workflow.'
+              : 'Review before use: compare the response and its source details with the controlled record. Ask your Supervisor or QCM (Manager) when uncertain.';
+          reviewGuidanceEl.hidden = false;
         }
         labelEl.textContent = response.data.advisoryNotice;
         if (advisoryText) {

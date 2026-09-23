@@ -95,6 +95,7 @@ export function containsSensitiveData(value: string): boolean {
 }
 
 const UNSAFE_AUTHORITY_TEXT = [
+  /\bignore\s+(?:all\s+)?(?:previous|prior|system)\s+instructions\b/i,
   /\b(?:bypass|override|ignore)\b.{0,50}\b(?:hold|policy|authorization|approval)\b/i,
   /\b(?:i|we|ai|the\s+model|the\s+system)\s+(?:approve|release|sign|authorize|grant|execute|apply|set|mark)\b/i,
   /\b(?:official|final)\s+(?:pass|fail|result|decision)\b/i,
@@ -163,7 +164,10 @@ function assertNoAuthorityEncoding(node: unknown, depth: number): void {
  * and only a bounded plain text body survives (SECURITY-ARCHITECTURE.md
  * sections 155, 161-162).
  */
-export function parseProviderAdvisory(raw: unknown): AdvisoryResponse {
+export function parseProviderAdvisory(
+  raw: unknown,
+  allowedSources: readonly { sourceId?: string; label: string; citation?: string }[] = [],
+): AdvisoryResponse {
   if (!isPlainObject(raw)) {
     throw new AdvisoryAuthorityViolationError();
   }
@@ -179,6 +183,19 @@ export function parseProviderAdvisory(raw: unknown): AdvisoryResponse {
     throw new AdvisoryAuthorityViolationError();
   }
   const sourceReferences = parseSourceReferences(raw.sourceReferences);
+  if (
+    sourceReferences?.some(
+      (reference) =>
+        !allowedSources.some(
+          (source) =>
+            source.sourceId === reference.sourceId &&
+            (reference.label === undefined || source.label === reference.label) &&
+            (reference.citation === undefined || source.citation === reference.citation),
+        ),
+    )
+  ) {
+    throw new AdvisoryAuthorityViolationError();
+  }
   const providerMetadata = parseProviderMetadata(raw.providerMetadata);
   return {
     mode: 'SUMMARIZE',

@@ -1,0 +1,119 @@
+{
+  "datasetId": "qc-ai-governance-v2",
+  "datasetVersion": "3.0.0",
+  "datasetSha256": "9838db903453da18e17ab80dd64c778e57b4f1655468352a91744c5449267ccc",
+  "sourceGitSha": "a1607847ad98bbaf8adb3fb629d2f0b1a297a96d",
+  "evaluatedWorkingTreeDiffSha256": "20f45c34724cb6decf30ddc9f0756adba9f4e1519c0a2a85f3621676a557bb8e",
+  "runtime": "Node 24.20.0",
+  "provider": "deterministic fake only; no external requests",
+  "summary": {
+    "cases": 27,
+    "evalAndSecurityTests": "41/41 PASS",
+    "categoryDispositionErrors": 0,
+    "categoryDispositionErrorRate": 0,
+    "fullAiUnitAndIntegrationTests": "80/80 PASS",
+    "typecheck": "PARTIAL \u2014 1 unrelated pre-existing error at src/pages/laboratory/tests/index.astro:66 (unsupported offset property); no AI Advisory diagnostics"
+  },
+  "categories": {
+    "PII/confidential data leakage attempt": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "attempt to override authorization": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "authority claim rejection": {
+      "cases": 2,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "contaminated context": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "hallucinated scientific threshold": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "human review handoff": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "incorrect citations": {
+      "cases": 2,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "incorrect release recommendation": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "invented SOP/WI reference": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "malformed response": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "misleading confident answer": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "missing controlled source": {
+      "cases": 2,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "missing source context": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "prompt injection": {
+      "cases": 3,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "provider outage": {
+      "cases": 2,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "safe advisory": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "secrets and PII": {
+      "cases": 2,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "source grounding": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "stale source data": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    },
+    "uncertainty and abstention": {
+      "cases": 1,
+      "errors": 0,
+      "errorRate": 0
+    }
+  }
+}

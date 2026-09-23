@@ -47,9 +47,6 @@
 
 
 
-## P15 — مصالحة نهائية للمخاطر والمتطلبات وبوابات الإصدار
-
-> بعد إنجاز البرومبتات المنطبقة، راجع `Documents/REQUIREMENTS-TRACEABILITY.md` و`REQUIREMENTS-RECONCILIATION.md` و`GAP-RISK-PRIORITY-MATRIX.md` و`RISK-REGISTER.md` و`src/modules/release-governance/` و`scripts/release/check-verification-evidence.mjs`. اربط كل فجوة مغلقة بكود/اختبار/دليل تشغيل أو قرار مالك على **نفس SHA**؛ لا تنقل نسب أو نجاحات تقارير قديمة. ولّد ملخص بوابات يميّز `PASS/FAIL/NOT RUN/BLOCKED/HISTORICAL`، ويحدد مالك كل blocker وفعل الإغلاق. تحقق من أن أدلة CI/security/database/E2E/UAT تدخل عبر مسار موثوق، وأن توقيع UAT البشري ونطاقه قراران صريحان لا نتيجة اختبار آلي. معايير القبول: اختلاف SHA أو نقص دليل يسبب NO-GO، والدليل المكتمل فقط يرفع بوابته، وأي نسبة جديدة تشرح المقام ووزن المجالات وطريقة الحساب وتاريخ الدليل. سلّم قرار جاهزية مشروطًا بالأدلة؛ لا deploy أو promotion أو إعلان `RELEASED` ضمن هذه المهمة.
 
 ## ملحق تجربة موظفي القسم — ينفّذ قبل P15
 

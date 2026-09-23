@@ -43,7 +43,7 @@ const SECRET_LIKE_PATTERN =
   /(-----BEGIN [A-Z ]*PRIVATE KEY-----|bearer\s+[A-Za-z0-9._~-]+|\bpassword\b\s*[:=]|\bpasswd\b\s*[:=]|\bapi[_-]?key\b\s*[:=]|\bsecret\b\s*[:=]|\b(access[_-]?)?token\b\s*[:=]|authorization\s*[:=]|database[_-]?url\s*[:=]|postgres(ql)?:\/\/[^\s@]+:[^\s@]+@|\bsk-[A-Za-z0-9]{16,})/i;
 
 const HIGH_RISK_UNSUPPORTED_REQUEST =
-  /(?:official\s+(?:assay\s+)?limit|current\s+wi|sop|without\s+(?:a\s+)?controlled\s+source|stale.{0,30}current\s+official|certain\s+answer.{0,30}incomplete)/i;
+  /(?:official\s+(?:assay\s+)?limit|current\s+wi|\bsop\b|without\s+(?:a\s+)?controlled\s+source|(?:missing|no)\s+(?:controlled\s+)?source|stale.{0,30}current\s+official|certain\s+answer.{0,30}incomplete)/i;
 
 export type AdvisoryOutcome = 'AVAILABLE' | 'UNAVAILABLE' | 'REFUSED';
 
@@ -193,7 +193,7 @@ export class GetAdvisoryUseCase {
 
     let parsedAdvisory: ReturnType<typeof parseProviderAdvisory>;
     try {
-      parsedAdvisory = parseProviderAdvisory(raw);
+      parsedAdvisory = parseProviderAdvisory(raw, input.context);
     } catch {
       return {
         status: 'REFUSED',

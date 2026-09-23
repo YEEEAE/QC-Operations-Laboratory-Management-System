@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — P14 / AI advisory governance and offline evaluation**
+  - Changed: expanded the synthetic evaluation to dataset 3.0.0 with per-category error reporting; mismatched provider citations now refuse; UI shows source limits, abstention reason, and human handoff; documented drift monitoring and owner-gated activation.
+  - Evidence: focused AI eval/security 41/41 PASS and full AI unit/integration suites 80/80 on Node 24.20.0; per-category error 0%, source SHA and evaluated diff fingerprint recorded in `audit/100-percent/ai-evals/results-2026-09-23.json`. No provider calls or business writes.
+  - State: DONE locally; external processing stays disabled and unapproved.
+  - Key files: `src/modules/ai-advisory/`, `tests/integration/ai-advisory/`, `Documents/AI-PROVIDERS.md`.
+
 - **2026-09-23 — P13 / master-data approval gates and representative performance harness**
   - Changed: catalog separates governed schemas from value-set approval; all current value sets stay pending, so fixture and unconfirmed data are refused before database access. Reconciliation mismatch now rolls back; import output includes lineage and dataset hash. Synthetic load set adds linked file metadata, with local app memory/DB-pool sampling and same-scenario comparison support.
   - Evidence: focused unit 11/11 PASS, ESLint, Node syntax, diff check, and build PASS on Node 24.20.0. Typecheck FAILS on two pre-existing `.mjs` declaration gaps in release tests. Before/after P95 and server memory/pool measurements NOT RUN: no disposable app/database baseline was available; SLO/capacity decisions remain open.
@@ -532,6 +538,6 @@
 - تنظيف Lottie container metadata/unused asset فقط إذا اعتُمد asset-pipeline لذلك.
 
 ## 16) الحالة الحالية — AI Advisory Safety / Evaluation
-- AI remains advisory-only. The boundary now blocks detected PII/secret-like input before provider access, rejects authority-claiming text and structured recommendations, fail-safe refuses high-risk unsupported-source requests, and preserves source identity/citations when supplied.
-- Deterministic dataset is `qc-ai-governance-v2` / `2.0.0`. Fresh QC-100-FINAL-009 evidence on candidate `95d1380f2f463bad911d6ee041ae6a7f45cbf897`: focused AI `4 files / 66 PASS`, Prettier PASS, typecheck `821 files / 0 errors / 72 hints`, on Node `24.19.0` (outside declared `>=24.20.0 <25`). Earlier `53/53`, full-unit `83/564`, security `52/52`, and Node `24.20.0` results belong to prior candidate snapshots and are not current-candidate evidence.
-- Groq/Gemini are selected only when server-side `AI_EXTERNAL_PROCESSING_APPROVED=true` and provider credentials/models are configured; the flag defaults to false, otherwise `DisabledAiProvider` is used. The flag is a technical gate, not evidence of approval. Canonical/legacy config names remain supported; provider metadata is sanitized and advisory-only. Live provider smoke tests, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. No production/provider approval is inferred.
+- AI remains advisory-only; no result writes controlled/business decisions. Detected secrets/PII are refused before provider access. Output authority fields/text and citations that do not match the supplied source identity/label/citation are refused. Missing controlled source and uncertainty prompts fail closed; normal human review remains authoritative.
+- Deterministic non-confidential dataset is `qc-ai-governance-v2` / `3.0.0` (27 cases; authority, missing source, injection, secret/PII, wrong citation, uncertainty, and human handoff included). On Node `24.20.0`, focused eval/security suites: 41/41 PASS; each category disposition error rate 0%. Exact report is `audit/100-percent/ai-evals/results-2026-09-23.json`, bound to source HEAD plus evaluated-file diff fingerprint.
+- `AI_EXTERNAL_PROCESSING_APPROVED=false` remains the default and current state. The technical flag is not evidence of authorization. Groq/Gemini configuration, live processing, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. Provider activation requires recorded owner decision, scoped data/retention terms, exact-SHA eval, and human acceptance as specified in `Documents/AI-PROVIDERS.md`.

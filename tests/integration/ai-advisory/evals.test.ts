@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { GetAdvisoryUseCase } from '../../../src/modules/ai-advisory/application/get-advisory.js';
 import type {
   AiAdvisoryRequest,
@@ -22,7 +24,7 @@ interface EvalCase {
 
 const dataset = JSON.parse(
   readFileSync('audit/100-percent/ai-evals/deterministic-eval-dataset.json', 'utf8'),
-) as { confidentialData: boolean; cases: EvalCase[] };
+) as { datasetVersion: string; confidentialData: boolean; cases: EvalCase[] };
 
 const actor = (permissions: readonly string[]): ActorContext => ({
   id: '01900000-0000-7000-8000-0000000000e1',
@@ -81,10 +83,17 @@ describe('AI governance eval suite — deterministic, non-confidential dataset',
         'malformed response',
         'source grounding',
         'safe advisory',
+        'authority claim rejection',
+        'missing source context',
+        'secrets and PII',
+        'incorrect citations',
+        'uncertainty and abstention',
+        'human review handoff',
       ]),
     );
-    expect(dataset.cases).toHaveLength(15);
-    expect(dataset.cases.filter(({ risk }) => risk === 'high')).toHaveLength(13);
+    expect(dataset.datasetVersion).toBe('3.0.0');
+    expect(dataset.cases).toHaveLength(27);
+    expect(dataset.cases.filter(({ risk }) => risk === 'high').length).toBeGreaterThanOrEqual(20);
   });
 
   it.each(dataset.cases)('enforces expected disposition: $id', async (testCase) => {
@@ -111,7 +120,7 @@ describe('AI governance eval suite — deterministic, non-confidential dataset',
       expect(
         (
           await new GetAdvisoryUseCase(providerFor(testCase, [])).execute({
-            actor: actor(allAiPermissions),
+            actor: actor(testCase.expected === 'DENIED' ? [] : allAiPermissions),
             mode: 'SUMMARIZE',
             question: testCase.question,
             context: testCase.context ?? [],
@@ -126,6 +135,66 @@ describe('AI governance eval suite — deterministic, non-confidential dataset',
       expect(['DENIED', 'REFUSED', 'UNAVAILABLE']).toContain(actual);
       expect(testCase.metrics?.failSafe).toBe(true);
     }
+  });
+
+  it('records reproducible per-category error rates for this dataset and source SHA', async () => {
+    const results = await Promise.all(
+      dataset.cases.map(async (testCase) => {
+        const calls: AiAdvisoryRequest[] = [];
+        const useCase = new GetAdvisoryUseCase(providerFor(testCase, calls));
+        let actual: EvalCase['expected'];
+        try {
+          actual = (
+            await useCase.execute({
+              actor: actor(testCase.expected === 'DENIED' ? [] : allAiPermissions),
+              mode: 'SUMMARIZE',
+              question: testCase.question,
+              context: testCase.context ?? [],
+              requestId: `eval-metrics-${testCase.id}`,
+            })
+          ).status;
+        } catch (error) {
+          if (!(error instanceof AppError)) throw error;
+          actual = 'DENIED';
+        }
+        return { category: testCase.category, expected: testCase.expected, actual };
+      }),
+    );
+    const categories = [...new Set(dataset.cases.map(({ category }) => category))].sort();
+    const rates = Object.fromEntries(
+      categories.map((category) => {
+        const categoryResults = results.filter((result) => result.category === category);
+        const errors = categoryResults.filter((result) => result.expected !== result.actual).length;
+        return [
+          category,
+          { cases: categoryResults.length, errors, errorRate: errors / categoryResults.length },
+        ];
+      }),
+    );
+    const datasetSha256 = createHash('sha256')
+      .update(readFileSync('audit/100-percent/ai-evals/deterministic-eval-dataset.json'))
+      .digest('hex');
+    const sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const workingTreeDiffSha256 = createHash('sha256')
+      .update(
+        execFileSync('git', [
+          'diff',
+          '--binary',
+          '--',
+          'src/modules/ai-advisory/application/get-advisory.ts',
+          'src/modules/ai-advisory/domain/advisory-response.ts',
+          'src/pages/ai-advisory.astro',
+          'tests/integration/ai-advisory/evals.test.ts',
+          'tests/integration/ai-advisory/security.test.ts',
+          'audit/100-percent/ai-evals/deterministic-eval-dataset.json',
+          'Documents/AI-PROVIDERS.md',
+        ]),
+      )
+      .digest('hex');
+    console.info(
+      `AI_EVAL_RESULT_JSON ${JSON.stringify({ datasetId: 'qc-ai-governance-v2', datasetVersion: dataset.datasetVersion, datasetSha256, sourceSha, workingTreeDiffSha256, cases: results.length, rates })}`,
+    );
+    expect(Object.values(rates).every((rate) => rate.errors === 0)).toBe(true);
   });
 
   it('defines zero-violation and zero-leakage targets for deterministic high-risk cases', () => {
