@@ -237,6 +237,15 @@ async function main(): Promise<void> {
     // authorization rule; the persona is disposable and candidate-bound.
     env.QC_E2E_ADMIN_LOGIN_IDENTITY = env.QC_E2E_ADMIN_LOGIN_IDENTITY ?? 'verify-admin';
     env.QC_E2E_ADMIN_PASSWORD = env.QC_E2E_ADMIN_PASSWORD ?? env.QC_VERIFY_ADMIN_PASSWORD;
+    env.QC_E2E_SUPERVISOR_LOGIN_IDENTITY =
+      env.QC_E2E_SUPERVISOR_LOGIN_IDENTITY ?? 'verify-supervisor';
+    env.QC_E2E_SUPERVISOR_PASSWORD =
+      env.QC_E2E_SUPERVISOR_PASSWORD ?? env.QC_VERIFY_SUPERVISOR_PASSWORD;
+    env.QC_E2E_MANAGER_LOGIN_IDENTITY = env.QC_E2E_MANAGER_LOGIN_IDENTITY ?? 'verify-manager';
+    env.QC_E2E_MANAGER_PASSWORD = env.QC_E2E_MANAGER_PASSWORD ?? env.QC_VERIFY_MANAGER_PASSWORD;
+    env.QC_E2E_SYSTEM_OWNER_LOGIN_IDENTITY = env.QC_E2E_SYSTEM_OWNER_LOGIN_IDENTITY ?? 'yazeed';
+    env.QC_E2E_SYSTEM_OWNER_PASSWORD =
+      env.QC_E2E_SYSTEM_OWNER_PASSWORD ?? env.QC_VERIFY_SYSTEM_OWNER_PASSWORD;
     env.SESSION_SECRET = env.SESSION_SECRET ?? 'closure-test-session-secret-0123456789';
     env.RATE_LIMIT_LOGIN_MAX = env.RATE_LIMIT_LOGIN_MAX ?? '8';
     env.RATE_LIMIT_LOGIN_WINDOW_SECONDS = env.RATE_LIMIT_LOGIN_WINDOW_SECONDS ?? '60';
@@ -291,7 +300,12 @@ async function main(): Promise<void> {
     }
     const e2eCode = await run(
       resolve('node_modules/.bin/playwright'),
-      ['test', '--workers=1', 'tests/e2e/authenticated-closure.spec.ts'],
+      [
+        'test',
+        '--workers=1',
+        'tests/e2e/authenticated-closure.spec.ts',
+        'tests/e2e/accessibility.spec.ts',
+      ],
       env,
     );
     if (e2eCode !== 0) process.exitCode = e2eCode;

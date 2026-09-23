@@ -45,9 +45,6 @@
 
 
 
-## P13 — البيانات الرئيسية وجودتها والأداء الممثل
-
-> افحص `scripts/data/master-data-catalog.ts` و`run-master-data-import.ts` و`Documents/MASTER-DATA-STARTING-DATA.md` و`Documents/DATA-MODEL.md` و`scripts/performance/seed-synthetic-dataset.ts` و`tests/performance/load-profiles.mjs`. ميّز مجموعات master data المعتمدة من الفئات غير المؤكدة؛ لا تحمل site/department/item/supplier/method ببيانات مخترعة. أضف مصدر ومالك ونسخة واعتمادًا لكل مجموعة قابلة للاستيراد، وفحوص تكرار وعلاقات وإعادة تشغيل idempotent مع سجل reconciliation. ابنِ dataset تركيبيًا يمثل كثافة الجداول والعلاقات والملفات والطوابير، وقِس P95/الذاكرة/DB pool مع وصف ظروف التشغيل؛ قرارات SLO والقدرة تبقى مفتوحة إن لم تعتمد. معايير القبول: import معتمد فقط، رفض المجموعة غير المعتمدة قبل أي كتابة، rollback على الفشل، تقارير lineage/quality قابلة لإعادة الإنتاج، وقياس أداء قبل/بعد لنفس السيناريو؛ لا seed للإنتاج.
 
 ## P14 — حوكمة AI وتقييمه مع الإنسان في الحلقة
 

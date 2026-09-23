@@ -147,6 +147,42 @@ async function assertVisibleFocus(page: Page, target: ReturnType<Page['locator']
   ).toBe(true);
 }
 
+async function assertHeadingStructure(page: Page, surface: string): Promise<void> {
+  const levels = await page
+    .locator('h1, h2, h3, h4, h5, h6')
+    .evaluateAll((headings) => headings.map((heading) => Number(heading.tagName.slice(1))));
+  expect(levels, `${surface}: page must expose a heading`).not.toEqual([]);
+  expect(
+    levels.filter((level) => level === 1),
+    `${surface}: exactly one page h1`,
+  ).toHaveLength(1);
+  for (let index = 1; index < levels.length; index += 1) {
+    expect(levels[index]!, `${surface}: heading level must not skip`).toBeLessThanOrEqual(
+      levels[index - 1]! + 1,
+    );
+  }
+}
+
+async function assertFormControlsHaveNames(page: Page, surface: string): Promise<void> {
+  const unnamed = await page
+    .locator('input:not([type="hidden"]):visible, select:visible, textarea:visible')
+    .evaluateAll((controls) =>
+      controls
+        .filter((control) => {
+          const input = control as HTMLInputElement;
+          const labelledBy = input.getAttribute('aria-labelledby');
+          return !(
+            input.labels?.length ||
+            input.getAttribute('aria-label')?.trim() ||
+            input.title?.trim() ||
+            (labelledBy && document.getElementById(labelledBy)?.textContent?.trim())
+          );
+        })
+        .map((control) => `${control.tagName.toLowerCase()}#${control.id || '(no id)'}`),
+    );
+  expect(unnamed, `${surface}: every visible form control has an accessible name`).toEqual([]);
+}
+
 /** WCAG 1.4.10 reflow + 4.1.2: no page-level overflow at the given transformation. */
 async function assertNoPageOverflow(page: Page, surface: string): Promise<void> {
   const overflow = await page.evaluate(() => ({
@@ -264,11 +300,21 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
   }) => {
     requireAuthenticatedFixture();
 
-    for (const path of ['/dashboard', '/tasks', '/reports/quarantine-aging', '/ai-advisory']) {
+    for (const path of [
+      '/dashboard',
+      '/work',
+      '/tasks',
+      '/quarantine/receiving',
+      '/laboratory/tests',
+      '/reports/quarantine-aging',
+      '/ai-advisory',
+    ]) {
       const response = await page.goto(path);
       expect(response?.status() ?? 0, path).toBeLessThan(400);
       await expectNoAxeViolations(page, path);
       await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+      await assertHeadingStructure(page, path);
+      await assertFormControlsHaveNames(page, path);
       await assertTableContracts(page);
       await assertChartContracts(page);
 
@@ -335,6 +381,66 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     }
   });
 });
+
+const OPERATIONAL_ROLE_FIXTURES = [
+  {
+    role: 'Employee',
+    identity: 'QC_E2E_LOGIN_IDENTITY',
+    password: 'QC_E2E_PASSWORD',
+  },
+  {
+    role: 'Supervisor',
+    identity: 'QC_E2E_SUPERVISOR_LOGIN_IDENTITY',
+    password: 'QC_E2E_SUPERVISOR_PASSWORD',
+  },
+  {
+    role: 'Manager',
+    identity: 'QC_E2E_MANAGER_LOGIN_IDENTITY',
+    password: 'QC_E2E_MANAGER_PASSWORD',
+  },
+  {
+    role: 'Admin',
+    identity: 'QC_E2E_ADMIN_LOGIN_IDENTITY',
+    password: 'QC_E2E_ADMIN_PASSWORD',
+  },
+  {
+    role: 'System owner',
+    identity: 'QC_E2E_SYSTEM_OWNER_LOGIN_IDENTITY',
+    password: 'QC_E2E_SYSTEM_OWNER_PASSWORD',
+  },
+] as const;
+
+test.describe('read-only role by operational surface keyboard matrix', () => {
+  for (const fixture of OPERATIONAL_ROLE_FIXTURES) {
+    test(`${fixture.role} can keyboard-navigate operational read surfaces`, async ({ page }) => {
+      const identity = process.env[fixture.identity];
+      const secret = process.env[fixture.password];
+      test.skip(
+        !identity || !secret,
+        `${fixture.identity} and ${fixture.password} must reference disposable fixtures`,
+      );
+      await signInWith(page, identity!, secret!);
+
+      for (const path of ['/dashboard', '/work', '/quarantine/receiving', '/laboratory/tests']) {
+        const response = await page.goto(path);
+        expect(response?.status() ?? 0, `${fixture.role} ${path}`).toBeLessThan(400);
+        await expect(
+          page.getByRole('navigation', { name: 'Primary navigation' }),
+          `${fixture.role} ${path}: primary navigation is available`,
+        ).toBeVisible();
+        await assertHeadingStructure(page, `${fixture.role} ${path}`);
+        await assertFormControlsHaveNames(page, `${fixture.role} ${path}`);
+        await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+        await page.keyboard.press('Tab');
+        await expect(
+          page.locator(':focus'),
+          `${fixture.role} ${path}: first keyboard stop is the skip link`,
+        ).toHaveAttribute('data-skip-link');
+      }
+    });
+  }
+});
+
 test.describe('authenticated keyboard-only, focus, and session recovery', () => {
   test.use({ storageState: AUTHENTICATED_STATE_PATH });
 
@@ -505,77 +611,118 @@ test.describe('authenticated validation, target size, and forced colors', () => 
     const bodyText = await page.locator('main').innerText();
     expect(bodyText.trim().length).toBeGreaterThan(30);
     await expectNoAxeViolations(page, 'dashboard under forced colors');
-    test.describe('authenticated modal dialog keyboard contract (admin surface)', () => {
-      test.use({ storageState: ADMIN_STATE_PATH });
+  });
 
-      test.beforeAll(async ({ browser }) => {
-        if (!hasAdminFixture()) {
-          writeStateFile(ADMIN_STATE_PATH, EMPTY_STATE);
-          return;
-        }
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        await signInWith(page, adminIdentity ?? '', adminPassword ?? '');
-        await context.storageState({ path: ADMIN_STATE_PATH });
-        await context.close();
-      });
+  test('laboratory review workspace exposes named controls and heading structure', async ({
+    page,
+  }) => {
+    requireAuthenticatedFixture();
+    const labTestId = process.env.QC_E2E_LAB_REVIEW_TEST_ID;
+    test.skip(
+      !labTestId,
+      'QC_E2E_LAB_REVIEW_TEST_ID must point to a disposable review fixture; no live record is used',
+    );
+    const response = await page.goto(`/laboratory/tests/${encodeURIComponent(labTestId!)}/review`);
+    expect(response?.status() ?? 0, 'laboratory review route').toBeLessThan(400);
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await assertHeadingStructure(page, '/laboratory/tests/[labTestId]/review');
+    await assertFormControlsHaveNames(page, '/laboratory/tests/[labTestId]/review');
+    await expectNoAxeViolations(page, '/laboratory/tests/[labTestId]/review');
+  });
 
-      test('dialog opens with focus inside, announces its title, closes on Escape, and returns focus', async ({
-        page,
-      }) => {
-        test.skip(
-          !hasAdminFixture(),
-          'QC_E2E_ADMIN_LOGIN_IDENTITY and QC_E2E_ADMIN_PASSWORD are required for the administration dialog surface',
-        );
+  test('employee review denial is announced while the laboratory record remains readable', async ({
+    page,
+  }) => {
+    requireAuthenticatedFixture();
+    const labTestId = process.env.QC_E2E_LAB_REVIEW_TEST_ID;
+    test.skip(
+      !labTestId,
+      'QC_E2E_LAB_REVIEW_TEST_ID must point to a disposable review fixture; no live record is used',
+    );
+    const response = await page.goto(`/laboratory/tests/${encodeURIComponent(labTestId!)}/review`);
+    expect(response?.status() ?? 0, 'read-only employee review route').toBeLessThan(400);
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('Review is not available.');
+  });
 
-        const listResponse = await page.goto('/admin/users');
-        if ((listResponse?.status() ?? 200) >= 400) {
-          test.skip(
-            true,
-            'the administration user register is not reachable for this fixture actor',
-          );
-          return;
-        }
-        const detailLink = page.locator('a[href^="/admin/users/"]').first();
-        if ((await detailLink.count()) === 0) {
-          test.skip(
-            true,
-            'no administration user detail link is available in this fixture dataset',
-          );
-          return;
-        }
-        await detailLink.click();
+  test('supervisor can read the assigned laboratory review workspace', async ({ page }) => {
+    const identity = process.env.QC_E2E_SUPERVISOR_LOGIN_IDENTITY;
+    const secret = process.env.QC_E2E_SUPERVISOR_PASSWORD;
+    const labTestId = process.env.QC_E2E_LAB_REVIEW_TEST_ID;
+    test.skip(
+      !identity || !secret || !labTestId,
+      'supervisor credentials and a disposable reviewable lab test are required',
+    );
+    await signInWith(page, identity!, secret!);
+    const response = await page.goto(`/laboratory/tests/${encodeURIComponent(labTestId!)}/review`);
+    expect(response?.status() ?? 0, 'supervisor laboratory review route').toBeLessThan(400);
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await expect(page.getByRole('alert')).not.toContainText('Review is not available.');
+    await assertHeadingStructure(page, 'Supervisor /laboratory/tests/[labTestId]/review');
+    await assertFormControlsHaveNames(page, 'Supervisor /laboratory/tests/[labTestId]/review');
+  });
 
-        const trigger = page.locator('[data-dialog-open]').first();
-        if ((await trigger.count()) === 0) {
-          test.skip(true, 'no dialog trigger is rendered for this fixture actor');
-          return;
-        }
-        const dialogId = await trigger.getAttribute('data-dialog-open');
-        const dialog = page.locator(`#${dialogId}`);
-        await expect(dialog, 'the trigger must reference a rendered dialog').toHaveCount(1);
-        await expect(dialog).not.toHaveAttribute('open', /.*/);
+  test.describe('authenticated modal dialog keyboard contract (admin surface)', () => {
+    test.use({ storageState: ADMIN_STATE_PATH });
 
-        await trigger.focus();
-        await page.keyboard.press('Enter');
-        await expect(dialog, 'Enter on the trigger must open the dialog').toHaveAttribute(
-          'open',
-          '',
-        );
-        await expect(
-          page.locator(`#${dialogId}-title`),
-          'the dialog title must carry the announced name and receive focus',
-        ).toBeFocused();
+    test.beforeAll(async ({ browser }) => {
+      if (!hasAdminFixture()) {
+        writeStateFile(ADMIN_STATE_PATH, EMPTY_STATE);
+        return;
+      }
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await signInWith(page, adminIdentity ?? '', adminPassword ?? '');
+      await context.storageState({ path: ADMIN_STATE_PATH });
+      await context.close();
+    });
 
-        const focusInside = await dialog.evaluate((element) =>
-          element.contains(document.activeElement),
-        );
-        expect(focusInside, 'focus must move inside the opened dialog').toBe(true);
+    test('dialog opens with focus inside, announces its title, closes on Escape, and returns focus', async ({
+      page,
+    }) => {
+      test.skip(
+        !hasAdminFixture(),
+        'QC_E2E_ADMIN_LOGIN_IDENTITY and QC_E2E_ADMIN_PASSWORD are required for the administration dialog surface',
+      );
 
-        await page.keyboard.press('Escape');
-        await expect(dialog, 'Escape must close the dialog').not.toHaveAttribute('open', /.*/);
-        await expect(trigger, 'focus must return to the trigger after closing').toBeFocused();
-      });
+      const listResponse = await page.goto('/admin/users');
+      if ((listResponse?.status() ?? 200) >= 400) {
+        test.skip(true, 'the administration user register is not reachable for this fixture actor');
+        return;
+      }
+      const detailLink = page.locator('a[href^="/admin/users/"]').first();
+      if ((await detailLink.count()) === 0) {
+        test.skip(true, 'no administration user detail link is available in this fixture dataset');
+        return;
+      }
+      await detailLink.click();
+
+      const trigger = page.locator('[data-dialog-open]').first();
+      if ((await trigger.count()) === 0) {
+        test.skip(true, 'no dialog trigger is rendered for this fixture actor');
+        return;
+      }
+      const dialogId = await trigger.getAttribute('data-dialog-open');
+      const dialog = page.locator(`#${dialogId}`);
+      await expect(dialog, 'the trigger must reference a rendered dialog').toHaveCount(1);
+      await expect(dialog).not.toHaveAttribute('open', /.*/);
+
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      await expect(dialog, 'Enter on the trigger must open the dialog').toHaveAttribute('open', '');
+      await expect(
+        page.locator(`#${dialogId}-title`),
+        'the dialog title must carry the announced name and receive focus',
+      ).toBeFocused();
+
+      const focusInside = await dialog.evaluate((element) =>
+        element.contains(document.activeElement),
+      );
+      expect(focusInside, 'focus must move inside the opened dialog').toBe(true);
+
+      await page.keyboard.press('Escape');
+      await expect(dialog, 'Escape must close the dialog').not.toHaveAttribute('open', /.*/);
+      await expect(trigger, 'focus must return to the trigger after closing').toBeFocused();
     });
   });
 });
