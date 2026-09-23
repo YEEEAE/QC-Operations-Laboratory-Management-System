@@ -5,7 +5,16 @@ import {
 } from '../../../src/modules/reporting/infrastructure/csv-exporter.js';
 
 describe('report export safety', () => {
-  it.each(['=SUM(A1:A2)', '+cmd', '-cmd', '@cmd'])('neutralizes formula-like cell %s', (value) => {
+  it.each([
+    '=SUM(A1:A2)',
+    '+cmd',
+    '-cmd',
+    '@cmd',
+    '  =SUM(A1:A2)',
+    '\t+cmd',
+    '\u0000@cmd',
+    '\ufeff-cmd',
+  ])('neutralizes formula-like cell %s', (value) => {
     expect(sanitizeSpreadsheetCell(value)).toBe(`'${value}`);
   });
 
@@ -18,5 +27,6 @@ describe('report export safety', () => {
       ],
     );
     expect(csv).toContain('"\'=danger, text",safe');
+    expect(csv.charCodeAt(0)).toBe(0xfeff);
   });
 });

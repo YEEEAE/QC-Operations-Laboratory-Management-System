@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { reportingDependencies } from '../../../modules/reporting/application/dependencies.js';
+import { parseReportFilters } from '../../../modules/reporting/application/parse-report-filters.js';
 
 const EXPORT_FORMATS = new Set(['csv', 'xlsx']);
 
@@ -25,24 +26,16 @@ export const GET: APIRoute = async ({ locals, params, url }) => {
   const actor = locals.actor;
   if (!actor) return problem(401, 'AUTH_REQUIRED');
   const code = params.reportCode ?? '';
-  const format = (url.searchParams.get('format') ?? '').toLowerCase();
-  if (!EXPORT_FORMATS.has(format)) return problem(400, 'VALIDATION_INVALID_QUERY');
+  const formatValues = url.searchParams.getAll('format');
+  const format = (formatValues[0] ?? '').toLowerCase();
+  if (formatValues.length !== 1 || !EXPORT_FORMATS.has(format))
+    return problem(400, 'VALIDATION_INVALID_QUERY');
   try {
     const result = await reportingDependencies().exportReport.execute(
       actor,
       code,
       format.toUpperCase() as 'CSV' | 'XLSX',
-      {
-        from: url.searchParams.get('from') ?? undefined,
-        to: url.searchParams.get('to') ?? undefined,
-        lot: url.searchParams.get('lot') ?? undefined,
-        itemCode: url.searchParams.get('itemCode') ?? undefined,
-        workflowState: url.searchParams.get('workflowState') ?? undefined,
-        inspectionResult: url.searchParams.get('inspectionResult') ?? undefined,
-        releaseSystem: url.searchParams.has('releaseSystem')
-          ? url.searchParams.get('releaseSystem') === 'true'
-          : undefined,
-      },
+      parseReportFilters(url.searchParams),
     );
     return new Response(new Uint8Array(result.bytes), {
       status: 200,

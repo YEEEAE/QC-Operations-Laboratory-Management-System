@@ -18,6 +18,7 @@ export interface ReportDefinition {
   readonly title: string;
   readonly description: string;
   readonly source: 'QUARANTINE_RECEIVING';
+  readonly status: 'UNAPPROVED_INFORMATIONAL_COPY';
   readonly viewPermission: PermissionCode;
   readonly runPermission: PermissionCode;
   readonly exportPermission: PermissionCode;
@@ -30,6 +31,7 @@ export const QUARANTINE_AGING_REPORT: ReportDefinition = {
   title: 'Quarantine receiving register',
   description: 'Authorized receiving items with their current workflow and inspection states.',
   source: 'QUARANTINE_RECEIVING',
+  status: 'UNAPPROVED_INFORMATIONAL_COPY',
   viewPermission: 'PERM-RPT-VIEW',
   runPermission: 'PERM-RPT-RUN',
   exportPermission: 'PERM-RPT-EXPORT',

@@ -3,7 +3,7 @@ import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { ReportFilters } from '../domain/report-definition.js';
 import type { ReportQuery } from '../ports/report-query.js';
-import { csvBytes } from '../infrastructure/csv-exporter.js';
+import { csvBytes, type ReportExportMetadata } from '../infrastructure/csv-exporter.js';
 import { xlsxBytes } from '../infrastructure/xlsx-exporter.js';
 import { ReportRegistry } from './report-registry.js';
 import { RunReportUseCase } from './run-report.js';
@@ -17,6 +17,7 @@ export class ExportReportUseCase {
   constructor(
     private readonly registry: ReportRegistry,
     private readonly query: ReportQuery,
+    private readonly now: () => Date = () => new Date(),
   ) {}
   async execute(
     actor: ActorContext,
@@ -53,10 +54,24 @@ export class ExportReportUseCase {
       code,
       filters,
     );
+    const metadata: ReportExportMetadata = {
+      report: `${definition.code} — ${definition.title}`,
+      generatedAt: this.now().toISOString(),
+      generatedBy: actor.loginIdentity ?? actor.id,
+      scope: 'Records created by this account (OWN scope)',
+      period: `${filters.from ?? 'all dates'} to ${filters.to ?? 'present'}`,
+      filters:
+        Object.entries(filters)
+          .map(([key, value]) => `${key}=${String(value)}`)
+          .join('; ') || 'No optional filters',
+      count: dataset.rows.length,
+      status: 'UNAPPROVED REPORT COPY — informational; not a controlled record',
+      source: 'qc.receiving_items',
+    };
     const bytes =
       format === 'CSV'
-        ? csvBytes(dataset.rows, dataset.columns)
-        : xlsxBytes(dataset.rows, dataset.columns);
+        ? csvBytes(dataset.rows, dataset.columns, metadata)
+        : xlsxBytes(dataset.rows, dataset.columns, metadata);
     return {
       filename: `${definition.code}.${format.toLowerCase()}`,
       mimeType:

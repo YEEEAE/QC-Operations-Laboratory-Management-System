@@ -70,8 +70,10 @@ async function insertReceiving(
 }
 
 const csvRows = (csv: string): string[] => {
-  const lines = csv.split('\r\n').filter((line) => line.length > 0);
-  return lines.slice(1);
+  return csv
+    .replace(/^\ufeff/, '')
+    .split('\r\n')
+    .filter((line) => line.startsWith('RPT-PARITY-'));
 };
 
 describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
@@ -104,7 +106,13 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
         id: `01900000-0000-7000-8000-${suffix}0000b001`,
         receivingNo: `RPT-PARITY-A-${suffix}`,
         description:
-          index === 1 ? '=SUM(A1:A2)' : index === 2 ? '+cmd|/c' : `Parity item ${suffix}`,
+          index === 1
+            ? '=SUM(A1:A2)'
+            : index === 2
+              ? '+cmd|/c'
+              : index === 4
+                ? '\t=1+1'
+                : `Parity item ${suffix}`,
         itemCode: index === 3 ? '@dangerous' : `ITEM-${suffix}`,
         createdBy: ownerId,
         receivingDate: '2026-03-15',
@@ -131,7 +139,11 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
     database = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool: pool! }) });
     const query = new PostgresReportQuery(database);
     runReport = new RunReportUseCase(new ReportRegistry(), query);
-    exportReport = new ExportReportUseCase(new ReportRegistry(), query);
+    exportReport = new ExportReportUseCase(
+      new ReportRegistry(),
+      query,
+      () => new Date('2026-09-23T12:00:00.000Z'),
+    );
   });
 
   afterAll(async () => {
@@ -157,7 +169,13 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
     expect(text).toContain(`'${'=SUM(A1:A2)'}`);
     expect(text).toContain(`'${'+cmd|/c'}`);
     expect(text).toContain(`'${'@dangerous'}`);
+    expect(text).toContain("'\t=1+1");
     expect(text).toContain('"\'=cmd, ""quoted"""');
+    expect(text.charCodeAt(0)).toBe(0xfeff);
+    expect(text).toContain('Generated at (UTC),2026-09-23T12:00:00.000Z');
+    expect(text).toContain('Actor scope,Records created by this account (OWN scope)');
+    expect(text).toContain('Status,UNAPPROVED REPORT COPY');
+    expect(text).toContain('Source,qc.receiving_items');
   });
 
   it('exports stay scoped to the authorized owner and never disclose other users rows', async () => {

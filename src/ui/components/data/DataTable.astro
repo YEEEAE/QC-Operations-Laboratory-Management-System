@@ -3,14 +3,18 @@ interface Props { caption: string; summary?: string; density?: 'standard' | 'com
 const { caption, summary, density = 'standard', empty = false } = Astro.props;
 ---
 <section class="data-panel" data-density={density}>
-  <div class="table-context"><div><h2>{caption}</h2>{summary && <p>{summary}</p>}</div><slot name="count" /></div>
+  <div class="table-context"><div><h2>{caption}</h2>{summary && <p>{summary}</p>}</div><label class="density-control">Row density<select aria-label="Row density" data-density-choice><option value="comfortable" selected={density === 'comfortable'}>Comfortable</option><option value="standard" selected={density === 'standard'}>Standard</option><option value="compact" selected={density === 'compact'}>Compact</option></select></label><slot name="count" /></div>
   <slot name="toolbar" />
+  <p class="bulk-note" role="note"><slot name="bulk-action">Bulk actions: none are available for this register. Open a row to use its authorized, audited actions.</slot></p>
   {empty ? <slot name="empty" /> : <div class="table-scroll"><table><caption class="visually-hidden">{caption}</caption><slot /></table></div>}
   <slot name="pagination" />
 </section>
 <style>
   .data-panel { background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--card-radius); overflow: hidden; }
-  .table-context { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-5) var(--space-5) var(--space-3); }
+  .table-context { display: flex; justify-content: space-between; align-items:center; gap: var(--space-4); padding: var(--space-5) var(--space-5) var(--space-3); }
+  .density-control { display:inline-flex; align-items:center; gap:var(--space-2); color:var(--text-muted); font-size:var(--font-size-xs); }
+  .density-control select { min-height:var(--control-height); padding-inline:var(--space-2); color:var(--text-primary); background:var(--surface-panel); border:1px solid var(--border-default); border-radius:var(--radius-sm); font:inherit; }
+  .bulk-note { margin:0; padding:var(--space-2) var(--space-5); color:var(--text-muted); font-size:var(--font-size-xs); }
   h2 { margin: 0; color: var(--text-primary); font-size: var(--font-size-lg); }
   p { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-xs); }
   .table-scroll { overflow-x: auto; }
@@ -23,3 +27,29 @@ const { caption, summary, density = 'standard', empty = false } = Astro.props;
   .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
   @media (max-width: 760px) { .table-context { padding: var(--space-4); } .table-scroll { margin-inline: 0; } }
 </style>
+<script>
+  const preferenceKey = 'qc.register-density';
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('.data-panel'));
+  const allowed = new Set(['comfortable', 'standard', 'compact']);
+  let saved = null;
+  try { saved = localStorage.getItem(preferenceKey); } catch { /* Storage can be unavailable in private contexts. */ }
+  if (saved && allowed.has(saved)) {
+    for (const panel of panels) {
+      panel.dataset.density = saved;
+      const select = panel.querySelector<HTMLSelectElement>('[data-density-choice]');
+      if (select) select.value = saved;
+    }
+  }
+  for (const panel of panels) {
+    panel.querySelector<HTMLSelectElement>('[data-density-choice]')?.addEventListener('change', (event) => {
+      const value = (event.currentTarget as HTMLSelectElement).value;
+      if (!allowed.has(value)) return;
+      for (const sibling of panels) {
+        sibling.dataset.density = value;
+        const select = sibling.querySelector<HTMLSelectElement>('[data-density-choice]');
+        if (select) select.value = value;
+      }
+      try { localStorage.setItem(preferenceKey, value); } catch { /* The setting still applies for this page view. */ }
+    });
+  }
+</script>
