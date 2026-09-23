@@ -6,6 +6,16 @@
 registered page files; 2 deferred auth route declarations; 6 conditional
 creation routes; 33 navigation destinations.
 
+> **Current-source count (2026-09-23):** The dated freeze counts above are
+> historical. `src/shared/routing/routes.ts` currently exports 87 routes and
+> `src/ui/navigation/navigation.ts` currently declares 34 destinations. The
+> current role-by-route visibility, direct page gate, data-read boundary, and
+> action boundary are recorded in `audit/2026-09-23/ui-baseline/route-visibility-matrix.csv`.
+> `/system/health` and `/system/control-center` are the only `YAZEED_ONLY`
+> routes. `/admin` and its ordinary navigation destinations stay visible and
+> page-openable to every ACTIVE authenticated account; identity data reads and
+> actions remain separately authorized.
+
 > 2026-09-20 (QC-100-FINAL-020): added `RT-HELP-001` `/help`
 > (`src/pages/help/index.astro`) — the in-app role operating & support guide,
 > `AUTHENTICATED` visibility with a printable surface.

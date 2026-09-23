@@ -2,10 +2,11 @@
 
 # QC Operations & Laboratory Management System
 
-## Universal Page Visibility & Owner-Exclusive Administration — v1.0
+## Universal Page Visibility & Owner-Exclusive System Surfaces — v1.1
 
 **Status:** FOUNDATION — APPROVED  
-**Date:** 2026-09-09  
+**Date:** 2026-09-09; visibility reconciliation: 2026-09-23
+
 **Decision owner:** Product/System Owner (`yazeed`)
 
 ---
@@ -16,8 +17,12 @@
 
 يوجد استثناءان فقط يجب ألا يظهرا أو يفتحا لأي عضو آخر:
 
-1. صحة النظام والتفاصيل التقنية.
-2. مركز تحكم المالك وإدارة الأعضاء والأدوار والصلاحيات والنطاقات.
+1. صحة النظام (`/system/health`).
+2. مركز تحكم المالك (`/system/control-center`).
+
+إدارة الأعضاء والأدوار والصلاحيات والنطاقات ليست صفحات مالك حصرية. روابطها
+وصفحاتها العادية ظاهرة وقابلة للفتح لكل حساب `ACTIVE` ومصادق عليه؛ قراءة بيانات
+إدارة الهوية والأفعال عليها تبقى محكومة بتفويضاتها المنفصلة.
 
 ---
 
@@ -70,12 +75,15 @@ Own Account
 /system/control-center
 ```
 
-بالنسبة لمسارات الإدارة، أي حساب لا يحمل دور `Admin` ولا يمثل `yazeed` تكون النتيجة:
+بالنسبة لمسارات الإدارة، كل حساب `ACTIVE` ومصادق عليه يرى الرابط ويمكنه اجتياز
+حارس الصفحة. فتح الصفحة لا يمنح قراءة بيانات إدارة الهوية أو صلاحية فعل؛ تظل
+القراءة الحساسة والأفعال خاضعة لحراس البيانات وحالات الاستخدام المعتمدة:
 
 ```text
-Navigation visibility: HIDDEN
-Direct route access: DENY
-Mutation/action access: DENY
+Navigation visibility: VISIBLE for every ACTIVE authenticated account
+Direct route page gate: ALLOW for every ACTIVE authenticated account
+Identity/admin data read: explicit read authorization required
+Mutation/action access: explicit use-case authorization required
 ```
 
 ## AVD-003 — Visibility Is Not Mutation Authority
@@ -140,12 +148,12 @@ Every ACTIVE authenticated non-owner:
   secrets and identity-security data remain hidden
   unauthorized actions remain denied server-side
   /system/health and /system/control-center denied
-  /admin and /admin/* visible only with explicit Admin permissions
+  /admin and /admin/* visible and page-access allowed; identity/admin reads and actions remain separately authorized
 
 SYSTEM_OWNER yazeed:
   all ordinary pages visible
   /system/health and /system/control-center visible and authorized
-  /admin and /admin/* visible and authorized
+  /admin and /admin/* visible and page-access allowed; identity/admin reads and actions remain separately authorized
 
 Anonymous/inactive account:
   protected routes denied or redirected safely

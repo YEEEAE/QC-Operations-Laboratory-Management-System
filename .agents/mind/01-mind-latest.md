@@ -1,5 +1,9 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — UI-ROUTE-BASELINE / route visibility and task-first inventory**
+  - Changed: reconciled stale `/admin` visibility denial with the current page guard/navigation; added current route × role and route copy-context matrices plus English task/state/measurement review.
+  - Evidence: current source exports 87 routes/34 navigation destinations; Node 24.20.0 generation produced 435 role rows and 87 copy-context rows. Human task metrics and authenticated 1440/390 captures remain NOT VERIFIED.
+  - State: PARTIAL — report `audit/2026-09-23/ui-baseline/current-interface-review.md`; no QC logic or runtime permissions changed.
 - **2026-09-23 — UI-LANGUAGE / تصحيح نطاق إعادة التصميم**
   - Changed: خطة إعادة التصميم English-only/LTR وبنصوص قصيرة وطبيعية؛ أُزيل شرط العربية/RTL.
   - Evidence: تصحيح المستخدم المباشر وملفا التقرير والبرومبتات في `audit/`.
@@ -10,22 +14,18 @@
   - Evidence: Node 24.20.0 static checks; local browser preview was blocked by browser URL policy.
   - State: PARTIAL — comparison artifact complete; owner/QC-QMS decision and visual browser review pending.
   - Key files: `audit/2026-09-23/p04-visual-directions.html`.
-
 - **2026-09-23 — UI-BASELINE / inventory and visual baseline**
   - Changed: added a source-linked screen/role/state inventory and repeatable three-task usability protocol; authorized live reads via an existing `yazeed` browser session confirmed current empty/no-actionable states in several registers. No synthetic fixture or login credentials used against production.
   - Evidence: Node 24.20.0 `diagnose` and `typecheck` PASS; live route read-only; 1440/390 captures cover only local unauthenticated gate; authenticated production screenshots were not persisted.
   - State: PARTIAL — human task metrics and synthetic populated states remain NOT VERIFIED; audit `audit/2026-09-23/ui-baseline/interface-state-inventory.md`.
-
 - **2026-09-23 — TOOLING / تثبيت uxaudit لـClaude Code**
   - Changed: إضافة سوق `gotalab-uxaudit` وتثبيت `uxaudit` بالإصدار `0.1.0` وتمكينه على نطاق المشروع.
   - Evidence: `claude plugin list` يعرض `uxaudit@gotalab-uxaudit` بحالة enabled؛ إعدادات `.claude/settings.json` صالحة.
   - State: DONE — إضافة Claude Code؛ المستودع يذكر أن دعم Codex غير متاح بعد.
-
 - **2026-09-23 — TOOLING / تثبيت إضافة 21st لـCodex**
   - Changed: إضافة سوق `21st` وتثبيت الإضافة العالمية `21st@21st` إصدار `0.4.1`؛ MCP مربوط بمتغير `API_KEY_21ST` دون حفظ المفتاح في المشروع.
   - Evidence: حالة الإضافة `installed, enabled`؛ المتغير غير متاح لعمليات Codex التي تبدأ من الواجهة، لذلك مصادقة MCP لم تُتحقق وتتطلب توفيره ثم إعادة تشغيل Codex.
   - State: PARTIAL.
-
 - **2026-09-23 — TOOLING / إضافة Impeccable لـCodex**
   - Changed: تثبيت المهارة الرسمية محليًا للمشروع (v4.3.1) ومحركها (v0.1.5) عبر `npx impeccable install --providers=codex --scope=project`.
   - Evidence: ملفات `.agents/skills/impeccable/` و`.codex/hooks.json` موجودة؛ Codex يتطلب مراجعة/اعتماد hook من `/hooks` قبل تفعيله.

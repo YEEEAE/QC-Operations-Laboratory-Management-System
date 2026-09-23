@@ -1,5 +1,7 @@
 # جرد الواجهات وخط أساس القياس — 2026-09-23
 
+English route-level follow-up: [current interface review and measurement baseline](current-interface-review.md), [route × role visibility matrix](route-visibility-matrix.csv), and [route copy context](route-copy-context.csv). It records the 2026-09-23 route source count, reconciles `/admin` page visibility, and keeps unauthenticated captures separate from authenticated task evidence.
+
 ## النطاق والمصادر
 
 مراجعة ساكنة للمصادر الحالية والسبع شاشات الأساسية المطلوبة: `src/pages/dashboard/index.astro` (RT-DASH-001)، `src/pages/quarantine/receiving/index.astro` (RT-REC-001)، `src/pages/laboratory/tests/index.astro` (RT-LAB-002)، `src/pages/approvals/index.astro` (RT-APPROVAL-001)، `src/pages/documents/index.astro` (RT-DOC-001)، `src/pages/reports/index.astro` (RT-REPORT-001)، `src/pages/system/health.astro` (RT-SYSTEM-001). مصادر السلطة: `Documents/ROUTE-MATRIX.md`, `Documents/ROLE-MATRIX.md`, `Documents/UI-UX-SPECIFICATION.md`, `Documents/ROLE-OPERATING-GUIDES.md`, `Documents/DATA-GOVERNANCE-REGISTER-032.md`، وكود الصفحات/مكوّنات UI الحالية.
