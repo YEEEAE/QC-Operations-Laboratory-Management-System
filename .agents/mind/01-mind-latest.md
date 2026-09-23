@@ -1,5 +1,13 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — LAB-REPORT-ENTRY / قالبا تقريري ضغط المختبر**
+  - Changed: قالبا إدخال مسودة للاختبارين المطلوبين، 12 عينة، وحفظ مملوك للمستخدم بإصدار وتدقيق؛ يظل اعتماد الاختبار الرسمي تابعًا للقالب والمصدر المعتمدين.
+  - Evidence: architecture PASS؛ Astro build PASS على Node 24.20.0؛ typecheck يظهر خطأَي declarations قائمين في release `.mjs` فقط. حفظ PostgreSQL الفعلي NOT VERIFIED لأن migration 0039 لم تُطبّق على قاعدة اختبار.
+  - State: PARTIAL — واجهة/كود المسودة DONE محليًا؛ تشغيلها على قاعدة بيانات يحتاج تطبيق 0039 في بيئة مخولة.
+  - Key files: `src/pages/laboratory/report-templates.astro`, `db/migrations/0039_laboratory_report_drafts.sql`.
+
+- **2026-09-24 — Mind rollover (LAB-REPORT-ENTRY):** نُقلت سجلات UI/tooling الأقدم من `01` إلى أعلى `02` بعد التحقق؛ بقيت الحالة الحالية والقيود.
+
 - **2026-09-24 — ACCESSIBILITY-TRANSITION-RECOVERY / POST fallback وتوثيق حدود التدقيق**
   - Changed: إضافة server POST/recovery لإنشاء نسخة مستند، وتقليص سجل الأسطح بلا baseline من 9 إلى 8.
   - Evidence: Astro check 963 ملفات/0 errors؛ عقد mutation safety 12/12. مصفوفة browser/AT موثقة NOT RUN لغياب بيانات E2E واعتماد بشري؛ `audit/2026-09-24/accessibility-responsive-transition-audit.md`.
@@ -140,78 +148,6 @@
   - Evidence: requirements/state-machine/code trace reviewed on Node 24.20.0; focused PG integration BLOCKED because Testcontainers has no working runtime. No approval values or criteria inferred.
   - State: BLOCKED — positive PostgreSQL/E2E acceptance awaits approved owner decision and disposable PostgreSQL runtime.
   - Key file: `audit/2026-09-23/qc-100-final-013/owner-decision-request.md`.
-
-- **2026-09-23 — UI-ROUTE-BASELINE / route visibility and task-first inventory**
-  - Changed: reconciled stale `/admin` visibility denial with the current page guard/navigation; added current route × role and route copy-context matrices plus English task/state/measurement review.
-  - Evidence: current source exports 87 routes/34 navigation destinations; Node 24.20.0 generation produced 435 role rows and 87 copy-context rows. Human task metrics and authenticated 1440/390 captures remain NOT VERIFIED.
-  - State: PARTIAL — report `audit/2026-09-23/ui-baseline/current-interface-review.md`; no QC logic or runtime permissions changed.
-- **2026-09-23 — REPORT-REDESIGN-ROLLBACK / العودة إلى تقرير ما قبل إعادة التصميم**
-  - Changed: أُزيل ملحق تغيير التصميم من تقرير المجالات المئة وعادت البرومبتات التنفيذية إلى 22.
-  - Evidence: مطابقة الملفين لنسخة `7d7f869` السابقة للتصميم، باستثناء تنسيق تاريخ Markdown؛ بقيت 100 درجة ومتوسط 55.0%.
-  - State: DONE — لا تغيير في واجهة المنتج أو صلاحياته.
-
-- **2026-09-23 — P03 / visual direction decision aid**
-  - Changed: added three original directions with 12 synthetic workflow compositions, current 34-destination navigation, state/refusal examples, trade-offs, and a shared visual charter; `Evidence Ledger` recommended while `DESIGN-SYSTEM.md` stays approved and unchanged.
-  - Evidence: Node 24.20.0 HTML/source checks; rendered browser review BLOCKED by URL policy; Product Owner and QC/QMS decision remains pending.
-  - State: PARTIAL — `audit/2026-09-23/p03-visual-directions.html`; no runtime, permission, scientific rule, or retention change.
-- **2026-09-23 — UI-BASELINE / inventory and visual baseline**
-  - Changed: added a source-linked screen/role/state inventory and repeatable three-task usability protocol; authorized live reads via an existing `yazeed` browser session confirmed current empty/no-actionable states in several registers. No synthetic fixture or login credentials used against production.
-  - Evidence: Node 24.20.0 `diagnose` and `typecheck` PASS; live route read-only; 1440/390 captures cover only local unauthenticated gate; authenticated production screenshots were not persisted.
-  - State: PARTIAL — human task metrics and synthetic populated states remain NOT VERIFIED; audit `audit/2026-09-23/ui-baseline/interface-state-inventory.md`.
-- **2026-09-23 — TOOLING / تثبيت uxaudit لـClaude Code**
-  - Changed: إضافة سوق `gotalab-uxaudit` وتثبيت `uxaudit` بالإصدار `0.1.0` وتمكينه على نطاق المشروع.
-  - Evidence: `claude plugin list` يعرض `uxaudit@gotalab-uxaudit` بحالة enabled؛ إعدادات `.claude/settings.json` صالحة.
-  - State: DONE — إضافة Claude Code؛ المستودع يذكر أن دعم Codex غير متاح بعد.
-- **2026-09-23 — TOOLING / تثبيت إضافة 21st لـCodex**
-  - Changed: إضافة سوق `21st` وتثبيت الإضافة العالمية `21st@21st` إصدار `0.4.1`؛ MCP مربوط بمتغير `API_KEY_21ST` دون حفظ المفتاح في المشروع.
-  - Evidence: حالة الإضافة `installed, enabled`؛ المتغير غير متاح لعمليات Codex التي تبدأ من الواجهة، لذلك مصادقة MCP لم تُتحقق وتتطلب توفيره ثم إعادة تشغيل Codex.
-  - State: PARTIAL.
-- **2026-09-23 — TOOLING / إضافة Impeccable لـCodex**
-  - Changed: تثبيت المهارة الرسمية محليًا للمشروع (v4.3.1) ومحركها (v0.1.5) عبر `npx impeccable install --providers=codex --scope=project`.
-  - Evidence: ملفات `.agents/skills/impeccable/` و`.codex/hooks.json` موجودة؛ Codex يتطلب مراجعة/اعتماد hook من `/hooks` قبل تفعيله.
-  - State: DONE — التثبيت فقط؛ لم يُشغّل `impeccable init`.
-
-- **2026-09-23 — QC-100-FINAL-036-B / ربط أدلة التحقق بالمرشح وتشغيل PG18 المحلي**
-  - Changed: أدلة suites والبناء أصبحت مرتبطة بـSHA وبصمة المصدر وmigration head وNode والبيئة والتوقيت؛ runner E2E يستخدم Testcontainers PostgreSQL 18 عبر TLS ويعزل جلسات personas.
-  - Evidence: رفضت البوابة SHA متغيرًا وتقريرًا قديمًا. على run `95969f8f` وfingerprint `06305aec…`: PG18 integration `487/487`، migrations `33/33`، security `52/52`، build `1/1`؛ unit `953/962` (9 FAIL). لم يُعَد concurrency بطلب المستخدم، وE2E أُوقف قبل إكماله. البوابة رفضت التقريرين الأقدمين، كما كشفت عدم تطابق manifest البناء بعد إضافة release identity إلى `dist/`.
-  - State: PARTIAL — gate النهائي يفشل؛ إصلاح manifest، concurrency/E2E بأدلة حديثة، CI الخارجي، والقبول/UAT ما زالت غير متحققة.
-
-- **2026-09-23 — QMD-CODEX-INTEGRATION-001 / وصل QMD بـCodex**
-  - Changed: إعداد QMD 2.8.3 كـMCP عالمي عبر Node 24.20.0، تثبيت مهارته عالميًا، وإنشاء مجموعة `qc-operations` لفهرسة 73 ملف Markdown من الوثائق وذاكرة المشروع.
-  - Evidence: MCP initialize/tools-list PASS (`query`, `get`, `multi_get`, `status`)؛ بحث lexical محلي PASS. نماذج GGUF غير منزلة، لذا vectors=0 والبحث الدلالي غير جاهز. أدوات MCP تحتاج إعادة تحميل Codex لتظهر في الجلسات.
-  - State: PARTIAL — الإعداد والفهرس المحليان جاهزان؛ إعادة تحميل Codex مطلوبة لإتاحة الأدوات.
-
-> آخر دمج: 2026-09-22  
-> الغرض: ذاكرة تشغيلية قصيرة للوكيل، وليست بديلًا عن الكود أو الوثائق أو أدلة التدقيق.  
-> **قاعدة التعارض:** الحالة الحالية والقرارات الثابتة في أعلى هذا الملف تتقدم على السجل التاريخي أدناه. السجل التاريخي للـtraceability فقط، ولا يعيد قرارًا ألغاه قرار أحدث.
-
-- **2026-09-23 — Complete workspace file map, excluding tests**
-  - Changed: ملفات التوجيه الستة في الجذر تحيل إلى فهارس `workspace-map/` التفصيلية؛ مولّد محلي يحافظ على فهرسة ملفات المشروع المتتبعة وغير المتتبعة ذات الصلة، مع استثناء الاختبارات والملفات المؤقتة/المولدة.
-  - Evidence: 2,881 مسارًا فريدًا، كلها موجودة؛ `generate-workspace-map.py --check` و`git diff --check` PASS.
-  - State: DONE.
-
-- **2026-09-22 — Workspace router map**
-  - Changed: أضيفت خمسة ملفات توجيه في الجذر للمنتج والهندسة والبيانات والتشغيل والتحقق، مع قسم `Map` في `AGENTS.md`.
-  - Evidence: جميع المسارات الـ61 المشار إليها موجودة محليًا.
-  - State: DONE.
-
-- **2026-09-22 — Independent 100-discipline source audit + live read-only review**
-  - Changed: أُنشئ تقرير HTML مستقل لـ100 مجال بسلم أدلة خاص به (55.0%، وليس مقام/درجة تدقيق المشروع ذي 80 مجالًا). مراجعة `qclevel.top` المصادقة كانت للقراءة فقط؛ لا تغيير في سجلات التطبيق.
-  - Evidence: typecheck/lint/format PASS على Node 24.20.0؛ HTML يحوي 100 مجال ومرجعًا موجودًا لكل صف. المتصفح الحي: النواة READY وDB HEALTHY، لكن `/reject-reports` غير متاح لغياب migrations النشر؛ release SHA/head UNVERIFIED؛ backup catalog فارغ وrestore NOT VERIFIED. اختبارات الوحدة/التكامل/E2E لم تُشغّل لهذه المهمة.
-  - State: PARTIAL — التحليل والتسليم المحلي DONE؛ التحقق الحي لا يرتبط بـSHA المستودع، والتغطية الديناميكية محدودة.
-  - Key files: `audit/2026-09-22-repository-comprehensive-audit-ar.html`.
-
-- **2026-09-22 — PR-A1 / مواءمة Node المحلي وإصلاح `.env` المحلي**
-  - Changed: Node المحلي لتشغيلات التحقق إلى `v24.20.0` عبر `nvm use` + `.nvmrc` جديد؛ `.env` المحلي: `NODE_ENV=production` → `development` وإضافة `SERVICE_VERSION=0.1.0` و`RATE_LIMIT_LOGIN_MAX=8` و`RATE_LIMIT_LOGIN_WINDOW_SECONDS=60` (قيم معتمدة من harness المحلي/`package.json`، الأسماء فقط دون طباعة أي قيمة). عقد `package.json` engines/`.node-version`/CI كان مطابقًا مسبقًا — الفجوة كانت محلية.
-  - Evidence: `pnpm diagnose` PASS (node-runtime + dotenv-configuration)؛ `pnpm release:parity:check` PASS (runtime-contract)؛ `pnpm typecheck` PASS (0 أخطاء)؛ `pnpm build` PASS — كلها على `node -v` = v24.20.0. صفر طباعة أسرار.
-  - State: DONE — بلا commit/push.
-  - Key files: `.nvmrc`، `.env` (untracked)، `Documents/ENVIRONMENT-DRIFT-REGISTER.md` (DRIFT-036-B-10).
-
-- **2026-09-22 — QC-ULTIMATE-ZERO-ASSUMPTION-ADAPTIVE-AUDIT-001 / تحليل الحالة + خطة HTML تفاعلية**
-  - Changed: تسليم عربي RTL واحد `audit/QC-ULTIMATE-CURRENT-STATE-ANALYSIS-AND-ACTION-PLAN.html` (KPIs، أدلة، بوابات 19، 17 نتيجة، مصفوفة 80 طازجة، 9 مجموعات RC، 16 برومبتًا كاملًا بنسخ/توسيع من `AUDIT_DATA` مصدّر واحد، مجهولات، قيود) على المرشح المجمّد `c4998fa4007ce2234c9f48940a0f48f56aa5930c` (tree `55987206…`، main == origin). دلتا من `653b58d`: 33 commit / 373 ملف. إعادة قياس: مجموع **3624 = 45.3%** (أساس 3739.3/تاريخي 3661=45.8%)، مقام 80 ثابت؛ بوابات **0/19**؛ NO-GO. خطة 67 بطاقة لها صفر سلطة توليد.
-  - Evidence: typecheck/build/requirements:check/diff-check PASS؛ format FAIL 38؛ lint FAIL 2؛ architecture FAIL 17؛ unit FAIL 948/957 (9/7)؛ audit FAIL 30 (1 critical GHSA-26w7-cxv4-gfx2)؛ diagnose/parity FAIL (Node v22.22.3 خارج العقد، SERVICE_VERSION/RATE_LIMIT_LOGIN_* names only)؛ Docker-less PG suites BLOCKED؛ e2e evidence FAIL@f64960b ≠ HEAD؛ Render PG read-only public=0؛ GH runs failure. HTML مُتحقَّق متصفحًا: 80 صف/16 بطاقة/0 تكرار id/expand+copy يعمل.
-  - State: DONE (تسليم وثائقي محلي) — بلا commit/push. `PASS ≠ RELEASED`.
-  - Key files: `audit/QC-ULTIMATE-CURRENT-STATE-ANALYSIS-AND-ACTION-PLAN.html`.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -391,6 +327,7 @@
 - QC-CLOSURE-006 يثبت عقود receiving supplier وinspection assignment وsource/evidence linkage/count وreceiving history؛ Submit يرفض التفتيش بلا evidence نشط، وReject قرار workflow مستقل عن النتيجة العلمية FAIL. الإثبات الحي لقاعدة البيانات ما زال BLOCKED.
 
 ## 6) Inspection / Laboratory / Release invariants
+- **Laboratory report entry (2026-09-24):** مسودتا Subatmospheric Pressure Air Leakage وPressure Decay متاحتان من صفحة المختبر بالحقول نفسها و12 عينة، وتُحفظان منفصلتين عن `lab_tests`. لا تمنح المسودة اعتمادًا أو نتيجة علمية رسمية؛ `0039_laboratory_report_drafts` هو رأس المصدر المحلي، وتطبيقه على قاعدة فعلية NOT VERIFIED.
 - `Inspection Result` و`Release System State` حالتان منفصلتان؛ `PASS ≠ RELEASED`.
 - Laboratory state machine is fully implemented for Create/Save/Submit/Review/Return/Resume/Approve/**Reject**; `VOID` (TR-LAB-008) remains unimplemented and policy-denied.
 - **Two-stage approval (QC-100-FINAL-013، مُثبت runtime):** `UNDER_REVIEW --stage-1 Supervisor (PERM-INSP/LAB-APPROVE)--> PENDING_QCM_APPROVAL --stage-2 QCM (MANAGER أو yazeed المسمى؛ PERM-APR-APPROVE + PERM-ESIG-SIGN + reauthentication)--> APPROVED (مقفل)` بتوقيع واحد بمعنى `FINAL_APPROVE` مربوط بالنسخة السابقة للانتقال؛ stage-1 حدث سير عمل بلا توقيع؛ لا مسار تجاوز؛ `REOPEN` بسبب مدقّق من سلطة الاعتماد النهائي يعيد إلى `UNDER_REVIEW` ولا يمحو سجل التوقيع، ثم يعاد إلزاميًا ترتيب المرحلتين. اعتماد تقرير التفتيش يحدّث Receiving إلى `INSPECTION_COMPLETE` ولا يُفرج أبدًا، وعنصر Receiving في `HOLD` لا يُستعاد (الطلب يُرفض).

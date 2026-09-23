@@ -92,7 +92,7 @@ const executorLabel = (executorId: string | null | undefined) =>
 ---
 <AppLayout title="Laboratory Tests · QC Operations" locale="en" direction="ltr">
   <div class="scientific-register">
-  <section class="head workspace-header"><div><p class="eyebrow">CONTROLLED LABORATORY</p><h1>Laboratory tests</h1><p class="lede">Review method, sample, result, execution, and approval context without editing controlled history.</p></div><a class="button" href="/laboratory/tests/new">Create laboratory test</a></section>
+  <section class="head workspace-header"><div><p class="eyebrow">CONTROLLED LABORATORY</p><h1>Laboratory tests</h1><p class="lede">Review method, sample, result, execution, and approval context without editing controlled history.</p><p><a href="/laboratory/report-templates">Enter Subatmospheric Air Leakage or Pressure Decay report draft</a></p></div><a class="button" href="/laboratory/tests/new">Create laboratory test</a></section>
   <FilterBar clearHref={hasFilters ? '/laboratory/tests' : undefined} label="Laboratory test filters">
     <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Test number or sample identifier" /></label>
     <label for="state">Workflow state<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>

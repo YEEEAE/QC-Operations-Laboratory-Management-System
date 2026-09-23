@@ -670,6 +670,15 @@ export interface LabTestSnapshotsTable {
   created_at: Generated<Date>;
   snapshot_hash: string;
 }
+export interface LaboratoryReportDraftsTable {
+  id: Generated<string>;
+  report_type: string;
+  form_data: unknown;
+  author_id: string;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  version: Generated<bigint>;
+}
 export interface LabEquipmentUsageTable {
   id: Generated<string>;
   lab_test_id: string;
@@ -1275,6 +1284,7 @@ export interface DatabaseSchema {
   lab_measurements: LabMeasurementsTable;
   lab_sample_results: LabSampleResultsTable;
   lab_test_snapshots: LabTestSnapshotsTable;
+  laboratory_report_drafts: LaboratoryReportDraftsTable;
   lab_equipment_usage: LabEquipmentUsageTable;
   lab_document_usage: LabDocumentUsageTable;
   lab_test_template_document_sources: LabTestTemplateDocumentSourcesTable;

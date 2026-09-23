@@ -1,0 +1,128 @@
+---
+import AppLayout from '../../ui/layouts/AppLayout.astro';
+import {
+  emptyReportDraft, reportDraftSchema, reportFields, reportTypes, sampleFields,
+  type ReportDraftData, type ReportType,
+} from '../../modules/laboratory/application/report-template-form.js';
+import { getReportDraft, listReportDrafts, saveReportDraft } from '../../modules/laboratory/application/report-drafts.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Flaboratory%2Freport-templates');
+const has = (code: string) => actor.accountState === 'ACTIVE' && actor.permissions.some((p) =>
+  p.code === code && p.active !== false && (p.scopes.includes('GLOBAL') || p.scopes.includes('OWN')));
+const canView = has('PERM-LAB-VIEW');
+const canCreate = has('PERM-LAB-CREATE');
+const requested = Astro.url.searchParams.get('type');
+const type: ReportType = requested === 'PRESSURE_DECAY' ? 'PRESSURE_DECAY' : 'SUBATMOSPHERIC_AIR_LEAKAGE';
+let data: ReportDraftData = emptyReportDraft(type);
+let id = Astro.url.searchParams.get('draft') ?? '';
+let version = 0n;
+let error = '';
+let draftLoadFailed = false;
+let drafts: Awaited<ReturnType<typeof listReportDrafts>> = [];
+
+if (canView) {
+  try {
+    drafts = await listReportDrafts(actor);
+    if (id) {
+      const draft = await getReportDraft(actor, id);
+      data = draft.data;
+      version = draft.version;
+    }
+  } catch {
+    error = 'The selected draft is unavailable in your account.';
+    draftLoadFailed = true;
+  }
+}
+
+if (Astro.request.method === 'POST' && !draftLoadFailed && canView && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate)) {
+  const form = await Astro.request.formData();
+  const text = (key: string) => String(form.get(key) ?? '').trim();
+  const raw = {
+    reportType: text('reportType'), connectorType: text('connectorType'),
+    overallResult: text('overallResult'),
+    ...Object.fromEntries(reportFields.map(([key]) => [key, text(key)])),
+    samples: Array.from({ length: 12 }, (_, index) =>
+      Object.fromEntries(sampleFields.map(([key]) => [key, text(`samples.${index}.${key}`)]))),
+  };
+  const parsed = reportDraftSchema.safeParse(raw);
+  if (!parsed.success) error = 'Check the report fields and try saving again.';
+  else {
+    data = parsed.data;
+    try {
+      const savedId = await saveReportDraft({
+        actor, id: id || undefined,
+        expectedVersion: id && /^\d+$/.test(text('version')) ? BigInt(text('version')) : undefined,
+        data, requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      });
+      return Astro.redirect(`/laboratory/report-templates?draft=${encodeURIComponent(savedId)}&saved=1`, 303);
+    } catch {
+      error = 'The draft could not be saved. Check your access and reload if another edit was saved first.';
+    }
+  }
+}
+
+const groups = [
+  { title: 'Record identification', keys: ['companyName', 'recordCategory', 'documentNo', 'revision', 'documentDate', 'pageNo'] },
+  { title: 'Sample identification', keys: ['productDescription', 'testingDate', 'sampleCount', 'lotNumber', 'testingArea'] },
+  { title: 'Requirements', keys: ['mediumName', 'mediumUsed'] },
+  { title: 'Connector assembly', keys: ['actualForce', 'torque', 'assemblyTime', 'assemblyAngle'] },
+  { title: 'Environmental condition', keys: ['temperature', 'humidity'] },
+  { title: 'Test conditions', keys: ['standardCondition', 'remainingDifference', 'timePreset'] },
+  { title: 'Remarks and signoffs', keys: ['remarks', 'testedBy', 'reviewedBy', 'approvedBy'] },
+] as const;
+const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1] ?? key;
+---
+<AppLayout title="Laboratory report templates" locale="en" direction="ltr">
+  <div class="report-entry">
+    <p><a href="/laboratory/tests">← Laboratory tests</a></p>
+    <h1>Laboratory report templates</h1>
+    <p>Enter the report as a draft. Recorded PASS / FAIL values and names are transcribed observations; they do not approve a controlled laboratory test.</p>
+    {!canView ? <p role="alert">You are not authorized to view laboratory reports.</p> : <>
+      <nav aria-label="Choose report template" class="template-choices">
+        {Object.entries(reportTypes).map(([key, title]) =>
+          <a href={`/laboratory/report-templates?type=${key}`} aria-current={!id && data.reportType === key ? 'page' : undefined}>{title}</a>)}
+      </nav>
+      {drafts.length > 0 && <section aria-labelledby="saved-drafts"><h2 id="saved-drafts">Your saved drafts</h2><ul>{drafts.map((draft) =>
+        <li><a href={`/laboratory/report-templates?draft=${draft.id}`}>{reportTypes[draft.report_type as ReportType] ?? draft.report_type} · {draft.updated_at.toISOString().slice(0, 10)}</a></li>)}</ul></section>}
+      {Astro.url.searchParams.get('saved') === '1' && <p role="status">Draft saved.</p>}
+      {error && <p role="alert">{error}</p>}
+      {!draftLoadFailed && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
+        <input type="hidden" name="version" value={version.toString()} />
+        <input type="hidden" name="reportType" value={data.reportType} />
+        <h2>{reportTypes[data.reportType]}</h2>
+        {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="field-grid">{group.keys.map((key) =>
+          <label>{labelOf(key)}<input name={key} type={key.toLowerCase().includes('date') ? 'date' : 'text'} maxlength="2000" value={data[key]} /></label>)}</div></fieldset>)}
+        <fieldset><legend>Connector type</legend><div class="radio-group">
+          {[
+            ['', 'Not recorded'], ['NON_LOCKING_RIGID', 'Non-locking (rigid) connector'],
+            ['FLOATING_COLLAR', 'Connector with floating or movable collar'],
+            ['LOCKING_FIXED_THREADS', 'Locking connector with fixed threads'],
+          ].map(([value, label]) => <label><input type="radio" name="connectorType" value={value} checked={data.connectorType === value} />{label}</label>)}
+        </div></fieldset>
+        <fieldset><legend>Test results · 12 samples</legend><div class="table-scroll"><table><caption>Measurements and result for each numbered sample</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>
+          {data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key, label]) => <td><label class="sr-only" for={`sample-${index}-${key}`}>{label} for sample {index + 1}</label>{key === 'result' ? <select id={`sample-${index}-${key}`} name={`samples.${index}.${key}`}><option value="" selected={sample.result === ''}>—</option><option value="PASS" selected={sample.result === 'PASS'}>PASS</option><option value="FAIL" selected={sample.result === 'FAIL'}>FAIL</option></select> : <input id={`sample-${index}-${key}`} name={`samples.${index}.${key}`} value={sample[key]} maxlength="500" />}</td>)}</tr>)}
+        </tbody></table></div></fieldset>
+        <fieldset><legend>Overall result entered on the source report</legend><div class="radio-group">
+          {[
+            ['', 'Not recorded'], ['PASS', 'PASS'], ['FAIL', 'FAIL'],
+            ['HOLD_FURTHER_EVALUATION', 'HOLD / FURTHER EVALUATION'],
+          ].map(([value, label]) => <label><input type="radio" name="overallResult" value={value} checked={data.overallResult === value} />{label}</label>)}
+        </div></fieldset>
+        <button type="submit">Save draft</button>
+      </form> : <p role="status">You do not have permission to {id ? 'edit this draft' : 'create a report draft'}.</p>}
+    </>}
+  </div>
+</AppLayout>
+<style>
+  .report-entry{max-width:78rem;margin-inline:auto;padding:1rem}.report-entry a{color:var(--color-accent-primary-hover)}
+  .template-choices{display:flex;gap:1rem;flex-wrap:wrap;margin:1.5rem 0}.template-choices a{padding:.75rem;border:1px solid var(--border-default);border-radius:var(--radius-md)}
+  .template-choices [aria-current]{border-color:var(--color-accent-primary);font-weight:700}
+  form{display:grid;gap:1.25rem}fieldset{min-width:0;border:1px solid var(--border-default);border-radius:var(--radius-md);padding:1rem}legend{font-weight:700;padding:0 .35rem}
+  .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:1rem}.field-grid label{display:grid;gap:.35rem}
+  input[type=text],input[type=date],select{width:100%;min-height:2.75rem;padding:.55rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-panel);color:inherit;font:inherit}
+  .radio-group{display:flex;gap:1rem;flex-wrap:wrap}.radio-group label{display:flex;align-items:center;gap:.4rem}
+  .table-scroll{overflow-x:auto}table{border-collapse:collapse;min-width:1100px;width:100%}th,td{border:1px solid var(--border-default);padding:.35rem}th{text-align:start}td input{min-width:7rem}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  button{justify-self:start;min-height:2.75rem;padding:.65rem 1rem;background:var(--color-accent-primary);color:var(--color-text-inverse);border:0;border-radius:var(--radius-md);font:inherit;cursor:pointer}
+</style>

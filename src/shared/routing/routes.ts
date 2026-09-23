@@ -187,6 +187,13 @@ const routeTuples = [
     'required',
   ],
   [
+    'RT-LAB-009',
+    '/laboratory/report-templates',
+    'src/pages/laboratory/report-templates.astro',
+    'permission-bound',
+    'required',
+  ],
+  [
     'RT-LAB-004',
     '/laboratory/tests/[labTestId]',
     'src/pages/laboratory/tests/[labTestId]/index.astro',
