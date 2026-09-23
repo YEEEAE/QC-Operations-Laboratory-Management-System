@@ -56,7 +56,48 @@ describe('explicit-permission audit query', () => {
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
   });
 
-  it('projects allowlisted audit fields and structurally drops the raw payload', () => {
+  it('rejects an unsafe stored payload before exposing the allowlisted projection', () => {
+    expect(() =>
+      mapAuditRowToView({
+        id: 'event-2',
+        event_no: 2n,
+        occurred_at: new Date('2026-09-21T00:00:00Z'),
+        actor_type: 'USER',
+        actor_id: 'u1',
+        subject_type: 'DOCUMENT_VERSION',
+        subject_id: 'doc-version-1',
+        action: 'CORRECT',
+        old_state: 'EFFECTIVE',
+        new_state: 'SUPERSEDED',
+        reason: 'Authorized correction with retained history',
+        request_id: 'req-correction',
+        signature_id: null,
+        payload: { context: [{ token: 'SYNTHETIC_VALUE' }] },
+      } as Parameters<typeof mapAuditRowToView>[0]),
+    ).toThrowError(expect.objectContaining({ code: 'VALIDATION_FAILED' }));
+  });
+
+  it('rejects a sensitive stored reason before exposing the audit projection', () => {
+    expect(() =>
+      mapAuditRowToView({
+        id: 'event-3',
+        event_no: 3n,
+        occurred_at: new Date('2026-09-21T00:00:00Z'),
+        actor_type: 'USER',
+        actor_id: 'u1',
+        subject_type: 'DOCUMENT_VERSION',
+        subject_id: 'doc-version-1',
+        action: 'CORRECT',
+        old_state: null,
+        new_state: null,
+        reason: 'token=SYNTHETIC_VALUE',
+        request_id: 'req-correction',
+        signature_id: null,
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'VALIDATION_FAILED' }));
+  });
+
+  it('keeps request correlation while structurally dropping a safe payload', () => {
     const projected = mapAuditRowToView({
       id: 'event-2',
       event_no: 2n,
@@ -71,13 +112,14 @@ describe('explicit-permission audit query', () => {
       reason: 'Authorized correction with retained history',
       request_id: 'req-correction',
       signature_id: null,
-      payload: { secret: 'must-not-escape' },
-    } as Parameters<typeof mapAuditRowToView>[0]);
+      payload: { changed_fields: ['state'], before: { state: 'EFFECTIVE' } },
+    });
     expect(projected).toMatchObject({
       subjectType: 'DOCUMENT_VERSION',
       action: 'CORRECT',
       oldState: 'EFFECTIVE',
       newState: 'SUPERSEDED',
+      requestId: 'req-correction',
     });
     expect(projected).not.toHaveProperty('payload');
     expect(Object.values(projected).join(' ')).not.toContain('must-not-escape');

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { assertSafeAuditPayload, assertSafeAuditText } from '../../../shared/audit/audit-event.js';
 import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type {
   ReleaseApprovalRecord,
@@ -398,6 +399,18 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
         .executeTakeFirst();
       if (!updated) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
 
+      const auditPayload = {
+        gitSha: row.git_sha.toLowerCase(),
+        buildId: row.build_id,
+        applicationVersion: row.application_version,
+        migrationHead: row.migration_head,
+        authority,
+        approvedBy: input.actor.id,
+        snapshotHash: input.signature.snapshotHash,
+      };
+      assertSafeAuditPayload(auditPayload);
+      const auditReason = `UAT ${row.uat_status}; residual risk ${row.residual_risk_status}`;
+      assertSafeAuditText(auditReason);
       await trx
         .insertInto('audit_events')
         .values({
@@ -409,18 +422,10 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
           transition_id: 'TR-REL-001',
           old_state: 'PENDING',
           new_state: 'RELEASE_APPROVED',
-          reason: `UAT ${row.uat_status}; residual risk ${row.residual_risk_status}`,
+          reason: auditReason,
           request_id: input.requestId,
           signature_id: input.signature.id,
-          payload: {
-            gitSha: row.git_sha.toLowerCase(),
-            buildId: row.build_id,
-            applicationVersion: row.application_version,
-            migrationHead: row.migration_head,
-            authority,
-            approvedBy: input.actor.id,
-            snapshotHash: input.signature.snapshotHash,
-          },
+          payload: auditPayload,
         })
         .execute();
 

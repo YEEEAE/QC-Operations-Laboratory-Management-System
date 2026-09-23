@@ -1,6 +1,7 @@
 import { authorize } from '../authorization/authorize.js';
 import type { ActorContext } from '../authorization/types.js';
 import { AppError } from '../errors/app-error.js';
+import { assertSafeAuditPayload, assertSafeAuditText } from './audit-event.js';
 
 export interface AuditQueryFilter {
   subjectType?: string;
@@ -118,6 +119,8 @@ export interface AuditEventRow {
   reason: string | null;
   request_id: string;
   signature_id: string | null;
+  /** Optional only for projections that already loaded a row (e.g. history export). */
+  payload?: unknown;
 }
 
 function toBigint(value: bigint | number | string): bigint {
@@ -135,6 +138,8 @@ function toDate(value: Date | string): Date {
  * structurally (the view type has no payload member at all).
  */
 export function mapAuditRowToView(row: AuditEventRow): AuditEventView {
+  assertSafeAuditPayload(row.payload);
+  assertSafeAuditText(row.reason ?? undefined);
   const actorType =
     row.actor_type === 'SYSTEM' || row.actor_type === 'SERVICE' ? row.actor_type : 'USER';
   return {

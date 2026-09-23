@@ -2,11 +2,13 @@ import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../database/db-types';
 import { stableJson } from '../json/stable-stringify';
 import { uuidv7 } from '../id/uuid';
-import type { AuditEventInput } from './audit-event';
+import { assertSafeAuditPayload, assertSafeAuditText, type AuditEventInput } from './audit-event';
 import type { AuditRepository } from './audit-repository';
 export class PostgresAuditRepository implements AuditRepository {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
   async append(event: AuditEventInput): Promise<void> {
+    assertSafeAuditPayload(event.payload);
+    assertSafeAuditText(event.reason);
     await this.database
       .insertInto('audit_events')
       .values({

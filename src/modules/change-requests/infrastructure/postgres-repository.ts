@@ -7,6 +7,7 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditRepository } from '../../../shared/audit/audit-repository.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import type { AuditEventView } from '../../../shared/audit/audit-query.js';
+import { assertSafeAuditPayload, assertSafeAuditText } from '../../../shared/audit/audit-event.js';
 import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import { isUuid } from '../../../shared/id/uuid.js';
@@ -72,6 +73,8 @@ const attemptMap = (
 });
 
 function historyMap(row: Record<string, unknown>): AuditEventView {
+  assertSafeAuditPayload(row.payload);
+  assertSafeAuditText(row.reason as string | undefined);
   return {
     id: row.id as string,
     eventNo: BigInt(row.event_no as bigint | number | string),

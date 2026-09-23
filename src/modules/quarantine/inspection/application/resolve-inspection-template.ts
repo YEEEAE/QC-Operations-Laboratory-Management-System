@@ -2,6 +2,7 @@ import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../../shared/database/db-types.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
+import { assertSafeAuditPayload } from '../../../../shared/audit/audit-event.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
 import {
@@ -128,13 +129,14 @@ export class ManageItemTemplateMappingUseCase {
           .where('item_code', '=', itemCode)
           .where('state', '=', 'ACTIVE')
           .execute();
-        for (const row of prior)
+        const id = uuidv7();
+        for (const row of prior) {
           await tx
             .updateTable('inspection_item_templates')
             .set({ state: 'STOPPED', updated_by: i.actor.id, updated_at: new Date() })
             .where('id', '=', row.id)
             .execute();
-        const id = uuidv7();
+        }
         await tx
           .insertInto('inspection_item_templates')
           .values({
@@ -147,7 +149,9 @@ export class ManageItemTemplateMappingUseCase {
             updated_by: i.actor.id,
           })
           .execute();
-        for (const row of prior)
+        for (const row of prior) {
+          const supersededPayload = { supersededBy: id };
+          assertSafeAuditPayload(supersededPayload);
           await tx
             .insertInto('audit_events')
             .values({
@@ -159,9 +163,12 @@ export class ManageItemTemplateMappingUseCase {
               action: 'MAPPING_SUPERSEDED',
               new_state: 'STOPPED',
               request_id: i.requestId,
-              payload: { supersededBy: id },
+              payload: supersededPayload,
             })
             .execute();
+        }
+        const payload = { itemCode, templateId: i.templateId };
+        assertSafeAuditPayload(payload);
         await tx
           .insertInto('audit_events')
           .values({
@@ -173,7 +180,7 @@ export class ManageItemTemplateMappingUseCase {
             action: 'MAPPING_CREATED',
             new_state: 'ACTIVE',
             request_id: i.requestId,
-            payload: { itemCode, templateId: i.templateId },
+            payload,
           })
           .execute();
         return { id };

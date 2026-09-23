@@ -4,6 +4,10 @@ import type { CapaRepository } from '../ports/repository.js';
 import type { Capa, CapaActionType } from '../domain/capa.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
+import {
+  assertSafeAuditPayload,
+  assertSafeAuditText,
+} from '../../../../shared/audit/audit-event.js';
 import { stableJson } from '../../../../shared/json/stable-stringify.js';
 import { createHash } from 'node:crypto';
 export class PostgresCapaRepository implements CapaRepository {
@@ -204,6 +208,13 @@ export class PostgresCapaRepository implements CapaRepository {
           request_id: i.signature.requestId,
         })
         .execute();
+      const auditPayload = {
+        oldVersion: String(row.version),
+        newVersion: String(BigInt(row.version) + 1n),
+        snapshotHash,
+      };
+      assertSafeAuditPayload(auditPayload);
+      assertSafeAuditText(i.reason);
       await trx
         .insertInto('audit_events')
         .values({
@@ -218,11 +229,7 @@ export class PostgresCapaRepository implements CapaRepository {
           reason: i.reason,
           request_id: i.requestId,
           signature_id: i.signature.id,
-          payload: {
-            oldVersion: String(row.version),
-            newVersion: String(BigInt(row.version) + 1n),
-            snapshotHash,
-          },
+          payload: auditPayload,
         })
         .execute();
       const result = this.map(updated, actions);
