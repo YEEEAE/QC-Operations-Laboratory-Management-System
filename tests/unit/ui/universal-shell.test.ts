@@ -2,7 +2,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { visibleNavigation } from '../../../src/ui/navigation/navigation.js';
+import {
+  visibleNavigation,
+  visibleNavigationUtilities,
+} from '../../../src/ui/navigation/navigation.js';
 
 /**
  * Universal shell regression contract.
@@ -123,54 +126,48 @@ describe('universal shell preservation', () => {
     // Breadcrumbs / current location + authorized scope context.
     expect(topbar).toContain('Breadcrumbs');
     expect(topbar).toContain('ScopeIndicator');
-    // Global search.
-    expect(topbar).toContain('data-global-search');
-    expect(topbar).toContain('Search authorized records');
-    expect(topbar).toContain('href="/search"');
-    // Notifications + My Approvals shortcuts.
-    expect(topbar).toContain('href="/notifications"');
-    expect(topbar).toContain('href="/approvals"');
-    expect(topbar).toContain('Approvals');
+    // These destinations appear once in the primary navigation tree.
+    expect(topbar).not.toContain('href="/search"');
+    expect(topbar).not.toContain('href="/notifications"');
+    expect(topbar).not.toContain('href="/approvals"');
+    expect(read('src/ui/shell/Sidebar.astro')).toContain('nav-utilities-label');
     expect(topbar).toContain('UserMenu');
     // Counts render only from authorized server numbers, never as false zero.
-    expect(topbar).toContain("typeof approvalCount === 'number'");
-    expect(topbar).toContain("typeof notificationCount === 'number'");
-    expect(topbar).not.toContain('approvalCount = 0');
-    expect(topbar).not.toContain('notificationCount = 0');
+    expect(read('src/ui/shell/UserMenu.astro')).not.toContain('href="/account"');
     // Contextual updates must not steal focus: no live regions, no autofocus,
     // no programmatic focus, and no client-side count fetching in the shell.
     expect(topbar).not.toContain('aria-live');
     expect(topbar).not.toContain('autofocus');
     expect(topbar).not.toContain('.focus(');
     expect(topbar).not.toContain('fetch(');
-    // Mobile opener stays operable with a 40px target at the mobile breakpoint.
-    expect(topbar).toContain('min-inline-size:40px');
+    // Mobile opener meets the 44px touch target at the mobile breakpoint.
+    expect(topbar).toContain('min-inline-size:44px');
     expect(topbar).toContain('@media(max-width:760px)');
     expect(topbar).toContain('display:inline-flex');
   });
 
-  it('keeps collapsed desktop navigation labelled beyond title with non-color active state', () => {
+  it('keeps two-level navigation labelled with a separate current-page indicator', () => {
     const sidebar = read('src/ui/shell/Sidebar.astro');
     expect(sidebar).toContain('aria-label="Primary navigation"');
     expect(sidebar).toContain('data-sidebar-toggle');
     expect(sidebar).toContain('aria-label="Collapse navigation"');
     expect(sidebar).toContain('aria-expanded');
     expect(sidebar).toContain('aria-label={item.label}');
-    expect(sidebar).toContain("aria-current={isActive ? 'page' : undefined}");
-    expect(sidebar).toContain('data-collapsed-tip');
-    // Visible tooltip appears on both hover AND keyboard focus, not title-only.
-    expect(sidebar).toContain(':hover::after');
-    expect(sidebar).toContain(':focus-visible::after');
+    expect(sidebar).toContain("aria-current={current ? 'page' : undefined}");
+    expect(sidebar).toContain('data-nav-section-toggle');
+    expect(sidebar).toContain('aria-controls={listId}');
+    expect(sidebar).toContain('<ul class="nav-items"');
     // Active state pairs the accent bar with underline + weight (not color-only).
-    expect(sidebar).toContain('box-shadow:inset');
-    expect(sidebar).toContain('text-decoration:underline');
+    expect(sidebar).toContain('box-shadow: inset');
+    expect(sidebar).toContain('text-decoration: underline');
     // Forced-colors keeps the active state and collapsed tooltip perceivable.
     expect(sidebar).toContain('forced-colors');
     expect(sidebar).toContain('Highlight');
     // Mobile drawer keeps a clear in-drawer dismiss affordance.
     expect(sidebar).toContain('data-drawer-close');
     expect(sidebar).toContain('aria-label="Close navigation"');
-    expect(sidebar).toContain('.drawer-close{display:grid}');
+    expect(sidebar).toContain('.drawer-close { display: grid; }');
+    expect(sidebar).toContain('min-block-size: 44px');
   });
 
   it('keeps mobile drawer keyboard, scroll, and breakpoint contracts in the shell script', () => {
@@ -179,6 +176,8 @@ describe('universal shell preservation', () => {
     expect(layout).toContain('setMobileNav(false, { returnFocus: true })');
     expect(layout).toContain("event.key === 'Tab'");
     expect(layout).toContain("event.key === 'Escape'");
+    expect(layout).toContain('sessionStorage.setItem(sectionsStorageKey');
+    expect(layout).toContain('isCurrentSection || expandedSections.has(sectionId)');
     expect(layout).toContain("document.body.style.overflow = 'hidden'");
     expect(layout).toContain("document.body.style.overflow = ''");
     expect(layout).toContain("mobileQuery.addEventListener?.('change'");
@@ -189,22 +188,28 @@ describe('universal shell preservation', () => {
   });
 
   it('shows all normal navigation to active users and isolates owner-private navigation', () => {
-    const granted = visibleNavigation({
+    const owner = {
       id: 'yazeed',
       loginIdentity: 'yazeed',
-      accountState: 'ACTIVE',
+      accountState: 'ACTIVE' as const,
       roles: ['SYSTEM_OWNER'],
       permissions: [],
-    }).flatMap((group) => group.items.map((item) => item.href));
+    };
+    const granted = visibleNavigation(owner)
+      .flatMap((group) => group.items.map((item) => item.href))
+      .concat(visibleNavigationUtilities(owner).map((item) => item.href));
     expect(granted).toContain('/system/health');
     expect(granted).toContain('/admin/users');
-    const ungranted = visibleNavigation({
+    const member = {
       id: 'member',
       loginIdentity: 'member',
-      accountState: 'ACTIVE',
+      accountState: 'ACTIVE' as const,
       roles: [],
       permissions: [],
-    }).flatMap((group) => group.items.map((item) => item.href));
+    };
+    const ungranted = visibleNavigation(member)
+      .flatMap((group) => group.items.map((item) => item.href))
+      .concat(visibleNavigationUtilities(member).map((item) => item.href));
     expect(ungranted).toContain('/tasks');
     expect(ungranted).not.toContain('/system/health');
     expect(ungranted).toContain('/admin');

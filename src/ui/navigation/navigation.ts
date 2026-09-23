@@ -19,6 +19,10 @@ export interface NavigationGroup {
   label: string;
   items: NavigationItem[];
 }
+export interface NavigationTree {
+  groups: NavigationGroup[];
+  utilities: NavigationItem[];
+}
 
 const declaredNavigationGroups: Array<
   Omit<NavigationGroup, 'items'> & { items: Omit<NavigationItem, 'routeId'>[] }
@@ -248,49 +252,42 @@ const declaredNavigationGroups: Array<
         href: '/documents',
         icon: 'documents',
       },
-      {
-        id: 'notifications',
-        label: 'Notifications',
-        href: '/notifications',
-        icon: 'notifications',
-      },
-      {
-        id: 'search',
-        label: 'Search',
-        href: '/search',
-        icon: 'search',
-      },
-      {
-        id: 'account',
-        label: 'Account settings',
-        href: '/account',
-        icon: 'account',
-      },
-      {
-        id: 'help',
-        label: 'Operating guides',
-        href: '/help',
-        icon: 'help',
-      },
     ],
   },
+];
+
+const declaredNavigationUtilities: Omit<NavigationItem, 'routeId'>[] = [
+  { id: 'notifications', label: 'Notifications', href: '/notifications', icon: 'notifications' },
+  { id: 'search', label: 'Search', href: '/search', icon: 'search' },
+  { id: 'account', label: 'Account settings', href: '/account', icon: 'account' },
+  { id: 'help', label: 'Operating guides', href: '/help', icon: 'help' },
 ];
 
 /**
  * Navigation is presentation metadata only. Route visibility stays in the
  * canonical page registry; mutation authority remains in server use cases.
  */
-export const navigationGroups: NavigationGroup[] = declaredNavigationGroups.map((group) => ({
-  ...group,
-  items: group.items.map((item) => ({
-    ...item,
-    routeId: getRouteByPath(item.href)?.id ?? `UNKNOWN:${item.href}`,
-  })),
-}));
+const withRouteId = (item: Omit<NavigationItem, 'routeId'>): NavigationItem => ({
+  ...item,
+  routeId: getRouteByPath(item.href)?.id ?? `UNKNOWN:${item.href}`,
+});
 
-export const navigationRouteIds = navigationGroups.flatMap((group) =>
-  group.items.map((item) => item.routeId),
-);
+/** Single presentation tree shared by rendering and navigation contracts. */
+export const navigationTree: NavigationTree = {
+  groups: declaredNavigationGroups.map((group) => ({
+    ...group,
+    items: group.items.map(withRouteId),
+  })),
+  utilities: declaredNavigationUtilities.map(withRouteId),
+};
+
+/** Stable compatibility exports used by existing route and permission contracts. */
+export const navigationGroups = navigationTree.groups;
+export const navigationUtilities = navigationTree.utilities;
+
+export const navigationRouteIds = navigationGroups
+  .flatMap((group) => group.items.map((item) => item.routeId))
+  .concat(navigationUtilities.map((item) => item.routeId));
 
 export function visibleNavigation(actor: ActorContext | undefined) {
   return navigationGroups
@@ -299,6 +296,10 @@ export function visibleNavigation(actor: ActorContext | undefined) {
       items: group.items.filter((item) => pageAccessDecision(actor, item.href) === 'ALLOWED'),
     }))
     .filter((group) => group.items.length > 0);
+}
+
+export function visibleNavigationUtilities(actor: ActorContext | undefined) {
+  return navigationUtilities.filter((item) => pageAccessDecision(actor, item.href) === 'ALLOWED');
 }
 
 export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?: string }> {
@@ -319,8 +320,7 @@ export function routeBreadcrumbs(pathname: string): Array<{ label: string; href?
     admin: { label: 'Administration', href: '/admin' },
     system: { label: 'System' },
   };
-  const matched = navigationGroups
-    .flatMap((group) => group.items)
+  const matched = [...navigationGroups.flatMap((group) => group.items), ...navigationUtilities]
     .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
     .sort((left, right) => right.href.length - left.href.length)[0];
 

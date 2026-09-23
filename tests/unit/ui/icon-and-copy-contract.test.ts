@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { navigationGroups } from '../../../src/ui/navigation/navigation';
+import { navigationGroups, navigationUtilities } from '../../../src/ui/navigation/navigation';
 import { iconNames } from '../../../src/ui/components/icon';
 
 const projectRoot = fileURLToPath(new URL('../../..', import.meta.url));
@@ -38,7 +38,7 @@ describe('presentation icon and copy contracts', () => {
 
   it('uses only semantic icon names in navigation data', () => {
     const allowed = new Set(iconNames);
-    const items = navigationGroups.flatMap((group) => group.items);
+    const items = navigationGroups.flatMap((group) => group.items).concat(navigationUtilities);
     expect(items.length).toBeGreaterThan(0);
     for (const item of items) {
       expect(allowed.has(item.icon), `${item.id} uses an unregistered icon`).toBe(true);

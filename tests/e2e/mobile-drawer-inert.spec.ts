@@ -13,7 +13,9 @@ const loginIdentity = process.env.QC_E2E_LOGIN_IDENTITY;
 const password = process.env.QC_E2E_PASSWORD;
 
 const MOBILE = { width: 320, height: 800 };
+const MOBILE_STANDARD = { width: 390, height: 844 };
 const DESKTOP = { width: 1280, height: 900 };
+const WIDE_DESKTOP = { width: 1440, height: 900 };
 
 function requireFixture(): void {
   test.skip(
@@ -48,6 +50,82 @@ async function bodyScrollLocked(page: Page): Promise<boolean> {
 }
 
 test.describe('BI-01 mobile drawer isolates the background', () => {
+  test('nested sections support pointer and keyboard disclosure at mobile and desktop sizes', async ({
+    page,
+  }) => {
+    requireFixture();
+    await page.setViewportSize(MOBILE_STANDARD);
+    await signIn(page);
+    await page.goto('/dashboard');
+
+    const nav = page.getByRole('navigation', { name: 'Primary navigation' });
+    await page.getByRole('button', { name: 'Open navigation' }).click();
+    const current = nav.getByRole('link', { name: 'Dashboard' });
+    await expect(current).toHaveAttribute('aria-current', 'page');
+    const overviewToggle = nav.locator('[data-section-id="overview"]');
+    await expect(overviewToggle).toHaveAttribute('aria-expanded', 'true');
+    const overviewListId = await overviewToggle.getAttribute('aria-controls');
+    expect(overviewListId).toBeTruthy();
+    await overviewToggle.click();
+    await expect(overviewToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(overviewToggle).toHaveAttribute('aria-label', 'Expand Overview section');
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(nav.locator('a[href="/dashboard"]')).toHaveAttribute('href', '/dashboard');
+    await expect(page.locator(`#${overviewListId}`)).toBeHidden();
+
+    await overviewToggle.focus();
+    await page.keyboard.press('Space');
+    await expect(overviewToggle).toHaveAttribute('aria-label', 'Collapse Overview section');
+    await expect(overviewToggle).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Enter');
+    await expect(overviewToggle).toHaveAttribute('aria-label', 'Expand Overview section');
+    await expect(overviewToggle).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Open navigation' })).toBeFocused();
+
+    for (const viewport of [MOBILE, MOBILE_STANDARD, WIDE_DESKTOP]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/dashboard');
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      );
+      expect(overflow, `navigation must reflow at ${viewport.width}px`).toBe(false);
+      if (viewport.width < 761) {
+        const opener = page.getByRole('button', { name: 'Open navigation' });
+        const box = await opener.boundingBox();
+        expect(
+          box && box.width >= 44 && box.height >= 44,
+          'mobile drawer opener meets 44px target',
+        ).toBe(true);
+        await opener.click();
+        for (const control of [
+          nav.locator('[data-section-id="overview"]'),
+          nav.getByRole('link', { name: 'Dashboard' }),
+          nav.getByRole('button', { name: 'Close navigation' }),
+        ]) {
+          const target = await control.boundingBox();
+          expect(
+            target && target.width >= 44 && target.height >= 44,
+            'navigation controls meet 44px touch target',
+          ).toBe(true);
+        }
+        await page.keyboard.press('Escape');
+      }
+    }
+
+    await page.setViewportSize(MOBILE_STANDARD);
+    await page.goto('/dashboard');
+    await page.evaluate(() => {
+      document.documentElement.style.zoom = '200%';
+    });
+    await expect(nav.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    await expect(nav.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+  });
+
   test('open drawer is inert outside, locks scroll, and moves focus inside (ltr)', async ({
     page,
   }) => {

@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — NAV-REBUILD / إعادة بناء التنقل الرئيسي**
+  - Changed: شجرة تنقل من 10 أقسام + 4 أدوات مساعدة، مع إزالة الروابط المكررة، وحفظ معرفات 34 وجهة. لا تغيير في صلاحيات الصفحات أو use cases.
+  - Evidence: عقود التنقل/shell المركزة 57/57 PASS؛ Astro check بقي بخطأين قائمين لتعريفات سكريبتات release `.mjs`. Playwright NOT VERIFIED: Chromium launch permission denied، ولا توجد بيانات دخول E2E؛ `.env` يشير لقاعدة خارجية ولم تُستخدم.
+  - State: PARTIAL — اختبار browser/responsive الفعلي محجوب؛ السجل: `tests/e2e/mobile-drawer-inert.spec.ts`.
+  - Key files: `src/ui/navigation/navigation.ts`, `src/ui/shell/Sidebar.astro`, `src/ui/layouts/AppLayout.astro`.
+
 - **2026-09-23 — FULL-REPO-AUDIT / تدقيق مستقل**
   - Changed: تقرير HTML مستقل لـ100 مجال بمؤشر نضج أدلة 49%، وست توصيات تكامل وبرومبتات معالجة؛ أزيل منه تصور إعادة التصميم بطلب المستخدم. لا تعديل للتطبيق أو الإنتاج.
   - Evidence: Node 24.20.0؛ unit 960/975 PASS (15 FAIL)، typecheck خطأ واحد، lint 9 أخطاء، architecture مخالفة واحدة؛ format/requirements/diagnose/build بعد verification:begin PASS. قراءة 6 صفحات إنتاجية أكدت NOT READY وschema 0018/0038 وReject Reports محجوب وbackup catalog فارغ. PG18/E2E/UAT NOT RUN في هذه الجولة.
@@ -436,7 +442,7 @@
 ### Accessibility / responsive
 - توجد حراسة static/unit لـWCAG fundamentals: landmarks/skip nav/focus/error summary/status semantics/drawer isolation/reduced motion/forced colors وغيرها.
 - fixes مؤكدة: loading `role=status`, notification severity نصيًا، forced-colors contract، drawer inert/focus behavior، reflow guards.
-- QC-100-FINAL-005: أرضية قراءة 12px (`--font-size-xs`) لميتاداتا الـKPI، هدف 44px لعناصر الـshell ذات الأيقونة الوحيدة (search/notifications/approvals) و44px لـdefinition disclosure، والرمز المرئي داخل عنصر يحمل `aria-label` يبقى `aria-hidden` حتى لا يخالف ظاهر النص الاسمَ المتاح.
+- QC-100-FINAL-005: أرضية قراءة 12px (`--font-size-xs`) لميتاداتا الـKPI، وهدف 44px للتحكمات التفاعلية في shell/navigation، والرمز المرئي داخل عنصر يحمل `aria-label` يبقى `aria-hidden` حتى لا يخالف ظاهر النص الاسمَ المتاح. إعادة بناء التنقل: 10 أقسام، أدوات مساعدة مستقلة، مؤشّر حالي نصي/شكلي، وفتح القسم الحالي تلقائيًا؛ 57/57 عقود shell/navigation مركزة PASS على Node `22.22.3` (خارج عقد المشروع). E2E الحقيقي غير متحقق: Chromium تعذر إقلاعه داخل sandbox، بيانات دخول الاختبار غير موجودة، وملف البيئة يشير إلى DB خارجية لم تُستخدم.
 - responsive E2E matrix صُممت لـ320/375/414/768/1024/1440 + landscape + LTR/RTL + 200% + text spacing + density.
 - live authenticated matrix وVoiceOver/NVDA/axe/320px/200% الشاملة ما زالت **NOT VERIFIED** على نفس current build.
 - لا claim امتثال WCAG 2.2 AA كامل.

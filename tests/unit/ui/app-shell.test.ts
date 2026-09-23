@@ -14,21 +14,31 @@ describe('enterprise application shell contracts', () => {
   it('provides an operable mobile navigation control and keeps collapsed state on the workspace', () => {
     const layout = readUi('layouts/AppLayout.astro');
     const topbar = readUi('shell/Topbar.astro');
+    const sidebar = readUi('shell/Sidebar.astro');
     expect(layout).toContain('data-app-shell');
     expect(layout).toContain('data-sidebar-panel');
     expect(layout).toContain("localStorage.setItem('qc-sidebar-collapsed'");
     expect(topbar).toContain('data-navigation-toggle');
     expect(topbar).toContain('aria-controls="primary-navigation"');
-    expect(topbar).toContain('min-inline-size:40px');
+    expect(topbar).toContain('min-inline-size:44px');
     expect(topbar).toContain('@media(max-width:760px)');
+    expect(sidebar).toContain('data-nav-section-toggle');
+    expect(sidebar).toContain('aria-expanded={expanded}');
+    expect(sidebar).toContain('aria-controls={listId}');
+    expect(sidebar).toContain('<ul class="nav-items"');
+    expect(layout).toContain(
+      "sidebarPanel.setAttribute('aria-hidden', String(isMobileDrawer() && !open))",
+    );
+    expect(layout).toContain("event.key !== 'Escape'");
   });
 
   it('supports a keyboard search shortcut without exposing unauthorized results in the shell', () => {
     const layout = readUi('layouts/AppLayout.astro');
     const topbar = readUi('shell/Topbar.astro');
+    const sidebar = readUi('shell/Sidebar.astro');
     expect(layout).toContain("event.key.toLowerCase() === 'k'");
     expect(layout).toContain("window.location.assign('/search')");
-    expect(topbar).toContain('Search authorized records');
+    expect(sidebar).toContain('href={item.href}');
     expect(topbar).not.toContain('All pending approvals');
   });
 

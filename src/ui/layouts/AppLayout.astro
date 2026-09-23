@@ -12,7 +12,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 <BaseLayout {...props}>
   <a class="skip-link" href="#main-content" data-skip-link>Skip to main content</a>
   <div class="app-shell" data-app-shell data-mobile-nav-open="false" data-sidebar-collapsed="false">
-    <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>
+    <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation" aria-hidden="false"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>
     <div class="app-workspace" data-app-workspace>
       <header class="app-topbar"><slot name="topbar"><Topbar breadcrumbs={breadcrumbs} userName={actor?.loginIdentity ?? 'Signed in'} userRole={props.userRole ?? actorRoleLabel(actor)} scope={props.scope ?? describeActorScope(actor)} approvalCount={props.approvalCount} notificationCount={props.notificationCount} /></slot></header>
       <main id="main-content" class="app-main"><slot /></main>
@@ -39,6 +39,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   const navigationToggle = document.querySelector<HTMLButtonElement>('[data-navigation-toggle]');
   const drawerClose = document.querySelector<HTMLButtonElement>('[data-drawer-close]');
   const storageKey = 'qc-sidebar-collapsed';
+  const sectionsStorageKey = 'qc-navigation-expanded-sections';
   const mobileQuery = window.matchMedia('(max-width: 760px)');
   const isMobileDrawer = () => mobileQuery.matches;
   const isDrawerOpen = () => shell?.dataset.mobileNavOpen === 'true';
@@ -52,9 +53,49 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     localStorage.setItem('qc-sidebar-collapsed', String(collapsed));
   };
 
-  const firstDrawerLink = () =>
-    sidebarPanel?.querySelector<HTMLElement>('a[href]') ??
-    sidebarPanel?.querySelector<HTMLElement>('button:not([disabled])');
+  let savedSections: unknown = [];
+  try {
+    savedSections = JSON.parse(sessionStorage.getItem(sectionsStorageKey) ?? '[]');
+  } catch {
+    // A malformed client preference must not prevent the primary navigation
+    // from working; the current route still opens its own section.
+  }
+  const expandedSections = new Set<string>(
+    Array.isArray(savedSections)
+      ? savedSections.filter((section): section is string => typeof section === 'string')
+      : [],
+  );
+  sidebar?.querySelectorAll<HTMLButtonElement>('[data-nav-section-toggle]').forEach((button) => {
+    const sectionId = button.dataset.sectionId;
+    const sectionLabel = button.dataset.sectionLabel ?? sectionId;
+    const listId = button.getAttribute('aria-controls');
+    const list = listId ? document.getElementById(listId) : null;
+    if (!sectionId || !list) return;
+    const isCurrentSection = button.closest('[data-current-section="true"]') !== null;
+    const open = isCurrentSection || expandedSections.has(sectionId);
+    button.setAttribute('aria-expanded', String(open));
+    button.setAttribute('aria-label', `${open ? 'Collapse' : 'Expand'} ${sectionLabel} section`);
+    list.toggleAttribute('hidden', !open);
+    if (open) expandedSections.add(sectionId);
+    button.addEventListener('click', () => {
+      const nextOpen = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(nextOpen));
+      button.setAttribute(
+        'aria-label',
+        `${nextOpen ? 'Collapse' : 'Expand'} ${sectionLabel} section`,
+      );
+      list.toggleAttribute('hidden', !nextOpen);
+      if (nextOpen) expandedSections.add(sectionId);
+      else expandedSections.delete(sectionId);
+      sessionStorage.setItem(sectionsStorageKey, JSON.stringify([...expandedSections]));
+    });
+    button.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || button.getAttribute('aria-expanded') !== 'true') return;
+      event.preventDefault();
+      button.click();
+      button.focus();
+    });
+  });
 
   const drawerFocusables = () => {
     if (!sidebarPanel) return [];
@@ -65,6 +106,9 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     );
     return candidates.filter((element) => element.getClientRects().length > 0);
   };
+
+  const firstDrawerLink = () =>
+    drawerFocusables().find((element) => element.matches('a[href]')) ?? drawerFocusables()[0];
 
   const lockBackgroundScroll = () => {
     document.body.style.overflow = 'hidden';
@@ -95,6 +139,8 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     if (!shell || !sidebarPanel) return;
     shell.dataset.mobileNavOpen = String(open);
     navigationToggle?.setAttribute('aria-expanded', String(open));
+    navigationToggle?.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    sidebarPanel.setAttribute('aria-hidden', String(isMobileDrawer() && !open));
     if (!isMobileDrawer()) {
       sidebarPanel.removeAttribute('inert');
       releaseBackground();
@@ -121,6 +167,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   // breakpoint; every other state releases all temporary isolation.
   if (isMobileDrawer() && !isDrawerOpen()) {
     sidebarPanel?.setAttribute('inert', '');
+    sidebarPanel?.setAttribute('aria-hidden', 'true');
     releaseBackground();
   }
   mobileQuery.addEventListener?.('change', (event) => {
@@ -131,11 +178,13 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
         isolateBackground();
       } else {
         sidebarPanel.setAttribute('inert', '');
+        sidebarPanel.setAttribute('aria-hidden', 'true');
         releaseBackground();
       }
     } else {
       // Leaving the mobile breakpoint: drop every temporary drawer state.
       sidebarPanel.removeAttribute('inert');
+      sidebarPanel.setAttribute('aria-hidden', 'false');
       releaseBackground();
     }
   });
