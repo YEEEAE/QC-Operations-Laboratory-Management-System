@@ -68,6 +68,7 @@ export interface UatEvidenceRepository {
     evidenceSnapshotHash: string;
     status?: UatCycleStatus;
     requestId: string;
+    actorId?: string;
   }): Promise<UatCycleRecord>;
   recordSession(command: RecordSessionCommand): Promise<UatSessionRecord>;
   recordDefect(command: RecordDefectCommand): Promise<UatDefectRecord>;

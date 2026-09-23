@@ -89,9 +89,9 @@ async function ensureUser(
     // must-change-password block left by a previous run.
     await client.query(
       `UPDATE qc.users
-       SET account_state = 'ACTIVE', password_hash = $2, must_change_password = TRUE
+       SET account_state = 'ACTIVE', display_name = $3, password_hash = $2, must_change_password = TRUE
        WHERE id = $1`,
-      [existing.rows[0].id, await hash(password)],
+      [existing.rows[0].id, await hash(password), displayName],
     );
     return existing.rows[0].id;
   }
@@ -261,12 +261,7 @@ async function main(): Promise<void> {
         fail(`Refusing UAT seed: persona ${persona.id} is not seed-managed.`);
       }
       const password = requirePassword(persona.passwordEnvVar, process.env);
-      const userId = await ensureUser(
-        client,
-        persona.loginIdentity,
-        `UAT ${persona.label} (disposable, 72h)`,
-        password,
-      );
+      const userId = await ensureUser(client, persona.loginIdentity, persona.label, password);
       await ensureRole(client, userId, persona.foundationRole, assignedBy);
       for (const scopeKind of persona.scopes) {
         await ensureScope(client, userId, scopeKind, persona.teamValue);

@@ -12,6 +12,10 @@ import {
   APPROVED_PERMISSION_CODES,
   FOUNDATION_ROLE_PERMISSIONS,
 } from '../../../db/seeds/common.js';
+import {
+  CREATE_ROUTES,
+  CREATE_SURFACE_PERMISSION_MATRIX,
+} from '../../../scripts/uat/scenario-support.js';
 
 const EMPLOYEE = FOUNDATION_ROLE_PERMISSIONS.EMPLOYEE;
 const SUPERVISOR = FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR;
@@ -27,6 +31,13 @@ const QC_CREATE_GRANTS = [
   'PERM-NCR-CREATE',
   'PERM-CHG-CREATE',
   'PERM-RREJ-CREATE',
+  'PERM-TASK-CREATE',
+  'PERM-CAPA-CREATE',
+  'PERM-DOC-CREATE',
+  'PERM-EQP-CREATE',
+  'PERM-CAL-CREATE',
+  'PERM-MNT-CREATE',
+  'PERM-QUAR-START-INSPECTION',
   'PERM-INSP-PRINT',
   'PERM-INSP-EXPORT',
   'PERM-LAB-PRINT',
@@ -53,6 +64,17 @@ const FORBIDDEN_FOR_QC = APPROVED_PERMISSION_CODES.filter(
 );
 
 describe('QC-100-FINAL-004 — EMPLOYEE (QC data entry) permission contract', () => {
+  it('maps every registered create route to an explicit grant shared by QC 01/02/03', () => {
+    expect(CREATE_SURFACE_PERMISSION_MATRIX.map((row) => row.route)).toEqual(CREATE_ROUTES);
+    expect(new Set(CREATE_SURFACE_PERMISSION_MATRIX.map((row) => row.permission)).size).toBe(
+      CREATE_SURFACE_PERMISSION_MATRIX.length,
+    );
+    for (const row of CREATE_SURFACE_PERMISSION_MATRIX) {
+      expect(EMPLOYEE, `${row.route} requires ${row.permission}`).toContain(row.permission);
+      expect(APPROVED_PERMISSION_CODES).toContain(row.permission);
+    }
+  });
+
   it('grants creation/data-entry for every report and form type', () => {
     for (const grant of QC_CREATE_GRANTS) {
       expect(EMPLOYEE, `EMPLOYEE missing ${grant}`).toContain(grant);
@@ -63,6 +85,13 @@ describe('QC-100-FINAL-004 — EMPLOYEE (QC data entry) permission contract', ()
     for (const code of FORBIDDEN_FOR_QC) {
       expect(EMPLOYEE, `EMPLOYEE must not hold ${code}`).not.toContain(code);
     }
+    for (const forbidden of [
+      'PERM-RREJ-CONFIRM-APPROVAL',
+      'PERM-RREJ-FINALIZE',
+      'PERM-RREJ-VOID',
+    ]) {
+      expect(EMPLOYEE, `EMPLOYEE must not hold ${forbidden}`).not.toContain(forbidden);
+    }
   });
 
   it('keeps the final-approval ceremony grant out of the Supervisor bundle', () => {
@@ -71,12 +100,14 @@ describe('QC-100-FINAL-004 — EMPLOYEE (QC data entry) permission contract', ()
     expect(SUPERVISOR).toContain('PERM-INSP-APPROVE');
     expect(SUPERVISOR).toContain('PERM-LAB-APPROVE');
     expect(SUPERVISOR).toContain('PERM-ESIG-SIGN');
+    expect(MANAGER).not.toContain('PERM-INSP-APPROVE');
+    expect(MANAGER).not.toContain('PERM-LAB-APPROVE');
   });
 
-  it('keeps the final-approval ceremony grant with Manager (QCM)', () => {
+  it('keeps QCM final approval grants separate from Supervisor stage-1 grants', () => {
     expect(MANAGER).toContain('PERM-APR-APPROVE');
-    expect(MANAGER).toContain('PERM-INSP-APPROVE');
-    expect(MANAGER).toContain('PERM-LAB-APPROVE');
+    expect(MANAGER).not.toContain('PERM-INSP-APPROVE');
+    expect(MANAGER).not.toContain('PERM-LAB-APPROVE');
     expect(MANAGER).toContain('PERM-ESIG-SIGN');
   });
 });

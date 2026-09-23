@@ -2105,3 +2105,21 @@ Tracked in Section 87
 Next Foundation Document:
 PERMISSION-MATRIX.md
 ```
+
+---
+
+# 104. Owner RBAC Decision — OD-2026-09-23-RBAC-01
+
+This decision supersedes earlier stage-1 `Manager`/QCM wording for the
+inspection and laboratory chains. See
+[`OWNER-DECISION-RBAC-2026-09-23.md`](OWNER-DECISION-RBAC-2026-09-23.md) for
+the owner source and full matrices.
+
+| Visible user | Internal role | Responsibility and authority boundary |
+|---|---|---|
+| Yazeed | `SYSTEM_OWNER` (only active named login `yazeed`) | Full explicit system authority and administrative override where a server use case supports it; cannot rewrite approved history/audit or invent a scientific result/source. |
+| QCM | `MANAGER` | Normal final approver and final signing authority after Supervisor stage. No inspection/laboratory stage-1 grant. |
+| Supervisor | `SUPERVISOR` | First-level reviewer/approver. Stage 1 is an audited workflow event without e-signature in the inspection/laboratory chain. |
+| QC 01, QC 02, QC 03 | `EMPLOYEE` | Identical QC data-entry role. Create all registered QC report/form types, edit eligible drafts/returned records, upload permitted evidence, submit and resubmit; no review, return, approval, signature, release, closure, or override authority. |
+
+This role mapping does not close PD-01, PD-02, or PD-07. `PASS ≠ RELEASED`.

@@ -9,7 +9,10 @@ import { describe, expect, it } from 'vitest';
 import { AppError } from '../../../src/shared/errors/app-error.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { getAuthorizationPolicy } from '../../../src/shared/authorization/policy-registry.js';
-import { isFinalApprovalAuthority } from '../../../src/shared/authorization/p05-authority.js';
+import {
+  isFinalApprovalAuthority,
+  isStageOneApprovalAuthority,
+} from '../../../src/shared/authorization/p05-authority.js';
 import { transitionInspection } from '../../../src/modules/quarantine/inspection/domain/inspection-state.js';
 import { transitionLab } from '../../../src/modules/laboratory/domain/lab-state.js';
 
@@ -75,5 +78,20 @@ describe('QC-100-FINAL-004 — final-approval authority separation', () => {
     expect(
       isFinalApprovalAuthority(stageActor({ loginIdentity: 'yazeed', roles: ['SYSTEM_OWNER'] })),
     ).toBe(true);
+  });
+});
+
+describe('OD-2026-09-23-RBAC-01 — stage authority separation', () => {
+  it('reserves first-stage approval for Supervisor and the named owner', () => {
+    expect(isStageOneApprovalAuthority(stageActor())).toBe(true);
+    expect(isStageOneApprovalAuthority(stageActor({ roles: ['MANAGER'] }))).toBe(false);
+    expect(
+      isStageOneApprovalAuthority(stageActor({ loginIdentity: 'yazeed', roles: ['SYSTEM_OWNER'] })),
+    ).toBe(true);
+    expect(
+      isStageOneApprovalAuthority(
+        stageActor({ loginIdentity: 'not-yazeed', roles: ['SYSTEM_OWNER'] }),
+      ),
+    ).toBe(false);
   });
 });

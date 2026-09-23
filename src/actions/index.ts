@@ -18,6 +18,7 @@ import { system } from './system.js';
 import { aiAdvisory } from './ai-advisory.js';
 import { releaseGovernance } from './release-governance.js';
 import { rejectReports } from './reject-reports.js';
+import { uatEvidence } from './uat-evidence.js';
 
 // Astro actions contract (verified against installed astro@4.16.19):
 // - `src/actions` must export a single `server` object
@@ -50,4 +51,5 @@ export const server = {
   aiAdvisory,
   releaseGovernance,
   rejectReports,
+  uatEvidence,
 };

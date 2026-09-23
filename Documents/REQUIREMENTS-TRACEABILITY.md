@@ -2222,3 +2222,22 @@ controlled source معتمد (PD-01/PD-02/PD-07 مفتوحة)؛ لا يوجد م
 `DESIGN-SYSTEM.md §16`، `PRODUCTION-READINESS-CHECKLIST.md §31`،
 `UAT-ACCEPTANCE-PLAN.md §57`) وغير منفذ: الواجهة English-only/LTR. لذلك يُبقى معرّف
 المجال كما هو، ويُحال التنفيذ إلى 005/018 والتحقق إلى 006، ولا يجوز تسجيل N/A غير معتمد.
+
+---
+
+# 104. Owner RBAC Decision Trace — OD-2026-09-23-RBAC-01
+
+| Owner decision | Requirement | Role / permission | State transition | Code / database | Verification evidence |
+|---|---|---|---|---|---|
+| QC 01/02/03 have identical create access to all registered QC forms | QC-OD-01 (Owner decision record) | `EMPLOYEE`: explicit per-domain CREATE grants; `PERM-QUAR-START-INSPECTION` is separate | Create only in each domain's allowed initial state | `db/seeds/common.ts`; `0038_owner_qc_report_access.sql`; `qc.role_permissions`; `CREATE_SURFACE_PERMISSION_MATRIX` in `scripts/uat/scenario-support.ts` | `tests/unit/authorization/qc-permission-contract.test.ts`; actual PostgreSQL create for all surfaces remains `NOT VERIFIED` |
+| QC cannot review/return/approve/sign/close/override | QC-OD-02 | Default deny; no approval or approval-signature grants in `EMPLOYEE`; reject-report confirm/finalize/void grants removed | Protected transitions remain denied for QC | `db/seeds/common.ts`; migration `0038`; authorization policy and use cases | Unit contracts updated; PostgreSQL and authenticated E2E negatives remain `BLOCKED` |
+| Supervisor first stage; QCM final signed stage | QC-OD-03 | `SUPERVISOR` + `PERM-INSP-APPROVE` / `PERM-LAB-APPROVE`; `MANAGER`/QCM + `PERM-APR-APPROVE` + `PERM-ESIG-SIGN` | `UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED` | `p05-authority.ts`; `db/seeds/common.ts`; migration `0038` revokes Manager stage-1 grants; inspection/lab transactions | `two-stage-approval-contract.test.ts`; integration case added to `two-stage-controlled-approval.test.ts`; PostgreSQL run remains `BLOCKED` |
+| Named system owner has explicit server-side authority | QC-OD-04 | `SYSTEM_OWNER` plus active exact `loginIdentity === 'yazeed'`; only explicit owner use cases | Named-owner exception preserves version, signature, history, and audit | `p05-authority.ts`; existing grant reconciliation via migration `0030`; no production mutation | Unit authority contract; isolated DB owner grant/override verification `NOT VERIFIED` |
+| PD-01/02/07 source and manual-judgment decisions remain open | QC-OD-06 | No role substitutes for controlled criteria/source | Missing official result/source remains fail-closed | QC-100-FINAL-013 request; decision register; inspection evaluator/use cases | Current-candidate PostgreSQL execution `BLOCKED` |
+| UAT scenario evidence is persistent, actor-bound, and retrievable | QC-OD-05 | Cycle/defect registration: named active owner; session: authenticated participant whose login and role match evidence; acceptance: existing QCM/owner signature use case; read: `PERM-RPT-VIEW` | Session/defect/cycle evidence appends only; acceptance binds the evidence snapshot to the release | `src/actions/uat-evidence.ts`; `src/modules/uat-evidence/application/use-cases.ts`; migration `0023_uat_evidence.sql`; `qc.audit_events` user actor | Unit authority/input tests; PostgreSQL persistence and authenticated E2E remain `NOT VERIFIED` |
+
+The QC access table has twelve registered create surfaces. It is a permission
+contract, not evidence that each form created a persisted record. User
+personas can be seeded only to a guarded isolated UAT database; the configured
+`.env` target was classified as production-like and was not used. The owner
+decision does not authorize production user/role/data writes.

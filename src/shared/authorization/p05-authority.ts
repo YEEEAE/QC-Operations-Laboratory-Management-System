@@ -53,7 +53,8 @@ export function isFinalApprovalAuthority(actor: ActorContext): boolean {
   return isNamedSystemOwner(actor);
 }
 
-/** QC-100-FINAL-004: first-stage (Supervisor) review/approval authority. */
+/** Owner decision 2026-09-23: first-stage approval belongs to Supervisor. */
 export function isStageOneApprovalAuthority(actor: ActorContext): boolean {
-  return isP05Authority(actor);
+  if (actor.accountState !== 'ACTIVE') return false;
+  return actor.roles.includes('SUPERVISOR') || isNamedSystemOwner(actor);
 }

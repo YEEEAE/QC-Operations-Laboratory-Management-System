@@ -2374,8 +2374,6 @@ This record changed after you opened it. Reload before continuing.
 | BD-011 SoD matrix               | Review / Approve            |
 | BD-012 Reviewer + Approver      | Approval                    |
 | BD-016 Draft deletion           | DELETE_DRAFT permissions    |
-| RD-003 Inspection approval role | PERM-INSP-APPROVE           |
-| RD-004 Lab approval role        | PERM-LAB-APPROVE            |
 | RD-006 Release role             | PERM-QUAR-RELEASE           |
 | RD-015 Retest authorization     | PERM-LAB-AUTHORIZE-RETEST   |
 | RD-016 Void authority           | Domain VOID permissions     |
@@ -2384,6 +2382,10 @@ This record changed after you opened it. Reload before continuing.
 | RD-019 Document approval        | PERM-DOC-APPROVE            |
 | RD-020 Production restore       | PERM-BKP-RESTORE-PRODUCTION |
 
+The former role-mapping questions RD-003/RD-004 are resolved by owner decision
+`OD-2026-09-23-RBAC-01`: `SUPERVISOR` is stage 1; `MANAGER`/QCM is final
+approval only. This does not resolve any open scientific source or criteria.
+
 ---
 
 # 130. Deny Until Approved Register
@@ -2391,12 +2393,6 @@ This record changed after you opened it. Reload before continuing.
 الـPermissions التالية يجب أن تكون Runtime DENY حتى policy approval:
 
 ```text
-PERM-INSP-APPROVE
-where role policy unresolved
-
-PERM-LAB-APPROVE
-where role policy unresolved
-
 PERM-LAB-RETEST
 PERM-LAB-AUTHORIZE-RETEST
 
@@ -2648,6 +2644,12 @@ DENY
 Reason:
 AUTH_SOD_DENIED
 ```
+
+For inspection/laboratory stage 1, `PERM-INSP-APPROVE` and
+`PERM-LAB-APPROVE` are granted only to Supervisor; the named active Owner may
+use the explicit domain exception. QCM/`MANAGER` is denied stage 1. These
+permissions remain subject to report state, scope, version, SoD and the
+scientific-source fail-closed guard.
 
 ---
 
@@ -2915,3 +2917,59 @@ FOUNDATION — APPROVED AUTHORIZATION MODEL
 Next Foundation Document:
 STATE-MACHINES.md
 ```
+
+---
+
+# 153. Owner RBAC Decision — OD-2026-09-23-RBAC-01
+
+This is the approved role-specific grant overlay for the six named personas.
+It supersedes earlier role examples that gave `MANAGER` stage-1 inspection or
+laboratory grants. Runtime authorization remains per-action, server-side,
+state/version/scope/SoD checked, and default-deny.
+
+## 153.1 Role/action matrix
+
+| Action | `SYSTEM_OWNER` / Yazeed | `MANAGER` / QCM | `SUPERVISOR` | `EMPLOYEE` / QC 01/02/03 |
+|---|---|---|---|---|
+| Create / edit eligible draft / submit / correct returned work | ALLOW under explicit domain rules | ALLOW where a domain grant exists | ALLOW where a domain grant exists | ALLOW for all registered QC creation surfaces and domain-granted data entry |
+| Review / return | ALLOW only through an explicit use case | ALLOW at final stage where implemented | ALLOW at first stage where assigned | DENY for QC-entry reports |
+| Inspection/lab stage-1 approve (`UNDER_REVIEW`) | Explicit named-owner exception only | DENY | ALLOW with domain grant | DENY |
+| Final approve / signature (`PENDING_QCM_APPROVAL`) | Explicit owner use case, required ceremony/audit | ALLOW; QCM is normal final authority | DENY | DENY |
+| Reopen / override | Only explicit audited administrative paths; no historical rewrite | DENY unless another domain grant says otherwise | DENY unless another domain grant says otherwise | DENY |
+| Direct edit/delete of approved history or audit evidence | DENY | DENY | DENY | DENY |
+
+## 153.2 QC report creation coverage
+
+`CREATE` means the server-side create permission in the `PERMISSION` column.
+Page visibility alone is not create evidence. All three QC identities map to
+the same `EMPLOYEE` grant bundle and have identical listed capability.
+
+| Report/form | Route | Permission | QC 01 | QC 02 | QC 03 |
+|---|---|---|---|---|---|
+| Receiving record | `/quarantine/receiving/new` | `PERM-QUAR-CREATE` | CREATE | CREATE | CREATE |
+| Laboratory report | `/laboratory/tests/new` | `PERM-LAB-CREATE` | CREATE | CREATE | CREATE |
+| NCR | `/quality/ncr/new` | `PERM-NCR-CREATE` | CREATE | CREATE | CREATE |
+| CAPA | `/quality/capa/new` | `PERM-CAPA-CREATE` | CREATE | CREATE | CREATE |
+| Finding | `/quality/findings/new` | `PERM-FIND-CREATE` | CREATE | CREATE | CREATE |
+| Change request | `/change-requests/new` | `PERM-CHG-CREATE` | CREATE | CREATE | CREATE |
+| Document | `/documents/new` | `PERM-DOC-CREATE` | CREATE | CREATE | CREATE |
+| Reject report | `/reject-reports/new` | `PERM-RREJ-CREATE` | CREATE | CREATE | CREATE |
+| Task | `/tasks/new` | `PERM-TASK-CREATE` | CREATE | CREATE | CREATE |
+| Equipment record | `/assets/equipment/new` | `PERM-EQP-CREATE` | CREATE | CREATE | CREATE |
+| Calibration record | `/assets/calibrations/new` | `PERM-CAL-CREATE` | CREATE | CREATE | CREATE |
+| Maintenance record | `/assets/maintenance/new` | `PERM-MNT-CREATE` | CREATE | CREATE | CREATE |
+
+Starting an inspection on an existing receiving record additionally requires
+`PERM-QUAR-START-INSPECTION`; it does not supply an official result. Update
+this matrix, explicit grants, and authorization tests when a create surface is
+added. Runtime creation of all twelve surfaces remains `NOT VERIFIED` until
+each create action runs against isolated PostgreSQL with valid domain inputs.
+
+## 153.3 Signature and scientific-source boundary
+
+QC `EMPLOYEE` has no approval-signature authority. Supervisor is the
+first-stage workflow approver without a formal signature in this chain. QCM
+(`MANAGER`) is the normal final signing authority. Owner authority never
+substitutes for an approved inspection source or acceptance criterion.
+PD-01/PD-02/PD-07 remain open; see the decision register and QC-100-FINAL-013
+request.

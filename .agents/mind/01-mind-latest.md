@@ -1,5 +1,18 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — OD-2026-09-23-RBAC-01 / قرار أدوار QC والاعتماد**
+  - Changed: وثّق قرار Yazeed للأدوار ومصفوفة إنشاء 12 surface؛ QC متساوون بلا اعتماد/توقيع، Supervisor مرحلة أولى وQCM نهائي. أضيف API أدلة UAT الموثّق بالدورة/الفاعل/الدور، وترحيل 0038 لمنح QC وسحب اعتماد المرحلة الأولى من MANAGER.
+  - Evidence: Node 24.20.0؛ authorization/UAT unit 47/47 PASS، typecheck 942 ملفًا بلا أخطاء، requirements:check PASS. PostgreSQL 18 integration/UAT وE2E BLOCKED لغياب container runtime؛ لم تُنشأ حسابات على أي قاعدة.
+  - State: PARTIAL — PD-01/02/07 مفتوحة؛ لا UAT بشري ولا production writes أو deploy أو Git remote.
+  - Key files: Documents/OWNER-DECISION-RBAC-2026-09-23.md، db/migrations/0038_owner_qc_report_access.sql، src/actions/uat-evidence.ts.
+
+
+- **2026-09-23 — RENDER-DEPLOY / فشل نشر `ba9d60b` بسبب غياب run-context**
+  - Changed: لا تغيير كود. صُحّح Build Command في خدمة Render `srv-dadqj67qj5pc7395rv2g` عبر الـAPI (كان يدويًا يتجاوز الـBlueprint) إلى `corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build`، ونُشر `9b9af0c` بنجاح (`dep-dapri7egekts73ev1dfg` → live). كذلك كانت `DATABASE_URL` ببيانات اعتماد قديمة (فشل auth `28000`) واستُبدلت بسلسلة الاتصال الخارجية الحالية لقاعدة `qc-database` (أعيد النشر `dep-daprlh6gekts73evbceg` → live).
+  - Evidence: النشر live؛ `/api/health/live` = 200 healthy والجذر يحوّل إلى `/login` على `qclevel.top`. `/api/health/ready` = 503 **متوقع**: قاعدة الإنتاج عند migration head `0018` بينما رأس المصدر `0038` وجدول `qc.reject_reports` غير موجود (بوابة readiness تجمع اتصال DB + توفر workflow — fail-closed كما صُمم). تطبيق الهجرات على الإنتاج يحتاج تفويضًا صريحًا.
+  - State: DONE للنشر. ملاحظات إعداد في Render لا تطابق `render.yaml` (يدوية، لم تُغيّر): runtime `rust`، healthCheckPath فارغ، renderSubdomainPolicy disabled (نطاق onrender محظور `blocked-render-subdomain` — استخدم `qclevel.top`)، startCommand يشغّل `pnpm access:grant-system-owner` عند الإقلاع، ومتغيرا بيئة شاذان باسم `Key` و`Value`.
+  - Security: مفتاح Render API وكلمة مرور DB ظهرا في المحادثة — يوصى بتدويرهما.
+
 - **2026-09-23 — QC-100-FINAL-013 / inspection source decision gap traced**
   - Changed: documented approved fail-closed guardrails and added a draft-only QC/QMS/Document Control decision request; PD-01/02/07 remain OPEN. Existing create-from-receiving action is present; official result/source mapping blocks a valid positive approval path.
   - Evidence: requirements/state-machine/code trace reviewed on Node 24.20.0; focused PG integration BLOCKED because Testcontainers has no working runtime. No approval values or criteria inferred.
@@ -263,6 +276,9 @@
 - الـowner control center يستدعي `GetControlCenterOverviewUseCase` (بوابة `isNamedSystemOwner`) ولا ينفّذ SQL أو منطق أعمال؛ الإنشاء/التعديل/الأدوار/النطاقات تمر عبر الـuse cases وactions القائمة نفسها.
 
 ### P-05 authority
+- OD-2026-09-23-RBAC-01 يحسم مسار التفتيش/المختبر: Supervisor وحده بصفة الدور يمنح المرحلة الأولى؛ QCM/MANAGER نهائي فقط؛ المالك المسمى يبقى استثناءً صريحًا داخل use case. أدلة الوحدة PASS، لكن التحقق على PostgreSQL 18 ما زال BLOCKED.
+- QC 01/02/03 يستخدمون EMPLOYEE bundle واحدًا لأسطح الإنشاء الـ12؛ لا مراجعة/إرجاع/اعتماد/توقيع/إغلاق/تجاوز. لم تُنشأ حسابات UAT لأن PostgreSQL المعزولة غير متاحة.
+- أدلة UAT تُسجل عبر authenticated actions مع participant login/role matching، وتكتب مع audit داخل transaction؛ PostgreSQL write/read round-trip لم يُتحقق.
 - سلطات P-05 الأساسية: Supervisor وManager و`yazeed`/SYSTEM_OWNER المسمى؛ Admin-only مرفوض.
 - تغطي حسب السياسة الحالية inspection/lab/release/retest/document approval وعمليات VOID المرتبطة، مع بقاء state/permission/SoD/version checks.
 - لا تستنتج سلطة من role label وحده إذا كانت use case تتطلب permission أو ceremony إضافية.

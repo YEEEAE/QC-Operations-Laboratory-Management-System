@@ -20,6 +20,8 @@ import {
   RecordUatDefectUseCase,
   RecordUatSessionUseCase,
   assertUatAcceptanceAuthority,
+  assertUatEvidenceRecorder,
+  assertUatSessionParticipant,
 } from '../../../src/modules/uat-evidence/application/use-cases.js';
 import type { UatEvidenceRepository } from '../../../src/modules/uat-evidence/ports/repository.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
@@ -317,6 +319,42 @@ describe('ingestion use cases', () => {
 });
 
 describe('acceptance authority and ceremony', () => {
+  it('binds authenticated scenario evidence to the participant login and role', () => {
+    const qcParticipant = {
+      id: 'qc-01-id',
+      loginIdentity: 'uat-qc-01',
+      accountState: 'ACTIVE' as const,
+      roles: ['EMPLOYEE'],
+    };
+    expect(() => assertUatSessionParticipant(qcParticipant, sessionInput())).not.toThrow();
+    expect(() =>
+      assertUatSessionParticipant({ ...qcParticipant, loginIdentity: 'uat-qc-02' }, sessionInput()),
+    ).toThrow();
+    expect(() =>
+      assertUatSessionParticipant({ ...qcParticipant, roles: ['SUPERVISOR'] }, sessionInput()),
+    ).toThrow();
+    expect(() =>
+      assertUatSessionParticipant({ ...qcParticipant, accountState: 'DISABLED' }, sessionInput()),
+    ).toThrow();
+  });
+
+  it('limits authenticated UAT cycle/session/defect recording to the named active owner', () => {
+    const ownerRecorder = {
+      id: 'owner-id',
+      loginIdentity: 'yazeed',
+      accountState: 'ACTIVE' as const,
+      roles: ['SYSTEM_OWNER'],
+    };
+    expect(() => assertUatEvidenceRecorder(ownerRecorder)).not.toThrow();
+    expect(() =>
+      assertUatEvidenceRecorder({ ...ownerRecorder, loginIdentity: 'forged-owner' }),
+    ).toThrow();
+    expect(() => assertUatEvidenceRecorder({ ...ownerRecorder, roles: ['MANAGER'] })).toThrow();
+    expect(() =>
+      assertUatEvidenceRecorder({ ...ownerRecorder, accountState: 'DISABLED' }),
+    ).toThrow();
+  });
+
   it('grants acceptance authority to Manager and named owner only', () => {
     expect(() =>
       assertUatAcceptanceAuthority(actor('mgr', ['MANAGER'], ['PERM-APR-APPROVE'])),

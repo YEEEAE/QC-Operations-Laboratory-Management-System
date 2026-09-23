@@ -15,6 +15,25 @@
 
 ## 2. Working assumptions and constraints
 
+### Approved owner decision — OD-2026-09-23-RBAC-01
+
+Yazeed (Owner) approved the role and workflow authority slice on 2026-09-23.
+The system role codes remain `SYSTEM_OWNER` (named active login `yazeed`),
+`MANAGER` (visible name QCM), `SUPERVISOR`, and `EMPLOYEE` (QC 01/02/03).
+The three QC users share the same create/submit/draft-edit bundle across all
+currently registered QC creation surfaces; approval, review, signature,
+release, closure, and workflow override remain denied to them. Supervisor owns
+inspection/laboratory stage 1 without e-signature; QCM (`MANAGER`) owns the
+normal final approval and signature. Named-owner administrative authority is
+limited to explicit server use cases and cannot create a scientific result or
+resolve a missing controlled source. See
+[`OWNER-DECISION-RBAC-2026-09-23.md`](OWNER-DECISION-RBAC-2026-09-23.md).
+
+This resolves the owner-authority and QC grant portion of PD-12 only. PD-12
+remains `PARTIAL` for any unenumerated domain permission or scope. PD-01,
+PD-02, and PD-07 remain `OPEN`; this RBAC decision supplies no scientific
+limits, controlled source/revision/hash, or manual-judgment procedure.
+
 These are planning constraints for phase B, not new product or QMS rules. Their evidence is the source document or explicit phase scope. If a source changes, QC-100-FINAL-012 reconciles the new evidence and QC-100-FINAL-013 routes policy questions to the named decision owner.
 
 | ID | Working assumption / constraint | Owner question | Affected behavior | Dependency | Evidence needed / source | State |

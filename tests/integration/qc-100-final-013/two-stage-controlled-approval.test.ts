@@ -757,6 +757,21 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       version: '3',
     });
 
+    // QCM is final-stage only under OD-2026-09-23-RBAC-01.
+    await expect(
+      new ApproveInspectionUseCase(inspectionRepository()).execute({
+        actor: qcm(),
+        id: skipReport,
+        expectedVersion: 3n,
+        requestId: 'f013-insp-qcm-stage1-e14',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    expect(await auditCountByRequest('f013-insp-qcm-stage1-e14')).toBe(0);
+    expect(await record('inspection_reports', skipReport)).toMatchObject({
+      state: 'UNDER_REVIEW',
+      version: '3',
+    });
+
     // Supervisor is stage-1 only: no final approval, even with the ceremony grant.
     await expect(
       new FinalApproveInspectionUseCase(inspectionRepository(), ceremony()).execute({

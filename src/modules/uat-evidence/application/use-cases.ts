@@ -16,7 +16,10 @@ import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
+import {
+  isNamedSystemOwner,
+  SYSTEM_OWNER_LOGIN_IDENTITY,
+} from '../../../shared/authorization/p05-authority.js';
 import type { ReauthenticationVerifier } from '../../e-signatures/ports/repository.js';
 import type {
   UatCycleIdentityBinding,
@@ -50,6 +53,37 @@ export function assertUatAcceptanceAuthority(actor: ActorContext): void {
   if (!isAuthority) throw new AppError('AUTHZ_DENIED', { userSafe: true });
 }
 
+/** Only the named system owner may register formal scenario/defect evidence. */
+export function assertUatEvidenceRecorder(actor: IngestionActor): void {
+  const isOwner =
+    actor.accountState === 'ACTIVE' &&
+    actor.roles.includes('SYSTEM_OWNER') &&
+    actor.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY;
+  if (!isOwner) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+}
+
+/** A signed-in UAT participant may record only their own role-bound session. */
+export function assertUatSessionParticipant(actor: IngestionActor, session: UatSessionInput): void {
+  const expectedRole =
+    actor.roles.includes('SYSTEM_OWNER') && actor.loginIdentity === SYSTEM_OWNER_LOGIN_IDENTITY
+      ? 'SYSTEM_OWNER'
+      : actor.roles.includes('MANAGER')
+        ? 'Manager'
+        : actor.roles.includes('SUPERVISOR')
+          ? 'Supervisor'
+          : actor.roles.includes('EMPLOYEE')
+            ? 'QC Employee'
+            : undefined;
+  if (
+    actor.accountState !== 'ACTIVE' ||
+    !expectedRole ||
+    session.participantCode.trim() !== actor.loginIdentity ||
+    session.participantRole.trim() !== expectedRole
+  ) {
+    throw new AppError('AUTHZ_DENIED', { userSafe: true });
+  }
+}
+
 export class CreateUatCycleUseCase {
   constructor(private readonly repository: UatEvidenceRepository) {}
 
@@ -57,8 +91,10 @@ export class CreateUatCycleUseCase {
     identity: UatCycleIdentityBinding;
     requestId: string;
     status?: 'UNVERIFIED' | 'IN_PROGRESS';
+    actor?: IngestionActor;
   }): Promise<UatCycleRecord> {
     if (!input.requestId?.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    if (input.actor) assertUatEvidenceRecorder(input.actor);
     assertUatCycleIdentity(input.identity);
     const existing = await this.repository.findCycleByCycleId(input.identity.cycleId.trim());
     if (existing) throw new AppError('RESOURCE_ALREADY_EXISTS', { userSafe: true });
@@ -68,6 +104,7 @@ export class CreateUatCycleUseCase {
       evidenceSnapshotHash: snapshotHash,
       status: input.status ?? 'UNVERIFIED',
       requestId: input.requestId.trim(),
+      ...(input.actor ? { actorId: input.actor.id } : {}),
     });
   }
 }
@@ -82,6 +119,7 @@ export class RecordUatSessionUseCase {
     actor?: IngestionActor;
   }): Promise<UatSessionRecord> {
     if (!input.requestId?.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    if (input.actor) assertUatSessionParticipant(input.actor, input.session);
     assertUatSession(input.session);
     return this.repository.recordSession({
       cycleId: input.cycleId,
@@ -102,6 +140,7 @@ export class RecordUatDefectUseCase {
     actor?: IngestionActor;
   }): Promise<UatDefectRecord> {
     if (!input.requestId?.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    if (input.actor) assertUatEvidenceRecorder(input.actor);
     assertUatDefect(input.defect);
     return this.repository.recordDefect({
       cycleId: input.cycleId,

@@ -114,6 +114,38 @@ export const CREATE_ROUTES = [
   '/assets/maintenance/new',
 ] as const;
 
+/** Canonical route-to-server-permission coverage used for the QC access matrix. */
+export const CREATE_SURFACE_PERMISSION_MATRIX = [
+  {
+    route: '/quarantine/receiving/new',
+    reportType: 'Receiving record',
+    permission: 'PERM-QUAR-CREATE',
+  },
+  {
+    route: '/laboratory/tests/new',
+    reportType: 'Laboratory report',
+    permission: 'PERM-LAB-CREATE',
+  },
+  { route: '/quality/ncr/new', reportType: 'NCR', permission: 'PERM-NCR-CREATE' },
+  { route: '/quality/capa/new', reportType: 'CAPA', permission: 'PERM-CAPA-CREATE' },
+  { route: '/quality/findings/new', reportType: 'Finding', permission: 'PERM-FIND-CREATE' },
+  { route: '/change-requests/new', reportType: 'Change request', permission: 'PERM-CHG-CREATE' },
+  { route: '/documents/new', reportType: 'Document', permission: 'PERM-DOC-CREATE' },
+  { route: '/reject-reports/new', reportType: 'Reject report', permission: 'PERM-RREJ-CREATE' },
+  { route: '/tasks/new', reportType: 'Task', permission: 'PERM-TASK-CREATE' },
+  { route: '/assets/equipment/new', reportType: 'Equipment record', permission: 'PERM-EQP-CREATE' },
+  {
+    route: '/assets/calibrations/new',
+    reportType: 'Calibration record',
+    permission: 'PERM-CAL-CREATE',
+  },
+  {
+    route: '/assets/maintenance/new',
+    reportType: 'Maintenance record',
+    permission: 'PERM-MNT-CREATE',
+  },
+] as const;
+
 /** Admin surface: must stay unreachable for the QC data-entry personas. */
 export const ADMIN_CREATE_ROUTE = '/admin/users/new';
 

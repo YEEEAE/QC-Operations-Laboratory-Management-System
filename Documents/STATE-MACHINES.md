@@ -180,8 +180,8 @@ projection only.
 | QMS RCA `TR-RCA-001..006` | `DRAFT/RETURNED → IN_PROGRESS → SUBMITTED → APPROVED` or `RETURNED`; void only `DRAFT/IN_PROGRESS/SUBMITTED → VOID` | RCA action permission and record scope | Expected version; author/reviewer separation where required | RCA evidence/history retained; audit records each accepted edge | Unknown transition is denied |
 | QMS CAPA `TR-CAPA-001..007` | `DRAFT → OPEN → IN_PROGRESS → AWAITING_VERIFICATION → EFFECTIVENESS_REVIEW → READY_FOR_CLOSURE`; `AWAITING_VERIFICATION → READY_FOR_CLOSURE` when effectiveness is not required; `DRAFT/OPEN/IN_PROGRESS/AWAITING_VERIFICATION/EFFECTIVENESS_REVIEW/READY_FOR_CLOSURE → CLOSED`; void only `DRAFT/OPEN/IN_PROGRESS → VOID` | CAPA permissions and record scope; close requires `PERM-CAPA-CLOSE` | Expected version; close requires reason, reauthentication, SoD and explicit CLOSE signature | Exact pre-transition snapshot, immutable signature/audit, replay-safe idempotency; all close effects transactional | Effectiveness/closure source requirements remain those explicitly approved for each edge |
 | Receiving `TR-RCV-001..010` | `PENDING → READY_FOR_INSPECTION → UNDER_INSPECTION → INSPECTION_COMPLETE → RELEASE_PENDING → RELEASED`; `HOLD`, `EXPIRED`, `CANCELLED` only through named edges | Explicit receiving permission + server-derived scope; release authority is Supervisor/Manager/named `yazeed` under P-05 | Expected version; release SoD against inspection actor; successful retry is idempotent | Audit/outbox and inspection-result consequences commit with transition; release is explicit; `PASS ≠ RELEASED`; `HOLD` is terminal in the implemented workflow | Duplicate/intake policy remains REQ-QUAR-010 source-dependent; release signature scope remains PD-32 |
-| Inspection `TR-INSP-001..009` | `DRAFT → SUBMITTED → UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`; return/resume/reopen/void/reject only by named edges | Stage 1: `PERM-INSP-APPROVE`, P-05 eligible authority and report scope. Stage 2: `PERM-APR-APPROVE + PERM-ESIG-SIGN`, Manager/QCM or named `yazeed`; ordinary scope still applies | Expected version; author/executor SoD; stage order enforced except the named-owner exception | Stage 1 has no signature. Stage 2 has reauthentication and a signature bound to the pre-transition version; signature, report, Receiving consequence, audit and outbox commit atomically. Receiving HOLD is preserved; approval never releases | Official result/evaluator and create-action input remain blocked by PD-01/02/07; absent source fails closed |
-| Laboratory `TR-LAB-001..009` | `DRAFT → SUBMITTED → UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`; return/resume/reopen/reject/void only by named edges | Stage 1: `PERM-LAB-APPROVE` + P-05 authority/scope. Stage 2: `PERM-APR-APPROVE + PERM-ESIG-SIGN`, Manager/QCM or named `yazeed` | Expected version; author/executor SoD; stage order, except named-owner exception | Server evaluator/source hash and frozen context; Stage 1 no signature; Stage 2 reauthentication and version-bound signature; immutable measurements/snapshots and audit | `VOID` policy TR-LAB-008 and reject decision authority PD-38 remain denied; no scientific evaluator/source is inferred |
+| Inspection `TR-INSP-001..009` | `DRAFT → SUBMITTED → UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`; return/resume/reopen/void/reject only by named edges | Stage 1: `SUPERVISOR` + `PERM-INSP-APPROVE` and report scope; named `SYSTEM_OWNER` only through the explicit domain exception. Stage 2: QCM (`MANAGER`) or named `yazeed` with `PERM-APR-APPROVE + PERM-ESIG-SIGN` | Expected version; author/executor SoD; stage order enforced except the named-owner exception | Stage 1 has no signature. Stage 2 has reauthentication and a signature bound to the pre-transition version; signature, report, Receiving consequence, audit and outbox commit atomically. Receiving HOLD is preserved; approval never releases | Official result/evaluator and create-action input remain blocked by PD-01/02/07; absent source fails closed |
+| Laboratory `TR-LAB-001..009` | `DRAFT → SUBMITTED → UNDER_REVIEW → PENDING_QCM_APPROVAL → APPROVED`; return/resume/reopen/reject/void only by named edges | Stage 1: `SUPERVISOR` + `PERM-LAB-APPROVE` and report scope; named `SYSTEM_OWNER` only through the explicit domain exception. Stage 2: QCM (`MANAGER`) or named `yazeed` with `PERM-APR-APPROVE + PERM-ESIG-SIGN` | Expected version; author/executor SoD; stage order, except named-owner exception | Server evaluator/source hash and frozen context; Stage 1 no signature; Stage 2 reauthentication and version-bound signature; immutable measurements/snapshots and audit | `VOID` policy TR-LAB-008 and reject decision authority PD-38 remain denied; no scientific evaluator/source is inferred |
 | Retest `TR-RETEST-001..003` | Request → approved request → new linked execution; never reuse the prior execution as a retest | Lab retest permissions and explicit policy scope | Expected original/request version; authority and SoD as defined by the approved retest policy | Link original and new execution; preserve prior measurements/results and reason | Retest count/effect policy remains open under REQ-LAB-018; deny unsupported requests |
 | Equipment `TR-EQP-001..005` | `DRAFT → ACTIVE ↔ OUT_OF_SERVICE/UNDER_MAINTENANCE → DECOMMISSIONED` only by named edges | Equipment action permissions and record scope from the asset matrices | Expected version; controlled reasons on high-risk edges; history retained | Append-only status/maintenance history; maintenance lock and downtime effects | Activation/return eligibility follows approved commissioning/calibration policy; no automatic overdue consequence inferred |
 | Calibration `TR-CAL-001..007` | Explicit edges: `DRAFT → SCHEDULED/SUBMITTED/VOID`; `SCHEDULED → SUBMITTED/VOID`; `SUBMITTED → APPROVED/FAILED/VOID`; `APPROVED → COMPLETED/CURRENT/FAILED/VOID`; `COMPLETED → CURRENT/FAILED/VOID`; `CURRENT → COMPLETED/DUE/OVERDUE/FAILED/SUPERSEDED/VOID`; `DUE → OVERDUE/FAILED/SUPERSEDED/VOID`; `OVERDUE → FAILED/SUPERSEDED/VOID`; `FAILED → SUPERSEDED` | Calibration action permission and scope; approval and current-setting remain policy-dependent where stated | Expected version; authority checks remain edge-specific | Source/certificate and append-only status history retained; new CURRENT supersedes prior calibration transactionally | Authority for approval/current-setting and void behavior remain source-dependent where marked |
@@ -1805,10 +1805,11 @@ Permission:
 PERM-INSP-APPROVE
 ```
 
-Current role policy (P-05 approved slice, PD-10):
+Current role policy (`OD-2026-09-23-RBAC-01`):
 
 ```text
-Supervisor / Manager / named yazeed (SYSTEM_OWNER)
+Supervisor / named yazeed (SYSTEM_OWNER) only through explicit domain exception
+Manager / QCM = DENY
 Admin alone = DENY
 ```
 
@@ -2229,10 +2230,11 @@ Permission:
 PERM-LAB-APPROVE
 ```
 
-Role assignment (P-05 approved slice, PD-09):
+Role assignment (`OD-2026-09-23-RBAC-01`):
 
 ```text
-Supervisor / Manager / named yazeed (SYSTEM_OWNER)
+Supervisor / named yazeed (SYSTEM_OWNER) only through explicit domain exception
+Manager / QCM = DENY
 Admin alone = DENY
 ```
 
@@ -4727,3 +4729,26 @@ FOUNDATION — APPROVED STATE MACHINE FRAMEWORK
 Next Foundation Document:
 DATA-MODEL.md
 ```
+
+---
+
+# 104. Owner RBAC Authority Overlay — OD-2026-09-23-RBAC-01
+
+For inspection and laboratory transitions `TR-INSP-006` and `TR-LAB-006`,
+the role authority in the detailed sections and index §5A is clarified as:
+
+```text
+UNDER_REVIEW --[Supervisor / domain approve permission; audit, version and SoD]-->
+PENDING_QCM_APPROVAL
+PENDING_QCM_APPROVAL --[QCM / PERM-APR-APPROVE + PERM-ESIG-SIGN]-->
+APPROVED (locked)
+```
+
+`MANAGER`/QCM is denied stage 1. The named active `SYSTEM_OWNER` login
+`yazeed` may use only an explicit owner exception implemented in the relevant
+use case; this exception does not grant QCM stage-1 authority. Stage 1 has no
+formal e-signature; QCM final approval has the version-bound signature
+ceremony. QC `EMPLOYEE` is denied every review/approval/signature transition.
+Transitions still require current version, domain preconditions, SoD, and
+transactional audit. Missing official result/source remains fail-closed under
+PD-01/PD-02/PD-07.

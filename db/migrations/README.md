@@ -2,7 +2,7 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current source head is `0037_qc_data_003_lab_batches_samples_readings` (37
+Current source head is `0038_owner_qc_report_access` (38
 migration files). Historical documentation freezes may cite earlier source heads. A read-only Render
 provider query on 2026-09-22 reports applied head `0018`; this is migration drift,
 not a reason to rewrite history or to claim production parity. Pending provider

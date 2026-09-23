@@ -54,10 +54,17 @@ describe('QC-100-FINAL-004 Task 4 UAT persona contract', () => {
   it('maps personas to the approved UAT matrix roles (QCM=MANAGER, supervisor=SUPERVISOR, 3× EMPLOYEE)', () => {
     const byId = new Map(UAT_PERSONAS.map((persona) => [persona.id, persona]));
     expect(byId.get('qcm')?.foundationRole).toBe('MANAGER');
+    expect(byId.get('qcm')?.label).toBe('QCM');
     expect(byId.get('supervisor')?.foundationRole).toBe('SUPERVISOR');
+    expect(byId.get('supervisor')?.label).toBe('Supervisor');
     for (const id of ['qc-01', 'qc-02', 'qc-03'] as const) {
       expect(byId.get(id)?.foundationRole).toBe('EMPLOYEE');
     }
+    expect((['qc-01', 'qc-02', 'qc-03'] as const).map((id) => byId.get(id)?.label)).toEqual([
+      'QC 01',
+      'QC 02',
+      'QC 03',
+    ]);
     for (const id of ['qcm', 'supervisor', 'qc-01', 'qc-02', 'qc-03'] as const) {
       expect(byId.get(id)?.scopes).toContain('TEAM');
       expect(byId.get(id)?.teamValue).toBe(UAT_TEAM_VALUE);
@@ -110,6 +117,8 @@ describe('QC-100-FINAL-004 Task 4 UAT persona contract', () => {
     // Supervisor stage approval remains a workflow event (no e-sign ceremony).
     expect(FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR).toContain('PERM-INSP-APPROVE');
     expect(FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR).toContain('PERM-ESIG-SIGN');
+    expect(FOUNDATION_ROLE_PERMISSIONS.MANAGER).not.toContain('PERM-INSP-APPROVE');
+    expect(FOUNDATION_ROLE_PERMISSIONS.MANAGER).not.toContain('PERM-LAB-APPROVE');
   });
 
   it('marks disposable records with the UAT- prefix contract', () => {

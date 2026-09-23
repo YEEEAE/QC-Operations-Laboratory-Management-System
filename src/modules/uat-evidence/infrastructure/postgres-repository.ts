@@ -107,42 +107,47 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
     evidenceSnapshotHash: string;
     status?: UatCycleStatus;
     requestId: string;
+    actorId?: string;
   }): Promise<UatCycleRecord> {
     const id = uuidv7();
     try {
-      const row = await this.database
-        .insertInto('uat_cycles')
-        .values({
-          id,
-          cycle_id: input.identity.cycleId.trim(),
-          release_id: input.identity.releaseId.trim(),
-          git_sha: input.identity.gitSha.trim().toLowerCase(),
-          build_id: input.identity.buildId.trim(),
-          application_version: input.identity.applicationVersion.trim(),
-          migration_head: input.identity.migrationHead.trim(),
-          environment: input.identity.environment,
-          plan_reference: input.identity.planReference.trim(),
-          status: input.status ?? 'UNVERIFIED',
-          evidence_snapshot_hash: input.evidenceSnapshotHash,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      await new PostgresAuditRepository(this.database).append({
-        actorType: 'SYSTEM',
-        subjectType: 'UAT_CYCLE',
-        subjectId: row.id,
-        action: 'UAT_CYCLE_CREATED',
-        requestId: input.requestId,
-        reason: `environment=${row.environment}; release=${row.release_id}`,
-        payload: {
-          cycleId: row.cycle_id,
-          gitSha: row.git_sha,
-          buildId: row.build_id,
-          applicationVersion: row.application_version,
-          migrationHead: row.migration_head,
-          environment: row.environment,
-          evidenceSnapshotHash: row.evidence_snapshot_hash,
-        },
+      const row = await this.database.transaction().execute(async (trx) => {
+        const inserted = await trx
+          .insertInto('uat_cycles')
+          .values({
+            id,
+            cycle_id: input.identity.cycleId.trim(),
+            release_id: input.identity.releaseId.trim(),
+            git_sha: input.identity.gitSha.trim().toLowerCase(),
+            build_id: input.identity.buildId.trim(),
+            application_version: input.identity.applicationVersion.trim(),
+            migration_head: input.identity.migrationHead.trim(),
+            environment: input.identity.environment,
+            plan_reference: input.identity.planReference.trim(),
+            status: input.status ?? 'UNVERIFIED',
+            evidence_snapshot_hash: input.evidenceSnapshotHash,
+          })
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await new PostgresAuditRepository(trx).append({
+          actorType: input.actorId ? 'USER' : 'SYSTEM',
+          ...(input.actorId ? { actorId: input.actorId } : {}),
+          subjectType: 'UAT_CYCLE',
+          subjectId: inserted.id,
+          action: 'UAT_CYCLE_CREATED',
+          requestId: input.requestId,
+          reason: `environment=${inserted.environment}; release=${inserted.release_id}`,
+          payload: {
+            cycleId: inserted.cycle_id,
+            gitSha: inserted.git_sha,
+            buildId: inserted.build_id,
+            applicationVersion: inserted.application_version,
+            migrationHead: inserted.migration_head,
+            environment: inserted.environment,
+            evidenceSnapshotHash: inserted.evidence_snapshot_hash,
+          },
+        });
+        return inserted;
       });
       return mapCycle(row);
     } catch (error) {
@@ -159,51 +164,54 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
     const id = uuidv7();
     const session = command.session;
     try {
-      const row = await this.database
-        .insertInto('uat_session_evidence')
-        .values({
-          id,
-          cycle_id: cycle.id,
-          session_id: session.sessionId.trim(),
-          participant_role: session.participantRole.trim(),
-          participant_code: session.participantCode.trim(),
-          task_id: session.taskId.trim(),
-          started_at: session.startedAt,
-          ended_at: session.endedAt,
-          time_on_task_seconds: session.timeOnTaskSeconds,
-          task_success: session.taskSuccess,
-          error_count: session.errorCount,
-          backtracking_count: session.backtrackingCount,
-          failed_navigation_count: session.failedNavigationCount,
-          form_correction_count: session.formCorrectionCount,
-          assistance: session.assistance,
-          wrong_action_attempts: session.wrongActionAttempts,
-          confidence_1_to_5: session.confidence1To5,
-          seq_1_to_7: session.seq1To7,
-          observations: session.observations,
-          severity: session.severity,
-          participant_comments: session.participantComments,
-          scenario_status: session.scenarioStatus,
-          task_accept_reject: session.taskAcceptReject,
-          evidence_reference: session.evidenceReference.trim(),
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      await new PostgresAuditRepository(this.database).append({
-        actorType: command.actorId ? 'USER' : 'SYSTEM',
-        ...(command.actorId ? { actorId: command.actorId } : {}),
-        subjectType: 'UAT_SESSION_EVIDENCE',
-        subjectId: row.id,
-        action: 'UAT_SESSION_RECORDED',
-        requestId: command.requestId,
-        reason: `cycle=${cycle.cycleId}; task=${row.task_id}; scenario=${row.scenario_status}`,
-        payload: {
-          cycleId: cycle.cycleId,
-          sessionId: row.session_id,
-          taskId: row.task_id,
-          participantCode: row.participant_code,
-          scenarioStatus: row.scenario_status,
-        },
+      const row = await this.database.transaction().execute(async (trx) => {
+        const inserted = await trx
+          .insertInto('uat_session_evidence')
+          .values({
+            id,
+            cycle_id: cycle.id,
+            session_id: session.sessionId.trim(),
+            participant_role: session.participantRole.trim(),
+            participant_code: session.participantCode.trim(),
+            task_id: session.taskId.trim(),
+            started_at: session.startedAt,
+            ended_at: session.endedAt,
+            time_on_task_seconds: session.timeOnTaskSeconds,
+            task_success: session.taskSuccess,
+            error_count: session.errorCount,
+            backtracking_count: session.backtrackingCount,
+            failed_navigation_count: session.failedNavigationCount,
+            form_correction_count: session.formCorrectionCount,
+            assistance: session.assistance,
+            wrong_action_attempts: session.wrongActionAttempts,
+            confidence_1_to_5: session.confidence1To5,
+            seq_1_to_7: session.seq1To7,
+            observations: session.observations,
+            severity: session.severity,
+            participant_comments: session.participantComments,
+            scenario_status: session.scenarioStatus,
+            task_accept_reject: session.taskAcceptReject,
+            evidence_reference: session.evidenceReference.trim(),
+          })
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await new PostgresAuditRepository(trx).append({
+          actorType: command.actorId ? 'USER' : 'SYSTEM',
+          ...(command.actorId ? { actorId: command.actorId } : {}),
+          subjectType: 'UAT_SESSION_EVIDENCE',
+          subjectId: inserted.id,
+          action: 'UAT_SESSION_RECORDED',
+          requestId: command.requestId,
+          reason: `cycle=${cycle.cycleId}; task=${inserted.task_id}; scenario=${inserted.scenario_status}`,
+          payload: {
+            cycleId: cycle.cycleId,
+            sessionId: inserted.session_id,
+            taskId: inserted.task_id,
+            participantCode: inserted.participant_code,
+            scenarioStatus: inserted.scenario_status,
+          },
+        });
+        return inserted;
       });
       return mapSession(row);
     } catch (error) {
@@ -217,40 +225,43 @@ export class PostgresUatEvidenceRepository implements UatEvidenceRepository {
     const id = uuidv7();
     const defect = command.defect;
     try {
-      const row = await this.database
-        .insertInto('uat_defects')
-        .values({
-          id,
-          cycle_id: cycle.id,
-          defect_id: defect.defectId.trim(),
-          session_id: defect.sessionId.trim(),
-          task_id: defect.taskId.trim(),
-          severity: defect.severity,
-          title: defect.title.trim(),
-          observed_evidence: defect.observedEvidence.trim(),
-          expected_business_outcome: defect.expectedBusinessOutcome,
-          actual_business_outcome: defect.actualBusinessOutcome,
-          request_id_or_ref: defect.requestIdOrRef.trim(),
-          status: defect.status,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      await new PostgresAuditRepository(this.database).append({
-        actorType: command.actorId ? 'USER' : 'SYSTEM',
-        ...(command.actorId ? { actorId: command.actorId } : {}),
-        subjectType: 'UAT_DEFECT',
-        subjectId: row.id,
-        action: 'UAT_DEFECT_RECORDED',
-        requestId: command.requestId,
-        reason: `cycle=${cycle.cycleId}; defect=${row.defect_id}; severity=${row.severity}`,
-        payload: {
-          cycleId: cycle.cycleId,
-          defectId: row.defect_id,
-          sessionId: row.session_id,
-          taskId: row.task_id,
-          severity: row.severity,
-          status: row.status,
-        },
+      const row = await this.database.transaction().execute(async (trx) => {
+        const inserted = await trx
+          .insertInto('uat_defects')
+          .values({
+            id,
+            cycle_id: cycle.id,
+            defect_id: defect.defectId.trim(),
+            session_id: defect.sessionId.trim(),
+            task_id: defect.taskId.trim(),
+            severity: defect.severity,
+            title: defect.title.trim(),
+            observed_evidence: defect.observedEvidence.trim(),
+            expected_business_outcome: defect.expectedBusinessOutcome,
+            actual_business_outcome: defect.actualBusinessOutcome,
+            request_id_or_ref: defect.requestIdOrRef.trim(),
+            status: defect.status,
+          })
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await new PostgresAuditRepository(trx).append({
+          actorType: command.actorId ? 'USER' : 'SYSTEM',
+          ...(command.actorId ? { actorId: command.actorId } : {}),
+          subjectType: 'UAT_DEFECT',
+          subjectId: inserted.id,
+          action: 'UAT_DEFECT_RECORDED',
+          requestId: command.requestId,
+          reason: `cycle=${cycle.cycleId}; defect=${inserted.defect_id}; severity=${inserted.severity}`,
+          payload: {
+            cycleId: cycle.cycleId,
+            defectId: inserted.defect_id,
+            sessionId: inserted.session_id,
+            taskId: inserted.task_id,
+            severity: inserted.severity,
+            status: inserted.status,
+          },
+        });
+        return inserted;
       });
       return mapDefect(row);
     } catch (error) {

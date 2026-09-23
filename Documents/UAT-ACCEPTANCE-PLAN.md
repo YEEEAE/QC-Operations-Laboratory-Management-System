@@ -1542,3 +1542,55 @@ UNVERIFIED
 # 79. Final Principle
 
 > **UAT succeeds only when representative authorized users can complete the intended controlled work correctly, prohibited actions remain prohibited, and every critical conclusion is supported by evidence tied to the exact release being evaluated.**
+
+---
+
+# 80. Owner RBAC Decision Coverage — OD-2026-09-23-RBAC-01
+
+The persona contract is `Yazeed/SYSTEM_OWNER`, `QCM/MANAGER`,
+`Supervisor/SUPERVISOR`, and `QC 01/02/03/EMPLOYEE`. QC personas share an
+identical server-side data-entry grant. They are denied review, return,
+approval, signature, close, and override actions. Supervisor is the first
+approval stage without a formal e-signature; QCM is the normal final signer
+and approver. See `Documents/OWNER-DECISION-RBAC-2026-09-23.md` and
+`Documents/PERMISSION-MATRIX.md` §153.
+
+## 80.1 QC creation matrix under test
+
+| Route | Permission | QC 01 | QC 02 | QC 03 | Evidence status in this task |
+|---|---|---|---|---|---|
+| `/quarantine/receiving/new` | `PERM-QUAR-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/laboratory/tests/new` | `PERM-LAB-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/quality/ncr/new` | `PERM-NCR-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/quality/capa/new` | `PERM-CAPA-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/quality/findings/new` | `PERM-FIND-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/change-requests/new` | `PERM-CHG-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/documents/new` | `PERM-DOC-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/reject-reports/new` | `PERM-RREJ-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/tasks/new` | `PERM-TASK-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/assets/equipment/new` | `PERM-EQP-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/assets/calibrations/new` | `PERM-CAL-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+| `/assets/maintenance/new` | `PERM-MNT-CREATE` | CREATE | CREATE | CREATE | NOT VERIFIED — no isolated PostgreSQL UAT run |
+
+Route availability is only a navigation check. `PASS` requires a successful
+server-side create, persisted row, correct creator/role, and audit evidence;
+domain required fields and preconditions must be satisfied. The route-to-
+permission table is a unit-level contract, not a runtime pass. QCM stage-1
+denial, QC protected-action denial, Supervisor stage-1, QCM final signature,
+owner exception/audit, concurrency, and post-approval lock scenarios remain
+`NOT RUN` in this environment until disposable PostgreSQL 18 and authenticated
+E2E are available.
+
+No human signature or acceptance is inferred from automated results. This
+decision does not close PD-01/02/07 or authorize production seeding,
+deployment, release, or remote Git operations.
+
+Authenticated evidence actions are available under the `uatEvidence` Astro
+Actions namespace. Cycle and defect registration are restricted to the named
+active Owner. A session write requires an active actor whose login identity and
+role match the participant code and role in that session. Reading uses the
+existing `PERM-RPT-VIEW` use case. UAT acceptance continues through the
+reauthenticated QCM/Owner signature transaction. Automated/API test results do
+not constitute human acceptance; scenario evidence must include its task,
+participant code/role, outcome, and evidence reference (including the record
+reference when a domain record is involved).

@@ -72,7 +72,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
   },
   {
     id: 'qcm',
-    label: 'QCM (quality control manager)',
+    label: 'QCM',
     loginIdentity: 'uat-qcm',
     foundationRole: 'MANAGER',
     passwordEnvVar: 'QC_UAT_QCM_PASSWORD',
@@ -83,7 +83,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
   },
   {
     id: 'supervisor',
-    label: 'Production supervisor',
+    label: 'Supervisor',
     loginIdentity: 'uat-supervisor',
     foundationRole: 'SUPERVISOR',
     passwordEnvVar: 'QC_UAT_SUPERVISOR_PASSWORD',
@@ -94,7 +94,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
   },
   {
     id: 'qc-01',
-    label: 'QC data-entry user 01',
+    label: 'QC 01',
     loginIdentity: 'uat-qc-01',
     foundationRole: 'EMPLOYEE',
     passwordEnvVar: 'QC_UAT_QC01_PASSWORD',
@@ -105,7 +105,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
   },
   {
     id: 'qc-02',
-    label: 'QC data-entry user 02',
+    label: 'QC 02',
     loginIdentity: 'uat-qc-02',
     foundationRole: 'EMPLOYEE',
     passwordEnvVar: 'QC_UAT_QC02_PASSWORD',
@@ -116,7 +116,7 @@ export const UAT_PERSONAS: readonly UatPersona[] = [
   },
   {
     id: 'qc-03',
-    label: 'QC data-entry user 03',
+    label: 'QC 03',
     loginIdentity: 'uat-qc-03',
     foundationRole: 'EMPLOYEE',
     passwordEnvVar: 'QC_UAT_QC03_PASSWORD',
