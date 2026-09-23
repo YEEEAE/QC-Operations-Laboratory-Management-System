@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — ACCESSIBILITY-TRANSITION-RECOVERY / POST fallback وتوثيق حدود التدقيق**
+  - Changed: إضافة server POST/recovery لإنشاء نسخة مستند، وتقليص سجل الأسطح بلا baseline من 9 إلى 8.
+  - Evidence: Astro check 963 ملفات/0 errors؛ عقد mutation safety 12/12. مصفوفة browser/AT موثقة NOT RUN لغياب بيانات E2E واعتماد بشري؛ `audit/2026-09-24/accessibility-responsive-transition-audit.md`.
+  - State: PARTIAL — لا ادعاء WCAG أو إغلاق للأسطح الثمانية المتبقية.
+
 - **2026-09-23 — REGISTERS-REPORT-PROVENANCE / مصدر التقرير وسلامة التصدير**
   - Changed: تقرير quarantine screen/print/CSV/XLSX يوضح منفذ التقرير والمصدر والنطاق والفلاتر والفترة والفرز والعدد والوقت وحالة النسخة غير المعتمدة؛ screen/export يشتركان في parser صارم؛ تحييد صيغ CSV/XLSX يشمل المحارف البيضاء/التحكمية السابقة للصيغة؛ الجداول المشتركة توفر اختيار كثافة من دون إخفاء الأعمدة، وتوضح أن الإجراءات الجماعية غير متاحة.
   - Evidence: focused reporting/filter/export tests 19/19 PASS؛ typecheck وAstro check وbuild PASS. populated PostgreSQL report/scope parity BLOCKED لغياب container runtime.

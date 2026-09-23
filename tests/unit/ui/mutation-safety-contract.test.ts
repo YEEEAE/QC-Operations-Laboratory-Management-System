@@ -44,13 +44,14 @@ const uiFiles = walk('src/ui').filter((path) => /\.(astro|ts)$/.test(path));
  * QC-100-FINAL-037-A register update: `quarantine/receiving/[receivingId]`
  * gained full POST baselines for inspection creation, HOLD, VOID, and
  * correction forms (verified against commit 5470a2e — 4 `method="post"`
- * forms), so it leaves this register. The register can only shrink.
+ * forms), so it leaves this register. `documents/[documentId]/versions/new`
+ * now has a server `Astro.callAction` POST baseline and leaves the register.
+ * The register can only shrink.
  */
 const NO_JS_BASELINE_OPEN = [
   'src/pages/admin/roles/[roleId].astro',
   'src/pages/change-requests/[changeRequestId]/review.astro',
   'src/pages/documents/[documentId]/versions/[versionId]/index.astro',
-  'src/pages/documents/[documentId]/versions/new.astro',
   'src/pages/laboratory/tests/[labTestId]/execute.astro',
   'src/pages/laboratory/tests/[labTestId]/review.astro',
   'src/pages/quality/capa/[capaId].astro',
@@ -153,6 +154,21 @@ describe('control surfaces and the JavaScript-only gap register', () => {
       (page) => read(page).includes('data-submit') && !hasPostBaseline(read(page)),
     );
     expect(withoutBaseline).toEqual(NO_JS_BASELINE_OPEN);
+  });
+
+  it('keeps document revision creation on a server POST path with recoverable errors', () => {
+    const source = read('src/pages/documents/[documentId]/versions/new.astro');
+    expect(source).toContain('<form class="form" method="post"');
+    expect(source).toContain("Astro.request.method === 'POST'");
+    expect(source).toContain('Astro.callAction(actions.documents.createVersion');
+    expect(source).toContain(
+      'Astro.redirect(`/documents/${document.id}/versions/${result.data.id}`, 303)',
+    );
+    expect(source).toContain('value={values.revision}');
+    expect(source).toContain('Nothing was submitted');
+    expect(source).toContain('Nothing was submitted. Review the current version history');
+    expect(source).toContain('role="alert"');
+    expect(source).toContain('aria-live="polite"');
   });
 
   it('lists exactly the surfaces without an in-flight duplicate guard', () => {
