@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — AUDIT-PAYLOAD-BOUNDARY / تحقق قراءات audit المباشرة**
+  - Changed: مسار idempotency في change requests يتحقق من payload المحفوظ قبل قراءة `expectedVersion`؛ الإسقاطات تواصل التحقق وتُبقي request ID دون تصدير payload.
+  - Evidence: Node 24.20.0؛ اختبارات audit/read-model/change requests 26/26 PASS؛ typecheck 942 ملفًا و0 أخطاء؛ Prettier و`git diff --check` PASS.
+  - State: DONE محليًا؛ لا تغيير صلاحيات أو بيانات أو سياسة احتفاظ.
+  - Key files: `src/modules/change-requests/infrastructure/postgres-repository.ts`, `tests/integration/shared/audit.test.ts`.
+
 - **2026-09-23 — FILE-EVIDENCE-01 / fail-closed upload boundaries**
   - Changed: `FileService` now requires explicit MIME/size/scanner policy; document-version actions no longer accept browser-supplied file IDs; evidence downloads resolve canonical links and authorize before object reads. Added draft decisions for unresolved file policy.
   - Evidence: Node 24.20.0 targeted file/telemetry tests 29/29 PASS; typecheck 942 files, 0 errors; build and release:verify PASS. Upload/download application routes and parent authorization wiring, approved scanner/policy, idempotency, and orphan reconciliation remain NOT VERIFIED/BLOCKED.

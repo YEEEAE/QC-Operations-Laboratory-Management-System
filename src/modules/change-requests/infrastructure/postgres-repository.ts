@@ -309,6 +309,9 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
       typeof row.payload === 'string'
         ? (JSON.parse(row.payload) as Record<string, unknown>)
         : (row.payload as Record<string, unknown> | null);
+    // This is a direct read of stored evidence for idempotency/replay, outside
+    // the history projection. Apply the same boundary as every other audit read.
+    assertSafeAuditPayload(payload);
     const expectedVersion = payload?.expectedVersion;
     if (typeof expectedVersion !== 'string' && typeof expectedVersion !== 'number')
       return undefined;

@@ -5,6 +5,7 @@ import {
   AUDIT_PAYLOAD_LIMITS,
   type AuditEventInput,
 } from '../../../src/shared/audit/audit-event';
+import { mapAuditRowToView } from '../../../src/shared/audit/audit-query';
 
 describe('immutable audit service contract', () => {
   it('captures trusted actor/time correlation fields through the repository', async () => {
@@ -92,6 +93,38 @@ describe('immutable audit service contract', () => {
     expect(() =>
       assertSafeAuditPayload({ values: Array(4).fill('x'.repeat(4_000)) }),
     ).not.toThrow();
+  });
+
+  it('validates stored payloads before exporting the allowlisted audit view', () => {
+    const baseRow = {
+      id: 'audit-1',
+      event_no: 1n,
+      occurred_at: new Date('2026-09-23T00:00:00.000Z'),
+      actor_type: 'USER',
+      actor_id: 'actor-1',
+      subject_type: 'CHANGE_REQUEST',
+      subject_id: 'record-1',
+      action: 'SUBMIT',
+      old_state: 'DRAFT',
+      new_state: 'SUBMITTED',
+      reason: null,
+      request_id: 'request-safe-1',
+      signature_id: null,
+    };
+
+    expect(() =>
+      mapAuditRowToView({
+        ...baseRow,
+        payload: { context: [{ authorization: 'SYNTHETIC_VALUE' }] },
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'VALIDATION_FAILED' }));
+
+    const view = mapAuditRowToView({
+      ...baseRow,
+      payload: { before: { state: 'DRAFT' }, after: { state: 'SUBMITTED' } },
+    });
+    expect(view.requestId).toBe('request-safe-1');
+    expect(view).not.toHaveProperty('payload');
   });
 
   it('rejects depth, array, node, string, and serialized byte overflow', () => {
