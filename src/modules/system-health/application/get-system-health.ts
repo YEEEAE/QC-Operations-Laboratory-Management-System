@@ -223,7 +223,7 @@ export class GetSystemHealthUseCase {
           artifactVerified: false,
           restoreVerification: 'NOT_VERIFIED',
           postureStatus: 'UNKNOWN',
-          knownGaps: ['NO_BACKUP_CATALOG_DATA'],
+          knownGaps: ['BACKUP_CATALOG_EMPTY'],
         };
       }
       const restoreRuns = await this.catalog.listRestoreRuns(latest.id);

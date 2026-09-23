@@ -41,9 +41,14 @@ export interface TelemetryHistogram {
   record(value: number, attributes?: TelemetryAttributes): void;
 }
 
+export interface TelemetryGauge {
+  set(value: number, attributes?: TelemetryAttributes): void;
+}
+
 export interface TelemetryMeter {
   createCounter(name: string): TelemetryCounter;
   createHistogram?(name: string): TelemetryHistogram;
+  createGauge?(name: string): TelemetryGauge;
 }
 
 function hex(bytes: number): string {
@@ -67,6 +72,10 @@ export class NoopTracer implements TelemetryTracer {
 export class NoopMeter implements TelemetryMeter {
   createCounter(): TelemetryCounter {
     return { increment: () => undefined };
+  }
+
+  createGauge(): TelemetryGauge {
+    return { set: () => undefined };
   }
 }
 
@@ -139,6 +148,16 @@ export function recordHistogram(
   if (!Number.isFinite(value) || value < 0) return;
   try {
     activeMeter.createHistogram?.(name).record(value, safeMetricAttributes(attributes));
+  } catch {
+    // telemetry failure must not propagate (§73)
+  }
+}
+
+/** Records an instantaneous numeric observation when a gauge exporter is configured. */
+export function recordGauge(name: string, value: number, attributes?: TelemetryAttributes): void {
+  if (!Number.isFinite(value) || value < 0) return;
+  try {
+    activeMeter.createGauge?.(name).set(value, safeMetricAttributes(attributes));
   } catch {
     // telemetry failure must not propagate (§73)
   }

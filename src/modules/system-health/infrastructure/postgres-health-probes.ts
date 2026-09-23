@@ -7,6 +7,8 @@ import {
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { DependencyHealth, SystemHealthProbes } from '../ports/health-probes.js';
 import { configuredAiProvider } from '../../ai-advisory/application/dependencies.js';
+import { reportDependencyFailure } from '../../../shared/observability/dependency-failure.js';
+import { recordGauge } from '../../../shared/observability/telemetry.js';
 
 /**
  * Server-side dependency probes for the authenticated system health view.
@@ -41,6 +43,11 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
         checkedAt,
       };
     } catch {
+      void reportDependencyFailure({
+        dependency: 'postgres',
+        operation: 'health_probe',
+        error: new Error('Database health probe failed'),
+      });
       return { dependency: 'database', status: 'UNAVAILABLE', checkedAt };
     }
   }
@@ -72,17 +79,21 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
         .executeTakeFirst();
       const pending = Number(row?.pending ?? 0);
       const oldest = row?.oldestAvailableAt ? new Date(row.oldestAvailableAt) : undefined;
+      recordGauge('qc_outbox_pending', pending, { dependency: 'outbox' });
       return {
         dependency: 'outbox',
-        status: 'HEALTHY',
+        status: !Number.isFinite(pending) ? 'UNKNOWN' : pending > 0 ? 'DEGRADED' : 'HEALTHY',
         checkedAt,
-        ...(Number.isFinite(pending)
-          ? {
-              detail: `Pending messages: ${pending}${oldest ? ` · oldest available ${oldest.toISOString()}` : ''}`,
-            }
-          : {}),
+        detail: Number.isFinite(pending)
+          ? `Pending messages: ${pending}${oldest ? ` · oldest available ${oldest.toISOString()}` : ''}`
+          : 'Pending count unavailable.',
       };
     } catch {
+      void reportDependencyFailure({
+        dependency: 'outbox',
+        operation: 'backlog_probe',
+        error: new Error('Outbox backlog probe failed'),
+      });
       return { dependency: 'outbox', status: 'UNAVAILABLE', checkedAt };
     }
   }
@@ -100,6 +111,11 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
             detail: 'AI advisory is unavailable; core QC workflows are unaffected.',
           };
     } catch {
+      void reportDependencyFailure({
+        dependency: 'ai-provider',
+        operation: 'availability_probe',
+        error: new Error('AI availability probe failed'),
+      });
       return {
         dependency: 'ai-provider',
         status: 'UNAVAILABLE',

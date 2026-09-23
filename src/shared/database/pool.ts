@@ -2,6 +2,7 @@ import { Pool, type PoolConfig } from 'pg';
 
 import { getRuntimeConfig } from '../../config/runtime.js';
 import { AppError } from '../errors/app-error.js';
+import { reportDependencyFailure } from '../observability/dependency-failure.js';
 
 let sharedPool: Pool | undefined;
 
@@ -79,11 +80,24 @@ export function getPool(): Pool {
   const databaseUrl = validateDatabaseUrl(getRuntimeConfig().databaseUrl);
 
   sharedPool = createPool(getDatabaseConnectionConfig(databaseUrl));
-  sharedPool.on('error', (error) => {
-    // Pool clients report errors asynchronously; do not leak driver details.
-    void databaseError(error);
-  });
+  attachPoolErrorTelemetry(sharedPool);
   return sharedPool;
+}
+
+/** Exported separately so asynchronous idle-client failures can be injected in tests. */
+export function attachPoolErrorTelemetry(
+  pool: Pick<Pool, 'on'>,
+  reportFailure = reportDependencyFailure,
+): void {
+  pool.on('error', (error) => {
+    // Pool clients report errors asynchronously; the error is classified but never serialized.
+    const classified = databaseError(error);
+    void reportFailure({
+      dependency: 'postgres',
+      operation: 'pool_client',
+      error: classified,
+    });
+  });
 }
 
 export async function closePool(): Promise<void> {

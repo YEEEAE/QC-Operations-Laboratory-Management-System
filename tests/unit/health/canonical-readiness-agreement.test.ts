@@ -10,6 +10,10 @@ import {
 } from '../../../src/shared/health/canonical-database-readiness.js';
 import { PostgresReadinessProbe } from '../../../src/shared/health/postgres-readiness-probe.js';
 import { createReadinessResponse } from '../../../src/shared/health/readiness.js';
+import {
+  resetTelemetryProviders,
+  setTelemetryProviders,
+} from '../../../src/shared/observability/telemetry.js';
 
 const { connectMock, endMock, queryMock, seenConfigs } = vi.hoisted(() => ({
   connectMock: vi.fn(),
@@ -84,6 +88,84 @@ beforeEach(() => {
 });
 
 describe('canonical database readiness agreement (F-01)', () => {
+  it('keeps liveness, readiness, capability degradation, and QC release status separate', async () => {
+    vi.stubEnv('DATABASE_URL', VALID_URL);
+    mockClientSuccess();
+    const probes = {
+      application: () => ({
+        dependency: 'application',
+        status: 'HEALTHY' as const,
+        checkedAt: new Date(),
+      }),
+      database: () => ({
+        dependency: 'database',
+        status: 'HEALTHY' as const,
+        checkedAt: new Date(),
+      }),
+      storage: () => ({
+        dependency: 'storage',
+        status: 'UNAVAILABLE' as const,
+        checkedAt: new Date(),
+      }),
+      outbox: () => ({
+        dependency: 'outbox',
+        status: 'DEGRADED' as const,
+        checkedAt: new Date(),
+        detail: 'Pending messages: 3',
+      }),
+      aiProvider: () => ({
+        dependency: 'ai-provider',
+        status: 'UNAVAILABLE' as const,
+        checkedAt: new Date(),
+      }),
+    };
+    const view = await new GetSystemHealthUseCase(probes, emptyCatalog, readyWorkflow).execute({
+      actor: {
+        ...viewer,
+        permissions: [
+          ...viewer.permissions,
+          { code: 'PERM-HLTH-READINESS', scopes: ['GLOBAL'] },
+          { code: 'PERM-BKP-VIEW', scopes: ['GLOBAL'] },
+        ],
+      },
+    });
+
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.rejectReportsReadiness).toBe('READY');
+    expect(view.qcReleaseReadiness).toBe('NOT_VERIFIED');
+    expect(view.checks.find((item) => item.dependency === 'outbox')).toMatchObject({
+      status: 'DEGRADED',
+      detail: 'Pending messages: 3',
+    });
+    expect(view.checks.find((item) => item.dependency === 'storage')?.status).toBe('UNAVAILABLE');
+    expect(view.aiCapability).toBe('UNAVAILABLE');
+    expect(view.backupPosture).toMatchObject({
+      restoreVerification: 'NOT_VERIFIED',
+      postureStatus: 'UNKNOWN',
+      knownGaps: ['BACKUP_CATALOG_EMPTY'],
+    });
+  });
+
+  it('records outbox pending count as a bounded gauge without choosing a trend threshold', async () => {
+    const setGauge = vi.fn();
+    setTelemetryProviders(undefined, {
+      createCounter: () => ({ increment: vi.fn() }),
+      createGauge: () => ({ set: setGauge }),
+    });
+    const database = {
+      selectFrom: () => ({
+        select: () => ({ where: () => ({ executeTakeFirst: async () => ({ pending: '3' }) }) }),
+      }),
+    };
+    try {
+      const health = await new PostgresSystemHealthProbes(database as never).outbox();
+      expect(health.status).toBe('DEGRADED');
+      expect(setGauge).toHaveBeenCalledWith(3, { dependency: 'outbox' });
+    } finally {
+      resetTelemetryProviders();
+    }
+  });
+
   it('reports healthy on both surfaces with the canonical TLS configuration', async () => {
     vi.stubEnv('DATABASE_URL', VALID_URL);
     mockClientSuccess();
