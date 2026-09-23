@@ -1,6 +1,8 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import AppliedFilters from '../../ui/components/data/AppliedFilters.astro';
+import DataTable from '../../ui/components/data/DataTable.astro';
+import FilterBar from '../../ui/components/data/FilterBar.astro';
 import Pagination from '../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
@@ -25,6 +27,9 @@ const ownership = params.get('assignee') === 'mine' ? ('mine' as const) : undefi
 // me" is one link instead of one per state and an assigned task with no due
 // date is never invisible.
 const openOnly = params.get('open') === '1';
+const sortKeys = ['updated', 'due', 'priority', 'taskNo'] as const;
+const sort = sortKeys.find((value) => value === params.get('sort')) ?? 'updated';
+const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
 // The register shows a human name, never a raw user identifier.
 let assigneeNames = new Map<string, string>();
 try {
@@ -55,6 +60,8 @@ try {
       due,
       open: openOnly || undefined,
       assigneeId: ownership === 'mine' ? actor.id : undefined,
+      sort,
+      direction,
     },
     page,
   });
@@ -83,14 +90,15 @@ const canCreate = actor.permissions.some(
 ---
 <AppLayout title="Tasks · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Work queue</p><h1>Tasks</h1><p class="lede">View operational work. Actions remain limited to your explicit permissions.</p></div>{canCreate && <a class="button" href="/tasks/new">Create task</a>}</section>
-  <form class="filters" method="get">
-    <label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label>
+  <FilterBar clearHref={hasFilters ? '/tasks' : undefined}>
+    <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Task number or title" /></label>
     <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
     <label for="due">Due<select id="due" name="due"><option value="">Any due date</option><option value="overdue" selected={due === 'overdue'}>Overdue</option><option value="today" selected={due === 'today'}>Due today</option></select></label>
     <label for="assignee">Assignee<select id="assignee" name="assignee"><option value="">All assignees</option><option value="mine" selected={ownership === 'mine'}>Only mine</option></select></label>
     <label for="open">Show<select id="open" name="open"><option value="">All tasks</option><option value="1" selected={openOnly}>Open work only</option></select></label>
-    <button type="submit">Filter</button>
-  </form>
+    <label for="sort">Sort by<select id="sort" name="sort"><option value="updated" selected={sort === 'updated'}>Recently updated</option><option value="due" selected={sort === 'due'}>Due date</option><option value="priority" selected={sort === 'priority'}>Priority</option><option value="taskNo" selected={sort === 'taskNo'}>Task number</option></select></label>
+    <label for="direction">Direction<select id="direction" name="direction"><option value="desc" selected={direction === 'desc'}>Descending</option><option value="asc" selected={direction === 'asc'}>Ascending</option></select></label>
+  </FilterBar>
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/tasks' : undefined}
@@ -98,8 +106,7 @@ const canCreate = actor.permissions.some(
       ? 'The task read is unavailable, so no count is shown.'
       : `Showing ${tasks.length} of ${result.total} in your authorized scope — page ${page.page} of ${totalPages}.`}
   />
-  {providerUnavailable ? <ProviderUnavailableState title="Tasks are temporarily unavailable" description="The task read did not return a confirmed result, so this queue is not treated as empty and no count is shown." retryHref="/tasks" /> : tasks.length ? <div class="table-wrap"><table><caption>{tasks.length} task{tasks.length === 1 ? '' : 's'}{hasFilters ? ' matching the current filters' : ''} — page {page.page} of {totalPages}</caption><thead><tr><th scope="col">Task number</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.priority}</td><td>{stateLabel(task.state)}</td><td>{assigneeLabel(task.currentAssigneeId)}</td><td>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDate(task.dueAt)}</time> : '—'}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters && <a href="/tasks">Clear all filters</a>}</section>}
-  {!providerUnavailable && totalPages > 1 && <Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="tasks" baseUrl="/tasks" />}
+  {providerUnavailable ? <ProviderUnavailableState title="Tasks are temporarily unavailable" description="The task read did not return a confirmed result, so this queue is not treated as empty and no count is shown." retryHref="/tasks" /> : tasks.length ? <DataTable caption={`Tasks — ${result.total} matching records`} summary={`Showing ${tasks.length} of ${result.total} authorized tasks · page ${page.page} of ${totalPages}`} density="compact"><thead><tr><th scope="col">Task number</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.priority}</td><td>{stateLabel(task.state)}</td><td>{assigneeLabel(task.currentAssigneeId)}</td><td>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDate(task.dueAt)}</time> : '—'}</td></tr>)}</tbody><Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="tasks" baseUrl="/tasks" /></Fragment></DataTable> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters && <a href="/tasks">Clear all filters</a>}</section>}
 </AppLayout>
 <style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--color-text-inverse);padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700;cursor:pointer}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5);flex-wrap:wrap}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem;font-size:1.1rem}@media(max-width:600px){.page-head,.filters{display:grid}.filters button{width:max-content}}
 </style>

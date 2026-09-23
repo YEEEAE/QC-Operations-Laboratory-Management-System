@@ -17,7 +17,17 @@ const { action = copy.actions.applyFilters, clearHref, label = 'Register filters
     <button type="submit">{action}</button>
     {clearHref && <a class="clear" href={clearHref}>{copy.actions.clearFilters}</a>}
   </div>
+  <p class="submit-status" role="status" aria-live="polite" hidden>Updating results…</p>
 </form>
+<script>
+  document.querySelectorAll<HTMLFormElement>('.filters[role="search"]').forEach((form) => {
+    form.addEventListener('submit', () => {
+      form.setAttribute('aria-busy', 'true');
+      const status = form.querySelector<HTMLElement>('.submit-status');
+      if (status) status.hidden = false;
+    });
+  });
+</script>
 <style>
   .filters {
     display: flex;
@@ -71,4 +81,5 @@ const { action = copy.actions.applyFilters, clearHref, label = 'Register filters
     border-color: var(--border-default);
     color: var(--text-secondary);
   }
+  .submit-status { flex-basis: 100%; margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); }
 </style>

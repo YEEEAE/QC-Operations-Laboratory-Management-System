@@ -23,6 +23,8 @@ export interface TaskListFilter {
    * instead of one link per state.
    */
   open?: boolean;
+  sort?: 'updated' | 'due' | 'priority' | 'taskNo';
+  direction?: 'asc' | 'desc';
 }
 export interface TaskListPage {
   items: readonly Task[];

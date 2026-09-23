@@ -21,6 +21,9 @@ export interface Mutation {
 export interface LabListFilter {
   state?: LabState;
   ownership?: 'mine';
+  search?: string;
+  sort?: 'updated' | 'testNo' | 'state';
+  direction?: 'asc' | 'desc';
 }
 
 /** One row of a bounded laboratory workload read. */
@@ -59,6 +62,7 @@ export interface LabRepository {
     actor: ActorContext;
     filter?: LabListFilter;
     limit: number;
+    offset?: number;
   }): Promise<{ items: LabTest[]; total: number }>;
   /**
    * Counts the readable population for `filter` and returns its bounded first

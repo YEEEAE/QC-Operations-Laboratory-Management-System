@@ -67,18 +67,34 @@ export class PostgresLabRepository implements LabRepository {
    * `get()` loop (four statements per laboratory test), which made the register
    * cost grow with the table it filtered.
    */
-  async list(input: { actor: ActorContext; filter?: LabListFilter; limit: number }) {
+  async list(input: {
+    actor: ActorContext;
+    filter?: LabListFilter;
+    limit: number;
+    offset?: number;
+  }) {
     const scope = this.rowScope(input.actor);
-    if (scope === 'NONE') return { items: [], total: 0 };
+    if (scope === 'NONE') throw new AppError('AUTHZ_DENIED');
+    let rowsQuery = this.filteredQuery(input.actor, scope, input.filter).selectAll();
+    const direction = input.filter?.direction ?? 'desc';
+    switch (input.filter?.sort ?? 'updated') {
+      case 'testNo':
+        rowsQuery = rowsQuery.orderBy('lab_test_no', direction);
+        break;
+      case 'state':
+        rowsQuery = rowsQuery.orderBy('state', direction);
+        break;
+      default:
+        rowsQuery = rowsQuery.orderBy('updated_at', direction);
+    }
     const [countRow, rows] = await Promise.all([
       this.filteredQuery(input.actor, scope, input.filter)
         .select((eb) => eb.fn.countAll().as('count'))
         .executeTakeFirst(),
-      this.filteredQuery(input.actor, scope, input.filter)
-        .selectAll()
-        .orderBy('updated_at', 'desc')
-        .orderBy('id', 'desc')
+      rowsQuery
+        .orderBy('id', direction)
         .limit(Math.max(1, input.limit))
+        .offset(Math.max(0, input.offset ?? 0))
         .execute(),
     ]);
     // The page keeps the same per-row scope decision the detail read applies,
@@ -134,7 +150,7 @@ export class PostgresLabRepository implements LabRepository {
    * cannot match because the entity carries no such identifiers.
    */
   private rowScope(actor: ActorContext): 'ALL' | 'OWN' | 'NONE' {
-    const grant = actor.permissions.find((p) => p.code === 'PERM-LAB-VIEW') ?? actor.permissions[0];
+    const grant = actor.permissions.find((p) => p.code === 'PERM-LAB-VIEW');
     if (!grant || grant.active === false) return 'NONE';
     if (grant.scopes.includes('GLOBAL')) return 'ALL';
     if (grant.scopes.includes('OWN')) return 'OWN';
@@ -168,6 +184,19 @@ export class PostgresLabRepository implements LabRepository {
   ) {
     let query = this.db.selectFrom('lab_tests');
     if (filter?.state) query = query.where('state', '=', filter.state) as typeof query;
+    if (filter?.search)
+      query = query.where((eb) =>
+        eb.or([
+          eb('lab_test_no', 'ilike', `%${filter.search}%`),
+          eb.exists(
+            eb
+              .selectFrom('lab_samples')
+              .select('id')
+              .whereRef('lab_samples.lab_test_id', '=', 'lab_tests.id')
+              .where('sample_identifier', 'ilike', `%${filter.search}%`),
+          ),
+        ]),
+      ) as typeof query;
     // Ownership is the same owner dimension the dashboard counts, so a personal
     // count can link to exactly its own set instead of the whole authorized
     // scope.

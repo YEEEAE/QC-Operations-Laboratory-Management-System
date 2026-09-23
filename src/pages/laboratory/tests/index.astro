@@ -1,9 +1,13 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
+import DataTable from '../../../ui/components/data/DataTable.astro';
+import Pagination from '../../../ui/components/data/Pagination.astro';
+import FilterBar from '../../../ui/components/data/FilterBar.astro';
+import { parsePageInput } from '../../../shared/pagination/page.js';
+import { AppError } from '../../../shared/errors/app-error.js';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import { laboratoryReadDependencies } from '../../../modules/laboratory/application/dependencies.js';
-import { DEFAULT_PAGE_SIZE } from '../../../config/constants.js';
 import { formatDate } from '../../../shared/copy/format.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
@@ -25,11 +29,15 @@ const states = [
   'VOID',
 ] as const;
 const params = Astro.url.searchParams;
+const page = parsePageInput({ page: params.get('page'), pageSize: params.get('pageSize') });
+const search = params.get('q')?.slice(0, 200).trim() || undefined;
 const requestedState = params.get('state');
 const state = states.find((value) => value === requestedState);
 // Ownership is the same owner dimension the dashboard counts, so a personal
 // laboratory count opens exactly its own records.
 const ownership = params.get('ownership') === 'mine' ? ('mine' as const) : undefined;
+const sort = (['updated', 'testNo', 'state'] as const).find((value) => value === params.get('sort')) ?? 'updated';
+const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
 
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
@@ -38,6 +46,7 @@ const chipHref = (drop: string) => {
   return `/laboratory/tests${search ? `?${search}` : ''}`;
 };
 const appliedFilters = [
+  search && { label: 'Search', value: search, href: chipHref('q') },
   state && { label: 'Workflow state', value: stateLabel(state), href: chipHref('state') },
   ownership && { label: 'Ownership', value: 'Only mine', href: chipHref('ownership') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
@@ -47,18 +56,21 @@ const hasFilters = appliedFilters.length > 0;
 // same filter. A dependency outage stays UNAVAILABLE rather than an empty
 // register, so no "no tests" claim is made when the read did not confirm one.
 let providerUnavailable = false;
+let accessDenied = false;
 let result: { items: Awaited<ReturnType<ReturnType<typeof laboratoryReadDependencies>['list']['execute']>>['items']; total: number } = { items: [], total: 0 };
 try {
   result = await laboratoryReadDependencies().list.execute({
     actor,
-    filter: { state, ownership },
-    limit: DEFAULT_PAGE_SIZE,
+    filter: { state, ownership, search, sort, direction },
+    limit: page.pageSize,
+    offset: page.offset,
   });
-} catch {
-  providerUnavailable = true;
+} catch (error) {
+  if (error instanceof AppError && error.category === 'AUTHORIZATION') accessDenied = true;
+  else providerUnavailable = true;
 }
 const tests = result.items;
-const showingAll = tests.length >= result.total;
+const totalPages = Math.max(1, Math.ceil(result.total / page.pageSize));
 
 // The register names the executor, never a raw account identifier. Resolution
 // is presentation-only and failure-tolerant: an unavailable identity read
@@ -79,20 +91,20 @@ const executorLabel = (executorId: string | null | undefined) =>
 ---
 <AppLayout title="Laboratory Tests · QC Operations" locale="en" direction="ltr">
   <section class="head"><div><p class="eyebrow">CONTROLLED LABORATORY</p><h1>Laboratory tests</h1><p class="lede">Review method, sample, result, execution, and approval context without editing controlled history.</p></div><a class="button" href="/laboratory/tests/new">Create laboratory test</a></section>
-  <form class="filters" method="get">
+  <FilterBar clearHref={hasFilters ? '/laboratory/tests' : undefined} label="Laboratory test filters">
+    <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Test number or sample identifier" /></label>
     <label for="state">Workflow state<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
     <label for="ownership">Ownership<select id="ownership" name="ownership"><option value="">All records</option><option value="mine" selected={ownership === 'mine'}>Only mine</option></select></label>
-    <button type="submit">Apply filters</button>
-  </form>
+    <label for="sort">Sort by<select id="sort" name="sort"><option value="updated" selected={sort === 'updated'}>Recently updated</option><option value="testNo" selected={sort === 'testNo'}>Test number</option><option value="state" selected={sort === 'state'}>Workflow state</option></select></label>
+    <label for="direction">Direction<select id="direction" name="direction"><option value="desc" selected={direction === 'desc'}>Descending</option><option value="asc" selected={direction === 'asc'}>Ascending</option></select></label>
+  </FilterBar>
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/laboratory/tests' : undefined}
-    note={providerUnavailable
-      ? 'The laboratory read is unavailable, so no count is shown.'
-      : showingAll
-        ? `Showing all ${result.total} laboratory test${result.total === 1 ? '' : 's'} in your authorized scope, newest first.`
-        : `Showing the ${tests.length} most recently updated of ${result.total} in your authorized scope, newest first.`}
+    note={providerUnavailable || accessDenied
+      ? 'A confirmed laboratory count is unavailable for this request.'
+      : `Showing ${tests.length} of ${result.total} laboratory tests in your authorized scope — page ${page.page} of ${totalPages}.`}
   />
-  {providerUnavailable ? <ProviderUnavailableState title="Laboratory data is temporarily unavailable" description="No test count or result state is shown because the laboratory provider did not confirm a response." /> : tests.length ? <div class="table-wrap"><table><caption>{result.total} authorized laboratory test{result.total === 1 ? '' : 's'}{hasFilters ? ' matching the current filters' : ''}{showingAll ? '' : ` — showing the ${tests.length} most recently updated`}</caption><thead><tr><th scope="col">Test number</th><th scope="col">Sample</th><th scope="col">Method / version</th><th scope="col">State</th><th scope="col">Official result</th><th scope="col">Executor</th><th scope="col">Last updated</th></tr></thead><tbody>{tests.map((test) => <tr><th scope="row"><a href={`/laboratory/tests/${test.id}`}>{test.labTestNo}</a></th><td>{test.samples.map((sample) => sample.identifier).join(', ') || 'Not recorded'}</td><td>{test.context.methodReference} · v{test.context.versionNo}</td><td>{stateLabel(test.state)}</td><td>{test.scientificResult ?? 'Not determined'}</td><td>{executorLabel(test.authorId)}</td><td><time datetime={test.updatedAt}>{formatDate(new Date(test.updatedAt))}</time></td></tr>)}</tbody></table></div> : <section class="empty"><h2>{hasFilters ? 'No laboratory tests match these filters' : 'No laboratory tests yet'}</h2><p>{hasFilters ? 'Nothing in your authorized scope matches the filters above. Remove a filter to widen the search.' : 'Tests appear here once they are created.'}</p>{hasFilters ? <a href="/laboratory/tests">Clear all filters</a> : <a href="/laboratory/tests/new">Create the first test</a>}</section>}
+  {accessDenied ? <section class="empty" role="alert"><h2>This account cannot view laboratory tests</h2><p>No records or counts were returned for this account. Ask your administrator to confirm access.</p></section> : providerUnavailable ? <ProviderUnavailableState title="Laboratory data is temporarily unavailable" description="No test count or result state is shown because the laboratory provider did not confirm a response." retryHref="/laboratory/tests" /> : tests.length ? <DataTable caption={`Laboratory tests — ${result.total} matching records`} summary={`Showing ${tests.length} of ${result.total} authorized records · page ${page.page} of ${totalPages}`} density="compact"><thead><tr><th scope="col">Test number</th><th scope="col">Sample</th><th scope="col">Method / version</th><th scope="col">State</th><th scope="col">Official result</th><th scope="col">Executor</th><th scope="col">Last updated</th></tr></thead><tbody>{tests.map((test) => <tr><th scope="row"><a href={`/laboratory/tests/${test.id}`}>{test.labTestNo}</a></th><td>{test.samples.map((sample) => sample.identifier).join(', ') || 'Not recorded'}</td><td>{test.context.methodReference} · v{test.context.versionNo}</td><td>{stateLabel(test.state)}</td><td>{test.scientificResult ?? 'Not determined'}</td><td>{executorLabel(test.authorId)}</td><td><time datetime={test.updatedAt}>{formatDate(new Date(test.updatedAt))}</time></td></tr>)}</tbody><Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="laboratory tests" baseUrl="/laboratory/tests" /></Fragment></DataTable> : <section class="empty"><h2>{hasFilters ? 'No laboratory tests match these filters' : 'No laboratory tests yet'}</h2><p>{hasFilters ? 'Nothing in your authorized scope matches the filters above. Remove a filter to widen the search.' : 'Tests appear here once they are created.'}</p>{hasFilters ? <a href="/laboratory/tests">Clear all filters</a> : <a href="/laboratory/tests/new">Create the first test</a>}</section>}
 </AppLayout>
 <style>.head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty p,.empty a{color:var(--text-muted);font-size:.85rem}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--color-text-inverse);border:1px solid var(--color-accent-primary);border-radius:var(--radius-md);text-decoration:none;font-weight:700;cursor:pointer}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding:.5rem .7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--border-default);border-radius:var(--radius-sm);font:inherit}.table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:1000px;background:var(--surface-panel);border-collapse:collapse}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.75rem;border-top:1px solid var(--color-border-subtle);text-align:start;vertical-align:top;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem}@media(max-width:650px){.head,.filters{display:grid}.button{width:max-content}}</style>

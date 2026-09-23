@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — DENSE-QUEUES / توحيد سجل المهام والمختبر**
+  - Changed: `/tasks` و`/laboratory/tests` يستخدمان عرض الجدول المشترك؛ البحث والترشيح والترتيب والصفحات في استعلامات الخادم، وعدّ النتائج يطابق مجموعة المرشحات. المختبر يرفض غياب/عدم كفاية `PERM-LAB-VIEW` بدل إظهار صفر؛ لم تُضف حقائق أو قواعد أو روابط غير موجودة في read models.
+  - Evidence: Node 24.20.0؛ build وarchitecture وrelease:verify وPrettier للـTypeScript وdiff-check PASS. Typecheck لديه خطآن قائمان في declarations لسكريبتين `.mjs`؛ تكامل PostgreSQL BLOCKED لعدم توفر container runtime. replay اصطناعي 5,000 صف/طابور، 101 تجربة: مهمة due-sort من 200 صفحة إلى صفحة واحدة؛ عينة المختبر من غير قابلة للعثور ضمن أول 25 إلى قابلة للعثور. أزمنة المعالجة 0.103→0.235ms و0.001→0.077ms، وليست أزمنة بشرية أو HTTP؛ تحسن UX البشري NOT VERIFIED.
+  - State: PARTIAL — مراجعة المتصفح/UAT ومقاييس إنجاز بشرية NOT VERIFIED؛ لا DB/provider/production writes.
+  - Key files: `src/pages/tasks/index.astro`, `src/pages/laboratory/tests/index.astro`, `src/modules/laboratory/infrastructure/postgres-repository.ts`.
+
 - **2026-09-23 — OBS-HEALTH-SIGNALS / ربط فشل الاعتماديات وعرض التدهور الآمن**
   - Changed: فشل pool غير المتزامن يصدر log/metric مرتبطًا ومصنفًا بلا تفاصيل driver؛ الصحة تعرض outbox pending كتدهور مع gauge، وتفصل liveness/readiness/QC-release والـbackup catalog/restore. التنبيه والاتجاه والتصدير والجهة المستقبلة `NOT CONFIGURED` وفق القرارات المؤجلة؛ لا عتبات مخترعة.
   - Evidence: Node 24.20.0؛ 10 اختبارات مركزة، architecture، typecheck، lint، build PASS. لا DB/provider/production writes.

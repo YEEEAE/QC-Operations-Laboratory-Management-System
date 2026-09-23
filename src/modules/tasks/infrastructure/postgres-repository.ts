@@ -206,10 +206,18 @@ export class PostgresTaskRepository implements TaskRepository {
     const countRow = await applyFilter(base(), input.filter)
       .select(({ fn }) => fn.countAll().as('count'))
       .executeTakeFirst();
+    const sortColumn = {
+      updated: 'updated_at',
+      due: 'due_at',
+      priority: 'priority',
+      taskNo: 'task_no',
+    } as const;
+    const sort = input.filter?.sort ?? 'updated';
+    const direction = input.filter?.direction ?? 'desc';
     const rows = await applyFilter(base(), input.filter)
       .selectAll()
-      .orderBy('updated_at', 'desc')
-      .orderBy('id', 'desc')
+      .orderBy(sortColumn[sort], direction)
+      .orderBy('id', direction)
       .limit(input.page.pageSize)
       .offset(input.page.offset)
       .execute();
