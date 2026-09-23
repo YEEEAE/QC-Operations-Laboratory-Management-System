@@ -1,0 +1,98 @@
+/* One language, three work rhythms. No state depends on color alone. */
+.decision-room .command-header,
+.workspace-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-command);
+  padding-block: var(--space-6) var(--space-8);
+  border-block-end: var(--border-width-subtle) solid var(--border-command);
+  margin-block-end: var(--space-6);
+}
+.workspace-kicker { margin: 0; color: var(--text-provenance); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.workspace-title { margin: var(--space-2) 0; font-size: var(--type-command); line-height: var(--line-height-tight); letter-spacing: -.025em; }
+.workspace-lede { max-inline-size: 72ch; margin: 0; color: var(--text-evidence); }
+.evidence-line { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--text-provenance); font-size: var(--font-size-xs); font-variant-numeric: var(--numeric-figures); }
+.evidence-line > * + * { border-inline-start: 1px solid var(--border-evidence); padding-inline-start: var(--space-4); }
+.decision-room .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 0; border-block: 1px solid var(--border-command); margin-block-end: var(--space-8); }
+.decision-room .kpis > * { border: 0; border-inline-end: 1px solid var(--border-evidence); border-radius: 0; background: transparent; box-shadow: none; }
+.decision-room .dashboard-grid { grid-template-columns: minmax(0, 1.8fr) minmax(240px, .7fr); }
+.decision-room .panel { border-radius: var(--radius-sm); }
+.decision-room .flow-panel { background: var(--surface-command); border-color: var(--border-command); }
+.decision-room .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 0; border-block: 1px solid var(--border-evidence); }
+.decision-room .flow-stage a { min-block-size: 120px; border: 0; border-inline-end: 1px solid var(--border-evidence); border-radius: 0; background: transparent; }
+.decision-room .flow-stage a:hover,
+.decision-room .flow-stage a:focus-visible { background: var(--surface-evidence); }
+.decision-room .workflow-access ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0; border-block-start: 1px solid var(--border-evidence); }
+.decision-room .workflow-access li { border: 0; border-block-end: 1px solid var(--border-evidence); border-radius: 0; background: transparent; }
+.decision-room .priority-panel { border-inline-start: var(--border-width-state) solid var(--state-denied); }
+.decision-room .attention-list li a { padding-block: var(--space-4); }
+.decision-room .attention-list li a:hover { background: var(--surface-evidence); }
+.decision-room .activity { border-inline-start: 1px solid var(--border-evidence); padding-inline-start: var(--space-4); }
+.decision-room .activity li { position: relative; }
+.decision-room .activity li::before { content: ''; position: absolute; inset-inline-start: calc(-1 * var(--space-4) - 4px); inset-block-start: var(--space-4); inline-size: 7px; block-size: 7px; border: 1px solid var(--border-command); background: var(--surface-panel); border-radius: 50%; }
+
+.scientific-register .data-panel,
+.scientific-register .table-wrap { border-radius: var(--radius-sm); background: var(--surface-register); border: 1px solid var(--border-evidence); }
+.scientific-register table { font-variant-numeric: var(--numeric-figures); }
+.scientific-register th,
+.scientific-register td { line-height: var(--line-height-data); }
+.scientific-register tbody th { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--surface-register); }
+.scientific-register tbody tr:nth-child(even) th { background: var(--surface-evidence); }
+.scientific-register .table-scroll,
+.scientific-register .table-wrap { scrollbar-color: var(--border-command) var(--surface-register); }
+
+.scientific-form { max-inline-size: 62rem; }
+.scientific-form form { max-inline-size: 100%; background: var(--surface-panel); border: 1px solid var(--border-evidence); border-block-start: var(--border-width-state) solid var(--status-review); border-radius: var(--radius-sm); padding: var(--space-6); }
+.scientific-form label { font-weight: var(--font-weight-semibold); }
+.scientific-form label span { font-weight: var(--font-weight-regular); line-height: var(--line-height-normal); }
+.scientific-form .actions { padding-block-start: var(--space-4); border-block-start: 1px solid var(--border-evidence); }
+.scientific-form :is(input, select, textarea) { min-block-size: var(--control-height); border: 1px solid var(--input-border); border-radius: var(--input-radius); background: var(--input-background); padding-inline: var(--input-padding-inline); }
+.scientific-form :is(input, select, textarea)[aria-invalid='true'] { border-color: var(--border-invalid); }
+
+.evidence-record .grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+.evidence-record .panel { border-radius: var(--radius-sm); }
+.evidence-record .panel dl { font-variant-numeric: var(--numeric-figures); }
+.evidence-record .decision { border-block-start: var(--border-width-state) solid var(--status-review); }
+.evidence-record .decision form { max-inline-size: 52rem; }
+.evidence-record .decision button { color: var(--text-on-accent); }
+
+.status-badge,
+.state-banner { font-weight: 700; }
+@media (max-width: 900px) {
+  .decision-room .dashboard-grid,
+  .evidence-record .grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .decision-room .command-header,
+  .workspace-header { display: block; padding-block: var(--space-4) var(--space-5); }
+  .decision-room .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scientific-form form { padding: var(--space-4); }
+  .evidence-line > * + * { border: 0; padding-inline-start: 0; }
+}
+@media (max-width: 360px) { .decision-room .kpis { grid-template-columns: 1fr; } }
+@media (forced-colors: active) {
+  .decision-room .priority-panel,
+  .scientific-form form,
+  .evidence-record .decision { border-color: Highlight; }
+  .decision-room .activity li::before { border-color: CanvasText; background: Canvas; }
+}
+@media print {
+  .decision-room .panel,
+  .scientific-register .data-panel,
+  .scientific-form form,
+  .evidence-record .panel { background: #fff !important; color: #111 !important; border-color: #333 !important; box-shadow: none !important; break-inside: avoid; }
+  .decision-room .panel :is(h2, h3, p, small, strong, span, dt, dd),
+  .scientific-register :is(th, td, caption, p, small),
+  .scientific-form :is(label, span, p),
+  .evidence-record .panel :is(h2, h3, p, small, strong, span, dt, dd) { color: #111 !important; }
+  .decision-room .dashboard-grid,
+  .evidence-record .grid { display: block; }
+  .decision-room .dashboard-grid > *,
+  .evidence-record .grid > * { margin-block-end: 12pt; }
+  .scientific-register .table-scroll,
+  .scientific-register .table-wrap { overflow: visible; }
+  .scientific-register table { min-width: 0; }
+  .scientific-register a,
+  .evidence-record a { color: #111 !important; text-decoration: underline; }
+}

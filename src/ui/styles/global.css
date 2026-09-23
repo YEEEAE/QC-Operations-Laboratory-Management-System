@@ -1,6 +1,7 @@
 @import './tokens.css';
 @import './motion.css';
 @import './density.css';
+@import './workspaces.css';
 
 /* Fonts are local-only by design: no external stylesheet, CDN, or font request. */
 @font-face {

@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — QC-VISUAL-SYSTEM / اتجاه غرفة القرار**
+  - Changed: ثلاثة اتجاهات موثقة، مع تطبيق غرفة القرار/المقعد العلمي/سجل الدليل على dashboard والسجلات ونموذج المختبر والاعتمادات؛ semantic tokens وحالات موحدة وحوكمة المساهمة.
+  - Evidence: build وarchitecture PASS؛ contrast للحالات النصية المختبرة ≥4.5:1؛ لقطات specimen توضيحية عند 320/390/768/1440 وforced-colors/reduced-motion/print بلا page overflow. typecheck بقي بخطأين قائمين لتعريفات release `.mjs`؛ browser مصادق وقياس زمن مهمة بشرية NOT VERIFIED.
+  - State: PARTIAL — اللقطات تثبت النموذج المرئي المحلي، لا سلوك البيانات الحية أو قبول المستخدم.
+  - Key files: `Documents/QC-VISUAL-SYSTEM.md`, `src/ui/styles/workspaces.css`, `audit/2026-09-23/qc-visual-specimen.html`.
+
 - **2026-09-23 — INTEGRATION-CONTRACTS / عقود المصادر ومحول الجهاز التجريبي**
   - Changed: عقود مسودة لستة مصادر؛ أول محول instrument sandbox مع فصل delivery عن business decision.
   - Evidence: عقود مركزة 8/8 PASS؛ typecheck بقي بخطأين قائمين في تعريفات release `.mjs`؛ لا مزود حي أو بيانات حساسة.
@@ -467,6 +473,7 @@
 - **التاريخ/التعريب:** العرض عبر `src/shared/copy/format.ts` (en-GB + Asia/Riyadh بصيغة «18 Sep 2026, 18:43») و20 صفحة ما زالت `toLocale*` مسجّلة كـratchet متقلّص. **قرار applicability لـdomain 70 محفوظ ولا يُحتسب credit:** 70 في سجل الـ100 = Security UX (أدلة الرفض/التعداد runtime معلّقة). مستندات أقدم ذكرت العربية/RTL كمتطلب غير منفّذ (`audit/100-percent/POLICY-CLOSURE-MATRIX.md` سطر 184)، ونُفِّذت أساسيات فقط (logical properties + `[dir=rtl]` font mapping)؛ نطاق إعادة التصميم الحالي English-only وفق قرار المستخدم أعلاه، وتحتاج المستندات القديمة مصالحة مستقلة.
 
 ### Accessibility / responsive
+- نمط القرار الحالي مطبق محليًا في dashboard، السجل الكثيف، إنشاء اختبار مختبري، ومراجعة الاعتماد؛ مرجع القواعد والحالات والحوكمة `Documents/QC-VISUAL-SYSTEM.md`. لقطات audit توضيحية وليست E2E مصادقًا.
 - توجد حراسة static/unit لـWCAG fundamentals: landmarks/skip nav/focus/error summary/status semantics/drawer isolation/reduced motion/forced colors وغيرها.
 - fixes مؤكدة: loading `role=status`, notification severity نصيًا، forced-colors contract، drawer inert/focus behavior، reflow guards.
 - QC-100-FINAL-005: أرضية قراءة 12px (`--font-size-xs`) لميتاداتا الـKPI، وهدف 44px للتحكمات التفاعلية في shell/navigation، والرمز المرئي داخل عنصر يحمل `aria-label` يبقى `aria-hidden` حتى لا يخالف ظاهر النص الاسمَ المتاح. إعادة بناء التنقل: 10 أقسام، أدوات مساعدة مستقلة، مؤشّر حالي نصي/شكلي، وفتح القسم الحالي تلقائيًا؛ 57/57 عقود shell/navigation مركزة PASS على Node `22.22.3` (خارج عقد المشروع). E2E الحقيقي غير متحقق: Chromium تعذر إقلاعه داخل sandbox، بيانات دخول الاختبار غير موجودة، وملف البيئة يشير إلى DB خارجية لم تُستخدم.

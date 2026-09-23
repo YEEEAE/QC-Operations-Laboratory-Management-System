@@ -1,0 +1,37 @@
+---
+type State = 'idle' | 'loading' | 'empty' | 'filtered-empty' | 'error' | 'denied' | 'stale' | 'success';
+interface Props {
+  state: State;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  actionHref?: string;
+}
+const { state, title, description, actionLabel, actionHref } = Astro.props;
+const urgent = state === 'error' || state === 'denied' || state === 'stale';
+---
+<section class={`operational-state operational-state--${state}`} role={urgent ? 'alert' : 'status'} aria-busy={state === 'loading' ? 'true' : undefined}>
+  <span class="state-word">{state.replace('-', ' ')}</span>
+  <div>
+    <h2>{title}</h2>
+    <p>{description}</p>
+    {actionLabel && actionHref && <a href={actionHref}>{actionLabel}</a>}
+  </div>
+</section>
+<style>
+  .operational-state { display: grid; grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--border-evidence); border-inline-start: var(--border-width-state) solid var(--state-idle); border-radius: var(--radius-sm); background: var(--surface-evidence); }
+  .state-word { align-self: start; color: var(--text-primary); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  h2 { margin: 0; font-size: var(--font-size-lg); }
+  p { max-inline-size: 65ch; margin: var(--space-2) 0 0; color: var(--text-evidence); font-size: var(--font-size-sm); }
+  a { display: inline-flex; align-items: center; min-block-size: 44px; margin-block-start: var(--space-2); font-weight: 700; }
+  .operational-state--loading { border-inline-start-color: var(--state-loading); }
+  .operational-state--empty { border-inline-start-color: var(--state-empty); }
+  .operational-state--filtered-empty { border-inline-start-color: var(--state-filtered-empty); }
+  .operational-state--error { border-inline-start-color: var(--state-error); }
+  .operational-state--denied { border-inline-start-color: var(--state-denied); }
+  .operational-state--stale { border-inline-start-color: var(--state-stale); }
+  .operational-state--success { border-inline-start-color: var(--state-success); }
+  @media (max-width: 500px) { .operational-state { grid-template-columns: 1fr; } }
+  @media (forced-colors: active) { .operational-state { border-color: CanvasText; border-inline-start-color: Highlight; } }
+  @media print { .operational-state { background: #fff !important; color: #111 !important; border-color: #333 !important; } }
+</style>

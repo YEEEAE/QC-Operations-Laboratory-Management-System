@@ -25,20 +25,38 @@
   --status-approved-bg: #233424;
   --status-pass: #79af70;
   --status-pass-bg: #253a25;
-  --status-released: #4f9b91;
+  --status-released: #78bdb2;
   --status-released-bg: #1f3532;
   --status-hold: #d2a24b;
   --status-hold-bg: #3b3020;
   --status-warning: #c9903d;
   --status-warning-bg: #382b1d;
-  --status-danger: #c96666;
+  --status-danger: #ed9292;
   --status-danger-bg: #3b2323;
-  --status-review: #6d8dbb;
+  --status-review: #95b5e0;
   --status-review-bg: #222e3e;
   --status-neutral: #8a918a;
   --status-neutral-bg: #2b2f2b;
   --status-stale: #d2a24b;
   --status-stale-bg: #3b3020;
+
+  /* Decision-room semantics: evidence and authority stay separate. */
+  --surface-command: var(--color-canvas-deep);
+  --surface-register: var(--color-surface-1);
+  --surface-evidence: var(--color-surface-2);
+  --surface-decision: var(--color-surface-3);
+  --text-evidence: var(--color-text-secondary);
+  --text-provenance: var(--color-text-muted);
+  --border-evidence: var(--color-border-default);
+  --border-command: var(--color-border-strong);
+  --state-idle: var(--status-neutral);
+  --state-loading: var(--status-review);
+  --state-empty: var(--status-neutral);
+  --state-filtered-empty: var(--status-review);
+  --state-denied: var(--status-warning);
+  --state-stale: var(--status-stale);
+  --state-success: var(--status-pass);
+  --state-error: var(--status-danger);
 
   /* Semantic aliases keep component CSS independent of raw primitives.
      Undefined-token guard: --status-success/--status-error are consumed by
@@ -95,6 +113,11 @@
   --font-size-xl: 1.125rem;
   --font-size-2xl: 1.5rem;
   --font-size-display: clamp(2rem, 3vw, 2.5rem);
+  --type-command: clamp(1.8rem, 3vw, 2.75rem);
+  --type-register: var(--font-size-sm);
+  --type-evidence: var(--font-size-sm);
+  --type-data: var(--font-size-md);
+  --line-height-data: 1.4;
   --line-height-tight: 1.2;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.6;
@@ -120,6 +143,11 @@
   --space-12: 48px;
   --space-16: 64px;
   --space-20: 80px;
+  --space-command: var(--space-8);
+  --space-register: var(--space-3);
+  --space-evidence: var(--space-4);
+  --border-width-subtle: 1px;
+  --border-width-state: 3px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -135,6 +163,8 @@
   --motion-duration-slow: var(--motion-slow);
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+  --motion-feedback: var(--motion-fast);
+  --motion-context: var(--motion-standard);
   --focus-width: 2px;
   --focus-offset: 2px;
   --disabled-opacity: 0.55;
