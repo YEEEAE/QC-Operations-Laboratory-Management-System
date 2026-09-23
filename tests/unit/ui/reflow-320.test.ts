@@ -47,9 +47,9 @@ describe('F-03 reflow guards at 320px', () => {
 
   it('mirrors the sidebar active indicator for RTL and collapses the drawer grid', () => {
     const sidebar = readRepo('src/ui/shell/Sidebar.astro');
-    expect(sidebar).toContain("[dir='rtl'] .nav-group a.active");
-    expect(sidebar).toContain('grid-template-columns:minmax(0,1fr)');
-    expect(sidebar).toContain('text-overflow:ellipsis');
+    expect(sidebar).toContain("[dir='rtl'] .nav-link.active");
+    expect(sidebar).toContain('.nav-groups { display: flex; flex-direction: column;');
+    expect(sidebar).toContain('overflow-wrap: anywhere');
   });
 
   it('uses fluid auto-fit tracks instead of fixed 320px minimums', () => {

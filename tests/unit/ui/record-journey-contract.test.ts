@@ -30,8 +30,9 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
   it('renders the NCR detail page with real reads and related finding/CAPA linkages', () => {
     const page = read('src/pages/quality/ncr/[ncrId].astro');
     expect(page).toContain('JourneyContextPanel');
-    expect(page).toContain('PostgresNcrRepository');
-    expect(page).toContain('PostgresCapaRepository');
+    expect(page).toContain('ncrReadDependencies()');
+    expect(page).toContain('capaReadDependencies()');
+    expect(page).not.toContain('infrastructure/postgres-');
     expect(page).toContain('listFindingsForActor');
     expect(page).toContain('audit?subjectType=NCR');
     expect(page).toContain('read-only linkage');
@@ -42,9 +43,10 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
 
   it('keeps the CAPA page read-only toward NCR state and links the source NCR', () => {
     const page = read('src/pages/quality/capa/[capaId].astro');
-    expect(page).toContain('PostgresNcrRepository');
+    expect(page).toContain('capaRead.listRelatedNcrs.execute');
+    expect(page).not.toContain('infrastructure/postgres-');
     expect(page).toContain('Source NCR');
-    expect(page).toContain('mutation\n// authority over NCR state');
+    expect(page).toMatch(/holds no mutation\s+\/\/ authority over NCR state/);
     expect(page).toContain('audit?subjectType=CAPA');
   });
 

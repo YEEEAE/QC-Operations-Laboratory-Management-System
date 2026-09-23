@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — QC-BASELINE-REPAIR / إصلاح بوابات typecheck وarchitecture والوحدة**
+  - Changed: تمرير offset المختبر، نقل metrics خلف application boundary، وإصلاح lint وعيوب unit مع تحديث العقود القديمة دون حذف أو تخفيف assertions.
+  - Evidence: baseline SHA `d0dc705f278a574b3f8f5e822c216fb01b61a9bd` clean؛ Node `24.20.0` / pnpm `11.25.0`؛ 24/977 إخفاقًا صُنفت (19 عقد/fixture متقادمة، 5 عيوب تنفيذ)؛ final run `9d8cb827-63f1-4fc9-8087-2844e63aecf4`: typecheck 956/0 errors، unit 977/977، lint/architecture/requirements/parity/build PASS. PostgreSQL/E2E BLOCKED لغياب Docker؛ البناء لا يثبت الجاهزية. التفصيل: `audit/2026-09-23/unit-baseline-triage.md`.
+  - State: DONE محليًا؛ بلا commit/push.
+  - Key files: `src/pages/api/performance-metrics.ts`, `src/pages/laboratory/tests/index.astro`.
+
 - **2026-09-23 — NAV-REBUILD / إعادة بناء التنقل الرئيسي**
   - Changed: شجرة تنقل من 10 أقسام + 4 أدوات مساعدة، مع إزالة الروابط المكررة، وحفظ معرفات 34 وجهة. لا تغيير في صلاحيات الصفحات أو use cases.
   - Evidence: عقود التنقل/shell المركزة 57/57 PASS؛ Astro check بقي بخطأين قائمين لتعريفات سكريبتات release `.mjs`. Playwright NOT VERIFIED: Chromium launch permission denied، ولا توجد بيانات دخول E2E؛ `.env` يشير لقاعدة خارجية ولم تُستخدم.

@@ -39,6 +39,10 @@ function labActor(): ActorContext {
   };
 }
 
+function labSupervisorActor(): ActorContext {
+  return { ...labActor(), roles: ['SUPERVISOR'] };
+}
+
 function labTest(): LabTest {
   return {
     id: '01900000-0000-7000-8000-0000000000b1',
@@ -179,7 +183,7 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
       matchingSources,
       allow,
     ).execute({
-      actor: labActor(),
+      actor: labSupervisorActor(),
       id: labTest().id,
       expectedVersion: 3n,
       requestId: 'req-lab-approve-allow',

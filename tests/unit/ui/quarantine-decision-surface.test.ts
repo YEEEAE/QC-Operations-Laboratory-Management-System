@@ -96,7 +96,8 @@ describe('quarantine decision surface', () => {
     // `today` is resolved once, in one place, from the UTC server date.
     expect(listUseCase).toContain("i.receivedOn === 'today' ? utcDateOnly(this.now())");
     expect(listUseCase).toContain('receivingDate');
-    expect(register).toContain("params.get('receivedOn') === 'today'");
-    expect(register).toContain('receivedOn,');
+    expect(register).toContain('parseReceivingFilters(Astro.url.searchParams)');
+    expect(register).toContain('const receivedOn = filters.receivedOn');
+    expect(register).toContain('...filters');
   });
 });

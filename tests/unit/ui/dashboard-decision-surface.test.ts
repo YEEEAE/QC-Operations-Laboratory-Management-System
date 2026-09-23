@@ -99,8 +99,14 @@ describe('dashboard decision surface', () => {
       'src/pages/quarantine/inspections/index.astro',
     ]) {
       const source = read(page);
-      expect(source, page).toContain("params.get('ownership') === 'mine'");
-      expect(source, page).toContain('ownership,');
+      if (page.includes('/receiving/')) {
+        expect(source, page).toContain('parseReceivingFilters(Astro.url.searchParams)');
+        expect(source, page).toContain('const ownership = filters.ownership');
+        expect(source, page).toContain('...filters');
+      } else {
+        expect(source, page).toContain("params.get('ownership') === 'mine'");
+        expect(source, page).toContain('ownership,');
+      }
       expect(source, page).toContain('Only mine');
     }
     // The laboratory register implements the same two server-side dimensions its
@@ -108,7 +114,7 @@ describe('dashboard decision surface', () => {
     const laboratoryPage = read('src/pages/laboratory/tests/index.astro');
     expect(laboratoryPage).toContain("params.get('ownership') === 'mine'");
     expect(laboratoryPage).toContain("params.get('state')");
-    expect(laboratoryPage).toContain('filter: { state, ownership }');
+    expect(laboratoryPage).toContain('filter: { state, ownership');
     expect(laboratoryPage).toContain('Only mine');
     const tasksPage = read('src/pages/tasks/index.astro');
     expect(tasksPage).toContain("params.get('assignee') === 'mine'");
@@ -180,14 +186,10 @@ describe('dashboard decision surface', () => {
     // hidden from the name computation or the visible text ("i") would not be
     // contained in the accessible name (WCAG 2.5.3 label in name).
     expect(kpiCard).toContain('<span aria-hidden="true">i</span>');
-    // The global search keeps its visible label inside the accessible name.
-    // QC-100-FINAL-006: the name must contain every visible label text; the
-    // parenthetical Control K aria-label broke label-content-name-mismatch
-    // (WCAG 2.5.3), so the hint is folded into the name with a comma.
+    // The rebuilt mobile shell exposes a named navigation control.
     const topbar = read('src/ui/shell/Topbar.astro');
-    expect(topbar).toContain('aria-label="Search authorized records, Control K"');
-    expect(topbar).not.toContain('aria-label="Search authorized records (Control K)"');
-    expect(topbar).toContain('<span>Search</span>');
+    expect(topbar).toContain('aria-label="Open navigation"');
+    expect(topbar).toContain('data-navigation-toggle');
   });
 
   it('requires an approved series contract before anything is plotted', () => {
@@ -255,9 +257,6 @@ describe('dashboard decision surface', () => {
 
   it('keeps the icon-only shell controls at the 44px target size', () => {
     const topbar = read('src/ui/shell/Topbar.astro');
-    // Icon-only search, notifications and approvals links must not collapse to
-    // the icon width when their text is hidden at the mobile breakpoint.
-    expect(topbar).toMatch(/\.search\{[^}]*min-inline-size:44px/);
-    expect(topbar).toMatch(/\.top-link\{[^}]*min-inline-size:44px/);
+    expect(topbar).toMatch(/\.navigation-toggle\{[^}]*inline-size:44px[^}]*min-inline-size:44px[^}]*block-size:44px/);
   });
 });

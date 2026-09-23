@@ -48,6 +48,10 @@ function deciderActor(): ActorContext {
   };
 }
 
+function supervisorActor(): ActorContext {
+  return { ...deciderActor(), roles: ['SUPERVISOR'] };
+}
+
 function labTest(overrides: Partial<LabTest> = {}): LabTest {
   return {
     id: '01900000-0000-7000-8000-0000000000b1',
@@ -169,7 +173,7 @@ describe('lab test reject transition (TR-LAB-007)', () => {
       allow,
       () => new Date('2026-01-03T00:00:00.000Z'),
     ).execute({
-      actor: deciderActor(),
+      actor: supervisorActor(),
       id: current.id,
       expectedVersion: 3n,
       reason: 'measurement record incomplete for the approved method',
@@ -294,7 +298,7 @@ describe('retest governance (TR-RETEST-003, BR-LAB-014..018 guards)', () => {
       }),
     };
     await new CreateRetestUseCase(repository, matchingSources, allow).execute({
-      actor: deciderActor(),
+      actor: supervisorActor(),
       originalId: original.id,
       reason: 'suspected contamination, supervisor requested repeat',
       requestId: 'req-retest-rejected',
@@ -342,7 +346,7 @@ describe('scientific result boundary on approval (BR-LAB-003)', () => {
       },
     };
     const saved = await new ApproveLabTestUseCase(repository, holdSources, allow).execute({
-      actor: deciderActor(),
+      actor: supervisorActor(),
       id: labTest().id,
       expectedVersion: 3n,
       requestId: 'req-lab-approve-hold',

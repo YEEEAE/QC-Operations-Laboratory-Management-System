@@ -10,7 +10,7 @@ import type { LabListFilter, LabRepository } from '../ports/repository.js';
  */
 export class ListLabTestsUseCase {
   constructor(private readonly repository: LabRepository) {}
-  execute(input: { actor: ActorContext; filter?: LabListFilter; limit: number }) {
+  execute(input: { actor: ActorContext; filter?: LabListFilter; limit: number; offset?: number }) {
     return this.repository.list(input);
   }
 }

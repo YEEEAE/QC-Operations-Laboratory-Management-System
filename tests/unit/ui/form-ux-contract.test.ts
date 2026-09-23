@@ -24,7 +24,7 @@ describe('regulated form UX contracts', () => {
     const review = read('src/pages/quarantine/inspections/[inspectionId]/review.astro');
     expect(execute).toMatch(/for="inspection-notes"/);
     expect(execute).toMatch(/id="inspection-notes"/);
-    expect(execute).toMatch(/data-submit>Save draft/);
+    expect(execute).toMatch(/<button[^>]*data-submit[^>]*>Save results<\/button>/);
     expect(review).toMatch(/for="inspection-return-reason"/);
     expect(review).toMatch(/id="inspection-return-reason"/);
   });

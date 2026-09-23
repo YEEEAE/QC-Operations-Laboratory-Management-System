@@ -9,7 +9,7 @@ describe('privacy notice copy contracts', () => {
   it('explains actual AI processing, disabled state, and the limit of pasted-source checks', () => {
     expect(aiPage).toContain('configured external AI provider');
     expect(aiPage).toContain('will not be sent to an AI provider');
-    expect(aiPage).toContain('cannot verify where an excerpt came from');
+    expect(aiPage).toContain('cannot verify that source');
     expect(aiPage).toContain('does not offer a deletion control for provider-side copies');
   });
 

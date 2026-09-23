@@ -60,7 +60,7 @@ describe('BI-01 mobile drawer background isolation', () => {
   it('moves focus to the first drawer destination on open', () => {
     const source = layout();
     expect(source).toContain('focusPanel');
-    expect(source).toContain("querySelector<HTMLElement>('a[href]')");
+    expect(source).toContain("element.matches('a[href]')");
     expect(source).toContain('aria-expanded');
   });
 
@@ -103,6 +103,6 @@ describe('BI-01 mobile drawer background isolation', () => {
     const sidebar = readRepo('src/ui/shell/Sidebar.astro');
     expect(sidebar).toContain('data-drawer-close');
     expect(sidebar).toContain('aria-label="Close navigation"');
-    expect(sidebar).toContain('.drawer-close{display:grid}');
+    expect(sidebar).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.drawer-close\s*\{\s*display:\s*grid/);
   });
 });

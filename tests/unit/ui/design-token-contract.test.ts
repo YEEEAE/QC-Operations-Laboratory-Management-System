@@ -76,8 +76,9 @@ describe('design token contract (Prompt 1)', () => {
     const topbar = read('src/ui/shell/Topbar.astro');
     expect(topbar).not.toContain('approvalCount = 0');
     expect(topbar).not.toContain('notificationCount = 0');
-    expect(topbar).toContain("typeof approvalCount === 'number'");
-    expect(topbar).toContain("typeof notificationCount === 'number'");
+    const renderedShell = topbar.split('---').at(-1) ?? '';
+    expect(renderedShell).not.toContain('approvalCount');
+    expect(renderedShell).not.toContain('notificationCount');
   });
 
   it('keeps zoom enabled through the viewport contract', () => {

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-import { getPool } from '../../shared/database/pool.js';
+import { performanceMetricsDependencies } from '../../modules/system-health/application/dependencies.js';
 
 /** Local, opt-in measurement endpoint. It exposes process/pool counts only. */
 export const GET: APIRoute = ({ request }) => {
@@ -14,18 +14,8 @@ export const GET: APIRoute = ({ request }) => {
     return new Response(null, { status: 404, headers: { 'cache-control': 'no-store' } });
   }
 
-  const pool = getPool();
   return Response.json(
-    {
-      sampledAt: new Date().toISOString(),
-      processMemoryBytes: process.memoryUsage(),
-      databasePool: {
-        total: pool.totalCount,
-        idle: pool.idleCount,
-        waiting: pool.waitingCount,
-        maximum: pool.options.max,
-      },
-    },
+    performanceMetricsDependencies().snapshot.execute(),
     { headers: { 'cache-control': 'no-store' } },
   );
 };

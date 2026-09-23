@@ -51,6 +51,7 @@ const documents = test.context.documents;
     {
       rows.length ? (
         <table class="comparison">
+          <caption>Measured results and controlled criteria for {test.labTestNo}</caption>
           <thead>
             <tr>
               <th scope="col">Sample</th>
@@ -64,7 +65,7 @@ const documents = test.context.documents;
           <tbody>
             {rows.map((row) => (
               <tr>
-                <td>{row.sampleIdentifier}</td>
+                <th scope="row">{row.sampleIdentifier}</th>
                 <td>
                   {row.parameterLabel}
                   {row.required ? <span aria-hidden="true"> *</span> : null}

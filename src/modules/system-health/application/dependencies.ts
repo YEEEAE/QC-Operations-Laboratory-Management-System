@@ -10,6 +10,8 @@ import { GetSystemHealthUseCase } from './get-system-health.js';
 import { GetReleaseIdentityUseCase } from './get-release-identity.js';
 import { GetControlCenterOverviewUseCase } from './get-control-center-overview.js';
 import { getRuntimeConfig } from '../../../config/runtime.js';
+import { GetPerformanceSnapshotUseCase } from './get-performance-snapshot.js';
+import { NodePerformanceSnapshotReader } from '../infrastructure/node-performance-snapshot-reader.js';
 
 export function systemHealthReadDependencies() {
   const database = getDatabase();
@@ -47,4 +49,8 @@ export function systemHealthReleaseIdentityDependencies() {
   return {
     identity: new GetReleaseIdentityUseCase(getRuntimeConfig().release),
   };
+}
+
+export function performanceMetricsDependencies() {
+  return { snapshot: new GetPerformanceSnapshotUseCase(new NodePerformanceSnapshotReader()) };
 }

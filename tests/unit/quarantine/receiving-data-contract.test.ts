@@ -33,7 +33,7 @@ import { parseReceivingFilters } from '../../../src/modules/quarantine/receiving
 describe('quantity and unit contract', () => {
   it('separates a legacy "250 PCS" value into a number and a unit', () => {
     const parsed = parseReceivingQuantity('250 PCS');
-    expect(parsed.classification).toBe('NORMALIZABLE');
+    expect(parsed.classification).toBe('VALID');
     expect(parsed.quantity).toBe('250');
     expect(parsed.unit).toBe('PCS');
   });

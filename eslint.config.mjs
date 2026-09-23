@@ -21,5 +21,20 @@ export default tseslint.config(
     ],
   },
   eslint.configs.recommended,
+  {
+    files: [
+      'scripts/verification/begin-verification-run.mjs',
+      'scripts/verification/run-vitest-evidence.mjs',
+    ],
+    languageOptions: { globals: { console: 'readonly' } },
+  },
+  {
+    files: ['scripts/verification/evidence-identity.mjs'],
+    languageOptions: { globals: { URL: 'readonly', process: 'readonly' } },
+  },
+  {
+    files: ['tests/performance/load-profiles.mjs'],
+    languageOptions: { globals: { clearInterval: 'readonly', setInterval: 'readonly' } },
+  },
   ...tseslint.configs.recommended,
 );

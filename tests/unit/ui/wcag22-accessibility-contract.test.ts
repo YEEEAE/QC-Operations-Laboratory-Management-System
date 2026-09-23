@@ -49,12 +49,8 @@ describe('WCAG 2.2 AA accessibility contracts', () => {
 
     expect(iconButton).toContain('aria-label={label}');
     expect(iconButton).toContain('title={label}');
-    // QC-100-FINAL-006: the accessible name must contain the visible "Search" label
-    // text so label-content-name-mismatch passes (WCAG 2.5.3 Label in Name), and it
-    // must also cover the visible "Ctrl K" hint (comma-separated inside the name
-    // instead of the parenthetical form that broke the match).
-    expect(topbar).toContain('aria-label="Search authorized records, Control K"');
-    expect(topbar).not.toContain('aria-label="Search authorized records (Control K)"');
+    expect(topbar).toContain('aria-label="Open navigation"');
+    expect(topbar).toContain('data-navigation-toggle');
     expect(sidebar).toContain('aria-label="Collapse navigation"');
     expect(sidebar).toContain('aria-label="Close navigation"');
   });
@@ -91,8 +87,8 @@ describe('WCAG 2.2 AA accessibility contracts', () => {
 
     expect(badge).toContain('<span>{label}</span>');
     expect(badge).toContain('aria-hidden="true"');
-    expect(sidebar).toContain('text-decoration:underline');
-    expect(sidebar).toContain("aria-current={isActive ? 'page' : undefined}");
+    expect(sidebar).toContain('text-decoration: underline');
+    expect(sidebar).toContain("aria-current={current ? 'page' : undefined}");
   });
 
   it('announces loading and notification severity without depending on color', () => {
