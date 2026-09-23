@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — RECOVERY-POSTURE / backup, retention, and incident response**
+  - Changed: removed unapproved RPO/RTO values and assumed 30-day retention; expiry now fails closed without an approved policy; backup verification reads actual stored bytes; added timestamp-derived metrics and recovery incident stop/GO runbook.
+  - Evidence: focused backup-recovery unit 23/23 PASS; typecheck still reports 2 `.mjs` declaration errors in release tests. Read-only Render check: PG plan Free, web service only/no Cron, `qc.backup_runs` 0 rows, `qc.recovery_evidence` absent. User confirmed no isolated target/recovery bundle and decisions still open; local Docker/Postgres unavailable. Restore drill and response-time rehearsal BLOCKED; no production restore attempted.
+  - State: PARTIAL — provider schedule/alerts/PITR/WAL and retention policy remain unverified; Render paid Cron capability not activated.
+
 - **2026-09-23 — QC-WORKFLOW-REDESIGN / سياق رحلة QC والتسليمات**
   - Changed: اللوحة المشتركة تفصل مجال العمل عن مالك السجل وتوضح نقص المصدر؛ أضيفت روابط HOLD/review/PASS-not-released، وحُفظت مدخلات Receiving/Lab عند الفشل.
   - Evidence: focused unit 98/98 PASS؛ build PASS؛ typecheck 0 errors. UAT مع ستة مشاركين فعليين وقياس زمن المهام NOT RUN؛ مصادر evaluator والسياسات المعتمدة ما زالت مفتوحة.
@@ -390,10 +395,14 @@
 - Document Version/Approval/Change Request مرتبطة بعقد Journey Context/Handoff read-only وسجل Audit.
 
 ## 8) Backup / Recovery
+- Current as of 2026-09-23: RPO/RTO objectives remain NOT APPROVED (PD-26/27); the UI says so, and measurements require evidence timestamps. Retention remains NOT APPROVED (PD-24/25); expiry requires an approved policy reference and otherwise deletes nothing. Incident procedure: `Documents/RECOVERY-INCIDENT-RUNBOOK.md`.
+- Provider posture: fresh read-only Render check on 2026-09-23 confirmed the `qc-database` plan is Free and the workspace service list contains only the web service (no Cron); SQL found `qc.backup_runs` 0 rows and `qc.recovery_evidence` absent. Provider PITR is unavailable on Free; no failure-alert delivery, WAL-chain, or storage recoverability evidence. Render Cron could add cost, so it is not activated without approved owner, schedule, secrets, alert route, and retention policy.
+- 2026-09-23 isolated restore drill/rehearsal: BLOCKED—user confirmed no isolated target or recovery bundle and the policy decisions remain open; Docker daemon and local PostgreSQL also unavailable. No production restore was attempted.
 - F-11 ما زال `OPEN / PARTIAL`: candidate-bound local archive bundle restored DB and file payloads from the archive; 77 tables / 487 snapshot rows / 30 ledger rows / 154 validated FKs, app/security and wrong-candidate denial PASS. Saved hashes show 74/77 current-source tables match; the 3 diffs are the measured post-backup task/audit/outbox marker. Local recovery measured 435 ms; provider DR/RPO remains NOT VERIFIED. Report `audit/2026-09-19/QC-100-FINAL-008-populated-backup-isolated-recovery.md`.
 - QC-100-FINAL-025 أعاد تمرين مسار dump→استعادة معزولة على المرشح الحالي (`0031`) بنجاح محلي وضابطة سلبية صادقة؛ أضاف `Documents/FIRST-DAY-OPERATING-CHECKLIST.md` و`Documents/INCIDENT-PROBLEM-RUNBOOK.md` كطبقة مشتقة. **حقيقة تشغيلية ثابتة: لا scheduler مربوطًا للنسخ اليومي/الـdrill الشهري (عقد تقويمي فقط) ولا قناة إشعارات خارجية (in-app فقط) ولا monitoring/alerting على المزود** — كلها مسجلة DEP-025-02..04 بلا تحويل إلى جاهزية.
 - الإعدادات الاختيارية لـR2 موجودة بدون أسرار، ويوجد backup job محلي fail-closed وPostgres recovery evidence append-only.
-- القيم 24h/4h التي يعرضها التطبيق وتثبتها unit tests غير معتمدة؛ PD-26/27 مفتوحة، فلا تُعامل كأهداف أو قياسات أو دليل امتثال. Marker محلي committed بعد إكمال dump بـ92s لم يوجد في الاستعادة؛ لا يحدد ذلك أقصى RPO.
+- Local logical backup script creates a manifest in memory and verifies stored bytes, but does not persist the manifest or catalog row; R2 adapter cannot list objects for retention inventory. This is an open implementation gap, independent of the Free provider plan.
+- التطبيق سابقًا كان يعرض 24h/4h كقيم hardcoded؛ أزيلت في هذا التغيير لأنها لا تمثل قرارًا معتمدًا أو قياسًا. Marker محلي committed بعد إكمال dump بـ92s لم يوجد في استعادة تاريخية؛ لا يحدد ذلك أقصى RPO.
 - restore drill يجب أن يكون على target معزول صريح.
 - application backup-catalog integration and provider plan/retention/PITR-WAL/storage/DR remain unverified; approved RPO/RTO and provider recovery remain unmeasured. Production stays behind QC-100-FINAL-015.
 - Production Recovery authorization تستخدم الهوية server-derived للمالك المسمى؛ لا تمنح Admin سلطة استعادة تلقائيًا.

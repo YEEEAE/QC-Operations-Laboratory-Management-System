@@ -14,9 +14,15 @@
 **Secondary Database Recovery Artifact:** Logical Export  
 **Binary Evidence Storage:** Private Object Storage with protected recovery copy/version context  
 **Operational Timezone:** `Asia/Riyadh`  
-**RPO:** POLICY-DEPENDENT  
-**RTO:** POLICY-DEPENDENT  
-**Core Evidence Rule:** A backup is not proven until restore is successfully executed and validated  
+**RPO:** POLICY-DEPENDENT
+**RTO:** POLICY-DEPENDENT
+**Core Evidence Rule:** A backup is not proven until restore is successfully executed and validated
+
+**Operational status (2026-09-23):** RPO/RTO are `NOT APPROVED`; PD-26/PD-27 remain open. No measured RPO/RTO is recorded for the current provider/environment. Retention is `NOT APPROVED` (PD-24/PD-25); automated expiry must fail closed until an approved class-specific retention rule is supplied. A read-only Render control-plane check found the `qc-database` PostgreSQL 18 instance on the Free plan and only the web service in the workspace service list (no Cron service). A separate read-only SQL check found zero rows in `qc.backup_runs` and no `qc.recovery_evidence` relation. Provider alert delivery and storage recoverability remain unverified.
+
+Render documents scheduled Cron Jobs and failed-job notifications as provider capabilities, and documents continuous backup/PITR only for eligible paid PostgreSQL plans. The current Free database plan does not provide that provider PITR path; no WAL-chain coverage evidence was supplied. Enabling a Cron service may add provider charges and requires an approved schedule, secret source, recipient/response owner, retention decision, and target. Therefore this repository does not activate a provider schedule or alert subscription while PD-24/25/29 and the deployment authorization are unresolved. See [Render Cron Jobs](https://render.com/docs/cronjobs), [Render Postgres Recovery and Backups](https://render.com/docs/postgresql-backups), and [Render Notifications](https://render.com/docs/notifications).
+
+The local logical backup script now verifies retrieved artifact bytes, but it does not persist the generated manifest or catalog row. The R2 adapter does not support listing; retention inventory cannot run through it. These are implementation gaps, separate from provider eligibility and approval. Do not represent a standalone `VERIFIED` artifact as a complete recoverable set.
 
 ---
 

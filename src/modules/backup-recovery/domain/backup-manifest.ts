@@ -19,7 +19,7 @@ export interface BackupManifestInput {
   completedAt: Date;
   byteSize: bigint;
   checksum: string;
-  retentionExpiresAt: Date;
+  retentionExpiresAt?: Date;
 }
 
 export interface BackupManifest extends BackupManifestInput {
@@ -37,7 +37,7 @@ export interface PublicBackupManifest {
   createdAt: Date;
   completedAt: Date;
   byteSize: string;
-  retentionExpiresAt: Date;
+  retentionExpiresAt?: Date;
   artifactVerified: boolean;
   knownGaps: readonly string[];
 }
@@ -48,7 +48,7 @@ export function createBackupManifest(input: BackupManifestInput): BackupManifest
   if (!GIT_SHA.test(input.gitSha)) throw new Error('Backup manifest Git SHA is invalid.');
   if (!SHA256.test(input.checksum)) throw new Error('Backup manifest checksum is invalid.');
   if (input.byteSize < 0n) throw new Error('Backup manifest size is invalid.');
-  if (input.retentionExpiresAt < input.completedAt)
+  if (input.retentionExpiresAt && input.retentionExpiresAt < input.completedAt)
     throw new Error('Backup manifest retention is invalid.');
 
   const canonical = JSON.stringify({
@@ -57,7 +57,7 @@ export function createBackupManifest(input: BackupManifestInput): BackupManifest
     createdAt: input.createdAt.toISOString(),
     startedAt: input.startedAt.toISOString(),
     completedAt: input.completedAt.toISOString(),
-    retentionExpiresAt: input.retentionExpiresAt.toISOString(),
+    retentionExpiresAt: input.retentionExpiresAt?.toISOString() ?? null,
   });
   return { ...input, manifestSha256: createHash('sha256').update(canonical).digest('hex') };
 }
@@ -78,7 +78,7 @@ export function toPublicBackupManifest(
     createdAt: manifest.createdAt,
     completedAt: manifest.completedAt,
     byteSize: manifest.byteSize.toString(),
-    retentionExpiresAt: manifest.retentionExpiresAt,
+    ...(manifest.retentionExpiresAt ? { retentionExpiresAt: manifest.retentionExpiresAt } : {}),
     artifactVerified,
     knownGaps,
   };

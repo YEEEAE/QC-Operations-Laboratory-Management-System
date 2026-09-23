@@ -1,24 +1,49 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createRecoveryMetrics,
-  RPO_TARGET_SECONDS,
-  RTO_TARGET_SECONDS,
-} from '../../../src/modules/backup-recovery/domain/recovery-metrics.js';
+import { createRecoveryMetrics } from '../../../src/modules/backup-recovery/domain/recovery-metrics.js';
 
 describe('recovery metrics', () => {
-  it('keeps targets separate from absent measurements', () => {
-    expect(createRecoveryMetrics({})).toEqual({
-      rpoTargetSeconds: RPO_TARGET_SECONDS,
-      rtoTargetSeconds: RTO_TARGET_SECONDS,
-      status: 'UNVERIFIED',
+  it('shows objectives as unapproved until policy decisions are closed', () => {
+    expect(createRecoveryMetrics({})).toMatchObject({
+      objectives: { rpo: { status: 'NOT_APPROVED' }, rto: { status: 'NOT_APPROVED' } },
+      status: 'NOT_MEASURED',
     });
   });
-  it('records measurements without claiming compliance', () => {
-    expect(createRecoveryMetrics({ measuredRpoSeconds: 10, measuredRtoSeconds: 20 })).toMatchObject(
-      { status: 'MEASURED', rpoTargetSeconds: 86400, rtoTargetSeconds: 14400 },
-    );
+  it('derives actual intervals only from evidence timestamps and does not claim compliance', () => {
+    expect(
+      createRecoveryMetrics({
+        incidentStartedAt: new Date('2026-09-10T00:01:00Z'),
+        recoveredDataAsOf: new Date('2026-09-10T00:00:50Z'),
+        recoveryStartedAt: new Date('2026-09-10T00:02:00Z'),
+        recoveryValidatedAt: new Date('2026-09-10T00:02:20Z'),
+      }),
+    ).toMatchObject({
+      status: 'MEASURED',
+      measuredRpoSeconds: 10,
+      measuredRtoSeconds: 80,
+      objectives: { rpo: { status: 'NOT_APPROVED' }, rto: { status: 'NOT_APPROVED' } },
+    });
   });
-  it('rejects invalid measurements', () => {
-    expect(() => createRecoveryMetrics({ measuredRtoSeconds: -1 })).toThrow();
+  it('rejects evidence timestamps that produce negative intervals', () => {
+    expect(() =>
+      createRecoveryMetrics({
+        incidentStartedAt: new Date('2026-09-10T00:00:00Z'),
+        recoveredDataAsOf: new Date('2026-09-10T00:01:00Z'),
+      }),
+    ).toThrow();
+    expect(() =>
+      createRecoveryMetrics({
+        recoveryStartedAt: new Date('2026-09-10T00:01:00Z'),
+        recoveryValidatedAt: new Date('2026-09-10T00:00:00Z'),
+      }),
+    ).toThrow();
+  });
+  it('rounds measured intervals upward to whole seconds for the recovery evidence schema', () => {
+    expect(
+      createRecoveryMetrics({
+        incidentStartedAt: new Date('2026-09-10T00:00:00.000Z'),
+        recoveryStartedAt: new Date('2026-09-10T00:00:00.000Z'),
+        recoveryValidatedAt: new Date('2026-09-10T00:00:00.001Z'),
+      }),
+    ).toMatchObject({ status: 'PARTIALLY_MEASURED', measuredRtoSeconds: 1 });
   });
 });

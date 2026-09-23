@@ -7,6 +7,16 @@ live deployment. The latest exact-candidate evidence is recorded below. The
 service is still divergent from this file and production migration parity and
 readiness are `NOT VERIFIED / NO-GO`.
 
+### Read-only recovery posture check — 2026-09-23
+
+The Render connector listed one web service and no Cron service in the project
+workspace. It reported `qc-database` as PostgreSQL 18 on the Free plan. Read-only
+SQL confirmed `qc.backup_runs` exists with zero rows and `qc.recovery_evidence`
+does not exist. These checks did not create a backup or restore, inspect provider
+notification delivery, or establish WAL/PITR coverage. RPO/RTO and retention
+decisions remain open; see `BACKUP-RECOVERY-PLAN.md` and
+`RECOVERY-INCIDENT-RUNBOOK.md`.
+
 ### Latest read-only live observation — 2026-09-22
 
 The Render control plane reported the live web deployment as

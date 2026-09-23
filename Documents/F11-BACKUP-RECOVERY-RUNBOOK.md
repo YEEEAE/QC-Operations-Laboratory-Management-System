@@ -1,10 +1,9 @@
 # F-11 Backup & Recovery Runbook
 
-**Current status — 2026-09-18:** `OPEN / PARTIAL`. Local logical backup and
-isolated restore evidence exists for the disposable dataset, but populated
-controlled-record recovery, provider retention/PITR/WAL, and a restore drill
-bound to the deployed release remain unverified. RPO/RTO values in this runbook
-are targets until measured evidence exists.
+**Current status — 2026-09-23:** `OPEN / PARTIAL`. Historical local logical
+backup and isolated restore evidence exists, but current-provider retention,
+PITR/WAL, and a restore drill bound to the deployed release remain unverified.
+RPO/RTO objectives are not approved.
 
 ## Runtime boundary
 
@@ -31,15 +30,17 @@ Run `pnpm recovery:backup:daily` once per day from the approved scheduler. The j
 
 1. runs `pg_dump --format=custom`;
 2. computes SHA-256 and byte size from the exact bytes;
-3. uploads a private artifact and manifest to R2;
+3. creates a manifest in memory and uploads a private artifact to R2;
 4. reads the object back and verifies size and SHA-256;
 5. reports `VERIFIED` only after the read-after-write check succeeds.
+
+The current script prints a `catalogId`, but does not persist its manifest or a row in `qc.backup_runs`. The R2 adapter does not implement object listing. Thus the script, application catalog, and retention inventory are not yet one operational chain; `VERIFIED` means stored artifact bytes matched this job only, not that a restore or complete recovery set was validated.
 
 Any missing configuration, command failure, provider failure, or hash mismatch exits non-zero and reports only `BACKUP_JOB_BLOCKED` or a sanitized failure code.
 
 ## Retention
 
-Artifacts are retained for 30 days. Cleanup must never remove the last eligible recoverable artifact. Backup retention is separate from controlled-record retention.
+Retention period and purge eligibility are `NOT APPROVED` (PD-24/PD-25). The backup job must not assign an expiry based on an assumed duration, and cleanup must fail closed until a class-specific policy with an approval reference is supplied. Once authorized, cleanup must never remove the last eligible recoverable artifact. Backup retention remains separate from controlled-record retention.
 
 ## Monthly isolated drill
 
@@ -49,11 +50,11 @@ The monthly drill must use an isolated non-production PostgreSQL target. It must
 
 ## Targets versus measurements
 
-- RPO target: **24 hours**
-- RTO target: **4 hours**
-- RPO/RTO measured values: shown only from completed recovery evidence
+- RPO objective: **NOT APPROVED** (PD-26; business owner decision required).
+- RTO objective: **NOT APPROVED** (PD-27; business owner decision required).
+- Measured values: not recorded for the current provider/environment. Derive only from the isolated-drill evidence timestamps defined in `RECOVERY-INCIDENT-RUNBOOK.md`.
 
-Configuration or a successful backup job does not prove either target was met.
+Configuration, a historical local drill, or a successful backup job does not approve an objective or prove current provider recovery performance.
 
 ## Production recovery
 

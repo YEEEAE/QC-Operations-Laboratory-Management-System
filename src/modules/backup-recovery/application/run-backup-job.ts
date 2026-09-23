@@ -46,7 +46,6 @@ export async function runLogicalBackupJob(input: {
       completedAt: execution.completedAt,
       byteSize: BigInt(execution.bytes.byteLength),
       checksum: bytesChecksum,
-      retentionExpiresAt: new Date(execution.completedAt.getTime() + 30 * 24 * 60 * 60 * 1000),
     });
     const reference = `backup/${manifest.releaseId}/${manifest.catalogId}.dump`;
     await input.store.put({
@@ -56,9 +55,12 @@ export async function runLogicalBackupJob(input: {
       metadata: { sizeBytes: manifest.byteSize, checksum: manifest.checksum },
     });
     const stored = await input.store.head(reference);
+    const retrievedBytes = await input.store.get(reference);
     if (
       stored.sizeBytes !== manifest.byteSize ||
-      stored.checksum.toLowerCase() !== manifest.checksum.toLowerCase()
+      stored.checksum.toLowerCase() !== manifest.checksum.toLowerCase() ||
+      BigInt(retrievedBytes.byteLength) !== manifest.byteSize ||
+      checksum(retrievedBytes) !== manifest.checksum
     )
       return { status: 'FAILED', failureCode: 'BACKUP_ARTIFACT_INTEGRITY_FAILED' };
     return { status: 'VERIFIED', manifest };

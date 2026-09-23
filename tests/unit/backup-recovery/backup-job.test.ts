@@ -35,6 +35,7 @@ describe('logical backup job', () => {
     });
     expect(result.status).toBe('VERIFIED');
     expect(result.manifest?.releaseId).toBe('rel-1');
+    expect(result.manifest?.retentionExpiresAt).toBeUndefined();
   });
   it('fails closed when backup execution fails', async () => {
     const result = await runLogicalBackupJob({
@@ -53,5 +54,22 @@ describe('logical backup job', () => {
       requestId: 'req-1',
     });
     expect(result).toEqual({ status: 'FAILED', failureCode: 'BACKUP_EXECUTION_FAILED' });
+  });
+  it('rejects stored bytes that differ despite matching HEAD metadata', async () => {
+    const actualStore = new LocalArtifactStore();
+    const result = await runLogicalBackupJob({
+      executor: {
+        createLogicalBackup: async () => execution,
+        restoreLogicalBackup: async () => {
+          throw new Error('unused');
+        },
+      },
+      store: Object.assign(actualStore, { get: async () => new Uint8Array([2, 1]) }),
+      databaseUrl: 'postgresql://redacted',
+      release,
+      catalogId: '01999999-9999-7999-8999-999999999999',
+      requestId: 'req-2',
+    });
+    expect(result).toEqual({ status: 'FAILED', failureCode: 'BACKUP_ARTIFACT_INTEGRITY_FAILED' });
   });
 });
