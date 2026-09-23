@@ -258,6 +258,7 @@ const SIZES = {
   approvalCases: 400,
   documentIdentities: 250,
   versionsPerDocument: 2,
+  filesPerDocument: 1,
   notifications: 2500,
   outboxEvents: 1200,
   auditEvents: 12000,
@@ -277,6 +278,10 @@ async function main(): Promise<void> {
     options: '-c timezone=UTC -c search_path=qc,pg_catalog',
   });
   const client = await pool.connect();
+  let serverVersion: string;
+  const databaseName = decodeURIComponent(
+    new URL(process.env.DATABASE_URL!).pathname.replace(/^\//, ''),
+  );
   const distributions: Record<string, Record<string, number>> = {};
 
   const record = (bucket: string, key: string): void => {
@@ -285,6 +290,10 @@ async function main(): Promise<void> {
   };
 
   try {
+    const serverInfo = await client.query<{ server_version: string }>(
+      "SELECT current_setting('server_version') AS server_version",
+    );
+    serverVersion = serverInfo.rows[0]?.server_version ?? 'UNKNOWN';
     await client.query('BEGIN');
 
     /* ---- idempotent removal of any prior PERF- dataset (perf rows only) --
@@ -298,6 +307,10 @@ async function main(): Promise<void> {
       "DELETE FROM qc.notifications WHERE recipient_user_id IN (SELECT id FROM qc.users WHERE login_identity LIKE 'perf-%')",
     );
     await client.query('DELETE FROM qc.outbox_events WHERE dedupe_key LIKE $$PERF-%$$');
+    await client.query(
+      "DELETE FROM qc.evidence_links WHERE file_id IN (SELECT id FROM qc.files WHERE storage_key LIKE 'synthetic://PERF-%')",
+    );
+    await client.query("DELETE FROM qc.files WHERE storage_key LIKE 'synthetic://PERF-%'");
     await client.query(
       'DELETE FROM qc.document_versions WHERE document_id IN (SELECT id FROM qc.document_identities WHERE document_no LIKE $$PERF-%$$)',
     );
@@ -1755,6 +1768,70 @@ async function main(): Promise<void> {
       );
       inserted.document_identities = SIZES.documentIdentities;
       inserted.document_versions = versionRows.length;
+
+      const fileRows: Row[] = [];
+      const evidenceRows: Row[] = [];
+      for (let i = 0; i < SIZES.documentIdentities * SIZES.filesPerDocument; i += 1) {
+        const documentIndex = Math.floor(i / SIZES.filesPerDocument);
+        const fileId = stableId(`perf-file:${i}`);
+        const versionId = stableId(`perf-document-version:${documentIndex}:0`);
+        const owner = syntheticUsers[documentIndex % syntheticUsers.length]!;
+        const digest = createHash('sha256').update(`perf-file-content:${i}`).digest('hex');
+        fileRows.push([
+          fileId,
+          `perf-evidence-${i + 1}.pdf`,
+          `synthetic://PERF-files/${fileId}`,
+          'SYNTHETIC',
+          'application/pdf',
+          '.pdf',
+          65536 + (i % 32) * 4096,
+          digest,
+          owner.id,
+          'SYNTHETIC',
+        ]);
+        evidenceRows.push([
+          stableId(`perf-evidence-link:${i}`),
+          fileId,
+          'DOCUMENT_VERSION',
+          versionId,
+          'SUPPORTING_EVIDENCE',
+          'Synthetic metadata only; no object-store content exists.',
+          owner.id,
+        ]);
+      }
+      await bulkInsert(
+        client,
+        'files',
+        [
+          'id',
+          'original_filename',
+          'storage_key',
+          'storage_provider',
+          'mime_type',
+          'extension',
+          'size_bytes',
+          'sha256',
+          'uploaded_by',
+          'state',
+        ],
+        fileRows,
+      );
+      await bulkInsert(
+        client,
+        'evidence_links',
+        [
+          'id',
+          'file_id',
+          'subject_type',
+          'subject_id',
+          'evidence_type',
+          'description',
+          'linked_by',
+        ],
+        evidenceRows,
+      );
+      inserted.files = fileRows.length;
+      inserted.evidence_links = evidenceRows.length;
     }
 
     /* ---- notifications + deliveries ----------------------------------- */
@@ -1981,6 +2058,8 @@ async function main(): Promise<void> {
       UNION ALL SELECT 'lab_tests', count(*)::text FROM qc.lab_tests WHERE lab_test_no LIKE 'PERF-%'
       UNION ALL SELECT 'reject_reports', count(*)::text FROM qc.reject_reports WHERE report_no LIKE 'PERF-%'
       UNION ALL SELECT 'notifications', count(*)::text FROM qc.notifications WHERE dedupe_key LIKE 'PERF-%'
+      UNION ALL SELECT 'files', count(*)::text FROM qc.files WHERE storage_key LIKE 'synthetic://PERF-%'
+      UNION ALL SELECT 'evidence_links', count(*)::text FROM qc.evidence_links WHERE file_id IN (SELECT id FROM qc.files WHERE storage_key LIKE 'synthetic://PERF-%')
       UNION ALL SELECT 'users', count(*)::text FROM qc.users WHERE login_identity LIKE 'perf-%'
     `);
     const verified: Counts = {};
@@ -1988,7 +2067,17 @@ async function main(): Promise<void> {
 
     const manifest = {
       seededAt: new Date().toISOString(),
-      database: 'disposable local PostgreSQL 18.6 cluster (qc_disposable)',
+      database: {
+        target: 'disposable local PostgreSQL cluster',
+        name: databaseName,
+        serverVersion,
+      },
+      workload: {
+        purpose: 'synthetic read/write density for local performance observation',
+        includesSyntheticFileMetadataOnly: true,
+        createsObjectStoreContent: false,
+        productionSeed: false,
+      },
       deterministicRngSeed: 20260919,
       frozenNow: NOW.toISOString(),
       sizes: SIZES,

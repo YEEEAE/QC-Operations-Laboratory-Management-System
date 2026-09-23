@@ -42,6 +42,13 @@ and are **not** re-imported by this pack.
 Machine-readable source of the same inventory:
 `scripts/data/master-data-catalog.ts`.
 
+The catalog records source revision, accountable owner, and an explicit
+value-set approval reference for every group. `APPROVED` above refers to
+schema/entity governance; it does not approve concrete values. All current
+value-set approvals are `PENDING`, so no business dataset is importable yet.
+The equipment rows in `tests/fixtures/` are disposable test data and cannot
+satisfy this gate.
+
 ## 3. Approved business data vs disposable fixtures
 
 - **APPROVED-BUSINESS** entities are `equipment` and `controlled-template`. The
@@ -59,7 +66,7 @@ Executable pack (all local, task-owned database only):
 
 | Command | Purpose |
 | ------- | ------- |
-| `pnpm data:master-data:preflight` | Read-only dry run of the equipment starting set |
+| `pnpm data:master-data:preflight` | Read-only command; currently refuses because no equipment value set has owner approval |
 | `tsx scripts/data/run-master-data-import.ts --entity <key> --dataset <file.json>` | Dry run any registered dataset |
 | `... --apply` | Load ready rows in one atomic transaction (gated) |
 
@@ -73,7 +80,8 @@ Engine: `scripts/data/import-preflight.ts`. It performs, in order:
 5. **Referential integrity** — every declared reference must resolve.
 6. **Dry-run** — the default; reads only, writes nothing.
 7. **Reconciliation** — after apply, the observed row count must equal the
-   number of distinct valid keys; `reconciled: true/false`.
+   number of distinct valid keys; mismatch fails the operation and rolls it
+   back.
 8. **Idempotent rerun** — inserts use the source UNIQUE constraint as the
    idempotency key (`ON CONFLICT ... DO NOTHING`); a rerun inserts nothing new.
 
@@ -83,6 +91,11 @@ Engine: `scripts/data/import-preflight.ts`. It performs, in order:
 `QC_SEED_ALLOW_NON_PRODUCTION=true`, `QC_MASTER_DATA_IMPORT_ALLOW=true`, and
 `DATABASE_URL` does not look like production. Dry-run applies the read guard.
 Unregistered or non-APPROVED entities are refused by the catalog.
+
+For an approved value set, output carries source, source revision, owner,
+approval reference, SHA-256 of the exact input, quality counts, and
+reconciliation. `--report <new-file>` writes the same JSON record and refuses
+to overwrite a prior report.
 
 ### Unresolved policy (do not invent)
 

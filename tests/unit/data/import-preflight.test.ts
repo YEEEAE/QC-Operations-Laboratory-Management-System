@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyImport,
   businessKeyTuple,
   preflightImport,
   type PreflightContext,
@@ -29,12 +30,15 @@ function context(overrides: Partial<PreflightContext> = {}): PreflightContext {
 }
 
 describe('master-data catalog gate', () => {
-  it('permits APPROVED + GOVERNED entities and exposes their load order', () => {
+  it('distinguishes governed schema from approved import values', () => {
     const equipment = getMasterDataEntity('equipment');
     expect(equipment.classification).toBe('APPROVED');
     expect(equipment.governance).toBe('GOVERNED');
     expect(equipment.businessKey).toEqual(['equipment_no']);
-    expect(() => assertImportable(equipment)).not.toThrow();
+    expect(equipment.sourceVersion).toBeTruthy();
+    expect(equipment.steward).toContain('Admin');
+    expect(equipment.approval).toEqual({ status: 'PENDING', reference: null });
+    expect(() => assertImportable(equipment)).toThrow(/recorded owner approval/);
   });
 
   it('refuses ungoverned/unconfirmed entities instead of inventing data', () => {
@@ -50,7 +54,31 @@ describe('master-data catalog gate', () => {
       expect(() => assertImportable(entity)).toThrow(/Refusing to import/);
       expect(() => getRegisteredDataset(key)).toThrow();
     }
-    expect(getRegisteredDataset('equipment')).toBe(EQUIPMENT_DATASET);
+    expect(() => getRegisteredDataset('equipment')).toThrow(/recorded owner approval/);
+  });
+});
+
+describe('applyImport reconciliation failure', () => {
+  it('rolls back when post-write reconciliation does not match expected keys', async () => {
+    const statements: string[] = [];
+    const client = {
+      async query(sql: string) {
+        statements.push(sql);
+        if (sql.startsWith('INSERT')) return { rowCount: 1, rows: [] };
+        if (sql.startsWith('SELECT count')) return { rowCount: 1, rows: [{ count: 0 }] };
+        return { rowCount: null, rows: [] };
+      },
+    };
+    await expect(
+      applyImport({
+        client: client as never,
+        spec: EQUIPMENT_DATASET,
+        rows: [{ equipment_no: 'FIX-EQP-ROLLBACK', name: 'Fixture', state: 'DRAFT' }],
+        actorId: MASTER_DATA_TEST_ACTOR_ID,
+      }),
+    ).rejects.toThrow(/reconciliation failed/);
+    expect(statements).toContain('ROLLBACK');
+    expect(statements).not.toContain('COMMIT');
   });
 });
 

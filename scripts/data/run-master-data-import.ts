@@ -3,7 +3,7 @@
  *
  * Usage:
  *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <file.json>
- *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <file.json> --apply
+ *   tsx scripts/data/run-master-data-import.ts --entity equipment --dataset <file.json> --apply --report <new-report.json>
  *
  * Default mode is a READ-ONLY dry run (preflight + reconciliation preview).
  * `--apply` writes inside one atomic transaction and is gated by:
@@ -16,7 +16,8 @@
  * invents values. Dry-run and apply both require a task-owned database.
  */
 
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
@@ -40,33 +41,43 @@ interface DatasetFile {
   records: ImportRow[];
 }
 
-export function parseDatasetFile(raw: string): ImportRow[] {
+export function parseDatasetFile(raw: string, expectedEntityKey?: string): ImportRow[] {
   const parsed = JSON.parse(raw) as DatasetFile | ImportRow[];
   if (Array.isArray(parsed)) return parsed;
-  if (parsed && Array.isArray(parsed.records)) return parsed.records;
+  if (parsed && Array.isArray(parsed.records)) {
+    if (parsed.entityKey && parsed.entityKey !== expectedEntityKey) {
+      fail(
+        `Dataset entity '${parsed.entityKey}' does not match requested entity '${expectedEntityKey}'.`,
+      );
+    }
+    return parsed.records;
+  }
   fail('Dataset file must be a JSON array of records or { records: [...] }.');
 }
 
 export interface ImportCliOptions {
   entityKey: string;
   datasetPath: string;
+  reportPath?: string;
   apply: boolean;
 }
 
 export function parseArgs(argv: readonly string[]): ImportCliOptions {
   let entityKey: string | undefined;
   let datasetPath: string | undefined;
+  let reportPath: string | undefined;
   let apply = false;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--entity') entityKey = argv[++i];
     else if (arg === '--dataset') datasetPath = argv[++i];
+    else if (arg === '--report') reportPath = argv[++i];
     else if (arg === '--apply') apply = true;
     else fail(`Unknown argument: ${arg}`);
   }
   if (!entityKey) fail('--entity is required.');
   if (!datasetPath) fail('--dataset is required.');
-  return { entityKey, datasetPath, apply };
+  return { entityKey, datasetPath, reportPath, apply };
 }
 
 function assertReadGuard(env: NodeJS.ProcessEnv): void {
@@ -108,7 +119,11 @@ export async function runImportCli(
 
   const spec = getRegisteredDataset(options.entityKey);
   const entity = getMasterDataEntity(options.entityKey);
-  const rows = parseDatasetFile(readFileSync(options.datasetPath, 'utf8'));
+  if (options.reportPath && existsSync(options.reportPath)) {
+    fail(`Refusing to overwrite existing report: ${options.reportPath}`);
+  }
+  const rawDataset = readFileSync(options.datasetPath, 'utf8');
+  const rows = parseDatasetFile(rawDataset, options.entityKey);
 
   const pool = createPool({
     ...getDatabaseConnectionConfig(env.DATABASE_URL),
@@ -120,11 +135,18 @@ export async function runImportCli(
     const report = await preflightImport(spec, rows, { existingKeys, referenceExists });
     const rejectionExamples = report.issues.slice(0, 5);
     if (!options.apply) {
-      return {
+      const result = {
         mode: 'DRY_RUN',
         entity: entity.key,
         classification: entity.classification,
         governance: entity.governance,
+        lineage: {
+          source: entity.sourceReference,
+          sourceVersion: entity.sourceVersion,
+          owner: entity.steward,
+          approval: entity.approval,
+          datasetSha256: createHash('sha256').update(rawDataset).digest('hex'),
+        },
         counts: report.counts,
         rejectionExamples,
         reconciliation: {
@@ -132,23 +154,38 @@ export async function runImportCli(
           newInserts: report.counts.ready,
         },
       };
+      if (options.reportPath) {
+        writeFileSync(options.reportPath, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+      }
+      return result;
     }
 
     const client = await pool.connect();
     try {
-      const result = await applyImport({
+      const applied = await applyImport({
         client,
         spec,
         rows: report.readyRows,
         actorId: '',
       });
-      return {
+      const result = {
         mode: 'APPLY',
         entity: entity.key,
+        lineage: {
+          source: entity.sourceReference,
+          sourceVersion: entity.sourceVersion,
+          owner: entity.steward,
+          approval: entity.approval,
+          datasetSha256: createHash('sha256').update(rawDataset).digest('hex'),
+        },
         counts: report.counts,
         rejectionExamples,
-        apply: result,
+        apply: applied,
       };
+      if (options.reportPath) {
+        writeFileSync(options.reportPath, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+      }
+      return result;
     } finally {
       client.release();
     }

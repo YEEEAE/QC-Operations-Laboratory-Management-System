@@ -2,8 +2,8 @@
  * QC-100-FINAL-019 — Registered import dataset specifications.
  *
  * A dataset is only registered when the catalog marks its entity APPROVED and
- * GOVERNED (a real table with source constraints exists). The equipment dataset
- * is the first such entity and is wired end-to-end. Entities that are
+ * GOVERNED (a real table with source constraints exists). The equipment adapter
+ * is wired end-to-end but remains closed until a concrete value-set approval is recorded. Entities that are
  * UNCONFIRMED / POLICY-DEPENDENT / SOURCE-DEPENDENT are deliberately not
  * registered; the catalog refuses to invent them.
  *

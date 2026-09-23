@@ -382,6 +382,12 @@ export async function applyImport(options: ApplyImportOptions): Promise<ApplyRes
       observed = verify.rows[0]?.count ?? 0;
     }
 
+    if (observed !== keys.length) {
+      throw new Error(
+        `Master-data reconciliation failed for '${spec.entityKey}': expected ${keys.length}, observed ${observed}.`,
+      );
+    }
+
     await client.query('COMMIT');
     return {
       entityKey: spec.entityKey,

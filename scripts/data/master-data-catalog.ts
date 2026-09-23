@@ -27,6 +27,7 @@ export type MasterDataGovernance = 'GOVERNED' | 'NOT-GOVERNED';
 
 /** Approved business data vs disposable test fixtures. */
 export type MasterDataClass = 'APPROVED-BUSINESS' | 'DISPOSABLE-FIXTURE' | 'UNRESOLVED';
+export type MasterDataApprovalStatus = 'APPROVED' | 'PENDING' | 'NOT-APPLICABLE';
 
 export interface MasterDataEntity {
   /** Stable inventory key (also the requirement->implementation handle). */
@@ -40,8 +41,12 @@ export interface MasterDataEntity {
   businessKey: readonly string[];
   /** Canonical documented source of the definition. Never a new source. */
   sourceReference: string;
+  /** Source dataset/schema revision. A schema revision is not data approval. */
+  sourceVersion: string;
   /** Accountable role/administrator slot. `UNRESOLVED` entries name the owner. */
   steward: string;
+  /** Explicit owner approval for importing actual values, separate from schema governance. */
+  approval: { status: MasterDataApprovalStatus; reference: string | null };
   /** Where the validation rule comes from. Never invented. */
   validationRule: string;
   /** Dependency-safe loading order; 1 loads before 2. */
@@ -67,7 +72,9 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     governedTable: null,
     businessKey: [],
     sourceReference: 'Documents/DATA-DICTIONARY.md §16 (Organizational Scope)',
+    sourceVersion: 'DATA-DICTIONARY §16 (current source revision; no governed dataset)',
     steward: 'UNRESOLVED — organizational structure approval required (owner decision via 013/026)',
+    approval: { status: 'PENDING', reference: null },
     validationRule: 'None approved — no organizational-unit schema exists (DO NOT MIGRATE).',
     loadingOrder: 1,
     dependsOn: [],
@@ -84,7 +91,9 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     governedTable: null,
     businessKey: [],
     sourceReference: 'Documents/DATA-DICTIONARY.md §16 (Organizational Scope)',
+    sourceVersion: 'DATA-DICTIONARY §16 (current source revision; no governed dataset)',
     steward: 'UNRESOLVED — organizational structure approval required (owner decision via 013/026)',
+    approval: { status: 'PENDING', reference: null },
     validationRule: 'None approved — no organizational-unit schema exists (DO NOT MIGRATE).',
     loadingOrder: 1,
     dependsOn: [],
@@ -102,7 +111,9 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     businessKey: [],
     sourceReference:
       'Documents/DATA-DICTIONARY.md §26 (receiving_items.item_code) and §22 (ncrs.affected_item_code)',
+    sourceVersion: 'DATA-DICTIONARY §§22, 26 (current source revision; free-text only)',
     steward: 'UNRESOLVED — controlled reference-data governance (BD-020, owner decision via 013)',
+    approval: { status: 'PENDING', reference: null },
     validationRule:
       'Source rule only: `length(btrim(item_code)) > 0` (0008/0026 CHECK). No code list.',
     loadingOrder: 2,
@@ -121,7 +132,9 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     businessKey: [],
     sourceReference:
       'db/migrations/0025_qc_closure_006_workflow.sql (receiving_items.supplier_name)',
+    sourceVersion: 'migration 0025 (source schema only; no governed dataset)',
     steward: 'UNRESOLVED — controlled reference-data governance (BD-020, owner decision via 013)',
+    approval: { status: 'PENDING', reference: null },
     validationRule: 'Source rule only: nullable free text. No supplier code list or constraint.',
     loadingOrder: 2,
     dependsOn: [],
@@ -138,9 +151,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     governedTable: 'equipment',
     businessKey: ['equipment_no'],
     sourceReference: 'db/migrations/0010_assets.sql (qc.equipment) · Documents/DATA-DICTIONARY.md',
+    sourceVersion: 'migration 0010 + DATA-DICTIONARY (schema source; no approved value set)',
     steward:
       'Admin (authorized controlled administrative operations, ROLE-MATRIX §43–48); ' +
       'equipment lifecycle actions gated by PERM-EQP-* (PERMISSION-MATRIX)',
+    approval: { status: 'PENDING', reference: null },
     validationRule:
       'Source constraints: `equipment_no` UNIQUE; `name` non-empty CHECK; `state` CHECK IN ' +
       '(DRAFT, ACTIVE, OUT_OF_SERVICE, UNDER_MAINTENANCE, DECOMMISSIONED); `created_by` FK users.',
@@ -148,8 +163,9 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     dependsOn: [],
     dataClass: 'APPROVED-BUSINESS',
     notes:
-      'This is the first governed master-data entity with a real unique business key, so it is the ' +
-      'registered end-to-end preflight/import dataset. It still requires an existing actor (`created_by`).',
+      'This is the first governed entity with a real unique business key and a registered adapter. ' +
+      'No concrete value set is approved; the adapter remains closed until an owner approval reference ' +
+      'is recorded. It also requires an existing actor (`created_by`).',
   },
   {
     key: 'method',
@@ -161,7 +177,9 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     sourceReference:
       'Documents/DATA-DICTIONARY.md §3 (SOURCE-DEPENDENT) · §23 (rcas.method) · ' +
       'db/migrations/0009_laboratory.sql (lab_test_template_versions.method_reference)',
+    sourceVersion: 'migration 0009 + DATA-DICTIONARY §23 (no controlled method dataset)',
     steward: 'UNRESOLVED — laboratory controlled-source owner (SOURCE-DEPENDENT; via 013)',
+    approval: { status: 'PENDING', reference: null },
     validationRule:
       'SOURCE-DEPENDENT: must resolve to a controlled source (SOP/WI/Specification/Test Method). ' +
       'No method value, tolerance, or acceptance rule may be invented.',
@@ -182,9 +200,11 @@ export const MASTER_DATA_ENTITIES: readonly MasterDataEntity[] = [
     sourceReference:
       'db/migrations/0008_quarantine.sql · db/migrations/0009_laboratory.sql · ' +
       'Documents/BUSINESS-RULES.md P-06',
+    sourceVersion: 'migrations 0008/0009 + BUSINESS-RULES P-06 (no approved value set)',
     steward:
       'Every active user may create DRAFT; Supervisor/Manager/named yazeed/SYSTEM_OWNER direct-create ' +
       'and review/approve (P-06, BR-APR authority)',
+    approval: { status: 'PENDING', reference: null },
     validationRule:
       'Source constraints: `template_code`/`test_code` UNIQUE; non-empty `name`; approved content is ' +
       'never edited in place (new revision only). Import must preserve P-06 lifecycle.',
@@ -204,12 +224,18 @@ export function getMasterDataEntity(key: string): MasterDataEntity {
   return entity;
 }
 
-/** Entities that may never be loaded locally because they are not APPROVED/GOVERNED. */
+/** Fail-closed gate for schema governance and approved concrete value sets. */
 export function assertImportable(entity: MasterDataEntity): void {
-  if (entity.governance !== 'GOVERNED' || entity.classification !== 'APPROVED') {
+  if (
+    entity.governance !== 'GOVERNED' ||
+    entity.classification !== 'APPROVED' ||
+    entity.approval.status !== 'APPROVED' ||
+    !entity.approval.reference
+  ) {
     throw new Error(
       `Refusing to import '${entity.key}': classification=${entity.classification}, ` +
-        `governance=${entity.governance}. Only APPROVED + GOVERNED entities are importable; ` +
+        `governance=${entity.governance}, dataApproval=${entity.approval.status}. ` +
+        'Import requires APPROVED + GOVERNED classification and a recorded owner approval; ' +
         'UNCONFIRMED/POLICY-DEPENDENT/SOURCE-DEPENDENT values must not be invented.',
     );
   }
