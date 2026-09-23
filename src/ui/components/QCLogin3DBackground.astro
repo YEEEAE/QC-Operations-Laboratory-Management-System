@@ -80,7 +80,7 @@ const {
       baseScale: 1.0
     });
 
-    let scene, camera, renderer, heroPivot, heroModel, inspectionGroup, scanStrip, scanLight, analysisTrace;
+    let scene, camera, renderer, heroPivot, heroModel, inspectionGroup, scanStrip, scanLight, analysisTrace, particleField, labGrid;
     let envTexture = null, envTarget = null, raf = 0, destroyed = false, initialized = false, hidden = document.hidden, contextLost = false, initHandle = 0, initHandleIsIdle = false;
     let startTime = performance.now(), lastFrame = startTime;
     let pointer = {x:0,y:0, tx:0,ty:0};
@@ -172,18 +172,65 @@ const {
 
     function buildBackgroundTrace() {
       const group=new THREE.Group(); group.position.set(-1.45,-1.45,-1.35); analysisTrace=group;
-      const pts=[]; const vals=[.06,.12,.09,.16,.11,.14,.20,.15,.18,.17,.23,.19];
-      for(let i=0;i<vals.length;i++) pts.push(new THREE.Vector3(-1.65+i*.29, vals[i], 0));
-      const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMaterial(.075)); group.add(l);
-      [-.03,.28].forEach(y=>group.add(guideLine(new THREE.Vector3(-1.7,y,0),new THREE.Vector3(1.7,y,0),.035)));
+      group.add(guideLine(new THREE.Vector3(-1.7,0,0),new THREE.Vector3(1.7,0,0),.05));
+      for(let i=0;i<=8;i++){
+        const x=-1.7+i*(3.4/8);
+        group.add(guideLine(new THREE.Vector3(x,-.04,0),new THREE.Vector3(x,.04,0),.035));
+      }
+      const peaks=[{x:-1.15,h:.17,w:.14},{x:-.4,h:.3,w:.12},{x:.35,h:.13,w:.16},{x:1.0,h:.24,w:.13}];
+      const pts=[];
+      for(let i=0;i<=80;i++){
+        const x=-1.65+(i/80)*3.3;
+        let y=.03;
+        for(const p of peaks){ const d=(x-p.x)/p.w; y+=p.h*Math.exp(-d*d); }
+        y+=Math.sin(i*1.7)*.006;
+        pts.push(new THREE.Vector3(x,y,0));
+      }
+      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMaterial(.12)));
       scene.add(group);
     }
 
+    function buildLabGrid() {
+      labGrid=new THREE.GridHelper(18,18,0x2e5d65,0x1a3339);
+      labGrid.name='BenchGrid';
+      labGrid.position.set(0,-2.55,-1.5);
+      const mats=Array.isArray(labGrid.material)?labGrid.material:[labGrid.material];
+      mats.forEach(m=>{ m.transparent=true; m.opacity=.16; m.depthWrite=false; });
+      scene.add(labGrid);
+    }
+
+    function buildParticleField() {
+      const count=240;
+      const positions=new Float32Array(count*3);
+      const base=new Float32Array(count*3);
+      const phases=new Float32Array(count);
+      for(let i=0;i<count;i++){
+        const x=-7+Math.random()*12;
+        const y=-3.2+Math.random()*6.4;
+        const z=-4.5+Math.random()*5.5;
+        base[i*3]=positions[i*3]=x;
+        base[i*3+1]=positions[i*3+1]=y;
+        base[i*3+2]=positions[i*3+2]=z;
+        phases[i]=Math.random()*Math.PI*2;
+      }
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+      const mat=new THREE.PointsMaterial({
+        color:CONFIG.teal, size:.04, sizeAttenuation:true,
+        transparent:true, opacity:.32, depthWrite:false, blending:THREE.AdditiveBlending
+      });
+      particleField=new THREE.Points(geo,mat);
+      particleField.name='SampleMotes';
+      particleField.userData={base,phases,count};
+      scene.add(particleField);
+    }
+
     function setupLights() {
-      scene.add(new THREE.HemisphereLight(0xb8d0d1,0x081016,.34));
-      const key=new THREE.DirectionalLight(0xe8eeee,2.1); key.position.set(-4.2,4.5,5.6); scene.add(key);
+      scene.add(new THREE.HemisphereLight(0xb8d0d1,0x0a1218,.32));
+      const key=new THREE.DirectionalLight(0xe8eeee,2.2); key.position.set(-4.2,4.5,5.6); scene.add(key);
       const fill=new THREE.PointLight(0x91b8bc,.72,8,2); fill.position.set(-2.4,-2.0,3.4); scene.add(fill);
-      const rim=new THREE.SpotLight(0x5aa9ad,1.55,10,.55,.58,1.5); rim.position.set(2.6,2.0,4.2); rim.target.position.set(-.8,0,0); scene.add(rim,rim.target);
+      const rim=new THREE.SpotLight(0x5aa9ad,1.7,10,.55,.58,1.5); rim.position.set(2.6,2.0,4.2); rim.target.position.set(-.8,0,0); scene.add(rim,rim.target);
+      const under=new THREE.PointLight(0x3f7c84,.4,7,2); under.position.set(-1.0,-2.8,1.6); scene.add(under);
       scanLight=new THREE.PointLight(CONFIG.teal,.58,3.2,2.0); scanLight.position.set(-2.0,0.6,2.2); scene.add(scanLight);
     }
 
@@ -204,14 +251,21 @@ const {
       const tablet=!portrait && w<1100;
       if(portrait){
         heroPivot.position.set(0,1.45,0); heroPivot.scale.setScalar(.58);
-        inspectionGroup.visible=false; if(analysisTrace) analysisTrace.visible=false; camera.fov=38; camera.position.set(0,.30,8.6); camera.lookAt(0,.72,0);
+        inspectionGroup.visible=false; if(analysisTrace) analysisTrace.visible=false;
+        if(labGrid) labGrid.visible=false;
+        if(particleField) particleField.visible=true;
+        camera.fov=38; camera.position.set(0,.30,8.6); camera.lookAt(0,.72,0);
         renderer && renderer.setPixelRatio(Math.min(devicePixelRatio||1,CONFIG.dprMobile));
       } else if(tablet){
         heroPivot.position.set(-.95,.06,0); heroPivot.scale.setScalar(.80); inspectionGroup.visible=true; if(analysisTrace) analysisTrace.visible=true;
+        if(labGrid) labGrid.visible=true;
+        if(particleField) particleField.visible=true;
         camera.fov=34; camera.position.set(0,.15,7.5); camera.lookAt(-.25,0,0);
         renderer && renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.35));
       } else {
         heroPivot.position.set(CONFIG.heroDesktopX,CONFIG.heroDesktopY,0); heroPivot.scale.setScalar(CONFIG.baseScale); inspectionGroup.visible=true; if(analysisTrace) analysisTrace.visible=true;
+        if(labGrid) labGrid.visible=true;
+        if(particleField) particleField.visible=true;
         camera.fov=32; camera.position.set(0,.15,7.45); camera.lookAt(-.56,0,0);
         renderer && renderer.setPixelRatio(Math.min(devicePixelRatio||1,CONFIG.dprDesktop));
       }
@@ -244,6 +298,16 @@ const {
           inspectionGroup.children.forEach(o=>{ if(o.isMesh && o.geometry && o.geometry.type==='SphereGeometry'){ o.material.opacity=.24 + .16*(.5+.5*Math.sin(t*.7+o.userData.phase)); } });
         }
       }
+      if(particleField && particleField.visible){
+        const ud=particleField.userData;
+        const arr=particleField.geometry.attributes.position.array;
+        for(let i=0;i<ud.count;i++){
+          const p=ud.phases[i];
+          arr[i*3]=ud.base[i*3]+Math.sin(t*.16+p)*.22;
+          arr[i*3+1]=ud.base[i*3+1]+Math.cos(t*.21+p*1.3)*.16;
+        }
+        particleField.geometry.attributes.position.needsUpdate=true;
+      }
     }
 
     function renderOnce(){ if(renderer && scene && camera && !contextLost) renderer.render(scene,camera); }
@@ -257,7 +321,7 @@ const {
     }
     function neutralPointer(){ pointer.tx=0; pointer.ty=0; }
     function onVisibility(){ hidden=document.hidden; if(hidden) stopLoop(); else { startTime += Math.max(0,performance.now()-lastFrame); startLoop(); renderOnce(); } }
-    function onReduced(e){ reducedMotion=e.matches; pointer.tx=pointer.ty=0; if(reducedMotion){ stopLoop(); if(heroPivot){ heroPivot.rotation.set(-.12,.42,-.09); applyResponsive(); if(scanStrip)scanStrip.position.x=-.22; } renderOnce(); } else startLoop(); }
+    function onReduced(e){ reducedMotion=e.matches; pointer.tx=pointer.ty=0; if(reducedMotion){ stopLoop(); if(heroPivot){ heroPivot.rotation.set(-.12,.42,-.09); applyResponsive(); if(scanStrip)scanStrip.position.x=-.22; } if(particleField){ particleField.rotation.set(0,0,0); } renderOnce(); } else startLoop(); }
 
     function disposeObject(o){
       if(o.geometry) o.geometry.dispose();
@@ -268,7 +332,7 @@ const {
       if(initHandle){ if(initHandleIsIdle && 'cancelIdleCallback' in window) window.cancelIdleCallback(initHandle); else clearTimeout(initHandle); initHandle=0; }
       if(scene) scene.traverse(disposeObject); if(envTarget) envTarget.dispose(); else if(envTexture) envTexture.dispose();
       if(renderer){ renderer.dispose(); const c=renderer.domElement; c && c.parentNode && c.parentNode.removeChild(c); }
-      scene=camera=renderer=heroPivot=heroModel=inspectionGroup=scanStrip=scanLight=analysisTrace=null; envTexture=envTarget=null; initialized=false;
+      scene=camera=renderer=heroPivot=heroModel=inspectionGroup=scanStrip=scanLight=analysisTrace=particleField=labGrid=null; envTexture=envTarget=null; initialized=false;
     }
 
     async function init(){
@@ -286,7 +350,7 @@ const {
         renderer.domElement.setAttribute('aria-hidden','true'); renderer.domElement.setAttribute('role','presentation'); root.appendChild(renderer.domElement);
         on(renderer.domElement,'webglcontextlost',e=>{e.preventDefault();contextLost=true;stopLoop();setFallback(true);},{passive:false});
         on(renderer.domElement,'webglcontextrestored',()=>{contextLost=false;setFallback(false);renderOnce();startLoop();});
-        buildEnvironment(); setupLights(); buildBackgroundTrace();
+        buildEnvironment(); setupLights(); buildBackgroundTrace(); buildLabGrid(); buildParticleField();
         reducedMotionQuery=matchMedia('(prefers-reduced-motion: reduce)'); reducedMotion=reducedMotionQuery.matches;
         on(window,'resize',()=>{applyResponsive();renderOnce();},{passive:true});
         on(window,'pointermove',onPointer,{passive:true}); on(window,'pointerleave',neutralPointer,{passive:true});

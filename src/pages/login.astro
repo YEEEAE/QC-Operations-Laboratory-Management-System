@@ -58,16 +58,31 @@ const copy = {
   </section>
 </AuthLayout>
 <style>
-  .login-panel { position: relative; z-index: 1; width: min(100%, 440px); padding: var(--space-8); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-1); }
+  .login-panel { position: relative; z-index: 1; width: min(100%, 440px); padding: var(--space-8); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-2); }
   .login-panel > p:first-child { margin: 0 0 var(--space-6); color: var(--color-accent-primary-hover); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
-  .login-panel h1 { margin: 0; font-size: clamp(1.75rem, 5vw, 2.25rem); }
+  .login-panel h1 { margin: 0; font-size: 2rem; line-height: var(--line-height-tight); }
   .login-panel h1 + p { margin: var(--space-2) 0 var(--space-6); color: var(--text-secondary); }
   #form-error { padding: var(--space-3); border: 1px solid var(--status-danger); border-radius: var(--radius-sm); color: var(--status-danger); background: var(--status-danger-bg); }
+  #session-recovery { padding: var(--space-3); border: 1px solid var(--status-review); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--status-review-bg); }
   .login-form { display: grid; gap: var(--space-3); }
   .login-form label { font-weight: 600; }
   .login-form input:not([type="hidden"]) { width: 100%; min-height: 48px; padding-inline: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-page); }
   .password-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }
   .password-field [data-password-toggle] { min-height: 48px; min-width: 72px; margin-top: 0; padding-inline: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-weight: 600; cursor: pointer; }
   .login-form button { min-height: 48px; margin-top: var(--space-2); padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--color-text-inverse); font-weight: 700; cursor: pointer; }
+  .login-form button:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  .login-form button:active { transform: scale(.96); }
   @media (max-width: 520px) { .login-panel { padding: var(--space-5); } }
+  @keyframes login-rise {
+    from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .login-panel > p:first-child { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 0ms both; }
+    .login-panel h1 { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 50ms both; }
+    .login-panel h1 + p { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 90ms both; }
+    #session-recovery,
+    #form-error,
+    .login-form { animation: login-rise var(--motion-duration-fast) var(--motion-ease-standard) 130ms both; }
+  }
 </style>
