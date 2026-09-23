@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — AUTHZ-SERVER-MATRIX**
+  - Changed: توحيد UX لرفض الصلاحية/السجل غير المتاح.
+  - Evidence: unit 268/268 PASS؛ PG setup BLOCKED.
+  - State: PARTIAL — `audit/2026-09-23/authorization-server-matrix.md`.
+
 - **2026-09-23 — QC-100-FINAL-026-C / reconciled open QC and recovery decisions**
   - Changed: ربط سجل القرار وآلات الحالة ومصالحة المتطلبات بمسارات use case الحالية، وإضافة RD-019/RD-020. تحديث التدفق الفعلي: إنشاء/تسجيل نتيجة التفتيش موصولان لكن لا مصدر evaluator معتمد؛ laboratory `evaluate()` يرفض؛ Reject الافتراضي `POLICY_SOURCE_REQUIRED`.
   - Evidence: `requirements:check` PASS (100 requirements, 34 risks, 20 gaps, 33 decisions, 80 domains). اكتُشفت مخالفة: recovery metrics/code والاختبار يثبتون RPO=24h وRTO=4h رغم بقاء PD-26/27 مفتوحة؛ لم تُغيّر القيم دون قرار.

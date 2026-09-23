@@ -129,7 +129,7 @@ describe('mutation POST baseline helper (F-04 / F-05)', () => {
       base,
     );
     expect(auth.kind).toBe('auth');
-    expect(auth.summary).toMatch(/not authorized/i);
+    expect(auth.summary).toMatch(/could not be created/i);
     expect(auth.recovery).toMatch(/preserved/i);
 
     const conflict = toFormFailure(
@@ -143,7 +143,9 @@ describe('mutation POST baseline helper (F-04 / F-05)', () => {
       { type: 'AstroActionError', message: 'errors.resource_not_found' },
       base,
     );
-    expect(dependency.recovery).toMatch(/identifier/i);
+    expect(dependency.kind).toBe('dependency');
+    expect(dependency.summary).toBe(auth.summary);
+    expect(dependency.recovery).toBe(auth.recovery);
 
     const unavailable = toFormFailure(
       { type: 'AstroActionError', message: 'errors.system_internal' },

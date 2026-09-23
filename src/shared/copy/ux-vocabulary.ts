@@ -56,7 +56,8 @@ export const uxVocabulary = {
     reviewFields: 'There is a problem. Review the highlighted fields.',
     noControlledAction: 'No controlled action was confirmed. Try again, or return to the record.',
     serviceUnavailable: 'The service is temporarily unavailable. Nothing was changed. Try again.',
-    authorizationChanged: 'Your authorization changed. Refresh the page before trying again.',
+    authorizationChanged:
+      'This action is unavailable. Refresh the page or return to the list, then try again if you still have access.',
     staleRecord: 'Your action was not applied. Review the latest version before continuing.',
   },
   /**
@@ -69,11 +70,11 @@ export const uxVocabulary = {
     VALIDATION_ERROR:
       'Your entries were not accepted. Review the highlighted fields and try again. Your entries are preserved.',
     AUTHORIZATION_CHANGED:
-      'This action needs permission you no longer hold. Your entries are preserved — return to the list or contact an administrator.',
+      'This action is unavailable. Refresh the page or return to the list, then try again if you still have access. Your entries are preserved.',
     CONFLICT_STALE:
       'Someone changed this record after you opened it. Reload the latest data before trying again. Nothing was resubmitted.',
     DEPENDENCY_UNAVAILABLE:
-      'A referenced record is unavailable, so the action was not applied. Reload the record and check the current state.',
+      'This action is unavailable. Refresh the page or return to the list, then try again if you still have access. Your entries are preserved.',
     DUPLICATE_COMMAND:
       'This action was already applied. Reload the record to see the current state — nothing was duplicated.',
     UNKNOWN_SAFE_ERROR:

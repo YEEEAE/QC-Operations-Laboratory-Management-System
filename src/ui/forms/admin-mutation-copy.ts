@@ -27,11 +27,11 @@ export function adminFailureMessage(state: MutationState, context: AdminFailureC
     case 'DUPLICATE_COMMAND':
       return `${operation} for ${subject} was already applied. Reload the record to see the current state — nothing was duplicated.`;
     case 'AUTHORIZATION_CHANGED':
-      return `${operation} for ${subject} was denied. Your authority may have changed — reload the record and try again only if you are still authorized.`;
+      return `${operation} was not completed. Refresh the page or return to the list, then try again if you still have access.`;
     case 'VALIDATION_ERROR':
       return `${operation} for ${subject} was not applied. Review the highlighted entries and try again. Your entries are preserved.`;
     case 'DEPENDENCY_UNAVAILABLE':
-      return `${operation} for ${subject} was not applied because a referenced record is unavailable. Reload the record and check the current state.`;
+      return `${operation} was not completed. Refresh the page or return to the list, then try again if you still have access.`;
     default:
       return `${operation} for ${subject} was not applied. Nothing was changed — try again, or reload the record.`;
   }

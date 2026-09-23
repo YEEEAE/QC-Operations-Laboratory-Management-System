@@ -227,8 +227,9 @@ export function toFormFailure(error: unknown, input: FailureCopyInput): FormFail
           : null;
       break;
     case 'auth':
-      summary = `You are not authorized to create this ${entity}.`;
-      recovery = 'This action needs an explicit permission. Your entries are preserved below.';
+      summary = `This ${entity} could not be created.`;
+      recovery =
+        'The action or a referenced record is unavailable. Check your access, then try again. Your entries are preserved below.';
       break;
     case 'conflict':
       summary = `This ${entity} conflicts with an existing record.`;
@@ -236,9 +237,9 @@ export function toFormFailure(error: unknown, input: FailureCopyInput): FormFail
         'A record with the same identifying number may already exist. Change the number, or check the list before trying again. Your other entries are preserved below.';
       break;
     case 'dependency':
-      summary = 'A referenced record could not be found.';
+      summary = `This ${entity} could not be created.`;
       recovery =
-        'Verify the equipment, template, or target identifier and try again. Your entries are preserved below.';
+        'The action or a referenced record is unavailable. Check your access, then try again. Your entries are preserved below.';
       break;
     case 'unavailable':
       summary = 'The service is temporarily unavailable.';

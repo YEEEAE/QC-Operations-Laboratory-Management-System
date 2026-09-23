@@ -94,12 +94,25 @@ describe('mutation failure classes stay distinguishable', () => {
     expect(duplicate).not.toBe(stale);
   });
 
+  it('uses identical user copy for authorization denial and missing records', () => {
+    const authState = classifyActionResult({ error: { message: 'AUTHZ_DENIED' } }).state;
+    const missingState = classifyActionResult({ error: { message: 'RESOURCE_NOT_FOUND' } }).state;
+    expect(authState).not.toBe(missingState);
+
+    const vocabulary = read('src/shared/copy/ux-vocabulary.ts');
+    const authCopy = /AUTHORIZATION_CHANGED:\s*'([^']+)'/.exec(vocabulary)?.[1];
+    const missingCopy = /DEPENDENCY_UNAVAILABLE:\s*'([^']+)'/.exec(vocabulary)?.[1];
+    expect(authCopy).toBeTruthy();
+    expect(missingCopy).toBe(authCopy);
+    expect(authCopy).not.toMatch(/permission you|record is unavailable|could not be found/i);
+  });
+
   it('keeps the stale message explicit about no resubmission and a refresh', () => {
     const vocabulary = read('src/shared/copy/ux-vocabulary.ts');
     expect(vocabulary).toMatch(/CONFLICT_STALE:[\s\S]*?Reload the latest data/);
     expect(vocabulary).toMatch(/CONFLICT_STALE:[\s\S]*?Nothing was resubmitted/);
     expect(vocabulary).toMatch(/AUTHORIZATION_CHANGED:[\s\S]*?preserved/);
-    expect(vocabulary).toMatch(/DEPENDENCY_UNAVAILABLE:[\s\S]*?not applied/);
+    expect(vocabulary).toMatch(/DEPENDENCY_UNAVAILABLE:[\s\S]*?Refresh the page/);
   });
 });
 

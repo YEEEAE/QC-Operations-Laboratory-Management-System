@@ -108,7 +108,9 @@ describe('admin failure copy', () => {
     ] as const) {
       const message = adminFailureMessage(state, context);
       expect(message).toContain('Remove role');
-      expect(message).toContain('verify-user');
+      if (state !== 'AUTHORIZATION_CHANGED' && state !== 'DEPENDENCY_UNAVAILABLE') {
+        expect(message).toContain('verify-user');
+      }
     }
     expect(adminFailureMessage('AUTHORIZATION_CHANGED', context)).not.toBe(
       adminFailureMessage('VALIDATION_ERROR', context),
@@ -118,6 +120,15 @@ describe('admin failure copy', () => {
   it('never leaks an authorization message for a stale conflict', () => {
     const stale = adminFailureMessage('CONFLICT_STALE', context);
     expect(stale).not.toMatch(/authoriz|denied|permission/i);
+  });
+
+  it('does not distinguish a denied action from a missing record in user copy', () => {
+    expect(adminFailureMessage('AUTHORIZATION_CHANGED', context)).toBe(
+      adminFailureMessage('DEPENDENCY_UNAVAILABLE', context),
+    );
+    expect(adminFailureMessage('AUTHORIZATION_CHANGED', context)).not.toMatch(
+      /not found|does not exist|unavailable because/i,
+    );
   });
 });
 
