@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — ATTACHMENT-SIGNATURE-DOC-AUDIT / lifecycle and traceability review**
+  - Changed: added known-signature/text validation and stored-object size/type/hash checks; added document lifecycle and PG rollback fault-injection coverage.
+  - Evidence: focused in-memory suites 31/31 PASS; PostgreSQL fault-injection NOT RUN (Docker daemon unavailable); typecheck has 2 existing `.mjs` declaration errors. Report: `audit/2026-09-23/attachment-signature-document-audit.md`.
+  - State: PARTIAL — upload/retention authority, end-to-end route scope, database rollback evidence, and document effective-date policy remain open.
+
 - **2026-09-23 — AUTHZ-SERVER-MATRIX**
   - Changed: توحيد UX لرفض الصلاحية/السجل غير المتاح.
   - Evidence: unit 268/268 PASS؛ PG setup BLOCKED.

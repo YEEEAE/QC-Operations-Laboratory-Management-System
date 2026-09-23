@@ -24,6 +24,26 @@ function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
   return signature.every((value, index) => bytes[index] === value);
 }
 
+function sniffKnownMimeType(bytes: Uint8Array): string | undefined {
+  if (startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])) return 'application/pdf';
+  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'image/png';
+  if (startsWith(bytes, [0xff, 0xd8, 0xff])) return 'image/jpeg';
+  if (startsWith(bytes, [0x47, 0x49, 0x46, 0x38])) return 'image/gif';
+  if (startsWith(bytes, [0x4d, 0x5a])) return 'application/x-executable';
+  return undefined;
+}
+
+function isPlainText(bytes: Uint8Array): boolean {
+  try {
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    // Plain text may contain tab/newline controls, but not binary control bytes.
+    // eslint-disable-next-line no-control-regex
+    return !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text);
+  } catch {
+    return false;
+  }
+}
+
 function assertSafeFileUpload(input: FileUploadInput, policy: FileSecurityPolicy): void {
   const filename = input.originalFilename.trim();
   const extension = input.extension?.trim().replace(/^\./, '');
@@ -50,8 +70,14 @@ function assertSafeFileUpload(input: FileUploadInput, policy: FileSecurityPolicy
     throw new AppError('VALIDATION_FAILED');
   }
 
-  // Reject executable binaries regardless of their client-declared MIME.
-  if (startsWith(input.bytes, [0x4d, 0x5a])) throw new AppError('VALIDATION_FAILED');
+  // Compare a known content signature to the declaration even when a malicious
+  // client declares a more permissive allowed type such as text/plain.
+  const detectedMimeType = sniffKnownMimeType(input.bytes);
+  if (detectedMimeType === 'application/x-executable') throw new AppError('VALIDATION_FAILED');
+  if (detectedMimeType && detectedMimeType !== input.mimeType)
+    throw new AppError('VALIDATION_FAILED');
+  if (input.mimeType === 'text/plain' && !isPlainText(input.bytes))
+    throw new AppError('VALIDATION_FAILED');
 
   // Validate a client-declared type whenever that format has an unambiguous
   // signature. The policy's MIME allowlist remains required.
@@ -239,7 +265,12 @@ export class FileService {
     if (!file || file.state !== 'ACTIVE') throw new AppError('RESOURCE_NOT_FOUND');
     const object = await this.store.get(file.storageKey);
     if (!object) throw new AppError('RESOURCE_NOT_FOUND');
-    if (sha256(object.bytes) !== file.sha256) throw new AppError('VALIDATION_FAILED');
+    if (
+      object.bytes.byteLength !== file.sizeBytes ||
+      object.contentType !== file.mimeType ||
+      sha256(object.bytes) !== file.sha256
+    )
+      throw new AppError('VALIDATION_FAILED');
     return { file, object: { bytes: object.bytes, contentType: file.mimeType } };
   }
 }

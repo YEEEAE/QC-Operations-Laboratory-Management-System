@@ -138,6 +138,12 @@ describe('files and evidence', () => {
     await expect(upload({ bytes: new TextEncoder().encode('not a PDF') })).rejects.toMatchObject({
       code: 'VALIDATION_FAILED',
     });
+    await expect(
+      upload({
+        mimeType: 'text/plain',
+        bytes: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
     expect(repository.files.size).toBe(0);
     expect(store.objects.size).toBe(0);
   });
@@ -195,6 +201,34 @@ describe('files and evidence', () => {
       contentType: 'text/plain',
     });
     await expect(service.downloadByEvidenceId('u1', result.evidence.id)).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+  });
+
+  it('rejects a stored object whose size or declared content type differs from metadata', async () => {
+    const repository = new MemoryFiles();
+    const store = new MemoryStore();
+    const service = new FileService(repository, store, async () => undefined, testPolicy);
+    const uploaded = await service.upload({
+      originalFilename: 'evidence.txt',
+      mimeType: 'text/plain',
+      bytes: new TextEncoder().encode('evidence'),
+      uploadedBy: 'u1',
+      subjectType: 'LAB_TEST',
+      subjectId: 'test-1',
+    });
+    store.objects.set(uploaded.file.storageKey, {
+      bytes: new TextEncoder().encode('evidence'),
+      contentType: 'application/octet-stream',
+    });
+    await expect(service.downloadByEvidenceId('u1', uploaded.evidence.id)).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    store.objects.set(uploaded.file.storageKey, {
+      bytes: new TextEncoder().encode('evidenc'),
+      contentType: 'text/plain',
+    });
+    await expect(service.downloadByEvidenceId('u1', uploaded.evidence.id)).rejects.toMatchObject({
       code: 'VALIDATION_FAILED',
     });
   });
