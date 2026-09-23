@@ -72,6 +72,71 @@
   - State: DONE (تسليم وثائقي محلي) — بلا commit/push. `PASS ≠ RELEASED`.
   - Key files: `audit/QC-ULTIMATE-CURRENT-STATE-ANALYSIS-AND-ACTION-PLAN.html`.
 
+## Rollover from 01 — 2026-09-24 (AI-POLICY-BOUNDARY — oldest ledger entries)
+
+> نُقلت السجلات الأقدم من `01` كما هي بعد التحقق من الحفظ؛ لا تحتوي قرارات حالية أو قيود فعالة.
+
+- **2026-09-23 — P14 / AI advisory governance and offline evaluation**
+  - Changed: expanded the synthetic evaluation to dataset 3.0.0 with per-category error reporting; mismatched provider citations now refuse; UI shows source limits, abstention reason, and human handoff; documented drift monitoring and owner-gated activation.
+  - Evidence: focused AI eval/security 41/41 PASS and full AI unit/integration suites 80/80 on Node 24.20.0; per-category error 0%, source SHA and evaluated diff fingerprint recorded in `audit/100-percent/ai-evals/results-2026-09-23.json`. No provider calls or business writes.
+  - State: DONE locally; external processing stays disabled and unapproved.
+  - Key files: `src/modules/ai-advisory/`, `tests/integration/ai-advisory/`, `Documents/AI-PROVIDERS.md`.
+
+- **2026-09-23 — P13 / master-data approval gates and representative performance harness**
+  - Changed: catalog separates governed schemas from value-set approval; all current value sets stay pending, so fixture and unconfirmed data are refused before database access. Reconciliation mismatch now rolls back; import output includes lineage and dataset hash. Synthetic load set adds linked file metadata, with local app memory/DB-pool sampling and same-scenario comparison support.
+  - Evidence: focused unit 11/11 PASS, ESLint, Node syntax, diff check, and build PASS on Node 24.20.0. Typecheck FAILS on two pre-existing `.mjs` declaration gaps in release tests. Before/after P95 and server memory/pool measurements NOT RUN: no disposable app/database baseline was available; SLO/capacity decisions remain open.
+  - State: PARTIAL — no production seeding or writes.
+  - Key files: `scripts/data/master-data-catalog.ts`, `scripts/performance/seed-synthetic-dataset.ts`, `tests/performance/load-profiles.mjs`.
+
+- **2026-09-23 — DENSE-QUEUES / توحيد سجل المهام والمختبر**
+  - Changed: `/tasks` و`/laboratory/tests` يستخدمان عرض الجدول المشترك؛ البحث والترشيح والترتيب والصفحات في استعلامات الخادم، وعدّ النتائج يطابق مجموعة المرشحات. المختبر يرفض غياب/عدم كفاية `PERM-LAB-VIEW` بدل إظهار صفر؛ لم تُضف حقائق أو قواعد أو روابط غير موجودة في read models.
+  - Evidence: Node 24.20.0؛ build وarchitecture وrelease:verify وPrettier للـTypeScript وdiff-check PASS. Typecheck لديه خطآن قائمان في declarations لسكريبتين `.mjs`؛ تكامل PostgreSQL BLOCKED لعدم توفر container runtime. replay اصطناعي 5,000 صف/طابور، 101 تجربة: مهمة due-sort من 200 صفحة إلى صفحة واحدة؛ عينة المختبر من غير قابلة للعثور ضمن أول 25 إلى قابلة للعثور. أزمنة المعالجة 0.103→0.235ms و0.001→0.077ms، وليست أزمنة بشرية أو HTTP؛ تحسن UX البشري NOT VERIFIED.
+  - State: PARTIAL — مراجعة المتصفح/UAT ومقاييس إنجاز بشرية NOT VERIFIED؛ لا DB/provider/production writes.
+  - Key files: `src/pages/tasks/index.astro`, `src/pages/laboratory/tests/index.astro`, `src/modules/laboratory/infrastructure/postgres-repository.ts`.
+
+- **2026-09-23 — OBS-HEALTH-SIGNALS / ربط فشل الاعتماديات وعرض التدهور الآمن**
+  - Changed: فشل pool غير المتزامن يصدر log/metric مرتبطًا ومصنفًا بلا تفاصيل driver؛ الصحة تعرض outbox pending كتدهور مع gauge، وتفصل liveness/readiness/QC-release والـbackup catalog/restore. التنبيه والاتجاه والتصدير والجهة المستقبلة `NOT CONFIGURED` وفق القرارات المؤجلة؛ لا عتبات مخترعة.
+  - Evidence: Node 24.20.0؛ 10 اختبارات مركزة، architecture، typecheck، lint، build PASS. لا DB/provider/production writes.
+  - State: PARTIAL — telemetry exporter ما زال no-op افتراضيًا؛ وصول التنبيهات والاتجاه وUAT NOT VERIFIED.
+  - Key files: `src/shared/database/pool.ts`, `src/shared/observability/dependency-failure.ts`, `src/pages/system/health.astro`, `workspace-map/ENGINEERING.md`.
+
+- **2026-09-23 — ARCH-DELIVERY-BOUNDARY / نقل قراءات العرض إلى application**
+  - Changed: قراءات NCR/CAPA وربطهما، وإعداد توفر AI، ومفردات receiving/UAT أصبحت تمر عبر واجهات application؛ لا تغييرات صلاحيات أو نتائج قراءة مقصودة.
+  - Evidence: Node 24.20.0؛ `pnpm test:architecture` PASS؛ typecheck 948 ملفًا / 0 أخطاء / 88 hints؛ suites المركزة 20/20 PASS؛ التحقق مربوط بالـHEAD `0ba087ca653c1f7d6855454f469716b52dc32307`.
+  - State: PARTIAL — صفحات Astro المصادق عليها ونتائجها/صلاحياتها runtime ما زالت NOT VERIFIED؛ لا commit/push.
+  - Key files: application dependencies/use case في quality NCR/CAPA.
+
+- **2026-09-23 — AUDIT-PAYLOAD-BOUNDARY / تحقق قراءات audit المباشرة**
+  - Changed: مسار idempotency في change requests يتحقق من payload المحفوظ قبل قراءة `expectedVersion`؛ الإسقاطات تواصل التحقق وتُبقي request ID دون تصدير payload.
+  - Evidence: Node 24.20.0؛ اختبارات audit/read-model/change requests 26/26 PASS؛ typecheck 942 ملفًا و0 أخطاء؛ Prettier و`git diff --check` PASS.
+  - State: DONE محليًا؛ لا تغيير صلاحيات أو بيانات أو سياسة احتفاظ.
+  - Key files: `src/modules/change-requests/infrastructure/postgres-repository.ts`, `tests/integration/shared/audit.test.ts`.
+
+- **2026-09-23 — FILE-EVIDENCE-01 / fail-closed upload boundaries**
+  - Changed: `FileService` now requires explicit MIME/size/scanner policy; document-version actions no longer accept browser-supplied file IDs; evidence downloads resolve canonical links and authorize before object reads. Added draft decisions for unresolved file policy.
+  - Evidence: Node 24.20.0 targeted file/telemetry tests 29/29 PASS; typecheck 942 files, 0 errors; build and release:verify PASS. Upload/download application routes and parent authorization wiring, approved scanner/policy, idempotency, and orphan reconciliation remain NOT VERIFIED/BLOCKED.
+  - State: PARTIAL — allowlist/size/scanning/retention and per-domain policy decisions remain open; no production or provider writes.
+  - Key files: `src/shared/files/file-service.ts`, `audit/2026-09-23/file-upload-policy-decision-request.md`.
+
+- **2026-09-23 — OD-2026-09-23-RBAC-01 / قرار أدوار QC والاعتماد**
+  - Changed: وثّق قرار Yazeed للأدوار ومصفوفة إنشاء 12 surface؛ QC متساوون بلا اعتماد/توقيع، Supervisor مرحلة أولى وQCM نهائي. أضيف API أدلة UAT الموثّق بالدورة/الفاعل/الدور، وترحيل 0038 لمنح QC وسحب اعتماد المرحلة الأولى من MANAGER.
+  - Evidence: Node 24.20.0؛ authorization/UAT unit 47/47 PASS، typecheck 942 ملفًا بلا أخطاء، requirements:check PASS. PostgreSQL 18 integration/UAT وE2E BLOCKED لغياب container runtime؛ لم تُنشأ حسابات على أي قاعدة.
+  - State: PARTIAL — PD-01/02/07 مفتوحة؛ لا UAT بشري ولا production writes أو deploy أو Git remote.
+  - Key files: Documents/OWNER-DECISION-RBAC-2026-09-23.md، db/migrations/0038_owner_qc_report_access.sql، src/actions/uat-evidence.ts.
+
+
+- **2026-09-23 — RENDER-DEPLOY / فشل نشر `ba9d60b` بسبب غياب run-context**
+  - Changed: لا تغيير كود. صُحّح Build Command في خدمة Render `srv-dadqj67qj5pc7395rv2g` عبر الـAPI (كان يدويًا يتجاوز الـBlueprint) إلى `corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build`، ونُشر `9b9af0c` بنجاح (`dep-dapri7egekts73ev1dfg` → live). كذلك كانت `DATABASE_URL` ببيانات اعتماد قديمة (فشل auth `28000`) واستُبدلت بسلسلة الاتصال الخارجية الحالية لقاعدة `qc-database` (أعيد النشر `dep-daprlh6gekts73evbceg` → live).
+  - Evidence: النشر live؛ `/api/health/live` = 200 healthy والجذر يحوّل إلى `/login` على `qclevel.top`. `/api/health/ready` = 503 **متوقع**: قاعدة الإنتاج عند migration head `0018` بينما رأس المصدر `0038` وجدول `qc.reject_reports` غير موجود (بوابة readiness تجمع اتصال DB + توفر workflow — fail-closed كما صُمم). تطبيق الهجرات على الإنتاج يحتاج تفويضًا صريحًا.
+  - State: DONE للنشر. ملاحظات إعداد في Render لا تطابق `render.yaml` (يدوية، لم تُغيّر): runtime `rust`، healthCheckPath فارغ، renderSubdomainPolicy disabled (نطاق onrender محظور `blocked-render-subdomain` — استخدم `qclevel.top`)، startCommand يشغّل `pnpm access:grant-system-owner` عند الإقلاع، ومتغيرا بيئة شاذان باسم `Key` و`Value`.
+  - Security: مفتاح Render API وكلمة مرور DB ظهرا في المحادثة — يوصى بتدويرهما.
+
+- **2026-09-23 — QC-100-FINAL-013 / inspection source decision gap traced**
+  - Changed: documented approved fail-closed guardrails and added a draft-only QC/QMS/Document Control decision request; PD-01/02/07 remain OPEN. Existing create-from-receiving action is present; official result/source mapping blocks a valid positive approval path.
+  - Evidence: requirements/state-machine/code trace reviewed on Node 24.20.0; focused PG integration BLOCKED because Testcontainers has no working runtime. No approval values or criteria inferred.
+  - State: BLOCKED — positive PostgreSQL/E2E acceptance awaits approved owner decision and disposable PostgreSQL runtime.
+  - Key file: `audit/2026-09-23/qc-100-final-013/owner-decision-request.md`.
+
 ## Rollover from 01 — 2026-09-23 (AUTHZ-SERVER-MATRIX — compact older ledger)
 
 > نُقلت أقدم سجلات 2026-09-22 بعد التحقق من غيابها في الأرشيف؛ لم تتغير الحالة الحالية أو القرارات والقيود.

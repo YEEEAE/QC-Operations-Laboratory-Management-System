@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ENV_KEYS } from '../../../config/constants.js';
+import type { AdvisoryDataClass } from '../ports/ai-provider.js';
 
 const providerSchema = z.enum(['groq', 'gemini']);
 const optionalUrl = z
@@ -24,13 +25,51 @@ const configurationSchema = z.object({
   geminiApiKey: z.string().trim().min(1).optional(),
   geminiModel: z.string().trim().min(1).max(200).optional(),
   geminiBaseUrl: optionalUrl,
+  processingPolicyJson: z.string().min(2).max(10_000).optional(),
 });
+
+const processingPolicySchema = z.object({
+  status: z.literal('APPROVED'),
+  policyId: z.string().trim().min(1).max(120),
+  version: z.string().trim().min(1).max(40),
+  sourceReference: z.string().trim().min(1).max(500),
+  approvedBy: z.string().trim().min(1).max(120),
+  approvedAt: z
+    .string()
+    .refine(
+      (value) => !Number.isNaN(Date.parse(value)) && /(?:Z|[+-]\d\d:\d\d)$/.test(value),
+      'must be an ISO timestamp with timezone',
+    ),
+  providers: z.array(providerSchema).min(1).max(2),
+  processingLocation: z.string().trim().min(1).max(120),
+  retentionDays: z.number().int().min(0).max(3650),
+  deletionTerms: z.string().trim().min(1).max(500),
+  providerTraining: z.literal(false),
+  consentVersion: z.string().trim().min(1).max(40),
+  permittedDataClasses: z
+    .array(z.enum(['PUBLIC', 'SYNTHETIC', 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT']))
+    .min(1),
+  prohibitedDataClasses: z
+    .array(
+      z.enum([
+        'PERSONAL_DATA',
+        'CREDENTIALS',
+        'CONFIDENTIAL_QC',
+        'CONTROLLED_RECORDS',
+        'UNAUTHORIZED_CONTENT',
+      ]),
+    )
+    .refine((values) => new Set(values).size === 5),
+});
+
+export type AiProcessingPolicy = z.infer<typeof processingPolicySchema>;
 
 export interface AiProviderConfig {
   kind: 'groq' | 'gemini';
   apiKey: string;
   model: string;
   baseUrl: string;
+  permittedDataClasses: readonly AdvisoryDataClass[];
 }
 
 export interface AiConfiguration {
@@ -39,6 +78,7 @@ export interface AiConfiguration {
   fallbackProvider: 'groq' | 'gemini';
   providers: Partial<Record<'groq' | 'gemini', AiProviderConfig>>;
   invalidFields: readonly string[];
+  processingPolicy?: AiProcessingPolicy;
 }
 
 const value = (input: Record<string, string | undefined>, canonical: string, legacy: string) =>
@@ -58,6 +98,7 @@ function parseCandidate(input: Record<string, string | undefined>) {
     geminiApiKey: value(input, ENV_KEYS.geminiApiKey, 'API_gemini_Key'),
     geminiModel: value(input, ENV_KEYS.geminiModel, 'gemini_model'),
     geminiBaseUrl: value(input, ENV_KEYS.geminiBaseUrl, 'URL_gemini'),
+    processingPolicyJson: input[ENV_KEYS.aiProcessingPolicyJson],
   });
   return parsed;
 }
@@ -76,29 +117,52 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
   }
 
   const data = parsed.data;
+  let processingPolicy: AiProcessingPolicy | undefined;
+  if (data.processingPolicyJson) {
+    try {
+      const policy = processingPolicySchema.safeParse(JSON.parse(data.processingPolicyJson));
+      if (policy.success) processingPolicy = policy.data;
+    } catch {
+      // A missing, malformed, or incomplete policy source keeps every provider disabled.
+    }
+  }
   const providers: Partial<Record<'groq' | 'gemini', AiProviderConfig>> = {};
-  if (data.externalProcessingApproved === 'true' && data.groqApiKey && data.groqModel) {
+  if (
+    data.externalProcessingApproved === 'true' &&
+    processingPolicy?.providers.includes('groq') &&
+    data.groqApiKey &&
+    data.groqModel
+  ) {
     providers.groq = {
       kind: 'groq',
       apiKey: data.groqApiKey,
       model: data.groqModel,
       baseUrl: data.groqBaseUrl || defaultGroqBaseUrl,
+      permittedDataClasses: processingPolicy!.permittedDataClasses,
     };
   }
-  if (data.externalProcessingApproved === 'true' && data.geminiApiKey && data.geminiModel) {
+  if (
+    data.externalProcessingApproved === 'true' &&
+    processingPolicy?.providers.includes('gemini') &&
+    data.geminiApiKey &&
+    data.geminiModel
+  ) {
     providers.gemini = {
       kind: 'gemini',
       apiKey: data.geminiApiKey,
       model: data.geminiModel,
       baseUrl: data.geminiBaseUrl || defaultGeminiBaseUrl,
+      permittedDataClasses: processingPolicy!.permittedDataClasses,
     };
   }
   return {
-    externalProcessingApproved: data.externalProcessingApproved === 'true',
+    externalProcessingApproved:
+      data.externalProcessingApproved === 'true' && Boolean(processingPolicy),
     primaryProvider: data.primaryProvider,
     fallbackProvider: data.fallbackProvider,
     providers,
     invalidFields: [],
+    ...(processingPolicy ? { processingPolicy } : {}),
   };
 }
 

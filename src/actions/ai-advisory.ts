@@ -48,10 +48,15 @@ const requestAdvisory = defineAction({
         z.object({
           label: z.string().trim().min(1).max(120),
           content: z.string().trim().min(1).max(4000),
+          sourceId: z.string().trim().max(200).optional(),
+          sourceType: z.string().trim().max(120).optional(),
+          citation: z.string().trim().max(500).optional(),
         }),
       )
       .max(10)
       .optional(),
+    consentToExternalProcessing: z.boolean().optional(),
+    dataClass: z.enum(['PUBLIC', 'SYNTHETIC', 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT']).optional(),
   }),
   handler: (input, context) =>
     run(async () => {
@@ -62,6 +67,8 @@ const requestAdvisory = defineAction({
         question: input.question,
         context: input.context ?? [],
         requestId: requestId(context),
+        consentToExternalProcessing: input.consentToExternalProcessing === true,
+        dataClass: input.dataClass,
       });
       return {
         status: result.status,

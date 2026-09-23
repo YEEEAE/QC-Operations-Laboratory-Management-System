@@ -2,6 +2,7 @@ import type {
   AiAdvisoryRequest,
   AiProvider,
   AiProviderAvailability,
+  AdvisoryDataClass,
 } from '../ports/ai-provider.js';
 import { DisabledAiProvider } from './disabled-ai-provider.js';
 import { isRetriableAiProviderError } from './provider-error.js';
@@ -13,6 +14,23 @@ export class FailoverAiProvider implements AiProvider {
     private readonly primary: AiProvider,
     private readonly fallback: AiProvider,
   ) {}
+
+  requiresExternalConsent(): boolean {
+    return (
+      this.primary.requiresExternalConsent?.() === true ||
+      this.fallback.requiresExternalConsent?.() === true
+    );
+  }
+
+  permitsDataClass(dataClass: AdvisoryDataClass): boolean {
+    const externalProviders = [this.primary, this.fallback].filter(
+      (provider) => provider.requiresExternalConsent?.() === true,
+    );
+    return (
+      externalProviders.length === 0 ||
+      externalProviders.some((provider) => provider.permitsDataClass?.(dataClass))
+    );
+  }
 
   async availability(): Promise<AiProviderAvailability> {
     const primary = await this.safeAvailability(this.primary);

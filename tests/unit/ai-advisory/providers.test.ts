@@ -15,12 +15,14 @@ const config = {
   apiKey: 'groq-secret-test',
   model: 'llama-test',
   baseUrl: 'https://groq.test/v1/chat/completions',
+  permittedDataClasses: ['PUBLIC', 'SYNTHETIC', 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT'] as const,
 };
 const geminiConfig = {
   kind: 'gemini' as const,
   apiKey: 'gemini-secret-test',
   model: 'gemini-test',
   baseUrl: 'https://gemini.test/v1beta',
+  permittedDataClasses: ['PUBLIC', 'SYNTHETIC', 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT'] as const,
 };
 const request = { mode: 'SUMMARIZE' as const, question: 'Summarize this.', context: [] };
 const actor: ActorContext = {
@@ -39,6 +41,29 @@ afterEach(() => {
 });
 
 describe('AI provider configuration', () => {
+  const approvedPolicy = JSON.stringify({
+    status: 'APPROVED',
+    policyId: 'AI-PRIVACY-1',
+    version: '1.0',
+    sourceReference: 'approved policy artifact',
+    approvedBy: 'privacy-owner',
+    approvedAt: '2026-09-24T00:00:00Z',
+    providers: ['groq', 'gemini'],
+    processingLocation: 'approved-region',
+    retentionDays: 7,
+    deletionTerms: 'deleted per approved provider terms',
+    providerTraining: false,
+    consentVersion: '1.0',
+    permittedDataClasses: ['PUBLIC', 'SYNTHETIC', 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT'],
+    prohibitedDataClasses: [
+      'PERSONAL_DATA',
+      'CREDENTIALS',
+      'CONFIDENTIAL_QC',
+      'CONTROLLED_RECORDS',
+      'UNAUTHORIZED_CONTENT',
+    ],
+  });
+
   it('uses canonical names and defaults without exposing secret values', () => {
     const result = parseAiConfiguration({
       AI_EXTERNAL_PROCESSING_APPROVED: 'true',
@@ -48,6 +73,7 @@ describe('AI provider configuration', () => {
       GROQ_MODEL: 'llama-3',
       GEMINI_API_KEY: 'canonical-gemini-secret',
       GEMINI_MODEL: 'gemini-2',
+      AI_PROCESSING_POLICY_JSON: approvedPolicy,
     });
     expect(result.primaryProvider).toBe('groq');
     expect(result.providers.groq?.model).toBe('llama-3');
@@ -63,6 +89,7 @@ describe('AI provider configuration', () => {
       URL_groq: 'https://legacy.test/chat/completions',
       API_gemini_Key: 'legacy-gemini-secret',
       gemini_model: 'legacy-gemini',
+      AI_PROCESSING_POLICY_JSON: approvedPolicy,
     });
     expect(legacy.providers.groq?.apiKey).toBe('legacy-groq-secret');
     expect(legacy.providers.gemini?.model).toBe('legacy-gemini');
@@ -71,7 +98,7 @@ describe('AI provider configuration', () => {
     );
   });
 
-  it('keeps providers disabled when external processing approval is absent or invalid', () => {
+  it('requires a complete approved policy source as well as the processing approval flag', () => {
     const credentials = {
       GROQ_API_KEY: 'groq-test-key',
       GROQ_MODEL: 'test-model',
@@ -84,7 +111,33 @@ describe('AI provider configuration', () => {
     ).toEqual({});
     expect(
       parseAiConfiguration({ ...credentials, AI_EXTERNAL_PROCESSING_APPROVED: 'true' }).providers,
+    ).toEqual({});
+    expect(
+      parseAiConfiguration({ ...credentials, AI_EXTERNAL_PROCESSING_APPROVED: 'true' })
+        .externalProcessingApproved,
+    ).toBe(false);
+    expect(
+      parseAiConfiguration({
+        ...credentials,
+        AI_EXTERNAL_PROCESSING_APPROVED: 'true',
+        AI_PROCESSING_POLICY_JSON: '{bad json',
+      }).providers,
+    ).toEqual({});
+    expect(
+      parseAiConfiguration({
+        ...credentials,
+        AI_EXTERNAL_PROCESSING_APPROVED: 'true',
+        AI_PROCESSING_POLICY_JSON: approvedPolicy,
+      }).providers,
     ).toHaveProperty('groq');
+    const malformedPolicy = JSON.stringify({ status: 'APPROVED', providers: ['groq'] });
+    expect(
+      parseAiConfiguration({
+        ...credentials,
+        AI_EXTERNAL_PROCESSING_APPROVED: 'true',
+        AI_PROCESSING_POLICY_JSON: malformedPolicy,
+      }).providers,
+    ).toEqual({});
   });
 });
 
@@ -100,8 +153,37 @@ describe('Groq and Gemini HTTP contracts', () => {
     });
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       method: 'POST',
+      redirect: 'error',
       headers: expect.objectContaining({ authorization: 'Bearer groq-secret-test' }),
     });
+  });
+
+  it('passes user-supplied source identity and citation as source metadata', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: 'Source-grounded note.' } }] }),
+        {
+          status: 200,
+        },
+      ),
+    );
+    await new GroqAiProvider(config).complete({
+      ...request,
+      context: [
+        {
+          label: 'Approved WI',
+          content: 'Use method A.',
+          sourceId: 'WI-001:v3',
+          sourceType: 'CONTROLLED_DOCUMENT',
+          citation: 'WI-001 §4',
+        },
+      ],
+    });
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      messages: { content: string }[];
+    };
+    expect(body.messages[1]?.content).toContain('Source identity: WI-001:v3');
+    expect(body.messages[1]?.content).toContain('Citation: WI-001 §4');
   });
 
   it.each([

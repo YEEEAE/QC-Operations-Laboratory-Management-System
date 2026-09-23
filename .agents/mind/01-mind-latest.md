@@ -1,5 +1,16 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — AI-POLICY-BOUNDARY / processing consent and advisory evals**
+  - Changed: external providers now require a complete approved policy artifact, policy-permitted content class, and per-request consent; outputs expose provenance and local correction guidance. Eval dataset v4 covers 33 synthetic cases.
+  - Evidence: AI-focused tests 90/90 PASS; eval category disposition errors 0%; typecheck 967/0 errors; build 1/1 PASS. No live provider calls. Source policy is absent, so external processing remains disabled.
+  - State: PARTIAL — owner must provide actual provider/location/retention/deletion policy before any external processing can be enabled.
+  - Key files: `Documents/AI-PROVIDERS.md`, `src/modules/ai-advisory/`, `audit/100-percent/ai-evals/results-2026-09-24.json`.
+
+- **2026-09-24 — SECURITY-BOUNDARIES-SUPPLY-CHAIN / threat model and candidate gate**
+  - Changed: expanded identity/files/AI/reports/approvals threat model; CI now produces lockfile-bound CycloneDX + license inventory and provenance/SBOM attestations; AI HTTP rejects redirects; poisoned SQL import test added.
+  - Evidence: PG18 focused integration 17/17 PASS; AI provider HTTP 25/25 PASS; actual-server security E2E 8 PASS/4 FAIL (authenticated file cases blocked at login controls); SBOM 822 locked packages, 4 installed license declarations UNKNOWN; dependency advisory result NOT VERIFIED (registry unavailable); secret scan 10 high-entropy assignment candidates in ignored local env, values not shown.
+  - State: PARTIAL — see `Documents/THREAT-MODEL-030.md`; Critical/High triage owner `yazeed` (24h/7d); four unknown license records due 2026-10-01.
+
 - **2026-09-24 — LAB-REPORT-ENTRY / قالبا تقريري ضغط المختبر**
   - Changed: قالبا إدخال مسودة للاختبارين المطلوبين، 12 عينة، وحفظ مملوك للمستخدم بإصدار وتدقيق؛ يظل اعتماد الاختبار الرسمي تابعًا للقالب والمصدر المعتمدين.
   - Evidence: architecture PASS؛ Astro build PASS على Node 24.20.0؛ typecheck يظهر خطأَي declarations قائمين في release `.mjs` فقط. حفظ PostgreSQL الفعلي NOT VERIFIED لأن migration 0039 لم تُطبّق على قاعدة اختبار.
@@ -88,66 +99,7 @@
   - Evidence: `release:evidence:check` FAIL على Node `24.20.0`؛ run context والتقارير على SHAs/run IDs أخرى، unit فيها 9 إخفاقات تاريخية، E2E فيه إخفاق، وrelease identity مفقود. GitHub status checks فارغة؛ reconciliation guard PASS (80 domains). لا اختبارات أُجريت.
   - State: PARTIAL — `audit/2026-09-23/release-gate-reconciliation-5d591af.md`; blocker owners/actions therein. No deploy/promotion/RELEASED.
 
-- **2026-09-23 — P14 / AI advisory governance and offline evaluation**
-  - Changed: expanded the synthetic evaluation to dataset 3.0.0 with per-category error reporting; mismatched provider citations now refuse; UI shows source limits, abstention reason, and human handoff; documented drift monitoring and owner-gated activation.
-  - Evidence: focused AI eval/security 41/41 PASS and full AI unit/integration suites 80/80 on Node 24.20.0; per-category error 0%, source SHA and evaluated diff fingerprint recorded in `audit/100-percent/ai-evals/results-2026-09-23.json`. No provider calls or business writes.
-  - State: DONE locally; external processing stays disabled and unapproved.
-  - Key files: `src/modules/ai-advisory/`, `tests/integration/ai-advisory/`, `Documents/AI-PROVIDERS.md`.
-
-- **2026-09-23 — P13 / master-data approval gates and representative performance harness**
-  - Changed: catalog separates governed schemas from value-set approval; all current value sets stay pending, so fixture and unconfirmed data are refused before database access. Reconciliation mismatch now rolls back; import output includes lineage and dataset hash. Synthetic load set adds linked file metadata, with local app memory/DB-pool sampling and same-scenario comparison support.
-  - Evidence: focused unit 11/11 PASS, ESLint, Node syntax, diff check, and build PASS on Node 24.20.0. Typecheck FAILS on two pre-existing `.mjs` declaration gaps in release tests. Before/after P95 and server memory/pool measurements NOT RUN: no disposable app/database baseline was available; SLO/capacity decisions remain open.
-  - State: PARTIAL — no production seeding or writes.
-  - Key files: `scripts/data/master-data-catalog.ts`, `scripts/performance/seed-synthetic-dataset.ts`, `tests/performance/load-profiles.mjs`.
-
-- **2026-09-23 — DENSE-QUEUES / توحيد سجل المهام والمختبر**
-  - Changed: `/tasks` و`/laboratory/tests` يستخدمان عرض الجدول المشترك؛ البحث والترشيح والترتيب والصفحات في استعلامات الخادم، وعدّ النتائج يطابق مجموعة المرشحات. المختبر يرفض غياب/عدم كفاية `PERM-LAB-VIEW` بدل إظهار صفر؛ لم تُضف حقائق أو قواعد أو روابط غير موجودة في read models.
-  - Evidence: Node 24.20.0؛ build وarchitecture وrelease:verify وPrettier للـTypeScript وdiff-check PASS. Typecheck لديه خطآن قائمان في declarations لسكريبتين `.mjs`؛ تكامل PostgreSQL BLOCKED لعدم توفر container runtime. replay اصطناعي 5,000 صف/طابور، 101 تجربة: مهمة due-sort من 200 صفحة إلى صفحة واحدة؛ عينة المختبر من غير قابلة للعثور ضمن أول 25 إلى قابلة للعثور. أزمنة المعالجة 0.103→0.235ms و0.001→0.077ms، وليست أزمنة بشرية أو HTTP؛ تحسن UX البشري NOT VERIFIED.
-  - State: PARTIAL — مراجعة المتصفح/UAT ومقاييس إنجاز بشرية NOT VERIFIED؛ لا DB/provider/production writes.
-  - Key files: `src/pages/tasks/index.astro`, `src/pages/laboratory/tests/index.astro`, `src/modules/laboratory/infrastructure/postgres-repository.ts`.
-
-- **2026-09-23 — OBS-HEALTH-SIGNALS / ربط فشل الاعتماديات وعرض التدهور الآمن**
-  - Changed: فشل pool غير المتزامن يصدر log/metric مرتبطًا ومصنفًا بلا تفاصيل driver؛ الصحة تعرض outbox pending كتدهور مع gauge، وتفصل liveness/readiness/QC-release والـbackup catalog/restore. التنبيه والاتجاه والتصدير والجهة المستقبلة `NOT CONFIGURED` وفق القرارات المؤجلة؛ لا عتبات مخترعة.
-  - Evidence: Node 24.20.0؛ 10 اختبارات مركزة، architecture، typecheck، lint، build PASS. لا DB/provider/production writes.
-  - State: PARTIAL — telemetry exporter ما زال no-op افتراضيًا؛ وصول التنبيهات والاتجاه وUAT NOT VERIFIED.
-  - Key files: `src/shared/database/pool.ts`, `src/shared/observability/dependency-failure.ts`, `src/pages/system/health.astro`, `workspace-map/ENGINEERING.md`.
-
-- **2026-09-23 — ARCH-DELIVERY-BOUNDARY / نقل قراءات العرض إلى application**
-  - Changed: قراءات NCR/CAPA وربطهما، وإعداد توفر AI، ومفردات receiving/UAT أصبحت تمر عبر واجهات application؛ لا تغييرات صلاحيات أو نتائج قراءة مقصودة.
-  - Evidence: Node 24.20.0؛ `pnpm test:architecture` PASS؛ typecheck 948 ملفًا / 0 أخطاء / 88 hints؛ suites المركزة 20/20 PASS؛ التحقق مربوط بالـHEAD `0ba087ca653c1f7d6855454f469716b52dc32307`.
-  - State: PARTIAL — صفحات Astro المصادق عليها ونتائجها/صلاحياتها runtime ما زالت NOT VERIFIED؛ لا commit/push.
-  - Key files: application dependencies/use case في quality NCR/CAPA.
-
-- **2026-09-23 — AUDIT-PAYLOAD-BOUNDARY / تحقق قراءات audit المباشرة**
-  - Changed: مسار idempotency في change requests يتحقق من payload المحفوظ قبل قراءة `expectedVersion`؛ الإسقاطات تواصل التحقق وتُبقي request ID دون تصدير payload.
-  - Evidence: Node 24.20.0؛ اختبارات audit/read-model/change requests 26/26 PASS؛ typecheck 942 ملفًا و0 أخطاء؛ Prettier و`git diff --check` PASS.
-  - State: DONE محليًا؛ لا تغيير صلاحيات أو بيانات أو سياسة احتفاظ.
-  - Key files: `src/modules/change-requests/infrastructure/postgres-repository.ts`, `tests/integration/shared/audit.test.ts`.
-
-- **2026-09-23 — FILE-EVIDENCE-01 / fail-closed upload boundaries**
-  - Changed: `FileService` now requires explicit MIME/size/scanner policy; document-version actions no longer accept browser-supplied file IDs; evidence downloads resolve canonical links and authorize before object reads. Added draft decisions for unresolved file policy.
-  - Evidence: Node 24.20.0 targeted file/telemetry tests 29/29 PASS; typecheck 942 files, 0 errors; build and release:verify PASS. Upload/download application routes and parent authorization wiring, approved scanner/policy, idempotency, and orphan reconciliation remain NOT VERIFIED/BLOCKED.
-  - State: PARTIAL — allowlist/size/scanning/retention and per-domain policy decisions remain open; no production or provider writes.
-  - Key files: `src/shared/files/file-service.ts`, `audit/2026-09-23/file-upload-policy-decision-request.md`.
-
-- **2026-09-23 — OD-2026-09-23-RBAC-01 / قرار أدوار QC والاعتماد**
-  - Changed: وثّق قرار Yazeed للأدوار ومصفوفة إنشاء 12 surface؛ QC متساوون بلا اعتماد/توقيع، Supervisor مرحلة أولى وQCM نهائي. أضيف API أدلة UAT الموثّق بالدورة/الفاعل/الدور، وترحيل 0038 لمنح QC وسحب اعتماد المرحلة الأولى من MANAGER.
-  - Evidence: Node 24.20.0؛ authorization/UAT unit 47/47 PASS، typecheck 942 ملفًا بلا أخطاء، requirements:check PASS. PostgreSQL 18 integration/UAT وE2E BLOCKED لغياب container runtime؛ لم تُنشأ حسابات على أي قاعدة.
-  - State: PARTIAL — PD-01/02/07 مفتوحة؛ لا UAT بشري ولا production writes أو deploy أو Git remote.
-  - Key files: Documents/OWNER-DECISION-RBAC-2026-09-23.md، db/migrations/0038_owner_qc_report_access.sql، src/actions/uat-evidence.ts.
-
-
-- **2026-09-23 — RENDER-DEPLOY / فشل نشر `ba9d60b` بسبب غياب run-context**
-  - Changed: لا تغيير كود. صُحّح Build Command في خدمة Render `srv-dadqj67qj5pc7395rv2g` عبر الـAPI (كان يدويًا يتجاوز الـBlueprint) إلى `corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build`، ونُشر `9b9af0c` بنجاح (`dep-dapri7egekts73ev1dfg` → live). كذلك كانت `DATABASE_URL` ببيانات اعتماد قديمة (فشل auth `28000`) واستُبدلت بسلسلة الاتصال الخارجية الحالية لقاعدة `qc-database` (أعيد النشر `dep-daprlh6gekts73evbceg` → live).
-  - Evidence: النشر live؛ `/api/health/live` = 200 healthy والجذر يحوّل إلى `/login` على `qclevel.top`. `/api/health/ready` = 503 **متوقع**: قاعدة الإنتاج عند migration head `0018` بينما رأس المصدر `0038` وجدول `qc.reject_reports` غير موجود (بوابة readiness تجمع اتصال DB + توفر workflow — fail-closed كما صُمم). تطبيق الهجرات على الإنتاج يحتاج تفويضًا صريحًا.
-  - State: DONE للنشر. ملاحظات إعداد في Render لا تطابق `render.yaml` (يدوية، لم تُغيّر): runtime `rust`، healthCheckPath فارغ، renderSubdomainPolicy disabled (نطاق onrender محظور `blocked-render-subdomain` — استخدم `qclevel.top`)، startCommand يشغّل `pnpm access:grant-system-owner` عند الإقلاع، ومتغيرا بيئة شاذان باسم `Key` و`Value`.
-  - Security: مفتاح Render API وكلمة مرور DB ظهرا في المحادثة — يوصى بتدويرهما.
-
-- **2026-09-23 — QC-100-FINAL-013 / inspection source decision gap traced**
-  - Changed: documented approved fail-closed guardrails and added a draft-only QC/QMS/Document Control decision request; PD-01/02/07 remain OPEN. Existing create-from-receiving action is present; official result/source mapping blocks a valid positive approval path.
-  - Evidence: requirements/state-machine/code trace reviewed on Node 24.20.0; focused PG integration BLOCKED because Testcontainers has no working runtime. No approval values or criteria inferred.
-  - State: BLOCKED — positive PostgreSQL/E2E acceptance awaits approved owner decision and disposable PostgreSQL runtime.
-  - Key file: `audit/2026-09-23/qc-100-final-013/owner-decision-request.md`.
+- **2026-09-24 — Mind rollover (AI-POLICY-BOUNDARY):** نُقلت أقدم سجلات Historical Ledger إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -527,6 +479,7 @@
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
 - **QC-100-FINAL-027 audit (2026-09-21):** 027-B أثبت unit 785/785 وPG18.6 integration 470/470 وserver contracts على قاعدة محلية disposable صريحة؛ التشغيل عبر Docker/Testcontainers ما زال NOT RUN، والثقة العامة بقيمة `QC_TEST_DATABASE_URL` عبر 21 reset site ما زالت غير محسومة. authenticated E2E واسع PARTIAL/FAIL بسبب fixture/session state وأخطاء workflows؛ focused login 2/2 PASS. `pnpm test:architecture` ما زال FAIL بانتهاكات imports السابقة في NCR/CAPA. التفاصيل في تقريري 027-A و027-B.
 - **QC-100-FINAL-030 current dependencies:** `pnpm audit --audit-level high` has a CI gate but no advisory result (registry DNS `ENOTFOUND`); local lockfile SBOM is available, but remote signed provenance and exact-SHA CI are not verified. Repeated Astro server builds produced different manifest filenames; reproducibility is FAIL pending diagnosis — **صُحّح في 036-B**: تثبيت `ASTRO_KEY` غير سرّي + normalizing لاسم chunk المانيفست، فأصبحت 4 عمليات build متتالية متطابقة الشجرة. 002/027 must provide exact-candidate PostgreSQL 18 evidence, then 012 reconciles. `REQ-FILE-008` scan/MIME/data-path policy and retention/orphan lifecycle authority remain POLICY-DEPENDENT through 013/026. Secret inventory/rotation preparation is recorded at 030-B; actual provider state and any rotation remain with the authorized credential owner.
+- **Security follow-up (2026-09-24):** local PostgreSQL 18 threat-case suite 17/17 PASS, but authenticated file cross-scope/tampered-object server requests are NOT VERIFIED because Playwright could not interact with login controls; expired bearer file links do not exist and expired session server rejection remains open. `Documents/THREAT-MODEL-030.md` records 4 package licenses as UNKNOWN (owner `yazeed`, due 2026-10-01), external audit result NOT VERIFIED, provider host allowlist OPEN, and security E2E 8 PASS/4 FAIL. Do not treat this as security closure.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
 - provider backup/PITR/WAL/object-store DR and approved RPO/RTO validation; QC-100-FINAL-034-B adds current-0034 local populated DB+file restore and synthetic read-pressure evidence, while provider DR, approved budgets, application backup-catalog integration, and representative workload limits remain open.
@@ -534,6 +487,8 @@
 - تنظيف Lottie container metadata/unused asset فقط إذا اعتُمد asset-pipeline لذلك.
 
 ## 16) الحالة الحالية — AI Advisory Safety / Evaluation
-- AI remains advisory-only; no result writes controlled/business decisions. Detected secrets/PII are refused before provider access. Output authority fields/text and citations that do not match the supplied source identity/label/citation are refused. Missing controlled source and uncertainty prompts fail closed; normal human review remains authoritative.
-- Deterministic non-confidential dataset is `qc-ai-governance-v2` / `3.0.0` (27 cases; authority, missing source, injection, secret/PII, wrong citation, uncertainty, and human handoff included). On Node `24.20.0`, focused eval/security suites: 41/41 PASS; each category disposition error rate 0%. Exact report is `audit/100-percent/ai-evals/results-2026-09-23.json`, bound to source HEAD plus evaluated-file diff fingerprint.
-- `AI_EXTERNAL_PROCESSING_APPROVED=false` remains the default and current state. The technical flag is not evidence of authorization. Groq/Gemini configuration, live processing, Render provider configuration, external data-processing approval, and human UAT remain `NOT VERIFIED/BLOCKED`. Provider activation requires recorded owner decision, scoped data/retention terms, exact-SHA eval, and human acceptance as specified in `Documents/AI-PROVIDERS.md`.
+- AI remains advisory-only; no result writes controlled/business decisions. Secret/PII checks, English/Arabic authority and prompt-injection refusals, current-request source citations, and provider outages fail closed within the advisory path; normal human QC review remains authoritative.
+- External Groq/Gemini sending now requires `AI_EXTERNAL_PROCESSING_APPROVED=true`, complete server-only `AI_PROCESSING_POLICY_JSON` (provider, processing location, retention/deletion terms, data classes, approval/source metadata), policy-permitted user-classification, and explicit consent for each request. The repository has no approved policy artifact; providers are currently disabled. Approved data classes are PUBLIC, SYNTHETIC, or AUTHORIZED_NONCONFIDENTIAL_EXCERPT; personal data, credentials, confidential/controlled QC records, and unauthorized content are prohibited. Pattern checks do not fully classify arbitrary content.
+- Responses expose supplied source identity/citation with an authenticity limit, provider/model when available, prompt version, server generation time, advisory boundary, and uncalibrated confidence. User correction remains a local draft into the existing human review path; no save, QC decision, release, PASS/FAIL/HOLD, or e-sign action is available.
+- Deterministic synthetic eval dataset is `qc-ai-governance-v2` / `4.0.0` (33 cases; hallucination, sensitive-data rejection, prompt injection, context switching, consent/policy gates, and Arabic/English included). Node `24.20.0`, AI-focused suites `90/90 PASS`, every category disposition error rate `0%`; prompt `qc-ai-prompt-v2`, criteria `1.0.0`, evaluated model `deterministic-fake-provider@1` (no live model). Result: `audit/100-percent/ai-evals/results-2026-09-24.json`.
+- `AI_EXTERNAL_PROCESSING_APPROVED=false` remains the default. Provider location/retention/deletion terms and live-model behavior remain `NOT VERIFIED` until supplied/accepted through the authorized processing decision and exact-SHA evaluation; human UAT remains `NOT RUN`.

@@ -20,6 +20,8 @@ export interface AdvisoryContextSegment {
   citation?: string;
 }
 
+export type AdvisoryDataClass = 'PUBLIC' | 'SYNTHETIC' | 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT';
+
 export interface AiAdvisoryRequest {
   mode: AdvisoryMode;
   question: string;
@@ -40,6 +42,9 @@ export interface AiProviderMetadata {
 }
 
 export interface AiProvider {
+  /** True for any provider that can transmit request content outside this process. */
+  requiresExternalConsent?(): boolean;
+  permitsDataClass?(dataClass: AdvisoryDataClass): boolean;
   metadata?(): Omit<AiProviderMetadata, 'fallbackUsed'>;
   availability(): Promise<AiProviderAvailability>;
   /**

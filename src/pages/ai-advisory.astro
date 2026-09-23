@@ -11,6 +11,7 @@ const canSuggest = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUG
 const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT' && grant.active !== false);
 const aiAvailability = aiAdvisoryPageAvailability();
 const configuredProviders = aiAvailability.configuredProviders;
+const processingPolicy = aiAvailability.processingPolicy;
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
@@ -20,12 +21,15 @@ const configuredProviders = aiAvailability.configuredProviders;
       <section class="notice" role="note" aria-label="Human review path"><strong>Human review path</strong><span>AI output is not entered into a QC record. Verify every statement against the cited controlled source, then take uncertainty, missing sources, or suspected incorrect citations to your Supervisor or QCM (Manager) through the normal authorized review workflow.</span></section>
       <section class="notice privacy-notice" role="note" aria-label="AI data use">
         <strong>About your request</strong>
-        {configuredProviders ? (
-          <span>Your question and any excerpt you enter are sent to the configured external AI provider ({configuredProviders}) to generate this advisory. Do not include personal data, credentials, or information you are not authorized to share. The provider may process the request under its own service terms. This page does not offer a deletion control for provider-side copies.</span>
+        {configuredProviders && processingPolicy ? (
+          <>
+            <span>Provider: {configuredProviders}. Processing location: {processingPolicy.processingLocation}. Retention limit in the approved policy: {processingPolicy.retentionDays} days. Deletion terms: {processingPolicy.deletionTerms}. Policy: {processingPolicy.policyId} v{processingPolicy.version} ({processingPolicy.sourceReference}). Provider training is prohibited by the configured policy.</span>
+            <span>Permitted content classes: {processingPolicy.permittedDataClasses.join(', ')}. Never submit personal data, credentials, confidential QC information, actual controlled QC records, or content you are not authorized to share. The system checks common sensitive patterns but cannot classify every excerpt.</span>
+          </>
         ) : aiAvailability.externalProcessingApproved ? (
-          <span>External processing is marked approved, but no provider is configured. Your question and excerpt will not be sent. Contact your system administrator if this should be available.</span>
+          <span>External processing is marked approved, but a complete approved processing-policy source or policy-authorized provider is missing. Your question and excerpt will not be sent. Contact the policy owner.</span>
         ) : (
-          <span>External AI processing is disabled until an approved processing decision is configured. Your question and excerpt will not be sent to an AI provider while this notice appears.</span>
+          <span>External AI processing is disabled because no complete approved processing-policy source is configured. Provider location, retention, permitted data classes, and consent terms must come from that source. Your question and excerpt will not be sent while this notice appears.</span>
         )}
       </section>
       <section class="panel">
@@ -40,10 +44,26 @@ const configuredProviders = aiAvailability.configuredProviders;
           </label>
           <label>Question for analysis<textarea name="question" required maxlength="4000" placeholder="What should the advisory review?"></textarea></label>
           <fieldset class="context"><legend>Optional context (minimized)</legend>
-            <p class="muted">Only text you enter here is submitted. Add the source identity and citation in the label (for example, WI-001 v3, §4). This form cannot verify that source or your right to share it. Do not paste personal data, credentials, or information you are not authorized to share. Missing or unverified source context can make the advisory abstain.</p>
-            <label>Source label<input name="contextLabel" maxlength="120" placeholder="e.g. Receiving item summary" /></label>
+            <p class="muted">Only text you enter here is submitted after consent. Do not enter actual controlled QC records. Source identity/citation is user supplied and not authenticated here. Missing or unverified sources make the advisory abstain.</p>
+            <label>Source label<input name="contextLabel" maxlength="120" placeholder="e.g. synthetic process summary" /></label>
+            <label>Source identity<input name="sourceId" maxlength="200" placeholder="e.g. WI-001 v3" /></label>
+            <label>Source type<input name="sourceType" maxlength="120" placeholder="e.g. CONTROLLED_DOCUMENT" /></label>
+            <label>Citation<input name="citation" maxlength="500" placeholder="e.g. WI-001 §4" /></label>
             <label>Excerpt<textarea name="contextContent" maxlength="4000"></textarea></label>
           </fieldset>
+          {configuredProviders && processingPolicy && (
+            <>
+              <label>Content class in approved policy
+                <select name="dataClass" required>
+                  <option value="">Select content class</option>
+                  {processingPolicy.permittedDataClasses.includes('PUBLIC') && <option value="PUBLIC">Public</option>}
+                  {processingPolicy.permittedDataClasses.includes('SYNTHETIC') && <option value="SYNTHETIC">Synthetic</option>}
+                  {processingPolicy.permittedDataClasses.includes('AUTHORIZED_NONCONFIDENTIAL_EXCERPT') && <option value="AUTHORIZED_NONCONFIDENTIAL_EXCERPT">Authorized non-confidential excerpt</option>}
+                </select>
+              </label>
+              <label class="consent"><input type="checkbox" name="consentToExternalProcessing" value="true" required /> I consent (version {processingPolicy.consentVersion}) to send this question and any excerpt to {configuredProviders} under policy {processingPolicy.policyId} v{processingPolicy.version}, processed in {processingPolicy.processingLocation} and retained for up to {processingPolicy.retentionDays} days.</label>
+            </>
+          )}
           <div class="actions"><button type="submit">Request advisory</button></div>
           <p role="status" data-result aria-live="polite"></p>
         </form>
@@ -56,6 +76,9 @@ const configuredProviders = aiAvailability.configuredProviders;
         <p class="muted" data-source-context hidden></p>
         <p class="muted" data-source-references hidden></p>
         <p class="muted" data-review-guidance hidden></p>
+        <p class="muted" data-provenance hidden></p>
+        <label class="correction-label">Correction or concern (kept in this page only)<textarea data-correction maxlength="4000" placeholder="Describe what is incorrect or missing. Do not include personal data or credentials."></textarea></label>
+        <button type="button" data-prepare-correction disabled>Prepare correction for human review</button>
         <div class="actions">
           <button type="button" data-copy disabled>Copy</button>
           <button type="button" data-use-draft disabled>Use as Draft</button>
@@ -85,6 +108,10 @@ const configuredProviders = aiAvailability.configuredProviders;
   const sourceReferencesEl = document.querySelector<HTMLElement>('[data-source-references]');
   const sourceContextEl = document.querySelector<HTMLElement>('[data-source-context]');
   const reviewGuidanceEl = document.querySelector<HTMLElement>('[data-review-guidance]');
+  const provenanceEl = document.querySelector<HTMLElement>('[data-provenance]');
+  const correctionEl = document.querySelector<HTMLTextAreaElement>('[data-correction]');
+  const correctionButton = document.querySelector<HTMLButtonElement>('[data-prepare-correction]');
+  const consentCheckbox = form?.querySelector<HTMLInputElement>('input[name="consentToExternalProcessing"]');
   let advisoryText = '';
   const resetButtons = () => {
     if (copyButton) copyButton.disabled = true;
@@ -98,13 +125,24 @@ const configuredProviders = aiAvailability.configuredProviders;
     const data = new FormData(form);
     const contextLabel = String(data.get('contextLabel') || '').trim();
     const contextContent = String(data.get('contextContent') || '').trim();
+    const selectedDataClass = String(data.get('dataClass') || '');
     const response = await actions.aiAdvisory.requestAdvisory({
       mode: String(data.get('mode')) as 'SUMMARIZE' | 'SUGGEST' | 'DRAFT',
       question: String(data.get('question') || ''),
       context:
         contextLabel && contextContent
-          ? [{ label: contextLabel, content: contextContent }]
+          ? [{
+              label: contextLabel,
+              content: contextContent,
+              ...(String(data.get('sourceId') || '').trim() ? { sourceId: String(data.get('sourceId')).trim() } : {}),
+              ...(String(data.get('sourceType') || '').trim() ? { sourceType: String(data.get('sourceType')).trim() } : {}),
+              ...(String(data.get('citation') || '').trim() ? { citation: String(data.get('citation')).trim() } : {}),
+            }]
           : [],
+      consentToExternalProcessing: (form.querySelector<HTMLInputElement>('input[name="consentToExternalProcessing"]')?.checked ?? false),
+      ...(selectedDataClass
+        ? { dataClass: selectedDataClass as 'PUBLIC' | 'SYNTHETIC' | 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT' }
+        : {}),
     });
     if (panel) panel.hidden = false;
     if (statusEl && textEl && labelEl) {
@@ -120,6 +158,7 @@ const configuredProviders = aiAvailability.configuredProviders;
           reviewGuidanceEl.textContent = 'If the source is missing or uncertainty remains, take the original controlled record to your Supervisor or QCM (Manager) through the normal authorized review workflow.';
           reviewGuidanceEl.hidden = false;
         }
+        if (provenanceEl) { provenanceEl.textContent = ''; provenanceEl.hidden = true; }
         resetButtons();
       } else if (response.data) {
         statusEl.textContent = response.data.message;
@@ -127,8 +166,10 @@ const configuredProviders = aiAvailability.configuredProviders;
         textEl.textContent = advisoryText;
         if (sourceContextEl) {
           const sourceLabel = String(data.get('contextLabel') || '').trim();
+          const sourceIdentity = String(data.get('sourceId') || '').trim();
+          const sourceCitation = String(data.get('citation') || '').trim();
           sourceContextEl.textContent = sourceLabel
-            ? `Source context supplied: ${sourceLabel}. The form does not verify source authenticity.`
+            ? `User-supplied source provenance: ${sourceLabel}${sourceIdentity ? ` · ${sourceIdentity}` : ''}${sourceCitation ? ` · ${sourceCitation}` : ''}. The form does not verify source authenticity or currency.`
             : 'No source context was supplied. Verify claims against a controlled source before relying on them.';
           sourceContextEl.hidden = false;
         }
@@ -147,6 +188,15 @@ const configuredProviders = aiAvailability.configuredProviders;
               : 'Review before use: compare the response and its source details with the controlled record. Ask your Supervisor or QCM (Manager) when uncertain.';
           reviewGuidanceEl.hidden = false;
         }
+        if (provenanceEl) {
+          const provenance = response.data.advisory?.provenance;
+          const provider = response.data.advisory?.providerMetadata;
+          provenanceEl.textContent = provenance
+            ? `Generated: ${provenance.generatedAt}. Provider/model: ${provider ? `${provider.provider}/${provider.model}` : 'not supplied'}. Prompt: ${provenance.promptVersion}. Confidence: not calibrated. Boundary: advisory only; verify every claim against the controlled source.`
+            : 'Provenance is unavailable; verify every claim against the controlled source.';
+          provenanceEl.hidden = false;
+        }
+        if (correctionButton) correctionButton.disabled = !advisoryText;
         labelEl.textContent = response.data.advisoryNotice;
         if (advisoryText) {
           if (copyButton) copyButton.disabled = false;
@@ -156,12 +206,22 @@ const configuredProviders = aiAvailability.configuredProviders;
     }
     if (resultEl) resultEl.textContent = '';
   });
+  form?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input:not([name="consentToExternalProcessing"]), textarea, select[name="dataClass"]').forEach((field) => {
+    field.addEventListener('input', () => { if (consentCheckbox) consentCheckbox.checked = false; });
+  });
   copyButton?.addEventListener('click', async () => {
     if (advisoryText) await navigator.clipboard.writeText(advisoryText);
   });
   draftButton?.addEventListener('click', () => {
     const questionField = form?.querySelector<HTMLTextAreaElement>('textarea[name="question"]');
     if (questionField && advisoryText) questionField.value = advisoryText;
+  });
+  correctionButton?.addEventListener('click', () => {
+    const questionField = form?.querySelector<HTMLTextAreaElement>('textarea[name="question"]');
+    if (!questionField || !advisoryText || !correctionEl?.value.trim()) return;
+    questionField.value = `Human correction for review (not an approved QC decision):\n${correctionEl.value.trim()}\n\nOriginal AI advisory for comparison:\n${advisoryText}`;
+    if (consentCheckbox) consentCheckbox.checked = false;
+    resultEl && (resultEl.textContent = 'Correction prepared locally. Route it through the normal authorized human review workflow; it has not been saved or sent.');
   });
 </script>
 <style>
@@ -174,6 +234,9 @@ const configuredProviders = aiAvailability.configuredProviders;
 .form label{display:grid;gap:.4rem;font-size:.85rem}
 .form input,.form select,.form textarea{font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}
 .form textarea{min-height:6rem}
+.consent{display:flex!important;grid-template-columns:auto 1fr;align-items:start;gap:.65rem!important}
+.consent input{margin-top:.15rem}
+.correction-label{display:grid;gap:.4rem;color:var(--text-muted);font-size:.85rem}
 fieldset.context{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);display:grid;gap:var(--space-3);margin:0}
 fieldset.context legend{font-size:.8rem;font-weight:700;padding:0 .4rem}
 .actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}

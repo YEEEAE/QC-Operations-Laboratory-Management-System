@@ -22,11 +22,16 @@ import {
   ADVISORY_NOTICE,
   ADVISORY_REFUSAL_NOTICE,
   ADVISORY_UNAVAILABLE_NOTICE,
+  AI_ADVISORY_PROMPT_VERSION,
   isAdvisoryMode,
   type AdvisoryMode,
   type AdvisoryResponse,
 } from '../domain/advisory-response.js';
-import type { AiProvider, AdvisoryContextSegment } from '../ports/ai-provider.js';
+import type {
+  AiProvider,
+  AdvisoryContextSegment,
+  AdvisoryDataClass,
+} from '../ports/ai-provider.js';
 
 export const MAX_ADVISORY_QUESTION_LENGTH = 4000;
 export const MAX_ADVISORY_CONTEXT_SEGMENTS = 10;
@@ -43,7 +48,9 @@ const SECRET_LIKE_PATTERN =
   /(-----BEGIN [A-Z ]*PRIVATE KEY-----|bearer\s+[A-Za-z0-9._~-]+|\bpassword\b\s*[:=]|\bpasswd\b\s*[:=]|\bapi[_-]?key\b\s*[:=]|\bsecret\b\s*[:=]|\b(access[_-]?)?token\b\s*[:=]|authorization\s*[:=]|database[_-]?url\s*[:=]|postgres(ql)?:\/\/[^\s@]+:[^\s@]+@|\bsk-[A-Za-z0-9]{16,})/i;
 
 const HIGH_RISK_UNSUPPORTED_REQUEST =
-  /(?:official\s+(?:assay\s+)?limit|current\s+wi|\bsop\b|without\s+(?:a\s+)?controlled\s+source|(?:missing|no)\s+(?:controlled\s+)?source|stale.{0,30}current\s+official|certain\s+answer.{0,30}incomplete)/i;
+  /(?:official\s+(?:assay\s+)?limit|current\s+wi|\bsop\b|without\s+(?:a\s+)?controlled\s+source|(?:missing|no)\s+(?:controlled\s+)?source|stale.{0,30}current\s+official|certain\s+answer.{0,30}incomplete|الحد\s+الرسمي|الإجراء\s+المعتمد|مصدر\s+معتمد|نتيجة\s+رسمية|اعتمد\s+النتيجة|أفرج\s+عن|وقّع\s+السجل)/iu;
+const PROMPT_INJECTION_PATTERN =
+  /(?:ignore\s+(?:all\s+)?(?:previous|prior|system)\s+instructions|override\s+(?:the\s+)?(?:policy|system|instructions)|تجاهل\s+(?:كل\s+)?(?:التعليمات|الأوامر)\s+(?:السابقة|أعلاه)|تجاوز\s+(?:السياسة|التعليمات|الصلاحيات))/iu;
 
 export type AdvisoryOutcome = 'AVAILABLE' | 'UNAVAILABLE' | 'REFUSED';
 
@@ -60,6 +67,8 @@ export interface GetAdvisoryInput {
   question: string;
   context: readonly AdvisoryContextSegment[];
   requestId: string;
+  consentToExternalProcessing?: boolean;
+  dataClass?: AdvisoryDataClass;
 }
 
 function authorizeAdvisory(actor: ActorContext, mode: AdvisoryMode): void {
@@ -109,7 +118,13 @@ function validateInput(question: string, context: readonly AdvisoryContextSegmen
       segment.label.length > MAX_ADVISORY_CONTEXT_LABEL_LENGTH ||
       typeof segment?.content !== 'string' ||
       segment.content.length === 0 ||
-      segment.content.length > MAX_ADVISORY_CONTEXT_CONTENT_LENGTH
+      segment.content.length > MAX_ADVISORY_CONTEXT_CONTENT_LENGTH ||
+      (segment.sourceId !== undefined &&
+        (typeof segment.sourceId !== 'string' || segment.sourceId.length > 200)) ||
+      (segment.sourceType !== undefined &&
+        (typeof segment.sourceType !== 'string' || segment.sourceType.length > 120)) ||
+      (segment.citation !== undefined &&
+        (typeof segment.citation !== 'string' || segment.citation.length > 500))
     ) {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     }
@@ -140,6 +155,8 @@ function requiresFailSafeRefusal(
 ): boolean {
   return (
     HIGH_RISK_UNSUPPORTED_REQUEST.test(question) ||
+    PROMPT_INJECTION_PATTERN.test(question) ||
+    context.some((segment) => PROMPT_INJECTION_PATTERN.test(segment.content)) ||
     context.some((segment) => /\bstale\b/i.test(segment.label))
   );
 }
@@ -158,6 +175,25 @@ export class GetAdvisoryUseCase {
       return {
         status: 'REFUSED',
         message: ADVISORY_REFUSAL_NOTICE,
+        advisoryNotice: ADVISORY_NOTICE,
+      };
+    }
+
+    if (this.provider.requiresExternalConsent?.() && input.consentToExternalProcessing !== true) {
+      return {
+        status: 'REFUSED',
+        message: 'External processing consent was not provided. No request content was sent.',
+        advisoryNotice: ADVISORY_NOTICE,
+      };
+    }
+    if (
+      this.provider.requiresExternalConsent?.() &&
+      (!input.dataClass || !this.provider.permitsDataClass?.(input.dataClass))
+    ) {
+      return {
+        status: 'REFUSED',
+        message:
+          'The selected content class is not authorized by the active processing policy. No request content was sent.',
         advisoryNotice: ADVISORY_NOTICE,
       };
     }
@@ -215,6 +251,12 @@ export class GetAdvisoryUseCase {
         ...(parsedAdvisory.providerMetadata
           ? { providerMetadata: parsedAdvisory.providerMetadata }
           : {}),
+        provenance: {
+          promptVersion: AI_ADVISORY_PROMPT_VERSION,
+          generatedAt: new Date().toISOString(),
+          confidence: 'NOT_CALIBRATED',
+          boundary: 'ADVISORY_ONLY',
+        },
       },
     };
   }

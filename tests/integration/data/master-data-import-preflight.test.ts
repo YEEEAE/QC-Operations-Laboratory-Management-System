@@ -117,6 +117,30 @@ describe('master-data import preflight on a task-owned database', () => {
     expect(await countFixtureRows()).toBe(1);
   });
 
+  it('stores adversarial import text as data and cannot execute injected SQL', async () => {
+    const injectedName = "'); DROP TABLE qc.equipment; --";
+    const row = {
+      ...VALID_EQUIPMENT_ROWS[0],
+      equipment_no: 'FIX-EQP-POISON',
+      name: injectedName,
+    };
+    const report = await preflight([row]);
+    expect(report.counts.ready).toBe(1);
+
+    const applied = await applyRows(report.readyRows);
+    expect(applied.inserted).toBe(1);
+    const stored = await pool!.query<{ name: string }>(
+      'SELECT name FROM qc.equipment WHERE equipment_no = $1',
+      ['FIX-EQP-POISON'],
+    );
+    expect(stored.rows[0]?.name).toBe(injectedName);
+    await expect(
+      pool!.query('SELECT count(*)::int AS count FROM qc.equipment'),
+    ).resolves.toMatchObject({
+      rows: [expect.objectContaining({ count: expect.any(Number) })],
+    });
+  });
+
   it('rolls back an interrupted load and leaves zero partial rows, then succeeds on rerun', async () => {
     const report = await preflight(VALID_EQUIPMENT_ROWS);
     await expect(

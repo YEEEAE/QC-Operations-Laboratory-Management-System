@@ -18,7 +18,7 @@ export const ADVISORY_UNAVAILABLE_NOTICE =
   'AI advisory is temporarily unavailable. Core QC workflows are unaffected and remain authoritative.';
 export const ADVISORY_REFUSAL_NOTICE =
   'The AI response was rejected because it attempted to encode an authoritative decision. Advisory output cannot approve, reject, release, sign, or set official PASS/FAIL.';
-export const AI_ADVISORY_PROMPT_VERSION = 'qc-ai-prompt-v1';
+export const AI_ADVISORY_PROMPT_VERSION = 'qc-ai-prompt-v2';
 
 export const MAX_ADVISORY_TEXT_LENGTH = 20_000;
 
@@ -34,6 +34,12 @@ export interface AdvisoryResponse {
   text: string;
   sourceReferences?: readonly AdvisorySourceReference[];
   providerMetadata?: AdvisoryProviderMetadata;
+  provenance: {
+    promptVersion: string;
+    generatedAt: string;
+    confidence: 'NOT_CALIBRATED';
+    boundary: 'ADVISORY_ONLY';
+  };
 }
 
 export interface AdvisoryProviderMetadata {
@@ -88,6 +94,7 @@ const SENSITIVE_DATA_PATTERNS = [
   /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
   /\b(?:patient|national\s+id|iqama|passport|medical\s+record)\b.{0,40}\b\d{4,}\b/i,
   /\b(?:phone|mobile|telephone)\b\s*[:=]?\s*\+?\d[\d\s().-]{7,}\d/i,
+  /(?:رقم\s*(?:الجوال|الهاتف|الهوية)|هوية\s*وطنية)\s*[:=]?\s*[+0-9٠-٩][0-9٠-٩\s().-]{7,}/u,
 ];
 
 export function containsSensitiveData(value: string): boolean {
@@ -98,6 +105,8 @@ const UNSAFE_AUTHORITY_TEXT = [
   /\bignore\s+(?:all\s+)?(?:previous|prior|system)\s+instructions\b/i,
   /\b(?:bypass|override|ignore)\b.{0,50}\b(?:hold|policy|authorization|approval)\b/i,
   /\b(?:i|we|ai|the\s+model|the\s+system)\s+(?:approve|release|sign|authorize|grant|execute|apply|set|mark)\b/i,
+  /\byou\s+are\s+now\s+(?:the\s+)?(?:release|approval|qc)\s+authority\b/i,
+  /(?:أنا\s+(?:أعتمد|أوافق|أفرج|أوقّع)|سأعتمد\s+النتيجة|هذه\s+نتيجة\s+(?:نجاح|فشل)\s+رسمية)/u,
   /\b(?:official|final)\s+(?:pass|fail|result|decision)\b/i,
   /\b(?:recommend|recommendation)\b.{0,50}\b(?:release|approve|reject|sign)\b/i,
 ];
@@ -167,7 +176,7 @@ function assertNoAuthorityEncoding(node: unknown, depth: number): void {
 export function parseProviderAdvisory(
   raw: unknown,
   allowedSources: readonly { sourceId?: string; label: string; citation?: string }[] = [],
-): AdvisoryResponse {
+): Omit<AdvisoryResponse, 'provenance'> {
   if (!isPlainObject(raw)) {
     throw new AdvisoryAuthorityViolationError();
   }

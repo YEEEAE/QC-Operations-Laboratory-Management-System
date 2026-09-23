@@ -33,6 +33,11 @@ const requiredPasswords = [
   'QC_VERIFY_EMPLOYEE_PASSWORD',
   'QC_VERIFY_LEAST_PASSWORD',
 ] as const;
+const securityE2eSpecs = [
+  'tests/e2e/files-reports.spec.ts',
+  'tests/e2e/approvals.spec.ts',
+  'tests/e2e/security-headers.spec.ts',
+] as const;
 
 function fail(message: string): never {
   throw new Error(message);
@@ -298,14 +303,13 @@ async function main(): Promise<void> {
       await new Promise((resolveWait) => setTimeout(resolveWait, 1000));
       if (attempt === 29) fail('Built preview server did not become live.');
     }
+    const selectedSpecs =
+      env.QC_AUTHENTICATED_E2E_SECURITY_ONLY === 'true'
+        ? securityE2eSpecs
+        : ['tests/e2e/authenticated-closure.spec.ts', 'tests/e2e/accessibility.spec.ts'];
     const e2eCode = await run(
       resolve('node_modules/.bin/playwright'),
-      [
-        'test',
-        '--workers=1',
-        'tests/e2e/authenticated-closure.spec.ts',
-        'tests/e2e/accessibility.spec.ts',
-      ],
+      ['test', '--workers=1', ...selectedSpecs],
       env,
     );
     if (e2eCode !== 0) process.exitCode = e2eCode;

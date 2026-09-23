@@ -41,11 +41,38 @@ Both adapters use server-side `fetch`, HTTPS endpoints, bounded abort timeouts,
 strict response validation, and sanitized provider error classes. The Gemini key
 is sent through the server-side `x-goog-api-key` header, not a URL query string.
 
-Until external processing approval is recorded, configured credentials alone do
-not enable either adapter. The advisory page explains when a question and its
-user-entered excerpt will be sent to a configured provider. Approval of the gate
-does not define provider retention, permitted data classes, or deletion rights;
-those remain governed by the approved privacy/QMS decisions.
+Configured credentials and `AI_EXTERNAL_PROCESSING_APPROVED=true` are
+insufficient on their own. Providers stay disabled unless the server-only
+`AI_PROCESSING_POLICY_JSON` contains a complete `APPROVED` policy artifact with
+policy ID/version/source reference, approver and approval time, approved
+providers, processing location, retention days, deletion terms, no-training
+commitment, consent version, permitted data classes, and all prohibited data
+classes. Missing, malformed, or incomplete policy content fails closed. The
+artifact is an operational input from the authorized policy owner; environment
+configuration is not itself the approval.
+
+Only these data classes may be approved for external processing:
+
+| Class | Meaning | Current default |
+| --- | --- | --- |
+| `PUBLIC` | Public, non-sensitive material | Disabled until a policy artifact explicitly permits it |
+| `SYNTHETIC` | Fabricated evaluation or demonstration content | Disabled until explicitly permitted |
+| `AUTHORIZED_NONCONFIDENTIAL_EXCERPT` | A minimized excerpt the user is authorized to share and has classified as non-confidential | Disabled until explicitly permitted |
+
+Personal data (including direct identifiers), credentials/tokens, confidential
+QC information, controlled QC records, and content without sharing authority are
+prohibited. Users classify the whole question and excerpt; pattern checks for
+common secrets and identifiers are an additional guard, not a reliable content
+classifier. Before each request, the UI names the policy-selected provider,
+processing location, retention limit, deletion terms, source, and consent
+version. Consent defaults to off and is cleared when question/context changes.
+The server checks consent and the policy's permitted class before calling
+provider availability or completion.
+
+The repository and deployment configuration currently contain no approved
+policy artifact. Provider credentials alone cannot send user content. No
+provider location, retention duration, or deletion right is claimed until that
+artifact is supplied by the authorized owner.
 
 ## Context and safety
 
@@ -70,11 +97,14 @@ credential or prompt content.
 ## Offline governance evaluation
 
 `audit/100-percent/ai-evals/deterministic-eval-dataset.json` is the synthetic,
-non-confidential regression dataset. Version `3.0.0` covers refusal of
+non-confidential regression dataset. Version `4.0.0` covers refusal of
 approval authority, missing controlled source context, prompt injection,
 secrets/PII, incorrect citations, uncertainty/abstention, human review handoff,
-provider failure, and safe advisory behavior. It runs only against deterministic
-fake providers; it never contacts Groq, Gemini, or another external service.
+provider failure, per-request consent/policy gates, context switching, and
+Arabic/English safety cases. Metadata versions the prompt and evaluation
+criteria. It runs only against deterministic fake providers
+(`modelVersion` explicitly says no live model was evaluated); it never contacts
+Groq, Gemini, or another external service.
 
 Run the focused suite with:
 
@@ -82,15 +112,24 @@ Run the focused suite with:
 pnpm exec vitest run tests/integration/ai-advisory/evals.test.ts tests/integration/ai-advisory/security.test.ts
 ```
 
-The suite emits one `AI_EVAL_RESULT_JSON` record containing dataset version and
-SHA-256, source Git SHA, case count, and each category's denominator, error
-count, and error rate. Preserve that complete record as the evaluation result;
+The suite emits one `AI_EVAL_RESULT_JSON` record containing dataset, model,
+prompt, and evaluation-criteria versions; dataset SHA-256; source Git SHA;
+evaluated working-tree diff fingerprint; case count; and each category's
+denominator, errors, and error rate. Preserve that complete record as the evaluation result;
 do not compare results across different source SHAs or dataset hashes. A
 changed dataset requires a version increment. A category error, any detected
 sensitive-data provider call, an authoritative output accepted as AVAILABLE, or
 a wrong citation accepted as AVAILABLE blocks a release of AI changes. Targets
 are 0% disposition errors in every category, 0% sensitive-data leakage, 0%
 false acceptance, and 100% correct abstention/human handoff.
+
+Each available response exposes provider/model when returned by the adapter,
+preserved source references, prompt version, server generation timestamp,
+`ADVISORY_ONLY` boundary, and `NOT_CALIBRATED` confidence. No numeric confidence
+is asserted. The page explains source-authenticity limits and offers a local
+correction draft path to the normal human review workflow; it does not save the
+correction or make it a QC decision. AI output cannot change PASS/FAIL/HOLD,
+release, or electronic signature state.
 
 ## Drift monitoring and provider activation decision
 

@@ -10,7 +10,17 @@ export class GeminiAiProvider extends HttpAiProvider implements AiProvider {
 
   async complete(request: AiAdvisoryRequest): Promise<unknown> {
     const context = request.context
-      .map(({ label, content }) => `Source: ${label}\nExcerpt: ${content}`)
+      .map(({ label, content, sourceId, citation, sourceType }) =>
+        [
+          `Source: ${label}`,
+          sourceId ? `Source identity: ${sourceId}` : undefined,
+          sourceType ? `Source type: ${sourceType}` : undefined,
+          citation ? `Citation: ${citation}` : undefined,
+          `Excerpt: ${content}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      )
       .join('\n\n');
     const raw = await this.requestJson(request, {
       method: 'POST',

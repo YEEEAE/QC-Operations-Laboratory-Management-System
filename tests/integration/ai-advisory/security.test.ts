@@ -128,6 +128,58 @@ describe('AI advisory security suite — deterministic fake provider', () => {
     expect(calls).toHaveLength(0);
   });
 
+  it('external content is not sent without per-request consent or an allowed data class', async () => {
+    const calls: AiAdvisoryRequest[] = [];
+    const provider: AiProvider = {
+      requiresExternalConsent: () => true,
+      permitsDataClass: (dataClass) => dataClass === 'PUBLIC',
+      availability: async () => ({ available: true }),
+      complete: async (request) => {
+        calls.push(request);
+        return { text: 'advisory' };
+      },
+    };
+    const useCase = new GetAdvisoryUseCase(provider);
+    const input = {
+      actor: actor(allAiPermissions),
+      mode: 'SUMMARIZE' as const,
+      question: 'Public sample.',
+      context: [],
+      requestId: 'consent-gate',
+    };
+    expect((await useCase.execute(input)).status).toBe('REFUSED');
+    expect(
+      (
+        await useCase.execute({
+          ...input,
+          consentToExternalProcessing: true,
+          dataClass: 'SYNTHETIC',
+        })
+      ).status,
+    ).toBe('REFUSED');
+    expect(calls).toHaveLength(0);
+    expect(
+      (await useCase.execute({ ...input, consentToExternalProcessing: true, dataClass: 'PUBLIC' }))
+        .status,
+    ).toBe('AVAILABLE');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('Arabic mobile and national identity data are refused before provider access', async () => {
+    const calls: AiAdvisoryRequest[] = [];
+    const useCase = new GetAdvisoryUseCase(recordingProvider({}, calls));
+    await expect(
+      useCase.execute({
+        actor: actor(allAiPermissions),
+        mode: 'SUMMARIZE',
+        question: 'لخص الحالة، رقم الجوال: ٠٥٠ ١٢٣ ٤٥٦٧',
+        context: [],
+        requestId: 'ar-sensitive',
+      }),
+    ).rejects.toThrow(AppError);
+    expect(calls).toHaveLength(0);
+  });
+
   it('authoritative provider output is rejected as authority: REFUSED, no text leaked, no decision fields', async () => {
     const calls: AiAdvisoryRequest[] = [];
     const useCase = new GetAdvisoryUseCase(

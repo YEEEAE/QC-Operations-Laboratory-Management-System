@@ -30,6 +30,7 @@ export const ENV_KEYS = {
   aiPrimaryProvider: 'AI_PRIMARY_PROVIDER',
   aiFallbackProvider: 'AI_FALLBACK_PROVIDER',
   aiExternalProcessingApproved: 'AI_EXTERNAL_PROCESSING_APPROVED',
+  aiProcessingPolicyJson: 'AI_PROCESSING_POLICY_JSON',
   groqApiKey: 'GROQ_API_KEY',
   groqModel: 'GROQ_MODEL',
   groqBaseUrl: 'GROQ_BASE_URL',

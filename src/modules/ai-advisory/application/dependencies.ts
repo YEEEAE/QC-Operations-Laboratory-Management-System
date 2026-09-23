@@ -13,6 +13,7 @@ function providerFor(kind: 'groq' | 'gemini', config: AiProviderConfig | undefin
 
 export function configuredAiProvider(): AiProvider {
   const config = getAiConfiguration();
+  if (Object.keys(config.providers).length === 0) return new DisabledAiProvider();
   return new FailoverAiProvider(
     providerFor(config.primaryProvider, config.providers[config.primaryProvider]),
     providerFor(config.fallbackProvider, config.providers[config.fallbackProvider]),

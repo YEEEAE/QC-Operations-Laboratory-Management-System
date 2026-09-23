@@ -9,6 +9,9 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+  attestations: write
+  artifact-metadata: write
 
 concurrency:
   group: verification-${{ github.workflow }}-${{ github.ref }}
@@ -50,7 +53,18 @@ jobs:
         run: pnpm verification:begin
 
       - name: Dependency vulnerability audit
-        run: pnpm audit --audit-level high
+        run: |
+          mkdir -p .ci-results
+          set +e
+          pnpm audit --audit-level high --json > .ci-results/dependency-audit.json
+          audit_status=$?
+          set -e
+          exit "$audit_status"
+
+      - name: Create candidate-bound SBOM and license inventory
+        run: |
+          mkdir -p .ci-results
+          node scripts/security/write-candidate-sbom.mjs --output .ci-results/sbom.cdx.json --licenses .ci-results/licenses.json
 
       - name: Format
         run: pnpm format:check
@@ -99,6 +113,19 @@ jobs:
         run: |
           mkdir -p .ci-results
           pnpm release:manifest -- --dir dist --write .ci-results/build-manifest.json
+
+      - name: Attest verified release artifact provenance
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/server/entry.mjs
+
+      - name: Attest candidate SBOM
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/server/entry.mjs
+          sbom-path: .ci-results/sbom.cdx.json
 
       - name: Create release-candidate evidence
         run: >-
