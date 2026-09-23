@@ -4,16 +4,15 @@
   - Changed: reconciled stale `/admin` visibility denial with the current page guard/navigation; added current route × role and route copy-context matrices plus English task/state/measurement review.
   - Evidence: current source exports 87 routes/34 navigation destinations; Node 24.20.0 generation produced 435 role rows and 87 copy-context rows. Human task metrics and authenticated 1440/390 captures remain NOT VERIFIED.
   - State: PARTIAL — report `audit/2026-09-23/ui-baseline/current-interface-review.md`; no QC logic or runtime permissions changed.
-- **2026-09-23 — UI-LANGUAGE / تصحيح نطاق إعادة التصميم**
-  - Changed: خطة إعادة التصميم English-only/LTR وبنصوص قصيرة وطبيعية؛ أُزيل شرط العربية/RTL.
-  - Evidence: تصحيح المستخدم المباشر وملفا التقرير والبرومبتات في `audit/`.
-  - State: DONE — المواصفة القديمة تحتاج مصالحة منفصلة.
+- **2026-09-23 — REPORT-REDESIGN-ROLLBACK / العودة إلى تقرير ما قبل إعادة التصميم**
+  - Changed: أُزيل ملحق تغيير التصميم من تقرير المجالات المئة وعادت البرومبتات التنفيذية إلى 22.
+  - Evidence: مطابقة الملفين لنسخة `7d7f869` السابقة للتصميم، باستثناء تنسيق تاريخ Markdown؛ بقيت 100 درجة ومتوسط 55.0%.
+  - State: DONE — لا تغيير في واجهة المنتج أو صلاحياته.
 
-- **2026-09-23 — P04 / visual directions decision aid**
-  - Changed: added three original, synthetic-data directions for four workflows; current approved design reference remains unchanged pending Product Owner and QC/QMS.
-  - Evidence: Node 24.20.0 static checks; local browser preview was blocked by browser URL policy.
-  - State: PARTIAL — comparison artifact complete; owner/QC-QMS decision and visual browser review pending.
-  - Key files: `audit/2026-09-23/p04-visual-directions.html`.
+- **2026-09-23 — P03 / visual direction decision aid**
+  - Changed: added three original directions with 12 synthetic workflow compositions, current 34-destination navigation, state/refusal examples, trade-offs, and a shared visual charter; `Evidence Ledger` recommended while `DESIGN-SYSTEM.md` stays approved and unchanged.
+  - Evidence: Node 24.20.0 HTML/source checks; rendered browser review BLOCKED by URL policy; Product Owner and QC/QMS decision remains pending.
+  - State: PARTIAL — `audit/2026-09-23/p03-visual-directions.html`; no runtime, permission, scientific rule, or retention change.
 - **2026-09-23 — UI-BASELINE / inventory and visual baseline**
   - Changed: added a source-linked screen/role/state inventory and repeatable three-task usability protocol; authorized live reads via an existing `yazeed` browser session confirmed current empty/no-actionable states in several registers. No synthetic fixture or login credentials used against production.
   - Evidence: Node 24.20.0 `diagnose` and `typecheck` PASS; live route read-only; 1440/390 captures cover only local unauthenticated gate; authenticated production screenshots were not persisted.
@@ -358,7 +357,7 @@
 ## 10) UI / UX / Accessibility
 
 ### Language/copy
-- الواجهة الحالية English-only, `lang="en"`, LTR؛ قرار المستخدم (2026-09-23) يؤكد ذلك لإعادة التصميم مع نصوص قصيرة وطبيعية. لا تشترط العربية/RTL في هذه الخطة؛ ذكرهما في `Documents/UI-UX-SPECIFICATION.md` أقدم ويحتاج مصالحة مستقلة.
+- الواجهة الحالية English-only, `lang="en"`, LTR؛ قرار المستخدم (2026-09-23) يؤكد الإنجليزية والنصوص القصيرة الطبيعية للمنتج. إشارات العربية/RTL في `Documents/UI-UX-SPECIFICATION.md` تحتاج قرارًا مستقلًا قبل توسيع النطاق.
 - الأفعال والعناوين تستخدم sentence case.
 - المصطلحات المنظمة مثل NCR/CAPA/PASS/RELEASED لا يُعاد تعريف معناها.
 - UX vocabulary المشترك موجود في `src/shared/copy/ux-vocabulary.ts`؛ دليل الكتابة المعتمد: `Documents/UX-WRITING-GUIDE.md`.
