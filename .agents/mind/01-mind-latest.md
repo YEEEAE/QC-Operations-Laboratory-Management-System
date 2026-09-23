@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — UI-BASELINE / inventory and visual baseline**
+  - Changed: added a source-linked screen/role/state inventory and repeatable three-task usability protocol; authorized live reads via an existing `yazeed` browser session confirmed current empty/no-actionable states in several registers. No synthetic fixture or login credentials used against production.
+  - Evidence: Node 24.20.0 `diagnose` and `typecheck` PASS; live route read-only; 1440/390 captures cover only local unauthenticated gate; authenticated production screenshots were not persisted.
+  - State: PARTIAL — human task metrics and synthetic populated states remain NOT VERIFIED; audit `audit/2026-09-23/ui-baseline/interface-state-inventory.md`.
+
 - **2026-09-23 — TOOLING / تثبيت uxaudit لـClaude Code**
   - Changed: إضافة سوق `gotalab-uxaudit` وتثبيت `uxaudit` بالإصدار `0.1.0` وتمكينه على نطاق المشروع.
   - Evidence: `claude plugin list` يعرض `uxaudit@gotalab-uxaudit` بحالة enabled؛ إعدادات `.claude/settings.json` صالحة.
@@ -400,6 +405,7 @@
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
 
 ## 12) Architecture / Deployment / Assets
+- **مشاهدة حية مأذونة للقراءة فقط 2026-09-23 عبر جلسة `yazeed` قائمة:** `/system/health` عرض `NOT READY` و`BLOCKED`; التطبيق وقاعدة البيانات HEALTHY، Reject Reports غير متاح بسبب schema readiness، وهوية الإصدار غير متحققة، وrestore غير متحقق. Snapshot للبيئة في ذلك الوقت فقط؛ لا يثبت حالة مرشح محلي ولا جاهزية UAT/الإصدار. المرجع التفصيلي: `audit/2026-09-23/ui-baseline/interface-state-inventory.md`.
 - **مشاهدة حية جديدة 2026-09-22، قراءة فقط:** حساب المالك فتح `/dashboard` و`/system/health`؛ ظهرت النواة READY، التطبيق وDB HEALTHY، storage وAI UNAVAILABLE، outbox به رسالة معلقة، ولا backup catalog/restore verification. هوية الإصدار (SHA/head) UNVERIFIED؛ `/reject-reports` يعرض أن migrations اللازمة غير مطبقة. هذه مشاهدة النشر فقط، وليست دليلًا على المرشح المحلي `6c505e65f410ae7ce4384c2d314578d821a53457` أو جاهزية إنتاج شاملة.
 - **`pnpm test:architecture` FAILs على المرشح `4fa6ac3` (مُثبت 2026-09-21 في 035-B):** انتهاكات delivery-boundary قائمة في `src/pages/quality/{ncr,capa}/[id].astro` و`src/pages/ai-advisory.astro` (استيراد infrastructure/SQL مباشر في الصفحات). ليست من أي diff حديث؛ خط الأساس الحالي لخريطة الحدود المملوكة لـ035-A المفقود.
 - `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. **فجوة `.env` المحلية أُغلقت 2026-09-22 (PR-A1):** `NODE_ENV=development` + `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` مكتملة؛ diagnose/parity/typecheck/build كلها PASS على Node `v24.20.0` مع `.nvmrc`.
