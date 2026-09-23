@@ -1850,10 +1850,12 @@ REQUIRED
 ```
 
 Open dependency: the official inspection result must come from an approved controlled
-source (PD-01 / PD-02 / PD-07). `SaveInspectionDraftUseCase` refuses a browser-supplied
-official result, so an application-created report currently cannot satisfy this
-precondition and the transition stays fail-closed. No result, limit or tolerance may be
-inferred in the meantime.
+source (PD-01 / PD-02 / PD-07). Current wiring now includes receiving-origin report
+creation and `RecordInspectionResultsUseCase` in
+`src/modules/quarantine/application/dependencies.ts`; `SaveInspectionDraftUseCase`
+still refuses a browser-supplied official result. Stage-1 approval requires a server
+derived result, so missing source/evaluator output still blocks approval. No result,
+limit, tolerance, or manual-judgment authority may be inferred in the meantime.
 
 ---
 
@@ -3037,6 +3039,21 @@ DENY UNTIL RD-019 APPROVED
 هذا السطر خاص بآلة حالة `DOCUMENT_VERSION` لـWI/SOP. لا ينطبق على
 `INSPECTION_TEMPLATE_VERSION`؛ دورة القالب المنفصلة وسياسة P-06 موثقتان
 في §118، مع بقاء RD-019 وSoD العام للمستندات كما هما.
+
+## 118A. Decision-bound execution trace — 2026-09-23
+
+This trace reconciles the normative transitions with current application use cases. Open decisions remain `BLOCKED`; existing denial tests prove the guard, not a valid business outcome.
+
+| Requirement / decision | Use case and current behavior | Source / owner question | Test and evidence | Fail-closed result / status |
+|---|---|---|---|---|
+| Inspection result; PD-01/02/07; `TR-INSP-001/006` | `CreateInspectionFromReceivingUseCase` and `RecordInspectionResultsUseCase` are wired under `quarantineActionDependencies`. `SaveInspectionDraftUseCase` rejects client-declared result. Point-level server evaluation reads template acceptance rules, but does not bind criteria to WI/SOP content hash or derive/write report-level `final_result`; evaluator human-result fallback is not approved. | QC method owner and Document Control: approved WI/SOP/spec, per-method criteria/source/version/hash; QC procedure: whether manual judgement is allowed and who may sign it. | `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts` blocker case proves client `finalResult` and approval without stored report `final_result` are rejected, with no audit/signature mutation; point-level evaluation coverage does not prove approved source mapping. | Client result claim denied; point rows may be saved, but stage-1 approval requires report `final_result` and is denied. No approval/signature/receiving consequence. BLOCKED pending source-bound mapping and positive/negative acceptance suite. |
+| Laboratory evaluator; PD-01/02/03; `TR-LAB-002/006` | `PostgresControlledLabSources.resolve()` loads only approved template definitions, linked EFFECTIVE document snapshots, and hashes. `evaluate()` currently always throws `AUTHZ_DENIED`; `ApproveLabTestUseCase` requires evaluator source reference and hash to match frozen context before saving result. | QC method owner + Document Control: which controlled method/criteria and version/hash govern each test? | `tests/integration/qc-100-final-013/controlled-workflow-proof-matrix.test.ts`; `tests/unit/laboratory/scientific-governance.test.ts`; `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`. Positive approved-source result remains unavailable. | No evaluator result is persisted. BLOCKED pending source, server evaluator implementation, hash/measurement trace, and acceptance tests. |
+| Workflow Reject; PD-38; `TR-LAB-007` | `RejectLabTestUseCase` requires reason, both lab/approval reject permissions, P-05 actor, expected version and injected `LabRejectPolicy`; default policy denies. Reject is a workflow decision, separate from scientific FAIL. | QC/QMS owner: who may reject, over what scope/state, with which SoD and approved procedure? | `tests/unit/laboratory/lab-workflow.test.ts`; `tests/unit/laboratory/scientific-governance.test.ts`. | `POLICY_SOURCE_REQUIRED` before save; BLOCKED pending approved authority source and positive/negative tests. |
+| Receiving release; PD-08 closed, PD-32 partial; `TR-RCV-008..010` | `ReleaseReceivingUseCase` requires an explicit authorized release transition and signature ceremony; inspection PASS is not a release action. | P-05 owner decision supplies the approved authority slice. QMS owner must still enumerate all signature-required actions (PD-32). | `tests/unit/quarantine/release-state.test.ts`; `tests/unit/shared/p05/authority-matrix.test.ts`; candidate-bound database evidence remains separate. | Missing authorization, scope, state, version, risk evidence or required signature denies; PASS never releases. PD-08 slice CLOSED; PD-32 BLOCKED for complete action scope. |
+| Final signature; PD-32; `TR-INSP-006B`, `TR-LAB-006B` | Final approval use cases persist an e-signature bound to the subject and pre-transition version in the domain transaction. The mechanic does not establish which other actions require signature. | QMS owner: complete action-to-signature matrix and ceremony. | Two-stage workflow integration and e-signature suites; exact evidence is candidate-specific and linked in the 026 decision register. | Final approval with missing/stale signature denies. Unlisted signing scope is not guessed. BLOCKED in full-scope decision. |
+| WI/SOP approval; RD-019; `TR-DOC-*` | Controlled document version approval uses the documents domain. P-06 approves template lifecycle only and does not grant `PERM-DOC-APPROVE`. | Document Control/QMS owner: roles, scope, SoD, effective source/version, and signature ceremony for WI/SOP. | Document workflow suites named by canonical `POLICY-CLOSURE-MATRIX.md` RD-019. | `PERM-DOC-APPROVE` remains DENY UNTIL EXPLICITLY APPROVED. BLOCKED. |
+| RPO/RTO; PD-26/27; `TR-BKP-* / TR-RST-*` | Recovery tooling distinguishes measurements from target comparisons. However `recovery-metrics.ts` currently exports hard-coded 86,400s/14,400s targets and its unit test asserts them; this conflicts with the approved open-decision matrix. | Business owner/Recovery Plan owner: approved RPO and RTO targets and the provider/environment to which they apply. | `tests/unit/backup-recovery/metrics.test.ts` is evidence of the current constants, not of approval or compliance; recovery/provider restore evidence remains absent. | Canonical behavior is no target comparison/claim until approved. Current constants are a code discrepancy; target acceptance must remain BLOCKED, with no compliance claim. |
+| Production restore; RD-020; `TR-RST-*` | Restore use cases distinguish isolated recovery drills from production restore. | Business owner: named authorizer, target/scope and risk-acceptance ceremony. | Recovery authorization tests; isolated restore evidence does not authorize production. | `PERM-BKP-RESTORE-PRODUCTION` DENY UNTIL APPROVED. BLOCKED. |
 
 Snapshot/hash:
 

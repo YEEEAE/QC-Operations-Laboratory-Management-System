@@ -127,8 +127,8 @@ Requirements whose behavior depends on an unapproved policy or controlled source
 | Requirement ID | RC ID | Requirement (legacy IDs) | Source | Business objective | Applicability | Capability | Owning task | Technical evidence reference |
 |---|---|---|---|---|---|---|---|---|
 | REQ-RCOV-001 | RC-05-001 | Backups exist, are restorable, and restores are drilled on an isolated explicit target (REQ-BKP-*; RISK-028) | BACKUP-RECOVERY-PLAN; RESTORE-DRILL-RUNBOOK | Backup is a recovery capability, not a file | Backup / recovery | MANDATORY | QC-100-FINAL-008 | populated-bundle isolated restore `audit/2026-09-19/QC-100-FINAL-008-*.md`; 025 re-drill on head `0031` PASS (local) |
-| REQ-RCOV-002 | RC-05-002 | RPO explicitly approved before claimed (REQ-BKP-006) | BR-BKP-006 | Recovery point is a decision, not a guess | Production operations | MANDATORY | QC-100-FINAL-013 | POLICY-DEPENDENT — RPO target displayed (24h) is not an approved measurement |
-| REQ-RCOV-003 | RC-05-003 | RTO explicitly approved before claimed (REQ-BKP-007) | BR-BKP-007 | Recovery time is a decision | Production operations | MANDATORY | QC-100-FINAL-013 | POLICY-DEPENDENT — RTO target (4h) unmeasured; local restore 435 ms is not production RTO |
+| REQ-RCOV-002 | RC-05-002 | RPO explicitly approved before claimed (REQ-BKP-006) | BR-BKP-006 | Recovery point is a decision, not a guess | Production operations | MANDATORY | QC-100-FINAL-013 | BLOCKED — implementation hard-codes 86,400s, but PD-26 is OPEN; no approved target or provider measurement |
+| REQ-RCOV-003 | RC-05-003 | RTO explicitly approved before claimed (REQ-BKP-007) | BR-BKP-007 | Recovery time is a decision | Production operations | MANDATORY | QC-100-FINAL-013 | BLOCKED — implementation hard-codes 14,400s, but PD-27 is OPEN; local restore 435 ms is not production RTO |
 | REQ-RCOV-004 | RC-05-004 | Daily-backup scheduler and monthly restore drill are calendar-contract only until an approved scheduler is wired (DEP-025-02) | BACKUP-RECOVERY-PLAN; FIRST-DAY-OPERATING-CHECKLIST | No unmonitored silent gap | Production operations | MANDATORY | QC-100-FINAL-025 | BLOCKED — no scheduler; recorded as external dependency |
 | REQ-RCOV-005 | RC-05-005 | No provider monitoring/alerting channel exists; do not claim it (DEP-025-03) | OBSERVABILITY-ARCHITECTURE | Honest operability | Production operations | MANDATORY | QC-100-FINAL-007 | BLOCKED — provider telemetry NOT VERIFIED |
 | REQ-RCOV-006 | RC-05-006 | Health/readiness use one canonical DB check with canonical TLS config (REQ-HLTH-*) | DATABASE-ARCHITECTURE; RENDER-DATABASE-CONNECTION | Readiness means what it says | Health endpoints | MANDATORY | QC-100-FINAL-014 | canonical readiness check evidence |
@@ -203,6 +203,7 @@ Requirements whose behavior depends on an unapproved policy or controlled source
 
 # 5. Audit-domain mapping (denominator unchanged)
 
+
 Task-family-026 disciplines map onto existing audit domains and are **not** new scored domains:
 
 | Discipline | Existing audit domain IDs | Register sections |
@@ -247,6 +248,52 @@ Every legacy requirement ID defined in `Documents/REQUIREMENTS-TRACEABILITY.md` 
 - **REQ-UX** → RC-08 (UX/accessibility): REQ-UX-001, REQ-UX-002, REQ-UX-003, REQ-UX-004, REQ-UX-005, REQ-UX-006, REQ-UX-007, REQ-UX-008, REQ-UX-009, REQ-UX-010, REQ-UX-011
 - **REQ-TST** → RC-07 (testing/verification): REQ-TST-001, REQ-TST-002, REQ-TST-003, REQ-TST-004, REQ-TST-005, REQ-TST-006, REQ-TST-007, REQ-TST-008, REQ-TST-009, REQ-TST-010, REQ-TST-011, REQ-TST-012, REQ-TST-013, REQ-TST-014, REQ-TST-015
 - **REQ-UAT** → RC-07 (UAT): 
+
+## 7A. Current requirement → implementation → test → evidence → status
+
+- **REQ-WFLOW-004/014 — official inspection result (PD-01/02/07)**
+  - Code/use case: receiving-origin creation and `RecordInspectionResultsUseCase` are wired; point-level server evaluation reads approved template rules. The use case persists point outcomes, but current persistence does not derive/write `inspection_reports.final_result`; no approved mapping to report outcome or manual-judgment policy exists.
+  - Existing test: `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts` verifies client-declared `finalResult` and approval without a stored result are rejected.
+  - Evidence/source: `STATE-MACHINES.md` TR-INSP-001/006; `POLICY-CLOSURE-MATRIX.md` PD-01/02/07; approved QC method/WI/SOP and manual-judgment procedure are absent.
+  - Status: BLOCKED — point results can be recorded against template rules, but report-level result aggregation and approved source/signature binding are unavailable; final approval remains denied.
+- **REQ-WFLOW-004 — laboratory evaluator (PD-01/02/03)**
+  - Code/use case: `PostgresControlledLabSources.resolve()` snapshots approved template/effective documents/hash; `evaluate()` denies; `ApproveLabTestUseCase` checks source/hash equality before persisting result.
+  - Existing test: `tests/integration/qc-100-final-013/controlled-workflow-proof-matrix.test.ts`; `tests/unit/laboratory/scientific-governance.test.ts`.
+  - Evidence/source: `STATE-MACHINES.md` TR-LAB-002/006; controlled criteria and evaluator source not supplied.
+  - Status: BLOCKED — no official laboratory result written.
+- **REQ-WFLOW-003 — laboratory Reject (PD-38)**
+  - Code/use case: `RejectLabTestUseCase`; deny-by-default policy with required reason/dual permissions/P-05/version guards.
+  - Existing test: `tests/unit/laboratory/lab-workflow.test.ts`; `tests/unit/laboratory/scientific-governance.test.ts`.
+  - Evidence/source: `POLICY-CLOSURE-MATRIX.md` PD-38; approved QC/QMS reject-authority source absent.
+  - Status: BLOCKED — `POLICY_SOURCE_REQUIRED`; workflow Reject remains separate from scientific FAIL.
+- **REQ-WFLOW-001/002 — release boundary (PD-08/PD-32)**
+  - Code/use case: explicit `ReleaseReceivingUseCase` and P-05 authority; inspection PASS has no release effect.
+  - Existing test: `tests/unit/quarantine/release-state.test.ts`; `tests/unit/shared/p05/authority-matrix.test.ts`.
+  - Evidence/source: owner-approved P-05 decision and `STATE-MACHINES.md` TR-RCV; complete signature scope remains open under PD-32.
+  - Status: PARTIAL — P-05 authority slice closed; full signature scope and live evidence blocked.
+- **REQ-WFLOW-010 — signature scope (PD-32)**
+  - Code/use case: final inspection/lab approval ceremonies bind signatures to exact subject/version; this does not enumerate all actions needing signature.
+  - Existing test: `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts` and e-signature suites referenced by the policy matrix.
+  - Evidence/source: `POLICY-CLOSURE-MATRIX.md` PD-32; QMS signature-scope list absent.
+  - Status: BLOCKED for complete scope; mechanics only.
+- **REQ-WFLOW-011 — WI/SOP approval (RD-019)**
+  - Code/use case: document-version approval; P-06 template approval does not grant WI/SOP approval permission.
+  - Existing test: document workflow suites referenced by canonical matrix RD-019.
+  - Evidence/source: `PERMISSION-MATRIX.md` §58; `STATE-MACHINES.md` TR-DOC; Document Control/QMS decision absent.
+  - Status: BLOCKED — `PERM-DOC-APPROVE` denied until explicit approval.
+- **REQ-RCOV-002/003 — RPO/RTO (PD-26/27)**
+  - Code/use case: `recovery-metrics.ts` hard-codes RPO 86,400s / RTO 14,400s, and unit tests assert them. Those values conflict with the open canonical decision and are not approved targets.
+  - Existing test: `tests/unit/backup-recovery/metrics.test.ts` asserts code constants; it is not policy approval or provider-compliance evidence.
+  - Evidence/source: `POLICY-CLOSURE-MATRIX.md` PD-26/27 and recovery risk record; approved target/provider measurement absent.
+  - Status: BLOCKED — code discrepancy identified; no approved target or provider measurement.
+- **REQ-AUTHZ-012 / REQ-RCOV-001 — production restore (RD-020)**
+  - Code/use case: restore validation distinguishes isolated drill target from production target.
+  - Existing test: recovery authorization tests referenced by canonical matrix RD-020.
+  - Evidence/source: `PERMISSION-MATRIX.md` §78; Recovery Plan owner decision absent.
+  - Status: BLOCKED — production restore denied until approval.
+
+All other open `PD-*` decisions remain itemized in `DECISION-ASSUMPTION-REGISTER-026.md` §3 and the canonical `audit/100-percent/POLICY-CLOSURE-MATRIX.md`, which records each decision's owner, exact question, governing source, implementation location, tests/evidence, and current fail-closed behavior. `RD-019` and `RD-020` are cross-referenced there and in §8 of the decision register. No unresolved requirement is upgraded by this derived mapping.
+
 
 # 7. Document status
 

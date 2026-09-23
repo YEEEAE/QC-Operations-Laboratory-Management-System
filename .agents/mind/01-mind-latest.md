@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-23 — QC-100-FINAL-026-C / reconciled open QC and recovery decisions**
+  - Changed: ربط سجل القرار وآلات الحالة ومصالحة المتطلبات بمسارات use case الحالية، وإضافة RD-019/RD-020. تحديث التدفق الفعلي: إنشاء/تسجيل نتيجة التفتيش موصولان لكن لا مصدر evaluator معتمد؛ laboratory `evaluate()` يرفض؛ Reject الافتراضي `POLICY_SOURCE_REQUIRED`.
+  - Evidence: `requirements:check` PASS (100 requirements, 34 risks, 20 gaps, 33 decisions, 80 domains). اكتُشفت مخالفة: recovery metrics/code والاختبار يثبتون RPO=24h وRTO=4h رغم بقاء PD-26/27 مفتوحة؛ لم تُغيّر القيم دون قرار.
+  - State: PARTIAL — قرارات QC/WI-SOP/Reject/restore وRPO/RTO ما زالت BLOCKED؛ لا tests أو migrations شُغلت، ولا تغيير runtime.
+  - Key files: `Documents/REQUIREMENTS-RECONCILIATION.md`, `Documents/DECISION-ASSUMPTION-REGISTER-026.md`, `Documents/STATE-MACHINES.md`.
+
 - **2026-09-23 — QC-BASELINE-REPAIR / إصلاح بوابات typecheck وarchitecture والوحدة**
   - Changed: تمرير offset المختبر، نقل metrics خلف application boundary، وإصلاح lint وعيوب unit مع تحديث العقود القديمة دون حذف أو تخفيف assertions.
   - Evidence: baseline SHA `d0dc705f278a574b3f8f5e822c216fb01b61a9bd` clean؛ Node `24.20.0` / pnpm `11.25.0`؛ 24/977 إخفاقًا صُنفت (19 عقد/fixture متقادمة، 5 عيوب تنفيذ)؛ final run `9d8cb827-63f1-4fc9-8087-2844e63aecf4`: typecheck 956/0 errors، unit 977/977، lint/architecture/requirements/parity/build PASS. PostgreSQL/E2E BLOCKED لغياب Docker؛ البناء لا يثبت الجاهزية. التفصيل: `audit/2026-09-23/unit-baseline-triage.md`.
@@ -383,7 +389,7 @@
 - F-11 ما زال `OPEN / PARTIAL`: candidate-bound local archive bundle restored DB and file payloads from the archive; 77 tables / 487 snapshot rows / 30 ledger rows / 154 validated FKs, app/security and wrong-candidate denial PASS. Saved hashes show 74/77 current-source tables match; the 3 diffs are the measured post-backup task/audit/outbox marker. Local recovery measured 435 ms; provider DR/RPO remains NOT VERIFIED. Report `audit/2026-09-19/QC-100-FINAL-008-populated-backup-isolated-recovery.md`.
 - QC-100-FINAL-025 أعاد تمرين مسار dump→استعادة معزولة على المرشح الحالي (`0031`) بنجاح محلي وضابطة سلبية صادقة؛ أضاف `Documents/FIRST-DAY-OPERATING-CHECKLIST.md` و`Documents/INCIDENT-PROBLEM-RUNBOOK.md` كطبقة مشتقة. **حقيقة تشغيلية ثابتة: لا scheduler مربوطًا للنسخ اليومي/الـdrill الشهري (عقد تقويمي فقط) ولا قناة إشعارات خارجية (in-app فقط) ولا monitoring/alerting على المزود** — كلها مسجلة DEP-025-02..04 بلا تحويل إلى جاهزية.
 - الإعدادات الاختيارية لـR2 موجودة بدون أسرار، ويوجد backup job محلي fail-closed وPostgres recovery evidence append-only.
-- واجهة Backups تعرض **أهداف** RPO=24h وRTO=4h؛ لا تعتبرها قياسات محققة. Marker محلي committed بعد إكمال dump بـ92s لم يوجد في الاستعادة؛ لا يحدد ذلك أقصى RPO.
+- القيم 24h/4h التي يعرضها التطبيق وتثبتها unit tests غير معتمدة؛ PD-26/27 مفتوحة، فلا تُعامل كأهداف أو قياسات أو دليل امتثال. Marker محلي committed بعد إكمال dump بـ92s لم يوجد في الاستعادة؛ لا يحدد ذلك أقصى RPO.
 - restore drill يجب أن يكون على target معزول صريح.
 - application backup-catalog integration and provider plan/retention/PITR-WAL/storage/DR remain unverified; approved RPO/RTO and provider recovery remain unmeasured. Production stays behind QC-100-FINAL-015.
 - Production Recovery authorization تستخدم الهوية server-derived للمالك المسمى؛ لا تمنح Admin سلطة استعادة تلقائيًا.
@@ -479,7 +485,7 @@
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
 
 ## 12) Architecture / Deployment / Assets
-- **2026-09-23 fresh live/source discrepancy:** `/system/backups` يعرض RPO=24h وRTO=4h، بينما `Documents/BACKUP-RECOVERY-PLAN.md` يحدد كليهما `POLICY-DEPENDENT` ويحظر اختراع الرقم؛ يلزم قرار مالك أو تصحيح العرض. في المشاهدة نفسها `/system/health`: NOT READY، 0018 مطبق/0038 مشحون، 20 ترحيلًا معلّقًا، هوية الإصدار UNVERIFIED، backup catalog فارغ وrestore NOT VERIFIED. هذه لقطة زمنية لا تثبت SHA النشر.
+- **2026-09-23 fresh live/source discrepancy:** التطبيق واختباراته يثبتون RPO=24h وRTO=4h، بينما `Documents/BACKUP-RECOVERY-PLAN.md` ومصفوفة القرارات يتركانهما `POLICY-DEPENDENT` ويحظران الرقم غير المعتمد؛ code correction remains open. في المشاهدة نفسها `/system/health`: NOT READY، 0018 مطبق/0038 مشحون، 20 ترحيلًا معلّقًا، هوية الإصدار UNVERIFIED، backup catalog فارغ وrestore NOT VERIFIED. هذه لقطة زمنية لا تثبت SHA النشر.
 - **Historical — 2026-09-21 (035-B):** فشل architecture على المرشح `4fa6ac3` بسبب استيرادات delivery مباشرة؛ أُعيد التحقق وأُغلقت محليًا على HEAD `0ba087c` بتاريخ 2026-09-23 (انظر ARCH-DELIVERY-BOUNDARY أعلاه).
 - `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. **فجوة `.env` المحلية أُغلقت 2026-09-22 (PR-A1):** `NODE_ENV=development` + `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` مكتملة؛ diagnose/parity/typecheck/build كلها PASS على Node `v24.20.0` مع `.nvmrc`.
 - **Historical — candidate `5470a2e` (036-B):** سجل سابق عن build/receiving والـarchitecture؛ انتهاكات delivery/domain المرتبطة أُغلقت محليًا على HEAD `0ba087c` بتاريخ 2026-09-23 (انظر ARCH-DELIVERY-BOUNDARY).
