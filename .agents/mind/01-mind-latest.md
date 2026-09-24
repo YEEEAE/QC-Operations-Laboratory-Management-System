@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-LAB-REPORT-TEMPLATES-ULTIMATE-001 / قوالب تقارير المختبر**
+  - Changed: فصل حفظ المسودات خلف repository مع تحقق الصلاحيات/المالك والإصدار والتدقيق؛ أضيف عرض الطباعة وتحذير التغييرات غير المحفوظة دون اختراع وحدات أو حدود قياس.
+  - Evidence: feature unit 6/6، typecheck 971/0 أخطاء، build وarchitecture وrequirements PASS؛ PostgreSQL integration BLOCKED لغياب container runtime. Full unit PARTIAL؛ التفاصيل `audit/2026-09-24/qc-lab-report-templates-ultimate-001.md`.
+  - State: PARTIAL — لا يوجد نموذج مصدر معتمد/إصدار لتأكيد المطابقة، ولا دليل PostgreSQL أو browser runtime؛ لا اعتماد أو نتيجة علمية رسمية.
+  - Key files: `src/pages/laboratory/report-templates.astro`, `src/modules/laboratory/`, `audit/2026-09-24/qc-lab-report-templates-ultimate-001.md`.
+
 - **2026-09-24 — AI-POLICY-BOUNDARY / processing consent and advisory evals**
   - Changed: external providers now require a complete approved policy artifact, policy-permitted content class, and per-request consent; outputs expose provenance and local correction guidance. Eval dataset v4 covers 33 synthetic cases.
   - Evidence: AI-focused tests 90/90 PASS; eval category disposition errors 0%; typecheck 967/0 errors; build 1/1 PASS. No live provider calls. Source policy is absent, so external processing remains disabled.
@@ -279,7 +285,7 @@
 - QC-CLOSURE-006 يثبت عقود receiving supplier وinspection assignment وsource/evidence linkage/count وreceiving history؛ Submit يرفض التفتيش بلا evidence نشط، وReject قرار workflow مستقل عن النتيجة العلمية FAIL. الإثبات الحي لقاعدة البيانات ما زال BLOCKED.
 
 ## 6) Inspection / Laboratory / Release invariants
-- **Laboratory report entry (2026-09-24):** مسودتا Subatmospheric Pressure Air Leakage وPressure Decay متاحتان من صفحة المختبر بالحقول نفسها و12 عينة، وتُحفظان منفصلتين عن `lab_tests`. لا تمنح المسودة اعتمادًا أو نتيجة علمية رسمية؛ `0039_laboratory_report_drafts` هو رأس المصدر المحلي، وتطبيقه على قاعدة فعلية NOT VERIFIED.
+- **Laboratory report entry (2026-09-24):** مسودتا Subatmospheric Pressure Air Leakage وPressure Decay متاحتان من صفحة المختبر، و12 عينة لكل منهما، وتُحفظان منفصلتين عن `lab_tests`. الحقول نصّية transcription-only لغياب نموذج مصدر معتمد/رقم مراجعة؛ لا وحدات أو حدود أو تقييم علمي مستنتج، والطباعة ليست تقريرًا معتمدًا. `0039_laboratory_report_drafts` رأس المصدر المحلي؛ repository/integration PostgreSQL runtime NOT VERIFIED لغياب container runtime، دون تغيير قاعدة الإنتاج.
 - `Inspection Result` و`Release System State` حالتان منفصلتان؛ `PASS ≠ RELEASED`.
 - Laboratory state machine is fully implemented for Create/Save/Submit/Review/Return/Resume/Approve/**Reject**; `VOID` (TR-LAB-008) remains unimplemented and policy-denied.
 - **Two-stage approval (QC-100-FINAL-013، مُثبت runtime):** `UNDER_REVIEW --stage-1 Supervisor (PERM-INSP/LAB-APPROVE)--> PENDING_QCM_APPROVAL --stage-2 QCM (MANAGER أو yazeed المسمى؛ PERM-APR-APPROVE + PERM-ESIG-SIGN + reauthentication)--> APPROVED (مقفل)` بتوقيع واحد بمعنى `FINAL_APPROVE` مربوط بالنسخة السابقة للانتقال؛ stage-1 حدث سير عمل بلا توقيع؛ لا مسار تجاوز؛ `REOPEN` بسبب مدقّق من سلطة الاعتماد النهائي يعيد إلى `UNDER_REVIEW` ولا يمحو سجل التوقيع، ثم يعاد إلزاميًا ترتيب المرحلتين. اعتماد تقرير التفتيش يحدّث Receiving إلى `INSPECTION_COMPLETE` ولا يُفرج أبدًا، وعنصر Receiving في `HOLD` لا يُستعاد (الطلب يُرفض).

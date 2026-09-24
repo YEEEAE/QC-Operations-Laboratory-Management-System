@@ -2948,6 +2948,7 @@ the same `EMPLOYEE` grant bundle and have identical listed capability.
 |---|---|---|---|---|---|
 | Receiving record | `/quarantine/receiving/new` | `PERM-QUAR-CREATE` | CREATE | CREATE | CREATE |
 | Laboratory report | `/laboratory/tests/new` | `PERM-LAB-CREATE` | CREATE | CREATE | CREATE |
+| Laboratory report transcription draft | `/laboratory/report-templates` | `PERM-LAB-CREATE` (plus `PERM-LAB-VIEW`; update: `PERM-LAB-EDIT-DRAFT`) | CREATE | CREATE | CREATE |
 | NCR | `/quality/ncr/new` | `PERM-NCR-CREATE` | CREATE | CREATE | CREATE |
 | CAPA | `/quality/capa/new` | `PERM-CAPA-CREATE` | CREATE | CREATE | CREATE |
 | Finding | `/quality/findings/new` | `PERM-FIND-CREATE` | CREATE | CREATE | CREATE |

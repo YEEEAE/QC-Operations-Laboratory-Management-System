@@ -19,6 +19,7 @@ let id = Astro.url.searchParams.get('draft') ?? '';
 let version = 0n;
 let error = '';
 let draftLoadFailed = false;
+const printMode = Astro.url.searchParams.get('print') === '1';
 let drafts: Awaited<ReturnType<typeof listReportDrafts>> = [];
 
 if (canView) {
@@ -38,6 +39,18 @@ if (canView) {
 if (Astro.request.method === 'POST' && !draftLoadFailed && canView && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate)) {
   const form = await Astro.request.formData();
   const text = (key: string) => String(form.get(key) ?? '').trim();
+  const expectedNames = new Set([
+    'version', 'reportType', 'connectorType', 'overallResult',
+    ...reportFields.map(([key]) => key),
+    ...Array.from({ length: 12 }, (_, index) => sampleFields.map(([key]) => `samples.${index}.${key}`)).flat(),
+  ]);
+  const submittedEntries = [...form.entries()];
+  const submittedNames = submittedEntries.map(([key]) => key);
+  const malformedForm =
+    submittedEntries.some(([, value]) => typeof value !== 'string') ||
+    submittedNames.some((key) => !expectedNames.has(key)) ||
+    new Set(submittedNames).size !== submittedNames.length ||
+    [...expectedNames].some((key) => !submittedNames.includes(key));
   const raw = {
     reportType: text('reportType'), connectorType: text('connectorType'),
     overallResult: text('overallResult'),
@@ -46,7 +59,10 @@ if (Astro.request.method === 'POST' && !draftLoadFailed && canView && (id ? has(
       Object.fromEntries(sampleFields.map(([key]) => [key, text(`samples.${index}.${key}`)]))),
   };
   const parsed = reportDraftSchema.safeParse(raw);
-  if (!parsed.success) error = 'Check the report fields and try saving again.';
+  if (malformedForm || !parsed.success) {
+    error = 'Check the report fields and try saving again.';
+    data = raw as ReportDraftData;
+  }
   else {
     data = parsed.data;
     try {
@@ -83,25 +99,32 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
         {Object.entries(reportTypes).map(([key, title]) =>
           <a href={`/laboratory/report-templates?type=${key}`} aria-current={!id && data.reportType === key ? 'page' : undefined}>{title}</a>)}
       </nav>
-      {drafts.length > 0 && <section aria-labelledby="saved-drafts"><h2 id="saved-drafts">Your saved drafts</h2><ul>{drafts.map((draft) =>
-        <li><a href={`/laboratory/report-templates?draft=${draft.id}`}>{reportTypes[draft.report_type as ReportType] ?? draft.report_type} · {draft.updated_at.toISOString().slice(0, 10)}</a></li>)}</ul></section>}
+      {drafts.length > 0 && <section aria-labelledby="saved-drafts"><h2 id="saved-drafts">Saved drafts</h2><ul class="draft-list">{drafts.map((draft) =>
+        <li><a href={`/laboratory/report-templates?draft=${draft.id}`}><strong>{reportTypes[draft.report_type as ReportType]}</strong><span>{draft.form_data.lotNumber ? `Lot ${draft.form_data.lotNumber}` : 'Lot not recorded'} · {draft.form_data.productDescription || 'Item not recorded'} · Updated {draft.updated_at.toISOString().slice(0, 10)}</span></a></li>)}</ul></section>}
       {Astro.url.searchParams.get('saved') === '1' && <p role="status">Draft saved.</p>}
       {error && <p role="alert">{error}</p>}
-      {!draftLoadFailed && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
+      {id && data && <p class="draft-meta"><strong>Draft ID:</strong> {id} · <strong>Version:</strong> {version.toString()}</p>}
+      {printMode && id && !draftLoadFailed ? <>
+        <div class="print-actions"><a href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}`}>Back to draft</a><button type="button" data-print-report>Print report</button></div>
+        <article class="print-report">
+          <header><p>TRANSCRIPTION DRAFT · NOT AN APPROVED LABORATORY RESULT</p><h2>{reportTypes[data.reportType]}</h2><p>Draft ID: {id} · Version {version.toString()}</p></header>
+          {groups.map((group) => <section><h3>{group.title}</h3><dl>{group.keys.map((key) => <div><dt>{labelOf(key)}</dt><dd>{data[key] || 'Not recorded'}</dd></div>)}</dl></section>)}
+          <section><h3>Connector type</h3><p>{data.connectorType || 'Not recorded'}</p></section>
+          <section><h3>Sample measurements</h3><div class="table-scroll"><table><caption>Recorded values for all 12 samples</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>{data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key]) => <td>{sample[key] || 'Not recorded'}</td>)}</tr>)}</tbody></table></div></section>
+          <section><h3>Overall result entered on source report</h3><p>{data.overallResult || 'Not recorded'}</p></section>
+          <p class="transcription-note">Tested By, Reviewed By, and Approved By are transcribed source text only. They are not electronic signatures or current approvals. This draft does not approve a laboratory test or release product.</p>
+        </article>
+      </> : !printMode && !draftLoadFailed && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form data-report-draft method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
         <input type="hidden" name="version" value={version.toString()} />
         <input type="hidden" name="reportType" value={data.reportType} />
         <h2>{reportTypes[data.reportType]}</h2>
+        {id && <p><a href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}&print=1`}>Open print view</a></p>}
+        <p class="dirty-state" data-dirty-label role="status" aria-live="polite"></p>
         {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="field-grid">{group.keys.map((key) =>
-          <label>{labelOf(key)}<input name={key} type={key.toLowerCase().includes('date') ? 'date' : 'text'} maxlength="2000" value={data[key]} /></label>)}</div></fieldset>)}
-        <fieldset><legend>Connector type</legend><div class="radio-group">
-          {[
-            ['', 'Not recorded'], ['NON_LOCKING_RIGID', 'Non-locking (rigid) connector'],
-            ['FLOATING_COLLAR', 'Connector with floating or movable collar'],
-            ['LOCKING_FIXED_THREADS', 'Locking connector with fixed threads'],
-          ].map(([value, label]) => <label><input type="radio" name="connectorType" value={value} checked={data.connectorType === value} />{label}</label>)}
-        </div></fieldset>
+          <label>{labelOf(key)}<input name={key} type="text" maxlength="2000" value={data[key]} /></label>)}</div></fieldset>)}
+        <fieldset><legend>Connector configuration</legend><label>Transcribe the configuration shown on the source report<input name="connectorType" maxlength="500" value={data.connectorType} /></label></fieldset>
         <fieldset><legend>Test results · 12 samples</legend><div class="table-scroll"><table><caption>Measurements and result for each numbered sample</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>
-          {data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key, label]) => <td><label class="sr-only" for={`sample-${index}-${key}`}>{label} for sample {index + 1}</label>{key === 'result' ? <select id={`sample-${index}-${key}`} name={`samples.${index}.${key}`}><option value="" selected={sample.result === ''}>—</option><option value="PASS" selected={sample.result === 'PASS'}>PASS</option><option value="FAIL" selected={sample.result === 'FAIL'}>FAIL</option></select> : <input id={`sample-${index}-${key}`} name={`samples.${index}.${key}`} value={sample[key]} maxlength="500" />}</td>)}</tr>)}
+          {data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key, label]) => <td><label class="sr-only" for={`sample-${index}-${key}`}>{label} for sample {index + 1}</label><input id={`sample-${index}-${key}`} name={`samples.${index}.${key}`} value={sample[key]} maxlength="500" /></td>)}</tr>)}
         </tbody></table></div></fieldset>
         <fieldset><legend>Overall result entered on the source report</legend><div class="radio-group">
           {[
@@ -114,6 +137,18 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
     </>}
   </div>
 </AppLayout>
+<script>
+  import { guardUnsavedChanges } from '../../ui/forms/unsaved-changes';
+  const form = document.querySelector<HTMLFormElement>('[data-report-draft]');
+  if (form) {
+    guardUnsavedChanges(form);
+    const dirtyLabel = form.querySelector<HTMLElement>('[data-dirty-label]');
+    const markDirty = () => { if (dirtyLabel) dirtyLabel.textContent = 'Unsaved changes'; };
+    form.addEventListener('input', markDirty);
+    form.addEventListener('change', markDirty);
+  }
+  document.querySelector<HTMLButtonElement>('[data-print-report]')?.addEventListener('click', () => window.print());
+</script>
 <style>
   .report-entry{max-width:78rem;margin-inline:auto;padding:1rem}.report-entry a{color:var(--color-accent-primary-hover)}
   .template-choices{display:flex;gap:1rem;flex-wrap:wrap;margin:1.5rem 0}.template-choices a{padding:.75rem;border:1px solid var(--border-default);border-radius:var(--radius-md)}
@@ -125,4 +160,8 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
   .table-scroll{overflow-x:auto}table{border-collapse:collapse;min-width:1100px;width:100%}th,td{border:1px solid var(--border-default);padding:.35rem}th{text-align:start}td input{min-width:7rem}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   button{justify-self:start;min-height:2.75rem;padding:.65rem 1rem;background:var(--color-accent-primary);color:var(--color-text-inverse);border:0;border-radius:var(--radius-md);font:inherit;cursor:pointer}
+  .draft-list{display:grid;gap:.5rem;padding-inline-start:1.25rem}.draft-list a{display:grid;gap:.2rem}.draft-list span,.draft-meta{color:var(--text-muted)}
+  .print-actions{display:flex;gap:1rem;align-items:center;margin-block:1rem}.print-report{background:white;color:#111;padding:1rem}.print-report header{border-bottom:2px solid #111;margin-bottom:1rem}.print-report header>p:first-child,.transcription-note{font-weight:700}.print-report section{margin-block:1rem}.print-report dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}.print-report dl div{display:grid;grid-template-columns:minmax(8rem,1fr) 2fr;border-bottom:1px solid #ccc}.print-report dt{font-weight:700}.print-report dd{margin:0}.dirty-state:empty{display:none}
+  @page{size:landscape;margin:12mm}
+  @media print{:global(.app-sidebar),:global(.app-topbar),:global(.skip-link){display:none!important}:global(.app-shell),:global(.app-workspace){display:block;min-height:0}:global(.app-main){width:auto;max-width:none;margin:0;padding:0;overflow:visible}.report-entry>p:first-child,.report-entry>h1,.report-entry>p:nth-of-type(2),nav,.draft-list,section[aria-labelledby="saved-drafts"],.draft-meta,.print-actions,form{display:none!important}.report-entry{max-width:none;padding:0}.print-report{padding:0}.table-scroll{overflow:visible}table{min-width:0;font-size:8pt}th,td{padding:.2rem}.print-report{break-inside:auto}.print-report section{break-inside:avoid}}
 </style>

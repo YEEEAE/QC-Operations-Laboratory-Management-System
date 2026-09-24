@@ -25,6 +25,7 @@ truth without checking the source code and current documents.
 | Role operating & support | `Documents/ROLE-OPERATING-GUIDES.md`, `Documents/SUPPORT-OWNERSHIP-REGISTER.md` (derived layer; canonical policy stays in ROLE-MATRIX/PERMISSION-MATRIX) |
 | Development and operations | `Documents/LOCAL-DEVELOPMENT.md`, `Documents/CONFIGURATION-REFERENCE.md`, `Documents/TESTING.md`, `Documents/TESTING-STRATEGY.md`, current runbooks under `Documents/` (`AI-PROVIDERS.md`, `F11-BACKUP-RECOVERY-RUNBOOK.md`, `INCIDENT-QUICK-REFERENCE.md`, `INCIDENT-PROBLEM-RUNBOOK.md`, `FIRST-DAY-OPERATING-CHECKLIST.md`, `INITIAL-ADMIN-BOOTSTRAP.md`, `RELEASE-RUNBOOK.md`, `ENVIRONMENT-DRIFT-REGISTER.md`, `RENDER-DATABASE-CONNECTION.md`, `RENDER-DEPLOYMENT.md`, `RENDER-MIGRATION-RUNBOOK.md`, `RESTORE-DRILL-RUNBOOK.md`, `BACKUP-RECOVERY-PLAN.md`) |
 | Architecture additions | `Documents/EXTENDING-THE-SYSTEM.md`, `Documents/ROUTE-MATRIX.md`, `Documents/REJECT-REPORTS.md` |
+| Laboratory report drafts | `Documents/LABORATORY-REPORT-TEMPLATES.md` |
 | Database contract | `db/migrations/README.md` |
 | Starting data preparation | `Documents/MASTER-DATA-STARTING-DATA.md`, `Documents/FIRST-USE-DATA-MANIFEST.md` (inventory derived from `scripts/data/`) |
 | Project operating instructions | `AGENTS.md`, `.agents/AGENTS.md`, `.agents/mind/01-mind-latest.md` |

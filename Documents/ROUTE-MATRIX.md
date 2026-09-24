@@ -6,7 +6,7 @@
 registered page files; 2 deferred auth route declarations; 6 conditional
 creation routes; 33 navigation destinations.
 
-> **Current-source count (2026-09-23):** The dated freeze counts above are
+> **Current-source count (2026-09-24):** The dated freeze counts above are
 > historical. `src/shared/routing/routes.ts` currently exports 87 routes and
 > `src/ui/navigation/navigation.ts` currently declares 34 destinations. The
 > current role-by-route visibility, direct page gate, data-read boundary, and
@@ -15,6 +15,10 @@ creation routes; 33 navigation destinations.
 > routes. `/admin` and its ordinary navigation destinations stay visible and
 > page-openable to every ACTIVE authenticated account; identity data reads and
 > actions remain separately authorized.
+
+> **Current-source addition (2026-09-24):** `RT-LAB-009` registers
+> `/laboratory/report-templates`; its create/read/edit permission checks remain
+> in the report-draft application boundary, independent of route visibility.
 
 > 2026-09-20 (QC-100-FINAL-020): added `RT-HELP-001` `/help`
 > (`src/pages/help/index.astro`) — the in-app role operating & support guide,
@@ -71,6 +75,7 @@ creation routes; 33 navigation destinations.
 | RT-LAB-001 | `/laboratory` | `src/pages/laboratory/index.astro` | laboratory | AUTHENTICATED | — | laboratory read models | laboratory use cases | NO | R/D/E |
 | RT-LAB-002 | `/laboratory/tests` | `src/pages/laboratory/tests/index.astro` | laboratory | AUTHENTICATED | Laboratory / Tests | authorized test list | lab permissions + state/version | NO | R/D/E |
 | RT-LAB-003 | `/laboratory/tests/new` | `src/pages/laboratory/tests/new.astro` | laboratory | AUTHENTICATED | — | server form/read context | lab create use case | NO | R/D/E |
+| RT-LAB-009 | `/laboratory/report-templates` | `src/pages/laboratory/report-templates.astro` | laboratory | AUTHENTICATED | Laboratory / Tests (entry link) | author-scoped or GLOBAL draft reads | report-draft permissions + author scope + version/audit transaction | NO | R/D/E |
 | RT-LAB-004 | `/laboratory/tests/[labTestId]` | `src/pages/laboratory/tests/[labTestId]/index.astro` | laboratory | AUTHENTICATED | — | test detail, measurements, history | lab permissions + state/version | NO | R/D/E |
 | RT-LAB-005 | `/laboratory/tests/[labTestId]/execute` | `src/pages/laboratory/tests/[labTestId]/execute.astro` | laboratory | AUTHENTICATED | — | execution snapshot/context | lab execution + equipment eligibility | NO | R/D/E |
 | RT-LAB-006 | `/laboratory/tests/[labTestId]/review` | `src/pages/laboratory/tests/[labTestId]/review.astro` | laboratory | AUTHENTICATED | — | review/evidence context | P-05 review/approve/reject policy | NO | R/D/E |

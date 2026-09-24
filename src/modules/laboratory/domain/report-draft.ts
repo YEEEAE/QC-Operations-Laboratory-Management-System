@@ -21,12 +21,12 @@ export const reportFields = [
   ['testingArea', 'Testing area'],
   ['mediumName', 'Medium name'],
   ['mediumUsed', 'Medium used'],
-  ['actualForce', 'Actual force (N)'],
-  ['torque', 'Torque (N·m)'],
-  ['assemblyTime', 'Assembly time (sec)'],
-  ['assemblyAngle', 'Assembly angle (°)'],
-  ['temperature', 'Temperature (°C)'],
-  ['humidity', 'Humidity (%)'],
+  ['actualForce', 'Actual force'],
+  ['torque', 'Torque'],
+  ['assemblyTime', 'Assembly time'],
+  ['assemblyAngle', 'Assembly angle'],
+  ['temperature', 'Temperature'],
+  ['humidity', 'Humidity'],
   ['standardCondition', 'Standard condition'],
   ['remainingDifference', 'Remaining difference'],
   ['timePreset', 'Time preset (sec)'],
@@ -37,33 +37,38 @@ export const reportFields = [
 ] as const;
 
 export const sampleFields = [
+  ['sampleIdentifier', 'Sample identifier (as recorded)'],
   ['partName', 'Part name'],
-  ['setPressure', 'Set pressure (kPa)'],
-  ['appliedPressure', 'Applied pressure (kPa)'],
-  ['volume', 'Volume (litre)'],
-  ['pressureDifference', 'Pressure difference (kPa)'],
-  ['holdingTime', 'Holding time (sec)'],
-  ['leakageRate', 'Leakage rate (Pa·cm³/s)'],
-  ['result', 'Result (Pass / Fail)'],
+  ['setPressure', 'Set pressure'],
+  ['appliedPressure', 'Applied pressure'],
+  ['volume', 'Volume'],
+  ['pressureDifference', 'Pressure difference'],
+  ['holdingTime', 'Holding time'],
+  ['leakageRate', 'Leakage rate'],
+  ['result', 'Result recorded on source report'],
 ] as const;
 
-const sampleSchema = z.object({
-  ...(Object.fromEntries(sampleFields.map(([key]) => [key, z.string().max(500)])) as Record<
-    (typeof sampleFields)[number][0],
-    z.ZodString
-  >),
-  result: z.enum(['', 'PASS', 'FAIL']),
-});
-export const reportDraftSchema = z.object({
-  reportType: z.enum(['SUBATMOSPHERIC_AIR_LEAKAGE', 'PRESSURE_DECAY']),
-  connectorType: z.enum(['', 'NON_LOCKING_RIGID', 'FLOATING_COLLAR', 'LOCKING_FIXED_THREADS']),
-  overallResult: z.enum(['', 'PASS', 'FAIL', 'HOLD_FURTHER_EVALUATION']),
-  ...(Object.fromEntries(reportFields.map(([key]) => [key, z.string().max(2000)])) as Record<
-    (typeof reportFields)[number][0],
-    z.ZodString
-  >),
-  samples: z.array(sampleSchema).length(12),
-});
+const sampleSchema = z
+  .object({
+    ...(Object.fromEntries(sampleFields.map(([key]) => [key, z.string().max(500)])) as Record<
+      (typeof sampleFields)[number][0],
+      z.ZodString
+    >),
+    result: z.string().max(500),
+  })
+  .strict();
+export const reportDraftSchema = z
+  .object({
+    reportType: z.enum(['SUBATMOSPHERIC_AIR_LEAKAGE', 'PRESSURE_DECAY']),
+    connectorType: z.string().max(500),
+    overallResult: z.enum(['', 'PASS', 'FAIL', 'HOLD_FURTHER_EVALUATION']),
+    ...(Object.fromEntries(reportFields.map(([key]) => [key, z.string().max(2000)])) as Record<
+      (typeof reportFields)[number][0],
+      z.ZodString
+    >),
+    samples: z.array(sampleSchema).length(12),
+  })
+  .strict();
 export type ReportDraftData = z.infer<typeof reportDraftSchema>;
 
 export function emptyReportDraft(reportType: ReportType): ReportDraftData {
