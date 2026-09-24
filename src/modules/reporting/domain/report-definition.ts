@@ -18,6 +18,7 @@ export interface ReportDefinition {
   readonly title: string;
   readonly description: string;
   readonly source: 'QUARANTINE_RECEIVING';
+  readonly sort: string;
   readonly status: 'UNAPPROVED_INFORMATIONAL_COPY';
   readonly viewPermission: PermissionCode;
   readonly runPermission: PermissionCode;
@@ -26,11 +27,25 @@ export interface ReportDefinition {
   readonly columns: readonly ReportColumn[];
 }
 
+export interface ReportProvenance {
+  readonly report: string;
+  readonly generatedAt: string;
+  readonly generatedBy: string;
+  readonly scope: string;
+  readonly period: string;
+  readonly filters: string;
+  readonly count: number;
+  readonly status: string;
+  readonly source: string;
+  readonly sort: string;
+}
+
 export const QUARANTINE_AGING_REPORT: ReportDefinition = {
   code: 'quarantine-aging',
   title: 'Quarantine receiving register',
   description: 'Authorized receiving items with their current workflow and inspection states.',
   source: 'QUARANTINE_RECEIVING',
+  sort: 'Receiving date descending, then stable record id descending',
   status: 'UNAPPROVED_INFORMATIONAL_COPY',
   viewPermission: 'PERM-RPT-VIEW',
   runPermission: 'PERM-RPT-RUN',

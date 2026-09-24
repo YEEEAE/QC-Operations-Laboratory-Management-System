@@ -84,7 +84,7 @@ test.describe('files, evidence, reports, and exports security', () => {
     await signIn(page);
     await page.goto('/reports/quarantine-aging');
     const toolbar = await page.locator('.toolbar').innerText();
-    const screenCount = Number(toolbar.match(/(\d+) authorized rows/)?.[1]);
+    const screenCount = Number(toolbar.match(/(\d+) authorized records/)?.[1]);
     expect(Number.isInteger(screenCount)).toBe(true);
 
     const result = await action(request, 'reports.exportReport', {
@@ -102,6 +102,67 @@ test.describe('files, evidence, reports, and exports security', () => {
     const csv = Buffer.from(data.contentBase64 ?? '', 'base64').toString('utf8');
     expect(csv).not.toMatch(/(^|[\r\n],?)[=+\-@][^\r\n]*/);
     expect(csv).not.toMatch(SENSITIVE);
+  });
+
+  test('report print keeps the screen dataset, provenance, and accessible table headers', async ({
+    page,
+    request,
+  }) => {
+    await signIn(page);
+    const filters = {
+      from: '2026-03-15',
+      to: '2026-03-15',
+      lot: 'LOT-SCOPE',
+      itemCode: 'ITEM-SCOPE',
+      workflowState: 'INSPECTION_COMPLETE',
+      inspectionResult: 'PASS',
+      releaseSystem: 'true',
+    };
+    await page.goto(`/reports/quarantine-aging?${new URLSearchParams(filters)}`);
+    const count = await page.locator('#report-table tbody tr').count();
+    await expect(page.locator('#report-table caption')).toContainText(
+      `${count} authorized records`,
+    );
+    await expect(page.getByText('qc.receiving_items', { exact: true })).toBeVisible();
+    await expect(page.getByText('2026-03-15 to 2026-03-15')).toBeVisible();
+    await expect(page.getByText(/lot=LOT-SCOPE; itemCode=ITEM-SCOPE/)).toBeVisible();
+    await expect(
+      page.getByText('Receiving date descending, then stable record id descending', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.locator('.report-provenance time')).toHaveAttribute('datetime', /Z$/);
+    await expect(page.locator('#report-table thead th[scope="col"]')).toHaveCount(11);
+    const result = await action(request, 'reports.exportReport', {
+      reportCode: 'quarantine-aging',
+      format: 'CSV',
+      ...filters,
+    });
+    expect(result.response.ok()).toBe(true);
+    const payload = JSON.parse(result.text) as {
+      data?: { rowCount?: number; contentBase64?: string };
+      rowCount?: number;
+      contentBase64?: string;
+    };
+    const exported = payload.data ?? payload;
+    expect(exported.rowCount).toBe(count);
+    const csv = Buffer.from(exported.contentBase64 ?? '', 'base64').toString('utf8');
+    expect(csv).toContain('Source,qc.receiving_items');
+    expect(csv).toContain('Period,2026-03-15 to 2026-03-15');
+    expect(csv).toContain(
+      'Filters,from=2026-03-15; to=2026-03-15; lot=LOT-SCOPE; itemCode=ITEM-SCOPE; workflowState=INSPECTION_COMPLETE; inspectionResult=PASS; releaseSystem=true',
+    );
+    expect(csv).toContain(`Record count,${count} records`);
+    expect(csv).toContain('Sort,"Receiving date descending, then stable record id descending"');
+    expect(csv).toMatch(/Generated at \(UTC\),\d{4}-\d{2}-\d{2}T[^\r\n]+Z/);
+    for (const row of await page.locator('#report-table tbody tr').allInnerTexts()) {
+      const receivingNo = row.split('\t')[0];
+      expect(csv).toContain(receivingNo);
+    }
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('#report-table')).toBeVisible();
+    await expect(page.locator('.report-provenance')).toBeVisible();
+    await expect(page.locator('.toolbar')).toBeHidden();
   });
 
   test('spreadsheet exports neutralize formula-like values and do not leak unauthorized rows', async ({

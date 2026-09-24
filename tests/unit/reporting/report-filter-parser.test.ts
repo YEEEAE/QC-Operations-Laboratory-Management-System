@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { parseReportFilters } from '../../../src/modules/reporting/application/parse-report-filters.js';
+import {
+  parseReportFilterValues,
+  parseReportFilters,
+} from '../../../src/modules/reporting/application/parse-report-filters.js';
 
 describe('report filter URL contract', () => {
   it('parses the same valid filters regardless of the CSV/XLSX format parameter', () => {
     const screen = parseReportFilters(
-      new URLSearchParams('from=2026-03-01&to=2026-03-31&workflowState=PENDING&releaseSystem=false'),
+      new URLSearchParams(
+        'from=2026-03-01&to=2026-03-31&workflowState=PENDING&releaseSystem=false',
+      ),
     );
     const exportFilters = parseReportFilters(
       new URLSearchParams(
@@ -14,6 +19,25 @@ describe('report filter URL contract', () => {
 
     expect(exportFilters).toEqual(screen);
     expect(exportFilters.releaseSystem).toBe(false);
+  });
+
+  it('preserves every report filter for both page links and action exports', () => {
+    const screen = parseReportFilters(
+      new URLSearchParams(
+        'from=2026-03-15&to=2026-03-15&lot=LOT-SCOPE&itemCode=ITEM-SCOPE&workflowState=INSPECTION_COMPLETE&inspectionResult=PASS&releaseSystem=true',
+      ),
+    );
+    const actionExport = parseReportFilterValues({
+      from: '2026-03-15',
+      to: '2026-03-15',
+      lot: 'LOT-SCOPE',
+      itemCode: 'ITEM-SCOPE',
+      workflowState: 'INSPECTION_COMPLETE',
+      inspectionResult: 'PASS',
+      releaseSystem: 'true',
+    });
+
+    expect(actionExport).toEqual(screen);
   });
 
   it.each([

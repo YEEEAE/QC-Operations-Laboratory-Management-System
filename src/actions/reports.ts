@@ -3,12 +3,18 @@ import { z } from 'astro:schema';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
 import { reportingDependencies } from '../modules/reporting/application/dependencies.js';
+import { parseReportFilterValues } from '../modules/reporting/application/parse-report-filters.js';
 
 const input = z.object({
   reportCode: z.string(),
   format: z.enum(['CSV', 'XLSX']),
   from: z.string().optional(),
   to: z.string().optional(),
+  lot: z.string().optional(),
+  itemCode: z.string().optional(),
+  workflowState: z.string().optional(),
+  inspectionResult: z.string().optional(),
+  releaseSystem: z.enum(['true', 'false']).optional(),
 });
 const exportReport = defineAction({
   accept: 'json',
@@ -21,7 +27,7 @@ const exportReport = defineAction({
         actor,
         value.reportCode,
         value.format,
-        { from: value.from, to: value.to },
+        parseReportFilterValues(value),
       );
       return {
         ok: true,

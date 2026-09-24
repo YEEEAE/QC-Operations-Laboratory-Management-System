@@ -75,6 +75,7 @@ export function xlsxBytes(
         ['Record count', `${metadata.count} records`],
         ['Status', metadata.status],
         ['Source', metadata.source],
+        ['Sort', metadata.sort],
         [],
       ]
     : [];

@@ -1,4 +1,7 @@
-import { INSPECTION_RESULTS, RECEIVING_WORKFLOW_STATES } from '../../quarantine/receiving/domain/receiving-state.js';
+import {
+  INSPECTION_RESULTS,
+  RECEIVING_WORKFLOW_STATES,
+} from '../../quarantine/receiving/domain/receiving-state.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { ReportFilters } from '../domain/report-definition.js';
 
@@ -68,7 +71,18 @@ export function parseReportFilters(params: URLSearchParams): ReportFilters {
     itemCode: values.itemCode,
     workflowState: values.workflowState,
     inspectionResult: values.inspectionResult,
-    releaseSystem:
-      values.releaseSystem === undefined ? undefined : values.releaseSystem === 'true',
+    releaseSystem: values.releaseSystem === undefined ? undefined : values.releaseSystem === 'true',
   };
+}
+
+/** Action payloads use the same validation contract as screen/export query strings. */
+export function parseReportFilterValues(
+  values: Partial<Record<(typeof FILTERS)[number], string | undefined>>,
+): ReportFilters {
+  const params = new URLSearchParams();
+  for (const key of FILTERS) {
+    const value = values[key];
+    if (value !== undefined) params.set(key, value);
+  }
+  return parseReportFilters(params);
 }

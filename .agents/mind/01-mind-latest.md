@@ -1,5 +1,7 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-10 / report parity:** Changed Action export to pass all seven filters through the shared strict parser and unified screen/CSV/XLSX provenance; Evidence: Docker PG18 parity 9/9, focused suite 35/35, Astro 0 errors/0 warnings. State: PARTIAL / NO-GO — authenticated print E2E and durable cross-request snapshot/retention decision remain open; handoff `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.
+
 - **2026-09-24 — QC-ADP-09 / accessibility route handoff**
   - Changed: no runtime UI change; root cause remains missing route/state/AT evidence for F-010.
   - Evidence: WCAG contract 9/9 and local login/404 axe+keyboard subset 2/2 PASS; 8 viewport captures show no overflow; live qclevel.top skip links work for dashboard/tasks. Full route cards remain open; 88 have no fresh route evidence, and AT/full denominators remain unverified. Handoff/evidence: `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md`.
@@ -475,6 +477,7 @@
 
 ### P1 / live validation / pre-existing test estate
 - **QC-ADP-08 / F-009 + F-018 remain OPEN:** real task fixture proves `/tasks/[taskId]` GET + server-denied POST with unchanged row/audit on the PG18.6 candidate. One route has partial HTTP proof; 450 remains gross planning only and each card needs applicable checks/N/A source and route-bound evidence. See `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
+- **QC-ADP-10 / F-011 PARTIAL:** PG18 candidate proves screen/query/CSV/XLSX row, filter, order, date, scope, permission, formula, and shared provenance parity. The Action filter omission is fixed. Live route/role and authenticated print E2E remain NOT VERIFIED; durable cross-request snapshots require owner reconciliation of `REQ-RPT-005` / `BR-RPT-005` and retention before persistence. Handoff: `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.
 - **QC-ADP-06:** Finding→NCR threshold/FAIL consequence/NCR closure/CAPA effectiveness remain owner-dependent (PD-15/16/17/18). Approved P-04 permits a controlled Supervisor exception without effectiveness acceptance, so an absolute effectiveness-before-every-closure acceptance criterion conflicts with current policy and requires an explicit owner decision; do not change the exception by implementation. Route handoff: `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
 - **ملف تكامل مخصص للمرحلتين موجود الآن** (كان مفتوحًا في تقرير FINAL-004): `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.

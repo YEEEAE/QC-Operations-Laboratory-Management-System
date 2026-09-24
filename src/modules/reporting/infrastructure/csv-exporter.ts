@@ -1,4 +1,4 @@
-import type { ReportColumn } from '../domain/report-definition.js';
+import type { ReportColumn, ReportProvenance } from '../domain/report-definition.js';
 import type { ReportRow } from '../ports/report-query.js';
 
 export function sanitizeSpreadsheetCell(value: string): string {
@@ -22,17 +22,7 @@ function cell(value: unknown): string {
   const safe = sanitizeSpreadsheetCell(value === null || value === undefined ? '' : String(value));
   return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
-export interface ReportExportMetadata {
-  readonly report: string;
-  readonly generatedAt: string;
-  readonly generatedBy: string;
-  readonly scope: string;
-  readonly period: string;
-  readonly filters: string;
-  readonly count: number;
-  readonly status: string;
-  readonly source: string;
-}
+export type ReportExportMetadata = ReportProvenance;
 
 export function toCsv(
   rows: readonly ReportRow[],
@@ -51,6 +41,7 @@ export function toCsv(
         ['Record count', `${metadata.count} records`],
         ['Status', metadata.status],
         ['Source', metadata.source],
+        ['Sort', metadata.sort],
         [],
       ].map((row) => row.map(cell).join(','))
     : [];
