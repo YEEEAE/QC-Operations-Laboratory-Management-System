@@ -2,12 +2,14 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current source head is `0039_laboratory_report_drafts` (39
-migration files). Historical documentation freezes may cite earlier source heads. A read-only Render
-provider query on 2026-09-22 reports applied head `0018`; this is migration drift,
-not a reason to rewrite history or to claim production parity. Pending provider
-migrations remain blocked by the credential-rotation gate documented in
-`Documents/RENDER-DATABASE-CONNECTION.md`.
+Current source head is `0040_signed_release_gate_evidence` (40
+migration files). Migration 0040 adds signed provider-evidence identity and
+append-only constraints; it has not been applied to a live database. Historical
+documentation freezes may cite earlier source heads. A read-only Render
+provider query on 2026-09-22 reported applied head `0018`; that is historical
+evidence only and does not establish current production parity. Do not apply
+pending provider migrations without the explicit authorization and credential
+rotation gate documented in `Documents/RENDER-DATABASE-CONNECTION.md`.
 
 - Files are forward-only SQL and are immutable after application to a shared environment.
 - `scripts/db/migrate.ts` applies them in lexical order and records SHA-256 checksums in `qc.schema_migrations`.

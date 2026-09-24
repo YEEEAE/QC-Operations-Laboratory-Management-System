@@ -1068,6 +1068,11 @@ export interface ReleaseGateEvidenceTable {
   evidence_version: bigint;
   recorded_by: string;
   audit_info: unknown;
+  evidence_digest: string | null;
+  signer_id: string | null;
+  signer_key_id: string | null;
+  signer_scope: unknown;
+  signature_digest: string | null;
   created_at: Generated<Date>;
 }
 

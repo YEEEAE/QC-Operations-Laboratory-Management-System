@@ -24,6 +24,7 @@ const envSchema = z.object({
   RELEASE_ENVIRONMENT: z.enum(['local', 'test', 'ci', 'staging', 'production']).optional(),
   RELEASE_GIT_SHA: z.string().trim().optional(),
   RELEASE_MIGRATION_HEAD: z.string().trim().optional(),
+  RELEASE_EVIDENCE_SIGNERS_JSON: z.string().trim().min(1).optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().trim().pipe(z.url()).optional(),
   OTEL_EXPORTER_OTLP_HEADERS: z.string().trim().min(1).optional(),
   RATE_LIMIT_LOGIN_MAX: z.string().regex(/^\d+$/).optional(),

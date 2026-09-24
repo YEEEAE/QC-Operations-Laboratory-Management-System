@@ -54,10 +54,10 @@ async function createCandidate(suffix: string): Promise<string> {
   );
   const releaseId = rows.rows[0].id;
   const gateSources: Record<string, string> = {
-    ci: 'TRUSTED_CI',
-    security: 'TRUSTED_SECURITY_SUITE',
-    database: 'TRUSTED_DATABASE_PREFLIGHT',
-    e2e: 'TRUSTED_PLAYWRIGHT',
+    ci: 'SIGNED_PROVIDER_ATTESTATION',
+    security: 'SIGNED_PROVIDER_ATTESTATION',
+    database: 'SIGNED_PROVIDER_ATTESTATION',
+    e2e: 'SIGNED_PROVIDER_ATTESTATION',
     uat: 'SIGNED_UAT_CYCLE',
     signatures: 'E_SIGNATURE_STORE',
     criticalRisks: 'CONTROLLED_RISK_REGISTER',
@@ -65,9 +65,37 @@ async function createCandidate(suffix: string): Promise<string> {
   };
   for (const [index, [gate, source]] of Object.entries(gateSources).entries()) {
     await pool!.query(
-      `INSERT INTO qc.release_gate_evidence (release_id, evidence_type, status, source, immutable_reference, observed_at, git_sha, build_id, application_version, migration_head, uat_cycle_id, release_version, evidence_version, recorded_by, audit_info)
-       SELECT id, $2, 'PASS', $3, $4, CURRENT_TIMESTAMP, git_sha, build_id, application_version, migration_head, uat_cycle_id, version, $5, 'test-ci', '{}'::jsonb FROM qc.release_candidates WHERE id = $1`,
-      [releaseId, gate, source, `test/${gate}/${suffix}`, index + 1],
+      `INSERT INTO qc.release_gate_evidence (release_id, evidence_type, status, source, immutable_reference, observed_at, git_sha, build_id, application_version, migration_head, uat_cycle_id, release_version, evidence_version, recorded_by, audit_info, evidence_digest, signer_id, signer_key_id, signer_scope, signature_digest)
+       SELECT id, $2, 'PASS', $3, $4, CURRENT_TIMESTAMP, git_sha, build_id, application_version, migration_head, uat_cycle_id, version, $5, 'test-ci', $11::jsonb, $6, $7, $8, $9::jsonb, $10 FROM qc.release_candidates WHERE id = $1`,
+      [
+        releaseId,
+        gate,
+        source,
+        `https://example.test/test/${gate}/${suffix}`,
+        index + 1,
+        ['ci', 'security', 'database', 'e2e'].includes(gate)
+          ? `${(index + 1).toString(16).padStart(64, '0')}`
+          : null,
+        ['ci', 'security', 'database', 'e2e'].includes(gate) ? 'test-provider' : null,
+        ['ci', 'security', 'database', 'e2e'].includes(gate) ? 'test-key' : null,
+        ['ci', 'security', 'database', 'e2e'].includes(gate)
+          ? JSON.stringify(['ci', 'security', 'database', 'e2e'])
+          : null,
+        ['ci', 'security', 'database', 'e2e'].includes(gate)
+          ? `${(index + 20).toString(16).padStart(64, '0')}`
+          : null,
+        JSON.stringify(
+          ['ci', 'security', 'database', 'e2e'].includes(gate)
+            ? {
+                signerId: 'test-provider',
+                signerKeyId: 'test-key',
+                approvedScope: ['ci', 'security', 'database', 'e2e'],
+                approvalReference: 'OD-TEST-01',
+                deploymentEnvironment: 'test',
+              }
+            : {},
+        ),
+      ],
     );
   }
   return releaseId;

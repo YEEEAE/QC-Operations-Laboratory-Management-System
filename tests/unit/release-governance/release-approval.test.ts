@@ -6,6 +6,7 @@ import {
   getReleaseApprovalCapability,
   type ReleaseGateEvidence,
   type ReleaseGateEvidenceRecord,
+  type ReleaseGateKey,
   type ReleaseRiskEvidenceRecord,
 } from '../../../src/modules/release-governance/domain/release-approval.js';
 import type {
@@ -51,26 +52,40 @@ const trustedEvidence = (): {
   gateRecords: RELEASE_GATE_KEYS.map((evidenceType, index) => ({
     evidenceType,
     status: 'PASS' as const,
-    source:
-      evidenceType === 'uat'
-        ? 'SIGNED_UAT_CYCLE'
-        : evidenceType === 'signatures'
-          ? 'E_SIGNATURE_STORE'
-          : evidenceType === 'criticalRisks' || evidenceType === 'residualRisk'
-            ? 'CONTROLLED_RISK_REGISTER'
-            : evidenceType === 'database'
-              ? 'TRUSTED_DATABASE_PREFLIGHT'
-              : evidenceType === 'e2e'
-                ? 'TRUSTED_PLAYWRIGHT'
-                : evidenceType === 'security'
-                  ? 'TRUSTED_SECURITY_SUITE'
-                  : 'TRUSTED_CI',
+    source: ({
+      ci: 'SIGNED_PROVIDER_ATTESTATION',
+      security: 'SIGNED_PROVIDER_ATTESTATION',
+      database: 'SIGNED_PROVIDER_ATTESTATION',
+      e2e: 'SIGNED_PROVIDER_ATTESTATION',
+      uat: 'SIGNED_UAT_CYCLE',
+      signatures: 'E_SIGNATURE_STORE',
+      criticalRisks: 'CONTROLLED_RISK_REGISTER',
+      residualRisk: 'CONTROLLED_RISK_REGISTER',
+    } satisfies Record<ReleaseGateKey, string>)[evidenceType],
     immutableReference: 'evidence/' + evidenceType + '/1',
     observedAt: new Date(),
     releaseVersion: 3n,
     evidenceVersion: BigInt(index + 1),
     recordedBy: 'trusted-service',
-    auditInfo: { source: 'test' },
+    auditInfo: ['ci', 'security', 'database', 'e2e'].includes(evidenceType)
+      ? {
+          source: 'test',
+          signerId: 'test-provider',
+          signerKeyId: 'test-key',
+          approvedScope: ['ci', 'security', 'database', 'e2e'],
+          approvalReference: 'OD-TEST-01',
+          deploymentEnvironment: 'test',
+        }
+      : { source: 'test' },
+    ...(['ci', 'security', 'database', 'e2e'].includes(evidenceType)
+      ? {
+          evidenceDigest: 'b'.repeat(64),
+          signerId: 'test-provider',
+          signerKeyId: 'test-key',
+          signerScope: ['ci', 'security', 'database', 'e2e'],
+          signatureDigest: 'c'.repeat(64),
+        }
+      : {}),
     ...candidate,
   })),
   riskRecords: [],
@@ -97,6 +112,7 @@ function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = tr
   const current: ReleaseCandidateRecord = { ...candidate, ...overrides };
   return {
     getCandidate: vi.fn(async () => current),
+    hasReconciledProductionGateDecision: vi.fn(async () => true),
     getEvidence: vi.fn(async () => evidence),
     resolveReplay: vi.fn(async () => undefined),
     approve: vi.fn(async (input: Parameters<ReleaseGovernanceRepository['approve']>[0]) => ({
@@ -118,6 +134,7 @@ function makeRepo(overrides: Partial<ReleaseCandidateRecord> = {}, evidence = tr
     })),
   } as unknown as ReleaseGovernanceRepository & {
     getCandidate: ReturnType<typeof vi.fn>;
+    hasReconciledProductionGateDecision: ReturnType<typeof vi.fn>;
     approve: ReturnType<typeof vi.fn>;
     resolveReplay: ReturnType<typeof vi.fn>;
   };
@@ -175,10 +192,23 @@ describe('release gates (fail-closed, table-driven)', () => {
   it('UNVERIFIED gate is denied and capability lists every failing gate', () => {
     const gates = { ...passGates, ci: 'UNVERIFIED', e2e: 'PARTIAL' } as ReleaseGateEvidence;
     expect(evaluateGates(gates).ok).toBe(false);
-    const capability = getReleaseApprovalCapability({ actor: manager(), gates, risks: [] });
+    const capability = getReleaseApprovalCapability({ actor: manager(), gates, risks: [], productionGateDecisionReconciled: false });
     expect(capability.canApprove).toBe(false);
+    expect(capability.disabledReasons).toContain('PRODUCTION_GATE_REGISTER_NOT_RECONCILED');
     expect(capability.disabledReasons).toContain('GATE:ci');
     expect(capability.disabledReasons).toContain('GATE:e2e');
+  });
+
+  it('blocks approval when the approved 19-gate decision is not reconciled', async () => {
+    const repo = makeRepo();
+    repo.hasReconciledProductionGateDecision.mockResolvedValueOnce(false);
+    await expect(
+      new ApproveReleaseUseCase(repo, verifier).execute({
+        ...baseInput(),
+        requestId: 'req-no-production-register',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED', messageKey: 'release.productionGateRegisterNotReconciled' });
+    expect(repo.approve).not.toHaveBeenCalled();
   });
 });
 
@@ -225,10 +255,11 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
         actor: actor('yazeed', ['SYSTEM_OWNER']),
         gates: passGates,
         risks: [],
+        productionGateDecisionReconciled: true,
       }).canApprove,
     ).toBe(false);
     expect(
-      getReleaseApprovalCapability({ actor: systemOwner(), gates: passGates, risks: [] })
+      getReleaseApprovalCapability({ actor: systemOwner(), gates: passGates, risks: [], productionGateDecisionReconciled: true })
         .canApprove,
     ).toBe(true);
     expect(
@@ -236,6 +267,7 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
         actor: { ...actor('owner-uuid', ['SYSTEM_OWNER']), loginIdentity: 'other-user' },
         gates: passGates,
         risks: [],
+        productionGateDecisionReconciled: true,
       }).canApprove,
     ).toBe(false);
   });

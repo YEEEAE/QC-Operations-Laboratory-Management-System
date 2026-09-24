@@ -20,10 +20,10 @@ const candidate: ReleaseCandidateForEvidence = {
   updatedAt: new Date('2026-09-15T00:00:00Z'),
 };
 const sources: Record<string, string> = {
-  ci: 'TRUSTED_CI',
-  security: 'TRUSTED_SECURITY_SUITE',
-  database: 'TRUSTED_DATABASE_PREFLIGHT',
-  e2e: 'TRUSTED_PLAYWRIGHT',
+  ci: 'SIGNED_PROVIDER_ATTESTATION',
+  security: 'SIGNED_PROVIDER_ATTESTATION',
+  database: 'SIGNED_PROVIDER_ATTESTATION',
+  e2e: 'SIGNED_PROVIDER_ATTESTATION',
   uat: 'SIGNED_UAT_CYCLE',
   signatures: 'E_SIGNATURE_STORE',
   criticalRisks: 'CONTROLLED_RISK_REGISTER',
@@ -40,7 +40,24 @@ const gates = (patch: Partial<Record<string, unknown>> = {}) =>
     releaseVersion: 4n,
     evidenceVersion: BigInt(index + 1),
     recordedBy: 'trusted-service',
-    auditInfo: {},
+    auditInfo: ['ci', 'security', 'database', 'e2e'].includes(evidenceType)
+      ? {
+          signerId: 'test-provider',
+          signerKeyId: 'test-key',
+          approvedScope: ['ci', 'security', 'database', 'e2e'],
+          approvalReference: 'OD-TEST-01',
+          deploymentEnvironment: 'test',
+        }
+      : {},
+    ...(['ci', 'security', 'database', 'e2e'].includes(evidenceType)
+      ? {
+          evidenceDigest: 'b'.repeat(64),
+          signerId: 'test-provider',
+          signerKeyId: 'test-key',
+          signerScope: ['ci', 'security', 'database', 'e2e'],
+          signatureDigest: 'c'.repeat(64),
+        }
+      : {}),
     ...patch,
   }));
 
@@ -112,5 +129,30 @@ describe('server-derived release evidence', () => {
       new Date('2026-09-15T02:00:00Z'),
     );
     expect(high.risks[0]).toMatchObject({ riskId: 'R-2', severity: 'HIGH', status: 'OPEN' });
+  });
+
+  it('does not accept provider evidence without a signer scope and approval reference', () => {
+    const unsigned = gates({
+      auditInfo: {},
+      evidenceDigest: null,
+      signerId: null,
+      signerKeyId: null,
+      signerScope: null,
+      signatureDigest: null,
+    });
+    expect(
+      deriveReleaseEvidence(candidate, unsigned, [], new Date('2026-09-15T02:00:00Z')).gates.ci,
+    ).toBe('UNVERIFIED');
+    const unapproved = gates({
+      auditInfo: {
+        signerId: 'test-provider',
+        signerKeyId: 'test-key',
+        approvedScope: ['ci'],
+        deploymentEnvironment: 'test',
+      },
+    });
+    expect(
+      deriveReleaseEvidence(candidate, unapproved, [], new Date('2026-09-15T02:00:00Z')).gates.ci,
+    ).toBe('UNVERIFIED');
   });
 });

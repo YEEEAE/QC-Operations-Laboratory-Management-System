@@ -28,6 +28,11 @@ export interface ReleaseGateEvidenceRecord extends ReleaseCandidateIdentity {
   evidenceVersion: bigint;
   recordedBy: string;
   auditInfo: unknown;
+  evidenceDigest?: string | null;
+  signerId?: string | null;
+  signerKeyId?: string | null;
+  signerScope?: unknown;
+  signatureDigest?: string | null;
 }
 
 export type ResidualSeverity = 'LOW' | 'MEDIUM' | 'MODERATE' | 'HIGH' | 'VERY_HIGH' | 'CRITICAL';
@@ -139,10 +144,10 @@ export function assertAllGatesPass(gates: ReleaseGateEvidence): void {
 }
 
 const TRUSTED_GATE_SOURCES: Record<ReleaseGateKey, readonly string[]> = {
-  ci: ['TRUSTED_CI', 'IMPORTED_CI'],
-  security: ['TRUSTED_SECURITY_SUITE', 'IMPORTED_SECURITY'],
-  database: ['TRUSTED_DATABASE_PREFLIGHT', 'IMPORTED_DATABASE'],
-  e2e: ['TRUSTED_PLAYWRIGHT', 'IMPORTED_E2E'],
+  ci: ['SIGNED_PROVIDER_ATTESTATION'],
+  security: ['SIGNED_PROVIDER_ATTESTATION'],
+  database: ['SIGNED_PROVIDER_ATTESTATION'],
+  e2e: ['SIGNED_PROVIDER_ATTESTATION'],
   uat: ['SIGNED_UAT_CYCLE'],
   signatures: ['E_SIGNATURE_STORE'],
   criticalRisks: ['CONTROLLED_RISK_REGISTER'],
@@ -154,7 +159,29 @@ function isCurrentEvidence(
   candidate: ReleaseCandidateForEvidence,
   now: Date,
 ): boolean {
+  const providerAudit =
+    record.auditInfo && typeof record.auditInfo === 'object'
+      ? (record.auditInfo as Record<string, unknown>)
+      : undefined;
+  const signedProviderEvidence = ['ci', 'security', 'database', 'e2e'].includes(record.evidenceType)
+    ? record.evidenceDigest != null &&
+      /^[a-f0-9]{64}$/.test(record.evidenceDigest) &&
+      Boolean(record.signerId?.trim()) &&
+      Boolean(record.signerKeyId?.trim()) &&
+      Array.isArray(record.signerScope) &&
+      record.signerScope.includes(record.evidenceType) &&
+      record.signatureDigest != null &&
+      /^[a-f0-9]{64}$/.test(record.signatureDigest) &&
+      providerAudit?.signerId === record.signerId &&
+      providerAudit?.signerKeyId === record.signerKeyId &&
+      typeof providerAudit?.approvalReference === 'string' &&
+      providerAudit.approvalReference.trim().length > 0 &&
+      typeof providerAudit?.deploymentEnvironment === 'string' &&
+      Array.isArray(providerAudit?.approvedScope) &&
+      providerAudit.approvedScope.includes(record.evidenceType)
+    : true;
   return (
+    signedProviderEvidence &&
     record.releaseId === candidate.releaseId &&
     record.gitSha.toLowerCase() === candidate.gitSha.toLowerCase() &&
     record.buildId === candidate.buildId &&
@@ -274,8 +301,15 @@ export function getReleaseApprovalCapability(input: {
   actor: ActorContext;
   gates: ReleaseGateEvidence;
   risks: readonly ResidualRiskEntry[];
+  productionGateDecisionReconciled: boolean;
 }): ReleaseApprovalCapability {
-  const disabledReasons: string[] = [];
+  // The application currently has eight internal evidence classes, while the
+  // approved production decision requires reconciliation of 19 gates. Until
+  // that authoritative register is wired to this exact candidate, approval
+  // must remain disabled even when the smaller internal set passes.
+  const disabledReasons: string[] = input.productionGateDecisionReconciled
+    ? []
+    : ['PRODUCTION_GATE_REGISTER_NOT_RECONCILED'];
   if (!isReleaseAuthority(input.actor)) disabledReasons.push('AUTHORITY');
   const gates = evaluateGates(input.gates);
   for (const failure of gates.failures) disabledReasons.push(`GATE:${failure}`);

@@ -90,6 +90,12 @@ function approvalReplayIdentity(input: {
 export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRepository {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
 
+  async hasReconciledProductionGateDecision(_releaseId: string): Promise<boolean> {
+    // QC-ADP-03 does not yet have the owner-approved 19-gate register/schema
+    // mapping. Never infer GO from the existing eight internal evidence classes.
+    return false;
+  }
+
   async getCandidate(releaseId: string): Promise<ReleaseCandidateRecord | undefined> {
     if (!isUuid(releaseId)) return undefined;
     const row = await this.db
@@ -138,6 +144,11 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
         evidenceVersion: BigInt(row.evidence_version),
         recordedBy: row.recorded_by,
         auditInfo: row.audit_info,
+        evidenceDigest: row.evidence_digest,
+        signerId: row.signer_id,
+        signerKeyId: row.signer_key_id,
+        signerScope: row.signer_scope,
+        signatureDigest: row.signature_digest,
         releaseId: row.release_id,
         gitSha: row.git_sha,
         buildId: row.build_id,

@@ -6,12 +6,21 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fgovernance%2Freleases');
 const releaseId = Astro.params.releaseId ?? '';
 const model = await getReleaseApprovalPageModel({ actor, releaseId });
 const { candidate, evidence } = model;
+const reasonCopy = (reason: string) => {
+  if (reason === 'AUTHORITY') return 'An active Manager or the named yazeed / SYSTEM_OWNER signer is required.';
+  if (reason === 'RELEASE_NOT_FOUND') return 'The release candidate is unavailable.';
+  if (reason === 'STATE_NOT_PENDING') return 'This candidate is no longer pending approval.';
+  if (reason.startsWith('GATE:')) return `${reason.slice(5)} has no current signed evidence for this exact candidate, or its latest result is not PASS.`;
+  if (reason.startsWith('RISK:')) return `Controlled risk ${reason.slice(5)} is unresolved or lacks accepted authority evidence.`;
+  return reason;
+};
 ---
 <AppLayout title="Production release approval · Governance" locale="en" direction="ltr">
   <main class="release-shell">
     <h1>Production release approval</h1>
     {candidate ? <>
       <p class="lede">Release {candidate.releaseId} · State: {candidate.state} · Version: {candidate.version.toString()}</p>
+      <section class="decision" aria-labelledby="decision-heading"><h2 id="decision-heading">Production decision: NO-GO</h2><p>The approved production baseline requires 19/19 mandatory gates on this exact candidate. This page currently reconciles eight release evidence classes; it does not contain an accepted 19-gate register, so these rows cannot produce an overall GO or RELEASED decision.</p><ul><li>Current candidate SHA: <code>{candidate.gitSha}</code></li><li>Current build: <code>{candidate.buildId}</code></li><li>Full 19-gate reconciliation: NOT VERIFIED</li></ul></section>
       <dl class="identity"><div><dt>Git SHA</dt><dd>{candidate.gitSha}</dd></div><div><dt>Build ID</dt><dd>{candidate.buildId}</dd></div><div><dt>Application version</dt><dd>{candidate.applicationVersion}</dd></div><div><dt>Migration head</dt><dd>{candidate.migrationHead}</dd></div><div><dt>UAT cycle</dt><dd>{candidate.uatCycleId}</dd></div></dl>
       {!model.authorized && <p role="alert" class="denied">Your account is not a release authority. Final approval requires Manager or yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}
       {candidate.state !== 'PENDING' && <p role="status" class="denied">This release candidate is not pending approval.</p>}
@@ -22,7 +31,8 @@ const { candidate, evidence } = model;
           {RELEASE_GATE_KEYS.map((gate) => { const record = evidence?.gateRecords[gate]; const status = evidence?.gates[gate] ?? 'UNVERIFIED'; return <tr><th scope="row">{gate}</th><td><span class={'status status-' + status.toLowerCase()}>{status}</span></td><td>{record?.immutableReference ?? 'No trusted evidence'}</td><td>{record?.source ?? 'UNVERIFIED'}</td><td>{record?.observedAt.toISOString() ?? '—'}</td><td><code>{record ? record.gitSha.slice(0, 12) + '… / ' + record.buildId + ' / ' + record.applicationVersion + ' / ' + record.migrationHead + ' / ' + record.uatCycleId : candidate.gitSha.slice(0, 12) + '… / ' + candidate.buildId + ' / ' + candidate.applicationVersion + ' / ' + candidate.migrationHead + ' / ' + candidate.uatCycleId}</code></td></tr>; })}
         </tbody></table></div>
         <section aria-labelledby="risk-heading" class="risk-summary"><h3 id="risk-heading">Controlled residual risks</h3>{evidence?.risks.length ? <ul>{evidence.risks.map((risk) => <li><strong>{risk.riskId}</strong> · {risk.severity} · {risk.status}</li>)}</ul> : <p>No current controlled residual risk evidence was returned.</p>}</section>
-        <p class="disabled-reason">Approval capability: {model.approvable ? 'Available' : 'Disabled — ' + (model.disabledReasons.join(', ') || 'SERVER_EVIDENCE_REQUIRED')}</p>
+        <p class="disabled-reason">Production decision: NO-GO. The approved 19-gate register is not reconciled to this exact candidate, so signed release approval is disabled.</p>
+        {!model.approvable && <ul class="reasons" aria-label="Approval blockers">{(model.disabledReasons.length ? model.disabledReasons : ['SERVER_EVIDENCE_REQUIRED']).map((reason) => <li>{reasonCopy(reason)}</li>)}</ul>}
         <form data-release-approve data-approvable={String(model.approvable)} method="post"><input type="hidden" name="releaseId" value={candidate.releaseId} /><input type="hidden" name="expectedVersion" value={candidate.version.toString()} /><label for="rel-reauth">Reauthentication</label><input id="rel-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required /><p class="signature-meaning">I approve the server-derived evidence for release {candidate.releaseId}.</p><button type="submit" data-submit disabled={!model.approvable} aria-disabled={!model.approvable}>Approve release</button><output data-result role="status" tabindex="-1"></output></form>
       </section>
     </> : <p class="lede">The release candidate is unavailable or you are not authorized to view it.</p>}

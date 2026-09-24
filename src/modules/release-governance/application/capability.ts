@@ -34,6 +34,9 @@ export async function getReleaseApprovalPageModel(input: {
     actor: input.actor,
     gates: evidence.gates,
     risks: evidence.risks,
+    productionGateDecisionReconciled: await repository
+      .hasReconciledProductionGateDecision(candidate.releaseId)
+      .catch(() => false),
   });
   return {
     candidate,

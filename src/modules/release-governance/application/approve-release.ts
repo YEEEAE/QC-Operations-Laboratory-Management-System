@@ -68,6 +68,13 @@ export class ApproveReleaseUseCase {
       trusted.riskRecords,
       this.now(),
     );
+    // Defense in depth: the UI capability is not an authorization boundary.
+    if (!(await this.repository.hasReconciledProductionGateDecision(candidate.releaseId))) {
+      throw new AppError('AUTHZ_DENIED', {
+        userSafe: true,
+        messageKey: 'release.productionGateRegisterNotReconciled',
+      });
+    }
     assertAllGatesPass(evidence.gates);
     assertResidualRisksAcceptable(evidence.risks);
 

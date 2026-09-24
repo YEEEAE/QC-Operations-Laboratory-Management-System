@@ -170,6 +170,7 @@ const formatDate = (value?: Date) =>
           <p class="muted">
             Sanitized live status generated {generatedAt} (Asia/Riyadh).
           </p>
+          <p class="release-boundary"><strong>Operational console status only.</strong> Core system READY does not mean production GO or RELEASED. The exact-candidate production decision remains NO-GO until all 19 mandatory gates have accepted evidence.</p>
           <div class="cards">
             <div class="card">
               <span class="card-label">Application</span>
@@ -508,6 +509,7 @@ const formatDate = (value?: Date) =>
     <p class="muted">Full history with filters: <a href="/audit">Audit history</a></p>
   </section>
 </AppLayout>
+<style>.release-boundary{padding:var(--space-3);border-inline-start:3px solid var(--status-error);background:var(--surface-raised);font-size:.84rem}</style>
 <script>
   import { actions } from 'astro:actions';
   import { enhanceMutationForm } from '../../ui/forms/mutation-interaction.js';

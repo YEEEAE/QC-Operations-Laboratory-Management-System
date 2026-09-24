@@ -1,5 +1,15 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-03 / signed release evidence intake**
+  - Changed: added signer/scope/digest-bound provider intake and append-only evidence schema; release approval is fail-closed until the approved 19-gate register reconciles to exact candidate.
+  - Evidence: unit 38/38 PASS; Astro check 0 errors; PostgreSQL integration BLOCKED (container runtime unavailable); exact-SHA CI, live deployment identity, provider/UAT evidence NOT VERIFIED. Details `audit/2026-09-24/QC-ADP-03-release-evidence-handoff.md`.
+  - State: PARTIAL / NO-GO — migration 0040 unapplied; owner-approved register/signer scope and exact-SHA candidate absent.
+
+- **2026-09-24 — QC-ADP-02 / handoff مصدر التفتيش والاعتماد**
+  - Changed: ثُبّت مقام 6 فحوص لكل واحدة من بطاقات Quarantine العشر؛ PD-01/02/07 بقيت مفتوحة ولا تغيير runtime أو schema.
+  - Evidence: source trace على `7e0a3535f80b956bcfe0143201ddfee2e4277e4c`؛ focused unit 40/40 PASS، لكن source-hash binding ونتيجة التقرير الرسمية غير مكتملين. قرار QC/QMS وPG18/E2E BLOCKED/NOT RUN؛ التفاصيل `audit/2026-09-24/QC-ADP-02-inspection-source-approval-handoff.md`.
+  - State: BLOCKED — NO-GO حتى اعتماد المصدر والمعيار وسياسة الحكم.
+
 - **2026-09-24 — QC-ADP-01 / مصالحة مخطط Reject Reports**
   - Changed: readiness candidate صار يطابق ledger/الأعمدة وقيود FK/unique؛ صفحات التفاصيل تعيد حالة خطأ 503 مفهومة عند نقص المخطط. لا migration تاريخية عُدلت.
   - Evidence: domain/approval unit 20/20 PASS؛ Astro check 0 errors؛ PostgreSQL 18/Testcontainers BLOCKED لغياب runtime؛ health المتاح تاريخيًا 0018 applied و21 pending.
@@ -74,17 +84,6 @@
 
 - **2026-09-23 — Mind rollover (AUTHZ-SERVER-MATRIX):** نُقلت أقدم سجلات 2026-09-22 إلى أعلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقرارات والقيود.
 
-- **2026-09-23 — AUTHZ-SERVER-MATRIX**
-  - Changed: توحيد UX لرفض الصلاحية/السجل غير المتاح.
-  - Evidence: unit 268/268 PASS؛ Docker PG 21/21؛ disposable actor HTTP reads/logout PASS؛ authenticated E2E الإجمالي FAIL (15 passed، 21 accessibility failures، 1 skipped، 2 لم تبدأ). كتابات actor على سجل صالح وتبدل الصلاحية أثناء الطلب NOT RUN؛ لا دليل BAD_REQUEST/ID غير موجود احتُسب كرفض صلاحية.
-  - State: PARTIAL — `audit/2026-09-23/authorization-server-matrix.md`.
-
-- **2026-09-23 — QC-100-FINAL-026-C / reconciled open QC and recovery decisions**
-  - Changed: ربط سجل القرار وآلات الحالة ومصالحة المتطلبات بمسارات use case الحالية، وإضافة RD-019/RD-020. تحديث التدفق الفعلي: إنشاء/تسجيل نتيجة التفتيش موصولان لكن لا مصدر evaluator معتمد؛ laboratory `evaluate()` يرفض؛ Reject الافتراضي `POLICY_SOURCE_REQUIRED`.
-  - Evidence: `requirements:check` PASS (100 requirements, 34 risks, 20 gaps, 33 decisions, 80 domains). اكتُشفت مخالفة: recovery metrics/code والاختبار يثبتون RPO=24h وRTO=4h رغم بقاء PD-26/27 مفتوحة؛ لم تُغيّر القيم دون قرار.
-  - State: PARTIAL — قرارات QC/WI-SOP/Reject/restore وRPO/RTO ما زالت BLOCKED؛ لا tests أو migrations شُغلت، ولا تغيير runtime.
-  - Key files: `Documents/REQUIREMENTS-RECONCILIATION.md`, `Documents/DECISION-ASSUMPTION-REGISTER-026.md`, `Documents/STATE-MACHINES.md`.
-
 - **2026-09-23 — QC-BASELINE-REPAIR / إصلاح بوابات typecheck وarchitecture والوحدة**
   - Changed: تمرير offset المختبر، نقل metrics خلف application boundary، وإصلاح lint وعيوب unit مع تحديث العقود القديمة دون حذف أو تخفيف assertions.
   - Evidence: baseline SHA `d0dc705f278a574b3f8f5e822c216fb01b61a9bd` clean؛ Node `24.20.0` / pnpm `11.25.0`؛ 24/977 إخفاقًا صُنفت (19 عقد/fixture متقادمة، 5 عيوب تنفيذ)؛ final run `9d8cb827-63f1-4fc9-8087-2844e63aecf4`: typecheck 956/0 errors، unit 977/977، lint/architecture/requirements/parity/build PASS. PostgreSQL/E2E BLOCKED لغياب Docker؛ البناء لا يثبت الجاهزية. التفصيل: `audit/2026-09-23/unit-baseline-triage.md`.
@@ -97,23 +96,8 @@
   - State: PARTIAL — اختبار browser/responsive الفعلي محجوب؛ السجل: `tests/e2e/mobile-drawer-inert.spec.ts`.
   - Key files: `src/ui/navigation/navigation.ts`, `src/ui/shell/Sidebar.astro`, `src/ui/layouts/AppLayout.astro`.
 
-- **2026-09-23 — FULL-REPO-AUDIT / تدقيق مستقل**
-  - Changed: تقرير HTML مستقل لـ100 مجال بمؤشر نضج أدلة 49%، وست توصيات تكامل وبرومبتات معالجة؛ أزيل منه تصور إعادة التصميم بطلب المستخدم. لا تعديل للتطبيق أو الإنتاج.
-  - Evidence: Node 24.20.0؛ unit 960/975 PASS (15 FAIL)، typecheck خطأ واحد، lint 9 أخطاء، architecture مخالفة واحدة؛ format/requirements/diagnose/build بعد verification:begin PASS. قراءة 6 صفحات إنتاجية أكدت NOT READY وschema 0018/0038 وReject Reports محجوب وbackup catalog فارغ. PG18/E2E/UAT NOT RUN في هذه الجولة.
-  - State: PARTIAL — `audit/2026-09-23-full-repository-audit-redesign-ar.html`؛ النسبة رأي تقييم أدلة وليست امتثالًا أو جاهزية إطلاق.
-
 - **2026-09-23 — Mind rollover:** نُقل أقدم سجلي Ledger (QC-100-FINAL-017/018) إلى أعلى `02-mind-mid.md` بلا تغيير الحالة الحالية.
 
-
-- **2026-09-23 — INDEPENDENT-LIVE-REASSESSMENT / تقييم عربي جديد**
-  - Changed: تقرير مستقل بـ50 معيارًا/10 مجالات، مؤشر أدلة 46%، دون الاستناد إلى درجات التقارير السابقة.
-  - Evidence: قراءة مصدر محلي عند `e9054c6` وست صفحات حية مصادقة؛ الصحة NOT READY، schema 0018/0038، Reject Reports محجوب، backup catalog فارغ، release identity UNVERIFIED. كشف تعارض RPO/RTO بين واجهة backups وخطة السياسة.
-  - State: PARTIAL — `audit/2026-09-23-independent-reassessment-ar.html`؛ أوضح المالك أن برومبتات الإطلاق التجريبي جرى تجاوزها ولم تُكمل. هوية النشر وUAT/E2E/الاستعادة غير متحققة.
-
-- **2026-09-23 — RELEASE-GATE-RECONCILIATION / exact-SHA readiness review**
-  - Changed: أُنتج قرار بوابات للمرشح `5d591afc29c04d66f1c0a80b9cd24d5accb71527`؛ NO-GO. تأكد غياب مسار ingest موثوق لـCI/security/database/E2E، وبقي signer/scope لـUAT قرار مالك.
-  - Evidence: `release:evidence:check` FAIL على Node `24.20.0`؛ run context والتقارير على SHAs/run IDs أخرى، unit فيها 9 إخفاقات تاريخية، E2E فيه إخفاق، وrelease identity مفقود. GitHub status checks فارغة؛ reconciliation guard PASS (80 domains). لا اختبارات أُجريت.
-  - State: PARTIAL — `audit/2026-09-23/release-gate-reconciliation-5d591af.md`; blocker owners/actions therein. No deploy/promotion/RELEASED.
 
 - **2026-09-24 — Mind rollover (AI-POLICY-BOUNDARY):** نُقلت أقدم سجلات Historical Ledger إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود.
 
@@ -278,7 +262,8 @@
 - سلطة الاعتماد النهائي حسب السياسة المنفذة: Manager أو `yazeed`/SYSTEM_OWNER المسمى؛ Admin-only ليس سلطة اعتماد.
 - **قرار التدقيق الحالي يبقى `NO-GO`** (مرشح 2026-09-19 `653b58d22d4a17994db7376a3bd691ca6e789f1a`: maturity 45.8%، gates 0/19) حتى تتحقق الأدلة الخارجية؛ `PASS ≠ RELEASED` ويبقى المجموع مشتقًا من الأدلة فقط.
 - P-07 هو القرار الحالي المعتمد لهذه السلطة: Manager OR named `yazeed/SYSTEM_OWNER`, one signer; هذا إغلاق لقرار السلطة فقط وليس دليل Production/UAT/provider.
-- لا يوجد حتى الآن provider-ingestion خارجي مكتمل لـCI/Security/E2E/UAT؛ هذه فجوة integration وليست وظيفة المتصفح.
+- أضيف محليًا endpoint لاستقبال أدلة CI/security/database/E2E بتوقيع HMAC ومجال اعتماد خادمي وبصمة immutable؛ لا توجد مفاتيح/سياسة owner-approved configured ولا run حالي ingested، واختبار PostgreSQL 18 BLOCKED. مسار UAT البشري الموقّع مستقل ولم يقدم evidence حالي.
+- سجل الجاهزية المعتمد 19 بوابة لا يملك بعد mapping/schema إلى الفئات الداخلية الثماني؛ القراءة التنفيذية لقرار الـ19 ترجع `false` fail-closed، واعتماد المرشح محجوب إلى حين مصالحة register مع exact identity.
 - أضيفت عقود مسودة لستة مصادر تكامل ومحول جهاز مخبري sandbox بلا اتصال حي؛ سجل التسليم يظل منفصلًا عن قرار QC، وتبقى تفعيلات المزود وسياسات actor/retention/retry رهينة اعتماد المالك.
 
 ## 5) Quarantine / Inspection Templates
@@ -299,7 +284,7 @@
 - `Inspection Result` و`Release System State` حالتان منفصلتان؛ `PASS ≠ RELEASED`.
 - Laboratory state machine is fully implemented for Create/Save/Submit/Review/Return/Resume/Approve/**Reject**; `VOID` (TR-LAB-008) remains unimplemented and policy-denied.
 - **Two-stage approval (QC-100-FINAL-013، مُثبت runtime):** `UNDER_REVIEW --stage-1 Supervisor (PERM-INSP/LAB-APPROVE)--> PENDING_QCM_APPROVAL --stage-2 QCM (MANAGER أو yazeed المسمى؛ PERM-APR-APPROVE + PERM-ESIG-SIGN + reauthentication)--> APPROVED (مقفل)` بتوقيع واحد بمعنى `FINAL_APPROVE` مربوط بالنسخة السابقة للانتقال؛ stage-1 حدث سير عمل بلا توقيع؛ لا مسار تجاوز؛ `REOPEN` بسبب مدقّق من سلطة الاعتماد النهائي يعيد إلى `UNDER_REVIEW` ولا يمحو سجل التوقيع، ثم يعاد إلزاميًا ترتيب المرحلتين. اعتماد تقرير التفتيش يحدّث Receiving إلى `INSPECTION_COMPLETE` ولا يُفرج أبدًا، وعنصر Receiving في `HOLD` لا يُستعاد (الطلب يُرفض).
-- **Blocker مؤكد (F-013-1):** تقرير التفتيش لا يملك مصدر نتيجة رسمي — `ApproveInspectionUseCase` يشترط `finalResult`، و`SaveInspectionDraftUseCase` يرفض نتيجة من المتصفح، ولا يوجد evaluator للتفتيش (بخلاف `PostgresControlledLabSources`)، و`StartInspectionUseCase` غير موصول بـ`quarantineActionDependencies()` ولا يوجد create action. لذلك سلسلة التفتيش fail-closed لأي سجل ينشئه التطبيق حتى تتوفر PD-01/PD-02/PD-07؛ لا يجوز اختراع معايير لتجاوزها.
+- **Blocker قائم (F-013-1 / PD-01/02/07):** المصدر الحالي يوصل إنشاء التفتيش من الاستلام ويحسب نتيجة النقطة خادميًا من rule fields في نسخة القالب، لكنه لا يثبت ربط القواعد بمصدر QC معتمد وبصمته، ولا يحتوي تجميعًا يكتب `inspection_reports.final_result`. `ApproveInspectionUseCase` يشترط النتيجة الرسمية، و`SaveInspectionDraftUseCase` يرفض ادعاء المتصفح؛ لذا الإيجابي العلمي يبقى محجوبًا حتى اعتماد المصدر/المعيار/الحكم اليدوي. قرار الأدوار OD-2026-09-23-RBAC-01 يغطي P-05 role slice فقط. handoff QC-ADP-02: كل واحدة من البطاقات العشر 0/6؛ PG18/E2E NOT RUN.
 - Lab reject (TR-LAB-007) is fail-closed by policy: the transition, reason, dual permission (`PERM-LAB-REJECT` + `PERM-APR-REJECT`), SoD, expected version and P-05 authority are enforced, but the reject **decision authority source does not exist** → default `LabRejectPolicy` throws `POLICY_SOURCE_REQUIRED` (PD-38 OPEN). Reject never changes `scientificResult` and preserves measurements/samples.
 - Scientific evaluation stays server-side only: `PostgresControlledLabSources.evaluate()` throws; `PASS`/`FAIL`/`HOLD` are stored only from an injected server evaluator whose `sourceReference`/`contentHash` must match the frozen context. No limit, unit, formula, tolerance or method was invented.
 - Equipment eligibility is verified fail-closed at Submit: equipment `ACTIVE`, not under maintenance/inactive/failed, its current-calibration pointer must match a `CURRENT` calibration that is not overdue, and equipment/calibration snapshots must match the referenced records. QC-CLOSURE-008 adds append-only status/calibration/maintenance history, explicit `SCHEDULED`/`COMPLETED`/`FAILED` calibration states, certificate preservation, maintenance downtime, and a maintenance lock; source requirement flags remain nullable until policy supplies their values.
@@ -472,7 +457,7 @@
 
 ### P0 / blocking evidence
 - **F-013-1 (QC-100-FINAL-013، غير مُصلح لغياب مدخل القرار):** سلسلة اعتماد التفتيش غير قابلة للإكمال من التطبيق — لا masدر نتيجة رسمي (PD-01/PD-02/PD-07) ولا create action؛ لا تُخترع معايير. المالك: QC/QMS ثم 013. الدليل: الحالة `[blocker]` في `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.
-- **F-013-2 (QC-100-FINAL-013):** لا يوجد كاتب/مستورد لأدلة release gate لأنواع `ci`/`security`/`database`/`e2e`؛ المُنفذ فقط `ReleaseGateEvidenceWriter.recordUatGateEvidence`. التصدير نفسه (`TRUSTED_PLAYWRIGHT` من `scripts/verification/run-authenticated-e2e.ts`) لا يُدخَل. المالك: 013 مع مسار نشر candidate مصرّح للـCI.
+- **F-013-2 / QC-ADP-03:** intake موقّع لـCI/security/database/E2E موجود محليًا، لكن لا policy مفاتيح/نطاقات معتمدة أو evidence حديثة؛ integration PostgreSQL BLOCKED. UAT يظل موقّعًا بشريًا ولا يوجد cycle مقبول للمرشح الحالي. سجل الـ19 غير reconciled، لذا الموافقة fail-closed. المالك: اعتماد signer/register ثم exact candidate evidence وQC-ADP-12.
 - **حالة بوابات المرشّح المجمّد `5470a2e` (036-B، 2026-09-21):** `pnpm build` كان FAIL وأُصلح؛ `pnpm lint` كان 6 أخطاء كلها في ملفات 036-A وأُصلحت (الآن exit 0)؛ `pnpm format:check` **FAIL** على 15 ملفًا خارج diff هذه المهمة (11 ملف receiving + اختباران + record-journey + audit JSON)؛ `pnpm test:unit` **FAIL** 5 اختبارات في 4 ملفات مُثبت أنها سابقة للـHEAD (receiving-data-contract، dashboard/quarantine decision surfaces، mutation-safety)؛ `pnpm test:architecture` FAIL كما في القسم 12. أي ادعاء «CI أخضر» على هذا المرشّح غير صحيح. المالك: عمل receiving/002 ثم 012.
 - **تقارير `.ci-results/*.json` غير مربوطة بالمرشّح (036-B):** بوابة الأدلة تتحقق من محتوى التقرير ومن هوية الإصدار فقط، فقد قُدّمت تقارير قديمة (integration 470/470، concurrency 12/12، security 52/52) كأنها حالية وفشلت فقط على `migrations 30/33` القديم. يجب إعادة توليد كل التقارير على المرشّح المجمّد قبل أي ادعاء تغطية. المالك: 002/027.
 - Local equivalent PG18.6 (QC-100-FINAL-002, candidate `84bdf249`): unit 677/677، integration 419/419 (0 skips، مرتين)، migrations 29/29، concurrency 12/12 (5 تكرارات exit 0)، security 52/52 بلا skips، format/lint/typecheck/architecture/build/release PASS. Docker/CI container path وfixture-backed six-persona E2E تبقى NOT VERIFIED.

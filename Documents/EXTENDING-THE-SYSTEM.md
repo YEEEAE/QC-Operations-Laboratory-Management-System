@@ -71,7 +71,8 @@ permission, scope, entity state, version, SoD, signature, and business rules.
 ## A new migration
 
 1. Add `db/migrations/NNNN_descriptive_name.sql` after the current head
-   (`0038_owner_qc_report_access` at the 2026-09-23 update).
+   (`0040_signed_release_gate_evidence` in the 2026-09-24 source tree; migration
+   0040 has not been applied to a live database).
 2. Keep migrations forward-only, lexically ordered, checksummed, and immutable
    after application to a shared environment. A correction is a new migration.
 3. Keep controlled history append-only and avoid destructive cascades. Add

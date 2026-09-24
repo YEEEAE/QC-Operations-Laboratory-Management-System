@@ -1,3 +1,33 @@
+## Rollover from 01 — 2026-09-24 (QC-ADP-03 context compaction)
+
+> نُقلت سجلات ledger الأقدم فقط لتقليل 01 تحت 500 سطر؛ الحالة الحالية والقرارات المفتوحة بقيت في 01.
+
+- **2026-09-23 — AUTHZ-SERVER-MATRIX**
+  - Changed: توحيد UX لرفض الصلاحية/السجل غير المتاح.
+  - Evidence: unit 268/268 PASS؛ Docker PG 21/21؛ disposable actor HTTP reads/logout PASS؛ authenticated E2E الإجمالي FAIL (15 passed، 21 accessibility failures، 1 skipped، 2 لم تبدأ). كتابات actor على سجل صالح وتبدل الصلاحية أثناء الطلب NOT RUN؛ لا دليل BAD_REQUEST/ID غير موجود احتُسب كرفض صلاحية.
+  - State: PARTIAL — `audit/2026-09-23/authorization-server-matrix.md`.
+
+- **2026-09-23 — QC-100-FINAL-026-C / reconciled open QC and recovery decisions**
+  - Changed: ربط سجل القرار وآلات الحالة ومصالحة المتطلبات بمسارات use case الحالية، وإضافة RD-019/RD-020. تحديث التدفق الفعلي: إنشاء/تسجيل نتيجة التفتيش موصولان لكن لا مصدر evaluator معتمد؛ laboratory `evaluate()` يرفض؛ Reject الافتراضي `POLICY_SOURCE_REQUIRED`.
+  - Evidence: `requirements:check` PASS (100 requirements, 34 risks, 20 gaps, 33 decisions, 80 domains). اكتُشفت مخالفة: recovery metrics/code والاختبار يثبتون RPO=24h وRTO=4h رغم بقاء PD-26/27 مفتوحة؛ لم تُغيّر القيم دون قرار.
+  - State: PARTIAL — قرارات QC/WI-SOP/Reject/restore وRPO/RTO ما زالت BLOCKED؛ لا tests أو migrations شُغلت، ولا تغيير runtime.
+  - Key files: `Documents/REQUIREMENTS-RECONCILIATION.md`, `Documents/DECISION-ASSUMPTION-REGISTER-026.md`, `Documents/STATE-MACHINES.md`.
+
+- **2026-09-23 — FULL-REPO-AUDIT / تدقيق مستقل**
+  - Changed: تقرير HTML مستقل لـ100 مجال بمؤشر نضج أدلة 49%، وست توصيات تكامل وبرومبتات معالجة؛ أزيل منه تصور إعادة التصميم بطلب المستخدم. لا تعديل للتطبيق أو الإنتاج.
+  - Evidence: Node 24.20.0؛ unit 960/975 PASS (15 FAIL)، typecheck خطأ واحد، lint 9 أخطاء، architecture مخالفة واحدة؛ format/requirements/diagnose/build بعد verification:begin PASS. قراءة 6 صفحات إنتاجية أكدت NOT READY وschema 0018/0038 وReject Reports محجوب وbackup catalog فارغ. PG18/E2E/UAT NOT RUN في هذه الجولة.
+  - State: PARTIAL — `audit/2026-09-23-full-repository-audit-redesign-ar.html`؛ النسبة رأي تقييم أدلة وليست امتثالًا أو جاهزية إطلاق.
+
+- **2026-09-23 — INDEPENDENT-LIVE-REASSESSMENT / تقييم عربي جديد**
+  - Changed: تقرير مستقل بـ50 معيارًا/10 مجالات، مؤشر أدلة 46%، دون الاستناد إلى درجات التقارير السابقة.
+  - Evidence: قراءة مصدر محلي عند `e9054c6` وست صفحات حية مصادقة؛ الصحة NOT READY، schema 0018/0038، Reject Reports محجوب، backup catalog فارغ، release identity UNVERIFIED. كشف تعارض RPO/RTO بين واجهة backups وخطة السياسة.
+  - State: PARTIAL — `audit/2026-09-23-independent-reassessment-ar.html`؛ أوضح المالك أن برومبتات الإطلاق التجريبي جرى تجاوزها ولم تُكمل. هوية النشر وUAT/E2E/الاستعادة غير متحققة.
+
+- **2026-09-23 — RELEASE-GATE-RECONCILIATION / exact-SHA readiness review**
+  - Changed: أُنتج قرار بوابات للمرشح `5d591afc29c04d66f1c0a80b9cd24d5accb71527`؛ NO-GO. تأكد غياب مسار ingest موثوق لـCI/security/database/E2E، وبقي signer/scope لـUAT قرار مالك.
+  - Evidence: `release:evidence:check` FAIL على Node `24.20.0`؛ run context والتقارير على SHAs/run IDs أخرى، unit فيها 9 إخفاقات تاريخية، E2E فيه إخفاق، وrelease identity مفقود. GitHub status checks فارغة؛ reconciliation guard PASS (80 domains). لا اختبارات أُجريت.
+  - State: PARTIAL — `audit/2026-09-23/release-gate-reconciliation-5d591af.md`; blocker owners/actions therein. No deploy/promotion/RELEASED.
+
 ## Rollover from 01 — 2026-09-24 (older UI and tooling ledger)
 
 - **2026-09-23 — UI-ROUTE-BASELINE / route visibility and task-first inventory**

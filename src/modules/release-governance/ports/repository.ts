@@ -51,6 +51,8 @@ export interface ReleaseApprovalReplayInput {
 
 export interface ReleaseGovernanceRepository {
   getCandidate(releaseId: string): Promise<ReleaseCandidateRecord | undefined>;
+  /** True only when the approved production gate register is reconciled to this candidate's exact identity. */
+  hasReconciledProductionGateDecision(releaseId: string): Promise<boolean>;
   getEvidence(releaseId: string): Promise<{
     gateRecords: ReleaseGateEvidenceRecord[];
     riskRecords: ReleaseRiskEvidenceRecord[];
