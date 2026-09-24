@@ -2,6 +2,7 @@ import { getDatabase } from '../../../shared/database/database.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import { PostgresDocumentRepository } from '../infrastructure/postgres-repository.js';
+import { PostgresDocumentReviewQueueQuery } from '../infrastructure/postgres-review-queue.js';
 import { ApproveVersionUseCase } from './approve-version.js';
 import { CreateDocumentUseCase } from './create-document.js';
 import { CreateVersionUseCase } from './create-version.js';
@@ -12,10 +13,16 @@ import { SubmitVersionUseCase } from './submit-version.js';
 import { SupersedeVersionUseCase } from './supersede-version.js';
 import { UpdateVersionDraftUseCase } from './update-version-draft.js';
 import { VoidVersionUseCase } from './void-version.js';
+import { ListDocumentReviewQueueUseCase } from './list-review-queue.js';
 
 export function documentsReadDependencies() {
-  const repository = new PostgresDocumentRepository(getDatabase());
-  return { get: new GetDocumentUseCase(repository), list: new ListDocumentsUseCase(repository) };
+  const database = getDatabase();
+  const repository = new PostgresDocumentRepository(database);
+  return {
+    get: new GetDocumentUseCase(repository),
+    list: new ListDocumentsUseCase(repository),
+    reviewQueue: new ListDocumentReviewQueueUseCase(new PostgresDocumentReviewQueueQuery(database)),
+  };
 }
 
 export function documentsActionDependencies() {

@@ -2,8 +2,9 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current source head is `0040_signed_release_gate_evidence` (40
-migration files). Migration 0040 adds signed provider-evidence identity and
+Current source head is `0041_document_review_queue_indexes` (41
+migration files). Migration 0041 adds partial indexes for the bounded,
+actor-scoped document review queue. Migration 0040 adds signed provider-evidence identity and
 append-only constraints; it has not been applied to a live database. Historical
 documentation freezes may cite earlier source heads. A read-only Render
 provider query on 2026-09-22 reported applied head `0018`; that is historical

@@ -1,5 +1,15 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-07 / مصادر لوحة القرار**
+  - Changed: أضيف document-review read model bounded بنفس actor predicate للعدد والصفوف، queue في dashboard/work ورابط register؛ أضيفت فهارس migration 0041. الجودة وblocked reason وreject analytics ما زالت محجوبة بسياسات/مصادر غير معتمدة.
+  - Evidence: unit/UI 20/20 PASS وAstro check 0 errors؛ PostgreSQL 18/Testcontainers BLOCKED (لا container runtime)، لذا parity/role E2E/perf وlive schema/role NOT VERIFIED. 12 فحص route ما زالت 0 PASS قبولًا كاملًا؛ تفاصيل `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md`.
+  - State: PARTIAL / NO-GO — source migration head 0041؛ لا دليل تطبيق live ولا إغلاق قرارات الجودة/الرفض/سبب التعطيل.
+
+- **2026-09-24 — QC-ADP-06 / سلسلة NCR/RCA/CAPA**
+  - Changed: لا تغيير runtime/schema؛ سبب التعطل قرارات QMS المفتوحة PD-15/16/17/18، مع تعارض معيار القبول المطلق للفعالية مع استثناء P-04 المعتمد.
+  - Evidence: quality unit/integration-file 17/17 PASS؛ PG18 BLOCKED/NOT RUN؛ E2E blocked قبل السيناريو بسبب Chromium sandbox؛ 13 route × 5 checks = 65، 0 PASS.
+  - State: BLOCKED / NO-GO — handoff وقرارات المالك المطلوبة في `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
+
 - **2026-09-24 — QC-ADP-05 / laboratory report drafts**
   - Changed: fixed draft-storage failure being presented as permission denial; added grant/scope and source unit/precision recovery guidance. No grant/schema/scientific-source change.
   - Evidence: focused unit/UI 12/12 PASS; Astro check 0 errors; PostgreSQL 18 BLOCKED (no container runtime); likely live schema lag, actual yazeed grant/source approval NOT VERIFIED. Handoff: `audit/2026-09-24/QC-ADP-05-laboratory-report-drafts-handoff.md`.
@@ -340,8 +350,8 @@
 - Quarantine flow على `/dashboard` = 6 مراحل (Received today → Awaiting inspection → Under inspection → HOLD → PASS not released → Released) وكل مرحلة projection لمقياس واحد من `GetQuarantineOverviewUseCase` نفسه الذي يقدّم `/quarantine`؛ لا SQL موازٍ ولا تعريف ثانٍ للحالة.
 - attention queue تُبنى من نفس صفوف الـcounts مع سبب بشري و`ageLabel` مشتق من timestamp خادمي حقيقي (`assignedAt`/`updatedAt`/`dueAt`/`createdAt`) وحالة ورابط مباشر، مرتّبة بالشدة الحقيقية ومحدودة بـ10؛ إن غاب timestamp تُكتب `Age not recorded`.
 - فشل قراءة أي source (غير AUTHZ) يحجب الـsnapshot كاملًا؛ رفض `AUTHORIZATION` لحساب لا يملك قراءة register معيّن يظهر كـ"Not available" بلا رقم وبلا رابط ولا يصبح صفرًا. حالات الseries تبقى `AVAILABLE|EMPTY|UNAVAILABLE|NOT_SUPPLIED` بلا نقاط خارج `AVAILABLE`، ويعرض الرسم source/unit/grain/counts/scope/period/zero/freshness.
-- coverage panel مُشتق من read model لا من copy الصفحة: 13 مدخلًا؛ `AVAILABLE` الآن يشمل laboratory workload (bounded state/ownership) وtasks (assigned/open/due/hold)، و`NOT_SUPPLIED` يبقى لـdocument review queue وblocked reasons (نصًّا حرًّا فقط — العمل المحجوز نفسه صار مقروءًا) وreject analytics وquality summary وsystem health (owner-only) — لكل مدخل سببه الحقيقي ومالكه.
-- ما زال يحتاج read model خادميًا قبل أي عرض: document review queue، blocked reason نصًّا حرًّا، reject analytics بعد إغلاق عيوب SQL/runtime + مسار قراءة مصرّح، وownership filter في سجلات Quality.
+- coverage panel مُشتق من read model لا من copy الصفحة: 13 مدخلًا؛ `AVAILABLE` يشمل laboratory workload، tasks، وdocument review queue (source bounded وsame-filter drilldown)؛ `NOT_SUPPLIED` يبقى لسبب blocked الحر، reject analytics، quality summary، وsystem health owner-only، ولكل مدخل سببه ومالكه.
+- document review queue مُنفذ source-side لكن PG parity والأدوار والأداء/live schema غير مثبتة حتى تطبيق/اختبار migration 0041 في مرشح مخول. لا تعرض blocked free text ولا reject analytics قبل قرارات المصدر والنطاق، ولا quality KPI حتى اعتماد ownership filter لكل domain. التفاصيل والحالة `PARTIAL / NO-GO`: `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md`.
 
 ### My work today (QC-100-FINAL-022 — سطح جديد `/work`)
 - الطابور **ليس** لوحة ثانية ولا مصدر SQL ثانيًا: `myWorkDependencies()` يستهلك نفس `dashboardMetricSources()`؛ لا `selectFrom`/`FROM qc.`/`getDatabase` في الصفحة (محروس في `tests/unit/ui/my-work-surface.test.ts`).
@@ -477,6 +487,7 @@
 - **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
+- **QC-ADP-06:** Finding→NCR threshold/FAIL consequence/NCR closure/CAPA effectiveness remain owner-dependent (PD-15/16/17/18). Approved P-04 permits a controlled Supervisor exception without effectiveness acceptance, so an absolute effectiveness-before-every-closure acceptance criterion conflicts with current policy and requires an explicit owner decision; do not change the exception by implementation. Route handoff: `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
 - **ملف تكامل مخصص للمرحلتين موجود الآن** (كان مفتوحًا في تقرير FINAL-004): `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.
 - **أُغلق 2026-09-19 (QC-100-FINAL-002):** كل ملفات `pnpm test:integration` التي كانت تفشل السابقة (`identity/system-owner-upgrade-parity`, `system/control-center`, `reporting/report-export-parity`, `shared/search-scope`, `shared/notification-outbox-delivery`, `quarantine/overview-parity`) صارت PASS بجذور مُثبتة: عزل schema لكل suite كانت تعوّل على قاعدة بكر، probed migration-dir في `createPostgresMigrationStatus` (العملة الواحدة كانت تُبلغ drift زائفًا تحت Vitest)، وعقود اختبار متقادمة (literal LIKE، bounded queue مقابل total، `uuidv7` غير مونوتونية داخل المللي ثانية، sparse-array matcher).

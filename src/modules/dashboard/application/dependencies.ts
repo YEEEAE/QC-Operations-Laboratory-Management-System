@@ -9,6 +9,7 @@ import {
   receivingReadDependencies,
 } from '../../quarantine/application/dependencies.js';
 import { laboratoryReadDependencies } from '../../laboratory/application/dependencies.js';
+import { documentsReadDependencies } from '../../documents/application/dependencies.js';
 import { DEFAULT_PAGE_SIZE } from '../../../config/constants.js';
 import { parsePageInput } from '../../../shared/pagination/page.js';
 import { taskReadDependencies } from '../../tasks/application/dependencies.js';
@@ -54,6 +55,7 @@ function composedSources(): DashboardSourceDependencies {
     // The laboratory register's bounded workload read: one count plus one bounded
     // page, so the laboratory counter and its queue come from a single read.
     laboratory: { execute: (input) => laboratoryReadDependencies().workload.execute(input) },
+    documentReview: { execute: (input) => documentsReadDependencies().reviewQueue.execute(input) },
   };
 }
 

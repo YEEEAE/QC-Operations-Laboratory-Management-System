@@ -117,6 +117,20 @@ export interface DashboardLaboratoryReader {
   }>;
 }
 
+export interface DashboardDocumentReviewReader {
+  execute(input: { actor: ActorContext; limit: number }): Promise<{
+    total: number;
+    items: readonly {
+      versionId: string;
+      documentId: string;
+      documentNo: string;
+      revision: string;
+      state: string;
+      createdAt: Date;
+    }[];
+  }>;
+}
+
 export interface DashboardSourceDependencies {
   approvals: DashboardApprovalReader;
   notifications: DashboardNotificationReader;
@@ -125,6 +139,7 @@ export interface DashboardSourceDependencies {
   tasks: DashboardTaskReader;
   calibrations: DashboardCalibrationReader;
   laboratory: DashboardLaboratoryReader;
+  documentReview: DashboardDocumentReviewReader;
 }
 
 /**
@@ -609,6 +624,48 @@ export function dashboardMetricSources(
       },
       read: (actor) => readLaboratorySource(dependencies, actor),
     },
+    {
+      metric: {
+        key: 'documents-pending-my-review',
+        label: 'Documents awaiting your review',
+        unit: 'records',
+        denominator: 'Every active document version your account may review',
+        grain: 'One document version awaiting review',
+        timeRange: 'current snapshot',
+        timezone: 'UTC',
+        freshness: SNAPSHOT_FRESHNESS,
+        source: 'Document review queue',
+        numerator: 'Active IN_REVIEW versions you are authorized to review, excluding versions you authored',
+        state: 'version = IN_REVIEW and document active',
+        actorScope: 'Both document-review and approval-review grants; owner scope or global scope',
+        definition: 'Active document versions awaiting your review. The count and bounded rows use the same indexed query and reviewer/author scope.',
+        drilldown: '?review=mine on the controlled documents register',
+        href: '/documents?review=mine',
+        drilldownLabel: 'Open documents awaiting my review',
+        tone: 'warning',
+      },
+      attention: { severity: 'WARNING', reason: 'Document version is waiting for your review' },
+      queue: {
+        category: 'ASSIGNED',
+        reason: 'Document version is waiting for your review',
+        nextAction: 'Review the version in the controlled documents register.',
+        responsibleRole: 'You, with both document-review and approval-review authority',
+      },
+      read: async (actor) => {
+        const page = await dependencies.documentReview.execute({ actor, limit: DEFAULT_PAGE_SIZE });
+        return {
+          total: page.total,
+          rows: page.items.map((item): DashboardAttentionRow => ({
+            id: item.versionId,
+            title: `${item.documentNo} · ${item.revision}`,
+            state: item.state,
+            href: `/documents/${item.documentId}/versions/${item.versionId}/review`,
+            anchorAt: item.createdAt,
+            anchor: 'waiting',
+          })),
+        };
+      },
+    },
   ];
 }
 
@@ -697,9 +754,9 @@ export const DASHBOARD_COVERAGE: readonly DashboardCoverageItem[] = [
   {
     key: 'document-review',
     label: 'Document review queue',
-    state: 'NOT_SUPPLIED',
+    state: 'AVAILABLE',
     reason:
-      'The documents module exposes document identities and their version history, but no reviewer-scoped review-queue read model: versions awaiting review are only reachable by opening each document, so no queue count could be reproduced by a link. Owner: 017-B with the documents module.',
+      'The documents read model uses one indexed IN_REVIEW query scoped by both required review grants and the reviewer/author rule; the same query supplies its full match count and bounded review links.',
   },
   {
     key: 'blocked-reasons',

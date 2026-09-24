@@ -17,3 +17,24 @@ export interface DocumentRepository {
   transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }): Promise<DocumentVersion>;
   supersede(input: { currentId: string; currentExpectedVersion: bigint; replacementId: string; replacementExpectedVersion: bigint; actor: ActorContext; effectiveAt: Date; requestId: string }): Promise<{ current: DocumentVersion; replacement: DocumentVersion }>;
 }
+
+export interface DocumentReviewQueueItem {
+  versionId: string;
+  documentId: string;
+  documentNo: string;
+  title: string;
+  revision: string;
+  state: 'IN_REVIEW';
+  authorId: string;
+  ownerId: string;
+  createdAt: Date;
+}
+
+export interface DocumentReviewQueueQuery {
+  listForReviewer(input: {
+    actorId: string;
+    global: boolean;
+    own: boolean;
+    limit: number;
+  }): Promise<{ total: number; items: readonly DocumentReviewQueueItem[] }>;
+}

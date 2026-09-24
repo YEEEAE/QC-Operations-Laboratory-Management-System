@@ -112,6 +112,7 @@ function sourceDependencies(db: Kysely<DatabaseSchema>): DashboardSourceDependen
     },
     calibrations: { execute: (input) => calibrations.execute(input) },
     laboratory: { execute: (input) => laboratory.execute(input) },
+    documentReview: { execute: async () => ({ total: 0, items: [] }) },
   };
 }
 

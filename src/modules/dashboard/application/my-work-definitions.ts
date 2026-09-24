@@ -19,13 +19,13 @@ export const MY_WORK_GROUP_DEFINITIONS: Readonly<Record<string, MyWorkGroupDefin
     membership:
       'Outstanding records whose owning register names your account — or your role — as the holder of the next step.',
     ownership:
-      'You are the named holder: the task assignee, the inspection or laboratory author it was returned to, or the work item assigned to you or to a role you hold.',
+      'You are the named holder: the task assignee, the inspection or laboratory author it was returned to, the reviewer assigned by both document-review grants, or the work item assigned to you or to a role you hold.',
     actorScope: 'Records your account is authorized to read, narrowed to your own holding.',
     timezone: 'UTC',
     sourceTimestamp:
       "The register's own assignment or last-update timestamp (task due date, approval assigned-at, report updated-at).",
     predicate:
-      'task: current_assignee_id = you AND state not COMPLETED/CANCELLED; approval: actionable work item whose assigned user is you or whose role requirement is a role you hold; inspection/laboratory: author = you AND workflow state = RETURNED.',
+      'task: current_assignee_id = you AND state not COMPLETED/CANCELLED; approval: actionable work item whose assigned user is you or whose role requirement is a role you hold; inspection/laboratory: author = you AND workflow state = RETURNED; document: both review grants, active document, IN_REVIEW version, not authored by reviewer, and owner-scope or global-scope grants.',
   },
   DUE_TODAY: {
     category: 'DUE_TODAY',
@@ -88,13 +88,6 @@ export const MY_WORK_UNRESOLVED_SOURCES: readonly MyWorkUnresolvedSource[] = [
     reason:
       'Only the current holder is a register field. The tasks register keeps an assignment history table, but a queue must show the single current holder so a record assigned more than once is never listed more than once.',
     owner: 'Not required for this workspace; the current-holder pointer is the approved reading.',
-  },
-  {
-    key: 'document-review-queue',
-    label: 'Document versions awaiting your review',
-    reason:
-      'The documents module exposes documents and their version history, but no reviewer-scoped review-queue read model, so a count could not be reproduced by a link. Owner: 017-B with the documents module.',
-    owner: '017-B with the documents module.',
   },
   {
     key: 'equipment-eligibility-blocks',

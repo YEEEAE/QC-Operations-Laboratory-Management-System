@@ -116,6 +116,7 @@ function dashboardOver(db: Kysely<DatabaseSchema>) {
       laboratory: {
         execute: (input) => new GetLabWorkloadUseCase(new PostgresLabRepository(db)).execute(input),
       },
+      documentReview: { execute: async () => ({ total: 0, items: [] }) },
     }),
     dashboardFlowSource({
       execute: (input) =>

@@ -159,6 +159,7 @@ function sourceDependencies(
     },
     calibrations: { execute: (input) => calibrations.execute(input) },
     laboratory: laboratorySource,
+    documentReview: { execute: async () => ({ total: 0, items: [] }) },
     ...overrides,
   };
 }

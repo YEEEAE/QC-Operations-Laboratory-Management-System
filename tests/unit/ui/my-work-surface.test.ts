@@ -73,13 +73,16 @@ describe('My work today workspace', () => {
     const definitions = read(DEFINITIONS);
     for (const key of [
       'blocked-reason-text',
-      'document-review-queue',
       'equipment-eligibility-blocks',
       'unassigned-work-in-my-scope',
       'reject-report-analytics',
     ]) {
       expect(definitions, key).toContain(`key: '${key}'`);
     }
+    expect(definitions).not.toContain("key: 'document-review-queue'");
+    expect(read('src/modules/dashboard/application/dashboard-sources.ts')).toContain(
+      "key: 'documents-pending-my-review'",
+    );
     expect(read(PAGE)).toContain('unresolvedSources');
     expect(read(PAGE)).toContain('What this queue cannot answer yet');
   });
@@ -125,6 +128,7 @@ describe('My work today workspace', () => {
       '/tasks': 'src/pages/tasks/index.astro',
       '/assets/calibrations': 'src/pages/assets/calibrations/index.astro',
       '/laboratory/tests': 'src/pages/laboratory/tests/index.astro',
+      '/documents': 'src/pages/documents/index.astro',
     };
     // `href` is the register path; `drilldown` states the same filter in query
     // form, so the parameters checked here are the ones the link really opens.

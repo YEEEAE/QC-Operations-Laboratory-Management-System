@@ -122,6 +122,7 @@ function dashboard(target: Kysely<DatabaseSchema>) {
     laboratory: {
       execute: (input) => new GetLabWorkloadUseCase(labRepository).execute(input),
     },
+    documentReview: { execute: async () => ({ total: 0, items: [] }) },
   };
   return new PostgresDashboardQuery(
     target,
