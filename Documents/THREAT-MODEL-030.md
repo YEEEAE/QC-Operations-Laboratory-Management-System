@@ -57,11 +57,11 @@ chain boundaries. It is not a penetration test or a production security claim.
 | Identity and sessions | Stolen, forged, replayed, or expired browser session; login abuse; account enumeration | Opaque server-side sessions, hashed server token, `__Host-` Secure/HttpOnly/SameSite=Strict cookie, revocation and DB-backed high-risk rate limit; middleware resolves actor per request | PostgreSQL-backed focused authorization integration passed, but authenticated session-expiry HTTP rejection remains NOT VERIFIED because login controls blocked the focused E2E requests. Security owner: `yazeed` |
 | Authorization and scope | Change a record ID, scope, role, state, or version in a direct request; cross-scope read/write or self-approval | Server-derived actor, default deny, route/use-case authorization, scope/state/SoD/version validation and transactional approval/signature; see approval/document authorization matrices and `tests/e2e/authorization-matrix.spec.ts` | Exact-candidate HTTP + populated PostgreSQL negative run NOT VERIFIED; 002/027 own DB evidence and 003 owns authenticated E2E |
 | Files and evidence | MIME/name spoofing, traversal, oversized/malicious bytes, link substitution, object tampering, partial DB/object write | Size and signature checks, required explicit scanner policy, private storage, digest verification, canonical evidence-link resolution, subject authorization before object read, transaction/compensation; `tests/integration/shared/files.test.ts` | Approved scanner/MIME/retention policy remains POLICY-DEPENDENT; exact-candidate PostgreSQL and authenticated expired-session download rejection NOT VERIFIED; 013/026 own policy and 002/027 own DB evidence |
-| AI processing | Prompt injection, secret/PII disclosure, unsafe authority output, provider failure, redirect to a hostile endpoint | External processing defaults false; only explicitly entered question/context is sent; visible notice before submission identifies configured provider and data sent; deterministic refusal/evaluation suites; HTTP redirect following is disabled | Configured HTTPS host is not allowlisted; environment/configuration compromise could direct server egress. Provider retention/deletion and permitted data classes remain open under PD-31; 013/026 own approval |
+| AI processing | Prompt injection, secret/PII disclosure, unsafe authority output, provider failure, redirect to a hostile endpoint | External processing defaults false; only explicitly entered question/context is sent; visible notice before submission identifies configured provider and data sent; deterministic refusal/evaluation suites; redirect following is disabled; provider URLs must exactly match the Groq or Gemini official endpoint allowlist | External processing remains disabled without PD-31 approval. Custom enterprise endpoints remain unsupported until owner/security approval; retention/deletion and permitted data classes remain open under PD-31 |
 | Reports and exports | Cross-scope rows, filter manipulation, formula injection, excessive export, raw HTML/XSS, error detail leakage | Registered report code, server permission and actor-scope query, strict filter parser, CSV/XLSX formula neutralization, attachment/nosniff/no-store, fixed errors and redacted logs | Populated-DB report-scope parity across every report remains PARTIAL; 002/027 own exact-candidate negative evidence |
 | Approvals and e-signatures | Replay, stale version, signature substitution/tampering, forged approval, SoD bypass, cross-scope mutation | Reauthentication, binding to actor/action/subject/version/snapshot, DB transaction and concurrency/idempotency protection; `tests/integration/e-signatures/signature.test.ts`, `tests/integration/concurrency/idempotency.test.ts`, approval authorization/rollback tests | Current local DB-backed signature tamper and server request rejection NOT VERIFIED in this run; 002/027 |
 | HTTP / browser boundary | CSRF, reflected/stored XSS, injection, clickjacking, MIME confusion, referrer leakage, raw stack/driver output | Astro origin checks, Zod action schemas, parameterized Kysely/SQL, context-safe text rendering, restrictive production CSP, HSTS/security headers, safe problem responses; security-header unit/E2E tests and `pnpm test:security` | Custom mutation routes and authenticated browser attack coverage must run on the exact candidate; no blanket penetration-test claim |
-| SSRF / provider egress | Redirect or malicious provider response forwards prompt/API key to another origin | AI client sets `redirect: 'error'`; configured provider URLs require HTTPS | Provider hostname allowlist/private-address denial remains OPEN; `yazeed` to decide whether custom enterprise endpoints are required before provider activation |
+| SSRF / provider egress | Redirect or malicious provider response forwards prompt/API key to another origin | AI client sets `redirect: 'error'`; configured provider base URLs must exactly match the two fixed HTTPS provider endpoints; malformed or custom URLs invalidate configuration and disable all providers | Application endpoint allowlist is closed for vendor endpoints only. Network egress enforcement and any custom enterprise destination remain NOT VERIFIED; owner must approve any custom destination before activation |
 | Supply chain | Compromised dependency, hidden transitive component, license conflict, artifact substitution | Exact-SHA CI job runs high/critical audit, creates lockfile-bound CycloneDX inventory and package-license inventory, records artifact digest, and requests GitHub build-provenance plus SBOM attestations for the same build output | Registry audit and GitHub attestation need a successful CI run; current local run has no advisory result. CI/platform owner: `yazeed` |
 
 ### Data leaving the system
@@ -99,12 +99,16 @@ advisory was independently verified in this local run; registry connectivity
 and green candidate CI are required before claiming the dependency set is
 clear.
 
-The current local package inventory reports four installed dependencies without
-declared license metadata: `buildcheck@0.0.7`, `cpu-features@0.0.10`,
-`ssh2@1.17.0`, and `zod-to-ts@1.2.0`. This is an UNKNOWN classification, not a
-claim that any license is incompatible. Owner `yazeed` must verify upstream
-license texts and record disposition by 2026-10-01; the CI inventory fails
-closed until metadata is known or an approved, reviewable disposition exists.
+The package manifests omit a `license` field for four installed dependencies:
+`buildcheck@0.0.7`, `cpu-features@0.0.10`, `ssh2@1.17.0`, and
+`zod-to-ts@1.2.0`. Their installed, lockfile-pinned `LICENSE` files and
+version-tagged upstream files were compared. All four match the SPDX MIT
+license text. `scripts/security/license-evidence.mjs` records each exact
+normalized license-text SHA-256 and upstream version URL; the SBOM writer emits
+MIT only when both package/version and installed-license digest match. A
+changed package version or license file remains UNKNOWN and fails the gate.
+This resolves license identification; it does not assert an organization-level
+license compatibility approval where no separate policy exists.
 
 ### Secret-path review and verification limits
 

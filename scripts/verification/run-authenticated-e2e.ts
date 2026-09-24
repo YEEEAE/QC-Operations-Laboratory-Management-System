@@ -171,8 +171,8 @@ async function main(): Promise<void> {
   }
   for (const key of requiredPasswords)
     if (!env[key]) fail(`${key} is required and is never logged.`);
-    // PostgreSQL 18 Testcontainers is the default. A separately provisioned
-    // disposable cluster may be supplied for restricted local environments.
+  // PostgreSQL 18 Testcontainers is the default. A separately provisioned
+  // disposable cluster may be supplied for restricted local environments.
 
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   env.RELEASE_GIT_SHA = sha;
@@ -225,8 +225,13 @@ async function main(): Promise<void> {
     if (externalDatabaseUrl) {
       const parsed = new URL(externalDatabaseUrl);
       if (!['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname))
-        fail('Refusing authenticated E2E override: QC_TEST_DATABASE_URL must target local disposable PostgreSQL.');
-      if (parsed.searchParams.get('sslmode') !== 'verify-full' || !parsed.searchParams.has('sslrootcert'))
+        fail(
+          'Refusing authenticated E2E override: QC_TEST_DATABASE_URL must target local disposable PostgreSQL.',
+        );
+      if (
+        parsed.searchParams.get('sslmode') !== 'verify-full' ||
+        !parsed.searchParams.has('sslrootcert')
+      )
         fail('Refusing authenticated E2E override: local PostgreSQL must use verified TLS.');
     }
     container = externalDatabaseUrl ? undefined : await startPostgresContainer({ tls: true });
@@ -314,23 +319,29 @@ async function main(): Promise<void> {
       if (attempt === 29) fail('Built preview server did not become live.');
     }
     const authorizationOnly = env.QC_ADP08_AUTHORIZATION_ONLY === 'true';
-    const selectedSpecs = env.QC_AUTHENTICATED_E2E_SECURITY_ONLY === 'true'
-      ? securityE2eSpecs
-      : ['tests/e2e/authenticated-closure.spec.ts', 'tests/e2e/accessibility.spec.ts'];
-    const playwrightArgs = authorizationOnly
+    const aiAdvisoryOnly = env.QC_ADP11_AI_ONLY === 'true';
+    const selectedSpecs =
+      env.QC_AUTHENTICATED_E2E_SECURITY_ONLY === 'true'
+        ? securityE2eSpecs
+        : ['tests/e2e/authenticated-closure.spec.ts', 'tests/e2e/accessibility.spec.ts'];
+    const playwrightArgs = aiAdvisoryOnly
       ? [
           'test',
           '--workers=1',
           'tests/e2e/authenticated-closure.spec.ts',
           '--grep',
-          'read-only role is denied a direct POST',
+          'read-only role cannot view or invoke AI advisory',
         ]
-      : ['test', '--workers=1', ...selectedSpecs];
-    const e2eCode = await run(
-      resolve('node_modules/.bin/playwright'),
-      playwrightArgs,
-      env,
-    );
+      : authorizationOnly
+        ? [
+            'test',
+            '--workers=1',
+            'tests/e2e/authenticated-closure.spec.ts',
+            '--grep',
+            'read-only role is denied a direct POST',
+          ]
+        : ['test', '--workers=1', ...selectedSpecs];
+    const e2eCode = await run(resolve('node_modules/.bin/playwright'), playwrightArgs, env);
     if (e2eCode !== 0) process.exitCode = e2eCode;
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'Disposable E2E setup failed.';

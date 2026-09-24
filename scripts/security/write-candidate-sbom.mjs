@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
+import { licenseTextSha256, verifiedLicenseEvidence } from './license-evidence.mjs';
 
 const args = new Map();
 for (let index = 2; index < process.argv.length; index += 1) {
@@ -24,6 +25,7 @@ try {
 const components = [];
 const dependencies = [];
 const licensesByPackage = new Map();
+const verifiedLicenseEvidenceByPackage = new Map();
 const refsByPackage = new Map();
 const licenseCounts = new Map();
 const findLicense = async (key) => {
@@ -40,7 +42,23 @@ const findLicense = async (key) => {
     const metadata = JSON.parse(
       await readFile(path.join(pnpmStore, storeName, 'node_modules', name, 'package.json'), 'utf8'),
     );
-    return { name, version, license: metadata.license, installed: true };
+    let licenseTextSha256Value;
+    try {
+      const licenseText = await readFile(
+        path.join(pnpmStore, storeName, 'node_modules', name, 'LICENSE'),
+        'utf8',
+      );
+      licenseTextSha256Value = licenseTextSha256(licenseText);
+    } catch {
+      // Missing license text remains unknown unless package metadata declares an SPDX identifier.
+    }
+    return {
+      name,
+      version,
+      license: metadata.license,
+      licenseTextSha256: licenseTextSha256Value,
+      installed: true,
+    };
   } catch {
     return { name, version, license: undefined, installed: true };
   }
@@ -52,19 +70,30 @@ for (const key of packageKeys) {
   const packageUrlName = pkg.name.startsWith('@') ? `%40${pkg.name.slice(1)}` : pkg.name;
   const bomRef = `pkg:npm/${packageUrlName}@${pkg.version}`;
   const declaredLicense = typeof pkg.license === 'string' ? pkg.license : pkg.license?.type;
-  const license = declaredLicense
+  const verifiedLicense = declaredLicense
+    ? undefined
+    : verifiedLicenseEvidence(pkg.name, pkg.version, pkg.licenseTextSha256);
+  const resolvedLicense = declaredLicense ?? verifiedLicense?.license;
+  const resolvedLicenseEntry = resolvedLicense
     ? [
         {
-          license: /^[A-Za-z0-9.+-]+$/.test(declaredLicense)
-            ? { id: declaredLicense }
-            : { expression: declaredLicense },
+          license: /^[A-Za-z0-9.+-]+$/.test(resolvedLicense)
+            ? { id: resolvedLicense }
+            : { expression: resolvedLicense },
         },
       ]
     : [];
-  const licenseLabel = declaredLicense || (pkg.installed ? 'UNKNOWN' : 'NOT_INSTALLED_ON_RUNNER');
+  const licenseLabel = resolvedLicense || (pkg.installed ? 'UNKNOWN' : 'NOT_INSTALLED_ON_RUNNER');
   licenseCounts.set(licenseLabel, (licenseCounts.get(licenseLabel) ?? 0) + 1);
-  if (!declaredLicense && pkg.installed)
+  if (!resolvedLicense && pkg.installed)
     licensesByPackage.set(`${pkg.name}@${pkg.version}`, 'UNKNOWN');
+  if (verifiedLicense)
+    verifiedLicenseEvidenceByPackage.set(`${pkg.name}@${pkg.version}`, {
+      license: verifiedLicense.license,
+      installedLicenseSha256: pkg.licenseTextSha256,
+      evidence: verifiedLicense.evidence,
+      upstreamLicense: verifiedLicense.source,
+    });
   components.push({
     type: 'library',
     name: pkg.name,
@@ -79,7 +108,7 @@ for (const key of packageKeys) {
           ],
         }
       : {}),
-    ...(license.length ? { licenses: license } : {}),
+    ...(resolvedLicenseEntry.length ? { licenses: resolvedLicenseEntry } : {}),
   });
   refsByPackage.set(`${pkg.name}@${pkg.version}`, bomRef);
   refsByPackage.set(key.replace(/^\//, '').replace(/\([^)]*\)$/, ''), bomRef);
@@ -104,6 +133,7 @@ const licenseReport = {
   source: 'pnpm-lock.yaml plus installed package metadata',
   totalLockedPackages: components.length,
   unknownLicenses: Object.fromEntries(licensesByPackage),
+  verifiedLicenseEvidence: Object.fromEntries(verifiedLicenseEvidenceByPackage),
   licenses: Object.fromEntries(
     [...licenseCounts].sort(([left], [right]) => left.localeCompare(right)),
   ),

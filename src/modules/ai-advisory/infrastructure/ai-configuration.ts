@@ -3,17 +3,18 @@ import { ENV_KEYS } from '../../../config/constants.js';
 import type { AdvisoryDataClass } from '../ports/ai-provider.js';
 
 const providerSchema = z.enum(['groq', 'gemini']);
-const optionalUrl = z
-  .string()
-  .trim()
-  .refine((value) => {
-    try {
-      return new URL(value).protocol === 'https:';
-    } catch {
-      return false;
-    }
-  }, 'must be an HTTPS URL')
-  .optional();
+const groqEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
+const geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta';
+
+const optionalHttpsEndpoint = (allowedEndpoint: string) =>
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === allowedEndpoint,
+      `must exactly match the approved provider endpoint`,
+    )
+    .optional();
 
 const configurationSchema = z.object({
   externalProcessingApproved: z.enum(['true', 'false']).default('false'),
@@ -21,10 +22,10 @@ const configurationSchema = z.object({
   fallbackProvider: providerSchema.default('gemini'),
   groqApiKey: z.string().trim().min(1).optional(),
   groqModel: z.string().trim().min(1).max(200).optional(),
-  groqBaseUrl: optionalUrl,
+  groqBaseUrl: optionalHttpsEndpoint(groqEndpoint),
   geminiApiKey: z.string().trim().min(1).optional(),
   geminiModel: z.string().trim().min(1).max(200).optional(),
-  geminiBaseUrl: optionalUrl,
+  geminiBaseUrl: optionalHttpsEndpoint(geminiEndpoint),
   processingPolicyJson: z.string().min(2).max(10_000).optional(),
 });
 
@@ -84,8 +85,8 @@ export interface AiConfiguration {
 const value = (input: Record<string, string | undefined>, canonical: string, legacy: string) =>
   input[canonical]?.trim() || input[legacy]?.trim();
 
-const defaultGroqBaseUrl = 'https://api.groq.com/openai/v1/chat/completions';
-const defaultGeminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+const defaultGroqBaseUrl = groqEndpoint;
+const defaultGeminiBaseUrl = geminiEndpoint;
 
 function parseCandidate(input: Record<string, string | undefined>) {
   const parsed = configurationSchema.safeParse({

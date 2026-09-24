@@ -32,6 +32,19 @@ Server-only variables are declared in `.env.example` and `render.yaml`:
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | Groq adapter configuration |
 | `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL` | Gemini adapter configuration |
 
+`GROQ_BASE_URL` and `GEMINI_BASE_URL` are accepted only when they exactly
+match the built-in HTTPS provider endpoints: Groq
+`https://api.groq.com/openai/v1/chat/completions`
+([API reference](https://console.groq.com/docs/api-reference)), or Gemini
+`https://generativelanguage.googleapis.com/v1beta`
+([API methods](https://ai.google.dev/api/all-methods)). Any other host, port,
+path, query, or scheme invalidates the provider configuration and keeps
+external processing disabled. Custom enterprise endpoints are not supported
+until the authorized owner approves their destination and the security review
+updates this explicit allowlist. The endpoint allowlist does not enable a
+provider or approve data processing; the complete policy artifact, user
+classification, and per-request consent remain required.
+
 Legacy local names (`API_groq_Key`, `groq_model`, `URL_groq`,
 `API_gemini_Key`, `gemini_model`) are accepted during transition. Canonical
 names take precedence. API keys are never stored in PostgreSQL, sent to the

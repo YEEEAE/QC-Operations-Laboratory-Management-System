@@ -81,21 +81,41 @@ describe('AI provider configuration', () => {
     expect(JSON.stringify(result)).toContain('canonical-groq-secret');
   });
 
-  it('supports legacy names during transition and rejects non-HTTPS endpoints', () => {
+  it('supports legacy credentials but rejects every provider destination outside the exact endpoint allowlist', () => {
     const legacy = parseAiConfiguration({
       AI_EXTERNAL_PROCESSING_APPROVED: 'true',
       API_groq_Key: 'legacy-groq-secret',
       groq_model: 'legacy-model',
-      URL_groq: 'https://legacy.test/chat/completions',
+      URL_groq: aiConfigurationDefaults.groqBaseUrl,
       API_gemini_Key: 'legacy-gemini-secret',
       gemini_model: 'legacy-gemini',
       AI_PROCESSING_POLICY_JSON: approvedPolicy,
     });
     expect(legacy.providers.groq?.apiKey).toBe('legacy-groq-secret');
     expect(legacy.providers.gemini?.model).toBe('legacy-gemini');
-    expect(parseAiConfiguration({ GROQ_BASE_URL: 'http://unsafe.test' }).invalidFields).toContain(
-      'groqBaseUrl',
+    expect(legacy.providers.groq?.baseUrl).toBe('https://api.groq.com/openai/v1/chat/completions');
+    expect(legacy.providers.gemini?.baseUrl).toBe(
+      'https://generativelanguage.googleapis.com/v1beta',
     );
+
+    const credentialsAndPolicy = {
+      AI_EXTERNAL_PROCESSING_APPROVED: 'true',
+      GROQ_API_KEY: 'groq-test-key',
+      GROQ_MODEL: 'test-model',
+      AI_PROCESSING_POLICY_JSON: approvedPolicy,
+    };
+    for (const endpoint of [
+      'http://api.groq.com/openai/v1/chat/completions',
+      'https://api.groq.com.attacker.example/openai/v1/chat/completions',
+      'https://attacker.example/openai/v1/chat/completions',
+      'https://127.0.0.1/openai/v1/chat/completions',
+      'https://api.groq.com:8443/openai/v1/chat/completions',
+      'https://api.groq.com/openai/v1/chat/completions?forward=1',
+    ]) {
+      const denied = parseAiConfiguration({ ...credentialsAndPolicy, GROQ_BASE_URL: endpoint });
+      expect(denied.invalidFields, endpoint).toContain('groqBaseUrl');
+      expect(denied.providers, endpoint).toEqual({});
+    }
   });
 
   it('requires a complete approved policy source as well as the processing approval flag', () => {

@@ -81,8 +81,8 @@ produce explicitly non-production evidence.
 | `AI_EXTERNAL_PROCESSING_APPROVED` | `true` / `false` | `false` | Technical gate only — not evidence of approval. When `false` or any provider field is invalid, the `DisabledAiProvider` is used and no external call is possible. |
 | `AI_PRIMARY_PROVIDER` | `groq` / `gemini` | `groq` | Selection only; inert while the gate is `false`. |
 | `AI_FALLBACK_PROVIDER` | `groq` / `gemini` | `gemini` | Selection only; inert while the gate is `false`. |
-| `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | strings / HTTPS URL | unset / provider defaults | Credential and model selection for Groq; key is secret-manager only. |
-| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL` | strings / HTTPS URL | unset / provider defaults | Same contract for Gemini. |
+| `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | strings / exact allowlisted HTTPS endpoint | unset / `https://api.groq.com/openai/v1/chat/completions` | Credential and model selection for Groq; key is secret-manager only. Any other endpoint invalidates AI provider configuration. |
+| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL` | strings / exact allowlisted HTTPS base URL | unset / `https://generativelanguage.googleapis.com/v1beta` | Same contract for Gemini. Any other endpoint invalidates AI provider configuration. |
 
 ## Operator and verification harness variables
 
@@ -107,4 +107,3 @@ approved defaults beyond what their owning script documents.
    requirements, pairing rules, AI gate, TLS enforcement).
 4. Secret values never appear in this document, `.env.example`, tests, logs, or
    audit artifacts.
-

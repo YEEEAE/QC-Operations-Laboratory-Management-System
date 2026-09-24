@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "candidate": {
+    "gitSha": "local",
+    "lockfileSha256": "c82b96f2a756792f05f7a120e08b605b8e7058706db3095b34e10d83c4577ee5"
+  },
+  "source": "pnpm-lock.yaml plus installed package metadata",
+  "totalLockedPackages": 822,
+  "unknownLicenses": {},
+  "verifiedLicenseEvidence": {
+    "buildcheck@0.0.7": {
+      "license": "MIT",
+      "installedLicenseSha256": "9f75981e6039d13bf2e591c59e9c89a2641ca605fde59ba78974b11553f6c148",
+      "evidence": "exact installed LICENSE text matches version-pinned upstream LICENSE",
+      "upstreamLicense": "https://github.com/mscdex/buildcheck/blob/v0.0.7/LICENSE"
+    },
+    "cpu-features@0.0.10": {
+      "license": "MIT",
+      "installedLicenseSha256": "9f75981e6039d13bf2e591c59e9c89a2641ca605fde59ba78974b11553f6c148",
+      "evidence": "exact installed LICENSE text matches version-pinned upstream LICENSE",
+      "upstreamLicense": "https://github.com/mscdex/cpu-features/blob/v0.0.10/LICENSE"
+    },
+    "ssh2@1.17.0": {
+      "license": "MIT",
+      "installedLicenseSha256": "9f75981e6039d13bf2e591c59e9c89a2641ca605fde59ba78974b11553f6c148",
+      "evidence": "exact installed LICENSE text matches version-pinned upstream LICENSE",
+      "upstreamLicense": "https://github.com/mscdex/ssh2/blob/v1.17.0/LICENSE"
+    },
+    "zod-to-ts@1.2.0": {
+      "license": "MIT",
+      "installedLicenseSha256": "901eb546213d344758178277346c83df776b3566895c507a82ee36447c6662ba",
+      "evidence": "exact installed LICENSE text matches version-pinned upstream LICENSE",
+      "upstreamLicense": "https://github.com/sachinraja/zod-to-ts/blob/v1.2.0/LICENSE"
+    }
+  },
+  "licenses": {
+    "(MIT OR CC0-1.0)": 1,
+    "Apache-2.0": 42,
+    "BlueOak-1.0.0": 5,
+    "BSD-2-Clause": 9,
+    "BSD-3-Clause": 17,
+    "CC-BY-4.0": 1,
+    "ISC": 45,
+    "LGPL-3.0-or-later": 1,
+    "MIT": 580,
+    "MPL-2.0": 4,
+    "NOT_INSTALLED_ON_RUNNER": 115,
+    "Python-2.0": 1,
+    "Unlicense": 1
+  },
+  "reviewPolicy": "Unknown or non-SPDX package license metadata blocks candidate review until a named owner records disposition."
+}

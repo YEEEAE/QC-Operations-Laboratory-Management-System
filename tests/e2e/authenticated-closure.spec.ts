@@ -88,9 +88,7 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
     }
   });
 
-  test('role and scope fixtures can read their intended surfaces', async ({
-    browser,
-  }) => {
+  test('role and scope fixtures can read their intended surfaces', async ({ browser }) => {
     test.setTimeout(120_000);
     test.skip(!hasRoleFixtures || !base, 'Disposable QC_VERIFY_* credentials are required.');
     for (const [identity, passwordEnv, paths] of personas) {
@@ -109,7 +107,9 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
     }
   });
 
-  test('read-only role is denied a direct POST against a real task without changing state', async ({ page }) => {
+  test('read-only role is denied a direct POST against a real task without changing state', async ({
+    page,
+  }) => {
     test.skip(!hasRoleFixtures || !base, 'Disposable QC_VERIFY_* credentials are required.');
     const fixture = await dbQuery<{ id: string; state: string; version: string }>(
       "SELECT id, state, version FROM qc.tasks WHERE task_no = 'VERIFY-AUTHZ-READONLY'",
@@ -188,6 +188,32 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
       const facts = await page.locator('.facts').innerText();
       if (/\bPASS\b/.test(facts)) expect(facts).toMatch(/NOT_RELEASED|RELEASE_PENDING|RELEASED/);
     }
+  });
+
+  test('read-only role cannot view or invoke AI advisory', async ({ page }) => {
+    test.skip(!hasRoleFixtures || !base, 'Disposable QC_VERIFY_* credentials are required.');
+    await signIn(page, 'verify-least', process.env.QC_VERIFY_LEAST_PASSWORD ?? '');
+    const response = await page.goto('/ai-advisory');
+    expect(response?.status() ?? 0).toBeLessThan(400);
+    await expect(page.getByText('You are not authorized to use AI advisory.')).toBeVisible();
+    await expect(page.locator('[data-advisory-request]')).toHaveCount(0);
+
+    const denied = await page.evaluate(async () => {
+      const response = await fetch('/_actions/aiAdvisory.requestAdvisory', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          mode: 'SUMMARIZE',
+          question: 'Synthetic authorization probe.',
+          context: [],
+        }),
+      });
+      return { status: response.status, body: await response.text() };
+    });
+    expect(denied.status).toBeGreaterThanOrEqual(400);
+    expect(denied.body).toContain('errors.authz_permission_missing');
+    expect(denied.body).not.toMatch(/provider|model|secret|authorization:\s*bearer/i);
   });
 
   test('critical pages pass automated WCAG 2.2 AA and keyboard smoke checks', async ({ page }) => {
