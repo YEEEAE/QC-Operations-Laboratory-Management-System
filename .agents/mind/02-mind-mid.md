@@ -1,3 +1,25 @@
+## Rollover from 01 — 2026-09-24 (QC-ADP-08 context compaction)
+
+> نُقلت أقدم سجلات 01 فقط لإبقائه دون 500 سطر؛ الحالة والقرارات الحالية بقيت في 01.
+
+- **2026-09-24 — Mind rollover (AI-POLICY-BOUNDARY):** نُقلت أقدم سجلات Historical Ledger إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود.
+- **2026-09-23 — Mind rollover:** نُقل أقدم سجلي Ledger (QC-100-FINAL-017/018) إلى أعلى `02-mind-mid.md` بلا تغيير الحالة الحالية.
+- **2026-09-23 — NAV-REBUILD / إعادة بناء التنقل الرئيسي**
+  - Changed: شجرة تنقل من 10 أقسام + 4 أدوات مساعدة، مع إزالة الروابط المكررة، وحفظ معرفات 34 وجهة. لا تغيير في صلاحيات الصفحات أو use cases.
+  - Evidence: عقود التنقل/shell المركزة 57/57 PASS؛ Astro check بقي بخطأين قائمين لتعريفات سكريبتات release `.mjs`. Playwright NOT VERIFIED: Chromium launch permission denied، ولا توجد بيانات دخول E2E؛ `.env` يشير لقاعدة خارجية ولم تُستخدم.
+  - State: PARTIAL — اختبار browser/responsive الفعلي محجوب؛ السجل: `tests/e2e/mobile-drawer-inert.spec.ts`.
+  - Key files: `src/ui/navigation/navigation.ts`, `src/ui/shell/Sidebar.astro`, `src/ui/layouts/AppLayout.astro`.
+- **2026-09-23 — QC-BASELINE-REPAIR / إصلاح بوابات typecheck وarchitecture والوحدة**
+  - Changed: تمرير offset المختبر، نقل metrics خلف application boundary، وإصلاح lint وعيوب unit مع تحديث العقود القديمة دون حذف أو تخفيف assertions.
+  - Evidence: baseline SHA `d0dc705f278a574b3f8f5e822c216fb01b61a9bd` clean؛ Node `24.20.0` / pnpm `11.25.0`؛ 24/977 إخفاقًا صُنفت؛ final run `9d8cb827-63f1-4fc9-8087-2844e63aecf4`: typecheck 956/0 errors، unit 977/977، lint/architecture/requirements/parity/build PASS. PostgreSQL/E2E BLOCKED. التفصيل: `audit/2026-09-23/unit-baseline-triage.md`.
+  - State: DONE محليًا؛ بلا commit/push.
+  - Key files: `src/pages/api/performance-metrics.ts`, `src/pages/laboratory/tests/index.astro`.
+- **2026-09-23 — Mind rollover (AUTHZ-SERVER-MATRIX):** نُقلت أقدم سجلات 2026-09-22 إلى أعلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقرارات والقيود.
+- **2026-09-23 — ATTACHMENT-SIGNATURE-DOC-AUDIT / lifecycle and traceability review**
+  - Changed: added known-signature/text validation and stored-object size/type/hash checks; added document lifecycle and PG rollback fault-injection coverage.
+  - Evidence: focused in-memory suites 31/31 PASS; PostgreSQL fault-injection NOT RUN (Docker daemon unavailable); typecheck has 2 existing `.mjs` declaration errors. Report: `audit/2026-09-23/attachment-signature-document-audit.md`.
+  - State: PARTIAL — upload/retention authority, end-to-end route scope, database rollback evidence, and document effective-date policy remain open.
+
 ## Rollover from 01 — 2026-09-24 (QC-ADP-03 context compaction)
 
 > نُقلت سجلات ledger الأقدم فقط لتقليل 01 تحت 500 سطر؛ الحالة الحالية والقرارات المفتوحة بقيت في 01.

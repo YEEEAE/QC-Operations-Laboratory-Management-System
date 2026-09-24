@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-08 / role-state matrix handoff**
+  - Changed: added a real disposable task fixture, task denial/stale-version integration case, and TLS-loopback PG18 E2E override. 450 remains a gross planning envelope, not an applicable denominator.
+  - Evidence: PG18.6; `/tasks/[taskId]` GET + direct denied POST 1/1 PASS with unchanged row/audit; server-contract 7/7 and nine authz integration files 23/23 PASS; typecheck 0 errors; build/release identity PASS at `069bebf`, migration 0041. Other routes remain NOT VERIFIED; handoff: `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
+  - State: PARTIAL / BLOCKED / NO-GO — one route has partial HTTP proof; no full page closure, F-009/F-018 and owner-dependent decisions remain open.
+  - Mind rollover: أقدم سجلات 2026-09-23 نُقلت إلى `02-mind-mid.md` بعد التحقق من حفظها.
+
 - **2026-09-24 — QC-ADP-07 / مصادر لوحة القرار**
   - Changed: أضيف document-review read model bounded بنفس actor predicate للعدد والصفوف، queue في dashboard/work ورابط register؛ أضيفت فهارس migration 0041. الجودة وblocked reason وreject analytics ما زالت محجوبة بسياسات/مصادر غير معتمدة.
   - Evidence: unit/UI 20/20 PASS وAstro check 0 errors؛ PostgreSQL 18/Testcontainers BLOCKED (لا container runtime)، لذا parity/role E2E/perf وlive schema/role NOT VERIFIED. 12 فحص route ما زالت 0 PASS قبولًا كاملًا؛ تفاصيل `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md`.
@@ -90,30 +96,6 @@
   - Changed: اللوحة المشتركة تفصل مجال العمل عن مالك السجل وتوضح نقص المصدر؛ أضيفت روابط HOLD/review/PASS-not-released، وحُفظت مدخلات Receiving/Lab عند الفشل.
   - Evidence: focused unit 98/98 PASS؛ build PASS؛ typecheck 0 errors. UAT مع ستة مشاركين فعليين وقياس زمن المهام NOT RUN؛ مصادر evaluator والسياسات المعتمدة ما زالت مفتوحة.
   - State: PARTIAL — لا تغييرات على mutations أو المخطط أو الموقع الحي.
-
-- **2026-09-23 — ATTACHMENT-SIGNATURE-DOC-AUDIT / lifecycle and traceability review**
-  - Changed: added known-signature/text validation and stored-object size/type/hash checks; added document lifecycle and PG rollback fault-injection coverage.
-  - Evidence: focused in-memory suites 31/31 PASS; PostgreSQL fault-injection NOT RUN (Docker daemon unavailable); typecheck has 2 existing `.mjs` declaration errors. Report: `audit/2026-09-23/attachment-signature-document-audit.md`.
-  - State: PARTIAL — upload/retention authority, end-to-end route scope, database rollback evidence, and document effective-date policy remain open.
-
-- **2026-09-23 — Mind rollover (AUTHZ-SERVER-MATRIX):** نُقلت أقدم سجلات 2026-09-22 إلى أعلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقرارات والقيود.
-
-- **2026-09-23 — QC-BASELINE-REPAIR / إصلاح بوابات typecheck وarchitecture والوحدة**
-  - Changed: تمرير offset المختبر، نقل metrics خلف application boundary، وإصلاح lint وعيوب unit مع تحديث العقود القديمة دون حذف أو تخفيف assertions.
-  - Evidence: baseline SHA `d0dc705f278a574b3f8f5e822c216fb01b61a9bd` clean؛ Node `24.20.0` / pnpm `11.25.0`؛ 24/977 إخفاقًا صُنفت (19 عقد/fixture متقادمة، 5 عيوب تنفيذ)؛ final run `9d8cb827-63f1-4fc9-8087-2844e63aecf4`: typecheck 956/0 errors، unit 977/977، lint/architecture/requirements/parity/build PASS. PostgreSQL/E2E BLOCKED لغياب Docker؛ البناء لا يثبت الجاهزية. التفصيل: `audit/2026-09-23/unit-baseline-triage.md`.
-  - State: DONE محليًا؛ بلا commit/push.
-  - Key files: `src/pages/api/performance-metrics.ts`, `src/pages/laboratory/tests/index.astro`.
-
-- **2026-09-23 — NAV-REBUILD / إعادة بناء التنقل الرئيسي**
-  - Changed: شجرة تنقل من 10 أقسام + 4 أدوات مساعدة، مع إزالة الروابط المكررة، وحفظ معرفات 34 وجهة. لا تغيير في صلاحيات الصفحات أو use cases.
-  - Evidence: عقود التنقل/shell المركزة 57/57 PASS؛ Astro check بقي بخطأين قائمين لتعريفات سكريبتات release `.mjs`. Playwright NOT VERIFIED: Chromium launch permission denied، ولا توجد بيانات دخول E2E؛ `.env` يشير لقاعدة خارجية ولم تُستخدم.
-  - State: PARTIAL — اختبار browser/responsive الفعلي محجوب؛ السجل: `tests/e2e/mobile-drawer-inert.spec.ts`.
-  - Key files: `src/ui/navigation/navigation.ts`, `src/ui/shell/Sidebar.astro`, `src/ui/layouts/AppLayout.astro`.
-
-- **2026-09-23 — Mind rollover:** نُقل أقدم سجلي Ledger (QC-100-FINAL-017/018) إلى أعلى `02-mind-mid.md` بلا تغيير الحالة الحالية.
-
-
-- **2026-09-24 — Mind rollover (AI-POLICY-BOUNDARY):** نُقلت أقدم سجلات Historical Ledger إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -487,6 +469,7 @@
 - **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
+- **QC-ADP-08 / F-009 + F-018 remain OPEN:** real task fixture proves `/tasks/[taskId]` GET + server-denied POST with unchanged row/audit on the PG18.6 candidate. One route has partial HTTP proof; 450 remains gross planning only and each card needs applicable checks/N/A source and route-bound evidence. See `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
 - **QC-ADP-06:** Finding→NCR threshold/FAIL consequence/NCR closure/CAPA effectiveness remain owner-dependent (PD-15/16/17/18). Approved P-04 permits a controlled Supervisor exception without effectiveness acceptance, so an absolute effectiveness-before-every-closure acceptance criterion conflicts with current policy and requires an explicit owner decision; do not change the exception by implementation. Route handoff: `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
 - **ملف تكامل مخصص للمرحلتين موجود الآن** (كان مفتوحًا في تقرير FINAL-004): `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.

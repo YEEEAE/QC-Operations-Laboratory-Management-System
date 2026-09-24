@@ -171,8 +171,8 @@ async function main(): Promise<void> {
   }
   for (const key of requiredPasswords)
     if (!env[key]) fail(`${key} is required and is never logged.`);
-  // PostgreSQL 18 Testcontainers is the default. A separately provisioned
-  // disposable cluster remains an explicit, production-host-guarded override.
+    // PostgreSQL 18 Testcontainers is the default. A separately provisioned
+    // disposable cluster may be supplied for restricted local environments.
 
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   env.RELEASE_GIT_SHA = sha;
@@ -182,6 +182,7 @@ async function main(): Promise<void> {
   env.E2E_EVIDENCE_OUTPUT = output;
 
   let server: ReturnType<typeof spawn> | undefined;
+  let container: Awaited<ReturnType<typeof startPostgresContainer>> | undefined;
   try {
     let releaseIdentity: {
       environment: string;
@@ -220,8 +221,16 @@ async function main(): Promise<void> {
 
     // The app's canonical PostgreSQL pool requires verified TLS. Test suites
     // that exercise the server must use the helper's disposable TLS setup too.
-    const container = await startPostgresContainer({ tls: true });
-    const databaseUrl = container.getConnectionUri();
+    const externalDatabaseUrl = env.QC_TEST_DATABASE_URL;
+    if (externalDatabaseUrl) {
+      const parsed = new URL(externalDatabaseUrl);
+      if (!['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname))
+        fail('Refusing authenticated E2E override: QC_TEST_DATABASE_URL must target local disposable PostgreSQL.');
+      if (parsed.searchParams.get('sslmode') !== 'verify-full' || !parsed.searchParams.has('sslrootcert'))
+        fail('Refusing authenticated E2E override: local PostgreSQL must use verified TLS.');
+    }
+    container = externalDatabaseUrl ? undefined : await startPostgresContainer({ tls: true });
+    const databaseUrl = externalDatabaseUrl ?? container!.getConnectionUri();
     env.DATABASE_URL = databaseUrl;
     env.QC_TEST_DATABASE_URL = databaseUrl;
     env.QC_SEED_ALLOW_NON_PRODUCTION = 'true';
@@ -231,6 +240,7 @@ async function main(): Promise<void> {
     // missing fixture fails the pipeline instead of reporting a silent skip.
     env.QC_MANDATORY_VERIFY_FIXTURES = 'true';
     env.QC_VERIFY_BASE_URL = env.QC_VERIFY_BASE_URL ?? 'http://127.0.0.1:4321';
+    env.QC_E2E_LEAST_SESSION_TOKEN = `${randomUUID()}${randomUUID()}`;
     // The broader closure suites use the single disposable employee as their
     // read-only actor. Keep the aliases candidate-bound and never source a
     // password from a file or print it.
@@ -303,13 +313,22 @@ async function main(): Promise<void> {
       await new Promise((resolveWait) => setTimeout(resolveWait, 1000));
       if (attempt === 29) fail('Built preview server did not become live.');
     }
-    const selectedSpecs =
-      env.QC_AUTHENTICATED_E2E_SECURITY_ONLY === 'true'
-        ? securityE2eSpecs
-        : ['tests/e2e/authenticated-closure.spec.ts', 'tests/e2e/accessibility.spec.ts'];
+    const authorizationOnly = env.QC_ADP08_AUTHORIZATION_ONLY === 'true';
+    const selectedSpecs = env.QC_AUTHENTICATED_E2E_SECURITY_ONLY === 'true'
+      ? securityE2eSpecs
+      : ['tests/e2e/authenticated-closure.spec.ts', 'tests/e2e/accessibility.spec.ts'];
+    const playwrightArgs = authorizationOnly
+      ? [
+          'test',
+          '--workers=1',
+          'tests/e2e/authenticated-closure.spec.ts',
+          '--grep',
+          'read-only role is denied a direct POST',
+        ]
+      : ['test', '--workers=1', ...selectedSpecs];
     const e2eCode = await run(
       resolve('node_modules/.bin/playwright'),
-      ['test', '--workers=1', ...selectedSpecs],
+      playwrightArgs,
       env,
     );
     if (e2eCode !== 0) process.exitCode = e2eCode;
@@ -325,7 +344,7 @@ async function main(): Promise<void> {
       await Promise.race([exited, delay(5000)]);
       if (server.exitCode === null) server.kill('SIGKILL');
     }
-    await stopPostgresContainer().catch(() => undefined);
+    if (container) await stopPostgresContainer().catch(() => undefined);
   }
 }
 

@@ -17,6 +17,7 @@ import { hash } from 'argon2';
 import { randomUUID } from 'node:crypto';
 
 import { stableSeedUuid } from '../../db/seeds/common.js';
+import { hashSessionToken } from '../../src/modules/identity/application/session-service.js';
 import { VERIFICATION_PERSONAS } from '../../tests/fixtures/verification-personas.js';
 
 const MIN_PASSWORD_LENGTH = 16;
@@ -77,7 +78,7 @@ async function ensureUser(
   const id = stableSeedUuid(`verification-user:${loginIdentity}`);
   await client.query(
     `INSERT INTO qc.users (id, login_identity, display_name, password_hash, account_state, must_change_password)
-     VALUES ($1, $2, $3, $4, 'ACTIVE', TRUE)`,
+     VALUES ($1, $2, $3, $4, 'ACTIVE', FALSE)`,
     [id, loginIdentity, displayName, passwordHash],
   );
   return id;
@@ -163,6 +164,39 @@ async function main(): Promise<void> {
          VALUES ('SYSTEM', NULL, 'USER', $1, 'VERIFY_FIXTURE_PROVISIONED', $2, 'Prompt 13 disposable fixture (24h)')`,
         [userId, `verify-seed-${persona.id}`],
       );
+    }
+    const leastPrivileged = await client.query<{ id: string }>(
+      "SELECT id FROM qc.users WHERE login_identity = 'verify-least' AND account_state = 'ACTIVE'",
+    );
+    if (!leastPrivileged.rows[0])
+      fail('Required active verify-least persona is missing for the task authorization fixture.');
+    const leastSessionToken = process.env.QC_E2E_LEAST_SESSION_TOKEN;
+    if (!leastSessionToken)
+      fail('QC_E2E_LEAST_SESSION_TOKEN is required for the disposable authenticated route fixture.');
+    await client.query(
+      `INSERT INTO qc.sessions (user_id, session_token_hash, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '1 hour')`,
+      [leastPrivileged.rows[0].id, hashSessionToken(leastSessionToken)],
+    );
+    const taskFixtureId = stableSeedUuid('verification-task:verify-least:QC-ADP-08');
+    await client.query(
+      `INSERT INTO qc.tasks (id, task_no, title, description, priority, state, created_by, updated_by)
+       VALUES ($1, 'VERIFY-AUTHZ-READONLY', 'Authorization read-only boundary fixture',
+               'Disposable QC-ADP-08 direct action fixture (24h)', 'NORMAL', 'DRAFT', $2, $2)
+       ON CONFLICT (task_no) DO NOTHING`,
+      [taskFixtureId, leastPrivileged.rows[0].id],
+    );
+    const seededTask = await client.query<{ id: string; created_by: string; state: string; version: string }>(
+      "SELECT id, created_by, state, version FROM qc.tasks WHERE task_no = 'VERIFY-AUTHZ-READONLY'",
+    );
+    if (
+      seededTask.rows.length !== 1 ||
+      seededTask.rows[0].id !== taskFixtureId ||
+      seededTask.rows[0].created_by !== leastPrivileged.rows[0].id ||
+      seededTask.rows[0].state !== 'DRAFT' ||
+      seededTask.rows[0].version !== '1'
+    ) {
+      fail('Existing VERIFY-AUTHZ-READONLY fixture does not match its disposable seed contract.');
     }
     await client.query('COMMIT');
     console.log(

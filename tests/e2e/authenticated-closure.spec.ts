@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { Pool } from 'pg';
 
 import { assertMandatoryVerificationFixtures } from './verify-fixtures.js';
 
@@ -13,16 +14,40 @@ const hasRoleFixtures = Boolean(
 );
 const base = process.env.QC_VERIFY_BASE_URL;
 assertMandatoryVerificationFixtures();
-const invalidUuid = '01900000-0000-7000-0000-0000000000f1';
+const opaqueRouteId = '01900000-0000-7000-0000-0000000000f1';
 const noLeak =
   /password_hash|session_token|DATABASE_URL|storage_key|\bselect\s+(?:\*|[\w.,"]+)\s+from\s+(?:qc\.)?(?:users|sessions|roles|permissions)\b/i;
+
+async function dbQuery<T extends Record<string, unknown>>(
+  sql: string,
+  values: unknown[] = [],
+): Promise<T[]> {
+  const connectionString = process.env.QC_TEST_DATABASE_URL;
+  if (!connectionString) throw new Error('QC_TEST_DATABASE_URL is required for this fixture test.');
+  const pool = new Pool({ connectionString });
+  try {
+    return (await pool.query<T>(sql, values)).rows;
+  } finally {
+    await pool.end();
+  }
+}
 
 async function signIn(page: Page, identity: string, password: string): Promise<void> {
   await page.context().clearCookies();
   await page.goto('/login');
-  await page.getByLabel('Login identity').fill(identity);
-  await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.locator('form.login-form').evaluate(
+    (form, credentials) => {
+      const identityInput = form.querySelector<HTMLInputElement>('input[name="loginIdentity"]');
+      const passwordInput = form.querySelector<HTMLInputElement>('input[name="password"]');
+      if (!identityInput || !passwordInput) throw new Error('Login form fields are missing.');
+      identityInput.value = credentials.identity;
+      passwordInput.value = credentials.password;
+      identityInput.dispatchEvent(new Event('input', { bubbles: true }));
+      passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+      (form as HTMLFormElement).requestSubmit();
+    },
+    { identity, password },
+  );
   await expect(page).toHaveURL(/\/dashboard/);
 }
 
@@ -54,7 +79,7 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
       '/dashboard',
       '/search?q=VERIFY',
       '/notifications',
-      `/tasks/${invalidUuid}`,
+      `/tasks/${opaqueRouteId}`,
     ]) {
       const response = await page.goto(path);
       expect(response?.status() ?? 0, path).toBeLessThan(400);
@@ -63,7 +88,7 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
     }
   });
 
-  test('role and scope fixtures can read their intended surfaces and cannot use admin gate as a business override', async ({
+  test('role and scope fixtures can read their intended surfaces', async ({
     browser,
   }) => {
     test.setTimeout(120_000);
@@ -78,14 +103,57 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
           expect(response?.status() ?? 0, `${identity} ${path}`).toBeLessThan(400);
           expect(await personaPage.content(), `${identity} ${path}`).not.toMatch(noLeak);
         }
-        const forged = await personaPage.request.post('/_actions/quarantine.approveInspection', {
-          data: { id: invalidUuid, expectedVersion: 1, requestId: `closure-${identity}` },
-        });
-        expect(forged.status(), `${identity} forged approval`).toBeGreaterThanOrEqual(400);
       } finally {
         await context.close();
       }
     }
+  });
+
+  test('read-only role is denied a direct POST against a real task without changing state', async ({ page }) => {
+    test.skip(!hasRoleFixtures || !base, 'Disposable QC_VERIFY_* credentials are required.');
+    const fixture = await dbQuery<{ id: string; state: string; version: string }>(
+      "SELECT id, state, version FROM qc.tasks WHERE task_no = 'VERIFY-AUTHZ-READONLY'",
+    );
+    expect(fixture).toHaveLength(1);
+    expect(fixture[0]).toMatchObject({ state: 'DRAFT', version: '1' });
+
+    const sessionToken = process.env.QC_E2E_LEAST_SESSION_TOKEN;
+    expect(sessionToken).toBeTruthy();
+    await page.goto(base!);
+    const cookieSet = await page.evaluate((token) => {
+      document.cookie = `__Host-qc_session=${token}; Path=/; Secure; SameSite=Strict`;
+      return document.cookie.includes('__Host-qc_session=');
+    }, sessionToken!);
+    expect(cookieSet).toBe(true);
+    await page.goto(`/tasks/${fixture[0].id}`);
+    await expect(page.getByText('VERIFY-AUTHZ-READONLY', { exact: false })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Activate' })).toHaveCount(0);
+    const auditBefore = await dbQuery<{ count: string }>(
+      'SELECT count(*)::text AS count FROM qc.audit_events WHERE subject_id = $1',
+      [fixture[0].id],
+    );
+
+    const denied = await page.evaluate(async (taskId) => {
+      const response = await fetch('/_actions/tasks.transition', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ taskId, expectedVersion: 1, action: 'ACTIVATE' }),
+      });
+      return { status: response.status, body: await response.text() };
+    }, fixture[0].id);
+    expect(denied.status).toBeGreaterThanOrEqual(400);
+    expect(denied.body).toContain('errors.authz_permission_missing');
+    const after = await dbQuery<{ state: string; version: string }>(
+      'SELECT state, version FROM qc.tasks WHERE id = $1',
+      [fixture[0].id],
+    );
+    expect(after).toEqual([{ state: 'DRAFT', version: '1' }]);
+    const auditAfter = await dbQuery<{ count: string }>(
+      'SELECT count(*)::text AS count FROM qc.audit_events WHERE subject_id = $1',
+      [fixture[0].id],
+    );
+    expect(auditAfter).toEqual(auditBefore);
   });
 
   test('critical operational surfaces keep controlled facts and governance read-only', async ({

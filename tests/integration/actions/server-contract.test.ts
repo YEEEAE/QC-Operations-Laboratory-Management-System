@@ -233,4 +233,86 @@ describe('actions authorized path on a disposable database', () => {
     expect((outcome.error as ActionError).code).toBe('BAD_REQUEST');
     expect((outcome.error as ActionError).message).toBe('errors.authz_permission_missing');
   });
+
+  it('denies a direct transition for a read-only actor on a real task, then accepts the permitted version', async () => {
+    const permittedActor: ActorContext = {
+      id: PROBE_ACTOR_ID,
+      accountState: 'ACTIVE',
+      roles: ['EMPLOYEE'],
+      permissions: [
+        { code: 'PERM-TASK-CREATE', scopes: ['OWN'] },
+        { code: 'PERM-TASK-VIEW', scopes: ['OWN'] },
+        { code: 'PERM-TASK-EDIT', scopes: ['OWN'] },
+      ],
+    };
+    const created = await (
+      server.tasks.createTask as unknown as (input: unknown) => Promise<{
+        data?: { id: string; taskNo: string; state: string; version: bigint };
+        error?: unknown;
+      }>
+    ).bind(actionContext(permittedActor))({
+      taskNo: 'TASK-AUTHZ-REAL-RECORD',
+      title: 'Authorization matrix record',
+      priority: 'HIGH',
+    });
+    expect(created.error).toBeUndefined();
+    expect(created.data).toMatchObject({ taskNo: 'TASK-AUTHZ-REAL-RECORD', state: 'DRAFT' });
+    const taskId = created.data!.id;
+
+    const readOnlyActor: ActorContext = {
+      ...permittedActor,
+      permissions: [{ code: 'PERM-TASK-VIEW', scopes: ['OWN'] }],
+    };
+    const denied = await (
+      server.tasks.transition as unknown as (input: unknown) => Promise<{
+        data?: unknown;
+        error?: unknown;
+      }>
+    ).bind(actionContext(readOnlyActor))({
+      taskId,
+      expectedVersion: 1,
+      action: 'START',
+    });
+    expect(denied.data).toBeUndefined();
+    expect(denied.error).toBeInstanceOf(ActionError);
+    expect((denied.error as ActionError).message).toBe('errors.authz_permission_missing');
+
+    const activated = await (
+      server.tasks.transition as unknown as (input: unknown) => Promise<{
+        data?: { state: string; version: bigint };
+        error?: unknown;
+      }>
+    ).bind(actionContext(permittedActor))({
+      taskId,
+      expectedVersion: 1,
+      action: 'ACTIVATE',
+    });
+    expect(activated.error).toBeUndefined();
+    expect(activated.data).toMatchObject({ state: 'OPEN', version: 2n });
+
+    const stale = await (
+      server.tasks.transition as unknown as (input: unknown) => Promise<{
+        data?: unknown;
+        error?: unknown;
+      }>
+    ).bind(actionContext(permittedActor))({
+      taskId,
+      expectedVersion: 1,
+      action: 'START',
+    });
+    expect(stale.data).toBeUndefined();
+    expect(stale.error).toBeInstanceOf(ActionError);
+    expect((stale.error as ActionError).message).toBe('errors.conflict_stale_version');
+
+    const verificationPool = createPool({ connectionString: process.env.DATABASE_URL, max: 1 });
+    try {
+      const persisted = await verificationPool.query<{ state: string; version: string }>(
+        'SELECT state, version FROM qc.tasks WHERE id = $1',
+        [taskId],
+      );
+      expect(persisted.rows).toEqual([{ state: 'OPEN', version: '2' }]);
+    } finally {
+      await verificationPool.end();
+    }
+  });
 });
