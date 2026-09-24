@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-09 / accessibility route handoff**
+  - Changed: no runtime UI change; root cause remains missing route/state/AT evidence for F-010.
+  - Evidence: WCAG contract 9/9 and local login/404 axe+keyboard subset 2/2 PASS; 8 viewport captures show no overflow; live qclevel.top skip links work for dashboard/tasks. Full route cards remain open; 88 have no fresh route evidence, and AT/full denominators remain unverified. Handoff/evidence: `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md`.
+  - State: PARTIAL / BLOCKED / NO-GO — no route fully closed on source HEAD `a7fb73eb9dd370a973634ac89f954bc369c83232`; live release identity is UNVERIFIED.
+
 - **2026-09-24 — QC-ADP-08 / role-state matrix handoff**
   - Changed: added a real disposable task fixture, task denial/stale-version integration case, and TLS-loopback PG18 E2E override. 450 remains a gross planning envelope, not an applicable denominator.
   - Evidence: PG18.6; `/tasks/[taskId]` GET + direct denied POST 1/1 PASS with unchanged row/audit; server-contract 7/7 and nine authz integration files 23/23 PASS; typecheck 0 errors; build/release identity PASS at `069bebf`, migration 0041. Other routes remain NOT VERIFIED; handoff: `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
@@ -482,6 +487,7 @@
 - **Security follow-up (2026-09-24):** local PostgreSQL 18 threat-case suite 17/17 PASS, but authenticated file cross-scope/tampered-object server requests are NOT VERIFIED because Playwright could not interact with login controls; expired bearer file links do not exist and expired session server rejection remains open. `Documents/THREAT-MODEL-030.md` records 4 package licenses as UNKNOWN (owner `yazeed`, due 2026-10-01), external audit result NOT VERIFIED, provider host allowlist OPEN, and security E2E 8 PASS/4 FAIL. Do not treat this as security closure.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
+- **QC-ADP-09 / F-010 remains OPEN:** local login/404 have partial axe, keyboard-order, and responsive evidence; qclevel.top dashboard/tasks have read-only skip-link/AX observations, not bound to the local release. No route card is fully closed; screen-reader/device evidence is absent. See `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md`.
 - provider backup/PITR/WAL/object-store DR and approved RPO/RTO validation; QC-100-FINAL-034-B adds current-0034 local populated DB+file restore and synthetic read-pressure evidence, while provider DR, approved budgets, application backup-catalog integration, and representative workload limits remain open.
 - ترقية fixtures القديمة بحيث `loginIdentity` يصبح حاضرًا بوضوح في test doubles.
 - تنظيف Lottie container metadata/unused asset فقط إذا اعتُمد asset-pipeline لذلك.

@@ -1,0 +1,137 @@
+{
+  "head": "a7fb73eb9dd370a973634ac89f954bc369c83232",
+  "results": [
+    {
+      "route": "/login",
+      "width": 320,
+      "status": 200,
+      "screenshot": "login-320.png",
+      "viewportWidth": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "title": "Sign in · QC Operations",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/login",
+      "width": 390,
+      "status": 200,
+      "screenshot": "login-390.png",
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "title": "Sign in · QC Operations",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/login",
+      "width": 768,
+      "status": 200,
+      "screenshot": "login-768.png",
+      "viewportWidth": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "title": "Sign in · QC Operations",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/login",
+      "width": 1440,
+      "status": 200,
+      "screenshot": "login-1440.png",
+      "viewportWidth": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "title": "Sign in · QC Operations",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/404",
+      "width": 320,
+      "status": 404,
+      "screenshot": "404-320.png",
+      "viewportWidth": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "title": "Page not found",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/404",
+      "width": 390,
+      "status": 404,
+      "screenshot": "404-390.png",
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "title": "Page not found",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/404",
+      "width": 768,
+      "status": 404,
+      "screenshot": "404-768.png",
+      "viewportWidth": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "title": "Page not found",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/404",
+      "width": 1440,
+      "status": 404,
+      "screenshot": "404-1440.png",
+      "viewportWidth": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "title": "Page not found",
+      "noHorizontalOverflow": true
+    },
+    {
+      "route": "/login",
+      "state": "synthetic fields populated, not submitted",
+      "width": 390,
+      "screenshot": "login-fields-populated-390.png",
+      "labelsPresent": true
+    },
+    {
+      "route": "/login",
+      "state": "empty submit native validation",
+      "width": 390,
+      "screenshot": "login-empty-submit-validation-390.png",
+      "invalidFields": [
+        {
+          "name": "loginIdentity",
+          "required": true
+        },
+        {
+          "name": "password",
+          "required": true
+        }
+      ],
+      "focusedName": "loginIdentity"
+    },
+    {
+      "route": "/login",
+      "condition": "200% CSS zoom approximation at 1280 CSS px",
+      "screenshot": "login-css-zoom-200.png",
+      "viewportWidth": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 640
+    },
+    {
+      "route": "/login",
+      "condition": "forced-colors active + reduced-motion reduce",
+      "screenshot": "login-forced-colors-reduced-motion.png",
+      "forcedColors": true,
+      "reducedMotion": true
+    },
+    {
+      "route": "/login",
+      "condition": "print media",
+      "screenshot": "login-print.pdf"
+    }
+  ]
+}
