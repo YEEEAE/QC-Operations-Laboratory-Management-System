@@ -28,6 +28,9 @@ export function laboratoryReadDependencies() {
   const sources = new PostgresControlledLabSources(getDatabase());
   return {
     get: new GetLabTestUseCase(repository),
+    equipmentUsage: {
+      listForTest: (labTestId: string) => repository.listRunEquipment(labTestId),
+    },
     list: new ListLabTestsUseCase(repository),
     workload: new GetLabWorkloadUseCase(repository),
     listApprovedTemplates: new ListApprovedLabTemplatesUseCase(sources),

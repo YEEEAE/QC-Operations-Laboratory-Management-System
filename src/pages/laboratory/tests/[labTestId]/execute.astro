@@ -2,6 +2,8 @@
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import JourneyContextPanel from '../../../../ui/components/workflow/JourneyContextPanel.astro';
 import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';
+import { assetsReadDependencies } from '../../../../modules/assets/application/dependencies.js';
+import { equipmentEligibilityOptionLabel } from '../../../../ui/forms/equipment-eligibility.js';
 import { entryParameters } from '../../../../modules/laboratory/application/lab-presentation.js';
 
 const actor = Astro.locals.actor;
@@ -32,7 +34,30 @@ const cellValue = (sampleId: string, parameterId: string): string => {
   return typeof raw === 'boolean' ? String(raw) : raw;
 };
 const documents = test.context.documents;
-const equipment = test.context.equipment;
+const equipment = await laboratoryReadDependencies().equipmentUsage.listForTest(test.id);
+let equipmentOptions: { id: string; calibrationId: string; label: string; eligible: boolean }[] = [];
+let equipmentSourceError = false;
+const canViewEquipment =
+  hasPermission('PERM-EQP-VIEW') &&
+  hasPermission('PERM-CAL-VIEW') &&
+  hasPermission('PERM-MNT-VIEW');
+if (canEdit && canViewEquipment) {
+  try {
+    const assets = assetsReadDependencies();
+    const items = await assets.equipment.list.execute({ actor });
+    equipmentOptions = await Promise.all(items.map(async (item) => {
+      const assessment = await assets.equipment.assessEligibility.assess(actor, item.id);
+      return {
+        id: item.id,
+        calibrationId: item.currentCalibrationId ?? '',
+        label: equipmentEligibilityOptionLabel(`${item.equipmentNo} · ${item.name}`, assessment),
+        eligible: assessment.eligible,
+      };
+    }));
+  } catch {
+    equipmentSourceError = true;
+  }
+}
 ---
 <AppLayout title={`Execute ${test.labTestNo}`}>
   <h1>Laboratory execution</h1>
@@ -145,6 +170,34 @@ const equipment = test.context.equipment;
           )
         }
         <p data-result role="status" tabindex="-1"></p>
+        <section aria-labelledby="equipment-use-heading">
+          <h2 id="equipment-use-heading">Equipment used for a run</h2>
+          <p>Choose a run and an equipment record. Eligibility and calibration details come from the authorized Assets source; the server checks them again and freezes the source facts when recorded.</p>
+          {
+            canViewEquipment ? equipmentSourceError ? (
+              <p role="status">The authorized equipment source is temporarily unavailable. No equipment usage was recorded.</p>
+            ) : equipmentOptions.length ? (
+              <form data-record-equipment data-expected-version={test.version.toString()}>
+                <label for="equipmentBatchId">Run</label>
+                <select id="equipmentBatchId" name="batchId" required>
+                  <option value="">Select a run…</option>
+                  {(test.batches ?? []).map((batch) => <option value={batch.id}>{batch.batchNo}{batch.label ? ` · ${batch.label}` : ''}</option>)}
+                </select>
+                <label for="equipmentChoice">Equipment</label>
+                <select id="equipmentChoice" name="equipmentId" required>
+                  <option value="">Select equipment…</option>
+                  {equipmentOptions.map((item) => <option value={item.id} data-calibration-id={item.calibrationId} disabled={!item.eligible}>{item.label}</option>)}
+                </select>
+                <button type="submit" data-record-equipment-button>Record equipment use</button>
+                <p data-equipment-result role="status" tabindex="-1"></p>
+              </form>
+            ) : (
+              <p>No equipment is available in your authorized scope. Ask an authorized equipment owner to confirm the record.</p>
+            ) : (
+              <p role="status">Equipment selection is unavailable because your account lacks explicit equipment, calibration, or maintenance view permission.</p>
+            )
+          }
+        </section>
       </section>
     )
   }
@@ -188,8 +241,7 @@ const equipment = test.context.equipment;
         </ul>
       ) : (
         <p class="muted">
-          No equipment is recorded against this test yet. Equipment eligibility is verified by the
-          approved Assets policy at submission.
+        No equipment is recorded against this test yet. Record the equipment used for each run above; eligibility is checked by the Assets domain.
         </p>
       )
     }
@@ -289,6 +341,45 @@ const equipment = test.context.equipment;
       btn.removeAttribute('aria-busy');
     }
   });
+
+  const equipmentForm = document.querySelector<HTMLFormElement>('form[data-record-equipment]');
+  const equipmentResult = document.querySelector<HTMLElement>('[data-equipment-result]');
+  equipmentForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = equipmentForm.querySelector<HTMLButtonElement>('[data-record-equipment-button]');
+    const selected = equipmentForm.querySelector<HTMLSelectElement>('#equipmentChoice')?.selectedOptions[0];
+    const equipmentId = selected?.value ?? '';
+    const calibrationRecordId = selected?.dataset.calibrationId ?? '';
+    const batchId = equipmentForm.querySelector<HTMLSelectElement>('#equipmentBatchId')?.value ?? '';
+    if (!button || button.disabled || !equipmentId || !calibrationRecordId || !batchId) return;
+    button.disabled = true;
+    equipmentForm.setAttribute('aria-busy', 'true');
+    if (equipmentResult) equipmentResult.textContent = 'Checking eligibility and recording equipment use…';
+    try {
+      const result = await actions.laboratory.recordRunEquipment({
+        id: labId,
+        expectedVersion: BigInt(equipmentForm.dataset.expectedVersion || '0'),
+        batchId,
+        usage: { equipmentId, calibrationRecordId, usageRole: 'MEASUREMENT' },
+      });
+      if (result.data) location.reload();
+      else {
+        if (equipmentResult) {
+          equipmentResult.textContent = 'Equipment use was not recorded. The equipment may no longer be eligible or the record may have changed. Refresh and choose an eligible record.';
+          equipmentResult.focus?.();
+        }
+        button.disabled = false;
+      }
+    } catch {
+      if (equipmentResult) {
+        equipmentResult.textContent = 'Equipment use was not recorded. Eligibility, permission, scope, or version validation failed; refresh and review the equipment status.';
+        equipmentResult.focus?.();
+      }
+      button.disabled = false;
+    } finally {
+      equipmentForm.removeAttribute('aria-busy');
+    }
+  });
 </script>
 <style>
   section,
@@ -354,4 +445,8 @@ const equipment = test.context.equipment;
   form[data-lab-measurements] > button {
     margin-top: 0.5rem;
   }
+  form[data-record-equipment]{display:grid;grid-template-columns:minmax(8rem,auto) minmax(15rem,1fr);gap:.6rem;max-width:54rem;align-items:center}
+  form[data-record-equipment] button,form[data-record-equipment] [role="status"]{grid-column:1/-1}
+  form[data-record-equipment] select{min-width:0;max-width:100%;padding:.6rem;font:inherit}
+  @media(max-width:650px){form[data-record-equipment]{grid-template-columns:1fr}form[data-record-equipment] button,form[data-record-equipment] [role="status"]{grid-column:auto}}
 </style>

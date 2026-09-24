@@ -446,6 +446,17 @@ export class PostgresLabRepository implements LabRepository {
           calibrationRecordId: i.usage.calibrationRecordId,
         },
       });
+      await this.outboxFor(tx)?.enqueue({
+        eventType: 'LAB_EQUIPMENT_LINKED',
+        aggregateType: 'LAB_TEST',
+        aggregateId: i.labTestId,
+        payload: {
+          batchId: i.batchId,
+          equipmentId: i.usage.equipmentId,
+          calibrationRecordId: i.usage.calibrationRecordId,
+        },
+        dedupeKey: `lab:${i.labTestId}:equipment:${i.id}`,
+      });
     });
   }
 

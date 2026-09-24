@@ -32,6 +32,9 @@ export function assetsReadDependencies() {
     equipment: {
       get: new GetEquipmentUseCase(repositories.equipment),
       list: new ListEquipmentUseCase(repositories.equipment),
+      assessEligibility: new GetEquipmentEligibilityUseCase(
+        new PostgresEquipmentEligibilityReader(getDatabase()),
+      ),
       history: {
         execute: ({ actor, equipmentId }: { actor: App.Locals['actor']; equipmentId: string }) =>
           repositories.equipment.history?.(equipmentId, actor!) ?? Promise.resolve([]),

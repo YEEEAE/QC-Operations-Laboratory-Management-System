@@ -1610,11 +1610,9 @@ Current trusted time > due date
 
 ## BR-CAL-004 — Equipment Use While Overdue
 
-**Status:** UNCONFIRMED
+**Status:** APPROVED
 
-هل overdue يمنع استخدام المعدة نهائيًا، يحذر فقط، أو يحتاج exception approval؟
-
-يحتاج policy معتمد.
+المعدة التي تجاوز تاريخ معايرتها الحالي تاريخ الاستحقاق المسجل من المصدر غير مؤهلة للاستخدام في تشغيل المختبر أو التفتيش. يرفض الخادم التسجيل والإرسال؛ لا يوجد استثناء تجاوز ضمن هذا المسار. تاريخ الاستحقاق قيمة مصدرية ولا يستنتج النظام فترة المعايرة.
 
 ---
 
@@ -1649,6 +1647,12 @@ Maintenance action لا overwrites previous maintenance.
 **Status:** APPROVED
 
 Maintenance ≠ Calibration.
+
+## BR-MNT-004 — Equipment Under Maintenance Is Not Available for Use
+
+**Status:** APPROVED
+
+لا تستخدم المعدة في تشغيل المختبر أو التفتيش أثناء حالتها `UNDER_MAINTENANCE`. يلزم انتقال مستقل معتمد يعيدها إلى `ACTIVE`؛ إكمال سجل الصيانة وحده لا يعيد الإتاحة.
 
 ---
 

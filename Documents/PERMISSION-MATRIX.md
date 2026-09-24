@@ -923,6 +923,7 @@ PERM-LAB-EXPORT
 | Edit Draft               |       ALLOW |       ALLOW | CONDITIONAL |   DENY |
 | Enter samples            |       ALLOW |       ALLOW | CONDITIONAL |   DENY |
 | Enter measurements       |       ALLOW |       ALLOW | CONDITIONAL |   DENY |
+| Record run equipment use | CONDITIONAL | CONDITIONAL | CONDITIONAL |   DENY |
 | Bulk entry               | CONDITIONAL | CONDITIONAL |      POLICY |   DENY |
 | Upload evidence          |       ALLOW |       ALLOW | CONDITIONAL |   DENY |
 | Submit                   |       ALLOW |       ALLOW | CONDITIONAL |   DENY |
@@ -936,6 +937,8 @@ PERM-LAB-EXPORT
 | Controlled Correction    |        DENY |      POLICY |      POLICY | POLICY |
 | Print                    | CONDITIONAL |       ALLOW |       ALLOW | POLICY |
 | Export                   | CONDITIONAL |       ALLOW |       ALLOW | POLICY |
+
+Record run equipment use requires the existing `PERM-LAB-EDIT-DRAFT` grant in the test owner's scope and the existing `PERM-EQP-VIEW` / `PERM-CAL-VIEW` grants in the equipment/calibration record scopes. When an active maintenance record is read for its date, the existing `PERM-MNT-VIEW` in that record's scope is also required. State, scope, and expected-version checks remain server-side. No dedicated permission or exception authority is introduced; the existing author/executor SoD at review and approval remains unchanged.
 
 ---
 

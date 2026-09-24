@@ -8,6 +8,13 @@ export interface AssetsEligibility {
     context: ControlledContext;
   }): Promise<void>;
 }
+export interface EquipmentUsageCapture {
+  capture(input: {
+    actor: ActorContext;
+    usage: { equipmentId: string; calibrationRecordId: string; usageRole?: string };
+    context: ControlledContext;
+  }): Promise<EquipmentContext>;
+}
 /**
  * Selector-facing projection of an approved lab template version. Only the
  * display fields needed to choose a template are exposed; acceptance

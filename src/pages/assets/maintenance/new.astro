@@ -13,8 +13,8 @@ import {
 import {
   resolvePreselectedId,
   safeListHref,
-  toSelectOptions,
 } from '../../../ui/forms/entity-select.js';
+import { equipmentEligibilityOptionLabel } from '../../../ui/forms/equipment-eligibility.js';
 import { assetsReadDependencies } from '../../../modules/assets/application/dependencies.js';
 
 const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login?returnTo=%2Fassets%2Fmaintenance%2Fnew');const canCreate=actor.permissions.some((permission)=>permission.code==='PERM-MNT-CREATE');
@@ -37,10 +37,15 @@ let equipmentOptions: { value: string; label: string }[] = [];
 let equipmentError = false;
 if (canCreate) {
   try {
-    const equipment = await assetsReadDependencies().equipment.list.execute({ actor });
-    equipmentOptions = toSelectOptions(
-      equipment.map((item) => ({ id: item.id, label: `${item.equipmentNo} · ${item.name}` })),
-    );
+    const readAssets = assetsReadDependencies();
+    const equipment = await readAssets.equipment.list.execute({ actor });
+    equipmentOptions = await Promise.all(equipment.map(async (item) => ({
+      value: item.id,
+      label: equipmentEligibilityOptionLabel(
+        `${item.equipmentNo} · ${item.name}`,
+        await readAssets.equipment.assessEligibility.assess(actor, item.id),
+      ),
+    })));
   } catch {
     // Fail closed into an error state below: the form stays submittable so
     // entries are preserved, and the server still validates the equipment

@@ -2,6 +2,7 @@ import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../../shared/database/db-types.js';
 import type { CalibrationRecord } from '../../calibration/domain/calibration.js';
 import type { Equipment } from '../domain/equipment.js';
+import type { MaintenanceRecord } from '../../maintenance/domain/maintenance.js';
 import type { EquipmentEligibilityReader } from '../application/get-equipment-eligibility.js';
 const dateOnly = (value: string | Date): Date => {
   if (value instanceof Date)
@@ -66,6 +67,38 @@ export class PostgresEquipmentEligibilityReader implements EquipmentEligibilityR
           createdBy: row.created_by,
           updatedAt: row.updated_at,
           version: BigInt(row.version),
+        }
+      : undefined;
+  }
+  async getCurrentMaintenance(equipmentId: string): Promise<MaintenanceRecord | undefined> {
+    const row = await this.db
+      .selectFrom('maintenance_records')
+      .selectAll()
+      .where('equipment_id', '=', equipmentId)
+      .where('state', '=', 'IN_PROGRESS')
+      .orderBy('started_at', 'desc')
+      .executeTakeFirst();
+    return row
+      ? {
+          id: row.id,
+          maintenanceNo: row.maintenance_no,
+          equipmentId: row.equipment_id,
+          state: row.state as MaintenanceRecord['state'],
+          maintenanceType: row.maintenance_type ?? undefined,
+          description: row.description,
+          plannedAt: row.planned_at ?? undefined,
+          startedAt: row.started_at ?? undefined,
+          completedAt: row.completed_at ?? undefined,
+          performedBy: row.performed_by ?? undefined,
+          provider: row.provider ?? undefined,
+          result: row.result ?? undefined,
+          createdBy: row.created_by,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          version: BigInt(row.version),
+          downtimeStartedAt: row.downtime_started_at ?? undefined,
+          downtimeEndedAt: row.downtime_ended_at ?? undefined,
+          downtimeMinutes: row.downtime_minutes ?? undefined,
         }
       : undefined;
   }

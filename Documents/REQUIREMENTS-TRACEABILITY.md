@@ -749,7 +749,7 @@ SoD, or any unrelated policy-dependent permission.
 | REQ-CAL-001 | Calibration records historical                         | BR-CAL-001 | all        | calibration_records   | APPROVED         |
 | REQ-CAL-002 | Due Date originates from approved policy/source        | BR-CAL-002 | —          | due_date              | SOURCE-DEPENDENT |
 | REQ-CAL-003 | Overdue derived deterministically using trusted time   | BR-CAL-003 | TR-CAL-005 | calibration_records   | APPROVED         |
-| REQ-CAL-004 | Equipment blocking on overdue not invented             | BR-CAL-004 | —          | —                     | POLICY-DEPENDENT |
+| REQ-CAL-004 | Equipment use is blocked when its source due date has passed | BR-CAL-004 | —          | lab_equipment_usage   | APPROVED         |
 | REQ-CAL-005 | Calibration certificate traceable                      | BR-CAL-005 | —          | files/evidence        | APPROVED         |
 | REQ-CAL-006 | New current calibration supersedes previous atomically | DATA-MODEL | TR-CAL-006 | equipment/calibration | APPROVED         |
 
@@ -760,7 +760,7 @@ SoD, or any unrelated policy-dependent permission.
 | ID          | Requirement                                | Rule       | Data                    | Status   |
 | ----------- | ------------------------------------------ | ---------- | ----------------------- | -------- |
 | REQ-MNT-001 | Maintenance history preserved              | BR-MNT-001 | maintenance_records     | APPROVED |
-| REQ-MNT-002 | Maintenance can affect availability        | BR-MNT-002 | equipment + maintenance | APPROVED |
+| REQ-MNT-002 | Active maintenance blocks laboratory/inspection use | BR-MNT-002/004 | equipment + maintenance | APPROVED |
 | REQ-MNT-003 | Maintenance completion ≠ valid calibration | BR-MNT-003 | equipment/calibration   | APPROVED |
 
 ---

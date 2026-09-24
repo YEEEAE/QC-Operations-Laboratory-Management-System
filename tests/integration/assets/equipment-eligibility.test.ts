@@ -4,11 +4,16 @@ import type {
   ControlledContext,
   EquipmentContext,
 } from '../../../src/modules/laboratory/domain/lab-test.js';
-const actor = {
+import type { ActorContext } from '../../../src/shared/authorization/types.js';
+const actor: ActorContext = {
   id: '00000000-0000-7000-8000-000000000001',
   accountState: 'ACTIVE' as const,
   roles: [],
-  permissions: [],
+  permissions: [
+    { code: 'PERM-EQP-VIEW', scopes: ['GLOBAL'] as const },
+    { code: 'PERM-CAL-VIEW', scopes: ['GLOBAL'] as const },
+    { code: 'PERM-MNT-VIEW', scopes: ['GLOBAL'] as const },
+  ],
 };
 const equipment = {
   id: '00000000-0000-7000-8000-000000000002',

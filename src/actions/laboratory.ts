@@ -108,10 +108,7 @@ const recordRunEquipment = defineAction({
     usage: z.object({
       equipmentId: z.string().uuid(),
       calibrationRecordId: z.string().uuid(),
-      usedAt: z.string().datetime(),
       usageRole: z.string().trim().min(1).optional(),
-      equipmentSnapshot: z.record(z.unknown()),
-      calibrationSnapshot: z.record(z.unknown()),
     }),
   }),
   handler: (input, context) =>

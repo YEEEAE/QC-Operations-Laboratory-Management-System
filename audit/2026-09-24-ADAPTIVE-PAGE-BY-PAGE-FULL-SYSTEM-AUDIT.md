@@ -531,6 +531,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** اربط كل مؤشر بمصدر ونطاق وزمن ورابط filter مطابق؛ أظهر unavailable بصدق ولا تحوّل الصفر إلى بيانات مفقودة.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** eligibility read dependency wired; no selector on this route; browser/role/populated/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-EQUIP-001 — `/assets/equipment`
@@ -542,6 +543,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** تحقق من filter/sort/pagination/empty-state مع بيانات ممتلئة متعددة النطاق، ثم افتح سجلًا وخطوة العمل التالية.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** equipment source/register remains the upstream record; no selector on this route; browser/role/populated/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-EQUIP-002 — `/assets/equipment/new`
@@ -553,6 +555,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** افصل الحقول المصدرية عن المشتقة؛ وفّر اختيارًا/تعبئة مسبقة حيث يوجد سجل موثوق؛ اختبر required/server error/duplicate submit/unsaved.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** equipment creation does not select an existing equipment ID; selector check N/A; live creation states NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-015, QC-PAGE-F-022.
 
 ### RT-EQUIP-003 — `/assets/equipment/[equipmentId]`
@@ -564,6 +567,7 @@
 - **قوة/مشكلة مرصودة:** المسار والملف ومكوّنات الصفحة موجودة في المصدر؛ السلوك الحي لهذا المسار غير مثبت. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** أظهر الحالة والنسخة والسجل المرتبط والحدث التالي؛ اختبر صلاحيات الأفعال على use case لا على ظهور الزر.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** detail remains the source record for equipment state/version; browser/role/populated/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=NOT VERIFIED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-CAL-001 — `/assets/calibrations`
@@ -575,6 +579,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** تحقق من filter/sort/pagination/empty-state مع بيانات ممتلئة متعددة النطاق، ثم افتح سجلًا وخطوة العمل التالية.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** calibration register is the source for current calibration; browser/populated/role/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-CAL-002 — `/assets/calibrations/new`
@@ -586,6 +591,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** افصل الحقول المصدرية عن المشتقة؛ وفّر اختيارًا/تعبئة مسبقة حيث يوجد سجل موثوق؛ اختبر required/server error/duplicate submit/unsaved.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** selector now shows eligibility, reason, calibration number/date/due date, and active maintenance start date when authorized; source + copy unit PASS; live/keyboard NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-015, QC-PAGE-F-022.
 
 ### RT-CAL-003 — `/assets/calibrations/[calibrationId]`
@@ -597,6 +603,7 @@
 - **قوة/مشكلة مرصودة:** المسار والملف ومكوّنات الصفحة موجودة في المصدر؛ السلوك الحي لهذا المسار غير مثبت. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** أظهر الحالة والنسخة والسجل المرتبط والحدث التالي؛ اختبر صلاحيات الأفعال على use case لا على ظهور الزر.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** detail remains the source record for calibration state/version; browser/role/populated/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=NOT VERIFIED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-MAINT-001 — `/assets/maintenance`
@@ -608,6 +615,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** تحقق من filter/sort/pagination/empty-state مع بيانات ممتلئة متعددة النطاق، ثم افتح سجلًا وخطوة العمل التالية.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** maintenance state feeds fail-closed eligibility; unit state case PASS; route populated/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-MAINT-002 — `/assets/maintenance/new`
@@ -619,6 +627,7 @@
 - **قوة/مشكلة مرصودة:** فُتحت الصفحة الحية؛ وجود المحتوى/حالة الصفر مثبت، لا اكتمال الدورة. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** افصل الحقول المصدرية عن المشتقة؛ وفّر اختيارًا/تعبئة مسبقة حيث يوجد سجل موثوق؛ اختبر required/server error/duplicate submit/unsaved.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** selector now shows eligibility, reason, calibration number/date/due date, and active maintenance start date when authorized; source + copy unit PASS; live/keyboard NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=OBSERVED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-015, QC-PAGE-F-022.
 
 ### RT-MAINT-003 — `/assets/maintenance/[maintenanceId]`
@@ -630,6 +639,7 @@
 - **قوة/مشكلة مرصودة:** المسار والملف ومكوّنات الصفحة موجودة في المصدر؛ السلوك الحي لهذا المسار غير مثبت. غياب fixture وسيناريو دور/حالة يعني أن نجاح القراءة والانتقال والكتابة غير مثبت.
 - **التوصية والتصميم:** أظهر الحالة والنسخة والسجل المرتبط والحدث التالي؛ اختبر صلاحيات الأفعال على use case لا على ظهور الزر.
 - **تحسين مسار مطلوب:** أظهر أهلية المعدة وسبب المنع وتاريخ المعايرة/الصيانة في موضع اختيارها؛ لا تطلب إعادة إدخال معرف موجود. **إغلاقه:** معدة مؤهلة وأخرى منتهية المعايرة وثالثة تحت الصيانة؛ رفض خادمي للاستخدام غير المؤهل ولقطة مصدر مجمدة في الاختبار. (`QC-PAGE-F-022` / `QC-ADP-19`).
+- **QC-ADP-19 / نتيجة البطاقة:** detail remains the source record; completion does not implicitly restore ACTIVE; browser/role/populated/AT NOT VERIFIED. دليل المهمة: `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
 - **بطاقة الدليل:** source=PASS؛ live=NOT VERIFIED؛ populated/role/PG/AT/performance/UAT=NOT VERIFIED. **تقييم الجودة:** NOT VERIFIED؛ **العوائق/الفحوص المطلوبة:** QC-PAGE-F-009, QC-PAGE-F-010, QC-PAGE-F-013, QC-PAGE-F-016, QC-PAGE-F-014, QC-PAGE-F-022.
 
 ### RT-DOC-001 — `/documents`

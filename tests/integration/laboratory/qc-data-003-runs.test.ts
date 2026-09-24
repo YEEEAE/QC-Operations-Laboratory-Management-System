@@ -35,6 +35,9 @@ const actor = (): ActorContext => ({
   permissions: [
     { code: 'PERM-LAB-VIEW', scopes: ['GLOBAL'] },
     { code: 'PERM-LAB-EDIT-DRAFT', scopes: ['GLOBAL'] },
+    { code: 'PERM-EQP-VIEW', scopes: ['GLOBAL'] },
+    { code: 'PERM-CAL-VIEW', scopes: ['GLOBAL'] },
+    { code: 'PERM-MNT-VIEW', scopes: ['GLOBAL'] },
     { code: 'PERM-LAB-ENTER-MEASUREMENT', scopes: ['GLOBAL'] },
     { code: 'PERM-LAB-SUBMIT', scopes: ['GLOBAL'] },
   ],
@@ -310,20 +313,49 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
       usage: {
         equipmentId: EQUIPMENT_ID,
         calibrationRecordId: CALIBRATION_ID,
-        usedAt: '2026-09-21T02:20:00.000Z',
         usageRole: 'MEASUREMENT',
-        equipmentSnapshot: { equipmentId: EQUIPMENT_ID, equipmentNo: `EQ-DATA003-${stamp}` },
-        calibrationSnapshot: { calibrationRecordId: CALIBRATION_ID },
       },
       requestId: `req-equipment-${stamp}`,
     });
-    const storedUsage = await pool!.query<{ batch_id: string; usage_role: string }>(
-      `SELECT batch_id, usage_role FROM qc.lab_equipment_usage WHERE lab_test_id = $1`,
+    const storedUsage = await pool!.query<{
+      batch_id: string;
+      usage_role: string;
+      equipment_snapshot: { equipmentNo: string; state: string };
+      calibration_snapshot: { calibrationNo: string; dueDate: string };
+    }>(
+      `SELECT batch_id, usage_role, equipment_snapshot, calibration_snapshot
+       FROM qc.lab_equipment_usage WHERE lab_test_id = $1`,
       [testId],
     );
     expect(storedUsage.rows[0]?.batch_id).toBe(batchId);
     expect(storedUsage.rows[0]?.usage_role).toBe('MEASUREMENT');
+    expect(storedUsage.rows[0]?.equipment_snapshot).toMatchObject({
+      equipmentNo: `EQ-DATA003-${stamp}`,
+      state: 'ACTIVE',
+    });
+    expect(storedUsage.rows[0]?.calibration_snapshot).toMatchObject({
+      calibrationNo: `CAL-DATA003-${stamp}`,
+      dueDate: expect.any(String),
+    });
+    const outboxEvent = await pool!.query(
+      `SELECT 1 FROM qc.outbox_events
+       WHERE event_type = 'LAB_EQUIPMENT_LINKED' AND aggregate_id = $1
+         AND payload->>'batchId' = $2`,
+      [testId, batchId],
+    );
+    expect(outboxEvent.rowCount).toBe(1);
+    await expect(
+      pool!.query(
+        `UPDATE qc.lab_equipment_usage SET equipment_snapshot = '{}'::jsonb WHERE lab_test_id = $1`,
+        [testId],
+      ),
+    ).rejects.toThrow(/append-only/i);
     // An ineligible usage is denied, not silently stored.
+    await pool!.query(
+      `UPDATE qc.calibration_records SET due_date = DATE '2026-09-20' WHERE id = $1`,
+      [CALIBRATION_ID],
+    );
+    const dueDateSnapshot = storedUsage.rows[0]!.calibration_snapshot.dueDate;
     await expect(
       new RecordRunEquipmentUseCase(repo, eligibility).execute({
         actor: actor(),
@@ -333,14 +365,39 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
         usage: {
           equipmentId: EQUIPMENT_ID,
           calibrationRecordId: CALIBRATION_ID,
-          usedAt: '2026-09-21T02:20:00.000Z',
-          usageSnapshot: {},
-          equipmentSnapshot: {},
-          calibrationSnapshot: {},
-        } as never,
+        },
         requestId: `req-equipment-bad-${stamp}`,
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    await pool!.query(
+      `UPDATE qc.calibration_records SET due_date = DATE '2027-09-20' WHERE id = $1`,
+      [CALIBRATION_ID],
+    );
+    await pool!.query(`UPDATE qc.equipment SET state = 'UNDER_MAINTENANCE' WHERE id = $1`, [
+      EQUIPMENT_ID,
+    ]);
+    await expect(
+      new RecordRunEquipmentUseCase(repo, eligibility).execute({
+        actor: actor(),
+        id: testId,
+        expectedVersion: (await repo.get(testId, actor()))!.version,
+        batchId,
+        usage: { equipmentId: EQUIPMENT_ID, calibrationRecordId: CALIBRATION_ID },
+        requestId: `req-equipment-maintenance-${stamp}`,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    const unchangedSnapshot = await pool!.query<{ due_date: string }>(
+      `SELECT calibration_snapshot->>'dueDate' AS due_date FROM qc.lab_equipment_usage WHERE lab_test_id = $1`,
+      [testId],
+    );
+    expect(unchangedSnapshot.rows[0]?.due_date).toBe(dueDateSnapshot);
+    const equipmentOutboxCount = await pool!.query<{ count: string }>(
+      `SELECT count(*) FROM qc.outbox_events
+       WHERE event_type = 'LAB_EQUIPMENT_LINKED' AND aggregate_id = $1
+         AND payload->>'batchId' = $2`,
+      [testId, batchId],
+    );
+    expect(Number(equipmentOutboxCount.rows[0]?.count)).toBe(1);
 
     // 6. Submission freezes the derived overall result as review evidence; the
     // official result still comes only from the approved evaluation source.
