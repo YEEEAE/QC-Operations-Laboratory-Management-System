@@ -45,4 +45,14 @@ describe('regulated form UX contracts', () => {
       'width=device-width, initial-scale=1',
     );
   });
+
+  it('distinguishes laboratory draft storage failures from permission denials', () => {
+    const page = read('src/pages/laboratory/report-templates.astro');
+    expect(page).toContain('draftStorageUnavailable = true');
+    expect(page).toContain('Saved drafts could not be loaded.');
+    expect(page).toContain('check database readiness and whether migration 0039 is applied');
+    expect(page).toContain('selectedDraftUnavailable ?');
+    expect(page).toContain('active ${id ?');
+    expect(page).toContain('This does not grant review or approval authority.');
+  });
 });

@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import { AppError } from '../../shared/errors/app-error.js';
 import {
   emptyReportDraft, reportDraftSchema, reportFields, reportTypes, sampleFields,
   type ReportDraftData, type ReportType,
@@ -18,25 +19,31 @@ let data: ReportDraftData = emptyReportDraft(type);
 let id = Astro.url.searchParams.get('draft') ?? '';
 let version = 0n;
 let error = '';
-let draftLoadFailed = false;
+let draftStorageUnavailable = false;
+let selectedDraftUnavailable = false;
 const printMode = Astro.url.searchParams.get('print') === '1';
 let drafts: Awaited<ReturnType<typeof listReportDrafts>> = [];
 
 if (canView) {
   try {
     drafts = await listReportDrafts(actor);
-    if (id) {
+  } catch {
+    error = 'Saved drafts could not be loaded. Ask the system owner to check database readiness and whether migration 0039 is applied, then reload.';
+    draftStorageUnavailable = true;
+  }
+  if (id && !draftStorageUnavailable) {
+    try {
       const draft = await getReportDraft(actor, id);
       data = draft.data;
       version = draft.version;
+    } catch {
+      error = 'The selected draft is unavailable in your account.';
+      selectedDraftUnavailable = true;
     }
-  } catch {
-    error = 'The selected draft is unavailable in your account.';
-    draftLoadFailed = true;
   }
 }
 
-if (Astro.request.method === 'POST' && !draftLoadFailed && canView && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate)) {
+if (Astro.request.method === 'POST' && !draftStorageUnavailable && !selectedDraftUnavailable && canView && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate)) {
   const form = await Astro.request.formData();
   const text = (key: string) => String(form.get(key) ?? '').trim();
   const expectedNames = new Set([
@@ -72,8 +79,14 @@ if (Astro.request.method === 'POST' && !draftLoadFailed && canView && (id ? has(
         data, requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
       });
       return Astro.redirect(`/laboratory/report-templates?draft=${encodeURIComponent(savedId)}&saved=1`, 303);
-    } catch {
-      error = 'The draft could not be saved. Check your access and reload if another edit was saved first.';
+    } catch (cause) {
+      if (cause instanceof AppError && cause.category === 'AUTHORIZATION') {
+        error = `You cannot save this draft. Ask the system owner to review your active ${id ? 'PERM-LAB-EDIT-DRAFT' : 'PERM-LAB-CREATE'} grant and OWN or GLOBAL scope. This does not grant review or approval authority.`;
+      } else if (cause instanceof AppError && cause.code === 'CONFLICT_STALE_VERSION') {
+        error = 'Another edit was saved first. Reload the latest draft before trying again; your current entries are still shown here.';
+      } else {
+        error = 'The draft could not be saved because draft storage is unavailable. Your entries are still shown here. Ask the system owner to check database readiness and migration 0039 before retrying.';
+      }
     }
   }
 }
@@ -94,7 +107,7 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
     <p><a href="/laboratory/tests">← Laboratory tests</a></p>
     <h1>Laboratory report templates</h1>
     <p>Enter the report as a draft. Recorded PASS / FAIL values and names are transcribed observations; they do not approve a controlled laboratory test.</p>
-    {!canView ? <p role="alert">You are not authorized to view laboratory reports.</p> : <>
+    {!canView ? <p role="alert">You are not authorized to view laboratory reports. Ask the system owner to review your active PERM-LAB-VIEW grant and OWN or GLOBAL scope.</p> : <>
       <nav aria-label="Choose report template" class="template-choices">
         {Object.entries(reportTypes).map(([key, title]) =>
           <a href={`/laboratory/report-templates?type=${key}`} aria-current={!id && data.reportType === key ? 'page' : undefined}>{title}</a>)}
@@ -104,7 +117,7 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
       {Astro.url.searchParams.get('saved') === '1' && <p role="status">Draft saved.</p>}
       {error && <p role="alert">{error}</p>}
       {id && data && <p class="draft-meta"><strong>Draft ID:</strong> {id} · <strong>Version:</strong> {version.toString()}</p>}
-      {printMode && id && !draftLoadFailed ? <>
+      {printMode && id && !draftStorageUnavailable && !selectedDraftUnavailable ? <>
         <div class="print-actions"><a href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}`}>Back to draft</a><button type="button" data-print-report>Print report</button></div>
         <article class="print-report">
           <header><p>TRANSCRIPTION DRAFT · NOT AN APPROVED LABORATORY RESULT</p><h2>{reportTypes[data.reportType]}</h2><p>Draft ID: {id} · Version {version.toString()}</p></header>
@@ -114,7 +127,7 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
           <section><h3>Overall result entered on source report</h3><p>{data.overallResult || 'Not recorded'}</p></section>
           <p class="transcription-note">Tested By, Reviewed By, and Approved By are transcribed source text only. They are not electronic signatures or current approvals. This draft does not approve a laboratory test or release product.</p>
         </article>
-      </> : !printMode && !draftLoadFailed && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form data-report-draft method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
+      </> : !printMode && !draftStorageUnavailable && !selectedDraftUnavailable && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form data-report-draft method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
         <input type="hidden" name="version" value={version.toString()} />
         <input type="hidden" name="reportType" value={data.reportType} />
         <h2>{reportTypes[data.reportType]}</h2>
@@ -123,7 +136,7 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
         {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="field-grid">{group.keys.map((key) =>
           <label>{labelOf(key)}<input name={key} type="text" maxlength="2000" value={data[key]} /></label>)}</div></fieldset>)}
         <fieldset><legend>Connector configuration</legend><label>Transcribe the configuration shown on the source report<input name="connectorType" maxlength="500" value={data.connectorType} /></label></fieldset>
-        <fieldset><legend>Test results · 12 samples</legend><div class="table-scroll"><table><caption>Measurements and result for each numbered sample</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>
+        <fieldset><legend>Test results · 12 samples</legend><p id="sample-transcription-help">Transcribe each value, unit, and decimal precision exactly as shown on the source report. No conversion, rounding, or scientific evaluation is applied.</p><div class="table-scroll"><table><caption>Measurements and result for each numbered sample</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>
           {data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key, label]) => <td><label class="sr-only" for={`sample-${index}-${key}`}>{label} for sample {index + 1}</label><input id={`sample-${index}-${key}`} name={`samples.${index}.${key}`} value={sample[key]} maxlength="500" /></td>)}</tr>)}
         </tbody></table></div></fieldset>
         <fieldset><legend>Overall result entered on the source report</legend><div class="radio-group">
@@ -133,7 +146,7 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
           ].map(([value, label]) => <label><input type="radio" name="overallResult" value={value} checked={data.overallResult === value} />{label}</label>)}
         </div></fieldset>
         <button type="submit">Save draft</button>
-      </form> : <p role="status">You do not have permission to {id ? 'edit this draft' : 'create a report draft'}.</p>}
+      </form> : draftStorageUnavailable ? <p role="status">Draft editing is unavailable until draft storage is restored. Resolve the data-source error above and reload.</p> : selectedDraftUnavailable ? <p role="status">This draft is unavailable in your account scope. Ask the system owner to review PERM-LAB-VIEW and OWN or GLOBAL scope.</p> : <p role="status">You cannot {id ? 'edit this draft' : 'create a report draft'}. Ask the system owner to review your active {id ? 'PERM-LAB-EDIT-DRAFT' : 'PERM-LAB-CREATE'} grant and OWN or GLOBAL scope. This does not grant review or approval authority.</p>}
     </>}
   </div>
 </AppLayout>

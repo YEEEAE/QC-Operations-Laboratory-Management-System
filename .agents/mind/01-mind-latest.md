@@ -1,5 +1,9 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-05 / laboratory report drafts**
+  - Changed: fixed draft-storage failure being presented as permission denial; added grant/scope and source unit/precision recovery guidance. No grant/schema/scientific-source change.
+  - Evidence: focused unit/UI 12/12 PASS; Astro check 0 errors; PostgreSQL 18 BLOCKED (no container runtime); likely live schema lag, actual yazeed grant/source approval NOT VERIFIED. Handoff: `audit/2026-09-24/QC-ADP-05-laboratory-report-drafts-handoff.md`.
+  - State: PARTIAL / NO-GO — approved source/revision and live grant/schema evidence remain blocked; affected routes 0/50 acceptance checks closed.
 - **2026-09-24 — QC-ADP-03 / signed release evidence intake**
   - Changed: added signer/scope/digest-bound provider intake and append-only evidence schema; release approval is fail-closed until the approved 19-gate register reconciles to exact candidate.
   - Evidence: unit 38/38 PASS; Astro check 0 errors; PostgreSQL integration BLOCKED (container runtime unavailable); exact-SHA CI, live deployment identity, provider/UAT evidence NOT VERIFIED. Details `audit/2026-09-24/QC-ADP-03-release-evidence-handoff.md`.
