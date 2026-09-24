@@ -1,9 +1,9 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
 - **2026-09-24 — QC-ADAPTIVE-PAGE-BY-PAGE-AUDIT-001 / تدقيق الصفحات التكيفي**
-  - Changed: جرد 90 موضع صفحة (88 ملفًا فعليًا، مساران deferred)، تقرير مصدر/حي وحزمة 16 مهمة لـ19 finding؛ لا تعديل للتطبيق أو الإنتاج.
-  - Evidence: 47 وجهة حية قراءة فقط بحساب yazeed؛ health يؤكد 0018 applied/0039 shipped وReject Reports محجوب وrelease/restore غير مثبتين؛ جرد 90/90 وHTML/JS traceability PASS. لا PostgreSQL/E2E/UAT جديد.
-  - State: PARTIAL / NO-GO — درجات التقرير مؤشر دليل تقديري لا امتثال؛ `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md`.
+  - Changed: جرد 90 موضع صفحة (88 ملفًا فعليًا، مساران deferred)، تقرير مصدر/حي وحزمة 16 مهمة لـ19 finding؛ أضيف أثر مصدر محدد لكل صفحة وسُحبت درجات الجودة التقديرية غير القابلة لإعادة الحساب. لا تعديل للتطبيق أو الإنتاج.
+  - Evidence: 47 وجهة حية قراءة فقط بحساب yazeed في الجولة الأصلية؛ health يؤكد 0018 applied/0039 shipped وReject Reports محجوب وrelease/restore غير مثبتين؛ 90/90 بطاقة مصدر وHTML/JS traceability PASS. لا PostgreSQL/E2E/UAT جديد.
+  - State: PARTIAL / NO-GO — جودة الصفحات والنظام NOT VERIFIED رقميًا؛ `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md`.
 
 - **2026-09-24 — QC-LAB-REPORT-TEMPLATES-ULTIMATE-001 / قوالب تقارير المختبر**
   - Changed: فصل حفظ المسودات خلف repository مع تحقق الصلاحيات/المالك والإصدار والتدقيق؛ أضيف عرض الطباعة وتحذير التغييرات غير المحفوظة دون اختراع وحدات أو حدود قياس.
