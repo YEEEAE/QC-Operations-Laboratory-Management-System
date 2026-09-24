@@ -2,7 +2,7 @@
 
 - **2026-09-24 — QC-ADP-11 / أمن وAI وسلسلة توريد**
   - Changed: exact provider endpoint allowlist; 4 formerly UNKNOWN package licenses resolved as MIT by pinned installed-text hashes; route denominator fixed at 10.
-  - Evidence: focused AI/security/license/eval 79/79 PASS; SBOM 822 packages, UNKNOWN=0; build/Astro check PASS. Dependency audit BLOCKED by registry DNS; authenticated security E2E BLOCKED by unavailable container runtime; provider policy/live evaluation remain owner-blocked.
+  - Evidence refreshed on HEAD `dc47645cc7072185cfd2c016668e6b611895f2e2`: focused AI/advisory 90/90 PASS; SBOM 822 packages, UNKNOWN=0; Astro check/build/release identity PASS. Advisory audit BLOCKED by registry DNS; authenticated security E2E BLOCKED before Playwright because no container runtime; provider policy/live evaluation remain owner-blocked. Requirements guard FAILs on unchanged `REQ-READY-003` owner syntax (`QC-ADP-03` vs legacy guard regex).
   - State: PARTIAL / NO-GO (RT-AI-001 5/10 = 50%); `audit/2026-09-24/QC-ADP-11-handoff.md`.
 
 - **2026-09-24 — QC-ADP-10 / report parity:** Changed Action export to pass all seven filters through the shared strict parser and unified screen/CSV/XLSX provenance; Evidence: Docker PG18 parity 9/9, focused suite 35/35, Astro 0 errors/0 warnings. State: PARTIAL / NO-GO — authenticated print E2E and durable cross-request snapshot/retention decision remain open; handoff `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.

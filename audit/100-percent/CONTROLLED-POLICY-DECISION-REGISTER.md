@@ -502,15 +502,18 @@
 - decision: approved provider, allowed use cases, outage/timeout handling, reviewer UAT (R-008 context).
 - why required: AI must stay advisory-only; provider handling touches secrets and controlled content.
 - current behavior: advisory boundary enforced in code (`advisory-response.ts` rejects authority vocabulary);
-  provider is `DisabledAiProvider` by default (no live model calls); deterministic eval suite `38/38`
-  (`tests/integration/ai-advisory/evals.test.ts`); authorization-before-provider, minimized context,
-  secret-like input rejection verified.
+  external processing defaults off and provider configuration requires a complete policy artifact,
+  per-request consent, permitted data class, credentials, and exact official endpoint allowlisting.
+  Current-candidate deterministic AI/advisory suites pass `90/90`; the 33-case v4.0.0 evaluation uses
+  a fake provider only. No live-provider call or approved business processing artifact exists.
 - current source: `BR-AI-001..012` (all APPROVED) + pending provider contract (R-008).
 - risk: AI presented as official authority; secret leakage to provider.
 - system default: DENY provider calls (disabled); advisory text only, never PASS/FAIL/approve/release/sign.
 - required approver/source: business-approved AI provider contract + reviewer UAT.
 - implementation impact: none until approved.
-- tests required: AI eval/security suites ✅; provider-contract tests pending approval.
+- tests required: synthetic AI eval/security suites ✅ on HEAD `dc47645cc7072185cfd2c016668e6b611895f2e2`;
+  authenticated role E2E BLOCKED (no container runtime), dependency advisory audit BLOCKED
+  (registry DNS), provider contract/live evaluation pending owner approval.
 - status: OPEN (provider half; advisory boundary itself is implemented and tested).
 
 ### PD-32 — E-signature scope (which actions require signing)
