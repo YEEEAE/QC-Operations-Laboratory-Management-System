@@ -511,9 +511,7 @@
 - system default: DENY provider calls (disabled); advisory text only, never PASS/FAIL/approve/release/sign.
 - required approver/source: business-approved AI provider contract + reviewer UAT.
 - implementation impact: none until approved.
-- tests required: synthetic AI eval/security suites ✅ on HEAD `dc47645cc7072185cfd2c016668e6b611895f2e2`;
-  authenticated role E2E BLOCKED (no container runtime), dependency advisory audit BLOCKED
-  (registry DNS), provider contract/live evaluation pending owner approval.
+- tests required: synthetic AI eval/security suites ✅, freshly rerun 90/90 on HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`; authenticated least-privilege AI denial E2E PASS on disposable PG18.6; build, Astro check, and release identity PASS. Dependency advisory audit BLOCKED (`registry.npmjs.org` DNS `ENOTFOUND`); provider contract/live evaluation pending owner approval.
 - status: OPEN (provider half; advisory boundary itself is implemented and tested).
 
 ### PD-32 — E-signature scope (which actions require signing)

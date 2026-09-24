@@ -212,7 +212,16 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
       return { status: response.status, body: await response.text() };
     });
     expect(denied.status).toBeGreaterThanOrEqual(400);
-    expect(denied.body).toContain('errors.authz_permission_missing');
+    const publicDenial = JSON.parse(denied.body) as {
+      code?: string;
+      status?: number;
+      message?: string;
+    };
+    expect(publicDenial).toMatchObject({
+      code: 'FORBIDDEN',
+      status: 403,
+      message: 'Unable to process the advisory request.',
+    });
     expect(denied.body).not.toMatch(/provider|model|secret|authorization:\s*bearer/i);
   });
 

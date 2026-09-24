@@ -114,7 +114,7 @@ for (const line of recon.split('\n')) {
     cols.length === 9,
     `register row has ${cols.length} columns (expected 9): ${line.slice(0, 60)}`,
   );
-  check(/QC-100-FINAL-\d{3}/.test(line), `row missing owning task: ${line.slice(0, 60)}`);
+  check(/QC-(?:100-FINAL-\d{3}|ADP-\d{2})/.test(line), `row missing owning task: ${line.slice(0, 60)}`);
   check(/RC-\d{2}-\d{3}/.test(line), `row missing RC ID: ${line.slice(0, 60)}`);
   check(SOURCE_RE.test(line), `row missing source reference: ${line.slice(0, 60)}`);
 }
