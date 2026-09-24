@@ -74,7 +74,7 @@ export const uxVocabulary = {
     CONFLICT_STALE:
       'Someone changed this record after you opened it. Reload the latest data before trying again. Nothing was resubmitted.',
     DEPENDENCY_UNAVAILABLE:
-      'This action is unavailable. Refresh the page or return to the list, then try again if you still have access. Your entries are preserved.',
+      'A linked record is no longer available. Refresh this page to review the current options, then try again. Your entries are preserved.',
     DUPLICATE_COMMAND:
       'This action was already applied. Reload the record to see the current state — nothing was duplicated.',
     UNKNOWN_SAFE_ERROR:
@@ -137,6 +137,8 @@ export const uxVocabulary = {
  * RELEASED, VOID, NCR, CAPA) keep their exact spelling and are never renamed.
  */
 export const stateLabels: Readonly<Record<string, string>> = {
+  // This is the stored task-priority sentinel, not an operator-facing label.
+  UNSPECIFIED: 'Not specified',
   // Receiving workflow
   PENDING: 'Pending',
   READY_FOR_INSPECTION: 'Ready for inspection',
@@ -217,6 +219,11 @@ export function stateLabel(code: string | null | undefined): string {
   if (known) return known;
   const humanized = code.replace(/_/g, ' ').toLowerCase();
   return humanized.charAt(0).toUpperCase() + humanized.slice(1);
+}
+
+/** Human label for a task priority while preserving its stored value. */
+export function priorityLabel(priority: string | null | undefined): string {
+  return stateLabel(priority);
 }
 
 export function releaseStateLabel(released: boolean): string {

@@ -31,6 +31,7 @@ describe('ux vocabulary module', () => {
     expect(stateLabel('UNDER_REVIEW')).toBe('Under review');
     expect(stateLabel('OUT_OF_SERVICE')).toBe('Out of service');
     expect(stateLabel('READY_FOR_INSPECTION')).toBe('Ready for inspection');
+    expect(stateLabel('UNSPECIFIED')).toBe('Not specified');
   });
 
   it('renders severity in human words and never invents a value', () => {
@@ -127,6 +128,8 @@ describe('error and empty-state copy hygiene', () => {
     for (const page of [notFound, server]) {
       expect(page.toLowerCase()).not.toMatch(/something went wrong|unexpected error/);
     }
+    expect(notFound).toContain("Astro.locals.user ? 'Go to dashboard' : 'Go to sign in'");
+    expect(notFound).not.toContain('404 · Route not found');
   });
 
   it('mutation forms never show a generic system failure', () => {

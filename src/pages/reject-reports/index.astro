@@ -28,12 +28,12 @@ const availability = await deps.availability.execute({ actor });
 if (!availability.available) Astro.response.status = 503;
 const availabilityError = availability.reason === 'SCHEMA_NOT_READY'
   ? {
-      title: 'Reject reports are blocked by an incomplete database schema',
-      description: 'The database is missing part of the Reject Reports schema or its integrity constraints. Review migration readiness and the approved database migration runbook before applying changes. Nothing was changed by this request.',
+      title: 'Reject Reports are temporarily unavailable',
+      description: 'The system could not confirm that Reject Reports are ready to open. No records were changed. Try again later or contact your system administrator.',
     }
   : {
-      title: 'Reject reports availability could not be verified',
-      description: 'The required schema check did not complete. No schema or record was changed by this request. Retry after an operator verifies database connectivity and the deployed schema.',
+      title: 'Reject Reports are temporarily unavailable',
+      description: 'The system could not confirm that Reject Reports are ready to open. No records were changed. Try again later or contact your system administrator.',
     };
 const showSlips = tab !== 'daily';
 const showDaily = tab === 'all' || tab === 'daily' || tab === 'completed' || tab === 'awaiting';
@@ -87,7 +87,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
 <AppLayout title="Reject Reports · QC Operations" locale="en" direction="ltr">
   {
     !availability.available ? (
-      <ErrorState title={availabilityError.title} description={availabilityError.description} />
+      <ErrorState title={availabilityError.title} description={availabilityError.description} retryHref="/reject-reports" />
     ) : (
       <>
   <section class="page-head">

@@ -1,5 +1,15 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-13 / تحسين النصوص والسجلات**
+  - Changed: humanized stored `UNSPECIFIED` in task views without changing storage; corrected session-dependent 404 link labels; made Reject Reports outage copy recoverable; permission-gated task/asset zero-state create links; replaced backup UUID primary labels and exposed technical job/schema sentinels as human copy; clarified `VOID` retention and separated dependency-error wording.
+  - Evidence: focused UX/copy contracts 33/33 PASS; Astro check 0 errors/0 warnings (88 hints), Astro build PASS, changed TypeScript Prettier PASS; browser live 404 before vs local candidate guest branch after. 58 requested section-25 cards plus the dependent `/tasks/new` card (59/59) now link the page handoff, but route-bound populated/empty/error and role/scope checks remain NOT VERIFIED; source schema head 0041, HEAD base `fc92cc4b36fbeb161336e9cda0e40b0af0b6f583`; live schema/role not directly verified.
+  - State: PARTIAL / BLOCKED for full acceptance — `audit/2026-09-24/QC-ADP-13-copy-registers-handoff.md`.
+
+- **2026-09-24 — QC-ADP-12 / قبول بشري موثق**
+  - Changed: no runtime or policy change; all 90 section-25 page cards now link the route-level UAT handoff and record `BLOCKED / NOT EXECUTED`.
+  - Evidence: local `main` HEAD `fc92cc4b36fbeb161336e9cda0e40b0af0b6f583`, source migration head `0041`; no bound UAT candidate/environment or real participant sessions. Current six-persona contract is Yazeed/QCM/Supervisor/QC 01–03; the role-bound evidence path exists, while signer scope remains owner-dependent (`UAT-DD-001` / `DEP-020-09`). Per-route acceptance denominators remain unapproved.
+  - State: PARTIAL / BLOCKED — no human acceptance or READY; `audit/2026-09-24/QC-ADP-12-human-uat-handoff.md`.
+
 - **2026-09-24 — QC-ADP-11 / أمن وAI وسلسلة توريد**
   - Changed: exact provider endpoint allowlist; 4 formerly UNKNOWN package licenses resolved as MIT by pinned installed-text hashes; route denominator fixed at 10.
   - Evidence refreshed on HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`: AI/advisory + requirements contract 97/97 PASS; authenticated least-privilege AI denial E2E 1/1 PASS on disposable PG18.6; SBOM 822 packages, UNKNOWN=0; build/Astro check/release identity PASS; requirements guard PASS after accepting existing `QC-ADP-03` owner syntax. Advisory audit BLOCKED by registry DNS; owner provider policy/live eval remain approval-blocked.

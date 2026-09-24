@@ -17,7 +17,6 @@ try {
 if (!detail) return Astro.redirect('/404');
 const { backup, restoreRuns, restoreVerification, restorable } = detail;
 const canRequestDrill = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-RESTORE-DRILL');
-const jobLabel = backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'SUCCEEDED' : backup.state;
 const restoreLabel =
   restoreVerification === 'VERIFIED'
     ? 'RESTORE VERIFIED'
@@ -34,11 +33,11 @@ const knownGaps = [
   ...(backup.databaseSchemaVersion ? [] : ['Migration/schema context is not recorded for this backup set.']),
 ];
 ---
-<AppLayout title={`Backup ${backup.id} · QC Operations`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Backup record</p><h1>Backup set</h1><p class="lede">Metadata only: this page never exposes storage references or provider paths, and it never restores.</p></div><div class="head-actions"><span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {jobLabel}</span><span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>{restorable && canRequestDrill && <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>}</div></section>
+<AppLayout title={`Backup set · ${riyadh(backup.requestedAt)} · QC Operations`} locale="en" direction="ltr">
+  <section class="page-head"><div><p class="eyebrow">Backup record</p><h1>Backup set</h1><p class="lede">Metadata only: this page never exposes storage references or provider paths, and it never restores.</p></div><div class="head-actions"><span class={`pill ${backup.state === 'CREATED' || backup.state === 'VERIFIED' ? 'ok' : backup.state === 'FAILED' ? 'bad' : 'unknown'}`}>Job: {stateLabel(backup.state)}</span><span class={`pill ${restoreVerification === 'VERIFIED' ? 'ok' : restoreVerification === 'VERIFICATION_FAILED' ? 'bad' : 'unknown'}`}>{restoreLabel}</span>{restorable && canRequestDrill && <a class="button" href={`/system/backups/${backup.id}/restore`}>Request restore</a>}</div></section>
   <div class="grid">
     <section class="panel"><h2>Backup metadata</h2><dl>
-      <div><dt>Backup set ID</dt><dd><code>{backup.id}</code></dd></div>
+      <div><dt>Internal reference</dt><dd><code>{backup.id}</code></dd></div>
       <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — execution result only</dd></div>
       <div><dt>Artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
       <div><dt>Requested</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh</dd></div>
@@ -46,14 +45,14 @@ const knownGaps = [
       {backup.verifiedAt && <div><dt>Artifact verified at</dt><dd>{riyadh(backup.verifiedAt)} · Asia/Riyadh</dd></div>}
       {backup.sizeBytes !== undefined && <div><dt>Size</dt><dd>{backup.sizeBytes.toString()} bytes</dd></div>}
       <div><dt>Integrity checksum</dt><dd>{backup.checksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
-      <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>
-      {backup.errorCode && <div><dt>Job error code</dt><dd>{backup.errorCode}</dd></div>}
+      <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'Not recorded'}</dd></div>
+      {backup.errorCode && <div><dt>Job result</dt><dd>The backup job did not complete. Contact your system administrator for help.</dd></div>}
     </dl></section>
     <section class="panel"><h2>Restore verification</h2><p class="muted">A completed backup job is not restore evidence. Verification status comes only from recorded restore operations for this set.</p><dl>
       <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{restoreLabel}</dd></div>
       <div><dt>Recorded restore operations</dt><dd>{restoreRuns.length}</dd></div>
     </dl>
-    {restoreRuns.length ? <div class="table-wrap"><table><caption>Restore operations recorded for this backup set</caption><thead><tr><th scope="col">Operation</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Target environment</th><th scope="col">Requested</th></tr></thead><tbody>{restoreRuns.map((run) => <tr><th scope="row"><code>{run.id}</code></th><td>{run.restoreType}</td><td>{stateLabel(run.state)}</td><td>{run.targetEnvironment}</td><td>{riyadh(run.requestedAt)}</td></tr>)}</tbody></table></div> : <p class="muted">No restore operations are recorded for this backup set.</p>}</section>
+    {restoreRuns.length ? <div class="table-wrap"><table><caption>Restore operations recorded for this backup set</caption><thead><tr><th scope="col">Operation</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Target environment</th><th scope="col">Requested</th></tr></thead><tbody>{restoreRuns.map((run) => <tr><th scope="row">Restore request · {riyadh(run.requestedAt)}</th><td>{run.restoreType === 'DRILL' ? 'Isolated drill' : 'Production restore'}</td><td>{stateLabel(run.state)}</td><td>{run.targetEnvironment}</td><td>{riyadh(run.requestedAt)}</td></tr>)}</tbody></table></div> : <p class="muted">No restore operations are recorded for this backup set.</p>}</section>
   </div>
   <section class="panel"><h2>Known gaps</h2>{knownGaps.length ? <ul class="gaps">{knownGaps.map((gap) => <li>{gap}</li>)}</ul> : <p class="muted">No catalog-level gaps are recorded for this backup set. Catalog completeness is not restore evidence.</p>}</section>
   <section class="notice" role="note"><strong>Restore boundary</strong><span>Restore requests are recorded through an explicit POST action with server-side authorization, a required reason, and confirmation. A recorded request stays planned: no restore provider or production authority is approved in this baseline, so nothing is executed and nothing is claimed verified.</span></section>

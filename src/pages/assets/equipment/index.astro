@@ -8,6 +8,7 @@ import { assetsReadDependencies } from '../../../modules/assets/application/depe
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fassets%2Fequipment');
+const canCreate = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-EQP-CREATE');
 const states = [
   'DRAFT',
   'ACTIVE',
@@ -51,7 +52,7 @@ const hasFilters = appliedFilters.length > 0;
       <h1>Equipment</h1>
       <p>Stable equipment identity and its current operational state.</p>
     </div>
-    <a class="button" href="/assets/equipment/new">Add equipment</a>
+    {canCreate && <a class="button" href="/assets/equipment/new">Add equipment</a>}
   </section>
   <FilterBar clearHref={hasFilters ? '/assets/equipment' : undefined}>
     <label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label>
@@ -123,8 +124,8 @@ const hasFilters = appliedFilters.length > 0;
       <EmptyTableState
         title="No equipment yet"
         description="No equipment record exists in your authorized scope. Create the first draft to start the asset register."
-        actionLabel="Create equipment"
-        actionHref="/assets/equipment/new"
+        actionLabel={canCreate ? 'Create equipment' : undefined}
+        actionHref={canCreate ? '/assets/equipment/new' : undefined}
       />
     )
   }

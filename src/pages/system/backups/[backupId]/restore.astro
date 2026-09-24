@@ -30,10 +30,10 @@ const verificationLabel =
         : 'RESTORE NOT VERIFIED';
 const productionBlocked = true; // Production restore authority/e-signature (RD-020, BKP-DD-014/016) unresolved: DENY.
 ---
-<AppLayout title={`Restore ${backup.id} · QC Operations`} locale="en" direction="ltr">
+<AppLayout title={`Restore request · ${riyadh(backup.requestedAt)} · QC Operations`} locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Restore request</p><h1>Restore request</h1><p class="lede">This page records a controlled restore request. It never executes a restore: no recovery provider, production authority, or e-signature ceremony is approved in this baseline, so every recorded request stays planned.</p></div><a href={`/system/backups/${backup.id}`}>Back to backup</a></section>
   <section class="panel"><h2>Backup and recovery context</h2><dl>
-    <div><dt>Backup set ID</dt><dd><code>{backup.id}</code></dd></div>
+    <div><dt>Internal backup reference</dt><dd><code>{backup.id}</code></dd></div>
     <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — job result only, never restore evidence</dd></div>
     <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
     <div><dt>Backup requested at</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh (UTC internally)</dd></div>

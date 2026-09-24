@@ -4,7 +4,7 @@ interface Props { status: Status; label?: string; }
 const { status, label = status } = Astro.props;
 const tone = status === 'PASS' ? 'pass' : status === 'RELEASED' ? 'released' : ['APPROVED'].includes(status) ? 'approved' : ['STALE'].includes(status) ? 'stale' : ['HOLD', 'WARNING'].includes(status) ? 'warning' : ['FAIL', 'REJECTED', 'VOID', 'CRITICAL'].includes(status) ? 'danger' : ['REVIEW'].includes(status) ? 'review' : 'neutral';
 ---
-<span class:list={['status-badge', `status-badge--${tone}`]}><span class="status-mark" aria-hidden="true"></span><span>{label}</span></span>
+<span class:list={['status-badge', `status-badge--${tone}`]} title={status === 'VOID' ? 'VOID means the record remains in history; it has not been deleted.' : undefined} aria-label={status === 'VOID' ? `${label}. The record remains in history; it has not been deleted.` : undefined}><span class="status-mark" aria-hidden="true"></span><span>{label}</span></span>
 <style>
   .status-badge { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 28px; padding-inline: var(--space-2) var(--space-3); border: 1px solid currentColor; border-radius: 999px; font-size: .8125rem; font-weight: 600; }
   .status-mark { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: currentColor; }

@@ -89,7 +89,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
     case 'REVIEW': return state === 'DRAFT' ? null : `Review is available only from DRAFT (current: ${state}).`;
     case 'APPROVE': return state === 'DRAFT' || state === 'UNDER_REVIEW' ? null : `Approval is available only from DRAFT or UNDER_REVIEW (current: ${state}).`;
     case 'STOP': return state === 'APPROVED' ? null : `Stop is available only from APPROVED (current: ${state}).`;
-    case 'VOID': return ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'].includes(state) ? null : `Void is unavailable from ${state}; history is preserved.`;
+    case 'VOID': return ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'].includes(state) ? null : `VOID is unavailable while this template is ${stateLabel(state)}. Its history is preserved.`;
     case 'SUPERSEDE': return state === 'APPROVED' || state === 'STOPPED' ? null : `Supersede is available only from APPROVED or STOPPED (current: ${state}).`;
     case 'REVISE': return state === 'APPROVED' || state === 'STOPPED' ? null : `New revisions start from APPROVED or STOPPED (current: ${state}). Approved content is never edited in place.`;
   }

@@ -26,7 +26,7 @@ function reasonFor(action: string): string | null {
     case 'REVIEW': return template!.state === 'DRAFT' ? null : `Review is available only from DRAFT (current: ${template!.state}).`;
     case 'APPROVE': return template!.state === 'DRAFT' || template!.state === 'UNDER_REVIEW' ? null : `Approval is available only from DRAFT or UNDER_REVIEW (current: ${template!.state}).`;
     case 'STOP': return template!.state === 'APPROVED' ? null : `Stop is available only from APPROVED (current: ${template!.state}).`;
-    case 'VOID': return ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'].includes(template!.state) ? null : `Void is unavailable from ${template!.state}; history is preserved.`;
+    case 'VOID': return ['DRAFT', 'UNDER_REVIEW', 'APPROVED', 'STOPPED'].includes(template!.state) ? null : `VOID is unavailable while this template is ${stateLabel(template!.state)}. Its history is preserved.`;
     case 'SUPERSEDE': return template!.state === 'APPROVED' || template!.state === 'STOPPED' ? null : `Supersede is available only from APPROVED or STOPPED (current: ${template!.state}).`;
     case 'REVISE': return template!.state === 'APPROVED' || template!.state === 'STOPPED' ? null : `New revisions start from APPROVED or STOPPED (current: ${template!.state}).`;
     default: return 'Unknown action.';
