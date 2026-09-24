@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
+import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
 import { dailyRejectTotals } from '../../../modules/reject-reports/application/view-model.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
@@ -9,25 +10,31 @@ if (!actor)
   return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const reportId = Astro.params.reportId ?? '';
 const deps = rejectReportReadDependencies();
-// See the Issue Slip detail page: a deep link into a module whose schema is not
-// provisioned lands on the register's honest environment state (P1-4).
 const availability = await deps.availability.execute({ actor });
-if (!availability.available) return Astro.redirect('/reject-reports', 303);
-const record = await deps.getDailyReject.execute({ actor, reportId });
+if (!availability.available) Astro.response.status = 503;
+const record = availability.available ? await deps.getDailyReject.execute({ actor, reportId }) : null;
 // Operational surfaces show a human identity, never the internal UUID (P1-3).
-const creatorLabel = record.createdBy === actor.id ? 'You' : 'Another authorized user';
+const creatorLabel = record?.createdBy === actor.id ? 'You' : 'Another authorized user';
 const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
-const isCreator = record.createdBy === actor.id;
-const canManage = isCreator && record.status === 'DRAFT';
-const totals = dailyRejectTotals(record.entries);
+const isCreator = record?.createdBy === actor.id;
+const canManage = isCreator && record?.status === 'DRAFT';
+const totals = dailyRejectTotals(record?.entries ?? []);
 const fmtDate = (d?: Date) =>
   d ? d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
 const fmtDateTime = (d?: Date) =>
   d ? d.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
 ---
 
-<AppLayout title={`${record.reportNo} · Daily Reject Record`} locale="en" direction="ltr">
+<AppLayout title={record ? `${record.reportNo} · Daily Reject Record` : 'Daily Reject unavailable'} locale="en" direction="ltr">
+  {!record ? (
+    <ErrorState
+      title="Reject Reports are unavailable in this environment"
+      description="The required database schema is incomplete or could not be verified. No report was changed. Ask an operator to check migration readiness, then retry."
+      retryHref="/reject-reports"
+    />
+  ) : (
+  <>
   <section class="page-head">
     <div>
       <p class="eyebrow">DAILY PRODUCTION &amp; REJECTION RECORD</p>
@@ -192,6 +199,8 @@ const fmtDateTime = (d?: Date) =>
       </form>
       <p class="hint">Voiding never deletes history; the record stays visible as VOID with its reason and audit trail.</p>
     </section>
+  )}
+  </>
   )}
 </AppLayout>
 

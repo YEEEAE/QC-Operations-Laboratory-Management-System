@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
+import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
 import {
   ISSUE_SLIP_APPROVAL_ROLES,
   nextPendingApprovalRole,
@@ -12,23 +13,20 @@ if (!actor)
   return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const reportId = Astro.params.reportId ?? '';
 const deps = rejectReportReadDependencies();
-// Without the module schema there is nothing to load. Send the user to the
-// register, which explains the environment state honestly, instead of
-// returning a generic 500 for a deep link (P1-4).
 const availability = await deps.availability.execute({ actor });
-if (!availability.available) return Astro.redirect('/reject-reports', 303);
-const slip = await deps.getIssueSlip.execute({ actor, reportId });
+if (!availability.available) Astro.response.status = 503;
+const slip = availability.available ? await deps.getIssueSlip.execute({ actor, reportId }) : null;
 // Operational surfaces show a human identity, never the internal UUID (P1-3).
-const creatorLabel = slip.createdBy === actor.id ? 'You' : 'Another authorized user';
+const creatorLabel = slip?.createdBy === actor.id ? 'You' : 'Another authorized user';
 const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
-const isCreator = slip.createdBy === actor.id;
+const isCreator = slip?.createdBy === actor.id;
 const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
 const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
 // Checkpoints are sequential (SUPERVISOR -> QC_MANAGER -> FACTORY_DIRECTOR), so
 // only the next pending checkpoint is confirmable; the server enforces the
 // same rule and denies an out-of-order confirmation.
-const nextApprovalRole = nextPendingApprovalRole(slip.approvals);
+const nextApprovalRole = nextPendingApprovalRole(slip?.approvals ?? []);
 const approvalLabel: Record<string, string> = {
   SUPERVISOR: 'Supervisor',
   QC_MANAGER: 'QC Manager',
@@ -40,7 +38,15 @@ const fmtDateTime = (d?: Date) =>
   d ? d.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
 ---
 
-<AppLayout title={`${slip.reportNo} · Issue Slip`} locale="en" direction="ltr">
+<AppLayout title={slip ? `${slip.reportNo} · Issue Slip` : 'Issue Slip unavailable'} locale="en" direction="ltr">
+  {!slip ? (
+    <ErrorState
+      title="Reject Reports are unavailable in this environment"
+      description="The required database schema is incomplete or could not be verified. No report was changed. Ask an operator to check migration readiness, then retry."
+      retryHref="/reject-reports"
+    />
+  ) : (
+  <>
   <section class="page-head">
     <div>
       <p class="eyebrow">REJECTED MATERIAL/PRODUCT ISSUE SLIP</p>
@@ -153,6 +159,8 @@ const fmtDateTime = (d?: Date) =>
     )}
     {slip.status === 'DRAFT' && !canManage && <p class="hint">Only the creator can issue or edit this draft.</p>}
   </section>
+  </>
+  )}
 </AppLayout>
 
 <script>

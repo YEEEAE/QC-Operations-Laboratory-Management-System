@@ -1,8 +1,13 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-01 / مصالحة مخطط Reject Reports**
+  - Changed: readiness candidate صار يطابق ledger/الأعمدة وقيود FK/unique؛ صفحات التفاصيل تعيد حالة خطأ 503 مفهومة عند نقص المخطط. لا migration تاريخية عُدلت.
+  - Evidence: domain/approval unit 20/20 PASS؛ Astro check 0 errors؛ PostgreSQL 18/Testcontainers BLOCKED لغياب runtime؛ health المتاح تاريخيًا 0018 applied و21 pending.
+  - State: PARTIAL / NO-GO — 4 بطاقات Reject Reports لكل منها 0/6 قبول؛ تقرير الخطة/الهاندوف `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`.
+
 - **2026-09-24 — QC-ADAPTIVE-PAGE-BY-PAGE-AUDIT-001 / تدقيق الصفحات التكيفي**
-  - Changed: جرد 90 موضع صفحة (88 ملفًا فعليًا، مساران deferred)، تقرير مصدر/حي وحزمة 16 مهمة لـ19 finding؛ أضيف أثر مصدر محدد لكل صفحة وسُحبت درجات الجودة التقديرية غير القابلة لإعادة الحساب. لا تعديل للتطبيق أو الإنتاج.
-  - Evidence: 47 وجهة حية قراءة فقط بحساب yazeed في الجولة الأصلية؛ health يؤكد 0018 applied/0039 shipped وReject Reports محجوب وrelease/restore غير مثبتين؛ 90/90 بطاقة مصدر وHTML/JS traceability PASS. لا PostgreSQL/E2E/UAT جديد.
+  - Changed: جرد 90 موضع صفحة (88 ملفًا فعليًا، مساران deferred)، تقرير مصدر/حي وحزمة 26 مهمة مجال و90 بطاقة قبول صفحة و29 finding و20 تحسينًا؛ لكل صفحة مصطلح/مشكلة أو فجوة/حل/اختبار، وبوابة استلام NO-GO. سُحبت درجات الجودة التقديرية غير القابلة لإعادة الحساب. لا تعديل للتطبيق أو الإنتاج.
+  - Evidence: 47 وجهة حية قراءة فقط بحساب yazeed في الجولة الأصلية؛ health يؤكد 0018 applied/0039 shipped وReject Reports محجوب وrelease/restore غير مثبتين؛ 90/90 بطاقة قبول وربط findings/prompts والتحسينات وHTML/JS PASS. لا PostgreSQL/E2E/UAT جديد.
   - State: PARTIAL / NO-GO — جودة الصفحات والنظام NOT VERIFIED رقميًا؛ `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md`.
 
 - **2026-09-24 — QC-LAB-REPORT-TEMPLATES-ULTIMATE-001 / قوالب تقارير المختبر**
@@ -480,6 +485,7 @@
 - **QC-100-FINAL-032-B technical evidence VERIFIED on exact local candidate** `0e9bdf28ae448ab2ebc197c567a05832ea88c07d` / dirty fingerprint `4d51084e350a79da5e8aed8d81e48f478f2101b8d5d2b5564841371fb807c51d`: Node 24.20.0, PG18.6, source head `0034_template_document_link_variable_scope` (34 migrations), 14 selected integration/concurrency files `65/65 PASS`; clean/upgrade/checksum/rollback, 79 tables/0 orphans, four PK-index plans, and restored report-lineage projection hash match. Provider-applied schema, Docker/Testcontainers, backup/PITR, and human acceptance remain NOT VERIFIED/NOT RUN. 013/026 own policy/source decisions; 002/027 container regression; 012 final reconciliation. Report: `audit/2026-09-21/QC-100-FINAL-032-B-integration-technical-evidence.md`.
 - QC-100-FINAL-029-B candidate-specific PostgreSQL evidence remains NOT VERIFIED: migration 0033 was not applied, Testcontainers has no runtime, and local disposable PostgreSQL startup is blocked by host shared-memory permissions. Resume with 002/027 on supported disposable PostgreSQL 18; reconcile through 012. Source links have no template-authoring UI in B; ask 003 to assess E2E only if authoring UX is required.
 - **Live 2026-09-24:** authorized yazeed GET `/reject-reports` now shows controlled 503/`SCHEMA_NOT_READY`; `/system/health` shows `0018` applied, `0039` shipped, 21 pending, `NOT READY`, release identity `UNVERIFIED`, and restore `NOT VERIFIED`. The prior 500 is historical; production schema migration and runtime closure remain BLOCKED.
+- **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.

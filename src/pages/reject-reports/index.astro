@@ -29,7 +29,7 @@ if (!availability.available) Astro.response.status = 503;
 const availabilityError = availability.reason === 'SCHEMA_NOT_READY'
   ? {
       title: 'Reject reports are blocked by an incomplete database schema',
-      description: 'The database is missing one or more tables required by Reject Reports. Review the pending migrations and the approved database migration runbook before applying them. Nothing was changed by this request.',
+      description: 'The database is missing part of the Reject Reports schema or its integrity constraints. Review migration readiness and the approved database migration runbook before applying changes. Nothing was changed by this request.',
     }
   : {
       title: 'Reject reports availability could not be verified',

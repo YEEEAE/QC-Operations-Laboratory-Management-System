@@ -57,7 +57,7 @@ let failure: FormFailure | null = null;
 // POST baseline (F-05): without JavaScript the form performs a real POST to
 // this page. The same Astro Action runs via Astro.callAction with the same
 // server-side reauthorization; success redirects (303) to the new record.
-if (Astro.request.method === 'POST' && canCreate) {
+if (Astro.request.method === 'POST' && canCreate && availability.available) {
   const formData = await Astro.request.formData();
   const kind = field(formData, 'reportType');
   if (kind === 'daily') {
@@ -147,8 +147,9 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
 <AppLayout title="New Reject Report · QC Operations" locale="en" direction="ltr">
   {!availability.available ? (
     <ErrorState
-      title="New reject reports are not available in this environment yet"
-      description="The database behind this deployment has not been provisioned for reject reports, so nothing can be created here. Nothing was changed."
+      title="Reject Reports are unavailable in this environment"
+      description="The required database schema is incomplete or could not be verified, so no report can be created here. Nothing was changed. Ask an operator to check migration readiness, then retry."
+      retryHref="/reject-reports"
     />
   ) : (
     <>

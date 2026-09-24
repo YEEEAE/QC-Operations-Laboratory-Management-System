@@ -182,20 +182,105 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
   ) {}
 
   /**
-   * Read-only capability probe for the four tables migration `0026` adds.
-   * `to_regclass` is a catalog lookup: it never touches the tables themselves
-   * and never writes. A missing table is reported as `SCHEMA_NOT_READY` so the
-   * page can fail closed with an honest availability state instead of a raw
-   * database error (QC-100-FINAL-016 P1-4).
+   * Read-only capability probe for the schema contract introduced by
+   * migration `0026`. Catalog lookups avoid touching report data. Checking
+   * columns and integrity constraints as well as table names prevents a
+   * partially applied or manually altered schema from being advertised as
+   * ready and failing later inside a report query.
    */
   async availability(): Promise<RejectReportAvailability> {
     try {
       const result = await sql<{ ready: boolean }>`
+        WITH expected_columns (table_name, column_name) AS (
+          VALUES
+            ('reject_reports', 'id'), ('reject_reports', 'report_no'),
+            ('reject_reports', 'report_type'), ('reject_reports', 'report_date'),
+            ('reject_reports', 'department'), ('reject_reports', 'shift'),
+            ('reject_reports', 'status'), ('reject_reports', 'issued_at'),
+            ('reject_reports', 'finalized_at'), ('reject_reports', 'completed_at'),
+            ('reject_reports', 'voided_at'), ('reject_reports', 'voided_by'),
+            ('reject_reports', 'void_reason'), ('reject_reports', 'correction_of'),
+            ('reject_reports', 'created_by'), ('reject_reports', 'created_at'),
+            ('reject_reports', 'updated_by'), ('reject_reports', 'updated_at'),
+            ('reject_reports', 'version'),
+            ('reject_issue_slips', 'report_id'), ('reject_issue_slips', 'goods_description'),
+            ('reject_issue_slips', 'item_code'), ('reject_issue_slips', 'item_name'),
+            ('reject_issue_slips', 'lot_no'), ('reject_issue_slips', 'unit'),
+            ('reject_issue_slips', 'rejected_qty'), ('reject_issue_slips', 'unit_cost'),
+            ('reject_issue_slips', 'total_value'), ('reject_issue_slips', 'reject_reason'),
+            ('reject_issue_slips', 'remarks'),
+            ('issue_slip_approval_confirmations', 'id'),
+            ('issue_slip_approval_confirmations', 'report_id'),
+            ('issue_slip_approval_confirmations', 'approval_role'),
+            ('issue_slip_approval_confirmations', 'status'),
+            ('issue_slip_approval_confirmations', 'approver_name'),
+            ('issue_slip_approval_confirmations', 'confirmed_by'),
+            ('issue_slip_approval_confirmations', 'confirmed_at'),
+            ('issue_slip_approval_confirmations', 'note'),
+            ('issue_slip_approval_confirmations', 'evidence_file_id'),
+            ('issue_slip_approval_confirmations', 'reversed_by'),
+            ('issue_slip_approval_confirmations', 'reversed_at'),
+            ('issue_slip_approval_confirmations', 'reversal_reason'),
+            ('issue_slip_approval_confirmations', 'version'),
+            ('daily_reject_entries', 'id'), ('daily_reject_entries', 'report_id'),
+            ('daily_reject_entries', 'position'), ('daily_reject_entries', 'machine_name'),
+            ('daily_reject_entries', 'item_code'), ('daily_reject_entries', 'item_description'),
+            ('daily_reject_entries', 'lot_no'), ('daily_reject_entries', 'bu_rm_product_name'),
+            ('daily_reject_entries', 'rm_description'), ('daily_reject_entries', 'rm_unit'),
+            ('daily_reject_entries', 'rm_lot_no'), ('daily_reject_entries', 'rm_type'),
+            ('daily_reject_entries', 'pump_out_qty'), ('daily_reject_entries', 'reject_qty'),
+            ('daily_reject_entries', 'good_qty'), ('daily_reject_entries', 'reject_pct'),
+            ('daily_reject_entries', 'reject_limit'), ('daily_reject_entries', 'production_formula'),
+            ('daily_reject_entries', 'reject_reason'), ('daily_reject_entries', 'analysis'),
+            ('daily_reject_entries', 'version')
+        ), expected_constraints (table_name, constraint_name) AS (
+          VALUES
+            ('reject_reports', 'uq_reject_reports__report_no'),
+            ('reject_reports', 'fk_reject_reports__created_by'),
+            ('reject_reports', 'fk_reject_reports__updated_by'),
+            ('reject_reports', 'fk_reject_reports__voided_by'),
+            ('reject_reports', 'fk_reject_reports__correction_of'),
+            ('reject_issue_slips', 'fk_reject_issue_slips__report_id'),
+            ('issue_slip_approval_confirmations', 'uq_issue_slip_approvals__report_role'),
+            ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__report_id'),
+            ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__confirmed_by'),
+            ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__reversed_by'),
+            ('issue_slip_approval_confirmations', 'fk_issue_slip_approvals__evidence_file'),
+            ('daily_reject_entries', 'uq_daily_reject_entries__report_position'),
+            ('daily_reject_entries', 'fk_daily_reject_entries__report_id')
+        ), expected_tables (table_name) AS (
+          VALUES
+            ('reject_reports'), ('reject_issue_slips'),
+            ('issue_slip_approval_confirmations'), ('daily_reject_entries')
+        )
         SELECT (
-          to_regclass('qc.reject_reports') IS NOT NULL
-          AND to_regclass('qc.reject_issue_slips') IS NOT NULL
-          AND to_regclass('qc.issue_slip_approval_confirmations') IS NOT NULL
-          AND to_regclass('qc.daily_reject_entries') IS NOT NULL
+          EXISTS (
+            SELECT 1 FROM qc.schema_migrations
+            WHERE version = '0026' AND name = '0026_reject_reports'
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM expected_tables t
+            WHERE to_regclass('qc.' || t.table_name) IS NULL
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM expected_columns c
+            WHERE NOT EXISTS (
+              SELECT 1 FROM pg_catalog.pg_attribute a
+              WHERE a.attrelid = to_regclass('qc.' || c.table_name)
+                AND a.attname = c.column_name
+                AND a.attnum > 0
+                AND NOT a.attisdropped
+            )
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM expected_constraints c
+            WHERE NOT EXISTS (
+              SELECT 1 FROM pg_catalog.pg_constraint con
+              WHERE con.conrelid = to_regclass('qc.' || c.table_name)
+                AND con.conname = c.constraint_name
+                AND con.convalidated
+            )
+          )
         ) AS ready
       `.execute(this.database);
       return result.rows[0]?.ready

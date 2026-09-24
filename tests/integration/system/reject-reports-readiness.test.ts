@@ -140,4 +140,22 @@ describe('Reject Reports readiness against disposable PostgreSQL', () => {
     expect(health.rejectReportsReadiness).toBe('READY');
     expect(health.qcReleaseReadiness).toBe('NOT_VERIFIED');
   });
+
+  it('fails closed when an expected report integrity constraint is missing', async () => {
+    const repository = new PostgresRejectReportRepository(db!);
+    expect(await repository.availability()).toEqual({ available: true });
+
+    await pool!.query(
+      'ALTER TABLE qc.daily_reject_entries DROP CONSTRAINT uq_daily_reject_entries__report_position',
+    );
+    expect(await repository.availability()).toEqual({
+      available: false,
+      reason: 'SCHEMA_NOT_READY',
+    });
+
+    await pool!.query(
+      'ALTER TABLE qc.daily_reject_entries ADD CONSTRAINT uq_daily_reject_entries__report_position UNIQUE (report_id, position)',
+    );
+    expect(await repository.availability()).toEqual({ available: true });
+  });
 });
