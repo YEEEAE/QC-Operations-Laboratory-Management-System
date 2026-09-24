@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADAPTIVE-PAGE-BY-PAGE-AUDIT-001 / تدقيق الصفحات التكيفي**
+  - Changed: جرد 90 موضع صفحة (88 ملفًا فعليًا، مساران deferred)، تقرير مصدر/حي وحزمة 16 مهمة لـ19 finding؛ لا تعديل للتطبيق أو الإنتاج.
+  - Evidence: 47 وجهة حية قراءة فقط بحساب yazeed؛ health يؤكد 0018 applied/0039 shipped وReject Reports محجوب وrelease/restore غير مثبتين؛ جرد 90/90 وHTML/JS traceability PASS. لا PostgreSQL/E2E/UAT جديد.
+  - State: PARTIAL / NO-GO — درجات التقرير مؤشر دليل تقديري لا امتثال؛ `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md`.
+
 - **2026-09-24 — QC-LAB-REPORT-TEMPLATES-ULTIMATE-001 / قوالب تقارير المختبر**
   - Changed: فصل حفظ المسودات خلف repository مع تحقق الصلاحيات/المالك والإصدار والتدقيق؛ أضيف عرض الطباعة وتحذير التغييرات غير المحفوظة دون اختراع وحدات أو حدود قياس.
   - Evidence: feature unit 6/6، typecheck 971/0 أخطاء، build وarchitecture وrequirements PASS؛ PostgreSQL integration BLOCKED لغياب container runtime. Full unit PARTIAL؛ التفاصيل `audit/2026-09-24/qc-lab-report-templates-ultimate-001.md`.
@@ -471,10 +476,10 @@
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
 - **قرار مالك مفتوح (QC-100-FINAL-004 Task 5/7): نطاق موقّع UAT.** قبول الدورة يصرّح بـ`scope: {}` على `UAT_CYCLE` مثل `ApproveReleaseUseCase`، وGLOBAL وحدها تمر مع scope فارغ؛ فمدير بنطاق TEAM (شخصية `uat-qcm`) يُرفض بـ`AUTHZ_SCOPE_DENIED`. لذلك العلامة البشرية ستكون من المالك المسمّى ما لم يُعتمد منح GLOBAL للـQCM — السلوك متسق ومقصود ولم يُغيَر. أدلة: `audit/2026-09-19/QC-100-FINAL-004-task5-uat-ingestion-closure.md`.
-- Render’s last verified applied migration head is `0018` (historical; not reverified on the current candidate); source head `0033_controlled_document_execution_context` is not a production claim and must not be applied before the credential-rotation gate. Fresh QC-100-FINAL-001 confirmed the gate remains open and no direct production DB access occurred.
+- Live health on 2026-09-24 reports `0018` applied and `0039` shipped with 21 pending; this is a read-only server projection, not direct database verification or permission to migrate. The credential-rotation gate remains open before any production migration.
 - **QC-100-FINAL-032-B technical evidence VERIFIED on exact local candidate** `0e9bdf28ae448ab2ebc197c567a05832ea88c07d` / dirty fingerprint `4d51084e350a79da5e8aed8d81e48f478f2101b8d5d2b5564841371fb807c51d`: Node 24.20.0, PG18.6, source head `0034_template_document_link_variable_scope` (34 migrations), 14 selected integration/concurrency files `65/65 PASS`; clean/upgrade/checksum/rollback, 79 tables/0 orphans, four PK-index plans, and restored report-lineage projection hash match. Provider-applied schema, Docker/Testcontainers, backup/PITR, and human acceptance remain NOT VERIFIED/NOT RUN. 013/026 own policy/source decisions; 002/027 container regression; 012 final reconciliation. Report: `audit/2026-09-21/QC-100-FINAL-032-B-integration-technical-evidence.md`.
 - QC-100-FINAL-029-B candidate-specific PostgreSQL evidence remains NOT VERIFIED: migration 0033 was not applied, Testcontainers has no runtime, and local disposable PostgreSQL startup is blocked by host shared-memory permissions. Resume with 002/027 on supported disposable PostgreSQL 18; reconcile through 012. Source links have no template-authoring UI in B; ask 003 to assess E2E only if authoring UX is required.
-- **Historical live defect (2026-09-18):** authorized yazeed GET `/reject-reports` returned 500 with Render migration projection `0018`. QC-100-FINAL-014 verified the candidate SQL ambiguity fix and populated regression on disposable PostgreSQL; production result remains NOT VERIFIED because current production migration state is blocked.
+- **Live 2026-09-24:** authorized yazeed GET `/reject-reports` now shows controlled 503/`SCHEMA_NOT_READY`; `/system/health` shows `0018` applied, `0039` shipped, 21 pending, `NOT READY`, release identity `UNVERIFIED`, and restore `NOT VERIFIED`. The prior 500 is historical; production schema migration and runtime closure remain BLOCKED.
 
 ### P1 / live validation / pre-existing test estate
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
