@@ -5,11 +5,13 @@ import DataTable from '../../ui/components/data/DataTable.astro';
 import FilterBar from '../../ui/components/data/FilterBar.astro';
 import Pagination from '../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
+import { AppError } from '../../shared/errors/app-error.js';
+import { actorHasScope } from '../../shared/authorization/scope-evaluator.js';
+import type { TaskListItem } from '../../modules/tasks/domain/model.js';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
 import { formatDate } from '../../shared/copy/format.js';
 import { priorityLabel, stateLabel } from '../../shared/copy/ux-vocabulary.js';
-import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Ftasks');
 const params = Astro.url.searchParams;
@@ -30,23 +32,30 @@ const openOnly = params.get('open') === '1';
 const sortKeys = ['updated', 'due', 'priority', 'taskNo'] as const;
 const sort = sortKeys.find((value) => value === params.get('sort')) ?? 'updated';
 const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
-// The register shows a human name, never a raw user identifier.
-let assigneeNames = new Map<string, string>();
-try {
-  assigneeNames = new Map(
-    (await identityAdminReadDependencies().listUsers.execute({ actor })).map((user) => [
-      user.id,
-      user.displayName,
-    ]),
+const canTaskAction = (task: TaskListItem, code: string) => {
+  const grant = actor.permissions.find((item) => item.code === code && item.active !== false);
+  return Boolean(
+    grant &&
+      actorHasScope(
+        actor,
+        { type: 'TASK', id: task.id, state: task.state, ownerId: task.createdBy, assigneeId: task.currentAssigneeId },
+        { ownerId: task.createdBy, assigneeId: task.currentAssigneeId },
+        grant,
+      ),
   );
-} catch {
-  // Name resolution is presentation-only; the register still renders states.
-}
-const assigneeLabel = (assigneeId: string | undefined) =>
-  assigneeId ? (assigneeNames.get(assigneeId) ?? 'Named account') : 'Unassigned';
+};
+const nextStep = (task: TaskListItem) => ({
+  DRAFT: canTaskAction(task, 'PERM-TASK-CREATE') ? 'Activate when the draft is ready' : 'Wait for an authorized user to activate this draft',
+  OPEN: canTaskAction(task, 'PERM-TASK-EDIT') ? 'Start the work' : 'Wait for an authorized user to start the work',
+  IN_PROGRESS: canTaskAction(task, 'PERM-TASK-COMPLETE') || canTaskAction(task, 'PERM-TASK-BLOCK') ? 'Complete the work or place it on hold with a reason' : 'Wait for an authorized user to complete or hold the work',
+  ON_HOLD: canTaskAction(task, 'PERM-TASK-EDIT') ? 'Resume when the blocker is resolved' : 'Wait for an authorized user to resume the work',
+  COMPLETED: canTaskAction(task, 'PERM-TASK-REOPEN') ? 'Reopen with permission and a reason if needed' : 'Task complete; reopening requires separate permission',
+  CANCELLED: 'No further action is available',
+})[task.state] ?? 'Review the task state';
 const dueLabels = { overdue: 'Overdue', today: 'Due today' } as const;
 // A dependency outage is UNAVAILABLE, not an empty queue and not a zero count.
 let providerUnavailable = false;
+let authorizationUnavailable = false;
 let result: Awaited<ReturnType<ReturnType<typeof taskReadDependencies>['list']['execute']>> = {
   items: [],
   total: 0,
@@ -65,8 +74,9 @@ try {
     },
     page,
   });
-} catch {
-  providerUnavailable = true;
+} catch (error) {
+  authorizationUnavailable = error instanceof AppError && error.code.startsWith('AUTHZ_');
+  providerUnavailable = !authorizationUnavailable;
 }
 const tasks = result.items;
 const totalPages = Math.max(1, Math.ceil(result.total / page.pageSize));
@@ -107,7 +117,7 @@ const canCreate = actor.permissions.some(
       ? 'The task read is unavailable, so no count is shown.'
       : `Showing ${tasks.length} of ${result.total} in your authorized scope — page ${page.page} of ${totalPages}.`}
   />
-  {providerUnavailable ? <ProviderUnavailableState title="Tasks are temporarily unavailable" description="The task read did not return a confirmed result, so this queue is not treated as empty and no count is shown." retryHref="/tasks" /> : tasks.length ? <DataTable caption={`Tasks — ${result.total} matching records`} summary={`Showing ${tasks.length} of ${result.total} authorized tasks · page ${page.page} of ${totalPages}. Sorted by ${sort} (${direction}); stable task identity breaks ties.`} density="compact"><thead><tr><th scope="col">Task number</th><th scope="col">Title</th><th scope="col">Priority</th><th scope="col">State</th><th scope="col">Assignee</th><th scope="col">Due</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{priorityLabel(task.priority)}</td><td>{stateLabel(task.state)}</td><td>{assigneeLabel(task.currentAssigneeId)}</td><td>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDate(task.dueAt)}</time> : '—'}</td></tr>)}</tbody><Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="tasks" baseUrl="/tasks" /></Fragment></DataTable> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters ? <a href="/tasks">Clear all filters</a> : canCreate && <a href="/tasks/new">Create task</a>}</section>}
+  {authorizationUnavailable ? <section class="empty"><h2>Tasks are not available in your permission scope</h2><p>No task data or count is shown for this account.</p></section> : providerUnavailable ? <ProviderUnavailableState title="Tasks are temporarily unavailable" description="The task read did not return a confirmed result, so this queue is not treated as empty and no count is shown." retryHref="/tasks" /> : tasks.length ? <DataTable caption={`Tasks — ${result.total} matching records`} summary={`Showing ${tasks.length} of ${result.total} authorized tasks · page ${page.page} of ${totalPages}. Sorted by ${sort} (${direction}); stable task identity breaks ties.`} density="compact"><thead><tr><th scope="col">Task number</th><th scope="col">Title</th><th scope="col">Owner</th><th scope="col">Priority</th><th scope="col">Assignee</th><th scope="col">Due</th><th scope="col">State</th><th scope="col">Version</th><th scope="col">Next step</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.ownerDisplayName}</td><td>{priorityLabel(task.priority)}</td><td>{task.assigneeDisplayName}</td><td>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDate(task.dueAt)}</time> : '—'}</td><td>{stateLabel(task.state)}</td><td>{task.version.toString()}</td><td>{nextStep(task)}</td></tr>)}</tbody><Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="tasks" baseUrl="/tasks" /></Fragment></DataTable> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters ? <a href="/tasks">Clear all filters</a> : canCreate && <a href="/tasks/new">Create task</a>}</section>}
   </div>
 </AppLayout>
 <style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--color-text-inverse);padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700;cursor:pointer}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5);flex-wrap:wrap}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem;font-size:1.1rem}@media(max-width:600px){.page-head,.filters{display:grid}.filters button{width:max-content}}

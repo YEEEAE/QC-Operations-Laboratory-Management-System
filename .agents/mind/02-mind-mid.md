@@ -189,6 +189,50 @@
   - State: BLOCKED — positive PostgreSQL/E2E acceptance awaits approved owner decision and disposable PostgreSQL runtime.
   - Key file: `audit/2026-09-23/qc-100-final-013/owner-decision-request.md`.
 
+## Rollover from 01 — 2026-09-24 (QC-ADP-17 context compaction)
+
+> نُقلت أقدم سجلات Historical Ledger فقط من 01 بعد تجاوز 500 سطر؛ بقيت الحالة والقرارات المفتوحة في 01.
+
+- **2026-09-24 — LAB-REPORT-ENTRY / قالبا تقريري ضغط المختبر**
+  - Changed: قالبا إدخال مسودة للاختبارين المطلوبين، 12 عينة، وحفظ مملوك للمستخدم بإصدار وتدقيق؛ يظل اعتماد الاختبار الرسمي تابعًا للقالب والمصدر المعتمدين.
+  - Evidence: architecture PASS؛ Astro build PASS على Node 24.20.0؛ typecheck يظهر خطأَي declarations قائمين في release `.mjs` فقط. حفظ PostgreSQL الفعلي NOT VERIFIED لأن migration 0039 لم تُطبّق على قاعدة اختبار.
+  - State: PARTIAL — واجهة/كود المسودة DONE محليًا؛ تشغيلها على قاعدة بيانات يحتاج تطبيق 0039 في بيئة مخولة.
+  - Key files: `src/pages/laboratory/report-templates.astro`, `db/migrations/0039_laboratory_report_drafts.sql`.
+
+- **2026-09-24 — Mind rollover (LAB-REPORT-ENTRY):** نُقلت سجلات UI/tooling الأقدم من `01` إلى أعلى `02` بعد التحقق؛ بقيت الحالة الحالية والقيود.
+
+- **2026-09-24 — ACCESSIBILITY-TRANSITION-RECOVERY / POST fallback وتوثيق حدود التدقيق**
+  - Changed: إضافة server POST/recovery لإنشاء نسخة مستند، وتقليص سجل الأسطح بلا baseline من 9 إلى 8.
+  - Evidence: Astro check 963 ملفات/0 errors؛ عقد mutation safety 12/12. مصفوفة browser/AT موثقة NOT RUN لغياب بيانات E2E واعتماد بشري؛ `audit/2026-09-24/accessibility-responsive-transition-audit.md`.
+  - State: PARTIAL — لا ادعاء WCAG أو إغلاق للأسطح الثمانية المتبقية.
+
+- **2026-09-23 — REGISTERS-REPORT-PROVENANCE / مصدر التقرير وسلامة التصدير**
+  - Changed: تقرير quarantine screen/print/CSV/XLSX يوضح منفذ التقرير والمصدر والنطاق والفلاتر والفترة والفرز والعدد والوقت وحالة النسخة غير المعتمدة؛ screen/export يشتركان في parser صارم؛ تحييد صيغ CSV/XLSX يشمل المحارف البيضاء/التحكمية السابقة للصيغة؛ الجداول المشتركة توفر اختيار كثافة من دون إخفاء الأعمدة، وتوضح أن الإجراءات الجماعية غير متاحة.
+  - Evidence: focused reporting/filter/export tests 19/19 PASS؛ typecheck وAstro check وbuild PASS. populated PostgreSQL report/scope parity BLOCKED لغياب container runtime.
+  - State: PARTIAL — تعميم source query/actor scope/server pagination وبوّابات KPI عبر جميع السجلات خارج نطاق التغيير الحالي وما زالت فجوة مفتوحة.
+  - Key files: `src/modules/reporting/`, `src/ui/components/data/DataTable.astro`, `src/pages/reports/[reportCode].astro`.
+
+- **2026-09-23 — QC-VISUAL-SYSTEM / اتجاه غرفة القرار**
+  - Changed: ثلاثة اتجاهات موثقة، مع تطبيق غرفة القرار/المقعد العلمي/سجل الدليل على dashboard والسجلات ونموذج المختبر والاعتمادات؛ semantic tokens وحالات موحدة وحوكمة المساهمة.
+  - Evidence: build وarchitecture PASS؛ contrast للحالات النصية المختبرة ≥4.5:1؛ لقطات specimen توضيحية عند 320/390/768/1440 وforced-colors/reduced-motion/print بلا page overflow. typecheck بقي بخطأين قائمين لتعريفات release `.mjs`؛ browser مصادق وقياس زمن مهمة بشرية NOT VERIFIED.
+  - State: PARTIAL — اللقطات تثبت النموذج المرئي المحلي، لا سلوك البيانات الحية أو قبول المستخدم.
+  - Key files: `Documents/QC-VISUAL-SYSTEM.md`, `src/ui/styles/workspaces.css`, `audit/2026-09-23/qc-visual-specimen.html`.
+
+- **2026-09-23 — INTEGRATION-CONTRACTS / عقود المصادر ومحول الجهاز التجريبي**
+  - Changed: عقود مسودة لستة مصادر؛ أول محول instrument sandbox مع فصل delivery عن business decision.
+  - Evidence: عقود مركزة 8/8 PASS؛ typecheck بقي بخطأين قائمين في تعريفات release `.mjs`؛ لا مزود حي أو بيانات حساسة.
+  - State: PARTIAL — تفعيل المزود وسياسات الاحتفاظ/إعادة المحاولة/هوية الفاعل تحتاج اعتماد المالك.
+
+- **2026-09-23 — RECOVERY-POSTURE / backup, retention, and incident response**
+  - Changed: removed unapproved RPO/RTO values and assumed 30-day retention; expiry now fails closed without an approved policy; backup verification reads actual stored bytes; added timestamp-derived metrics and recovery incident stop/GO runbook.
+  - Evidence: focused backup-recovery unit 23/23 PASS; typecheck still reports 2 `.mjs` declaration errors in release tests. Read-only Render check: PG plan Free, web service only/no Cron, `qc.backup_runs` 0 rows, `qc.recovery_evidence` absent. User confirmed no isolated target/recovery bundle and decisions still open; local Docker/Postgres unavailable. Restore drill and response-time rehearsal BLOCKED; no production restore attempted.
+  - State: PARTIAL — provider schedule/alerts/PITR/WAL and retention policy remain unverified; Render paid Cron capability not activated.
+
+- **2026-09-23 — QC-WORKFLOW-REDESIGN / سياق رحلة QC والتسليمات**
+  - Changed: اللوحة المشتركة تفصل مجال العمل عن مالك السجل وتوضح نقص المصدر؛ أضيفت روابط HOLD/review/PASS-not-released، وحُفظت مدخلات Receiving/Lab عند الفشل.
+  - Evidence: focused unit 98/98 PASS؛ build PASS؛ typecheck 0 errors. UAT مع ستة مشاركين فعليين وقياس زمن المهام NOT RUN؛ مصادر evaluator والسياسات المعتمدة ما زالت مفتوحة.
+  - State: PARTIAL — لا تغييرات على mutations أو المخطط أو الموقع الحي.
+
 ## Rollover from 01 — 2026-09-23 (AUTHZ-SERVER-MATRIX — compact older ledger)
 
 > نُقلت أقدم سجلات 2026-09-22 بعد التحقق من غيابها في الأرشيف؛ لم تتغير الحالة الحالية أو القرارات والقيود.

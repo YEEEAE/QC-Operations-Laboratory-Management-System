@@ -1,33 +1,55 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
-import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
 import { priorityLabel, stateLabel } from '../../shared/copy/ux-vocabulary.js';
+import { formatDateTime } from '../../shared/copy/format.js';
+import { actorHasScope } from '../../shared/authorization/scope-evaluator.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const taskId = Astro.params.taskId ?? '';
-const task = await taskReadDependencies().get.execute({ actor, taskId });
-const hasPermission = (code: string) => actor.permissions.some((grant) => grant.code === code && grant.active !== false);
-// Show the human name of the assignee; the raw identifier is not a label.
-let assigneeName: string | undefined;
-try {
-  if (task.currentAssigneeId) {
-    const user = await identityAdminReadDependencies().getUser.execute({ actor, userId: task.currentAssigneeId });
-    assigneeName = user?.displayName;
-  }
-} catch {
-  // Presentation-only resolution; the record itself is unaffected.
-}
+const details = await taskReadDependencies().get.execute({ actor, taskId });
+const { task } = details;
+const canTaskAction = (code: string) => {
+  const grant = actor.permissions.find((item) => item.code === code && item.active !== false);
+  return Boolean(
+    grant &&
+      actorHasScope(
+        actor,
+        { type: 'TASK', id: task.id, state: task.state, ownerId: task.createdBy, assigneeId: task.currentAssigneeId },
+        { ownerId: task.createdBy, assigneeId: task.currentAssigneeId },
+        grant,
+      ),
+  );
+};
+const nextStep = ({
+  DRAFT: canTaskAction('PERM-TASK-CREATE') ? 'Activate when the draft is ready.' : 'Wait for an authorized user to activate this draft.',
+  OPEN: canTaskAction('PERM-TASK-EDIT') ? 'Start the work when it is ready to begin.' : 'Wait for an authorized user to start the work.',
+  IN_PROGRESS: canTaskAction('PERM-TASK-COMPLETE') || canTaskAction('PERM-TASK-BLOCK') ? 'Complete the work when requirements are met, or place it on hold with a reason.' : 'Wait for an authorized user to complete or hold the work.',
+  ON_HOLD: canTaskAction('PERM-TASK-EDIT') ? 'Resume work when the blocker is resolved.' : 'Wait for an authorized user to resume the work.',
+  COMPLETED: canTaskAction('PERM-TASK-REOPEN') ? 'Reopen with a reason if more work is needed.' : 'Task complete. Reopening requires separate permission.',
+  CANCELLED: 'No further action is available.',
+} as const)[task.state];
+const actionLabel = (action: string) => ({
+  CREATE_TASK: 'Created',
+  UPDATE_DRAFT: 'Draft updated',
+  ACTIVATE: 'Activated',
+  START: 'Started',
+  HOLD: 'Placed on hold',
+  RESUME: 'Resumed',
+  COMPLETE: 'Completed',
+  REOPEN: 'Reopened',
+}[action] ?? 'Task updated');
 ---
 
 <AppLayout title={`${task.taskNo} · Tasks`} locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Task</p><h1>{task.title}</h1><p class="lede">{task.taskNo} · Version {task.version.toString()}</p></div><a href="/tasks">Back to tasks</a></section>
   <div class="grid">
-    <section class="panel"><h2>Overview</h2><dl><dt>State</dt><dd>{stateLabel(task.state)}</dd><dt>Priority</dt><dd>{priorityLabel(task.priority)}</dd><dt>Assignee</dt><dd>{task.currentAssigneeId ? (assigneeName ?? 'Named account') : 'Unassigned'}</dd><dt>Due date</dt><dd>{task.dueAt?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not set'}</dd></dl><p>{task.description ?? 'No description.'}</p></section>
+    <section class="panel"><h2>Overview</h2><dl><dt>Owner</dt><dd>{details.ownerDisplayName}</dd><dt>Assignee</dt><dd>{details.assigneeDisplayName}</dd><dt>Priority</dt><dd>{priorityLabel(task.priority)}</dd><dt>Due date</dt><dd>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDateTime(task.dueAt)}</time> : 'Not set'}</dd><dt>State</dt><dd>{stateLabel(task.state)}</dd><dt>Version</dt><dd>{task.version.toString()}</dd><dt>Next step</dt><dd>{nextStep}</dd></dl><p>{task.description ?? 'No description.'}</p></section>
     <section class="panel"><h2>Checklist</h2>{task.checklist.length ? <ul>{task.checklist.map((item) => <li><span>{item.completed ? 'Complete:' : 'Pending:'}</span> {item.label}{item.required ? ' (required)' : ''}</li>)}</ul> : <p>No checklist items.</p>}</section>
   </div>
-  <section class="panel actions"><h2>Available actions</h2><p>State changes require a server-side action and the current version.</p>{task.state === 'DRAFT' && hasPermission('PERM-TASK-CREATE') && <button data-action="ACTIVATE" data-version={task.version.toString()}>Activate</button>}{task.state === 'OPEN' && hasPermission('PERM-TASK-EDIT') && <button data-action="START" data-version={task.version.toString()}>Start</button>}{(task.state === 'OPEN' || task.state === 'IN_PROGRESS') && hasPermission('PERM-TASK-BLOCK') && <button data-action="HOLD" data-version={task.version.toString()}>Put on hold</button>}{task.state === 'IN_PROGRESS' && hasPermission('PERM-TASK-COMPLETE') && <button data-action="COMPLETE" data-version={task.version.toString()}>Complete</button>}{task.state === 'ON_HOLD' && hasPermission('PERM-TASK-EDIT') && <button data-action="RESUME" data-version={task.version.toString()}>Resume</button>}{task.state === 'COMPLETED' && hasPermission('PERM-TASK-REOPEN') && <button data-action="REOPEN" data-version={task.version.toString()}>Reopen</button>}<p role="status" data-result tabindex="-1"></p></section>
+  <section class="panel actions"><h2>Available actions</h2><p>State changes require server-side permission, scope, and the current version.</p><label for="transition-reason">Reason <span>(required for hold and reopen)</span></label><textarea id="transition-reason" data-reason rows="3"></textarea>{task.state === 'DRAFT' && canTaskAction('PERM-TASK-CREATE') && <button data-action="ACTIVATE" data-version={task.version.toString()}>Activate</button>}{task.state === 'OPEN' && canTaskAction('PERM-TASK-EDIT') && <button data-action="START" data-version={task.version.toString()}>Start</button>}{(task.state === 'OPEN' || task.state === 'IN_PROGRESS') && canTaskAction('PERM-TASK-BLOCK') && <button data-action="HOLD" data-version={task.version.toString()}>Put on hold</button>}{task.state === 'IN_PROGRESS' && canTaskAction('PERM-TASK-COMPLETE') && <button data-action="COMPLETE" data-version={task.version.toString()}>Complete</button>}{task.state === 'ON_HOLD' && canTaskAction('PERM-TASK-EDIT') && <button data-action="RESUME" data-version={task.version.toString()}>Resume</button>}{task.state === 'COMPLETED' && canTaskAction('PERM-TASK-REOPEN') && <button data-action="REOPEN" data-version={task.version.toString()}>Reopen</button>}<p role="status" data-result tabindex="-1"></p></section>
+  <section class="panel"><h2>Transition history</h2>{details.history.length ? <ol class="history">{details.history.map((event) => <li><div><strong>{actionLabel(event.action)}</strong><span>{event.oldState || event.newState ? ` · ${event.oldState ? stateLabel(event.oldState) : ''}${event.oldState && event.newState ? ' → ' : ''}${event.newState ? stateLabel(event.newState) : ''}` : ''}</span></div><p><time datetime={event.occurredAt.toISOString()}>{formatDateTime(event.occurredAt)}</time> · {event.actorLabel}{event.reason ? ` · ${event.reason}` : ''}</p></li>)}</ol> : <p>No recorded changes.</p>}</section>
 </AppLayout>
 
 <script>
@@ -40,11 +62,17 @@ try {
     if (btn.disabled || button.closest('[aria-busy="true"]')) return;
     const scope = button.closest('section') as HTMLElement | null;
     const output = document.querySelector<HTMLElement>('[data-result]');
+    const reason = document.querySelector<HTMLTextAreaElement>('[data-reason]')?.value.trim();
+    if ((requested === 'HOLD' || requested === 'REOPEN') && !reason) {
+      if (output) output.textContent = requested === 'HOLD' ? 'Add a reason before placing this task on hold.' : 'Add a reason before reopening this task.';
+      document.querySelector<HTMLTextAreaElement>('[data-reason]')?.focus();
+      return;
+    }
     btn.disabled = true;
     scope?.setAttribute('aria-busy', 'true');
     if (output) output.textContent = 'Applying the controlled action…';
     try {
-      const result = await actions.tasks.transition({ taskId: location.pathname.split('/').pop() || '', expectedVersion: BigInt(button.dataset.version || '0'), action: requested as (typeof validTransitions)[number] });
+      const result = await actions.tasks.transition({ taskId: location.pathname.split('/').pop() || '', expectedVersion: BigInt(button.dataset.version || '0'), action: requested as (typeof validTransitions)[number], ...(reason ? { reason } : {}) });
       if (result.error) {
         if (output) { output.textContent = 'The action was not applied. The record may have changed or authorization may have changed — refresh and try again if authorized.'; output.focus?.(); }
       } else location.reload();
@@ -55,5 +83,5 @@ try {
 </script>
 
 <style>
-  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.panel p{color:var(--text-muted);font-size:.86rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}h2{font-size:1rem;margin-top:0}dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:700}li{margin:.6rem 0}.actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}.actions h2,.actions p{width:100%}button{padding:.65rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:#fff;font-weight:700}a{color:var(--color-accent-primary-hover)}@media(max-width:700px){.page-head,.grid{display:block}}
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.panel p{color:var(--text-muted);font-size:.86rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);margin-bottom:var(--space-5)}h2{font-size:1rem;margin-top:0}dl{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.5rem}dt{color:var(--text-muted)}dd{margin:0;font-weight:700}li{margin:.6rem 0}.actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}.actions h2,.actions p,.actions label,.actions textarea{width:100%}textarea{font:inherit;resize:vertical;padding:.6rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}button{padding:.65rem 1rem;background:var(--color-accent-primary);border:0;border-radius:var(--radius-md);color:#fff;font-weight:700}a{color:var(--color-accent-primary-hover)}.history{padding-inline-start:1.5rem}.history time{font-variant-numeric:tabular-nums}@media(max-width:700px){.page-head,.grid{display:block}}
 </style>

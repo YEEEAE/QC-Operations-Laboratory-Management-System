@@ -25,8 +25,9 @@ const transitions: Record<TaskAction, readonly [TaskState, TaskState][]> = {
 
 export function transitionTask(task: Task, action: TaskAction, now: Date, reason?: string): Task {
   const match = transitions[action].find(([from]) => from === task.state);
-  if (!match || (['HOLD', 'CANCEL', 'REOPEN'].includes(action) && !reason?.trim()))
-    throw new AppError('AUTHZ_DENIED', { userSafe: true });
+  if (!match) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+  if (['HOLD', 'CANCEL', 'REOPEN'].includes(action) && !reason?.trim())
+    throw new AppError('VALIDATION_FAILED', { userSafe: true });
   if (action === 'COMPLETE') assertCompletable(task);
   return {
     ...task,

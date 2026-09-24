@@ -43,6 +43,21 @@ export interface Task {
   requiredEvidencePresent: boolean;
 }
 
+export interface TaskHistoryEntry {
+  id: string;
+  action: string;
+  oldState?: TaskState;
+  newState?: TaskState;
+  actorLabel: string;
+  occurredAt: Date;
+  reason?: string;
+}
+
+export interface TaskListItem extends Task {
+  ownerDisplayName: string;
+  assigneeDisplayName: string;
+}
+
 export interface NewTaskInput {
   id: string;
   taskNo: string;

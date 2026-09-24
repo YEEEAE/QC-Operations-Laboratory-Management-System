@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-17 / رحلة المهام وحالاتها**
+  - Changed: تحسين صفحات قائمة/إنشاء/تفصيل المهمة مع fail-closed read scope وسجل الانتقالات؛ لا migration أو توسيع لصلاحيات Reopen/Cancel.
+  - Evidence: unit 11/11 وAstro 0 errors/0 warnings؛ PostgreSQL BLOCKED لغياب container runtime، وE2E BLOCKED عند Chromium sandbox مع غياب fixture env. source head 0041؛ SD-002 وUAT ما زالا مفتوحين. البطاقات 3/21 source checks فقط، لا READY؛ `audit/2026-09-24/QC-ADP-17-task-lifecycle-handoff.md`.
+  - State: PARTIAL / BLOCKED — PostgreSQL parity وauthenticated E2E/keyboard والقبول البشري غير مثبتة.
+- **2026-09-24 — Mind rollover:** نُقلت أقدم سجلات Ledger (LAB-REPORT-ENTRY حتى QC-WORKFLOW-REDESIGN) إلى أعلى الأرشيف بعد التحقق من النقل؛ بقيت الحالة الحالية في 01.
+
 - **2026-09-24 — QC-ADP-13 / تحسين النصوص والسجلات**
   - Changed: humanized stored `UNSPECIFIED` in task views without changing storage; corrected session-dependent 404 link labels; made Reject Reports outage copy recoverable; permission-gated task/asset zero-state create links; replaced backup UUID primary labels and exposed technical job/schema sentinels as human copy; clarified `VOID` retention and separated dependency-error wording.
   - Evidence: focused UX/copy contracts 33/33 PASS; Astro check 0 errors/0 warnings (88 hints), Astro build PASS, changed TypeScript Prettier PASS; browser live 404 before vs local candidate guest branch after. 58 requested section-25 cards plus the dependent `/tasks/new` card (59/59) now link the page handoff, but route-bound populated/empty/error and role/scope checks remain NOT VERIFIED; source schema head 0041, HEAD base `fc92cc4b36fbeb161336e9cda0e40b0af0b6f583`; live schema/role not directly verified.
@@ -78,46 +84,6 @@
   - Changed: expanded identity/files/AI/reports/approvals threat model; CI now produces lockfile-bound CycloneDX + license inventory and provenance/SBOM attestations; AI HTTP rejects redirects; poisoned SQL import test added.
   - Evidence: PG18 focused integration 17/17 PASS; AI provider HTTP 25/25 PASS; actual-server security E2E 8 PASS/4 FAIL (authenticated file cases blocked at login controls); SBOM 822 locked packages, 4 installed license declarations UNKNOWN; dependency advisory result NOT VERIFIED (registry unavailable); secret scan 10 high-entropy assignment candidates in ignored local env, values not shown.
   - State: PARTIAL — see `Documents/THREAT-MODEL-030.md`; Critical/High triage owner `yazeed` (24h/7d); four unknown license records due 2026-10-01.
-
-- **2026-09-24 — LAB-REPORT-ENTRY / قالبا تقريري ضغط المختبر**
-  - Changed: قالبا إدخال مسودة للاختبارين المطلوبين، 12 عينة، وحفظ مملوك للمستخدم بإصدار وتدقيق؛ يظل اعتماد الاختبار الرسمي تابعًا للقالب والمصدر المعتمدين.
-  - Evidence: architecture PASS؛ Astro build PASS على Node 24.20.0؛ typecheck يظهر خطأَي declarations قائمين في release `.mjs` فقط. حفظ PostgreSQL الفعلي NOT VERIFIED لأن migration 0039 لم تُطبّق على قاعدة اختبار.
-  - State: PARTIAL — واجهة/كود المسودة DONE محليًا؛ تشغيلها على قاعدة بيانات يحتاج تطبيق 0039 في بيئة مخولة.
-  - Key files: `src/pages/laboratory/report-templates.astro`, `db/migrations/0039_laboratory_report_drafts.sql`.
-
-- **2026-09-24 — Mind rollover (LAB-REPORT-ENTRY):** نُقلت سجلات UI/tooling الأقدم من `01` إلى أعلى `02` بعد التحقق؛ بقيت الحالة الحالية والقيود.
-
-- **2026-09-24 — ACCESSIBILITY-TRANSITION-RECOVERY / POST fallback وتوثيق حدود التدقيق**
-  - Changed: إضافة server POST/recovery لإنشاء نسخة مستند، وتقليص سجل الأسطح بلا baseline من 9 إلى 8.
-  - Evidence: Astro check 963 ملفات/0 errors؛ عقد mutation safety 12/12. مصفوفة browser/AT موثقة NOT RUN لغياب بيانات E2E واعتماد بشري؛ `audit/2026-09-24/accessibility-responsive-transition-audit.md`.
-  - State: PARTIAL — لا ادعاء WCAG أو إغلاق للأسطح الثمانية المتبقية.
-
-- **2026-09-23 — REGISTERS-REPORT-PROVENANCE / مصدر التقرير وسلامة التصدير**
-  - Changed: تقرير quarantine screen/print/CSV/XLSX يوضح منفذ التقرير والمصدر والنطاق والفلاتر والفترة والفرز والعدد والوقت وحالة النسخة غير المعتمدة؛ screen/export يشتركان في parser صارم؛ تحييد صيغ CSV/XLSX يشمل المحارف البيضاء/التحكمية السابقة للصيغة؛ الجداول المشتركة توفر اختيار كثافة من دون إخفاء الأعمدة، وتوضح أن الإجراءات الجماعية غير متاحة.
-  - Evidence: focused reporting/filter/export tests 19/19 PASS؛ typecheck وAstro check وbuild PASS. populated PostgreSQL report/scope parity BLOCKED لغياب container runtime.
-  - State: PARTIAL — تعميم source query/actor scope/server pagination وبوّابات KPI عبر جميع السجلات خارج نطاق التغيير الحالي وما زالت فجوة مفتوحة.
-  - Key files: `src/modules/reporting/`, `src/ui/components/data/DataTable.astro`, `src/pages/reports/[reportCode].astro`.
-
-- **2026-09-23 — QC-VISUAL-SYSTEM / اتجاه غرفة القرار**
-  - Changed: ثلاثة اتجاهات موثقة، مع تطبيق غرفة القرار/المقعد العلمي/سجل الدليل على dashboard والسجلات ونموذج المختبر والاعتمادات؛ semantic tokens وحالات موحدة وحوكمة المساهمة.
-  - Evidence: build وarchitecture PASS؛ contrast للحالات النصية المختبرة ≥4.5:1؛ لقطات specimen توضيحية عند 320/390/768/1440 وforced-colors/reduced-motion/print بلا page overflow. typecheck بقي بخطأين قائمين لتعريفات release `.mjs`؛ browser مصادق وقياس زمن مهمة بشرية NOT VERIFIED.
-  - State: PARTIAL — اللقطات تثبت النموذج المرئي المحلي، لا سلوك البيانات الحية أو قبول المستخدم.
-  - Key files: `Documents/QC-VISUAL-SYSTEM.md`, `src/ui/styles/workspaces.css`, `audit/2026-09-23/qc-visual-specimen.html`.
-
-- **2026-09-23 — INTEGRATION-CONTRACTS / عقود المصادر ومحول الجهاز التجريبي**
-  - Changed: عقود مسودة لستة مصادر؛ أول محول instrument sandbox مع فصل delivery عن business decision.
-  - Evidence: عقود مركزة 8/8 PASS؛ typecheck بقي بخطأين قائمين في تعريفات release `.mjs`؛ لا مزود حي أو بيانات حساسة.
-  - State: PARTIAL — تفعيل المزود وسياسات الاحتفاظ/إعادة المحاولة/هوية الفاعل تحتاج اعتماد المالك.
-
-- **2026-09-23 — RECOVERY-POSTURE / backup, retention, and incident response**
-  - Changed: removed unapproved RPO/RTO values and assumed 30-day retention; expiry now fails closed without an approved policy; backup verification reads actual stored bytes; added timestamp-derived metrics and recovery incident stop/GO runbook.
-  - Evidence: focused backup-recovery unit 23/23 PASS; typecheck still reports 2 `.mjs` declaration errors in release tests. Read-only Render check: PG plan Free, web service only/no Cron, `qc.backup_runs` 0 rows, `qc.recovery_evidence` absent. User confirmed no isolated target/recovery bundle and decisions still open; local Docker/Postgres unavailable. Restore drill and response-time rehearsal BLOCKED; no production restore attempted.
-  - State: PARTIAL — provider schedule/alerts/PITR/WAL and retention policy remain unverified; Render paid Cron capability not activated.
-
-- **2026-09-23 — QC-WORKFLOW-REDESIGN / سياق رحلة QC والتسليمات**
-  - Changed: اللوحة المشتركة تفصل مجال العمل عن مالك السجل وتوضح نقص المصدر؛ أضيفت روابط HOLD/review/PASS-not-released، وحُفظت مدخلات Receiving/Lab عند الفشل.
-  - Evidence: focused unit 98/98 PASS؛ build PASS؛ typecheck 0 errors. UAT مع ستة مشاركين فعليين وقياس زمن المهام NOT RUN؛ مصادر evaluator والسياسات المعتمدة ما زالت مفتوحة.
-  - State: PARTIAL — لا تغييرات على mutations أو المخطط أو الموقع الحي.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -491,6 +457,7 @@
 - **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
+- **QC-ADP-17 / F-020 PARTIAL:** قائمة/إنشاء/تفصيل المهام تعرض سياق المالك/المكلّف والخطوة التالية وسجل الانتقال؛ source migration head `0041` بلا migration جديدة. Unit 11/11 وAstro check PASS؛ PG18 integration BLOCKED لغياب container runtime، وauthenticated E2E BLOCKED عند Chromium sandbox/fixture env. لا READY؛ سياسة SD-002 وUAT وإثبات actor/role حي تبقى مفتوحة. المقام 7 فحوص لكل route (21): source فقط 3/21. `audit/2026-09-24/QC-ADP-17-task-lifecycle-handoff.md`.
 - **QC-ADP-08 / F-009 + F-018 remain OPEN:** real task fixture proves `/tasks/[taskId]` GET + server-denied POST with unchanged row/audit on the PG18.6 candidate. One route has partial HTTP proof; 450 remains gross planning only and each card needs applicable checks/N/A source and route-bound evidence. See `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
 - **QC-ADP-10 / F-011 PARTIAL:** PG18 candidate proves screen/query/CSV/XLSX row, filter, order, date, scope, permission, formula, and shared provenance parity. The Action filter omission is fixed. Live route/role and authenticated print E2E remain NOT VERIFIED; durable cross-request snapshots require owner reconciliation of `REQ-RPT-005` / `BR-RPT-005` and retention before persistence. Handoff: `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.
 - **QC-ADP-06:** Finding→NCR threshold/FAIL consequence/NCR closure/CAPA effectiveness remain owner-dependent (PD-15/16/17/18). Approved P-04 permits a controlled Supervisor exception without effectiveness acceptance, so an absolute effectiveness-before-every-closure acceptance criterion conflicts with current policy and requires an explicit owner decision; do not change the exception by implementation. Route handoff: `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.

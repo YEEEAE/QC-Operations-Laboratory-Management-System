@@ -1,6 +1,6 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { Page } from '../../../shared/pagination/page.js';
-import type { Task } from '../domain/model.js';
+import type { Task, TaskHistoryEntry, TaskListItem } from '../domain/model.js';
 import type { TaskAction } from '../domain/state.js';
 
 export interface TaskListFilter {
@@ -27,12 +27,14 @@ export interface TaskListFilter {
   direction?: 'asc' | 'desc';
 }
 export interface TaskListPage {
-  items: readonly Task[];
+  items: readonly TaskListItem[];
   total: number;
 }
 export interface TaskRepository {
   create(input: { task: Task; actor: ActorContext; requestId: string }): Promise<Task>;
   get(id: string, actor: ActorContext): Promise<Task | undefined>;
+  getIdentityLabels(task: Task): Promise<{ owner: string; assignee: string }>;
+  listHistory(taskId: string, actorId: string): Promise<readonly TaskHistoryEntry[]>;
   /**
    * Bounded register read. `page` is required: the register never returns an
    * unbounded row set. `total` is the full authorized match count for the same

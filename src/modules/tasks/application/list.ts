@@ -8,6 +8,12 @@ export class ListTasksUseCase {
     if (input.actor.accountState !== 'ACTIVE') {
       throw new AppError('AUTHZ_DENIED');
     }
+    const grant = input.actor.permissions.find(
+      (item) => item.code === 'PERM-TASK-VIEW' && item.active !== false,
+    );
+    if (!grant) throw new AppError('AUTHZ_PERMISSION_MISSING', { userSafe: true });
+    if (!grant.scopes.some((scope) => ['OWN', 'ASSIGNED', 'GLOBAL'].includes(scope)))
+      throw new AppError('AUTHZ_SCOPE_DENIED', { userSafe: true });
     return this.repository.list(input);
   }
 }

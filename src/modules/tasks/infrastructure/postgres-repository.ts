@@ -9,7 +9,7 @@ import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { Page } from '../../../shared/pagination/page.js';
-import type { Task } from '../domain/model.js';
+import type { Task, TaskHistoryEntry, TaskListItem } from '../domain/model.js';
 import type { TaskAction } from '../domain/state.js';
 import type { TaskListFilter, TaskListPage, TaskRepository } from '../ports/repository.js';
 
@@ -168,6 +168,56 @@ export class PostgresTaskRepository implements TaskRepository {
       .executeTakeFirst();
     return mapTask(row, checklist, Boolean(evidence));
   }
+  async getIdentityLabels(task: Task): Promise<{ owner: string; assignee: string }> {
+    const ids = [...new Set([task.createdBy, task.currentAssigneeId].filter(Boolean))] as string[];
+    const users = await this.database
+      .selectFrom('users')
+      .select(['id', 'display_name'])
+      .where('id', 'in', ids)
+      .execute();
+    const names = new Map(users.map((user) => [user.id, user.display_name]));
+    return {
+      owner: names.get(task.createdBy) ?? 'Named account',
+      assignee: task.currentAssigneeId
+        ? (names.get(task.currentAssigneeId) ?? 'Named account')
+        : 'Unassigned',
+    };
+  }
+  async listHistory(taskId: string, actorId: string): Promise<readonly TaskHistoryEntry[]> {
+    const rows = await this.database
+      .selectFrom('audit_events')
+      .leftJoin('users', 'users.id', 'audit_events.actor_id')
+      .select([
+        'audit_events.id',
+        'audit_events.action',
+        'audit_events.old_state',
+        'audit_events.new_state',
+        'audit_events.actor_id',
+        'audit_events.occurred_at',
+        'audit_events.reason',
+        'users.display_name as actor_display_name',
+      ])
+      .where('subject_type', '=', 'TASK')
+      .where('subject_id', '=', taskId)
+      .orderBy('occurred_at', 'desc')
+      .orderBy('event_no', 'desc')
+      .limit(100)
+      .execute();
+    return rows.reverse().map((row) => ({
+      id: row.id,
+      action: row.action,
+      oldState: row.old_state as TaskHistoryEntry['oldState'],
+      newState: row.new_state as TaskHistoryEntry['newState'],
+      actorLabel:
+        row.actor_id === actorId
+          ? 'You'
+          : row.actor_id
+            ? (row.actor_display_name ?? 'Named account')
+            : 'System',
+      occurredAt: row.occurred_at,
+      reason: row.reason ?? undefined,
+    }));
+  }
   async list(input: {
     actor: ActorContext;
     filter?: TaskListFilter;
@@ -176,6 +226,31 @@ export class PostgresTaskRepository implements TaskRepository {
     const base = () => this.database.selectFrom('tasks');
     const applyFilter = (query: ReturnType<typeof base>, filter?: TaskListFilter) => {
       let q = query;
+      const viewGrant = input.actor.permissions.find(
+        (grant) => grant.code === 'PERM-TASK-VIEW' && grant.active !== false,
+      );
+      const canSeeOwn = viewGrant?.scopes.includes('OWN') ?? false;
+      const canSeeAssigned = viewGrant?.scopes.includes('ASSIGNED') ?? false;
+      const canSeeGlobal = viewGrant?.scopes.includes('GLOBAL') ?? false;
+      // Tasks have no team/department/site/domain key, so those grant kinds
+      // cannot broaden this query. Until a record-level key exists they fail
+      // closed; only supported OWN, ASSIGNED, or explicit GLOBAL scopes apply.
+      if (!canSeeGlobal) {
+        if (canSeeOwn && canSeeAssigned) {
+          q = q.where((eb) =>
+            eb.or([
+              eb('created_by', '=', input.actor.id),
+              eb('current_assignee_id', '=', input.actor.id),
+            ]),
+          );
+        } else if (canSeeOwn) {
+          q = q.where('created_by', '=', input.actor.id);
+        } else if (canSeeAssigned) {
+          q = q.where('current_assignee_id', '=', input.actor.id);
+        } else {
+          q = q.where('id', '=', '00000000-0000-0000-0000-000000000000');
+        }
+      }
       if (filter?.state) q = q.where('state', '=', filter.state);
       if (filter?.assigneeId) q = q.where('current_assignee_id', '=', filter.assigneeId);
       if (filter?.search)
@@ -226,7 +301,10 @@ export class PostgresTaskRepository implements TaskRepository {
     // Batched related reads: one query per relation for the whole page instead
     // of three per task, which is what made the register quadratic in rows.
     const ids = rows.map((row) => row.id);
-    const [checklistRows, evidenceRows] = await Promise.all([
+    const identityIds = [
+      ...new Set(rows.flatMap((row) => [row.created_by, row.current_assignee_id].filter(Boolean))),
+    ];
+    const [checklistRows, evidenceRows, identityRows] = await Promise.all([
       this.database
         .selectFrom('task_checklist_items')
         .selectAll()
@@ -240,6 +318,11 @@ export class PostgresTaskRepository implements TaskRepository {
         .where('subject_id', 'in', ids)
         .where('removed_at', 'is', null)
         .execute(),
+      this.database
+        .selectFrom('users')
+        .select(['id', 'display_name'])
+        .where('id', 'in', identityIds)
+        .execute(),
     ]);
     const checklistByTask = new Map<string, DatabaseRow<'task_checklist_items'>[]>();
     for (const item of checklistRows) {
@@ -248,10 +331,18 @@ export class PostgresTaskRepository implements TaskRepository {
       else checklistByTask.set(item.task_id, [item]);
     }
     const tasksWithEvidence = new Set(evidenceRows.map((row) => row.subject_id));
+    const names = new Map(identityRows.map((row) => [row.id, row.display_name]));
     return {
-      items: rows.map((row) =>
-        mapTask(row, checklistByTask.get(row.id) ?? [], tasksWithEvidence.has(row.id)),
-      ),
+      items: rows.map((row): TaskListItem => {
+        const task = mapTask(row, checklistByTask.get(row.id) ?? [], tasksWithEvidence.has(row.id));
+        return {
+          ...task,
+          ownerDisplayName: names.get(task.createdBy) ?? 'Named account',
+          assigneeDisplayName: task.currentAssigneeId
+            ? (names.get(task.currentAssigneeId) ?? 'Named account')
+            : 'Unassigned',
+        };
+      }),
       total,
     };
   }
@@ -386,7 +477,7 @@ export class PostgresTaskRepository implements TaskRepository {
   ): Promise<Task> {
     try {
       return await this.database.transaction().execute(async (tx) => {
-        const old = await this.get(input.id);
+        const old = await this.readTask(tx, input.id, true);
         if (!old) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
         const row = await change(tx, old);
         await this.auditFor(tx)?.append({
@@ -421,6 +512,31 @@ export class PostgresTaskRepository implements TaskRepository {
       if (error instanceof AppError) throw error;
       throw translateDatabaseError(error);
     }
+  }
+  private async readTask(
+    database: Kysely<DatabaseSchema> | Transaction<DatabaseSchema>,
+    id: string,
+    forUpdate = false,
+  ): Promise<Task | undefined> {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return undefined;
+    let query = database.selectFrom('tasks').selectAll().where('id', '=', id);
+    if (forUpdate) query = query.forUpdate();
+    const row = await query.executeTakeFirst();
+    if (!row) return undefined;
+    const checklist = await database
+      .selectFrom('task_checklist_items')
+      .selectAll()
+      .where('task_id', '=', id)
+      .orderBy('position')
+      .execute();
+    const evidence = await database
+      .selectFrom('evidence_links')
+      .select('id')
+      .where('subject_type', '=', 'TASK')
+      .where('subject_id', '=', id)
+      .where('removed_at', 'is', null)
+      .executeTakeFirst();
+    return mapTask(row, checklist, Boolean(evidence));
   }
   private auditFor(tx: Transaction<DatabaseSchema>): AuditRepository | undefined {
     return this.audit instanceof PostgresAuditRepository

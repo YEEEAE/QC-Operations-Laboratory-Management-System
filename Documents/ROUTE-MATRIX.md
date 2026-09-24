@@ -48,9 +48,9 @@ creation routes; 33 navigation destinations.
 | RT-AUTH-002 | `/auth/recovery` | `src/pages/auth/recovery.astro` | identity | AUTHENTICATED | — | active-session server read | identity use case | NO | R/D/E |
 | RT-AUTH-003 | `/auth/reset/[requestId]` | `src/pages/auth/reset/[requestId].astro` | identity | AUTHENTICATED | — | active-session server read | identity use case | NO | R/D/E |
 | RT-DASH-001 | `/dashboard` | `src/pages/dashboard/index.astro` | dashboard | AUTHENTICATED | Overview / Dashboard | server KPI/read models | dashboard use cases; no client authority | NO | R/D/E |
-| RT-TASK-001 | `/tasks` | `src/pages/tasks/index.astro` | tasks | AUTHENTICATED | Work / Tasks | authorized task list/read model | task permissions + state/version | NO | R/D/E |
-| RT-TASK-002 | `/tasks/new` | `src/pages/tasks/new.astro` | tasks | AUTHENTICATED | — | server form/read context | task create use case | NO | R/D/E |
-| RT-TASK-003 | `/tasks/[taskId]` | `src/pages/tasks/[taskId].astro` | tasks | AUTHENTICATED | — | authorized task detail | task permissions + state/version | NO | R/D/E |
+| RT-TASK-001 | `/tasks` | `src/pages/tasks/index.astro` | tasks | AUTHENTICATED | Work / Tasks | bounded authorized task list/read model with owner, assignee, priority, due, state, version, and next step | explicit task-view permission/scope + action permission/scope + state/version | NO | R/D/E |
+| RT-TASK-002 | `/tasks/new` | `src/pages/tasks/new.astro` | tasks | AUTHENTICATED | — | server form; draft creation through task use case | create/assignment permission + scope + audit/outbox | NO | R/D/E |
+| RT-TASK-003 | `/tasks/[taskId]` | `src/pages/tasks/[taskId].astro` | tasks | AUTHENTICATED | — | authorized task detail with identity labels and transition history | explicit task-view permission/scope + action permission/scope + state/version + audit/outbox | NO | R/D/E |
 | RT-QUAL-001 | `/quality` | `src/pages/quality/index.astro` | quality | AUTHENTICATED | — | quality read models | quality use cases | NO | R/D/E |
 | RT-FIND-001 | `/quality/findings` | `src/pages/quality/findings/index.astro` | quality | AUTHENTICATED | Quality / Findings | authorized finding list | finding permissions + state/version | NO | R/D/E |
 | RT-FIND-002 | `/quality/findings/new` | `src/pages/quality/findings/new.astro` | quality | AUTHENTICATED | — | server form/read context | finding create use case | NO | R/D/E |
