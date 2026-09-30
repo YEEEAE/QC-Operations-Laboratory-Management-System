@@ -23,6 +23,8 @@ export interface ControlCenterMigrationStatus {
    */
   expectedHead: string;
   pendingCount: number;
+  integrityMismatches: readonly string[];
+  sourceAvailable: boolean;
   drift: boolean;
 }
 
@@ -54,6 +56,8 @@ export interface ControlCenterOverviewDependencies {
     appliedHead: string;
     buildHead: string;
     pending: readonly string[];
+    integrityMismatches?: readonly string[];
+    sourceAvailable?: boolean;
   }>;
   release: ConfiguredReleaseIdentity;
   now?: () => Date;
@@ -101,6 +105,10 @@ export class GetControlCenterOverviewUseCase {
     const appliedHead = migrationResult.ok ? migrationResult.result.appliedHead : 'UNKNOWN';
     const buildHead = migrationResult.ok ? migrationResult.result.buildHead : 'UNKNOWN';
     const pendingCount = migrationResult.ok ? migrationResult.result.pending.length : 0;
+    const integrityMismatches = migrationResult.ok
+      ? (migrationResult.result.integrityMismatches ?? [])
+      : [];
+    const sourceAvailable = migrationResult.ok && migrationResult.result.sourceAvailable !== false;
     // The ledger stores the bare version ("0025"); the release identity carries
     // the full name ("0025_qc_closure_006_workflow"). Compare on the version.
     // A release identity is authoritative for the *intended* head; otherwise the
@@ -110,7 +118,9 @@ export class GetControlCenterOverviewUseCase {
     const expectedHead = release.migrationHead ?? (buildHead !== 'NONE' ? buildHead : 'UNKNOWN');
     const expectedVersion = expectedHead.slice(0, 4);
     const drift =
-      appliedHead !== 'UNKNOWN' && (appliedHead !== expectedVersion || pendingCount > 0);
+      !sourceAvailable ||
+      integrityMismatches.length > 0 ||
+      (appliedHead !== 'UNKNOWN' && (appliedHead !== expectedVersion || pendingCount > 0));
 
     return {
       coreStatus:
@@ -118,7 +128,15 @@ export class GetControlCenterOverviewUseCase {
       applicationStatus,
       databaseStatus,
       auditStatus: auditResult,
-      migration: { appliedHead, buildHead, expectedHead, pendingCount, drift },
+      migration: {
+        appliedHead,
+        buildHead,
+        expectedHead,
+        pendingCount,
+        integrityMismatches,
+        sourceAvailable,
+        drift,
+      },
       release: {
         status: release.status,
         ...(release.releaseId ? { releaseId: release.releaseId } : {}),

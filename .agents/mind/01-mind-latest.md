@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — QC-ADP26-02 / migration ledger and release identity**
+  - Changed: health/control center reconcile migration names and SHA-256 checksums, failing closed on drift or unreadable source; no schema change.
+  - Evidence: isolated PG18.6 42/42 exact; source rehearsal 0018→0042; backup/restore and schema check PASS. Live schema/artifact identity, gates, UI/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-02.md`.
+  - State: PARTIAL / NO-GO.
+
 - **2026-09-30 — QC-ADP26-01 / candidate-bound route inventory**
   - Changed: executable 88-card/six-persona acceptance inventory and fail-closed evidence binding; unresolved applicability stays NOT VERIFIED and human UAT cannot close automatically.
   - Evidence: base `60237b5`; PostgreSQL 18.6 loopback disposable concurrency/replay + action contracts 17 PASS/3 FAIL (stage-1 fixtures use MANAGER against SUPERVISOR authority). Real-task GET/direct-denial E2E includes unchanged row/audit/outbox and candidate/applied-ledger binding; technical fixture is not six-persona UAT. Source visibility checks are not runtime acceptance; all page acceptances remain open. `audit/2026-09-30/handoff-QC-ADP26-01.md`.
@@ -30,27 +35,15 @@
   - State: PARTIAL / BLOCKED — PostgreSQL parity وauthenticated E2E/keyboard والقبول البشري غير مثبتة.
 - **2026-09-24 — Mind rollover:** نُقلت أقدم سجلات Ledger (LAB-REPORT-ENTRY حتى QC-WORKFLOW-REDESIGN) إلى أعلى الأرشيف بعد التحقق من النقل؛ بقيت الحالة الحالية في 01.
 
-- **2026-09-24 — QC-ADP-13 / تحسين النصوص والسجلات**
-  - Changed: humanized stored `UNSPECIFIED` in task views without changing storage; corrected session-dependent 404 link labels; made Reject Reports outage copy recoverable; permission-gated task/asset zero-state create links; replaced backup UUID primary labels and exposed technical job/schema sentinels as human copy; clarified `VOID` retention and separated dependency-error wording.
-  - Evidence: focused UX/copy contracts 33/33 PASS; Astro check 0 errors/0 warnings (88 hints), Astro build PASS, changed TypeScript Prettier PASS; browser live 404 before vs local candidate guest branch after. 58 requested section-25 cards plus the dependent `/tasks/new` card (59/59) now link the page handoff, but route-bound populated/empty/error and role/scope checks remain NOT VERIFIED; source schema head 0041, HEAD base `fc92cc4b36fbeb161336e9cda0e40b0af0b6f583`; live schema/role not directly verified.
-  - State: PARTIAL / BLOCKED for full acceptance — `audit/2026-09-24/QC-ADP-13-copy-registers-handoff.md`.
+- **2026-09-24 — QC-ADP-13 / تحسين النصوص والسجلات:** humanized UI copy, recovery, and permission-gated empty states; focused contracts 33/33 and Astro/build/format PASS. 59 cards link the handoff; route/state/role and live-schema acceptance remain NOT VERIFIED. `audit/2026-09-24/QC-ADP-13-copy-registers-handoff.md` — PARTIAL.
 
-- **2026-09-24 — QC-ADP-12 / قبول بشري موثق**
-  - Changed: no runtime or policy change; all 90 section-25 page cards now link the route-level UAT handoff and record `BLOCKED / NOT EXECUTED`.
-  - Evidence: local `main` HEAD `fc92cc4b36fbeb161336e9cda0e40b0af0b6f583`, source migration head `0041`; no bound UAT candidate/environment or real participant sessions. Current six-persona contract is Yazeed/QCM/Supervisor/QC 01–03; the role-bound evidence path exists, while signer scope remains owner-dependent (`UAT-DD-001` / `DEP-020-09`). Per-route acceptance denominators remain unapproved.
-  - State: PARTIAL / BLOCKED — no human acceptance or READY; `audit/2026-09-24/QC-ADP-12-human-uat-handoff.md`.
+- **2026-09-24 — QC-ADP-12 / قبول بشري موثق:** 90 page cards link UAT handoff as `BLOCKED / NOT EXECUTED`; no bound candidate or real participants, signer scope and route denominators remain open. `audit/2026-09-24/QC-ADP-12-human-uat-handoff.md` — PARTIAL / BLOCKED.
 
-- **2026-09-24 — QC-ADP-11 / أمن وAI وسلسلة توريد**
-  - Changed: exact provider endpoint allowlist; 4 formerly UNKNOWN package licenses resolved as MIT by pinned installed-text hashes; route denominator fixed at 10.
-  - Evidence refreshed on HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`: AI/advisory + requirements contract 97/97 PASS; authenticated least-privilege AI denial E2E 1/1 PASS on disposable PG18.6; SBOM 822 packages, UNKNOWN=0; build/Astro check/release identity PASS; requirements guard PASS after accepting existing `QC-ADP-03` owner syntax. Advisory audit BLOCKED by registry DNS; owner provider policy/live eval remain approval-blocked.
-  - State: PARTIAL / NO-GO (RT-AI-001 6/10 = 60%); `audit/2026-09-24/QC-ADP-11-handoff.md`.
+- **2026-09-24 — QC-ADP-11 / أمن وAI وسلسلة توريد:** provider allowlist and four pinned license resolutions; focused contracts 97/97, PG18.6 denial E2E 1/1, SBOM 822/UNKNOWN=0. Advisory audit/provider approval remain blocked; RT-AI-001 6/10. `audit/2026-09-24/QC-ADP-11-handoff.md` — PARTIAL / NO-GO.
 
 - **2026-09-24 — QC-ADP-10 / report parity:** Changed Action export to pass all seven filters through the shared strict parser and unified screen/CSV/XLSX provenance; Evidence: Docker PG18 parity 9/9, focused suite 35/35, Astro 0 errors/0 warnings. State: PARTIAL / NO-GO — authenticated print E2E and durable cross-request snapshot/retention decision remain open; handoff `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.
 
-- **2026-09-24 — QC-ADP-09 / accessibility route handoff**
-  - Changed: no runtime UI change; root cause remains missing route/state/AT evidence for F-010.
-  - Evidence: WCAG contract 9/9 and local login/404 axe+keyboard subset 2/2 PASS; 8 viewport captures show no overflow; live qclevel.top skip links work for dashboard/tasks. Full route cards remain open; 88 have no fresh route evidence, and AT/full denominators remain unverified. Handoff/evidence: `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md`.
-  - State: PARTIAL / BLOCKED / NO-GO — no route fully closed on source HEAD `a7fb73eb9dd370a973634ac89f954bc369c83232`; live release identity is UNVERIFIED.
+- **2026-09-24 — QC-ADP-09 / accessibility route handoff:** no runtime change; WCAG contract 9/9, login/404 axe+keyboard 2/2, eight viewport captures PASS. 88 route cards and manual AT remain open; live identity UNVERIFIED. `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md` — PARTIAL / BLOCKED / NO-GO.
 
 - **2026-09-24 — QC-ADP-08 / role-state matrix handoff**
   - Changed: added a real disposable task fixture, task denial/stale-version integration case, and TLS-loopback PG18 E2E override. 450 remains a gross planning envelope, not an applicable denominator.
@@ -58,10 +51,7 @@
   - State: PARTIAL / BLOCKED / NO-GO — one route has partial HTTP proof; no full page closure, F-009/F-018 and owner-dependent decisions remain open.
   - Mind rollover: أقدم سجلات 2026-09-23 نُقلت إلى `02-mind-mid.md` بعد التحقق من حفظها.
 
-- **2026-09-24 — QC-ADP-07 / مصادر لوحة القرار**
-  - Changed: أضيف document-review read model bounded بنفس actor predicate للعدد والصفوف، queue في dashboard/work ورابط register؛ أضيفت فهارس migration 0041. الجودة وblocked reason وreject analytics ما زالت محجوبة بسياسات/مصادر غير معتمدة.
-  - Evidence: unit/UI 20/20 PASS وAstro check 0 errors؛ PostgreSQL 18/Testcontainers BLOCKED (لا container runtime)، لذا parity/role E2E/perf وlive schema/role NOT VERIFIED. 12 فحص route ما زالت 0 PASS قبولًا كاملًا؛ تفاصيل `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md`.
-  - State: PARTIAL / NO-GO — source migration head 0041؛ لا دليل تطبيق live ولا إغلاق قرارات الجودة/الرفض/سبب التعطيل.
+- **2026-09-24 — QC-ADP-07 / مصادر لوحة القرار:** bounded document-review model/queue and migration 0041 indexes; unit/UI 20/20, Astro check PASS. PG18, roles/live schema, perf and policy-bound decisions remain NOT VERIFIED; 12 route checks have 0 full acceptances. `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md` — PARTIAL / NO-GO.
 
 - **2026-09-24 — QC-ADP-06 / سلسلة NCR/RCA/CAPA**
   - Changed: لا تغيير runtime/schema؛ سبب التعطل قرارات QMS المفتوحة PD-15/16/17/18، مع تعارض معيار القبول المطلق للفعالية مع استثناء P-04 المعتمد.
@@ -77,20 +67,11 @@
   - Evidence: unit 38/38 PASS; Astro check 0 errors; PostgreSQL integration BLOCKED (container runtime unavailable); exact-SHA CI, live deployment identity, provider/UAT evidence NOT VERIFIED. Details `audit/2026-09-24/QC-ADP-03-release-evidence-handoff.md`.
   - State: PARTIAL / NO-GO — migration 0040 unapplied; owner-approved register/signer scope and exact-SHA candidate absent.
 
-- **2026-09-24 — QC-ADP-02 / handoff مصدر التفتيش والاعتماد**
-  - Changed: ثُبّت مقام 6 فحوص لكل واحدة من بطاقات Quarantine العشر؛ PD-01/02/07 بقيت مفتوحة ولا تغيير runtime أو schema.
-  - Evidence: source trace على `7e0a3535f80b956bcfe0143201ddfee2e4277e4c`؛ focused unit 40/40 PASS، لكن source-hash binding ونتيجة التقرير الرسمية غير مكتملين. قرار QC/QMS وPG18/E2E BLOCKED/NOT RUN؛ التفاصيل `audit/2026-09-24/QC-ADP-02-inspection-source-approval-handoff.md`.
-  - State: BLOCKED — NO-GO حتى اعتماد المصدر والمعيار وسياسة الحكم.
+- **2026-09-24 — QC-ADP-02 / مصدر التفتيش والاعتماد:** denominator 6 for each of ten quarantine cards; unit 40/40. Source-hash binding and approved result remain incomplete; QC/QMS decision and PG18/E2E BLOCKED. `audit/2026-09-24/QC-ADP-02-inspection-source-approval-handoff.md` — BLOCKED / NO-GO.
 
-- **2026-09-24 — QC-ADP-01 / مصالحة مخطط Reject Reports**
-  - Changed: readiness candidate صار يطابق ledger/الأعمدة وقيود FK/unique؛ صفحات التفاصيل تعيد حالة خطأ 503 مفهومة عند نقص المخطط. لا migration تاريخية عُدلت.
-  - Evidence: domain/approval unit 20/20 PASS؛ Astro check 0 errors؛ PostgreSQL 18/Testcontainers BLOCKED لغياب runtime؛ health المتاح تاريخيًا 0018 applied و21 pending.
-  - State: PARTIAL / NO-GO — 4 بطاقات Reject Reports لكل منها 0/6 قبول؛ تقرير الخطة/الهاندوف `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`.
+- **2026-09-24 — QC-ADP-01 / مصالحة مخطط Reject Reports:** readiness checks ledger/columns/core constraints and details return controlled 503; unit 20/20, Astro check PASS. PG18 was blocked then; historical health projected 0018/21 pending. Four cards remain 0/6. `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md` — PARTIAL / NO-GO.
 
-- **2026-09-24 — QC-ADAPTIVE-PAGE-BY-PAGE-AUDIT-001 / تدقيق الصفحات التكيفي**
-  - Changed: جرد 90 موضع صفحة (88 ملفًا فعليًا، مساران deferred)، تقرير مصدر/حي وحزمة 26 مهمة مجال و90 بطاقة قبول صفحة و29 finding و20 تحسينًا؛ لكل صفحة مصطلح/مشكلة أو فجوة/حل/اختبار، وبوابة استلام NO-GO. سُحبت درجات الجودة التقديرية غير القابلة لإعادة الحساب. لا تعديل للتطبيق أو الإنتاج.
-  - Evidence: 47 وجهة حية قراءة فقط بحساب yazeed في الجولة الأصلية؛ health يؤكد 0018 applied/0039 shipped وReject Reports محجوب وrelease/restore غير مثبتين؛ 90/90 بطاقة قبول وربط findings/prompts والتحسينات وHTML/JS PASS. لا PostgreSQL/E2E/UAT جديد.
-  - State: PARTIAL / NO-GO — جودة الصفحات والنظام NOT VERIFIED رقميًا؛ `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md`.
+- **2026-09-24 — QC-ADAPTIVE-PAGE-BY-PAGE-AUDIT-001:** 90 page locations, 26 domain tasks, 29 findings and 20 improvements; read-only audit inspected 47 live routes, with 90/90 card/report links. Health/restore/release remain unverified; no DB/E2E/UAT. `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md` — PARTIAL / NO-GO.
 
 - **2026-09-24 — QC-LAB-REPORT-TEMPLATES-ULTIMATE-001 / قوالب تقارير المختبر**
   - Changed: فصل حفظ المسودات خلف repository مع تحقق الصلاحيات/المالك والإصدار والتدقيق؛ أضيف عرض الطباعة وتحذير التغييرات غير المحفوظة دون اختراع وحدات أو حدود قياس.
@@ -474,7 +455,7 @@
 - provider-ingestion الموثوق لأدلة CI/Security/E2E/UAT غير مكتمل.
 - UAT غير منفذ؛ production readiness غير مثبت.
 - **قرار مالك مفتوح (QC-100-FINAL-004 Task 5/7): نطاق موقّع UAT.** قبول الدورة يصرّح بـ`scope: {}` على `UAT_CYCLE` مثل `ApproveReleaseUseCase`، وGLOBAL وحدها تمر مع scope فارغ؛ فمدير بنطاق TEAM (شخصية `uat-qcm`) يُرفض بـ`AUTHZ_SCOPE_DENIED`. لذلك العلامة البشرية ستكون من المالك المسمّى ما لم يُعتمد منح GLOBAL للـQCM — السلوك متسق ومقصود ولم يُغيَر. أدلة: `audit/2026-09-19/QC-100-FINAL-004-task5-uat-ingestion-closure.md`.
-- Live health on 2026-09-24 reports `0018` applied and `0039` shipped with 21 pending; this is a read-only server projection, not direct database verification or permission to migrate. The credential-rotation gate remains open before any production migration.
+- Historical live health on 2026-09-24 reported `0018` applied / `0039` shipped / 21 pending; projection only, not direct DB proof or migration authority. QC-ADP26-02 now checks complete ledger names/checksums and source availability in code. Latest exact-candidate live schema/artifact identity remains NOT VERIFIED; credential/release gates still block production migration.
 - **QC-100-FINAL-032-B technical evidence VERIFIED on exact local candidate** `0e9bdf28ae448ab2ebc197c567a05832ea88c07d` / dirty fingerprint `4d51084e350a79da5e8aed8d81e48f478f2101b8d5d2b5564841371fb807c51d`: Node 24.20.0, PG18.6, source head `0034_template_document_link_variable_scope` (34 migrations), 14 selected integration/concurrency files `65/65 PASS`; clean/upgrade/checksum/rollback, 79 tables/0 orphans, four PK-index plans, and restored report-lineage projection hash match. Provider-applied schema, Docker/Testcontainers, backup/PITR, and human acceptance remain NOT VERIFIED/NOT RUN. 013/026 own policy/source decisions; 002/027 container regression; 012 final reconciliation. Report: `audit/2026-09-21/QC-100-FINAL-032-B-integration-technical-evidence.md`.
 - QC-100-FINAL-029-B candidate-specific PostgreSQL evidence remains NOT VERIFIED: migration 0033 was not applied, Testcontainers has no runtime, and local disposable PostgreSQL startup is blocked by host shared-memory permissions. Resume with 002/027 on supported disposable PostgreSQL 18; reconcile through 012. Source links have no template-authoring UI in B; ask 003 to assess E2E only if authoring UX is required.
 - **Live 2026-09-24:** authorized yazeed GET `/reject-reports` now shows controlled 503/`SCHEMA_NOT_READY`; `/system/health` shows `0018` applied, `0039` shipped, 21 pending, `NOT READY`, release identity `UNVERIFIED`, and restore `NOT VERIFIED`. The prior 500 is historical; production schema migration and runtime closure remain BLOCKED.

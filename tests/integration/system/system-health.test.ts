@@ -99,6 +99,8 @@ function readiness(
     appliedHead: string;
     buildHead: string;
     pending: readonly string[];
+    integrityMismatches: readonly string[];
+    sourceAvailable: boolean;
     reportsAvailable: boolean;
     reportReason: 'SCHEMA_NOT_READY' | 'CHECK_FAILED';
   }> = {},
@@ -109,6 +111,8 @@ function readiness(
         appliedHead: overrides.appliedHead ?? '0037',
         buildHead: overrides.buildHead ?? '0037',
         pending: overrides.pending ?? [],
+        integrityMismatches: overrides.integrityMismatches ?? [],
+        sourceAvailable: overrides.sourceAvailable ?? true,
       };
     },
     async rejectReportsAvailability() {
@@ -242,6 +246,36 @@ describe('system health view', () => {
       status: 'DEGRADED',
       detail: '0018 applied; 0037 shipped; 19 pending',
     });
+  });
+
+  it('blocks QC release readiness when connectivity is healthy but a migration checksum differs', async () => {
+    const view = await new GetSystemHealthUseCase(
+      probes(),
+      catalog(),
+      readiness({ integrityMismatches: ['0039'] }),
+    ).execute({ actor: fullViewer });
+
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.rejectReportsReadiness).toBe('READY');
+    expect(view.qcReleaseReadiness).toBe('BLOCKED');
+    expect(view.checks.find((item) => item.dependency === 'migration-schema')).toMatchObject({
+      status: 'DEGRADED',
+      detail: '0037 applied; 0037 shipped; 0 pending; ledger identity mismatch at 0039',
+    });
+  });
+
+  it('keeps migration status UNKNOWN if this build cannot read its shipped migration set', async () => {
+    const view = await new GetSystemHealthUseCase(
+      probes(),
+      catalog(),
+      readiness({ sourceAvailable: false }),
+    ).execute({ actor: fullViewer });
+
+    expect(view.dependencyReadiness).toBe('READY');
+    expect(view.qcReleaseReadiness).toBe('BLOCKED');
+    expect(view.checks.find((item) => item.dependency === 'migration-schema')?.status).toBe(
+      'UNKNOWN',
+    );
   });
 
   it('keeps a failed schema check UNKNOWN instead of claiming a migration gap', async () => {

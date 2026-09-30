@@ -47,7 +47,13 @@ function useCase(overrides: Record<string, unknown> = {}) {
   return new GetControlCenterOverviewUseCase({
     probes: healthyProbes,
     auditReadiness: async () => ({ status: 'HEALTHY' }),
-    migrationStatus: async () => ({ appliedHead: '0025', buildHead: '0025', pending: [] }),
+    migrationStatus: async () => ({
+      appliedHead: '0025',
+      buildHead: '0025',
+      pending: [],
+      integrityMismatches: [],
+      sourceAvailable: true,
+    }),
     release: {
       status: 'VERIFIED',
       releaseId: 'rel-0123456789abcdef',
@@ -111,6 +117,37 @@ describe('GetControlCenterOverviewUseCase', () => {
     expect(view.release.status).toBe('UNVERIFIED');
     // No raw error text, connection strings, or stack data crosses the boundary.
     expect(JSON.stringify(view)).not.toMatch(/password|postgres:\/\/|DATABASE_URL|at\s+\w+\s*\(/i);
+  });
+
+  it('reports checksum-only migration drift even when applied and expected heads match', async () => {
+    const view = await useCase({
+      migrationStatus: async () => ({
+        appliedHead: '0042',
+        buildHead: '0042',
+        pending: [],
+        integrityMismatches: ['0039'],
+        sourceAvailable: true,
+      }),
+    }).execute({ actor: owner() });
+
+    expect(view.coreStatus).toBe('READY');
+    expect(view.migration.drift).toBe(true);
+    expect(view.migration.integrityMismatches).toEqual(['0039']);
+  });
+
+  it('does not claim migration parity when the shipped migration source is unavailable', async () => {
+    const view = await useCase({
+      migrationStatus: async () => ({
+        appliedHead: '0025',
+        buildHead: 'UNKNOWN',
+        pending: [],
+        integrityMismatches: [],
+        sourceAvailable: false,
+      }),
+    }).execute({ actor: owner() });
+
+    expect(view.migration.drift).toBe(true);
+    expect(view.migration.sourceAvailable).toBe(false);
   });
 
   it('fails closed to sanitized statuses, never leaking probe internals', async () => {

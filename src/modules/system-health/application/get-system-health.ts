@@ -20,6 +20,8 @@ export interface SystemHealthReadinessDependencies {
     appliedHead: string;
     buildHead: string;
     pending: readonly string[];
+    integrityMismatches?: readonly string[];
+    sourceAvailable?: boolean;
   }>;
   rejectReportsAvailability: () => Promise<RejectReportAvailability>;
 }
@@ -146,18 +148,22 @@ export class GetSystemHealthUseCase {
             detail: rejectReportsResult.result.reason ?? 'SCHEMA_NOT_READY',
           };
 
-    const migrationStatus = !migrationResult.ok
-      ? { dependency: 'migration-schema', status: 'UNKNOWN' as const, checkedAt: generatedAt }
-      : {
-          dependency: 'migration-schema',
-          status:
-            migrationResult.result.pending.length === 0 &&
-            migrationResult.result.appliedHead === migrationResult.result.buildHead
-              ? ('HEALTHY' as const)
-              : ('DEGRADED' as const),
-          checkedAt: generatedAt,
-          detail: `${migrationResult.result.appliedHead} applied; ${migrationResult.result.buildHead} shipped; ${migrationResult.result.pending.length} pending`,
-        };
+    const migrationData = migrationResult.ok ? migrationResult.result : undefined;
+    const integrityMismatches = migrationData?.integrityMismatches ?? [];
+    const migrationStatus =
+      !migrationData || migrationData.sourceAvailable === false
+        ? { dependency: 'migration-schema', status: 'UNKNOWN' as const, checkedAt: generatedAt }
+        : {
+            dependency: 'migration-schema',
+            status:
+              migrationData.pending.length === 0 &&
+              (migrationData.integrityMismatches?.length ?? 0) === 0 &&
+              migrationData.appliedHead === migrationData.buildHead
+                ? ('HEALTHY' as const)
+                : ('DEGRADED' as const),
+            checkedAt: generatedAt,
+            detail: `${migrationData.appliedHead} applied; ${migrationData.buildHead} shipped; ${migrationData.pending.length} pending${integrityMismatches.length ? `; ledger identity mismatch at ${integrityMismatches.join(', ')}` : ''}`,
+          };
 
     const rejectReportsReadiness: WorkflowReadiness =
       rejectReportsHealth.status === 'HEALTHY'
@@ -167,9 +173,7 @@ export class GetSystemHealthUseCase {
           : 'NOT_READY';
 
     const qcReleaseReadiness: QCReleaseReadiness =
-      rejectReportsReadiness !== 'READY' ||
-      !migrationResult.ok ||
-      migrationStatus.status !== 'HEALTHY'
+      rejectReportsReadiness !== 'READY' || migrationStatus.status !== 'HEALTHY'
         ? 'BLOCKED'
         : 'NOT_VERIFIED';
 

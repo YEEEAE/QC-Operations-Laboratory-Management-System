@@ -136,6 +136,16 @@ const statusClass = (status: string) =>
 const generatedAt = overview?.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
 const formatDate = (value?: Date) =>
   value ? value.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+const migrationBlocker = (migration: Overview['migration']) =>
+  !migration.sourceAvailable
+    ? 'the shipped migration source could not be verified.'
+    : migration.integrityMismatches.length > 0
+      ? `ledger name/checksum mismatch at ${migration.integrityMismatches.join(', ')}.`
+      : migration.pendingCount > 0
+        ? `the database is at ${migration.appliedHead} while this build ships ${migration.buildHead}; pending migrations are not applied automatically.`
+        : migration.drift
+          ? `the database is at ${migration.appliedHead} while this release expects ${migration.expectedHead}.`
+          : 'none modeled in this view.';
 ---
 <AppLayout title="Control center · System" locale="en" direction="ltr">
   <section class="page-head">
@@ -227,9 +237,8 @@ const formatDate = (value?: Date) =>
           </dl>
           <p class="muted">
             Open blockers:{' '}
-            {overview.migration.drift
-              ? `the database is at ${overview.migration.appliedHead} while this build ships ${overview.migration.buildHead}; pending migrations are not applied automatically.`
-              : 'none modeled in this view.'}{' '}
+            {migrationBlocker(overview.migration)}{' '}
+            Core connectivity is not release approval; release gates and recovery evidence remain separate.{' '}
             Dependency and backup detail: <a href="/system/health">System health</a> ·{' '}
             <a href="/system/backups">Backups</a>
           </p>
