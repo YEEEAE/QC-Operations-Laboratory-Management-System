@@ -10,6 +10,10 @@ import type { PasswordHasher } from '../../../src/modules/identity/security/pass
 import type { SessionService } from '../../../src/modules/identity/application/session-service.js';
 import type { AuditService } from '../../../src/shared/audit/audit-service.js';
 import { AdminResetPasswordUseCase } from '../../../src/modules/identity/application/admin-reset-password.js';
+import type {
+  CredentialMutation,
+  CredentialMutationCommit,
+} from '../../../src/modules/identity/ports/credential-mutation.js';
 import { CreateUserUseCase } from '../../../src/modules/identity/application/create-user.js';
 import { DisableUserUseCase } from '../../../src/modules/identity/application/disable-user.js';
 import { GetUserUseCase } from '../../../src/modules/identity/application/get-user.js';
@@ -298,7 +302,28 @@ describe('identity administration use cases', () => {
     const users = new MemoryUsers([target]);
     const sessionStub = sessions();
     const recorder = audit();
-    await new AdminResetPasswordUseCase(users, hasher, sessionStub, recorder).execute({
+    const commit: CredentialMutationCommit = {
+      execute: async (input: CredentialMutation) => {
+        await users.changePassword(
+          input.userId,
+          input.passwordHash,
+          input.expectedVersion,
+          input.actorId,
+          input.at,
+          input.mustChangePassword,
+        );
+        await sessionStub.revokeAllForUser(input.userId, input.reason);
+        await recorder.record({
+          actorType: 'USER',
+          actorId: input.actorId,
+          subjectType: 'USER',
+          subjectId: input.userId,
+          action: input.action,
+          requestId: input.requestId,
+        });
+      },
+    };
+    await new AdminResetPasswordUseCase(users, hasher, commit).execute({
       actor: actor([reset]),
       userId: target.id,
       temporaryPassword: 'temp-next',
@@ -312,7 +337,7 @@ describe('identity administration use cases', () => {
       expect.objectContaining({ action: 'ADMIN_RESET_PASSWORD' }),
     );
     await expect(
-      new AdminResetPasswordUseCase(users, hasher, sessionStub, recorder).execute({
+      new AdminResetPasswordUseCase(users, hasher, commit).execute({
         actor: actor([reset], target.id),
         userId: target.id,
         temporaryPassword: 'temp-self',

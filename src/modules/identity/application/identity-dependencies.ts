@@ -5,6 +5,7 @@ import { PostgresSessionRepository } from '../infrastructure/postgres-session-re
 import { PostgresUserRepository } from '../infrastructure/postgres-user-repository.js';
 import { Argon2idPasswordHasher } from '../security/argon2-password-hasher.js';
 import { SessionService } from './session-service.js';
+import { PostgresCredentialMutationCommit } from '../infrastructure/postgres-credential-mutation-commit.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { systemClock } from '../../../shared/time/clock.js';
 import { addUniversalOperationalReadPermissions } from '../../../shared/authorization/visibility.js';
@@ -17,6 +18,7 @@ export function identityDependencies(database: Kysely<DatabaseSchema> = getDatab
     users,
     sessions,
     passwords: new Argon2idPasswordHasher(),
+    credentialMutation: new PostgresCredentialMutationCommit(database),
     sessionService: new SessionService(users, sessions, systemClock, 8 * 60 * 60 * 1000),
   };
 }

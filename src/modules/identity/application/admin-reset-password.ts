@@ -1,16 +1,14 @@
 import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import type { AuditService } from '../../../shared/audit/audit-service.js';
 import type { UserRepository } from '../ports/user-repository.js';
 import type { PasswordHasher } from '../security/password-hasher.js';
-import type { SessionService } from './session-service.js';
+import type { CredentialMutationCommit } from '../ports/credential-mutation.js';
 export class AdminResetPasswordUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly passwords: PasswordHasher,
-    private readonly sessions: SessionService,
-    private readonly audit?: AuditService,
+    private readonly commit: CredentialMutationCommit,
   ) {}
   async execute(input: {
     actor: ActorContext;
@@ -34,23 +32,16 @@ export class AdminResetPasswordUseCase {
       },
       { throwOnDeny: true },
     );
-    await this.users.changePassword(
-      target.id,
-      await this.passwords.hash(input.temporaryPassword),
-      input.expectedVersion,
-      input.actor.id,
-      new Date(),
-      true,
-    );
-    await this.sessions.revokeAllForUser(target.id, 'PASSWORD_RESET');
-    if (this.audit)
-      await this.audit.record({
-        actorType: 'USER',
-        actorId: input.actor.id,
-        subjectType: 'USER',
-        subjectId: target.id,
-        action: 'ADMIN_RESET_PASSWORD',
-        requestId: input.requestId,
-      });
+    await this.commit.execute({
+      userId: target.id,
+      passwordHash: await this.passwords.hash(input.temporaryPassword),
+      expectedVersion: input.expectedVersion,
+      actorId: input.actor.id,
+      at: new Date(),
+      mustChangePassword: true,
+      reason: 'PASSWORD_RESET',
+      action: 'ADMIN_RESET_PASSWORD',
+      requestId: input.requestId,
+    });
   }
 }

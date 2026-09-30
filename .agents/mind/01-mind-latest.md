@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-13 / credential/session/audit atomicity**
+  - Changed: self-service change and admin reset now share one PostgreSQL transaction for credential, session revocation, and audit; account feedback reflects revoked sessions and directs confirmed success to login.
+  - Evidence: focused source tests and candidate build are recorded in `.ci-results/build.json` and `audit/2026-10-01/handoff-QC-ADP26-13.md`; PostgreSQL 18 failure-injection, authenticated browser/AT, and UAT remain NOT VERIFIED because no container runtime or authenticated fixture is available.
+  - State: PARTIAL — source implementation updated; database and page acceptance remain open.
+
 - **2026-10-01 — QC-ADP26-12 / register pagination**
   - Changed: source pagination/filtering and human-first labels implemented for `/admin/users` and `/system/backups`; remaining F-012 routes are still open.
   - Evidence: focused synthetic tests 18/18 and candidate Astro build PASS; PostgreSQL 18, authenticated browser, AT and UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-12.md`.
@@ -514,6 +519,7 @@
 - **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
+- **QC-ADP26-13 / QC-PAGE-F-013 PARTIAL:** credential change and administrative reset now use a shared transaction-bound commit for password hash, revoking all active sessions, and secret-free audit metadata. Account copy and refusal feedback are field-safe; confirmed success redirects to login. The PG18 audit-failure rollback test was added but is BLOCKED before setup because Testcontainers has no runtime; applied schema, old-password/login, race/replay, authenticated browser, AT, and UAT remain NOT VERIFIED. `audit/2026-10-01/handoff-QC-ADP26-13.md`.
 - **QC-ADP26-12 / QC-PAGE-F-012 PARTIAL:** source-level filtered paging and human-first labels cover `/admin/users` and `/system/backups`; synthetic 501-user/51-backup tests and Astro build PASS. Other F-012 routes and PostgreSQL 18, authenticated browser, AT, and UAT evidence remain OPEN/NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-12.md`.
 - **QC-ADP26-09 / QC-PAGE-F-009 PARTIAL:** canonical P-06 authority and strict field-bound expectedVersion validation are fixed in source; focused unit 73/73 PASS. PG18/HTTP/browser/AT/UAT remain NOT VERIFIED because this host has no Docker daemon and no authenticated fixture. Handoff `audit/2026-09-30/handoff-QC-ADP26-09.md`.
 - **QC-ADP26-08 / QC-PAGE-F-008 PARTIAL:** missing/denied/provider classification and no-count behavior were added to selected cited routes; primary equipment/maintenance, test and account reads are preserved across related-source failures. The finding spans 61 routes and remains OPEN pending remaining read paths, per-read failure injection, PG/HTTP/browser/AT evidence. Handoff `audit/2026-09-30/handoff-QC-ADP26-08.md`.

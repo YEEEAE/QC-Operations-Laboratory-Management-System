@@ -33,8 +33,7 @@ export function identityAdminActionDependencies() {
     resetPassword: new AdminResetPasswordUseCase(
       base.users,
       base.passwords,
-      base.sessionService,
-      audit,
+      base.credentialMutation,
     ),
     activateUser: new ActivateUserUseCase(base.users, audit),
     revokeUserSessions: new RevokeUserSessionsUseCase(base.users, base.sessionService, audit),

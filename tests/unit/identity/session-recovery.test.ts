@@ -19,6 +19,12 @@ describe('session recovery UX', () => {
     );
   });
 
+  it('confirms a completed password change and directs the user to sign in with the new password', () => {
+    const notice = sessionRecoveryNotice('PASSWORD_CHANGED');
+    expect(notice).toBe('PASSWORD_CHANGED');
+    expect(sessionRecoveryCopy(notice!)).toContain('Sign in with your new password.');
+  });
+
   it('ignores unrecognized notice values and constrains the eventual return destination', () => {
     expect(sessionRecoveryNotice('anything')).toBeUndefined();
     expect(safeReturnTo('//attacker.example')).toBe('/dashboard');

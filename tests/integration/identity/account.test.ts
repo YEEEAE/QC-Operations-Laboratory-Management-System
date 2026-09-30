@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { ChangePasswordUseCase } from '../../../src/modules/identity/application/change-password.js';
 import { GetAccountUseCase } from '../../../src/modules/identity/application/get-account.js';
 import type { User } from '../../../src/modules/identity/domain/user.js';
-import type { Session } from '../../../src/modules/identity/domain/session.js';
 import type { UserRepository } from '../../../src/modules/identity/ports/user-repository.js';
-import type { SessionRepository } from '../../../src/modules/identity/ports/session-repository.js';
-import { SessionService } from '../../../src/modules/identity/application/session-service.js';
+import type {
+  CredentialMutationCommit,
+  CredentialMutation,
+} from '../../../src/modules/identity/ports/credential-mutation.js';
 
 const user: User = {
   id: 'u1',
@@ -29,17 +30,6 @@ class Users implements UserRepository {
   };
   setAccountState = async () => {};
 }
-class Sessions implements SessionRepository {
-  revoked = false;
-  create = async (input: Omit<Session, 'version'>) => ({ ...input, version: 1n });
-  findByTokenHash = async () => undefined;
-  revoke = async () => {
-    this.revoked = true;
-  };
-  revokeAllForUser = async () => {
-    this.revoked = true;
-  };
-}
 const actor = {
   id: 'u1',
   loginIdentity: 'qa',
@@ -60,19 +50,69 @@ describe('identity account use cases', () => {
   });
   it('requires the current password and revokes sessions after change', async () => {
     const users = new Users();
-    const sessions = new Sessions();
+    let commitInput: CredentialMutation | undefined;
     const hasher = {
       hash: async (v: string) => `hash:${v}`,
       verify: async (v: string, h: string) => v === 'current' && h === 'old',
     };
-    const service = new SessionService(users, sessions, { now: () => new Date() }, 1000);
-    await new ChangePasswordUseCase(users, hasher, service).execute({
+    const commit: CredentialMutationCommit = {
+      execute: async (input) => {
+        commitInput = input;
+        users.value = {
+          ...users.value,
+          passwordHash: input.passwordHash,
+          version: users.value.version + 1n,
+        };
+      },
+    };
+    await new ChangePasswordUseCase(users, hasher, commit).execute({
       actor,
       currentPassword: 'current',
       newPassword: 'new',
       requestId: 'req-1',
     });
     expect(users.value.passwordHash).toBe('hash:new');
-    expect(sessions.revoked).toBe(true);
+    expect(commitInput).toMatchObject({
+      action: 'CHANGE_PASSWORD',
+      reason: 'PASSWORD_CHANGE',
+      requestId: 'req-1',
+    });
+  });
+
+  it('refuses missing and incorrect credentials before any credential commit', async () => {
+    const users = new Users();
+    let commits = 0;
+    const commit: CredentialMutationCommit = {
+      execute: async () => {
+        commits += 1;
+      },
+    };
+    const hasher = {
+      hash: async (value: string) => `hash:${value}`,
+      verify: async (value: string, encoded: string) => value === 'current' && encoded === 'old',
+    };
+    const useCase = new ChangePasswordUseCase(users, hasher, commit);
+
+    await expect(
+      useCase.execute({
+        actor,
+        currentPassword: '',
+        newPassword: 'next',
+        requestId: 'missing-current',
+      }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+      fieldErrors: { currentPassword: ['errors.required'] },
+    });
+    await expect(
+      useCase.execute({
+        actor,
+        currentPassword: 'wrong',
+        newPassword: 'next',
+        requestId: 'wrong-current',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
+    expect(commits).toBe(0);
+    expect(users.value.passwordHash).toBe('old');
   });
 });

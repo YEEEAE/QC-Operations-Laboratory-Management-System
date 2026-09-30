@@ -7,6 +7,11 @@ import { stateLabel } from '../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const account = await new GetAccountUseCase(identityDependencies().users).execute(actor);
+const actionResult = Astro.getActionResult(actions.account.changePassword);
+if (actionResult?.data?.ok) return Astro.redirect(actionResult.data.redirectTo, 303);
+const changeError = actionResult?.data && !actionResult.data.ok ? actionResult.data : undefined;
+const currentPasswordError = changeError?.fieldErrors?.currentPassword?.[0];
+const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
 ---
 <AppLayout title="Account · QC Operations" locale="en" direction="ltr">
   <section class="page-head">
@@ -52,6 +57,7 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
         <section class="panel" aria-labelledby="security">
           <h2 id="security">Password and security</h2>
           <form class="form" method="POST" action={actions.account.changePassword}>
+            {changeError?.formError && <p role="alert" id="password-form-error" tabindex="-1">{changeError.formError === 'missing' ? 'This account is no longer available for password changes. Sign in again or contact an administrator.' : changeError.formError === 'denied' ? 'You no longer have permission to change this password. Contact an administrator.' : changeError.formError === 'stale' ? 'Account security details changed before this request completed. Reload the page before trying again.' : changeError.formError === 'provider' ? 'The password service is temporarily unavailable. Your request was not confirmed. Try again later.' : 'We could not confirm whether the password change completed. Do not submit it again yet. Contact an administrator for help.'}</p>}
             <div class="field">
               <label for="currentPassword">Current password</label>
               <div class="password-field">
@@ -61,6 +67,8 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
                   type="password"
                   autocomplete="current-password"
                   required
+                  aria-invalid={currentPasswordError ? 'true' : undefined}
+                  aria-describedby={currentPasswordError ? 'currentPassword-error' : 'password-change-hint'}
                 />
                 <button
                   type="button"
@@ -72,6 +80,7 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
                   Show
                 </button>
               </div>
+              {currentPasswordError && <p class="field-error" id="currentPassword-error" tabindex="-1" aria-live="assertive">The current password is incorrect. Check it and try again.</p>}
             </div>
             <div class="field">
               <label for="newPassword">New password</label>
@@ -82,6 +91,8 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
                   type="password"
                   autocomplete="new-password"
                   required
+                  aria-invalid={newPasswordError ? 'true' : undefined}
+                  aria-describedby={newPasswordError ? 'newPassword-error' : undefined}
                 />
                 <button
                   type="button"
@@ -93,12 +104,13 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
                   Show
                 </button>
               </div>
+              {newPasswordError && <p class="field-error" id="newPassword-error">Enter a new password.</p>}
             </div>
-            <p class="hint">Changing your password keeps you signed in on this device.</p>
+            <p class="hint" id="password-change-hint">Changing your password ends all active sessions, including this one. You will need to sign in again.</p>
             <div class="actions">
               <button type="submit" data-submit>Change password</button>
             </div>
-            <p role="status" data-result tabindex="-1" class="status"></p>
+            <p role="status" aria-live="polite" data-result tabindex="-1" class="status"></p>
           </form>
         </section>
         <section class="panel" aria-labelledby="session">
@@ -130,6 +142,7 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
   };
   wire('[data-password-toggle]', 'currentPassword');
   wire('[data-password-toggle-new]', 'newPassword');
+  document.querySelector<HTMLElement>('#password-form-error, .field-error')?.focus();
   const form = document.querySelector<HTMLFormElement>('form[action*="changePassword"]');
   form?.addEventListener('submit', (event: Event) => {
     if (form.getAttribute('aria-busy') === 'true') {
@@ -144,5 +157,5 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
   });
 </script>
 <style>
-  .page-head{margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.hint{color:var(--text-muted);font-size:.85rem}.panel{padding:var(--space-5);margin-bottom:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);max-width:640px}.panel h2{margin-top:0;font-size:1rem}.summary{display:grid;grid-template-columns:minmax(140px,auto) minmax(0,1fr);gap:.5rem 1rem;margin:0 0 var(--space-3)}.summary div{display:contents}.summary dt{color:var(--text-muted);font-size:.8rem}.summary dd{margin:0;font-size:.85rem}.form{display:grid;gap:var(--space-4)}.field{display:grid;gap:.35rem}label{font-size:.85rem;font-weight:600}.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}input{min-height:44px;padding-inline:.75rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit;min-width:0}button{min-height:44px;padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.status{margin:0;font-size:.85rem;color:var(--text-muted)}@media(max-width:520px){.summary{grid-template-columns:1fr}.summary dt{margin-top:var(--space-2)}}
+  .page-head{margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.hint{color:var(--text-muted);font-size:.85rem}.panel{padding:var(--space-5);margin-bottom:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);max-width:640px}.panel h2{margin-top:0;font-size:1rem}.summary{display:grid;grid-template-columns:minmax(140px,auto) minmax(0,1fr);gap:.5rem 1rem;margin:0 0 var(--space-3)}.summary div{display:contents}.summary dt{color:var(--text-muted);font-size:.8rem}.summary dd{margin:0;font-size:.85rem}.form{display:grid;gap:var(--space-4)}.field{display:grid;gap:.35rem}label{font-size:.85rem;font-weight:600}.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}input{min-height:44px;padding-inline:.75rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit;min-width:0}button{min-height:44px;padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.status{margin:0;font-size:.85rem;color:var(--text-muted)}.field-error,#password-form-error{margin:0;color:var(--status-danger)}input[aria-invalid="true"]{border-color:var(--status-danger)}@media(max-width:520px){.summary{grid-template-columns:1fr}.summary dt{margin-top:var(--space-2)}}
 </style>

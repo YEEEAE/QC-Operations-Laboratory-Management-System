@@ -1,6 +1,6 @@
 import { safeReturnTo } from '../http/safe-return-to.js';
 
-export type SessionRecoveryNotice = 'SESSION_ENDED' | 'ACCOUNT_UNAVAILABLE';
+export type SessionRecoveryNotice = 'SESSION_ENDED' | 'ACCOUNT_UNAVAILABLE' | 'PASSWORD_CHANGED';
 
 /**
  * Public, non-sensitive recovery copy for a protected-page redirect. The
@@ -8,13 +8,16 @@ export type SessionRecoveryNotice = 'SESSION_ENDED' | 'ACCOUNT_UNAVAILABLE';
  * authoritative. Never carry a mutation payload or credential into recovery.
  */
 export function sessionRecoveryNotice(value: unknown): SessionRecoveryNotice | undefined {
-  if (value === 'SESSION_ENDED' || value === 'ACCOUNT_UNAVAILABLE') return value;
+  if (value === 'SESSION_ENDED' || value === 'ACCOUNT_UNAVAILABLE' || value === 'PASSWORD_CHANGED')
+    return value;
   return undefined;
 }
 
 export function sessionRecoveryCopy(notice: SessionRecoveryNotice): string {
   if (notice === 'SESSION_ENDED')
     return 'Your session ended or expired. Sign in again to continue. The previous action was not resubmitted.';
+  if (notice === 'PASSWORD_CHANGED')
+    return 'Your password was changed and all active sessions ended. Sign in with your new password.';
   return 'This account cannot continue. Contact the system owner if you think access should be restored.';
 }
 

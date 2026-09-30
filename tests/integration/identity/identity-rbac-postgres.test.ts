@@ -8,11 +8,14 @@ import { RemoveUserScopeUseCase } from '../../../src/modules/administration/appl
 import { PostgresAuthorizationRepository } from '../../../src/modules/administration/infrastructure/postgres-authorization-repository.js';
 import { ActivateUserUseCase } from '../../../src/modules/identity/application/activate-user.js';
 import { AdminResetPasswordUseCase } from '../../../src/modules/identity/application/admin-reset-password.js';
+import { ChangePasswordUseCase } from '../../../src/modules/identity/application/change-password.js';
+import { LoginUseCase } from '../../../src/modules/identity/application/login.js';
 import { DisableUserUseCase } from '../../../src/modules/identity/application/disable-user.js';
 import { RevokeUserSessionsUseCase } from '../../../src/modules/identity/application/revoke-user-sessions.js';
 import { SessionService } from '../../../src/modules/identity/application/session-service.js';
 import { PostgresSessionRepository } from '../../../src/modules/identity/infrastructure/postgres-session-repository.js';
 import { PostgresUserRepository } from '../../../src/modules/identity/infrastructure/postgres-user-repository.js';
+import { PostgresCredentialMutationCommit } from '../../../src/modules/identity/infrastructure/postgres-credential-mutation-commit.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { AuditService } from '../../../src/shared/audit/audit-service.js';
 import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audit-repository.js';
@@ -211,7 +214,10 @@ describe('identity and RBAC PostgreSQL contracts', () => {
       undefined,
       60_000,
     );
-    const passwords = { hash: async (value: string) => `hash:${value}`, verify: async () => true };
+    const passwords = {
+      hash: async (value: string) => `hash:${value}`,
+      verify: async (value: string, encoded: string) => encoded === `hash:${value}`,
+    };
     const audit = new AuditService(new PostgresAuditRepository(db));
     const first = await sessions.createForUser(MEMBER_ID);
 
@@ -232,7 +238,12 @@ describe('identity and RBAC PostgreSQL contracts', () => {
       requestId: 'identity-activate',
     });
     const second = await sessions.createForUser(MEMBER_ID);
-    await new AdminResetPasswordUseCase(users, passwords, sessions, audit).execute({
+    const secondAlternate = await sessions.createForUser(MEMBER_ID);
+    await new AdminResetPasswordUseCase(
+      users,
+      passwords,
+      new PostgresCredentialMutationCommit(db),
+    ).execute({
       actor: actor('PERM-IDN-RESET-PASSWORD'),
       userId: MEMBER_ID,
       temporaryPassword: 'temporary-password',
@@ -242,7 +253,24 @@ describe('identity and RBAC PostgreSQL contracts', () => {
     await expect(sessions.resolve(second.token)).rejects.toMatchObject({
       code: 'AUTH_SESSION_REVOKED',
     });
+    await expect(sessions.resolve(secondAlternate.token)).rejects.toMatchObject({
+      code: 'AUTH_SESSION_REVOKED',
+    });
     expect((await users.findById(MEMBER_ID))?.mustChangePassword).toBe(true);
+    const login = new LoginUseCase(users, passwords, sessions);
+    await expect(login.execute('identity-member', 'hash:member')).rejects.toMatchObject({
+      code: 'AUTH_INVALID_CREDENTIALS',
+    });
+    await expect(login.execute('identity-member', 'temporary-password')).resolves.toMatchObject({
+      userId: MEMBER_ID,
+      mustChangePassword: true,
+    });
+    const auditRow = await db
+      .selectFrom('audit_events')
+      .select(['action', 'payload', 'reason'])
+      .where('request_id', '=', 'identity-reset')
+      .executeTakeFirstOrThrow();
+    expect(auditRow).toEqual({ action: 'ADMIN_RESET_PASSWORD', payload: null, reason: null });
 
     const third = await sessions.createForUser(MEMBER_ID);
     await new RevokeUserSessionsUseCase(users, sessions, audit).execute({
@@ -309,6 +337,78 @@ describe('identity and RBAC PostgreSQL contracts', () => {
       await pool!.query(`
         DROP TRIGGER IF EXISTS test_fail_atomic_role_audit ON qc.audit_events;
         DROP FUNCTION IF EXISTS qc.test_fail_atomic_role_audit();
+      `);
+    }
+  });
+
+  it('rolls back password and session revocation when the atomic credential audit fails', async () => {
+    const userId = '01900000-0000-7000-8000-00000000c004';
+    await pool!.query(
+      `INSERT INTO qc.users (id, login_identity, display_name, password_hash)
+       VALUES ($1, 'atomic-password-member', 'Atomic Password Member', 'hash:old')`,
+      [userId],
+    );
+    const users = new PostgresUserRepository(db);
+    const sessions = new SessionService(
+      users,
+      new PostgresSessionRepository(db),
+      undefined,
+      60_000,
+    );
+    const first = await sessions.createForUser(userId);
+    const second = await sessions.createForUser(userId);
+    const requestId = 'identity-password-audit-failure';
+    const passwordHasher = {
+      verify: async (value: string, encoded: string) =>
+        value === 'current' && encoded === 'hash:old',
+      hash: async (value: string) => `hash:${value}`,
+    };
+    const ownActor: ActorContext = {
+      id: userId,
+      loginIdentity: 'atomic-password-member',
+      accountState: 'ACTIVE',
+      roles: ['EMPLOYEE'],
+      permissions: [{ code: 'PERM-IDN-CHANGE-OWN-PASSWORD', scopes: ['OWN'] }],
+    };
+    await pool!.query(`
+      CREATE OR REPLACE FUNCTION qc.test_fail_atomic_password_audit() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.request_id = 'identity-password-audit-failure' THEN
+          RAISE EXCEPTION 'injected credential audit failure';
+        END IF;
+        RETURN NEW;
+      END $$ LANGUAGE plpgsql;
+      CREATE TRIGGER test_fail_atomic_password_audit
+        BEFORE INSERT ON qc.audit_events
+        FOR EACH ROW EXECUTE FUNCTION qc.test_fail_atomic_password_audit();
+    `);
+
+    try {
+      await expect(
+        new ChangePasswordUseCase(
+          users,
+          passwordHasher,
+          new PostgresCredentialMutationCommit(db),
+        ).execute({
+          actor: ownActor,
+          currentPassword: 'current',
+          newPassword: 'new-password',
+          requestId,
+        }),
+      ).rejects.toThrow(/injected credential audit failure/);
+
+      expect((await users.findById(userId))?.passwordHash).toBe('hash:old');
+      await expect(sessions.resolve(first.token)).resolves.toBeTruthy();
+      await expect(sessions.resolve(second.token)).resolves.toBeTruthy();
+      const audits = await pool!.query<{ count: number }>(
+        'SELECT count(*)::int AS count FROM qc.audit_events WHERE request_id = $1',
+        [requestId],
+      );
+      expect(audits.rows[0].count).toBe(0);
+    } finally {
+      await pool!.query(`
+        DROP TRIGGER IF EXISTS test_fail_atomic_password_audit ON qc.audit_events;
+        DROP FUNCTION IF EXISTS qc.test_fail_atomic_password_audit();
       `);
     }
   });

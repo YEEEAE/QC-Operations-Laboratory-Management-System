@@ -1,17 +1,15 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import { authorize } from '../../../shared/authorization/authorize.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import type { AuditService } from '../../../shared/audit/audit-service.js';
 import type { UserRepository } from '../ports/user-repository.js';
 import type { PasswordHasher } from '../security/password-hasher.js';
-import type { SessionService } from './session-service.js';
+import type { CredentialMutationCommit } from '../ports/credential-mutation.js';
 
 export class ChangePasswordUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly passwords: PasswordHasher,
-    private readonly sessions: SessionService,
-    private readonly audit?: AuditService,
+    private readonly commit: CredentialMutationCommit,
   ) {}
   async execute(input: {
     actor: ActorContext;
@@ -31,7 +29,7 @@ export class ChangePasswordUseCase {
         actor: input.actor,
         permission: 'PERM-IDN-CHANGE-OWN-PASSWORD',
         action: 'CHANGE_PASSWORD',
-        entity: { type: 'ACCOUNT', id: user.id, state: 'ACTIVE', ownerId: user.id },
+        entity: { type: 'ACCOUNT', id: user.id, state: user.accountState, ownerId: user.id },
         scope: { ownerId: user.id },
         currentVersion: user.version,
         expectedVersion: user.version,
@@ -43,16 +41,16 @@ export class ChangePasswordUseCase {
       throw new AppError('AUTH_REAUTH_REQUIRED', { userSafe: true });
     const hash = await this.passwords.hash(input.newPassword);
     const at = new Date();
-    await this.users.changePassword(user.id, hash, user.version, input.actor.id, at);
-    await this.sessions.revokeAllForUser(user.id, 'PASSWORD_CHANGE');
-    if (this.audit)
-      await this.audit.record({
-        actorType: 'USER',
-        actorId: input.actor.id,
-        subjectType: 'USER',
-        subjectId: user.id,
-        action: 'CHANGE_PASSWORD',
-        requestId: input.requestId,
-      });
+    await this.commit.execute({
+      userId: user.id,
+      passwordHash: hash,
+      expectedVersion: user.version,
+      actorId: input.actor.id,
+      at,
+      mustChangePassword: false,
+      reason: 'PASSWORD_CHANGE',
+      action: 'CHANGE_PASSWORD',
+      requestId: input.requestId,
+    });
   }
 }

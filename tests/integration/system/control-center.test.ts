@@ -16,6 +16,7 @@ import { UpdateUserUseCase } from '../../../src/modules/identity/application/upd
 import { SessionService } from '../../../src/modules/identity/application/session-service.js';
 import { PostgresSessionRepository } from '../../../src/modules/identity/infrastructure/postgres-session-repository.js';
 import { PostgresUserRepository } from '../../../src/modules/identity/infrastructure/postgres-user-repository.js';
+import { PostgresCredentialMutationCommit } from '../../../src/modules/identity/infrastructure/postgres-credential-mutation-commit.js';
 import { Argon2idPasswordHasher } from '../../../src/modules/identity/security/argon2-password-hasher.js';
 import { GetControlCenterOverviewUseCase } from '../../../src/modules/system-health/application/get-control-center-overview.js';
 import { PostgresSystemHealthProbes } from '../../../src/modules/system-health/infrastructure/postgres-health-probes.js';
@@ -229,7 +230,11 @@ describe('owner control center PostgreSQL contracts', () => {
 
     // Admin password reset + session revocation persist audit events.
     const current = await users.findById(created.id);
-    await new AdminResetPasswordUseCase(users, passwords, sessionService, audit).execute({
+    await new AdminResetPasswordUseCase(
+      users,
+      passwords,
+      new PostgresCredentialMutationCommit(db),
+    ).execute({
       actor: owner(),
       userId: created.id,
       temporaryPassword: 'temporary-pass-2',
