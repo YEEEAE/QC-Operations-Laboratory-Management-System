@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — QC-ADP26-05 / inspection draft notes and point results**
+  - Changed: per-point remarks, REMARK_ONLY and NA now have existing-row save contracts with required-point validation; unsaved general notes removed. No schema/policy/outbox change.
+  - Evidence: candidate base `161762e7`; focused unit 33/33, Astro check 0 errors, local build PASS. PostgreSQL 18, authenticated browser/AT and UAT BLOCKED/NOT VERIFIED; handoff `audit/2026-09-30/handoff-QC-ADP26-05.md`.
+  - State: PARTIAL — source fix complete; route acceptance remains open pending candidate-bound database and live-page evidence.
+
 - **2026-09-30 — QC-ADP26-04 / exact inspection decimal transport**
   - Changed: execute Action/domain/repository now preserve decimal strings and reject float transport/invalid decimal notation; no schema/policy changes.
   - Evidence: candidate `6c312f05`; focused unit 37/37 and Astro check 0 errors. PG18 Testcontainers BLOCKED (no container runtime); live browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-04.md`.
@@ -266,7 +271,7 @@
 - أضيفت عقود مسودة لستة مصادر تكامل ومحول جهاز مخبري sandbox بلا اتصال حي؛ سجل التسليم يظل منفصلًا عن قرار QC، وتبقى تفعيلات المزود وسياسات actor/retention/retry رهينة اعتماد المالك.
 
 ## 5) Quarantine / Inspection Templates
-- Result draft saves require explicit EDIT-DRAFT and owner/assignee scope on DRAFT/current version, rechecked under transaction lock; report/results/audit commit together. Draft saving adds no approval/signature/receiving/outbox consequence. QC-ADP26-03 local technical evidence is verified; QC-ADP26-04 makes numeric values exact decimal strings across UI/action/domain/repository; PostgreSQL roundtrip, AT/UAT and deployed acceptance remain unverified.
+- Result draft saves require explicit EDIT-DRAFT and owner/assignee scope on DRAFT/current version, rechecked under transaction lock; report/results/audit commit together. Draft saving adds no approval/signature/receiving/outbox consequence. QC-ADP26-03 local technical evidence is verified; QC-ADP26-04 carries exact decimal strings; QC-ADP26-05 saves point remarks, REMARK_ONLY and NA through existing typed result rows while general notes remain explicitly unsaved and removed from the form. PostgreSQL roundtrip, AT/UAT and deployed acceptance remain unverified.
 - دورة P-06 موجودة في `src/modules/quarantine/templates`.
 - Employee يقدر ينشئ `DRAFT`; سلطات القوالب المعتمدة تقدر تنشئ/تراجع/تعتمد حسب السياسة.
 - سلطة القوالب الحالية محصورة في Supervisor وManager و`yazeed`؛ Admin أو SYSTEM_OWNER غير المسمى مرفوض.

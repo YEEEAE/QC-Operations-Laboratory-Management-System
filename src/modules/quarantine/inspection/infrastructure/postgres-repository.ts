@@ -448,6 +448,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
       .select([
         'point.id as pointId',
         'point.data_type as dataType',
+        'point.required as required',
         'point.acceptance_rule_type as acceptanceRuleType',
         'point.acceptance_rule_payload as acceptanceRulePayload',
       ])
@@ -458,6 +459,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
     return rows.map((row) => ({
       pointId: row.pointId,
       dataType: row.dataType,
+      required: row.required,
       acceptanceRuleType: row.acceptanceRuleType,
       acceptanceRulePayload: row.acceptanceRulePayload,
     }));

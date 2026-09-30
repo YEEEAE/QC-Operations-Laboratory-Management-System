@@ -129,6 +129,18 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
       acceptanceRuleType: null,
       acceptanceRulePayload: null,
     },
+    {
+      pointId: '01900000-0000-7000-8000-0000000000b4',
+      dataType: 'REMARK_ONLY',
+      acceptanceRuleType: null,
+      acceptanceRulePayload: null,
+    },
+    {
+      pointId: '01900000-0000-7000-8000-0000000000b5',
+      dataType: 'NOT_APPLICABLE',
+      acceptanceRuleType: null,
+      acceptanceRulePayload: null,
+    },
   ];
   const criteriaReader: PointCriteriaReader = {
     async listPointCriteria() {
@@ -197,6 +209,29 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
     });
     expect(capture.capture.saved).toMatchObject([
       { value: '5.4000000000000000001', numericValue: '5.4000000000000000001', result: 'PASS' },
+    ]);
+  });
+
+  it('preserves repeated readings for MULTI_MEASUREMENT points', async () => {
+    const capture = repo();
+    const multiCriteria = { ...criteria[0]!, dataType: 'MULTI_MEASUREMENT' };
+    await new RecordInspectionResultsUseCase(capture.repository, {
+      async listPointCriteria() {
+        return [multiCriteria];
+      },
+    }).execute({
+      actor: actor(),
+      id: draftInspection.id,
+      expectedVersion: 3n,
+      requestId: 'req-multi-reading',
+      results: [
+        { id: 'r6', pointId: multiCriteria.pointId, value: '5.1', version: 1n },
+        { id: 'r7', pointId: multiCriteria.pointId, value: '5.2', version: 1n },
+      ],
+    });
+    expect(capture.capture.saved).toMatchObject([
+      { value: '5.1', numericValue: '5.1' },
+      { value: '5.2', numericValue: '5.2' },
     ]);
   });
 
@@ -313,6 +348,93 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
       ],
     });
     expect((capture.capture.saved as { result?: string }[])[0]?.result).toBeUndefined();
+  });
+
+  it('persists a remarks-only point with the approved REMARK outcome', async () => {
+    const capture = repo();
+    await new RecordInspectionResultsUseCase(capture.repository, criteriaReader).execute({
+      actor: actor(),
+      id: draftInspection.id,
+      expectedVersion: 3n,
+      requestId: 'req-remark-only',
+      results: [{ id: 'r4', pointId: criteria[3]!.pointId, value: 'Seal intact', version: 1n }],
+    });
+    expect(capture.capture.saved).toMatchObject([{ value: 'Seal intact', result: 'REMARK' }]);
+  });
+
+  it('persists not-applicable points as a typed value plus server-resolved NA', async () => {
+    const capture = repo();
+    await new RecordInspectionResultsUseCase(capture.repository, criteriaReader).execute({
+      actor: actor(),
+      id: draftInspection.id,
+      expectedVersion: 3n,
+      requestId: 'req-na',
+      results: [
+        { id: 'r5', pointId: criteria[4]!.pointId, value: 'N/A', result: 'NA', version: 1n },
+      ],
+    });
+    expect(capture.capture.saved).toMatchObject([{ value: 'N/A', result: 'NA' }]);
+  });
+
+  it('rejects blank remarks-only values and orphan remarks before persistence', async () => {
+    const capture = repo();
+    const useCase = new RecordInspectionResultsUseCase(capture.repository, criteriaReader);
+    await expect(
+      useCase.execute({
+        actor: actor(),
+        id: draftInspection.id,
+        expectedVersion: 3n,
+        requestId: 'req-blank-remark',
+        results: [{ id: 'r4', pointId: criteria[3]!.pointId, value: '  ', version: 1n }],
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    await expect(
+      useCase.execute({
+        actor: actor(),
+        id: draftInspection.id,
+        expectedVersion: 3n,
+        requestId: 'req-orphan-remark',
+        results: [
+          {
+            id: 'r3',
+            pointId: criteria[2]!.pointId,
+            value: '',
+            remarks: 'Needs review',
+            version: 1n,
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    expect(capture.capture.saved).toBeUndefined();
+  });
+
+  it('requires every template-required point before replacing the draft', async () => {
+    const capture = repo();
+    const requiredId = '01900000-0000-7000-8000-0000000000b6';
+    const useCase = new RecordInspectionResultsUseCase(capture.repository, {
+      async listPointCriteria() {
+        return [
+          ...criteria,
+          {
+            pointId: requiredId,
+            dataType: 'TEXT',
+            required: true,
+            acceptanceRuleType: null,
+            acceptanceRulePayload: null,
+          },
+        ];
+      },
+    });
+    await expect(
+      useCase.execute({
+        actor: actor(),
+        id: draftInspection.id,
+        expectedVersion: 3n,
+        requestId: 'req-required',
+        results: [],
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    expect(capture.capture.saved).toBeUndefined();
   });
 
   it('rejects a client-declared PASS/FAIL claim outright', async () => {

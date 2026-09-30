@@ -17,6 +17,7 @@ import type { InspectionResultEntry } from '../domain/inspection-result.js';
 export interface PointCriteria {
   pointId: string;
   dataType: string;
+  required?: boolean;
   acceptanceRuleType: string | null;
   acceptanceRulePayload: unknown;
 }
@@ -88,11 +89,43 @@ export class RecordInspectionResultsUseCase {
       ]),
     );
 
-    const evaluated: InspectionResultEntry[] = i.results.map((entry) => {
-      if (!isUuid(entry.pointId) || !criteria.has(entry.pointId))
+    // A draft replacement must not silently clear a required point. Validate
+    // against the frozen server-side template criteria before entering SQL.
+    const pointCounts = new Map<string, number>();
+    for (const entry of i.results) {
+      const point = criteria.get(entry.pointId);
+      const count = pointCounts.get(entry.pointId) ?? 0;
+      if (!isUuid(entry.pointId) || !point || (count > 0 && point.dataType !== 'MULTI_MEASUREMENT'))
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
+      pointCounts.set(entry.pointId, count + 1);
+      if (
+        entry.remarks?.trim() &&
+        (typeof entry.value !== 'string' || !entry.value.trim()) &&
+        typeof entry.value !== 'boolean'
+      )
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    }
+    for (const point of criteria.values()) {
+      if (point.required && !pointCounts.has(point.pointId))
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    }
+
+    const evaluated: InspectionResultEntry[] = i.results.map((entry) => {
       const point = criteria.get(entry.pointId)!;
-      if (point.dataType === 'NOT_APPLICABLE') return { ...entry, result: 'NA' };
+      if (point.dataType === 'NOT_APPLICABLE') {
+        if (entry.value !== 'N/A') throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        return { ...entry, result: 'NA' };
+      }
+      if (entry.result === 'NA') throw new AppError('VALIDATION_FAILED', { userSafe: true });
+      if (point.dataType === 'REMARK_ONLY') {
+        if (typeof entry.value !== 'string' || !entry.value.trim())
+          throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        return { ...entry, result: 'REMARK' };
+      }
+      if (typeof entry.value === 'string' && !entry.value.trim())
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+      if (point.required && (typeof entry.value === 'string' ? !entry.value.trim() : false))
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
 
       // Enum / boolean acceptability: evaluate from the approved allowed list
       // when one exists; otherwise no automated result.

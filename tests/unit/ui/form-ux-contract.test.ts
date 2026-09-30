@@ -19,11 +19,16 @@ describe('regulated form UX contracts', () => {
     expect(page).toMatch(/data-submit/);
   });
 
-  it('links inspection notes and return reasons to their labels', () => {
+  it('links point errors and remarks to inspection points without offering unsaved general notes', () => {
     const execute = read('src/pages/quarantine/inspections/[inspectionId]/execute.astro');
     const review = read('src/pages/quarantine/inspections/[inspectionId]/review.astro');
-    expect(execute).toMatch(/for="inspection-notes"/);
-    expect(execute).toMatch(/id="inspection-notes"/);
+    expect(execute).toMatch(/for=\{remarksId\}/);
+    expect(execute).toMatch(/aria-describedby=\{errorId\}/);
+    expect(execute).toMatch(
+      /General execution notes are not part of the approved draft save contract and are not saved/,
+    );
+    expect(execute).not.toMatch(/name="notes"/);
+    expect(execute).toMatch(/data-point-error/);
     expect(execute).toMatch(/<button[^>]*data-submit[^>]*>Save results<\/button>/);
     expect(review).toMatch(/for="inspection-return-reason"/);
     expect(review).toMatch(/id="inspection-return-reason"/);
