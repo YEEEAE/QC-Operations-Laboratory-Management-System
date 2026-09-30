@@ -1,0 +1,33 @@
+{
+  "head": "0b1bb21bb3b4eca77862dbba1da8623044e96355",
+  "branch": "main",
+  "physicalPages": 88,
+  "canonicalRoutes": 86,
+  "required": 80,
+  "conditional": 6,
+  "deferred": 0,
+  "pagesAnalyzed": 88,
+  "families": 35,
+  "workflows": 12,
+  "liveRoutePatterns": 55,
+  "liveDisplayStateVisits": 56,
+  "pageScoreMeaning": "proposed applicable verified-checklist fulfillment; NOT product quality or UAT approval",
+  "averagePageScore": 38.4,
+  "lowestPageScore": 14.3,
+  "highestPageScore": 57.1,
+  "passedChecks": 258,
+  "applicableChecks": 671,
+  "severityCounts": {
+    "P0": 2,
+    "P1": 22,
+    "P2": 10,
+    "P3": 0
+  },
+  "findings": 34,
+  "prompts": 36,
+  "orphanP0": 0,
+  "orphanP1": 0,
+  "below100WithoutClosure": 0,
+  "promptWithoutFinding": 0,
+  "verdict": "NO-GO"
+}
