@@ -588,7 +588,7 @@ Current CI Evidence
 | REQ-IDN-001 | Controlled human actions require authenticated user  | BR-IDN-001 | users, sessions   | Integration + E2E | APPROVED |
 | REQ-IDN-002 | Shared accounts cannot perform controlled actions    | BR-IDN-002 | users             | Negative E2E      | APPROVED |
 | REQ-IDN-003 | Disabled users cannot create sessions                | BR-IDN-003 | users, sessions   | Integration       | APPROVED |
-| REQ-IDN-004 | Password reset invalidates existing sessions         | BR-IDN-004 | users, sessions   | Integration       | APPROVED |
+| REQ-IDN-004 | Administrative password reset invalidates existing sessions | BR-IDN-004 | users, sessions | Integration | APPROVED |
 | REQ-IDN-005 | Actor identity comes from trusted server session     | BR-IDN-005 | sessions          | Security test     | APPROVED |
 | REQ-IDN-006 | Historical user actions survive account deactivation | DATA-MODEL | users + audit FKs | DB integration    | APPROVED |
 

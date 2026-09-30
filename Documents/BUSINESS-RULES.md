@@ -535,17 +535,22 @@ VERIFIED
 
 ---
 
-## BR-IDN-004 — Password Reset Invalidates Existing Sessions
+## BR-IDN-004 — Administrative Password Reset Invalidates Existing Sessions
 
 **Status:** APPROVED
 
-عند Administrative Password Reset:
+عند إعادة تعيين كلمة المرور إداريًا:
 
 ```text
 Invalidate existing sessions
 Require new user-owned password
 Audit reset
 ```
+
+هذا لا يعرّف استرداد الوصول الذاتي عبر البريد أو رابط برمز. استرداد الوصول الذاتي مؤجل
+حتى اعتماد سياسة تحدد إثبات ملكية الحساب، مهلة الرمز، الاستخدام الواحد ومقاومة إعادة
+الاستخدام المتزامنة، إبطال الجلسات، عدم كشف وجود الحساب، الإرسال والتدقيق. لا تسجل له
+صفحات أو مسارات قابلة للتشغيل قبل ذلك القرار.
 
 ---
 

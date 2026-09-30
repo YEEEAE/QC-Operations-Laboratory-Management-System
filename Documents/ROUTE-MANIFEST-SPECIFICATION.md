@@ -48,8 +48,9 @@ visibility, mutationCapabilities, fileExpectation
 
 الحالة الحالية المفصلة لكل route موجودة في
 `Documents/ROUTE-MATRIX.md`: 85 route declarations، منها 2 `PUBLIC`،
-81 `AUTHENTICATED`، و2 `YAZEED_ONLY`. صفحتا `/auth/recovery` و`/auth/reset/[requestId]`
-مسجلتان كـ`AUTHENTICATED` و`deferred` في registry؛ لا تُعاملان كصفحات عامة.
+81 `AUTHENTICATED`، و2 `YAZEED_ONLY`. مسارا `/auth/recovery` و
+`/auth/reset/[requestId]` مؤجلان وغير مسجلين في registry لحين اعتماد سياسة
+استرداد الوصول. BR-IDN-004 يخص إعادة التعيين الإدارية ولا يجيز استردادًا ذاتيًا.
 
 ---
 **Business ID:** Display/Search identifier — not route authority
@@ -691,15 +692,17 @@ No `getStaticPaths()` للrecords التشغيلية dynamic.
 
 ---
 
-# 28. Public Authentication Routes
+# 28. Authentication Routes
 
 | Route ID    | UI ID       | URL                       | Astro File                               | Class    |
 | ----------- | ----------- | ------------------------- | ---------------------------------------- | -------- |
 | RT-AUTH-001 | UI-AUTH-001 | `/login`                  | `src/pages/login.astro`                  | PUBLIC   |
-| RT-AUTH-002 | UI-AUTH-002 | `/auth/recovery`          | `src/pages/auth/recovery.astro`          | DEFERRED |
-| RT-AUTH-003 | UI-AUTH-002 | `/auth/reset/[requestId]` | `src/pages/auth/reset/[requestId].astro` | DEFERRED |
+| — | — | `/auth/recovery` | — | DEFERRED — not in route registry |
+| — | — | `/auth/reset/[requestId]` | — | DEFERRED — not in route registry |
 
-Password recovery/reset routes لا تتفعل إلا بعد اعتماد authentication recovery policy.
+Password recovery/reset routes are not canonical browser-route contracts. Reintroduce
+them only after an approved recovery policy defines identity disclosure, delivery,
+token lifetime and single-use/replay behavior, session invalidation, and audit.
 
 ---
 
@@ -2001,8 +2004,7 @@ Record-level history remains inside each record route.
 /
 ├── login
 ├── auth/
-│   ├── recovery                      [DEFERRED]
-│   └── reset/[requestId]             [DEFERRED]
+│   └── (self-service recovery deferred; no route registered)
 │
 ├── dashboard
 │

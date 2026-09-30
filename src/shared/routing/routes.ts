@@ -11,14 +11,6 @@ type RouteTuple = readonly [
 const routeTuples = [
   ['RT-ROOT-001', '/', 'src/pages/index.astro', 'public', 'required'],
   ['RT-AUTH-001', '/login', 'src/pages/login.astro', 'public', 'required'],
-  ['RT-AUTH-002', '/auth/recovery', 'src/pages/auth/recovery.astro', 'public', 'deferred'],
-  [
-    'RT-AUTH-003',
-    '/auth/reset/[requestId]',
-    'src/pages/auth/reset/[requestId].astro',
-    'public',
-    'deferred',
-  ],
   ['RT-DASH-001', '/dashboard', 'src/pages/dashboard/index.astro', 'permission-bound', 'required'],
   ['RT-WORK-001', '/work', 'src/pages/work/index.astro', 'authenticated', 'required'],
   ['RT-TASK-001', '/tasks', 'src/pages/tasks/index.astro', 'permission-bound', 'required'],

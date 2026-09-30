@@ -6,8 +6,8 @@
 registered page files; 2 deferred auth route declarations; 6 conditional
 creation routes; 33 navigation destinations.
 
-> **Current-source count (2026-09-24):** The dated freeze counts above are
-> historical. `src/shared/routing/routes.ts` currently exports 87 routes and
+> **Current-source count (2026-09-30):** The dated freeze counts above are
+> historical. `src/shared/routing/routes.ts` currently exports 85 routes and
 > `src/ui/navigation/navigation.ts` currently declares 34 destinations. The
 > current role-by-route visibility, direct page gate, data-read boundary, and
 > action boundary are recorded in `audit/2026-09-23/ui-baseline/route-visibility-matrix.csv`.
@@ -19,6 +19,13 @@ creation routes; 33 navigation destinations.
 > **Current-source addition (2026-09-24):** `RT-LAB-009` registers
 > `/laboratory/report-templates`; its create/read/edit permission checks remain
 > in the report-draft application boundary, independent of route visibility.
+
+> **2026-09-30 — RT-AUTH-003 decision:** Self-service `/auth/recovery` and
+> `/auth/reset/[requestId]` are deferred and removed from the canonical route
+> registry until an authentication-recovery policy is approved. The policy
+> questions and acceptance boundary are recorded in
+> `audit/2026-09-30/RT-AUTH-003-recovery-deferral.md`. BR-IDN-004 continues to
+> cover administrative password reset only.
 
 > 2026-09-20 (QC-100-FINAL-020): added `RT-HELP-001` `/help`
 > (`src/pages/help/index.astro`) — the in-app role operating & support guide,
@@ -45,8 +52,6 @@ creation routes; 33 navigation destinations.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | RT-ROOT-001 | `/` | `src/pages/index.astro` | shared | PUBLIC | — | public redirect/render | owning use case if any | NO | R/E |
 | RT-AUTH-001 | `/login` | `src/pages/login.astro` | identity | PUBLIC | — | public login surface | auth use case | NO | R/E |
-| RT-AUTH-002 | `/auth/recovery` | `src/pages/auth/recovery.astro` | identity | AUTHENTICATED | — | active-session server read | identity use case | NO | R/D/E |
-| RT-AUTH-003 | `/auth/reset/[requestId]` | `src/pages/auth/reset/[requestId].astro` | identity | AUTHENTICATED | — | active-session server read | identity use case | NO | R/D/E |
 | RT-DASH-001 | `/dashboard` | `src/pages/dashboard/index.astro` | dashboard | AUTHENTICATED | Overview / Dashboard | server KPI/read models | dashboard use cases; no client authority | NO | R/D/E |
 | RT-TASK-001 | `/tasks` | `src/pages/tasks/index.astro` | tasks | AUTHENTICATED | Work / Tasks | bounded authorized task list/read model with owner, assignee, priority, due, state, version, and next step | explicit task-view permission/scope + action permission/scope + state/version | NO | R/D/E |
 | RT-TASK-002 | `/tasks/new` | `src/pages/tasks/new.astro` | tasks | AUTHENTICATED | — | server form; draft creation through task use case | create/assignment permission + scope + audit/outbox | NO | R/D/E |
@@ -135,6 +140,6 @@ creation routes; 33 navigation destinations.
 
 The physical page count includes `404.astro` and `500.astro`, which are error
 surfaces and do not have canonical browser-route declarations. The registry has
-86 entries: 78 required files, 6 conditional files, and 2 deferred auth
-declarations. The architecture check is the executable authority for registry
-coverage and currently passes.
+The current route registry contains 85 entries. Its architecture check is the
+executable authority for registry coverage. Self-service recovery routes are
+not registered while policy is deferred.

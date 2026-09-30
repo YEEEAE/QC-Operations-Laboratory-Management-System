@@ -10,7 +10,9 @@ describe('canonical route registry', () => {
     expect(new Set(routes.map((route) => route.file)).size).toBe(routes.length);
   });
 
-  it('does not require deferred or conditional files before their policy is approved', () => {
+  it('does not register self-service recovery routes before recovery policy approval', () => {
+    expect(getRouteById('RT-AUTH-002')).toBeUndefined();
+    expect(getRouteById('RT-AUTH-003')).toBeUndefined();
     expect(getRequiredRouteFiles()).not.toContain('src/pages/auth/recovery.astro');
     expect(getRequiredRouteFiles()).not.toContain('src/pages/quality/ncr/new.astro');
   });

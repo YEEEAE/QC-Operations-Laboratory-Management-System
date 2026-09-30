@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — RT-AUTH-001 / login acceptance evidence**
+  - Changed: no runtime/policy change; recorded source review and candidate-bound evidence gaps.
+  - Evidence: current HEAD `bd30e257`; prior login E2E evidence is bound to `06479e8` and is historical. Authenticated success/rejection, rate-limit, session revoke/expiry, applied schema/DB audit, current browser/AT and owner signature remain NOT VERIFIED; no READY. `audit/2026-09-30/RT-AUTH-001-login-acceptance.md`.
+  - State: PARTIAL / NO-GO.
+
 - **2026-09-30 — QC-ADP-27 / RT-ROOT-001 authentication redirect**
   - Changed: root now routes by server-resolved session, validates guest `returnTo`, and carries an explicit ended-session reason to login. State: PARTIAL / NO-GO.
   - Evidence: unit 6/6, build/release verification PASS; candidate-bound Playwright 5 PASS / 1 auth-fixture skip. Authenticated route, applied schema, manual AT, owner signature and UAT remain NOT VERIFIED; no READY. Handoff: `audit/2026-09-30/QC-ADP-27-rt-root-001-handoff.md`.
