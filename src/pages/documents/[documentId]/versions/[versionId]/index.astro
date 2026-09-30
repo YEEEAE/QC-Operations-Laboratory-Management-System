@@ -6,7 +6,15 @@ import { documentsReadDependencies } from '../../../../../modules/documents/appl
 import { stateLabel } from '../../../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const document = await documentsReadDependencies().get.execute({ actor, documentId: Astro.params.documentId ?? '' }).catch(() => undefined);
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../../shared/errors/read-failure.js';
+let document: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['get']['execute']>> | undefined;
+try {
+  document = await documentsReadDependencies().get.execute({ actor, documentId: Astro.params.documentId ?? '' });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') {
+    return providerUnavailableResponse('Document details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+  }
+}
 const version = document?.versions.find((item) => item.id === Astro.params.versionId);
 if (!document || !version) return Astro.redirect('/404');
 const editable = version.state === 'DRAFT' && actor.permissions.some((permission) => permission.code === 'PERM-DOC-EDIT-DRAFT' && permission.active !== false);

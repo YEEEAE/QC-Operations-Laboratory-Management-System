@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import StatusBadge from '../../../ui/components/StatusBadge.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
@@ -11,7 +12,7 @@ import { actions } from 'astro:actions';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 let item: Awaited<ReturnType<ReturnType<typeof receivingReadDependencies>['get']['execute']>> | undefined;
-try { item = await receivingReadDependencies().get.execute({ actor, id: Astro.params.receivingId ?? '' }); } catch { return Astro.redirect('/404'); }
+try { item = await receivingReadDependencies().get.execute({ actor, id: Astro.params.receivingId ?? '' }); } catch (error) { if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Receiving details are temporarily unavailable', Astro.url.pathname + Astro.url.search); return Astro.redirect('/404'); }
 if (!item) return Astro.redirect('/404');
 const canHold = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-HOLD');
 const canRelease = actor.permissions.some((permission) => permission.code === 'PERM-QUAR-RELEASE');

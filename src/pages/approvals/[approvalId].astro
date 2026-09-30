@@ -9,7 +9,15 @@ import { isUuid } from '../../shared/id/uuid.js';
 import { approvalsReadDependencies } from '../../modules/approvals/application/dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const approval = await approvalsReadDependencies().get.execute({ actor, approvalId: Astro.params.approvalId ?? '' }).catch(() => undefined);
+import { classifyReadFailure, providerUnavailableResponse } from '../../shared/errors/read-failure.js';
+let approval: Awaited<ReturnType<ReturnType<typeof approvalsReadDependencies>['get']['execute']>> | undefined;
+try {
+  approval = await approvalsReadDependencies().get.execute({ actor, approvalId: Astro.params.approvalId ?? '' });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') {
+    return providerUnavailableResponse('Approval details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+  }
+}
 if (!approval) return Astro.redirect('/404');
 const context = approval.subject.reviewContext;
 const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? context['labTestNo'] ?? context['calibrationNo'] ?? approval.approvalCase.subjectType);

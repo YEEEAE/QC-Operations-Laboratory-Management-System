@@ -113,7 +113,7 @@ const canCreate = actor.permissions.some(
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/tasks' : undefined}
-    note={providerUnavailable
+    note={providerUnavailable || authorizationUnavailable
       ? 'The task read is unavailable, so no count is shown.'
       : `Showing ${tasks.length} of ${result.total} in your authorized scope — page ${page.page} of ${totalPages}.`}
   />

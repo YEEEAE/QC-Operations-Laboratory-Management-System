@@ -4,11 +4,20 @@ import { taskReadDependencies } from '../../modules/tasks/application/dependenci
 import { priorityLabel, stateLabel } from '../../shared/copy/ux-vocabulary.js';
 import { formatDateTime } from '../../shared/copy/format.js';
 import { actorHasScope } from '../../shared/authorization/scope-evaluator.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../shared/errors/read-failure.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const taskId = Astro.params.taskId ?? '';
-const details = await taskReadDependencies().get.execute({ actor, taskId });
+let details;
+try {
+  details = await taskReadDependencies().get.execute({ actor, taskId });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') {
+    return providerUnavailableResponse('Task details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+  }
+  return Astro.redirect('/404');
+}
 const { task } = details;
 const canTaskAction = (code: string) => {
   const grant = actor.permissions.find((item) => item.code === code && item.active !== false);

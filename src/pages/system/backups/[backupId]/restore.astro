@@ -3,6 +3,7 @@ import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import { backupCatalogReadDependencies } from '../../../../modules/backup-recovery/application/dependencies.js';
 import { isUuid } from '../../../../shared/id/uuid.js';
 import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -11,7 +12,8 @@ if (!isUuid(backupId)) return Astro.redirect('/404');
 let detail;
 try {
   detail = await backupCatalogReadDependencies().get.execute({ actor, backupId });
-} catch {
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Backup details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
   return Astro.redirect('/404');
 }
 if (!detail) return Astro.redirect('/404');

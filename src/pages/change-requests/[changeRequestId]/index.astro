@@ -3,6 +3,7 @@ import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import HandoffTimeline from '../../../ui/components/workflow/HandoffTimeline.astro';
 import { changeRequestsReadDependencies } from '../../../modules/change-requests/application/dependencies.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { isUuid } from '../../../shared/id/uuid.js';
 import { stateLabel, transitionLabel, targetTypeLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { formatDateTime } from '../../../shared/copy/format.js';
@@ -12,7 +13,7 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
 const id = Astro.params.changeRequestId ?? '';
 if (!isUuid(id)) return Astro.redirect('/404');
 let aggregate;
-try { aggregate = await changeRequestsReadDependencies().get.execute({ actor, id }); } catch { return Astro.redirect('/404'); }
+try { aggregate = await changeRequestsReadDependencies().get.execute({ actor, id }); } catch (error) { if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Change request details are temporarily unavailable', Astro.url.pathname + Astro.url.search); return Astro.redirect('/404'); }
 if (!aggregate) return Astro.redirect('/404');
 const { changeRequest, changes, history, applicationAttempts } = aggregate;
 const canReview = actor.permissions.some((permission) => permission.active !== false && ['PERM-CHG-REVIEW', 'PERM-CHG-RETURN', 'PERM-CHG-APPROVE', 'PERM-CHG-REJECT'].includes(permission.code));

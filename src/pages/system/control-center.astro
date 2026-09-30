@@ -36,24 +36,31 @@ try {
 
 let users: Users = [];
 let usersError = false;
+let userAssignmentsUnavailable = false;
 const roleSummary = new Map<string, string>();
 const scopeSummary = new Map<string, string>();
 try {
   users = await identityAdminReadDependencies().listUsers.execute({ actor });
-  const auth = administrationDependencies();
-  const userIds = users.map((user) => user.id);
-  const [roles, scopes] = await Promise.all([
-    auth.listUserRoles.executeForUsers({ actor, userIds }),
-    auth.listUserScopes.executeForUsers({ actor, userIds }),
-  ]);
-  for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
-  for (const row of scopes) scopeSummary.set(row.userId, row.scopes.map((scope) => scope.value ? `${scope.kind}:${scope.value}` : scope.kind).join(', ') || '—');
-  for (const user of users) {
-    roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
-    scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
-  }
 } catch {
   usersError = true;
+}
+if (!usersError) {
+  const auth = administrationDependencies();
+  const userIds = users.map((user) => user.id);
+  try {
+    const [roles, scopes] = await Promise.all([
+      auth.listUserRoles.executeForUsers({ actor, userIds }),
+      auth.listUserScopes.executeForUsers({ actor, userIds }),
+    ]);
+    for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
+    for (const row of scopes) scopeSummary.set(row.userId, row.scopes.map((scope) => scope.value ? `${scope.kind}:${scope.value}` : scope.kind).join(', ') || '—');
+    for (const user of users) {
+      roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
+      scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
+    }
+  } catch {
+    userAssignmentsUnavailable = true;
+  }
 }
 
 let roles: Roles = [];
@@ -65,12 +72,11 @@ try {
 }
 
 let audit: AuditResult | undefined;
+let auditUnavailable = false;
 try {
   audit = await auditQueryDependencies().list.list(actor, { limit: 25 });
 } catch {
-  // Denied or unavailable audit reads render the same empty state; history
-  // existence never leaks through a distinguishable error.
-  audit = undefined;
+  auditUnavailable = true;
 }
 
 // Server-rendered search/filter/sort/pagination — fully functional without client JS.
@@ -254,6 +260,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
         <p class="muted" role="alert">The account register is temporarily unavailable.</p>
       ) : (
         <>
+          {userAssignmentsUnavailable && <p class="muted" role="alert">Account role and scope assignments are temporarily unavailable; those relationship values are withheld.</p>}
           <div class="cards">
             <div class="card"><span class="card-label">Total</span><strong>{counts.total}</strong></div>
             <div class="card"><span class="card-label">Active</span><strong>{counts.active}</strong></div>
@@ -483,7 +490,9 @@ const migrationBlocker = (migration: Overview['migration']) =>
       Sanitized audit view — payloads and secret-bearing columns never leave the audit store.
     </p>
     {
-      !audit || audit.events.length === 0 ? (
+      auditUnavailable ? (
+        <p class="muted" role="alert">Administrative activity is temporarily unavailable. No conclusion about recorded history can be made.</p>
+      ) : !audit || audit.events.length === 0 ? (
         <p class="muted">No audit events are visible.</p>
       ) : (
         <div class="table-wrap">

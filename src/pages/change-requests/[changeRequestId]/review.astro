@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { changeRequestsReadDependencies } from '../../../modules/change-requests/application/dependencies.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { isUuid } from '../../../shared/id/uuid.js';
 
 const actor = Astro.locals.actor;
@@ -8,7 +9,7 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
 const id = Astro.params.changeRequestId ?? '';
 if (!isUuid(id)) return Astro.redirect('/404');
 let aggregate;
-try { aggregate = await changeRequestsReadDependencies().get.execute({ actor, id }); } catch { return Astro.redirect('/404'); }
+try { aggregate = await changeRequestsReadDependencies().get.execute({ actor, id }); } catch (error) { if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Change request details are temporarily unavailable', Astro.url.pathname + Astro.url.search); return Astro.redirect('/404'); }
 if (!aggregate) return Astro.redirect('/404');
 const { changeRequest, changes } = aggregate;
 const permission = (code: string) => actor.permissions.some((item) => item.active !== false && item.code === code);

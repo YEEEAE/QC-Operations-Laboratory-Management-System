@@ -14,11 +14,12 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fwork');
 // authorization refusal is a different fact from a provider outage.
 let queue: Awaited<ReturnType<ReturnType<typeof myWorkDependencies>['get']['execute']>> | undefined;
 let providerUnavailable = false;
+let authorizationUnavailable = false;
 try {
   queue = await myWorkDependencies().get.execute(actor);
 } catch (error) {
-  providerUnavailable = true;
-  if (error instanceof AppError && error.category !== 'AUTHORIZATION') queue = undefined;
+  authorizationUnavailable = error instanceof AppError && error.category === 'AUTHORIZATION';
+  providerUnavailable = !authorizationUnavailable;
 }
 const groups = queue?.groups ?? [];
 const unresolved = queue?.unresolvedSources ?? [];
@@ -39,7 +40,8 @@ const unresolved = queue?.unresolvedSources ?? [];
     <p><span>Scope</span> <strong>{queue?.scopeLabel ?? 'Not confirmed'}</strong></p>
   </section>
 
-  {providerUnavailable && <ProviderUnavailableState title="Your work queue is unavailable" description="A register did not return a confirmed read, so every group is withheld instead of being shown as empty or as zero." retryHref="/work" />}
+  {providerUnavailable && <ProviderUnavailableState title="Your work queue is temporarily unavailable" description="A register did not return a confirmed read, so every group and count is withheld." retryHref="/work" />}
+  {authorizationUnavailable && <section class="empty" role="status"><h2>Your work queue is unavailable</h2><p>This account cannot view the requested queue. No record or count is shown.</p></section>}
 
   {!providerUnavailable && queue && (
     <>

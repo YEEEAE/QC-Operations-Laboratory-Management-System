@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
 import JourneyContextPanel from '../../../../ui/components/workflow/JourneyContextPanel.astro';
 import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';
 import { assetsReadDependencies } from '../../../../modules/assets/application/dependencies.js';
@@ -12,7 +13,8 @@ if (!actor)
 let test;
 try {
   test = await laboratoryReadDependencies().get.execute({ actor, id: Astro.params.labTestId ?? '' });
-} catch {
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Laboratory test details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
   return Astro.redirect('/404');
 }
 const stateEditable = test.state === 'DRAFT';

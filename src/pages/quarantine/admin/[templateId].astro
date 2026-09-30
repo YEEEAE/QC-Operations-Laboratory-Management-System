@@ -4,6 +4,7 @@ import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { field, toFormFailure, type FormFailure } from '../../../ui/forms/mutation-post.js';
 import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
@@ -15,7 +16,15 @@ const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM
 const isAuthority =
   actor.roles.includes('SUPERVISOR') || actor.roles.includes('MANAGER') || actor.roles.includes('SYSTEM_OWNER');
 
-let template = await templateReadDependencies().get.execute({ actor, id: templateId }).catch(() => undefined);
+let template;
+try {
+  template = await templateReadDependencies().get.execute({ actor, id: templateId });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') {
+    return providerUnavailableResponse('Template details are temporarily unavailable', Astro.url.pathname);
+  }
+  return Astro.redirect('/quarantine/admin');
+}
 if (!template) return Astro.redirect('/quarantine/admin');
 
 let failure: FormFailure | null = null;

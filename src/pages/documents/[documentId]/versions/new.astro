@@ -4,7 +4,15 @@ import { documentsReadDependencies } from '../../../../modules/documents/applica
 import { actions } from 'astro:actions';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const document = await documentsReadDependencies().get.execute({ actor, documentId: Astro.params.documentId ?? '' }).catch(() => undefined);
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
+let document: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['get']['execute']>> | undefined;
+try {
+  document = await documentsReadDependencies().get.execute({ actor, documentId: Astro.params.documentId ?? '' });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') {
+    return providerUnavailableResponse('Document details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+  }
+}
 if (!document) return Astro.redirect('/404');
 const canCreate = actor.permissions.some((permission) => ['PERM-DOC-CREATE','PERM-DOC-REVISE'].includes(permission.code) && permission.active !== false);
 const formData = Astro.request.method === 'POST' ? await Astro.request.formData() : null;

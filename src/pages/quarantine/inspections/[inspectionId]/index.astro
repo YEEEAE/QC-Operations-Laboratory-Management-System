@@ -1,12 +1,13 @@
 ---
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
 import StatusBadge from '../../../../ui/components/StatusBadge.astro';
 import { inspectionReadDependencies } from '../../../../modules/quarantine/application/dependencies.js';
 import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 let inspection: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['get']['execute']>> | undefined;
-try { inspection = await inspectionReadDependencies().get.execute({ actor, id: Astro.params.inspectionId ?? '' }); } catch { return Astro.redirect('/404'); }
+try { inspection = await inspectionReadDependencies().get.execute({ actor, id: Astro.params.inspectionId ?? '' }); } catch (error) { if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Inspection details are temporarily unavailable', Astro.url.pathname + Astro.url.search); return Astro.redirect('/404'); }
 if (!inspection) return Astro.redirect('/404');
 const editable = inspection.state === 'DRAFT' || inspection.state === 'RETURNED';
 ---
