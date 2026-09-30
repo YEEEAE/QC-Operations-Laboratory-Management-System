@@ -203,6 +203,7 @@ export const onRequest = defineMiddleware(
           sessionRecovery = 'ACCOUNT_UNAVAILABLE';
       }
     }
+    locals.sessionRecovery = sessionRecovery;
 
     let response: Response;
     // Route visibility is resolved after the server-derived session actor is

@@ -1,5 +1,9 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — QC-ADP-27 / RT-ROOT-001 authentication redirect**
+  - Changed: root now routes by server-resolved session, validates guest `returnTo`, and carries an explicit ended-session reason to login. State: PARTIAL / NO-GO.
+  - Evidence: unit 6/6, build/release verification PASS; candidate-bound Playwright 5 PASS / 1 auth-fixture skip. Authenticated route, applied schema, manual AT, owner signature and UAT remain NOT VERIFIED; no READY. Handoff: `audit/2026-09-30/QC-ADP-27-rt-root-001-handoff.md`.
+
 - **2026-09-24 — QC-ADP-26 / integration contract boundary**
   - Changed: sandbox adapter now binds source/site/actor, source-event idempotency, signed envelope audit correlation/time/sequence, and duplicate decision separation; no runtime provider wiring or policy approval.
   - Evidence: focused contracts 11/11 and targeted PostgreSQL route suites 25/25 PASS; authenticated E2E FAIL (13 PASS/26 FAIL/3 SKIPPED), including 404 recovery and accessibility/keyboard failures; AT/UAT NOT RUN. External integration stays DRAFT and disabled; handoff `audit/2026-09-24/QC-ADP-26-integration-contracts-handoff.md`.
@@ -482,7 +486,7 @@
 - **Security follow-up (2026-09-24):** local PostgreSQL 18 threat-case suite 17/17 PASS; authenticated file cross-scope/tampered-object requests and expired-session rejection remain NOT VERIFIED. QC-ADP-11 resolves four formerly UNKNOWN license classifications as MIT through exact version/text evidence, and limits provider destinations to exact official endpoints. Current dependency advisory result is still NOT VERIFIED (`registry.npmjs.org` DNS `ENOTFOUND`); security E2E is BLOCKED before Playwright because no container runtime is available. Prior 8 PASS/4 FAIL is HISTORICAL. See `audit/2026-09-24/QC-ADP-11-handoff.md`; do not treat this as security closure.
 - live performance evidence لخلفية النظام وlogin (CPU/GPU/heap/Web Vitals).
 - authenticated accessibility/responsive/keyboard/screen-reader matrix.
-- **QC-ADP-09 / F-010 remains OPEN:** local login/404 have partial axe, keyboard-order, and responsive evidence; qclevel.top dashboard/tasks have read-only skip-link/AX observations, not bound to the local release. No route card is fully closed; screen-reader/device evidence is absent. See `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md`.
+- **QC-ADP-09 / F-010 remains OPEN:** candidate-bound root/login Playwright now passes guest routing, external `returnTo` rejection, login axe/keyboard smoke, and 320/375px reflow (QC-ADP-27); authenticated resume is fixture-skipped and manual AT/screen-reader/device evidence remains absent. No route card is fully closed. See `audit/2026-09-30/QC-ADP-27-rt-root-001-handoff.md` and `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md`.
 - provider backup/PITR/WAL/object-store DR and approved RPO/RTO validation; QC-100-FINAL-034-B adds current-0034 local populated DB+file restore and synthetic read-pressure evidence, while provider DR, approved budgets, application backup-catalog integration, and representative workload limits remain open.
 - ترقية fixtures القديمة بحيث `loginIdentity` يصبح حاضرًا بوضوح في test doubles.
 - تنظيف Lottie container metadata/unused asset فقط إذا اعتُمد asset-pipeline لذلك.

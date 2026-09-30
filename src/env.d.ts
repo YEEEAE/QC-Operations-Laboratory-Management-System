@@ -23,5 +23,6 @@ declare namespace App {
     requestContext: import('./shared/http/request-context').RequestContext;
     actor?: import('./shared/authorization/types').ActorContext;
     user?: import('./modules/identity/domain/user').User;
+    sessionRecovery?: import('./shared/identity/session-recovery').SessionRecoveryNotice;
   }
 }

@@ -1,3 +1,5 @@
+import { safeReturnTo } from '../http/safe-return-to.js';
+
 export type SessionRecoveryNotice = 'SESSION_ENDED' | 'ACCOUNT_UNAVAILABLE';
 
 /**
@@ -14,4 +16,22 @@ export function sessionRecoveryCopy(notice: SessionRecoveryNotice): string {
   if (notice === 'SESSION_ENDED')
     return 'Your session ended or expired. Sign in again to continue. The previous action was not resubmitted.';
   return 'This account cannot continue. Contact the system owner if you think access should be restored.';
+}
+
+/**
+ * Selects the root route destination using the server-resolved session. Guests
+ * may resume only at a same-origin path; unknown or external values fall back
+ * to the dashboard. An expired/revoked session receives an explicit recovery
+ * reason without replaying the original request.
+ */
+export function rootRedirectDestination(
+  authenticated: boolean,
+  returnTo: unknown,
+  notice?: SessionRecoveryNotice,
+): string {
+  if (authenticated) return '/dashboard';
+
+  const query = new URLSearchParams({ returnTo: safeReturnTo(returnTo) });
+  if (notice) query.set('session', notice);
+  return `/login?${query.toString()}`;
 }

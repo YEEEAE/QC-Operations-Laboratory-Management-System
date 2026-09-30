@@ -60,6 +60,32 @@ const personas = [
 ] as const;
 
 test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
+  test('root sends guests to login and keeps returnTo on the local origin', async ({ page }) => {
+    await page.goto('/?returnTo=%2Ftasks%3Fdue%3Dtoday');
+    await expect(page).toHaveURL(/\/login\?/);
+    await expect(page.locator('input[name="returnTo"]')).toHaveValue('/tasks?due=today');
+
+    await page.goto('/?returnTo=https%3A%2F%2Fevil.example%2Fsteal');
+    await expect(page).toHaveURL(/\/login\?/);
+    await expect(page.locator('input[name="returnTo"]')).toHaveValue('/dashboard');
+  });
+
+  test('authenticated root requests go to dashboard and valid login returnTo resumes locally', async ({
+    page,
+  }) => {
+    test.skip(!hasRoleFixtures || !base, 'Disposable QC_VERIFY_* credentials are required.');
+    await page.goto('/login?returnTo=%2Ftasks');
+    await page.getByLabel('Login identity').fill('yazeed');
+    await page
+      .getByLabel('Password', { exact: true })
+      .fill(process.env.QC_VERIFY_SYSTEM_OWNER_PASSWORD ?? '');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page).toHaveURL(/\/tasks(?:\?|$)/);
+
+    await page.goto('/?returnTo=%2Ftasks');
+    await expect(page).toHaveURL(/\/dashboard(?:\?|$)/);
+  });
+
   test('login rejects bad credentials, preserves safe returnTo, and supports logout', async ({
     page,
   }) => {
