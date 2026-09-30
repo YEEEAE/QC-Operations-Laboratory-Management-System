@@ -110,6 +110,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
     </div>
     <a href="/admin/users">Back to users</a>
   </section>
+  {user && <details class="technical-record"><summary>Technical record details</summary><dl><div><dt>User record UUID</dt><dd><code>{user.id}</code></dd></div></dl></details>}
   {
     denied || !user ? (
       <section class="denied" role="alert">

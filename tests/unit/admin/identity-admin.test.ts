@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppError } from '../../../src/shared/errors/app-error.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import type { User } from '../../../src/modules/identity/domain/user.js';
-import type { UserRepository } from '../../../src/modules/identity/ports/user-repository.js';
+import type {
+  UserListFilter,
+  UserRepository,
+} from '../../../src/modules/identity/ports/user-repository.js';
 import type { PasswordHasher } from '../../../src/modules/identity/security/password-hasher.js';
 import type { SessionService } from '../../../src/modules/identity/application/session-service.js';
 import type { AuditService } from '../../../src/shared/audit/audit-service.js';
@@ -35,6 +38,22 @@ class MemoryUsers implements UserRepository {
     [...this.store.values()].find((entry) => entry.loginIdentity === loginIdentity);
   findById = async (id: string) => this.store.get(id);
   listUsers = async () => [...this.store.values()];
+  listUsersPage = async (filter: UserListFilter) => {
+    const matches = [...this.store.values()]
+      .filter((entry) => !filter.query || entry.loginIdentity.includes(filter.query))
+      .filter((entry) => !filter.accountState || entry.accountState === filter.accountState)
+      .sort((left, right) => left.loginIdentity.localeCompare(right.loginIdentity));
+    const start = (filter.page - 1) * filter.pageSize;
+    const items = matches
+      .slice(start, start + filter.pageSize)
+      .map(({ passwordHash: _hash, ...entry }) => entry);
+    return {
+      items,
+      total: matches.length,
+      page: filter.page,
+      pageSize: filter.pageSize,
+    };
+  };
   recordSuccessfulLogin = async () => {};
   create = async (input: {
     id: string;
@@ -136,6 +155,31 @@ describe('identity administration use cases', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).not.toHaveProperty('passwordHash');
     expect(result[0]?.loginIdentity).toBe('member');
+  });
+
+  it('pages a large user register with source filters and a safe projection', async () => {
+    const seed = Array.from({ length: 501 }, (_, index) =>
+      user({ id: `user-${index}`, loginIdentity: `member-${String(index).padStart(3, '0')}` }),
+    );
+    const repository = new MemoryUsers(seed);
+    const useCase = new ListUsersUseCase(repository);
+    const first = await useCase.executePage({
+      actor: actor([]),
+      filter: { page: 1, pageSize: 25 },
+    });
+    const last = await useCase.executePage({
+      actor: actor([]),
+      filter: { page: 21, pageSize: 25 },
+    });
+    const filtered = await useCase.executePage({
+      actor: actor([]),
+      filter: { query: 'member-500', page: 1, pageSize: 25 },
+    });
+    expect(first.total).toBe(501);
+    expect(first.items).toHaveLength(25);
+    expect(last.items).toHaveLength(1);
+    expect(filtered.items.map((entry) => entry.loginIdentity)).toEqual(['member-500']);
+    expect(first.items[0]).not.toHaveProperty('passwordHash');
   });
 
   it('allows active users to list safe member views without mutation authority', async () => {

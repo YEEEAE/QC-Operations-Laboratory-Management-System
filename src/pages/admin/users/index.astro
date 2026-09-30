@@ -1,42 +1,67 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
 import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const canCreate = canAccessAdminRoute(actor, 'usersNew');
+const params = Astro.url.searchParams;
+const requestedPage = Number(params.get('page') ?? '1');
+let page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+const query = (params.get('q') ?? '').trim().slice(0, 120);
+const stateParam = params.get('state');
+const accountState = stateParam === 'ACTIVE' || stateParam === 'INACTIVE' || stateParam === 'DISABLED' ? stateParam : undefined;
+const pageSize = 25;
 
 type UserList = Awaited<ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['execute']>>;
 let users: UserList | undefined;
 let roleSummary = new Map<string, string>();
 let scopeSummary = new Map<string, string>();
+let total = 0;
+let pages = 1;
 let denied = false;
+let providerUnavailable = false;
+let relationshipUnavailable = false;
 try {
-  users = await identityAdminReadDependencies().listUsers.execute({ actor });
-  const auth = administrationDependencies();
-  const userIds = users.map((user) => user.id);
-  const [roles, scopes] = await Promise.all([
-    auth.listUserRoles.executeForUsers({ actor, userIds }),
-    auth.listUserScopes.executeForUsers({ actor, userIds }),
-  ]);
-  for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
-  for (const row of scopes)
-    scopeSummary.set(
-      row.userId,
-      row.scopes
-        .map((scope) => (scope.value ? `${scope.kind}:${scope.value}` : scope.kind))
-        .join(', ') || '—',
-    );
-  for (const user of users) {
-    roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
-    scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
+  const result = await identityAdminReadDependencies().listUsers.executePage({
+    actor,
+    filter: { query, accountState, page, pageSize },
+  });
+  users = result.items;
+  total = result.total;
+  page = result.page;
+  pages = Math.max(1, Math.ceil(total / pageSize));
+  try {
+    const auth = administrationDependencies();
+    const userIds = users.map((user) => user.id);
+    const [roles, scopes] = await Promise.all([
+      auth.listUserRoles.executeForUsers({ actor, userIds }),
+      auth.listUserScopes.executeForUsers({ actor, userIds }),
+    ]);
+    for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
+    for (const row of scopes)
+      scopeSummary.set(
+        row.userId,
+        row.scopes
+          .map((scope) => (scope.value ? `${scope.kind}:${scope.value}` : scope.kind))
+          .join(', ') || '—',
+      );
+    for (const user of users) {
+      roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
+      scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
+    }
+  } catch {
+    relationshipUnavailable = true;
   }
 } catch (error) {
-  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
-  if (!denied) throw error;
+  const failure = classifyReadFailure(error);
+  denied = failure === 'DENIED' || (error instanceof AppError && error.category === 'AUTHORIZATION');
+  providerUnavailable = !denied;
 }
 ---
 
@@ -56,8 +81,10 @@ try {
       <a href="/admin">Back to administration</a>
     </div>
   </section>
+  {providerUnavailable && <ProviderUnavailableState title="User register is temporarily unavailable" description="The user source did not confirm a complete page. Retry after the source is available." retryHref={Astro.url.pathname + Astro.url.search} />}
+  {Boolean(stateParam && !accountState) && <p class="rejected" role="status">The account-state filter was not applied because its value is unsupported.</p>}
   {
-    denied || !users ? (
+    denied ? (
       <section class="denied" role="alert">
         <h2>User administration is not available</h2>
         <p>
@@ -65,10 +92,21 @@ try {
           membership alone does not authorize this view.
         </p>
       </section>
-    ) : users.length ? (
+    ) : providerUnavailable || !users ? null : (
+      <form class="filters" method="get" aria-label="Filter user accounts">
+        <label for="q">Search accounts<input id="q" name="q" type="search" maxlength="120" value={query} placeholder="Login, name, or email" /></label>
+        <label for="state">Account state<select id="state" name="state">
+          <option value="">All states</option><option value="ACTIVE" selected={accountState === 'ACTIVE'}>Active</option><option value="INACTIVE" selected={accountState === 'INACTIVE'}>Inactive</option><option value="DISABLED" selected={accountState === 'DISABLED'}>Disabled</option>
+        </select></label>
+        <button type="submit">Apply filters</button>
+        {(query || accountState) && <a href="/admin/users">Clear filters</a>}
+      </form>
+    )}
+  {
+    denied || !users ? null : users.length ? (
       <div class="table-wrap">
         <table>
-          <caption>Authorized member accounts</caption>
+          <caption>{total} authorized member account{total === 1 ? '' : 's'}{query || accountState ? ' matching these filters' : ''}; page {page} of {pages}</caption>
           <thead>
             <tr>
               <th scope="col">Login identity</th>
@@ -86,17 +124,23 @@ try {
                 </th>
                 <td>{user.displayName}</td>
                 <td>{user.accountState}</td>
-                <td>{roleSummary.get(user.id) ?? '—'}</td>
-                <td>{scopeSummary.get(user.id) ?? '—'}</td>
+                <td>{relationshipUnavailable ? 'Not confirmed' : roleSummary.get(user.id) ?? '—'}</td>
+                <td>{relationshipUnavailable ? 'Not confirmed' : scopeSummary.get(user.id) ?? '—'}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
     ) : (
-      <p class="empty">No member accounts are visible under your authorized scope.</p>
+      <p class="empty">{query || accountState ? 'No member accounts match these filters.' : 'No member accounts are visible under your authorized scope.'}</p>
     )
   }
+  {relationshipUnavailable && <p class="rejected" role="status">Role and scope details could not be confirmed. The user records remain available; retry this page to check these relationships again.</p>}
+  {!denied && !providerUnavailable && users && pages > 1 && <nav class="pagination" aria-label="User account pages">
+    {page > 1 ? <a href={`/admin/users?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(accountState ? { state: accountState } : {}), page: String(page - 1) })}`} rel="prev">Previous page</a> : <span>Previous page</span>}
+    <span aria-current="page">Page {page} of {pages}</span>
+    {page < pages ? <a href={`/admin/users?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(accountState ? { state: accountState } : {}), page: String(page + 1) })}`} rel="next">Next page</a> : <span>Next page</span>}
+  </nav>}
 </AppLayout>
 <style>
   .page-head {
@@ -150,6 +194,12 @@ try {
   .table-wrap {
     overflow-x: auto;
   }
+  .filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-4);margin-bottom:var(--space-4)}
+  .rejected{padding:var(--space-3);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}
+  .filters label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}
+  .filters input,.filters select,.filters button{min-height:var(--control-height);padding:.45rem .7rem}
+  .pagination{display:flex;align-items:center;justify-content:center;gap:var(--space-5);padding:var(--space-5)}
+  .pagination span{color:var(--text-muted)}
   table {
     width: 100%;
     border-collapse: collapse;

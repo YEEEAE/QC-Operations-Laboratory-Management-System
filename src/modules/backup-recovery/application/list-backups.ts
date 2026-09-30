@@ -1,5 +1,6 @@
 import { authorize } from '../../../shared/authorization/authorize.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { AppError } from '../../../shared/errors/app-error.js';
 import { BACKUP_RUN_STATES, type BackupRun } from '../domain/backup-record.js';
 import type { BackupCatalogFilter, BackupCatalogRepository } from '../ports/repository.js';
 
@@ -17,9 +18,35 @@ export class ListBackupsUseCase {
     actor: ActorContext;
     filter?: BackupCatalogFilter;
   }): Promise<readonly BackupRun[]> {
+    const requestedStates = this.authorizeAndFilter(input.actor, input.filter?.states);
+    const limit = Math.min(Math.max(input.filter?.limit ?? 50, 1), MAX_CATALOG_PAGE);
+    return this.repository.listBackups({ ...input.filter, limit, states: requestedStates });
+  }
+
+  async executePage(input: {
+    actor: ActorContext;
+    filter: { states?: readonly string[]; page: number; pageSize: number };
+  }) {
+    const states = this.authorizeAndFilter(input.actor, input.filter.states);
+    if (!this.repository.listBackupPage)
+      throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', {
+        userSafe: true,
+        retryability: 'INTERNAL_RETRY_ONLY',
+      });
+    return this.repository.listBackupPage({
+      states,
+      page: Math.max(1, Math.trunc(input.filter.page)),
+      pageSize: Math.min(100, Math.max(1, Math.trunc(input.filter.pageSize))),
+    });
+  }
+
+  private authorizeAndFilter(
+    actor: ActorContext,
+    states?: readonly string[],
+  ): readonly BackupRun['state'][] {
     authorize(
       {
-        actor: input.actor,
+        actor,
         permission: 'PERM-BKP-VIEW',
         action: 'VIEW',
         entity: {
@@ -35,16 +62,9 @@ export class ListBackupsUseCase {
       },
       { throwOnDeny: true },
     );
-    const limit = Math.min(Math.max(input.filter?.limit ?? 50, 1), MAX_CATALOG_PAGE);
-    const requestedStates = input.filter?.states?.length
-      ? input.filter.states.filter((state) =>
-          (BACKUP_RUN_STATES as readonly string[]).includes(state),
-        )
-      : [...BACKUP_RUN_STATES];
-    return this.repository.listBackups({
-      ...input.filter,
-      limit,
-      states: requestedStates as readonly BackupRun['state'][],
-    });
+    if (states?.some((state) => !(BACKUP_RUN_STATES as readonly string[]).includes(state))) {
+      throw new AppError('VALIDATION_INVALID_QUERY', { userSafe: true });
+    }
+    return states?.length ? (states as readonly BackupRun['state'][]) : [...BACKUP_RUN_STATES];
   }
 }

@@ -12,7 +12,12 @@ import type {
   RestoreRun,
   RestoreRunState,
 } from '../domain/backup-record.js';
-import type { BackupCatalogFilter, BackupCatalogRepository } from '../ports/repository.js';
+import type {
+  BackupCatalogFilter,
+  BackupCatalogPage,
+  BackupCatalogPageFilter,
+  BackupCatalogRepository,
+} from '../ports/repository.js';
 
 const mapBackup = (row: DatabaseRow<'backup_runs'>): BackupRun => ({
   id: row.id,
@@ -82,6 +87,33 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
       query = query.limit(Math.min(Math.max(filter.limit ?? 50, 1), 100)) as typeof query;
       const rows = await query.execute();
       return rows.map(mapBackup);
+    } catch (error) {
+      throw translateDatabaseError(error);
+    }
+  }
+
+  async listBackupPage(filter: BackupCatalogPageFilter): Promise<BackupCatalogPage> {
+    try {
+      const page = Math.max(1, Math.trunc(filter.page));
+      const pageSize = Math.min(100, Math.max(1, Math.trunc(filter.pageSize)));
+      let countQuery = this.database
+        .selectFrom('backup_runs')
+        .select((eb) => eb.fn.countAll().as('total'));
+      let rowsQuery = this.database.selectFrom('backup_runs').selectAll();
+      if (filter.states?.length) {
+        countQuery = countQuery.where('state', 'in', [...filter.states]) as typeof countQuery;
+        rowsQuery = rowsQuery.where('state', 'in', [...filter.states]) as typeof rowsQuery;
+      }
+      const count = await countQuery.executeTakeFirstOrThrow();
+      const total = Number(count.total);
+      const effectivePage = Math.min(page, Math.max(1, Math.ceil(total / pageSize)));
+      const rows = await rowsQuery
+        .orderBy('requested_at', 'desc')
+        .orderBy('id', 'desc')
+        .limit(pageSize)
+        .offset((effectivePage - 1) * pageSize)
+        .execute();
+      return { items: rows.map(mapBackup), total, page: effectivePage, pageSize };
     } catch (error) {
       throw translateDatabaseError(error);
     }

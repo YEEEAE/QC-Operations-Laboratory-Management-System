@@ -1,6 +1,6 @@
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import type { UserRepository } from '../ports/user-repository.js';
+import type { UserListFilter, UserListPage, UserRepository } from '../ports/user-repository.js';
 import { toSafeUserView, type SafeUserView } from './safe-user-view.js';
 
 export class ListUsersUseCase {
@@ -12,5 +12,16 @@ export class ListUsersUseCase {
     if (input.actor.accountState !== 'ACTIVE')
       throw new AppError('AUTHZ_DENIED', { userSafe: true });
     return (await this.users.listUsers()).map(toSafeUserView);
+  }
+
+  async executePage(input: { actor: ActorContext; filter: UserListFilter }): Promise<UserListPage> {
+    if (input.actor.accountState !== 'ACTIVE')
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (!this.users.listUsersPage)
+      throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', {
+        userSafe: true,
+        retryability: 'INTERNAL_RETRY_ONLY',
+      });
+    return this.users.listUsersPage(input.filter);
   }
 }

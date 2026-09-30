@@ -61,6 +61,18 @@ function catalog(
     async listBackups() {
       return items;
     },
+    async listBackupPage(filter) {
+      const filtered = filter.states?.length
+        ? items.filter((item) => filter.states?.includes(item.state))
+        : [...items];
+      const start = (filter.page - 1) * filter.pageSize;
+      return {
+        items: filtered.slice(start, start + filter.pageSize),
+        total: filtered.length,
+        page: filter.page,
+        pageSize: filter.pageSize,
+      };
+    },
     async getBackup(id) {
       return items.find((item) => item.id === id);
     },
@@ -173,6 +185,39 @@ describe('backup catalog', () => {
       actor: actor(['PERM-BKP-VIEW']),
     });
     expect(items).toHaveLength(1);
+  });
+
+  it('pages a backup catalog and applies state filters before selecting the page', async () => {
+    const many = Array.from({ length: 51 }, (_, index) => ({
+      ...backup(index === 50 ? 'FAILED' : 'VERIFIED'),
+      id: `backup-${String(index).padStart(3, '0')}`,
+    }));
+    const useCase = new ListBackupsUseCase(catalog(many));
+    const first = await useCase.executePage({
+      actor: actor(['PERM-BKP-VIEW']),
+      filter: { page: 1, pageSize: 25 },
+    });
+    const last = await useCase.executePage({
+      actor: actor(['PERM-BKP-VIEW']),
+      filter: { page: 3, pageSize: 25 },
+    });
+    const filtered = await useCase.executePage({
+      actor: actor(['PERM-BKP-VIEW']),
+      filter: { states: ['FAILED'], page: 1, pageSize: 25 },
+    });
+    expect(first.total).toBe(51);
+    expect(first.items).toHaveLength(25);
+    expect(last.items).toHaveLength(1);
+    expect(filtered.total).toBe(1);
+    await expect(
+      useCase.executePage({
+        actor: actor(['PERM-BKP-VIEW']),
+        filter: { states: ['NOT_A_BACKUP_STATE'], page: 1, pageSize: 25 },
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_INVALID_QUERY' });
+    await expect(
+      useCase.executePage({ actor: actor([]), filter: { page: 1, pageSize: 25 } }),
+    ).rejects.toThrowError(AppError);
   });
 
   it('returns backup details with restore history for permitted viewers and nothing for missing records', async () => {

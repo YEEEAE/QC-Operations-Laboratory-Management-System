@@ -6,6 +6,19 @@ export interface BackupCatalogFilter {
   limit?: number;
 }
 
+export interface BackupCatalogPageFilter {
+  states?: readonly BackupRunState[];
+  page: number;
+  pageSize: number;
+}
+
+export interface BackupCatalogPage {
+  items: readonly BackupRun[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 /**
  * Read/write boundary for the application-level backup catalog backed by the
  * canonical `qc.backup_runs` / `qc.restore_runs` tables. Raw storage
@@ -14,6 +27,7 @@ export interface BackupCatalogFilter {
  */
 export interface BackupCatalogRepository {
   listBackups(filter?: BackupCatalogFilter): Promise<readonly BackupRun[]>;
+  listBackupPage?(filter: BackupCatalogPageFilter): Promise<BackupCatalogPage>;
   getBackup(backupId: string): Promise<BackupRun | undefined>;
   listRestoreRuns(backupId: string): Promise<readonly RestoreRun[]>;
   recordRestoreRequest(input: {

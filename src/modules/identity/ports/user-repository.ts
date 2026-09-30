@@ -15,6 +15,7 @@ export interface UserRepository {
   findByLoginIdentity(loginIdentity: string): Promise<User | undefined>;
   findById(id: string): Promise<User | undefined>;
   listUsers(): Promise<readonly User[]>;
+  listUsersPage?(filter: UserListFilter): Promise<UserListPage>;
   recordSuccessfulLogin(id: string, at: Date): Promise<void>;
   create(input: {
     id: string;
@@ -53,3 +54,19 @@ export interface UserRepository {
     at: Date,
   ): Promise<void>;
 }
+
+export interface UserListFilter {
+  query?: string;
+  accountState?: User['accountState'];
+  page: number;
+  pageSize: number;
+}
+
+export interface UserListPage {
+  items: readonly UserListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type UserListItem = Omit<User, 'passwordHash'>;

@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-12 / register pagination**
+  - Changed: source pagination/filtering and human-first labels implemented for `/admin/users` and `/system/backups`; remaining F-012 routes are still open.
+  - Evidence: focused synthetic tests 18/18 and candidate Astro build PASS; PostgreSQL 18, authenticated browser, AT and UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-12.md`.
+  - State: PARTIAL.
+
 - **2026-10-01 — QC-ADP26-11 / POST baseline and unknown write outcomes**
   - Changed: task lifecycle now has native POST and selected create forms use classified enhancement; shared unknown-write recovery no longer claims rollback. No schema/policy change.
   - Evidence: focused 85/85 and Astro build 1/1 PASS; typecheck still FAILS on the existing `Date.formatDate` error. PostgreSQL18/authenticated HTTP/browser/AT/UAT NOT VERIFIED; route inventory remains open. `audit/2026-09-30/handoff-QC-ADP26-11.md`.
@@ -509,6 +514,7 @@
 - **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
+- **QC-ADP26-12 / QC-PAGE-F-012 PARTIAL:** source-level filtered paging and human-first labels cover `/admin/users` and `/system/backups`; synthetic 501-user/51-backup tests and Astro build PASS. Other F-012 routes and PostgreSQL 18, authenticated browser, AT, and UAT evidence remain OPEN/NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-12.md`.
 - **QC-ADP26-09 / QC-PAGE-F-009 PARTIAL:** canonical P-06 authority and strict field-bound expectedVersion validation are fixed in source; focused unit 73/73 PASS. PG18/HTTP/browser/AT/UAT remain NOT VERIFIED because this host has no Docker daemon and no authenticated fixture. Handoff `audit/2026-09-30/handoff-QC-ADP26-09.md`.
 - **QC-ADP26-08 / QC-PAGE-F-008 PARTIAL:** missing/denied/provider classification and no-count behavior were added to selected cited routes; primary equipment/maintenance, test and account reads are preserved across related-source failures. The finding spans 61 routes and remains OPEN pending remaining read paths, per-read failure injection, PG/HTTP/browser/AT evidence. Handoff `audit/2026-09-30/handoff-QC-ADP26-08.md`.
 - **QC-ADP26-01 / QC-PAGE-F-001 OPEN:** `scripts/verification/build-route-acceptance.ts` inventories all 88 current F-001 cards and six UAT personas; 3,696 rows are planning only, not approved applicability. `.ci-results/route-acceptance.json` carries exact candidate/build/schema binding. Source page-access checks are separate from runtime/AT/UAT. The validator rejects stale bindings, unsupported N/A, invalid denial controls and automated human acceptance. Domain action/state expansion and real route fixtures remain NOT VERIFIED; `Documents/ROUTE-ACCEPTANCE-MATRIX.md`.

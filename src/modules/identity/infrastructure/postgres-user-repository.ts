@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema, DatabaseRow } from '../../../shared/database/db-types.js';
-import type { UserRepository } from '../ports/user-repository.js';
+import type { UserListFilter, UserListPage, UserRepository } from '../ports/user-repository.js';
 import type { User } from '../domain/user.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
@@ -115,6 +115,69 @@ export class PostgresUserRepository implements UserRepository {
       .limit(500)
       .execute();
     return rows.map(map);
+  }
+  async listUsersPage(filter: UserListFilter): Promise<UserListPage> {
+    const page = Math.max(1, Math.trunc(filter.page));
+    const pageSize = Math.min(100, Math.max(1, Math.trunc(filter.pageSize)));
+    let countQuery = this.db.selectFrom('users').select((eb) => eb.fn.countAll().as('total'));
+    let rowsQuery = this.db
+      .selectFrom('users')
+      .select([
+        'id',
+        'login_identity',
+        'email',
+        'display_name',
+        'account_state',
+        'must_change_password',
+        'last_login_at',
+        'version',
+      ]);
+    if (filter.accountState) {
+      countQuery = countQuery.where('account_state', '=', filter.accountState) as typeof countQuery;
+      rowsQuery = rowsQuery.where('account_state', '=', filter.accountState) as typeof rowsQuery;
+    }
+    const query = filter.query?.trim();
+    if (query) {
+      const pattern = `%${query.replace(/[\\%_]/g, (value) => `\\${value}`)}%`;
+      countQuery = countQuery.where((eb) =>
+        eb.or([
+          eb('login_identity', 'ilike', pattern),
+          eb('display_name', 'ilike', pattern),
+          eb('email', 'ilike', pattern),
+        ]),
+      ) as typeof countQuery;
+      rowsQuery = rowsQuery.where((eb) =>
+        eb.or([
+          eb('login_identity', 'ilike', pattern),
+          eb('display_name', 'ilike', pattern),
+          eb('email', 'ilike', pattern),
+        ]),
+      ) as typeof rowsQuery;
+    }
+    const count = await countQuery.executeTakeFirstOrThrow();
+    const total = Number(count.total);
+    const effectivePage = Math.min(page, Math.max(1, Math.ceil(total / pageSize)));
+    const rows = await rowsQuery
+      .orderBy('login_identity')
+      .orderBy('id')
+      .limit(pageSize)
+      .offset((effectivePage - 1) * pageSize)
+      .execute();
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        loginIdentity: row.login_identity,
+        ...(row.email ? { email: row.email } : {}),
+        displayName: row.display_name,
+        accountState: row.account_state as User['accountState'],
+        mustChangePassword: row.must_change_password,
+        ...(row.last_login_at ? { lastLoginAt: row.last_login_at } : {}),
+        version: BigInt(row.version),
+      })),
+      total,
+      page: effectivePage,
+      pageSize,
+    };
   }
   async recordSuccessfulLogin(id: string, at: Date) {
     await this.db
