@@ -1,5 +1,6 @@
 import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { AppError } from '../../../src/shared/errors/app-error.js';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { PostgresTemplateRepository } from '../../../src/modules/quarantine/templates/infrastructure/postgres-repository.js';
 import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audit-repository.js';
@@ -14,6 +15,8 @@ import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
 const SUPERVISOR_ID = '01900000-0000-7000-8000-00000000d001';
 const EMPLOYEE_ID = '01900000-0000-7000-8000-00000000d002';
+const OWNER_ID = '01900000-0000-7000-8000-00000000d003';
+const ADMIN_ID = '01900000-0000-7000-8000-00000000d004';
 
 const actor = (id: string, roles: string[]): ActorContext => ({
   id,
@@ -43,6 +46,8 @@ beforeAll(async () => {
   for (const [id, identity] of [
     [SUPERVISOR_ID, 'template-conc-sup'],
     [EMPLOYEE_ID, 'template-conc-emp'],
+    [OWNER_ID, 'yazeed'],
+    [ADMIN_ID, 'template-conc-admin'],
   ] as const) {
     await pool!.query(
       `INSERT INTO qc.users (id, login_identity, display_name, password_hash) VALUES ($1, $2, $3, 'test-only-placeholder-not-a-secret') ON CONFLICT (id) DO NOTHING`,
@@ -58,6 +63,69 @@ afterAll(async () => {
 });
 
 describe('template PostgreSQL concurrency and idempotency (P-06)', () => {
+  it('allows canonical yazeed and leaves a valid row plus audit/outbox unchanged for noncanonical owner and Admin denial', async () => {
+    const repo = new PostgresTemplateRepository(
+      db,
+      new PostgresAuditRepository(db),
+      new PostgresOutboxRepository(db),
+    );
+    const stamp = Date.now();
+    const draft = await new CreateTemplateUseCase(repo).execute({
+      actor: actor(EMPLOYEE_ID, ['EMPLOYEE']),
+      templateCode: `AUTH-${stamp}`,
+      versionNo: 'v1',
+      name: 'Authority acceptance template',
+      requestId: `auth-create-${stamp}`,
+    });
+    const supervisor = actor(SUPERVISOR_ID, ['SUPERVISOR']);
+    expect(await repo.get(draft.id, supervisor)).toMatchObject({ id: draft.id, state: 'DRAFT' });
+
+    const snapshot = async () => {
+      const row = await pool!.query(
+        'SELECT state, version::text FROM qc.inspection_template_versions WHERE id = $1',
+        [draft.id],
+      );
+      const audit = await pool!.query(
+        'SELECT count(*)::int AS count FROM qc.audit_events WHERE subject_id = $1',
+        [draft.id],
+      );
+      const outbox = await pool!.query(
+        'SELECT count(*)::int AS count FROM qc.outbox_events WHERE aggregate_id = $1',
+        [draft.id],
+      );
+      return { row: row.rows[0], audit: audit.rows[0].count, outbox: outbox.rows[0].count };
+    };
+    const before = await snapshot();
+    const review = new ReviewTemplateUseCase(repo);
+
+    await expect(
+      review.execute({
+        actor: { ...actor(OWNER_ID, ['SYSTEM_OWNER']), loginIdentity: 'not-yazeed' },
+        id: draft.id,
+        expectedVersion: 1n,
+        requestId: `auth-deny-owner-${stamp}`,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    await expect(
+      review.execute({
+        actor: { ...actor(ADMIN_ID, ['ADMIN']), permissions: [] },
+        id: draft.id,
+        expectedVersion: 1n,
+        requestId: `auth-deny-admin-${stamp}`,
+      }),
+    ).rejects.toBeInstanceOf(AppError);
+    expect(await snapshot()).toEqual(before);
+
+    const canonicalOwner = { ...actor(OWNER_ID, ['SYSTEM_OWNER']), loginIdentity: 'yazeed' };
+    const approvedReview = await review.execute({
+      actor: canonicalOwner,
+      id: draft.id,
+      expectedVersion: 1n,
+      requestId: `auth-allow-yazeed-${stamp}`,
+    });
+    expect(approvedReview.state).toBe('UNDER_REVIEW');
+  });
+
   it('serializes concurrent reviews: at most one transition wins per version', async () => {
     const repo = new PostgresTemplateRepository(
       db,

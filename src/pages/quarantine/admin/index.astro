@@ -5,13 +5,13 @@ import { field, optionalField, toFormFailure, extractDetailId, type FormFailure 
 import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { isTemplateAuthority } from '../../../modules/quarantine/templates/domain/template-policy.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
 
 const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
-const isAuthority =
-  actor.roles.includes('SUPERVISOR') || actor.roles.includes('MANAGER') || actor.roles.includes('SYSTEM_OWNER');
+const isAuthority = isTemplateAuthority(actor);
 
 let denied = false;
 let templates: Awaited<ReturnType<ReturnType<typeof templateReadDependencies>['list']['execute']>> = [];
@@ -21,7 +21,8 @@ try {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
 }
 
-let values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '', reauthenticationSecret: '' };
+let values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '' };
+let reauthenticationSecret = '';
 let failure: FormFailure | null = null;
 
 if (Astro.request.method === 'POST' && hasTemplatePermission) {
@@ -33,8 +34,10 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     description: field(formData, 'description'),
     contentHash: field(formData, 'contentHash'),
     sourceDocument: field(formData, 'sourceDocument'),
-    reauthenticationSecret: field(formData, 'reauthenticationSecret'),
+    // Keep credentials out of the retained form state so they can never be
+    // echoed into SSR output after a failed request.
   };
+  reauthenticationSecret = field(formData, 'reauthenticationSecret');
   try {
     const created = await templateActionDependencies().create.execute({
       actor,
@@ -44,13 +47,14 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
       ...(values.description ? { description: values.description } : {}),
       ...(values.contentHash ? { contentHash: values.contentHash } : {}),
       ...(values.sourceDocument ? { sourceDocument: values.sourceDocument } : {}),
-      ...(values.reauthenticationSecret ? { reauthenticationSecret: values.reauthenticationSecret } : {}),
+      ...(reauthenticationSecret ? { reauthenticationSecret } : {}),
       requestId: Astro.locals.requestContext?.requestId ?? `admin-create-${Date.now()}`,
     });
     const id = extractDetailId(created);
     if (id) return Astro.redirect(`/quarantine/admin/${id}`, 303);
     templates = await templateReadDependencies().list.execute({ actor });
-    values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '', reauthenticationSecret: '' };
+    values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '' };
+    reauthenticationSecret = '';
   } catch (error) {
     failure = toFormFailure(error, {
       entity: 'Template',
@@ -65,9 +69,11 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
       listLabel: 'template administration',
     });
   }
+  reauthenticationSecret = '';
 }
 
-function describedBy(name: keyof typeof values): string | undefined {
+type FieldName = keyof typeof values | 'reauthenticationSecret';
+function describedBy(name: FieldName): string | undefined {
   const parts: string[] = [];
   if (failure?.fieldErrors[name]) parts.push(`${name}-error`);
   if (name === 'templateCode') parts.push('templateCode-help');
@@ -76,7 +82,7 @@ function describedBy(name: keyof typeof values): string | undefined {
   if (name === 'reauthenticationSecret') parts.push('reauthenticationSecret-help');
   return parts.length ? parts.join(' ') : undefined;
 }
-function invalid(name: keyof typeof values): 'true' | undefined {
+function invalid(name: FieldName): 'true' | undefined {
   return failure?.fieldErrors[name] ? 'true' : undefined;
 }
 

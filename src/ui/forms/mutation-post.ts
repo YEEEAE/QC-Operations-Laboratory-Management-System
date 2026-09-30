@@ -101,6 +101,21 @@ export function parseBigintField(text: string, fieldName: string): bigint {
   }
 }
 
+/** Parse a positive base-10 version token without accepting BigInt's alternate syntaxes. */
+export function parseExpectedVersionField(text: string, fieldName = 'expectedVersion'): bigint {
+  const value = text.trim();
+  if (value.length > 19 || !/^[1-9]\d*$/.test(value)) {
+    throw new TransportValidationError(fieldName);
+  }
+  try {
+    const parsed = BigInt(value);
+    if (parsed > 9_223_372_036_854_775_807n) throw new TransportValidationError(fieldName);
+    return parsed;
+  } catch {
+    throw new TransportValidationError(fieldName);
+  }
+}
+
 /** Parse a required JSON-object textarea (change-request snapshot). */
 export function parseJsonField(text: string, fieldName: string): Record<string, unknown> {
   const trimmed = text.trim();

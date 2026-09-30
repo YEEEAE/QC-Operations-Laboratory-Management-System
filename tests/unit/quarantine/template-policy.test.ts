@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import {
   describeTemplateActor,
@@ -43,5 +44,23 @@ describe('template authority policy (P-06)', () => {
     expect(describeTemplateActor(actor(['SUPERVISOR']))).toBe('AUTHORITY');
     expect(describeTemplateActor(actor(['EMPLOYEE']))).toBe('EMPLOYEE');
     expect(describeTemplateActor(actor(['ADMIN']))).toBe('OTHER');
+  });
+
+  it('uses the canonical P-06 authority and safe version parsing in both template pages', () => {
+    const register = readFileSync(
+      new URL('../../../src/pages/quarantine/admin/index.astro', import.meta.url),
+      'utf8',
+    );
+    const detail = readFileSync(
+      new URL('../../../src/pages/quarantine/admin/[templateId].astro', import.meta.url),
+      'utf8',
+    );
+
+    expect(register).toContain('const isAuthority = isTemplateAuthority(actor)');
+    expect(detail).toContain('const isAuthority = isTemplateAuthority(actor)');
+    expect(detail).toContain('parseExpectedVersionField(formValues.expectedVersion)');
+    expect(detail).not.toMatch(/BigInt\(field\(formData,\s*'expectedVersion'/);
+    expect(register).not.toContain('values.reauthenticationSecret');
+    expect(detail).not.toContain('value={reauthenticationSecret}');
   });
 });

@@ -9,6 +9,7 @@ import {
   optionalDate,
   optionalField,
   parseBigintField,
+  parseExpectedVersionField,
   parseJsonField,
   parseJsonValue,
   toFormFailure,
@@ -58,6 +59,35 @@ describe('mutation POST baseline helper (F-04 / F-05)', () => {
       transportField = (error as TransportValidationError).field;
     }
     expect(transportField).toBe('targetVersion');
+    expect(parseExpectedVersionField(' 3 ')).toBe(3n);
+    expect(parseExpectedVersionField('9223372036854775807')).toBe(9_223_372_036_854_775_807n);
+    for (const malformed of [
+      '',
+      '0',
+      '-1',
+      '+1',
+      '0x10',
+      '1e3',
+      '1.0',
+      '9223372036854775808',
+      '9'.repeat(10_000),
+    ]) {
+      expect(() => parseExpectedVersionField(malformed)).toThrow(
+        expect.objectContaining({ field: 'expectedVersion' }),
+      );
+    }
+    const expectedVersionFailure = toFormFailure(
+      new TransportValidationError('expectedVersion'),
+      {
+        entity: 'Template',
+        requiredFields: [{ name: 'expectedVersion', label: 'Expected version' }],
+        values: { expectedVersion: '0' },
+        listHref: '/quarantine/admin',
+        listLabel: 'template administration',
+      },
+    );
+    expect(expectedVersionFailure.fieldErrors).toEqual({ expectedVersion: 'Check the Expected version.' });
+    expect(expectedVersionFailure.firstInvalidField).toBe('expectedVersion');
     expect(parseJsonField('{"a":1}', 'targetSnapshot')).toEqual({ a: 1 });
     expect(() => parseJsonField('', 'targetSnapshot')).toThrow(TransportValidationError);
     expect(() => parseJsonField('[1,2]', 'targetSnapshot')).toThrow(TransportValidationError);

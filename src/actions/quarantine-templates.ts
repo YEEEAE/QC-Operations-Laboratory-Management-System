@@ -39,7 +39,16 @@ const templateFields = z.object({
   sourceDocument: z.string().trim().max(256).optional(),
   reauthenticationSecret: z.string().optional(),
 });
-const idVersion = z.object({ id: z.string().uuid(), expectedVersion: z.coerce.bigint() });
+const POSTGRES_BIGINT_MAX = 9_223_372_036_854_775_807n;
+const idVersion = z.object({
+  id: z.string().uuid(),
+  expectedVersion: z
+    .string()
+    .max(19)
+    .regex(/^[1-9]\d*$/)
+    .transform((value) => BigInt(value))
+    .refine((value) => value <= POSTGRES_BIGINT_MAX),
+});
 
 const createTemplate = defineAction({
   accept: 'json',
