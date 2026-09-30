@@ -1,5 +1,11 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-24 — QC-ADP-26 / integration contract boundary**
+  - Changed: sandbox adapter now binds source/site/actor, source-event idempotency, signed envelope audit correlation/time/sequence, and duplicate decision separation; no runtime provider wiring or policy approval.
+  - Evidence: focused contracts 11/11 and targeted PostgreSQL route suites 25/25 PASS; authenticated E2E FAIL (13 PASS/26 FAIL/3 SKIPPED), including 404 recovery and accessibility/keyboard failures; AT/UAT NOT RUN. External integration stays DRAFT and disabled; handoff `audit/2026-09-24/QC-ADP-26-integration-contracts-handoff.md`.
+  - State: PARTIAL / BLOCKED / NO-GO.
+  - Key files: `Documents/INTEGRATION-CONTRACTS.md`, `src/shared/integrations/instrument-sandbox-adapter.ts`.
+
 - **2026-09-24 — QC-ADP-19 / أهلية المعدات والمعايرة والصيانة**
   - Changed: BR-CAL-004/BR-MNT-004 صارتا معتمدتين وفق قبول المستخدم؛ منع المعايرة المنتهية وUNDER_MAINTENANCE، ولقطة مصدر خادمية append-only في تسجيل استخدام المعدة بالمختبر. source migration head `0042_immutable_lab_equipment_usage`؛ PD-21 PARTIAL (السياسة معتمدة، دليل التنفيذ ناقص).
   - Evidence: unit 10/10 PASS؛ asset eligibility contract 6/6 PASS (in-memory؛ ليس دليل PostgreSQL)؛ lab PG BLOCKED لغياب container runtime (حالتان لم تنفذا)؛ Astro 0 errors؛ authenticated E2E/browser/UAT NOT VERIFIED. Architecture check FAIL في انتهاكات سابقة بصفحات release-evidence وtasks. لا READY؛ `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.

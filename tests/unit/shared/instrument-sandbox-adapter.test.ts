@@ -32,6 +32,7 @@ function setup(isAvailable: () => boolean = () => true) {
   const adapter = createInstrumentSandboxAdapter({
     sourceId: 'sandbox-instrument-01',
     siteId: 'sandbox-site',
+    actorId: 'instrument-service-sandbox',
     signingKey: key,
     isAvailable,
     appendAudit: (record) => audit.push(record),
@@ -47,16 +48,23 @@ describe('instrument sandbox contract', () => {
       businessDecision: 'UNDECIDED',
       signatureStatus: 'VALID',
       actorMapping: 'PROVENANCE_ONLY',
+      sequenceOutcome: 'IN_ORDER',
     });
     expect(audit).toHaveLength(1);
+    expect(audit[0]?.correlationId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(audit[0]?.recordedAt).toBeTruthy();
     expect(JSON.stringify(audit[0])).not.toContain('sample-1');
   });
 
-  it('makes an identical duplicate idempotent', () => {
-    const { adapter } = setup();
+  it('makes an identical duplicate idempotent without creating a QC decision', () => {
+    const { adapter, audit } = setup();
     const event = envelope(1);
     expect(adapter.receive(event).deliveryStatus).toBe('ACCEPTED');
-    expect(adapter.receive(event).deliveryStatus).toBe('DUPLICATE');
+    const duplicate = adapter.receive(event);
+    expect(duplicate.deliveryStatus).toBe('DUPLICATE');
+    expect(audit).toHaveLength(2);
+    expect(audit.filter((record) => record.deliveryStatus === 'ACCEPTED')).toHaveLength(1);
+    expect(audit.every((record) => record.businessDecision === 'UNDECIDED')).toBe(true);
   });
 
   it('quarantines an out-of-order sequence without turning it into a business result', () => {
@@ -68,6 +76,7 @@ describe('instrument sandbox contract', () => {
     ).toMatchObject({
       deliveryStatus: 'QUARANTINED',
       failureCode: 'OUT_OF_ORDER',
+      sequenceOutcome: 'OUT_OF_ORDER',
       businessDecision: 'UNDECIDED',
     });
   });
@@ -81,6 +90,7 @@ describe('instrument sandbox contract', () => {
       deliveryStatus: 'REJECTED',
       failureCode: 'INVALID_SIGNATURE',
       signatureStatus: 'INVALID',
+      actorMapping: 'UNMAPPED',
       businessDecision: 'UNDECIDED',
     });
   });
@@ -91,6 +101,7 @@ describe('instrument sandbox contract', () => {
       deliveryStatus: 'RETRYABLE_FAILURE',
       failureCode: 'SANDBOX_UNAVAILABLE',
       signatureStatus: 'VALID',
+      sequenceOutcome: 'NOT_CHECKED',
       businessDecision: 'UNDECIDED',
     });
     expect(adapter.receive(envelope(1)).deliveryStatus).toBe('RETRYABLE_FAILURE');
@@ -101,6 +112,27 @@ describe('instrument sandbox contract', () => {
     adapter.receive(envelope(1));
     const altered = envelope(2, { idempotencyKey: 'sandbox-instrument-01:event-1', sequence: 2 });
     expect(adapter.receive(altered)).toMatchObject({
+      deliveryStatus: 'REJECTED',
+      failureCode: 'IDEMPOTENCY_CONFLICT',
+      businessDecision: 'UNDECIDED',
+    });
+  });
+
+  it('rejects a signed event whose actor is not registered for the source', () => {
+    const { adapter } = setup();
+    const event = envelope(1, { actorId: 'unregistered-actor' });
+    expect(adapter.receive(event)).toMatchObject({
+      deliveryStatus: 'REJECTED',
+      failureCode: 'INVALID_ENVELOPE',
+      actorMapping: 'UNMAPPED',
+      businessDecision: 'UNDECIDED',
+    });
+  });
+
+  it('rejects a second idempotency key for an already accepted source event', () => {
+    const { adapter } = setup();
+    adapter.receive(envelope(1));
+    expect(adapter.receive(envelope(1, { idempotencyKey: 'alternate-key' }))).toMatchObject({
       deliveryStatus: 'REJECTED',
       failureCode: 'IDEMPOTENCY_CONFLICT',
       businessDecision: 'UNDECIDED',

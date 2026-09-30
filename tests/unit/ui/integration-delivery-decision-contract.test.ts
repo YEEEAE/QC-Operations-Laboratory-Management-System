@@ -17,4 +17,12 @@ describe('integration delivery and business decision UX contract', () => {
     expect(adapter).toContain("businessDecision: 'UNDECIDED'");
     expect(adapter).toContain("failureCode: 'SANDBOX_UNAVAILABLE'");
   });
+
+  it('does not connect the offline instrument adapter to laboratory execution actions', () => {
+    const page = readFileSync('src/pages/laboratory/tests/[labTestId]/execute.astro', 'utf8');
+    const actions = readFileSync('src/actions/laboratory.ts', 'utf8');
+    expect(page).not.toContain('instrument-sandbox-adapter');
+    expect(actions).not.toContain('instrument-sandbox-adapter');
+    expect(actions).not.toContain('createInstrumentSandboxAdapter');
+  });
 });

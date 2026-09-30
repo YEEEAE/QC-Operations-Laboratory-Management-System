@@ -43,11 +43,20 @@ approval; no provider-specific configuration or retention duration is implied.
 
 `src/shared/integrations/instrument-sandbox-adapter.ts` is an offline contract
 adapter, not a live connector. Tests inject a deterministic signing key and an
-in-memory receiver. It validates version/source/event identity and HMAC,
-deduplicates exact replays, rejects key reuse with changed content, and holds
-out-of-order sequences. It records `deliveryStatus` separately from
-`businessDecision: UNDECIDED`; it does not evaluate measurements or write QC
-records. No key is configured in application runtime.
+in-memory receiver. It validates version, exact configured source/site/actor
+identity, event identity, and HMAC. Dedupe is keyed by source + site + event;
+an exact replay is idempotent, while reuse of the event or idempotency key with
+different content is rejected. Per-source/site sequence gaps are quarantined.
+Its audit projection includes correlation ID, record time, keyed identity and
+payload digests, signature and actor-mapping outcomes, sequence outcome,
+delivery outcome, and `businessDecision: UNDECIDED`. The receiver state is
+in-memory only; it does not evaluate measurements, persist an audit record, or
+write QC records. No key is configured in application runtime.
+
+Sandbox evidence proves only this deterministic local contract. It does not
+establish a registered production source or actor, durable idempotency,
+signature-key custody/rotation, audit retention, retry exhaustion/dead-letter
+handling, a live receiver, or a provider failure's operational visibility.
 
 Retry delay, exhaustion threshold, dead-letter ownership, retention periods,
 privacy schedules, key custody/rotation, actor-to-account mapping, and all live

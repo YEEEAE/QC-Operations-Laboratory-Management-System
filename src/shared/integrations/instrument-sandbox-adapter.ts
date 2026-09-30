@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 
 export interface InstrumentEnvelope {
   schema: 'qc.instrument-result';
@@ -21,8 +21,11 @@ export interface InstrumentDeliveryAudit {
   eventId: string;
   idempotencyKeyDigest: string;
   payloadDigest: string;
+  correlationId: string;
+  recordedAt: string;
   signatureStatus: 'VALID' | 'INVALID' | 'NOT_CHECKED';
-  actorMapping: 'PROVENANCE_ONLY';
+  actorMapping: 'PROVENANCE_ONLY' | 'UNMAPPED';
+  sequenceOutcome: 'IN_ORDER' | 'DUPLICATE' | 'OUT_OF_ORDER' | 'NOT_CHECKED';
   deliveryStatus: DeliveryStatus;
   businessDecision: 'UNDECIDED';
   failureCode?:
@@ -36,6 +39,7 @@ export interface InstrumentDeliveryAudit {
 export interface InstrumentSandboxOptions {
   sourceId: string;
   siteId: string;
+  actorId: string;
   signingKey: Uint8Array;
   isAvailable?: () => boolean;
   appendAudit: (record: InstrumentDeliveryAudit) => void;
@@ -67,7 +71,8 @@ export function signInstrumentEnvelope(
 }
 
 export function createInstrumentSandboxAdapter(options: InstrumentSandboxOptions) {
-  const accepted = new Map<string, { digest: string; sequence: number }>();
+  const acceptedEvents = new Map<string, { digest: string; idempotencyKey: string }>();
+  const acceptedKeys = new Map<string, { eventKey: string; digest: string }>();
   const lastSequence = new Map<string, number>();
 
   function receive(envelope: InstrumentEnvelope): InstrumentDeliveryAudit {
@@ -76,8 +81,8 @@ export function createInstrumentSandboxAdapter(options: InstrumentSandboxOptions
       envelope.schemaVersion === '1.0.0' &&
       envelope.sourceId === options.sourceId &&
       envelope.siteId === options.siteId &&
+      envelope.actorId === options.actorId &&
       envelope.eventId.length > 0 &&
-      envelope.actorId.length > 0 &&
       envelope.idempotencyKey.length > 0 &&
       Number.isSafeInteger(envelope.sequence) &&
       envelope.sequence > 0 &&
@@ -95,6 +100,12 @@ export function createInstrumentSandboxAdapter(options: InstrumentSandboxOptions
     const signatureValid =
       received.length === expected.length && timingSafeEqual(received, expected);
 
+    const eventKey = stableJson([envelope.sourceId, envelope.siteId, envelope.eventId]);
+    const sourceKey = stableJson([envelope.sourceId, envelope.siteId]);
+    const previousEvent = acceptedEvents.get(eventKey);
+    const previousKey = acceptedKeys.get(envelope.idempotencyKey);
+    const correlationId = randomUUID();
+    const recordedAt = new Date().toISOString();
     let record: InstrumentDeliveryAudit;
     if (!envelopeIsValid) {
       record = {
@@ -102,8 +113,11 @@ export function createInstrumentSandboxAdapter(options: InstrumentSandboxOptions
         eventId: envelope.eventId,
         idempotencyKeyDigest: keyDigest,
         payloadDigest,
+        correlationId,
+        recordedAt,
         signatureStatus: 'NOT_CHECKED',
-        actorMapping: 'PROVENANCE_ONLY',
+        actorMapping: envelope.actorId === options.actorId ? 'PROVENANCE_ONLY' : 'UNMAPPED',
+        sequenceOutcome: 'NOT_CHECKED',
         deliveryStatus: 'REJECTED',
         businessDecision: 'UNDECIDED',
         failureCode: 'INVALID_ENVELOPE',
@@ -114,11 +128,47 @@ export function createInstrumentSandboxAdapter(options: InstrumentSandboxOptions
         eventId: envelope.eventId,
         idempotencyKeyDigest: keyDigest,
         payloadDigest,
+        correlationId,
+        recordedAt,
         signatureStatus: 'INVALID',
-        actorMapping: 'PROVENANCE_ONLY',
+        actorMapping: 'UNMAPPED',
+        sequenceOutcome: 'NOT_CHECKED',
         deliveryStatus: 'REJECTED',
         businessDecision: 'UNDECIDED',
         failureCode: 'INVALID_SIGNATURE',
+      };
+    } else if (previousEvent) {
+      const exactReplay =
+        previousEvent.digest === payloadDigest &&
+        previousEvent.idempotencyKey === envelope.idempotencyKey;
+      record = {
+        sourceId: envelope.sourceId,
+        eventId: envelope.eventId,
+        idempotencyKeyDigest: keyDigest,
+        payloadDigest,
+        correlationId,
+        recordedAt,
+        signatureStatus: 'VALID',
+        actorMapping: 'PROVENANCE_ONLY',
+        sequenceOutcome: exactReplay ? 'DUPLICATE' : 'NOT_CHECKED',
+        deliveryStatus: exactReplay ? 'DUPLICATE' : 'REJECTED',
+        businessDecision: 'UNDECIDED',
+        ...(exactReplay ? {} : { failureCode: 'IDEMPOTENCY_CONFLICT' as const }),
+      };
+    } else if (previousKey) {
+      record = {
+        sourceId: envelope.sourceId,
+        eventId: envelope.eventId,
+        idempotencyKeyDigest: keyDigest,
+        payloadDigest,
+        correlationId,
+        recordedAt,
+        signatureStatus: 'VALID',
+        actorMapping: 'PROVENANCE_ONLY',
+        sequenceOutcome: 'NOT_CHECKED',
+        deliveryStatus: 'REJECTED',
+        businessDecision: 'UNDECIDED',
+        failureCode: 'IDEMPOTENCY_CONFLICT',
       };
     } else if (options.isAvailable?.() === false) {
       record = {
@@ -126,54 +176,49 @@ export function createInstrumentSandboxAdapter(options: InstrumentSandboxOptions
         eventId: envelope.eventId,
         idempotencyKeyDigest: keyDigest,
         payloadDigest,
+        correlationId,
+        recordedAt,
         signatureStatus: 'VALID',
         actorMapping: 'PROVENANCE_ONLY',
+        sequenceOutcome: 'NOT_CHECKED',
         deliveryStatus: 'RETRYABLE_FAILURE',
         businessDecision: 'UNDECIDED',
         failureCode: 'SANDBOX_UNAVAILABLE',
       };
     } else {
-      const previous = accepted.get(envelope.idempotencyKey);
-      const sourceSequence = lastSequence.get(envelope.sourceId) ?? 0;
-      if (previous) {
+      const sourceSequence = lastSequence.get(sourceKey) ?? 0;
+      if (envelope.sequence !== sourceSequence + 1) {
         record = {
           sourceId: envelope.sourceId,
           eventId: envelope.eventId,
           idempotencyKeyDigest: keyDigest,
           payloadDigest,
+          correlationId,
+          recordedAt,
           signatureStatus: 'VALID',
           actorMapping: 'PROVENANCE_ONLY',
-          deliveryStatus: previous.digest === payloadDigest ? 'DUPLICATE' : 'REJECTED',
-          businessDecision: 'UNDECIDED',
-          ...(previous.digest === payloadDigest
-            ? {}
-            : { failureCode: 'IDEMPOTENCY_CONFLICT' as const }),
-        };
-      } else if (envelope.sequence !== sourceSequence + 1) {
-        record = {
-          sourceId: envelope.sourceId,
-          eventId: envelope.eventId,
-          idempotencyKeyDigest: keyDigest,
-          payloadDigest,
-          signatureStatus: 'VALID',
-          actorMapping: 'PROVENANCE_ONLY',
+          sequenceOutcome: 'OUT_OF_ORDER',
           deliveryStatus: 'QUARANTINED',
           businessDecision: 'UNDECIDED',
           failureCode: 'OUT_OF_ORDER',
         };
       } else {
-        accepted.set(envelope.idempotencyKey, {
+        acceptedEvents.set(eventKey, {
           digest: payloadDigest,
-          sequence: envelope.sequence,
+          idempotencyKey: envelope.idempotencyKey,
         });
-        lastSequence.set(envelope.sourceId, envelope.sequence);
+        acceptedKeys.set(envelope.idempotencyKey, { eventKey, digest: payloadDigest });
+        lastSequence.set(sourceKey, envelope.sequence);
         record = {
           sourceId: envelope.sourceId,
           eventId: envelope.eventId,
           idempotencyKeyDigest: keyDigest,
           payloadDigest,
+          correlationId,
+          recordedAt,
           signatureStatus: 'VALID',
           actorMapping: 'PROVENANCE_ONLY',
+          sequenceOutcome: 'IN_ORDER',
           deliveryStatus: 'ACCEPTED',
           businessDecision: 'UNDECIDED',
         };
