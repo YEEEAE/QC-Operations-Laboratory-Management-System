@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — QC-ADP26-04 / exact inspection decimal transport**
+  - Changed: execute Action/domain/repository now preserve decimal strings and reject float transport/invalid decimal notation; no schema/policy changes.
+  - Evidence: candidate `6c312f05`; focused unit 37/37 and Astro check 0 errors. PG18 Testcontainers BLOCKED (no container runtime); live browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-04.md`.
+  - State: PARTIAL — exact storage/evaluator code updated, PostgreSQL roundtrip and page acceptance remain open.
+
 - **2026-09-30 — QC-ADP26-03 / inspection draft save authorization**
   - Changed: EDIT-DRAFT/scope/state/version checked before evaluation and under report lock; mandatory result audit shares write transaction; frozen criteria projection and exact JSON version transport repaired.
   - Evidence: candidate `08d15788`; focused unit 70/70, isolated PG18 5/5 (denial/rollback/race/replay), real browser/direct HTTP 1/1 including stale preservation and four widths. AT/200%/UAT NOT VERIFIED; final ledger export BLOCKED by approval-review usage limit. `audit/2026-09-30/handoff-QC-ADP26-03.md`.
@@ -261,7 +266,7 @@
 - أضيفت عقود مسودة لستة مصادر تكامل ومحول جهاز مخبري sandbox بلا اتصال حي؛ سجل التسليم يظل منفصلًا عن قرار QC، وتبقى تفعيلات المزود وسياسات actor/retention/retry رهينة اعتماد المالك.
 
 ## 5) Quarantine / Inspection Templates
-- Result draft saves require explicit EDIT-DRAFT and owner/assignee scope on DRAFT/current version, rechecked under transaction lock; report/results/audit commit together. Draft saving adds no approval/signature/receiving/outbox consequence. QC-ADP26-03 local technical evidence is verified; AT/UAT and deployed acceptance remain unverified.
+- Result draft saves require explicit EDIT-DRAFT and owner/assignee scope on DRAFT/current version, rechecked under transaction lock; report/results/audit commit together. Draft saving adds no approval/signature/receiving/outbox consequence. QC-ADP26-03 local technical evidence is verified; QC-ADP26-04 makes numeric values exact decimal strings across UI/action/domain/repository; PostgreSQL roundtrip, AT/UAT and deployed acceptance remain unverified.
 - دورة P-06 موجودة في `src/modules/quarantine/templates`.
 - Employee يقدر ينشئ `DRAFT`; سلطات القوالب المعتمدة تقدر تنشئ/تراجع/تعتمد حسب السياسة.
 - سلطة القوالب الحالية محصورة في Supervisor وManager و`yazeed`؛ Admin أو SYSTEM_OWNER غير المسمى مرفوض.

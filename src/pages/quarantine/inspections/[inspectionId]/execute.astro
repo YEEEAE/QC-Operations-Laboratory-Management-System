@@ -63,7 +63,7 @@ const pointResultLabel: Record<string, string> = { PASS: 'Acceptable', FAIL: 'No
   // QC-DATA-002: collect the observed point values from the dynamic inputs.
   // PASS/FAIL is never sent — only values and client-allowed REMARK/NA flags.
   const collectResults = () => {
-    const    results: Array<{ id: string; pointId: string; value: string | number | boolean; version: string; result?: 'REMARK' | 'NA'; remarks?: string }> = [];
+    const results: Array<{ id: string; pointId: string; value: string | boolean; version: string; result?: 'REMARK' | 'NA'; remarks?: string }> = [];
     form?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input[name^="value-"], select[name^="value-"]').forEach((input) => {
       const pointId = input.name.replace(/^value-/, '');
       if (!pointId || input.value === '') return;
@@ -71,7 +71,7 @@ const pointResultLabel: Record<string, string> = { PASS: 'Acceptable', FAIL: 'No
       results.push({
         id: crypto.randomUUID(),
         pointId,
-        value: (input as HTMLInputElement).type === 'number' ? Number(input.value) : input.value,
+        value: input.value,
         remarks: remarksInput?.value || undefined,
         version: version,
       });

@@ -21,6 +21,8 @@ export interface PointCriteria {
   acceptanceRulePayload: unknown;
 }
 
+const EXACT_DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
+
 export interface PointCriteriaReader {
   listPointCriteria(templateVersionId: string): Promise<PointCriteria[]>;
 }
@@ -104,13 +106,15 @@ export class RecordInspectionResultsUseCase {
       }
       // Numeric measurement: exact-decimal evaluation against bounds.
       if (point.dataType === 'NUMERIC_MEASUREMENT' || point.dataType === 'MULTI_MEASUREMENT') {
-        if (typeof entry.value === 'number') {
+        if (typeof entry.value !== 'string' || !EXACT_DECIMAL.test(entry.value))
+          throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        {
           const evaluation = evaluateNumericAcceptance({
-            numericValue: String(entry.value),
+            numericValue: entry.value,
             ruleType: point.acceptanceRuleType ?? '',
             rulePayload: point.acceptanceRulePayload,
           });
-          if (evaluation) return { ...entry, result: evaluation.result };
+          return { ...entry, numericValue: entry.value, result: evaluation?.result };
         }
       }
       // No formal rule applies: result stays with the human reviewer.

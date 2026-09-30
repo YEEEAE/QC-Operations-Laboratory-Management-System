@@ -4,7 +4,10 @@ export type FinalResult = (typeof FINAL_RESULTS)[number];
 export interface InspectionResultEntry {
   id: string;
   pointId: string;
-  value: string | number | boolean;
+  /** Raw UI observation. Decimal measurements are always transported as text. */
+  value: string | boolean;
+  /** Set only by the server after resolving the frozen point data type. */
+  numericValue?: string;
   unit?: string;
   result?: string;
   remarks?: string;

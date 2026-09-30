@@ -620,8 +620,11 @@ export class PostgresInspectionRepository implements InspectionRepository {
             id: result.id,
             inspection_report_id: i.id,
             template_point_id: result.pointId,
-            numeric_value: typeof result.value === 'number' ? String(result.value) : null,
-            text_value: typeof result.value === 'string' ? result.value : null,
+            numeric_value: result.numericValue ?? null,
+            text_value:
+              typeof result.value === 'string' && result.numericValue === undefined
+                ? result.value
+                : null,
             boolean_value: typeof result.value === 'boolean' ? result.value : null,
             selected_value: null,
             unit: result.unit ?? null,

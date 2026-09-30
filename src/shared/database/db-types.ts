@@ -462,7 +462,7 @@ export interface InspectionReportResultsTable {
   id: Generated<string>;
   inspection_report_id: string;
   template_point_id: string;
-  numeric_value: string | number | null;
+  numeric_value: string | null;
   text_value: string | null;
   boolean_value: boolean | null;
   selected_value: string | null;

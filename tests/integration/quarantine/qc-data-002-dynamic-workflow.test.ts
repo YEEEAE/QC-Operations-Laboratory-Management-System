@@ -37,7 +37,7 @@ const POINT_ID = '01900000-0000-7000-8000-00000000e030';
 const resultEntry = {
   id: '01900000-0000-7000-8000-00000000e031',
   pointId: POINT_ID,
-  value: 5.4,
+  value: '5.4',
   version: 1n,
 };
 const repository = () =>
@@ -197,14 +197,25 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       id: inspection.id,
       expectedVersion: 1n,
       requestId: `req-eval-${stamp}`,
-      results: [{ id: '01900000-0000-7000-8000-00000000e031', pointId, value: 5.4, version: 1n }],
+      results: [
+        {
+          id: '01900000-0000-7000-8000-00000000e031',
+          pointId,
+          value: '5.4000000000000000001',
+          version: 1n,
+        },
+      ],
     });
 
     const stored = await pool!.query(
-      `SELECT result, numeric_value FROM qc.inspection_report_results WHERE inspection_report_id = $1`,
+      `SELECT result, numeric_value::text AS numeric_value FROM qc.inspection_report_results WHERE inspection_report_id = $1`,
       [inspection.id],
     );
     expect(stored.rows[0]?.result).toBe('PASS');
+    expect(stored.rows[0]?.numeric_value).toBe('5.4000000000000000001');
+    expect((await repo.get(inspection.id, systemOwner()))?.results[0]?.value).toBe(
+      '5.4000000000000000001',
+    );
 
     // 6. Structured AQL persistence with an explicitly synthetic source label.
     // Synthetic persistence values only; they do not represent an approved
@@ -278,7 +289,7 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
           actor: systemOwner(),
           id: reportId,
           expectedVersion: 3n,
-          results: [{ ...resultEntry, value: 8 }],
+          results: [{ ...resultEntry, value: '8' }],
           requestId: 'adp03-audit-fail',
         }),
       ).rejects.toThrow();

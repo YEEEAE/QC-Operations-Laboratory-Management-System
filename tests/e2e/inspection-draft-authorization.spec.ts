@@ -116,7 +116,7 @@ test.describe('QC-ADP26-03 real inspection draft authorization', () => {
             {
               id: randomUUID(),
               pointId: '01900000-0000-7000-8000-00000000e030',
-              value: 5.4,
+              value: '5.4',
               version: '1',
             },
           ],

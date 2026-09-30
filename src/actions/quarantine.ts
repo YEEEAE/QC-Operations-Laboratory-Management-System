@@ -164,7 +164,7 @@ const saveInspectionDraft = defineAction({
       z.object({
         id: z.string().uuid(),
         pointId: z.string().uuid(),
-        value: z.union([z.string(), z.number(), z.boolean()]),
+        value: z.union([z.string(), z.boolean()]),
         unit: z.string().optional(),
         result: z.string().optional(),
         remarks: z.string().optional(),
@@ -203,7 +203,7 @@ const recordInspectionResults = defineAction({
       z.object({
         id: z.string().uuid(),
         pointId: z.string().uuid(),
-        value: z.union([z.string(), z.number(), z.boolean()]),
+        value: z.union([z.string(), z.boolean()]),
         unit: z.string().optional(),
         result: z.enum(['REMARK', 'NA']).optional(),
         remarks: z.string().optional(),

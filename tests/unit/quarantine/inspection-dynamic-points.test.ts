@@ -178,7 +178,7 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
     return { repository, capture };
   }
 
-  it('computes PASS server-side from the approved limits', async () => {
+  it('keeps an exact decimal string through server evaluation and persistence contract', async () => {
     const capture = repo();
     const useCase = new RecordInspectionResultsUseCase(capture.repository, criteriaReader);
     await useCase.execute({
@@ -190,15 +190,33 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
         {
           id: 'r1',
           pointId: criteria[0]!.pointId,
-          value: 5.4,
+          value: '5.4000000000000000001',
           version: 1n,
         },
       ],
     });
-    expect((capture.capture.saved as { pointId: string; result?: string }[])[0]?.result).toBe(
-      'PASS',
-    );
+    expect(capture.capture.saved).toMatchObject([
+      { value: '5.4000000000000000001', numericValue: '5.4000000000000000001', result: 'PASS' },
+    ]);
   });
+
+  it.each(['1e2', 'Infinity', ' 5.4 ', 'NaN'])(
+    'rejects non-canonical numeric text %s',
+    async (value) => {
+      const capture = repo();
+      const useCase = new RecordInspectionResultsUseCase(capture.repository, criteriaReader);
+      await expect(
+        useCase.execute({
+          actor: actor(),
+          id: draftInspection.id,
+          expectedVersion: 3n,
+          requestId: 'req-invalid-decimal',
+          results: [{ id: 'r1', pointId: criteria[0]!.pointId, value, version: 1n }],
+        }),
+      ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+      expect(capture.capture.saved).toBeUndefined();
+    },
+  );
 
   it.each([
     ['read-only', { ...actor(), permissions: [] }, draftInspection, 3n, 'AUTHZ_PERMISSION_MISSING'],
@@ -241,7 +259,7 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
           id: draftInspection.id,
           expectedVersion: version as bigint,
           requestId: 'req-denied',
-          results: [{ id: 'r1', pointId: criteria[0]!.pointId, value: 5.4, version: 1n }],
+          results: [{ id: 'r1', pointId: criteria[0]!.pointId, value: '5.4', version: 1n }],
         }),
       ).rejects.toMatchObject({ code });
       expect(capture.capture.saved).toBeUndefined();
@@ -261,7 +279,7 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
         {
           id: 'r1',
           pointId: criteria[0]!.pointId,
-          value: 6.4,
+          value: '6.4',
           version: 1n,
         },
       ],
@@ -306,7 +324,7 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
         expectedVersion: 3n,
         requestId: 'req-forge',
         results: [
-          { id: 'r1', pointId: criteria[0]!.pointId, value: 5.4, result: 'PASS', version: 1n },
+          { id: 'r1', pointId: criteria[0]!.pointId, value: '5.4', result: 'PASS', version: 1n },
         ],
       }),
     ).rejects.toThrow(AppError);
