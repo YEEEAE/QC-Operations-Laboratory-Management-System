@@ -1,4 +1,5 @@
 import { AppError } from '../../../../shared/errors/app-error.js';
+import { authorize } from '../../../../shared/authorization/authorize.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { isUuid } from '../../../../shared/id/uuid.js';
 import {
@@ -51,7 +52,25 @@ export class RecordInspectionResultsUseCase {
   }) {
     const x = await this.repo.get(i.id, i.actor);
     if (!x) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (x.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    authorize(
+      {
+        actor: i.actor,
+        permission: 'PERM-INSP-EDIT-DRAFT',
+        action: 'EDIT',
+        entity: {
+          type: 'INSPECTION_REPORT',
+          id: x.id,
+          state: x.state,
+          authorId: x.authorId,
+          executorId: x.authorId,
+        },
+        scope: { ownerId: x.authorId, assigneeId: x.assignedTo ?? x.authorId },
+        currentVersion: x.version,
+        expectedVersion: i.expectedVersion,
+        businessCondition: x.state === 'DRAFT',
+      },
+      { throwOnDeny: true },
+    );
 
     // Client result claims: only REMARK / NA may come from the browser.
     if (i.results.some((r) => r.result !== undefined && !isClientAllowedPointResult(r.result)))

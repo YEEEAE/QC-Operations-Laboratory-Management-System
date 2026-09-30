@@ -1,6 +1,7 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { AppError } from '../shared/errors/app-error.js';
+import { astroActionCodeFor } from '../shared/errors/action-error-code.js';
 import { quarantineActionDependencies } from '../modules/quarantine/application/dependencies.js';
 import { RECEIVING_QUANTITY_UNITS } from '../modules/quarantine/receiving/application/presentation.js';
 
@@ -19,13 +20,9 @@ const run = async <T>(work: () => Promise<T>) => {
         ? error
         : new AppError('SYSTEM_INTERNAL', { userSafe: false, cause: error });
     throw new ActionError({
-      code:
-        appError.category === 'AUTHENTICATION'
-          ? 'UNAUTHORIZED'
-          : appError.category === 'AUTHORIZATION'
-            ? 'FORBIDDEN'
-            : 'BAD_REQUEST',
-      message: appError.userSafe ? appError.message : 'Unable to complete the controlled action.',
+      code: astroActionCodeFor(appError.code),
+      // Canonical codes contain no record content or underlying provider error.
+      message: appError.code,
     });
   }
 };
@@ -45,7 +42,16 @@ const receivingInput = z.object({
   receivingDate: z.coerce.date(),
   expiryDate: z.coerce.date().optional(),
 });
-const idVersion = z.object({ id: z.string().uuid(), expectedVersion: z.coerce.bigint() });
+// JSON cannot represent bigint. Keep exact decimal-string transport while
+// preserving bigint callers and safe integer HTTP fixtures.
+const versionInput = z
+  .union([
+    z.string().regex(/^[1-9]\d*$/),
+    z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    z.bigint().positive(),
+  ])
+  .pipe(z.coerce.bigint());
+const idVersion = z.object({ id: z.string().uuid(), expectedVersion: versionInput });
 const transitionInput = idVersion.extend({
   action: z.enum([
     'MARK_READY',
@@ -162,7 +168,7 @@ const saveInspectionDraft = defineAction({
         unit: z.string().optional(),
         result: z.string().optional(),
         remarks: z.string().optional(),
-        version: z.coerce.bigint(),
+        version: versionInput,
       }),
     ),
   }),
@@ -201,7 +207,7 @@ const recordInspectionResults = defineAction({
         unit: z.string().optional(),
         result: z.enum(['REMARK', 'NA']).optional(),
         remarks: z.string().optional(),
-        version: z.coerce.bigint(),
+        version: versionInput,
       }),
     ),
   }),

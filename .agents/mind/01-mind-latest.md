@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — QC-ADP26-03 / inspection draft save authorization**
+  - Changed: EDIT-DRAFT/scope/state/version checked before evaluation and under report lock; mandatory result audit shares write transaction; frozen criteria projection and exact JSON version transport repaired.
+  - Evidence: candidate `08d15788`; focused unit 70/70, isolated PG18 5/5 (denial/rollback/race/replay), real browser/direct HTTP 1/1 including stale preservation and four widths. AT/200%/UAT NOT VERIFIED; final ledger export BLOCKED by approval-review usage limit. `audit/2026-09-30/handoff-QC-ADP26-03.md`.
+  - State: PARTIAL — local F-003 technical acceptance PASS; other execute-page findings remain open.
+
 - **2026-09-30 — QC-ADP26-02 / migration ledger and release identity**
   - Changed: health/control center reconcile migration names and SHA-256 checksums, failing closed on drift or unreadable source; no schema change.
   - Evidence: isolated PG18.6 42/42 exact; source rehearsal 0018→0042; backup/restore and schema check PASS. Live schema/artifact identity, gates, UI/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-02.md`.
@@ -256,6 +261,7 @@
 - أضيفت عقود مسودة لستة مصادر تكامل ومحول جهاز مخبري sandbox بلا اتصال حي؛ سجل التسليم يظل منفصلًا عن قرار QC، وتبقى تفعيلات المزود وسياسات actor/retention/retry رهينة اعتماد المالك.
 
 ## 5) Quarantine / Inspection Templates
+- Result draft saves require explicit EDIT-DRAFT and owner/assignee scope on DRAFT/current version, rechecked under transaction lock; report/results/audit commit together. Draft saving adds no approval/signature/receiving/outbox consequence. QC-ADP26-03 local technical evidence is verified; AT/UAT and deployed acceptance remain unverified.
 - دورة P-06 موجودة في `src/modules/quarantine/templates`.
 - Employee يقدر ينشئ `DRAFT`; سلطات القوالب المعتمدة تقدر تنشئ/تراجع/تعتمد حسب السياسة.
 - سلطة القوالب الحالية محصورة في Supervisor وManager و`yazeed`؛ Admin أو SYSTEM_OWNER غير المسمى مرفوض.

@@ -200,6 +200,55 @@ describe('server-side result evaluation and client-claim rejection (§5)', () =>
     );
   });
 
+  it.each([
+    ['read-only', { ...actor(), permissions: [] }, draftInspection, 3n, 'AUTHZ_PERMISSION_MISSING'],
+    ['inactive', { ...actor(), accountState: 'INACTIVE' }, draftInspection, 3n, 'AUTHZ_DENIED'],
+    [
+      'outside scope',
+      { ...actor(), id: 'another-actor' },
+      draftInspection,
+      3n,
+      'AUTHZ_SCOPE_DENIED',
+    ],
+    ['stale', actor(), draftInspection, 2n, 'CONFLICT_STALE_VERSION'],
+    ['locked', actor(), { ...draftInspection, state: 'SUBMITTED' }, 3n, 'AUTHZ_DENIED'],
+    [
+      'named owner cannot edit locked report',
+      { ...actor(), roles: ['SYSTEM_OWNER'], loginIdentity: 'yazeed' },
+      { ...draftInspection, state: 'APPROVED' },
+      3n,
+      'AUTHZ_DENIED',
+    ],
+  ])(
+    'rejects %s before reading criteria or writing',
+    async (_label, deniedActor, inspection, version, code) => {
+      const capture = repo();
+      capture.repository.get = async () => inspection as Inspection;
+      let reads = 0;
+      const useCase = new RecordInspectionResultsUseCase(capture.repository, {
+        async listPointCriteria() {
+          reads++;
+          return criteria;
+        },
+      });
+      // The existing valid record is readable; denial is not a missing-record test.
+      expect(await capture.repository.get(draftInspection.id, deniedActor as ActorContext)).toBe(
+        inspection,
+      );
+      await expect(
+        useCase.execute({
+          actor: deniedActor as ActorContext,
+          id: draftInspection.id,
+          expectedVersion: version as bigint,
+          requestId: 'req-denied',
+          results: [{ id: 'r1', pointId: criteria[0]!.pointId, value: 5.4, version: 1n }],
+        }),
+      ).rejects.toMatchObject({ code });
+      expect(capture.capture.saved).toBeUndefined();
+      expect(reads).toBe(0);
+    },
+  );
+
   it('computes FAIL server-side when the observation breaches the approved limits', async () => {
     const capture = repo();
     const useCase = new RecordInspectionResultsUseCase(capture.repository, criteriaReader);

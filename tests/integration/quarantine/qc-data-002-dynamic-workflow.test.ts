@@ -32,6 +32,31 @@ const systemOwner = (): ActorContext => ({
 
 let pool: ReturnType<typeof createPool> | undefined;
 let db: Kysely<DatabaseSchema>;
+let reportId: string;
+const POINT_ID = '01900000-0000-7000-8000-00000000e030';
+const resultEntry = {
+  id: '01900000-0000-7000-8000-00000000e031',
+  pointId: POINT_ID,
+  value: 5.4,
+  version: 1n,
+};
+const repository = () =>
+  new PostgresInspectionRepository(
+    db,
+    new PostgresAuditRepository(db),
+    new PostgresOutboxRepository(db),
+  );
+const record = (repo = repository()) => new RecordInspectionResultsUseCase(repo, repo);
+const snapshot = async () => {
+  const row = await pool!.query('SELECT * FROM qc.inspection_reports WHERE id=$1', [reportId]);
+  const results = await pool!.query(
+    'SELECT * FROM qc.inspection_report_results WHERE inspection_report_id=$1 ORDER BY id',
+    [reportId],
+  );
+  const audit = await pool!.query('SELECT * FROM qc.audit_events ORDER BY id');
+  const outbox = await pool!.query('SELECT * FROM qc.outbox_events ORDER BY id');
+  return { row: row.rows, results: results.rows, audit: audit.rows, outbox: outbox.rows };
+};
 
 beforeAll(async () => {
   const databaseUrl = getTestDatabaseUrl(await startPostgresContainer());
@@ -110,6 +135,27 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
         OWNER_ID,
       ],
     );
+    // 4. Synthetic engineering range fixture; this is not a laboratory criterion.
+    const sectionId = '01900000-0000-7000-8000-00000000e032';
+    const pointId = '01900000-0000-7000-8000-00000000e030';
+    await pool!.query(
+      `INSERT INTO qc.inspection_template_sections
+         (id, template_version_id, section_code, title, position)
+       VALUES ($1, $2, 'SYNTHETIC', 'Synthetic engineering fixture', 1)
+       ON CONFLICT (id) DO NOTHING`,
+      [sectionId, templateVersionId],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_template_points
+         (id, section_id, point_code, label, data_type, requirement_text, unit,
+          required, position, acceptance_rule_type, acceptance_rule_payload)
+       VALUES ($1, $2, 'SYNTHETIC-RANGE', 'Synthetic numeric fixture', 'NUMERIC_MEASUREMENT',
+               'Synthetic test range 5.0–6.0', 'test-unit', TRUE, 1, 'RANGE_INCLUSIVE',
+               '{"lower":"5.0","upper":"6.0"}'::jsonb)
+       ON CONFLICT (id) DO NOTHING`,
+      [pointId, sectionId],
+    );
+
     const inspection = await new StartInspectionUseCase(repo, () => new Date()).execute({
       actor: systemOwner(),
       inspectionNo: `INSP-DATA002-${stamp}`,
@@ -132,27 +178,7 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       },
       requestId: `req-start-${stamp}`,
     });
-
-    // 4. Synthetic engineering range fixture; this is not a laboratory criterion.
-    const sectionId = '01900000-0000-7000-8000-00000000e032';
-    const pointId = '01900000-0000-7000-8000-00000000e030';
-    await pool!.query(
-      `INSERT INTO qc.inspection_template_sections
-         (id, template_version_id, section_code, title, position)
-       VALUES ($1, $2, 'SYNTHETIC', 'Synthetic engineering fixture', 1)
-       ON CONFLICT (id) DO NOTHING`,
-      [sectionId, templateVersionId],
-    );
-    await pool!.query(
-      `INSERT INTO qc.inspection_template_points
-         (id, section_id, point_code, label, data_type, requirement_text, unit,
-          required, position, acceptance_rule_type, acceptance_rule_payload)
-       VALUES ($1, $2, 'SYNTHETIC-RANGE', 'Synthetic numeric fixture', 'NUMERIC_MEASUREMENT',
-               'Synthetic test range 5.0–6.0', 'test-unit', TRUE, 1, 'RANGE_INCLUSIVE',
-               '{"lower":"5.0","upper":"6.0"}'::jsonb)
-       ON CONFLICT (id) DO NOTHING`,
-      [pointId, sectionId],
-    );
+    reportId = inspection.id;
 
     // 5. Server-side evaluation: numeric value inside range → PASS.
     await new RecordInspectionResultsUseCase(repo, {
@@ -208,5 +234,140 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
     expect(aqlRow.rows[0]?.aql).toBe('1.0');
     expect(aqlRow.rows[0]?.aql_code_letter).toBe('H');
     expect(aqlRow.rows[0]?.aql_sampling_result).toBe('ACCEPT');
+  });
+
+  it('read-only actor reads the existing DRAFT then is denied with no row/results/audit/outbox writes', async () => {
+    const actor: ActorContext = {
+      ...systemOwner(),
+      roles: ['EMPLOYEE'],
+      permissions: [{ code: 'PERM-INSP-VIEW', scopes: ['GLOBAL'] }],
+    };
+    expect((await repository().get(reportId, actor))?.state).toBe('DRAFT');
+    const before = await snapshot();
+    await expect(
+      record().execute({
+        actor,
+        id: reportId,
+        expectedVersion: 3n,
+        results: [resultEntry],
+        requestId: 'adp03-denied',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    expect(await snapshot()).toEqual(before);
+    // Repository defense also rejects bypassing the application layer.
+    await expect(
+      repository().saveDraft({
+        actor,
+        id: reportId,
+        expectedVersion: 3n,
+        results: [resultEntry],
+        requestId: 'adp03-direct',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    expect(await snapshot()).toEqual(before);
+  });
+
+  it('audit insertion failure rolls back the report version and replacement results', async () => {
+    const before = await snapshot();
+    await pool!
+      .query(`CREATE FUNCTION qc.adp03_fail_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic audit failure'; END $$;
+      CREATE TRIGGER adp03_fail_audit BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.adp03_fail_audit()`);
+    try {
+      await expect(
+        record().execute({
+          actor: systemOwner(),
+          id: reportId,
+          expectedVersion: 3n,
+          results: [{ ...resultEntry, value: 8 }],
+          requestId: 'adp03-audit-fail',
+        }),
+      ).rejects.toThrow();
+      expect(await snapshot()).toEqual(before);
+    } finally {
+      await pool!.query(
+        'DROP TRIGGER adp03_fail_audit ON qc.audit_events; DROP FUNCTION qc.adp03_fail_audit()',
+      );
+    }
+  });
+
+  it('locked-record authorization rejects scope and stale versions before writes', async () => {
+    const actor: ActorContext = {
+      ...systemOwner(),
+      id: '01900000-0000-7000-8000-00000000e099',
+      permissions: [
+        { code: 'PERM-INSP-VIEW', scopes: ['GLOBAL'] },
+        { code: 'PERM-INSP-EDIT-DRAFT', scopes: ['OWN'] },
+      ],
+    };
+    expect((await repository().get(reportId, actor))?.state).toBe('DRAFT');
+    const before = await snapshot();
+    await expect(
+      repository().saveDraft({
+        actor,
+        id: reportId,
+        expectedVersion: 3n,
+        results: [resultEntry],
+        requestId: 'adp03-scope',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_SCOPE_DENIED' });
+    await expect(
+      repository().saveDraft({
+        actor: systemOwner(),
+        id: reportId,
+        expectedVersion: 2n,
+        results: [resultEntry],
+        requestId: 'adp03-stale',
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    expect(await snapshot()).toEqual(before);
+    await pool!.query(
+      "UPDATE qc.inspection_reports SET state='SUBMITTED',submitted_at=now() WHERE id=$1",
+      [reportId],
+    );
+    try {
+      const locked = await snapshot();
+      await expect(
+        repository().saveDraft({
+          actor: systemOwner(),
+          id: reportId,
+          expectedVersion: 3n,
+          results: [resultEntry],
+          requestId: 'adp03-state',
+        }),
+      ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+      expect(await snapshot()).toEqual(locked);
+    } finally {
+      await pool!.query(
+        "UPDATE qc.inspection_reports SET state='DRAFT',submitted_at=NULL WHERE id=$1",
+        [reportId],
+      );
+    }
+  });
+
+  it('same-version race commits exactly once and stale replay changes nothing', async () => {
+    const before = await snapshot();
+    const command = {
+      actor: systemOwner(),
+      id: reportId,
+      expectedVersion: 3n,
+      results: [resultEntry],
+      requestId: 'adp03-race-replay',
+    };
+    const attempts = await Promise.allSettled([
+      record().execute(command),
+      record().execute(command),
+    ]);
+    expect(attempts.filter((a) => a.status === 'fulfilled')).toHaveLength(1);
+    expect(attempts.find((a) => a.status === 'rejected')).toMatchObject({
+      reason: { code: 'CONFLICT_STALE_VERSION' },
+    });
+    const after = await snapshot();
+    expect(after.row[0].version).toBe('4');
+    expect(after.audit.length).toBe(before.audit.length + 1);
+    expect(after.outbox).toEqual(before.outbox);
+    await expect(record().execute(command)).rejects.toMatchObject({
+      code: 'CONFLICT_STALE_VERSION',
+    });
+    expect(await snapshot()).toEqual(after);
   });
 });

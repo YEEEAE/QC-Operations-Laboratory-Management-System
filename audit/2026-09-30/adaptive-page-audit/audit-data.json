@@ -3157,7 +3157,15 @@
         "QC-ADP26-31",
         "QC-ADP26-35",
         "QC-ADP26-36"
-      ]
+      ],
+      "implementationFollowup": {
+        "task": "QC-ADP26-03",
+        "candidateSHA": "08d15788f6e7d6e9aedd777a5f4296d44fee8708",
+        "state": "PARTIAL",
+        "localTechnicalAcceptance": "PASS: application/PG/directHTTP; denied write unchanged; audit rollback; race/replay; real browser",
+        "evidence": "audit/2026-09-30/handoff-QC-ADP26-03.md",
+        "remaining": "200%/manual AT/human UAT and other page findings NOT VERIFIED; applied-ledger final export BLOCKED"
+      }
     },
     {
       "id": "RT-INSP-004",
@@ -22486,7 +22494,15 @@
         "src/modules/quarantine/inspection/application/record-inspection-results.ts:52",
         "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:567"
       ],
-      "dependencies": []
+      "dependencies": [],
+      "implementationFollowup": {
+        "task": "QC-ADP26-03",
+        "candidateSHA": "08d15788f6e7d6e9aedd777a5f4296d44fee8708",
+        "state": "PARTIAL",
+        "localTechnicalAcceptance": "PASS: application/PG/directHTTP; denied write unchanged; audit rollback; race/replay; real browser",
+        "evidence": "audit/2026-09-30/handoff-QC-ADP26-03.md",
+        "remaining": "200%/manual AT/human UAT and other page findings NOT VERIFIED; applied-ledger final export BLOCKED"
+      }
     },
     {
       "id": "QC-PAGE-F-004",

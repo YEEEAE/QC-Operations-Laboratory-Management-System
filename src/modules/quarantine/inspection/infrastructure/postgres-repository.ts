@@ -3,6 +3,7 @@ import type { DatabaseSchema, DatabaseRow } from '../../../../shared/database/db
 import { translateDatabaseError } from '../../../../shared/database/database.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import { actorHasScope } from '../../../../shared/authorization/scope-evaluator.js';
+import { authorize } from '../../../../shared/authorization/authorize.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { InspectionRepository } from '../ports/repository.js';
@@ -48,13 +49,18 @@ const map = (
     templateId: tv.template_id,
     templateVersionId: tv.id,
     versionNo: tv.version_no,
-    templateSnapshot: (snapshot?.template_snapshot as Readonly<Record<string, unknown>> | null) ?? {
-      templateId: tv.template_id,
-      templateVersionId: tv.id,
-      versionNo: tv.version_no,
-      sourceDocument: tv.source_document,
-      contentHash: tv.content_hash,
-    },
+    templateSnapshot: snapshot
+      ? {
+          ...(snapshot.template_snapshot as Readonly<Record<string, unknown>>),
+          criteria: snapshot.criteria_snapshot,
+        }
+      : {
+          templateId: tv.template_id,
+          templateVersionId: tv.id,
+          versionNo: tv.version_no,
+          sourceDocument: tv.source_document,
+          contentHash: tv.content_hash,
+        },
     // A stopped/superseded template can still be the approved source of an
     // existing execution. The immutable execution snapshot is authoritative
     // for that historical fact; only new executions consult current state.
@@ -565,6 +571,35 @@ export class PostgresInspectionRepository implements InspectionRepository {
     requestId: string;
   }) {
     const r = await this.db.transaction().execute(async (tx) => {
+      const current = await tx
+        .selectFrom('inspection_reports')
+        .selectAll()
+        .where('id', '=', i.id)
+        .forUpdate()
+        .executeTakeFirst();
+      if (!current) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      authorize(
+        {
+          actor: i.actor,
+          permission: 'PERM-INSP-EDIT-DRAFT',
+          action: 'EDIT',
+          entity: {
+            type: 'INSPECTION_REPORT',
+            id: current.id,
+            state: current.state,
+            authorId: current.author_id,
+            executorId: current.author_id,
+          },
+          scope: {
+            ownerId: current.author_id,
+            assigneeId: current.assigned_user_id ?? current.author_id,
+          },
+          currentVersion: BigInt(current.version),
+          expectedVersion: i.expectedVersion,
+          businessCondition: current.state === 'DRAFT',
+        },
+        { throwOnDeny: true },
+      );
       const updated = await tx
         .updateTable('inspection_reports')
         .set({ updated_by: i.actor.id, updated_at: new Date(), version: i.expectedVersion + 1n })
@@ -600,6 +635,20 @@ export class PostgresInspectionRepository implements InspectionRepository {
             version: 1n,
           })
           .execute();
+      await (this.auditFor(tx) ?? new PostgresAuditRepository(tx)).append({
+        actorType: 'USER',
+        actorId: i.actor.id,
+        subjectType: 'INSPECTION_REPORT',
+        subjectId: i.id,
+        action: 'MEASUREMENT_RECORDED',
+        requestId: i.requestId,
+        payload: {
+          kind: 'INSPECTION_RESULTS',
+          resultCount: i.results.length,
+          previousVersion: i.expectedVersion.toString(),
+          version: updated.version.toString(),
+        },
+      });
       return updated;
     });
     const item = await this.load(i.id);

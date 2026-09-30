@@ -1018,6 +1018,7 @@
 <li><strong>الحالة:</strong> OPEN ؛ sourcefinding/verificationrisk كماورد؛لا exploit مثبتإلامع fixture موجبوسالب؛ LIVE غيرمرتبطب SHA.</li>
 </ul>
 </details><details class="review" data-search="qc-page-f-003 — p0 — حفظ نتائج التفتيش بلا تفويض edit-draft" open=""><summary>QC-PAGE-F-003 — P0 — حفظ نتائج التفتيش بلا تفويض EDIT-DRAFT</summary>
+<p class="notice">متابعة تنفيذ QC-ADP26-03 على المرشح 08d15788: إصلاح محلي مثبت بـ70 unit و5 PostgreSQL و1 browser، مع بقاء AT/200%/UAT غير متحققة. التقرير الأصلي ودرجاته تاريخية بلا تعديل. <a href="2026-09-30/handoff-QC-ADP26-03.md">handoff والدليل المرتبط</a>.</p>
 <ul>
 <li><strong>الصفحات:</strong> ["/quarantine/inspections/[inspectionId]/execute"]</li>
 <li><strong>المشكلة:</strong> RecordInspectionResultsUseCase لا يستدعي authorize ؛ repo.get يفوض VIEW ثم saveDraft يكتب بالنسخة والحالة بلا audit/outbox.</li>
