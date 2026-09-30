@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-09-30 — QC-ADP26-01 / candidate-bound route inventory**
+  - Changed: executable 88-card/six-persona acceptance inventory and fail-closed evidence binding; unresolved applicability stays NOT VERIFIED and human UAT cannot close automatically.
+  - Evidence: base `60237b5`; PostgreSQL 18.6 loopback disposable concurrency/replay + action contracts 17 PASS/3 FAIL (stage-1 fixtures use MANAGER against SUPERVISOR authority). Real-task GET/direct-denial E2E includes unchanged row/audit/outbox and candidate/applied-ledger binding; technical fixture is not six-persona UAT. Source visibility checks are not runtime acceptance; all page acceptances remain open. `audit/2026-09-30/handoff-QC-ADP26-01.md`.
+  - State: PARTIAL / NO-GO.
+
 - **2026-09-30 — RT-AUTH-001 / login acceptance evidence**
   - Changed: no runtime/policy change; recorded source review and candidate-bound evidence gaps.
   - Evidence: current HEAD `bd30e257`; prior login E2E evidence is bound to `06479e8` and is historical. Authenticated success/rejection, rate-limit, session revoke/expiry, applied schema/DB audit, current browser/AT and owner signature remain NOT VERIFIED; no READY. `audit/2026-09-30/RT-AUTH-001-login-acceptance.md`.
@@ -476,6 +481,7 @@
 - **QC-ADP-01 candidate handoff (2026-09-24):** readiness now checks migration `0026` ledger identity, report columns and core FK/unique constraints; the four affected pages surface the unavailable state as 503. Exact source migration checksums and preflight/backup/forward-only recovery plan are in `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md`. Live deployment remains at historical `0018`; production credential gate/explicit migration authority open; page cards remain 0/6 each pending PG18 and route evidence.
 
 ### P1 / live validation / pre-existing test estate
+- **QC-ADP26-01 / QC-PAGE-F-001 OPEN:** `scripts/verification/build-route-acceptance.ts` inventories all 88 current F-001 cards and six UAT personas; 3,696 rows are planning only, not approved applicability. `.ci-results/route-acceptance.json` carries exact candidate/build/schema binding. Source page-access checks are separate from runtime/AT/UAT. The validator rejects stale bindings, unsupported N/A, invalid denial controls and automated human acceptance. Domain action/state expansion and real route fixtures remain NOT VERIFIED; `Documents/ROUTE-ACCEPTANCE-MATRIX.md`.
 - **QC-ADP-17 / F-020 PARTIAL:** قائمة/إنشاء/تفصيل المهام تعرض سياق المالك/المكلّف والخطوة التالية وسجل الانتقال؛ source migration head `0041` بلا migration جديدة. Unit 11/11 وAstro check PASS؛ PG18 integration BLOCKED لغياب container runtime، وauthenticated E2E BLOCKED عند Chromium sandbox/fixture env. لا READY؛ سياسة SD-002 وUAT وإثبات actor/role حي تبقى مفتوحة. المقام 7 فحوص لكل route (21): source فقط 3/21. `audit/2026-09-24/QC-ADP-17-task-lifecycle-handoff.md`.
 - **QC-ADP-08 / F-009 + F-018 remain OPEN:** real task fixture proves `/tasks/[taskId]` GET + server-denied POST with unchanged row/audit on the PG18.6 candidate. One route has partial HTTP proof; 450 remains gross planning only and each card needs applicable checks/N/A source and route-bound evidence. See `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
 - **QC-ADP-10 / F-011 PARTIAL:** PG18 candidate proves screen/query/CSV/XLSX row, filter, order, date, scope, permission, formula, and shared provenance parity. The Action filter omission is fixed. Live route/role and authenticated print E2E remain NOT VERIFIED; durable cross-request snapshots require owner reconciliation of `REQ-RPT-005` / `BR-RPT-005` and retention before persistence. Handoff: `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.

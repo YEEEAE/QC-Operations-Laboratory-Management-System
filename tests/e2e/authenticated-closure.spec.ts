@@ -1,8 +1,32 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { Pool } from 'pg';
-
+import { Kysely, PostgresDialect } from 'kysely';
+import type { DatabaseSchema } from '../../src/shared/database/db-types.js';
+import { resolveActor } from '../../src/modules/identity/application/identity-dependencies.js';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { loadMigrations } from '../../scripts/db/migrate.js';
+import { verificationRun } from '../../scripts/verification/evidence-identity.mjs';
+import { digestInputs } from '../../scripts/verification/route-acceptance.mjs';
 import { assertMandatoryVerificationFixtures } from './verify-fixtures.js';
+
+async function taskIntegritySnapshot(taskId: string) {
+  const snapshots = await dbQuery<{
+    row_digest: string;
+    audit_digest: string;
+    outbox_digest: string;
+  }>(
+    `SELECT md5(row_to_json(t)::text) AS row_digest,
+      (SELECT md5(COALESCE(string_agg(md5(row_to_json(a)::text), '' ORDER BY a.id), ''))
+       FROM qc.audit_events a WHERE a.subject_id = t.id) AS audit_digest,
+      (SELECT md5(COALESCE(string_agg(md5(row_to_json(o)::text), '' ORDER BY o.id), ''))
+       FROM qc.outbox_events o WHERE o.aggregate_id = t.id) AS outbox_digest
+     FROM qc.tasks t WHERE t.id = $1`,
+    [taskId],
+  );
+  expect(snapshots).toHaveLength(1);
+  return snapshots[0];
+}
 
 const hasRoleFixtures = Boolean(
   process.env.QC_VERIFY_SYSTEM_OWNER_PASSWORD &&
@@ -158,6 +182,7 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
       'SELECT count(*)::text AS count FROM qc.audit_events WHERE subject_id = $1',
       [fixture[0].id],
     );
+    const integrityBefore = await taskIntegritySnapshot(fixture[0].id);
 
     const denied = await page.evaluate(async (taskId) => {
       const response = await fetch('/_actions/tasks.transition', {
@@ -180,6 +205,90 @@ test.describe('QC-CLOSURE-E2E-006 authenticated engineering closure', () => {
       [fixture[0].id],
     );
     expect(auditAfter).toEqual(auditBefore);
+    const integrityAfter = await taskIntegritySnapshot(fixture[0].id);
+    expect(integrityAfter).toEqual(integrityBefore);
+    const sourceMigrations = await loadMigrations();
+    const appliedMigrations = await dbQuery<{ name: string; checksum: string }>(
+      'SELECT name, checksum FROM qc.schema_migrations ORDER BY version',
+    );
+    expect(appliedMigrations).toEqual(
+      sourceMigrations.map(({ name, checksum }) => ({ name, checksum })),
+    );
+    const schemaDigest = digestInputs(
+      sourceMigrations.map((migration) => [`${migration.name}.sql`, migration.sql]),
+    );
+    const run = await verificationRun();
+    const release = JSON.parse(await readFile('dist/release-identity.json', 'utf8'));
+    const liveGrants = await dbQuery<{ role: string; permission: string }>(
+      `SELECT DISTINCT r.code AS role, p.code AS permission FROM qc.users u
+       JOIN qc.user_roles ur ON ur.user_id = u.id AND ur.revoked_at IS NULL
+       JOIN qc.roles r ON r.id = ur.role_id AND r.active = true
+       JOIN qc.role_permissions rp ON rp.role_id = r.id
+       JOIN qc.permissions p ON p.id = rp.permission_id AND p.active = true
+       WHERE u.login_identity = 'verify-least' AND u.account_state = 'ACTIVE'
+       ORDER BY r.code, p.code`,
+    );
+    const liveScopes = await dbQuery<{ scope_kind: string; scope_value: string | null }>(
+      `SELECT s.scope_kind, s.scope_value FROM qc.user_scopes s
+       JOIN qc.users u ON u.id = s.user_id WHERE u.login_identity = 'verify-least'
+       AND s.revoked_at IS NULL ORDER BY s.scope_kind, s.scope_value`,
+    );
+    const users = await dbQuery<{ id: string }>(
+      "SELECT id FROM qc.users WHERE login_identity = 'verify-least' AND account_state = 'ACTIVE'",
+    );
+    expect(users).toHaveLength(1);
+    const actorDatabase = new Kysely<DatabaseSchema>({
+      dialect: new PostgresDialect({
+        pool: new Pool({ connectionString: process.env.QC_TEST_DATABASE_URL }),
+      }),
+    }).withSchema('qc');
+    let resolvedActor;
+    try {
+      resolvedActor = await resolveActor(actorDatabase, users[0].id);
+    } finally {
+      await actorDatabase.destroy();
+    }
+    // Operational reads are derived at actor resolution, not role_permissions rows.
+    expect(resolvedActor?.permissions.some((grant) => grant.code === 'PERM-TASK-VIEW')).toBe(true);
+    expect(resolvedActor?.permissions.some((grant) => grant.code === 'PERM-TASK-CREATE')).toBe(
+      false,
+    );
+    const supportingEvidence = {
+      ...run,
+      release,
+      schemaDigest,
+      appliedMigrations,
+      route: '/tasks/[taskId]',
+      routeId: 'RT-TASK-003',
+      fixtureReference: 'VERIFY-AUTHZ-READONLY',
+      persona: 'verify-least',
+      liveGrants,
+      liveScopes,
+      resolvedActor,
+      executedAt: new Date().toISOString(),
+      command:
+        'QC_ADP08_AUTHORIZATION_ONLY=true node --import=tsx scripts/verification/run-authenticated-e2e.ts',
+      state: 'DRAFT',
+      version: '1',
+      status: 'PASS',
+      positiveReadControl: true,
+      expectedOutcome: 'errors.authz_permission_missing',
+      observedOutcome: 'errors.authz_permission_missing',
+      httpStatus: denied.status,
+      before: integrityBefore,
+      after: integrityAfter,
+      auditCounts: { before: auditBefore, after: auditAfter },
+      boundary: 'Supporting technical fixture; not six-persona or human UAT acceptance',
+    };
+    await mkdir('.ci-results', { recursive: true });
+    await writeFile(
+      '.ci-results/task-direct-denial.json',
+      `${JSON.stringify(supportingEvidence, null, 2)}\n`,
+    );
+    await test.info().attach('route-task-direct-denial-integrity', {
+      contentType: 'application/json',
+      body: JSON.stringify(supportingEvidence),
+    });
   });
 
   test('critical operational surfaces keep controlled facts and governance read-only', async ({
