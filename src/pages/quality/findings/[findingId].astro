@@ -9,17 +9,27 @@ if (!actor) return Astro.redirect('/login');
 // F-05 baseline: a read failure renders the unavailable state, never a 500.
 const read = findingsReadDependencies();
 const findingId = Astro.params.findingId ?? '';
-const finding = /^[0-9a-f-]{36}$/i.test(findingId)
-  ? await read.get.execute({ actor, id: findingId }).catch(() => undefined)
-  : undefined;
-if (!finding) return Astro.redirect('/404');
+let finding: Awaited<ReturnType<typeof read.get.execute>> | undefined;
+let providerUnavailable = false;
+if (/^[0-9a-f-]{36}$/i.test(findingId)) {
+  try { finding = await read.get.execute({ actor, id: findingId }); }
+  catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'RESOURCE_NOT_FOUND') Astro.response.status = 404;
+    else providerUnavailable = true;
+  }
+} else Astro.response.status = 404;
 // Related NCRs are resolved server-side through the NCR domain's own
 // scope-limited read; a finding page never queries the NCR table directly and
 // never links a record this account cannot open.
-const relatedNcrs = await listRelatedNcrsForFinding(actor, finding.id).catch(() => []);
+let relatedNcrs: Awaited<ReturnType<typeof listRelatedNcrsForFinding>> = [];
+if (finding) {
+  try { relatedNcrs = await listRelatedNcrsForFinding(actor, finding.id); }
+  catch { providerUnavailable = true; }
+}
+if (providerUnavailable) Astro.response.status = 503;
 ---
-<AppLayout title={`${finding.findingNo} · Quality`} locale="en" direction="ltr"><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p>
-<JourneyContextPanel ownerDomain="Quality / Findings" currentState={stateLabel(finding.state)} nextAction={finding.state === 'DRAFT' ? 'Open the finding for review' : finding.state === 'OPEN' ? 'Submit the finding for review' : undefined} nextActionHref={finding.state === 'DRAFT' ? '/quality/findings' : finding.state === 'OPEN' ? '/quality/findings' : undefined} nextOwner={finding.state === 'DRAFT' || finding.state === 'OPEN' ? 'Quality owner' : finding.state === 'UNDER_REVIEW' ? 'Finding reviewer' : undefined} whyUnavailable={finding.state === 'UNDER_REVIEW' ? 'state: this record is waiting for an authorized review decision' : finding.state === 'CLOSED' ? 'state: controlled closure is complete and the record is immutable' : undefined} waitingOn={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} expectedEvent={finding.state === 'OPEN' ? 'Submit for review' : finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} controlledContext={`Finding ${finding.findingNo} · record version ${finding.version.toString()}`} evidenceSummary={finding.sourceContext ? 'Source context recorded by the owning workflow' : 'No source context was recorded for this finding'} auditHref={`/audit?subjectType=FINDING&subjectId=${encodeURIComponent(finding.id)}`} relatedLinks={[{ label: 'Findings register', href: '/quality/findings', detail: 'Quality-owned records' }]} />
+<AppLayout title={`${finding?.findingNo ?? 'Finding'} · Quality`} locale="en" direction="ltr">{providerUnavailable ? <main><h1>Finding details are temporarily unavailable</h1><p role="status">The record source could not be reached. Your record was not changed. Retry from <a href="/quality/findings">Findings</a>.</p></main> : finding ? <><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p>
+<JourneyContextPanel ownerDomain="Quality / Findings" currentState={stateLabel(finding.state)} nextAction={undefined} nextOwner={finding.state === 'DRAFT' || finding.state === 'OPEN' ? 'Quality owner' : finding.state === 'UNDER_REVIEW' ? 'Finding reviewer' : undefined} whyUnavailable={finding.state === 'OPEN' ? 'policy: PD-15 Finding-to-NCR criteria are pending the QC owner; no NCR is created automatically' : finding.state === 'UNDER_REVIEW' ? 'state: this record is waiting for an authorized review decision' : finding.state === 'CLOSED' ? 'state: controlled closure is complete and the record is immutable' : undefined} waitingOn={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} expectedEvent={finding.state === 'OPEN' ? 'QC owner decision on NCR initiation criteria (PD-15)' : finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} controlledContext={`Finding ${finding.findingNo} · record version ${finding.version.toString()}`} evidenceSummary={finding.sourceContext ? 'Source context recorded by the owning workflow' : 'No source context was recorded for this finding'} auditHref={`/audit?subjectType=FINDING&subjectId=${encodeURIComponent(finding.id)}`} relatedLinks={[{ label: 'Findings register', href: '/quality/findings', detail: 'Quality-owned records' }, ...relatedNcrs.map((ncr) => ({ label: `NCR ${ncr.ncrNo}`, href: `/quality/ncr/${ncr.id}`, detail: stateLabel(ncr.state) }))]} />
 <dl><dt>State</dt><dd>{stateLabel(finding.state)}</dd><dt>Severity</dt><dd>{finding.severity ? severityLabel(finding.severity) : 'Not classified'}</dd><dt>Version</dt><dd>{finding.version.toString()}</dd><dt>Source context</dt><dd>{finding.sourceContext?'Recorded':'Not provided'}</dd></dl>
-<section class="related"><h2>Related NCRs</h2>{relatedNcrs.length ? <ul>{relatedNcrs.map((ncr) => <li><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a><span>{stateLabel(ncr.state)}</span></li>)}</ul> : <p class="muted">No NCR linked to this finding is visible in your authorized scope.</p>}<p class="note">NCR creation and lifecycle remain owned by the NCR workflow; this list is a read-only linkage.</p></section></AppLayout>
+<section class="related"><h2>Related NCRs</h2>{relatedNcrs.length ? <ul>{relatedNcrs.map((ncr) => <li><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a><span>{stateLabel(ncr.state)}</span></li>)}</ul> : <p class="muted">No NCR linked to this finding is visible in your authorized scope.</p>}{providerUnavailable && <p role="status">The NCR source is temporarily unavailable. Retry this record before treating the relationship as empty.</p>}<p class="note">PD-15 decision owner: QC-approved NCR initiation criteria. No NCR creation action is offered while that policy remains open.</p></section></> : <main><h1>Finding record not found</h1><p>This record does not exist or is outside your authorized scope.</p><a href="/quality/findings">Return to Findings</a></main>}</AppLayout>
 <style>.eyebrow,.lede{color:var(--text-muted)}dl{display:grid;grid-template-columns:max-content 1fr;gap:.65rem 1rem;background:var(--surface-panel);padding:1rem}dt{font-weight:700}dd{margin:0}.related{margin-top:1rem;padding:1rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle)}.related ul{list-style:none;padding:0;margin:0;display:grid;gap:.4rem}.related a{color:var(--color-accent-primary-hover)}.related span{color:var(--text-muted);margin-inline-start:.5rem}.note{color:var(--text-muted);font-size:.8rem}</style>

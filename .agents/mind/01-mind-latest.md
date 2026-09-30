@@ -1,5 +1,15 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-07 / P-04 and equipment eligibility copy**
+  - Changed: copy now maps approved P-04/BR-CAL-004; CAPA aggregate reads include actions and signed snapshot/replay JSON preserves bigint versions. No policy/schema change.
+  - Evidence: Node 24.20.0; focused 31/31, isolated PostgreSQL18.6 5/5 and real browser/direct HTTP 1/1 PASS, four widths; Astro build PASS. AT/200%/human UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-07.md`.
+  - State: PARTIAL — technical F-007 acceptance passed; manual acceptance remains open.
+
+- **2026-09-30 — QC-ADP26-06 / رحلة Findings→NCR→RCA→CAPA**
+  - Changed: توصيل سجلات وتفاصيل القراءة ذات النطاق؛ قرارات PD15–18 بقيت deny ولا تغييرات schema/transitions.
+  - Evidence: focused quality/journey 27/27 PASS؛ candidate `a5ae05df`, fingerprint `c6271719`، Node 24.20.0؛ build وrelease verification PASS (`rel-0deb353299ce53a5`). PG18 والواجهة/AT/UAT BLOCKED أو NOT VERIFIED؛ handoff `audit/2026-09-30/handoff-QC-ADP26-06.md`.
+  - State: PARTIAL — قرارات المالك وأدلة التشغيل والقبول ما زالت مفتوحة.
+
 - **2026-09-30 — QC-ADP26-05 / inspection draft notes and point results**
   - Changed: per-point remarks, REMARK_ONLY and NA now have existing-row save contracts with required-point validation; unsaved general notes removed. No schema/policy/outbox change.
   - Evidence: candidate base `161762e7`; focused unit 33/33, Astro check 0 errors, local build PASS. PostgreSQL 18, authenticated browser/AT and UAT BLOCKED/NOT VERIFIED; handoff `audit/2026-09-30/handoff-QC-ADP26-05.md`.
@@ -254,6 +264,7 @@
 - إغلاق CAPA الاستثنائي: Supervisor فقط مع `PERM-CAPA-CLOSE` + ACTIVE + scope/version + reason + reauthentication + e-signature.
 - `ACTIONS_COMPLETE` ومراجعة الفعالية تبقى مطلوبة.
 - المسار العام للـtransition لا يجوز أن يتجاوز مراسم `CloseCapaUseCase`.
+- QC-ADP26-07: isolated PG18 proves incomplete-action closure/denial/rollback/race/replay; read aggregate and JSON persistence repaired. Closure makes no effectiveness claim; general effectiveness criteria remain PD-18 owner-dependent.
 
 ## 4) Release Governance
 - browser لا يرسل حقيقة PASS أو risk acceptance أو هوية إصدار موثوقة.
@@ -482,7 +493,7 @@
 - **QC-ADP-17 / F-020 PARTIAL:** قائمة/إنشاء/تفصيل المهام تعرض سياق المالك/المكلّف والخطوة التالية وسجل الانتقال؛ source migration head `0041` بلا migration جديدة. Unit 11/11 وAstro check PASS؛ PG18 integration BLOCKED لغياب container runtime، وauthenticated E2E BLOCKED عند Chromium sandbox/fixture env. لا READY؛ سياسة SD-002 وUAT وإثبات actor/role حي تبقى مفتوحة. المقام 7 فحوص لكل route (21): source فقط 3/21. `audit/2026-09-24/QC-ADP-17-task-lifecycle-handoff.md`.
 - **QC-ADP-08 / F-009 + F-018 remain OPEN:** real task fixture proves `/tasks/[taskId]` GET + server-denied POST with unchanged row/audit on the PG18.6 candidate. One route has partial HTTP proof; 450 remains gross planning only and each card needs applicable checks/N/A source and route-bound evidence. See `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
 - **QC-ADP-10 / F-011 PARTIAL:** PG18 candidate proves screen/query/CSV/XLSX row, filter, order, date, scope, permission, formula, and shared provenance parity. The Action filter omission is fixed. Live route/role and authenticated print E2E remain NOT VERIFIED; durable cross-request snapshots require owner reconciliation of `REQ-RPT-005` / `BR-RPT-005` and retention before persistence. Handoff: `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.
-- **QC-ADP-06:** Finding→NCR threshold/FAIL consequence/NCR closure/CAPA effectiveness remain owner-dependent (PD-15/16/17/18). Approved P-04 permits a controlled Supervisor exception without effectiveness acceptance, so an absolute effectiveness-before-every-closure acceptance criterion conflicts with current policy and requires an explicit owner decision; do not change the exception by implementation. Route handoff: `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
+- **QC-ADP-06:** Finding/NCR/RCA/CAPA scoped read registers and details now link visible related records and show the decision owner. PD-15/16/17/18 remain deny/owner-dependent; approved P-04 Supervisor close exception remains intact. PG18, populated-role proof, browser/AT and UAT are not verified; see `audit/2026-09-30/handoff-QC-ADP26-06.md` and historical policy decision `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
 - **ملف تكامل مخصص للمرحلتين موجود الآن** (كان مفتوحًا في تقرير FINAL-004): `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.
 - **أُغلق 2026-09-19 (QC-100-FINAL-002):** كل ملفات `pnpm test:integration` التي كانت تفشل السابقة (`identity/system-owner-upgrade-parity`, `system/control-center`, `reporting/report-export-parity`, `shared/search-scope`, `shared/notification-outbox-delivery`, `quarantine/overview-parity`) صارت PASS بجذور مُثبتة: عزل schema لكل suite كانت تعوّل على قاعدة بكر، probed migration-dir في `createPostgresMigrationStatus` (العملة الواحدة كانت تُبلغ drift زائفًا تحت Vitest)، وعقود اختبار متقادمة (literal LIKE، bounded queue مقابل total، `uuidv7` غير مونوتونية داخل المللي ثانية، sparse-array matcher).

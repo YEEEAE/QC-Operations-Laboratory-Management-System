@@ -1,4 +1,53 @@
 ---
-import AppLayout from '../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect('/login');
+import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
+import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
+import { rcaReadDependencies } from '../../../modules/quality/rca/application/dependencies.js';
+import { ncrReadDependencies } from '../../../modules/quality/ncr/application/dependencies.js';
+import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
+import { AppError } from '../../../shared/errors/app-error.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { formatDateTime } from '../../../shared/copy/format.js';
+
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Frca');
+const rcaId = Astro.params.rcaId ?? '';
+const validId = /^[0-9a-f-]{36}$/i.test(rcaId);
+let rca: Awaited<ReturnType<ReturnType<typeof rcaReadDependencies>['get']['execute']>> | undefined;
+let unavailable = false;
+if (validId) {
+  try { rca = await rcaReadDependencies().get.execute({ actor, id: rcaId }); }
+  catch (error) {
+    if (!(error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND')) unavailable = true;
+  }
+}
+if (!validId || (!rca && !unavailable)) Astro.response.status = 404;
+if (unavailable) Astro.response.status = 503;
+let ncr: Awaited<ReturnType<ReturnType<typeof ncrReadDependencies>['get']['execute']>> | undefined;
+let relatedCapas: Awaited<ReturnType<ReturnType<typeof capaReadDependencies>['list']['execute']>> = [];
+let relationUnavailable = false;
+if (rca) {
+  const [ncrResult, capaResult] = await Promise.allSettled([
+    ncrReadDependencies().get.execute({ actor, id: rca.ncrId }),
+    capaReadDependencies().list.execute({ actor }),
+  ]);
+  if (ncrResult.status === 'fulfilled') ncr = ncrResult.value;
+  else if (!(ncrResult.reason instanceof AppError && ncrResult.reason.code === 'RESOURCE_NOT_FOUND')) relationUnavailable = true;
+  if (capaResult.status === 'fulfilled') relatedCapas = capaResult.value.filter((capa) => capa.ncrId === rca?.ncrId);
+  else relationUnavailable = true;
+}
+const reference = rca?.rcaNo ?? (ncr ? `RCA for ${ncr.ncrNo}` : 'Root-cause analysis');
+const nextOwner = rca?.state === 'DRAFT' || rca?.state === 'IN_PROGRESS' || rca?.state === 'RETURNED' ? 'Assigned RCA analyst' : rca?.state === 'SUBMITTED' ? 'Authorized RCA reviewer' : undefined;
+const nextStep = rca?.state === 'SUBMITTED' ? 'Await the authorized review decision' : rca?.state === 'APPROVED' ? 'Return to the linked NCR and review its permitted next step' : rca?.state === 'VOID' ? 'Record is void; history remains available' : 'Continue analysis through the authorized RCA workflow';
 ---
-<AppLayout title="RCA detail · Quality" locale="en" direction="ltr"><h1>RCA workspace</h1><p class="lede">Analysis, root cause, review, and history remain linked to the NCR.</p></AppLayout><style>.lede{color:var(--text-muted)}</style>
+<AppLayout title={`${reference} · RCA · Quality`} locale="en" direction="ltr">
+  {unavailable ? <main class="shell"><h1>RCA details are temporarily unavailable</h1><ProviderUnavailableState title="The record source could not be reached" /><p><a href="/quality/rca">Return to the RCA register</a> and retry when the source is available.</p></main> : rca ? <main class="shell">
+    <p class="eyebrow">Root-cause analysis</p><h1>{reference}</h1>
+    <JourneyContextPanel ownerDomain="Quality / RCA" recordReference={`${reference} · version ${rca.version.toString()}`} currentState={stateLabel(rca.state)} nextOwner={nextOwner} waitingOn={rca.state === 'SUBMITTED' ? 'Authorized RCA review' : undefined} expectedEvent={nextStep} whyUnavailable={rca.state === 'APPROVED' ? 'state: the analysis is approved; NCR closure remains subject to the QMS owner decision (PD-17)' : rca.state === 'VOID' ? 'state: this analysis is void and read-only' : undefined} controlledContext={`${reference} · version ${rca.version.toString()}`} evidenceSummary={`Method ${rca.method ?? 'not recorded'} · analysis ${rca.analysis ? 'recorded' : 'not recorded'} · root cause ${rca.rootCause ? 'recorded' : 'not recorded'}`} auditHref={`/audit?subjectType=RCA&subjectId=${encodeURIComponent(rca.id)}`} relatedLinks={[{ label: ncr ? `NCR ${ncr.ncrNo}` : 'NCR register', href: ncr ? `/quality/ncr/${ncr.id}` : '/quality/ncr', detail: 'Source non-conformance record' }, ...relatedCapas.map((capa) => ({ label: `CAPA ${capa.capaNo}`, href: `/quality/capa/${capa.id}`, detail: stateLabel(capa.state) }))]} />
+    <section class="details" aria-labelledby="details-heading"><h2 id="details-heading">Analysis details</h2><dl><dt>State</dt><dd>{stateLabel(rca.state)}</dd><dt>Version</dt><dd>{rca.version.toString()}</dd><dt>Method</dt><dd>{rca.method ?? 'Not recorded'}</dd><dt>Analysis</dt><dd>{rca.analysis ?? 'Not recorded'}</dd><dt>Root cause</dt><dd>{rca.rootCause ?? 'Not recorded'}</dd><dt>Submitted</dt><dd>{rca.submittedAt ? formatDateTime(rca.submittedAt) : 'Not submitted'}</dd><dt>Approved</dt><dd>{rca.approvedAt ? formatDateTime(rca.approvedAt) : 'Not approved'}</dd></dl></section>
+    <section class="related"><h2>Source NCR</h2>{ncr ? <p><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> · {stateLabel(ncr.state)} · {ncr.title}</p> : <p>{relationUnavailable ? 'The linked record source is temporarily unavailable. Retry this page.' : 'The source NCR is not visible in your authorized scope.'}</p>}</section>
+    <section class="related"><h2>Related CAPAs</h2>{relationUnavailable ? <p>The CAPA source is temporarily unavailable. Retry this page.</p> : relatedCapas.length ? <ul>{relatedCapas.map((capa) => <li><a href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a> · {stateLabel(capa.state)}</li>)}</ul> : <p>No linked CAPA is visible in your authorized scope.</p>}<p class="owner"><strong>PD-18 · Quality-policy owner:</strong> effectiveness requirement and criteria remain undecided. No effectiveness verdict is inferred.</p></section>
+    <p class="next"><strong>Next step:</strong> {nextStep}. <span>PD-17 decision owner: QMS process owner.</span> {relationUnavailable && <span role="status">One or more related sources are unavailable; retry the relationship lookup.</span>}</p>
+  </main> : <main class="shell"><h1>RCA record not found</h1><p>This record does not exist or is outside your authorized scope.</p><p><a href="/quality/rca">Return to the RCA register</a> to find an accessible record.</p></main>}
+</AppLayout>
+<style>.shell{max-width:64rem;margin:0 auto;padding:var(--space-6) var(--space-4)}h1{margin:.25rem 0 var(--space-5)}h2{font-size:1rem}.eyebrow{color:var(--text-muted);font-size:.75rem;font-weight:700;letter-spacing:.1em}.details,.related,.next{margin-top:var(--space-4);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}dl{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:.6rem 1rem}dt{font-weight:700}dd{margin:0;white-space:pre-wrap}.related a,.shell a{color:var(--color-accent-primary-hover)}.related ul{display:grid;gap:.5rem;padding-inline-start:1.25rem}.owner,.next span{color:var(--text-muted)}@media(max-width:480px){dl{grid-template-columns:1fr;gap:.25rem}.details dd{margin-bottom:.65rem}}</style>

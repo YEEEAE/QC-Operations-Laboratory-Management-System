@@ -3,29 +3,44 @@ import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { AppError } from '../../../shared/errors/app-error.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 const capaId = Astro.params.capaId ?? '';
 const capaRead = capaReadDependencies();
-const capa = /^[0-9a-f-]{36}$/i.test(capaId) ? await capaRead.get.execute({ id: capaId, actor }).catch(() => undefined) : undefined;
+let capa: Awaited<ReturnType<typeof capaRead.get.execute>> | undefined;
+let providerUnavailable = false;
+if (/^[0-9a-f-]{36}$/i.test(capaId)) {
+  try { capa = await capaRead.get.execute({ id: capaId, actor }); }
+  catch (error) {
+    if (!(error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND')) providerUnavailable = true;
+  }
+} else Astro.response.status = 404;
+if (!capa && !providerUnavailable) Astro.response.status = 404;
+if (providerUnavailable) Astro.response.status = 503;
 const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
 // The source NCR is resolved server-side through the NCR domain's own
 // scope-limited read (QC-100-FINAL-024). The CAPA page holds no mutation
 // authority over NCR state — the linkage is presentation only.
-const sourceNcr = capa?.ncrId
-  ? await capaRead.listRelatedNcrs.execute({ ncrId: capa.ncrId, actor }).then((ncrs) => ncrs[0]).catch(() => undefined)
-  : undefined;
+let sourceNcr: Awaited<ReturnType<typeof capaRead.listRelatedNcrs.execute>>[number] | undefined;
+let sourceUnavailable = false;
+if (capa?.ncrId) {
+  try { sourceNcr = (await capaRead.listRelatedNcrs.execute({ ncrId: capa.ncrId, actor }))[0]; }
+  catch { sourceUnavailable = true; }
+}
 ---
 <AppLayout title="CAPA detail · Quality" locale="en" direction="ltr">
   <main class="capa-shell">
     <h1>CAPA detail</h1>
-    {capa ? <>
+  {providerUnavailable ? <section class="unavailable"><h1>CAPA details are temporarily unavailable</h1><p role="status">The record source could not be reached. No record was changed. Retry from <a href="/quality/capa">CAPA records</a>.</p></section> : capa ? <>
       <p class="lede">{capa.capaNo} · State: {stateLabel(capa.state)} · Version: {capa.version}</p>
-      <JourneyContextPanel ownerDomain="Quality / CAPA" recordReference={`${capa.capaNo} · version ${capa.version.toString()}`} currentState={stateLabel(capa.state)} nextOwner={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'CAPA action owner' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'CAPA verifier' : undefined} whyUnavailable={capa.state === 'READY_FOR_CLOSURE' ? 'policy: closure requires the approved closure authority (P-04)' : capa.state === 'CLOSED' ? 'state: controlled closure is complete and evidence is preserved' : undefined} waitingOn={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'Action execution' : capa.state === 'AWAITING_VERIFICATION' ? 'Verification' : capa.state === 'EFFECTIVENESS_REVIEW' ? 'Effectiveness review' : undefined} expectedEvent={capa.state === 'IN_PROGRESS' ? 'Action completion' : ['AWAITING_VERIFICATION', 'EFFECTIVENESS_REVIEW'].includes(capa.state) ? 'Verification progress' : capa.state === 'READY_FOR_CLOSURE' ? 'Controlled closure with e-signature' : undefined} controlledContext={`CAPA ${capa.capaNo} · record version ${capa.version.toString()}`} evidenceSummary={`Actions: ${capa.actions.length} · verification ${capa.verificationRequired ? 'required' : 'not required'} · effectiveness ${capa.effectivenessRequired ? 'required' : 'not required'}`} auditHref={`/audit?subjectType=CAPA&subjectId=${encodeURIComponent(capa.id)}`} relatedLinks={[{ label: sourceNcr ? `Source NCR ${sourceNcr.ncrNo}` : 'NCR register', href: sourceNcr ? `/quality/ncr/${sourceNcr.id}` : '/quality/ncr', detail: 'Owning non-conformance record' }]} />
+      <JourneyContextPanel ownerDomain="Quality / CAPA" recordReference={`${capa.capaNo} · version ${capa.version.toString()}`} currentState={stateLabel(capa.state)} nextOwner={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'CAPA action owner' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'CAPA verifier' : undefined} whyUnavailable={capa.state === 'READY_FOR_CLOSURE' ? 'P-04 closure is available only to an active Supervisor with the explicit close grant and authorized scope, subject to its reason, version, reauthentication, and e-signature checks' : capa.state === 'CLOSED' ? 'state: controlled closure is complete and evidence is preserved' : undefined} waitingOn={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'Action execution' : capa.state === 'AWAITING_VERIFICATION' ? 'Verification' : capa.state === 'EFFECTIVENESS_REVIEW' ? 'Effectiveness review' : undefined} expectedEvent={capa.state === 'IN_PROGRESS' ? 'Action completion' : ['AWAITING_VERIFICATION', 'EFFECTIVENESS_REVIEW'].includes(capa.state) ? 'Verification progress' : capa.state === 'READY_FOR_CLOSURE' ? 'Controlled P-04 closure with reason and e-signature' : undefined} controlledContext={`CAPA ${capa.capaNo} · record version ${capa.version.toString()}`} evidenceSummary={`Actions: ${capa.actions.length} · verification ${capa.verificationRequired ? 'required' : 'not required'} · recorded effectiveness requirement: ${capa.effectivenessRequired ? 'yes' : 'no'} (not an effectiveness verdict)`} auditHref={`/audit?subjectType=CAPA&subjectId=${encodeURIComponent(capa.id)}`} relatedLinks={[{ label: sourceNcr ? `Source NCR ${sourceNcr.ncrNo}` : 'NCR register', href: sourceNcr ? `/quality/ncr/${sourceNcr.id}` : '/quality/ncr', detail: 'Owning non-conformance record' }]} />
       <p class="lede">Related RCA, action owners, evidence, verification, closure, and history belong to the server-authorized aggregate.</p>
+      <p class="policy"><strong>PD-18 · Quality-policy owner:</strong> the general effectiveness requirement and criteria remain unresolved. The stored flag is record data, not an effectiveness verdict. P-04 is a separate approved closure exception and does not establish effectiveness.</p>
+      {sourceUnavailable && <p role="status">The related NCR source is temporarily unavailable. Retry before treating this relationship as absent.</p>}
       {canClose && <section aria-labelledby="close-heading" class="close-panel">
         <h2 id="close-heading">Close CAPA</h2>
-        <p>Approved P-04 closure does not require incomplete actions or effectiveness acceptance to be complete.</p>
+        <p>P-04 allows this exception only for an active Supervisor with the explicit close grant and authorized scope. The CAPA must be in an eligible state and at the displayed version. Enter a reason, reauthenticate, and sign the CLOSE meaning. Incomplete actions or unaccepted effectiveness do not block this exception; closure does not claim effectiveness.</p>
         <form data-capa-close data-capa-id={capa.id} data-capa-version={capa.version.toString()}>
           <label for="close-reason">Closure reason</label>
           <textarea id="close-reason" name="reason" required maxlength="2000"></textarea>
@@ -36,7 +51,7 @@ const sourceNcr = capa?.ncrId
           <output data-result role="status" tabindex="-1"></output>
         </form>
       </section>}
-    </> : <p class="lede">The CAPA is unavailable or you are not authorized to view it.</p>}
+    </> : <section class="unavailable"><h1>CAPA record not found</h1><p>This record does not exist or is outside your authorized scope.</p><a href="/quality/capa">Return to CAPA records</a></section>}
   </main>
 </AppLayout>
 <script>
@@ -62,6 +77,7 @@ const sourceNcr = capa?.ncrId
 </script>
 <style>
   .capa-shell{max-width:60rem;margin:0 auto;padding:2rem 1rem}.lede{color:var(--text-muted)}
+  .policy,.unavailable{padding:var(--space-4);background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}.policy{color:var(--text-muted)}.unavailable a{color:var(--color-accent-primary-hover)}
   .close-panel{margin-top:2rem;padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
   form{display:grid;gap:.75rem;max-width:38rem}textarea{min-height:7rem}button{width:max-content;padding:.7rem 1rem}.signature-meaning{font-weight:600}
   output{min-height:1.5rem}

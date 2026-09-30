@@ -3,9 +3,8 @@
 // to the CAPA detail route (`/quality/capa/[capaId]`), which previously rendered
 // a detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
 //
-// A CAPA is opened against an authorized NCR/RCA relation, and closure authority
-// plus effectiveness policy remain unresolved, so this page states that
-// honestly instead of showing a form that cannot be submitted.
+// This route intentionally remains informational until its authorized creation
+// flow is available; P-04 closure is a separate approved exception.
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fcapa%2Fnew');
@@ -18,9 +17,12 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fcapa%2Fnew');
   <section class="panel" role="status">
     <h2>Direct creation is not available</h2>
     <p>
-      Closure authority and effectiveness policy are unresolved, so this page does not offer a
-      create form. Nothing was changed. Existing CAPA records stay available in the register.
+      This page does not provide the authorized CAPA creation flow. Creating a CAPA requires an
+      authorized NCR relationship and the CAPA-create permission. Nothing was changed.
+      P-04 separately permits controlled closure by an active Supervisor with the explicit
+      close grant and scope, reason, matching version, reauthentication, and CLOSE e-signature.
     </p>
+    <p><strong>Still unresolved:</strong> PD-18 — whether an effectiveness check is generally required and its criteria. No effectiveness result is inferred.</p>
     <p class="links">
       <a href="/quality/capa">Open the CAPA register</a>
       <a href="/quality/ncr">Open NCR</a>

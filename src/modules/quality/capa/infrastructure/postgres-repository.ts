@@ -75,7 +75,14 @@ export class PostgresCapaRepository implements CapaRepository {
       .where('id', '=', id)
       .where((eb) => eb.or([eb('owner_id', '=', a.id), eb('created_by', '=', a.id)]))
       .executeTakeFirst();
-    return r && this.map(r);
+    if (!r) return;
+    const actions = await this.db
+      .selectFrom('capa_actions')
+      .selectAll()
+      .where('capa_id', '=', r.id)
+      .orderBy('sequence_no')
+      .execute();
+    return this.map(r, actions);
   }
   async list(i: Parameters<CapaRepository['list']>[0]) {
     let q = this.db
@@ -83,7 +90,15 @@ export class PostgresCapaRepository implements CapaRepository {
       .selectAll()
       .where((eb) => eb.or([eb('owner_id', '=', i.actor.id), eb('created_by', '=', i.actor.id)]));
     if (i.state) q = q.where('state', '=', i.state);
-    return (await q.execute()).map((r) => this.map(r));
+    const rows = await q.execute();
+    if (!rows.length) return [];
+    const actions = await this.db
+      .selectFrom('capa_actions')
+      .selectAll()
+      .where('capa_id', 'in', rows.map((row) => row.id))
+      .orderBy('sequence_no')
+      .execute();
+    return rows.map((row) => this.map(row, actions.filter((action) => action.capa_id === row.id)));
   }
   async transition(i: Parameters<CapaRepository['transition']>[0]) {
     if (i.action === 'CLOSE') throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -133,8 +148,22 @@ export class PostgresCapaRepository implements CapaRepository {
       if (replay) {
         if (replay.request_fingerprint !== fingerprint)
           throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
-        if (replay.status === 'COMPLETED' && replay.response_payload)
-          return replay.response_payload as Capa;
+        if (replay.status === 'COMPLETED' && replay.response_payload) {
+          const saved = replay.response_payload as Capa;
+          return {
+            ...saved,
+            version: BigInt(saved.version),
+            createdAt: new Date(saved.createdAt),
+            updatedAt: new Date(saved.updatedAt),
+            closedAt: saved.closedAt ? new Date(saved.closedAt) : undefined,
+            actions: saved.actions.map((action) => ({
+              ...action,
+              version: BigInt(action.version),
+              dueAt: action.dueAt ? new Date(action.dueAt) : undefined,
+              completedAt: action.completedAt ? new Date(action.completedAt) : undefined,
+            })),
+          };
+        }
         throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
       }
       await trx
@@ -174,7 +203,7 @@ export class PostgresCapaRepository implements CapaRepository {
         .values({
           capa_id: i.id,
           capa_version: BigInt(row.version),
-          snapshot,
+          snapshot: JSON.parse(snapshotJson),
           snapshot_hash: snapshotHash,
         })
         .execute();
@@ -237,7 +266,7 @@ export class PostgresCapaRepository implements CapaRepository {
         .updateTable('idempotency_records')
         .set({
           status: 'COMPLETED',
-          response_payload: result,
+          response_payload: JSON.parse(stableJson(result)),
           completed_at: new Date(),
         })
         .where('key', '=', key)
