@@ -55,7 +55,7 @@ export const uxVocabulary = {
   errors: {
     reviewFields: 'There is a problem. Review the highlighted fields.',
     noControlledAction: 'No controlled action was confirmed. Try again, or return to the record.',
-    serviceUnavailable: 'The service is temporarily unavailable. Nothing was changed. Try again.',
+    serviceUnavailable: 'The service did not confirm the result. Refresh the record and its history before deciding whether to try again.',
     authorizationChanged:
       'This action is unavailable. Refresh the page or return to the list, then try again if you still have access.',
     staleRecord: 'Your action was not applied. Review the latest version before continuing.',
@@ -78,7 +78,7 @@ export const uxVocabulary = {
     DUPLICATE_COMMAND:
       'This action was already applied. Reload the record to see the current state — nothing was duplicated.',
     UNKNOWN_SAFE_ERROR:
-      'The action did not complete. Nothing was changed — try again, or return to the record.',
+      'The action result could not be confirmed. Review the record or its history before deciding whether to try again. Your entries are preserved.',
   },
   /**
    * Human labels for change-request target types and approval workflow types.

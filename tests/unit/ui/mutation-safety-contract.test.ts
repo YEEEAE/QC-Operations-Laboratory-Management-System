@@ -74,6 +74,9 @@ describe('mutation failure classes stay distinguishable', () => {
       error: { message: 'CONFLICT_DUPLICATE_COMMAND' },
     }).state;
     const dependency = classifyActionResult({
+      error: { message: 'RESOURCE_NOT_FOUND' },
+    }).state;
+    const databaseUnavailable = classifyActionResult({
       error: { message: 'SYSTEM_DATABASE_UNAVAILABLE' },
     }).state;
     const notFound = classifyActionResult({ error: { message: 'RESOURCE_NOT_FOUND' } }).state;
@@ -86,6 +89,7 @@ describe('mutation failure classes stay distinguishable', () => {
     expect(stale).toBe('CONFLICT_STALE');
     expect(duplicate).toBe('DUPLICATE_COMMAND');
     expect(dependency).toBe('DEPENDENCY_UNAVAILABLE');
+    expect(databaseUnavailable).toBe('UNKNOWN_SAFE_ERROR');
     expect(notFound).toBe('DEPENDENCY_UNAVAILABLE');
     expect(validation).toBe('VALIDATION_ERROR');
     expect(unknown).toBe('UNKNOWN_SAFE_ERROR');
@@ -95,7 +99,7 @@ describe('mutation failure classes stay distinguishable', () => {
     expect(duplicate).not.toBe(stale);
   });
 
-  it('uses identical user copy for authorization denial and missing records', () => {
+  it('distinguishes authorization denial from a missing linked record', () => {
     const authState = classifyActionResult({ error: { message: 'AUTHZ_DENIED' } }).state;
     const missingState = classifyActionResult({ error: { message: 'RESOURCE_NOT_FOUND' } }).state;
     expect(authState).not.toBe(missingState);
@@ -104,7 +108,8 @@ describe('mutation failure classes stay distinguishable', () => {
     const authCopy = /AUTHORIZATION_CHANGED:\s*'([^']+)'/.exec(vocabulary)?.[1];
     const missingCopy = /DEPENDENCY_UNAVAILABLE:\s*'([^']+)'/.exec(vocabulary)?.[1];
     expect(authCopy).toBeTruthy();
-    expect(missingCopy).toBe(authCopy);
+    expect(missingCopy).toBeTruthy();
+    expect(missingCopy).not.toBe(authCopy);
     expect(authCopy).not.toMatch(/permission you|record is unavailable|could not be found/i);
   });
 
@@ -113,7 +118,7 @@ describe('mutation failure classes stay distinguishable', () => {
     expect(vocabulary).toMatch(/CONFLICT_STALE:[\s\S]*?Reload the latest data/);
     expect(vocabulary).toMatch(/CONFLICT_STALE:[\s\S]*?Nothing was resubmitted/);
     expect(vocabulary).toMatch(/AUTHORIZATION_CHANGED:[\s\S]*?preserved/);
-    expect(vocabulary).toMatch(/DEPENDENCY_UNAVAILABLE:[\s\S]*?Refresh the page/);
+    expect(vocabulary).toMatch(/DEPENDENCY_UNAVAILABLE:[\s\S]*?Refresh this page to review the current options/);
   });
 });
 

@@ -110,7 +110,7 @@ export function bindDialogMutation(
       setDialogPending(dialog, false);
       if (error) {
         error.textContent =
-          'The service is temporarily unavailable. Nothing was changed — try again.';
+          'The service did not confirm the result. Review the record or its history before deciding whether to try again.';
         error.focus();
       }
     }

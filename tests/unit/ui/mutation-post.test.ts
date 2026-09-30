@@ -21,6 +21,17 @@ const readPage = (path: string): string =>
   readFileSync(new URL(`../../../src/pages/${path}`, import.meta.url), 'utf8');
 
 describe('mutation POST baseline helper (F-04 / F-05)', () => {
+  it('does not claim rollback when the database result is unavailable', () => {
+    const failure = toFormFailure(
+      { message: 'errors.system_database_unavailable' },
+      { entity: 'Task', requiredFields: [], values: {}, listHref: '/tasks', listLabel: 'tasks' },
+    );
+    expect(failure.kind).toBe('unavailable');
+    expect(failure.summary).toContain('did not confirm the result');
+    expect(failure.recovery).toContain('before deciding whether to try again');
+    expect(failure.recovery).not.toContain('Nothing was saved');
+  });
+
   it('accepts only uuid-like detail ids from action results', () => {
     expect(extractDetailId({ id: ID_A })).toBe(ID_A);
     expect(extractDetailId({ changeRequest: { id: ID_A } })).toBe(ID_A);
@@ -181,7 +192,7 @@ describe('mutation POST baseline helper (F-04 / F-05)', () => {
       { type: 'AstroActionError', message: 'errors.system_internal' },
       base,
     );
-    expect(unavailable.recovery).toMatch(/nothing was saved/i);
+    expect(unavailable.recovery).toMatch(/before deciding whether to try again/i);
 
     for (const failure of [validation, empty, auth, conflict, dependency, unavailable]) {
       expect(failure.summary).not.toMatch(/stack|node_modules|select .* from/i);
@@ -273,6 +284,9 @@ describe('shared async mutation interaction contract (ui-ux-pro-max)', () => {
     expect(classifyActionResult({ error: { message: 'errors.resource_not_found' } }).state).toBe(
       'DEPENDENCY_UNAVAILABLE',
     );
+    expect(classifyActionResult({ error: { message: 'errors.system_database_unavailable' } }).state).toBe(
+      'UNKNOWN_SAFE_ERROR',
+    );
     expect(classifyActionResult({ error: { message: 'weird' } }).state).toBe('UNKNOWN_SAFE_ERROR');
   });
 });
@@ -338,4 +352,17 @@ describe('create-form POST baseline contracts across the nine Tier-2 routes', ()
       expect(source).not.toContain('URLSearchParams');
     });
   }
+});
+
+describe('task lifecycle POST baseline (QC-PAGE-F-011)', () => {
+  it('posts lifecycle transitions to the same authorized Action and redirects after success', () => {
+    const source = readPage('tasks/[taskId].astro');
+    expect(source).toContain('Astro.request.method === \'POST\'');
+    expect(source).toContain('Astro.callAction(actions.tasks.transition');
+    expect(source).toContain('parseExpectedVersionField');
+    expect(source).toContain('method="post" data-task-transition');
+    expect(source).toContain('Astro.redirect(`/tasks/${id}`, 303)');
+    expect(source).toContain('unknownRecoveryHref: `/tasks/${currentTaskId}?reconcile=1#transition-history`');
+    expect(source).toContain('guardUnsavedChanges(form)');
+  });
 });

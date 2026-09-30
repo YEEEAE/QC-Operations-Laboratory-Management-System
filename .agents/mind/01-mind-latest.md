@@ -1,5 +1,15 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-11 / POST baseline and unknown write outcomes**
+  - Changed: task lifecycle now has native POST and selected create forms use classified enhancement; shared unknown-write recovery no longer claims rollback. No schema/policy change.
+  - Evidence: focused 85/85 and Astro build 1/1 PASS; typecheck still FAILS on the existing `Date.formatDate` error. PostgreSQL18/authenticated HTTP/browser/AT/UAT NOT VERIFIED; route inventory remains open. `audit/2026-09-30/handoff-QC-ADP26-11.md`.
+  - State: PARTIAL / NO-GO for full acceptance; candidate HEAD differs from requested audit SHA.
+
+- **2026-10-01 — QC-ADP26-10 / scientific source and final judgment**
+  - Changed: no runtime/schema change; current-candidate trace confirms lab's default evaluator denies, while inspection point PASS/FAIL persistence lacks verified approved-source/hash binding.
+  - Evidence: candidate `b3d2d476`; focused unit 63/63 PASS (synthetic/contracts only); PD-01/02/03/04/05/07 remain OPEN; PG18/browser/AT/UAT NOT RUN. `audit/2026-10-01/handoff-QC-ADP26-10.md`.
+  - State: PARTIAL / BLOCKED pending QC/QMS + Document Control source/criteria decision.
+
 - **2026-10-01 — QC-ADP26-09 / authority and version transport on template pages**
   - Changed: template pages now consume canonical P-06 authority; expectedVersion uses strict positive PostgreSQL BIGINT parsing with field recovery; secrets are not retained for redisplay.
   - Evidence: focused 73/73 PASS; Astro build 1/1 PASS under Node 24.19.0 (contract requires >=24.20.0); typecheck has 1 unrelated pre-existing error; local unauthenticated routes redirect 303 to sign-in; PG18/authenticated role and UI checks blocked or NOT VERIFIED. Final identity: `.ci-results/run-context.json` and `build.json`; handoff `audit/2026-09-30/handoff-QC-ADP26-09.md`.

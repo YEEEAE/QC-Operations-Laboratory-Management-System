@@ -68,7 +68,7 @@ const prereqs = inspection.state === 'SUBMITTED' || atSupervisorStage || atQcmSt
       if (!result.error) { window.location.reload(); return; }
       if (output) { output.textContent = 'The review action was not applied. Refresh and review the current state and version.'; (output as HTMLElement).focus?.(); }
     } catch {
-      if (output) { output.textContent = 'The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.'; (output as HTMLElement).focus?.(); }
+      if (output) { output.textContent = 'The service did not confirm the result. Refresh the inspection and its history before deciding whether to try again.'; (output as HTMLElement).focus?.(); }
     } finally { btn.disabled = false; scope?.removeAttribute('aria-busy'); }
   };
   document.querySelectorAll<HTMLElement>('[data-action="quarantine.reviewInspection"]').forEach((button) => button.addEventListener('click', () => void run(button, 'Starting review…', () => actions.quarantine.reviewInspection({ id: inspectionId, expectedVersion: BigInt(version) }))));
@@ -92,7 +92,7 @@ const prereqs = inspection.state === 'SUBMITTED' || atSupervisorStage || atQcmSt
       if (output) { output.textContent = 'The final approval was not applied. Verify your reauthentication password and the current version, then try again.'; output.focus?.(); }
     } catch {
       form.reset();
-      if (output) { output.textContent = 'The service is temporarily unavailable. Nothing was changed — try again if permitted.'; output.focus?.(); }
+      if (output) { output.textContent = 'The service did not confirm the result. Refresh the inspection and its history before deciding whether to try again.'; output.focus?.(); }
     } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   }));
   document.querySelectorAll<HTMLFormElement>('[data-action="quarantine.returnInspection"]').forEach((form) => form.addEventListener('submit', async (event) => {
@@ -109,7 +109,7 @@ const prereqs = inspection.state === 'SUBMITTED' || atSupervisorStage || atQcmSt
       if (!result.error) { window.location.reload(); return; }
       if (output) { output.textContent = 'Return was not applied. Refresh and review the current state before trying again.'; output.focus?.(); }
     } catch {
-      if (output) { output.textContent = 'The service is temporarily unavailable. Your reason was kept — try again if permitted.'; output.focus?.(); }
+      if (output) { output.textContent = 'The service did not confirm the result. Your reason is kept. Refresh the record and its history before deciding whether to try again.'; output.focus?.(); }
     } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   }));
   document.querySelectorAll<HTMLFormElement>('[data-action="quarantine.rejectInspection"]').forEach((form) => form.addEventListener('submit', async (event) => {
@@ -126,7 +126,7 @@ const prereqs = inspection.state === 'SUBMITTED' || atSupervisorStage || atQcmSt
       if (!result.error) { window.location.reload(); return; }
       if (output) { output.textContent = 'Rejection was not applied. Refresh and review the current state before trying again.'; output.focus?.(); }
     } catch {
-      if (output) { output.textContent = 'The service is temporarily unavailable. Your reason was kept — try again if permitted.'; output.focus?.(); }
+      if (output) { output.textContent = 'The service did not confirm the result. Your reason is kept. Refresh the record and its history before deciding whether to try again.'; output.focus?.(); }
     } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   }));
 </script>

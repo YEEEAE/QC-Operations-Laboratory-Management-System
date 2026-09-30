@@ -299,7 +299,7 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
       const firstInvalid = form.querySelector<HTMLElement>('input:invalid,textarea:invalid');
       (firstInvalid ?? output)?.focus?.();
     } catch {
-      if (output) output.textContent = 'The service is temporarily unavailable. Your entries are kept — try again.';
+      if (output) output.textContent = 'The service did not confirm the result. Your entries are kept. Check the report register before deciding whether to try again.';
     } finally {
       if (submit) submit.disabled = false;
       form.removeAttribute('aria-busy');

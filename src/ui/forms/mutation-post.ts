@@ -257,8 +257,8 @@ export function toFormFailure(error: unknown, input: FailureCopyInput): FormFail
         'The action or a referenced record is unavailable. Check your access, then try again. Your entries are preserved below.';
       break;
     case 'unavailable':
-      summary = 'The service is temporarily unavailable.';
-      recovery = 'Nothing was saved. Your entries are preserved below — try again in a moment.';
+      summary = 'The service did not confirm the result.';
+      recovery = 'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
       break;
     default:
       summary = `This ${entity} could not be created.`;

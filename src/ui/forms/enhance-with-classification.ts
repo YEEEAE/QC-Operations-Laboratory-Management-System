@@ -38,6 +38,8 @@ export interface FormEnhanceConfig<TData> {
   progressText: string;
   /** Detail route prefix for the created record, e.g. `/assets/equipment`. */
   detailBaseHref: string;
+  /** Existing record/history route used to reconcile an unknown commit before retry. */
+  unknownRecoveryHref?: string;
   /**
    * On SUCCESS the default navigates to `${detailBaseHref}/${recordId}`.
    * Provide to override only when the page needs a different behavior.
@@ -103,14 +105,24 @@ export function enhanceClassifiedForm<TData>(
       if (output) {
         const classKey = outcome.state as Exclude<MutationState, 'IDLE' | 'SUBMITTING' | 'SUCCESS'>;
         output.textContent = copy.errorClasses[classKey] ?? copy.errorClasses.UNKNOWN_SAFE_ERROR;
+        if (outcome.state === 'UNKNOWN_SAFE_ERROR') {
+          const link = document.createElement('a');
+          link.href = config.unknownRecoveryHref ?? config.detailBaseHref;
+          link.textContent = 'Review the record before retrying';
+          output.append(' ', link);
+        }
         if (outcome.state === 'VALIDATION_ERROR') focusFirstInvalid(form, output);
         else output?.focus?.();
       }
     } catch {
-      // Transport failure: no result was received, so nothing was applied.
-      // Safe-unknown vocabulary names exactly that and keeps the entries.
+      // Transport failure has an unknown commit outcome. Keep entries and
+      // require a record/history read before the operator decides to retry.
       if (output) {
         output.textContent = copy.errorClasses.UNKNOWN_SAFE_ERROR;
+        const link = document.createElement('a');
+        link.href = config.unknownRecoveryHref ?? config.detailBaseHref;
+        link.textContent = 'Review the record before retrying';
+        output.append(' ', link);
         output?.focus?.();
       }
     } finally {

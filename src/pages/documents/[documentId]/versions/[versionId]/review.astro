@@ -36,7 +36,7 @@ const canApprove = actor.permissions.some((permission) => permission.code === 'P
       if (result.data) { window.location.reload(); return; }
       status.textContent = 'The action was not applied. The version may have changed or authorization may have changed — refresh and try again if permitted.';
       status.focus?.();
-    } catch { status.textContent = 'The service is temporarily unavailable. Nothing was changed — refresh and try again if permitted.'; status.focus?.(); }
+    } catch { status.textContent = 'The service did not confirm the result. Refresh this version and its history before deciding whether to try again.'; status.focus?.(); }
     finally { b.disabled = false; section?.removeAttribute('aria-busy'); }
   };
   const review=document.querySelector<HTMLButtonElement>('[data-review-version]');

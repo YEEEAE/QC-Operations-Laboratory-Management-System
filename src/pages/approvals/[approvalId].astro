@@ -97,7 +97,7 @@ const approvalEvents = [
       };
       if (output) { output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR; output.focus?.(); }
     } catch {
-      if (output) { output.textContent = 'The service is temporarily unavailable. Your entries are preserved — try again if permitted.'; output.focus?.(); }
+      if (output) { output.textContent = 'The service did not confirm the result. Your entries are preserved. Refresh the record and its history before deciding whether to try again.'; output.focus?.(); }
     } finally { if (loading) loading.hidden = true; form.removeAttribute('aria-busy'); if (button) button.disabled = false; }
   });
   form?.querySelector<HTMLSelectElement>('#decision')?.addEventListener('change', (event) => {

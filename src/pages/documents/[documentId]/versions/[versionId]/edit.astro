@@ -44,7 +44,7 @@ const canEdit = version.state === 'DRAFT' && actor.permissions.some((permission)
         if(result.data){window.location.href=`/documents/${form.dataset.documentId}/versions/${form.dataset.versionId}`;return;}
         if(output){output.textContent='The draft was not saved. Refresh the version and review the current state before trying again.';output.focus?.();}
       }catch{
-        if(output){output.textContent='The service is temporarily unavailable. Your entries are preserved — try again if permitted.';output.focus?.();}
+        if(output){output.textContent='The service did not confirm the result. Your entries are preserved. Refresh the record and its history before deciding whether to try again.';output.focus?.();}
       }finally{form.removeAttribute('aria-busy');if(submit)submit.disabled=false;}
     });
   }

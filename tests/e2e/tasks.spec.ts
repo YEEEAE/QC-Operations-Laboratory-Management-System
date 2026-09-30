@@ -82,7 +82,7 @@ test('authenticated task journey preserves state, audit, scope, and version', as
     const completeButton = page.getByRole('button', { name: 'Complete', exact: true });
     await completeButton.evaluate((button) => button.setAttribute('data-version', '6'));
     await completeButton.click();
-    await expect(page.getByRole('status')).toContainText('The action was not applied');
+    await expect(page.getByRole('status')).toContainText('Someone changed this record');
 
     const taskRows = await pool.query<{ state: string; version: string }>(
       'SELECT state, version::text FROM qc.tasks WHERE id = $1 AND task_no = $2',
