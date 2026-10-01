@@ -17,7 +17,7 @@ describe('enterprise application shell contracts', () => {
     const sidebar = readUi('shell/Sidebar.astro');
     expect(layout).toContain('data-app-shell');
     expect(layout).toContain('data-sidebar-panel');
-    expect(layout).toContain("localStorage.setItem('qc-sidebar-collapsed'");
+    expect(layout).toContain('localStorage.setItem(storageKey, String(collapsed))');
     expect(topbar).toContain('data-navigation-toggle');
     expect(topbar).toContain('aria-controls="primary-navigation"');
     expect(topbar).toContain('min-inline-size:44px');
@@ -30,6 +30,25 @@ describe('enterprise application shell contracts', () => {
       "sidebarPanel.setAttribute('aria-hidden', String(isMobileDrawer() && !open))",
     );
     expect(layout).toContain("event.key !== 'Escape'");
+  });
+
+  it('keeps the drawer operable when browser preference storage is blocked', () => {
+    const layout = readUi('layouts/AppLayout.astro');
+    expect(layout).toContain('let collapsedPreference: string | null = null');
+    expect(layout).toMatch(
+      /try\s*\{\s*collapsedPreference = localStorage\.getItem\(storageKey\);\s*\}\s*catch/,
+    );
+    expect(layout).toMatch(/try\s*\{\s*sessionStorage\.setItem\(sectionsStorageKey/);
+    expect(layout).toMatch(/try\s*\{\s*localStorage\.setItem\(storageKey/);
+    expect(layout).toContain('in-memory state still applies');
+  });
+
+  it('gives operational states short readable labels instead of internal state keys', () => {
+    const state = readUi('components/feedback/OperationalState.astro');
+    expect(state).toContain("'filtered-empty': 'No matches'");
+    expect(state).toContain("denied: 'Access denied'");
+    expect(state).toContain('{stateLabels[state]}');
+    expect(state).not.toContain('state.replace');
   });
 
   it('supports a keyboard search shortcut without exposing unauthorized results in the shell', () => {

@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { getRouteById } from '../../shared/routing/routes.js';
+import { pageAccessDecision } from '../../shared/routing/page-access.js';
 import {
   HELP_GUIDANCE_MATRIX,
   HELP_ROLE_GUIDES,
@@ -21,6 +22,11 @@ const routeHref = (routeId: string): string => {
   if (!route) throw new Error(`Help guide references an unregistered route: ${routeId}`);
   return route.path;
 };
+const canVisitRoute = (routeId: string): boolean => {
+  const route = getRouteById(routeId);
+  if (!route) throw new Error(`Help guide references an unregistered route: ${routeId}`);
+  return pageAccessDecision(actor, route.path) === 'ALLOWED';
+};
 
 const labelFor = (routeId: string): string => {
   const route = getRouteById(routeId);
@@ -28,7 +34,7 @@ const labelFor = (routeId: string): string => {
   return route.title;
 };
 
-const quickLinks = HELP_ROUTE_LINKS.map((link) => ({
+const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)).map((link) => ({
   ...link,
   href: routeHref(link.routeId),
 }));
@@ -73,7 +79,7 @@ const quickLinks = HELP_ROUTE_LINKS.map((link) => ({
             <h3 id={`role-${guide.role}`}>{guide.title}</h3>
             <p class="focus">{guide.focus}</p>
             <ol>
-              {guide.startOfDay.map((routeId) => (
+              {guide.startOfDay.filter(canVisitRoute).map((routeId) => (
                 <li>
                   <a href={routeHref(routeId)}>
                     {labelFor(routeId)}

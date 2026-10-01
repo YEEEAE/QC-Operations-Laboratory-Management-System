@@ -1,6 +1,21 @@
 ---
 import BaseLayout from '../ui/layouts/BaseLayout.astro';
 const requestId = Astro.locals.requestContext?.requestId;
+const hasSession = Boolean(Astro.locals.actor);
+const returnTo = encodeURIComponent(`${Astro.url.pathname}${Astro.url.search}`);
+const recoveryHref = hasSession ? '/dashboard' : `/login?returnTo=${returnTo}`;
+const recoveryLabel = hasSession ? 'Back to dashboard' : 'Sign in to continue';
+const sessionEnded = Astro.locals.sessionRecovery === 'SESSION_ENDED';
 ---
-<BaseLayout title="Service unavailable"><main class="error-page"><p class="eyebrow">500 · Request could not be completed</p><h1>Something interrupted this request</h1><p>The request result could not be confirmed. Review the affected record and its history before deciding whether to try again. Contact support if the result remains unclear.</p>{requestId && <p class="reference">Reference: <code>{requestId}</code></p>}<div><a href="/dashboard">Back to dashboard</a></div></main></BaseLayout>
-<style>.error-page{min-height:70vh;display:grid;align-content:center;gap:12px;width:min(560px,calc(100% - 32px));margin:auto}.eyebrow{color:var(--status-danger);font:600 11px var(--font-mono)}h1{margin:0;color:var(--text-primary);font-size:clamp(28px,5vw,46px)}.error-page p{margin:0;color:var(--text-secondary);line-height:1.6}.reference{font-size:12px}.reference code{color:var(--text-primary);font-family:var(--font-mono)}.error-page div{display:flex;gap:16px;margin-top:12px}.error-page a{color:var(--color-accent-primary-hover);font-size:13px}</style>
+<BaseLayout title="Service unavailable"><main class="error-page"><p class="eyebrow">Request could not be completed</p><h1>Something interrupted this request</h1><p>{sessionEnded ? 'Your session ended while this request was being processed. Sign in again, then review the affected record and its history before deciding whether to retry.' : 'The request result could not be confirmed. Review the affected record and its history before deciding whether to try again. Contact support if the result remains unclear.'}</p>{requestId && <p class="reference">Reference: <code>{requestId}</code></p>}<div><a href={recoveryHref}>{recoveryLabel}</a><a href="/help">Get help</a></div></main></BaseLayout>
+<style>
+  .error-page { min-height: 70vh; display: grid; align-content: center; gap: var(--space-3); width: min(560px, calc(100% - 2 * var(--space-4))); margin-inline: auto; }
+  .eyebrow { margin: 0; color: var(--status-danger); font-size: var(--font-size-sm); font-weight: 700; }
+  h1 { margin: 0; color: var(--text-primary); font-size: clamp(1.75rem, 5vw, 2.875rem); }
+  .error-page p { margin: 0; color: var(--text-secondary); line-height: var(--line-height-relaxed); }
+  .reference { font-size: var(--font-size-sm); }
+  .reference code { color: var(--text-primary); font-family: var(--font-mono); overflow-wrap: anywhere; }
+  .error-page div { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-block-start: var(--space-2); }
+  .error-page a { display: inline-flex; align-items: center; min-block-size: var(--control-height); color: var(--color-accent-primary-hover); font-weight: 600; }
+  .error-page a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+</style>

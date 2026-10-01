@@ -9,9 +9,13 @@ interface Props {
 }
 const { state, title, description, actionLabel, actionHref } = Astro.props;
 const urgent = state === 'error' || state === 'denied' || state === 'stale';
+const stateLabels: Record<State, string> = {
+  idle: 'Ready', loading: 'Loading', empty: 'No records', 'filtered-empty': 'No matches',
+  error: 'Unavailable', denied: 'Access denied', stale: 'Refresh needed', success: 'Complete',
+};
 ---
 <section class={`operational-state operational-state--${state}`} role={urgent ? 'alert' : 'status'} aria-busy={state === 'loading' ? 'true' : undefined}>
-  <span class="state-word">{state.replace('-', ' ')}</span>
+  <span class="state-word">{stateLabels[state]}</span>
   <div>
     <h2>{title}</h2>
     <p>{description}</p>

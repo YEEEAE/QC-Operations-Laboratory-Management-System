@@ -338,6 +338,16 @@ export const HELP_STATE_NOTES: readonly { readonly situation: string; readonly m
         'The record changed since you loaded it. Reload and re-apply; never retry the stale intent.',
     },
     {
+      situation: 'Navigation does not remember a display preference',
+      meaning:
+        'Browser storage may be blocked. Navigation still works; the preference applies only while this page is open.',
+    },
+    {
+      situation: 'A request was interrupted before its result was confirmed',
+      meaning:
+        'Do not submit it again yet. Sign in if needed, then check the record and its history first. Use the reference shown on the error page when contacting support.',
+    },
+    {
       situation: 'A dashboard value shows “Not available”',
       meaning: 'Your scope has no read for that source, or it is unavailable. It is not zero.',
     },

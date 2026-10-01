@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getRouteById, getRouteByPathname } from '../../../src/shared/routing/routes.js';
+import { pageAccessDecision } from '../../../src/shared/routing/page-access.js';
 import {
   PERMISSION_CODES,
   isPermissionCode,
@@ -63,6 +64,23 @@ describe('help route registry integrity', () => {
     expect(unresolved).toEqual([]);
   });
 
+  it('hides named-owner help links for other authenticated accounts', () => {
+    const member = {
+      id: 'member',
+      loginIdentity: 'member',
+      accountState: 'ACTIVE' as const,
+      roles: ['SYSTEM_OWNER'],
+      permissions: [],
+    };
+    for (const routeId of ['RT-SYSTEM-001', 'RT-SYSTEM-002']) {
+      const route = getRouteById(routeId)!;
+      expect(pageAccessDecision(member, route.path)).toBe('YAZEED_ONLY');
+      expect(pageAccessDecision({ ...member, loginIdentity: 'yazeed' }, route.path)).toBe(
+        'ALLOWED',
+      );
+    }
+  });
+
   it('resolves every guidance matrix route and names only known states', () => {
     const unresolved = HELP_GUIDANCE_MATRIX.filter(
       (block) => !getRouteById(block.routeId) || block.entries.length === 0,
@@ -109,6 +127,15 @@ describe('printable help surface contract', () => {
     expect(page).toContain('unregistered route');
   });
 
+  it('filters all route links through the server page visibility decision', () => {
+    expect(page).toContain(
+      "import { pageAccessDecision } from '../../shared/routing/page-access.js'",
+    );
+    expect(page).toContain("pageAccessDecision(actor, route.path) === 'ALLOWED'");
+    expect(page).toContain('HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId))');
+    expect(page).toContain('guide.startOfDay.filter(canVisitRoute)');
+  });
+
   it('offers a print affordance and a print stylesheet', () => {
     expect(page).toContain('data-print-guide');
     expect(page).toContain('window.print()');
@@ -144,6 +171,16 @@ describe('printable help surface contract', () => {
     expect(read('src/shared/copy/help-content.ts')).toContain(
       'Page visibility does not grant mutation authority',
     );
+  });
+
+  it('makes 500 recovery session-aware without repeating an uncertain request', () => {
+    const page500 = read('src/pages/500.astro');
+    expect(page500).toContain("Astro.locals.sessionRecovery === 'SESSION_ENDED'");
+    expect(page500).toContain('Boolean(Astro.locals.actor)');
+    expect(page500).toContain('`/login?returnTo=${returnTo}`');
+    expect(page500).toContain('request result could not be confirmed');
+    expect(page500).toContain('review the affected record and its history');
+    expect(page500).not.toContain('href="/dashboard"');
   });
 });
 

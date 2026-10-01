@@ -1,5 +1,6 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-18 / shell preferences and recovery:** Browser preference storage failures no longer block drawer use; help route links follow `pageAccessDecision`; 500 recovery distinguishes ended sessions/unknown results and offers guest sign-in. Focused UI unit 55/55 and local Astro build PASS under Node 24.19.0 (below contract); typecheck FAILS in unrelated verification `.mjs` declarations/implicit-any. Preview E2E hit sanitized config-invalid 503 before rendering; authenticated browser/AT/UAT NOT VERIFIED. `audit/2026-10-01/handoff-QC-ADP26-18.md`.
 - **2026-10-01 — QC-ADP26-16 / AI advisory request transport**
   - Changed: `/ai-advisory` now keeps no-JavaScript transport POST-only with submission disabled until policy/configuration and client readiness; pending, refusal, provider timeout, ambiguous transport, consent reset, copy fallback, and local editing feedback are explicit. No AI provider activation or database change.
   - Evidence: focused AI/UI suites 97/97 PASS and candidate build PASS after verification context; authenticated browser, applied schema, external provider behavior, and UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-16.md`.
@@ -367,7 +368,7 @@
 - fixes مؤكدة: loading `role=status`, notification severity نصيًا، forced-colors contract، drawer inert/focus behavior، reflow guards.
 - QC-100-FINAL-005: أرضية قراءة 12px (`--font-size-xs`) لميتاداتا الـKPI، وهدف 44px للتحكمات التفاعلية في shell/navigation، والرمز المرئي داخل عنصر يحمل `aria-label` يبقى `aria-hidden` حتى لا يخالف ظاهر النص الاسمَ المتاح. إعادة بناء التنقل: 10 أقسام، أدوات مساعدة مستقلة، مؤشّر حالي نصي/شكلي، وفتح القسم الحالي تلقائيًا؛ 57/57 عقود shell/navigation مركزة PASS على Node `22.22.3` (خارج عقد المشروع). E2E الحقيقي غير متحقق: Chromium تعذر إقلاعه داخل sandbox، بيانات دخول الاختبار غير موجودة، وملف البيئة يشير إلى DB خارجية لم تُستخدم.
 - responsive E2E matrix صُممت لـ320/375/414/768/1024/1440 + landscape + LTR/RTL + 200% + text spacing + density.
-- live authenticated matrix وVoiceOver/NVDA/axe/320px/200% الشاملة ما زالت **NOT VERIFIED** على نفس current build.
+- live authenticated matrix وVoiceOver/NVDA/axe/320px/200% الشاملة ما زالت **NOT VERIFIED** على نفس current build. QC-ADP26-18 adds guarded shell preference access and server-page-filtered help links; real drawer storage-failure/focus proof remains open (`audit/2026-10-01/handoff-QC-ADP26-18.md`).
 - لا claim امتثال WCAG 2.2 AA كامل.
 
 ### Motion/backgrounds

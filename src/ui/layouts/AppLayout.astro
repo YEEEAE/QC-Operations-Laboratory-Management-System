@@ -50,7 +50,11 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     sidebar.dataset.collapsed = String(collapsed);
     collapse.setAttribute('aria-expanded', String(!collapsed));
     collapse.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
-    localStorage.setItem('qc-sidebar-collapsed', String(collapsed));
+    try {
+      localStorage.setItem(storageKey, String(collapsed));
+    } catch {
+      // The in-memory state still applies when browser storage is blocked.
+    }
   };
 
   let savedSections: unknown = [];
@@ -87,7 +91,11 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
       list.toggleAttribute('hidden', !nextOpen);
       if (nextOpen) expandedSections.add(sectionId);
       else expandedSections.delete(sectionId);
-      sessionStorage.setItem(sectionsStorageKey, JSON.stringify([...expandedSections]));
+      try {
+        sessionStorage.setItem(sectionsStorageKey, JSON.stringify([...expandedSections]));
+      } catch {
+        // Section expansion is a convenience; navigation stays usable.
+      }
     });
     button.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape' || button.getAttribute('aria-expanded') !== 'true') return;
@@ -161,7 +169,21 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     }
   };
 
-  if (localStorage.getItem(storageKey) === 'true') setCollapsed(true);
+  let collapsedPreference: string | null = null;
+  try {
+    collapsedPreference = localStorage.getItem(storageKey);
+  } catch {
+    // A blocked preference store must not prevent the drawer from opening.
+  }
+  if (collapsedPreference === 'true') {
+    // Apply the preference without requiring a storage write.
+    if (shell && sidebar && collapse) {
+      shell.dataset.sidebarCollapsed = 'true';
+      sidebar.dataset.collapsed = 'true';
+      collapse.setAttribute('aria-expanded', 'false');
+      collapse.setAttribute('aria-label', 'Expand navigation');
+    }
+  }
   // A closed mobile drawer must never keep keyboard focus: park it inert.
   // The workspace is only ever inert while the drawer is open at the mobile
   // breakpoint; every other state releases all temporary isolation.
