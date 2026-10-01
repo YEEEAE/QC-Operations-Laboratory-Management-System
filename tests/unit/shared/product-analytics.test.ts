@@ -26,6 +26,7 @@ describe('privacy-conscious product analytics', () => {
       ...baseEvent,
       attributes: {
         ...baseEvent.attributes,
+        duration_bucket: 'under-50ms',
         result_count_bucket: 'person@example.test',
         resolution: 'This contains a private query',
         userId: 'user-1',
@@ -34,6 +35,7 @@ describe('privacy-conscious product analytics', () => {
     });
     expect(safe?.attributes).toEqual({
       search_surface: 'global',
+      duration_bucket: 'under-50ms',
     });
     expect(
       sanitizeProductAnalyticsEvent({ ...baseEvent, name: 'arbitrary.event' }),

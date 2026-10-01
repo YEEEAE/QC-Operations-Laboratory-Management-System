@@ -55,7 +55,8 @@ export const uxVocabulary = {
   errors: {
     reviewFields: 'There is a problem. Review the highlighted fields.',
     noControlledAction: 'No controlled action was confirmed. Try again, or return to the record.',
-    serviceUnavailable: 'The service did not confirm the result. Refresh the record and its history before deciding whether to try again.',
+    serviceUnavailable:
+      'The service did not confirm the result. Refresh the record and its history before deciding whether to try again.',
     authorizationChanged:
       'This action is unavailable. Refresh the page or return to the list, then try again if you still have access.',
     staleRecord: 'Your action was not applied. Review the latest version before continuing.',
@@ -93,6 +94,19 @@ export const uxVocabulary = {
     INSPECTION_APPROVAL: 'Inspection approval',
     LAB_TEST_APPROVAL: 'Laboratory test approval',
     CHANGE_REQUEST_APPROVAL: 'Change request approval',
+  } as Record<string, string>,
+  searchTypeLabels: {
+    TASK: 'Task',
+    RECEIVING_ITEM: 'Received item',
+    INSPECTION_REPORT: 'Inspection report',
+    LAB_TEST: 'Laboratory test',
+    FINDING: 'Finding',
+    NCR: 'NCR',
+    CAPA: 'CAPA',
+    EQUIPMENT: 'Equipment',
+    DOCUMENT: 'Controlled document',
+    CHANGE_REQUEST: 'Change request',
+    REJECT_REPORT: 'Reject report',
   } as Record<string, string>,
   /**
    * The controlled lifecycle words keep four distinct meanings. Copy never
@@ -240,6 +254,11 @@ export function targetTypeLabel(code: string | null | undefined): string {
 export function workflowTypeLabel(code: string | null | undefined): string {
   if (!code) return 'Not supplied';
   return uxVocabulary.workflowTypeLabels[code] ?? code;
+}
+
+export function searchTypeLabel(code: string | null | undefined): string {
+  if (!code) return 'Record';
+  return uxVocabulary.searchTypeLabels[code] ?? 'Record';
 }
 
 /** Audit transition display: never renders “Not set to Not set”. */

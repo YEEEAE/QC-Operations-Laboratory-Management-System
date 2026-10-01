@@ -2,22 +2,58 @@
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
 import { searchDependencies } from '../shared/search/search-dependencies.js';
-import type { SearchResult } from '../shared/search/search-result.js';
-import { stateLabel } from '../shared/copy/ux-vocabulary.js';
+import type { SearchPage } from '../shared/search/search-result.js';
+import { searchTypeLabel, stateLabel } from '../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(`${Astro.url.pathname}${Astro.url.search}`)}`);
 const rawQuery = Astro.url.searchParams.get('q') ?? '';
-const q = rawQuery.length <= 200 && !rawQuery.includes('\0') ? rawQuery.trim() : '';
-let results: SearchResult[] = [];
+const q = rawQuery.trim();
+const rawCursor = Astro.url.searchParams.get('cursor') ?? undefined;
+const invalidQuery = Astro.url.searchParams.has('q') && (!q || q.length > 200 || q.includes('\0'));
+if (invalidQuery) Astro.response.status = 400;
+const canUseSearch = actor.permissions.some((grant) => grant.code === 'PERM-SRCH-USE' && grant.active !== false);
+let page: SearchPage = { items: [], total: 0 };
 let providerUnavailable = false;
-if (q && actor.permissions.some((grant) => grant.code === 'PERM-SRCH-USE' && grant.active !== false)) {
-  try { results = await searchDependencies(async (actorId) => { if (actorId !== actor.id) throw new Error('unauthorized'); }).search.search({ actorId: actor.id, q }); } catch { providerUnavailable = true; }
+let invalidCursor = false;
+if (q && !invalidQuery && canUseSearch) {
+  try {
+    page = await searchDependencies(async (actorId) => { if (actorId !== actor.id) throw new Error('unauthorized'); }).search.search({
+      actorId: actor.id,
+      q,
+      cursor: rawCursor,
+      permissions: actor.permissions,
+    });
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'VALIDATION_INVALID_QUERY') {
+      // Malformed cursors are presented as validation errors, not as source outages.
+      invalidCursor = true;
+      Astro.response.status = 400;
+    } else providerUnavailable = true;
+  }
 }
-const destination = (result: SearchResult) => ({ TASK: `/tasks/${result.entityId}`, RECEIVING_ITEM: `/quarantine/receiving/${result.entityId}`, INSPECTION_REPORT: `/quarantine/inspections/${result.entityId}`, LAB_TEST: `/laboratory/tests/${result.entityId}`, FINDING: `/quality/findings/${result.entityId}`, NCR: `/quality/ncr/${result.entityId}`, CAPA: `/quality/capa/${result.entityId}`, EQUIPMENT: `/assets/equipment/${result.entityId}`, DOCUMENT: `/documents/${result.entityId}`, CHANGE_REQUEST: `/change-requests/${result.entityId}`, REJECT_REPORT: `/reject-reports/${result.businessId.startsWith('RIS') ? 'issue-slips' : 'daily'}/${result.entityId}` } as Record<string, string>)[result.entityType] ?? '/dashboard';
+const results = page.items;
+const destination = (result: (typeof results)[number]) => ({ TASK: `/tasks/${result.entityId}`, RECEIVING_ITEM: `/quarantine/receiving/${result.entityId}`, INSPECTION_REPORT: `/quarantine/inspections/${result.entityId}`, LAB_TEST: `/laboratory/tests/${result.entityId}`, FINDING: `/quality/findings/${result.entityId}`, NCR: `/quality/ncr/${result.entityId}`, CAPA: `/quality/capa/${result.entityId}`, EQUIPMENT: `/assets/equipment/${result.entityId}`, DOCUMENT: `/documents/${result.entityId}`, CHANGE_REQUEST: `/change-requests/${result.entityId}`, REJECT_REPORT: `/reject-reports/${result.businessId.startsWith('RIS') ? 'issue-slips' : 'daily'}/${result.entityId}` } as Record<string, string>)[result.entityType] ?? '/dashboard';
+const nextHref = page.nextCursor ? `/search?q=${encodeURIComponent(q)}&cursor=${encodeURIComponent(page.nextCursor)}` : undefined;
 ---
 <AppLayout title="Search · QC Operations" locale="en" direction="ltr">
-  <section class="search-page"><p class="eyebrow">GLOBAL SEARCH</p><h1>Find authorized records</h1><form role="search" method="get"><label for="q">Search tasks, inspections, lab tests, findings, NCRs, CAPA, equipment, documents, or change requests</label><div class="search-row"><input id="q" name="q" value={rawQuery} maxlength="200" autocomplete="off" autofocus /><button type="submit">Search</button>{q && <a href="/search">Clear</a>}</div><p class="hint">Press Enter to search. Results are limited to records available in your scope. Use Ctrl/Cmd+K anywhere in the workspace to return here.</p></form>{providerUnavailable ? <ProviderUnavailableState title="Search is temporarily unavailable" description="No result count is shown because the authorized search provider did not confirm a response." /> : q ? <p class="result-count" aria-live="polite">{results.length} authorized result{results.length === 1 ? '' : 's'} for “{q}”</p> : <p class="empty">Start with a record number, document number, lot, or description.</p>}{q && !providerUnavailable && !results.length && <section class="empty" aria-live="polite"><h2>No authorized results found</h2><p>Check the identifier or try a broader term. Unauthorized records are not disclosed.</p></section>}{results.length > 0 && <ul class="results">{results.map((result) => <li><a href={destination(result)}><span class="type">{result.entityType}</span><strong>{result.businessId}</strong><span>{result.descriptor}</span><small>{stateLabel(result.state)}{result.context ? ` · ${result.context}` : ''}</small></a></li>)}</ul>}</section>
+  <section class="search-page" aria-labelledby="search-title">
+    <p class="eyebrow">GLOBAL SEARCH</p>
+    <h1 id="search-title">Find authorized records</h1>
+    <form role="search" method="get">
+      <label for="q">Search tasks, inspections, lab tests, findings, NCRs, CAPA, equipment, documents, or change requests</label>
+      <div class="search-row"><input id="q" name="q" value={rawQuery} maxlength="200" autocomplete="off" aria-invalid={invalidQuery || invalidCursor ? 'true' : undefined} aria-describedby={invalidQuery || invalidCursor ? 'query-error' : 'query-hint'} /><button type="submit">Search</button>{q && <a href="/search">Clear</a>}</div>
+    {invalidQuery || invalidCursor ? <p class="field-error" id="query-error" role="alert">{invalidCursor ? 'That result page link is no longer valid. Start the same search again.' : 'Enter a search term with 1–200 characters. Your search text is preserved.'}</p> : <p class="hint" id="query-hint">Press Enter to search. Results follow your read permissions and scope. Use Ctrl/Cmd+K anywhere in the workspace to return here.</p>}
+    </form>
+    {!canUseSearch ? <section class="empty" role="status"><h2>Search is not available for this account</h2><p>No records or result counts are shown. Ask your administrator to review your search access.</p></section>
+      : providerUnavailable ? <ProviderUnavailableState title="Search is temporarily unavailable" description="The search source did not confirm a response. No result count is shown. Retry the same search or return to the workspace." />
+      : q && !invalidQuery && !invalidCursor ? <p class="result-count" aria-live="polite">Showing {results.length} of {page.total} authorized result{page.total === 1 ? '' : 's'} for “{q}”.</p>
+      : !q && !invalidQuery && <p class="empty">Start with a record number, document number, lot, task title, or description.</p>}
+    {q && !invalidQuery && !invalidCursor && canUseSearch && !providerUnavailable && page.total === 0 && <section class="empty" aria-live="polite"><h2>No matching records found</h2><p>Check the identifier or try a broader term. Records outside your authorized read scope are not disclosed.</p></section>}
+    {results.length > 0 && <ul class="results" aria-label="Search results">{results.map((result) => <li><a href={destination(result)}><span class="type">{searchTypeLabel(result.entityType)}</span><strong>{result.businessId}</strong><span class="descriptor">{result.descriptor}</span><small>{stateLabel(result.state)}{result.context ? ` · ${result.context}` : ''}</small></a></li>)}</ul>}
+    {nextHref && <nav class="pagination" aria-label="Search result pages"><a href={nextHref}>Next results</a></nav>}
+  </section>
 </AppLayout>
-<style>.search-page{max-width:900px;margin-inline:auto}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.search-page h1{margin:.4rem 0 1.5rem}.search-page form{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}label{display:block;color:var(--text-secondary);font-size:.85rem;font-weight:600}.search-row{display:flex;gap:var(--space-3);align-items:center;margin-top:var(--space-3)}input{flex:1;min-height:48px;padding-inline:14px;border:1px solid var(--color-border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:var(--text-primary);font:inherit}button{min-height:48px;padding-inline:18px;border:0;border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}.search-row a{color:var(--color-accent-primary-hover);font-size:.8rem}.hint,.empty,.result-count{color:var(--text-muted);font-size:.8rem}.results{list-style:none;margin:var(--space-5) 0;padding:0}.results li{border-block-start:1px solid var(--color-border-subtle)}.results a{display:grid;grid-template-columns:140px 1fr;gap:4px 14px;padding:var(--space-4) 0;color:inherit;text-decoration:none}.results .type,.results small{color:var(--text-muted);font-size:.72rem}.results span:not(.type){color:var(--text-secondary);font-size:.85rem}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg)}.empty h2{color:var(--text-primary);font-size:1rem}@media(max-width:520px){.search-row{flex-wrap:wrap}.search-row input{flex-basis:100%}.results a{grid-template-columns:1fr}}
+<style>
+.search-page{max-width:900px;margin-inline:auto}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.search-page h1{margin:.4rem 0 1.5rem}.search-page form{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}label{display:block;color:var(--text-secondary);font-size:.85rem;font-weight:600}.search-row{display:flex;gap:var(--space-3);align-items:center;margin-top:var(--space-3)}input{flex:1;min-width:0;min-height:48px;padding-inline:14px;border:1px solid var(--color-border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:var(--text-primary);font:inherit}input[aria-invalid="true"]{border-color:var(--border-invalid)}button{min-height:48px;padding-inline:18px;border:0;border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}.search-row a,.pagination a{color:var(--color-accent-primary-hover);font-size:.85rem}.hint,.empty,.result-count{color:var(--text-muted);font-size:.85rem}.field-error{color:var(--text-danger);font-size:.85rem}.results{list-style:none;margin:var(--space-5) 0;padding:0}.results li{border-block-start:1px solid var(--color-border-subtle)}.results a{display:grid;grid-template-columns:140px minmax(0,1fr);gap:4px 14px;padding:var(--space-4) 0;color:inherit;text-decoration:none}.results a:focus-visible,.search-row a:focus-visible,.pagination a:focus-visible{outline:3px solid var(--focus-ring);outline-offset:3px}.results .type,.results small{color:var(--text-muted);font-size:.78rem}.results .descriptor{color:var(--text-secondary);font-size:.9rem;overflow-wrap:anywhere}.results strong{overflow-wrap:anywhere}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg)}.empty h2{color:var(--text-primary);font-size:1rem}.pagination{display:flex;justify-content:flex-end;margin-block:var(--space-5)}@media(max-width:520px){.search-row{flex-wrap:wrap}.search-row input{flex-basis:100%}.results a{grid-template-columns:1fr}.search-page form{padding:var(--space-4)}}
 </style>

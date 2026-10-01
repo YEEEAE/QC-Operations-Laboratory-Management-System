@@ -1,5 +1,15 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-14 / search authorization and paging**
+  - Changed: `/search` applies each source read permission and supported scope before rows/counts, searches task titles, uses bounded keyset pages plus exact total in a read-only repeatable-read transaction, and reports source latency in privacy-safe buckets; no schema change.
+  - Evidence: focused search contracts and Node 24.20 build PASS; PostgreSQL 18/Testcontainers BLOCKED (runtime absent), applied schema and authenticated browser/AT/UAT NOT VERIFIED. Handoff: `audit/2026-10-01/handoff-QC-ADP26-14.md`.
+  - State: PARTIAL — live DB/runtime and route acceptance remain open.
+
+- **2026-10-01 — QC-ENV26 / environment and database parity addendum**
+  - Changed: five environment prompts inserted immediately after QC-ADP26-14 in the dated HTML pack; report has denominator-based percentages. Totals: 41 prompts / 38 findings; original historical page checklist remains 38.4%.
+  - Evidence: Render API names/presence comparison and PostgreSQL18.6 READ ONLY + TLS catalog/ledger: 18/42 applied (42.9%), 24 pending, 18/18 applied checksums matching source. Core config 5/5; explicit AI vars 0/7; explicit release identity vars 0/6. Optional R2/OTEL absence requires contract assessment. Evidence: `audit/2026-10-01/env-parity/`.
+  - State: PARTIAL / NO-GO — exact runtime candidate NOT VERIFIED (deployment in progress at snapshot); AI sending still needs approved policy. No external writes or deployment performed.
+
 - **2026-10-01 — QC-ADP26-13 / credential/session/audit atomicity**
   - Changed: self-service change and admin reset now share one PostgreSQL transaction for credential, session revocation, and audit; account feedback reflects revoked sessions and directs confirmed success to login.
   - Evidence: focused source tests and candidate build are recorded in `.ci-results/build.json` and `audit/2026-10-01/handoff-QC-ADP26-13.md`; PostgreSQL 18 failure-injection, authenticated browser/AT, and UAT remain NOT VERIFIED because no container runtime or authenticated fixture is available.
@@ -520,6 +530,7 @@
 
 ### P1 / live validation / pre-existing test estate
 - **QC-ADP26-13 / QC-PAGE-F-013 PARTIAL:** credential change and administrative reset now use a shared transaction-bound commit for password hash, revoking all active sessions, and secret-free audit metadata. Account copy and refusal feedback are field-safe; confirmed success redirects to login. The PG18 audit-failure rollback test was added but is BLOCKED before setup because Testcontainers has no runtime; applied schema, old-password/login, race/replay, authenticated browser, AT, and UAT remain NOT VERIFIED. `audit/2026-10-01/handoff-QC-ADP26-13.md`.
+- **QC-ADP26-14 / QC-PAGE-F-014 PARTIAL:** `/search` now filters each result type by its read permission/supported scope, searches task titles, and has 25-row keyset pages, authorized total, strict query/cursor validation, human type labels, source-outage separation, and bucketed query timing. Domains whose grant depends on unprojected team/department/site/domain keys fail closed. Focused contracts/build PASS; PG18 cases BLOCKED by missing container runtime; exact DB/browser/AT/UAT proof remains open. `audit/2026-10-01/handoff-QC-ADP26-14.md`.
 - **QC-ADP26-12 / QC-PAGE-F-012 PARTIAL:** source-level filtered paging and human-first labels cover `/admin/users` and `/system/backups`; synthetic 501-user/51-backup tests and Astro build PASS. Other F-012 routes and PostgreSQL 18, authenticated browser, AT, and UAT evidence remain OPEN/NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-12.md`.
 - **QC-ADP26-09 / QC-PAGE-F-009 PARTIAL:** canonical P-06 authority and strict field-bound expectedVersion validation are fixed in source; focused unit 73/73 PASS. PG18/HTTP/browser/AT/UAT remain NOT VERIFIED because this host has no Docker daemon and no authenticated fixture. Handoff `audit/2026-09-30/handoff-QC-ADP26-09.md`.
 - **QC-ADP26-08 / QC-PAGE-F-008 PARTIAL:** missing/denied/provider classification and no-count behavior were added to selected cited routes; primary equipment/maintenance, test and account reads are preserved across related-source failures. The finding spans 61 routes and remains OPEN pending remaining read paths, per-read failure injection, PG/HTTP/browser/AT evidence. Handoff `audit/2026-09-30/handoff-QC-ADP26-08.md`.

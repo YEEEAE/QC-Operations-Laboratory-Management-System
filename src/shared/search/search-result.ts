@@ -23,5 +23,19 @@ export interface SearchResult {
 export interface SearchQuery {
   actorId: string;
   q: string;
+  cursor?: string;
   limit?: number;
+  permissions?: readonly SearchReadPermission[];
+}
+
+export interface SearchReadPermission {
+  code: string;
+  scopes: readonly string[];
+  active?: boolean;
+}
+
+export interface SearchPage {
+  items: SearchResult[];
+  total: number;
+  nextCursor?: string;
 }

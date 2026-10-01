@@ -87,6 +87,7 @@ const SAFE_SEARCH_VALUES: Record<string, ReadonlySet<string>> = {
   query_length_bucket: new Set(['0-3', '4-20', '21-200']),
   result_count_bucket: new Set(['0', '1-9', '10+']),
   resolution: new Set(['unresolved', 'results_available']),
+  duration_bucket: new Set(['under-50ms', '50-199ms', '200-999ms', '1000ms-or-more']),
   form_key: new Set(['global-search']),
   field_group: new Set(['query']),
   error_family: new Set(['invalid_query']),
