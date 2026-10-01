@@ -19,6 +19,7 @@ export interface AuditEventView {
   occurredAt: Date;
   actorType: 'USER' | 'SYSTEM' | 'SERVICE';
   actorId?: string;
+  actorDisplayName?: string;
   subjectType: string;
   subjectId: string;
   action: string;
@@ -111,6 +112,7 @@ export interface AuditEventRow {
   occurred_at: Date | string;
   actor_type: string;
   actor_id: string | null;
+  actor_display_name?: string | null;
   subject_type: string;
   subject_id: string;
   action: string;
@@ -148,6 +150,7 @@ export function mapAuditRowToView(row: AuditEventRow): AuditEventView {
     occurredAt: toDate(row.occurred_at),
     actorType,
     actorId: row.actor_id == null ? undefined : String(row.actor_id),
+    actorDisplayName: row.actor_display_name == null ? undefined : String(row.actor_display_name),
     subjectType: String(row.subject_type),
     subjectId: String(row.subject_id),
     action: String(row.action),

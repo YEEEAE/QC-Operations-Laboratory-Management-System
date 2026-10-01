@@ -10,6 +10,7 @@ import { actorHasScope } from '../../shared/authorization/scope-evaluator.js';
 import type { TaskListItem } from '../../modules/tasks/application/ports/task-list-item.js';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
+import { removeFilter } from '../../shared/pagination/remove-filter.js';
 import { formatDate } from '../../shared/copy/format.js';
 import { priorityLabel, stateLabel } from '../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
@@ -81,8 +82,7 @@ try {
 const tasks = result.items;
 const totalPages = Math.max(1, Math.ceil(result.total / page.pageSize));
 const chipHref = (drop: string) => {
-  const next = new URLSearchParams(params);
-  next.delete(drop);
+  const next = removeFilter(params, drop);
   const query = next.toString();
   return `/tasks${query ? `?${query}` : ''}`;
 };

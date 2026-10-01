@@ -20,20 +20,22 @@ export class PostgresAuditQuery implements AuditQuery {
       .select((builder) => builder.fn.countAll().as('count'));
     let pageQuery = this.database
       .selectFrom('audit_events')
+      .leftJoin('users', 'users.id', 'audit_events.actor_id')
       .select([
-        'id',
-        'event_no',
-        'occurred_at',
-        'actor_type',
-        'actor_id',
-        'subject_type',
-        'subject_id',
-        'action',
-        'old_state',
-        'new_state',
-        'reason',
-        'request_id',
-        'signature_id',
+        'audit_events.id',
+        'audit_events.event_no',
+        'audit_events.occurred_at',
+        'audit_events.actor_type',
+        'audit_events.actor_id',
+        'users.display_name as actor_display_name',
+        'audit_events.subject_type',
+        'audit_events.subject_id',
+        'audit_events.action',
+        'audit_events.old_state',
+        'audit_events.new_state',
+        'audit_events.reason',
+        'audit_events.request_id',
+        'audit_events.signature_id',
       ]);
     const narrow = (
       column: 'subject_type' | 'subject_id' | 'actor_id' | 'action',

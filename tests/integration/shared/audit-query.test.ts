@@ -104,6 +104,7 @@ describe('explicit-permission audit query', () => {
       occurred_at: new Date('2026-09-21T00:00:00Z'),
       actor_type: 'USER',
       actor_id: 'u1',
+      actor_display_name: 'Samira Analyst',
       subject_type: 'DOCUMENT_VERSION',
       subject_id: 'doc-version-1',
       action: 'CORRECT',
@@ -115,6 +116,7 @@ describe('explicit-permission audit query', () => {
       payload: { changed_fields: ['state'], before: { state: 'EFFECTIVE' } },
     });
     expect(projected).toMatchObject({
+      actorDisplayName: 'Samira Analyst',
       subjectType: 'DOCUMENT_VERSION',
       action: 'CORRECT',
       oldState: 'EFFECTIVE',

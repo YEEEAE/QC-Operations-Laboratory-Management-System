@@ -7,6 +7,7 @@ import { pageAccessDecision } from '../shared/routing/page-access.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const pageAccess = pageAccessDecision(actor, Astro.url.pathname);
+const healthPageAccess = pageAccessDecision(actor, '/system/health');
 const canUse = actor.permissions.some((grant) => grant.code === 'PERM-AI-USE' && grant.active !== false);
 const canSummarize = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUMMARIZE' && grant.active !== false);
 const canSuggest = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUGGEST' && grant.active !== false);
@@ -30,7 +31,7 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
           <dt>Owner approval and policy</dt><dd>{aiAvailability.approvalFlagGranted ? 'Technical approval flag is true' : 'Owner approval is not granted'}; {aiAvailability.policyValid ? 'complete valid policy is configured' : aiAvailability.policyConfigured ? 'policy source is invalid or incomplete' : 'policy source is missing'}. This flag is not itself owner approval.</dd>
           <dt>Provider availability</dt><dd>{configuredProviders ? 'Not checked until all policy gates and per-request consent pass.' : 'No policy-authorized provider is configured; no provider request can be sent.'}</dd>
           <dt>Per-request consent</dt><dd>Required for every request after the processing policy is approved; changing the question or excerpt clears consent.</dd>
-          <dt>Database schema</dt><dd>Checked separately on <a href="/system/health">System health</a>; schema readiness does not enable AI processing.</dd>
+          <dt>Database schema</dt><dd>{healthPageAccess === 'ALLOWED' ? <>Checked separately on <a href="/system/health">System health</a>; schema readiness does not enable AI processing.</> : <>Schema readiness is available to the named service owner. Ask the service owner to check it; schema readiness does not enable AI processing.</>}</dd>
         </dl>
         {aiAvailability.invalidConfiguration ? (
           <span>AI configuration is invalid ({aiAvailability.invalidFields.join(', ')}). External sending is disabled. Ask the service owner to correct the named settings; no values or credentials are shown here.</span>
