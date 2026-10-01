@@ -5,7 +5,7 @@ import { Pool } from 'pg';
 
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { SYSTEM_OWNER_LOGIN_IDENTITY } from '../../src/shared/authorization/p05-authority.js';
-import { loadLocalEnv } from '../db/load-local-env.js';
+import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
 
 export const SYSTEM_OWNER_ROLE_CODE = 'SYSTEM_OWNER';
 
@@ -177,6 +177,7 @@ export async function grantSystemOwnerAccess(
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   loadLocalEnv();
+  loadLocalOperatorEnv();
   grantSystemOwnerAccess()
     .then((result) => {
       console.log(

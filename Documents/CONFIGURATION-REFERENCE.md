@@ -118,20 +118,40 @@ separately from AI provider availability.
 
 ## Operator and verification harness variables
 
-`BOOTSTRAP_ADMIN_*`, `QC_VERIFY_*`, `QC_UAT_*`, `QC_SEED_ALLOW_NON_PRODUCTION`,
-`QC_VERIFICATION_SEED_ALLOW`, and `QC_VERIFICATION_OPERATOR_IDENTITY` belong to
-one-time operator commands and non-production verification harnesses. They are
-parsed by their owning scripts with explicit non-production guards, are never
-read by the request path, and must be removed after use. `HOST` / `PORT` select
-the local bind for the built server; `PGPASSFILE` and `PG_VERSION_CONTEXT` are
-PostgreSQL tooling context for the local backup executor. None of these carry
-approved defaults beyond what their owning script documents.
+The application's `.env.example` and Render service use canonical runtime keys
+only. `DATABASE_URL` is the only supported runtime database setting; the app
+does not accept aliases such as `Database`, `Internal_Database_URL`, or
+`External_Database_URL`. `Hostname`, `Port`, `Username`, `Password`, and
+`PSQL_Command` are provider-export/operator fields, not application settings.
+`API_Render` is an operator API credential and is not an application key. These
+provider-export fields are not present in `ENV_KEYS`, the runtime parser, the
+Render blueprint, or either local env loader.
+
+`BOOTSTRAP_ADMIN_*`, `SYSTEM_OWNER_LOGIN_IDENTITY`, `QC_VERIFY_*`, `QC_E2E_*`,
+`QC_UAT_*`, `QC_SEED_ALLOW_NON_PRODUCTION`, `QC_VERIFICATION_SEED_ALLOW`,
+`QC_VERIFICATION_OPERATOR_IDENTITY`, and `QC_MASTER_DATA_IMPORT_ALLOW` are
+operator-only settings for their named bootstrap, verification, UAT, or seed
+commands. Keep their names in `operator.env.example`; do not copy them into the
+web-service runtime. Generic `loadLocalEnv()` reads only canonical application
+settings. Guarded operator CLIs must explicitly opt into
+`loadLocalOperatorEnv()`, and their own non-production authorization checks
+remain mandatory. No API credential or provider connection export is loaded by
+that operator allowlist. Remove temporary operator values after their approved
+use.
+
+`HOST` / `PORT` select a local bind for the built server; `PGPASSFILE` and
+`PG_VERSION_CONTEXT` are PostgreSQL tooling context for the local backup
+executor. None of these carry approved defaults beyond what their owning tool
+documents.
 
 ## Change-management rules
 
-1. Adding or renaming a variable requires updating `src/config/constants.ts`
-   (`ENV_KEYS`), the schema in `src/config/env.ts`, `.env.example` (names only),
-   this reference, and the unit contract in `tests/unit/config/`.
+1. Adding or renaming a runtime variable requires updating
+   `src/config/constants.ts` (`ENV_KEYS`), the schema in `src/config/env.ts`,
+   `.env.example` (names only), this reference, and the unit contract in
+   `tests/unit/config/`. Operator-only variables belong in the owning CLI's
+   allowlist and `operator.env.example`; they must not be added to `ENV_KEYS` or
+   the runtime schema.
 2. Tightening a validation rule is a breaking runtime change: record the change
    impact above and re-run the configuration unit tests, the middleware
    configuration-failure path, and the build before relying on it.

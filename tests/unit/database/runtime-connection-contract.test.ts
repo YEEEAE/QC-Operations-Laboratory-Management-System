@@ -4,7 +4,12 @@ import { join, resolve } from 'node:path';
 
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-import { loadLocalEnv, parseLocalEnvFile } from '../../../scripts/db/load-local-env.js';
+import {
+  loadLocalEnv,
+  loadLocalOperatorEnv,
+  parseLocalEnvFile,
+  parseLocalOperatorEnvFile,
+} from '../../../scripts/db/load-local-env.js';
 import {
   DatabaseConfigurationError,
   createPool,
@@ -141,6 +146,9 @@ describe('runtime connection contract', () => {
         'SERVICE_VERSION=9.9.9',
         'PSQL_Command=PGPASSWORD=file_secret psql',
         'Hostname=dpg-from-file-a',
+        'QC_VERIFY_EMPLOYEE_PASSWORD=operator_fixture_value',
+        'QC_SEED_ALLOW_NON_PRODUCTION=true',
+        'API_Render=operator_api_credential',
       ].join('\n'),
     );
 
@@ -151,6 +159,58 @@ describe('runtime connection contract', () => {
     expect(environment.SERVICE_VERSION).toBe('9.9.9');
     expect(environment.Hostname).toBeUndefined();
     expect(environment.PSQL_Command).toBeUndefined();
+    expect(environment.QC_VERIFY_EMPLOYEE_PASSWORD).toBeUndefined();
+    expect(environment.QC_SEED_ALLOW_NON_PRODUCTION).toBeUndefined();
+    expect(environment.API_Render).toBeUndefined();
+  });
+
+  it('loads operator settings only through the explicit operator loader', () => {
+    const directory = tempEnvDirectory(
+      [
+        'DATABASE_URL=postgresql://local.example.invalid/qc',
+        'QC_VERIFY_EMPLOYEE_PASSWORD=operator_fixture_value',
+        'QC_SEED_ALLOW_NON_PRODUCTION=true',
+        'API_Render=operator_api_credential',
+        'External_Database_URL=postgresql://provider-export.invalid/qc',
+      ].join('\n'),
+    );
+    const environment: NodeJS.ProcessEnv = {};
+
+    loadLocalOperatorEnv(environment, join(directory, '.env'));
+
+    expect(environment.QC_VERIFY_EMPLOYEE_PASSWORD).toBe('operator_fixture_value');
+    expect(environment.QC_SEED_ALLOW_NON_PRODUCTION).toBe('true');
+    expect(environment.DATABASE_URL).toBeUndefined();
+    expect(environment.API_Render).toBeUndefined();
+    expect(environment.External_Database_URL).toBeUndefined();
+  });
+
+  it('keeps operator fixtures out of the server env parser, runtime template, and Render service', () => {
+    const contents = [
+      'DATABASE_URL=postgresql://local.example.invalid/qc',
+      'QC_VERIFY_EMPLOYEE_PASSWORD=operator_fixture_value',
+      'QC_SEED_ALLOW_NON_PRODUCTION=true',
+      'API_Render=operator_api_credential',
+      'Hostname=provider-export-host',
+    ].join('\n');
+    const runtimeTemplate = readFileSync(resolve(process.cwd(), '.env.example'), 'utf8');
+    const operatorTemplate = readFileSync(resolve(process.cwd(), 'operator.env.example'), 'utf8');
+    const renderConfig = readFileSync(resolve(process.cwd(), 'render.yaml'), 'utf8');
+
+    expect(Object.keys(parseLocalEnvFile(contents))).toEqual(['DATABASE_URL']);
+    expect(parseLocalOperatorEnvFile(contents)).toEqual({
+      QC_VERIFY_EMPLOYEE_PASSWORD: 'operator_fixture_value',
+      QC_SEED_ALLOW_NON_PRODUCTION: 'true',
+    });
+    expect(runtimeTemplate).not.toMatch(
+      /^(?:QC_VERIFY_|QC_SEED_|QC_VERIFICATION_|BOOTSTRAP_ADMIN_)/m,
+    );
+    expect(operatorTemplate).toContain('QC_VERIFY_EMPLOYEE_PASSWORD=');
+    expect(operatorTemplate).not.toContain('API_Render=');
+    expect(renderConfig).toContain('key: DATABASE_URL');
+    expect(renderConfig).not.toMatch(
+      /key:\s*(?:API_Render|QC_VERIFY_|QC_SEED_|QC_VERIFICATION_|Hostname|Port|Database|Username|Password|Internal_Database_URL|External_Database_URL|PSQL_Command)/,
+    );
   });
 
   it('wires the ignored local .env into every documented standalone CLI entrypoint', () => {

@@ -26,6 +26,8 @@ services:
       - key: SERVICE_VERSION
         value: 0.1.0
       - key: DATABASE_URL
+        # Canonical application connection only; provider export aliases and
+        # operator/API credentials do not belong in the web-service runtime.
         sync: false
       - key: SESSION_SECRET
         sync: false

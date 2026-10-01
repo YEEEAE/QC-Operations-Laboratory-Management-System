@@ -21,7 +21,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
-import { loadLocalEnv } from '../db/load-local-env.js';
+import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
 import { getMasterDataEntity } from './master-data-catalog.js';
 import type { ImportRow } from './import-preflight.js';
 import {
@@ -114,6 +114,7 @@ export async function runImportCli(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<Record<string, unknown>> {
   loadLocalEnv(env);
+  loadLocalOperatorEnv(env);
   if (options.apply) assertApplyGuard(env);
   else assertReadGuard(env);
 

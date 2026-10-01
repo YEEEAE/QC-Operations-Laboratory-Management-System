@@ -20,6 +20,21 @@ describe('server environment configuration', () => {
     expect(env.LOG_LEVEL).toBeUndefined();
   });
 
+  it('does not expose operator, seed, or provider-export entries in typed runtime config', () => {
+    const env = parseServerEnv({
+      NODE_ENV: 'test',
+      QC_VERIFY_EMPLOYEE_PASSWORD: 'operator_fixture_value',
+      QC_SEED_ALLOW_NON_PRODUCTION: 'true',
+      API_Render: 'operator_api_credential',
+      External_Database_URL: 'postgres://provider-export.invalid/qc',
+    });
+
+    expect(env).not.toHaveProperty('QC_VERIFY_EMPLOYEE_PASSWORD');
+    expect(env).not.toHaveProperty('QC_SEED_ALLOW_NON_PRODUCTION');
+    expect(env).not.toHaveProperty('API_Render');
+    expect(env).not.toHaveProperty('External_Database_URL');
+  });
+
   it('fails closed in production when critical configuration is missing', () => {
     try {
       parseServerEnv({ NODE_ENV: 'production' });

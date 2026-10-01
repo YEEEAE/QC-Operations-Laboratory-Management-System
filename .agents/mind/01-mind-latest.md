@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ENV26-05 / canonical environment and operator isolation**
+  - Changed: generic local env loading is runtime-only; bootstrap/QC_VERIFY/seed/UAT settings require explicit operator CLI loading. `API_Render`/provider exports are ignored. No remote Render, schema, or migration change.
+  - Evidence: source migrations 42/42 match manifest; focused 27/27 PASS. Applied/isolated PostgreSQL proof BLOCKED; Render Key/Value target not preserved in sanitized evidence. Handoff: `audit/2026-10-01/handoff-QC-ENV26-05.md`.
+  - State: PARTIAL — owner read-back/cleanup decision and isolated PG18 evidence remain open.
+
 - **2026-10-01 — QC-ENV26-04 / storage, backup, and monitoring integration**
   - Changed: configuration reference now states R2 is optional and the local adapter is memory-only; the app has no wired durable backup scheduler/restore or OTEL exporter. No runtime/schema change.
   - Evidence: `audit/2026-10-01/handoff-QC-ENV26-04.md`; service snapshot 0/4 R2 and 0/2 OTEL was during deployment, and local `.env` has both groups absent. Provider round-trip/restore/export NOT VERIFIED.
@@ -420,6 +425,7 @@
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
 
 ## 12) Architecture / Deployment / Assets
+- Local `.env` loading is split: `loadLocalEnv()` accepts canonical runtime keys only; guarded operator/verification CLIs opt in to their separate allowlist. Provider API/connection exports are not loaded by either path.
 - **2026-09-23 fresh live/source discrepancy:** التطبيق واختباراته يثبتون RPO=24h وRTO=4h، بينما `Documents/BACKUP-RECOVERY-PLAN.md` ومصفوفة القرارات يتركانهما `POLICY-DEPENDENT` ويحظران الرقم غير المعتمد؛ code correction remains open. في المشاهدة نفسها `/system/health`: NOT READY، 0018 مطبق/0038 مشحون، 20 ترحيلًا معلّقًا، هوية الإصدار UNVERIFIED، backup catalog فارغ وrestore NOT VERIFIED. هذه لقطة زمنية لا تثبت SHA النشر.
 - **Historical — 2026-09-21 (035-B):** فشل architecture على المرشح `4fa6ac3` بسبب استيرادات delivery مباشرة؛ أُعيد التحقق وأُغلقت محليًا على HEAD `0ba087c` بتاريخ 2026-09-23 (انظر ARCH-DELIVERY-BOUNDARY أعلاه).
 - `pnpm diagnose` (035-B) فحص محلي read-only fail-closed: عقد Node/pnpm، هوية المستودع، رأس migrations، وتحقق الإعدادات بما فيه دمج `.env` المسموح — أسماء فقط، exit 1 عند أي خرق عقد. **فجوة `.env` المحلية أُغلقت 2026-09-22 (PR-A1):** `NODE_ENV=development` + `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` مكتملة؛ diagnose/parity/typecheck/build كلها PASS على Node `v24.20.0` مع `.nvmrc`.

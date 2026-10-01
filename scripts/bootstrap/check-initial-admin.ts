@@ -10,10 +10,11 @@ import {
 } from '../../src/modules/identity/application/bootstrap-admin-check.js';
 import type { DatabaseSchema } from '../../src/shared/database/db-types.js';
 import { getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
-import { loadLocalEnv } from '../db/load-local-env.js';
+import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
 
 export async function runBootstrapAdminCheck(environment = process.env): Promise<void> {
   loadLocalEnv(environment);
+  loadLocalOperatorEnv(environment);
   const identity = environment.BOOTSTRAP_ADMIN_IDENTITY?.trim();
   if (!identity) throw new Error('BOOTSTRAP_ADMIN_IDENTITY is required.');
   const pool = new Pool({

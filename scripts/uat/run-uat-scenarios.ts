@@ -27,7 +27,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 
 import { createPool, getDatabaseConnectionConfig } from '../../src/shared/database/pool.js';
 import { UAT_PERSONAS, UAT_PASSWORD_ENV_VARS } from '../../tests/fixtures/uat-personas.js';
-import { loadLocalEnv } from '../db/load-local-env.js';
+import { loadLocalEnv, loadLocalOperatorEnv } from '../db/load-local-env.js';
 import {
   ADMIN_CREATE_ROUTE,
   CREATE_ROUTES,
@@ -250,6 +250,7 @@ async function unauthenticatedAction(
 
 async function main(): Promise<void> {
   loadLocalEnv();
+  loadLocalOperatorEnv();
   requireGuard(process.env);
   const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: process.env.NODE_ENV ?? 'test' };
   oneTimePasswords(env);
