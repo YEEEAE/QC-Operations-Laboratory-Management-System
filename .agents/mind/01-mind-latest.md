@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-COPY26-01 / interface copy implementation**
+  - Changed: 207 documented text entries; plain English and confirmation labels, exact PASS/FAIL, unconfirmed-write recovery; no authority/schema change.
+  - Evidence: focused 72/72 PASS; broader 103/105 (2 failures in baseline-identical classifier/500 source); diff check PASS. Full state/display coverage 0/88; complete text/defect denominator NOT VERIFIED; browser/AT/UAT NOT RUN.
+  - State: PARTIAL — dynamic/shared review and rendered acceptance remain open. `audit/2026-10-01/handoff-QC-COPY26-01.md`.
+
 - **2026-10-01 — QC-COPY26-01 / full-page interface copy prompt**
   - Changed: inserted one executable copy-cleanup prompt immediately after QC-ADP26-19, before QC-ADP26-20; 42 total prompts, 38 findings, 88-page linkage. Preserves language, controlled terminology, permissions, warnings, user data and historical records.
   - Evidence: HTML/JSON order, unique IDs, anchors, copy targets and all-page linkage PASS. Writing coverage remains NOT VERIFIED; historical page scores unchanged. Report includes coverage denominator rules.
@@ -238,7 +243,7 @@
 
 ### P-04 CAPA close
 - إغلاق CAPA الاستثنائي: Supervisor فقط مع `PERM-CAPA-CLOSE` + ACTIVE + scope/version + reason + reauthentication + e-signature.
-- `ACTIONS_COMPLETE` ومراجعة الفعالية تبقى مطلوبة.
+- `ACTIONS_COMPLETE` ومراجعة الفعالية تبقى متطلبات المسار العام؛ استثناء الإغلاق P-04 في BR-QUAL-032 يسمح بالإغلاق رغم إجراءات غير مكتملة أو فعالية غير مقبولة، ولا يثبت الفعالية.
 - المسار العام للـtransition لا يجوز أن يتجاوز مراسم `CloseCapaUseCase`.
 - QC-ADP26-07: isolated PG18 proves incomplete-action closure/denial/rollback/race/replay; read aggregate and JSON persistence repaired. Closure makes no effectiveness claim; general effectiveness criteria remain PD-18 owner-dependent.
 

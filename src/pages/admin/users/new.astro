@@ -56,7 +56,7 @@ if (canCreate) {
           {roles.map((role) => (
             <label class="check"><input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})</label>
           ))}
-          {optionsError && <p class="note" role="alert">Role options are temporarily unavailable. Try again later.</p>}
+          {optionsError && <p class="note" role="alert">Role options are unavailable. Reload this page before selecting roles.</p>}
         </fieldset>
         <fieldset>
           <legend>Initial scopes</legend>
@@ -125,7 +125,7 @@ if (canCreate) {
         CONFLICT_STALE: 'A member with the same login identity may already exist. Change the identity or check the list before trying again. Your other entries are preserved.',
         AUTHORIZATION_CHANGED: 'Your authorization changed. Creating members needs the explicit user-management permission. Your entries are preserved.',
         DEPENDENCY_UNAVAILABLE: 'A referenced record could not be found. Verify the entries and try again. Your entries are preserved.',
-        UNKNOWN_SAFE_ERROR: 'The user could not be created. Your entries are preserved — try again, or return to the list.',
+        UNKNOWN_SAFE_ERROR: 'User creation is unconfirmed. Check the user register before deciding whether to try again. Your entries are preserved.',
       },
       invoke: (data) => {
         const email = String(data.get('email') || '').trim();

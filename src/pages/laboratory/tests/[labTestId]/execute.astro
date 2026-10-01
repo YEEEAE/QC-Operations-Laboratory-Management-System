@@ -174,7 +174,7 @@ if (canEdit && canViewEquipment) {
         <p data-result role="status" tabindex="-1"></p>
         <section aria-labelledby="equipment-use-heading">
           <h2 id="equipment-use-heading">Equipment used for a run</h2>
-          <p>Choose a run and an equipment record. Eligibility and calibration details come from the authorized Assets source; the server checks them again and freezes the source facts when recorded.</p>
+          <p>Choose a run and equipment. Eligibility and calibration are checked before recording; their details are preserved at the time of use.</p>
           {
             canViewEquipment ? equipmentSourceError ? (
               <p role="status">The authorized equipment source is temporarily unavailable. No equipment usage was recorded.</p>
@@ -243,7 +243,7 @@ if (canEdit && canViewEquipment) {
         </ul>
       ) : (
         <p class="muted">
-        No equipment is recorded against this test yet. Record the equipment used for each run above; eligibility is checked by the Assets domain.
+        No equipment is recorded for this test yet. Record the equipment used for each run above; eligibility is checked before recording.
         </p>
       )
     }
@@ -374,7 +374,7 @@ if (canEdit && canViewEquipment) {
       }
     } catch {
       if (equipmentResult) {
-        equipmentResult.textContent = 'Equipment use was not recorded. Eligibility, permission, scope, or version validation failed; refresh and review the equipment status.';
+        equipmentResult.textContent = 'The equipment-use result could not be confirmed. Check the test and its history before retrying.';
         equipmentResult.focus?.();
       }
       button.disabled = false;

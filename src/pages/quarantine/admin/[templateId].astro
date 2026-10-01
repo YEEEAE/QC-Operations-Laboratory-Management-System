@@ -134,7 +134,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
             const roleBlocked = !hasTemplatePermission
               ? 'This action requires the explicit Quarantine template permission.'
                 : !isAuthority
-                ? 'This action requires a canonical P-06 template authority.'
+                ? 'This action requires an authorized Supervisor, Manager, or named yazeed account under P-06.'
                 : null;
             const disabled = reason ?? roleBlocked;
             const needsSig = intent !== 'review';

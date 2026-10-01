@@ -33,8 +33,8 @@ const atQcmStage = test.state === 'PENDING_QCM_APPROVAL';
 // never an invented threshold.
 const rows = comparisonRows(test);
 const outcomeLabels: Record<string, string> = {
-  PASS: 'Pass',
-  FAIL: 'Fail',
+  PASS: 'PASS',
+  FAIL: 'FAIL',
   REVIEWER_DECISION: 'Reviewer decision',
   NOT_RECORDED: 'Not recorded',
 };
@@ -47,7 +47,7 @@ const documents = test.context.documents;
   <section>
     <h2>Observed results vs approved criteria</h2>
     <p>
-      Pass and Fail badges are evaluated only from the approved acceptance rules frozen with this
+      PASS and FAIL badges are evaluated only from the approved acceptance rules frozen with this
       record. Rows marked “Reviewer decision” have no approved rule and are decided by the
       reviewer; the system never invents thresholds. Values marked “calculated” come from the
       approved calculation rule.

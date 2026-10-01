@@ -23,8 +23,7 @@ try {
       <p class="eyebrow">Permissions</p>
       <h1>Permissions</h1>
       <p class="lede">
-        Read-only catalog of active canonical permissions. Grants change only through roles —
-        there is no direct permission mutation here.
+        View active permissions. Change permission grants through roles; this catalog is read-only.
       </p>
     </div>
     <a href="/admin">Back to administration</a>
@@ -41,7 +40,7 @@ try {
     ) : permissions.length ? (
       <div class="table-wrap">
         <table>
-          <caption>Active canonical permissions</caption>
+          <caption>Active permissions</caption>
           <thead>
             <tr>
               <th scope="col">Code</th>

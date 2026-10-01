@@ -30,14 +30,14 @@ const fmtDateTime = (d?: Date) =>
   {!record ? (
     <ErrorState
       title="Reject Reports are unavailable in this environment"
-      description="The required database schema is incomplete or could not be verified. No report was changed. Ask an operator to check migration readiness, then retry."
+      description="This report could not be opened. No report was changed. Contact your system administrator, then try opening it again."
       retryHref="/reject-reports"
     />
   ) : (
   <>
   <section class="page-head">
     <div>
-      <p class="eyebrow">DAILY PRODUCTION &amp; REJECTION RECORD</p>
+      <p class="eyebrow">Daily production and rejection record</p>
       <h1>{record.reportNo}</h1>
       <p class="lede">
         Status: <strong class={`status status-${record.status.toLowerCase()}`}>{stateLabel(record.status)}</strong>
@@ -45,7 +45,7 @@ const fmtDateTime = (d?: Date) =>
       </p>
     </div>
     <div class="head-actions">
-      <a href="/reject-reports">Back to Reject Reports</a>
+      <a href="/reject-reports">Back to reject reports</a>
       <a href={`${Astro.url.pathname}?print=1`} target="_blank" rel="noopener">Print view</a>
     </div>
   </section>
@@ -66,8 +66,8 @@ const fmtDateTime = (d?: Date) =>
     <section class="panel">
       <h2>Totals</h2>
       <dl>
-        <dt>Aggregate reject quantity</dt><dd>{totals.totalRejectQty}</dd>
-        <dt>Aggregate good quantity</dt><dd>{totals.totalGoodQty}</dd>
+        <dt>Total reject quantity</dt><dd>{totals.totalRejectQty}</dd>
+        <dt>Total good production quantity</dt><dd>{totals.totalGoodQty}</dd>
         <dt>Reject %</dt><dd>{totals.rejectPct === null ? '—' : `${totals.rejectPct}%`}</dd>
         <dt>Entries</dt><dd>{record.entries.length}</dd>
       </dl>
@@ -167,7 +167,7 @@ const fmtDateTime = (d?: Date) =>
           <div><label for="rmUnit">RM unit<input id="rmUnit" name="rmUnit" maxlength="50" /></label></div>
           <div><label for="rmLotNo">RM lot number<input id="rmLotNo" name="rmLotNo" maxlength="100" /></label></div>
           <div><label for="rmType">RM type<input id="rmType" name="rmType" maxlength="100" /></label></div>
-          <div><label for="pumpOutQty">Pump out qty<input id="pumpOutQty" name="pumpOutQty" type="number" min="0" step="any" /></label></div>
+          <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="number" min="0" step="any" /></label></div>
           <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="number" min="0" step="any" required /></label></div>
           <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="number" min="0" step="any" required /></label></div>
           <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="number" min="0" step="any" /></label></div>
@@ -214,7 +214,7 @@ const fmtDateTime = (d?: Date) =>
   const run = async (work: Promise<{ error?: unknown }>) => {
     try {
       const result = await work;
-      if (result.error) fail('The action was not applied. The record may have changed or authorization may have changed — refresh and try again if authorized.');
+      if (result.error) fail('The action was not accepted. Refresh the record and check its current state and your permissions before trying again.');
       else location.reload();
     } catch {
       fail('The service did not confirm the result. Refresh the report and its history before deciding whether to try again.');

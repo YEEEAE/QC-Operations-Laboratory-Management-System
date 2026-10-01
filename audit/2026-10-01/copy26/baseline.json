@@ -1,0 +1,453 @@
+{
+  "task": "QC-COPY26-01",
+  "date": "2026-10-01",
+  "candidateSha": "f7d7114eedbd89a2e1c894a591d2d2c55c8b4417",
+  "initialTrackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "initialStatus": "",
+  "routeDenominator": 88,
+  "routes": [
+    {
+      "id": "RT-ROOT-001",
+      "route": "/",
+      "file": "src/pages/index.astro"
+    },
+    {
+      "id": "RT-AUTH-001",
+      "route": "/login",
+      "file": "src/pages/login.astro"
+    },
+    {
+      "id": "RT-DASH-001",
+      "route": "/dashboard",
+      "file": "src/pages/dashboard/index.astro"
+    },
+    {
+      "id": "RT-WORK-001",
+      "route": "/work",
+      "file": "src/pages/work/index.astro"
+    },
+    {
+      "id": "RT-TASK-001",
+      "route": "/tasks",
+      "file": "src/pages/tasks/index.astro"
+    },
+    {
+      "id": "RT-TASK-002",
+      "route": "/tasks/new",
+      "file": "src/pages/tasks/new.astro"
+    },
+    {
+      "id": "RT-TASK-003",
+      "route": "/tasks/[taskId]",
+      "file": "src/pages/tasks/[taskId].astro"
+    },
+    {
+      "id": "RT-QUAL-001",
+      "route": "/quality",
+      "file": "src/pages/quality/index.astro"
+    },
+    {
+      "id": "RT-FIND-001",
+      "route": "/quality/findings",
+      "file": "src/pages/quality/findings/index.astro"
+    },
+    {
+      "id": "RT-FIND-002",
+      "route": "/quality/findings/new",
+      "file": "src/pages/quality/findings/new.astro"
+    },
+    {
+      "id": "RT-FIND-003",
+      "route": "/quality/findings/[findingId]",
+      "file": "src/pages/quality/findings/[findingId].astro"
+    },
+    {
+      "id": "RT-NCR-001",
+      "route": "/quality/ncr",
+      "file": "src/pages/quality/ncr/index.astro"
+    },
+    {
+      "id": "RT-NCR-002",
+      "route": "/quality/ncr/new",
+      "file": "src/pages/quality/ncr/new.astro"
+    },
+    {
+      "id": "RT-NCR-003",
+      "route": "/quality/ncr/[ncrId]",
+      "file": "src/pages/quality/ncr/[ncrId].astro"
+    },
+    {
+      "id": "RT-RCA-001",
+      "route": "/quality/rca",
+      "file": "src/pages/quality/rca/index.astro"
+    },
+    {
+      "id": "RT-RCA-002",
+      "route": "/quality/rca/[rcaId]",
+      "file": "src/pages/quality/rca/[rcaId].astro"
+    },
+    {
+      "id": "RT-CAPA-001",
+      "route": "/quality/capa",
+      "file": "src/pages/quality/capa/index.astro"
+    },
+    {
+      "id": "RT-CAPA-002",
+      "route": "/quality/capa/new",
+      "file": "src/pages/quality/capa/new.astro"
+    },
+    {
+      "id": "RT-CAPA-003",
+      "route": "/quality/capa/[capaId]",
+      "file": "src/pages/quality/capa/[capaId].astro"
+    },
+    {
+      "id": "RT-QUAR-001",
+      "route": "/quarantine",
+      "file": "src/pages/quarantine/index.astro"
+    },
+    {
+      "id": "RT-REC-001",
+      "route": "/quarantine/receiving",
+      "file": "src/pages/quarantine/receiving/index.astro"
+    },
+    {
+      "id": "RT-REC-002",
+      "route": "/quarantine/receiving/new",
+      "file": "src/pages/quarantine/receiving/new.astro"
+    },
+    {
+      "id": "RT-REC-003",
+      "route": "/quarantine/receiving/[receivingId]",
+      "file": "src/pages/quarantine/receiving/[receivingId].astro"
+    },
+    {
+      "id": "RT-INSP-001",
+      "route": "/quarantine/inspections",
+      "file": "src/pages/quarantine/inspections/index.astro"
+    },
+    {
+      "id": "RT-INSP-002",
+      "route": "/quarantine/inspections/[inspectionId]",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/index.astro"
+    },
+    {
+      "id": "RT-INSP-003",
+      "route": "/quarantine/inspections/[inspectionId]/execute",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/execute.astro"
+    },
+    {
+      "id": "RT-INSP-004",
+      "route": "/quarantine/inspections/[inspectionId]/review",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/review.astro"
+    },
+    {
+      "id": "RT-QUAR-002",
+      "route": "/quarantine/admin",
+      "file": "src/pages/quarantine/admin/index.astro"
+    },
+    {
+      "id": "RT-LAB-001",
+      "route": "/laboratory",
+      "file": "src/pages/laboratory/index.astro"
+    },
+    {
+      "id": "RT-LAB-002",
+      "route": "/laboratory/tests",
+      "file": "src/pages/laboratory/tests/index.astro"
+    },
+    {
+      "id": "RT-LAB-003",
+      "route": "/laboratory/tests/new",
+      "file": "src/pages/laboratory/tests/new.astro"
+    },
+    {
+      "id": "RT-LAB-009",
+      "route": "/laboratory/report-templates",
+      "file": "src/pages/laboratory/report-templates.astro"
+    },
+    {
+      "id": "RT-LAB-004",
+      "route": "/laboratory/tests/[labTestId]",
+      "file": "src/pages/laboratory/tests/[labTestId]/index.astro"
+    },
+    {
+      "id": "RT-LAB-005",
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro"
+    },
+    {
+      "id": "RT-LAB-006",
+      "route": "/laboratory/tests/[labTestId]/review",
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro"
+    },
+    {
+      "id": "RT-LAB-007",
+      "route": "/laboratory/tests/[labTestId]/retests/new",
+      "file": "src/pages/laboratory/tests/[labTestId]/retests/new.astro"
+    },
+    {
+      "id": "RT-ASSET-001",
+      "route": "/assets",
+      "file": "src/pages/assets/index.astro"
+    },
+    {
+      "id": "RT-EQUIP-001",
+      "route": "/assets/equipment",
+      "file": "src/pages/assets/equipment/index.astro"
+    },
+    {
+      "id": "RT-EQUIP-002",
+      "route": "/assets/equipment/new",
+      "file": "src/pages/assets/equipment/new.astro"
+    },
+    {
+      "id": "RT-EQUIP-003",
+      "route": "/assets/equipment/[equipmentId]",
+      "file": "src/pages/assets/equipment/[equipmentId].astro"
+    },
+    {
+      "id": "RT-CAL-001",
+      "route": "/assets/calibrations",
+      "file": "src/pages/assets/calibrations/index.astro"
+    },
+    {
+      "id": "RT-CAL-002",
+      "route": "/assets/calibrations/new",
+      "file": "src/pages/assets/calibrations/new.astro"
+    },
+    {
+      "id": "RT-CAL-003",
+      "route": "/assets/calibrations/[calibrationId]",
+      "file": "src/pages/assets/calibrations/[calibrationId].astro"
+    },
+    {
+      "id": "RT-MAINT-001",
+      "route": "/assets/maintenance",
+      "file": "src/pages/assets/maintenance/index.astro"
+    },
+    {
+      "id": "RT-MAINT-002",
+      "route": "/assets/maintenance/new",
+      "file": "src/pages/assets/maintenance/new.astro"
+    },
+    {
+      "id": "RT-MAINT-003",
+      "route": "/assets/maintenance/[maintenanceId]",
+      "file": "src/pages/assets/maintenance/[maintenanceId].astro"
+    },
+    {
+      "id": "RT-DOC-001",
+      "route": "/documents",
+      "file": "src/pages/documents/index.astro"
+    },
+    {
+      "id": "RT-DOC-002",
+      "route": "/documents/new",
+      "file": "src/pages/documents/new.astro"
+    },
+    {
+      "id": "RT-DOC-003",
+      "route": "/documents/[documentId]",
+      "file": "src/pages/documents/[documentId]/index.astro"
+    },
+    {
+      "id": "RT-DOC-004",
+      "route": "/documents/[documentId]/versions/new",
+      "file": "src/pages/documents/[documentId]/versions/new.astro"
+    },
+    {
+      "id": "RT-DOC-005",
+      "route": "/documents/[documentId]/versions/[versionId]",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/index.astro"
+    },
+    {
+      "id": "RT-DOC-006",
+      "route": "/documents/[documentId]/versions/[versionId]/review",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/review.astro"
+    },
+    {
+      "id": "RT-APPROVAL-001",
+      "route": "/approvals",
+      "file": "src/pages/approvals/index.astro"
+    },
+    {
+      "id": "RT-APPROVAL-002",
+      "route": "/approvals/[approvalId]",
+      "file": "src/pages/approvals/[approvalId].astro"
+    },
+    {
+      "id": "RT-CHANGE-001",
+      "route": "/change-requests",
+      "file": "src/pages/change-requests/index.astro"
+    },
+    {
+      "id": "RT-CHANGE-002",
+      "route": "/change-requests/new",
+      "file": "src/pages/change-requests/new.astro"
+    },
+    {
+      "id": "RT-CHANGE-003",
+      "route": "/change-requests/[changeRequestId]",
+      "file": "src/pages/change-requests/[changeRequestId]/index.astro"
+    },
+    {
+      "id": "RT-CHANGE-004",
+      "route": "/change-requests/[changeRequestId]/review",
+      "file": "src/pages/change-requests/[changeRequestId]/review.astro"
+    },
+    {
+      "id": "RT-REPORT-001",
+      "route": "/reports",
+      "file": "src/pages/reports/index.astro"
+    },
+    {
+      "id": "RT-REPORT-002",
+      "route": "/reports/[reportCode]",
+      "file": "src/pages/reports/[reportCode].astro"
+    },
+    {
+      "id": "RT-ADMIN-001",
+      "route": "/admin",
+      "file": "src/pages/admin/index.astro"
+    },
+    {
+      "id": "RT-USER-001",
+      "route": "/admin/users",
+      "file": "src/pages/admin/users/index.astro"
+    },
+    {
+      "id": "RT-USER-002",
+      "route": "/admin/users/new",
+      "file": "src/pages/admin/users/new.astro"
+    },
+    {
+      "id": "RT-USER-003",
+      "route": "/admin/users/[userId]",
+      "file": "src/pages/admin/users/[userId].astro"
+    },
+    {
+      "id": "RT-ROLE-001",
+      "route": "/admin/roles",
+      "file": "src/pages/admin/roles/index.astro"
+    },
+    {
+      "id": "RT-ROLE-002",
+      "route": "/admin/roles/[roleId]",
+      "file": "src/pages/admin/roles/[roleId].astro"
+    },
+    {
+      "id": "RT-ADMIN-002",
+      "route": "/admin/permissions",
+      "file": "src/pages/admin/permissions/index.astro"
+    },
+    {
+      "id": "RT-ADMIN-003",
+      "route": "/admin/scopes",
+      "file": "src/pages/admin/scopes/index.astro"
+    },
+    {
+      "id": "RT-SYSTEM-001",
+      "route": "/system/health",
+      "file": "src/pages/system/health.astro"
+    },
+    {
+      "id": "RT-SYSTEM-002",
+      "route": "/system/control-center",
+      "file": "src/pages/system/control-center.astro"
+    },
+    {
+      "id": "RT-BACKUP-001",
+      "route": "/system/backups",
+      "file": "src/pages/system/backups/index.astro"
+    },
+    {
+      "id": "RT-BACKUP-002",
+      "route": "/system/backups/[backupId]",
+      "file": "src/pages/system/backups/[backupId]/index.astro"
+    },
+    {
+      "id": "RT-BACKUP-003",
+      "route": "/system/backups/[backupId]/restore",
+      "file": "src/pages/system/backups/[backupId]/restore.astro"
+    },
+    {
+      "id": "RT-REJ-001",
+      "route": "/reject-reports",
+      "file": "src/pages/reject-reports/index.astro"
+    },
+    {
+      "id": "RT-REJ-002",
+      "route": "/reject-reports/new",
+      "file": "src/pages/reject-reports/new.astro"
+    },
+    {
+      "id": "RT-REJ-003",
+      "route": "/reject-reports/issue-slips/[reportId]",
+      "file": "src/pages/reject-reports/issue-slips/[reportId].astro"
+    },
+    {
+      "id": "RT-REJ-004",
+      "route": "/reject-reports/daily/[reportId]",
+      "file": "src/pages/reject-reports/daily/[reportId].astro"
+    },
+    {
+      "id": "RT-AI-001",
+      "route": "/ai-advisory",
+      "file": "src/pages/ai-advisory.astro"
+    },
+    {
+      "id": "RT-SHARED-001",
+      "route": "/search",
+      "file": "src/pages/search.astro"
+    },
+    {
+      "id": "RT-SHARED-002",
+      "route": "/notifications",
+      "file": "src/pages/notifications.astro"
+    },
+    {
+      "id": "RT-SHARED-003",
+      "route": "/account",
+      "file": "src/pages/account.astro"
+    },
+    {
+      "id": "RT-SHARED-004",
+      "route": "/audit",
+      "file": "src/pages/audit.astro"
+    },
+    {
+      "id": "RT-HELP-001",
+      "route": "/help",
+      "file": "src/pages/help/index.astro"
+    },
+    {
+      "id": "RT-QUAR-003",
+      "route": "/quarantine/admin/[templateId]",
+      "file": "src/pages/quarantine/admin/[templateId].astro"
+    },
+    {
+      "id": "RT-DOC-007",
+      "route": "/documents/[documentId]/versions/[versionId]/edit",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/edit.astro"
+    },
+    {
+      "id": "RT-REL-001",
+      "route": "/governance/releases/[releaseId]",
+      "file": "src/pages/governance/releases/[releaseId].astro"
+    },
+    {
+      "id": "RT-ERROR-404",
+      "route": "/404",
+      "file": "src/pages/404.astro"
+    },
+    {
+      "id": "RT-ERROR-500",
+      "route": "/500",
+      "file": "src/pages/500.astro"
+    }
+  ],
+  "candidateCount": 4606,
+  "method": "Conservative regex candidate extraction; not complete text denominator or dynamic rendering proof. Source snapshots retained for before/after verification.",
+  "sourceFiles": 154
+}

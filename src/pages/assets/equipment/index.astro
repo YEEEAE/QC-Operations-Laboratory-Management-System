@@ -76,7 +76,7 @@ const hasFilters = appliedFilters.length > 0;
     providerUnavailable ? (
       <ProviderUnavailableState
         title="Equipment data is temporarily unavailable"
-        description="The equipment read provider did not return a confirmed result, so the register is not treated as empty."
+        description="Equipment records could not be loaded. This does not mean the register is empty."
         retryHref="/assets/equipment"
       />
     ) : equipment.length ? (

@@ -48,7 +48,7 @@ if (Astro.request.method === 'POST') {
     if (id) return Astro.redirect(detailHref(LIST_HREF, id), 303);
     failure = {
       kind: 'unknown',
-      summary: 'The finding was received but no record reference came back.',
+      summary: 'The finding creation result could not be confirmed.',
       recovery: 'Check the findings register before trying again to avoid a duplicate.',
       fieldErrors: {},
       firstInvalidField: null,

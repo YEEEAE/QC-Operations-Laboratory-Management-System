@@ -177,7 +177,7 @@ const version = role?.version.toString() ?? '0';
         CONFLICT_STALE: 'The role changed while you were editing it. Refresh the role detail and try again if still permitted.',
         AUTHORIZATION_CHANGED: 'Your authorization changed. Replacing grants needs the explicit role-administration permission.',
         DEPENDENCY_UNAVAILABLE: 'The role or permission catalog is no longer available. Refresh before trying again.',
-        UNKNOWN_SAFE_ERROR: 'Unable to replace grants. Refresh and try again if authorized.',
+        UNKNOWN_SAFE_ERROR: 'Grant replacement is unconfirmed. Review the role and its history before deciding whether to try again.',
       };
       output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR;
       output.focus?.();

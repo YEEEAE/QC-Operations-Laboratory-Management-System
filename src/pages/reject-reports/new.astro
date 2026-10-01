@@ -148,7 +148,7 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
   {!availability.available ? (
     <ErrorState
       title="Reject Reports are unavailable in this environment"
-      description="The required database schema is incomplete or could not be verified, so no report can be created here. Nothing was changed. Ask an operator to check migration readiness, then retry."
+      description="Report creation is unavailable. Nothing was changed. Contact your system administrator before trying again."
       retryHref="/reject-reports"
     />
   ) : (
@@ -229,7 +229,7 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
 
       <div class="actions">
         <a class="secondary" href="/reject-reports">Cancel</a>
-        <button type="submit" data-submit>{type === 'slip' ? 'Create Issue Slip' : 'Create Daily Reject record'}</button>
+        <button type="submit" data-submit>{type === 'slip' ? 'Create issue slip' : 'Create daily reject record'}</button>
       </div>
       <p role="status" data-result></p>
     </form>
@@ -237,8 +237,7 @@ const describedBy = (name: string): string | undefined => (err(name) ? `${name}-
     <section class="denied" role="alert">
       <h2>You cannot create reject reports yet</h2>
       <p>
-        Your account does not have the create permission for reject reports. Ask an administrator
-        to grant it — in a provisioned environment every active operational role has it by default.
+        Creating reject reports requires PERM-RREJ-CREATE. Contact an administrator if you need access.
       </p>
       <p><a href="/reject-reports">Back to reject reports</a></p>
     </section>

@@ -53,8 +53,8 @@ export const uxVocabulary = {
     authorizedScope: 'Your authorized scope',
   },
   errors: {
-    reviewFields: 'There is a problem. Review the highlighted fields.',
-    noControlledAction: 'No controlled action was confirmed. Try again, or return to the record.',
+    reviewFields: 'Review the highlighted fields.',
+    noControlledAction: 'The action result is unconfirmed. Review the record and its history before deciding whether to try again.',
     serviceUnavailable:
       'The service did not confirm the result. Refresh the record and its history before deciding whether to try again.',
     authorizationChanged:
@@ -69,17 +69,17 @@ export const uxVocabulary = {
    */
   errorClasses: {
     VALIDATION_ERROR:
-      'Your entries were not accepted. Review the highlighted fields and try again. Your entries are preserved.',
+      'Review the highlighted fields and try again. Your entries are preserved.',
     AUTHORIZATION_CHANGED:
-      'This action is unavailable. Refresh the page or return to the list, then try again if you still have access. Your entries are preserved.',
+      'This action is unavailable. Refresh the page to check your access. Your entries are preserved.',
     CONFLICT_STALE:
-      'Someone changed this record after you opened it. Reload the latest data before trying again. Nothing was resubmitted.',
+      'This record changed after you opened it. Reload it before trying again. Nothing was resubmitted.',
     DEPENDENCY_UNAVAILABLE:
-      'A linked record is no longer available. Refresh this page to review the current options, then try again. Your entries are preserved.',
+      'A linked record is unavailable. Refresh the page to check current options. Your entries are preserved.',
     DUPLICATE_COMMAND:
       'This action was already applied. Reload the record to see the current state — nothing was duplicated.',
     UNKNOWN_SAFE_ERROR:
-      'The action result could not be confirmed. Review the record or its history before deciding whether to try again. Your entries are preserved.',
+      'The result is unconfirmed. Review the record and its history before deciding whether to try again. Your entries are preserved.',
   },
   /**
    * Human labels for change-request target types and approval workflow types.

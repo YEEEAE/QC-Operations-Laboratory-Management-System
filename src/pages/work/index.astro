@@ -27,9 +27,9 @@ const unresolved = queue?.unresolvedSources ?? [];
 <AppLayout title="My work today · QC Operations" locale="en" direction="ltr" scope={queue?.scopeLabel}>
   <section class="page-head">
     <div>
-      <p class="eyebrow">YOUR QUEUE</p>
+      <p class="eyebrow">Your queue</p>
       <h1>My work today</h1>
-      <p class="lede">Work the registers record as yours, grouped by the question you are asking: what is assigned to me, what is due today, what is past due, and what is blocked. Every group names the register it was read from, the reason the record is waiting, the next action and the role that owns it. Opening a record changes nothing — the server still decides whether you may act.</p>
+      <p class="lede">View assigned, due, overdue and blocked work. Each group shows its source, next step and responsible role. Opening a record does not change it or grant permission to act.</p>
     </div>
     {queue && <p class="snapshot"><time datetime={queue.generatedAt.toISOString()}>Server snapshot · {formatDateTime(queue.generatedAt)}</time><span>All windows in {queue.timezone}</span><a href="/work">Refresh</a></p>}
   </section>
@@ -45,7 +45,7 @@ const unresolved = queue?.unresolvedSources ?? [];
 
   {!providerUnavailable && queue && (
     <>
-      <p class="explainer">A record can belong to more than one group — one task can be both assigned to you and past its due date — so a group count is that group's own question, not a share of a total. Each record is listed once, under its most urgent group.</p>
+      <p class="explainer">Group counts can overlap. Each record appears once, in its most urgent group. Do not add group counts to calculate a total.</p>
       {groups.map((group) => (
         <section class="panel" aria-labelledby={`group-${group.definition.category}`}>
           <div class="panel-head">
@@ -111,7 +111,7 @@ const unresolved = queue?.unresolvedSources ?? [];
         <p class="empty">Missing evidence is never converted into completion: a group with no source says so rather than showing a zero.</p>
       </section>
 
-      <section class="panel note"><strong>PASS and Released are separate</strong><p>A scientific PASS is an inspection result, not a release decision. A receiving item on HOLD cannot be released by any of these links.</p></section>
+      <section class="panel note"><strong>PASS and RELEASED are separate</strong><p>A scientific PASS is an inspection result, not a release decision. A receiving item on HOLD cannot be released by any of these links.</p></section>
     </>
   )}
 </AppLayout>

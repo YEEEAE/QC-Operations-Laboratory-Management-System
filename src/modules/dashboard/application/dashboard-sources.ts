@@ -457,7 +457,7 @@ export function dashboardMetricSources(
       queue: {
         category: 'OVERDUE',
         reason: 'Task is past its due date',
-        nextAction: 'Open the task and complete it, or move its due date with a reason.',
+        nextAction: 'Open the task and review its available state actions.',
         responsibleRole: 'You, as the named assignee',
       },
       read: (actor) => readTaskSource(dependencies, actor, { due: 'overdue' }),
@@ -488,7 +488,7 @@ export function dashboardMetricSources(
       queue: {
         category: 'DUE_TODAY',
         reason: 'Task is due today',
-        nextAction: 'Open the task and complete it, or move its due date with a reason.',
+        nextAction: 'Open the task and review its available state actions.',
         responsibleRole: 'You, as the named assignee',
       },
       read: (actor) => readTaskSource(dependencies, actor, { due: 'today' }),
@@ -519,7 +519,7 @@ export function dashboardMetricSources(
       queue: {
         category: 'ASSIGNED',
         reason: 'Task is assigned to you and still open',
-        nextAction: 'Open the task and start, complete or hand it on.',
+        nextAction: 'Open the task and review its available state actions.',
         responsibleRole: 'You, as the named assignee',
       },
       read: (actor) => readTaskSource(dependencies, actor, { open: true }),

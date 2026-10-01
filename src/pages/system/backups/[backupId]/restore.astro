@@ -51,11 +51,11 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
     <form class="decision" method="post" data-backup-id={backup.id}>
       <label for="restoreType">Restore type
         <select id="restoreType" name="restoreType">
-          {canRequestDrill && <option value="DRILL">DRILL — isolated non-production target</option>}
-          <option value="PRODUCTION" disabled={productionBlocked}>PRODUCTION — DENY UNTIL APPROVED (RD-020)</option>
+          {canRequestDrill && <option value="DRILL">Isolated drill — non-production target</option>}
+          <option value="PRODUCTION" disabled={productionBlocked}>Production restore — unavailable pending approval (RD-020)</option>
         </select>
       </label>
-      <label for="targetEnvironment">Target environment (canonical: local · test · staging · production)
+      <label for="targetEnvironment">Target environment
         <select id="targetEnvironment" name="targetEnvironment">
           <option value="test">test</option>
           <option value="local">local</option>
@@ -63,12 +63,12 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
           <option value="production" disabled>production — isolated drill targets only</option>
         </select>
       </label>
-      <label for="reason">Reason (required, recorded as recovery evidence)
+      <label for="reason">Reason (required; saved as recovery evidence)
         <textarea id="reason" name="reason" rows="3" required minlength="3" maxlength="2000"></textarea>
       </label>
       <label class="confirm" for="confirmRestore"><input id="confirmRestore" name="confirmRestore" type="checkbox" required /> I understand this records a restore intent only, that no restore is executed by this system, and that the backup job state is not restore evidence.</label>
       <button type="submit" data-submit>Record restore request</button>
-      <p class="muted">The server re-checks permission, scope, environment, backup state, and policy. This form is a presentation hint, not the authorization boundary.</p>
+      <p class="muted">Each request must meet permission, scope, environment, backup-state, and policy requirements.</p>
     </form>
   )}
 </AppLayout>
@@ -95,7 +95,7 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
         CONFLICT_STALE: 'This backup set changed while you were reviewing it. Refresh the backup detail and try again if still permitted.',
         AUTHORIZATION_CHANGED: 'Your authorization changed. Recording a restore intent needs the explicit drill/production restore permission. Your reason was kept.',
         DEPENDENCY_UNAVAILABLE: 'The backup set is no longer available as a recovery candidate. Refresh the backup detail before trying again.',
-        UNKNOWN_SAFE_ERROR: 'The restore intent was not recorded. Your reason was kept — try again, or return to the backup detail.',
+        UNKNOWN_SAFE_ERROR: 'The restore request result is unconfirmed. Your reason is kept. Check the backup and its request history before retrying.',
       },
       invoke: (data) => {
         const confirmed = data.get('confirmRestore') === 'on';

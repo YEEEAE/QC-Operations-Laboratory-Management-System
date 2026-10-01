@@ -28,7 +28,7 @@ if (canView) {
   try {
     drafts = await listReportDrafts(actor);
   } catch {
-    error = 'Saved drafts could not be loaded. Ask the system owner to check database readiness and whether migration 0039 is applied, then reload.';
+    error = 'Saved drafts could not be loaded. Ask the system owner to restore access, then reload.';
     draftStorageUnavailable = true;
   }
   if (id && !draftStorageUnavailable) {
@@ -85,7 +85,7 @@ if (Astro.request.method === 'POST' && !draftStorageUnavailable && !selectedDraf
       } else if (cause instanceof AppError && cause.code === 'CONFLICT_STALE_VERSION') {
         error = 'Another edit was saved first. Reload the latest draft before trying again; your current entries are still shown here.';
       } else {
-        error = 'The draft could not be saved because draft storage is unavailable. Your entries are still shown here. Ask the system owner to check database readiness and migration 0039 before retrying.';
+        error = 'The save result could not be confirmed. Your entries are still shown here. Check saved drafts before retrying. If drafts are unavailable, contact the system owner.';
       }
     }
   }

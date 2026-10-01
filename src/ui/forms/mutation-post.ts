@@ -261,8 +261,8 @@ export function toFormFailure(error: unknown, input: FailureCopyInput): FormFail
       recovery = 'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
       break;
     default:
-      summary = `This ${entity} could not be created.`;
-      recovery = 'Your entries are preserved below. Try again, or return to the list.';
+      summary = `The result for this ${entity} is unconfirmed.`;
+      recovery = 'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
       break;
   }
 

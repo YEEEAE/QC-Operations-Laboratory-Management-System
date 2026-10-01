@@ -42,21 +42,21 @@ const fmtDateTime = (d?: Date) =>
   {!slip ? (
     <ErrorState
       title="Reject Reports are unavailable in this environment"
-      description="The required database schema is incomplete or could not be verified. No report was changed. Ask an operator to check migration readiness, then retry."
+      description="This report could not be opened. No report was changed. Contact your system administrator, then try opening it again."
       retryHref="/reject-reports"
     />
   ) : (
   <>
   <section class="page-head">
     <div>
-      <p class="eyebrow">REJECTED MATERIAL/PRODUCT ISSUE SLIP</p>
+      <p class="eyebrow">Rejected material/product issue slip</p>
       <h1>{slip.reportNo}</h1>
       <p class="lede">
         Status: <strong class={`status status-${slip.status.toLowerCase()}`}>{stateLabel(slip.status)}</strong>
       </p>
     </div>
     <div class="head-actions">
-      <a href="/reject-reports">Back to Reject Reports</a>
+      <a href="/reject-reports">Back to reject reports</a>
       <a href={`${Astro.url.pathname}?print=1`} target="_blank" rel="noopener">Print view</a>
     </div>
   </section>
@@ -124,7 +124,7 @@ const fmtDateTime = (d?: Date) =>
                 <form class="inline-form" data-confirm-form={role} data-version={slip.version.toString()}>
                   <label class="sr-only" for={`approver-${role}`}>Approver name (optional)</label>
                   <input id={`approver-${role}`} name="approverName" maxlength="200" placeholder="Approver name (optional)" />
-                  <button type="submit">Mark confirmed</button>
+                  <button type="submit">Confirm approval</button>
                 </form>
               )}
               {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role !== nextApprovalRole && (
@@ -134,7 +134,7 @@ const fmtDateTime = (d?: Date) =>
                 <form class="inline-form" data-reverse-form={role} data-version={slip.version.toString()}>
                   <label class="sr-only" for={`reason-${role}`}>Correction reason</label>
                   <input id={`reason-${role}`} name="reason" required maxlength="2000" placeholder="Correction reason (required)" />
-                  <button type="submit" class="secondary">Reverse (correction)</button>
+                  <button type="submit" class="secondary">Reverse confirmation</button>
                 </form>
               )}
             </div>
@@ -173,7 +173,7 @@ const fmtDateTime = (d?: Date) =>
   const run = async (work: Promise<{ error?: unknown }>) => {
     try {
       const result = await work;
-      if (result.error) fail('The action was not applied. The record may have changed or authorization may have changed — refresh and try again if authorized.');
+      if (result.error) fail('The action was not accepted. Refresh the record and check its current state and your permissions before trying again.');
       else location.reload();
     } catch {
       fail('The service did not confirm the result. Refresh the report and its history before deciding whether to try again.');

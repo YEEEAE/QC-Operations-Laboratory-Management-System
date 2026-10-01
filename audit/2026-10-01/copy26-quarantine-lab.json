@@ -1,0 +1,441 @@
+{
+  "task": "QC-COPY26-01",
+  "group": "quarantine-laboratory",
+  "review": "source",
+  "changes": [
+    {
+      "file": "src/pages/laboratory/report-templates.astro",
+      "route": "/laboratory/report-templates",
+      "state": "draft read unavailable",
+      "before": "Saved drafts could not be loaded. Ask the system owner to check database readiness and whether migration 0039 is applied, then reload.",
+      "after": "Saved drafts could not be loaded. Ask the system owner to restore access, then reload.",
+      "why": "Remove database/migration implementation detail from operator recovery.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/report-templates.astro",
+      "route": "/laboratory/report-templates",
+      "state": "unclassified save failure",
+      "before": "The draft could not be saved because draft storage is unavailable. Your entries are still shown here. Ask the system owner to check database readiness and migration 0039 before retrying.",
+      "after": "The save result could not be confirmed. Your entries are still shown here. Check saved drafts before retrying. If drafts are unavailable, contact the system owner.",
+      "why": "Do not assume storage failure or absence of a committed save.",
+      "meaningReview": "Unknown outcome stays unknown; directs comparison before another write; retained values verified in source.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/new.astro",
+      "route": "/laboratory/tests/new",
+      "state": "number help",
+      "before": "Use the test number from your approved source. Numbers are validated on the server; the technical record identifier is generated server-side.",
+      "after": "Use the test number from your approved source.",
+      "why": "Remove internal record identifier explanation.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/new.astro",
+      "route": "/laboratory/tests/new",
+      "state": "unknown creation result",
+      "before": "The laboratory test was received but no record reference came back.",
+      "after": "The laboratory test creation result could not be confirmed.",
+      "why": "Do not imply confirmed receipt when the record reference is missing.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/index.astro",
+      "route": "/laboratory/tests",
+      "state": "table summary",
+      "before": "; record id breaks ties.",
+      "after": ".",
+      "why": "Remove internal sorting tie-breaker detail.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro",
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "state": "equipment-use transport catch",
+      "before": "Equipment use was not recorded. Eligibility, permission, scope, or version validation failed; refresh and review the equipment status.",
+      "after": "The equipment-use result could not be confirmed. Check the test and its history before retrying.",
+      "why": "Do not turn an unknown write outcome into confirmed validation failure.",
+      "meaningReview": "Only catch feedback changes; unknown commit is not asserted as rollback.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro",
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "state": "equipment help",
+      "before": "Choose a run and an equipment record. Eligibility and calibration details come from the authorized Assets source; the server checks them again and freezes the source facts when recorded.",
+      "after": "Choose a run and equipment. Eligibility and calibration are checked before recording; their details are preserved at the time of use.",
+      "why": "Replace architecture wording with operator outcome.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro",
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "state": "equipment empty",
+      "before": "No equipment is recorded against this test yet. Record the equipment used for each run above; eligibility is checked by the Assets domain.",
+      "after": "No equipment is recorded for this test yet. Record the equipment used for each run above; eligibility is checked before recording.",
+      "why": "Remove internal owning-domain detail.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro",
+      "route": "/laboratory/tests/[labTestId]/review",
+      "state": "comparison outcome",
+      "before": "PASS: 'Pass'",
+      "after": "PASS: 'PASS'",
+      "why": "Restore exact controlled scientific term.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro",
+      "route": "/laboratory/tests/[labTestId]/review",
+      "state": "comparison outcome",
+      "before": "FAIL: 'Fail'",
+      "after": "FAIL: 'FAIL'",
+      "why": "Restore exact controlled scientific term.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro",
+      "route": "/laboratory/tests/[labTestId]/review",
+      "state": "comparison help",
+      "before": "Pass and Fail badges",
+      "after": "PASS and FAIL badges",
+      "why": "Keep paragraph terms aligned with controlled labels.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/admin/index.astro",
+      "route": "/quarantine/admin",
+      "state": "lifecycle footer",
+      "before": "Every action requires the expected version and rejects stale writes. Audit and outbox evidence persist atomically with each transition.",
+      "after": "Actions check the current record version. Each transition preserves its audit history.",
+      "why": "Remove outbox/atomic storage detail while retaining version and history meaning.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/admin/index.astro",
+      "route": "/quarantine/admin",
+      "state": "UNKNOWN_SAFE_ERROR",
+      "before": "The template could not be created. Your entries are preserved \u2014 try again, or return to the list.",
+      "after": "The creation result could not be confirmed. Your entries are preserved. Check the template list before trying again.",
+      "why": "Require current-record check before unknown-write retry.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/admin/[templateId].astro",
+      "route": "/quarantine/admin/[templateId]",
+      "state": "authority disabled reason",
+      "before": "This action requires a canonical P-06 template authority.",
+      "after": "This action requires an authorized Supervisor, Manager, or named yazeed account under P-06.",
+      "why": "Replace canonical jargon without widening P-06 authority.",
+      "meaningReview": "P-06 named account and role set preserved; separate permission warning remains.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/index.astro",
+      "route": "/quarantine",
+      "state": "denied",
+      "before": "Reading the quarantine register needs the quarantine view permission. Your authorization was not changed by this request, and nothing is withheld-and-retried.",
+      "after": "This account needs the quarantine view permission. Ask your administrator to confirm access.",
+      "why": "Remove opaque retry implementation phrase; provide recovery.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/index.astro",
+      "route": "/quarantine",
+      "state": "provider unavailable",
+      "before": "The quarantine read provider did not return a confirmed snapshot. Every counter, including zero-looking ones, is withheld.",
+      "after": "Quarantine data could not be confirmed. No counts are shown. Reload to check again.",
+      "why": "Explain withheld counts directly.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/index.astro",
+      "route": "/quarantine",
+      "state": "attention unavailable",
+      "before": "Attention data is unavailable. No follow-up list or empty-state claim is shown.",
+      "after": "Items needing follow-up could not be loaded. Reload to check again.",
+      "why": "Remove audit-oriented empty-state claim wording.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/inspections/[inspectionId]/execute.astro",
+      "route": "/quarantine/inspections/[inspectionId]/execute",
+      "state": "point remarks help",
+      "before": "General execution notes are not part of the approved draft save contract and are not saved.",
+      "after": "General execution notes are not saved.",
+      "why": "Remove technical save-contract explanation; keep explicit unsaved limitation.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/inspections/[inspectionId]/review.astro",
+      "route": "/quarantine/inspections/[inspectionId]/review",
+      "state": "review prerequisite",
+      "before": "final result recorded from the approved deterministic source gate",
+      "after": "final result recorded from the approved source",
+      "why": "Remove implementation gate jargon; source requirement unchanged.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/inspections/[inspectionId]/review.astro",
+      "route": "/quarantine/inspections/[inspectionId]/review",
+      "state": "criteria help",
+      "before": "Review the preserved controlled context and evidence. Official outcome requires the approved deterministic source gate on the server.",
+      "after": "Review the preserved controlled context and evidence. The official outcome requires an approved scientific source.",
+      "why": "Explain approved scientific source without server-gate jargon.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/receiving/new.astro",
+      "route": "/quarantine/receiving/new",
+      "state": "unknown creation result",
+      "before": "The receiving item was received but no record reference came back.",
+      "after": "The receiving item creation result could not be confirmed.",
+      "why": "Avoid ambiguous received statement for creation result.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/receiving/new.astro",
+      "route": "/quarantine/receiving/new",
+      "state": "creation lede",
+      "before": "Register the material identity. The server assigns the initial PENDING state.",
+      "after": "Register the material identity. New items start as Pending.",
+      "why": "Describe initial operator state without server detail.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/receiving/[receivingId].astro",
+      "route": "/quarantine/receiving/[receivingId]",
+      "state": "POST catch",
+      "before": "The action was not applied. Review the highlighted fields and try again.",
+      "after": "The action result could not be confirmed. Review any highlighted fields.",
+      "why": "A general catch does not prove no write occurred.",
+      "meaningReview": "No logic change; known field error remains available but commit outcome is not guessed.",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quarantine/receiving/[receivingId].astro",
+      "route": "/quarantine/receiving/[receivingId]",
+      "state": "POST catch recovery",
+      "before": "The record may have changed after you opened it. Reload the latest version before trying again.",
+      "after": "Check the current record and its history before retrying.",
+      "why": "Avoid immediate retry before checking an uncertain write.",
+      "meaningReview": "Presentation only; permissions, state, version checks, scientific criteria and controlled history are unchanged.",
+      "occurrences": 1
+    }
+  ],
+  "routes": [
+    {
+      "file": "src/pages/laboratory/index.astro",
+      "route": "/laboratory",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "NO_CHANGE",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/report-templates.astro",
+      "route": "/laboratory/report-templates",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro",
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/index.astro",
+      "route": "/laboratory/tests/[labTestId]",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "NO_CHANGE",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/retests/new.astro",
+      "route": "/laboratory/tests/[labTestId]/retests/new",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "NO_CHANGE",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro",
+      "route": "/laboratory/tests/[labTestId]/review",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/tests/index.astro",
+      "route": "/laboratory/tests",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/laboratory/tests/new.astro",
+      "route": "/laboratory/tests/new",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/admin/[templateId].astro",
+      "route": "/quarantine/admin/[templateId]",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/admin/index.astro",
+      "route": "/quarantine/admin",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/index.astro",
+      "route": "/quarantine",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/inspections/[inspectionId]/execute.astro",
+      "route": "/quarantine/inspections/[inspectionId]/execute",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/inspections/[inspectionId]/index.astro",
+      "route": "/quarantine/inspections/[inspectionId]",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "NO_CHANGE",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/inspections/[inspectionId]/review.astro",
+      "route": "/quarantine/inspections/[inspectionId]/review",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/inspections/index.astro",
+      "route": "/quarantine/inspections",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "NO_CHANGE",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/receiving/[receivingId].astro",
+      "route": "/quarantine/receiving/[receivingId]",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/receiving/index.astro",
+      "route": "/quarantine/receiving",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "NO_CHANGE",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    },
+    {
+      "file": "src/pages/quarantine/receiving/new.astro",
+      "route": "/quarantine/receiving/new",
+      "sourceReview": "REVIEWED",
+      "copyStatus": "EDITED",
+      "statesReviewed": "All source branches including client feedback, denial, empty, unavailable and dynamic references where present",
+      "browser": "NOT VERIFIED",
+      "assistiveTechnology": "NOT VERIFIED",
+      "realDynamicValues": "NOT VERIFIED"
+    }
+  ],
+  "limitations": [
+    "Source review is not browser, assistive technology, authenticated-role or real dynamic-data testing.",
+    "Controlled template/report labels, criteria, units, source references and user-entered content remain source data; actual dynamic values were not inspected.",
+    "Protected scientific/template/P-05/P-06 warnings and signature/SoD boundaries retained.",
+    "Raw dynamic snapshot JSON and some raw state/identifier surfaces require separate presentation work; no DOM/data-mapping changes in this copy-only task.",
+    "Template list read catch can turn non-authorization errors into an empty view; requires business/read-state logic work outside text-only scope."
+  ],
+  "verification": {
+    "textReplacement": "PASS",
+    "diffReview": "PASS: exact reconstruction from HEAD using only documented text replacements; no other source edits",
+    "focusedContracts": "ROOT_RUN"
+  }
+}

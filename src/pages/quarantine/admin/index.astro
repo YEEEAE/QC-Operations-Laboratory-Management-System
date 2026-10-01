@@ -190,7 +190,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
             <div class="actions"><button type="submit" data-submit>Create template</button></div>
           </form>
         )}
-        <p class="note">Every action requires the expected version and rejects stale writes. Audit and outbox evidence persist atomically with each transition.</p>
+        <p class="note">Actions check the current record version. Each transition preserves its audit history.</p>
       </section>
     </div>
   )}
@@ -208,7 +208,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
         CONFLICT_STALE: 'A template with the same code and version may already exist. Change the code or version, or check the list before trying again. Your other entries are preserved.',
         AUTHORIZATION_CHANGED: 'Your authorization changed. This action needs the explicit template administration permission. Your entries are preserved.',
         DEPENDENCY_UNAVAILABLE: 'A referenced record could not be found. Verify the source document and try again. Your entries are preserved.',
-        UNKNOWN_SAFE_ERROR: 'The template could not be created. Your entries are preserved — try again, or return to the list.',
+        UNKNOWN_SAFE_ERROR: 'The creation result could not be confirmed. Your entries are preserved. Check the template list before trying again.',
       },
       invoke: (data) =>
         actions.quarantineTemplates.createTemplate({

@@ -39,7 +39,7 @@ export const HELP_ROUTE_LINKS: readonly HelpRouteLink[] = [
   {
     routeId: 'RT-TASK-001',
     label: 'Tasks',
-    purpose: 'Assigned, due and overdue work; filters work without JavaScript.',
+    purpose: 'Find assigned, due, and overdue tasks.',
   },
   {
     routeId: 'RT-SHARED-002',
@@ -117,7 +117,7 @@ export const HELP_ROUTE_LINKS: readonly HelpRouteLink[] = [
   {
     routeId: 'RT-SHARED-004',
     label: 'Audit history',
-    purpose: 'Mapped, sanitized audit read model.',
+    purpose: 'View the audit history available to your account.',
   },
   {
     routeId: 'RT-SHARED-001',
@@ -132,7 +132,7 @@ export const HELP_ROUTE_LINKS: readonly HelpRouteLink[] = [
   {
     routeId: 'RT-USER-001',
     label: 'Users',
-    purpose: 'Member register (administration projections).',
+    purpose: 'Review member accounts and their access.',
   },
   {
     routeId: 'RT-SYSTEM-001',

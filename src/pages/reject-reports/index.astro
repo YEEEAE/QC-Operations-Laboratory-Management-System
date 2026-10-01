@@ -22,18 +22,18 @@ const filter: RejectReportListFilter = {
 };
 const deps = rejectReportReadDependencies();
 // Fail closed with an honest availability state when the database behind this
-// deployment has not been provisioned for Reject Reports. The previous
+// deployment has not been provisioned for Reject reports. The previous
 // behaviour was a generic 500 inviting a retry for a permanent gap (P1-4).
 const availability = await deps.availability.execute({ actor });
 if (!availability.available) Astro.response.status = 503;
 const availabilityError = availability.reason === 'SCHEMA_NOT_READY'
   ? {
-      title: 'Reject Reports are temporarily unavailable',
-      description: 'The system could not confirm that Reject Reports are ready to open. No records were changed. Try again later or contact your system administrator.',
+      title: 'Reject reports are temporarily unavailable',
+      description: 'The system could not confirm that Reject reports are ready to open. No records were changed. Try again later or contact your system administrator.',
     }
   : {
-      title: 'Reject Reports are temporarily unavailable',
-      description: 'The system could not confirm that Reject Reports are ready to open. No records were changed. Try again later or contact your system administrator.',
+      title: 'Reject reports are temporarily unavailable',
+      description: 'The system could not confirm that Reject reports are ready to open. No records were changed. Try again later or contact your system administrator.',
     };
 const showSlips = tab !== 'daily';
 const showDaily = tab === 'all' || tab === 'daily' || tab === 'completed' || tab === 'awaiting';
@@ -76,15 +76,15 @@ const canCreate = actor.permissions.some(
 );
 const tabs = [
   { id: 'all', label: 'All' },
-  { id: 'slips', label: 'Issue Slips' },
-  { id: 'daily', label: 'Daily Reject' },
-  { id: 'awaiting', label: 'Awaiting Approvals' },
+  { id: 'slips', label: 'Issue slips' },
+  { id: 'daily', label: 'Daily reject' },
+  { id: 'awaiting', label: 'Awaiting approvals' },
   { id: 'completed', label: 'Completed' },
 ] as const;
 const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' });
 const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty));
 ---
-<AppLayout title="Reject Reports · QC Operations" locale="en" direction="ltr">
+<AppLayout title="Reject reports · QC Operations" locale="en" direction="ltr">
   {
     !availability.available ? (
       <ErrorState title={availabilityError.title} description={availabilityError.description} retryHref="/reject-reports" />
@@ -93,21 +93,21 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
   <section class="page-head">
     <div>
       <p class="eyebrow">Quality</p>
-      <h1>Reject Reports</h1>
-      <p class="lede">Issue Slips track three real-world approval confirmations. Daily Reject records are finalized without approvals. All analytics derive from PostgreSQL.</p>
+      <h1>Reject reports</h1>
+      <p class="lede">Issue slips track three real-world approval confirmations. Daily reject records are finalized without approvals. Analytics use recorded report data.</p>
     </div>
-    {canCreate && <a class="button" href="/reject-reports/new">New Report</a>}
+    {canCreate && <a class="button" href="/reject-reports/new">Create report</a>}
   </section>
 
   <section class="cards" aria-label="Summary">
     <div class="card"><span>Reports today</span><strong>{summary.reportsToday}</strong></div>
     <div class="card"><span>Reports this month</span><strong>{summary.reportsThisMonth}</strong></div>
     <div class="card"><span>Total rejected quantity</span><strong>{summary.totalRejectedQuantity}</strong></div>
-    <div class="card"><span>Issue Slips</span><strong>{summary.totalIssueSlips}</strong></div>
-    <div class="card"><span>Daily Reject records</span><strong>{summary.totalDailyRejects}</strong></div>
+    <div class="card"><span>Issue slips</span><strong>{summary.totalIssueSlips}</strong></div>
+    <div class="card"><span>Daily reject records</span><strong>{summary.totalDailyRejects}</strong></div>
     <div class="card warn"><span>Awaiting approvals</span><strong>{summary.awaitingApprovals}</strong></div>
-    <div class="card"><span>Completed Issue Slips</span><strong>{summary.completedIssueSlips}</strong></div>
-    <div class="card"><span>Finalized Daily Reject</span><strong>{summary.finalizedDailyRejects}</strong></div>
+    <div class="card"><span>Completed Issue slips</span><strong>{summary.completedIssueSlips}</strong></div>
+    <div class="card"><span>Finalized Daily reject</span><strong>{summary.finalizedDailyRejects}</strong></div>
   </section>
 
   <section class="analytics" aria-label="Analytics">
@@ -191,7 +191,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
 
   {showSlips && (
     <section class="panel">
-      <h2>Issue Slips ({slips.total})</h2>
+      <h2>Issue slips ({slips.total})</h2>
       {slips.items.length ? (
         <div class="table-wrap">
           <table>
@@ -212,13 +212,13 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
             </tbody>
           </table>
         </div>
-      ) : <p class="empty">No Issue Slips match the current filters.</p>}
+      ) : <p class="empty">No Issue slips match the current filters.</p>}
     </section>
   )}
 
   {showDaily && (
     <section class="panel">
-      <h2>Daily Production &amp; Rejection Records ({daily.total})</h2>
+      <h2>Daily production and rejection records ({daily.total})</h2>
       {daily.items.length ? (
         <div class="table-wrap">
           <table>
@@ -238,7 +238,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
             </tbody>
           </table>
         </div>
-      ) : <p class="empty">No Daily Reject records match the current filters.</p>}
+      ) : <p class="empty">No Daily reject records match the current filters.</p>}
     </section>
   )}
 

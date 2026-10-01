@@ -1,0 +1,1095 @@
+{
+  "task": "QC-COPY26-01",
+  "group": "quality-tasks-assets-work-dashboard",
+  "changes": [
+    {
+      "file": "src/pages/quality/index.astro",
+      "route": "/quality",
+      "state": "default",
+      "before": "Authorized quality records and controlled workflow progression.",
+      "after": "View quality records and their next steps.",
+      "why": "Replace abstract workflow wording.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/findings/index.astro",
+      "route": "/quality/findings",
+      "state": "default",
+      "before": "NO MATCHES",
+      "after": "No matches",
+      "why": "Sentence case.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/findings/index.astro",
+      "route": "/quality/findings",
+      "state": "default",
+      "before": ">Clear</a>",
+      "after": ">Clear filter</a>",
+      "why": "Name the filter action.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/findings/[findingId].astro",
+      "route": "/quality/findings/[findingId]",
+      "state": "default",
+      "before": "Return to Findings",
+      "after": "Return to findings",
+      "why": "Sentence case.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/ncr/index.astro",
+      "route": "/quality/ncr",
+      "state": "default",
+      "before": "Non-conformance records",
+      "after": "NCR records",
+      "why": "Keep governed NCR heading term.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/ncr/index.astro",
+      "route": "/quality/ncr",
+      "state": "default",
+      "before": "Current records in your authorized scope, with their source Finding and RCA workspace.",
+      "after": "View NCR records, source findings and linked RCA in your authorized scope.",
+      "why": "Replace workspace jargon.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/ncr/index.astro",
+      "route": "/quality/ncr",
+      "state": "default",
+      "before": "Source Finding",
+      "after": "Source finding",
+      "why": "Sentence case.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/ncr/index.astro",
+      "route": "/quality/ncr",
+      "state": "default",
+      "before": ">Clear</a>",
+      "after": ">Clear filter</a>",
+      "why": "Name filter action.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/ncr/new.astro",
+      "route": "/quality/ncr/new",
+      "state": "default",
+      "before": "New non-conformance report",
+      "after": "New NCR",
+      "why": "Keep governed NCR heading term.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/capa/new.astro",
+      "route": "/quality/capa/new",
+      "state": "default",
+      "before": "New corrective or preventive action",
+      "after": "New CAPA",
+      "why": "Keep governed CAPA heading term.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/capa/index.astro",
+      "route": "/quality/capa",
+      "state": "default",
+      "before": "Corrective and preventive actions",
+      "after": "CAPA records",
+      "why": "Keep governed CAPA heading term.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/capa/[capaId].astro",
+      "route": "/quality/capa/[capaId]",
+      "state": "default",
+      "before": "Related RCA, action owners, evidence, verification, closure, and history belong to the server-authorized aggregate.",
+      "after": "View related RCA, action owners, evidence, verification, closure and history through the authorized CAPA workflow.",
+      "why": "Remove implementation aggregate jargon.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/capa/[capaId].astro",
+      "route": "/quality/capa/[capaId]",
+      "state": "client transport catch",
+      "before": "The CAPA could not be closed. Your reason was kept; try again if permitted.",
+      "after": "The closure result could not be confirmed. Your reason is still in this form. Review the CAPA state and audit history before trying again.",
+      "why": "Unknown transport cannot prove failure; reconcile before repeating a signed closure.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/capa/[capaId].astro",
+      "route": "/quality/capa/[capaId]",
+      "state": "pending",
+      "before": "Checking authorization and controlled evidence\u2026",
+      "after": "Checking closure permission and evidence\u2026",
+      "why": "Name operation without generic authorization jargon.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/[taskId].astro",
+      "route": "/tasks/[taskId]",
+      "state": "default",
+      "before": "State changes require server-side permission, scope, and the current version.",
+      "after": "State changes require permission for this task and its current version.",
+      "why": "Remove implementation detail without weakening scope.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/[taskId].astro",
+      "route": "/tasks/[taskId]",
+      "state": "pending",
+      "before": "Applying the controlled action\u2026",
+      "after": "Updating task state\u2026",
+      "why": "Name pending action.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/index.astro",
+      "route": "/tasks",
+      "state": "unavailable",
+      "before": "The task read is unavailable, so no count is shown.",
+      "after": "Task data is unavailable, so no count is shown.",
+      "why": "Remove technical read wording.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/index.astro",
+      "route": "/tasks",
+      "state": "unavailable",
+      "before": "The task read did not return a confirmed result, so this queue is not treated as empty and no count is shown.",
+      "after": "Task data could not be loaded. No records or count are shown.",
+      "why": "Short honest unavailable message.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/index.astro",
+      "route": "/tasks",
+      "state": "default",
+      "before": "; stable task identity breaks ties.",
+      "after": ".",
+      "why": "Remove sorting implementation detail.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/new.astro",
+      "route": "/tasks/new",
+      "state": "default",
+      "before": "New tasks start as controlled drafts.",
+      "after": "New tasks start as drafts.",
+      "why": "Remove redundant controlled qualifier.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/new.astro",
+      "route": "/tasks/new",
+      "state": "default",
+      "before": "Leave blank when no priority has been assigned. The saved value will be shown as \u201cNot specified\u201d.",
+      "after": "Leave blank if no priority is assigned. It will show as \u201cNot specified\u201d.",
+      "why": "Shorten instruction.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/tasks/new.astro",
+      "route": "/tasks/new",
+      "state": "unknown result",
+      "before": "The task was received but no record reference came back.",
+      "after": "The task creation result could not be confirmed.",
+      "why": "Avoid unconfirmed receipt claim while keeping duplicate recovery.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/quality/findings/new.astro",
+      "route": "/quality/findings/new",
+      "state": "unknown result",
+      "before": "The finding was received but no record reference came back.",
+      "after": "The finding creation result could not be confirmed.",
+      "why": "Avoid unconfirmed receipt claim while keeping duplicate recovery.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/equipment/new.astro",
+      "route": "/assets/equipment/new",
+      "state": "unknown result",
+      "before": "The equipment record was received but no record reference came back.",
+      "after": "The equipment record creation result could not be confirmed.",
+      "why": "Avoid unconfirmed receipt claim while keeping duplicate recovery.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/calibrations/new.astro",
+      "route": "/assets/calibrations/new",
+      "state": "unknown result",
+      "before": "The calibration record was received but no record reference came back.",
+      "after": "The calibration record creation result could not be confirmed.",
+      "why": "Avoid unconfirmed receipt claim while keeping duplicate recovery.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "state": "unknown result",
+      "before": "The maintenance record was received but no record reference came back.",
+      "after": "The maintenance record creation result could not be confirmed.",
+      "why": "Avoid unconfirmed receipt claim while keeping duplicate recovery.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/equipment/new.astro",
+      "route": "/assets/equipment/new",
+      "state": "field label",
+      "before": "Equipment ID",
+      "after": "Equipment number",
+      "why": "Match human number field and validation label.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 2
+    },
+    {
+      "file": "src/pages/assets/equipment/new.astro",
+      "route": "/assets/equipment/new",
+      "state": "pending",
+      "before": "progressText:'Saving\u2026'",
+      "after": "progressText:'Saving equipment draft\u2026'",
+      "why": "Name pending draft save.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/calibrations/new.astro",
+      "route": "/assets/calibrations/new",
+      "state": "field label",
+      "before": "Calibration ID",
+      "after": "Calibration number",
+      "why": "Match human number field and validation label.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 2
+    },
+    {
+      "file": "src/pages/assets/calibrations/new.astro",
+      "route": "/assets/calibrations/new",
+      "state": "default",
+      "before": "Choose from equipment in your authorized scope. The technical identifier is kept automatically after selection.",
+      "after": "Choose equipment in your authorized scope.",
+      "why": "Remove hidden identifier implementation detail.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/calibrations/new.astro",
+      "route": "/assets/calibrations/new",
+      "state": "selector unavailable",
+      "before": "The authorized equipment list is temporarily unavailable. Your entries are kept \u2014 you can try again, or return to the list.",
+      "after": "The equipment list is temporarily unavailable. Keep your entries here and check the equipment register before submitting.",
+      "why": "Distinguish loading recovery from blind submission retry.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/calibrations/new.astro",
+      "route": "/assets/calibrations/new",
+      "state": "pending",
+      "before": "progressText:'Saving\u2026'",
+      "after": "progressText:'Saving calibration draft\u2026'",
+      "why": "Name pending draft save.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "state": "field label",
+      "before": "Maintenance ID",
+      "after": "Maintenance number",
+      "why": "Match human number field and validation label.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 2
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "state": "default",
+      "before": "Choose from equipment in your authorized scope. The technical identifier is kept automatically after selection.",
+      "after": "Choose equipment in your authorized scope.",
+      "why": "Remove hidden identifier implementation detail.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "state": "selector unavailable",
+      "before": "The authorized equipment list is temporarily unavailable. Your entries are kept \u2014 you can try again, or return to the list.",
+      "after": "The equipment list is temporarily unavailable. Keep your entries here and check the equipment register before submitting.",
+      "why": "Distinguish loading recovery from blind submission retry.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "state": "pending",
+      "before": "progressText:'Saving\u2026'",
+      "after": "progressText:'Saving maintenance draft\u2026'",
+      "why": "Name pending draft save.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/equipment/new.astro",
+      "route": "/assets/equipment/new",
+      "state": "default",
+      "before": "T3 CONTROLLED MASTER DATA",
+      "after": "Equipment draft",
+      "why": "Remove architectural tier and decorative capitals.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/equipment/new.astro",
+      "route": "/assets/equipment/new",
+      "state": "default",
+      "before": "The server creates a DRAFT. Activation requirements remain policy-controlled.",
+      "after": "Create an equipment draft. Activation follows the approved policy.",
+      "why": "Human draft label without raw enum.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "state": "default",
+      "before": "Starting work may put equipment UNDER_MAINTENANCE; completion does not certify calibration.",
+      "after": "Starting work may put equipment under maintenance. Completion does not certify calibration.",
+      "why": "Human state phrasing preserving calibration boundary.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/[maintenanceId].astro",
+      "route": "/assets/maintenance/[maintenanceId]",
+      "state": "empty",
+      "before": "History is unavailable or empty in your authorized scope.",
+      "after": "No maintenance history entries are visible in your authorized scope.",
+      "why": "Successful empty branch should not claim unavailable.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/[maintenanceId].astro",
+      "route": "/assets/maintenance/[maintenanceId]",
+      "state": "default",
+      "before": "Starting maintenance can put the equipment under maintenance transactionally.",
+      "after": "Starting maintenance can put the equipment under maintenance.",
+      "why": "Remove transaction implementation jargon.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/index.astro",
+      "route": "/assets",
+      "state": "unavailable",
+      "before": "One or more asset read providers did not return a confirmed snapshot, so counts are withheld.",
+      "after": "Asset data could not be loaded. Counts are not shown.",
+      "why": "Remove read-provider jargon.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/index.astro",
+      "route": "/assets",
+      "state": "default",
+      "before": "Historical records; no invented intervals",
+      "after": "History and source-provided dates",
+      "why": "Operator-facing positive wording.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/equipment/index.astro",
+      "route": "/assets/equipment",
+      "state": "unavailable",
+      "before": "The equipment read provider did not return a confirmed result, so the register is not treated as empty.",
+      "after": "Equipment records could not be loaded. This does not mean the register is empty.",
+      "why": "Short unavailable copy.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/calibrations/index.astro",
+      "route": "/assets/calibrations",
+      "state": "unavailable",
+      "before": "The calibration read provider did not return a confirmed result, so the register is not treated as empty.",
+      "after": "Calibration records could not be loaded. This does not mean the register is empty.",
+      "why": "Short unavailable copy.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/maintenance/index.astro",
+      "route": "/assets/maintenance",
+      "state": "unavailable",
+      "before": "The maintenance read provider did not return a confirmed result, so the register is not treated as empty.",
+      "after": "Maintenance records could not be loaded. This does not mean the register is empty.",
+      "why": "Short unavailable copy.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/assets/equipment/[equipmentId].astro",
+      "route": "/assets/equipment/[equipmentId]",
+      "state": "default",
+      "before": ">View all</a>",
+      "after": ">View all records</a>",
+      "why": "Specify destination in panel context.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 2
+    },
+    {
+      "file": "src/pages/work/index.astro",
+      "route": "/work",
+      "state": "default",
+      "before": "YOUR QUEUE",
+      "after": "Your queue",
+      "why": "Sentence case.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/work/index.astro",
+      "route": "/work",
+      "state": "default",
+      "before": "Work the registers record as yours, grouped by the question you are asking: what is assigned to me, what is due today, what is past due, and what is blocked. Every group names the register it was read from, the reason the record is waiting, the next action and the role that owns it. Opening a record changes nothing \u2014 the server still decides whether you may act.",
+      "after": "View assigned, due, overdue and blocked work. Each group shows its source, next step and responsible role. Opening a record does not change it or grant permission to act.",
+      "why": "Shorten dense queue introduction.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/work/index.astro",
+      "route": "/work",
+      "state": "default",
+      "before": "A record can belong to more than one group \u2014 one task can be both assigned to you and past its due date \u2014 so a group count is that group's own question, not a share of a total. Each record is listed once, under its most urgent group.",
+      "after": "Group counts can overlap. Each record appears once, in its most urgent group. Do not add group counts to calculate a total.",
+      "why": "Explain count overlap directly.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/work/index.astro",
+      "route": "/work",
+      "state": "boundary",
+      "before": "PASS and Released are separate",
+      "after": "PASS and RELEASED are separate",
+      "why": "Preserve controlled release casing.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "boundary",
+      "before": "PASS and Released are separate",
+      "after": "PASS and RELEASED are separate",
+      "why": "Preserve controlled release casing.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "MEDIUM",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "default",
+      "before": "What needs your attention now, what changed, what is waiting, and where the bottlenecks are. Every number below is read from a server register and links to the same filter it was counted with.",
+      "after": "View work that needs attention, recent changes and waiting items. Counts link to the same records and filters they represent.",
+      "why": "Shorten dashboard introduction.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "unavailable",
+      "before": "At least one operational read provider did not return a confirmed snapshot. Every count, stage and queue is withheld instead of being shown as zero.",
+      "after": "Dashboard data could not be loaded. Counts, stages and queues are not shown.",
+      "why": "Remove provider terminology.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "unavailable",
+      "before": "Attention data is unavailable. No queue count or empty-state claim is shown.",
+      "after": "Attention data is unavailable. No records or count are shown.",
+      "why": "Remove meta empty-state jargon.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "attention",
+      "before": "Open items you can act on now, each from a real register, with why it is waiting, how long it has been waiting and a direct link to the record.",
+      "after": "Open waiting items to review their reason, age and available actions.",
+      "why": "Do not imply mutation authority from queue visibility.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "default",
+      "before": "Active IN_REVIEW versions you may review, excluding versions you authored",
+      "after": "Active versions awaiting your review, excluding versions you authored",
+      "why": "Human review-state wording.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "LOW",
+      "occurrences": 1
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "state": "unavailable",
+      "before": "Activity data is unavailable. History is still available from the audit register.",
+      "after": "Activity data is unavailable. Check the audit register for history.",
+      "why": "Do not guarantee another source is available.",
+      "meaningReview": "Controlled terms, permissions, state transitions and data remain unchanged; presentation copy only.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/modules/dashboard/application/dashboard-sources.ts",
+      "route": "/dashboard and /work",
+      "state": "due today / overdue nextAction",
+      "before": "Open the task and complete it, or move its due date with a reason.",
+      "after": "Open the task and review its available state actions.",
+      "why": "Task detail offers state actions, not due-date changes.",
+      "meaningReview": "Dynamic presentation string only; same source selection, grouping, permissions, filters and controlled states.",
+      "severity": "HIGH",
+      "occurrences": 2
+    },
+    {
+      "file": "src/modules/dashboard/application/dashboard-sources.ts",
+      "route": "/dashboard and /work",
+      "state": "assigned nextAction",
+      "before": "Open the task and start, complete or hand it on.",
+      "after": "Open the task and review its available state actions.",
+      "why": "Task detail offers state actions, not reassignment.",
+      "meaningReview": "Dynamic presentation string only; same source selection, grouping, permissions, filters and controlled states.",
+      "severity": "HIGH",
+      "occurrences": 1
+    },
+    {
+      "file": "src/modules/dashboard/application/my-work-definitions.ts",
+      "route": "/work",
+      "state": "due today / overdue sourceTimestamp",
+      "before": "The record's own due date (tasks.due_at), stored with a time zone.",
+      "after": "The record's due date, with its time zone.",
+      "why": "Remove table/column implementation detail.",
+      "meaningReview": "Dynamic presentation string only; same source selection, grouping, permissions, filters and controlled states.",
+      "severity": "MEDIUM",
+      "occurrences": 2
+    },
+    {
+      "file": "src/modules/dashboard/application/my-work-definitions.ts",
+      "route": "/work",
+      "state": "all groups actorScope",
+      "before": "Records your account is authorized to read, narrowed to your own holding.",
+      "after": "Records you may read where you hold the next step.",
+      "why": "Plain description of personal source scope.",
+      "meaningReview": "Dynamic presentation string only; same source selection, grouping, permissions, filters and controlled states.",
+      "severity": "MEDIUM",
+      "occurrences": 4
+    },
+    {
+      "file": "src/modules/dashboard/application/my-work-definitions.ts",
+      "route": "/work",
+      "state": "due today predicate",
+      "before": "due_at >= UTC midnight of the current day AND due_at < UTC midnight of the next day AND state not COMPLETED/CANCELLED.",
+      "after": "Due from midnight today to before midnight tomorrow, in UTC. Completed and cancelled tasks are excluded.",
+      "why": "Retain exact date bounds using readable words.",
+      "meaningReview": "Dynamic presentation string only; same source selection, grouping, permissions, filters and controlled states.",
+      "severity": "MEDIUM",
+      "occurrences": 1
+    },
+    {
+      "file": "src/modules/dashboard/application/my-work-definitions.ts",
+      "route": "/work",
+      "state": "overdue predicate",
+      "before": "due_at < UTC midnight of the current day AND state not COMPLETED/CANCELLED. A closed record is never overdue whatever its due date says.",
+      "after": "Due before midnight today, in UTC. Completed and cancelled tasks are excluded.",
+      "why": "Retain exact date bound and exclusions.",
+      "meaningReview": "Dynamic presentation string only; same source selection, grouping, permissions, filters and controlled states.",
+      "severity": "MEDIUM",
+      "occurrences": 1
+    }
+  ],
+  "routeReviews": [
+    {
+      "file": "src/pages/assets/calibrations/[calibrationId].astro",
+      "route": "/assets/calibrations/[calibrationId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/calibrations/index.astro",
+      "route": "/assets/calibrations",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/calibrations/new.astro",
+      "route": "/assets/calibrations/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/equipment/[equipmentId].astro",
+      "route": "/assets/equipment/[equipmentId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/equipment/index.astro",
+      "route": "/assets/equipment",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/equipment/new.astro",
+      "route": "/assets/equipment/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/index.astro",
+      "route": "/assets",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/maintenance/[maintenanceId].astro",
+      "route": "/assets/maintenance/[maintenanceId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/maintenance/index.astro",
+      "route": "/assets/maintenance",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/assets/maintenance/new.astro",
+      "route": "/assets/maintenance/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/dashboard/index.astro",
+      "route": "/dashboard",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Reviewed page interpolations and dashboard-source string definitions; my-work-definitions.ts read in full. Other shared queue/series runtime outputs remain NOT VERIFIED."
+    },
+    {
+      "file": "src/pages/quality/capa/[capaId].astro",
+      "route": "/quality/capa/[capaId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/capa/index.astro",
+      "route": "/quality/capa",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/capa/new.astro",
+      "route": "/quality/capa/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/findings/[findingId].astro",
+      "route": "/quality/findings/[findingId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/findings/index.astro",
+      "route": "/quality/findings",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/findings/new.astro",
+      "route": "/quality/findings/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/index.astro",
+      "route": "/quality",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/ncr/[ncrId].astro",
+      "route": "/quality/ncr/[ncrId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/ncr/index.astro",
+      "route": "/quality/ncr",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/ncr/new.astro",
+      "route": "/quality/ncr/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/rca/[rcaId].astro",
+      "route": "/quality/rca/[rcaId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/quality/rca/index.astro",
+      "route": "/quality/rca",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/tasks/[taskId].astro",
+      "route": "/tasks/[taskId]",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/tasks/index.astro",
+      "route": "/tasks",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/tasks/new.astro",
+      "route": "/tasks/new",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Page interpolations inspected; user records/notes/audit unchanged. Shared dynamic module copy needs root integration review."
+    },
+    {
+      "file": "src/pages/work/index.astro",
+      "route": "/work",
+      "sourceReview": "REVIEWED",
+      "statesReviewed": [
+        "default",
+        "conditional data/permission/state branches",
+        "loading/pending and client messages when present",
+        "empty and unavailable when present"
+      ],
+      "runtimeReview": "NOT VERIFIED \u2014 no authenticated browser review",
+      "dynamicSourceReview": "Reviewed page interpolations and dashboard-source string definitions; my-work-definitions.ts read in full. Other shared queue/series runtime outputs remain NOT VERIFIED."
+    }
+  ],
+  "unresolved": [
+    {
+      "severity": "MEDIUM",
+      "file": "Documents/BUSINESS-RULES.md",
+      "route": "/quality/capa/[capaId]",
+      "state": "P-04 approved exception",
+      "why": "BR-QUAL-032 explicitly permits closure with incomplete actions/unaccepted effectiveness, consistent with CloseCapaUseCase. Mind ACTIONS_COMPLETE statement must distinguish normal completion transition from the approved close exception. Controlled page wording preserved.",
+      "status": "MIND PRECISION \u2014 root reconciliation"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "src/pages/assets/equipment/[equipmentId].astro",
+      "route": "/assets/equipment/[equipmentId]",
+      "state": "related history denied",
+      "why": "calibrationDenied, maintenanceDenied and historyDenied are set but not rendered separately; page uses no records visible in authorized scope. Distinguishing denial needs behavior work outside copy-only scope.",
+      "status": "BEHAVIOR LIMITATION"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "src/pages/assets/calibrations/index.astro",
+      "route": "/assets/calibrations and /assets/maintenance",
+      "state": "equipment reference cells and filters",
+      "why": "Equipment UUID is the dynamic display source in register rows/filter chips. Human equipment number requires a new read projection; data sourcing unchanged.",
+      "status": "DYNAMIC SOURCE LIMITATION"
+    }
+  ],
+  "verification": {
+    "source": "27/27 pages reviewed; 2 extended shared dynamic copy sources inspected",
+    "browser": "NOT RUN",
+    "tests": "root integration pending",
+    "diffCheck": "PASS"
+  }
+}

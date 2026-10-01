@@ -76,7 +76,7 @@ const hasFilters = appliedFilters.length > 0;
     providerUnavailable ? (
       <ProviderUnavailableState
         title="Maintenance data is unavailable"
-        description="The maintenance read provider did not return a confirmed result, so the register is not treated as empty."
+        description="Maintenance records could not be loaded. This does not mean the register is empty."
         retryHref="/assets/maintenance"
       />
     ) : records.length ? (

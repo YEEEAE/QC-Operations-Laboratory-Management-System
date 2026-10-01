@@ -47,7 +47,7 @@ const approvalEvents = [
 ---
 <AppLayout title={`Approval · ${subjectLabel}`} locale="en" direction="ltr">
   <div class="evidence-record">
-  <nav class="crumb"><a href="/approvals">My Approvals</a><span>/</span><span>{subjectLabel}</span></nav>
+  <nav class="crumb"><a href="/approvals">My approvals</a><span>/</span><span>{subjectLabel}</span></nav>
   <section class="head workspace-header"><div><p class="eyebrow">Approval review</p><h1>{subjectLabel}</h1><p>{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · Current version {approval.subject.version.toString()}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
   <JourneyContextPanel ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? 'state: this approval work item is no longer actionable' : undefined} waitingOn={approvalActionable ? approvalNextOwner : 'Owning domain transition'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Source-domain transition or audit trace'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={`/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
   <HandoffTimeline events={approvalEvents} />
@@ -91,13 +91,13 @@ const approvalEvents = [
       const copy: Record<string, string> = {
         VALIDATION_ERROR: 'The decision was not accepted. A reason is required for return/reject — review the fields and try again. Your entries are preserved.',
         CONFLICT_STALE: 'The record changed while you were reviewing it. Reload the current record and try again if permitted. Your reason was kept.',
-        AUTHORIZATION_CHANGED: 'Your authorization changed. This decision needs the explicit approval permission plus a fresh e-signature. Your entries are preserved.',
+        AUTHORIZATION_CHANGED: 'Your authorization changed. Check your approval permission and any signature requirement. Your entries remain on this page.',
         DEPENDENCY_UNAVAILABLE: 'The approval record is no longer available. Reload the record before trying again.',
-        UNKNOWN_SAFE_ERROR: 'The decision was not accepted. Reload the current record and try again if permitted. Your entries are preserved.',
+        UNKNOWN_SAFE_ERROR: 'The result is unconfirmed. Your entries remain on this page. Check the record and its history before trying again.',
       };
       if (output) { output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR; output.focus?.(); }
     } catch {
-      if (output) { output.textContent = 'The service did not confirm the result. Your entries are preserved. Refresh the record and its history before deciding whether to try again.'; output.focus?.(); }
+      if (output) { output.textContent = 'The result is unconfirmed. Your entries remain on this page. Check the record and its history before trying again.'; output.focus?.(); }
     } finally { if (loading) loading.hidden = true; form.removeAttribute('aria-busy'); if (button) button.disabled = false; }
   });
   form?.querySelector<HTMLSelectElement>('#decision')?.addEventListener('change', (event) => {

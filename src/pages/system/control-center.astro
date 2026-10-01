@@ -556,7 +556,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
           'Your authorization changed. Account creation requires the canonical owner session. Your entries are preserved.',
         DEPENDENCY_UNAVAILABLE:
           'A referenced record could not be found. Verify the entries and try again.',
-        UNKNOWN_SAFE_ERROR: 'The account could not be created. Your entries are preserved.',
+        UNKNOWN_SAFE_ERROR: 'Account creation is unconfirmed. Check the account register and history before deciding whether to retry. Your entries are preserved.',
       },
       invoke: (data) => {
         const email = String(data.get('email') || '').trim();

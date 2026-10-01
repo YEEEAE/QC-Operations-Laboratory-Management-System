@@ -41,8 +41,8 @@ const nextHref = page.nextCursor ? `/search?q=${encodeURIComponent(q)}&cursor=${
     <p class="eyebrow">GLOBAL SEARCH</p>
     <h1 id="search-title">Find authorized records</h1>
     <form role="search" method="get">
-      <label for="q">Search tasks, inspections, lab tests, findings, NCRs, CAPA, equipment, documents, or change requests</label>
-      <div class="search-row"><input id="q" name="q" value={rawQuery} maxlength="200" autocomplete="off" aria-invalid={invalidQuery || invalidCursor ? 'true' : undefined} aria-describedby={invalidQuery || invalidCursor ? 'query-error' : 'query-hint'} /><button type="submit">Search</button>{q && <a href="/search">Clear</a>}</div>
+      <label for="q">Search records</label>
+      <div class="search-row"><input id="q" name="q" value={rawQuery} maxlength="200" autocomplete="off" aria-invalid={invalidQuery || invalidCursor ? 'true' : undefined} aria-describedby={invalidQuery || invalidCursor ? 'query-error' : 'query-hint'} /><button type="submit">Search</button>{q && <a href="/search">Clear search</a>}</div>
     {invalidQuery || invalidCursor ? <p class="field-error" id="query-error" role="alert">{invalidCursor ? 'That result page link is no longer valid. Start the same search again.' : 'Enter a search term with 1–200 characters. Your search text is preserved.'}</p> : <p class="hint" id="query-hint">Press Enter to search. Results follow your read permissions and scope. Use Ctrl/Cmd+K anywhere in the workspace to return here.</p>}
     </form>
     {!canUseSearch ? <section class="empty" role="status"><h2>Search is not available for this account</h2><p>No records or result counts are shown. Ask your administrator to review your search access.</p></section>

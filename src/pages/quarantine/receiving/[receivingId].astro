@@ -112,8 +112,8 @@ if (Astro.request.method === 'POST') {
     return Astro.redirect(`/quarantine/receiving/${item.id}`, 303);
   } catch {
     failure = {
-      summary: 'The action was not applied. Review the highlighted fields and try again.',
-      recovery: 'The record may have changed after you opened it. Reload the latest version before trying again.',
+      summary: 'The action result could not be confirmed. Review any highlighted fields.',
+      recovery: 'Check the current record and its history before retrying.',
       fieldErrors: field(formData, 'reason') ? {} : { reason: 'A reason is required for this action.' },
     };
     correcting = intent === 'correct';

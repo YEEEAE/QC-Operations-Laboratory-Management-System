@@ -71,7 +71,7 @@ but must keep the class distinction:
 | `CONFLICT_STALE` | Record changed after opening; reload; nothing resubmitted |
 | `DEPENDENCY_UNAVAILABLE` | Referenced record unavailable; check current state |
 | `DUPLICATE_COMMAND` | Action already applied; reload to see current state |
-| `UNKNOWN_SAFE_ERROR` | Action did not complete; nothing changed; retry is safe |
+| `UNKNOWN_SAFE_ERROR` | Outcome is unconfirmed; inspect the record and history before deciding whether to retry |
 
 Forbidden: “Something went wrong”, “An error occurred”, “Unexpected error”, “Try
 again later” as a complete message, any copy that blames the user or exposes a stack

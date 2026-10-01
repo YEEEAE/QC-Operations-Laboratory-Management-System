@@ -20,7 +20,7 @@ export const MY_WORK_GROUP_DEFINITIONS: Readonly<Record<string, MyWorkGroupDefin
       'Outstanding records whose owning register names your account — or your role — as the holder of the next step.',
     ownership:
       'You are the named holder: the task assignee, the inspection or laboratory author it was returned to, the reviewer assigned by both document-review grants, or the work item assigned to you or to a role you hold.',
-    actorScope: 'Records your account is authorized to read, narrowed to your own holding.',
+    actorScope: 'Records you may read where you hold the next step.',
     timezone: 'UTC',
     sourceTimestamp:
       "The register's own assignment or last-update timestamp (task due date, approval assigned-at, report updated-at).",
@@ -33,22 +33,22 @@ export const MY_WORK_GROUP_DEFINITIONS: Readonly<Record<string, MyWorkGroupDefin
     membership:
       'Open work whose due date falls on the current UTC day, from the start of that day up to but not including the next.',
     ownership: 'The record is assigned to you: its current assignee is your account.',
-    actorScope: 'Records your account is authorized to read, narrowed to your own holding.',
+    actorScope: 'Records you may read where you hold the next step.',
     timezone: 'UTC',
-    sourceTimestamp: "The record's own due date (tasks.due_at), stored with a time zone.",
+    sourceTimestamp: "The record's due date, with its time zone.",
     predicate:
-      'due_at >= UTC midnight of the current day AND due_at < UTC midnight of the next day AND state not COMPLETED/CANCELLED.',
+      'Due from midnight today to before midnight tomorrow, in UTC. Completed and cancelled tasks are excluded.',
   },
   OVERDUE: {
     category: 'OVERDUE',
     label: 'Overdue',
     membership: 'Open work whose due date is before the start of the current UTC day.',
     ownership: 'The record is assigned to you: its current assignee is your account.',
-    actorScope: 'Records your account is authorized to read, narrowed to your own holding.',
+    actorScope: 'Records you may read where you hold the next step.',
     timezone: 'UTC',
-    sourceTimestamp: "The record's own due date (tasks.due_at), stored with a time zone.",
+    sourceTimestamp: "The record's due date, with its time zone.",
     predicate:
-      'due_at < UTC midnight of the current day AND state not COMPLETED/CANCELLED. A closed record is never overdue whatever its due date says.',
+      'Due before midnight today, in UTC. Completed and cancelled tasks are excluded.',
   },
   BLOCKED: {
     category: 'BLOCKED',
@@ -57,7 +57,7 @@ export const MY_WORK_GROUP_DEFINITIONS: Readonly<Record<string, MyWorkGroupDefin
       'Records whose owning register records that they cannot proceed: a task deliberately held, or a receiving item whose scientific result is HOLD and which therefore cannot be released.',
     ownership:
       'You are the named holder (task assignee, or the account that recorded the receiving item).',
-    actorScope: 'Records your account is authorized to read, narrowed to your own holding.',
+    actorScope: 'Records you may read where you hold the next step.',
     timezone: 'UTC',
     sourceTimestamp:
       "The register's own holding timestamp: the task's last update when it entered ON_HOLD, or the receiving item's last update.",

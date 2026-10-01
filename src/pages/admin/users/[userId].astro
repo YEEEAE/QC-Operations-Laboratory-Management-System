@@ -185,8 +185,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 />
               </label>
               <p class="hint">
-                Saving sends the version this page was opened with, so a concurrent change is
-                rejected instead of silently overwritten.
+                Saving checks the version you opened. If the profile changed, reload it before saving.
               </p>
               <div class="actions">
                 <button type="submit" data-submit>
@@ -530,8 +529,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
             </div>
           </dl>
           <p class="note">
-            Capabilities are derived from your explicit server-side permission grants, and every
-            mutation re-authorizes inside its use case. Rendering this page never grants an action.
+            Each action requires its explicit permission and is checked again before any change. Opening this page grants no authority.
           </p>
           <p class="note">
             Protected grants belong to the canonical named system owner. The interface never offers
@@ -549,7 +547,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
               description="Removing this role ends the member's role membership. The change is audited, and permissions derived from this role stop applying immediately."
               subject={subject}
               intent={`Remove Role — ${role.name} (${role.code})`}
-              confirmLabel="Confirm removal"
+              confirmLabel="Remove role"
               cancelLabel="Cancel"
               danger
               pendingLabel="Removing role…"
@@ -564,7 +562,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
               description="Removing this scope revokes one authorization scope. Unrelated scopes the member holds are preserved, and the change is audited."
               subject={subject}
               intent={`Remove Scope — ${scopeLabel(scope)}`}
-              confirmLabel="Confirm removal"
+              confirmLabel="Remove scope"
               cancelLabel="Cancel"
               danger
               pendingLabel="Removing scope…"
@@ -579,7 +577,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 description="Disabling sets the account to DISABLED and revokes every session immediately. The account can be activated again later, and the change is audited."
                 subject={subject}
                 intent="Disable account"
-                confirmLabel="Confirm disable"
+                confirmLabel="Disable account"
                 cancelLabel="Cancel"
                 danger
                 pendingLabel="Disabling account…"
@@ -590,7 +588,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 description="Activating returns the account to ACTIVE and is audited."
                 subject={subject}
                 intent="Activate account"
-                confirmLabel="Confirm activate"
+                confirmLabel="Activate account"
                 cancelLabel="Cancel"
                 pendingLabel="Activating account…"
               />
@@ -600,7 +598,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 description="Every active session for this member ends immediately. The account state and password are unchanged, and the revocation is audited."
                 subject={subject}
                 intent="Revoke all sessions"
-                confirmLabel="Confirm revocation"
+                confirmLabel="Revoke all sessions"
                 cancelLabel="Cancel"
                 danger
                 pendingLabel="Revoking sessions…"
@@ -611,7 +609,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 description="Resetting sets a temporary password, requires a change at next sign-in, and revokes every session immediately. The change is audited."
                 subject={subject}
                 intent="Reset password"
-                confirmLabel="Confirm reset"
+                confirmLabel="Reset password"
                 cancelLabel="Cancel"
                 danger
                 pendingLabel="Resetting password…"
@@ -749,7 +747,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
       if (valueHint)
         valueHint.textContent = requiresValue
           ? `The value names the ${kind} scope, for example an operational site or domain.`
-          : `${kind} is a whole-system grant and takes no value.`;
+          : `${kind} uses its defined record scope and needs no value.`;
     };
     kindSelect?.addEventListener('change', syncValueField);
     syncValueField();

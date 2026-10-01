@@ -33,7 +33,7 @@ export function adminFailureMessage(state: MutationState, context: AdminFailureC
     case 'DEPENDENCY_UNAVAILABLE':
       return `${operation} was not completed. Refresh the page or return to the list, then try again if you still have access.`;
     default:
-      return `${operation} for ${subject} was not applied. Nothing was changed — try again, or reload the record.`;
+      return `The result of ${operation} for ${subject} is unconfirmed. Review the record and its history before deciding whether to try again.`;
   }
 }
 

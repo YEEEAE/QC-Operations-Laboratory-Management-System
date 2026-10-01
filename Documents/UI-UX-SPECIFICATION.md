@@ -5186,3 +5186,12 @@ UNVERIFIED
 Document Approval Status:
 FOUNDATION — APPROVED UI/UX SPECIFICATION BASELINE
 ```
+
+
+## QC-COPY26-01 — Copy evidence (1 Oct 2026)
+
+English/LTR remains unchanged. Unconfirmed writes never imply rollback or invite
+resubmission before checking the record/history. Approval, release, restore request, and
+verified restore stay separate. Candidate handoff and before/after table:
+`audit/2026-10-01/handoff-QC-COPY26-01.md`. Status: PARTIAL; full route-state,
+dynamic-copy, responsive/keyboard/AT and human acceptance are not established.

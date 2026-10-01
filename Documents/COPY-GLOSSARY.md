@@ -106,8 +106,8 @@ explicit permission; role membership is never described as authorization.
 ## 7. Error and outcome wording
 
 Failure copy is chosen by canonical server error class (`uxVocabulary.errorClasses`), never
-one generic failure. Each message says what happened, what did **not** change, and the next
-step. Forbidden anywhere: "Something went wrong", "An error occurred", "Unexpected error",
+one generic failure. Each message states the confirmed outcome and the next safe step. An unknown result never
+claims rollback or invites a retry before checking the record and its history. Forbidden anywhere: "Something went wrong", "An error occurred", "Unexpected error",
 "Try again later" as a complete message, and any copy that blames the user, exposes a stack
 trace, SQL, table name, provider name, or secret.
 

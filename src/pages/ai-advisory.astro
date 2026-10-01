@@ -17,7 +17,7 @@ const processingPolicy = aiAvailability.processingPolicy;
 const canSendExternally = Boolean(configuredProviders && processingPolicy && aiAvailability.externalProcessingApproved);
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
+  <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
   {pageAccess === 'ALLOWED' && canUse ? (
     <>
       <section class="notice" role="note"><strong>Advisory boundary</strong><span>{copy.boundaries.aiNotAuthority} Response actions are limited to copying text or editing it locally.</span></section>
