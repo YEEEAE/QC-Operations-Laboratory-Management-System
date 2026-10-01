@@ -75,6 +75,9 @@ function repository(initial: ApprovalRecord = fixture()): ApprovalRepository {
   let current = initial;
   let storedDecision: ApprovalDecision | undefined;
   return {
+    async runDecisionTransaction(work) {
+      return work({} as never);
+    },
     async listActionable() {
       return current.workItem.assignedUserId === approverId ? [current] : [];
     },
@@ -215,6 +218,53 @@ describe('approval orchestration', () => {
     });
     expect(first.decision.id).toBe(second.decision.id);
     expect(delegate).toHaveBeenCalledTimes(1);
+  });
+
+  it('commits the domain transition and decision evidence with one transaction', async () => {
+    const tx = {};
+    const repo = repository();
+    vi.spyOn(repo, 'runDecisionTransaction').mockImplementation(async (work) => work(tx as never));
+    const transition = vi.fn(async (input: { transaction: unknown }) => {
+      expect(input.transaction).toBe(tx);
+      return { subjectId, version: 8n, state: 'APPROVED' };
+    });
+    const recordDecision = vi.spyOn(repo, 'recordDecision');
+    await new DecideApprovalUseCase(repo, {
+      subjectTransitions: { DOCUMENT_VERSION: transition },
+      signaturePolicy: notRequired,
+    }).execute({
+      actor: makeActor(approverId),
+      approvalId,
+      workItemId,
+      decision: 'APPROVE',
+      subjectVersion: 7n,
+      requestId: 'req-atomic-approval',
+    });
+    expect(transition).toHaveBeenCalledTimes(1);
+    expect(recordDecision.mock.calls[0]?.[1]).toBe(tx);
+  });
+
+  it('does not write decision evidence when the owning domain transition fails', async () => {
+    const repo = repository();
+    vi.spyOn(repo, 'runDecisionTransaction').mockImplementation(async (work) => work({} as never));
+    const recordDecision = vi.spyOn(repo, 'recordDecision');
+    const transition = vi.fn(async () => {
+      throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+    });
+    await expect(
+      new DecideApprovalUseCase(repo, {
+        subjectTransitions: { DOCUMENT_VERSION: transition },
+        signaturePolicy: notRequired,
+      }).execute({
+        actor: makeActor(approverId),
+        approvalId,
+        workItemId,
+        decision: 'APPROVE',
+        subjectVersion: 7n,
+        requestId: 'req-atomic-deny',
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    expect(recordDecision).not.toHaveBeenCalled();
   });
 
   it('does not bypass an unresolved signature policy and binds required evidence without password', async () => {

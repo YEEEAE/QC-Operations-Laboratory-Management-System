@@ -23,6 +23,7 @@ import type {
   ChangeRequestListFilter,
   ChangeRequestAggregate,
 } from '../ports/repository.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 const requestMap = (row: DatabaseRow<'change_requests'>): ChangeRequest => ({
   id: row.id,
@@ -327,7 +328,7 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
     now: Date;
   }): Promise<ChangeRequestAggregate> {
     try {
-      return await this.database.transaction().execute(async (tx) => {
+      const commit = async (tx: DatabaseTransaction) => {
         const row = await tx
           .updateTable('change_requests')
           .set({
@@ -357,7 +358,8 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
           },
         });
         return this.loadAggregate(tx, requestMap(row));
-      });
+      };
+      return await this.database.transaction().execute(commit);
     } catch (error) {
       throw error instanceof AppError ? error : translateDatabaseError(error);
     }
@@ -371,9 +373,10 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
     actor: ActorContext;
     requestId: string;
     now: Date;
+    transaction?: DatabaseTransaction;
   }): Promise<ChangeRequestAggregate> {
     try {
-      return await this.database.transaction().execute(async (tx) => {
+      const commit = async (tx: DatabaseTransaction) => {
         const oldRow = await tx
           .selectFrom('change_requests')
           .selectAll()
@@ -428,7 +431,10 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
           dedupeKey: `change-request-transition:${input.id}:${input.requestId}`,
         });
         return this.loadAggregate(tx, requestMap(row));
-      });
+      };
+      return input.transaction
+        ? await commit(input.transaction)
+        : await this.database.transaction().execute(commit);
     } catch (error) {
       throw error instanceof AppError ? error : translateDatabaseError(error);
     }

@@ -21,6 +21,7 @@ import type {
   RecordApprovalDecisionInput,
 } from '../ports/repository.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
+import { inTransaction, type DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 const caseMap = (row: DatabaseRow<'approval_cases'>): ApprovalCase => {
   assertApprovalSubjectType(row.subject_type);
@@ -73,6 +74,10 @@ export class PostgresApprovalRepository implements ApprovalRepository {
     private readonly audit?: AuditRepository,
     private readonly outbox?: OutboxRepository,
   ) {}
+
+  runDecisionTransaction<T>(work: (transaction: DatabaseTransaction) => Promise<T>): Promise<T> {
+    return inTransaction(this.database, work);
+  }
 
   async listActionable(input: { actor: ActorContext }): Promise<readonly ApprovalRecord[]> {
     try {
@@ -184,9 +189,10 @@ export class PostgresApprovalRepository implements ApprovalRepository {
 
   async recordDecision(
     input: RecordApprovalDecisionInput,
+    transaction?: DatabaseTransaction,
   ): Promise<{ decision: ApprovalDecision; signature?: SignatureEvidence }> {
     try {
-      return await this.database.transaction().execute(async (tx) => {
+      const commit = async (tx: DatabaseTransaction) => {
         const replay = await tx
           .selectFrom('approval_decisions')
           .selectAll()
@@ -307,7 +313,10 @@ export class PostgresApprovalRepository implements ApprovalRepository {
           decision: decisionMap(row),
           ...(input.signature ? { signature: input.signature } : {}),
         };
-      });
+      };
+      return transaction
+        ? await commit(transaction)
+        : await this.database.transaction().execute(commit);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw translateDatabaseError(error);

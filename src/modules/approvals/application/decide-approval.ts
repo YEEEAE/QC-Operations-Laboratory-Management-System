@@ -5,6 +5,7 @@ import { authorizeApprovalDecision, authorizeApprovalView } from './authorizatio
 import type { ApprovalRepository, ApprovalRecord } from '../ports/repository.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 import type { SignControlledActionUseCase } from '../../e-signatures/application/sign-controlled-action.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export type SignatureRequirement = 'REQUIRED' | 'NOT_REQUIRED' | 'UNRESOLVED';
 export interface SignaturePolicy {
@@ -26,6 +27,7 @@ export interface SubjectTransition {
     action: ApprovalDecisionKind;
     reason?: string;
     requestId: string;
+    transaction: DatabaseTransaction;
   }): Promise<SubjectTransitionResult>;
 }
 export type SubjectTransitionHandler =
@@ -119,37 +121,44 @@ export class DecideApprovalUseCase {
     }
     const transition = this.transitions[record.subject.subjectType];
     if (!transition) throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    const subject =
-      typeof transition === 'function'
-        ? await transition({
-            actor: input.actor,
-            subjectId: record.subject.subjectId,
-            expectedVersion: input.subjectVersion,
-            action: input.decision,
-            reason: input.reason,
-            requestId: input.requestId,
-          })
-        : await transition.execute({
-            actor: input.actor,
-            subjectId: record.subject.subjectId,
-            expectedVersion: input.subjectVersion,
-            action: input.decision,
-            reason: input.reason,
-            requestId: input.requestId,
-          });
-    if (subject.subjectId !== record.subject.subjectId || subject.version <= input.subjectVersion)
-      throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-    return this.repository.recordDecision({
-      approvalCaseId: record.approvalCase.id,
-      workItemId: record.workItem.id,
-      actor: input.actor,
-      decision: input.decision,
-      subjectVersion: input.subjectVersion,
-      reason: input.reason,
-      comments: input.comments,
-      signature,
-      requestId: input.requestId,
-      now: this.now(),
+    return this.repository.runDecisionTransaction(async (transaction) => {
+      const subject =
+        typeof transition === 'function'
+          ? await transition({
+              actor: input.actor,
+              subjectId: record.subject.subjectId,
+              expectedVersion: input.subjectVersion,
+              action: input.decision,
+              reason: input.reason,
+              requestId: input.requestId,
+              transaction,
+            })
+          : await transition.execute({
+              actor: input.actor,
+              subjectId: record.subject.subjectId,
+              expectedVersion: input.subjectVersion,
+              action: input.decision,
+              reason: input.reason,
+              requestId: input.requestId,
+              transaction,
+            });
+      if (subject.subjectId !== record.subject.subjectId || subject.version <= input.subjectVersion)
+        throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+      return this.repository.recordDecision(
+        {
+          approvalCaseId: record.approvalCase.id,
+          workItemId: record.workItem.id,
+          actor: input.actor,
+          decision: input.decision,
+          subjectVersion: input.subjectVersion,
+          reason: input.reason,
+          comments: input.comments,
+          signature,
+          requestId: input.requestId,
+          now: this.now(),
+        },
+        transaction,
+      );
     });
   }
 }

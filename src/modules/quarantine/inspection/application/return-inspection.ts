@@ -2,6 +2,7 @@ import { authorize } from '../../../../shared/authorization/authorize.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { InspectionRepository } from '../ports/repository.js';
+import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 
 export class ReturnInspectionUseCase {
   constructor(private readonly repository: InspectionRepository) {}
@@ -11,6 +12,7 @@ export class ReturnInspectionUseCase {
     expectedVersion: bigint;
     reason: string;
     requestId: string;
+    transaction?: DatabaseTransaction;
   }) {
     if (!input.reason.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const inspection = await this.repository.get(input.id, input.actor);
@@ -55,6 +57,7 @@ export class ReturnInspectionUseCase {
       action: 'RETURN',
       reason: input.reason,
       requestId: input.requestId,
+      transaction: input.transaction,
     });
   }
 }

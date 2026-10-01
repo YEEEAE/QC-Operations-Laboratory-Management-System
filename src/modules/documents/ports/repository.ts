@@ -2,6 +2,7 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { DocumentIdentity } from '../domain/document.js';
 import type { DocumentVersion } from '../domain/document-version.js';
 import type { DocumentVersionAction } from '../domain/document-state.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export interface DocumentListFilter { search?: string; documentType?: string; state?: string; }
 
@@ -14,7 +15,7 @@ export interface DocumentRepository {
   listVersions(documentId: string): Promise<readonly DocumentVersion[]>;
   updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; revision: string; changeSummary?: string; contentHash?: string; now: Date; requestId: string }): Promise<DocumentVersion>;
   recordReview(input: { id: string; expectedVersion: bigint; actor: ActorContext; now: Date; requestId: string }): Promise<DocumentVersion>;
-  transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }): Promise<DocumentVersion>;
+  transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion>;
   supersede(input: { currentId: string; currentExpectedVersion: bigint; replacementId: string; replacementExpectedVersion: bigint; actor: ActorContext; effectiveAt: Date; requestId: string }): Promise<{ current: DocumentVersion; replacement: DocumentVersion }>;
 }
 

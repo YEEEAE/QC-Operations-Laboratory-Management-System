@@ -22,6 +22,7 @@ import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-out
 import { stableJson } from '../../../../shared/json/stable-stringify.js';
 import { createHash } from 'node:crypto';
 import { insertSignatureEvidence } from '../../../../shared/e-signatures/insert-signature-evidence.js';
+import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 
 const map = (
   r: DatabaseRow<'inspection_reports'>,
@@ -668,6 +669,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
     reason?: string;
     signatureEvidence?: import('../../../e-signatures/domain/signature-evidence.js').SignatureEvidence;
     requestId: string;
+    transaction?: DatabaseTransaction;
   }) {
     if (i.action === 'FINAL_APPROVE') {
       const evidence = i.signatureEvidence;
@@ -690,7 +692,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
     const next = transitionInspection(old.state, i.action);
     applyInspectionAction(old, i.action, i.reason);
     try {
-      const result = await this.db.transaction().execute(async (tx) => {
+      const commit = async (tx: DatabaseTransaction) => {
         const now = new Date();
         const changes = {
           state: next,
@@ -809,7 +811,11 @@ export class PostgresInspectionRepository implements InspectionRepository {
           dedupeKey: `inspection:${i.id}:v${i.expectedVersion + 1n}`,
         });
         return r;
-      });
+      };
+      const result = i.transaction
+        ? await commit(i.transaction)
+        : await this.db.transaction().execute(commit);
+      if (i.transaction) return { ...old, state: next, version: i.expectedVersion + 1n };
       const item = await this.load(i.id);
       if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
       return { ...item, version: BigInt(result.version) };

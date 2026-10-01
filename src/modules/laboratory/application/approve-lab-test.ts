@@ -5,6 +5,7 @@ import { transitionLab } from '../domain/lab-state.js';
 import type { ControlledLabSources, LabApprovalPolicy } from '../ports/controlled-sources.js';
 import type { LabRepository } from '../ports/repository.js';
 import { authorizeLab } from './lab-authorization.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 /**
  * P-05 (PD-09, CLOSED) supplies the approved authority decision for lab test
  * stage approval: Supervisor, Manager, or named yazeed/SYSTEM_OWNER with the
@@ -33,6 +34,7 @@ export class ApproveLabTestUseCase {
     id: string;
     expectedVersion: bigint;
     requestId: string;
+    transaction?: DatabaseTransaction;
   }) {
     const test = await this.repository.get(input.id, input.actor);
     if (!test) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
@@ -61,6 +63,7 @@ export class ApproveLabTestUseCase {
         updatedAt: at,
       },
       { actor: input.actor, requestId: input.requestId, action: 'APPROVE' },
+      input.transaction,
     );
   }
 }

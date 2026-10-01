@@ -4,6 +4,7 @@ import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Inspection } from '../domain/inspection.js';
 import type { InspectionRepository } from '../ports/repository.js';
 import { isStageOneApprovalAuthority } from '../../../../shared/authorization/p05-authority.js';
+import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 
 export interface InspectionApprovalPolicy {
   canApprove(input: { inspection: Inspection; actor: ActorContext }): boolean | Promise<boolean>;
@@ -29,6 +30,7 @@ export class ApproveInspectionUseCase {
     id: string;
     expectedVersion: bigint;
     requestId: string;
+    transaction?: DatabaseTransaction;
   }) {
     const inspection = await this.repository.get(input.id, input.actor);
     if (!inspection) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
@@ -68,6 +70,7 @@ export class ApproveInspectionUseCase {
       actor: input.actor,
       action: 'APPROVE',
       requestId: input.requestId,
+      transaction: input.transaction,
     });
   }
 }

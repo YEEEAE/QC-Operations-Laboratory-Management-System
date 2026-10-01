@@ -5,6 +5,7 @@ import type { FinalResult, InspectionResultEntry } from '../domain/inspection-re
 import type { SignatureEvidence } from '../../../e-signatures/domain/signature-evidence.js';
 import type { PointCriteria } from '../application/record-inspection-results.js';
 import type { AqlSampling } from '../domain/inspection-aql.js';
+import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 export interface InspectionRepository {
   /**
    * QC-DATA-002: approved point criteria of the bound template version for
@@ -55,5 +56,6 @@ export interface InspectionRepository {
     /** Final-approval evidence is committed atomically with the state transition. */
     signatureEvidence?: SignatureEvidence;
     requestId: string;
+    transaction?: DatabaseTransaction;
   }): Promise<Inspection>;
 }

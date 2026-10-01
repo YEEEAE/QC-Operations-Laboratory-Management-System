@@ -7,6 +7,7 @@ import type {
   ApprovalDecisionKind,
 } from '../domain/approval.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export interface ApprovalSubjectContext {
   subjectType: ApprovalSubjectType;
@@ -42,6 +43,7 @@ export interface RecordApprovalDecisionInput {
 }
 
 export interface ApprovalRepository {
+  runDecisionTransaction<T>(work: (transaction: DatabaseTransaction) => Promise<T>): Promise<T>;
   listActionable(input: { actor: ActorContext }): Promise<readonly ApprovalRecord[]>;
   get(input: { approvalId: string; actor: ActorContext }): Promise<ApprovalRecord | undefined>;
   findDecisionByRequestId(input: {
@@ -51,6 +53,7 @@ export interface ApprovalRepository {
   }): Promise<ApprovalDecision | undefined>;
   recordDecision(
     input: RecordApprovalDecisionInput,
+    transaction?: DatabaseTransaction,
   ): Promise<{ decision: ApprovalDecision; signature?: SignatureEvidence }>;
 }
 

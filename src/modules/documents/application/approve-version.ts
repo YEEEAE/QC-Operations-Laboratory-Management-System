@@ -5,11 +5,12 @@ import { transitionDocumentVersion } from '../domain/document-state.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { DocumentRepository } from '../ports/repository.js';
 import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export class ApproveVersionUseCase {
   constructor(private readonly repository: DocumentRepository, private readonly now = () => new Date()) {}
 
-  async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; requestId: string }) {
+  async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; requestId: string; transaction?: DatabaseTransaction }) {
     const version = await this.repository.getVersion(input.versionId);
     if (!version) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -19,6 +20,7 @@ export class ApproveVersionUseCase {
     authorizeDocument({ actor: input.actor, permission: 'PERM-APR-APPROVE', action: 'APPROVE', document, state: version.state, version, expectedVersion: input.expectedVersion });
     assertApprovalEvidence(version);
     const next = transitionDocumentVersion(version as DocumentVersion, 'APPROVE', this.now());
-    return this.repository.transition({ ...input, id: version.id, action: 'APPROVE', toState: next.state, now: next.updatedAt ?? this.now() });
+    const { transaction, ...transition } = input;
+    return this.repository.transition({ ...transition, id: version.id, action: 'APPROVE', toState: next.state, now: next.updatedAt ?? this.now() }, transaction);
   }
 }

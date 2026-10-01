@@ -36,6 +36,9 @@ const contextLabel = (key: string): string => humanize(key);
 const contextUuid = (key: string): string | undefined => typeof context[key] === 'string' && isUuid(context[key]) ? context[key] : undefined;
 const subjectHref = contextUuid('documentId') ? `/documents/${contextUuid('documentId')}` : contextUuid('inspectionId') ? `/quarantine/inspections/${contextUuid('inspectionId')}` : contextUuid('labTestId') ? `/laboratory/tests/${contextUuid('labTestId')}` : contextUuid('calibrationId') ? `/assets/calibrations/${contextUuid('calibrationId')}` : undefined;
 const approvalActionable = approval.workItem.state === 'PENDING' || approval.workItem.state === 'IN_PROGRESS';
+// The action dependency currently has no approved signature policy and the use case defaults to deny.
+// Keep the UI aligned with that fail-closed contract until the policy owner resolves it.
+const decisionPolicyUnresolved = true;
 const approvalNextAction = approvalActionable ? 'Submit controlled decision' : 'No approval action is available';
 const approvalNextOwner = approvalActionable ? (approval.workItem.assignedRoleRequirement ?? 'Assigned approver') : 'Owning domain';
 const approvalEvents = [
@@ -52,7 +55,7 @@ const approvalEvents = [
   <JourneyContextPanel ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? 'state: this approval work item is no longer actionable' : undefined} waitingOn={approvalActionable ? approvalNextOwner : 'Owning domain transition'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Source-domain transition or audit trace'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={`/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
   <HandoffTimeline events={approvalEvents} />
   <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{humanize(approval.approvalCase.workflowType)}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requester</dt><dd>Recorded in the controlled audit trail</dd><dt>State</dt><dd>{humanize(approval.subject.state)}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ? 'Available in the controlled record' : 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{contextLabel(key)}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value).match(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i) ? 'Available in the controlled record' : String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
-  <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required when returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit" data-submit>Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output></form></section>
+  {approvalActionable && decisionPolicyUnresolved ? <section class="panel decision" role="status"><h2>Decision unavailable</h2><p>The approval signature policy has no approved decision yet, so decisions remain blocked. Contact the policy owner. You can review this subject and its current version here; do not submit a decision or reauthentication secret.</p></section> : approvalActionable ? <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required when returning or rejecting.</span><span id="reason-error" role="alert" hidden>Enter a reason before returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help reason-error"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit" data-submit>Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output><a data-recovery hidden href={Astro.url.pathname}>Reload the current approval before retrying</a></form></section> : null}
   <div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div>
   <div data-stale-state hidden><StaleVersionState version={approval.subject.version.toString()} /></div>
   </div>
@@ -67,17 +70,23 @@ const approvalEvents = [
     const button = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
     const decision = form.querySelector<HTMLSelectElement>('#decision');
     const reason = form.querySelector<HTMLTextAreaElement>('#reason');
+    const reasonError = form.querySelector<HTMLElement>('#reason-error');
+    const secret = form.querySelector<HTMLInputElement>('#reauthenticationSecret');
     const requiresReason = decision?.value === 'RETURN' || decision?.value === 'REJECT';
     if (reason) reason.required = Boolean(requiresReason);
     if (requiresReason && !reason?.value.trim()) {
       reason?.setAttribute('aria-invalid', 'true');
+      if (reasonError) reasonError.hidden = false;
       reason?.focus();
       return;
     }
+    reason?.removeAttribute('aria-invalid');
+    if (reasonError) reasonError.hidden = true;
     const output = form.querySelector<HTMLOutputElement>('[data-result]');
     form.setAttribute('aria-busy', 'true');
-    const loading = form.closest('.decision')?.querySelector<HTMLElement>('[data-loading-state]');
-    const stale = form.closest('.decision')?.querySelector<HTMLElement>('[data-stale-state]');
+    const page = form.closest('.evidence-record');
+    const loading = page?.querySelector<HTMLElement>('[data-loading-state]');
+    const stale = page?.querySelector<HTMLElement>('[data-stale-state]');
     if (loading) loading.hidden = false;
     if (stale) stale.hidden = true;
     if (button) button.disabled = true;
@@ -88,6 +97,11 @@ const approvalEvents = [
       const outcome = classifyActionResult(result as unknown as { data?: { id?: string }; error?: unknown });
       if (outcome.state === 'SUCCESS') { window.location.href = '/approvals'; return; }
       if (outcome.state === 'CONFLICT_STALE' && stale) stale.hidden = false;
+      if (outcome.state === 'CONFLICT_STALE' || outcome.state === 'UNKNOWN_SAFE_ERROR') {
+        form.dataset.recoveryRequired = 'true';
+        const recovery = form.querySelector<HTMLAnchorElement>('[data-recovery]');
+        if (recovery) recovery.hidden = false;
+      }
       const copy: Record<string, string> = {
         VALIDATION_ERROR: 'The decision was not accepted. A reason is required for return/reject — review the fields and try again. Your entries are preserved.',
         CONFLICT_STALE: 'The record changed while you were reviewing it. Reload the current record and try again if permitted. Your reason was kept.',
@@ -97,15 +111,21 @@ const approvalEvents = [
       };
       if (output) { output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR; output.focus?.(); }
     } catch {
+      form.dataset.recoveryRequired = 'true';
+      const recovery = form.querySelector<HTMLAnchorElement>('[data-recovery]');
+      if (recovery) recovery.hidden = false;
       if (output) { output.textContent = 'The result is unconfirmed. Your entries remain on this page. Check the record and its history before trying again.'; output.focus?.(); }
-    } finally { if (loading) loading.hidden = true; form.removeAttribute('aria-busy'); if (button) button.disabled = false; }
+    } finally { if (secret) secret.value = ''; if (loading) loading.hidden = true; form.removeAttribute('aria-busy'); if (button) button.disabled = form.dataset.recoveryRequired === 'true'; }
   });
   form?.querySelector<HTMLSelectElement>('#decision')?.addEventListener('change', (event) => {
     const decision = event.currentTarget as HTMLSelectElement;
     const reason = form?.querySelector<HTMLTextAreaElement>('#reason');
     if (reason) reason.required = decision.value === 'RETURN' || decision.value === 'REJECT';
+    reason?.removeAttribute('aria-invalid');
+    const reasonError = form?.querySelector<HTMLElement>('#reason-error');
+    if (reasonError) reasonError.hidden = true;
   });
 </script>
 <style>
-  .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a,a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.decision p{color:var(--text-muted);font-size:.85rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:0 0 var(--space-4);font-size:1rem}dl{display:grid;grid-template-columns:minmax(150px,.6fr) 1fr;gap:.75rem;font-size:.82rem}dt{color:var(--text-muted)}dd{margin:0;overflow-wrap:anywhere;font-weight:600}.decision{margin-top:var(--space-4)}form{display:grid;gap:var(--space-4);max-width:720px}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.8rem}select,textarea,input{padding:.65rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-page);color:inherit;font:inherit}button{width:max-content;min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}output{color:var(--text-muted);font-size:.8rem}@media(max-width:700px){.head{display:grid}.grid{grid-template-columns:1fr}dl{grid-template-columns:1fr}.panel{padding:var(--space-4)}}
+  .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a,a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.decision p{color:var(--text-muted);font-size:.85rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:0 0 var(--space-4);font-size:1rem}dl{display:grid;grid-template-columns:minmax(150px,.6fr) 1fr;gap:.75rem;font-size:.82rem}dt{color:var(--text-muted)}dd{margin:0;overflow-wrap:anywhere;font-weight:600}.decision{margin-top:var(--space-4)}form{display:grid;gap:var(--space-4);max-width:720px}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.8rem}#reason-error{color:var(--text-danger)}select,textarea,input{padding:.65rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-page);color:inherit;font:inherit}button{width:max-content;min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}output{color:var(--text-muted);font-size:.8rem}@media(max-width:700px){.head{display:grid}.grid{grid-template-columns:1fr}dl{grid-template-columns:1fr}.panel{padding:var(--space-4)}}
 </style>

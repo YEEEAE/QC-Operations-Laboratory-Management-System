@@ -32,6 +32,7 @@ function transitionDependencies() {
         versionId: input.subjectId,
         expectedVersion: input.expectedVersion,
         requestId: input.requestId,
+        transaction: input.transaction,
       });
       return { subjectId: result.id, version: result.version, state: result.state };
     },
@@ -44,6 +45,7 @@ function transitionDependencies() {
         id: input.subjectId,
         expectedVersion: input.expectedVersion,
         requestId: input.requestId,
+        transaction: input.transaction,
       });
       return { subjectId: result.id, version: result.version, state: result.state };
     },
@@ -57,6 +59,7 @@ function transitionDependencies() {
           expectedVersion: input.expectedVersion,
           reason: input.reason ?? '',
           requestId: input.requestId,
+          transaction: input.transaction,
         });
         return { subjectId: result.id, version: result.version, state: result.state };
       }
@@ -66,6 +69,7 @@ function transitionDependencies() {
           id: input.subjectId,
           expectedVersion: input.expectedVersion,
           requestId: input.requestId,
+          transaction: input.transaction,
         });
         return { subjectId: result.id, version: result.version, state: result.state };
       }
@@ -82,6 +86,7 @@ function transitionDependencies() {
         action: input.action,
         reason: input.reason,
         requestId: input.requestId,
+        transaction: input.transaction,
       });
       return {
         subjectId: result.changeRequest.id,

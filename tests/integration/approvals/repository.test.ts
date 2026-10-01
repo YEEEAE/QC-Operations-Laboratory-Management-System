@@ -58,6 +58,9 @@ function repository(): ApprovalRepository {
     reviewContext: { revision: '4' },
   };
   return {
+    async runDecisionTransaction(work) {
+      return work({} as never);
+    },
     async listActionable(input) {
       return input.actor.id === approverId ? [{ approvalCase, workItem, subject }] : [];
     },

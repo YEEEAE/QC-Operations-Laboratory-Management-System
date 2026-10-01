@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { sql, type Kysely, type Selectable, type Transaction } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
@@ -398,8 +399,13 @@ export class PostgresLabRepository implements LabRepository {
   async create(test: LabTest, mutation: Mutation) {
     return this.persist(undefined, test, mutation);
   }
-  async save(previous: LabTest, next: LabTest, mutation: Mutation) {
-    return this.persist(previous, next, mutation);
+  async save(
+    previous: LabTest,
+    next: LabTest,
+    mutation: Mutation,
+    transaction?: DatabaseTransaction,
+  ) {
+    return this.persist(previous, next, mutation, transaction);
   }
   /**
    * QC-DATA-003 run-level equipment evidence.
@@ -494,7 +500,12 @@ export class PostgresLabRepository implements LabRepository {
       record: r.template_snapshot as LabTest,
     }));
   }
-  private async persist(previous: LabTest | undefined, next: LabTest, mutation: Mutation) {
+  private async persist(
+    previous: LabTest | undefined,
+    next: LabTest,
+    mutation: Mutation,
+    transaction?: DatabaseTransaction,
+  ) {
     if (mutation.action === 'FINAL_APPROVE') {
       const evidence = mutation.signatureEvidence;
       if (
@@ -511,7 +522,7 @@ export class PostgresLabRepository implements LabRepository {
     } else if (mutation.signatureEvidence) {
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     }
-    return this.db.transaction().execute(async (tx) => {
+    const commit = async (tx: Transaction<DatabaseSchema>) => {
       if (!previous) {
         await tx
           .insertInto('lab_tests')
@@ -637,7 +648,8 @@ export class PostgresLabRepository implements LabRepository {
         dedupeKey: `lab:${next.id}:v${next.version}`,
       });
       return next;
-    });
+    };
+    return transaction ? commit(transaction) : this.db.transaction().execute(commit);
   }
   /**
    * QC-DATA-003 run content reconcile.

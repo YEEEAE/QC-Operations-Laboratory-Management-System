@@ -12,6 +12,7 @@ import type { DocumentIdentity } from '../domain/document.js';
 import type { DocumentVersion, DocumentVersionFile } from '../domain/document-version.js';
 import type { DocumentVersionAction } from '../domain/document-state.js';
 import type { DocumentListFilter, DocumentRepository } from '../ports/repository.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 const identityMap = (row: DatabaseRow<'document_identities'>, currentEffectiveVersionId?: string): DocumentIdentity => ({
   id: row.id,
@@ -147,9 +148,9 @@ export class PostgresDocumentRepository implements DocumentRepository {
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
   }
 
-  async transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }): Promise<DocumentVersion> {
+  async transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion> {
     try {
-      return await this.database.transaction().execute(async (tx) => {
+      const commit = async (tx: DatabaseTransaction) => {
         const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).forUpdate().executeTakeFirst();
         if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const values: Record<string, unknown> = { state: input.toState, version: input.expectedVersion + 1n };
@@ -163,7 +164,8 @@ export class PostgresDocumentRepository implements DocumentRepository {
         await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: input.action, transitionId: `TR-DOC-${input.action}`, oldState: old.state, newState: input.toState, reason: input.reason, requestId: input.requestId });
         await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_CHANGED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { action: input.action, state: input.toState }, dedupeKey: `document-version:${input.id}:v${input.expectedVersion + 1n}` });
         return versionMap(row);
-      });
+      };
+      return transaction ? await commit(transaction) : await this.database.transaction().execute(commit);
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
   }
 

@@ -6,6 +6,7 @@ import type {
   ChangeRequestChange,
 } from '../domain/change-request.js';
 import type { AuditEventView } from '../../../shared/audit/audit-query.js';
+import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export interface ChangeRequestAggregate {
   changeRequest: ChangeRequest;
@@ -58,6 +59,7 @@ export interface ChangeRequestRepository {
     actor: ActorContext;
     requestId: string;
     now: Date;
+    transaction?: DatabaseTransaction;
   }): Promise<ChangeRequestAggregate>;
   recordApplicationAttempt(input: {
     attempt: ChangeRequestApplicationAttempt;
