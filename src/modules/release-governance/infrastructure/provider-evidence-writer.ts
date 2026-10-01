@@ -1,7 +1,7 @@
 import type { Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
-import type { VerifiedProviderAttestation } from '../domain/provider-attestation.js';
+import type { VerifiedProviderAttestation } from '../application/ports/provider-attestation.js';
 
 /** Persist one authenticated, owner-scoped provider statement without changing prior evidence. */
 export async function recordProviderGateEvidence(

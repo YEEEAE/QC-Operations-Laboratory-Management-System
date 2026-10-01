@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   parseProviderSignerPolicies,
   providerSignature,
-  ProviderAttestationError,
   verifyProviderAttestation,
-} from '../../../src/modules/release-governance/domain/provider-attestation.js';
+} from '../../../src/modules/release-governance/application/verify-provider-attestation.js';
+import { ProviderAttestationError } from '../../../src/modules/release-governance/application/ports/provider-attestation.js';
 
 const now = new Date('2026-09-24T12:00:00.000Z');
 const secret = 'test-only-provider-secret-with-at-least-32-bytes';

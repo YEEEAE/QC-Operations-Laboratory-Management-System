@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { PostgresReleaseGovernanceRepository } from '../../../src/modules/release-governance/infrastructure/postgres-repository.js';
 import { recordProviderGateEvidence } from '../../../src/modules/release-governance/infrastructure/provider-evidence-writer.js';
-import type { VerifiedProviderAttestation } from '../../../src/modules/release-governance/domain/provider-attestation.js';
+import type { VerifiedProviderAttestation } from '../../../src/modules/release-governance/application/ports/provider-attestation.js';
 import { deriveReleaseEvidence } from '../../../src/modules/release-governance/domain/release-approval.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
@@ -108,17 +108,25 @@ describe('release provider evidence persistence and reconciliation', () => {
   });
 
   it('rejects a foreign SHA and blocks mutation of stored evidence', async () => {
+    const before = await db
+      .selectFrom('release_gate_evidence')
+      .select(['id', 'evidence_digest', 'audit_info'])
+      .where('release_id', '=', releaseId)
+      .execute();
+    expect(before).toHaveLength(1);
     await expect(
       recordProviderGateEvidence(
         db,
         attestation({ identity: { ...attestation().identity, gitSha: 'd'.repeat(40) } }),
       ),
     ).rejects.toThrow();
-    const result = await db
+    const after = await db
       .selectFrom('release_gate_evidence')
-      .select('id')
+      .select(['id', 'evidence_digest', 'audit_info'])
       .where('release_id', '=', releaseId)
-      .executeTakeFirstOrThrow();
+      .execute();
+    expect(after).toEqual(before);
+    const result = before[0];
     await expect(
       db
         .updateTable('release_gate_evidence')

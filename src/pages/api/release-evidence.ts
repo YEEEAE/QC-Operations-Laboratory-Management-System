@@ -1,14 +1,7 @@
 import type { APIRoute } from 'astro';
-import { getServerEnv } from '../../config/env.js';
-import { getDatabase } from '../../shared/database/database.js';
-import { PostgresReleaseGovernanceRepository } from '../../modules/release-governance/infrastructure/postgres-repository.js';
-import { recordProviderGateEvidence } from '../../modules/release-governance/infrastructure/provider-evidence-writer.js';
+import { providerEvidenceIntakeDependencies } from '../../modules/release-governance/application/provider-evidence-intake-dependencies.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import {
-  parseProviderSignerPolicies,
-  ProviderAttestationError,
-  verifyProviderAttestation,
-} from '../../modules/release-governance/domain/provider-attestation.js';
+import { ProviderAttestationError } from '../../modules/release-governance/application/ports/provider-attestation.js';
 
 const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 function response(status: number, code: string, extra: Record<string, unknown> = {}): Response {
@@ -22,39 +15,13 @@ export const POST: APIRoute = async ({ request }) => {
   const rawBody = await request.text();
   if (Buffer.byteLength(rawBody, 'utf8') > 32_768) return response(413, 'PAYLOAD_TOO_LARGE');
 
-  let policies;
   try {
-    policies = parseProviderSignerPolicies(getServerEnv().RELEASE_EVIDENCE_SIGNERS_JSON);
-  } catch {
-    return response(503, 'PROVIDER_SIGNER_POLICY_INVALID');
-  }
-  if (policies.length === 0) return response(503, 'PROVIDER_SIGNER_POLICY_NOT_CONFIGURED');
-
-  let untrusted: unknown;
-  try {
-    untrusted = JSON.parse(rawBody);
-  } catch {
-    return response(400, 'INVALID_ATTESTATION');
-  }
-  if (!untrusted || typeof untrusted !== 'object' || !('identity' in untrusted)) {
-    return response(400, 'INVALID_ATTESTATION');
-  }
-  const identity = (untrusted as { identity?: { releaseId?: unknown } }).identity;
-  if (typeof identity?.releaseId !== 'string') return response(400, 'INVALID_ATTESTATION');
-
-  try {
-    const attestation = verifyProviderAttestation({
+    const { attestation, result } = await providerEvidenceIntakeDependencies().execute({
       rawBody,
       keyId: request.headers.get('x-qc-key-id'),
       timestamp: request.headers.get('x-qc-timestamp'),
       signature: request.headers.get('x-qc-signature'),
-      policies,
     });
-    const database = getDatabase();
-    const repository = new PostgresReleaseGovernanceRepository(database);
-    const candidate = await repository.getCandidate(attestation.identity.releaseId);
-    if (!candidate) return response(404, 'RELEASE_CANDIDATE_NOT_FOUND');
-    const result = await recordProviderGateEvidence(database, attestation);
     return response(
       result.replayed ? 200 : 201,
       result.replayed ? 'EVIDENCE_ALREADY_RECORDED' : 'EVIDENCE_RECORDED',
@@ -69,6 +36,10 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     if (error instanceof ProviderAttestationError) {
+      if (error.reason === 'POLICY_NOT_CONFIGURED')
+        return response(503, 'PROVIDER_SIGNER_POLICY_NOT_CONFIGURED');
+      if (error.reason === 'CONFIGURATION') return response(503, 'PROVIDER_SIGNER_POLICY_INVALID');
+      if (error.reason === 'PAYLOAD') return response(400, 'INVALID_ATTESTATION');
       const status =
         error.reason === 'SIGNATURE'
           ? 401
@@ -79,6 +50,8 @@ export const POST: APIRoute = async ({ request }) => {
               : 400;
       return response(status, `EVIDENCE_${error.reason}_REJECTED`);
     }
+    if (error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND')
+      return response(404, 'RELEASE_CANDIDATE_NOT_FOUND');
     if (error instanceof AppError && error.code === 'CONFLICT_STALE_VERSION') {
       return response(409, 'CANDIDATE_IDENTITY_MISMATCH');
     }

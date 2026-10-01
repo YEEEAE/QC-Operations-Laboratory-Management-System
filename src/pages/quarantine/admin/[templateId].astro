@@ -6,7 +6,7 @@ import { templateActionDependencies, templateReadDependencies } from '../../../m
 import { AppError } from '../../../shared/errors/app-error.js';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
-import { isTemplateAuthority } from '../../../modules/quarantine/templates/domain/template-policy.js';
+import { isTemplateAuthority } from '../../../modules/quarantine/templates/application/template-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');

@@ -5,7 +5,7 @@ import { field, optionalField, toFormFailure, extractDetailId, type FormFailure 
 import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
-import { isTemplateAuthority } from '../../../modules/quarantine/templates/domain/template-policy.js';
+import { isTemplateAuthority } from '../../../modules/quarantine/templates/application/template-authority.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');

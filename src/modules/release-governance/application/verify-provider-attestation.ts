@@ -1,53 +1,18 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
-import type { GateStatus, ReleaseCandidateIdentity, ReleaseGateKey } from './release-approval.js';
+import type { GateStatus, ReleaseCandidateIdentity } from '../domain/release-approval.js';
+import {
+  ProviderAttestationError,
+  type ProviderGateAttestation,
+  type ProviderGateKey,
+  type ProviderSignerPolicy,
+  type VerifiedProviderAttestation,
+} from './ports/provider-attestation.js';
 
-export type ProviderGateKey = Extract<ReleaseGateKey, 'ci' | 'security' | 'database' | 'e2e'>;
 const PROVIDER_GATE_KEYS: readonly ProviderGateKey[] = ['ci', 'security', 'database', 'e2e'];
 const STATUSES: readonly GateStatus[] = ['PASS', 'PARTIAL', 'FAIL', 'UNVERIFIED'];
 const SHA256 = /^[a-f0-9]{64}$/;
 const GIT_SHA = /^[a-f0-9]{40}$/i;
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._:+/@-]{0,127}$/;
-
-export interface ProviderSignerPolicy {
-  signerId: string;
-  keyId: string;
-  secret: string;
-  provider: string;
-  approvalReference: string;
-  gates: ProviderGateKey[];
-  environments: string[];
-  maxEvidenceAgeSeconds: number;
-}
-
-export interface ProviderGateAttestation {
-  signerId: string;
-  keyId: string;
-  nonce: string;
-  environment: string;
-  identity: ReleaseCandidateIdentity & { releaseVersion: bigint };
-  evidenceType: ProviderGateKey;
-  status: GateStatus;
-  immutableReference: string;
-  observedAt: Date;
-  evidenceDigest: string;
-}
-
-export interface VerifiedProviderAttestation extends ProviderGateAttestation {
-  source: 'SIGNED_PROVIDER_ATTESTATION';
-  provider: string;
-  signerScope: ProviderGateKey[];
-  approvalReference: string;
-  signatureDigest: string;
-}
-
-export class ProviderAttestationError extends Error {
-  constructor(
-    readonly reason: 'CONFIGURATION' | 'SIGNATURE' | 'SCOPE' | 'IDENTITY' | 'STALE' | 'PAYLOAD',
-  ) {
-    super(`Provider evidence rejected: ${reason.toLowerCase()}.`);
-    this.name = 'ProviderAttestationError';
-  }
-}
 
 export function parseProviderSignerPolicies(raw: string | undefined): ProviderSignerPolicy[] {
   if (!raw?.trim()) return [];

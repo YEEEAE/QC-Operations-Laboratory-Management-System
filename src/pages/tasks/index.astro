@@ -7,7 +7,7 @@ import Pagination from '../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { AppError } from '../../shared/errors/app-error.js';
 import { actorHasScope } from '../../shared/authorization/scope-evaluator.js';
-import type { TaskListItem } from '../../modules/tasks/domain/model.js';
+import type { TaskListItem } from '../../modules/tasks/application/ports/task-list-item.js';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
 import { formatDate } from '../../shared/copy/format.js';
