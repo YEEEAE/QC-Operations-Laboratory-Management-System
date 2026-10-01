@@ -170,7 +170,12 @@ describe('design tokens — colour and date contracts', () => {
   });
 
   it('cannot grow the ad-hoc date-rendering list', () => {
-    const adHoc = pageFiles.filter((file) => /toLocale(?:Date|Time)?String/.test(read(file)));
+    const adHoc = pageFiles.filter((file) => {
+      // File sizes use locale grouping too; exclude that numeric presentation
+      // so this ratchet measures date/time formatting only.
+      const source = read(file).replace(/\.sizeBytes\.toLocaleString\s*\(/g, '');
+      return /\.toLocale(?:Date|Time)?String\s*\(/.test(source);
+    });
     expect(adHoc).toEqual(ADHOC_DATE_PAGES);
   });
 });

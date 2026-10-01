@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 import { parse } from 'yaml';
 import { licenseTextSha256, verifiedLicenseEvidence } from './license-evidence.mjs';
 

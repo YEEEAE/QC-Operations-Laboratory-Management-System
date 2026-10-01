@@ -91,6 +91,7 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
 
   async hasReconciledProductionGateDecision(_releaseId: string): Promise<boolean> {
+    void _releaseId;
     // QC-ADP-03 does not yet have the owner-approved 19-gate register/schema
     // mapping. Never infer GO from the existing eight internal evidence classes.
     return false;

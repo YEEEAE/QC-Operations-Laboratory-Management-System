@@ -109,7 +109,7 @@ describe('equipment eligibility capture', () => {
   it('denies a valid equipment record when the actor cannot read its calibration source', async () => {
     const actorWithoutCalibrationRead = {
       ...actor,
-      permissions: [{ code: 'PERM-EQP-VIEW', scopes: ['GLOBAL'] as const }],
+      permissions: [{ code: 'PERM-EQP-VIEW' as const, scopes: ['GLOBAL'] as const }],
     };
     const useCase = new GetEquipmentEligibilityUseCase({
       getEquipment: async () => undefined,

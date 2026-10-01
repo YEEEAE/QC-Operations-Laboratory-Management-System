@@ -103,6 +103,8 @@ describe('BI-01 mobile drawer background isolation', () => {
     const sidebar = readRepo('src/ui/shell/Sidebar.astro');
     expect(sidebar).toContain('data-drawer-close');
     expect(sidebar).toContain('aria-label="Close navigation"');
-    expect(sidebar).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.drawer-close\s*\{\s*display:\s*grid/);
+    expect(sidebar).toMatch(
+      /@media \(max-width: 760px\)[\s\S]*?\.drawer-close\s*\{\s*display:\s*grid/,
+    );
   });
 });

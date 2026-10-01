@@ -172,7 +172,9 @@ async function main(): Promise<void> {
       fail('Required active verify-least persona is missing for the task authorization fixture.');
     const leastSessionToken = process.env.QC_E2E_LEAST_SESSION_TOKEN;
     if (!leastSessionToken)
-      fail('QC_E2E_LEAST_SESSION_TOKEN is required for the disposable authenticated route fixture.');
+      fail(
+        'QC_E2E_LEAST_SESSION_TOKEN is required for the disposable authenticated route fixture.',
+      );
     await client.query(
       `INSERT INTO qc.sessions (user_id, session_token_hash, expires_at)
        VALUES ($1, $2, NOW() + INTERVAL '1 hour')`,
@@ -186,7 +188,12 @@ async function main(): Promise<void> {
        ON CONFLICT (task_no) DO NOTHING`,
       [taskFixtureId, leastPrivileged.rows[0].id],
     );
-    const seededTask = await client.query<{ id: string; created_by: string; state: string; version: string }>(
+    const seededTask = await client.query<{
+      id: string;
+      created_by: string;
+      state: string;
+      version: string;
+    }>(
       "SELECT id, created_by, state, version FROM qc.tasks WHERE task_no = 'VERIFY-AUTHZ-READONLY'",
     );
     if (

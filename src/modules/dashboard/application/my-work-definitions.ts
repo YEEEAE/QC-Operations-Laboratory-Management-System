@@ -47,8 +47,7 @@ export const MY_WORK_GROUP_DEFINITIONS: Readonly<Record<string, MyWorkGroupDefin
     actorScope: 'Records you may read where you hold the next step.',
     timezone: 'UTC',
     sourceTimestamp: "The record's due date, with its time zone.",
-    predicate:
-      'Due before midnight today, in UTC. Completed and cancelled tasks are excluded.',
+    predicate: 'Due before midnight today, in UTC. Completed and cancelled tasks are excluded.',
   },
   BLOCKED: {
     category: 'BLOCKED',

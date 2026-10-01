@@ -77,10 +77,7 @@ export class CreateDocumentVersionChangeRequestUseCase {
     if (target.version !== input.expectedDocumentVersion) {
       throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     }
-    const currentValue =
-      field === 'revision'
-        ? target.revision
-        : (target.changeSummary ?? '');
+    const currentValue = field === 'revision' ? target.revision : (target.changeSummary ?? '');
     // Immutable snapshot of the exact controlled context used at creation.
     const targetSnapshot: Record<string, unknown> = {
       documentId: target.documentId,

@@ -14,8 +14,7 @@ export const GET: APIRoute = ({ request }) => {
     return new Response(null, { status: 404, headers: { 'cache-control': 'no-store' } });
   }
 
-  return Response.json(
-    performanceMetricsDependencies().snapshot.execute(),
-    { headers: { 'cache-control': 'no-store' } },
-  );
+  return Response.json(performanceMetricsDependencies().snapshot.execute(), {
+    headers: { 'cache-control': 'no-store' },
+  });
 };

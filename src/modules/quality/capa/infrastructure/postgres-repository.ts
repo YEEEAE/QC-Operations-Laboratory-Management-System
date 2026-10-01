@@ -95,10 +95,19 @@ export class PostgresCapaRepository implements CapaRepository {
     const actions = await this.db
       .selectFrom('capa_actions')
       .selectAll()
-      .where('capa_id', 'in', rows.map((row) => row.id))
+      .where(
+        'capa_id',
+        'in',
+        rows.map((row) => row.id),
+      )
       .orderBy('sequence_no')
       .execute();
-    return rows.map((row) => this.map(row, actions.filter((action) => action.capa_id === row.id)));
+    return rows.map((row) =>
+      this.map(
+        row,
+        actions.filter((action) => action.capa_id === row.id),
+      ),
+    );
   }
   async transition(i: Parameters<CapaRepository['transition']>[0]) {
     if (i.action === 'CLOSE') throw new AppError('AUTHZ_DENIED', { userSafe: true });

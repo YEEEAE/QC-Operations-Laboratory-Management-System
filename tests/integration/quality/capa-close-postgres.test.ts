@@ -17,8 +17,11 @@ const db = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) }
 const actorId = randomUUID();
 const otherId = randomUUID();
 const actor = (overrides: Partial<ActorContext> = {}): ActorContext => ({
-  id: actorId, accountState: 'ACTIVE', roles: ['SUPERVISOR'],
-  permissions: [{ code: 'PERM-CAPA-CLOSE', scopes: ['GLOBAL'] }], ...overrides,
+  id: actorId,
+  accountState: 'ACTIVE',
+  roles: ['SUPERVISOR'],
+  permissions: [{ code: 'PERM-CAPA-CLOSE', scopes: ['GLOBAL'] }],
+  ...overrides,
 });
 const repo = new PostgresCapaRepository(db);
 const observations: Record<string, unknown> = {};
@@ -34,7 +37,12 @@ const snapshot = async (id: string) => {
   ] as const;
   const result: Record<string, unknown[]> = {};
   for (const [key, query] of queries)
-    result[key] = (await pool.query(query, [key === 'idempotency' ? `CAPA:CLOSE:${id}:%` : id].slice(0, key === 'outbox' ? 0 : 1))).rows;
+    result[key] = (
+      await pool.query(
+        query,
+        [key === 'idempotency' ? `CAPA:CLOSE:${id}:%` : id].slice(0, key === 'outbox' ? 0 : 1),
+      )
+    ).rows;
   return result;
 };
 const summary = (value: Record<string, unknown[]>) => ({
@@ -44,19 +52,42 @@ const summary = (value: Record<string, unknown[]>) => ({
 });
 const fixture = async (owner = actorId) => {
   const id = randomUUID();
-  await pool.query(`INSERT INTO qc.capas(id,capa_no,state,title,description,owner_id,verification_required,effectiveness_required,created_by) VALUES($1,$2,'IN_PROGRESS','Synthetic CAPA','P-04 exception fixture',$3,true,true,$4)`, [id, `ADP07-${id}`, owner, actorId]);
-  await pool.query(`INSERT INTO qc.capa_actions(capa_id,sequence_no,description,owner_id,state) VALUES($1,1,'Incomplete synthetic action',$2,'OPEN')`, [id, owner]);
+  await pool.query(
+    `INSERT INTO qc.capas(id,capa_no,state,title,description,owner_id,verification_required,effectiveness_required,created_by) VALUES($1,$2,'IN_PROGRESS','Synthetic CAPA','P-04 exception fixture',$3,true,true,$4)`,
+    [id, `ADP07-${id}`, owner, actorId],
+  );
+  await pool.query(
+    `INSERT INTO qc.capa_actions(capa_id,sequence_no,description,owner_id,state) VALUES($1,1,'Incomplete synthetic action',$2,'OPEN')`,
+    [id, owner],
+  );
   return id;
 };
-const close = (id: string, options: Partial<Parameters<CloseCapaUseCase['execute']>[0]> = {}, valid = true) =>
-  new CloseCapaUseCase(repo, { verify: async () => valid }).execute({ actor: actor(), id, expectedVersion: 1n, reason: 'Synthetic P-04 exception', reauthenticationSecret: 'synthetic-test-input', requestId: randomUUID(), ...options });
+const close = (
+  id: string,
+  options: Partial<Parameters<CloseCapaUseCase['execute']>[0]> = {},
+  valid = true,
+) =>
+  new CloseCapaUseCase(repo, { verify: async () => valid }).execute({
+    actor: actor(),
+    id,
+    expectedVersion: 1n,
+    reason: 'Synthetic P-04 exception',
+    reauthenticationSecret: 'synthetic-test-input',
+    requestId: randomUUID(),
+    ...options,
+  });
 
 beforeAll(async () => {
   await migrate({ pool });
   observations.version = (await pool.query('SHOW server_version')).rows[0];
-  observations.ledger = (await pool.query('SELECT version,name,checksum FROM qc.schema_migrations ORDER BY version')).rows;
+  observations.ledger = (
+    await pool.query('SELECT version,name,checksum FROM qc.schema_migrations ORDER BY version')
+  ).rows;
   for (const id of [actorId, otherId])
-    await pool.query(`INSERT INTO qc.users(id,login_identity,display_name,password_hash) VALUES($1,$2,'Synthetic ADP07 actor','test-only-placeholder')`, [id, `adp07-${id}`]);
+    await pool.query(
+      `INSERT INTO qc.users(id,login_identity,display_name,password_hash) VALUES($1,$2,'Synthetic ADP07 actor','test-only-placeholder')`,
+      [id, `adp07-${id}`],
+    );
 }, 180000);
 afterAll(async () => {
   mkdirSync('.ci-results', { recursive: true });
@@ -84,11 +115,21 @@ describe.skipIf(!url)('P-04 PostgreSQL acceptance (dedicated database required)'
     const id = await fixture();
     expect(await repo.get(id, actor())).toBeTruthy();
     const before = await snapshot(id);
-    for (const deniedActor of [actor({ roles: ['MANAGER'] }), actor({ roles: ['ADMIN'] }), actor({ roles: ['SYSTEM_OWNER'], loginIdentity: 'yazeed' }), actor({ permissions: [] }), actor({ accountState: 'INACTIVE' })]) {
+    for (const deniedActor of [
+      actor({ roles: ['MANAGER'] }),
+      actor({ roles: ['ADMIN'] }),
+      actor({ roles: ['SYSTEM_OWNER'], loginIdentity: 'yazeed' }),
+      actor({ permissions: [] }),
+      actor({ accountState: 'INACTIVE' }),
+    ]) {
       await expect(close(id, { actor: deniedActor })).rejects.toThrow();
       expect(await snapshot(id)).toEqual(before);
     }
-    for (const options of [{ expectedVersion: 2n }, { reason: ' ' }, { reauthenticationSecret: '' }]) {
+    for (const options of [
+      { expectedVersion: 2n },
+      { reason: ' ' },
+      { reauthenticationSecret: '' },
+    ]) {
       await expect(close(id, options)).rejects.toThrow();
       expect(await snapshot(id)).toEqual(before);
     }
@@ -97,17 +138,34 @@ describe.skipIf(!url)('P-04 PostgreSQL acceptance (dedicated database required)'
     const scoped = await fixture(otherId);
     expect(await repo.get(scoped, actor())).toBeTruthy();
     const scopeBefore = await snapshot(scoped);
-    await expect(close(scoped, { actor: actor({ permissions: [{ code: 'PERM-CAPA-CLOSE', scopes: ['OWN'] }] }) })).rejects.toThrow();
+    await expect(
+      close(scoped, {
+        actor: actor({ permissions: [{ code: 'PERM-CAPA-CLOSE', scopes: ['OWN'] }] }),
+      }),
+    ).rejects.toThrow();
     expect(await snapshot(scoped)).toEqual(scopeBefore);
-    observations.denial = { before: summary(before), after: summary(await snapshot(id)), scopeBefore: summary(scopeBefore), scopeAfter: summary(await snapshot(scoped)) };
+    observations.denial = {
+      before: summary(before),
+      after: summary(await snapshot(id)),
+      scopeBefore: summary(scopeBefore),
+      scopeAfter: summary(await snapshot(scoped)),
+    };
   });
 
   it('rolls back the close, signature, snapshot and idempotency if audit insertion fails', async () => {
     const id = await fixture();
     const before = await snapshot(id);
-    await pool.query(`CREATE FUNCTION qc.adp07_fail_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.subject_id='${id}'::uuid THEN RAISE EXCEPTION 'synthetic audit failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER adp07_fail_audit BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.adp07_fail_audit()`);
-    try { await expect(close(id)).rejects.toThrow(); expect(await snapshot(id)).toEqual(before); }
-    finally { await pool.query('DROP TRIGGER adp07_fail_audit ON qc.audit_events; DROP FUNCTION qc.adp07_fail_audit()'); }
+    await pool.query(
+      `CREATE FUNCTION qc.adp07_fail_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.subject_id='${id}'::uuid THEN RAISE EXCEPTION 'synthetic audit failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER adp07_fail_audit BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.adp07_fail_audit()`,
+    );
+    try {
+      await expect(close(id)).rejects.toThrow();
+      expect(await snapshot(id)).toEqual(before);
+    } finally {
+      await pool.query(
+        'DROP TRIGGER adp07_fail_audit ON qc.audit_events; DROP FUNCTION qc.adp07_fail_audit()',
+      );
+    }
     observations.rollback = { before: summary(before), after: summary(await snapshot(id)) };
   });
 
@@ -127,8 +185,18 @@ describe.skipIf(!url)('P-04 PostgreSQL acceptance (dedicated database required)'
     const id = await fixture();
     let command: Parameters<PostgresCapaRepository['close']>[0] | undefined;
     const capturing = Object.create(repo) as PostgresCapaRepository;
-    capturing.close = async (input) => { command = input; return repo.close(input); };
-    await new CloseCapaUseCase(capturing, { verify: async () => true }).execute({ actor: actor(), id, expectedVersion: 1n, reason: 'Replay fixture', reauthenticationSecret: 'synthetic-test-input', requestId: randomUUID() });
+    capturing.close = async (input) => {
+      command = input;
+      return repo.close(input);
+    };
+    await new CloseCapaUseCase(capturing, { verify: async () => true }).execute({
+      actor: actor(),
+      id,
+      expectedVersion: 1n,
+      reason: 'Replay fixture',
+      reauthenticationSecret: 'synthetic-test-input',
+      requestId: randomUUID(),
+    });
     const before = await snapshot(id);
     expect((await repo.close(command!)).state).toBe('CLOSED');
     expect(await snapshot(id)).toEqual(before);

@@ -70,9 +70,10 @@ permission, scope, entity state, version, SoD, signature, and business rules.
 
 ## A new migration
 
-1. Add `db/migrations/NNNN_descriptive_name.sql` after the current head
-   (`0040_signed_release_gate_evidence` in the 2026-09-24 source tree; migration
-   0040 has not been applied to a live database).
+1. Add `db/migrations/NNNN_descriptive_name.sql` after the current source head
+   (`0043_controlled_document_source_binding`). This is the repository source
+   head; it does not assert that migration 0043 has been applied to any live
+   database. Confirm the current ledger and owner-approved rollout separately.
 2. Keep migrations forward-only, lexically ordered, checksummed, and immutable
    after application to a shared environment. A correction is a new migration.
 3. Keep controlled history append-only and avoid destructive cascades. Add

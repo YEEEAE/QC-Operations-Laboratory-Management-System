@@ -72,7 +72,10 @@ afterAll(async () => {
   await stopPostgresContainer();
 });
 
-async function seedApprovedTemplate(): Promise<{ templateVersionId: string; sourceContentHash: string }> {
+async function seedApprovedTemplate(): Promise<{
+  templateVersionId: string;
+  sourceContentHash: string;
+}> {
   const templateId = crypto.randomUUID();
   const versionId = crypto.randomUUID();
   const documentId = crypto.randomUUID();
@@ -109,12 +112,19 @@ async function seedApprovedTemplate(): Promise<{ templateVersionId: string; sour
      VALUES ($1, $2, 'SOURCE', $3)`,
     [documentVersionId, sourceFileId, AUTHOR_ID],
   );
-  const sourceContentHash = documentContentDigest({ documentId, revision: '7', files: [{ fileId: sourceFileId, fileRole: 'SOURCE', sha256: sourceFileHash }] });
+  const sourceContentHash = documentContentDigest({
+    documentId,
+    revision: '7',
+    files: [{ fileId: sourceFileId, fileRole: 'SOURCE', sha256: sourceFileHash }],
+  });
   await pool!.query(
     `UPDATE qc.document_versions SET content_hash = $2, source_binding_verified = true, state = 'APPROVED' WHERE id = $1`,
     [documentVersionId, sourceContentHash],
   );
-  await pool!.query(`UPDATE qc.document_versions SET state = 'EFFECTIVE', effective_at = CURRENT_TIMESTAMP WHERE id = $1`, [documentVersionId]);
+  await pool!.query(
+    `UPDATE qc.document_versions SET state = 'EFFECTIVE', effective_at = CURRENT_TIMESTAMP WHERE id = $1`,
+    [documentVersionId],
+  );
   await pool!.query(
     `INSERT INTO qc.lab_test_template_document_sources (template_version_id, document_version_id, usage_type, linked_by)
      VALUES ($1, $2, 'WI', $3)`,

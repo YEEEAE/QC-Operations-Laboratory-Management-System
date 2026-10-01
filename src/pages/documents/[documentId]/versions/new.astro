@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../../ui/components/FormErrorSummary.astro';
+import { formatDate } from '../../../../shared/copy/format.js';
 import { documentsReadDependencies } from '../../../../modules/documents/application/dependencies.js';
 import { actions } from 'astro:actions';
 import type { ReadFailure } from '../../../../shared/errors/read-failure.js';
@@ -121,7 +122,7 @@ if (formData && canCreate) {
           : sourceFailure === 'MISSING'
             ? <p class="notice" role="alert">The source document record is no longer available. Return to the document register and reload.</p>
         : sourceFiles.length
-          ? <ul class="source-list">{sourceFiles.map((file) => <li><label class="file-option"><input type="checkbox" name="fileId" value={file.id} checked={values.fileIds.includes(file.id)} /><span><strong>{file.originalFilename}</strong><small>{file.sizeBytes.toLocaleString('en-US')} bytes · Added {file.uploadedAt.toLocaleDateString('en-GB',{timeZone:'Asia/Riyadh'})}</small></span></label></li>)}</ul>
+          ? <ul class="source-list">{sourceFiles.map((file) => <li><label class="file-option"><input type="checkbox" name="fileId" value={file.id} checked={values.fileIds.includes(file.id)} /><span><strong>{file.originalFilename}</strong><small>{file.sizeBytes.toLocaleString('en-US')} bytes · Added {formatDate(file.uploadedAt)}</small></span></label></li>)}</ul>
           : <p class="notice" role="status">No registered source file is available for this document. Ask Document Control to register the source file, then return here.</p>}
       {failure?.field === 'fileIds' && <p id="fileIds-error" class="field-error">Select at least one registered source file.</p>}
     </fieldset>

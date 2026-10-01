@@ -7,10 +7,12 @@ const reportPage = readFileSync('src/pages/reports/[reportCode].astro', 'utf8');
 
 describe('privacy notice copy contracts', () => {
   it('explains actual AI processing, disabled state, and the limit of pasted-source checks', () => {
-    expect(aiPage).toContain('configured external AI provider');
-    expect(aiPage).toContain('will not be sent to an AI provider');
-    expect(aiPage).toContain('cannot verify that source');
-    expect(aiPage).toContain('does not offer a deletion control for provider-side copies');
+    expect(aiPage).toContain('no provider request can be sent');
+    expect(aiPage).toContain('Your question and excerpt will not be sent.');
+    expect(aiPage).toContain(
+      'Source identity/citation is user supplied and not authenticated here.',
+    );
+    expect(aiPage).toContain('deletion terms');
   });
 
   it('explains account correction and retained history without claiming user deletion', () => {

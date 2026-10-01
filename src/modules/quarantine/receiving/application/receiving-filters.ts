@@ -218,9 +218,7 @@ export function parseReceivingFilters(params: URLSearchParams): ParsedReceivingF
     delete filters.expiryFrom;
   }
 
-  const parameterOrder = new Map(
-    [...params.keys()].map((parameter, index) => [parameter, index]),
-  );
+  const parameterOrder = new Map([...params.keys()].map((parameter, index) => [parameter, index]));
   rejected.sort(
     (left, right) =>
       (parameterOrder.get(left.parameter) ?? Number.MAX_SAFE_INTEGER) -

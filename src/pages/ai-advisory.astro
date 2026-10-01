@@ -144,7 +144,7 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
   if (requestButton) requestButton.disabled = !externalRequestAllowed;
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!form || !resultEl || !externalRequestAllowed || requestButton?.disabled) return;
+    if (!form || !resultEl || !requestButton || !externalRequestAllowed || requestButton.disabled) return;
     requestButton.disabled = true;
     form.setAttribute('aria-busy', 'true');
     form.dataset.submitting = 'true';

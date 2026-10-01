@@ -610,7 +610,15 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-version',
     });
-    await repository.transition({ id: versionId, expectedVersion: 1n, actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]), action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'proof-document-submit' });
+    await repository.transition({
+      id: versionId,
+      expectedVersion: 1n,
+      actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
+      action: 'SUBMIT',
+      toState: 'IN_REVIEW',
+      now: new Date(),
+      requestId: 'proof-document-submit',
+    });
     await new ApproveVersionUseCase(repository).execute({
       actor: documentApprover(),
       versionId,
@@ -670,7 +678,15 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-version-admin',
     });
-    await repository.transition({ id: versionId, expectedVersion: 1n, actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]), action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'proof-document-submit-admin' });
+    await repository.transition({
+      id: versionId,
+      expectedVersion: 1n,
+      actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
+      action: 'SUBMIT',
+      toState: 'IN_REVIEW',
+      now: new Date(),
+      requestId: 'proof-document-submit-admin',
+    });
     await expect(
       new ApproveVersionUseCase(repository).execute({
         actor: adminOnly(),

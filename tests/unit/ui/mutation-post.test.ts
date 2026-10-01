@@ -87,17 +87,16 @@ describe('mutation POST baseline helper (F-04 / F-05)', () => {
         expect.objectContaining({ field: 'expectedVersion' }),
       );
     }
-    const expectedVersionFailure = toFormFailure(
-      new TransportValidationError('expectedVersion'),
-      {
-        entity: 'Template',
-        requiredFields: [{ name: 'expectedVersion', label: 'Expected version' }],
-        values: { expectedVersion: '0' },
-        listHref: '/quarantine/admin',
-        listLabel: 'template administration',
-      },
-    );
-    expect(expectedVersionFailure.fieldErrors).toEqual({ expectedVersion: 'Check the Expected version.' });
+    const expectedVersionFailure = toFormFailure(new TransportValidationError('expectedVersion'), {
+      entity: 'Template',
+      requiredFields: [{ name: 'expectedVersion', label: 'Expected version' }],
+      values: { expectedVersion: '0' },
+      listHref: '/quarantine/admin',
+      listLabel: 'template administration',
+    });
+    expect(expectedVersionFailure.fieldErrors).toEqual({
+      expectedVersion: 'Check the Expected version.',
+    });
     expect(expectedVersionFailure.firstInvalidField).toBe('expectedVersion');
     expect(parseJsonField('{"a":1}', 'targetSnapshot')).toEqual({ a: 1 });
     expect(() => parseJsonField('', 'targetSnapshot')).toThrow(TransportValidationError);
@@ -358,12 +357,14 @@ describe('create-form POST baseline contracts across the nine Tier-2 routes', ()
 describe('task lifecycle POST baseline (QC-PAGE-F-011)', () => {
   it('posts lifecycle transitions to the same authorized Action and redirects after success', () => {
     const source = readPage('tasks/[taskId].astro');
-    expect(source).toContain('Astro.request.method === \'POST\'');
+    expect(source).toContain("Astro.request.method === 'POST'");
     expect(source).toContain('Astro.callAction(actions.tasks.transition');
     expect(source).toContain('parseExpectedVersionField');
     expect(source).toContain('method="post" data-task-transition');
     expect(source).toContain('Astro.redirect(`/tasks/${id}`, 303)');
-    expect(source).toContain('unknownRecoveryHref: `/tasks/${currentTaskId}?reconcile=1#transition-history`');
+    expect(source).toContain(
+      'unknownRecoveryHref: `/tasks/${currentTaskId}?reconcile=1#transition-history`',
+    );
     expect(source).toContain('guardUnsavedChanges(form)');
   });
 });

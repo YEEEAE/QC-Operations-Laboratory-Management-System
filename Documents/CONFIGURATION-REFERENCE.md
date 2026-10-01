@@ -113,8 +113,15 @@ separately from AI provider availability.
 | `AI_EXTERNAL_PROCESSING_APPROVED` | `true` / `false` | `false` | Technical gate only — not evidence of approval. When `false` or any provider field is invalid, the `DisabledAiProvider` is used and no external call is possible. |
 | `AI_PRIMARY_PROVIDER` | `groq` / `gemini` | `groq` | Selection only; inert while the gate is `false`. |
 | `AI_FALLBACK_PROVIDER` | `groq` / `gemini` | `gemini` | Selection only; inert while the gate is `false`. |
+| `AI_PROCESSING_POLICY_JSON` | server-only approved policy JSON | unset | Missing, malformed, or incomplete policy keeps providers disabled. An environment value is not the owner approval itself. |
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | strings / exact allowlisted HTTPS endpoint | unset / `https://api.groq.com/openai/v1/chat/completions` | Credential and model selection for Groq; key is secret-manager only. Any other endpoint invalidates AI provider configuration. |
 | `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_BASE_URL` | strings / exact allowlisted HTTPS base URL | unset / `https://generativelanguage.googleapis.com/v1beta` | Same contract for Gemini. Any other endpoint invalidates AI provider configuration. |
+
+## Release evidence intake
+
+| Variable | Type | Approved default | Change impact |
+| --- | --- | --- | --- |
+| `RELEASE_EVIDENCE_SIGNERS_JSON` | server-only JSON signer registry | unset | Optional technical configuration for signed CI/security/database/E2E evidence intake. Without a complete approved signer mapping, evidence intake remains closed. Presence alone does not approve release gates or human UAT. Keep signer secrets in the secret manager; never commit or log their values. |
 
 ## Operator and verification harness variables
 

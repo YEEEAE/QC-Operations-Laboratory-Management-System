@@ -258,11 +258,13 @@ export function toFormFailure(error: unknown, input: FailureCopyInput): FormFail
       break;
     case 'unavailable':
       summary = 'The service did not confirm the result.';
-      recovery = 'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
+      recovery =
+        'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
       break;
     default:
       summary = `The result for this ${entity} is unconfirmed.`;
-      recovery = 'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
+      recovery =
+        'Your entries are preserved below. Check the record or its history before deciding whether to try again.';
       break;
   }
 

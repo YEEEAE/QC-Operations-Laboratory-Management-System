@@ -10,7 +10,7 @@ describe('AI advisory transport and recovery contract', () => {
     expect(page).toContain('data-request-button disabled');
     expect(page).toContain('requestButton.disabled = !externalRequestAllowed');
     expect(page).toContain(
-      'if (!form || !resultEl || !externalRequestAllowed || requestButton?.disabled) return;',
+      'if (!form || !resultEl || !requestButton || !externalRequestAllowed || requestButton.disabled) return;',
     );
   });
 
