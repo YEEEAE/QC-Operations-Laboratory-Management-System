@@ -38,6 +38,7 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
     <div><dt>Internal backup reference</dt><dd><code>{backup.id}</code></dd></div>
     <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — job result only, never restore evidence</dd></div>
     <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
+    <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
     <div><dt>Backup requested at</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh (UTC internally)</dd></div>
     <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{verificationLabel}</dd></div>
     <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>

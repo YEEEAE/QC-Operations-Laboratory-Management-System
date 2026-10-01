@@ -55,7 +55,8 @@ export interface BackupRun {
   verifiedAt?: Date;
   completedAt?: Date;
   sizeBytes?: bigint;
-  checksum?: string;
+  /** Safe availability projection; the checksum value never leaves infrastructure. */
+  hasChecksum: boolean;
   artifactType?: 'LOGICAL_EXPORT';
   objectVersion?: string;
   gitSha?: string;
@@ -134,7 +135,7 @@ export function describeBackupPosture(
   restoreRuns: readonly RestoreRun[],
 ): BackupPostureView {
   const gaps: string[] = [];
-  if (!backup.checksum) gaps.push('INTEGRITY_CHECKSUM_UNAVAILABLE');
+  if (!backup.hasChecksum) gaps.push('INTEGRITY_CHECKSUM_UNAVAILABLE');
   if (!isBackupArtifactVerified(backup) && backup.state === 'CREATED')
     gaps.push('BACKUP_ARTIFACT_NOT_VERIFIED');
   const verification = restoreVerificationStatus(restoreRuns);
@@ -150,7 +151,7 @@ export function describeBackupPosture(
     ...(backup.databaseSchemaVersion
       ? { databaseSchemaVersion: backup.databaseSchemaVersion }
       : {}),
-    hasChecksum: Boolean(backup.checksum),
+    hasChecksum: backup.hasChecksum,
     knownGaps: gaps,
   };
 }

@@ -1,4 +1,4 @@
-import type { Kysely } from 'kysely';
+import type { Kysely, Transaction } from 'kysely';
 import type { DatabaseRow, DatabaseSchema } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
 import { AppError } from '../../../shared/errors/app-error.js';
@@ -29,6 +29,7 @@ const mapBackup = (row: DatabaseRow<'backup_runs'>): BackupRun => ({
   ...(row.verified_at ? { verifiedAt: row.verified_at } : {}),
   ...(row.completed_at ? { completedAt: row.completed_at } : {}),
   ...(row.size_bytes !== null ? { sizeBytes: BigInt(row.size_bytes) } : {}),
+  hasChecksum: typeof row.checksum === 'string' && /^[0-9a-f]{64}$/i.test(row.checksum),
   ...(row.database_schema_version ? { databaseSchemaVersion: row.database_schema_version } : {}),
   ...(row.artifact_type === 'LOGICAL_EXPORT' ? { artifactType: 'LOGICAL_EXPORT' as const } : {}),
   ...(row.object_version ? { objectVersion: row.object_version } : {}),
@@ -71,8 +72,12 @@ const mapRestore = (row: DatabaseRow<'restore_runs'>): RestoreRun => ({
 export class PostgresBackupCatalogRepository implements BackupCatalogRepository {
   constructor(
     private readonly database: Kysely<DatabaseSchema>,
-    private readonly audit?: AuditRepository,
-    private readonly outbox?: OutboxRepository,
+    private readonly auditForTransaction?: (
+      transaction: Transaction<DatabaseSchema>,
+    ) => AuditRepository,
+    private readonly outboxForTransaction?: (
+      transaction: Transaction<DatabaseSchema>,
+    ) => OutboxRepository,
   ) {}
 
   async listBackups(filter: BackupCatalogFilter = {}): Promise<readonly BackupRun[]> {
@@ -152,11 +157,30 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
     restore: RestoreRun;
     actor: ActorContext;
     requestId: string;
+    reason: string;
+    requestFingerprint: string;
   }): Promise<RestoreRun> {
+    const auditForTransaction = this.auditForTransaction;
+    const outboxForTransaction = this.outboxForTransaction;
+    if (!auditForTransaction || !outboxForTransaction)
+      throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
     try {
       return await this.database.transaction().execute(async (tx) => {
         const restore = input.restore;
-        const row = await tx
+        const backup = await tx
+          .selectFrom('backup_runs')
+          .select(['id', 'state'])
+          .where('id', '=', restore.backupRunId)
+          .forUpdate()
+          .executeTakeFirst();
+        if (!backup) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        if (backup.state !== 'CREATED' && backup.state !== 'VERIFIED')
+          throw new AppError('DOMAIN_INVALID_TRANSITION', {
+            userSafe: true,
+            safeMetadata: { reason: 'BACKUP_NOT_RESTORABLE' },
+          });
+
+        const inserted = await tx
           .insertInto('restore_runs')
           .values({
             id: restore.id,
@@ -175,26 +199,56 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
               recordedVia: 'RESTORE_REQUEST_USE_CASE',
               orchestrationStatus: 'NOT_AVAILABLE',
               restoreExecuted: false,
+              operatorReason: input.reason,
+              requestFingerprint: input.requestFingerprint,
             }),
             request_id: restore.requestId,
           })
+          .onConflict((conflict) => conflict.columns(['backup_run_id', 'request_id']).doNothing())
           .returningAll()
-          .executeTakeFirstOrThrow();
-        await this.audit?.append({
+          .executeTakeFirst();
+
+        if (!inserted) {
+          const existing = await tx
+            .selectFrom('restore_runs')
+            .selectAll()
+            .where('backup_run_id', '=', restore.backupRunId)
+            .where('request_id', '=', restore.requestId)
+            .forUpdate()
+            .executeTakeFirst();
+          if (!existing) throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
+          let evidence: unknown = existing.evidence;
+          if (typeof evidence === 'string') {
+            try {
+              evidence = JSON.parse(evidence);
+            } catch {
+              evidence = undefined;
+            }
+          }
+          const storedFingerprint =
+            evidence && typeof evidence === 'object' && !Array.isArray(evidence)
+              ? (evidence as Record<string, unknown>).requestFingerprint
+              : undefined;
+          if (storedFingerprint !== input.requestFingerprint)
+            throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+          return mapRestore(existing);
+        }
+
+        await auditForTransaction(tx).append({
           actorType: 'USER',
           actorId: input.actor.id,
           subjectType: 'BACKUP_RESTORE_REQUEST',
           subjectId: restore.backupRunId,
           action: 'REQUEST_RESTORE',
           newState: restore.state,
-          reason: 'Restore intent recorded; execution requires an approved recovery orchestrator.',
+          reason: input.reason,
           requestId: input.requestId,
           payload: {
             restoreType: restore.restoreType,
             targetEnvironment: restore.targetEnvironment,
           },
         });
-        await this.outbox?.enqueue({
+        await outboxForTransaction(tx).enqueue({
           eventType: 'BACKUP_RESTORE_REQUESTED',
           aggregateType: 'BACKUP_RUN',
           aggregateId: restore.backupRunId,
@@ -206,7 +260,7 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
           },
           dedupeKey: `backup-restore-requested:${restore.id}`,
         });
-        return mapRestore(row);
+        return mapRestore(inserted);
       });
     } catch (error) {
       throw error instanceof AppError ? error : translateDatabaseError(error);

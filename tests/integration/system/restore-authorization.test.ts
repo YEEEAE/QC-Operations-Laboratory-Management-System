@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RequestRestoreUseCase } from '../../../src/modules/backup-recovery/application/request-restore.js';
+import { GetBackupUseCase } from '../../../src/modules/backup-recovery/application/get-backup.js';
 import type { BackupCatalogRepository } from '../../../src/modules/backup-recovery/ports/repository.js';
 import type {
   BackupRun,
@@ -31,15 +32,17 @@ const backup = (state: string): BackupRun => ({
   requestedBy: requesterId,
   requestedAt: new Date('2026-09-05T08:00:00.000Z'),
   artifactCreatedAt: new Date('2026-09-05T08:30:00.000Z'),
+  hasChecksum: true,
   databaseSchemaVersion: '0017',
   requestId: 'req-backup-1',
 });
 
 function catalog(
   items: readonly BackupRun[],
-  options: { recorded?: RestoreRun[]; existing?: RestoreRun } = {},
+  options: { recorded?: RestoreRun[] } = {},
 ): BackupCatalogRepository & { recorded: RestoreRun[]; insertCount: number } {
   const recorded = options.recorded ?? [];
+  const fingerprints = new Map<string, string>();
   let insertCount = 0;
   return {
     recorded,
@@ -53,19 +56,23 @@ function catalog(
       return items.find((item) => item.id === id);
     },
     async listRestoreRuns(backupRunId) {
-      if (backupRunId === backupId && options.existing) return [options.existing];
-      return [];
+      return recorded.filter((item) => item.backupRunId === backupRunId);
     },
     async recordRestoreRequest(input) {
+      const key = `${input.restore.backupRunId}:${input.restore.requestId}`;
       const replay = recorded.find(
         (item) =>
           item.requestId === input.restore.requestId &&
-          item.backupRunId === input.restore.backupRunId &&
-          item.restoreType === input.restore.restoreType,
+          item.backupRunId === input.restore.backupRunId,
       );
-      if (replay) return replay;
+      if (replay) {
+        if (fingerprints.get(key) !== input.requestFingerprint)
+          throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+        return replay;
+      }
       insertCount += 1;
       recorded.push(input.restore);
+      fingerprints.set(key, input.requestFingerprint);
       return input.restore;
     },
   };
@@ -95,6 +102,9 @@ describe('restore request authorization boundary', () => {
 
   it('denies a restore request without the explicit restore permission', async () => {
     const repository = catalog([backup('VERIFIED')]);
+    await expect(
+      new GetBackupUseCase(repository).execute({ actor: actor(['PERM-BKP-VIEW']), backupId }),
+    ).resolves.toMatchObject({ backup: { id: backupId } });
     await expect(
       new RequestRestoreUseCase(repository).execute({
         actor: actor(['PERM-BKP-VIEW']),
@@ -173,6 +183,19 @@ describe('restore request authorization boundary', () => {
     expect(repository.insertCount).toBe(0);
   });
 
+  it('rejects an overlong reason with a reason field error before persistence', async () => {
+    const repository = catalog([backup('VERIFIED')]);
+    await expect(
+      new RequestRestoreUseCase(repository).execute({
+        actor: actor(['PERM-BKP-VIEW', 'PERM-BKP-RESTORE-DRILL']),
+        ...drillInput,
+        reason: 'x'.repeat(2001),
+        requestId,
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED', fieldErrors: { reason: ['too_long'] } });
+    expect(repository.insertCount).toBe(0);
+  });
+
   it('rejects a restore request for a backup without a created artifact', async () => {
     const repository = catalog([backup('RUNNING')]);
     await expect(
@@ -199,6 +222,25 @@ describe('restore request authorization boundary', () => {
       requestId,
     });
     expect(second.restore.id).toBe(first.restore.id);
+    expect(repository.insertCount).toBe(1);
+  });
+
+  it('rejects reuse of a request id when the approved operator reason changes', async () => {
+    const repository = catalog([backup('VERIFIED')]);
+    const useCase = new RequestRestoreUseCase(repository);
+    await useCase.execute({
+      actor: actor(['PERM-BKP-VIEW', 'PERM-BKP-RESTORE-DRILL']),
+      ...drillInput,
+      requestId,
+    });
+    await expect(
+      useCase.execute({
+        actor: actor(['PERM-BKP-VIEW', 'PERM-BKP-RESTORE-DRILL']),
+        ...drillInput,
+        reason: 'Different approved reason.',
+        requestId,
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_DUPLICATE_COMMAND' });
     expect(repository.insertCount).toBe(1);
   });
 

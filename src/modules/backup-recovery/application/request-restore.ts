@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
 import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
+import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { createRestoreRequest, type RestoreRun } from '../domain/backup-record.js';
 import type { BackupCatalogRepository } from '../ports/repository.js';
@@ -76,16 +78,6 @@ export class RequestRestoreUseCase {
       { throwOnDeny: true },
     );
 
-    const existing = await this.repository.listRestoreRuns(backup.id);
-    const replay = existing.find(
-      (run) =>
-        run.requestId === input.requestId &&
-        run.restoreType === validated.restoreType &&
-        run.targetEnvironment === validated.targetEnvironment,
-    );
-    if (replay)
-      return { restore: replay, orchestration: { executed: false, status: 'NOT_AVAILABLE' } };
-
     const restore = createRestoreRequest({
       id: uuidv7(),
       backupRun: backup,
@@ -101,6 +93,18 @@ export class RequestRestoreUseCase {
       restore,
       actor: input.actor,
       requestId: input.requestId,
+      reason: validated.reason,
+      requestFingerprint: createHash('sha256')
+        .update(
+          stableJson({
+            backupRunId: backup.id,
+            actorId: input.actor.id,
+            restoreType: validated.restoreType,
+            targetEnvironment: validated.targetEnvironment,
+            reason: validated.reason,
+          }),
+        )
+        .digest('hex'),
     });
     return { restore: persisted, orchestration: { executed: false, status: 'NOT_AVAILABLE' } };
   }

@@ -44,6 +44,7 @@ export function validateRestoreRequest(
   if (!(CANONICAL_ENVIRONMENTS as readonly string[]).includes(input.targetEnvironment))
     fieldErrors.targetEnvironment = ['invalid'];
   if (!input.reason.trim()) fieldErrors.reason = ['required'];
+  else if (input.reason.trim().length > 2000) fieldErrors.reason = ['too_long'];
   if (!input.confirmation) fieldErrors.confirmation = ['required'];
   if (Object.keys(fieldErrors).length)
     throw new AppError('VALIDATION_FAILED', { userSafe: true, fieldErrors });

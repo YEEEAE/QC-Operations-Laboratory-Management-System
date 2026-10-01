@@ -29,7 +29,7 @@ const restoreLabel =
         : 'RESTORE NOT VERIFIED';
 const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
 const knownGaps = [
-  ...(backup.checksum ? [] : ['Integrity checksum is not recorded for this backup set.']),
+  ...(backup.hasChecksum ? [] : ['Integrity checksum is not recorded for this backup set.']),
   ...(backup.state === 'CREATED' ? ['Backup artifact has not completed verification.'] : []),
   ...(restoreVerification !== 'VERIFIED' ? ['No verified restore exists for this backup set.'] : []),
   ...(backup.databaseSchemaVersion ? [] : ['Migration/schema context is not recorded for this backup set.']),
@@ -45,7 +45,7 @@ const knownGaps = [
       {backup.artifactCreatedAt && <div><dt>Artifact created</dt><dd>{riyadh(backup.artifactCreatedAt)} · Asia/Riyadh</dd></div>}
       {backup.verifiedAt && <div><dt>Artifact verified at</dt><dd>{riyadh(backup.verifiedAt)} · Asia/Riyadh</dd></div>}
       {backup.sizeBytes !== undefined && <div><dt>Size</dt><dd>{backup.sizeBytes.toString()} bytes</dd></div>}
-      <div><dt>Integrity checksum</dt><dd>{backup.checksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+      <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
       <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'Not recorded'}</dd></div>
       {backup.errorCode && <div><dt>Job result</dt><dd>The backup job did not complete. Contact your system administrator for help.</dd></div>}
     </dl></section>

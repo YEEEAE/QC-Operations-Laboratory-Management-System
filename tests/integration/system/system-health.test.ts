@@ -81,6 +81,7 @@ const backup = (state: string): BackupRun => ({
   id: '01900000-0000-7000-8000-000000000301',
   state: state as BackupRun['state'],
   requestedAt: new Date('2026-09-05T09:00:00.000Z'),
+  hasChecksum: false,
   requestId: 'req-1',
 });
 

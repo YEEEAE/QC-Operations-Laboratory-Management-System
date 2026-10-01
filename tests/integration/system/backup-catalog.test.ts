@@ -37,7 +37,7 @@ const backup = (state: string): BackupRun => ({
   requestedAt: new Date('2026-09-05T08:00:00.000Z'),
   artifactCreatedAt: new Date('2026-09-05T08:30:00.000Z'),
   sizeBytes: 1048576n,
-  checksum: 'a'.repeat(64),
+  hasChecksum: true,
   databaseSchemaVersion: '0017',
   requestId: 'req-backup-1',
 });
@@ -166,6 +166,7 @@ describe('backup catalog', () => {
 
   it('never presents a succeeded backup job as a verified restore', () => {
     expect(restoreVerificationStatus([])).toBe('NOT_VERIFIED');
+    expect(restoreVerificationStatus([restoreRun('PLANNED')])).toBe('NOT_VERIFIED');
     expect(restoreVerificationStatus([restoreRun('SUCCEEDED')])).toBe('VERIFIED');
     expect(restoreVerificationStatus([restoreRun('FAILED')])).toBe('VERIFICATION_FAILED');
     expect(restoreVerificationStatus([restoreRun('VALIDATING')])).toBe('VERIFYING');
@@ -175,6 +176,12 @@ describe('backup catalog', () => {
     expect(posture.artifactVerified).toBe(false);
     expect(posture.restoreVerification).toBe('NOT_VERIFIED');
     expect(posture.backupJobState).not.toBe(posture.restoreVerification);
+    const verifiedWithChecksum = describeBackupPosture(backup('VERIFIED'), []);
+    expect(verifiedWithChecksum.hasChecksum).toBe(true);
+    expect(verifiedWithChecksum.knownGaps).not.toContain('INTEGRITY_CHECKSUM_UNAVAILABLE');
+    expect(
+      describeBackupPosture({ ...backup('VERIFIED'), hasChecksum: false }, []).knownGaps,
+    ).toContain('INTEGRITY_CHECKSUM_UNAVAILABLE');
   });
 
   it('lists the catalog only for actors holding the explicit backup view permission', async () => {

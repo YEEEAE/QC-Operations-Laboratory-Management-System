@@ -15,8 +15,8 @@ export function backupRestoreActionDependencies() {
   const database = getDatabase();
   const repository = new PostgresBackupCatalogRepository(
     database,
-    new PostgresAuditRepository(database),
-    new PostgresOutboxRepository(database),
+    (transaction) => new PostgresAuditRepository(transaction),
+    (transaction) => new PostgresOutboxRepository(transaction),
   );
   return { requestRestore: new RequestRestoreUseCase(repository) };
 }

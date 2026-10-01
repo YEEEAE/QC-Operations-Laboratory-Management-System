@@ -1,5 +1,7 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ADP26-21 / restore intent atomicity:** Restore intent, audit, and outbox now share a transaction; the operator reason is persisted and replay fingerprints reject changed requests. Requests remain `PLANNED`, production stays denied, and PostgreSQL 18/browser proof is still open. Handoff: `audit/2026-09-30/handoff-QC-ADP26-21.md`.
+
 - **2026-10-01 — QC-ADP26-20 / UI contract reconciliation**
   - Changed: replaced the actual print hex colors with visual-system tokens; fixed Findings date formatting and reconciled stale date, register-bound, and mutation-copy assertions to live source and approved intent.
   - Evidence: four focused UI suites 45/45 PASS; build/release verification PASS on HEAD `318b3e7`; full Astro check still has one unrelated `ai-advisory.astro` error. Authenticated browser/AT/UAT NOT VERIFIED.
@@ -306,6 +308,7 @@
 - Document Version/Approval/Change Request مرتبطة بعقد Journey Context/Handoff read-only وسجل Audit.
 
 ## 8) Backup / Recovery
+- Restore-intent persistence now locks and rechecks the backup row, then writes `restore_runs`, audit, and outbox in one transaction. Reason and a stable request fingerprint are stored in `restore_runs.evidence`; same-fingerprint replay is idempotent and changed-reason replay is denied. The request remains `PLANNED` with `restoreExecuted=false`; this is not restore execution or verification. Source-level tests/build pass on QC-ADP26-21; isolated PostgreSQL 18 failure-injection/concurrency evidence and authenticated page acceptance remain NOT VERIFIED. See `audit/2026-09-30/handoff-QC-ADP26-21.md`.
 - Current as of 2026-09-23: RPO/RTO objectives remain NOT APPROVED (PD-26/27); the UI says so, and measurements require evidence timestamps. Retention remains NOT APPROVED (PD-24/25); expiry requires an approved policy reference and otherwise deletes nothing. Incident procedure: `Documents/RECOVERY-INCIDENT-RUNBOOK.md`.
 - Provider posture: fresh read-only Render check on 2026-09-23 confirmed the `qc-database` plan is Free and the workspace service list contains only the web service (no Cron); SQL found `qc.backup_runs` 0 rows and `qc.recovery_evidence` absent. Provider PITR is unavailable on Free; no failure-alert delivery, WAL-chain, or storage recoverability evidence. Render Cron could add cost, so it is not activated without approved owner, schedule, secrets, alert route, and retention policy.
 - 2026-09-23 isolated restore drill/rehearsal: BLOCKED—user confirmed no isolated target or recovery bundle and the policy decisions remain open; Docker daemon and local PostgreSQL also unavailable. No production restore was attempted.

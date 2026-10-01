@@ -34,5 +34,7 @@ export interface BackupCatalogRepository {
     restore: RestoreRun;
     actor: ActorContext;
     requestId: string;
+    reason: string;
+    requestFingerprint: string;
   }): Promise<RestoreRun>;
 }
