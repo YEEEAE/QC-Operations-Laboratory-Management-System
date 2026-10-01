@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ENV26-03 / AI environment gates**
+  - Changed: `/ai/advisory` now distinguishes owner approval/policy, missing credential/model settings, invalid configuration, and provider outage; selection defaults do not imply credentials or approval. External sending remains fail-closed and requires per-request consent. No schema change.
+  - Evidence: handoff `audit/2026-10-01/handoff-QC-ENV26-03.md`; Render environment snapshot remains 0/7 and belongs to a deploy-in-progress, not a verified current runtime. Isolated PostgreSQL ledger validation and live page acceptance status are recorded there.
+  - State: PARTIAL — owner policy decision, candidate-bound completed runtime, isolated ledger proof, and route acceptance remain open.
+
 - **2026-10-01 — QC-ENV26-02 / release identity and runtime evidence**
   - Changed: six identity fields now come from a generated build artifact matched to the running server entry; release approval also requires a fresh clean production runtime identity matching the candidate. Health classifies AI policy/configuration/provider states separately; no DB schema change.
   - Evidence: implementation-local artifact/runtime 6/6 PASS but dirty; missing/mismatched/stale approval identity tests PASS. Render runtime NOT VERIFIED; PostgreSQL 18 isolated ledger rehearsal BLOCKED by missing container runtime. Handoff: `audit/2026-10-01/handoff-QC-ENV26-02.md`.

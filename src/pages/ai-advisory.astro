@@ -12,6 +12,7 @@ const canDraft = actor.permissions.some((grant) => grant.code === 'PERM-AI-DRAFT
 const aiAvailability = aiAdvisoryPageAvailability();
 const configuredProviders = aiAvailability.configuredProviders;
 const processingPolicy = aiAvailability.processingPolicy;
+const canSendExternally = Boolean(configuredProviders && processingPolicy && aiAvailability.externalProcessingApproved);
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
@@ -21,15 +22,30 @@ const processingPolicy = aiAvailability.processingPolicy;
       <section class="notice" role="note" aria-label="Human review path"><strong>Human review path</strong><span>AI output is not entered into a QC record. Verify every statement against the cited controlled source, then take uncertainty, missing sources, or suspected incorrect citations to your Supervisor or QCM (Manager) through the normal authorized review workflow.</span></section>
       <section class="notice privacy-notice" role="note" aria-label="AI data use">
         <strong>About your request</strong>
-        {configuredProviders && processingPolicy ? (
+        <dl>
+          <dt>Provider selection defaults</dt><dd>{aiAvailability.primaryProvider} primary / {aiAvailability.fallbackProvider} fallback. These are routing preferences only.</dd>
+          <dt>Credential presence</dt><dd>{aiAvailability.credentialProviders || 'No complete provider credentials/model settings detected'}{aiAvailability.missingCredentials.length > 0 && `; missing: ${aiAvailability.missingCredentials.join(', ')}`}</dd>
+          <dt>Owner approval and policy</dt><dd>{aiAvailability.approvalFlagGranted ? 'Technical approval flag is true' : 'Owner approval is not granted'}; {aiAvailability.policyValid ? 'complete valid policy is configured' : aiAvailability.policyConfigured ? 'policy source is invalid or incomplete' : 'policy source is missing'}. This flag is not itself owner approval.</dd>
+          <dt>Provider availability</dt><dd>{configuredProviders ? 'Not checked until all policy gates and per-request consent pass.' : 'No policy-authorized provider is configured; no provider request can be sent.'}</dd>
+          <dt>Per-request consent</dt><dd>Required for every request after the processing policy is approved; changing the question or excerpt clears consent.</dd>
+          <dt>Database schema</dt><dd>Checked separately on <a href="/system/health">System health</a>; schema readiness does not enable AI processing.</dd>
+        </dl>
+        {aiAvailability.invalidConfiguration ? (
+          <span>AI configuration is invalid ({aiAvailability.invalidFields.join(', ')}). External sending is disabled. Ask the service owner to correct the named settings; no values or credentials are shown here.</span>
+        ) : !aiAvailability.approvalFlagGranted ? (
+          <span>External processing is disabled pending the authorized owner's processing decision. Provider defaults and credentials do not grant approval. Your question and excerpt will not be sent.</span>
+        ) : !aiAvailability.policyValid ? (
+          <span>The approval flag is present, but a complete valid policy artifact is missing. External sending is disabled until the owner approves provider, data classes, processing location, retention, deletion terms, and consent terms.</span>
+        ) : aiAvailability.missingCredentials.length > 0 && !configuredProviders ? (
+          <span>Provider credentials or model configuration are missing for this policy: {aiAvailability.missingCredentials.join(', ')}. Provider selection defaults do not count as credentials. No request content will be sent. Contact the service owner to configure approved settings.</span>
+        ) : configuredProviders && processingPolicy ? (
           <>
             <span>Provider: {configuredProviders}. Processing location: {processingPolicy.processingLocation}. Retention limit in the approved policy: {processingPolicy.retentionDays} days. Deletion terms: {processingPolicy.deletionTerms}. Policy: {processingPolicy.policyId} v{processingPolicy.version} ({processingPolicy.sourceReference}). Provider training is prohibited by the configured policy.</span>
+            {aiAvailability.missingCredentials.length > 0 && <span>Optional policy-listed provider settings are incomplete: {aiAvailability.missingCredentials.join(', ')}. Configured provider(s) available: {configuredProviders}.</span>}
             <span>Permitted content classes: {processingPolicy.permittedDataClasses.join(', ')}. Never submit personal data, credentials, confidential QC information, actual controlled QC records, or content you are not authorized to share. The system checks common sensitive patterns but cannot classify every excerpt.</span>
           </>
-        ) : aiAvailability.externalProcessingApproved ? (
-          <span>External processing is marked approved, but a complete approved processing-policy source or policy-authorized provider is missing. Your question and excerpt will not be sent. Contact the policy owner.</span>
         ) : (
-          <span>External AI processing is disabled because no complete approved processing-policy source is configured. Provider location, retention, permitted data classes, and consent terms must come from that source. Your question and excerpt will not be sent while this notice appears.</span>
+          <span>No policy-authorized provider is configured. External sending is disabled; the request will not be sent.</span>
         )}
       </section>
       <section class="panel">
@@ -64,7 +80,8 @@ const processingPolicy = aiAvailability.processingPolicy;
               <label class="consent"><input type="checkbox" name="consentToExternalProcessing" value="true" required /> I consent (version {processingPolicy.consentVersion}) to send this question and any excerpt to {configuredProviders} under policy {processingPolicy.policyId} v{processingPolicy.version}, processed in {processingPolicy.processingLocation} and retained for up to {processingPolicy.retentionDays} days.</label>
             </>
           )}
-          <div class="actions"><button type="submit">Request advisory</button></div>
+          <div class="actions"><button type="submit" disabled={!canSendExternally}>Request advisory</button></div>
+          {!canSendExternally && <p class="muted">Requests are unavailable until configuration and owner-approved policy are complete. Per-request consent is still required after that.</p>}
           <p role="status" data-result aria-live="polite"></p>
         </form>
       </section>
@@ -184,7 +201,7 @@ const processingPolicy = aiAvailability.processingPolicy;
           reviewGuidanceEl.textContent = response.data.status === 'REFUSED'
             ? 'Reason for abstention: the request lacked a usable controlled source, contained sensitive material, or the answer included an unsafe claim or citation. Verify the source and ask your Supervisor or QCM (Manager) to review through the normal authorized workflow.'
             : response.data.status === 'UNAVAILABLE'
-              ? 'Reason: no usable advisory provider response. Continue with the normal human review workflow.'
+              ? 'Provider unavailable: no advisory was produced and no fallback response is available. Retry later or continue with the normal human review workflow.'
               : 'Review before use: compare the response and its source details with the controlled record. Ask your Supervisor or QCM (Manager) when uncertain.';
           reviewGuidanceEl.hidden = false;
         }

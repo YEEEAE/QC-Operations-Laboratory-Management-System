@@ -77,6 +77,7 @@ export interface AiConfiguration {
   externalProcessingApproved: boolean;
   primaryProvider: 'groq' | 'gemini';
   fallbackProvider: 'groq' | 'gemini';
+  credentialPresence: Record<'groq' | 'gemini', { apiKey: boolean; model: boolean }>;
   providers: Partial<Record<'groq' | 'gemini', AiProviderConfig>>;
   invalidFields: readonly string[];
   processingPolicy?: AiProcessingPolicy;
@@ -84,6 +85,17 @@ export interface AiConfiguration {
 
 const value = (input: Record<string, string | undefined>, canonical: string, legacy: string) =>
   input[canonical]?.trim() || input[legacy]?.trim();
+
+const credentialPresence = (input: Record<string, string | undefined>) => ({
+  groq: {
+    apiKey: Boolean(value(input, ENV_KEYS.groqApiKey, 'API_groq_Key')),
+    model: Boolean(value(input, ENV_KEYS.groqModel, 'groq_model')),
+  },
+  gemini: {
+    apiKey: Boolean(value(input, ENV_KEYS.geminiApiKey, 'API_gemini_Key')),
+    model: Boolean(value(input, ENV_KEYS.geminiModel, 'gemini_model')),
+  },
+});
 
 const defaultGroqBaseUrl = groqEndpoint;
 const defaultGeminiBaseUrl = geminiEndpoint;
@@ -112,6 +124,7 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
       externalProcessingApproved: false,
       primaryProvider: 'groq',
       fallbackProvider: 'gemini',
+      credentialPresence: credentialPresence(input),
       providers: {},
       invalidFields,
     };
@@ -161,6 +174,7 @@ export function parseAiConfiguration(input: Record<string, string | undefined>):
       data.externalProcessingApproved === 'true' && Boolean(processingPolicy),
     primaryProvider: data.primaryProvider,
     fallbackProvider: data.fallbackProvider,
+    credentialPresence: credentialPresence(input),
     providers,
     invalidFields: [],
     ...(processingPolicy ? { processingPolicy } : {}),

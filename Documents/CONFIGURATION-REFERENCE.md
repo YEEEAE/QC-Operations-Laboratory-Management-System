@@ -74,6 +74,14 @@ release identity or approval by itself.
 
 ## AI advisory providers (fail-closed, default off)
 
+Provider-selection defaults (`groq` and `gemini`) are routing preferences only;
+they do not indicate that credentials exist, that a provider is reachable, or
+that processing is approved. Missing key/model settings, invalid settings,
+owner approval, the complete policy artifact, provider availability, and
+per-request consent are separate gates. The request path must remain closed
+when any required gate is absent. Health reports database schema readiness
+separately from AI provider availability.
+
 | Variable | Type | Approved default | Change impact |
 | --- | --- | --- | --- |
 | `AI_EXTERNAL_PROCESSING_APPROVED` | `true` / `false` | `false` | Technical gate only — not evidence of approval. When `false` or any provider field is invalid, the `DisabledAiProvider` is used and no external call is possible. |
