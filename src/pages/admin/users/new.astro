@@ -8,10 +8,17 @@ import { uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const canCreate = canAccessAdminRoute(actor, 'usersNew');
+const hasGlobalGrant = (permission: (typeof actor.permissions)[number]['code']) =>
+  actor.accountState === 'ACTIVE' &&
+  actor.permissions.some(
+    (grant) => grant.code === permission && grant.active !== false && grant.scopes.includes('GLOBAL'),
+  );
+const canCreate = canAccessAdminRoute(actor, 'usersNew') && hasGlobalGrant('PERM-IDN-MANAGE-USERS');
+const canAssignRoles = canCreate && hasGlobalGrant('PERM-ADM-ROLE-ASSIGN');
+const canAssignScopes = canCreate && hasGlobalGrant('PERM-ADM-SCOPE-ASSIGN');
 let roles: Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>> = [];
 let optionsError = false;
-if (canCreate) {
+if (canAssignRoles) {
   try {
     roles = [...(await administrationDependencies().listRoles.execute({ actor }))].filter((role) => role.active);
   } catch (error) {
@@ -51,38 +58,52 @@ if (canCreate) {
           Temporary password<span aria-hidden="true"> *</span>
           <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" />
         </label>
-        <fieldset>
-          <legend>Roles</legend>
-          {roles.map((role) => (
-            <label class="check"><input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})</label>
-          ))}
-          {optionsError && <p class="note" role="alert">Role options are unavailable. Reload this page before selecting roles.</p>}
-        </fieldset>
-        <fieldset>
-          <legend>Initial scopes</legend>
-          <p class="note">
-            Scopes are optional. Kinds that name a collection require a value; GLOBAL is a
-            whole-system grant and takes none.
-          </p>
-          {SCOPE_KINDS.map((kind) => (
-            <div class="scope-row">
-              <label class="check">
-                <input type="checkbox" name="scopeKind" value={kind} />
-                {uxVocabulary.scopeKindLabels[kind] ?? kind}
-              </label>
-              {scopeRequiresValue(kind) ? (
-                <input
-                  name={`scopeValue-${kind}`}
-                  maxlength="200"
-                  placeholder={`${uxVocabulary.scopeKindLabels[kind] ?? kind} value`}
-                  aria-label={`${uxVocabulary.scopeKindLabels[kind] ?? kind} scope value`}
-                />
-              ) : (
-                <span class="note">No value</span>
-              )}
-            </div>
-          ))}
-        </fieldset>
+        {canAssignRoles ? (
+          <fieldset>
+            <legend>Initial roles (optional)</legend>
+            {roles.map((role) => (
+              <label class="check"><input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})</label>
+            ))}
+            {optionsError ? (
+              <p class="note" role="alert">Role options are unavailable. You can create this member without roles, or reload later and ask an authorized administrator to check role availability.</p>
+            ) : roles.length === 0 ? (
+              <p class="note">No active roles are available. You can create this member without roles, or ask an authorized administrator to make a role available.</p>
+            ) : null}
+          </fieldset>
+        ) : (
+          <p class="note">You can create the member without roles. Initial role assignment requires a separate role-assignment permission; an authorized administrator can add roles later.</p>
+        )}
+        {canAssignScopes ? (
+          <fieldset>
+            <legend>Initial scopes (optional)</legend>
+            <p class="note" id="scope-instructions">
+              Kinds that name a collection require a value; GLOBAL is a whole-system grant and takes none.
+            </p>
+            {SCOPE_KINDS.map((kind) => (
+              <div class="scope-row">
+                <label class="check">
+                  <input type="checkbox" name="scopeKind" value={kind} aria-describedby="scope-instructions" />
+                  {uxVocabulary.scopeKindLabels[kind] ?? kind}
+                </label>
+                {scopeRequiresValue(kind) ? (
+                  <label class="scope-value">
+                    <span>{uxVocabulary.scopeKindLabels[kind] ?? kind} value</span>
+                    <input
+                      name={`scopeValue-${kind}`}
+                      maxlength="200"
+                      placeholder="Enter a value"
+                      aria-describedby="scope-instructions"
+                    />
+                  </label>
+                ) : (
+                  <span class="note">No value</span>
+                )}
+              </div>
+            ))}
+          </fieldset>
+        ) : (
+          <p class="note">You can create the member without scopes. Initial scope assignment requires a separate scope-assignment permission; an authorized administrator can add scopes later.</p>
+        )}
         <div class="actions">
           <button type="submit" data-submit>Create user</button>
           <a href="/admin/users">Cancel</a>
@@ -94,7 +115,7 @@ if (canCreate) {
         <h2>User creation is not available</h2>
         <p>
           Creating members requires the explicit user-management permission. Role membership
-          alone does not authorize this action.
+          alone does not authorize this action. Ask an administrator to review your user-management access.
         </p>
       </section>
     )
@@ -121,10 +142,11 @@ if (canCreate) {
       form,
       progressText: 'Creating user…',
       copy: {
-        VALIDATION_ERROR: 'The user was not created. Review the highlighted fields and try again.',
+        VALIDATION_ERROR: 'The user was not created. Review required fields; every selected scope needs a value. Your entries are preserved.',
         CONFLICT_STALE: 'A member with the same login identity may already exist. Change the identity or check the list before trying again. Your other entries are preserved.',
-        AUTHORIZATION_CHANGED: 'Your authorization changed. Creating members needs the explicit user-management permission. Your entries are preserved.',
-        DEPENDENCY_UNAVAILABLE: 'A referenced record could not be found. Verify the entries and try again. Your entries are preserved.',
+        AUTHORIZATION_CHANGED: 'Your current permissions do not allow all requested account and initial-grant changes. Nothing was saved. Check the requested roles and scopes, or ask an administrator to confirm the needed permissions. Your entries are preserved.',
+        DEPENDENCY_UNAVAILABLE: 'A referenced role or scope could not be found. Confirm the requested entry still exists and is active, then ask an authorized administrator if needed. Your entries are preserved.',
+        PROVIDER_UNAVAILABLE: 'The user service is unavailable. The save result may be unconfirmed; check the user register before retrying. Your entries are preserved.',
         UNKNOWN_SAFE_ERROR: 'User creation is unconfirmed. Check the user register before deciding whether to try again. Your entries are preserved.',
       },
       invoke: (data) => {
@@ -231,6 +253,10 @@ if (canCreate) {
     gap: var(--space-3);
     align-items: center;
   }
+  .scope-value {
+    display: grid;
+    gap: 0.4rem;
+  }
   .check {
     display: flex;
     gap: 0.5rem;
@@ -261,6 +287,9 @@ if (canCreate) {
   @media (max-width: 600px) {
     .page-head {
       display: grid;
+    }
+    .scope-row {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 </style>

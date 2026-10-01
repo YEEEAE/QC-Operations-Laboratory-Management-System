@@ -50,7 +50,10 @@ class MemoryUsers implements UserRepository {
     const start = (filter.page - 1) * filter.pageSize;
     const items = matches
       .slice(start, start + filter.pageSize)
-      .map(({ passwordHash: _hash, ...entry }) => entry);
+      .map(({ passwordHash: _hash, ...entry }) => {
+        void _hash;
+        return entry;
+      });
     return {
       items,
       total: matches.length,
@@ -59,6 +62,12 @@ class MemoryUsers implements UserRepository {
     };
   };
   recordSuccessfulLogin = async () => {};
+  createProvisioned: NonNullable<UserRepository['createProvisioned']> = async (input) =>
+    this.create({
+      ...input,
+      accountState: 'ACTIVE',
+      mustChangePassword: true,
+    });
   create = async (input: {
     id: string;
     loginIdentity: string;
@@ -149,6 +158,8 @@ const actor = (permissions: ActorContext['permissions'], id = 'actor-1'): ActorC
 });
 
 const manageUsers = { code: 'PERM-IDN-MANAGE-USERS' as const, scopes: ['GLOBAL'] as const };
+const assignRoles = { code: 'PERM-ADM-ROLE-ASSIGN' as const, scopes: ['GLOBAL'] as const };
+const assignScopes = { code: 'PERM-ADM-SCOPE-ASSIGN' as const, scopes: ['GLOBAL'] as const };
 const deactivate = { code: 'PERM-IDN-DEACTIVATE' as const, scopes: ['GLOBAL'] as const };
 const reset = { code: 'PERM-IDN-RESET-PASSWORD' as const, scopes: ['GLOBAL'] as const };
 
@@ -242,6 +253,105 @@ describe('identity administration use cases', () => {
         requestId: 'req-2',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+  });
+
+  it('lets a manager with only global MANAGE create an account without initial grants', async () => {
+    const users = new MemoryUsers();
+    const created = await new CreateUserUseCase(users, hasher).execute({
+      actor: { ...actor([manageUsers]), roles: ['MANAGER'] },
+      loginIdentity: 'manager-created-member',
+      displayName: 'Manager Created Member',
+      temporaryPassword: 'temp-1',
+      requestId: 'manager-create-1',
+      roleCodes: [],
+      scopes: [],
+    });
+
+    expect(created.accountState).toBe('ACTIVE');
+    expect(created.mustChangePassword).toBe(true);
+    expect(users.store.has(created.id)).toBe(true);
+  });
+
+  it('denies initial role and scope grants without each assignment permission before hashing or writes', async () => {
+    const users = new MemoryUsers();
+    const create = vi.spyOn(users, 'create');
+    const createProvisioned = vi.spyOn(users, 'createProvisioned');
+    const hash = vi.fn(async (value: string) => `hash:${value}`);
+    const recorder = audit();
+    const useCase = new CreateUserUseCase(users, { hash, verify: hasher.verify }, recorder);
+
+    await expect(
+      useCase.execute({
+        actor: { ...actor([manageUsers]), roles: ['MANAGER'] },
+        loginIdentity: 'denied-provisioned-member',
+        displayName: 'Denied Member',
+        temporaryPassword: 'temp-1',
+        roleCodes: ['CC_MEMBER'],
+        scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+        requestId: 'manager-provision-denied-1',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+
+    expect(hash).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+    expect(createProvisioned).not.toHaveBeenCalled();
+    expect(users.store.size).toBe(0);
+    expect(recorder.record).not.toHaveBeenCalled();
+
+    await expect(
+      useCase.execute({
+        actor: { ...actor([manageUsers, assignRoles]), roles: ['MANAGER'] },
+        loginIdentity: 'denied-scope-member',
+        displayName: 'Denied Scope Member',
+        temporaryPassword: 'temp-2',
+        scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+        requestId: 'manager-scope-denied-1',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    expect(users.store.size).toBe(0);
+  });
+
+  it('provisions only the requested grants when MANAGE and matching assignment permissions exist', async () => {
+    const users = new MemoryUsers();
+    const createProvisioned = vi.spyOn(users, 'createProvisioned');
+    const created = await new CreateUserUseCase(users, hasher).execute({
+      actor: { ...actor([manageUsers, assignRoles, assignScopes]), roles: ['MANAGER'] },
+      loginIdentity: 'manager-authorized-member',
+      displayName: 'Manager Authorized Member',
+      temporaryPassword: 'temp-1',
+      roleCodes: ['CC_MEMBER'],
+      scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+      requestId: 'manager-provision-allowed-1',
+    });
+
+    expect(created.accountState).toBe('ACTIVE');
+    expect(created.mustChangePassword).toBe(true);
+    expect(createProvisioned).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roleCodes: ['CC_MEMBER'],
+        scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+      }),
+    );
+  });
+
+  it('requires global scope on the explicit initial role-assignment grant', async () => {
+    const users = new MemoryUsers();
+    const hash = vi.fn(async (value: string) => `hash:${value}`);
+    const useCase = new CreateUserUseCase(users, { hash, verify: hasher.verify });
+
+    await expect(
+      useCase.execute({
+        actor: actor([manageUsers, { code: 'PERM-ADM-ROLE-ASSIGN', scopes: ['TEAM'] }]),
+        loginIdentity: 'out-of-scope-provision',
+        displayName: 'Out of Scope Member',
+        temporaryPassword: 'temp-1',
+        roleCodes: ['CC_MEMBER'],
+        requestId: 'scope-denied-provision-1',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_SCOPE_DENIED' });
+
+    expect(hash).not.toHaveBeenCalled();
+    expect(users.store.size).toBe(0);
   });
 
   it('rejects stale profile updates before mutation', async () => {

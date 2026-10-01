@@ -142,6 +142,9 @@ describe('error and empty-state copy hygiene', () => {
         /something went wrong|unexpected error|an error occurred/,
       );
     }
+    const createUser = read('src/pages/admin/users/new.astro');
+    expect(createUser).toContain('DEPENDENCY_UNAVAILABLE:');
+    expect(createUser).toContain('PROVIDER_UNAVAILABLE:');
   });
 
   it('admin user creation labels scope kinds in human words', () => {

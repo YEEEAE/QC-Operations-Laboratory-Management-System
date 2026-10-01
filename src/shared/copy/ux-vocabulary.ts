@@ -54,7 +54,8 @@ export const uxVocabulary = {
   },
   errors: {
     reviewFields: 'Review the highlighted fields.',
-    noControlledAction: 'The action result is unconfirmed. Review the record and its history before deciding whether to try again.',
+    noControlledAction:
+      'The action result is unconfirmed. Review the record and its history before deciding whether to try again.',
     serviceUnavailable:
       'The service did not confirm the result. Refresh the record and its history before deciding whether to try again.',
     authorizationChanged:
@@ -68,14 +69,15 @@ export const uxVocabulary = {
    * outage — never one generic "something failed".
    */
   errorClasses: {
-    VALIDATION_ERROR:
-      'Review the highlighted fields and try again. Your entries are preserved.',
+    VALIDATION_ERROR: 'Review the highlighted fields and try again. Your entries are preserved.',
     AUTHORIZATION_CHANGED:
       'This action is unavailable. Refresh the page to check your access. Your entries are preserved.',
     CONFLICT_STALE:
       'This record changed after you opened it. Reload it before trying again. Nothing was resubmitted.',
     DEPENDENCY_UNAVAILABLE:
       'A linked record is unavailable. Refresh the page to check current options. Your entries are preserved.',
+    PROVIDER_UNAVAILABLE:
+      'The service is unavailable. The result may be unconfirmed. Review the record before retrying. Your entries are preserved.',
     DUPLICATE_COMMAND:
       'This action was already applied. Reload the record to see the current state — nothing was duplicated.',
     UNKNOWN_SAFE_ERROR:

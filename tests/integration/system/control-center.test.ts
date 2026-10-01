@@ -34,6 +34,7 @@ import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
 const OWNER_ID = '01900000-0000-7000-8000-00000000d001';
 const ADMIN_ID = '01900000-0000-7000-8000-00000000d002';
+const MANAGER_ID = '01900000-0000-7000-8000-00000000d003';
 
 let pool: ReturnType<typeof createPool> | undefined;
 let readerPool: ReturnType<typeof createPool> | undefined;
@@ -73,12 +74,14 @@ beforeAll(async () => {
   await pool.query(
     `INSERT INTO qc.users (id, login_identity, display_name, password_hash)
      VALUES ($1, 'yazeed', 'Yazeed', 'hash:owner'),
-            ($2, 'cc-admin', 'Control Center Admin', 'hash:admin')`,
-    [OWNER_ID, ADMIN_ID],
+            ($2, 'cc-admin', 'Control Center Admin', 'hash:admin'),
+            ($3, 'cc-manager', 'Control Center Manager', 'hash:manager')`,
+    [OWNER_ID, ADMIN_ID, MANAGER_ID],
   );
   await pool.query(
     `INSERT INTO qc.roles (code, name, is_system_role) VALUES
        ('SYSTEM_OWNER', 'System owner', true),
+       ('MANAGER', 'Manager', true),
        ('CC_MEMBER', 'Control center member role', false)`,
   );
   const ownerRole = await pool.query(`SELECT id FROM qc.roles WHERE code = 'SYSTEM_OWNER'`);
@@ -89,6 +92,15 @@ beforeAll(async () => {
   await pool.query(
     `INSERT INTO qc.user_scopes (user_id, scope_kind, assigned_by) VALUES ($1, 'GLOBAL', $1)`,
     [OWNER_ID],
+  );
+  const managerRole = await pool.query(`SELECT id FROM qc.roles WHERE code = 'MANAGER'`);
+  await pool.query(
+    `INSERT INTO qc.user_roles (user_id, role_id, assigned_by) VALUES ($1, $2, $1)`,
+    [MANAGER_ID, managerRole.rows[0].id],
+  );
+  await pool.query(
+    `INSERT INTO qc.user_scopes (user_id, scope_kind, assigned_by) VALUES ($1, 'GLOBAL', $1)`,
+    [MANAGER_ID],
   );
 });
 
@@ -276,6 +288,237 @@ describe('owner control center PostgreSQL contracts', () => {
     expect((await authorization.listUserRoles(created.id)).map((role) => role.code)).not.toContain(
       'CC_MEMBER',
     );
+  });
+
+  it('denies a manager initial grants without leaving user, grant, or audit rows', async () => {
+    const users = new PostgresUserRepository(db);
+    const audit = new AuditService(new PostgresAuditRepository(db));
+    const manager: ActorContext = {
+      id: MANAGER_ID,
+      loginIdentity: 'cc-manager',
+      accountState: 'ACTIVE',
+      roles: ['MANAGER'],
+      permissions: [{ code: 'PERM-IDN-MANAGE-USERS', scopes: ['GLOBAL'] }],
+    };
+    const useCase = new CreateUserUseCase(users, new Argon2idPasswordHasher(), audit);
+
+    // Positive control for account creation under MANAGE alone.
+    await useCase.execute({
+      actor: manager,
+      loginIdentity: 'cc-manager-control',
+      displayName: 'Manager Control Member',
+      temporaryPassword: 'temporary-pass-control',
+      requestId: 'cc-manager-control-1',
+      roleCodes: [],
+      scopes: [],
+    });
+    expect(await users.findByLoginIdentity('cc-manager-control')).toBeDefined();
+    expect(
+      await db
+        .selectFrom('audit_events')
+        .select('action')
+        .where('request_id', '=', 'cc-manager-control-1')
+        .execute(),
+    ).toEqual([{ action: 'CREATE_USER_PROVISIONED' }]);
+
+    const before = await Promise.all([
+      db
+        .selectFrom('users')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('user_roles')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('user_scopes')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('audit_events')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('outbox_events')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+    ]);
+    const requestId = 'cc-manager-provision-denied-1';
+    await expect(
+      useCase.execute({
+        actor: manager,
+        loginIdentity: 'cc-manager-provision-denied',
+        displayName: 'Denied Manager Member',
+        temporaryPassword: 'temporary-pass-denied',
+        roleCodes: ['CC_MEMBER'],
+        scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+        requestId,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    const after = await Promise.all([
+      db
+        .selectFrom('users')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('user_roles')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('user_scopes')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('audit_events')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+      db
+        .selectFrom('outbox_events')
+        .select((eb) => eb.fn.countAll().as('count'))
+        .executeTakeFirstOrThrow(),
+    ]);
+    expect(after).toEqual(before);
+    expect(await users.findByLoginIdentity('cc-manager-provision-denied')).toBeUndefined();
+    expect(
+      await db
+        .selectFrom('audit_events')
+        .select('id')
+        .where('request_id', '=', requestId)
+        .execute(),
+    ).toHaveLength(0);
+  });
+
+  it('serializes concurrent duplicate initial provisions to one account and one audit', async () => {
+    const users = new PostgresUserRepository(db);
+    const audit = new AuditService(new PostgresAuditRepository(db));
+    const actor: ActorContext = {
+      ...ownerActor(),
+      permissions: [
+        { code: 'PERM-IDN-MANAGE-USERS', scopes: ['GLOBAL'] },
+        { code: 'PERM-ADM-ROLE-ASSIGN', scopes: ['GLOBAL'] },
+        { code: 'PERM-ADM-SCOPE-ASSIGN', scopes: ['GLOBAL'] },
+      ],
+    };
+    const useCase = new CreateUserUseCase(users, new Argon2idPasswordHasher(), audit);
+    const input = {
+      actor,
+      loginIdentity: 'cc-concurrent-provision',
+      displayName: 'Concurrent Member',
+      temporaryPassword: 'temporary-pass-concurrent',
+      roleCodes: ['CC_MEMBER'],
+      scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+    };
+    const results = await Promise.allSettled([
+      useCase.execute({ ...input, requestId: 'cc-concurrent-provision-1' }),
+      useCase.execute({ ...input, requestId: 'cc-concurrent-provision-2' }),
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+
+    // A client retry after an ambiguous response is not a second provision;
+    // unique login remains the dedupe boundary even though requestId is not an
+    // idempotency key.
+    const replay = await Promise.allSettled([
+      useCase.execute({ ...input, requestId: 'cc-concurrent-provision-replay' }),
+    ]);
+    expect(replay[0]?.status).toBe('rejected');
+
+    const member = await users.findByLoginIdentity(input.loginIdentity);
+    expect(member).toBeDefined();
+    expect(
+      await db.selectFrom('user_roles').select('id').where('user_id', '=', member!.id).execute(),
+    ).toHaveLength(1);
+    expect(
+      await db.selectFrom('user_scopes').select('id').where('user_id', '=', member!.id).execute(),
+    ).toHaveLength(1);
+    expect(
+      await db
+        .selectFrom('audit_events')
+        .select('id')
+        .where('subject_id', '=', member!.id)
+        .where('action', '=', 'CREATE_USER_PROVISIONED')
+        .execute(),
+    ).toHaveLength(1);
+    expect(
+      await db
+        .selectFrom('outbox_events')
+        .select('id')
+        .where('aggregate_id', '=', member!.id)
+        .execute(),
+    ).toHaveLength(0);
+  });
+
+  it('rolls back the user and both grants when provisioning audit persistence fails', async () => {
+    const users = new PostgresUserRepository(db);
+    const audit = new AuditService(new PostgresAuditRepository(db));
+    const actor: ActorContext = {
+      ...ownerActor(),
+      permissions: [
+        { code: 'PERM-IDN-MANAGE-USERS', scopes: ['GLOBAL'] },
+        { code: 'PERM-ADM-ROLE-ASSIGN', scopes: ['GLOBAL'] },
+        { code: 'PERM-ADM-SCOPE-ASSIGN', scopes: ['GLOBAL'] },
+      ],
+    };
+    const useCase = new CreateUserUseCase(users, new Argon2idPasswordHasher(), audit);
+    await pool!.query(`
+      CREATE OR REPLACE FUNCTION qc.reject_provision_audit() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.action = 'CREATE_USER_PROVISIONED' THEN
+          RAISE EXCEPTION 'injected provisioning audit failure';
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+      CREATE TRIGGER reject_provision_audit
+      BEFORE INSERT ON qc.audit_events
+      FOR EACH ROW EXECUTE FUNCTION qc.reject_provision_audit();
+    `);
+    try {
+      const before = await Promise.all([
+        db
+          .selectFrom('users')
+          .select((eb) => eb.fn.countAll().as('count'))
+          .executeTakeFirstOrThrow(),
+        db
+          .selectFrom('user_roles')
+          .select((eb) => eb.fn.countAll().as('count'))
+          .executeTakeFirstOrThrow(),
+        db
+          .selectFrom('user_scopes')
+          .select((eb) => eb.fn.countAll().as('count'))
+          .executeTakeFirstOrThrow(),
+      ]);
+      await expect(
+        useCase.execute({
+          actor,
+          loginIdentity: 'cc-audit-failure-provision',
+          displayName: 'Audit Failure Member',
+          temporaryPassword: 'temporary-pass-audit-failure',
+          roleCodes: ['CC_MEMBER'],
+          scopes: [{ kind: 'TEAM', value: 'qc-lab' }],
+          requestId: 'cc-audit-failure-provision-1',
+        }),
+      ).rejects.toBeDefined();
+      const after = await Promise.all([
+        db
+          .selectFrom('users')
+          .select((eb) => eb.fn.countAll().as('count'))
+          .executeTakeFirstOrThrow(),
+        db
+          .selectFrom('user_roles')
+          .select((eb) => eb.fn.countAll().as('count'))
+          .executeTakeFirstOrThrow(),
+        db
+          .selectFrom('user_scopes')
+          .select((eb) => eb.fn.countAll().as('count'))
+          .executeTakeFirstOrThrow(),
+      ]);
+      expect(after).toEqual(before);
+      expect(await users.findByLoginIdentity('cc-audit-failure-provision')).toBeUndefined();
+    } finally {
+      await pool!.query('DROP TRIGGER IF EXISTS reject_provision_audit ON qc.audit_events');
+      await pool!.query('DROP FUNCTION IF EXISTS qc.reject_provision_audit()');
+    }
   });
 
   it('preserves the protected canonical owner grants against crafted removal', async () => {

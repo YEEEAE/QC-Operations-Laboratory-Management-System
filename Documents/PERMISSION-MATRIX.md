@@ -571,6 +571,34 @@ Matrix:
 Audit required
 ```
 
+### Initial user provisioning boundary
+
+`PERM-IDN-MANAGE-USERS` authorizes creating the account itself. It does not
+implicitly authorize grants that happen to be submitted in the same form:
+
+- A non-empty initial role list also requires `PERM-ADM-ROLE-ASSIGN`.
+- A non-empty initial scope list also requires `PERM-ADM-SCOPE-ASSIGN`.
+- Each permission is checked as an active, explicit grant with the scope
+  required by its registered policy. Missing assignment authority denies the
+  entire create before password hashing or persistence; the account and its
+  grants are never partially created.
+- Creating an account without initial roles or scopes requires only
+  `PERM-IDN-MANAGE-USERS`. Initial provisioning follows the same authority
+  boundary as later role/scope assignment, while PostgreSQL persists an
+  authorized provisioned account, its selected grants, and its audit event in
+  one transaction.
+
+This applies the separate user-management and role/scope-assignment entries
+above; it adds no permissions and does not infer authority from a role label.
+
+**Role-to-permission reconciliation remains open:** §28 currently marks
+`PERM-IDN-MANAGE-USERS` DENY for Manager and Admin, while
+`db/seeds/common.ts` grants that permission plus role/scope assignment to the
+Admin seed and grants none of these to Manager. The implementation continues
+to trust active explicit grants only; this task does not change role bundles.
+The identity/RBAC policy owner must reconcile the approved role mapping before
+a Manager persona can be accepted as a real user-management actor.
+
 ---
 
 # 30. Tasks Permissions

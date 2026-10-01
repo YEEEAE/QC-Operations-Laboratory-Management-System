@@ -57,7 +57,7 @@ describe('admin action error contract', () => {
       ['CONFLICT_DUPLICATE_COMMAND', 'DUPLICATE_COMMAND'],
       ['RESOURCE_ALREADY_EXISTS', 'DUPLICATE_COMMAND'],
       ['RESOURCE_NOT_FOUND', 'DEPENDENCY_UNAVAILABLE'],
-      ['SYSTEM_DATABASE_UNAVAILABLE', 'DEPENDENCY_UNAVAILABLE'],
+      ['SYSTEM_DATABASE_UNAVAILABLE', 'PROVIDER_UNAVAILABLE'],
       ['SYSTEM_INTERNAL', 'UNKNOWN_SAFE_ERROR'],
     ];
     for (const [code, state] of cases) {
@@ -104,6 +104,7 @@ describe('admin failure copy', () => {
       'AUTHORIZATION_CHANGED',
       'VALIDATION_ERROR',
       'DEPENDENCY_UNAVAILABLE',
+      'PROVIDER_UNAVAILABLE',
       'UNKNOWN_SAFE_ERROR',
     ] as const) {
       const message = adminFailureMessage(state, context);
@@ -115,6 +116,7 @@ describe('admin failure copy', () => {
     expect(adminFailureMessage('AUTHORIZATION_CHANGED', context)).not.toBe(
       adminFailureMessage('VALIDATION_ERROR', context),
     );
+    expect(adminFailureMessage('PROVIDER_UNAVAILABLE', context)).toMatch(/service is unavailable/i);
   });
 
   it('never leaks an authorization message for a stale conflict', () => {

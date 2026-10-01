@@ -42,12 +42,45 @@ export class CreateUserUseCase {
     const roleCodes = input.roleCodes ?? [];
     const scopes = input.scopes ?? [];
     const provisioned = Boolean(input.roleCodes || input.scopes);
+    const id = uuidv7();
+    // Creating the account does not implicitly grant authority to assign its
+    // roles or scopes. Initial grants follow the same explicit permissions as
+    // the incremental administration actions, while the repository keeps the
+    // whole provisioned create atomic.
+    for (const roleCode of roleCodes)
+      authorize(
+        {
+          actor: input.actor,
+          permission: 'PERM-ADM-ROLE-ASSIGN',
+          action: 'ASSIGN',
+          entity: { type: 'ROLE', id: roleCode, state: 'ACTIVE' },
+          scope: {},
+          currentVersion: 1,
+          expectedVersion: 1,
+          businessCondition: true,
+        },
+        { throwOnDeny: true },
+      );
+    if (scopes.length > 0)
+      authorize(
+        {
+          actor: input.actor,
+          permission: 'PERM-ADM-SCOPE-ASSIGN',
+          action: 'ASSIGN',
+          entity: { type: 'USER', id, state: 'ACTIVE' },
+          scope: {},
+          currentVersion: 1,
+          expectedVersion: 1,
+          businessCondition: id !== input.actor.id,
+        },
+        { throwOnDeny: true },
+      );
     const hashedPassword = await this.passwords.hash(input.temporaryPassword);
     const user =
       input.roleCodes || input.scopes
         ? this.users.createProvisioned
           ? await this.users.createProvisioned({
-              id: uuidv7(),
+              id,
               loginIdentity: input.loginIdentity,
               email: input.email,
               displayName: input.displayName,
@@ -62,7 +95,7 @@ export class CreateUserUseCase {
               throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
             })()
         : await this.users.create({
-            id: uuidv7(),
+            id,
             loginIdentity: input.loginIdentity,
             email: input.email,
             displayName: input.displayName,

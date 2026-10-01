@@ -105,7 +105,7 @@ export function enhanceClassifiedForm<TData>(
       if (output) {
         const classKey = outcome.state as Exclude<MutationState, 'IDLE' | 'SUBMITTING' | 'SUCCESS'>;
         output.textContent = copy.errorClasses[classKey] ?? copy.errorClasses.UNKNOWN_SAFE_ERROR;
-        if (outcome.state === 'UNKNOWN_SAFE_ERROR') {
+        if (outcome.state === 'UNKNOWN_SAFE_ERROR' || outcome.state === 'PROVIDER_UNAVAILABLE') {
           const link = document.createElement('a');
           link.href = config.unknownRecoveryHref ?? config.detailBaseHref;
           link.textContent = 'Review the record before retrying';

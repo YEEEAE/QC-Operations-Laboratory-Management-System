@@ -15,6 +15,7 @@ export type MutationState =
   | 'DUPLICATE_COMMAND'
   | 'AUTHORIZATION_CHANGED'
   | 'DEPENDENCY_UNAVAILABLE'
+  | 'PROVIDER_UNAVAILABLE'
   | 'UNKNOWN_SAFE_ERROR';
 
 export interface MutationOutcome {
@@ -70,7 +71,7 @@ const EXACT_CODE_STATE: Readonly<Record<string, MutationState>> = {
   CONFLICT_DUPLICATE_COMMAND: 'DUPLICATE_COMMAND',
   RESOURCE_ALREADY_EXISTS: 'DUPLICATE_COMMAND',
   RESOURCE_NOT_FOUND: 'DEPENDENCY_UNAVAILABLE',
-  SYSTEM_DATABASE_UNAVAILABLE: 'UNKNOWN_SAFE_ERROR',
+  SYSTEM_DATABASE_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',
   SYSTEM_CONFIGURATION_INVALID: 'UNKNOWN_SAFE_ERROR',
   SYSTEM_INTERNAL: 'UNKNOWN_SAFE_ERROR',
 };
@@ -111,6 +112,8 @@ export interface FailureCopy {
   UNKNOWN_SAFE_ERROR: string;
   /** Optional; falls back to the stale/conflict wording when omitted. */
   DUPLICATE_COMMAND?: string;
+  /** Optional; safely falls back to unknown-result recovery when omitted. */
+  PROVIDER_UNAVAILABLE?: string;
 }
 
 export type MutationCopy = FailureCopy;
@@ -146,7 +149,11 @@ export function enhanceMutationForm<TData>(options: EnhanceOptions<TData>): void
       }
       if (output) {
         const failureState = outcome.state as keyof FailureCopy;
-        output.textContent = copy[failureState] ?? copy.CONFLICT_STALE;
+        output.textContent =
+          copy[failureState] ??
+          (outcome.state === 'PROVIDER_UNAVAILABLE'
+            ? copy.UNKNOWN_SAFE_ERROR
+            : copy.CONFLICT_STALE);
         if (outcome.state === 'VALIDATION_ERROR') {
           const firstInvalid = form.querySelector<HTMLElement>(
             'input:invalid, select:invalid, textarea:invalid, [aria-invalid="true"]',

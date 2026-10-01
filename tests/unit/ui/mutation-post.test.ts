@@ -235,7 +235,7 @@ describe('shared async mutation interaction contract (ui-ux-pro-max)', () => {
     'utf8',
   );
 
-  it('exposes the eight canonical states without weakening server controls', () => {
+  it('exposes the nine canonical states without weakening server controls', () => {
     for (const state of [
       'IDLE',
       'SUBMITTING',
@@ -244,6 +244,7 @@ describe('shared async mutation interaction contract (ui-ux-pro-max)', () => {
       'CONFLICT_STALE',
       'AUTHORIZATION_CHANGED',
       'DEPENDENCY_UNAVAILABLE',
+      'PROVIDER_UNAVAILABLE',
       'UNKNOWN_SAFE_ERROR',
     ]) {
       expect(contract).toContain(state);
@@ -284,9 +285,9 @@ describe('shared async mutation interaction contract (ui-ux-pro-max)', () => {
     expect(classifyActionResult({ error: { message: 'errors.resource_not_found' } }).state).toBe(
       'DEPENDENCY_UNAVAILABLE',
     );
-    expect(classifyActionResult({ error: { message: 'errors.system_database_unavailable' } }).state).toBe(
-      'UNKNOWN_SAFE_ERROR',
-    );
+    expect(
+      classifyActionResult({ error: { message: 'errors.system_database_unavailable' } }).state,
+    ).toBe('PROVIDER_UNAVAILABLE');
     expect(classifyActionResult({ error: { message: 'weird' } }).state).toBe('UNKNOWN_SAFE_ERROR');
   });
 });

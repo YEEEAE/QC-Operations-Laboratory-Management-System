@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   ADMIN_ROUTE_PERMISSIONS,
@@ -99,6 +99,17 @@ describe('administration workspace guard', () => {
     expect(canAccessAdminRoute(creator, 'usersNew')).toBe(true);
     expect(canAccessAdminRoute(creator, 'users')).toBe(true);
     expect(canAccessAdminRoute(creator, 'roleDetail')).toBe(false);
+  });
+
+  it('shows initial role and scope controls only to actors with their matching assignment grants', () => {
+    const source = readFileSync(
+      new URL('../../../src/pages/admin/users/new.astro', import.meta.url),
+      'utf8',
+    );
+    expect(source).toContain("hasGlobalGrant('PERM-ADM-ROLE-ASSIGN')");
+    expect(source).toContain("hasGlobalGrant('PERM-ADM-SCOPE-ASSIGN')");
+    expect(source).toContain('{canAssignRoles ? (');
+    expect(source).toContain('{canAssignScopes ? (');
   });
 
   it('grants SYSTEM_OWNER visibility across the whole workspace', () => {
