@@ -42,6 +42,16 @@ export class NotificationService {
     return this.repository.listForRecipient(actor.id, { unreadOnly });
   }
 
+  async listOwnPage(actor: ActorContext, unreadOnly = false, page = 1) {
+    assertNotificationPermission(actor, 'VIEW', actor.id);
+    if (!Number.isSafeInteger(page) || page < 1) throw new AppError('VALIDATION_INVALID_QUERY');
+    return this.repository.listPageForRecipient(actor.id, {
+      unreadOnly,
+      page,
+      pageSize: 50,
+    });
+  }
+
   async markOwnRead(
     actor: ActorContext,
     notificationId: string,

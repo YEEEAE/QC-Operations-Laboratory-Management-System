@@ -104,7 +104,7 @@ function sourceDependencies(db: Kysely<DatabaseSchema>): DashboardSourceDependen
   const laboratory = new GetLabWorkloadUseCase(new PostgresLabRepository(db));
   return {
     approvals: { execute: async () => [] },
-    notifications: { listOwn: async () => [] },
+    notifications: { listOwnPage: async () => ({ total: 0, items: [] }) },
     receiving: { execute: (input) => receiving.execute(input) },
     inspections: { execute: (input) => inspections.execute(input) },
     tasks: {

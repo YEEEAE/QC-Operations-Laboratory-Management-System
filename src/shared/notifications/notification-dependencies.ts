@@ -3,5 +3,10 @@ import { NotificationService } from './notification-service.js';
 import { PostgresNotificationRepository } from './postgres-notification-repository.js';
 
 export function notificationDependencies() {
-  return { listOwn: new NotificationService(new PostgresNotificationRepository(getDatabase())) };
+  const service = new NotificationService(new PostgresNotificationRepository(getDatabase()));
+  return {
+    listOwn: service,
+    markOwnRead: (actor: Parameters<NotificationService['markOwnRead']>[0], id: string) =>
+      service.markOwnRead(actor, id),
+  };
 }

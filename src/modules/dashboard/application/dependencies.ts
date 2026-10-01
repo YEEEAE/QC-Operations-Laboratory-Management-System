@@ -37,7 +37,8 @@ function composedSources(): DashboardSourceDependencies {
   return {
     approvals: { execute: (input) => approvalsReadDependencies().list.execute(input) },
     notifications: {
-      listOwn: (actor, unreadOnly) => notificationDependencies().listOwn.listOwn(actor, unreadOnly),
+      listOwnPage: (actor, unreadOnly) =>
+        notificationDependencies().listOwn.listOwnPage(actor, unreadOnly, 1),
     },
     receiving: { execute: (input) => receivingReadDependencies().list.execute(input) },
     inspections: { execute: (input) => inspectionReadDependencies().list.execute(input) },

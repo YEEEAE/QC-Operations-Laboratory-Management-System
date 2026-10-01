@@ -15,6 +15,7 @@ import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 
 const recipientA = '01900000-0000-7000-8000-000000000d01';
 const recipientB = '01900000-0000-7000-8000-000000000d02';
+const recipientC = '01900000-0000-7000-8000-000000000d03';
 
 const actorFor = (id: string): ActorContext => ({
   id,
@@ -67,6 +68,7 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
     for (const [id, identity] of [
       [recipientA, 'notification-recipient-a'],
       [recipientB, 'notification-recipient-b'],
+      [recipientC, 'notification-recipient-c'],
     ] as const) {
       await pool!.query(
         `INSERT INTO qc.users (id, login_identity, display_name, password_hash)
@@ -224,5 +226,58 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
     const markedOnce = await service.markOwnRead(actorFor(recipientB), first.id);
     const markedTwice = await service.markOwnRead(actorFor(recipientB), first.id);
     expect(markedOnce?.readAt).toEqual(markedTwice?.readAt);
+  });
+
+  it('pages 51 own notifications and changes only read_at on authorized idempotent replay', async () => {
+    const own = actorFor(recipientC);
+    for (let index = 1; index <= 51; index++) {
+      await service.create({
+        recipientUserId: recipientC,
+        notificationType: 'TASK_ASSIGNED',
+        severity: 'INFO',
+        title: `Page boundary ${index}`,
+        message: 'Bounded page fixture',
+      });
+    }
+    const firstPage = await service.listOwnPage(own, true, 1);
+    const secondPage = await service.listOwnPage(own, true, 2);
+    expect(firstPage).toMatchObject({ total: 51, page: 1, pageSize: 50 });
+    expect(firstPage.items).toHaveLength(50);
+    expect(secondPage).toMatchObject({ total: 51, page: 2, pageSize: 50 });
+    expect(secondPage.items).toHaveLength(1);
+    expect(new Set([...firstPage.items, ...secondPage.items].map((row) => row.id)).size).toBe(51);
+
+    const target = secondPage.items[0]!;
+    const beforeCounts = await pool!.query(
+      `SELECT (SELECT COUNT(*)::int FROM qc.audit_events) AS audit_count,
+              (SELECT COUNT(*)::int FROM qc.outbox_events) AS outbox_count`,
+    );
+    await expect(service.markOwnRead(actorFor(recipientB), target.id)).resolves.toBeUndefined();
+    const deniedSnapshot = await pool!.query(
+      `SELECT read_at FROM qc.notifications WHERE id = $1 AND recipient_user_id = $2`,
+      [target.id, recipientC],
+    );
+    const deniedCounts = await pool!.query(
+      `SELECT (SELECT COUNT(*)::int FROM qc.audit_events) AS audit_count,
+              (SELECT COUNT(*)::int FROM qc.outbox_events) AS outbox_count`,
+    );
+    expect(deniedSnapshot.rows[0]?.read_at).toBeNull();
+    expect(deniedCounts.rows[0]).toEqual(beforeCounts.rows[0]);
+
+    const [marked, replay, concurrentReplay] = await Promise.all([
+      service.markOwnRead(own, target.id),
+      service.markOwnRead(own, target.id),
+      service.markOwnRead(own, target.id),
+    ]);
+    expect(marked?.readAt).toBeInstanceOf(Date);
+    expect(replay?.readAt).toEqual(marked?.readAt);
+    expect(concurrentReplay?.readAt).toEqual(marked?.readAt);
+    const finalCounts = await pool!.query(
+      `SELECT (SELECT COUNT(*)::int FROM qc.audit_events) AS audit_count,
+              (SELECT COUNT(*)::int FROM qc.outbox_events) AS outbox_count`,
+    );
+    expect(finalCounts.rows[0]).toEqual(beforeCounts.rows[0]);
+    await expect(service.listOwnPage(own, true, 1)).resolves.toMatchObject({ total: 50 });
+    await expect(service.listOwnPage(own, false, 1)).resolves.toMatchObject({ total: 51 });
   });
 });

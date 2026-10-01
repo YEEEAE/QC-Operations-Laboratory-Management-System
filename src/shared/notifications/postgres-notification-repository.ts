@@ -69,6 +69,42 @@ export class PostgresNotificationRepository implements NotificationRepository {
     return rows.map(toNotification);
   }
 
+  async listPageForRecipient(
+    recipientUserId: string,
+    options: { unreadOnly?: boolean; page: number; pageSize: number },
+  ) {
+    const pageSize = Math.min(50, Math.max(1, Math.trunc(options.pageSize)));
+    return this.database
+      .transaction()
+      .setIsolationLevel('repeatable read')
+      .setAccessMode('read only')
+      .execute(async (trx) => {
+        let countQuery = trx
+          .selectFrom('notifications')
+          .select((expression) => expression.fn.countAll<number>().as('count'))
+          .where('recipient_user_id', '=', recipientUserId);
+        let rowsQuery = trx
+          .selectFrom('notifications')
+          .selectAll()
+          .where('recipient_user_id', '=', recipientUserId)
+          .orderBy('created_at', 'desc')
+          .orderBy('id', 'desc');
+        if (options.unreadOnly) {
+          countQuery = countQuery.where('read_at', 'is', null);
+          rowsQuery = rowsQuery.where('read_at', 'is', null);
+        }
+        const count = await countQuery.executeTakeFirstOrThrow();
+        const total = Number(count.count);
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const page = Math.min(Math.max(1, Math.trunc(options.page)), totalPages);
+        const rows = await rowsQuery
+          .limit(pageSize)
+          .offset((page - 1) * pageSize)
+          .execute();
+        return { items: rows.map(toNotification), total, page, pageSize };
+      });
+  }
+
   async markRead(
     id: string,
     recipientUserId: string,

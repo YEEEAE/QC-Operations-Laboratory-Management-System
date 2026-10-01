@@ -94,7 +94,7 @@ function dashboardOver(db: Kysely<DatabaseSchema>) {
     db,
     dashboardMetricSources({
       approvals: emptyApprovals,
-      notifications: { listOwn: async () => [] },
+      notifications: { listOwnPage: async () => ({ total: 0, items: [] }) },
       receiving: { execute: (input) => receiving.execute(input) },
       inspections: {
         execute: (input) =>

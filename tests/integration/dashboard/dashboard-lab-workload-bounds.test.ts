@@ -114,7 +114,7 @@ function dashboard(target: Kysely<DatabaseSchema>) {
   const empty = { execute: async () => [] as never[] };
   const dependencies: DashboardSourceDependencies = {
     approvals: empty,
-    notifications: { listOwn: async () => [] },
+    notifications: { listOwnPage: async () => ({ total: 0, items: [] }) },
     receiving: empty,
     inspections: empty,
     tasks: { execute: async () => ({ items: [], total: 0 }) },

@@ -40,11 +40,12 @@ export interface DashboardApprovalReader {
 }
 
 export interface DashboardNotificationReader {
-  listOwn(
+  listOwnPage(
     actor: ActorContext,
     unreadOnly?: boolean,
-  ): Promise<
-    readonly {
+  ): Promise<{
+    total: number;
+    items: readonly {
       id: string;
       title: string;
       message: string;
@@ -52,8 +53,8 @@ export interface DashboardNotificationReader {
       subjectType?: string;
       subjectId?: string;
       createdAt: Date;
-    }[]
-  >;
+    }[];
+  }>;
 }
 
 // The option types are the exact literal filters this surface passes, so the
@@ -305,11 +306,11 @@ export function dashboardMetricSources(
         freshness: SNAPSHOT_FRESHNESS,
         source: 'Notifications addressed to your account',
         numerator:
-          'Unread notifications addressed to your authenticated account, newest first within the register’s bounded page',
+          'All unread notifications addressed to your authenticated account; the attention queue shows the newest bounded page',
         state: 'read timestamp is empty',
         actorScope: 'Addressed to you',
         definition:
-          'Notifications addressed to your authenticated account that have not been marked read, newest first within the register’s bounded page. This is the same set the unread view lists.',
+          'All notifications addressed to your authenticated account that have not been marked read. The attention queue samples the newest bounded page; the linked register shows all pages and the exact total.',
         drilldown: '?unread=1 on the notifications register',
         href: '/notifications?unread=1',
         drilldownLabel: 'Open unread notifications',
@@ -317,19 +318,22 @@ export function dashboardMetricSources(
       },
       attention: { severity: 'INFO', reason: 'Unread notification addressed to you' },
       read: async (actor) => {
-        const rows = await dependencies.notifications.listOwn(actor, true);
-        return rows.map((notification): DashboardAttentionRow => ({
-          id: notification.id,
-          title: notification.title,
-          state: 'UNREAD',
-          href: notificationDestination(notification.subjectType, notification.subjectId),
-          anchorAt: notification.createdAt,
-          anchor: 'waiting',
-          // The notification carries its own severity and message, so the
-          // queue shows the recorded severity instead of a surface default.
-          severity: notification.severity,
-          reason: notification.message,
-        }));
+        const page = await dependencies.notifications.listOwnPage(actor, true);
+        return {
+          total: page.total,
+          rows: page.items.map((notification): DashboardAttentionRow => ({
+            id: notification.id,
+            title: notification.title,
+            state: 'UNREAD',
+            href: notificationDestination(notification.subjectType, notification.subjectId),
+            anchorAt: notification.createdAt,
+            anchor: 'waiting',
+            // The notification carries its own severity and message, so the
+            // queue shows the recorded severity instead of a surface default.
+            severity: notification.severity,
+            reason: notification.message,
+          })),
+        };
       },
     },
     {
@@ -635,10 +639,12 @@ export function dashboardMetricSources(
         timezone: 'UTC',
         freshness: SNAPSHOT_FRESHNESS,
         source: 'Document review queue',
-        numerator: 'Active IN_REVIEW versions you are authorized to review, excluding versions you authored',
+        numerator:
+          'Active IN_REVIEW versions you are authorized to review, excluding versions you authored',
         state: 'version = IN_REVIEW and document active',
         actorScope: 'Both document-review and approval-review grants; owner scope or global scope',
-        definition: 'Active document versions awaiting your review. The count and bounded rows use the same indexed query and reviewer/author scope.',
+        definition:
+          'Active document versions awaiting your review. The count and bounded rows use the same indexed query and reviewer/author scope.',
         drilldown: '?review=mine on the controlled documents register',
         href: '/documents?review=mine',
         drilldownLabel: 'Open documents awaiting my review',

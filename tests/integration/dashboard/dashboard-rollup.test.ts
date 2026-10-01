@@ -151,7 +151,9 @@ function sourceDependencies(
 ): DashboardSourceDependencies {
   return {
     approvals: { execute: async () => APPROVALS },
-    notifications: { listOwn: (actor, unreadOnly) => notifications.listOwn(actor, unreadOnly) },
+    notifications: {
+      listOwnPage: (actor, unreadOnly) => notifications.listOwnPage(actor, unreadOnly, 1),
+    },
     receiving: { execute: (input) => receiving.execute(input) },
     inspections: { execute: (input) => inspections.execute(input) },
     tasks: {
@@ -469,7 +471,7 @@ describe('dashboard command center', () => {
     const model = await dashboard(
       sourceDependencies({
         notifications: {
-          listOwn: async () => {
+          listOwnPage: async () => {
             throw new AppError('AUTHZ_DENIED');
           },
         },

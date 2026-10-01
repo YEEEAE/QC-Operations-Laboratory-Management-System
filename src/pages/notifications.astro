@@ -1,20 +1,106 @@
 ---
+import { actions } from 'astro:actions';
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
+import Pagination from '../ui/components/data/Pagination.astro';
 import { NotificationService } from '../shared/notifications/notification-service.js';
 import { notificationDependencies } from '../shared/notifications/notification-dependencies.js';
 import { notificationDestination } from '../shared/notifications/notification-destination.js';
 import { formatDateTime } from '../shared/copy/format.js';
+import { AppError } from '../shared/errors/app-error.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fnotifications');
-let notifications = [] as Awaited<ReturnType<NotificationService['listOwn']>>;
-let providerUnavailable = false;
+const actionResult = Astro.getActionResult(actions.notifications.markOwnRead);
+if (actionResult?.data?.ok)
+  return Astro.redirect(`${Astro.url.pathname}${Astro.url.search}`, 303);
+const markReadError = actionResult?.data && !actionResult.data.ok ? actionResult.data : undefined;
+const unclassifiedActionError = actionResult?.error ? 'The service did not confirm whether this notification changed. Refresh the register before deciding whether to retry.' : undefined;
 const unreadOnly = Astro.url.searchParams.get('unread') === '1';
-try { notifications = await notificationDependencies().listOwn.listOwn(actor, unreadOnly); } catch { providerUnavailable = true; }
+const rawPage = Astro.url.searchParams.get('page') ?? '1';
+const requestedPage = /^\d+$/.test(rawPage) ? Number(rawPage) : Number.NaN;
+let result: Awaited<ReturnType<NotificationService['listOwnPage']>> | undefined;
+let providerUnavailable = false;
+let accessDenied = false;
+let invalidPage = !Number.isSafeInteger(requestedPage) || requestedPage < 1;
+if (!invalidPage) {
+  try {
+    result = await notificationDependencies().listOwn.listOwnPage(actor, unreadOnly, requestedPage);
+  } catch (error) {
+    if (error instanceof AppError && error.category === 'AUTHORIZATION') accessDenied = true;
+    else if (error instanceof AppError && error.code === 'VALIDATION_INVALID_QUERY') invalidPage = true;
+    else providerUnavailable = true;
+  }
+}
+const notifications = result?.items ?? [];
+const totalPages = Math.max(1, Math.ceil((result?.total ?? 0) / (result?.pageSize ?? 50)));
+const currentPage = result?.page ?? 1;
+const pageLabel = result && result.total > 0
+  ? `Showing ${(currentPage - 1) * result.pageSize + 1}–${Math.min(currentPage * result.pageSize, result.total)} of ${result.total} notifications${unreadOnly ? ' that are unread' : ''}. Up to ${result.pageSize} are shown per page.`
+  : '';
+const pageBase = `/notifications${unreadOnly ? '?unread=1' : ''}`;
+const markReadMessage = (reason: string) => reason === 'missing'
+  ? 'This notification is no longer available or is not addressed to this account. Refresh the register to see the current list.'
+  : reason === 'denied'
+    ? 'Your account cannot change this notification. It was not changed.'
+  : reason === 'provider'
+    ? 'The notification service did not confirm the change. Refresh the register before trying again.'
+    : reason === 'stale'
+      ? 'This notification changed before the request finished. Refresh the register and review its current read state.'
+    : 'The service did not confirm whether this notification changed. Refresh the register before deciding whether to retry.';
 ---
 <AppLayout title="Notifications · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><h1>Notifications</h1><p>Only notifications addressed to your authenticated account are shown.</p></div>{unreadOnly ? <a href="/notifications">All</a> : <a href="/notifications?unread=1">Unread</a>}</section>
-  {providerUnavailable ? <ProviderUnavailableState title="Notifications are temporarily unavailable" description="Unread and pending counts are withheld until the notification provider confirms a response." /> : notifications.length ? <ul class="notifications">{notifications.map((notification) => <li class:list={{ unread: !notification.readAt }}><a href={notificationDestination(notification.subjectType, notification.subjectId)}><span class={`severity ${notification.severity.toLowerCase()}`} aria-hidden="true"></span><span class="sr-only">{notification.severity}</span><span><strong>{notification.title}</strong><span>{notification.message}</span><small>{formatDateTime(notification.createdAt)}</small><small>{notification.readAt ? 'Read' : 'Unread'}</small></span></a></li>)}</ul> : <section class="empty"><h2>You’re all caught up</h2><p>No notifications are waiting for this account.</p></section>}
+  <section class="page-head"><div><h1>Notifications</h1><p>Only notifications addressed to your authenticated account are shown.</p></div><nav aria-label="Notification filters"><a href="/notifications" aria-current={unreadOnly ? undefined : 'page'}>All</a><a href="/notifications?unread=1" aria-current={unreadOnly ? 'page' : undefined}>Unread</a></nav></section>
+  {providerUnavailable ? <ProviderUnavailableState title="Notifications are temporarily unavailable" description="The notification source did not confirm a result. No empty state or count is shown; refresh when the service is available." retryHref={Astro.url.pathname + Astro.url.search} /> : accessDenied ? <section class="empty" role="alert"><h2>Notifications are unavailable for this account</h2><p>Your account cannot read this notification register. Contact your administrator if you need access.</p></section> : invalidPage ? <section class="empty" role="alert"><h2>This page number is not valid</h2><p>Open the first page of the notification register to continue.</p><a href={pageBase}>Open page 1</a></section> : <>
+    {unclassifiedActionError && <p class="action-error" role="alert" tabindex="-1">{unclassifiedActionError}</p>}
+    <p class="bounded-label" role="status" aria-live="polite">{result?.total === 0 ? (unreadOnly ? 'No unread notifications. Your notifications are still available in All notifications.' : 'No notifications have been sent to this account.') : pageLabel}</p>
+    {notifications.length ? <ul class="notifications">{notifications.map((notification) => <li class:list={{ unread: !notification.readAt }}>
+      <article class="notification-row">
+        <a class="destination" href={notificationDestination(notification.subjectType, notification.subjectId)}><span class={`severity ${notification.severity.toLowerCase()}`} aria-hidden="true"></span><span class="sr-only">{notification.severity}</span><span class="notification-copy"><strong>{notification.title}</strong><span>{notification.message}</span><small>{formatDateTime(notification.createdAt)}</small><small>{notification.readAt ? 'Read' : 'Unread'}</small></span></a>
+        {!notification.readAt && <form class="read-form" method="POST" action={actions.notifications.markOwnRead} data-mark-read><input type="hidden" name="notificationId" value={notification.id} /><button type="submit" aria-describedby={`mark-status-${notification.id}`}>Mark “{notification.title.slice(0, 60)}” as read</button><p id={`mark-status-${notification.id}`} class="action-status" role={markReadError && 'notificationId' in markReadError && markReadError.notificationId === notification.id ? 'alert' : 'status'} aria-live="polite" tabindex="-1">{markReadError && 'notificationId' in markReadError && markReadError.notificationId === notification.id ? markReadMessage(markReadError.reason) : ''}</p></form>}
+      </article>
+    </li>)}</ul> : null}
+    {result && result.total > result.pageSize && <Pagination page={result.page} totalPages={totalPages} total={result.total} itemLabel={unreadOnly ? 'unread notifications' : 'notifications'} baseUrl="/notifications" />}
+  </>}
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p{color:var(--text-muted);font-size:.85rem}.page-head a{color:var(--color-accent-primary-hover);font-size:.8rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.notifications{list-style:none;margin:var(--space-6) 0;padding:0;max-width:900px}.notifications li{border-block-start:1px solid var(--color-border-subtle)}.notifications a{display:flex;gap:var(--space-3);padding:var(--space-4) 0;color:inherit;text-decoration:none}.notifications a>span:last-child{display:grid;gap:4px}.notifications strong{color:var(--text-primary)}.notifications a span span,.notifications small{color:var(--text-secondary);font-size:.82rem}.notifications small{color:var(--text-muted);font-size:.72rem}.notifications .unread strong{color:var(--color-accent-primary-hover)}.severity{width:10px;height:10px;flex:0 0 auto;margin-top:6px;border-radius:50%;background:var(--status-neutral)}.severity.warning{background:var(--status-warning)}.severity.critical{background:var(--status-danger)}.empty{padding:var(--space-10);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}@media(max-width:650px){.page-head{display:grid}.notifications a{flex-wrap:wrap}}
+<script>
+  import { actions } from 'astro:actions';
+  document.querySelectorAll<HTMLFormElement>('[data-mark-read]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (form.getAttribute('aria-busy') === 'true') return;
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        const status = form.querySelector<HTMLElement>('[role="status"], [role="alert"]');
+        const formData = new FormData(form);
+      form.setAttribute('aria-busy', 'true');
+      if (button) button.disabled = true;
+      if (status) status.textContent = 'Marking this notification as read…';
+      try {
+        const result = await actions.notifications.markOwnRead(formData);
+        if (result.data?.ok) {
+          window.location.reload();
+          return;
+        }
+        const reason = result.data?.reason;
+        if (status) status.textContent = reason === 'missing'
+          ? 'This notification is no longer available or is not addressed to this account. Refresh the register to see the current list.'
+          : reason === 'denied'
+            ? 'Your account cannot change this notification. It was not changed.'
+            : reason === 'provider'
+              ? 'The notification service did not confirm the change. Refresh the register before trying again.'
+              : reason === 'stale'
+                ? 'This notification changed before the request finished. Refresh the register and review its current read state.'
+                : 'The service did not confirm whether this notification changed. Refresh the register before deciding whether to retry.';
+        status?.focus();
+      } catch {
+        if (status) status.textContent = 'The service did not confirm whether this notification was changed. Refresh the register before deciding whether to retry.';
+        status?.focus();
+      } finally {
+        form.removeAttribute('aria-busy');
+        if (button) button.disabled = false;
+      }
+    });
+  });
+</script>
+<style>
+  .page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p,.bounded-label{color:var(--text-muted);font-size:.85rem}.page-head nav{display:flex;gap:var(--space-3);flex-wrap:wrap}.page-head nav a{color:var(--color-accent-primary-hover);font-size:.85rem}.page-head nav a[aria-current=page]{font-weight:var(--font-weight-semibold);text-decoration:underline;text-underline-offset:.25em}.bounded-label{margin:var(--space-5) 0}.action-error{color:var(--status-danger);margin-block:var(--space-4)}.notifications{list-style:none;margin:var(--space-4) 0;padding:0;max-width:900px}.notifications li{border-block-start:1px solid var(--color-border-subtle)}.notification-row{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);padding:var(--space-4) 0}.destination{display:flex;gap:var(--space-3);min-width:0;color:inherit;text-decoration:none}.notification-copy{display:grid;gap:4px;min-width:0}.notification-copy strong{color:var(--text-primary)}.notification-copy>span,.notification-copy small{color:var(--text-secondary);font-size:.85rem;overflow-wrap:anywhere}.notification-copy small{color:var(--text-muted);font-size:.75rem}.notifications .unread strong{color:var(--color-accent-primary-hover)}.severity{width:10px;height:10px;flex:0 0 auto;margin-top:6px;border-radius:50%;background:var(--status-neutral)}.severity.warning{background:var(--status-warning)}.severity.critical{background:var(--status-danger)}.read-form{flex:0 0 auto;max-width:18rem}.read-form button{min-height:44px;padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-default);border-radius:var(--radius-md);background:var(--surface-panel);color:var(--text-primary);cursor:pointer}.read-form button:focus-visible,.page-head a:focus-visible,.destination:focus-visible{outline:3px solid var(--color-accent-primary);outline-offset:3px}.read-form button:disabled{opacity:.65;cursor:wait}.action-status{max-width:18rem;margin:var(--space-2) 0 0;color:var(--text-muted);font-size:.8rem}.empty{padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}.pagination{margin-block:var(--space-5)}@media(max-width:650px){.page-head{display:grid}.notification-row{align-items:flex-start;display:grid}.read-form{width:100%;max-width:none}.read-form button{width:100%;min-height:48px}.action-status{max-width:none}}
 </style>
