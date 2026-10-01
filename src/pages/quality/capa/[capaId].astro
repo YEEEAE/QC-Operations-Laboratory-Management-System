@@ -4,6 +4,7 @@ import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextP
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { readOutcome } from '../../../shared/errors/read-outcome.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 const capaId = Astro.params.capaId ?? '';
@@ -23,10 +24,11 @@ const canClose = Boolean(capa && capaRead.canClose(actor, capa.state));
 // scope-limited read (QC-100-FINAL-024). The CAPA page holds no mutation
 // authority over NCR state — the linkage is presentation only.
 let sourceNcr: Awaited<ReturnType<typeof capaRead.listRelatedNcrs.execute>>[number] | undefined;
-let sourceUnavailable = false;
+let sourceStatus: 'AVAILABLE' | 'NOT_VISIBLE' | 'UNAVAILABLE' = 'NOT_VISIBLE';
 if (capa?.ncrId) {
-  try { sourceNcr = (await capaRead.listRelatedNcrs.execute({ ncrId: capa.ncrId, actor }))[0]; }
-  catch { sourceUnavailable = true; }
+  const sourceOutcome = await readOutcome(() => capaRead.listRelatedNcrs.execute({ ncrId: capa!.ncrId!, actor }));
+  sourceStatus = sourceOutcome.status;
+  if (sourceOutcome.status === 'AVAILABLE') sourceNcr = sourceOutcome.value[0];
 }
 ---
 <AppLayout title="CAPA detail · Quality" locale="en" direction="ltr">
@@ -37,7 +39,8 @@ if (capa?.ncrId) {
       <JourneyContextPanel ownerDomain="Quality / CAPA" recordReference={`${capa.capaNo} · version ${capa.version.toString()}`} currentState={stateLabel(capa.state)} nextOwner={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'CAPA action owner' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'CAPA verifier' : undefined} whyUnavailable={capa.state === 'READY_FOR_CLOSURE' ? 'P-04 closure is available only to an active Supervisor with the explicit close grant and authorized scope, subject to its reason, version, reauthentication, and e-signature checks' : capa.state === 'CLOSED' ? 'state: controlled closure is complete and evidence is preserved' : undefined} waitingOn={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'Action execution' : capa.state === 'AWAITING_VERIFICATION' ? 'Verification' : capa.state === 'EFFECTIVENESS_REVIEW' ? 'Effectiveness review' : undefined} expectedEvent={capa.state === 'IN_PROGRESS' ? 'Action completion' : ['AWAITING_VERIFICATION', 'EFFECTIVENESS_REVIEW'].includes(capa.state) ? 'Verification progress' : capa.state === 'READY_FOR_CLOSURE' ? 'Controlled P-04 closure with reason and e-signature' : undefined} controlledContext={`CAPA ${capa.capaNo} · record version ${capa.version.toString()}`} evidenceSummary={`Actions: ${capa.actions.length} · verification ${capa.verificationRequired ? 'required' : 'not required'} · recorded effectiveness requirement: ${capa.effectivenessRequired ? 'yes' : 'no'} (not an effectiveness verdict)`} auditHref={`/audit?subjectType=CAPA&subjectId=${encodeURIComponent(capa.id)}`} relatedLinks={[{ label: sourceNcr ? `Source NCR ${sourceNcr.ncrNo}` : 'NCR register', href: sourceNcr ? `/quality/ncr/${sourceNcr.id}` : '/quality/ncr', detail: 'Owning non-conformance record' }]} />
       <p class="lede">View related RCA, action owners, evidence, verification, closure and history through the authorized CAPA workflow.</p>
       <p class="policy"><strong>PD-18 · Quality-policy owner:</strong> the general effectiveness requirement and criteria remain unresolved. The stored flag is record data, not an effectiveness verdict. P-04 is a separate approved closure exception and does not establish effectiveness.</p>
-      {sourceUnavailable && <p role="status">The related NCR source is temporarily unavailable. Retry before treating this relationship as absent.</p>}
+      {capa.ncrId && sourceStatus === 'UNAVAILABLE' && <p role="status">The related NCR source is temporarily unavailable. Retry before treating this relationship as absent.</p>}
+      {capa.ncrId && sourceStatus === 'NOT_VISIBLE' && <p role="status">The related NCR details are not available in your authorized scope.</p>}
       {canClose && <section aria-labelledby="close-heading" class="close-panel">
         <h2 id="close-heading">Close CAPA</h2>
         <p>P-04 allows this exception only for an active Supervisor with the explicit close grant and authorized scope. The CAPA must be in an eligible state and at the displayed version. Enter a reason, reauthenticate, and sign the CLOSE meaning. Incomplete actions or unaccepted effectiveness do not block this exception; closure does not claim effectiveness.</p>

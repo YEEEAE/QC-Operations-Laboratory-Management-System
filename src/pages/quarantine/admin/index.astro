@@ -3,7 +3,7 @@ import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { field, optionalField, toFormFailure, extractDetailId, type FormFailure } from '../../../ui/forms/mutation-post.js';
 import { templateActionDependencies, templateReadDependencies } from '../../../modules/quarantine/templates/application/dependencies.js';
-import { AppError } from '../../../shared/errors/app-error.js';
+import { readOutcome } from '../../../shared/errors/read-outcome.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { isTemplateAuthority } from '../../../modules/quarantine/templates/application/template-authority.js';
 
@@ -13,13 +13,10 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
 const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
 const isAuthority = isTemplateAuthority(actor);
 
-let denied = false;
-let templates: Awaited<ReturnType<ReturnType<typeof templateReadDependencies>['list']['execute']>> = [];
-try {
-  templates = await templateReadDependencies().list.execute({ actor });
-} catch (error) {
-  denied = error instanceof AppError && error.category === 'AUTHORIZATION';
-}
+const templateResult = await readOutcome(() => templateReadDependencies().list.execute({ actor }));
+let templates: Awaited<ReturnType<ReturnType<typeof templateReadDependencies>['list']['execute']>> = templateResult.status === 'AVAILABLE' ? templateResult.value : [];
+const denied = templateResult.status === 'NOT_VISIBLE';
+const listUnavailable = templateResult.status === 'UNAVAILABLE';
 
 let values = { templateCode: '', versionNo: '', name: '', description: '' };
 let reauthenticationSecret = '';
@@ -122,7 +119,9 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
         {isAuthority && (
           <p class="note" role="note">Authority creation produces APPROVED immediately and always requires password re-entry (E-Signature). Reviewer may also approve the same template: an explicit template-only exception to the general SoD rule.</p>
         )}
-        {templates.length ? (
+        {listUnavailable ? (
+          <p class="empty" role="status">The template list is temporarily unavailable. Retry this page before treating the list as empty.</p>
+        ) : templates.length ? (
           <div class="table-wrap"><table>
             <caption>Template versions with lifecycle state</caption>
             <thead><tr><th scope="col">Code</th><th scope="col">Version</th><th scope="col">State</th><th scope="col">Open</th></tr></thead>

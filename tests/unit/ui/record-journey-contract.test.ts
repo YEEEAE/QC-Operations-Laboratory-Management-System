@@ -27,13 +27,47 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
     }
   });
 
+  it('keeps quality primary reads independent and withholds failed relationship counts', () => {
+    const finding = read('src/pages/quality/findings/[findingId].astro');
+    const ncr = read('src/pages/quality/ncr/index.astro');
+    const rca = read('src/pages/quality/rca/index.astro');
+    const capa = read('src/pages/quality/capa/index.astro');
+    const templates = read('src/pages/quarantine/admin/index.astro');
+
+    expect(finding).toContain("relatedNcrsStatus === 'AVAILABLE'");
+    expect(finding).toContain("relatedNcrsStatus === 'UNAVAILABLE'");
+    expect(ncr).toContain("rcaCount: rcaResult.status === 'AVAILABLE'");
+    expect(ncr).toContain('Count unavailable');
+    expect(ncr).toContain("findingResult.status === 'UNAVAILABLE'");
+    expect(rca).toContain("ncrResult.status === 'UNAVAILABLE'");
+    expect(rca).toContain('RCA records remain available');
+    expect(capa).toContain("ncrResult.status === 'UNAVAILABLE'");
+    expect(capa).toContain('CAPA records remain available');
+    expect(templates).toContain('listUnavailable ?');
+    expect(templates).toContain('Retry this page before treating the list as empty');
+    for (const page of [finding, ncr, rca, capa, templates]) expect(page).toContain('readOutcome');
+  });
+
+  it('classifies each detail relationship separately so one outage cannot hide its primary record', () => {
+    const ncr = read('src/pages/quality/ncr/[ncrId].astro');
+    const rca = read('src/pages/quality/rca/[rcaId].astro');
+    const capa = read('src/pages/quality/capa/[capaId].astro');
+    expect(ncr).toContain("findingResult.status === 'UNAVAILABLE'");
+    expect(ncr).toContain("rcaResult.status === 'UNAVAILABLE'");
+    expect(ncr).toContain("capaResult.status === 'UNAVAILABLE'");
+    expect(rca).toContain("ncrStatus === 'UNAVAILABLE'");
+    expect(rca).toContain("capaStatus === 'UNAVAILABLE'");
+    expect(capa).toContain("sourceStatus === 'UNAVAILABLE'");
+    expect(capa).toContain('capa ? <>');
+  });
+
   it('loads an RCA by its route id and distinguishes not-found from provider outage', () => {
     const page = read('src/pages/quality/rca/[rcaId].astro');
     expect(page).toContain('rcaReadDependencies().get.execute({ actor, id: rcaId })');
     expect(page).toContain('RESOURCE_NOT_FOUND');
     expect(page).toContain('Astro.response.status = 404');
     expect(page).toContain('Astro.response.status = 503');
-    expect(page).toContain('ncrReadDependencies().get.execute({ actor, id: rca.ncrId })');
+    expect(page).toContain('ncrReadDependencies().get.execute({ actor, id: rca!.ncrId })');
     expect(page).toContain('PD-17 decision owner: QMS process owner');
     expect(page).toContain('PD-18 · Quality-policy owner');
   });
