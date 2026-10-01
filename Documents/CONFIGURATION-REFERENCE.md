@@ -60,17 +60,43 @@ release identity or approval by itself.
 
 | Variable | Type | Approved default | Change impact |
 | --- | --- | --- | --- |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL | unset (no-op providers) | Enables trace/metric export when paired with headers. Unpaired configuration fails validation. Delivery to a real backend remains operator-configured. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | URL | unset (no-op providers) | Paired values are parsed and exposed in runtime diagnostics; this does not currently wire an exporter. The application telemetry providers remain no-op unless an adapter is installed in code. Unpaired configuration fails validation. |
 | `OTEL_EXPORTER_OTLP_HEADERS` | non-empty string | unset | Must be paired with the endpoint; may carry credentials — never commit or log it. |
 
 ## Backup artifact storage (all four together)
 
 | Variable | Type | Approved default | Change impact |
 | --- | --- | --- | --- |
-| `R2_ENDPOINT` | HTTPS URL | unset (local file artifacts) | Selects the Cloudflare R2 artifact store. Any partial subset of the four `R2_*` keys fails validation. |
-| `R2_ACCESS_KEY_ID` | non-empty string | unset | Credential — secret manager only. |
-| `R2_SECRET_ACCESS_KEY` | non-empty string | unset | Credential — secret manager only. |
-| `R2_BUCKET` | bucket name, min 3 chars | unset | Destination bucket; the store additionally enforces the safe bucket pattern and HTTPS. |
+| `R2_ENDPOINT` | HTTPS URL | unset (no durable server store selected) | Used by the explicit daily-backup script to select Cloudflare R2. Any partial subset of the four `R2_*` keys fails validation. The in-memory `LocalArtifactStore` is for isolated execution only; it is not a file-backed or durable production fallback. |
+| `R2_ACCESS_KEY_ID` | non-empty string | unset | Credential — secret manager only. Required with the endpoint, secret key, and bucket for the daily-backup script. |
+| `R2_SECRET_ACCESS_KEY` | non-empty string | unset | Credential — secret manager only. Required with the endpoint, access key, and bucket for the daily-backup script. |
+| `R2_BUCKET` | bucket name, min 3 chars | unset | Destination bucket; the store additionally enforces the safe bucket pattern and HTTPS. Required with the other three values for the daily-backup script. |
+
+### Server-side integration status
+
+The environment schema validates configuration; it does not prove a provider is
+reachable or that application code uses it. At the 2026-10-01 environment
+comparison, all four R2 variables and both OTEL variables were absent from the
+service. The daily backup script explicitly constructs the R2 adapter, but it
+is not scheduled or wired to the web application's backup catalog. The local
+artifact adapter stores bytes in process memory and is used by isolated tests;
+it cannot provide persistent server backup storage. The OTEL SDK API is a
+dependency, but the application still installs no exporter and keeps no-op
+tracer/meter providers. Do not mark either integration active based on env
+variable presence alone.
+
+Until a durable provider and its scheduler/restore path are approved and
+implemented, backup storage and recovery remain unverified. A future R2 setup
+requires an owner-approved provider/bucket and access scope; enter all four
+`R2_*` values in the server secret manager, run the candidate-bound artifact
+round-trip and isolated restore checks, and verify least-privilege access. Do
+not create a paid resource or enter credentials as part of local preparation.
+OTEL remains optional while no monitoring backend is approved. Once its
+exporter is implemented and a backend is approved, configure
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` together in the
+server secret manager, then verify an emitted signal and provider outage
+handling. Header values can carry credentials and must never enter source,
+logs, or evidence.
 
 ## AI advisory providers (fail-closed, default off)
 

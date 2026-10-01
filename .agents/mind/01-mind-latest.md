@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ENV26-04 / storage, backup, and monitoring integration**
+  - Changed: configuration reference now states R2 is optional and the local adapter is memory-only; the app has no wired durable backup scheduler/restore or OTEL exporter. No runtime/schema change.
+  - Evidence: `audit/2026-10-01/handoff-QC-ENV26-04.md`; service snapshot 0/4 R2 and 0/2 OTEL was during deployment, and local `.env` has both groups absent. Provider round-trip/restore/export NOT VERIFIED.
+  - State: PARTIAL — required/optional decision on durable backup and monitoring backend needs the named owner; no external resources changed.
+
 - **2026-10-01 — QC-ENV26-03 / AI environment gates**
   - Changed: `/ai/advisory` now distinguishes owner approval/policy, missing credential/model settings, invalid configuration, and provider outage; selection defaults do not imply credentials or approval. External sending remains fail-closed and requires per-request consent. No schema change.
   - Evidence: handoff `audit/2026-10-01/handoff-QC-ENV26-03.md`; Render environment snapshot remains 0/7 and belongs to a deploy-in-progress, not a verified current runtime. Isolated PostgreSQL ledger validation and live page acceptance status are recorded there.
@@ -99,76 +104,7 @@
   - Changed: root now routes by server-resolved session, validates guest `returnTo`, and carries an explicit ended-session reason to login. State: PARTIAL / NO-GO.
   - Evidence: unit 6/6, build/release verification PASS; candidate-bound Playwright 5 PASS / 1 auth-fixture skip. Authenticated route, applied schema, manual AT, owner signature and UAT remain NOT VERIFIED; no READY. Handoff: `audit/2026-09-30/QC-ADP-27-rt-root-001-handoff.md`.
 
-- **2026-09-24 — QC-ADP-26 / integration contract boundary**
-  - Changed: sandbox adapter now binds source/site/actor, source-event idempotency, signed envelope audit correlation/time/sequence, and duplicate decision separation; no runtime provider wiring or policy approval.
-  - Evidence: focused contracts 11/11 and targeted PostgreSQL route suites 25/25 PASS; authenticated E2E FAIL (13 PASS/26 FAIL/3 SKIPPED), including 404 recovery and accessibility/keyboard failures; AT/UAT NOT RUN. External integration stays DRAFT and disabled; handoff `audit/2026-09-24/QC-ADP-26-integration-contracts-handoff.md`.
-  - State: PARTIAL / BLOCKED / NO-GO.
-  - Key files: `Documents/INTEGRATION-CONTRACTS.md`, `src/shared/integrations/instrument-sandbox-adapter.ts`.
-
-- **2026-09-24 — QC-ADP-19 / أهلية المعدات والمعايرة والصيانة**
-  - Changed: BR-CAL-004/BR-MNT-004 صارتا معتمدتين وفق قبول المستخدم؛ منع المعايرة المنتهية وUNDER_MAINTENANCE، ولقطة مصدر خادمية append-only في تسجيل استخدام المعدة بالمختبر. source migration head `0042_immutable_lab_equipment_usage`؛ PD-21 PARTIAL (السياسة معتمدة، دليل التنفيذ ناقص).
-  - Evidence: unit 10/10 PASS؛ asset eligibility contract 6/6 PASS (in-memory؛ ليس دليل PostgreSQL)؛ lab PG BLOCKED لغياب container runtime (حالتان لم تنفذا)؛ Astro 0 errors؛ authenticated E2E/browser/UAT NOT VERIFIED. Architecture check FAIL في انتهاكات سابقة بصفحات release-evidence وtasks. لا READY؛ `audit/2026-09-24/QC-ADP-19-equipment-eligibility-handoff.md`.
-  - State: PARTIAL / BLOCKED.
-- **2026-09-24 — QC-ADP-17 / رحلة المهام وحالاتها**
-  - Changed: تحسين صفحات قائمة/إنشاء/تفصيل المهمة مع fail-closed read scope وسجل الانتقالات؛ لا migration أو توسيع لصلاحيات Reopen/Cancel.
-  - Evidence: unit 11/11 وAstro 0 errors/0 warnings؛ PostgreSQL BLOCKED لغياب container runtime، وE2E BLOCKED عند Chromium sandbox مع غياب fixture env. source head 0041؛ SD-002 وUAT ما زالا مفتوحين. البطاقات 3/21 source checks فقط، لا READY؛ `audit/2026-09-24/QC-ADP-17-task-lifecycle-handoff.md`.
-  - State: PARTIAL / BLOCKED — PostgreSQL parity وauthenticated E2E/keyboard والقبول البشري غير مثبتة.
-- **2026-09-24 — Mind rollover:** نُقلت أقدم سجلات Ledger (LAB-REPORT-ENTRY حتى QC-WORKFLOW-REDESIGN) إلى أعلى الأرشيف بعد التحقق من النقل؛ بقيت الحالة الحالية في 01.
-
-- **2026-09-24 — QC-ADP-13 / تحسين النصوص والسجلات:** humanized UI copy, recovery, and permission-gated empty states; focused contracts 33/33 and Astro/build/format PASS. 59 cards link the handoff; route/state/role and live-schema acceptance remain NOT VERIFIED. `audit/2026-09-24/QC-ADP-13-copy-registers-handoff.md` — PARTIAL.
-
-- **2026-09-24 — QC-ADP-12 / قبول بشري موثق:** 90 page cards link UAT handoff as `BLOCKED / NOT EXECUTED`; no bound candidate or real participants, signer scope and route denominators remain open. `audit/2026-09-24/QC-ADP-12-human-uat-handoff.md` — PARTIAL / BLOCKED.
-
-- **2026-09-24 — QC-ADP-11 / أمن وAI وسلسلة توريد:** provider allowlist and four pinned license resolutions; focused contracts 97/97, PG18.6 denial E2E 1/1, SBOM 822/UNKNOWN=0. Advisory audit/provider approval remain blocked; RT-AI-001 6/10. `audit/2026-09-24/QC-ADP-11-handoff.md` — PARTIAL / NO-GO.
-
-- **2026-09-24 — QC-ADP-10 / report parity:** Changed Action export to pass all seven filters through the shared strict parser and unified screen/CSV/XLSX provenance; Evidence: Docker PG18 parity 9/9, focused suite 35/35, Astro 0 errors/0 warnings. State: PARTIAL / NO-GO — authenticated print E2E and durable cross-request snapshot/retention decision remain open; handoff `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md`.
-
-- **2026-09-24 — QC-ADP-09 / accessibility route handoff:** no runtime change; WCAG contract 9/9, login/404 axe+keyboard 2/2, eight viewport captures PASS. 88 route cards and manual AT remain open; live identity UNVERIFIED. `audit/2026-09-24/QC-ADP-09-accessibility-route-handoff.md` — PARTIAL / BLOCKED / NO-GO.
-
-- **2026-09-24 — QC-ADP-08 / role-state matrix handoff**
-  - Changed: added a real disposable task fixture, task denial/stale-version integration case, and TLS-loopback PG18 E2E override. 450 remains a gross planning envelope, not an applicable denominator.
-  - Evidence: PG18.6; `/tasks/[taskId]` GET + direct denied POST 1/1 PASS with unchanged row/audit; server-contract 7/7 and nine authz integration files 23/23 PASS; typecheck 0 errors; build/release identity PASS at `069bebf`, migration 0041. Other routes remain NOT VERIFIED; handoff: `audit/2026-09-24/QC-ADP-08-role-state-matrix-handoff.md`.
-  - State: PARTIAL / BLOCKED / NO-GO — one route has partial HTTP proof; no full page closure, F-009/F-018 and owner-dependent decisions remain open.
-  - Mind rollover: أقدم سجلات 2026-09-23 نُقلت إلى `02-mind-mid.md` بعد التحقق من حفظها.
-
-- **2026-09-24 — QC-ADP-07 / مصادر لوحة القرار:** bounded document-review model/queue and migration 0041 indexes; unit/UI 20/20, Astro check PASS. PG18, roles/live schema, perf and policy-bound decisions remain NOT VERIFIED; 12 route checks have 0 full acceptances. `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md` — PARTIAL / NO-GO.
-
-- **2026-09-24 — QC-ADP-06 / سلسلة NCR/RCA/CAPA**
-  - Changed: لا تغيير runtime/schema؛ سبب التعطل قرارات QMS المفتوحة PD-15/16/17/18، مع تعارض معيار القبول المطلق للفعالية مع استثناء P-04 المعتمد.
-  - Evidence: quality unit/integration-file 17/17 PASS؛ PG18 BLOCKED/NOT RUN؛ E2E blocked قبل السيناريو بسبب Chromium sandbox؛ 13 route × 5 checks = 65، 0 PASS.
-  - State: BLOCKED / NO-GO — handoff وقرارات المالك المطلوبة في `audit/2026-09-24/QC-ADP-06-ncr-rca-capa-handoff.md`.
-
-- **2026-09-24 — QC-ADP-05 / laboratory report drafts**
-  - Changed: fixed draft-storage failure being presented as permission denial; added grant/scope and source unit/precision recovery guidance. No grant/schema/scientific-source change.
-  - Evidence: focused unit/UI 12/12 PASS; Astro check 0 errors; PostgreSQL 18 BLOCKED (no container runtime); likely live schema lag, actual yazeed grant/source approval NOT VERIFIED. Handoff: `audit/2026-09-24/QC-ADP-05-laboratory-report-drafts-handoff.md`.
-  - State: PARTIAL / NO-GO — approved source/revision and live grant/schema evidence remain blocked; affected routes 0/50 acceptance checks closed.
-- **2026-09-24 — QC-ADP-03 / signed release evidence intake**
-  - Changed: added signer/scope/digest-bound provider intake and append-only evidence schema; release approval is fail-closed until the approved 19-gate register reconciles to exact candidate.
-  - Evidence: unit 38/38 PASS; Astro check 0 errors; PostgreSQL integration BLOCKED (container runtime unavailable); exact-SHA CI, live deployment identity, provider/UAT evidence NOT VERIFIED. Details `audit/2026-09-24/QC-ADP-03-release-evidence-handoff.md`.
-  - State: PARTIAL / NO-GO — migration 0040 unapplied; owner-approved register/signer scope and exact-SHA candidate absent.
-
-- **2026-09-24 — QC-ADP-02 / مصدر التفتيش والاعتماد:** denominator 6 for each of ten quarantine cards; unit 40/40. Source-hash binding and approved result remain incomplete; QC/QMS decision and PG18/E2E BLOCKED. `audit/2026-09-24/QC-ADP-02-inspection-source-approval-handoff.md` — BLOCKED / NO-GO.
-
-- **2026-09-24 — QC-ADP-01 / مصالحة مخطط Reject Reports:** readiness checks ledger/columns/core constraints and details return controlled 503; unit 20/20, Astro check PASS. PG18 was blocked then; historical health projected 0018/21 pending. Four cards remain 0/6. `audit/2026-09-24/QC-ADP-01-reject-reports-schema-reconciliation.md` — PARTIAL / NO-GO.
-
-- **2026-09-24 — QC-ADAPTIVE-PAGE-BY-PAGE-AUDIT-001:** 90 page locations, 26 domain tasks, 29 findings and 20 improvements; read-only audit inspected 47 live routes, with 90/90 card/report links. Health/restore/release remain unverified; no DB/E2E/UAT. `audit/2026-09-24-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.md` — PARTIAL / NO-GO.
-
-- **2026-09-24 — QC-LAB-REPORT-TEMPLATES-ULTIMATE-001 / قوالب تقارير المختبر**
-  - Changed: فصل حفظ المسودات خلف repository مع تحقق الصلاحيات/المالك والإصدار والتدقيق؛ أضيف عرض الطباعة وتحذير التغييرات غير المحفوظة دون اختراع وحدات أو حدود قياس.
-  - Evidence: feature unit 6/6، typecheck 971/0 أخطاء، build وarchitecture وrequirements PASS؛ PostgreSQL integration BLOCKED لغياب container runtime. Full unit PARTIAL؛ التفاصيل `audit/2026-09-24/qc-lab-report-templates-ultimate-001.md`.
-  - State: PARTIAL — لا يوجد نموذج مصدر معتمد/إصدار لتأكيد المطابقة، ولا دليل PostgreSQL أو browser runtime؛ لا اعتماد أو نتيجة علمية رسمية.
-  - Key files: `src/pages/laboratory/report-templates.astro`, `src/modules/laboratory/`, `audit/2026-09-24/qc-lab-report-templates-ultimate-001.md`.
-
-- **2026-09-24 — AI-POLICY-BOUNDARY / processing consent and advisory evals**
-  - Changed: external providers now require a complete approved policy artifact, policy-permitted content class, and per-request consent; outputs expose provenance and local correction guidance. Eval dataset v4 covers 33 synthetic cases.
-  - Evidence: AI-focused tests 90/90 PASS; eval category disposition errors 0%; typecheck 967/0 errors; build 1/1 PASS. No live provider calls. Source policy is absent, so external processing remains disabled.
-  - State: PARTIAL — owner must provide actual provider/location/retention/deletion policy before any external processing can be enabled.
-  - Key files: `Documents/AI-PROVIDERS.md`, `src/modules/ai-advisory/`, `audit/100-percent/ai-evals/results-2026-09-24.json`.
-
-- **2026-09-24 — SECURITY-BOUNDARIES-SUPPLY-CHAIN / threat model and candidate gate**
-  - Changed: expanded identity/files/AI/reports/approvals threat model; CI now produces lockfile-bound CycloneDX + license inventory and provenance/SBOM attestations; AI HTTP rejects redirects; poisoned SQL import test added.
-  - Evidence: PG18 focused integration 17/17 PASS; AI provider HTTP 25/25 PASS; actual-server security E2E 8 PASS/4 FAIL (authenticated file cases blocked at login controls); SBOM 822 locked packages, 4 installed license declarations UNKNOWN; dependency advisory result NOT VERIFIED (registry unavailable); secret scan 10 high-entropy assignment candidates in ignored local env, values not shown.
-  - State: PARTIAL — see `Documents/THREAT-MODEL-030.md`; Critical/High triage owner `yazeed` (24h/7d); four unknown license records due 2026-10-01.
+- **2026-10-01 — Mind rollover (QC-ENV26-04):** نُقلت أقدم سجلات Ledger المتبقية بتاريخ 2026-09-24 إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود في 01.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -380,8 +316,9 @@
 - 2026-09-23 isolated restore drill/rehearsal: BLOCKED—user confirmed no isolated target or recovery bundle and the policy decisions remain open; Docker daemon and local PostgreSQL also unavailable. No production restore was attempted.
 - F-11 ما زال `OPEN / PARTIAL`: candidate-bound local archive bundle restored DB and file payloads from the archive; 77 tables / 487 snapshot rows / 30 ledger rows / 154 validated FKs, app/security and wrong-candidate denial PASS. Saved hashes show 74/77 current-source tables match; the 3 diffs are the measured post-backup task/audit/outbox marker. Local recovery measured 435 ms; provider DR/RPO remains NOT VERIFIED. Report `audit/2026-09-19/QC-100-FINAL-008-populated-backup-isolated-recovery.md`.
 - QC-100-FINAL-025 أعاد تمرين مسار dump→استعادة معزولة على المرشح الحالي (`0031`) بنجاح محلي وضابطة سلبية صادقة؛ أضاف `Documents/FIRST-DAY-OPERATING-CHECKLIST.md` و`Documents/INCIDENT-PROBLEM-RUNBOOK.md` كطبقة مشتقة. **حقيقة تشغيلية ثابتة: لا scheduler مربوطًا للنسخ اليومي/الـdrill الشهري (عقد تقويمي فقط) ولا قناة إشعارات خارجية (in-app فقط) ولا monitoring/alerting على المزود** — كلها مسجلة DEP-025-02..04 بلا تحويل إلى جاهزية.
-- الإعدادات الاختيارية لـR2 موجودة بدون أسرار، ويوجد backup job محلي fail-closed وPostgres recovery evidence append-only.
-- Local logical backup script creates a manifest in memory and verifies stored bytes, but does not persist the manifest or catalog row; R2 adapter cannot list objects for retention inventory. This is an open implementation gap, independent of the Free provider plan.
+- إعدادات R2 اختيارية all-or-none؛ غيابها لا يثبت خطأ إعداد. `LocalArtifactStore` يحتفظ بالبيانات في ذاكرة العملية فقط، والـdaily backup script يتطلب R2 لكنه غير مربوط بكتالوج التطبيق أو scheduler. لا يوجد restore orchestrator؛ لا backup دائم أو استعادة خادمية مثبتة.
+- Local logical backup job creates a manifest in memory and verifies stored bytes, but does not persist the manifest or catalog row; R2 adapter cannot list objects for retention inventory. This is an open implementation gap, independent of the Free provider plan.
+- OTEL endpoint/headers optional and must be paired; `src/shared/observability/telemetry.ts` still installs no-op providers by default and no exporter is wired. Environment presence alone is not monitoring evidence.
 - التطبيق سابقًا كان يعرض 24h/4h كقيم hardcoded؛ أزيلت في هذا التغيير لأنها لا تمثل قرارًا معتمدًا أو قياسًا. Marker محلي committed بعد إكمال dump بـ92s لم يوجد في استعادة تاريخية؛ لا يحدد ذلك أقصى RPO.
 - restore drill يجب أن يكون على target معزول صريح.
 - application backup-catalog integration and provider plan/retention/PITR-WAL/storage/DR remain unverified; approved RPO/RTO and provider recovery remain unmeasured. Production stays behind QC-100-FINAL-015.
@@ -392,6 +329,7 @@
 ### Database readiness
 - `/api/health/ready` و`/system/health` يستخدمان فحص قاعدة بيانات canonical واحد ونفس TLS config.
 - `/system/health` يميز `CONFIGURATION_MISSING` و`CONFIGURATION_INVALID` (DEGRADED) عن `PROVIDER_UNAVAILABLE` (UNAVAILABLE) دون إظهار تفاصيل الاتصال؛ عقد `/api/health/ready` يبقى `healthy|unhealthy`. AI health يميز الآن `POLICY_DISABLED` و`POLICY_NOT_VALID` و`CONFIGURATION_MISSING/INVALID` عن `PROVIDER_UNAVAILABLE` دون طلب خارجي عند الحالات الأولى. PostgreSQL 18 rehearsal ما زال BLOCKED.
+- OTEL remains optional and no-op: the endpoint/header pair is validated but has no exporter; do not interpret unset fields or successful parsing as telemetry delivery.
 - Release identity الستة تُشتق من `dist/release-identity.json` وتُقبل فقط عند مطابقة SHA-256 الفعلي لـ`dist/server/entry.mjs`، ومطابقة Render `RENDER_GIT_COMMIT` عند التشغيل هناك. `SERVICE_VERSION` وحده ليس إثباتًا؛ غياب/اختلاف artifact يبقي الحقول UNVERIFIED. تنفيذ اعتماد الإصدار يشترط هوية production حديثة ونظيفة تطابق المرشح في SHA/build/version/migration. فحص الإنتاج الحالي لا يملك runtime snapshot مكتملًا مربوطًا بـHEAD المحلي.
 - `sslmode=disable` مرفوض؛ لا تُسرّب host/secret/exception raw.
 - failure يتحول إلى حالات منقحة مثل `false` / `UNAVAILABLE` / `503`.
