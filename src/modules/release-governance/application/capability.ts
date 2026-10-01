@@ -1,4 +1,5 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { getRuntimeConfig } from '../../../config/runtime.js';
 import {
   deriveReleaseEvidence,
   getReleaseApprovalCapability,
@@ -8,6 +9,7 @@ import {
 export { RELEASE_GATE_KEYS };
 import type { ReleaseCandidateRecord } from '../ports/repository.js';
 import { releaseGovernanceReadDependencies } from './dependencies.js';
+import { isCurrentRuntimeIdentityForCandidate } from './runtime-identity-check.js';
 
 export async function getReleaseApprovalPageModel(input: {
   actor: ActorContext;
@@ -30,6 +32,10 @@ export async function getReleaseApprovalPageModel(input: {
     .getEvidence(candidate.releaseId)
     .catch(() => ({ gateRecords: [], riskRecords: [] }));
   const evidence = deriveReleaseEvidence(candidate, raw.gateRecords, raw.riskRecords, new Date());
+  const runtimeIdentityMatches = isCurrentRuntimeIdentityForCandidate(
+    getRuntimeConfig().release,
+    candidate,
+  );
   const capability = getReleaseApprovalCapability({
     actor: input.actor,
     gates: evidence.gates,
@@ -41,9 +47,14 @@ export async function getReleaseApprovalPageModel(input: {
   return {
     candidate,
     authorized,
-    approvable: candidate.state === 'PENDING' && capability.canApprove,
+    approvable: candidate.state === 'PENDING' && capability.canApprove && runtimeIdentityMatches,
     evidence,
     disabledReasons:
-      candidate.state === 'PENDING' ? capability.disabledReasons : ['STATE_NOT_PENDING'],
+      candidate.state !== 'PENDING'
+        ? ['STATE_NOT_PENDING']
+        : [
+            ...(!runtimeIdentityMatches ? ['IDENTITY_NOT_VERIFIED'] : []),
+            ...capability.disabledReasons,
+          ],
   };
 }

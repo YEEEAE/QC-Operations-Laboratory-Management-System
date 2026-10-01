@@ -37,7 +37,12 @@ async function walk(directory) {
 
 export async function hashFileTree(rootDirectory) {
   const root = resolve(rootDirectory);
-  const paths = (await walk(root)).sort((a, b) => a.localeCompare(b, 'en'));
+  // This generated attestation is keyed to the server entry bytes and carries
+  // a build timestamp, so it is intentionally excluded from reproducible
+  // application-bundle manifests.
+  const paths = (await walk(root))
+    .filter((path) => relative(root, path).split(sep).join('/') !== 'release-identity.json')
+    .sort((a, b) => a.localeCompare(b, 'en'));
   const files = [];
   for (const path of paths) {
     const sha256 = createHash('sha256')

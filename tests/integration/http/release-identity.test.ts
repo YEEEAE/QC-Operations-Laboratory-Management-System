@@ -22,15 +22,6 @@ function context(query = '', actorValue?: ActorContext): RouteContext {
   } as any as RouteContext;
 }
 
-const COMPLETE_IDENTITY = {
-  RELEASE_ID: 'rel-0123456789abcdef',
-  RELEASE_BUILD_ID: 'render-123',
-  RELEASE_BUILD_TIMESTAMP: '2026-09-10T01:00:00.000Z',
-  RELEASE_ENVIRONMENT: 'production',
-  RELEASE_GIT_SHA: '0123456789abcdef0123456789abcdef01234567',
-  RELEASE_MIGRATION_HEAD: '0018_rate_limit_windows',
-};
-
 beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'test');
   resetServerEnvForTests();
@@ -52,34 +43,34 @@ describe('authenticated build-identity surface (Prompt 12 integration)', () => {
   });
 
   it('denies actors without the explicit health-view permission', async () => {
-    for (const [key, value] of Object.entries(COMPLETE_IDENTITY)) vi.stubEnv(key, value);
-    resetServerEnvForTests();
     const response = await GET(context('', actor([])));
     expect(response.status).toBe(403);
     const body = (await response.json()) as Record<string, unknown>;
-    expect(JSON.stringify(body)).not.toContain('rel-0123456789abcdef');
+    expect(body).not.toHaveProperty('release');
   });
 
-  it('returns the exact server-derived identity for a permitted actor', async () => {
-    for (const [key, value] of Object.entries(COMPLETE_IDENTITY)) vi.stubEnv(key, value);
-    resetServerEnvForTests();
+  it('returns artifact-bound identity status and six source checks for a permitted actor', async () => {
     const response = await GET(context('', actor(permitted)));
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      status: 'VERIFIED',
-      release: {
-        id: 'rel-0123456789abcdef',
-        buildId: 'render-123',
-        gitSha: '0123456789abcdef0123456789abcdef01234567',
-        buildTimestamp: '2026-09-10T01:00:00.000Z',
-        environment: 'production',
-        migrationHead: '0018_rate_limit_windows',
-      },
-    });
+    const body = (await response.json()) as {
+      status: string;
+      verifiedFields: number;
+      fieldCount: number;
+      fields: Array<{ status: string; source: string }>;
+    };
+    expect(body.fieldCount).toBe(6);
+    expect(body.fields).toHaveLength(6);
+    expect(body.verifiedFields).toBe(
+      body.fields.filter((field) => field.status === 'VERIFIED').length,
+    );
+    if (body.status === 'VERIFIED') expect(body.verifiedFields).toBe(6);
   });
 
-  it('ignores browser-supplied identity overrides', async () => {
-    for (const [key, value] of Object.entries(COMPLETE_IDENTITY)) vi.stubEnv(key, value);
+  it('ignores browser-supplied identity overrides and legacy environment values', async () => {
+    vi.stubEnv('RELEASE_GIT_SHA', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    vi.stubEnv('RELEASE_ID', 'rel-aaaaaaaaaaaaaaaa');
+    vi.stubEnv('RENDER', 'true');
+    vi.stubEnv('RENDER_GIT_COMMIT', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     resetServerEnvForTests();
     const response = await GET(
       context(
@@ -87,13 +78,17 @@ describe('authenticated build-identity surface (Prompt 12 integration)', () => {
         actor(permitted),
       ),
     );
-    const body = (await response.json()) as { release: Record<string, string> };
-    expect(body.release.gitSha).toBe('0123456789abcdef0123456789abcdef01234567');
+    const body = (await response.json()) as { release: Record<string, string>; status: string };
+    expect(body.release.gitSha).not.toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    expect(body.status).toBe('UNVERIFIED');
+    expect(body).toMatchObject({ reason: 'RUNTIME_MISMATCH', verifiedFields: 0 });
   });
 
-  it('stays UNVERIFIED when build evidence is absent and exposes no secrets', async () => {
+  it('stays UNVERIFIED when platform identity mismatches and exposes no secrets', async () => {
     vi.stubEnv('SESSION_SECRET', 'top-secret-session-value-32-chars-ok');
     vi.stubEnv('DATABASE_URL', 'postgresql://user:secret@db.internal:5432/qc_ops');
+    vi.stubEnv('RENDER', 'true');
+    vi.stubEnv('RENDER_GIT_COMMIT', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     resetServerEnvForTests();
     const response = await GET(context('', actor(permitted)));
     expect(response.status).toBe(200);

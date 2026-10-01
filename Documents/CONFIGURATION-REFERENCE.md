@@ -37,19 +37,17 @@ provider secret manager. `.env.example` carries variable names only.
 | `SERVICE_VERSION` | non-empty string | `0.1.0` | explicit in `production` | Feeds release identity and structured-log `service_version`; must match the deployed artifact version. |
 | `LOG_LEVEL` | `fatal` / `error` / `warn` / `info` / `debug` / `trace` / `silent` | `info` | optional | Changes log verbosity only. Unknown values are rejected at validation; the request-path logger degrades an unexpected value to `info` because logging must never break a request. |
 
-## Release evidence (optional, sanitized)
+## Release evidence
 
-| Variable | Type | Approved default | Change impact |
-| --- | --- | --- | --- |
-| `RELEASE_ID` | non-empty string | unset | Overrides the derived local release identity; a wrong value breaks candidate binding. |
-| `RELEASE_BUILD_ID` | non-empty string | unset | Part of release evidence identity. |
-| `RELEASE_BUILD_TIMESTAMP` | non-empty string | unset | Part of release evidence identity. |
-| `RELEASE_ENVIRONMENT` | `local` / `test` / `ci` / `staging` / `production` | unset | Labels evidence; `production` evidence is only valid from the real deployment path. |
-| `RELEASE_GIT_SHA` | string | unset | Binds evidence to an exact candidate. |
-| `RELEASE_MIGRATION_HEAD` | string | unset | Binds evidence to a schema head. |
-
-All six release values are injected by the build/deployment system; local runs
-produce explicitly non-production evidence.
+The six runtime identity elements are generated into `dist/release-identity.json`
+from the checked-out Git SHA, Render's `RENDER_GIT_COMMIT`, the ordered source
+migrations, the build timestamp, the explicit build environment, and the
+server-entry SHA-256. Runtime reads this artifact and compares the running
+server entry bytes before marking fields `VERIFIED`. They are not operator-set
+environment variables; browser query/body fields cannot override them. Missing,
+invalid, stale, or mismatched artifact/runtime evidence stays `UNVERIFIED`.
+`SERVICE_VERSION` remains a separate core runtime setting and cannot establish
+release identity or approval by itself.
 
 ## Rate limiting
 

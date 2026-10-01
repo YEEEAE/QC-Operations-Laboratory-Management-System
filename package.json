@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/verification/write-build-evidence.mjs",
+    "build": "astro build && node scripts/release/release-id.mjs --artifact dist/server/entry.mjs && node scripts/verification/write-build-evidence.mjs",
     "preview": "astro preview",
     "typecheck": "astro check",
     "lint": "eslint .",

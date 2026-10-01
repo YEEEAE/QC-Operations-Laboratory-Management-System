@@ -19,9 +19,9 @@ function problem(status: number, title: string, requestId?: string): Response {
 /**
  * Authenticated sanitized build-identity surface (Prompt 12).
  *
- * Returns the exact server-derived deployment identity — Git SHA, immutable
- * build ID, release-candidate ID, deployment timestamp, and environment
- * name — generated at CI/build time and injected through server environment.
+ * Returns the exact server-derived deployment identity and per-field source
+ * checks from the build artifact and the running server entrypoint. Manual
+ * release environment variables and browser input are not identity sources.
  * Nothing is accepted from the browser: query strings and request bodies are
  * ignored. Credentials, endpoints, and raw errors are never exposed.
  * Unauthenticated callers receive 401, actors without PERM-HLTH-VIEW
@@ -36,6 +36,11 @@ export const GET: APIRoute = ({ locals }) => {
     return new Response(
       JSON.stringify({
         status: release.status,
+        verifiedFields: release.verifiedFields,
+        fieldCount: release.fieldCount,
+        checkedAt: release.checkedAt,
+        fields: release.fields,
+        ...(release.reason ? { reason: release.reason } : {}),
         release: {
           ...(release.releaseId ? { id: release.releaseId } : {}),
           ...(release.buildId ? { buildId: release.buildId } : {}),

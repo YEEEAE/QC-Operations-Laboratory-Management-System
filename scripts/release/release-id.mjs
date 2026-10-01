@@ -189,7 +189,7 @@ export function parseArguments(args) {
 
 function inferredEnvironment(environment, env) {
   if (environment) return environment;
-  if (env.RELEASE_ENVIRONMENT) return env.RELEASE_ENVIRONMENT;
+  if (env.RENDER === 'true') return 'production';
   if (env.GITHUB_ACTIONS === 'true') return 'ci';
   if (env.NODE_ENV === 'production') return 'production';
   if (env.NODE_ENV === 'test') return 'test';
@@ -198,7 +198,8 @@ function inferredEnvironment(environment, env) {
 
 function inferredBuildId(buildId, env, gitSha, environment) {
   if (buildId) return buildId;
-  if (env.RELEASE_BUILD_ID) return env.RELEASE_BUILD_ID;
+  if (env.RENDER === 'true' && gitShaPattern.test(env.RENDER_GIT_COMMIT ?? ''))
+    return `render-${env.RENDER_GIT_COMMIT.toLowerCase()}`;
   if (env.GITHUB_RUN_ID) return `github-${env.GITHUB_RUN_ID}.${env.GITHUB_RUN_ATTEMPT ?? '1'}`;
   if (environment === 'production')
     throw new Error('RELEASE_BUILD_ID or --build-id is required for production evidence.');
@@ -208,6 +209,15 @@ function inferredBuildId(buildId, env, gitSha, environment) {
 export async function collectReleaseMetadata(options = {}, env = process.env) {
   const packageJson = JSON.parse(await readFile(resolve(repositoryRoot, 'package.json'), 'utf8'));
   const gitSha = readGitSha();
+  if (
+    env.RENDER === 'true' &&
+    (!gitShaPattern.test(env.RENDER_GIT_COMMIT ?? '') ||
+      env.RENDER_GIT_COMMIT.toLowerCase() !== gitSha)
+  ) {
+    throw new Error('Render commit does not match the checked-out Git SHA.');
+  }
+  if (options.expectedGitSha && options.expectedGitSha.toLowerCase() !== gitSha)
+    throw new Error('Expected Git SHA does not match the checked-out Git SHA.');
   const migration = await readMigrationHead();
   const environment = inferredEnvironment(options.environment, env);
   const buildId = inferredBuildId(options.buildId, env, gitSha, environment);

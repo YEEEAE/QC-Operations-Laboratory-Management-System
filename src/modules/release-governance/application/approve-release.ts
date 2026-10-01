@@ -3,6 +3,8 @@ import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { getRuntimeConfig } from '../../../config/runtime.js';
+import type { ConfiguredReleaseIdentity } from '../../../config/release.js';
 import {
   createSignatureEvidence,
   type SignatureEvidence,
@@ -13,12 +15,14 @@ import {
   deriveReleaseEvidence,
   assertReleaseAuthority,
   assertResidualRisksAcceptable,
+  type ReleaseCandidateIdentity,
 } from '../domain/release-approval.js';
 import type {
   ApproveReleaseInput,
   ReleaseApprovalRecord,
   ReleaseGovernanceRepository,
 } from '../ports/repository.js';
+import { isCurrentRuntimeIdentityForCandidate } from './runtime-identity-check.js';
 
 export interface ReleaseSignatureService {
   create(input: Omit<SignatureEvidence, 'id' | 'signedAt'>): SignatureEvidence;
@@ -32,6 +36,9 @@ export class ApproveReleaseUseCase {
     private readonly signatureService: ReleaseSignatureService = {
       create: (input) => createSignatureEvidence({ ...input, signedAt: new Date() }),
     },
+    private readonly runtimeIdentity: (
+      candidate: ReleaseCandidateIdentity,
+    ) => ConfiguredReleaseIdentity = () => getRuntimeConfig().release,
   ) {}
 
   async execute(input: ApproveReleaseInput): Promise<ReleaseApprovalRecord> {
@@ -60,6 +67,14 @@ export class ApproveReleaseUseCase {
 
     if (candidate.state !== 'PENDING')
       throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (
+      !isCurrentRuntimeIdentityForCandidate(this.runtimeIdentity(candidate), candidate, this.now())
+    ) {
+      throw new AppError('AUTHZ_DENIED', {
+        userSafe: true,
+        messageKey: 'release.runtimeIdentityNotVerified',
+      });
+    }
 
     const trusted = await this.repository.getEvidence(candidate.releaseId);
     const evidence = deriveReleaseEvidence(

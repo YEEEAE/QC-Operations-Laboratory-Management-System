@@ -40,6 +40,12 @@ export interface PublicReleaseInfo {
 
 export interface ConfiguredReleaseIdentity {
   status: 'VERIFIED' | 'UNVERIFIED';
+  verifiedFields?: number;
+  readonly fieldCount?: 6;
+  checkedAt?: string;
+  fields?: readonly ReleaseIdentityField[];
+  reason?: 'ARTIFACT_MISSING' | 'ARTIFACT_INVALID' | 'ARTIFACT_MISMATCH' | 'RUNTIME_MISMATCH';
+  dirty?: boolean;
   releaseId?: string;
   buildId?: string;
   buildTimestamp?: string;
@@ -48,6 +54,50 @@ export interface ConfiguredReleaseIdentity {
   migrationHead?: string;
   serviceVersion?: string;
 }
+
+export interface ReleaseIdentityField {
+  name: 'releaseId' | 'buildId' | 'buildTimestamp' | 'environment' | 'gitSha' | 'migrationHead';
+  status: 'VERIFIED' | 'MISSING' | 'INVALID' | 'MISMATCH';
+  source: string;
+  value?: string;
+}
+
+const IDENTITY_FIELD_NAMES = [
+  'releaseId',
+  'buildId',
+  'buildTimestamp',
+  'environment',
+  'gitSha',
+  'migrationHead',
+] as const;
+function identityFieldSources(
+  isRenderRuntime: boolean,
+): Record<(typeof IDENTITY_FIELD_NAMES)[number], string> {
+  const buildIdentitySource = isRenderRuntime
+    ? 'Render RENDER_GIT_COMMIT platform metadata'
+    : 'Build command --build-id or platform CI run identity';
+  const gitSource = isRenderRuntime
+    ? 'Git HEAD cross-checked against Render RENDER_GIT_COMMIT'
+    : 'Git HEAD read by release:identity';
+  const environmentSource = isRenderRuntime
+    ? 'Render platform metadata (RENDER=true maps to production)'
+    : 'Build platform metadata or explicit release:identity argument';
+  return {
+    releaseId: 'Derived from the candidate identity and server artifact SHA-256',
+    buildId: buildIdentitySource,
+    buildTimestamp: 'Build process timestamp captured by release:identity',
+    environment: environmentSource,
+    gitSha: gitSource,
+    migrationHead: 'Highest ordered db/migrations source file',
+  };
+}
+
+export type ReleaseIdentityArtifact = ReleaseIdentity & {
+  readonly applicationVersion: string;
+  readonly migrationHeadChecksum: string;
+  readonly artifactSha256: string;
+  readonly workingTree: 'clean' | 'dirty';
+};
 
 const SHA256 = /^[0-9a-f]{64}$/i;
 const GIT_SHA = /^[0-9a-f]{40}$/i;
@@ -169,40 +219,138 @@ export function getPublicReleaseInfo(identity: ReleaseIdentity): PublicReleaseIn
 
 export function getConfiguredReleaseIdentity(
   environment: Record<string, string | undefined>,
+  artifact?: unknown,
+  runtimeArtifactSha256?: string,
+  checkedAt = new Date().toISOString(),
 ): ConfiguredReleaseIdentity {
   const serviceVersion = environment.SERVICE_VERSION?.trim() || undefined;
-  const releaseId = environment.RELEASE_ID?.trim();
-  const buildId = environment.RELEASE_BUILD_ID?.trim();
-  const buildTimestamp = environment.RELEASE_BUILD_TIMESTAMP?.trim();
-  const releaseEnvironment = environment.RELEASE_ENVIRONMENT?.trim() as
-    ReleaseEnvironment | undefined;
-  const gitSha = environment.RELEASE_GIT_SHA?.trim().toLowerCase();
-  const migrationHead = environment.RELEASE_MIGRATION_HEAD?.trim();
-  const complete = Boolean(
-    releaseId &&
-    RELEASE_ID.test(releaseId) &&
-    buildId &&
-    SAFE_VALUE.test(buildId) &&
-    buildTimestamp &&
-    Number.isFinite(Date.parse(buildTimestamp)) &&
-    releaseEnvironment &&
-    RELEASE_ENVIRONMENTS.includes(releaseEnvironment) &&
-    gitSha &&
-    GIT_SHA.test(gitSha) &&
-    migrationHead &&
-    MIGRATION_HEAD.test(migrationHead),
-  );
+  const names = IDENTITY_FIELD_NAMES;
+  const fieldSources = identityFieldSources(environment.RENDER === 'true');
+  if (artifact === undefined || artifact === null) {
+    return {
+      status: 'UNVERIFIED',
+      verifiedFields: 0,
+      fieldCount: 6,
+      checkedAt,
+      reason: 'ARTIFACT_MISSING',
+      fields: names.map((name) => ({
+        name,
+        status: 'MISSING',
+        source: fieldSources[name],
+      })),
+    };
+  }
+
+  const data = artifact as Partial<ReleaseIdentityArtifact>;
+  const candidateFields: Record<(typeof names)[number], unknown> = {
+    releaseId: data.releaseId,
+    buildId: data.buildId,
+    buildTimestamp: data.buildTimestamp,
+    environment: data.environment,
+    gitSha: data.gitSha,
+    migrationHead: data.migrationHead,
+  };
+  let reason: ConfiguredReleaseIdentity['reason'];
+  let reconstructed: ReleaseIdentity | undefined;
+  try {
+    if (
+      data.schemaVersion !== RELEASE_SCHEMA_VERSION ||
+      data.serviceName !== SERVICE_NAME ||
+      (data.environment === 'production' &&
+        (data.workingTree !== 'clean' || data.dirty !== false)) ||
+      !data.migrationHeadChecksum ||
+      !data.artifactSha256 ||
+      !data.applicationVersion ||
+      !data.serviceVersion ||
+      typeof data.workingTree !== 'string' ||
+      !data.buildTimestamp
+    ) {
+      throw new Error('invalid-artifact');
+    }
+    reconstructed = createReleaseIdentity({
+      applicationVersion: data.applicationVersion,
+      serviceVersion: data.serviceVersion,
+      buildId: data.buildId ?? '',
+      buildTimestamp: data.buildTimestamp,
+      environment: data.environment as ReleaseEnvironment,
+      gitSha: data.gitSha ?? '',
+      migrationHead: data.migrationHead ?? '',
+      migrationHeadChecksum: data.migrationHeadChecksum,
+      workingTree: data.workingTree,
+      artifactSha256: data.artifactSha256,
+    });
+    if (
+      data.releaseId !== reconstructed.releaseId ||
+      !SHA256.test(data.artifactSha256) ||
+      !SHA256.test(runtimeArtifactSha256 ?? '')
+    ) {
+      reason = 'ARTIFACT_INVALID';
+    } else if (runtimeArtifactSha256?.toLowerCase() !== data.artifactSha256.toLowerCase()) {
+      reason = 'ARTIFACT_MISMATCH';
+    } else if (
+      (environment.NODE_ENV === 'production' && data.environment !== 'production') ||
+      (environment.RENDER === 'true' &&
+        (!GIT_SHA.test(environment.RENDER_GIT_COMMIT ?? '') ||
+          environment.RENDER_GIT_COMMIT?.toLowerCase() !== data.gitSha?.toLowerCase())) ||
+      (serviceVersion && serviceVersion !== data.serviceVersion)
+    ) {
+      reason = 'RUNTIME_MISMATCH';
+    }
+  } catch {
+    reason = 'ARTIFACT_INVALID';
+  }
+
+  const validMetadata = Boolean(reconstructed && !reason);
+  const fields: ReleaseIdentityField[] = names.map((name) => {
+    const value = candidateFields[name];
+    const present = typeof value === 'string' && value.trim().length > 0;
+    const valid =
+      (name === 'releaseId' && typeof value === 'string' && RELEASE_ID.test(value)) ||
+      (name === 'buildId' && typeof value === 'string' && SAFE_VALUE.test(value)) ||
+      (name === 'buildTimestamp' &&
+        typeof value === 'string' &&
+        Number.isFinite(Date.parse(value))) ||
+      (name === 'environment' &&
+        typeof value === 'string' &&
+        RELEASE_ENVIRONMENTS.includes(value as ReleaseEnvironment)) ||
+      (name === 'gitSha' && typeof value === 'string' && GIT_SHA.test(value)) ||
+      (name === 'migrationHead' && typeof value === 'string' && MIGRATION_HEAD.test(value));
+    return {
+      name,
+      status: !present ? 'MISSING' : !valid ? 'INVALID' : validMetadata ? 'VERIFIED' : 'MISMATCH',
+      source: fieldSources[name],
+      ...(valid ? { value: value as string } : {}),
+    };
+  });
+  const verifiedFields = fields.filter((field) => field.status === 'VERIFIED').length;
   return {
-    status: complete ? 'VERIFIED' : 'UNVERIFIED',
-    ...(releaseId && RELEASE_ID.test(releaseId) ? { releaseId } : {}),
-    ...(buildId && SAFE_VALUE.test(buildId) ? { buildId } : {}),
-    ...(buildTimestamp && Number.isFinite(Date.parse(buildTimestamp)) ? { buildTimestamp } : {}),
-    ...(releaseEnvironment && RELEASE_ENVIRONMENTS.includes(releaseEnvironment)
-      ? { environment: releaseEnvironment }
+    status: verifiedFields === 6 ? 'VERIFIED' : 'UNVERIFIED',
+    verifiedFields,
+    fieldCount: 6,
+    checkedAt,
+    fields,
+    ...(reason ? { reason } : {}),
+    ...(typeof data.releaseId === 'string' && RELEASE_ID.test(data.releaseId)
+      ? { releaseId: data.releaseId }
       : {}),
-    ...(gitSha && GIT_SHA.test(gitSha) ? { gitSha } : {}),
-    ...(migrationHead && MIGRATION_HEAD.test(migrationHead) ? { migrationHead } : {}),
+    ...(typeof data.buildId === 'string' && SAFE_VALUE.test(data.buildId)
+      ? { buildId: data.buildId }
+      : {}),
+    ...(typeof data.buildTimestamp === 'string' && Number.isFinite(Date.parse(data.buildTimestamp))
+      ? { buildTimestamp: data.buildTimestamp }
+      : {}),
+    ...(typeof data.environment === 'string' &&
+    RELEASE_ENVIRONMENTS.includes(data.environment as ReleaseEnvironment)
+      ? { environment: data.environment as ReleaseEnvironment }
+      : {}),
+    ...(typeof data.gitSha === 'string' && GIT_SHA.test(data.gitSha)
+      ? { gitSha: data.gitSha.toLowerCase() }
+      : {}),
+    ...(typeof data.migrationHead === 'string' && MIGRATION_HEAD.test(data.migrationHead)
+      ? { migrationHead: data.migrationHead }
+      : {}),
     ...(serviceVersion && SAFE_VALUE.test(serviceVersion) ? { serviceVersion } : {}),
+    ...(validMetadata && typeof data.dirty === 'boolean' ? { dirty: data.dirty } : {}),
   };
 }
 

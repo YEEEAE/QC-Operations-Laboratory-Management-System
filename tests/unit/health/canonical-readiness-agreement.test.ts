@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GetSystemHealthUseCase } from '../../../src/modules/system-health/application/get-system-health.js';
 import { PostgresSystemHealthProbes } from '../../../src/modules/system-health/infrastructure/postgres-health-probes.js';
+import { resetAiConfigurationForTests } from '../../../src/modules/ai-advisory/infrastructure/ai-configuration.js';
 import type { BackupCatalogRepository } from '../../../src/modules/backup-recovery/ports/repository.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import {
@@ -86,9 +87,57 @@ beforeEach(() => {
   vi.clearAllMocks();
   seenConfigs.length = 0;
   vi.stubEnv('NODE_ENV', 'test');
+  resetAiConfigurationForTests();
 });
 
 describe('canonical database readiness agreement (F-01)', () => {
+  it('separates disabled policy, invalid policy, and missing provider configuration without probing providers', async () => {
+    vi.stubEnv('AI_EXTERNAL_PROCESSING_APPROVED', 'false');
+    expect(await new PostgresSystemHealthProbes().aiProvider()).toMatchObject({
+      status: 'DEGRADED',
+      detail: 'POLICY_DISABLED',
+    });
+
+    resetAiConfigurationForTests();
+    vi.stubEnv('AI_EXTERNAL_PROCESSING_APPROVED', 'true');
+    vi.stubEnv('AI_PROCESSING_POLICY_JSON', 'not-json');
+    expect(await new PostgresSystemHealthProbes().aiProvider()).toMatchObject({
+      status: 'DEGRADED',
+      detail: 'POLICY_NOT_VALID',
+    });
+
+    resetAiConfigurationForTests();
+    vi.stubEnv(
+      'AI_PROCESSING_POLICY_JSON',
+      JSON.stringify({
+        status: 'APPROVED',
+        policyId: 'synthetic',
+        version: '1',
+        sourceReference: 'synthetic',
+        approvedBy: 'synthetic',
+        approvedAt: '2026-10-01T00:00:00Z',
+        providers: ['groq'],
+        processingLocation: 'synthetic',
+        retentionDays: 0,
+        deletionTerms: 'synthetic',
+        providerTraining: false,
+        consentVersion: '1',
+        permittedDataClasses: ['SYNTHETIC'],
+        prohibitedDataClasses: [
+          'PERSONAL_DATA',
+          'CREDENTIALS',
+          'CONFIDENTIAL_QC',
+          'CONTROLLED_RECORDS',
+          'UNAUTHORIZED_CONTENT',
+        ],
+      }),
+    );
+    expect(await new PostgresSystemHealthProbes().aiProvider()).toMatchObject({
+      status: 'DEGRADED',
+      detail: 'CONFIGURATION_MISSING',
+    });
+  });
+
   it('keeps liveness, readiness, capability degradation, and QC release status separate', async () => {
     vi.stubEnv('DATABASE_URL', VALID_URL);
     mockClientSuccess();

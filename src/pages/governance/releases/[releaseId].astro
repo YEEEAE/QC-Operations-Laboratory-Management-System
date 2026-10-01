@@ -9,6 +9,7 @@ const { candidate, evidence } = model;
 const reasonCopy = (reason: string) => {
   if (reason === 'AUTHORITY') return 'An active Manager or the named yazeed / SYSTEM_OWNER signer is required.';
   if (reason === 'RELEASE_NOT_FOUND') return 'The release candidate is unavailable.';
+  if (reason === 'IDENTITY_NOT_VERIFIED') return 'The current server artifact is missing, stale, or does not match all six fields on this candidate; approval remains blocked.';
   if (reason === 'STATE_NOT_PENDING') return 'This candidate is no longer pending approval.';
   if (reason.startsWith('GATE:')) return `${reason.slice(5)} has no current signed evidence for this exact candidate, or its latest result is not PASS.`;
   if (reason.startsWith('RISK:')) return `Controlled risk ${reason.slice(5)} is unresolved or lacks accepted authority evidence.`;

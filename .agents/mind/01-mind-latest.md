@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ENV26-02 / release identity and runtime evidence**
+  - Changed: six identity fields now come from a generated build artifact matched to the running server entry; release approval also requires a fresh clean production runtime identity matching the candidate. Health classifies AI policy/configuration/provider states separately; no DB schema change.
+  - Evidence: implementation-local artifact/runtime 6/6 PASS but dirty; missing/mismatched/stale approval identity tests PASS. Render runtime NOT VERIFIED; PostgreSQL 18 isolated ledger rehearsal BLOCKED by missing container runtime. Handoff: `audit/2026-10-01/handoff-QC-ENV26-02.md`.
+  - State: PARTIAL — production acceptance and owner decision remain open; no external writes or deploy.
+
 - **2026-10-01 — QC-ENV26-01 / server migration parity**
   - Changed: `/system/health` distinguishes missing/invalid `DATABASE_URL` from provider outage using sanitized classifications; no migration files changed.
   - Evidence: frozen HEAD `ffc218ca`; source 42-migration manifest captured. Focused unit 19/19 PASS; PG18 rehearsal/integration BLOCKED by Testcontainers runtime and host `shmget` restriction. Render snapshot remains 18/42 and deploy-in-progress evidence is not candidate-bound.
@@ -381,7 +386,8 @@
 
 ### Database readiness
 - `/api/health/ready` و`/system/health` يستخدمان فحص قاعدة بيانات canonical واحد ونفس TLS config.
-- `/system/health` يميز `CONFIGURATION_MISSING` و`CONFIGURATION_INVALID` (DEGRADED) عن `PROVIDER_UNAVAILABLE` (UNAVAILABLE) دون إظهار تفاصيل الاتصال؛ عقد `/api/health/ready` يبقى `healthy|unhealthy`. QC-ENV26-01 لم يثبت بعد فصل سبب تعطيل AI في العرض، وتجربة PostgreSQL 18 بالمرشح الحالي BLOCKED.
+- `/system/health` يميز `CONFIGURATION_MISSING` و`CONFIGURATION_INVALID` (DEGRADED) عن `PROVIDER_UNAVAILABLE` (UNAVAILABLE) دون إظهار تفاصيل الاتصال؛ عقد `/api/health/ready` يبقى `healthy|unhealthy`. AI health يميز الآن `POLICY_DISABLED` و`POLICY_NOT_VALID` و`CONFIGURATION_MISSING/INVALID` عن `PROVIDER_UNAVAILABLE` دون طلب خارجي عند الحالات الأولى. PostgreSQL 18 rehearsal ما زال BLOCKED.
+- Release identity الستة تُشتق من `dist/release-identity.json` وتُقبل فقط عند مطابقة SHA-256 الفعلي لـ`dist/server/entry.mjs`، ومطابقة Render `RENDER_GIT_COMMIT` عند التشغيل هناك. `SERVICE_VERSION` وحده ليس إثباتًا؛ غياب/اختلاف artifact يبقي الحقول UNVERIFIED. تنفيذ اعتماد الإصدار يشترط هوية production حديثة ونظيفة تطابق المرشح في SHA/build/version/migration. فحص الإنتاج الحالي لا يملك runtime snapshot مكتملًا مربوطًا بـHEAD المحلي.
 - `sslmode=disable` مرفوض؛ لا تُسرّب host/secret/exception raw.
 - failure يتحول إلى حالات منقحة مثل `false` / `UNAVAILABLE` / `503`.
 

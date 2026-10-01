@@ -104,7 +104,33 @@ async function createCandidate(suffix: string): Promise<string> {
 function useCase() {
   const repository = new PostgresReleaseGovernanceRepository(db);
   const verifier = { verify: async () => true };
-  return new ApproveReleaseUseCase(repository, verifier);
+  return new ApproveReleaseUseCase(repository, verifier, undefined, undefined, (candidate) => ({
+    status: 'VERIFIED',
+    verifiedFields: 6,
+    fieldCount: 6,
+    checkedAt: new Date().toISOString(),
+    dirty: false,
+    releaseId: 'rel-0123456789abcdef',
+    buildId: candidate.buildId,
+    buildTimestamp: new Date().toISOString(),
+    environment: 'production',
+    gitSha: candidate.gitSha,
+    migrationHead: candidate.migrationHead,
+    serviceVersion: candidate.applicationVersion,
+    fields: [
+      'releaseId',
+      'buildId',
+      'buildTimestamp',
+      'environment',
+      'gitSha',
+      'migrationHead',
+    ].map((name) => ({
+      name: name as
+        'releaseId' | 'buildId' | 'buildTimestamp' | 'environment' | 'gitSha' | 'migrationHead',
+      status: 'VERIFIED' as const,
+      source: 'synthetic test artifact',
+    })),
+  }));
 }
 
 describe('release governance PostgreSQL concurrency and idempotency', () => {

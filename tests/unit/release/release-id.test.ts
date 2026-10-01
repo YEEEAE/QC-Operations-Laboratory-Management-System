@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { collectReleaseMetadata } from '../../../scripts/release/release-id.mjs';
 
 import {
   assertReleaseIdentity,
@@ -20,6 +22,33 @@ const input = (overrides: Partial<ReleaseIdentityInput> = {}): ReleaseIdentityIn
 });
 
 describe('release identity', () => {
+  it('derives Render build identity from its platform commit and rejects a mismatch', async () => {
+    const gitSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const metadata = await collectReleaseMetadata(
+      { environment: 'local' },
+      { RENDER: 'true', RENDER_GIT_COMMIT: gitSha, SERVICE_VERSION: '0.1.0' },
+    );
+    expect(metadata).toMatchObject({
+      buildId: `render-${gitSha}`,
+      gitSha,
+      environment: 'local',
+    });
+    await expect(
+      collectReleaseMetadata(
+        { environment: 'local' },
+        { RENDER: 'true', RENDER_GIT_COMMIT: 'a'.repeat(40), SERVICE_VERSION: '0.1.0' },
+      ),
+    ).rejects.toThrow(/does not match the checked-out Git SHA/i);
+    const locallyForgedLabels = await collectReleaseMetadata(
+      {},
+      { RELEASE_BUILD_ID: 'fake-build', RELEASE_ENVIRONMENT: 'production' },
+    );
+    expect(locallyForgedLabels).toMatchObject({
+      buildId: `local-${gitSha.slice(0, 12)}`,
+      environment: 'local',
+    });
+  });
+
   it('produces deterministic release metadata for the same inputs', () => {
     const first = createReleaseIdentity(input());
     const second = createReleaseIdentity(input());

@@ -15,6 +15,7 @@ import type {
 } from '../../../src/modules/release-governance/ports/repository.js';
 import type { ReauthenticationVerifier } from '../../../src/modules/e-signatures/ports/repository.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
+import type { ConfiguredReleaseIdentity } from '../../../src/config/release.js';
 
 const GIT_SHA = 'a'.repeat(40);
 const RELEASE_ID = '01900000-0000-7000-8000-00000000aa01';
@@ -52,16 +53,18 @@ const trustedEvidence = (): {
   gateRecords: RELEASE_GATE_KEYS.map((evidenceType, index) => ({
     evidenceType,
     status: 'PASS' as const,
-    source: ({
-      ci: 'SIGNED_PROVIDER_ATTESTATION',
-      security: 'SIGNED_PROVIDER_ATTESTATION',
-      database: 'SIGNED_PROVIDER_ATTESTATION',
-      e2e: 'SIGNED_PROVIDER_ATTESTATION',
-      uat: 'SIGNED_UAT_CYCLE',
-      signatures: 'E_SIGNATURE_STORE',
-      criticalRisks: 'CONTROLLED_RISK_REGISTER',
-      residualRisk: 'CONTROLLED_RISK_REGISTER',
-    } satisfies Record<ReleaseGateKey, string>)[evidenceType],
+    source: (
+      {
+        ci: 'SIGNED_PROVIDER_ATTESTATION',
+        security: 'SIGNED_PROVIDER_ATTESTATION',
+        database: 'SIGNED_PROVIDER_ATTESTATION',
+        e2e: 'SIGNED_PROVIDER_ATTESTATION',
+        uat: 'SIGNED_UAT_CYCLE',
+        signatures: 'E_SIGNATURE_STORE',
+        criticalRisks: 'CONTROLLED_RISK_REGISTER',
+        residualRisk: 'CONTROLLED_RISK_REGISTER',
+      } satisfies Record<ReleaseGateKey, string>
+    )[evidenceType],
     immutableReference: 'evidence/' + evidenceType + '/1',
     observedAt: new Date(),
     releaseVersion: 3n,
@@ -158,6 +161,48 @@ const storedApproval = {
 
 const verifier: ReauthenticationVerifier = { verify: vi.fn(async () => true) };
 
+const runtimeIdentity = (
+  overrides: Partial<ConfiguredReleaseIdentity> = {},
+): ConfiguredReleaseIdentity => ({
+  status: 'VERIFIED',
+  verifiedFields: 6,
+  fieldCount: 6,
+  checkedAt: new Date().toISOString(),
+  dirty: false,
+  releaseId: 'rel-0123456789abcdef',
+  buildId: candidate.buildId,
+  buildTimestamp: new Date().toISOString(),
+  environment: 'production',
+  gitSha: candidate.gitSha,
+  migrationHead: candidate.migrationHead,
+  serviceVersion: candidate.applicationVersion,
+  fields: ['releaseId', 'buildId', 'buildTimestamp', 'environment', 'gitSha', 'migrationHead'].map(
+    (name) => ({
+      name: name as NonNullable<ConfiguredReleaseIdentity['fields']>[number]['name'],
+      status: 'VERIFIED' as const,
+      source: 'synthetic test artifact',
+    }),
+  ),
+  ...overrides,
+});
+
+function useCase(repository: ReleaseGovernanceRepository, identity?: ConfiguredReleaseIdentity) {
+  return new ApproveReleaseUseCase(
+    repository,
+    verifier,
+    undefined,
+    undefined,
+    (current) =>
+      identity ??
+      runtimeIdentity({
+        gitSha: current.gitSha,
+        buildId: current.buildId,
+        serviceVersion: current.applicationVersion,
+        migrationHead: current.migrationHead,
+      }),
+  );
+}
+
 const baseInput = () => ({
   actor: manager(),
   releaseId: RELEASE_ID,
@@ -181,7 +226,7 @@ describe('release gates (fail-closed, table-driven)', () => {
     evidence.gateRecords[RELEASE_GATE_KEYS.indexOf(gate)].status = 'FAIL';
     const repo = makeRepo({}, evidence);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         requestId: `req-gate-${gate}`,
       }),
@@ -192,7 +237,12 @@ describe('release gates (fail-closed, table-driven)', () => {
   it('UNVERIFIED gate is denied and capability lists every failing gate', () => {
     const gates = { ...passGates, ci: 'UNVERIFIED', e2e: 'PARTIAL' } as ReleaseGateEvidence;
     expect(evaluateGates(gates).ok).toBe(false);
-    const capability = getReleaseApprovalCapability({ actor: manager(), gates, risks: [], productionGateDecisionReconciled: false });
+    const capability = getReleaseApprovalCapability({
+      actor: manager(),
+      gates,
+      risks: [],
+      productionGateDecisionReconciled: false,
+    });
     expect(capability.canApprove).toBe(false);
     expect(capability.disabledReasons).toContain('PRODUCTION_GATE_REGISTER_NOT_RECONCILED');
     expect(capability.disabledReasons).toContain('GATE:ci');
@@ -203,11 +253,35 @@ describe('release gates (fail-closed, table-driven)', () => {
     const repo = makeRepo();
     repo.hasReconciledProductionGateDecision.mockResolvedValueOnce(false);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         requestId: 'req-no-production-register',
       }),
-    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED', messageKey: 'release.productionGateRegisterNotReconciled' });
+    ).rejects.toMatchObject({
+      code: 'AUTHZ_DENIED',
+      messageKey: 'release.productionGateRegisterNotReconciled',
+    });
+    expect(repo.approve).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing identity', { status: 'UNVERIFIED' as const, verifiedFields: 0, fieldCount: 6 }],
+    ['candidate mismatch', runtimeIdentity({ gitSha: 'b'.repeat(40) })],
+    [
+      'stale identity check',
+      runtimeIdentity({ checkedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() }),
+    ],
+  ])('blocks approval for %s', async (_label, identity) => {
+    const repo = makeRepo();
+    await expect(
+      useCase(repo, identity as ConfiguredReleaseIdentity).execute({
+        ...baseInput(),
+        requestId: `req-identity-${String(_label).replace(/\W+/g, '-')}`,
+      }),
+    ).rejects.toMatchObject({
+      code: 'AUTHZ_DENIED',
+      messageKey: 'release.runtimeIdentityNotVerified',
+    });
     expect(repo.approve).not.toHaveBeenCalled();
   });
 });
@@ -224,7 +298,7 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
     ['manager without permission', actor('mgr-1', ['MANAGER'], []), false],
   ])('%s -> %s', async (_name, testActor, allowed) => {
     const repo = makeRepo();
-    const promise = new ApproveReleaseUseCase(repo, verifier).execute({
+    const promise = useCase(repo).execute({
       ...baseInput(),
       actor: testActor,
       requestId: `req-auth-${String(_name).replace(/\W+/g, '-')}`,
@@ -241,7 +315,7 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
   it('system owner identity is exact: another SYSTEM_OWNER id is denied', async () => {
     const repo = makeRepo();
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         actor: actor('someone-else', ['SYSTEM_OWNER']),
         requestId: 'req-auth-identity',
@@ -259,8 +333,12 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
       }).canApprove,
     ).toBe(false);
     expect(
-      getReleaseApprovalCapability({ actor: systemOwner(), gates: passGates, risks: [], productionGateDecisionReconciled: true })
-        .canApprove,
+      getReleaseApprovalCapability({
+        actor: systemOwner(),
+        gates: passGates,
+        risks: [],
+        productionGateDecisionReconciled: true,
+      }).canApprove,
     ).toBe(true);
     expect(
       getReleaseApprovalCapability({
@@ -274,7 +352,7 @@ describe('release authority (Manager OR yazeed/SYSTEM_OWNER)', () => {
 
   it('one authorized signer is sufficient', async () => {
     const repo = makeRepo();
-    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+    const result = await useCase(repo).execute({
       ...baseInput(),
       actor: systemOwner(),
       requestId: 'req-single-signer',
@@ -287,7 +365,7 @@ describe('server-owned identity and version', () => {
   it('stale expected version is denied', async () => {
     const repo = makeRepo();
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         expectedVersion: 2n,
         requestId: 'req-stale',
@@ -297,7 +375,7 @@ describe('server-owned identity and version', () => {
 
   it('uses the candidate identity and ignores browser identity-shaped extras', async () => {
     const repo = makeRepo();
-    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+    const result = await useCase(repo).execute({
       ...baseInput(),
       requestId: 'req-browser-extra',
       ...({
@@ -333,7 +411,7 @@ describe('residual-risk handling', () => {
     });
     const repo = makeRepo({}, evidence);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         requestId: 'req-critical',
       }),
@@ -357,7 +435,7 @@ describe('residual-risk handling', () => {
     });
     const repo = makeRepo({}, evidence);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         requestId: 'req-very-high',
       }),
@@ -381,7 +459,7 @@ describe('residual-risk handling', () => {
     });
     const denied = makeRepo({}, deniedEvidence);
     await expect(
-      new ApproveReleaseUseCase(denied, verifier).execute({
+      useCase(denied).execute({
         ...baseInput(),
         requestId: 'req-high-denied',
       }),
@@ -408,7 +486,7 @@ describe('residual-risk handling', () => {
       ...candidate,
     });
     const allowed = makeRepo({}, allowedEvidence);
-    const result = await new ApproveReleaseUseCase(allowed, verifier).execute({
+    const result = await useCase(allowed).execute({
       ...baseInput(),
       requestId: 'req-high-allowed',
     });
@@ -438,7 +516,7 @@ describe('residual-risk handling', () => {
     });
     const repo = makeRepo({}, evidence);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         requestId: 'req-acceptance-evidence',
       }),
@@ -450,7 +528,7 @@ describe('reauthentication and signature ceremony', () => {
   it('missing secret and failed verification are denied', async () => {
     const repo = makeRepo();
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         reauthenticationSecret: ' ',
         requestId: 'req-nosecret',
@@ -458,7 +536,7 @@ describe('reauthentication and signature ceremony', () => {
     ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
     vi.mocked(verifier.verify).mockResolvedValueOnce(false);
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         requestId: 'req-badsecret',
       }),
@@ -472,7 +550,7 @@ describe('reauthentication and signature ceremony', () => {
     // with the same request id must return the committed outcome.
     const repo = makeRepo({ state: 'RELEASE_APPROVED', version: 4n });
     repo.resolveReplay.mockResolvedValueOnce(storedApproval);
-    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+    const result = await useCase(repo).execute({
       ...baseInput(),
       expectedVersion: 4n,
       requestId: 'req-replay',
@@ -490,7 +568,7 @@ describe('reauthentication and signature ceremony', () => {
       Object.assign(new Error('duplicate'), { code: 'CONFLICT_DUPLICATE_COMMAND' }),
     );
     await expect(
-      new ApproveReleaseUseCase(repo, verifier).execute({
+      useCase(repo).execute({
         ...baseInput(),
         expectedVersion: 4n,
         requestId: 'req-replay',
@@ -501,7 +579,7 @@ describe('reauthentication and signature ceremony', () => {
 
   it('stores RELEASE_APPROVED with the required atomic fields', async () => {
     const repo = makeRepo();
-    const result = await new ApproveReleaseUseCase(repo, verifier).execute({
+    const result = await useCase(repo).execute({
       ...baseInput(),
       requestId: 'req-success',
     });

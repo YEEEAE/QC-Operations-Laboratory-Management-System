@@ -96,4 +96,20 @@ describe('QC-100-FINAL-036-A build manifest reproducibility', () => {
     expect(outcome.status).toBe(0);
     expect(JSON.parse(outcome.stdout)).toMatchObject({ reproducible: true, files: 2 });
   });
+
+  it('keeps the timestamped release identity sidecar outside the reproducible bundle digest', () => {
+    const withoutIdentity = buildTree('identity-base', baseFiles);
+    const withIdentity = buildTree('identity-sidecar', {
+      ...baseFiles,
+      'release-identity.json': JSON.stringify({ buildTimestamp: 'different per build' }),
+    });
+    const baseManifest = manifestPath('identity-base');
+    const sidecarManifest = manifestPath('identity-sidecar');
+    run(['--dir', withoutIdentity, '--write', baseManifest]);
+    run(['--dir', withIdentity, '--write', sidecarManifest]);
+    const base = JSON.parse(readFileSync(baseManifest, 'utf8'));
+    const sidecar = JSON.parse(readFileSync(sidecarManifest, 'utf8'));
+    expect(sidecar.digest).toBe(base.digest);
+    expect(sidecar.files).toEqual(base.files);
+  });
 });

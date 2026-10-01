@@ -7,6 +7,7 @@ import {
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import type { DependencyHealth, SystemHealthProbes } from '../ports/health-probes.js';
 import { configuredAiProvider } from '../../ai-advisory/application/dependencies.js';
+import { getAiConfiguration } from '../../ai-advisory/infrastructure/ai-configuration.js';
 import { reportDependencyFailure } from '../../../shared/observability/dependency-failure.js';
 import { recordGauge } from '../../../shared/observability/telemetry.js';
 
@@ -117,6 +118,39 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
   async aiProvider(): Promise<DependencyHealth> {
     const checkedAt = new Date();
     try {
+      const configuration = getAiConfiguration();
+      if (process.env.AI_EXTERNAL_PROCESSING_APPROVED?.trim() !== 'true') {
+        return {
+          dependency: 'ai-provider',
+          status: 'DEGRADED',
+          checkedAt,
+          detail: 'POLICY_DISABLED',
+        };
+      }
+      if (configuration.invalidFields.length > 0) {
+        return {
+          dependency: 'ai-provider',
+          status: 'DEGRADED',
+          checkedAt,
+          detail: 'CONFIGURATION_INVALID',
+        };
+      }
+      if (!configuration.processingPolicy) {
+        return {
+          dependency: 'ai-provider',
+          status: 'DEGRADED',
+          checkedAt,
+          detail: 'POLICY_NOT_VALID',
+        };
+      }
+      if (Object.keys(configuration.providers).length === 0) {
+        return {
+          dependency: 'ai-provider',
+          status: 'DEGRADED',
+          checkedAt,
+          detail: 'CONFIGURATION_MISSING',
+        };
+      }
       const availability = await configuredAiProvider().availability();
       return availability.available
         ? { dependency: 'ai-provider', status: 'HEALTHY', checkedAt }
@@ -124,7 +158,7 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
             dependency: 'ai-provider',
             status: 'UNAVAILABLE',
             checkedAt,
-            detail: 'AI advisory is unavailable; core QC workflows are unaffected.',
+            detail: 'PROVIDER_UNAVAILABLE',
           };
     } catch {
       void reportDependencyFailure({
@@ -136,7 +170,7 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
         dependency: 'ai-provider',
         status: 'UNAVAILABLE',
         checkedAt,
-        detail: 'AI advisory is unavailable; core QC workflows are unaffected.',
+        detail: 'PROVIDER_UNAVAILABLE',
       };
     }
   }
