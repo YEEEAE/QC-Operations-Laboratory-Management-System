@@ -2,14 +2,15 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
-import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { hasAdminCapability } from '../../../shared/authorization/admin-workspace.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
+import { roleLabel, stateLabel, uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const canCreate = canAccessAdminRoute(actor, 'usersNew');
+const canCreate = hasAdminCapability(actor, 'createUser');
 const params = Astro.url.searchParams;
 const requestedPage = Number(params.get('page') ?? '1');
 let page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -43,12 +44,15 @@ try {
       auth.listUserRoles.executeForUsers({ actor, userIds }),
       auth.listUserScopes.executeForUsers({ actor, userIds }),
     ]);
-    for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
+    for (const row of roles) roleSummary.set(row.userId, row.codes.map((code) => `${roleLabel(code)} (${code})`).join(', ') || '—');
     for (const row of scopes)
       scopeSummary.set(
         row.userId,
         row.scopes
-          .map((scope) => (scope.value ? `${scope.kind}:${scope.value}` : scope.kind))
+          .map((scope) => {
+            const label = uxVocabulary.scopeKindLabels[scope.kind] ?? scope.kind;
+            return scope.value ? `${label} (${scope.kind}: ${scope.value})` : `${label} (${scope.kind})`;
+          })
           .join(', ') || '—',
       );
     for (const user of users) {
@@ -70,7 +74,7 @@ try {
     <div>
       <p class="eyebrow">Members</p>
       <h1>Users</h1>
-      <p class="lede">Member accounts under your explicit administration authority.</p>
+        <p class="lede">Read-only member records. Each account change requires its matching permission.</p>
     </div>
     <div class="head-links">
       {canCreate && (
@@ -88,8 +92,7 @@ try {
       <section class="denied" role="alert">
         <h2>User administration is not available</h2>
         <p>
-          Listing members requires an explicit user-administration permission grant. Role
-          membership alone does not authorize this view.
+          The member projection is not available right now. Retry the register to read the current page.
         </p>
       </section>
     ) : providerUnavailable || !users ? null : (
@@ -123,7 +126,7 @@ try {
                   <a href={`/admin/users/${user.id}`}>{user.loginIdentity}</a>
                 </th>
                 <td>{user.displayName}</td>
-                <td>{user.accountState}</td>
+                <td>{stateLabel(user.accountState)}</td>
                 <td>{relationshipUnavailable ? 'Not confirmed' : roleSummary.get(user.id) ?? '—'}</td>
                 <td>{relationshipUnavailable ? 'Not confirmed' : scopeSummary.get(user.id) ?? '—'}</td>
               </tr>

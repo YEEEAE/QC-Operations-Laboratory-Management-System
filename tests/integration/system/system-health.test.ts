@@ -164,6 +164,51 @@ describe('system health view', () => {
     expect(view.rejectReportsReadiness).toBe('READY');
   });
 
+  it('returns source check times and permission-gates outbox diagnostics separately from QC readiness', async () => {
+    const checkedAt = new Date('2026-09-05T10:00:00.000Z');
+    const outbox = {
+      ...check('outbox', 'DEGRADED'),
+      checkedAt,
+      outboxDiagnostics: {
+        checkedAt,
+        pendingCount: 2,
+        availableNowCount: 1,
+        retryingCount: 1,
+        maxAttemptCount: 3,
+        oldestPendingAt: new Date('2026-09-05T09:00:00.000Z'),
+        oldestPendingAgeSeconds: 3600,
+        workerHeartbeat: 'NOT_RECORDED' as const,
+        channelDelivery: 'NOT_REPRESENTED' as const,
+      },
+    };
+    const full = await new GetSystemHealthUseCase(
+      probes({ outbox }),
+      catalog(),
+      readiness(),
+      { status: 'UNVERIFIED' },
+      () => new Date('2026-09-05T10:01:00.000Z'),
+    ).execute({ actor: fullViewer });
+
+    expect(full.checks.find((item) => item.dependency === 'outbox')?.checkedAt).toEqual(checkedAt);
+    expect(full.outboxDiagnostics).toMatchObject({
+      pendingCount: 2,
+      oldestPendingAgeSeconds: 3600,
+      workerHeartbeat: 'NOT_RECORDED',
+      channelDelivery: 'NOT_REPRESENTED',
+    });
+    expect(full.qcReleaseReadiness).toBe('NOT_VERIFIED');
+
+    const restricted = await new GetSystemHealthUseCase(
+      probes({ outbox }),
+      catalog(),
+      readiness(),
+    ).execute({ actor: healthViewer });
+    expect(restricted.checks.find((item) => item.dependency === 'outbox')?.checkedAt).toEqual(
+      checkedAt,
+    );
+    expect(restricted.outboxDiagnostics).toBeUndefined();
+  });
+
   it('reports dependency readiness NOT READY when PostgreSQL is unavailable', async () => {
     const view = await new GetSystemHealthUseCase(
       probes({ database: check('database', 'UNAVAILABLE') }),

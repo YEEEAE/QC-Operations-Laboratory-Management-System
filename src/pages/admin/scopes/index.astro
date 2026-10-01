@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -23,31 +24,31 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
           <h2>Canonical vocabulary</h2>
           <ul class="kinds">
             <li>
-              <strong>OWN</strong>
+              <strong>{uxVocabulary.scopeKindLabels.OWN} <small>OWN</small></strong>
               <span>Records owned by the member</span>
             </li>
             <li>
-              <strong>ASSIGNED</strong>
+              <strong>{uxVocabulary.scopeKindLabels.ASSIGNED} <small>ASSIGNED</small></strong>
               <span>Records formally assigned to the member</span>
             </li>
             <li>
-              <strong>TEAM</strong>
+              <strong>{uxVocabulary.scopeKindLabels.TEAM} <small>TEAM</small></strong>
               <span>Records of the member's team</span>
             </li>
             <li>
-              <strong>DEPARTMENT</strong>
+              <strong>{uxVocabulary.scopeKindLabels.DEPARTMENT} <small>DEPARTMENT</small></strong>
               <span>Records of the member's department</span>
             </li>
             <li>
-              <strong>SITE</strong>
+              <strong>{uxVocabulary.scopeKindLabels.SITE} <small>SITE</small></strong>
               <span>Records of an operational site</span>
             </li>
             <li>
-              <strong>DOMAIN</strong>
+              <strong>{uxVocabulary.scopeKindLabels.DOMAIN} <small>DOMAIN</small></strong>
               <span>Wide visibility inside one domain only</span>
             </li>
             <li>
-              <strong>GLOBAL</strong>
+              <strong>{uxVocabulary.scopeKindLabels.GLOBAL} <small>GLOBAL</small></strong>
               <span>System-wide visibility for this grant</span>
             </li>
           </ul>
@@ -142,6 +143,11 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
   }
   .kinds span {
     color: var(--text-muted);
+  }
+  .kinds small {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
   }
   .note {
     color: var(--text-muted);

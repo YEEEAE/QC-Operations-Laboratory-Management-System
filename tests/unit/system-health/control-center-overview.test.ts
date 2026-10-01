@@ -99,6 +99,12 @@ describe('GetControlCenterOverviewUseCase', () => {
     expect(view.release.gitSha).toBe('a'.repeat(40));
     expect(view.release.applicationVersion).toBe('0.1.0');
     expect(view.generatedAt).toEqual(new Date('2026-09-18T03:00:00Z'));
+    expect(view.sourceCheckedAt).toEqual({
+      application: new Date('2026-09-18T00:00:00Z'),
+      database: new Date('2026-09-18T00:00:00Z'),
+      audit: new Date('2026-09-18T03:00:00Z'),
+      migration: new Date('2026-09-18T03:00:00Z'),
+    });
   });
 
   it('reports migration drift without exposing raw internals', async () => {

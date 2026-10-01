@@ -2,6 +2,7 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -33,8 +34,7 @@ try {
       <section class="denied" role="alert">
         <h2>Permission catalog is not available</h2>
         <p>
-          Reading permissions requires an explicit permission-view grant. Role membership alone
-          does not authorize this view.
+          The permission catalog is temporarily unavailable. Retry this page to read the current records.
         </p>
       </section>
     ) : permissions.length ? (
@@ -43,7 +43,7 @@ try {
           <caption>Active permissions</caption>
           <thead>
             <tr>
-              <th scope="col">Code</th>
+              <th scope="col">Permission</th>
               <th scope="col">Domain</th>
               <th scope="col">Action</th>
             </tr>
@@ -52,10 +52,11 @@ try {
             {permissions.map((permission) => (
               <tr>
                 <th scope="row">
-                  <code>{permission.code}</code>
+                  <strong>{permission.description || `${stateLabel(permission.domain)} ${stateLabel(permission.action)}`}</strong>
+                  <code class="code-secondary">{permission.code}</code>
                 </th>
-                <td>{permission.domain}</td>
-                <td>{permission.action}</td>
+                <td>{stateLabel(permission.domain)}</td>
+                <td>{stateLabel(permission.action)}</td>
               </tr>
             ))}
           </tbody>
@@ -124,6 +125,11 @@ try {
   }
   code {
     font-size: 0.78rem;
+  }
+  .code-secondary {
+    display: block;
+    color: var(--text-muted);
+    font-weight: 400;
   }
   a {
     color: var(--color-accent-primary-hover);

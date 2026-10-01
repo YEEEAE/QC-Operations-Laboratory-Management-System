@@ -155,7 +155,57 @@ describe('owner control center PostgreSQL contracts', () => {
     expect(view.migration.appliedHead).toBe(shippedHead);
     expect(view.migration.pendingCount).toBe(0);
     expect(view.migration.drift).toBe(false);
+    expect(view.sourceCheckedAt.application).toBeInstanceOf(Date);
+    expect(view.sourceCheckedAt.database).toBeInstanceOf(Date);
+    expect(view.sourceCheckedAt.migration).toBeInstanceOf(Date);
     expect(JSON.stringify(view)).not.toMatch(/password|postgres:\/\//i);
+  });
+
+  it('measures real outbox backlog age and processing evidence from PostgreSQL 18 without claiming a heartbeat', async () => {
+    const probe = new PostgresSystemHealthProbes(db);
+    const baselineResult = await pool!.query<{
+      pending: string;
+      retrying: string;
+      available: string;
+    }>(
+      `SELECT
+         count(*) FILTER (WHERE processed_at IS NULL)::text AS pending,
+         count(*) FILTER (WHERE processed_at IS NULL AND attempt_count > 0)::text AS retrying,
+         count(*) FILTER (WHERE processed_at IS NULL AND available_at <= now())::text AS available
+       FROM qc.outbox_events`,
+    );
+    const baseline = baselineResult.rows[0]!;
+    const dedupeKey = `health-probe:${crypto.randomUUID()}`;
+    await pool!.query(
+      `INSERT INTO qc.outbox_events
+        (event_type, aggregate_type, aggregate_id, payload, created_at, available_at, processed_at, attempt_count, dedupe_key)
+       VALUES
+        ('health.probe.pending', 'health_probe', gen_random_uuid(), '{}'::jsonb, now() - interval '10 days', now() - interval '1 second', NULL, 2, $1),
+        ('health.probe.delayed', 'health_probe', gen_random_uuid(), '{}'::jsonb, now() - interval '9 days', now() + interval '5 minutes', NULL, 4, $2),
+        ('health.probe.processed', 'health_probe', gen_random_uuid(), '{}'::jsonb, now() - interval '1 minute', now(), now(), 1, $3)`,
+      [`${dedupeKey}:pending`, `${dedupeKey}:delayed`, `${dedupeKey}:processed`],
+    );
+
+    try {
+      const result = await probe.outbox();
+      expect(result.status).toBe('DEGRADED');
+      expect(result.outboxDiagnostics).toMatchObject({
+        pendingCount: Number(baseline.pending) + 2,
+        availableNowCount: Number(baseline.available) + 1,
+        retryingCount: Number(baseline.retrying) + 2,
+        maxAttemptCount: 4,
+        workerHeartbeat: 'NOT_RECORDED',
+        channelDelivery: 'NOT_REPRESENTED',
+      });
+      expect(result.outboxDiagnostics?.oldestPendingAgeSeconds).toBeGreaterThanOrEqual(
+        9 * 24 * 60 * 60,
+      );
+      expect(result.outboxDiagnostics?.lastProcessedAt).toBeInstanceOf(Date);
+    } finally {
+      await pool!.query('DELETE FROM qc.outbox_events WHERE dedupe_key LIKE $1', [
+        `${dedupeKey}:%`,
+      ]);
+    }
   });
 
   it('runs the full owner account lifecycle against PostgreSQL with audit persistence', async () => {

@@ -18,6 +18,7 @@ try {
 }
 if (!detail) return Astro.redirect('/404');
 const { backup, restoreRuns, restoreVerification, restorable } = detail;
+const catalogCheckedAt = new Date();
 const canRequestDrill = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-RESTORE-DRILL');
 const restoreLabel =
   restoreVerification === 'VERIFIED'
@@ -46,6 +47,7 @@ const knownGaps = [
       {backup.verifiedAt && <div><dt>Artifact verified at</dt><dd>{riyadh(backup.verifiedAt)} · Asia/Riyadh</dd></div>}
       {backup.sizeBytes !== undefined && <div><dt>Size</dt><dd>{backup.sizeBytes.toString()} bytes</dd></div>}
       <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
+      <div><dt>Catalog record checked</dt><dd><time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)} · Asia/Riyadh</time></dd></div>
       <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'Not recorded'}</dd></div>
       {backup.errorCode && <div><dt>Job result</dt><dd>The backup job did not complete. Contact your system administrator for help.</dd></div>}
     </dl></section>

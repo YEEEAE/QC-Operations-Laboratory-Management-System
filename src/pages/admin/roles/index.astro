@@ -2,6 +2,7 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -23,7 +24,7 @@ try {
       <p class="eyebrow">Roles</p>
       <h1>Roles</h1>
       <p class="lede">
-        Role configuration and canonical permission grants. Changes require version and audit.
+        Read-only role records. Changes require their matching permission, current version, and audit.
       </p>
     </div>
     <a href="/admin">Back to administration</a>
@@ -33,8 +34,7 @@ try {
       <section class="denied" role="alert">
         <h2>Role administration is not available</h2>
         <p>
-          Reading roles requires an explicit role-administration permission grant. Role membership
-          alone does not authorize this view.
+          Role information is temporarily unavailable. Retry this page to read the current records.
         </p>
       </section>
     ) : roles.length ? (
@@ -43,10 +43,9 @@ try {
           <caption>Configured roles</caption>
           <thead>
             <tr>
-              <th scope="col">Code</th>
               <th scope="col">Name</th>
-              <th scope="col">System</th>
-              <th scope="col">Active</th>
+              <th scope="col">Role type</th>
+              <th scope="col">Status</th>
               <th scope="col">Version</th>
             </tr>
           </thead>
@@ -54,11 +53,11 @@ try {
             {roles.map((role) => (
               <tr>
                 <th scope="row">
-                  <a href={`/admin/roles/${role.id}`}>{role.code}</a>
+                  <a href={`/admin/roles/${role.id}`}>{role.name}</a>
+                  <small class="code">{role.code}</small>
                 </th>
-                <td>{role.name}</td>
-                <td>{role.isSystemRole ? 'YES' : 'NO'}</td>
-                <td>{role.active ? 'Active' : 'Inactive'}</td>
+                <td>{role.isSystemRole ? 'System role' : 'Custom role'}</td>
+                <td>{stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')}</td>
                 <td>{role.version.toString()}</td>
               </tr>
             ))}
@@ -125,6 +124,12 @@ try {
   }
   th {
     font-weight: 700;
+  }
+  .code {
+    display: block;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
   }
   a {
     color: var(--color-accent-primary-hover);

@@ -38,7 +38,7 @@ const repository = (overrides: Partial<AuthorizationRepository> = {}): Authoriza
   }) as AuthorizationRepository;
 
 describe('administration read use cases', () => {
-  it('reads member scopes with the explicit assignment authority', async () => {
+  it('reads a caller own scope projection without assignment authority or writes', async () => {
     const repo = repository({
       listUserScopes: vi.fn().mockResolvedValue([
         {
@@ -53,17 +53,19 @@ describe('administration read use cases', () => {
       ]),
     });
     const scopes = await new ListUserScopesUseCase(repo).execute({
-      actor: actor([{ code: 'PERM-ADM-SCOPE-ASSIGN', scopes: ['GLOBAL'] }]),
-      userId: 'member-1',
+      actor: actor([]),
+      userId: 'actor-1',
     });
     expect(scopes).toHaveLength(1);
-    expect(repo.listUserScopes).toHaveBeenCalledWith('member-1');
+    expect(repo.listUserScopes).toHaveBeenCalledWith('actor-1');
+    expect(repo.replaceUserScopes).not.toHaveBeenCalled();
   });
 
   it('allows active users to read scopes without granting assignment authority', async () => {
     const repo = repository();
     await new ListUserScopesUseCase(repo).execute({ actor: actor([]), userId: 'member-1' });
     expect(repo.listUserScopes).toHaveBeenCalledWith('member-1');
+    expect(repo.replaceUserScopes).not.toHaveBeenCalled();
   });
 
   it('reads role grants and reports missing roles as not found', async () => {

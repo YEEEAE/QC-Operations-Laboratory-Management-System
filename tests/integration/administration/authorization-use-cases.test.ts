@@ -35,15 +35,29 @@ const repository = (overrides: Partial<AuthorizationRepository> = {}): Authoriza
 
 describe('authorization administration use cases', () => {
   it('denies an ADMIN role without the explicit permission and scope', async () => {
+    const repo = repository();
     await expect(
-      new UpdateRolePermissionsUseCase(repository()).execute({
+      new UpdateRolePermissionsUseCase(repo).execute({
         actor: actor([]),
         roleId: 'role-1',
-        permissionCodes: [],
+        permissionCodes: ['PERM-ADM-ROLE-VIEW'],
         expectedVersion: 2n,
         requestId: 'r1',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    expect(repo.getRole).toHaveBeenCalledWith('role-1');
+    expect(repo.replaceRolePermissions).not.toHaveBeenCalled();
+  });
+  it('permits the canonical assignment grant on an existing active role', async () => {
+    const repo = repository();
+    await new UpdateRolePermissionsUseCase(repo).execute({
+      actor: actor([{ code: 'PERM-ADM-PERMISSION-ASSIGN', scopes: ['GLOBAL'] }]),
+      roleId: 'role-1',
+      permissionCodes: ['PERM-ADM-ROLE-VIEW'],
+      expectedVersion: 2n,
+      requestId: 'r-positive',
+    });
+    expect(repo.replaceRolePermissions).toHaveBeenCalledOnce();
   });
   it('rejects stale role permission changes before repository mutation', async () => {
     const repo = repository();

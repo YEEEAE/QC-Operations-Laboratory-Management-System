@@ -1,11 +1,11 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
-import { canAccessAdminRoute, hasAdminGrant } from '../../shared/authorization/admin-workspace.js';
+import { hasAdminCapability } from '../../shared/authorization/admin-workspace.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const canCreateUser = canAccessAdminRoute(actor, 'usersNew');
-const canAudit = actor ? hasAdminGrant(actor, 'PERM-ADM-AUDIT-VIEW') : false;
+const canCreateUser = hasAdminCapability(actor, 'createUser');
+const canAudit = hasAdminCapability(actor, 'viewAudit');
 ---
 
 <AppLayout title="Administration · QC Operations" locale="en" direction="ltr">

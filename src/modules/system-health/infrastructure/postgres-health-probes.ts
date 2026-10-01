@@ -1,4 +1,5 @@
 import type { Kysely } from 'kysely';
+import { sql } from 'kysely';
 import {
   checkCanonicalDatabaseReadiness,
   inspectCanonicalDatabaseConfiguration,
@@ -88,22 +89,72 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
     try {
       const row = await this.outboxDatabase
         .selectFrom('outbox_events')
-        .select((expression) => [
-          expression.fn.countAll<number>().as('pending'),
-          expression.fn.min('available_at').as('oldestAvailableAt'),
+        .select(() => [
+          sql<string>`count(*) filter (where processed_at is null)`.as('pending'),
+          sql<Date | null>`min(created_at) filter (where processed_at is null)`.as(
+            'oldestPendingAt',
+          ),
+          sql<string>`count(*) filter (where processed_at is null and available_at <= ${checkedAt})`.as(
+            'availableNow',
+          ),
+          sql<string>`count(*) filter (where processed_at is null and attempt_count > 0)`.as(
+            'retrying',
+          ),
+          sql<string>`coalesce(max(attempt_count) filter (where processed_at is null), 0)`.as(
+            'maxAttemptCount',
+          ),
+          sql<Date | null>`max(processed_at)`.as('lastProcessedAt'),
         ])
-        .where('processed_at', 'is', null)
         .executeTakeFirst();
+      if (!row) {
+        return {
+          dependency: 'outbox',
+          status: 'UNKNOWN',
+          checkedAt,
+          detail: 'Outbox aggregate returned no diagnostic row.',
+        };
+      }
       const pending = Number(row?.pending ?? 0);
-      const oldest = row?.oldestAvailableAt ? new Date(row.oldestAvailableAt) : undefined;
-      recordGauge('qc_outbox_pending', pending, { dependency: 'outbox' });
+      const availableNow = Number(row?.availableNow ?? 0);
+      const retrying = Number(row?.retrying ?? 0);
+      const maxAttemptCount = Number(row?.maxAttemptCount ?? 0);
+      const oldest = row?.oldestPendingAt ? new Date(row.oldestPendingAt) : undefined;
+      const lastProcessedAt = row?.lastProcessedAt ? new Date(row.lastProcessedAt) : undefined;
+      const oldestPendingAgeSeconds = oldest
+        ? Math.max(0, Math.floor((checkedAt.getTime() - oldest.getTime()) / 1000))
+        : undefined;
+      const countsValid =
+        [pending, availableNow, retrying, maxAttemptCount].every(Number.isSafeInteger) &&
+        pending >= 0 &&
+        availableNow >= 0 &&
+        availableNow <= pending &&
+        retrying >= 0 &&
+        retrying <= pending &&
+        maxAttemptCount >= 0;
+      if (countsValid) recordGauge('qc_outbox_pending', pending, { dependency: 'outbox' });
       return {
         dependency: 'outbox',
-        status: !Number.isFinite(pending) ? 'UNKNOWN' : pending > 0 ? 'DEGRADED' : 'HEALTHY',
+        status: !countsValid ? 'UNKNOWN' : pending > 0 ? 'DEGRADED' : 'HEALTHY',
         checkedAt,
-        detail: Number.isFinite(pending)
-          ? `Pending messages: ${pending}${oldest ? ` · oldest available ${oldest.toISOString()}` : ''}`
+        detail: countsValid
+          ? `Pending messages: ${pending}; available now: ${availableNow}; retrying: ${retrying}; oldest age seconds: ${oldestPendingAgeSeconds ?? 'none recorded'}`
           : 'Pending count unavailable.',
+        ...(countsValid
+          ? {
+              outboxDiagnostics: {
+                checkedAt,
+                pendingCount: pending,
+                availableNowCount: availableNow,
+                retryingCount: retrying,
+                maxAttemptCount,
+                ...(oldest ? { oldestPendingAt: oldest } : {}),
+                ...(oldestPendingAgeSeconds !== undefined ? { oldestPendingAgeSeconds } : {}),
+                ...(lastProcessedAt ? { lastProcessedAt } : {}),
+                workerHeartbeat: 'NOT_RECORDED' as const,
+                channelDelivery: 'NOT_REPRESENTED' as const,
+              },
+            }
+          : {}),
       };
     } catch {
       void reportDependencyFailure({

@@ -1,8 +1,9 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
-import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { hasAdminCapability } from '../../../shared/authorization/admin-workspace.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -42,7 +43,7 @@ if (role) {
 }
 
 const granted = new Set((grants ?? []).map(String));
-const canAssign = canAccessAdminRoute(actor, 'roleDetail') && (role?.active ?? false);
+const canAssign = hasAdminCapability(actor, 'assignRolePermissions') && (role?.active ?? false);
 const version = role?.version.toString() ?? '0';
 ---
 
@@ -52,7 +53,7 @@ const version = role?.version.toString() ?? '0';
       <p class="eyebrow">Role</p>
       <h1>{role?.name ?? 'Role detail'}</h1>
       <p class="lede">
-        {role ? `${role.code} · ${role.active ? 'Active' : 'Inactive'} · Version ${version}` : ''}
+        {role ? `${role.name} · ${role.code} · ${stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')} · Version ${version}` : ''}
       </p>
     </div>
     <a href="/admin/roles">Back to roles</a>
@@ -62,8 +63,7 @@ const version = role?.version.toString() ?? '0';
       <section class="denied" role="alert">
         <h2>Role detail is not available</h2>
         <p>
-          Reading this role requires an explicit role-administration permission grant. Role
-          membership alone does not authorize this view.
+          Role information is temporarily unavailable. Retry this page to read the current record.
         </p>
       </section>
     ) : (
@@ -78,7 +78,7 @@ const version = role?.version.toString() ?? '0';
             </div>
             <div>
               <dt>System role</dt>
-              <dd>{role.isSystemRole ? 'YES' : 'NO'}</dd>
+              <dd>{role.isSystemRole ? 'System role' : 'Custom role'}</dd>
             </div>
             <div>
               <dt>Description</dt>
@@ -97,11 +97,10 @@ const version = role?.version.toString() ?? '0';
           <h2>Canonical grants</h2>
           {catalogRestricted || !catalog ? (
             <p class="note">
-              The permission catalog requires the explicit permission-view grant. Your current
-              grants do not include it.
+              Role grant details are temporarily unavailable. Retry this page to read the current grants.
             </p>
           ) : canAssign ? (
-            <form class="form" data-admin-role-permissions data-role={role.id} data-version={version}>
+            <form method="post" class="form" data-role-grants data-role={role.id} data-version={version}>
               <p class="note">
                 Replacing grants is a high-risk, audited mutation. The current version is
                 required; stale versions are rejected without overwriting.
@@ -116,16 +115,17 @@ const version = role?.version.toString() ?? '0';
                       checked={granted.has(permission.code)}
                     />
                     <span>
-                      <strong>{permission.code}</strong>
+                      <strong>{permission.description || `${permission.domain} ${permission.action}`}</strong>
+                      <code class="code-secondary">{permission.code}</code>
                       <small>
-                        {permission.domain} · {permission.action} · {permission.riskLevel}
+                        {stateLabel(permission.domain)} · {stateLabel(permission.action)} · {stateLabel(permission.riskLevel)}
                       </small>
                     </span>
                   </label>
                 ))}
               </div>
               <div class="actions">
-                <button type="submit">Replace grants</button>
+              <button type="submit" data-submit>Replace grants</button>
               </div>
               <p role="status" data-result tabindex="-1" />
             </form>
@@ -135,7 +135,8 @@ const version = role?.version.toString() ?? '0';
                 <ul class="grants-read">
                   {grants.map((code) => (
                     <li>
-                      <code>{code}</code>
+                      {catalog?.find((permission) => permission.code === code)?.description ?? code}
+                      <code class="code-secondary">{code}</code>
                     </li>
                   ))}
                 </ul>
@@ -290,6 +291,12 @@ const version = role?.version.toString() ?? '0';
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+  .code-secondary {
+    display: block;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
   }
   .grants-read code {
     padding: 0.2rem 0.45rem;

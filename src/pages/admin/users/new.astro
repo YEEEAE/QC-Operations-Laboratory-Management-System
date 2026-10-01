@@ -1,6 +1,6 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
-import { canAccessAdminRoute } from '../../../shared/authorization/admin-workspace.js';
+import { hasAdminCapability } from '../../../shared/authorization/admin-workspace.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import { SCOPE_KINDS, scopeRequiresValue } from '../../../shared/authorization/types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
@@ -8,14 +8,9 @@ import { uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-const hasGlobalGrant = (permission: (typeof actor.permissions)[number]['code']) =>
-  actor.accountState === 'ACTIVE' &&
-  actor.permissions.some(
-    (grant) => grant.code === permission && grant.active !== false && grant.scopes.includes('GLOBAL'),
-  );
-const canCreate = canAccessAdminRoute(actor, 'usersNew') && hasGlobalGrant('PERM-IDN-MANAGE-USERS');
-const canAssignRoles = canCreate && hasGlobalGrant('PERM-ADM-ROLE-ASSIGN');
-const canAssignScopes = canCreate && hasGlobalGrant('PERM-ADM-SCOPE-ASSIGN');
+const canCreate = hasAdminCapability(actor, 'createUser');
+const canAssignRoles = canCreate && hasAdminCapability(actor, 'assignUserRole');
+const canAssignScopes = canCreate && hasAdminCapability(actor, 'assignUserScope');
 let roles: Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>> = [];
 let optionsError = false;
 if (canAssignRoles) {

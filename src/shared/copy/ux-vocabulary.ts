@@ -137,6 +137,14 @@ export const uxVocabulary = {
     DOMAIN: 'Domain records',
     GLOBAL: 'Whole system',
   } as Record<string, string>,
+  /** Human-first names for canonical authorization roles. */
+  roleLabels: {
+    EMPLOYEE: 'Employee',
+    SUPERVISOR: 'Supervisor',
+    MANAGER: 'Manager',
+    ADMIN: 'Administrator',
+    SYSTEM_OWNER: 'System owner',
+  } as Record<string, string>,
   boundaries: {
     backupNotRestoreProof: 'A backup created or verified here is not proof of a verified restore.',
     passNotRelease: 'PASS is a scientific result. It does not release the item.',
@@ -144,6 +152,11 @@ export const uxVocabulary = {
       'AI output is advisory only. It cannot approve, reject, release, sign, or set an official PASS/FAIL.',
   },
 } as const;
+
+export function roleLabel(code: string | null | undefined): string {
+  if (!code) return '—';
+  return uxVocabulary.roleLabels[code] ?? code;
+}
 
 /**
  * Display labels for controlled state codes.

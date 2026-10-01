@@ -1,127 +1,116 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  ADMIN_ROUTE_PERMISSIONS,
-  ADMIN_WORKSPACE_PERMISSIONS,
-  canAccessAdminRoute,
-  type AdminRouteId,
+  ADMIN_ACTION_CAPABILITIES,
+  hasAdminCapability,
+  type AdminActionCapability,
 } from '../../../src/shared/authorization/admin-workspace.js';
 import { isPermissionCode } from '../../../src/shared/authorization/permissions.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { APPROVED_PERMISSION_CODES } from '../../../db/seeds/common.js';
+import { pageAccessDecision } from '../../../src/shared/routing/page-access.js';
 
-const ADMIN_ROUTE_FILES: Record<AdminRouteId, string> = {
-  admin: 'src/pages/admin/index.astro',
-  users: 'src/pages/admin/users/index.astro',
-  usersNew: 'src/pages/admin/users/new.astro',
-  userDetail: 'src/pages/admin/users/[userId].astro',
-  roles: 'src/pages/admin/roles/index.astro',
-  roleDetail: 'src/pages/admin/roles/[roleId].astro',
-  permissions: 'src/pages/admin/permissions/index.astro',
-  scopes: 'src/pages/admin/scopes/index.astro',
-};
+const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
 
 const actor = (
-  overrides: Partial<ActorContext> & { permissions: ActorContext['permissions'] },
+  permissions: ActorContext['permissions'],
+  overrides: Partial<ActorContext> = {},
 ): ActorContext => ({
   id: 'actor-1',
   accountState: 'ACTIVE',
   roles: [],
+  permissions,
   ...overrides,
 });
 
-const grant = (code: ActorContext['permissions'][number]['code']) => ({
-  code,
-  scopes: ['GLOBAL'] as const,
-});
+const grant = (
+  code: ActorContext['permissions'][number]['code'],
+  scopes: ActorContext['permissions'][number]['scopes'] = ['GLOBAL'],
+  active = true,
+) => ({ code, scopes, active });
 
-describe('administration workspace guard', () => {
-  it('binds every workspace route to an implemented page file', () => {
-    for (const file of Object.values(ADMIN_ROUTE_FILES)) {
-      expect(existsSync(new URL(`../../../${file}`, import.meta.url)), file).toBe(true);
+describe('administration action affordances', () => {
+  it('maps every visible mutation to a canonical permission and explicit global scope', () => {
+    for (const [capability, requirement] of Object.entries(ADMIN_ACTION_CAPABILITIES)) {
+      expect(isPermissionCode(requirement.permission), capability).toBe(true);
+      expect(requirement.scope, capability).toBe('GLOBAL');
     }
   });
 
-  it('uses only canonical permission codes', () => {
-    for (const code of ADMIN_WORKSPACE_PERMISSIONS) {
-      expect(isPermissionCode(code), code).toBe(true);
-    }
-    for (const codes of Object.values(ADMIN_ROUTE_PERMISSIONS)) {
-      for (const code of codes) {
-        expect(isPermissionCode(code), code).toBe(true);
-      }
-    }
+  it('requires an ACTIVE actor, matching active grant, and required scope', () => {
+    expect(hasAdminCapability(undefined, 'createUser')).toBe(false);
+    expect(
+      hasAdminCapability(
+        actor([grant('PERM-IDN-MANAGE-USERS')], { accountState: 'DISABLED' }),
+        'createUser',
+      ),
+    ).toBe(false);
+    expect(hasAdminCapability(actor([]), 'createUser')).toBe(false);
+    expect(
+      hasAdminCapability(actor([grant('PERM-IDN-MANAGE-USERS', ['GLOBAL'], false)]), 'createUser'),
+    ).toBe(false);
+    expect(
+      hasAdminCapability(actor([grant('PERM-IDN-MANAGE-USERS', ['TEAM'])]), 'createUser'),
+    ).toBe(false);
+    expect(hasAdminCapability(actor([grant('PERM-IDN-MANAGE-USERS')]), 'createUser')).toBe(true);
   });
 
-  it('denies anonymous, inactive, and permission-less actors on every route', () => {
-    const routes = Object.keys(ADMIN_ROUTE_FILES) as AdminRouteId[];
-    for (const route of routes) {
-      expect(canAccessAdminRoute(undefined, route)).toBe(false);
-      expect(
-        canAccessAdminRoute(
-          actor({ accountState: 'DISABLED', permissions: [grant('PERM-ADM-USERS')] }),
-          route,
-        ),
-      ).toBe(false);
-      expect(canAccessAdminRoute(actor({ permissions: [] }), route)).toBe(false);
-    }
-  });
-
-  it('denies an Admin role without explicit permission grants', () => {
-    const adminWithoutGrants = actor({ roles: ['ADMIN'], permissions: [] });
-    for (const route of Object.keys(ADMIN_ROUTE_FILES) as AdminRouteId[]) {
-      expect(canAccessAdminRoute(adminWithoutGrants, route), route).toBe(false);
-    }
-  });
-
-  it('ignores revoked grants', () => {
-    const revoked = actor({
+  it('does not derive assignment from read, role membership, or another action grant', () => {
+    const viewOnly = actor([grant('PERM-ADM-ROLE-VIEW'), grant('PERM-ADM-PERMISSION-VIEW')], {
       roles: ['ADMIN'],
-      permissions: [{ code: 'PERM-ADM-USERS', scopes: ['GLOBAL'], active: false }],
     });
-    expect(canAccessAdminRoute(revoked, 'users')).toBe(false);
-    expect(canAccessAdminRoute(revoked, 'admin')).toBe(false);
+    expect(hasAdminCapability(viewOnly, 'assignUserRole')).toBe(false);
+    expect(hasAdminCapability(viewOnly, 'removeUserRole')).toBe(false);
+    expect(hasAdminCapability(viewOnly, 'assignRolePermissions')).toBe(false);
+    expect(hasAdminCapability(viewOnly, 'assignUserScope')).toBe(false);
+    expect(hasAdminCapability(viewOnly, 'removeUserScope')).toBe(false);
+
+    const userManager = actor([grant('PERM-IDN-MANAGE-USERS')]);
+    expect(hasAdminCapability(userManager, 'createUser')).toBe(true);
+    expect(hasAdminCapability(userManager, 'assignUserRole')).toBe(false);
+    expect(hasAdminCapability(userManager, 'removeUserRole')).toBe(false);
+    expect(hasAdminCapability(userManager, 'assignUserScope')).toBe(false);
   });
 
-  it('scopes each section to its explicit permission', () => {
-    const usersOnly = actor({ permissions: [grant('PERM-ADM-USERS')] });
-    expect(canAccessAdminRoute(usersOnly, 'admin')).toBe(true);
-    expect(canAccessAdminRoute(usersOnly, 'users')).toBe(true);
-    expect(canAccessAdminRoute(usersOnly, 'userDetail')).toBe(true);
-    expect(canAccessAdminRoute(usersOnly, 'usersNew')).toBe(false);
-    expect(canAccessAdminRoute(usersOnly, 'roles')).toBe(false);
-    expect(canAccessAdminRoute(usersOnly, 'permissions')).toBe(false);
-    expect(canAccessAdminRoute(usersOnly, 'scopes')).toBe(false);
-  });
+  it('keeps page visibility separate and gates the role-grant form by its own action capability', () => {
+    const pages = [
+      'src/pages/admin/index.astro',
+      'src/pages/admin/users/index.astro',
+      'src/pages/admin/users/new.astro',
+      'src/pages/admin/users/[userId].astro',
+      'src/pages/admin/roles/index.astro',
+      'src/pages/admin/roles/[roleId].astro',
+      'src/pages/admin/permissions/index.astro',
+      'src/pages/admin/scopes/index.astro',
+    ];
+    for (const page of pages)
+      expect(existsSync(new URL(`../../../${page}`, import.meta.url))).toBe(true);
 
-  it('keeps user creation on the explicit management permission', () => {
-    const creator = actor({ permissions: [grant('PERM-IDN-MANAGE-USERS')] });
-    expect(canAccessAdminRoute(creator, 'usersNew')).toBe(true);
-    expect(canAccessAdminRoute(creator, 'users')).toBe(true);
-    expect(canAccessAdminRoute(creator, 'roleDetail')).toBe(false);
-  });
-
-  it('shows initial role and scope controls only to actors with their matching assignment grants', () => {
-    const source = readFileSync(
-      new URL('../../../src/pages/admin/users/new.astro', import.meta.url),
-      'utf8',
-    );
-    expect(source).toContain("hasGlobalGrant('PERM-ADM-ROLE-ASSIGN')");
-    expect(source).toContain("hasGlobalGrant('PERM-ADM-SCOPE-ASSIGN')");
-    expect(source).toContain('{canAssignRoles ? (');
-    expect(source).toContain('{canAssignScopes ? (');
-  });
-
-  it('grants SYSTEM_OWNER visibility across the whole workspace', () => {
-    const owner = actor({
-      roles: ['SYSTEM_OWNER'],
-      permissions: APPROVED_PERMISSION_CODES.map((code) => ({
-        code,
-        scopes: ['GLOBAL'] as const,
-      })),
-    });
-    for (const route of Object.keys(ADMIN_ROUTE_FILES) as AdminRouteId[]) {
-      expect(canAccessAdminRoute(owner, route), route).toBe(true);
+    const registry = read('src/shared/authorization/admin-workspace.ts');
+    const roleDetail = read('src/pages/admin/roles/[roleId].astro');
+    expect(registry).toContain('Route visibility belongs to pageAccessDecision');
+    expect(registry).not.toContain('ADMIN_ROUTE_PERMISSIONS');
+    for (const path of pages) {
+      expect(pageAccessDecision(actor([]), path), path).toBe('ALLOWED');
     }
+    expect(pageAccessDecision(actor([], { accountState: 'DISABLED' }), '/admin/users')).toBe(
+      'AUTHENTICATION_REQUIRED',
+    );
+    expect(roleDetail).toContain("hasAdminCapability(actor, 'assignRolePermissions')");
+    expect(roleDetail).toContain('data-role-grants');
+    expect(roleDetail).toContain("querySelector<HTMLFormElement>('[data-role-grants]')");
+    expect(roleDetail).not.toContain("canAccessAdminRoute(actor, 'roleDetail')");
+  });
+
+  it('keeps the canonical SYSTEM_OWNER grants protected in the rendered user controls', () => {
+    const owner = actor(APPROVED_PERMISSION_CODES.map((code) => grant(code)));
+    for (const capability of Object.keys(ADMIN_ACTION_CAPABILITIES) as AdminActionCapability[]) {
+      expect(hasAdminCapability(owner, capability), capability).toBe(true);
+    }
+    const page = read('src/pages/admin/users/[userId].astro');
+    expect(page).toContain('isProtectedOwnerRoleGrant');
+    expect(page).toContain('isProtectedOwnerScope');
+    expect(page).toContain('!protectedRole(role.code)');
+    expect(page).toContain('!protectedScope(scope.kind)');
   });
 });

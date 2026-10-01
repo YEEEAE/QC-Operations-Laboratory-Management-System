@@ -18,6 +18,7 @@ try {
 }
 if (!detail) return Astro.redirect('/404');
 const { backup, restoreVerification, restorable } = detail;
+const catalogCheckedAt = new Date();
 const permission = (code: string) => actor.permissions.some((item) => item.active !== false && item.code === code);
 const canRequestDrill = permission('PERM-BKP-RESTORE-DRILL');
 const canRequestProduction = permission('PERM-BKP-RESTORE-PRODUCTION');
@@ -40,12 +41,14 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
     <div><dt>Backup artifact verified</dt><dd>{backup.state === 'VERIFIED' ? 'Yes' : 'No'}</dd></div>
     <div><dt>Integrity checksum</dt><dd>{backup.hasChecksum ? 'Recorded (value withheld)' : 'Not recorded'}</dd></div>
     <div><dt>Backup requested at</dt><dd>{riyadh(backup.requestedAt)} · Asia/Riyadh (UTC internally)</dd></div>
+    <div><dt>Catalog record checked</dt><dd><time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)} · Asia/Riyadh</time></dd></div>
     <div><dt>Restore verification</dt><dd class={restoreVerification === 'VERIFIED' ? 'good' : 'warn'}>{verificationLabel}</dd></div>
     <div><dt>Database schema version</dt><dd>{backup.databaseSchemaVersion ?? 'UNKNOWN'}</dd></div>
     <div><dt>Application version / Git SHA binding</dt><dd>Not recorded in catalog</dd></div>
     <div><dt>Known gaps</dt><dd>{restoreVerification !== 'VERIFIED' ? 'No verified restore exists for this backup set' : 'None recorded'}</dd></div>
     <div><dt>Display timezone</dt><dd>Asia/Riyadh — all recovery timestamps are shown with explicit timezone to prevent target ambiguity</dd></div>
   </dl></section>
+  <section class="panel"><h2>Restore verification requirements</h2><p class="muted">This page can record a restore intent only. It has no provider executor or restore report, so these checks are not represented by evidence in this view. A real isolated drill must record each result:</p><dl><div><dt>Artifact bytes and checksum comparison</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>Restored schema and migration ledger</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>QC, audit, and business history</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>Linked evidence files and restored hashes</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>Application and authorization checks</dt><dd class="warn">NOT RECORDED IN THIS VIEW</dd></div><div><dt>RPO / RTO targets</dt><dd class="warn">NOT APPROVED</dd></div></dl><p>Next permitted step: request a DRILL and execute the approved procedure against an explicitly isolated disposable target. Production restore remains DENIED until its authority and recovery evidence are approved.</p></section>
   {!restorable && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Only backup sets whose artifact exists and is verified can be selected as a recovery set candidate. This set is {stateLabel(backup.state)}.</p></section>}
   {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
   {restorable && (canRequestDrill || canRequestProduction) && (

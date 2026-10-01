@@ -10,6 +10,7 @@ let backups: Awaited<ReturnType<ReturnType<typeof backupCatalogReadDependencies>
 let total = 0;
 let pages = 1;
 let providerUnavailable = false;
+let catalogCheckedAt = new Date();
 const states = ['REQUESTED', 'RUNNING', 'CREATED', 'VERIFYING', 'VERIFIED', 'FAILED', 'EXPIRED', 'DELETED'] as const;
 const requestedPage = Number(Astro.url.searchParams.get('page') ?? '1');
 let page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -27,11 +28,14 @@ try {
   pages = Math.max(1, Math.ceil(total / pageSize));
 } catch {
   providerUnavailable = true;
+} finally {
+  catalogCheckedAt = new Date();
 }
 const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
 ---
 <AppLayout title="Backups · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Backups</p><h1>Backups</h1><p class="lede">Recorded backup sets. A completed backup job is not the same as a verified restore — verification for each set is shown on its detail page.</p></div></section>
+  <p class="muted">Backup catalog {providerUnavailable ? 'read attempted' : 'read'} at <time datetime={catalogCheckedAt.toISOString()}>{riyadh(catalogCheckedAt)}</time> (Asia/Riyadh). Empty catalog, unavailable provider, and unverified recovery remain separate states.</p>
   <form class="filters" method="get" aria-label="Filter backup catalog">
     <label for="state">Backup job result<select id="state" name="state"><option value="">All states</option>{states.map((state) => <option value={state} selected={selectedState === state}>{stateLabel(state)}</option>)}</select></label>
     <button type="submit">Apply filter</button>

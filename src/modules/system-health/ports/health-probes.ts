@@ -7,11 +7,27 @@
  */
 export type HealthStatus = 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'UNKNOWN';
 
+export interface OutboxWorkerDiagnostics {
+  /** Time of this read-only diagnostic query. */
+  checkedAt: Date;
+  pendingCount: number;
+  availableNowCount: number;
+  retryingCount: number;
+  maxAttemptCount: number;
+  oldestPendingAt?: Date;
+  oldestPendingAgeSeconds?: number;
+  /** Event processing evidence only; this is not a process heartbeat. */
+  lastProcessedAt?: Date;
+  workerHeartbeat: 'NOT_RECORDED';
+  channelDelivery: 'NOT_REPRESENTED';
+}
+
 export interface DependencyHealth {
   dependency: string;
   status: HealthStatus;
   checkedAt: Date;
   detail?: string;
+  outboxDiagnostics?: OutboxWorkerDiagnostics;
 }
 
 export interface SystemHealthProbes {

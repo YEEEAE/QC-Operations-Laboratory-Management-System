@@ -9,12 +9,17 @@ import { identityAdminReadDependencies } from '../../modules/identity/applicatio
 import { administrationDependencies } from '../../modules/administration/application/dependencies.js';
 import { auditQueryDependencies } from '../../shared/audit/audit-dependencies.js';
 import { SCOPE_KINDS, scopeRequiresValue } from '../../shared/authorization/types.js';
+import { hasAdminCapability } from '../../shared/authorization/admin-workspace.js';
+import { roleLabel, stateLabel, uxVocabulary } from '../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 // Canonical-owner page: the middleware already returns 404 for non-owners; this
 // defense-in-depth check keeps the page safe even if routing is bypassed.
 if (!isNamedSystemOwner(actor)) return new Response(null, { status: 404 });
+const canCreateUser = hasAdminCapability(actor, 'createUser');
+const canAssignRoles = hasAdminCapability(actor, 'assignUserRole');
+const canAssignScopes = hasAdminCapability(actor, 'assignUserScope');
 
 type Overview = Awaited<
   ReturnType<ReturnType<typeof controlCenterReadDependencies>['overview']['execute']>
@@ -52,8 +57,11 @@ if (!usersError) {
       auth.listUserRoles.executeForUsers({ actor, userIds }),
       auth.listUserScopes.executeForUsers({ actor, userIds }),
     ]);
-    for (const row of roles) roleSummary.set(row.userId, row.codes.join(', ') || '—');
-    for (const row of scopes) scopeSummary.set(row.userId, row.scopes.map((scope) => scope.value ? `${scope.kind}:${scope.value}` : scope.kind).join(', ') || '—');
+    for (const row of roles) roleSummary.set(row.userId, row.codes.map((code) => `${roleLabel(code)} (${code})`).join(', ') || '—');
+    for (const row of scopes) scopeSummary.set(row.userId, row.scopes.map((scope) => {
+      const label = uxVocabulary.scopeKindLabels[scope.kind] ?? scope.kind;
+      return scope.value ? `${label} (${scope.kind}: ${scope.value})` : `${label} (${scope.kind})`;
+    }).join(', ') || '—');
     for (const user of users) {
       roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
       scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
@@ -167,8 +175,8 @@ const migrationBlocker = (migration: Overview['migration']) =>
     <span class={`banner ${overview?.coreStatus === 'READY' ? 'ok' : 'bad'}`}>
       {overview
         ? overview.coreStatus === 'READY'
-          ? 'Core system: READY'
-          : 'Core system: NOT READY'
+          ? 'Application and database connectivity: READY'
+          : 'Application and database connectivity: NOT READY'
         : 'STATUS UNAVAILABLE'}
     </span>
   </section>
@@ -186,6 +194,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
           <p class="muted">
             Sanitized live status generated {generatedAt} (Asia/Riyadh).
           </p>
+          <p class="release-boundary"><strong>QC acceptance: NOT VERIFIED.</strong> This console checks operational connectivity and migration posture; it does not establish QC completion, recovery acceptance, or production release approval.</p>
           <p class="release-boundary"><strong>Operational console status only.</strong> Core system READY does not mean production GO or RELEASED. The exact-candidate production decision remains NO-GO until all 19 mandatory gates have accepted evidence.</p>
           <div class="cards">
             <div class="card">
@@ -193,22 +202,26 @@ const migrationBlocker = (migration: Overview['migration']) =>
               <span class={`pill ${statusClass(overview.applicationStatus)}`}>
                 {overview.applicationStatus}
               </span>
+              <small>Checked {formatDate(overview.sourceCheckedAt.application)} (Asia/Riyadh)</small>
             </div>
             <div class="card">
               <span class="card-label">PostgreSQL</span>
               <span class={`pill ${statusClass(overview.databaseStatus)}`}>
                 {overview.databaseStatus}
               </span>
+              <small>Checked {formatDate(overview.sourceCheckedAt.database)} (Asia/Riyadh)</small>
             </div>
             <div class="card">
               <span class="card-label">Audit subsystem</span>
               <span class={`pill ${statusClass(overview.auditStatus)}`}>{overview.auditStatus}</span>
+              <small>Checked {formatDate(overview.sourceCheckedAt.audit)} (Asia/Riyadh)</small>
             </div>
             <div class="card">
               <span class="card-label">Migrations</span>
               <span class={`pill ${overview.migration.drift ? 'bad' : 'ok'}`}>
                 {overview.migration.drift ? 'DRIFT DETECTED' : 'IN SYNC'}
               </span>
+              <small>Checked {formatDate(overview.sourceCheckedAt.migration)} (Asia/Riyadh)</small>
             </div>
           </div>
           <dl>
@@ -276,9 +289,9 @@ const migrationBlocker = (migration: Overview['migration']) =>
               State
               <select id="state" name="state">
                 <option value="" selected={stateFilter === ''}>All states</option>
-                <option value="ACTIVE" selected={stateFilter === 'ACTIVE'}>ACTIVE</option>
-                <option value="INACTIVE" selected={stateFilter === 'INACTIVE'}>INACTIVE</option>
-                <option value="DISABLED" selected={stateFilter === 'DISABLED'}>DISABLED</option>
+                <option value="ACTIVE" selected={stateFilter === 'ACTIVE'}>{stateLabel('ACTIVE')}</option>
+                <option value="INACTIVE" selected={stateFilter === 'INACTIVE'}>{stateLabel('INACTIVE')}</option>
+                <option value="DISABLED" selected={stateFilter === 'DISABLED'}>{stateLabel('DISABLED')}</option>
               </select>
             </label>
             <input type="hidden" name="sort" value={sortKey} />
@@ -325,7 +338,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
                                   : 'warn'
                             }`}
                           >
-                            {user.accountState}
+                            {stateLabel(user.accountState)}
                           </span>
                         </td>
                         <td>{roleSummary.get(user.id) ?? '—'}</td>
@@ -361,7 +374,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
     }
   </section>
 
-  <section class="panel" aria-labelledby="create-title">
+  {canCreateUser ? <section class="panel" aria-labelledby="create-title">
     <h2 id="create-title">Create account</h2>
     <p class="muted">
       New accounts start ACTIVE with a temporary password that must be changed at first
@@ -384,7 +397,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
         Temporary password<span aria-hidden="true"> *</span>
         <input id="temporaryPassword" name="temporaryPassword" type="password" required maxlength="512" autocomplete="new-password" />
       </label>
-      <fieldset>
+      {canAssignRoles ? <fieldset>
         <legend>Initial role grants</legend>
         {rolesError && (
           <p class="note" role="alert">Role options are temporarily unavailable.</p>
@@ -396,8 +409,8 @@ const migrationBlocker = (migration: Overview['migration']) =>
               <input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})
             </label>
           ))}
-      </fieldset>
-      <fieldset>
+      </fieldset> : <p class="note">You can create an account without initial roles. Role assignment requires its separate permission.</p>}
+      {canAssignScopes ? <fieldset>
         <legend>Initial scopes (optional)</legend>
         <p class="note">
           Kinds that name a collection require a value; GLOBAL is a whole-system grant and takes
@@ -406,26 +419,26 @@ const migrationBlocker = (migration: Overview['migration']) =>
         {SCOPE_KINDS.map((kind) => (
           <div class="scope-row">
             <label class="check">
-              <input type="checkbox" name="scopeKind" value={kind} /> {kind}
+              <input type="checkbox" name="scopeKind" value={kind} /> {uxVocabulary.scopeKindLabels[kind]} <span class="code">{kind}</span>
             </label>
             {scopeRequiresValue(kind) ? (
               <input
                 name={`scopeValue-${kind}`}
                 maxlength="200"
-                placeholder={`${kind} value`}
-                aria-label={`${kind} scope value`}
+                placeholder={`${uxVocabulary.scopeKindLabels[kind]} value`}
+                aria-label={`${uxVocabulary.scopeKindLabels[kind]} scope value`}
               />
             ) : (
               <span class="note">No value</span>
             )}
           </div>
         ))}
-      </fieldset>
+      </fieldset> : <p class="note">You can create an account without initial scopes. Scope assignment requires its separate permission.</p>}
       <div class="actions">
         <button type="submit">Create account</button>
       </div>
     </form>
-  </section>
+  </section> : <section class="panel" aria-labelledby="create-title"><h2 id="create-title">Create account</h2><p class="note">Account creation requires its separate permission. You can still review the safe account and system projections above.</p></section>}
 
   <section class="panel" aria-labelledby="roles-title">
     <h2 id="roles-title">Roles &amp; permissions</h2>
@@ -443,8 +456,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
             <caption>Canonical roles</caption>
             <thead>
               <tr>
-                <th scope="col">Code</th>
-                <th scope="col">Name</th>
+                <th scope="col">Role</th>
                 <th scope="col">State</th>
                 <th scope="col">Administration</th>
               </tr>
@@ -452,11 +464,10 @@ const migrationBlocker = (migration: Overview['migration']) =>
             <tbody>
               {roles.map((role) => (
                 <tr>
-                  <th scope="row">{role.code}</th>
-                  <td>{role.name}</td>
+                  <th scope="row"><a href={`/admin/roles/${role.id}`}>{role.name}</a><small class="code">{role.code}</small></th>
                   <td>
                     <span class={`pill ${role.active ? 'ok' : 'bad'}`}>
-                      {role.active ? 'ACTIVE' : 'INACTIVE'}
+                      {stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')}
                     </span>
                   </td>
                   <td><a href={`/admin/roles/${role.id}`}>Open role</a></td>
@@ -662,6 +673,11 @@ const migrationBlocker = (migration: Overview['migration']) =>
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+  .card small {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
   }
   .pill {
     padding: 0.2rem 0.55rem;

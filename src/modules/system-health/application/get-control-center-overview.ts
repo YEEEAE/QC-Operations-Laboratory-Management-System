@@ -47,6 +47,12 @@ export interface ControlCenterOverview {
   migration: ControlCenterMigrationStatus;
   release: ControlCenterReleaseView;
   generatedAt: Date;
+  sourceCheckedAt: {
+    application: Date;
+    database: Date;
+    audit: Date;
+    migration: Date;
+  };
 }
 
 export interface ControlCenterOverviewDependencies {
@@ -80,27 +86,33 @@ export class GetControlCenterOverviewUseCase {
     const now = this.dependencies.now ?? (() => new Date());
     const generatedAt = now();
 
-    const probeStatus = async (probe: keyof SystemHealthProbes): Promise<HealthStatus> => {
+    const probeStatus = async (
+      probe: keyof SystemHealthProbes,
+    ): Promise<{ status: HealthStatus; checkedAt: Date }> => {
+      const fallbackCheckedAt = now();
       try {
-        return (await this.dependencies.probes[probe]()).status;
+        const health = await this.dependencies.probes[probe]();
+        return { status: health.status, checkedAt: health.checkedAt };
       } catch {
-        return 'UNAVAILABLE';
+        return { status: 'UNAVAILABLE', checkedAt: fallbackCheckedAt };
       }
     };
 
-    const [applicationStatus, databaseStatus, auditResult, migrationResult] = await Promise.all([
+    const [applicationResult, databaseResult, auditResult, migrationResult] = await Promise.all([
       probeStatus('application'),
       probeStatus('database'),
       this.dependencies
         .auditReadiness()
-        .then((result) => result.status)
-        .catch(() => 'UNKNOWN' as const),
+        .then((result) => ({ status: result.status, checkedAt: now() }))
+        .catch(() => ({ status: 'UNKNOWN' as const, checkedAt: now() })),
       this.dependencies
         .migrationStatus()
-        .then((result) => ({ ok: true as const, result }))
-        .catch(() => ({ ok: false as const })),
+        .then((result) => ({ ok: true as const, result, checkedAt: now() }))
+        .catch(() => ({ ok: false as const, checkedAt: now() })),
     ]);
 
+    const applicationStatus = applicationResult.status;
+    const databaseStatus = databaseResult.status;
     const release = this.dependencies.release;
     const appliedHead = migrationResult.ok ? migrationResult.result.appliedHead : 'UNKNOWN';
     const buildHead = migrationResult.ok ? migrationResult.result.buildHead : 'UNKNOWN';
@@ -127,7 +139,7 @@ export class GetControlCenterOverviewUseCase {
         applicationStatus === 'HEALTHY' && databaseStatus === 'HEALTHY' ? 'READY' : 'NOT_READY',
       applicationStatus,
       databaseStatus,
-      auditStatus: auditResult,
+      auditStatus: auditResult.status,
       migration: {
         appliedHead,
         buildHead,
@@ -148,6 +160,12 @@ export class GetControlCenterOverviewUseCase {
         ...(release.serviceVersion ? { applicationVersion: release.serviceVersion } : {}),
       },
       generatedAt,
+      sourceCheckedAt: {
+        application: applicationResult.checkedAt,
+        database: databaseResult.checkedAt,
+        audit: auditResult.checkedAt,
+        migration: migrationResult.checkedAt,
+      },
     };
   }
 }

@@ -7,7 +7,12 @@ import {
   type RestoreVerificationStatus,
 } from '../../backup-recovery/domain/backup-record.js';
 import type { BackupCatalogRepository } from '../../backup-recovery/ports/repository.js';
-import type { DependencyHealth, HealthStatus, SystemHealthProbes } from '../ports/health-probes.js';
+import type {
+  DependencyHealth,
+  HealthStatus,
+  OutboxWorkerDiagnostics,
+  SystemHealthProbes,
+} from '../ports/health-probes.js';
 import type { ConfiguredReleaseIdentity } from '../../../config/release.js';
 import type { RejectReportAvailability } from '../../reject-reports/ports/repository.js';
 
@@ -29,6 +34,7 @@ export interface SystemHealthReadinessDependencies {
 export interface SystemHealthCheck {
   dependency: string;
   status: HealthStatus;
+  checkedAt: Date;
   detail?: string;
 }
 
@@ -50,6 +56,7 @@ export interface SystemHealthView {
   qcReleaseReadiness: QCReleaseReadiness;
   aiCapability: HealthStatus;
   checks: readonly SystemHealthCheck[];
+  outboxDiagnostics?: OutboxWorkerDiagnostics;
   backupPosture?: SystemHealthBackupPosture;
   generatedAt: Date;
   release: ConfiguredReleaseIdentity;
@@ -186,6 +193,7 @@ export class GetSystemHealthUseCase {
       return {
         dependency,
         status: health.status,
+        checkedAt: health.checkedAt,
         ...(includeDetail ? { detail: health.detail } : {}),
       };
     });
@@ -193,6 +201,7 @@ export class GetSystemHealthUseCase {
     checks.push({
       dependency: rejectReportsHealth.dependency,
       status: rejectReportsHealth.status,
+      checkedAt: rejectReportsHealth.checkedAt,
       ...(readinessDetailVisible && rejectReportsHealth.detail
         ? { detail: rejectReportsHealth.detail }
         : {}),
@@ -200,6 +209,7 @@ export class GetSystemHealthUseCase {
     checks.push({
       dependency: migrationStatus.dependency,
       status: migrationStatus.status,
+      checkedAt: migrationStatus.checkedAt,
       ...(readinessDetailVisible && migrationStatus.detail
         ? { detail: migrationStatus.detail }
         : {}),
@@ -211,6 +221,9 @@ export class GetSystemHealthUseCase {
       qcReleaseReadiness,
       aiCapability: byStatus.get('ai-provider')?.status ?? 'UNKNOWN',
       checks,
+      ...(readinessDetailVisible
+        ? { outboxDiagnostics: byStatus.get('outbox')?.outboxDiagnostics }
+        : {}),
       generatedAt,
       release: this.release,
     };

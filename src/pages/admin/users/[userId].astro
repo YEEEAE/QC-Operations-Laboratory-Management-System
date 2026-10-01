@@ -4,8 +4,7 @@ import ConfirmDialog from '../../../ui/components/feedback/ConfirmDialog.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import {
-  canAccessAdminRoute,
-  hasAdminGrant,
+  hasAdminCapability,
 } from '../../../shared/authorization/admin-workspace.js';
 import {
   isProtectedOwnerRoleGrant,
@@ -45,29 +44,32 @@ try {
 
 /**
  * Capability-driven controls. Each control is governed by the same explicit
- * permission its server-side use case re-checks, so administration is never
- * exposed merely because someone reached /admin/users/*. Role membership
- * alone never grants access here.
+ * permission its server-side use case re-checks. Safe projections remain
+ * readable to active accounts independently of these mutation controls.
  */
-const canManage = canAccessAdminRoute(actor, 'users');
-const canViewRoles = hasAdminGrant(actor, 'PERM-ADM-ROLE-VIEW');
-const canAssignRoles = hasAdminGrant(actor, 'PERM-ADM-ROLE-ASSIGN');
-const canAssignScopes = hasAdminGrant(actor, 'PERM-ADM-SCOPE-ASSIGN');
-const canManageRoles = canViewRoles && !isSelf;
+const canUpdateProfile = hasAdminCapability(actor, 'updateUserProfile');
+const canActivateUser = hasAdminCapability(actor, 'activateUser');
+const canDeactivateUser = hasAdminCapability(actor, 'deactivateUser');
+const canResetPassword = hasAdminCapability(actor, 'resetUserPassword');
+const canRevokeSessions = hasAdminCapability(actor, 'revokeUserSessions');
+const canAssignRoles = hasAdminCapability(actor, 'assignUserRole');
+const canRemoveRoles = hasAdminCapability(actor, 'removeUserRole');
+const canAssignScopes = hasAdminCapability(actor, 'assignUserScope');
+const canRemoveScopes = hasAdminCapability(actor, 'removeUserScope');
+const canReplaceScopes = hasAdminCapability(actor, 'replaceUserScopes');
+const canManageRoles = canAssignRoles && !isSelf;
 const canManageScopes = canAssignScopes && !isSelf;
 
-// Reading role membership is a read-only capability: it is loaded for the
-// member's own account too, so the page can never claim "no roles are assigned"
-// while the owner console lists them (P2-3). Only the *mutation* controls stay
-// self-blocked (`canManageRoles`).
-if (user && canViewRoles) {
+// These application queries return the same safe, read-only projections used
+// by the administration register. Reading a projection never grants a write.
+if (user) {
   try {
     roles = await administrationDependencies().listUserRoles.execute({ actor, userId });
   } catch (error) {
     rolesRestricted = error instanceof AppError && error.category === 'AUTHORIZATION';
     if (!rolesRestricted) throw error;
   }
-  if (!isSelf) {
+  if (!isSelf && canAssignRoles) {
     try {
       const assigned = new Set((roles ?? []).map((role) => role.id));
       availableRoles = [
@@ -77,8 +79,6 @@ if (user && canViewRoles) {
       if (!(error instanceof AppError && error.category === 'AUTHORIZATION')) throw error;
     }
   }
-}
-if (user && !isSelf && canManageScopes) {
   try {
     scopes = await administrationDependencies().listUserScopes.execute({ actor, userId });
   } catch (error) {
@@ -116,8 +116,8 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
       <section class="denied" role="alert">
         <h2>User detail is not available</h2>
         <p>
-          Reading this member requires an explicit user-administration permission grant. Role
-          membership alone does not authorize this view.
+          This safe member projection is temporarily unavailable. Retry the page to read the
+          current record, or return to the member register.
         </p>
       </section>
     ) : (
@@ -144,7 +144,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
             </div>
             <div>
               <dt>State</dt>
-              <dd>{user.accountState}</dd>
+              <dd>{stateLabel(user.accountState)}</dd>
             </div>
             <div>
               <dt>Must change password</dt>
@@ -155,7 +155,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
               <dd>{user.lastLoginAt?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? '—'}</dd>
             </div>
           </dl>
-          {canManage && !isSelf ? (              <form
+          {canUpdateProfile && !isSelf ? (              <form
                 class="form"
                 method="post"
                 data-admin-form
@@ -210,7 +210,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
               administration are always blocked. Every lifecycle change revokes sessions
               immediately and is audited.
             </p>
-          ) : canManage ? (
+          ) : canResetPassword || canActivateUser || canDeactivateUser || canRevokeSessions ? (
             <div class="stack">
               <div class="control">
                 <h3>Password</h3>
@@ -218,7 +218,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                   Resetting revokes every session for this member immediately and is audited. The
                   member must change the password at next sign-in.
                 </p>
-                <form
+                {canResetPassword ? <form
                   class="form"
                   method="post"
                   data-admin-form
@@ -244,7 +244,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                     </button>
                   </div>
                   <p class="status" role="status" aria-live="polite" data-status />
-                </form>
+                </form> : <p class="note">Password reset requires its separate permission.</p>}
               </div>
               <div class="control">
                 <h3>Account state</h3>
@@ -254,17 +254,17 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                     : 'Activating returns the account to ACTIVE and is audited. The current version is required.'}
                 </p>
                 {user.accountState === 'ACTIVE' ? (
-                  <div class="actions">
+                  canDeactivateUser ? <div class="actions">
                     <button type="button" class="danger" data-dialog-open="dialog-disable-account">
                       Disable account
                     </button>
-                  </div>
+                  </div> : <p class="note">Disabling requires its separate permission.</p>
                 ) : (
-                  <div class="actions">
+                  canActivateUser ? <div class="actions">
                     <button type="button" data-dialog-open="dialog-activate-account">
                       Activate account
                     </button>
-                  </div>
+                  </div> : <p class="note">Activation requires its separate permission.</p>
                 )}
               </div>
               <div class="control">
@@ -273,11 +273,11 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                   Revoking ends every active session for this member immediately. The account state
                   and password are unchanged, and the revocation is audited.
                 </p>
-                <div class="actions">
+                {canRevokeSessions ? <div class="actions">
                   <button type="button" data-dialog-open="dialog-revoke-sessions">
                     Revoke all sessions
                   </button>
-                </div>
+                </div> : <p class="note">Session revocation requires its separate permission.</p>}
               </div>
             </div>
           ) : (
@@ -288,13 +288,8 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
         <section class="panel" id="roles">
           <p class="eyebrow">Roles</p>
           <h2>Roles</h2>
-          {!canViewRoles ? (
-            <p class="note">
-              Reading role membership requires the explicit role-view permission. Your current
-              grants do not include it.
-            </p>
-          ) : rolesRestricted ? (
-            <p class="note">Role membership is not available under your current authority.</p>
+          {rolesRestricted || !roles ? (
+            <p class="note">Role membership is temporarily unavailable. Retry this page to read the current assignments.</p>
           ) : (
             <div>
               <h3>Current roles</h3>
@@ -307,8 +302,8 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                       </span>
                       {protectedRole(role.code) ? (
                         <span class="protected">Protected</span>
-                      ) : isSelf || !canAssignRoles ? (
-                        <span class="note">—</span>
+                      ) : isSelf || !canRemoveRoles || !role.active ? (
+                        <span class="note">{role.active ? 'View only' : 'Inactive role'}</span>
                       ) : (
                         <button
                           type="button"
@@ -378,15 +373,8 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
         <section class="panel" id="scopes">
           <p class="eyebrow">SCOPES · UI-ADM-SCOPE-001</p>
           <h2>Scopes {scopeSection && <span class="flag">(requested section)</span>}</h2>
-          {isSelf ? (
-            <p class="note">
-              Scope changes on your own account are always blocked, even with explicit permission.
-            </p>
-          ) : scopesRestricted || !canAssignScopes ? (
-            <p class="note">
-              Scope management requires the explicit scope-assignment permission. Your current
-              grants do not include it.
-            </p>
+          {scopesRestricted || !scopes ? (
+            <p class="note">Scope assignments are temporarily unavailable. Retry this page to read the current assignments.</p>
           ) : (
             <div>
               <h3>Current scopes</h3>
@@ -395,10 +383,13 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                   {scopes.map((scope) => (
                     <li>
                       <span class="grant-name">
-                        {scope.kind} <span class="code">{scope.value ?? '—'}</span>
+                        {uxVocabulary.scopeKindLabels[scope.kind] ?? scope.kind}
+                        <span class="code">{scope.kind}{scope.value ? ` · ${scope.value}` : ''}</span>
                       </span>
                       {protectedScope(scope.kind) ? (
                         <span class="protected">Protected</span>
+                      ) : isSelf || !canRemoveScopes ? (
+                        <span class="note">View only</span>
                       ) : (
                         <button
                           type="button"
@@ -417,7 +408,9 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
               ) : (
                 <p class="note">No active scopes are assigned to this member.</p>
               )}
-              <form
+              {isSelf && <p class="note">Scope changes on your own account are always blocked, even with explicit permission.</p>}
+              {!isSelf && !canAssignScopes && <p class="note">Assigning or removing scopes requires the explicit scope-assignment permission.</p>}
+              {!isSelf && canAssignScopes && <form
                 class="form"
                 method="post"
                 data-admin-form
@@ -431,7 +424,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                   <select id="scopeKind" name="kind" required data-scope-kind-select>
                     {SCOPE_KINDS.map((kind) => (
                       <option value={kind} data-requires-value={scopeRequiresValue(kind) ? 'true' : 'false'}>
-                        {kind}
+                        {uxVocabulary.scopeKindLabels[kind]} ({kind})
                       </option>
                     ))}
                   </select>
@@ -451,8 +444,8 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                   </button>
                 </div>
                 <p class="status" role="status" aria-live="polite" data-status />
-              </form>
-              <details class="bulk">
+              </form>}
+              {!isSelf && canReplaceScopes && <details class="bulk">
                 <summary>Bulk operations</summary>
                 <p class="note">
                   Replacement revokes every current grant and writes the selected set in one
@@ -478,7 +471,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                             checked={scopes?.some((scope) => scope.kind === kind)}
                             disabled={protectedScope(kind)}
                           />
-                          {kind}
+                          {uxVocabulary.scopeKindLabels[kind] ?? kind} <span class="code">{kind}</span>
                           {protectedScope(kind) ? ' (Protected)' : ''}
                         </label>
                         <input
@@ -502,7 +495,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                   </div>
                   <p class="status" role="status" aria-live="polite" data-status />
                 </form>
-              </details>
+              </details>}
             </div>
           )}
         </section>
@@ -513,19 +506,19 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
           <dl>
             <div>
               <dt>Profile edit</dt>
-              <dd>{canManage && !isSelf ? 'Allowed' : 'Not allowed'}</dd>
+              <dd>{canUpdateProfile && !isSelf ? 'Allowed' : 'Not allowed'}</dd>
             </div>
             <div>
               <dt>Account lifecycle</dt>
-              <dd>{canManage && !isSelf ? 'Allowed' : 'Not allowed'}</dd>
+              <dd>{!isSelf && (canResetPassword || canRevokeSessions || (user.accountState === 'ACTIVE' ? canDeactivateUser : canActivateUser)) ? 'Allowed for the current state' : 'Not allowed'}</dd>
             </div>
             <div>
               <dt>Role administration</dt>
-              <dd>{canManageRoles ? (canAssignRoles ? 'View and assign' : 'View only') : 'Not allowed'}</dd>
+              <dd>{canManageRoles ? 'View and assign' : 'View only'}</dd>
             </div>
             <div>
               <dt>Scope administration</dt>
-              <dd>{canManageScopes ? 'View, assign and remove' : 'Not allowed'}</dd>
+              <dd>{canManageScopes ? 'View, assign and remove' : 'View only'}</dd>
             </div>
           </dl>
           <p class="note">
@@ -539,7 +532,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
         </section>
 
         {(roles ?? [])
-          .filter((role) => !isSelf && canAssignRoles && !protectedRole(role.code))
+          .filter((role) => !isSelf && canRemoveRoles && role.active && !protectedRole(role.code))
           .map((role) => (
             <ConfirmDialog
               id={`dialog-remove-role-${role.id}`}
@@ -554,7 +547,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
             />
           ))}
         {(scopes ?? [])
-          .filter((scope) => !isSelf && canAssignScopes && !protectedScope(scope.kind))
+          .filter((scope) => !isSelf && canRemoveScopes && !protectedScope(scope.kind))
           .map((scope) => (
             <ConfirmDialog
               id={`dialog-remove-scope-${scope.id}`}
@@ -569,8 +562,7 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
             />
           ))}
         {
-          !isSelf && canManage && (
-            <>
+          !isSelf && canDeactivateUser && user.accountState === 'ACTIVE' && (
               <ConfirmDialog
                 id="dialog-disable-account"
                 title="Disable account"
@@ -582,6 +574,10 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 danger
                 pendingLabel="Disabling account…"
               />
+          )
+        }
+        {
+          !isSelf && canActivateUser && user.accountState !== 'ACTIVE' && (
               <ConfirmDialog
                 id="dialog-activate-account"
                 title="Activate account"
@@ -592,6 +588,10 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 cancelLabel="Cancel"
                 pendingLabel="Activating account…"
               />
+          )
+        }
+        {
+          !isSelf && canRevokeSessions && (
               <ConfirmDialog
                 id="dialog-revoke-sessions"
                 title="Revoke all sessions"
@@ -603,6 +603,10 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 danger
                 pendingLabel="Revoking sessions…"
               />
+          )
+        }
+        {
+          !isSelf && canResetPassword && (
               <ConfirmDialog
                 id="dialog-password-reset"
                 title="Reset password"
@@ -614,7 +618,6 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
                 danger
                 pendingLabel="Resetting password…"
               />
-            </>
           )
         }
       </div>
