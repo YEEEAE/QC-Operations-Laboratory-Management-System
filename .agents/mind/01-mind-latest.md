@@ -1,3 +1,11 @@
+- **2026-10-02 — QC-POST-100-001 / native POST transport**
+  - Changed: Lab review, Daily Reject, and Issue Slip mutations now POST to the same authorized actions; reauthentication input clears after each attempt.
+  - Evidence: frozen source fingerprint 4028465413bf476b5f4af1b3b3220c169685da78878b514bcb7f38e058eb8c99; focused 13/13 and build PASS. PG rollback BLOCKED (container runtime absent); no-JS browser BLOCKED (Chromium launch permission denied).
+  - State: PARTIAL / full acceptance NOT VERIFIED.
+- **2026-10-02 — QC-POST-EXECUTION-VERIFICATION-001 / partial-state audit**
+  - Changed: 88 pages/42 prompts/38 original findings reconciled; QC-ADP26-32..36 NOT STARTED per user. MD+HTML report and16 residual prompts; runtime source unchanged.
+  - Evidence: Node24 build PASS; unit1124/1152 (28 FAIL); PG18 integration535/593 (48 FAIL,10 skipped); empty source schema43 migrations/85 tables/0 orphans PASS. Live exact SHA6059e177 identity matches, readiness503/25pending. New9 findings; ancillary raw tests not bound release envelopes.
+  - State: PARTIAL / NO-GO. Key files: `audit/2026-09-30-POST-IMPLEMENTATION-FULL-SYSTEM-VERIFICATION.md`, `.html`, `audit/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.html`.
 - **2026-10-02 — QC-ADP26-31 / representative performance:** Calibration selector eligibility now uses bounded batch reads (3–4 SQL statements including equipment list by source shape); focused contracts 17/17 PASS and build PASS on rebound HEAD `9ee20b9`. PostgreSQL 18, authenticated route p95/payload, LCP/INP, and login GPU timing remain BLOCKED/NOT VERIFIED; budgets are proposed, not approved. Handoff: `audit/2026-09-30/handoff-QC-ADP26-31.md`.
 - **2026-10-02 — QC-ADP26-30 / report copy binding:** Added request-local dataset digest; changed-source downloads deny stale; report and reject print views mark informational/unapproved. No durable snapshot, report-run table, or retention policy. Focused reporting 24/24 and build/release PASS; PG18 BLOCKED, authenticated browser/print/AT/UAT NOT VERIFIED. Report-run persistence owner decision remains open. Handoff: `audit/2026-09-30/handoff-QC-ADP26-30.md`. State: PARTIAL.
 - **2026-10-02 — QC-ADP26-29 / Reject analytics parity**
@@ -236,7 +244,7 @@
 - قبل الاعتماد يعاد القفل والقراءة `FOR UPDATE` وإعادة الاشتقاق داخل transaction؛ أي اختلاف snapshot يرفض العملية.
 - إعادة إرسال نفس `requestId` للاعتماد تُحلّ **قبل** أي فحص state/version/authority وتُعيد النتيجة المخزّنة؛ نفس المعرّف بمحتوى مختلف يفشل بـ`CONFLICT_DUPLICATE_COMMAND`.
 - سلطة الاعتماد النهائي حسب السياسة المنفذة: Manager أو `yazeed`/SYSTEM_OWNER المسمى؛ Admin-only ليس سلطة اعتماد.
-- **قرار التدقيق الحالي يبقى `NO-GO`** (مرشح 2026-09-19 `653b58d22d4a17994db7376a3bd691ca6e789f1a`: maturity 45.8%، gates 0/19) حتى تتحقق الأدلة الخارجية؛ `PASS ≠ RELEASED` ويبقى المجموع مشتقًا من الأدلة فقط.
+- **Current audit 2026-10-02: NO-GO** on `6059e177438d8ae110c99084d32758b048f22cd2`; checklist311/671=46.3% (23 FAIL,337 NOT VERIFIED), not product maturity. Original0 CLOSED/30 PARTIAL/8 OPEN; new9 (P1=6/P2=3). Product maturity/production readiness NOT VERIFIED; signed accepted19-gate register absent. Prior45.8% candidate score HISTORICAL. `PASS ≠ RELEASED`.
 - P-07 هو القرار الحالي المعتمد لهذه السلطة: Manager OR named `yazeed/SYSTEM_OWNER`, one signer; هذا إغلاق لقرار السلطة فقط وليس دليل Production/UAT/provider.
 - أضيف محليًا endpoint لاستقبال أدلة CI/security/database/E2E بتوقيع HMAC ومجال اعتماد خادمي وبصمة immutable؛ لا توجد مفاتيح/سياسة owner-approved configured ولا run حالي ingested، واختبار PostgreSQL 18 BLOCKED. مسار UAT البشري الموقّع مستقل ولم يقدم evidence حالي.
 - سجل الجاهزية المعتمد 19 بوابة لا يملك بعد mapping/schema إلى الفئات الداخلية الثماني؛ القراءة التنفيذية لقرار الـ19 ترجع `false` fail-closed، واعتماد المرشح محجوب إلى حين مصالحة register مع exact identity.
@@ -442,6 +450,8 @@
 - 21st.dev Codex plugin is installed and enabled globally (`21st@21st`, 0.4.1); its MCP reads `API_KEY_21ST`. The variable was not available to GUI-launched Codex during installation, so authenticated MCP use remains NOT VERIFIED until the variable is available and Codex is restarted.
 
 ## 14) المشاكل المفتوحة الحالية — لا تعيد فتح المشاكل المغلقة تاريخيًا
+
+- **Current post audit:** QC-POST-F-002 source GET/password exposure repaired on the frozen local candidate across Lab review, Daily Reject, and Issue Slip; focused source contract 13/13 and build PASS. PostgreSQL rollback and fixture-backed no-JS browser evidence remain BLOCKED/NOT VERIFIED. Other findings remain: receiving correction cannot open; TEXT true/false coercion; no-JS document draft stale version; Reject analytics UNION ordering fails PG18; Issue Slip approverName conflicts with audit privacy guard. Architecture fails actions/documents.ts:6; Astro check has two unrelated errors; lint/format/parity remain outstanding. Live sameSHA/source0043,25pending/storage unavailable; projection only, no raw production ledger. Report owns remediation/evidence; no production changes authorized.
 
 ### P0 / blocking evidence
 - **F-013-1 (QC-100-FINAL-013، غير مُصلح لغياب مدخل القرار):** سلسلة اعتماد التفتيش غير قابلة للإكمال من التطبيق — لا masدر نتيجة رسمي (PD-01/PD-02/PD-07) ولا create action؛ لا تُخترع معايير. المالك: QC/QMS ثم 013. الدليل: الحالة `[blocker]` في `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.

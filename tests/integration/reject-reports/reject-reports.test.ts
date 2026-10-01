@@ -405,6 +405,71 @@ describe('Reject Reports PostgreSQL integration', () => {
     expect(afterReplay.rows[0]).toEqual(beforeReplay.rows[0]);
   });
 
+  it('rolls back the append, version, and outbox when audit persistence fails', async () => {
+    const normalRepository = new PostgresRejectReportRepository(
+      database,
+      (globalThis as { __rejectWiring?: { audit: PostgresAuditRepository } }).__rejectWiring!.audit,
+      (globalThis as { __rejectWiring?: { outbox: PostgresOutboxRepository } }).__rejectWiring!
+        .outbox,
+    );
+    const record = await new CreateDailyRejectUseCase(normalRepository).execute({
+      actor: creator,
+      reportDate: new Date('2026-09-18'),
+      department: 'Append rollback line',
+      entries: [
+        {
+          itemDescription: 'Original entry',
+          rejectQty: '2',
+          goodQty: '8',
+          rejectReason: 'Original reason',
+        },
+      ],
+      requestId: 'req-daily-append-rollback-create',
+    });
+    const failingAudit = {
+      append: async () => {
+        throw new Error('injected audit persistence failure');
+      },
+    };
+    const failingRepository = new PostgresRejectReportRepository(
+      database,
+      failingAudit,
+      (globalThis as { __rejectWiring?: { outbox: PostgresOutboxRepository } }).__rejectWiring!
+        .outbox,
+    );
+    const before = await pool!.query(
+      `SELECT r.version::text AS version,
+         (SELECT count(*)::text FROM qc.daily_reject_entries WHERE report_id = r.id) AS rows,
+         (SELECT count(*)::text FROM qc.audit_events WHERE subject_id = r.id) AS audit,
+         (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_id = r.id) AS outbox
+       FROM qc.reject_reports r WHERE r.id = $1`,
+      [record.id],
+    );
+    await expect(
+      new AppendDailyRejectEntryUseCase(failingRepository).execute({
+        actor: creator,
+        reportId: record.id,
+        expectedVersion: record.version,
+        entry: {
+          itemDescription: 'Must roll back',
+          rejectQty: '1',
+          goodQty: '4',
+          rejectReason: 'Rollback probe',
+        },
+        requestId: 'req-daily-append-rollback',
+      }),
+    ).rejects.toThrow('injected audit persistence failure');
+    const after = await pool!.query(
+      `SELECT r.version::text AS version,
+         (SELECT count(*)::text FROM qc.daily_reject_entries WHERE report_id = r.id) AS rows,
+         (SELECT count(*)::text FROM qc.audit_events WHERE subject_id = r.id) AS audit,
+         (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_id = r.id) AS outbox
+       FROM qc.reject_reports r WHERE r.id = $1`,
+      [record.id],
+    );
+    expect(after.rows[0]).toEqual(before.rows[0]);
+  });
+
   it('rejects anonymous/inactive actors and enforces optimistic concurrency', async () => {
     const repository = new PostgresRejectReportRepository(
       database,

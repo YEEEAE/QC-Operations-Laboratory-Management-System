@@ -49,22 +49,48 @@ const uiFiles = walk('src/ui').filter((path) => /\.(astro|ts)$/.test(path));
  * The register can only shrink.
  */
 const NO_JS_BASELINE_OPEN = [
-  'src/pages/admin/roles/[roleId].astro',
   'src/pages/change-requests/[changeRequestId]/review.astro',
   'src/pages/documents/[documentId]/versions/[versionId]/index.astro',
   'src/pages/laboratory/tests/[labTestId]/execute.astro',
-  'src/pages/laboratory/tests/[labTestId]/review.astro',
   'src/pages/quality/capa/[capaId].astro',
-  'src/pages/reject-reports/daily/[reportId].astro',
 ];
 
 /** Surfaces with a submit control but no in-flight/duplicate guard of their own. */
-const PENDING_GUARD_OPEN = ['src/pages/reject-reports/daily/[reportId].astro'];
+const PENDING_GUARD_OPEN: string[] = [];
 
 const hasPostBaseline = (source: string): boolean =>
   source.includes('method="post"') || source.includes('action={actions.');
 
 describe('mutation failure classes stay distinguishable', () => {
+  it('uses native POST for lab approval and reject-report mutations without putting form fields in the URL', () => {
+    const routes = [
+      'src/pages/laboratory/tests/[labTestId]/review.astro',
+      'src/pages/reject-reports/daily/[reportId].astro',
+      'src/pages/reject-reports/issue-slips/[reportId].astro',
+    ];
+    for (const route of routes) {
+      const source = read(route);
+      const forms = [...source.matchAll(/<form\b([\s\S]*?)>/g)].map((match) => match[1]);
+      expect(forms.length, route).toBeGreaterThan(0);
+      expect(
+        forms.every((form) => /method="post"/.test(form)),
+        route,
+      ).toBe(true);
+      expect(source).toMatch(/Astro\.request\.method === 'POST'/);
+      expect(source).toMatch(/Astro\.callAction/);
+      expect(
+        forms.every((form) => !/(?<![\w-])action\s*=/.test(form)),
+        route,
+      ).toBe(true);
+      expect(source).not.toMatch(
+        /(?:href|action)=["'][^"']*[?&](?:reauthenticationSecret|approverName|rejectQty|rejectReason|reason)=/i,
+      );
+    }
+    const laboratory = read(routes[0]);
+    expect(laboratory).toContain("password.value=''");
+    expect(laboratory).toContain('name="reauthenticationSecret"');
+  });
+
   it('never collapses authorization, staleness, dependency, validation or unknown', () => {
     const auth = classifyActionResult({ error: { message: 'AUTHZ_DENIED' } }).state;
     const scope = classifyActionResult({ error: { message: 'AUTHZ_SCOPE_DENIED' } }).state;
@@ -89,7 +115,7 @@ describe('mutation failure classes stay distinguishable', () => {
     expect(stale).toBe('CONFLICT_STALE');
     expect(duplicate).toBe('DUPLICATE_COMMAND');
     expect(dependency).toBe('DEPENDENCY_UNAVAILABLE');
-    expect(databaseUnavailable).toBe('UNKNOWN_SAFE_ERROR');
+    expect(databaseUnavailable).toBe('PROVIDER_UNAVAILABLE');
     expect(notFound).toBe('DEPENDENCY_UNAVAILABLE');
     expect(validation).toBe('VALIDATION_ERROR');
     expect(unknown).toBe('UNKNOWN_SAFE_ERROR');
@@ -174,12 +200,18 @@ describe('control surfaces and the JavaScript-only gap register', () => {
       'Astro.redirect(`/documents/${document.id}/versions/${result.data.id}`, 303)',
     );
     expect(source).toContain('value={values.revision}');
-    expect(source).toContain('name="expectedDocumentVersion" value={values.expectedDocumentVersion}');
-    expect(source).toContain("expectedDocumentVersion: String(data.get('expectedDocumentVersion') ?? '')");
+    expect(source).toContain(
+      'name="expectedDocumentVersion" value={values.expectedDocumentVersion}',
+    );
+    expect(source).toContain(
+      "expectedDocumentVersion: String(data.get('expectedDocumentVersion') ?? '')",
+    );
     expect(source).toContain("!formData.has('expectedDocumentVersion')");
     expect(source).toContain("'The document history changed after this form was opened.'");
     expect(source).toContain('!creationDecision.allowed');
-    expect(source).toContain('The revision may have been saved. Check the document history before retrying');
+    expect(source).toContain(
+      'The revision may have been saved. Check the document history before retrying',
+    );
     expect(source).not.toContain('Nothing was submitted');
     expect(source).toContain('role="alert"');
     expect(source).toContain('aria-live="polite"');

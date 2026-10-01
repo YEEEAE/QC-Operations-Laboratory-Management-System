@@ -1,0 +1,179 @@
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QC — الأعمال المتبقية بعد التدقيق الجزئي</title><style>body{font:17px/1.8 system-ui;background:#101916;color:#f2f6ef;margin:0}main{max-width:1100px;margin:auto;padding:24px}a{color:#d7ee9a}button,input,select{font:inherit;min-height:44px;padding:8px;background:#18241f;color:#f2f6ef;border:1px solid #839986;border-radius:6px}details{padding:16px;margin:16px 0;border:1px solid #839986;border-radius:10px}summary{cursor:pointer;font-weight:bold}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#18241f}*:focus-visible{outline:3px solid #d7ee9a} .controls{display:flex;gap:12px;flex-wrap:wrap}[hidden]{display:none}@media(max-width:600px){main{padding:12px}}@media print{button,.controls{display:none}details>div{display:block}}</style><main><h1>الأعمال المتبقية بعد تدقيق الحالة الجزئية</h1>
+<p>2026-10-02 · HEAD <bdi>6059e177</bdi> · NO-GO. checklist 46.3%؛ Product maturity وProduction readiness: NOT VERIFIED. original closed0/38؛ remaining38؛ new9؛ confirmed architecture regression1؛ residual16.</p><p>المهام QC-ADP26-32..36 لم تبدأ حسب المستخدم. الدرجات هنا تخص مقام checklist671 ولا تمثل نسبة جاهزية المنتج.</p><p><a href="2026-09-30-POST-IMPLEMENTATION-FULL-SYSTEM-VERIFICATION.md">التقرير</a> · <a href="2026-10-02/post-implementation/verification-data.json">الأدلة والترابط</a></p><div class="controls"><label>بحث <input id="query" type="search"></label><button id="expand">فتح الكل</button><button id="collapse">إغلاق الكل</button></div><p id="status" role="status" aria-live="polite"></p>
+<details data-search="إصلاح النماذج التي تُرسل الأسرار أو بيانات العمل عبر GET QC-POST-100-001"><summary>QC-POST-100-001 · P1 · إصلاح النماذج التي تُرسل الأسرار أو بيانات العمل عبر GET</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-POST-F-002, QC-PAGE-F-011</p><p>الصفحات: /laboratory/tests/[labTestId]/review, /reject-reports/daily/[reportId], /reject-reports/issue-slips/[reportId]</p><p>Dependencies: none</p><button data-copy="QC-POST-100-001">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-001">Prompt ID: QC-POST-100-001
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إصلاح النماذج التي تُرسل الأسرار أو بيانات العمل عبر GET
+Trace: QC-POST-F-002, QC-PAGE-F-011
+Affected pages/domains: /laboratory/tests/[labTestId]/review, /reject-reports/daily/[reportId], /reject-reports/issue-slips/[reportId]
+Required implementation: أضف native POST إلى نفس use case المصرح، دون أسرار في URL؛ امسح إعادة المصادقة بعد محاولة الطلب. حافظ على validation وunknown-write reconciliation.
+Required verification/tests/acceptance: no-JS populated positive/negative POST؛ URL خالٍ من secret/business fields؛ rollback وduplicate/stale tests.
+Dependencies: none
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إصلاح فتح التصحيح ونسخة تعديل الوثيقة ونوع القياس QC-POST-100-002"><summary>QC-POST-100-002 · P1 · إصلاح فتح التصحيح ونسخة تعديل الوثيقة ونوع القياس</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-POST-F-001, QC-POST-F-003, QC-POST-F-004</p><p>الصفحات: /quarantine/receiving/[receivingId], /documents/[documentId]/versions/[versionId]/edit, /laboratory/tests/[labTestId]/execute</p><p>Dependencies: none</p><button data-copy="QC-POST-100-002">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-002">Prompt ID: QC-POST-100-002
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إصلاح فتح التصحيح ونسخة تعديل الوثيقة ونوع القياس
+Trace: QC-POST-F-001, QC-POST-F-003, QC-POST-F-004
+Affected pages/domains: /quarantine/receiving/[receivingId], /documents/[documentId]/versions/[versionId]/edit, /laboratory/tests/[labTestId]/execute
+Required implementation: اجعل التصحيح يفتح نموذجًا موجودًا؛ مرر expectedVersion من فتح النموذج كحقل مسمى، وأعد فحصه في transaction؛ حوّل القياس حسب dataType فقط.
+Required verification/tests/acceptance: تصحيح مع/بدون JS؛ رفض stale draft edit بلا آثار؛ حفظ TEXT true/false وBOOLEAN وDECIMAL ثم reload.
+Dependencies: none
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إكمال تصنيف إخفاق مصادر القراءة واستقلال الأقسام QC-POST-100-003"><summary>QC-POST-100-003 · P1 · إكمال تصنيف إخفاق مصادر القراءة واستقلال الأقسام</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-008</p><p>الصفحات: /quality/findings/[findingId], /quality/ncr, /quality/rca, /quality/capa, /quarantine/admin</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-003">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-003">Prompt ID: QC-POST-100-003
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إكمال تصنيف إخفاق مصادر القراءة واستقلال الأقسام
+Trace: QC-PAGE-F-008
+Affected pages/domains: /quality/findings/[findingId], /quality/ncr, /quality/rca, /quality/capa, /quarantine/admin
+Required implementation: احتفظ بالقراءة الأساسية عند فشل related؛ لا تعرض outage كسجل فارغ؛ حالة كل مصدر مستقلة.
+Required verification/tests/acceptance: fault injection لكل مصدر، primary محفوظ، withheld counts، no existence leak.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إغلاق بوابات الكود وعقود UI والبيئة الحالية QC-POST-100-004"><summary>QC-POST-100-004 · P2 · إغلاق بوابات الكود وعقود UI والبيئة الحالية</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-POST-F-007, QC-PAGE-F-019, QC-PAGE-F-020, QC-ENV-F-004</p><p>الصفحات: src/actions/documents.ts, /ai-advisory, Documents/EXTENDING-THE-SYSTEM.md, .env.example</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-004">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-004">Prompt ID: QC-POST-100-004
+Priority: P2
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إغلاق بوابات الكود وعقود UI والبيئة الحالية
+Trace: QC-POST-F-007, QC-PAGE-F-019, QC-PAGE-F-020, QC-ENV-F-004
+Affected pages/domains: src/actions/documents.ts, /ai-advisory, Documents/EXTENDING-THE-SYSTEM.md, .env.example
+Required implementation: أصلح import عبر application port؛ أصلح الخطأين TypeScript؛ صالح assertions للمعنى المعتمد دون تعطيل اختبارات؛ وثق 0043 ومفاتيح البيئة الناقصة؛ أصلح lint/format الفعلي.
+Required verification/tests/acceptance: Node24.20/pnpm11.25؛ unit/lint/format/typecheck/architecture/parity PASS؛ لا تحديث expected لإخفاء defect.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إكمال الفلاتر وتسميات Audit وروابط السلطة QC-POST-100-005"><summary>QC-POST-100-005 · P2 · إكمال الفلاتر وتسميات Audit وروابط السلطة</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-POST-F-005, QC-POST-F-006, QC-PAGE-F-012, QC-PAGE-F-018</p><p>الصفحات: /tasks, /audit, /ai-advisory</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-005">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-005">Prompt ID: QC-POST-100-005
+Priority: P2
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إكمال الفلاتر وتسميات Audit وروابط السلطة
+Trace: QC-POST-F-005, QC-POST-F-006, QC-PAGE-F-012, QC-PAGE-F-018
+Affected pages/domains: /tasks, /audit, /ai-advisory
+Required implementation: صفّر page عند تغيير/remove filter؛ حل human references/action/actor؛ فلتر private link بنفس pageAccessDecision.
+Required verification/tests/acceptance: صفحة&gt;1 fixture، تغيير/removal، readable/nonowner/private denial، screen-reader labels.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="حسم المصدر العلمي والتوقيع والإفراج من أصحاب القرار QC-POST-100-006"><summary>QC-POST-100-006 · P1 · حسم المصدر العلمي والتوقيع والإفراج من أصحاب القرار</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-010, QC-PAGE-F-023, QC-PAGE-F-024</p><p>الصفحات: /quarantine/inspections, /laboratory, /documents, /approvals</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-006">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-006">Prompt ID: QC-POST-100-006
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: حسم المصدر العلمي والتوقيع والإفراج من أصحاب القرار
+Trace: QC-PAGE-F-010, QC-PAGE-F-023, QC-PAGE-F-024
+Affected pages/domains: /quarantine/inspections, /laboratory, /documents, /approvals
+Required implementation: اجمع approved source/revision/hash/units/precision ومعايير QC/QMS وper-decision signature/effectivity/file retention؛ أبق deny حتى الاعتماد.
+Required verification/tests/acceptance: positive official-source ثم negative missing/hash drift/client PASS؛ لا اختراع policy ولا human signature.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إكمال المختبر والمعدات حسب QC-ADP26-33 غير المبدوء QC-POST-100-007"><summary>QC-POST-100-007 · P1 · إكمال المختبر والمعدات حسب QC-ADP26-33 غير المبدوء</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-033</p><p>الصفحات: /laboratory/tests/[labTestId], /laboratory/tests/[labTestId]/review, /assets, /quarantine/inspections</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-007">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-007">Prompt ID: QC-POST-100-007
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إكمال المختبر والمعدات حسب QC-ADP26-33 غير المبدوء
+Trace: QC-PAGE-F-033
+Affected pages/domains: /laboratory/tests/[labTestId], /laboratory/tests/[labTestId]/review, /assets, /quarantine/inspections
+Required implementation: اربط SUBMITTED/PENDING_QCM بالخطوة المسموحة؛ أصلح stage filters/context؛ نفذ approved asset actions دون اختراع دورة جديدة.
+Required verification/tests/acceptance: populated role/state/version fixtures؛ eligible/ineligible lab use؛ repair creation؛ audit atomicity.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إثبات معاملات الدومينات والتزامن على PostgreSQL18 QC-POST-100-008"><summary>QC-POST-100-008 · P1 · إثبات معاملات الدومينات والتزامن على PostgreSQL18</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-003, QC-PAGE-F-004, QC-PAGE-F-005, QC-PAGE-F-006, QC-PAGE-F-007, QC-PAGE-F-009, QC-PAGE-F-013, QC-PAGE-F-021, QC-PAGE-F-022, QC-PAGE-F-025, QC-PAGE-F-026, QC-PAGE-F-028</p><p>الصفحات: quarantine, quality, identity, documents, approvals, system</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-008">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-008">Prompt ID: QC-POST-100-008
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إثبات معاملات الدومينات والتزامن على PostgreSQL18
+Trace: QC-PAGE-F-003, QC-PAGE-F-004, QC-PAGE-F-005, QC-PAGE-F-006, QC-PAGE-F-007, QC-PAGE-F-009, QC-PAGE-F-013, QC-PAGE-F-021, QC-PAGE-F-022, QC-PAGE-F-025, QC-PAGE-F-026, QC-PAGE-F-028
+Affected pages/domains: quarantine, quality, identity, documents, approvals, system
+Required implementation: عالج فقط إخفاقات التكامل المثبتة؛ ثم أثبت كل boundary rollback/replay/race/current-version/authority؛ استخدم قاعدة disposable وعزل suites.
+Required verification/tests/acceptance: integration/migrations/concurrency/security بلا skips وفشل؛ Node24 evidence مرتبط SHA/schema/fingerprint؛ لا production DB.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إثبات البحث والإشعارات واللوحة والتقارير ببيانات ممثلة QC-POST-100-009"><summary>QC-POST-100-009 · P1 · إثبات البحث والإشعارات واللوحة والتقارير ببيانات ممثلة</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-014, QC-PAGE-F-015, QC-PAGE-F-017, QC-PAGE-F-029, QC-PAGE-F-030, QC-POST-F-008, QC-POST-F-009</p><p>الصفحات: /search, /notifications, /dashboard, /work, /reports, /reject-reports</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-009">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-009">Prompt ID: QC-POST-100-009
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إثبات البحث والإشعارات واللوحة والتقارير ببيانات ممثلة
+Trace: QC-PAGE-F-014, QC-PAGE-F-015, QC-PAGE-F-017, QC-PAGE-F-029, QC-PAGE-F-030, QC-POST-F-008, QC-POST-F-009
+Affected pages/domains: /search, /notifications, /dashboard, /work, /reports, /reject-reports
+Required implementation: أثبت exact totals/scopes/order/51 notifications/decimal units؛ احسم durable report snapshot والretention عند لزوم العقد.
+Required verification/tests/acceptance: screen/CSV/XLSX/print parity، changed-source denial، recipient isolation، no double-count، rollback append.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="مصالحة الإنتاج والمخطط بعد تدوير الاتصال المعتمد QC-POST-100-010"><summary>QC-POST-100-010 · P1 · مصالحة الإنتاج والمخطط بعد تدوير الاتصال المعتمد</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-002, QC-ENV-F-001</p><p>الصفحات: /system/health, production database</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-010">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-010">Prompt ID: QC-POST-100-010
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: مصالحة الإنتاج والمخطط بعد تدوير الاتصال المعتمد
+Trace: QC-PAGE-F-002, QC-ENV-F-001
+Affected pages/domains: /system/health, production database
+Required implementation: جهز migration/rollback/recovery plan بعد بوابة تدوير credential؛ اجمع read-only ledger names/checksums وتطابق artifact/runtime/config؛ أي تنفيذ إنتاج يتطلب تفويضًا مستقلًا.
+Required verification/tests/acceptance: 43 source↔applied ledger parity وchecksum/no missing tables؛ live ready على exact candidate؛ محفوظ SHA/provider readback.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="التخزين والمراقبة والاستعادة وDR QC-POST-100-011"><summary>QC-POST-100-011 · P1 · التخزين والمراقبة والاستعادة وDR</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-027, QC-ENV-F-003</p><p>الصفحات: /system/health, /system/backups, /system/control-center</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-011">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-011">Prompt ID: QC-POST-100-011
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: التخزين والمراقبة والاستعادة وDR
+Trace: QC-PAGE-F-027, QC-ENV-F-003
+Affected pages/domains: /system/health, /system/backups, /system/control-center
+Required implementation: احسم required/optional مع المالك؛ جهز durable storage وoutbox worker/receiver والalerts؛ اعتمد RPO/RTO ثم نفذ isolated restore drill.
+Required verification/tests/acceptance: storage roundtrip، delivery age/count/ack، backup checksum/schema/business history، measured restore/RPO/RTO؛ لا إنتاج restore.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إغلاق الأداء المقاس فقط QC-POST-100-012"><summary>QC-POST-100-012 · P2 · إغلاق الأداء المقاس فقط</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-031</p><p>الصفحات: /assets/maintenance/new, /assets/calibrations/new, /dashboard, /login</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-012">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-012">Prompt ID: QC-POST-100-012
+Priority: P2
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إغلاق الأداء المقاس فقط
+Trace: QC-PAGE-F-031
+Affected pages/domains: /assets/maintenance/new, /assets/calibrations/new, /dashboard, /login
+Required implementation: أزل N+1 للصيانة إذا أثبته القياس؛ استخدم أحجام بيانات ممثلة وbudgets معتمدة؛ لا threshold مخترع.
+Required verification/tests/acceptance: SQL query count وp95/payload/LCP/INP/GPU قبل/بعد نفس الظروف؛ test compatibility.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="إكمال الدخول حسب QC-ADP26-34 غير المبدوء QC-POST-100-013"><summary>QC-POST-100-013 · P2 · إكمال الدخول حسب QC-ADP26-34 غير المبدوء</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-034</p><p>الصفحات: /login</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-013">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-013">Prompt ID: QC-POST-100-013
+Priority: P2
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: إكمال الدخول حسب QC-ADP26-34 غير المبدوء
+Trace: QC-PAGE-F-034
+Affected pages/domains: /login
+Required implementation: حافظ native POST، أضف pending/double-submit guard وserver-derived throttle/session recovery.
+Required verification/tests/acceptance: no-JS، slow network، repeated submit، invalid/rate-limited/expired، password-manager/keyboard.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="مصالحة 19 بوابة الإصدار حسب QC-ADP26-32 غير المبدوء QC-POST-100-014"><summary>QC-POST-100-014 · P1 · مصالحة 19 بوابة الإصدار حسب QC-ADP26-32 غير المبدوء</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-032</p><p>الصفحات: /governance/releases/[releaseId]</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-014">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-014">Prompt ID: QC-POST-100-014
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: مصالحة 19 بوابة الإصدار حسب QC-ADP26-32 غير المبدوء
+Trace: QC-PAGE-F-032
+Affected pages/domains: /governance/releases/[releaseId]
+Required implementation: احصل mapping معتمد لـ19 gate↔requirements↔provider/signer digest؛ اربط SHA/build/schema/scope؛ recompute خادميًا؛ لا إغلاق بمجرد تقرير.
+Required verification/tests/acceptance: tamper/stale/wrong SHA/scope/replay denial؛ trusted intake؛ كل gate disposition؛ لا release approval قبل الدليل.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="القبول المصادق والإتاحة والنصوص حسب QC-ADP26-35 QC-POST-100-015"><summary>QC-POST-100-015 · P1 · القبول المصادق والإتاحة والنصوص حسب QC-ADP26-35</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-001, QC-PAGE-F-011, QC-PAGE-F-016, QC-PAGE-F-017, QC-ENV-F-002</p><p>الصفحات: 88 pages / applicable states</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-015">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-015">Prompt ID: QC-POST-100-015
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: القبول المصادق والإتاحة والنصوص حسب QC-ADP26-35
+Trace: QC-PAGE-F-001, QC-PAGE-F-011, QC-PAGE-F-016, QC-PAGE-F-017, QC-ENV-F-002
+Affected pages/domains: 88 pages / applicable states
+Required implementation: نفذ المتبقي فقط من route/state/persona matrix مع source/fixture identity؛ راجع النصوص في حالات العرض؛ AI processing فقط بعد سياسة معتمدة.
+Required verification/tests/acceptance: six-persona positive/negative direct HTTP + no-JS/error/session؛ 320/375/768/1440 و200% ولوحة مفاتيح وAT يدوي؛ provider AI conditional دون بيانات حساسة.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+<details data-search="UAT والمصالحة النهائية حسب QC-ADP26-36 QC-POST-100-016"><summary>QC-POST-100-016 · P1 · UAT والمصالحة النهائية حسب QC-ADP26-36</summary><div><p>current checklist 46.3% · target100 · gap53.7pp؛ مصدر النسبة مشترك، لا نسبة تنفيذ هذه المهمة.</p><p>Trace: QC-PAGE-F-001</p><p>الصفحات: all mandatory workflows</p><p>Dependencies: QC-POST-100-001, QC-POST-100-002</p><button data-copy="QC-POST-100-016">نسخ البرومبت</button><pre tabindex="0" id="QC-POST-100-016">Prompt ID: QC-POST-100-016
+Priority: P1
+Audit candidate: 6059e177438d8ae110c99084d32758b048f22cd2; re-freeze final candidate before evidence.
+Current evidence: report sections4/5/41/50 and verification-data.json; no original finding fully closed.
+Exact remaining problem: UAT والمصالحة النهائية حسب QC-ADP26-36
+Trace: QC-PAGE-F-001
+Affected pages/domains: all mandatory workflows
+Required implementation: اجمع قبولًا بشريًا حقيقيًا من Yazeed/QCM/Supervisor/QC01–03؛ صالح كل old/new finding وgate على المرشح النهائي؛ لا توقيع نيابة عن المشاركين.
+Required verification/tests/acceptance: signed UAT scope/digest؛ P0/P1=0، mandatory FAIL/BLOCKED/NV=0؛ exact SHA CI/security/PG/E2E/AT/provider evidence.
+Dependencies: QC-POST-100-001, QC-POST-100-002
+Read AGENTS and current Mind. Preserve current owner/scientific/signature decisions. Do not manufacture policy, evidence or human UAT. Only modify unresolved parts. No commit/push/merge/deploy/production migration without explicit authorization. Update candidate-bound evidence and Mind after result. CLOSED only after required proof; otherwise PARTIAL/BLOCKED/NOT VERIFIED.</pre></div></details>
+</main><script>const status=document.getElementById('status');document.getElementById('expand').onclick=()=>document.querySelectorAll('details').forEach(d=>d.open=true);document.getElementById('collapse').onclick=()=>document.querySelectorAll('details').forEach(d=>d.open=false);document.getElementById('query').oninput=e=>document.querySelectorAll('details').forEach(d=>d.hidden=!d.textContent.toLowerCase().includes(e.target.value.toLowerCase()));document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent);status.textContent='تم نسخ البرومبت';}catch{const node=document.getElementById(b.dataset.copy);const range=document.createRange();range.selectNodeContents(node);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);status.textContent='تعذر النسخ التلقائي؛ النص محدد للنسخ اليدوي';node.focus();}});</script></html>

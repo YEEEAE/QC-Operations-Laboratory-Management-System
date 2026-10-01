@@ -7,6 +7,8 @@ import {
   nextPendingApprovalRole,
 } from '../../../modules/reject-reports/application/view-model.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { actions } from 'astro:actions';
+import { field, parseExpectedVersionField } from '../../../ui/forms/mutation-post.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -24,6 +26,26 @@ const hasPermission = (code: string) =>
 const isCreator = slip?.createdBy === actor.id;
 const canManage = isCreator && hasPermission('PERM-RREJ-EDIT');
 const canConfirm = isCreator && hasPermission('PERM-RREJ-CONFIRM-APPROVAL');
+let postError = '';
+let postedValues: Record<string, string> = {};
+if (Astro.request.method === 'POST' && slip && !printMode) {
+  const form = await Astro.request.formData();
+  postedValues = Object.fromEntries([...form.entries()].filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+  const intent = field(form, 'intent');
+  try {
+    const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
+    let result;
+    if (intent === 'confirm' && canConfirm) result = await Astro.callAction(actions.rejectReports.confirmApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', approverName: field(form, 'approverName') || undefined });
+    else if (intent === 'reverse' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT'))) result = await Astro.callAction(actions.rejectReports.reverseApproval, { reportId, expectedVersion, role: field(form, 'role') as 'SUPERVISOR' | 'QC_MANAGER' | 'FACTORY_DIRECTOR', reason: field(form, 'reason') });
+    else if (intent === 'issue' && canManage) result = await Astro.callAction(actions.rejectReports.issueIssueSlip, { reportId, expectedVersion });
+    else if (intent === 'void' && isCreator && hasPermission('PERM-RREJ-VOID')) result = await Astro.callAction(actions.rejectReports.voidReport, { reportId, expectedVersion, reason: field(form, 'reason') });
+    else postError = 'This action is not available. Refresh the report and review its current state.';
+    if (result && !result.error) return Astro.redirect(Astro.url.pathname, 303);
+    if (result?.error) postError = 'The action was not accepted. Review the current version, permissions, and approval history before trying again.';
+  } catch {
+    postError = 'The result could not be confirmed. Review this report and its approval history before deciding whether to try again.';
+  }
+}
 // Checkpoints are sequential (SUPERVISOR -> QC_MANAGER -> FACTORY_DIRECTOR), so
 // only the next pending checkpoint is confirmable; the server enforces the
 // same rule and denies an out-of-order confirmation.
@@ -63,6 +85,7 @@ const fmtDateTime = (d?: Date) =>
   </section>
 
   {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
+  {postError && <p role="alert" tabindex="-1" data-post-error>{postError} <a href={`${Astro.url.pathname}#approval-confirmations`}>Review approval history</a></p>}
   <div class="grid">
     <section class="panel">
       <h2>Report</h2>
@@ -97,7 +120,7 @@ const fmtDateTime = (d?: Date) =>
     </section>
   </div>
 
-  <section class="panel approvals">
+  <section class="panel approvals" id="approval-confirmations">
     <h2>Approval confirmations</h2>
     <p class="hint">
       The report creator records that each real-world approval was obtained. These are
@@ -123,9 +146,10 @@ const fmtDateTime = (d?: Date) =>
             </div>
             {!printMode && <div class="step-actions">
               {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role === nextApprovalRole && (
-                <form class="inline-form" data-confirm-form={role} data-version={slip.version.toString()}>
+                <form class="inline-form" method="post" data-confirm-form={role} data-version={slip.version.toString()}>
+                  <input type="hidden" name="intent" value="confirm" /><input type="hidden" name="role" value={role} /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
                   <label class="sr-only" for={`approver-${role}`}>Approver name (optional)</label>
-                  <input id={`approver-${role}`} name="approverName" maxlength="200" placeholder="Approver name (optional)" />
+                  <input id={`approver-${role}`} name="approverName" maxlength="200" placeholder="Approver name (optional)" value={postedValues.approverName ?? ''} />
                   <button type="submit">Confirm approval</button>
                 </form>
               )}
@@ -133,9 +157,10 @@ const fmtDateTime = (d?: Date) =>
                 <span class="hint">Confirm the earlier checkpoint first.</span>
               )}
               {state === 'CONFIRMED' && (canConfirm || hasPermission('PERM-RREJ-ADMIN-CORRECT')) && (
-                <form class="inline-form" data-reverse-form={role} data-version={slip.version.toString()}>
+                <form class="inline-form" method="post" data-reverse-form={role} data-version={slip.version.toString()}>
+                  <input type="hidden" name="intent" value="reverse" /><input type="hidden" name="role" value={role} /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
                   <label class="sr-only" for={`reason-${role}`}>Correction reason</label>
-                  <input id={`reason-${role}`} name="reason" required maxlength="2000" placeholder="Correction reason (required)" />
+                  <input id={`reason-${role}`} name="reason" required maxlength="2000" placeholder="Correction reason (required)" value={postedValues.reason ?? ''} />
                   <button type="submit" class="secondary">Reverse confirmation</button>
                 </form>
               )}
@@ -150,12 +175,13 @@ const fmtDateTime = (d?: Date) =>
   {!printMode && <section class="panel actions">
     <h2>Actions</h2>
     {slip.status === 'DRAFT' && canManage && (
-      <button data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button>
+      <form method="post" data-issue-form><input type="hidden" name="intent" value="issue" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} /><button type="submit" data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button></form>
     )}
     {slip.status !== 'VOID' && slip.status !== 'COMPLETED' && isCreator && hasPermission('PERM-RREJ-VOID') && (
-      <form class="inline-form" data-void-form data-version={slip.version.toString()}>
+      <form class="inline-form" method="post" data-void-form data-version={slip.version.toString()}>
+        <input type="hidden" name="intent" value="void" /><input type="hidden" name="expectedVersion" value={slip.version.toString()} />
         <label class="sr-only" for="voidReason">Void reason</label>
-        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" />
+        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" value={postedValues.reason ?? ''} />
         <button type="submit" class="danger">Void report</button>
       </form>
     )}
@@ -213,9 +239,11 @@ const fmtDateTime = (d?: Date) =>
       );
     }),
   );
-  document.querySelector<HTMLElement>('[data-issue]')?.addEventListener('click', (event) => {
-    const button = event.currentTarget as HTMLElement;
-    run(actions.rejectReports.issueIssueSlip({ reportId, expectedVersion: BigInt(button.dataset.version || '0') }));
+  document.querySelector<HTMLFormElement>('[data-issue-form]')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    const button = form.querySelector<HTMLElement>('[data-issue]');
+    run(actions.rejectReports.issueIssueSlip({ reportId, expectedVersion: BigInt(button?.dataset.version || '0') }));
   });
   document.querySelector<HTMLFormElement>('[data-void-form]')?.addEventListener('submit', (event) => {
     event.preventDefault();

@@ -4,6 +4,8 @@ import { rejectReportReadDependencies } from '../../../modules/reject-reports/ap
 import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
 import { compareRejectDecimalStrings, dailyRejectTotals } from '../../../modules/reject-reports/application/view-model.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import { actions } from 'astro:actions';
+import { field, parseExpectedVersionField } from '../../../ui/forms/mutation-post.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -20,6 +22,43 @@ const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
 const isCreator = record?.createdBy === actor.id;
 const canManage = isCreator && record?.status === 'DRAFT' && hasPermission('PERM-RREJ-EDIT');
+let postError = '';
+let postedValues: Record<string, string> = {};
+if (Astro.request.method === 'POST' && record && !printMode) {
+  const form = await Astro.request.formData();
+  postedValues = Object.fromEntries([...form.entries()].filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+  const intent = field(form, 'intent');
+  try {
+    const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
+    let result;
+    if (intent === 'append' && canManage) {
+      const value = (name: string) => field(form, name);
+      const optional = (name: string) => value(name) || undefined;
+      result = await Astro.callAction(actions.rejectReports.appendDailyRejectEntry, {
+        reportId, expectedVersion,
+        entry: {
+          machineName: optional('machineName'), itemCode: optional('itemCode'),
+          itemDescription: value('itemDescription'), lotNo: optional('lotNo'),
+          buRmProductName: optional('buRmProductName'), rmDescription: optional('rmDescription'),
+          rmUnit: optional('rmUnit'), rmLotNo: optional('rmLotNo'), rmType: optional('rmType'),
+          pumpOutQty: optional('pumpOutQty'), rejectQty: value('rejectQty'), goodQty: value('goodQty'),
+          rejectLimit: optional('rejectLimit'), productionFormula: optional('productionFormula'),
+          rejectReason: value('rejectReason'), analysis: optional('analysis'),
+        },
+      });
+    } else if (intent === 'finalize' && canManage) {
+      result = await Astro.callAction(actions.rejectReports.finalizeDailyReject, { reportId, expectedVersion });
+    } else if (intent === 'void' && isCreator && hasPermission('PERM-RREJ-VOID')) {
+      result = await Astro.callAction(actions.rejectReports.voidReport, { reportId, expectedVersion, reason: field(form, 'reason') });
+    } else {
+      postError = 'This action is not available. Refresh the record and review its current state.';
+    }
+    if (result && !result.error) return Astro.redirect(Astro.url.pathname, 303);
+    if (result?.error) postError = 'The action was not accepted. Review the record, current version, and permissions before trying again.';
+  } catch {
+    postError = 'The result could not be confirmed. Review this report and its history before deciding whether to try again.';
+  }
+}
 const totals = dailyRejectTotals(record?.entries ?? []);
 const overLimit = (rejectPct: string | null, rejectLimit?: string) =>
   rejectPct !== null && rejectLimit !== undefined && compareRejectDecimalStrings(rejectPct, rejectLimit) > 0;
@@ -54,6 +93,7 @@ const fmtDateTime = (d?: Date) =>
   </section>
 
   {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
+  {postError && <p role="alert" tabindex="-1" data-post-error>{postError} <a href={`${Astro.url.pathname}#entries`}>Review this report</a></p>}
   <div class="grid">
     <section class="panel">
       <h2>Header</h2>
@@ -86,7 +126,7 @@ const fmtDateTime = (d?: Date) =>
     </section>
   </div>
 
-  <section class="panel">
+  <section class="panel" id="entries">
     <h2>Entries</h2>
     {record.entries.length ? (
       <div class="table-wrap">
@@ -144,37 +184,41 @@ const fmtDateTime = (d?: Date) =>
       <h2>Add entry</h2>
       <form
         class="form"
+        method="post"
         data-add-entry
         data-version={record.version.toString()}
       >
+        <input type="hidden" name="intent" value="append" />
+        <input type="hidden" name="expectedVersion" value={record.version.toString()} />
         <div class="fields">
-          <div><label for="machineName">Machine name<input id="machineName" name="machineName" maxlength="200" /></label></div>
-          <div><label for="itemCode">Item code<input id="itemCode" name="itemCode" maxlength="100" /></label></div>
-          <div class="wide"><label for="itemDescription">Material / product description<input id="itemDescription" name="itemDescription" required maxlength="1000" /></label></div>
-          <div><label for="lotNo">Lot number<input id="lotNo" name="lotNo" maxlength="100" /></label></div>
-          <div><label for="buRmProductName">BU &amp; RM product name<input id="buRmProductName" name="buRmProductName" maxlength="500" /></label></div>
-          <div><label for="rmDescription">Raw-material description<input id="rmDescription" name="rmDescription" maxlength="1000" /></label></div>
-          <div><label for="rmUnit">RM unit<input id="rmUnit" name="rmUnit" maxlength="50" /></label></div>
-          <div><label for="rmLotNo">RM lot number<input id="rmLotNo" name="rmLotNo" maxlength="100" /></label></div>
-          <div><label for="rmType">RM type<input id="rmType" name="rmType" maxlength="100" /></label></div>
-          <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" /></label></div>
-          <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required /></label></div>
-          <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required /></label></div>
-          <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" /></label></div>
-          <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" /></label></div>
-          <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" /></label></div>
-          <div class="wide"><label for="analysis">Analysis / notes<textarea id="analysis" name="analysis" maxlength="4000"></textarea></label></div>
+          <div><label for="machineName">Machine name<input id="machineName" name="machineName" maxlength="200" value={postedValues.machineName ?? ''} /></label></div>
+          <div><label for="itemCode">Item code<input id="itemCode" name="itemCode" maxlength="100" value={postedValues.itemCode ?? ''} /></label></div>
+          <div class="wide"><label for="itemDescription">Material / product description<input id="itemDescription" name="itemDescription" required maxlength="1000" value={postedValues.itemDescription ?? ''} /></label></div>
+          <div><label for="lotNo">Lot number<input id="lotNo" name="lotNo" maxlength="100" value={postedValues.lotNo ?? ''} /></label></div>
+          <div><label for="buRmProductName">BU &amp; RM product name<input id="buRmProductName" name="buRmProductName" maxlength="500" value={postedValues.buRmProductName ?? ''} /></label></div>
+          <div><label for="rmDescription">Raw-material description<input id="rmDescription" name="rmDescription" maxlength="1000" value={postedValues.rmDescription ?? ''} /></label></div>
+          <div><label for="rmUnit">RM unit<input id="rmUnit" name="rmUnit" maxlength="50" value={postedValues.rmUnit ?? ''} /></label></div>
+          <div><label for="rmLotNo">RM lot number<input id="rmLotNo" name="rmLotNo" maxlength="100" value={postedValues.rmLotNo ?? ''} /></label></div>
+          <div><label for="rmType">RM type<input id="rmType" name="rmType" maxlength="100" value={postedValues.rmType ?? ''} /></label></div>
+          <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.pumpOutQty ?? ''} /></label></div>
+          <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required value={postedValues.rejectQty ?? ''} /></label></div>
+          <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required value={postedValues.goodQty ?? ''} /></label></div>
+          <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" value={postedValues.rejectLimit ?? ''} /></label></div>
+          <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" value={postedValues.productionFormula ?? ''} /></label></div>
+          <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" value={postedValues.rejectReason ?? ''} /></label></div>
+          <div class="wide"><label for="analysis">Analysis / notes<textarea id="analysis" name="analysis" maxlength="4000">{postedValues.analysis ?? ''}</textarea></label></div>
         </div>
         <div class="actions">
           <button type="submit" data-submit>Add entry</button>
           {record.entries.length > 0 && (
-            <button type="button" class="secondary" data-finalize data-version={record.version.toString()}>
+            <button type="submit" name="intent" value="finalize" form="finalize-daily" class="secondary" data-finalize data-version={record.version.toString()}>
               Finalize record
             </button>
           )}
         </div>
         <p role="status" data-result tabindex="-1"></p>
       </form>
+      {record.entries.length > 0 && <form id="finalize-daily" method="post"><input type="hidden" name="intent" value="finalize" /><input type="hidden" name="expectedVersion" value={record.version.toString()} /></form>}
     </section>
   )}
 
@@ -182,9 +226,10 @@ const fmtDateTime = (d?: Date) =>
   {!printMode && record.status !== 'VOID' && isCreator && hasPermission('PERM-RREJ-VOID') && (
     <section class="panel actions">
       <h2>Correction</h2>
-      <form class="inline-form" data-void-form data-version={record.version.toString()}>
+      <form class="inline-form" method="post" data-void-form data-version={record.version.toString()}>
+        <input type="hidden" name="intent" value="void" /><input type="hidden" name="expectedVersion" value={record.version.toString()} />
         <label class="sr-only" for="voidReason">Void reason</label>
-        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" />
+        <input id="voidReason" name="reason" required maxlength="2000" placeholder="Void reason (required)" value={postedValues.reason ?? ''} />
         <button type="submit" class="danger">Void record</button>
       </form>
       <p class="hint">Voiding never deletes history; the record stays visible as VOID with its reason and audit trail.</p>
@@ -310,7 +355,8 @@ const fmtDateTime = (d?: Date) =>
     };
     void submitEntry();
   });
-  document.querySelector<HTMLElement>('[data-finalize]')?.addEventListener('click', (event) => {
+  document.querySelector<HTMLButtonElement>('[data-finalize]')?.addEventListener('click', (event) => {
+    event.preventDefault();
     const button = event.currentTarget as HTMLElement;
     run(actions.rejectReports.finalizeDailyReject({ reportId, expectedVersion: BigInt(button.dataset.version || '0') }));
   });
