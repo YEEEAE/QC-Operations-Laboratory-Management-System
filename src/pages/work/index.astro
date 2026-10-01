@@ -58,19 +58,21 @@ const unresolved = queue?.unresolvedSources ?? [];
             </p>
           </div>
           <p class="state-message" role="status">{group.message}</p>
-          <dl class="definition">
-            <div><dt>Ownership</dt><dd>{group.definition.ownership}</dd></div>
-            <div><dt>Actor scope</dt><dd>{group.definition.actorScope}</dd></div>
-            <div><dt>Clock</dt><dd>{group.definition.timezone}</dd></div>
-            <div><dt>Source timestamp</dt><dd>{group.definition.sourceTimestamp}</dd></div>
-            <div><dt>Predicate</dt><dd>{group.definition.predicate}</dd></div>
-          </dl>
-          {group.registerLinks.length > 0 && (
-            <p class="links">
-              <span>Registers behind this group:</span>
-              {group.registerLinks.map((link) => <a href={link.href}>{link.label} ({link.count})</a>)}
-            </p>
-          )}
+          <details class="lineage">
+            <summary>How this group is counted</summary>
+            <dl class="definition">
+              <div><dt>Ownership</dt><dd>{group.definition.ownership}</dd></div>
+              <div><dt>Scope</dt><dd>{group.definition.actorScope}</dd></div>
+              <div><dt>Time basis</dt><dd>{group.definition.timezone}; {group.definition.sourceTimestamp}</dd></div>
+              <div><dt>Included records</dt><dd>{group.definition.predicate}</dd></div>
+            </dl>
+            {group.registerLinks.length > 0 && (
+              <p class="links">
+                <span>Source registers:</span>
+                {group.registerLinks.map((link) => <a href={link.href}>{link.label} ({link.count})</a>)}
+              </p>
+            )}
+          </details>
           {group.items.length > 0 ? (
             <ul class="queue">
               {group.items.map((item) => (
@@ -91,9 +93,7 @@ const unresolved = queue?.unresolvedSources ?? [];
                 </li>
               ))}
             </ul>
-          ) : (
-            <p class="empty" role="status">{group.state === 'AVAILABLE' && group.count === 0 ? 'Nothing in this group right now.' : 'No record in this group is listed for your account — the group total above is still the register’s own count.'}</p>
-          )}
+          ) : null}
         </section>
       ))}
 
@@ -134,7 +134,9 @@ const unresolved = queue?.unresolvedSources ?? [];
   .group-count strong{color:var(--color-accent-primary-hover);font-size:24px;font-variant-numeric:tabular-nums}
   .no-count{color:var(--status-warning);font-weight:700}
   .state-message{margin:var(--space-3) 0 0}
-  .definition{display:grid;gap:2px;margin:var(--space-3) 0 0;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.45}
+  .lineage{margin-top:var(--space-3);font-size:var(--font-size-xs)}
+  .lineage summary{min-block-size:44px;display:flex;align-items:center;color:var(--color-accent-primary-hover);cursor:pointer}
+  .definition{display:grid;gap:2px;margin:var(--space-2) 0 0;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.45}
   .definition div{display:grid;grid-template-columns:auto 1fr;gap:2px var(--space-2)}
   .definition dt{color:var(--text-secondary);font-weight:700}
   .definition dd{margin:0;min-width:0;overflow-wrap:anywhere}

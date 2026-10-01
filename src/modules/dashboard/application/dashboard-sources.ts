@@ -553,7 +553,7 @@ export function dashboardMetricSources(
         category: 'BLOCKED',
         reason: 'Task is on hold and needs a recorded reason to resume',
         nextAction:
-          'Open the task and resume it, or cancel it. Resuming requires the reason the transition records.',
+          'Open the task and resume it when the blocker is resolved. Resuming requires a recorded reason.',
         responsibleRole: 'You, as the named assignee',
       },
       read: (actor) => readTaskSource(dependencies, actor, { state: 'ON_HOLD' }),

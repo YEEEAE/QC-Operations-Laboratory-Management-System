@@ -80,46 +80,8 @@
   - Evidence: Node 24.20.0; focused 31/31, isolated PostgreSQL18.6 5/5 and real browser/direct HTTP 1/1 PASS, four widths; Astro build PASS. AT/200%/human UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-07.md`.
   - State: PARTIAL — technical F-007 acceptance passed; manual acceptance remains open.
 
-- **2026-09-30 — QC-ADP26-06 / رحلة Findings→NCR→RCA→CAPA**
-  - Changed: توصيل سجلات وتفاصيل القراءة ذات النطاق؛ قرارات PD15–18 بقيت deny ولا تغييرات schema/transitions.
-  - Evidence: focused quality/journey 27/27 PASS؛ candidate `a5ae05df`, fingerprint `c6271719`، Node 24.20.0؛ build وrelease verification PASS (`rel-0deb353299ce53a5`). PG18 والواجهة/AT/UAT BLOCKED أو NOT VERIFIED؛ handoff `audit/2026-09-30/handoff-QC-ADP26-06.md`.
-  - State: PARTIAL — قرارات المالك وأدلة التشغيل والقبول ما زالت مفتوحة.
-
-- **2026-09-30 — QC-ADP26-05 / inspection draft notes and point results**
-  - Changed: per-point remarks, REMARK_ONLY and NA now have existing-row save contracts with required-point validation; unsaved general notes removed. No schema/policy/outbox change.
-  - Evidence: candidate base `161762e7`; focused unit 33/33, Astro check 0 errors, local build PASS. PostgreSQL 18, authenticated browser/AT and UAT BLOCKED/NOT VERIFIED; handoff `audit/2026-09-30/handoff-QC-ADP26-05.md`.
-  - State: PARTIAL — source fix complete; route acceptance remains open pending candidate-bound database and live-page evidence.
-
-- **2026-09-30 — QC-ADP26-04 / exact inspection decimal transport**
-  - Changed: execute Action/domain/repository now preserve decimal strings and reject float transport/invalid decimal notation; no schema/policy changes.
-  - Evidence: candidate `6c312f05`; focused unit 37/37 and Astro check 0 errors. PG18 Testcontainers BLOCKED (no container runtime); live browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-04.md`.
-  - State: PARTIAL — exact storage/evaluator code updated, PostgreSQL roundtrip and page acceptance remain open.
-
-- **2026-09-30 — QC-ADP26-03 / inspection draft save authorization**
-  - Changed: EDIT-DRAFT/scope/state/version checked before evaluation and under report lock; mandatory result audit shares write transaction; frozen criteria projection and exact JSON version transport repaired.
-  - Evidence: candidate `08d15788`; focused unit 70/70, isolated PG18 5/5 (denial/rollback/race/replay), real browser/direct HTTP 1/1 including stale preservation and four widths. AT/200%/UAT NOT VERIFIED; final ledger export BLOCKED by approval-review usage limit. `audit/2026-09-30/handoff-QC-ADP26-03.md`.
-  - State: PARTIAL — local F-003 technical acceptance PASS; other execute-page findings remain open.
-
-- **2026-09-30 — QC-ADP26-02 / migration ledger and release identity**
-  - Changed: health/control center reconcile migration names and SHA-256 checksums, failing closed on drift or unreadable source; no schema change.
-  - Evidence: isolated PG18.6 42/42 exact; source rehearsal 0018→0042; backup/restore and schema check PASS. Live schema/artifact identity, gates, UI/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-02.md`.
-  - State: PARTIAL / NO-GO.
-
-- **2026-09-30 — QC-ADP26-01 / candidate-bound route inventory**
-  - Changed: executable 88-card/six-persona acceptance inventory and fail-closed evidence binding; unresolved applicability stays NOT VERIFIED and human UAT cannot close automatically.
-  - Evidence: base `60237b5`; PostgreSQL 18.6 loopback disposable concurrency/replay + action contracts 17 PASS/3 FAIL (stage-1 fixtures use MANAGER against SUPERVISOR authority). Real-task GET/direct-denial E2E includes unchanged row/audit/outbox and candidate/applied-ledger binding; technical fixture is not six-persona UAT. Source visibility checks are not runtime acceptance; all page acceptances remain open. `audit/2026-09-30/handoff-QC-ADP26-01.md`.
-  - State: PARTIAL / NO-GO.
-
-- **2026-09-30 — RT-AUTH-001 / login acceptance evidence**
-  - Changed: no runtime/policy change; recorded source review and candidate-bound evidence gaps.
-  - Evidence: current HEAD `bd30e257`; prior login E2E evidence is bound to `06479e8` and is historical. Authenticated success/rejection, rate-limit, session revoke/expiry, applied schema/DB audit, current browser/AT and owner signature remain NOT VERIFIED; no READY. `audit/2026-09-30/RT-AUTH-001-login-acceptance.md`.
-  - State: PARTIAL / NO-GO.
-
-- **2026-09-30 — QC-ADP-27 / RT-ROOT-001 authentication redirect**
-  - Changed: root now routes by server-resolved session, validates guest `returnTo`, and carries an explicit ended-session reason to login. State: PARTIAL / NO-GO.
-  - Evidence: unit 6/6, build/release verification PASS; candidate-bound Playwright 5 PASS / 1 auth-fixture skip. Authenticated route, applied schema, manual AT, owner signature and UAT remain NOT VERIFIED; no READY. Handoff: `audit/2026-09-30/QC-ADP-27-rt-root-001-handoff.md`.
-
-- **2026-10-01 — Mind rollover (QC-ENV26-04):** نُقلت أقدم سجلات Ledger المتبقية بتاريخ 2026-09-24 إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود في 01.
+- **2026-10-01 — Mind rollover (QC-ADP26-17):** نُقلت أقدم سجلات Ledger بتاريخ 2026-09-30 إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والمشكلات المفتوحة في 01.
+- **2026-10-01 — QC-ADP26-17 / لوحة القرار والعمل:** Changed: ترتيب dashboard، تغطية document queue، lineage/empty لمجموعة العمل، نشاط بشري dedupe بهوية الحدث، مع بقاء CANCEL deny؛ بلا schema/write. Evidence: focused unit 33/33 وPrettier PASS؛ PG18 وHTTP/browser/AT/UAT/build evidence BLOCKED أو NOT VERIFIED. State: PARTIAL؛ `audit/2026-09-30/handoff-QC-ADP26-17.md`.
 
 ## Current audit reality — 2026-09-18
 - **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
@@ -363,7 +325,7 @@
 - attention queue تُبنى من نفس صفوف الـcounts مع سبب بشري و`ageLabel` مشتق من timestamp خادمي حقيقي (`assignedAt`/`updatedAt`/`dueAt`/`createdAt`) وحالة ورابط مباشر، مرتّبة بالشدة الحقيقية ومحدودة بـ10؛ إن غاب timestamp تُكتب `Age not recorded`.
 - فشل قراءة أي source (غير AUTHZ) يحجب الـsnapshot كاملًا؛ رفض `AUTHORIZATION` لحساب لا يملك قراءة register معيّن يظهر كـ"Not available" بلا رقم وبلا رابط ولا يصبح صفرًا. حالات الseries تبقى `AVAILABLE|EMPTY|UNAVAILABLE|NOT_SUPPLIED` بلا نقاط خارج `AVAILABLE`، ويعرض الرسم source/unit/grain/counts/scope/period/zero/freshness.
 - coverage panel مُشتق من read model لا من copy الصفحة: 13 مدخلًا؛ `AVAILABLE` يشمل laboratory workload، tasks، وdocument review queue (source bounded وsame-filter drilldown)؛ `NOT_SUPPLIED` يبقى لسبب blocked الحر، reject analytics، quality summary، وsystem health owner-only، ولكل مدخل سببه ومالكه.
-- document review queue مُنفذ source-side لكن PG parity والأدوار والأداء/live schema غير مثبتة حتى تطبيق/اختبار migration 0041 في مرشح مخول. لا تعرض blocked free text ولا reject analytics قبل قرارات المصدر والنطاق، ولا quality KPI حتى اعتماد ownership filter لكل domain. التفاصيل والحالة `PARTIAL / NO-GO`: `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md`.
+- document review queue متاح source-side؛ PG parity والأدوار والأداء/live schema غير مثبتة. لا تعرض blocked free text ولا reject analytics قبل قرارات المصدر والنطاق، ولا quality KPI حتى اعتماد ownership filter لكل domain. التفاصيل والحالة `PARTIAL / NO-GO`: `audit/2026-09-24/QC-ADP-07-dashboard-decision-sources-handoff.md`.
 
 ### My work today (QC-100-FINAL-022 — سطح جديد `/work`)
 - الطابور **ليس** لوحة ثانية ولا مصدر SQL ثانيًا: `myWorkDependencies()` يستهلك نفس `dashboardMetricSources()`؛ لا `selectFrom`/`FROM qc.`/`getDatabase` في الصفحة (محروس في `tests/unit/ui/my-work-surface.test.ts`).
@@ -429,7 +391,7 @@
 
 ### Journey/Handoffs
 - `JourneyContextPanel` يفصل record owner عن owning domain، ويعرض مرجع السجل، السبب، الأدلة الموجودة والمطلوبة؛ الحقول الغائبة تظهر صراحة كمصدر غير مسجل.
-- لوحة dashboard تربط المرشحات المدعومة لـHOLD وinspection/lab submission وPASS + NOT_RELEASED؛ document review وNCR/CAPA ownership queues لا تزال غير متاحة كـread models.
+- لوحة dashboard تربط المرشحات المدعومة لـHOLD وinspection/lab submission وPASS + NOT_RELEASED وdocument review queue؛ NCR/CAPA ownership queues لا تزال غير متاحة كـread models.
 - `HandoffTimeline` يعرض أحداث التسليم؛ Receiving, Inspection Review, Lab Test, Calibration, Document Version, Approval, Change Request مرتبطة بالسياق المناسب.
 - approval decision لا يعني application success؛ notification delivery ليست business completion.
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
@@ -515,7 +477,7 @@
 - **F-013-3 (QC-100-FINAL-013، كان مُقاسًا):** عولج محليًا في QC-100-FINAL-028-A بنقل إدراج signature evidence إلى transaction الدومين مع compare-and-set والآثار المتزامنة؛ اختبار populated PostgreSQL المحدّث لم يُنفذ لأن Testcontainers بلا runtime. تبقى حالة التحقق على قاعدة البيانات **BLOCKED** حتى 002/027.
 - **ملف تكامل مخصص للمرحلتين موجود الآن** (كان مفتوحًا في تقرير FINAL-004): `tests/integration/qc-100-final-013/two-stage-controlled-approval.test.ts`.
 - **أُغلق 2026-09-19 (QC-100-FINAL-002):** كل ملفات `pnpm test:integration` التي كانت تفشل السابقة (`identity/system-owner-upgrade-parity`, `system/control-center`, `reporting/report-export-parity`, `shared/search-scope`, `shared/notification-outbox-delivery`, `quarantine/overview-parity`) صارت PASS بجذور مُثبتة: عزل schema لكل suite كانت تعوّل على قاعدة بكر، probed migration-dir في `createPostgresMigrationStatus` (العملة الواحدة كانت تُبلغ drift زائفًا تحت Vitest)، وعقود اختبار متقادمة (literal LIKE، bounded queue مقابل total، `uuidv7` غير مونوتونية داخل المللي ثانية، sparse-array matcher).
-- read models المطلوبة لاستكمال لوحة القيادة (QC-100-FINAL-017): **DONE 2026-09-20** bounded lab workload مع state/ownership filter (KPI `lab-tests-returned` + readiness read)؛ **DONE 2026-09-20 (022)** عدّادا `tasks-assigned` (`open`) و`tasks-on-hold` وفلتر `open` خادميًا في سجل المهام — فالعمل المُسنَد صار مرئيًا حتى بلا تاريخ استحقاق، والعمل المحجوز له عدّاد مسجّل بدل استنتاج؛ **متبقٍ لـ017-B:** document review queue (لا يوجد read model لطابور المراجعة في وحدة documents)، quality ownership filters (سجلات findings/NCR/RCA/CAPA تدعم state فقط)، وblocked reason كنصّ حرّ (لا حقل في المخطط؛ إدخال audit لكل انتقال)، وreject analytics معلّق على قرار نطاق (النموذج يجمّع globally و`/reject-reports` مصرّح `authenticated` لا permission-bound، فنشر تجميعة عامة على سطح scope-aware ممنوع). بدونها تبقى هذه المنتجات `NOT_SUPPLIED` معلنة بأسباب تسمّي المصدر والمالك، ولا تُقدَّر بأرقام.
+- read models المطلوبة لاستكمال لوحة القيادة (QC-100-FINAL-017): **DONE 2026-09-20** bounded lab workload مع state/ownership filter (KPI `lab-tests-returned` + readiness read)؛ **DONE 2026-09-20 (022)** عدّادا `tasks-assigned` (`open`) و`tasks-on-hold` وفلتر `open` خادميًا في سجل المهام؛ document review queue متاح source-side لكن PG/role parity غير مثبت؛ المتبقي: quality ownership filters، وblocked reason كنصّ حرّ (لا حقل في المخطط؛ audit لكل انتقال)، وreject analytics المعلّق على قرار نطاق. تبقى المنتجات غير المثبتة `NOT_SUPPLIED` بأسبابها، ولا تُقدَّر بأرقام. QC-ADP26-17 غيّر عرض اللوحة فقط؛ الأدلة الحية ما زالت مفتوحة في `audit/2026-09-30/handoff-QC-ADP26-17.md`.
 - **مكتشف 2026-09-19 (QC-100-FINAL-002):** ست صفحات `.astro` محفوظة كسطر مضغوط واحد (`assets/equipment|[calibrationId]|[maintenanceId]` + `laboratory/tests/[labTestId]/{review,index,execute}`) ولا بوابة تكشفها (Prettier لا ينسّق `.astro`)؛ تحتاج إعادة تنسيق محافظة على المخرجات. كذلك `.env` المحلي يضبط `NODE_ENV=production` فيرفض كل CLI قاعدة بيانات العمل محليًا حتى تتوفر `SERVICE_VERSION` + `RATE_LIMIT_LOGIN_*` أو يُتجاوَز NODE_ENV، و`audit/**` داخل نطاق Prettier العام، و`.tmp-check/check-bundles.ts` ملف scratch متتبَّع.
 - تشغيل مسار Testcontainers/`postgres:18-alpine` (نفس مسار CI) على بيئة فيها container runtime، لأن مسار الـcontainer الفرعي لم يُنفذ فعليًا بعد.
 - **QC-100-FINAL-027 audit (2026-09-21):** 027-B أثبت unit 785/785 وPG18.6 integration 470/470 وserver contracts على قاعدة محلية disposable صريحة؛ التشغيل عبر Docker/Testcontainers ما زال NOT RUN، والثقة العامة بقيمة `QC_TEST_DATABASE_URL` عبر 21 reset site ما زالت غير محسومة. authenticated E2E واسع PARTIAL/FAIL بسبب fixture/session state وأخطاء workflows؛ focused login 2/2 PASS. `pnpm test:architecture` ما زال FAIL بانتهاكات imports السابقة في NCR/CAPA. التفاصيل في تقريري 027-A و027-B.

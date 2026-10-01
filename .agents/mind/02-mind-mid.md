@@ -2,6 +2,51 @@
 
 > نُقلت أقدم سجلات Historical Ledger المتبقية (2026-09-24) بعد التحقق من الحفظ؛ بقيت الحالة الحالية والقرارات المفتوحة في 01.
 
+## Rollover from 01 — 2026-10-01 (QC-ADP26-17 context compaction)
+
+> نُقلت أقدم سجلات 2026-09-30 من Ledger بعد التحقق من عدم وجودها سابقًا؛ بقيت الحالة الحالية والمشكلات المفتوحة في 01.
+
+- **2026-09-30 — QC-ADP26-06 / رحلة Findings→NCR→RCA→CAPA**
+  - Changed: توصيل سجلات وتفاصيل القراءة ذات النطاق؛ قرارات PD15–18 بقيت deny ولا تغييرات schema/transitions.
+  - Evidence: focused quality/journey 27/27 PASS؛ candidate `a5ae05df`, fingerprint `c6271719`، Node 24.20.0؛ build وrelease verification PASS (`rel-0deb353299ce53a5`). PG18 والواجهة/AT/UAT BLOCKED أو NOT VERIFIED؛ handoff `audit/2026-09-30/handoff-QC-ADP26-06.md`.
+  - State: PARTIAL — قرارات المالك وأدلة التشغيل والقبول ما زالت مفتوحة.
+
+- **2026-09-30 — QC-ADP26-05 / inspection draft notes and point results**
+  - Changed: per-point remarks, REMARK_ONLY and NA now have existing-row save contracts with required-point validation; unsaved general notes removed. No schema/policy/outbox change.
+  - Evidence: candidate base `161762e7`; focused unit 33/33, Astro check 0 errors, local build PASS. PostgreSQL 18, authenticated browser/AT and UAT BLOCKED/NOT VERIFIED; handoff `audit/2026-09-30/handoff-QC-ADP26-05.md`.
+  - State: PARTIAL — source fix complete; route acceptance remains open pending candidate-bound database and live-page evidence.
+
+- **2026-09-30 — QC-ADP26-04 / exact inspection decimal transport**
+  - Changed: execute Action/domain/repository now preserve decimal strings and reject float transport/invalid decimal notation; no schema/policy changes.
+  - Evidence: candidate `6c312f05`; focused unit 37/37 and Astro check 0 errors. PG18 Testcontainers BLOCKED (no container runtime); live browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-04.md`.
+  - State: PARTIAL — exact storage/evaluator code updated, PostgreSQL roundtrip and page acceptance remain open.
+
+- **2026-09-30 — QC-ADP26-03 / inspection draft save authorization**
+  - Changed: EDIT-DRAFT/scope/state/version checked before evaluation and under report lock; mandatory result audit shares write transaction; frozen criteria projection and exact JSON version transport repaired.
+  - Evidence: candidate `08d15788`; focused unit 70/70, isolated PG18 5/5 (denial/rollback/race/replay), real browser/direct HTTP 1/1 including stale preservation and four widths. AT/200%/UAT NOT VERIFIED; final ledger export BLOCKED by approval-review usage limit. `audit/2026-09-30/handoff-QC-ADP26-03.md`.
+  - State: PARTIAL — local F-003 technical acceptance PASS; other execute-page findings remain open.
+
+- **2026-09-30 — QC-ADP26-02 / migration ledger and release identity**
+  - Changed: health/control center reconcile migration names and SHA-256 checksums, failing closed on drift or unreadable source; no schema change.
+  - Evidence: isolated PG18.6 42/42 exact; source rehearsal 0018→0042; backup/restore and schema check PASS. Live schema/artifact identity, gates, UI/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-02.md`.
+  - State: PARTIAL / NO-GO.
+
+- **2026-09-30 — QC-ADP26-01 / candidate-bound route inventory**
+  - Changed: executable 88-card/six-persona acceptance inventory and fail-closed evidence binding; unresolved applicability stays NOT VERIFIED and human UAT cannot close automatically.
+  - Evidence: base `60237b5`; PostgreSQL 18.6 loopback disposable concurrency/replay + action contracts 17 PASS/3 FAIL (stage-1 fixtures use MANAGER against SUPERVISOR authority). Real-task GET/direct-denial E2E includes unchanged row/audit/outbox and candidate/applied-ledger binding; technical fixture is not six-persona UAT. Source visibility checks are not runtime acceptance; all page acceptances remain open. `audit/2026-09-30/handoff-QC-ADP26-01.md`.
+  - State: PARTIAL / NO-GO.
+
+- **2026-09-30 — RT-AUTH-001 / login acceptance evidence**
+  - Changed: no runtime/policy change; recorded source review and candidate-bound evidence gaps.
+  - Evidence: current HEAD `bd30e257`; prior login E2E evidence is bound to `06479e8` and is historical. Authenticated success/rejection, rate-limit, session revoke/expiry, applied schema/DB audit, current browser/AT and owner signature remain NOT VERIFIED; no READY. `audit/2026-09-30/RT-AUTH-001-login-acceptance.md`.
+  - State: PARTIAL / NO-GO.
+
+- **2026-09-30 — QC-ADP-27 / RT-ROOT-001 authentication redirect**
+  - Changed: root now routes by server-resolved session, validates guest `returnTo`, and carries an explicit ended-session reason to login. State: PARTIAL / NO-GO.
+  - Evidence: unit 6/6, build/release verification PASS; candidate-bound Playwright 5 PASS / 1 auth-fixture skip. Authenticated route, applied schema, manual AT, owner signature and UAT remain NOT VERIFIED; no READY. Handoff: `audit/2026-09-30/QC-ADP-27-rt-root-001-handoff.md`.
+
+- **2026-10-01 — Mind rollover (QC-ENV26-04):** نُقلت أقدم سجلات Ledger المتبقية بتاريخ 2026-09-24 إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والقيود في 01.
+
 - **2026-09-24 — QC-ADP-26 / integration contract boundary**
   - Changed: sandbox adapter now binds source/site/actor, source-event idempotency, signed envelope audit correlation/time/sequence, and duplicate decision separation; no runtime provider wiring or policy approval.
   - Evidence: focused contracts 11/11 and targeted PostgreSQL route suites 25/25 PASS; authenticated E2E FAIL (13 PASS/26 FAIL/3 SKIPPED), including 404 recovery and accessibility/keyboard failures; AT/UAT NOT RUN. External integration stays DRAFT and disabled; handoff `audit/2026-09-24/QC-ADP-26-integration-contracts-handoff.md`.

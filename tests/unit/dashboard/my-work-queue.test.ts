@@ -14,6 +14,7 @@ import type {
 } from '../../../src/modules/dashboard/ports/dashboard-query.js';
 import type { MyWorkCategory } from '../../../src/modules/dashboard/ports/my-work.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
+import { dashboardMetricSources } from '../../../src/modules/dashboard/application/dashboard-sources.js';
 
 /**
  * QC-100-FINAL-022 item 2 — the queue contract, without a database.
@@ -302,5 +303,26 @@ describe('My work today queue', () => {
       expect(entry.reason.length).toBeGreaterThan(20);
       expect(entry.owner.length).toBeGreaterThan(2);
     }
+  });
+
+  it('gives held tasks only the approved resume next step', async () => {
+    const heldTaskSource = source({
+      key: 'tasks-on-hold',
+      category: 'BLOCKED',
+      rows: [row({ id: 'held', state: 'ON_HOLD' })],
+      nextAction: 'Open the task and resume it when the blocker is resolved.',
+    });
+    const model = await buildMyWork([heldTaskSource], viewer, readCounted(1), NOW);
+    const item = model.groups.find((group) => group.definition.category === 'BLOCKED')!.items[0]!;
+    expect(item.nextAction).toContain('resume');
+    expect(item.nextAction).not.toMatch(/cancel/i);
+  });
+
+  it('does not advertise the denied CANCEL transition for real held-task sources', () => {
+    const held = dashboardMetricSources({} as never).find(
+      (entry) => entry.metric.key === 'tasks-on-hold',
+    )!;
+    expect(held.queue?.nextAction).toContain('resume');
+    expect(held.queue?.nextAction).not.toMatch(/cancel/i);
   });
 });

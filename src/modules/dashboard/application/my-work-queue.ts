@@ -249,9 +249,11 @@ function groupMessage(
       ? ` ${deferred} of them ${deferred === 1 ? 'is' : 'are'} listed under a more urgent group above.`
       : '';
   const bounded =
-    shown < matched
-      ? ` The list below shows the ${shown} most urgent of them.`
-      : ` All ${shown} are listed below.`;
+    shown === 0 && deferred > 0
+      ? ' Its displayed records are all listed in more urgent groups above.'
+      : shown < matched
+        ? ` The list below shows the ${shown} most urgent of them.`
+        : ` All ${shown} are listed below.`;
   return `${matched} record${matched === 1 ? '' : 's'} match this group.${bounded}${deferredNote}`;
 }
 

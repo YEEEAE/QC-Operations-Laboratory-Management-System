@@ -98,7 +98,9 @@ export class PostgresDashboardQuery implements DashboardQuery {
           action: view.action,
           subjectType: view.subjectType,
           subjectId: view.subjectId,
-          summary: view.reason ?? view.action,
+          // Keep the stored action code for presentation mapping; without a
+          // recorded reason, do not repeat the raw enum as user-facing detail.
+          summary: view.reason ?? '',
           occurredAt: view.occurredAt,
         };
       }),

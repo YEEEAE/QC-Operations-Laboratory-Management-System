@@ -77,6 +77,37 @@ describe('dashboard decision surface', () => {
     expect(kpiCard).toContain('Drill-down:');
   });
 
+  it('puts attention and decision queues before dashboard summary counts', () => {
+    const attention = dashboard.indexOf('aria-labelledby="attention-title"');
+    const decisionQueues = dashboard.indexOf('aria-labelledby="workflow-access-title"');
+    const summary = dashboard.indexOf('aria-label="Operational action counts"');
+    expect(attention).toBeGreaterThan(-1);
+    expect(decisionQueues).toBeGreaterThan(attention);
+    expect(summary).toBeGreaterThan(decisionQueues);
+    expect(dashboard).toContain('href="/documents?review=mine"');
+    expect(dashboard).toContain('Active IN_REVIEW versions you may review');
+    expect(dashboard).not.toContain('Review-specific document queue is not supplied');
+  });
+
+  it('deduplicates activity by audit identity and presents human labels', () => {
+    const presentation = read('src/modules/dashboard/application/dashboard-presentation.ts');
+    expect(presentation).toContain('seen.has(event.id)');
+    expect(presentation).not.toContain('event.title');
+    expect(dashboard).toContain('dedupeDashboardActivity(dashboard.activity)');
+    expect(dashboard).toContain('dashboardActivityActionLabel(item.action)');
+    expect(dashboard).toContain('The audit history retains every event.');
+    expect(dashboard).toContain('href="/audit"');
+  });
+
+  it('keeps work lineage in a disclosure and announces one group status', () => {
+    const work = read('src/pages/work/index.astro');
+    expect(work).toContain('<details class="lineage">');
+    expect(work).toContain('How this group is counted');
+    expect(work).not.toContain('or cancel it');
+    expect(work.match(/class="state-message" role="status"/g)).toHaveLength(1);
+    expect(work).not.toContain('No record in this group is listed for your account');
+  });
+
   it('separates an authorization failure from a provider outage', () => {
     expect(dashboard).toContain('accessDenied');
     expect(dashboard).toContain("error.category === 'AUTHORIZATION'");
@@ -132,6 +163,7 @@ describe('dashboard decision surface', () => {
       '/tasks': 'src/pages/tasks/index.astro',
       '/assets/calibrations': 'src/pages/assets/calibrations/index.astro',
       '/laboratory/tests': 'src/pages/laboratory/tests/index.astro',
+      '/documents': 'src/pages/documents/index.astro',
     };
     const hrefs = [...sources.matchAll(/href: '([^']+)'/g)].map((match) => match[1]!);
     expect(hrefs.length).toBeGreaterThan(0);
@@ -257,6 +289,8 @@ describe('dashboard decision surface', () => {
 
   it('keeps the icon-only shell controls at the 44px target size', () => {
     const topbar = read('src/ui/shell/Topbar.astro');
-    expect(topbar).toMatch(/\.navigation-toggle\{[^}]*inline-size:44px[^}]*min-inline-size:44px[^}]*block-size:44px/);
+    expect(topbar).toMatch(
+      /\.navigation-toggle\{[^}]*inline-size:44px[^}]*min-inline-size:44px[^}]*block-size:44px/,
+    );
   });
 });
