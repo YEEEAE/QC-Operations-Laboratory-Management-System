@@ -95,8 +95,22 @@ records, hidden/global context, and raw audit history are excluded. Provider
 input is treated as untrusted data, and provider output is parsed through the
 existing advisory domain boundary before it can reach the UI.
 
-The UI supports requesting, copying, and using text as a draft only. It does not
+The UI supports requesting, copying, and editing text locally only. It does not
 provide a path from AI output to controlled mutation or approval workflows.
+
+The advisory form uses POST semantics and keeps its submit control disabled
+until the client handler is ready and the complete approved processing policy,
+provider configuration, and server approval gate are present. Without
+JavaScript, the disabled control cannot submit question or excerpt values. A
+transport error preserves the current form values and source reference, reports
+an unknown outcome, and requires an edit before another request can start. A
+provider timeout is bounded by the adapter and returns an unavailable outcome;
+the user can retry later or continue through the human review path. Request
+details remain only in the page memory and are never autosaved.
+
+Copy reports success or failure and attempts a temporary local copy fallback.
+**Edit locally** places the response into the question field for
+manual revision; it is not a persisted draft and clears per-request consent.
 
 ## Health and evidence
 

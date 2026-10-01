@@ -2,9 +2,11 @@
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import { copy } from '../shared/copy/ux-vocabulary';
 import { aiAdvisoryPageAvailability } from '../modules/ai-advisory/application/page-availability.js';
+import { pageAccessDecision } from '../shared/routing/page-access.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const pageAccess = pageAccessDecision(actor, Astro.url.pathname);
 const canUse = actor.permissions.some((grant) => grant.code === 'PERM-AI-USE' && grant.active !== false);
 const canSummarize = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUMMARIZE' && grant.active !== false);
 const canSuggest = actor.permissions.some((grant) => grant.code === 'PERM-AI-SUGGEST' && grant.active !== false);
@@ -16,9 +18,9 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
 ---
 <AppLayout title="AI Advisory · QC Operations" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">AI advisory</p><h1>AI Advisory</h1><p class="lede">Suggestions and analysis only — not an approval authority.</p></div></section>
-  {canUse ? (
+  {pageAccess === 'ALLOWED' && canUse ? (
     <>
-      <section class="notice" role="note"><strong>Advisory boundary</strong><span>{copy.boundaries.aiNotAuthority} Response actions are limited to copying text or using it as your own draft.</span></section>
+      <section class="notice" role="note"><strong>Advisory boundary</strong><span>{copy.boundaries.aiNotAuthority} Response actions are limited to copying text or editing it locally.</span></section>
       <section class="notice" role="note" aria-label="Human review path"><strong>Human review path</strong><span>AI output is not entered into a QC record. Verify every statement against the cited controlled source, then take uncertainty, missing sources, or suspected incorrect citations to your Supervisor or QCM (Manager) through the normal authorized review workflow.</span></section>
       <section class="notice privacy-notice" role="note" aria-label="AI data use">
         <strong>About your request</strong>
@@ -50,7 +52,7 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
       </section>
       <section class="panel">
         <h2>Request advisory</h2>
-        <form class="form" data-advisory-request>
+        <form class="form" method="post" data-advisory-request data-can-send-externally={canSendExternally ? 'true' : 'false'}>
           <label>Output type
             <select name="mode">
               {canSummarize && <option value="SUMMARIZE">Summarize</option>}
@@ -80,15 +82,15 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
               <label class="consent"><input type="checkbox" name="consentToExternalProcessing" value="true" required /> I consent (version {processingPolicy.consentVersion}) to send this question and any excerpt to {configuredProviders} under policy {processingPolicy.policyId} v{processingPolicy.version}, processed in {processingPolicy.processingLocation} and retained for up to {processingPolicy.retentionDays} days.</label>
             </>
           )}
-          <div class="actions"><button type="submit" disabled={!canSendExternally}>Request advisory</button></div>
+          <div class="actions"><button type="submit" data-request-button disabled>Request advisory</button></div>
           {!canSendExternally && <p class="muted">Requests are unavailable until configuration and owner-approved policy are complete. Per-request consent is still required after that.</p>}
-          <p role="status" data-result aria-live="polite"></p>
+          <p role="status" data-result aria-live="polite" aria-atomic="true"></p>
         </form>
       </section>
       <section class="panel response-panel" data-response-panel hidden>
         <h2>AI response</h2>
         <p class="advisory-label" data-advisory-label>AI-generated advisory content — suggestions and analysis only, not an approval authority.</p>
-        <p class="status" data-status></p>
+        <p class="status" data-status role="status" aria-live="polite" aria-atomic="true"></p>
         <div class="advisory-text" data-advisory-text></div>
         <p class="muted" data-source-context hidden></p>
         <p class="muted" data-source-references hidden></p>
@@ -98,8 +100,9 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
         <button type="button" data-prepare-correction disabled>Prepare correction for human review</button>
         <div class="actions">
           <button type="button" data-copy disabled>Copy</button>
-          <button type="button" data-use-draft disabled>Use as Draft</button>
+          <button type="button" data-edit-locally disabled>Edit locally</button>
         </div>
+        <p class="muted" data-response-feedback role="status" aria-live="polite" aria-atomic="true"></p>
         <p class="muted">No controlled action can be triggered from an AI response. Any official decision must go through the normal authorized workflow.</p>
       </section>
     </>
@@ -117,11 +120,13 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
   const form = document.querySelector<HTMLFormElement>('[data-advisory-request]');
   const panel = document.querySelector<HTMLElement>('[data-response-panel]');
   const statusEl = document.querySelector<HTMLElement>('[data-status]');
+  const responseFeedbackEl = document.querySelector<HTMLElement>('[data-response-feedback]');
   const textEl = document.querySelector<HTMLElement>('[data-advisory-text]');
   const labelEl = document.querySelector<HTMLElement>('[data-advisory-label]');
   const resultEl = document.querySelector<HTMLElement>('[data-result]');
+  const requestButton = form?.querySelector<HTMLButtonElement>('[data-request-button]');
   const copyButton = document.querySelector<HTMLButtonElement>('[data-copy]');
-  const draftButton = document.querySelector<HTMLButtonElement>('[data-use-draft]');
+  const editLocallyButton = document.querySelector<HTMLButtonElement>('[data-edit-locally]');
   const sourceReferencesEl = document.querySelector<HTMLElement>('[data-source-references]');
   const sourceContextEl = document.querySelector<HTMLElement>('[data-source-context]');
   const reviewGuidanceEl = document.querySelector<HTMLElement>('[data-review-guidance]');
@@ -129,46 +134,60 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
   const correctionEl = document.querySelector<HTMLTextAreaElement>('[data-correction]');
   const correctionButton = document.querySelector<HTMLButtonElement>('[data-prepare-correction]');
   const consentCheckbox = form?.querySelector<HTMLInputElement>('input[name="consentToExternalProcessing"]');
+  const externalRequestAllowed = form?.dataset.canSendExternally === 'true';
   let advisoryText = '';
+  let requestOutcomeUnknown = false;
   const resetButtons = () => {
     if (copyButton) copyButton.disabled = true;
-    if (draftButton) draftButton.disabled = true;
+    if (editLocallyButton) editLocallyButton.disabled = true;
   };
+  if (requestButton) requestButton.disabled = !externalRequestAllowed;
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (!form || !resultEl) return;
+    if (!form || !resultEl || !externalRequestAllowed || requestButton?.disabled) return;
+    requestButton.disabled = true;
+    form.setAttribute('aria-busy', 'true');
+    form.dataset.submitting = 'true';
     resultEl.textContent = 'Requesting advisory…';
     resetButtons();
+    advisoryText = '';
     const data = new FormData(form);
     const contextLabel = String(data.get('contextLabel') || '').trim();
     const contextContent = String(data.get('contextContent') || '').trim();
     const selectedDataClass = String(data.get('dataClass') || '');
-    const response = await actions.aiAdvisory.requestAdvisory({
-      mode: String(data.get('mode')) as 'SUMMARIZE' | 'SUGGEST' | 'DRAFT',
-      question: String(data.get('question') || ''),
-      context:
-        contextLabel && contextContent
-          ? [{
-              label: contextLabel,
-              content: contextContent,
-              ...(String(data.get('sourceId') || '').trim() ? { sourceId: String(data.get('sourceId')).trim() } : {}),
-              ...(String(data.get('sourceType') || '').trim() ? { sourceType: String(data.get('sourceType')).trim() } : {}),
-              ...(String(data.get('citation') || '').trim() ? { citation: String(data.get('citation')).trim() } : {}),
-            }]
-          : [],
-      consentToExternalProcessing: (form.querySelector<HTMLInputElement>('input[name="consentToExternalProcessing"]')?.checked ?? false),
-      ...(selectedDataClass
-        ? { dataClass: selectedDataClass as 'PUBLIC' | 'SYNTHETIC' | 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT' }
-        : {}),
-    });
-    if (panel) panel.hidden = false;
-    if (statusEl && textEl && labelEl) {
-      if (response.error) {
-        statusEl.textContent = 'Request blocked or unavailable.';
+    const slowRequestNotice = window.setTimeout(() => {
+      resultEl.textContent = 'Still waiting for the advisory service. Keep this page open; another request is blocked until this one returns.';
+    }, 10_000);
+    try {
+      const response = await actions.aiAdvisory.requestAdvisory({
+        mode: String(data.get('mode')) as 'SUMMARIZE' | 'SUGGEST' | 'DRAFT',
+        question: String(data.get('question') || ''),
+        context:
+          contextLabel && contextContent
+            ? [{
+                label: contextLabel,
+                content: contextContent,
+                ...(String(data.get('sourceId') || '').trim() ? { sourceId: String(data.get('sourceId')).trim() } : {}),
+                ...(String(data.get('sourceType') || '').trim() ? { sourceType: String(data.get('sourceType')).trim() } : {}),
+                ...(String(data.get('citation') || '').trim() ? { citation: String(data.get('citation')).trim() } : {}),
+              }]
+            : [],
+        consentToExternalProcessing: (form.querySelector<HTMLInputElement>('input[name="consentToExternalProcessing"]')?.checked ?? false),
+        ...(selectedDataClass
+          ? { dataClass: selectedDataClass as 'PUBLIC' | 'SYNTHETIC' | 'AUTHORIZED_NONCONFIDENTIAL_EXCERPT' }
+          : {}),
+      });
+      if (panel) panel.hidden = false;
+      if (statusEl && textEl && labelEl) {
+        if (response.error) {
+          requestOutcomeUnknown = true;
+          statusEl.textContent = 'The request could not be completed. The outcome is unknown; edit the request before starting another one.';
         textEl.textContent = '';
         labelEl.textContent = 'AI advisory is optional: core QC workflows are unaffected.';
         if (sourceContextEl) {
-          sourceContextEl.textContent = 'The request was not returned as an advisory. Check authorization and remove sensitive or unsupported input before trying again.';
+          sourceContextEl.textContent = contextLabel
+            ? `Your source reference remains on this page: ${contextLabel}${String(data.get('sourceId') || '').trim() ? ` · ${String(data.get('sourceId')).trim()}` : ''}${String(data.get('citation') || '').trim() ? ` · ${String(data.get('citation')).trim()}` : ''}. The request result is unknown; do not assume it was processed.`
+            : 'Your entries remain on this page. The request result is unknown; do not assume it was processed.';
           sourceContextEl.hidden = false;
         }
         if (reviewGuidanceEl) {
@@ -177,8 +196,8 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
         }
         if (provenanceEl) { provenanceEl.textContent = ''; provenanceEl.hidden = true; }
         resetButtons();
-      } else if (response.data) {
-        statusEl.textContent = response.data.message;
+        } else if (response.data) {
+          statusEl.textContent = response.data.message;
         advisoryText = response.data.advisory?.text ?? '';
         textEl.textContent = advisoryText;
         if (sourceContextEl) {
@@ -201,7 +220,7 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
           reviewGuidanceEl.textContent = response.data.status === 'REFUSED'
             ? 'Reason for abstention: the request lacked a usable controlled source, contained sensitive material, or the answer included an unsafe claim or citation. Verify the source and ask your Supervisor or QCM (Manager) to review through the normal authorized workflow.'
             : response.data.status === 'UNAVAILABLE'
-              ? 'Provider unavailable: no advisory was produced and no fallback response is available. Retry later or continue with the normal human review workflow.'
+              ? 'The provider timed out or was unavailable. No advisory was produced. Retry later or continue with the normal human review workflow.'
               : 'Review before use: compare the response and its source details with the controlled record. Ask your Supervisor or QCM (Manager) when uncertain.';
           reviewGuidanceEl.hidden = false;
         }
@@ -217,28 +236,91 @@ const canSendExternally = Boolean(configuredProviders && processingPolicy && aiA
         labelEl.textContent = response.data.advisoryNotice;
         if (advisoryText) {
           if (copyButton) copyButton.disabled = false;
-          if (draftButton) draftButton.disabled = false;
+          if (editLocallyButton) editLocallyButton.disabled = false;
         }
+        }
+        resultEl.textContent = '';
+      } else {
+        if (panel) panel.hidden = false;
+        if (statusEl) statusEl.textContent = 'No advisory was returned. Your entries are still here; continue with the normal human review workflow.';
       }
+    } catch {
+      requestOutcomeUnknown = true;
+      if (panel) panel.hidden = false;
+      if (statusEl) statusEl.textContent = 'The connection ended before a result was confirmed. The outcome is unknown; edit the request before starting another one.';
+      if (textEl) textEl.textContent = '';
+      if (labelEl) labelEl.textContent = 'AI advisory is optional: core QC workflows are unaffected.';
+      if (sourceContextEl) {
+        sourceContextEl.textContent = contextLabel
+          ? `Your source reference remains on this page: ${contextLabel}${String(data.get('sourceId') || '').trim() ? ` · ${String(data.get('sourceId')).trim()}` : ''}${String(data.get('citation') || '').trim() ? ` · ${String(data.get('citation')).trim()}` : ''}. The request result is unknown; do not assume it was processed.`
+          : 'Your entries remain on this page. The request result is unknown; do not assume it was processed.';
+        sourceContextEl.hidden = false;
+      }
+      if (reviewGuidanceEl) {
+        reviewGuidanceEl.textContent = 'Check your connection and continue with the normal human review workflow. Retry only when you are ready to make a new advisory request.';
+        reviewGuidanceEl.hidden = false;
+      }
+      resetButtons();
+    } finally {
+      window.clearTimeout(slowRequestNotice);
+      form.removeAttribute('aria-busy');
+      delete form.dataset.submitting;
+      if (requestButton) requestButton.disabled = !externalRequestAllowed || requestOutcomeUnknown;
     }
-    if (resultEl) resultEl.textContent = '';
   });
   form?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input:not([name="consentToExternalProcessing"]), textarea, select[name="dataClass"]').forEach((field) => {
-    field.addEventListener('input', () => { if (consentCheckbox) consentCheckbox.checked = false; });
+    const invalidateConsent = () => {
+      if (consentCheckbox) consentCheckbox.checked = false;
+      if (requestOutcomeUnknown) {
+        requestOutcomeUnknown = false;
+        if (requestButton) requestButton.disabled = !externalRequestAllowed;
+      }
+      if (resultEl && panel && !panel.hidden) resultEl.textContent = 'Request details changed. Consent is cleared; submit a new request only after reviewing the updated terms.';
+    };
+    field.addEventListener('input', invalidateConsent);
+    field.addEventListener('change', invalidateConsent);
   });
   copyButton?.addEventListener('click', async () => {
-    if (advisoryText) await navigator.clipboard.writeText(advisoryText);
+    if (!advisoryText || !responseFeedbackEl) return;
+    try {
+      await navigator.clipboard.writeText(advisoryText);
+      responseFeedbackEl.textContent = 'Advisory copied.';
+    } catch {
+      const fallback = document.createElement('textarea');
+      let copied = false;
+      try {
+        fallback.value = advisoryText;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.append(fallback);
+        fallback.select();
+        copied = document.execCommand('copy');
+      } catch {
+        copied = false;
+      } finally {
+        fallback.remove();
+      }
+      responseFeedbackEl.textContent = copied
+        ? 'Advisory copied.'
+        : 'Copy was not available. Select the advisory text below and copy it manually.';
+    }
   });
-  draftButton?.addEventListener('click', () => {
+  editLocallyButton?.addEventListener('click', () => {
     const questionField = form?.querySelector<HTMLTextAreaElement>('textarea[name="question"]');
-    if (questionField && advisoryText) questionField.value = advisoryText;
+    if (!questionField || !advisoryText || !responseFeedbackEl) return;
+    questionField.value = advisoryText;
+    if (consentCheckbox) consentCheckbox.checked = false;
+    questionField.focus();
+    responseFeedbackEl.textContent = 'Advisory text placed in Question for local editing only. Review it against a controlled source before using it.';
   });
   correctionButton?.addEventListener('click', () => {
     const questionField = form?.querySelector<HTMLTextAreaElement>('textarea[name="question"]');
     if (!questionField || !advisoryText || !correctionEl?.value.trim()) return;
     questionField.value = `Human correction for review (not an approved QC decision):\n${correctionEl.value.trim()}\n\nOriginal AI advisory for comparison:\n${advisoryText}`;
     if (consentCheckbox) consentCheckbox.checked = false;
-    resultEl && (resultEl.textContent = 'Correction prepared locally. Route it through the normal authorized human review workflow; it has not been saved or sent.');
+    questionField.focus();
+    if (responseFeedbackEl) responseFeedbackEl.textContent = 'Correction prepared locally. Route it through the normal authorized human review workflow; it has not been saved or sent.';
   });
 </script>
 <style>

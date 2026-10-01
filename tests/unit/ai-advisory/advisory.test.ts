@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   parseProviderAdvisory,
   AdvisoryAuthorityViolationError,
@@ -100,6 +100,39 @@ describe('GetAdvisoryUseCase — advisory boundary', () => {
     expect(result.message).toBe(ADVISORY_UNAVAILABLE_NOTICE);
     expect(result.advisory).toBeUndefined();
     expect(result.advisoryNotice).toBe(ADVISORY_NOTICE);
+  });
+
+  it('checks external consent and approved data class before provider availability', async () => {
+    const availability = vi.fn(async () => ({ available: true as const }));
+    const complete = vi.fn(async () => ({ text: 'must not be returned' }));
+    const externalProvider: AiProvider = {
+      availability,
+      complete,
+      requiresExternalConsent: () => true,
+      permitsDataClass: (dataClass) => dataClass === 'SYNTHETIC',
+    };
+    const useCase = new GetAdvisoryUseCase(externalProvider);
+    const input = {
+      actor: aiActor(),
+      mode: 'SUMMARIZE' as const,
+      question: 'Summarize this synthetic example.',
+      context: [],
+      requestId: 'req-policy-gate',
+    };
+
+    const missingConsent = await useCase.execute(input);
+    expect(missingConsent.status).toBe('REFUSED');
+    expect(availability).not.toHaveBeenCalled();
+    expect(complete).not.toHaveBeenCalled();
+
+    const deniedClass = await useCase.execute({
+      ...input,
+      consentToExternalProcessing: true,
+      dataClass: 'PUBLIC',
+    });
+    expect(deniedClass.status).toBe('REFUSED');
+    expect(availability).not.toHaveBeenCalled();
+    expect(complete).not.toHaveBeenCalled();
   });
 
   it('returns advisory text labeled advisory with no authority fields on success', async () => {
