@@ -13,8 +13,6 @@ export class ReviseTemplateUseCase {
     versionNo: string;
     name: string;
     description?: string;
-    contentHash?: string;
-    sourceDocument?: string;
     requestId: string;
   }) {
     const current = await this.repository.get(input.id, input.actor);
@@ -44,8 +42,8 @@ export class ReviseTemplateUseCase {
       versionNo: input.versionNo,
       name: input.name,
       description: input.description ?? null,
-      contentHash: input.contentHash ?? null,
-      sourceDocument: input.sourceDocument ?? null,
+      contentHash: null,
+      sourceDocument: null,
       requestId: input.requestId,
     });
   }

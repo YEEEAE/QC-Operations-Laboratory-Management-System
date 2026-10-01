@@ -132,7 +132,7 @@ if (Astro.request.method === 'POST' && canCreate) {
       reason: values.reason,
       documentVersionId: values.documentVersionId,
       expectedDocumentVersion: parseBigintField(values.expectedDocumentVersion, 'documentVersionId'),
-      changeField: values.changeField as 'revision' | 'changeSummary' | 'contentHash',
+      changeField: values.changeField as 'revision' | 'changeSummary',
       proposedValue: values.proposedValue,
     });
     const id = extractDetailId(data);
@@ -169,7 +169,7 @@ const form = document.querySelector<HTMLFormElement>('[data-action="change-reque
 let createdRecordId = '';
 if (form) {enhanceClassifiedForm(form,{
   invoke: async (payload) => { const result = await actions.changeRequests.createForDocumentVersion(payload as Parameters<typeof actions.changeRequests.createForDocumentVersion>[0]); const record = result?.data as { changeRequest?: { id?: unknown } } | undefined; if (typeof record?.changeRequest?.id === 'string') createdRecordId = record.changeRequest.id; return result; },
-  payload: (data) => ({ changeNo: String(data.get('changeNo')), reason: String(data.get('reason')), documentVersionId: String(data.get('documentVersionId')), expectedDocumentVersion: BigInt(String(data.get('expectedDocumentVersion'))), changeField: String(data.get('changeField')) as 'revision' | 'changeSummary' | 'contentHash', proposedValue: String(data.get('proposedValue')) }),
+  payload: (data) => ({ changeNo: String(data.get('changeNo')), reason: String(data.get('reason')), documentVersionId: String(data.get('documentVersionId')), expectedDocumentVersion: BigInt(String(data.get('expectedDocumentVersion'))), changeField: String(data.get('changeField')) as 'revision' | 'changeSummary', proposedValue: String(data.get('proposedValue')) }),
   progressText: 'Saving…',
   detailBaseHref: '/change-requests',
   onSuccess: () => { if (createdRecordId) window.location.href = `/change-requests/${createdRecordId}`; else window.location.reload(); },

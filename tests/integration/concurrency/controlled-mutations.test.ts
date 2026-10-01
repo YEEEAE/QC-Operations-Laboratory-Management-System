@@ -129,6 +129,20 @@ const countOutbox = async (dedupeKey: string): Promise<number> =>
     ).rows[0].count,
   );
 
+async function seedDocumentSource(documentId: string): Promise<string> {
+  const fileId = crypto.randomUUID();
+  await pool!.query(
+    `INSERT INTO qc.files (id, original_filename, storage_key, storage_provider, mime_type, extension, size_bytes, sha256, uploaded_by, state)
+     VALUES ($1, 'controlled-source.pdf', $2, 'test', 'application/pdf', 'pdf', 10, $3, $4, 'ACTIVE')`,
+    [fileId, `test-document-source-${fileId}`, 'd'.repeat(64), AUTHOR_ID],
+  );
+  await pool!.query(
+    `INSERT INTO qc.evidence_links (file_id, subject_type, subject_id, linked_by) VALUES ($1, 'DOCUMENT_IDENTITY', $2, $3)`,
+    [fileId, documentId, AUTHOR_ID],
+  );
+  return fileId;
+}
+
 describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => {
   it('advances quality aggregate versions so concurrent same-version transitions cannot both commit', async () => {
     const findingId = '01900000-0000-7000-8000-00000000b080';
@@ -629,11 +643,12 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       actor: actor(AUTHOR_ID, [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'cm-doc-create',
     });
+    const sourceFileId = await seedDocumentSource(documentId);
     const version: DocumentVersion = {
       id: versionId,
       documentId,
       revision: '1',
-      state: 'IN_REVIEW',
+      state: 'DRAFT',
       contentHash: 'hash-doc-cm-001',
       createdBy: AUTHOR_ID,
       createdAt: new Date('2026-01-01T00:00:00Z'),
@@ -642,22 +657,24 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     };
     await repository.createVersion({
       version,
+      sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
       actor: actor(AUTHOR_ID, [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'cm-doc-version',
     });
+    await repository.transition({ id: versionId, expectedVersion: 1n, actor: actor(AUTHOR_ID, [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]), action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'cm-doc-submit' });
     const useCase = new ApproveVersionUseCase(repository);
 
     const outcomes = await Promise.allSettled([
       useCase.execute({
         actor: approver(),
         versionId,
-        expectedVersion: 1n,
+        expectedVersion: 2n,
         requestId: 'cm-doc-approve-1',
       }),
       useCase.execute({
         actor: approver(),
         versionId,
-        expectedVersion: 1n,
+        expectedVersion: 2n,
         requestId: 'cm-doc-approve-2',
       }),
     ]);
@@ -673,10 +690,10 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       )
     ).rows[0];
     expect(row.state).toBe('APPROVED');
-    expect(Number(row.version)).toBe(2);
+    expect(Number(row.version)).toBe(3);
     expect(row.approved_by).toBe(APPROVER_ID);
     expect(await countAudit(versionId, 'APPROVE')).toBe(1);
-    expect(await countOutbox(`document-version:${versionId}:v2`)).toBe(1);
+    expect(await countOutbox(`document-version:${versionId}:v3`)).toBe(1);
   });
 
   it('applies exactly one of two concurrent role permission updates on the same role version', async () => {

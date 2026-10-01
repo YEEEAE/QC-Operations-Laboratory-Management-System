@@ -1,5 +1,5 @@
 import { AppError } from '../../../shared/errors/app-error.js';
-import type { DocumentVersion, DocumentVersionState } from './document-version.js';
+import { assertApprovalEvidence, type DocumentVersion, type DocumentVersionState } from './document-version.js';
 
 export type DocumentVersionAction = 'SUBMIT' | 'RETURN' | 'RESUME' | 'APPROVE' | 'MAKE_EFFECTIVE' | 'SUPERSEDE' | 'ARCHIVE' | 'VOID';
 
@@ -23,7 +23,7 @@ export function nextDocumentVersionState(state: DocumentVersionState, action: Do
 export function transitionDocumentVersion(version: DocumentVersion, action: DocumentVersionAction, now: Date, reason?: string): DocumentVersion {
   const nextState = nextDocumentVersionState(version.state, action);
   if (['RETURN', 'VOID'].includes(action) && !reason?.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true, fieldErrors: { reason: ['required'] } });
-  if (action === 'APPROVE' && !version.contentHash?.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true, fieldErrors: { contentHash: ['required before approval'] } });
+  if (action === 'SUBMIT' || action === 'APPROVE') assertApprovalEvidence(version);
   return {
     ...version,
     state: nextState,

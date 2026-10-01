@@ -15,6 +15,7 @@ import { createPool } from '../../../src/shared/database/pool.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
+import { documentContentDigest } from '../../../src/modules/documents/domain/document-content-digest.js';
 
 const AUTHOR_ID = '01900000-0000-7000-8000-0000000000e1';
 const MANAGER_ID = '01900000-0000-7000-8000-0000000000e2';
@@ -71,7 +72,7 @@ afterAll(async () => {
   await stopPostgresContainer();
 });
 
-async function seedApprovedTemplate(): Promise<string> {
+async function seedApprovedTemplate(): Promise<{ templateVersionId: string; sourceContentHash: string }> {
   const templateId = crypto.randomUUID();
   const versionId = crypto.randomUUID();
   const documentId = crypto.randomUUID();
@@ -91,11 +92,29 @@ async function seedApprovedTemplate(): Promise<string> {
      VALUES ($1, $2, 'WI', 'Fixture controlled work instruction', true, $3)`,
     [documentId, documentNo, AUTHOR_ID],
   );
+  const sourceFileId = crypto.randomUUID();
+  const sourceFileHash = 'e'.repeat(64);
   await pool!.query(
-    `INSERT INTO qc.document_versions (id, document_id, revision, state, effective_at, content_hash, created_by)
-     VALUES ($1, $2, '7', 'EFFECTIVE', CURRENT_TIMESTAMP, $3, $4)`,
-    [documentVersionId, documentId, 'document-content-hash-v7', AUTHOR_ID],
+    `INSERT INTO qc.document_versions (id, document_id, revision, state, content_hash, created_by)
+     VALUES ($1, $2, '7', 'DRAFT', NULL, $3)`,
+    [documentVersionId, documentId, AUTHOR_ID],
   );
+  await pool!.query(
+    `INSERT INTO qc.files (id, original_filename, storage_key, storage_provider, mime_type, extension, size_bytes, sha256, uploaded_by, state)
+     VALUES ($1, 'fixture-source.pdf', $2, 'test', 'application/pdf', 'pdf', 10, $3, $4, 'ACTIVE')`,
+    [sourceFileId, `test-source-${sourceFileId}`, sourceFileHash, AUTHOR_ID],
+  );
+  await pool!.query(
+    `INSERT INTO qc.document_version_files (document_version_id, file_id, file_role, linked_by)
+     VALUES ($1, $2, 'SOURCE', $3)`,
+    [documentVersionId, sourceFileId, AUTHOR_ID],
+  );
+  const sourceContentHash = documentContentDigest({ documentId, revision: '7', files: [{ fileId: sourceFileId, fileRole: 'SOURCE', sha256: sourceFileHash }] });
+  await pool!.query(
+    `UPDATE qc.document_versions SET content_hash = $2, source_binding_verified = true, state = 'APPROVED' WHERE id = $1`,
+    [documentVersionId, sourceContentHash],
+  );
+  await pool!.query(`UPDATE qc.document_versions SET state = 'EFFECTIVE', effective_at = CURRENT_TIMESTAMP WHERE id = $1`, [documentVersionId]);
   await pool!.query(
     `INSERT INTO qc.lab_test_template_document_sources (template_version_id, document_version_id, usage_type, linked_by)
      VALUES ($1, $2, 'WI', $3)`,
@@ -109,7 +128,7 @@ async function seedApprovedTemplate(): Promise<string> {
   await pool!.query(`UPDATE qc.lab_test_template_versions SET state = 'APPROVED' WHERE id = $1`, [
     versionId,
   ]);
-  return versionId;
+  return { templateVersionId: versionId, sourceContentHash };
 }
 
 async function seedUnderReviewTest(templateVersionId: string): Promise<string> {
@@ -155,7 +174,7 @@ function repository() {
 
 describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
   it('reject persists no state change without an approved policy source', async () => {
-    const templateVersionId = await seedApprovedTemplate();
+    const { templateVersionId } = await seedApprovedTemplate();
     const testId = await seedUnderReviewTest(templateVersionId);
     await expect(
       new RejectLabTestUseCase(repository()).execute({
@@ -171,7 +190,7 @@ describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
   });
 
   it('a supplied policy persists REJECTED with a snapshot, audit row and outbox event', async () => {
-    const templateVersionId = await seedApprovedTemplate();
+    const { templateVersionId } = await seedApprovedTemplate();
     const testId = await seedUnderReviewTest(templateVersionId);
     const saved = await new RejectLabTestUseCase(repository(), {
       authorize: async () => {},
@@ -217,13 +236,13 @@ describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
   });
 
   it('freezes linked WI revision and hash in execution rows when the document is superseded', async () => {
-    const templateVersionId = await seedApprovedTemplate();
+    const { templateVersionId, sourceContentHash } = await seedApprovedTemplate();
     const testId = await seedUnderReviewTest(templateVersionId);
     const context = await new PostgresControlledLabSources(db).resolve(templateVersionId);
     expect(context.documents).toHaveLength(1);
     expect(context.documents[0]).toMatchObject({
       usageType: 'WI',
-      snapshot: { revision: '7', contentHash: 'document-content-hash-v7' },
+      snapshot: { revision: '7', contentHash: sourceContentHash },
     });
     const linkedBefore = await pool!.query(
       `SELECT usage.document_version_id, usage.usage_type, usage.document_snapshot,
@@ -235,7 +254,7 @@ describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
     );
     expect(linkedBefore.rows[0]?.document_snapshot).toMatchObject({
       revision: '7',
-      contentHash: 'document-content-hash-v7',
+      contentHash: sourceContentHash,
     });
 
     const oldDocumentVersionId = context.documents[0]!.documentVersionId;
@@ -263,7 +282,7 @@ describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
     expect(linkedAfter.rows[0]?.document_version_id).toBe(oldDocumentVersionId);
     expect(linkedAfter.rows[0]?.document_snapshot).toMatchObject({
       revision: '7',
-      contentHash: 'document-content-hash-v7',
+      contentHash: sourceContentHash,
     });
     expect(linkedAfter.rows[0]?.execution_snapshot).toMatchObject([
       { documentVersionId: oldDocumentVersionId, snapshot: { revision: '7' } },
@@ -271,7 +290,7 @@ describe('laboratory governance on PostgreSQL (fail-closed policy)', () => {
   });
 
   it('a supplied retest policy links a new DRAFT to the original and preserves history', async () => {
-    const templateVersionId = await seedApprovedTemplate();
+    const { templateVersionId } = await seedApprovedTemplate();
     const originalId = await seedUnderReviewTest(templateVersionId);
     const sources = new PostgresControlledLabSources(db);
     const policy: RetestPolicy = {

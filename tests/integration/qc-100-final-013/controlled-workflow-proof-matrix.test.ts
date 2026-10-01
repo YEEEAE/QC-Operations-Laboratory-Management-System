@@ -142,6 +142,20 @@ const outboxCount = async (dedupeKey: string): Promise<number> =>
     ).rows[0].count,
   );
 
+async function seedDocumentSource(documentId: string): Promise<string> {
+  const fileId = crypto.randomUUID();
+  await pool!.query(
+    `INSERT INTO qc.files (id, original_filename, storage_key, storage_provider, mime_type, extension, size_bytes, sha256, uploaded_by, state)
+     VALUES ($1, 'controlled-source.pdf', $2, 'test', 'application/pdf', 'pdf', 10, $3, $4, 'ACTIVE')`,
+    [fileId, `test-document-source-${fileId}`, 'e'.repeat(64), AUTHOR_ID],
+  );
+  await pool!.query(
+    `INSERT INTO qc.evidence_links (file_id, subject_type, subject_id, linked_by) VALUES ($1, 'DOCUMENT_IDENTITY', $2, $3)`,
+    [fileId, documentId, AUTHOR_ID],
+  );
+  return fileId;
+}
+
 const receivingRow = async (id: string) =>
   (
     await pool!.query(
@@ -576,11 +590,12 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-create',
     });
+    const sourceFileId = await seedDocumentSource(documentId);
     const version: DocumentVersion = {
       id: versionId,
       documentId,
       revision: '1',
-      state: 'IN_REVIEW',
+      state: 'DRAFT',
       contentHash: 'proof-hash-1',
       createdBy: AUTHOR_ID,
       createdAt: new Date('2026-02-01T00:00:00Z'),
@@ -589,13 +604,15 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
     };
     await repository.createVersion({
       version,
+      sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-version',
     });
+    await repository.transition({ id: versionId, expectedVersion: 1n, actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]), action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'proof-document-submit' });
     await new ApproveVersionUseCase(repository).execute({
       actor: documentApprover(),
       versionId,
-      expectedVersion: 1n,
+      expectedVersion: 2n,
       requestId: 'proof-document-approve',
     });
     const row = (
@@ -604,7 +621,7 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
         [versionId],
       )
     ).rows[0];
-    expect(row).toMatchObject({ state: 'APPROVED', approved_by: SUPERVISOR_ID, version: '2' });
+    expect(row).toMatchObject({ state: 'APPROVED', approved_by: SUPERVISOR_ID, version: '3' });
     expect(await auditCount(versionId, 'APPROVE')).toBe(1);
   });
 
@@ -632,26 +649,29 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-create-admin',
     });
+    const sourceFileId = await seedDocumentSource(documentId);
     await repository.createVersion({
       version: {
         id: versionId,
         documentId,
         revision: '1',
-        state: 'IN_REVIEW',
+        state: 'DRAFT',
         contentHash: 'proof-hash-admin',
         createdBy: AUTHOR_ID,
         createdAt: new Date('2026-02-01T00:00:00Z'),
         version: 1n,
         files: [],
       },
+      sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-version-admin',
     });
+    await repository.transition({ id: versionId, expectedVersion: 1n, actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]), action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'proof-document-submit-admin' });
     await expect(
       new ApproveVersionUseCase(repository).execute({
         actor: adminOnly(),
         versionId,
-        expectedVersion: 1n,
+        expectedVersion: 2n,
         requestId: 'proof-document-approve-admin',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
@@ -660,7 +680,7 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
         versionId,
       ])
     ).rows[0];
-    expect(row).toMatchObject({ state: 'IN_REVIEW', version: '1' });
+    expect(row).toMatchObject({ state: 'IN_REVIEW', version: '2' });
     expect(await auditCountByRequest('proof-document-approve-admin')).toBe(0);
   });
 

@@ -270,10 +270,12 @@
 
 ## 7) Change Requests / Documents
 - إنشاء Change Request لنوع `DOCUMENT_VERSION` صار contextual؛ لا تعرض UUID/JSON/fieldPath/dataType كمدخلات تشغيلية للمستخدم.
-- allowlist الحالية للحقول: `revision`, `changeSummary`, `contentHash` فقط.
+- allowlist الحالية للحقول: `revision`, `changeSummary` فقط؛ digest مرتبط خادميًا بملفات المصدر ولا يقبل كتغيير من العميل.
 - `targetId/version/snapshot/currentValue/dataType` تُشتق خادميًا.
 - مستودع الإنشاء يعيد قراءة النسخة `FOR UPDATE` ويرفض stale version.
 - الموافقات على الوثائق وتفعيل النسخ تبقى حسب P-05/state/version/signature rules.
+- `document_versions.content_hash` يُشتق من document identity + revision + ملفات المصدر النشطة وSHA-256 المخزنة؛ submit/approve يعيدان احتسابه، وروابط الملفات غير قابلة للتغيير بعد الإنشاء. `0043_controlled_document_source_binding` مصدر محلي فقط حتى اختبار PG18 وفحص schema المطبق.
+- الاستخدامات الجديدة للنسخ الفعالة تحفظ source revision/digest/file manifest في usage snapshots append-only. `APPROVED` لا يفعّل النسخة تلقائيًا؛ effectivity/effective-date policy ما زالت deny-by-default بانتظار مالك Document Control/QMS (SD-023/PD-13). تعريف approved file وscan/MIME والاحتفاظ ما زال policy-dependent.
 - Document Version/Approval/Change Request مرتبطة بعقد Journey Context/Handoff read-only وسجل Audit.
 
 ## 8) Backup / Recovery
@@ -491,3 +493,4 @@
 - Deterministic synthetic eval dataset is `qc-ai-governance-v2` / `4.0.0` (33 cases; hallucination, sensitive-data rejection, prompt injection, context switching, consent/policy gates, and Arabic/English included). Node `24.20.0`, AI-focused suites `90/90 PASS`, every category disposition error rate `0%`; prompt `qc-ai-prompt-v2`, criteria `1.0.0`, evaluated model `deterministic-fake-provider@1` (no live model). Result: `audit/100-percent/ai-evals/results-2026-09-24.json`.
 - `AI_EXTERNAL_PROCESSING_APPROVED=false` remains the default. Provider location/retention/deletion terms and live-model behavior remain `NOT VERIFIED` until supplied/accepted through the authorized processing decision and exact-SHA evaluation; human UAT remains `NOT RUN`.
 - QC-ADP-11 binds provider URLs to exact official Groq/Gemini endpoints; this is a technical destination allowlist, not processing approval. PD-31 remains PARTIAL; no external provider call or live eval was made. On candidate HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`, route acceptance is 6/10 (60%); authenticated least-privilege denial E2E passes on disposable PG18.6, while advisory audit remains blocked by registry DNS and owner policy/live eval remain approval-blocked. Live UI accessibility/readability is NOT VERIFIED. Details: `audit/2026-09-24/QC-ADP-11-handoff.md`.
+- **2026-10-01 — QC-ADP26-24 / document source binding:** Changed: server-derived revision/file fingerprints, approval recomputation, verified immutable usage snapshots, and no browser-proposed digest/source claim. Evidence: focused 21/21 and production build PASS; PostgreSQL18 BLOCKED by unavailable container runtime; local authenticated page returned 503 for missing runtime configuration, browser/AT/UAT NOT VERIFIED; provider schema NOT VERIFIED. SD-023/PD-13 effectivity and file/source approval-retention rules remain owner-dependent. Handoff: `audit/2026-09-30/handoff-QC-ADP26-24.md`. State: PARTIAL.

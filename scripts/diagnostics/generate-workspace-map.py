@@ -35,6 +35,10 @@ ENGINEERING_DOCS = {
 }
 
 
+def escape_path(path: str) -> str:
+    return path.replace("\r", "\\r").replace("\n", "\\n")
+
+
 def included(path: str) -> bool:
     """Leave out tests and ignored machine output; Git handles ignored paths."""
     name = Path(path).name
@@ -157,7 +161,7 @@ def main() -> None:
             "Git-tracked and project-local untracked files are listed; tests, test fixtures, "
             "browser captures, and ignored build/dependency output are excluded.\n\n"
             + "\n".join(
-                f"- `{path.replace(chr(13), r'\r').replace(chr(10), r'\n')}` — {purpose(path)}."
+                f"- `{escape_path(path)}` — {purpose(path)}."
                 for path in paths
             )
             + "\n"

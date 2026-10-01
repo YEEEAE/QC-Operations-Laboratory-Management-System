@@ -494,6 +494,10 @@ export interface InspectionTemplateDocumentSourcesTable {
   usage_type: string;
   linked_by: string;
   linked_at: Generated<Date>;
+  source_revision: string | null;
+  source_content_hash: string | null;
+  source_files_snapshot: unknown | null;
+  source_snapshot_verified: Generated<boolean>;
 }
 export interface LabTestTemplateDocumentSourcesTable {
   id: Generated<string>;
@@ -502,6 +506,10 @@ export interface LabTestTemplateDocumentSourcesTable {
   usage_type: string;
   linked_by: string;
   linked_at: Generated<Date>;
+  source_revision: string | null;
+  source_content_hash: string | null;
+  source_files_snapshot: unknown | null;
+  source_snapshot_verified: Generated<boolean>;
 }
 export interface LabTestTemplatesTable {
   id: Generated<string>;
@@ -698,6 +706,10 @@ export interface LabDocumentUsageTable {
   document_version_id: string;
   usage_type: string;
   document_snapshot: unknown | null;
+  source_revision: string | null;
+  source_content_hash: string | null;
+  source_files_snapshot: unknown | null;
+  source_snapshot_verified: Generated<boolean>;
   created_at: Generated<Date>;
 }
 export interface EquipmentTable {
@@ -825,6 +837,7 @@ export interface DocumentVersionsTable {
   void_reason: string | null;
   change_summary: string | null;
   content_hash: string | null;
+  source_binding_verified: Generated<boolean>;
   created_by: string;
   created_at: Generated<Date>;
   version: Generated<bigint>;

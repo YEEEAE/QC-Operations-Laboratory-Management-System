@@ -21,7 +21,7 @@ try {
   denied = error instanceof AppError && error.category === 'AUTHORIZATION';
 }
 
-let values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '' };
+let values = { templateCode: '', versionNo: '', name: '', description: '' };
 let reauthenticationSecret = '';
 let failure: FormFailure | null = null;
 
@@ -32,8 +32,6 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     versionNo: field(formData, 'versionNo'),
     name: field(formData, 'name'),
     description: field(formData, 'description'),
-    contentHash: field(formData, 'contentHash'),
-    sourceDocument: field(formData, 'sourceDocument'),
     // Keep credentials out of the retained form state so they can never be
     // echoed into SSR output after a failed request.
   };
@@ -45,15 +43,13 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
       versionNo: values.versionNo,
       name: values.name,
       ...(values.description ? { description: values.description } : {}),
-      ...(values.contentHash ? { contentHash: values.contentHash } : {}),
-      ...(values.sourceDocument ? { sourceDocument: values.sourceDocument } : {}),
       ...(reauthenticationSecret ? { reauthenticationSecret } : {}),
       requestId: Astro.locals.requestContext?.requestId ?? `admin-create-${Date.now()}`,
     });
     const id = extractDetailId(created);
     if (id) return Astro.redirect(`/quarantine/admin/${id}`, 303);
     templates = await templateReadDependencies().list.execute({ actor });
-    values = { templateCode: '', versionNo: '', name: '', description: '', contentHash: '', sourceDocument: '' };
+    values = { templateCode: '', versionNo: '', name: '', description: '' };
     reauthenticationSecret = '';
   } catch (error) {
     failure = toFormFailure(error, {
@@ -177,10 +173,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
             {failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}
             <label for="templateDescription">Description<textarea id="templateDescription" name="description" rows="3">{values.description}</textarea></label>
             </fieldset>
-            <details><summary>Optional controlled references</summary>
-            <label for="contentHash">Content hash (optional)<input id="contentHash" name="contentHash" value={values.contentHash} autocomplete="off" /></label>
-            <label for="sourceDocument">Source document (optional)<input id="sourceDocument" name="sourceDocument" value={values.sourceDocument} autocomplete="off" /></label>
-            </details>
+            <p class="note">Source document evidence is bound through Document Control. This form does not accept a browser-provided digest or free-text source reference.</p>
             <fieldset><legend>E-Signature</legend>
             <label for="reauthenticationSecret">Password confirmation{isAuthority && <span aria-hidden="true"> *</span>}<span class="hint" id="reauthenticationSecret-help">Required for Supervisor, Manager, yazeed. Never stored as evidence.</span><input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" required={isAuthority} aria-invalid={invalid('reauthenticationSecret')} aria-describedby={describedBy('reauthenticationSecret')} /></label>
             {failure?.fieldErrors.reauthenticationSecret && <p class="field-error" id="reauthenticationSecret-error">{failure.fieldErrors.reauthenticationSecret}</p>}
@@ -216,8 +209,6 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
           versionNo: String(data.get('versionNo') ?? ''),
           name: String(data.get('name') ?? ''),
           description: String(data.get('description') ?? '') || undefined,
-          contentHash: String(data.get('contentHash') ?? '') || undefined,
-          sourceDocument: String(data.get('sourceDocument') ?? '') || undefined,
           reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') || undefined,
         }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>,
       onSuccess: (outcome) => {

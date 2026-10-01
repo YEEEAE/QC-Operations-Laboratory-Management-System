@@ -8,12 +8,8 @@ import {
 } from '../../../src/modules/change-requests/application/document-version-change-fields.js';
 
 describe('DOCUMENT_VERSION change field allowlist (Prompt 2)', () => {
-  it('allows exactly revision, changeSummary, and contentHash', () => {
-    expect([...DOCUMENT_VERSION_CHANGE_FIELDS]).toEqual([
-      'revision',
-      'changeSummary',
-      'contentHash',
-    ]);
+  it('allows only the editable revision metadata', () => {
+    expect([...DOCUMENT_VERSION_CHANGE_FIELDS]).toEqual(['revision', 'changeSummary']);
   });
 
   it('accepts the revision field', () => {
@@ -26,9 +22,9 @@ describe('DOCUMENT_VERSION change field allowlist (Prompt 2)', () => {
     expect(() => assertDocumentVersionChangeField('changeSummary')).not.toThrow();
   });
 
-  it('accepts the contentHash field', () => {
-    expect(isDocumentVersionChangeField('contentHash')).toBe(true);
-    expect(() => assertDocumentVersionChangeField('contentHash')).not.toThrow();
+  it('rejects a client proposed digest', () => {
+    expect(isDocumentVersionChangeField('contentHash')).toBe(false);
+    expect(() => assertDocumentVersionChangeField('contentHash')).toThrow();
   });
 
   it('rejects any other field with a safe validation error', () => {

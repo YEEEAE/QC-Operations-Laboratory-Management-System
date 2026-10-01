@@ -10,8 +10,10 @@ import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
 import type { DocumentIdentity } from '../domain/document.js';
 import type { DocumentVersion, DocumentVersionFile } from '../domain/document-version.js';
+import { documentContentDigest } from '../domain/document-content-digest.js';
+import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { DocumentVersionAction } from '../domain/document-state.js';
-import type { DocumentListFilter, DocumentRepository } from '../ports/repository.js';
+import type { DocumentListFilter, DocumentRepository, DocumentSourceFileOption } from '../ports/repository.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 const identityMap = (row: DatabaseRow<'document_identities'>, currentEffectiveVersionId?: string): DocumentIdentity => ({
@@ -28,11 +30,22 @@ const identityMap = (row: DatabaseRow<'document_identities'>, currentEffectiveVe
   ...(currentEffectiveVersionId ? { currentEffectiveVersionId } : {}),
 });
 
-const fileMap = (row: DatabaseRow<'document_version_files'>): DocumentVersionFile => ({
+type JoinedDocumentFile = DatabaseRow<'document_version_files'> & {
+  source_filename: string;
+  source_size_bytes: bigint;
+  source_sha256: string;
+  source_state: string;
+};
+
+const fileMap = (row: JoinedDocumentFile): DocumentVersionFile => ({
   id: row.id,
   documentVersionId: row.document_version_id,
   fileId: row.file_id,
   fileRole: row.file_role,
+  originalFilename: row.source_filename,
+  sizeBytes: Number(row.source_size_bytes),
+  sha256: row.source_sha256,
+  state: row.source_state,
   linkedAt: row.linked_at,
   linkedBy: row.linked_by,
 });
@@ -51,6 +64,7 @@ const versionMap = (row: DatabaseRow<'document_versions'>, files: readonly Docum
   ...(row.void_reason ? { voidReason: row.void_reason } : {}),
   ...(row.change_summary ? { changeSummary: row.change_summary } : {}),
   ...(row.content_hash ? { contentHash: row.content_hash } : {}),
+  sourceBindingVerified: row.source_binding_verified,
   createdBy: row.created_by,
   createdAt: row.created_at,
   updatedAt: row.created_at,
@@ -81,6 +95,24 @@ export class PostgresDocumentRepository implements DocumentRepository {
     return identityMap(row, effective?.id);
   }
 
+  async listSourceFiles(documentId: string): Promise<readonly DocumentSourceFileOption[]> {
+    const rows = await this.database
+      .selectFrom('evidence_links as evidence')
+      .innerJoin('files as file', 'file.id', 'evidence.file_id')
+      .select(['file.id', 'file.original_filename', 'file.size_bytes', 'file.uploaded_at', 'file.sha256'])
+      .distinct()
+      .where('evidence.subject_type', '=', 'DOCUMENT_IDENTITY')
+      .where('evidence.subject_id', '=', documentId)
+      .where('evidence.removed_at', 'is', null)
+      .where('file.state', '=', 'ACTIVE')
+      .orderBy('file.original_filename')
+      .orderBy('file.id')
+      .execute();
+    return rows
+      .filter((row) => /^[0-9a-f]{64}$/i.test(row.sha256))
+      .map((row) => ({ id: row.id, originalFilename: row.original_filename, sizeBytes: Number(row.size_bytes), uploadedAt: row.uploaded_at }));
+  }
+
   async listDocuments(input: { actor: ActorContext; filter?: DocumentListFilter }): Promise<readonly DocumentIdentity[]> {
     let query = this.database.selectFrom('document_identities').selectAll().orderBy('updated_at', 'desc').orderBy('id', 'desc');
     if (input.filter?.documentType) query = query.where('document_type', '=', input.filter.documentType) as typeof query;
@@ -99,15 +131,42 @@ export class PostgresDocumentRepository implements DocumentRepository {
     return result;
   }
 
-  async createVersion(input: { version: DocumentVersion; actor: ActorContext; requestId: string }): Promise<DocumentVersion> {
+  async createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; actor: ActorContext; requestId: string }): Promise<DocumentVersion> {
     try {
       return await this.database.transaction().execute(async (tx) => {
         const version = input.version;
-        const row = await tx.insertInto('document_versions').values({ id: version.id, document_id: version.documentId, revision: version.revision, state: version.state, effective_at: version.effectiveAt ?? null, approved_at: version.approvedAt ?? null, approved_by: version.approvedBy ?? null, superseded_at: null, archived_at: null, voided_at: null, void_reason: null, change_summary: version.changeSummary ?? null, content_hash: version.contentHash ?? null, created_by: version.createdBy, version: 1n }).returningAll().executeTakeFirstOrThrow(); 
-        if (version.files.length) await tx.insertInto('document_version_files').values(version.files.map((file) => ({ id: file.id, document_version_id: version.id, file_id: file.fileId, file_role: file.fileRole, linked_at: file.linkedAt, linked_by: file.linkedBy }))).execute();
-        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: version.id, action: 'CREATE_DOCUMENT_VERSION', newState: 'DRAFT', requestId: input.requestId });
-        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_CREATED', aggregateType: 'DOCUMENT_VERSION', aggregateId: version.id, payload: { documentId: version.documentId, revision: version.revision }, dedupeKey: `document-version-created:${version.id}` });
-        return versionMap(row);
+        if (version.state !== 'DRAFT') throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        const selected = input.sourceFiles;
+        if (!selected.length || new Set(selected.map((file) => file.fileId)).size !== selected.length)
+          throw new AppError('VALIDATION_FAILED', { userSafe: true, fieldErrors: { files: ['select one or more unique source files'] } });
+        const sourceRows = await tx
+          .selectFrom('evidence_links as evidence')
+          .innerJoin('files as file', 'file.id', 'evidence.file_id')
+          .select(['file.id', 'file.original_filename', 'file.size_bytes', 'file.sha256', 'file.state'])
+          .where('evidence.subject_type', '=', 'DOCUMENT_IDENTITY')
+          .where('evidence.subject_id', '=', version.documentId)
+          .where('evidence.removed_at', 'is', null)
+          .where('file.state', '=', 'ACTIVE')
+          .where('file.id', 'in', selected.map((file) => file.fileId))
+          .forUpdate()
+          .execute();
+        if (sourceRows.length !== selected.length) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        const rowsById = new Map(sourceRows.map((source) => [source.id, source]));
+        const digestFiles = selected.map((source) => {
+          const stored = rowsById.get(source.fileId);
+          if (!stored) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+          return { fileId: stored.id, fileRole: source.fileRole, sha256: stored.sha256 };
+        });
+        const contentHash = documentContentDigest({ documentId: version.documentId, revision: version.revision, files: digestFiles });
+        const linkedFiles: DocumentVersionFile[] = selected.map((source) => {
+          const stored = rowsById.get(source.fileId)!;
+          return { id: uuidv7(), documentVersionId: version.id, fileId: source.fileId, fileRole: source.fileRole, originalFilename: stored.original_filename, sizeBytes: Number(stored.size_bytes), sha256: stored.sha256, state: stored.state, linkedAt: version.createdAt, linkedBy: input.actor.id };
+        });
+        const row = await tx.insertInto('document_versions').values({ id: version.id, document_id: version.documentId, revision: version.revision, state: version.state, effective_at: version.effectiveAt ?? null, approved_at: version.approvedAt ?? null, approved_by: version.approvedBy ?? null, superseded_at: null, archived_at: null, voided_at: null, void_reason: null, change_summary: version.changeSummary ?? null, content_hash: contentHash, source_binding_verified: true, created_by: version.createdBy, version: 1n }).returningAll().executeTakeFirstOrThrow();
+        await tx.insertInto('document_version_files').values(linkedFiles.map((file) => ({ id: file.id, document_version_id: version.id, file_id: file.fileId, file_role: file.fileRole, linked_at: file.linkedAt, linked_by: file.linkedBy }))).execute();
+        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: version.id, action: 'CREATE_DOCUMENT_VERSION', newState: 'DRAFT', requestId: input.requestId, payload: { revision: version.revision, contentHash, sourceFileIds: selected.map((file) => file.fileId) } });
+        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_CREATED', aggregateType: 'DOCUMENT_VERSION', aggregateId: version.id, payload: { documentId: version.documentId, revision: version.revision, contentHash }, dedupeKey: `document-version-created:${version.id}` });
+        return versionMap(row, linkedFiles);
       });
     } catch (error) { throw translateDatabaseError(error); }
   }
@@ -116,22 +175,26 @@ export class PostgresDocumentRepository implements DocumentRepository {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return undefined;
     const row = await this.database.selectFrom('document_versions').selectAll().where('id', '=', id).executeTakeFirst();
     if (!row) return undefined;
-    const files = await this.database.selectFrom('document_version_files').selectAll().where('document_version_id', '=', id).orderBy('linked_at').execute();
-    return versionMap(row, files.map(fileMap));
+    return versionMap(row, await this.listVersionFiles(this.database, id));
   }
 
   async listVersions(documentId: string): Promise<readonly DocumentVersion[]> {
     const rows = await this.database.selectFrom('document_versions').selectAll().where('document_id', '=', documentId).orderBy('created_at', 'desc').execute();
-    return Promise.all(rows.map(async (row) => versionMap(row, (await this.database.selectFrom('document_version_files').selectAll().where('document_version_id', '=', row.id).orderBy('linked_at').execute()).map(fileMap))));
+    return Promise.all(rows.map(async (row) => versionMap(row, await this.listVersionFiles(this.database, row.id))));
   }
 
-  async updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; revision: string; changeSummary?: string; contentHash?: string; now: Date; requestId: string }): Promise<DocumentVersion> {
+  async updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion> {
     try {
       return await this.database.transaction().execute(async (tx) => {
-        const row = await tx.updateTable('document_versions').set({ revision: input.revision.trim(), change_summary: input.changeSummary?.trim() || null, content_hash: input.contentHash?.trim() || null, version: input.expectedVersion + 1n }).where('id', '=', input.id).where('version', '=', input.expectedVersion).where('state', '=', 'DRAFT').returningAll().executeTakeFirst();
+        const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).where('state', '=', 'DRAFT').forUpdate().executeTakeFirst();
+        if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        const files = await this.listVersionFiles(tx, input.id, true);
+        const contentHash = documentContentDigest({ documentId: old.document_id, revision: input.revision, files });
+        const row = await tx.updateTable('document_versions').set({ revision: input.revision.trim(), change_summary: input.changeSummary?.trim() || null, content_hash: contentHash, source_binding_verified: true, version: input.expectedVersion + 1n }).where('id', '=', input.id).where('version', '=', input.expectedVersion).where('state', '=', 'DRAFT').returningAll().executeTakeFirst();
         if (!row) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: 'EDIT_DOCUMENT_DRAFT', oldState: 'DRAFT', newState: 'DRAFT', requestId: input.requestId });
-        return versionMap(row);
+        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: 'EDIT_DOCUMENT_DRAFT', oldState: 'DRAFT', newState: 'DRAFT', requestId: input.requestId, payload: { revision: input.revision.trim(), contentHash } });
+        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_DRAFT_UPDATED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { revision: input.revision.trim(), contentHash }, dedupeKey: `document-version-draft-updated:${input.id}:v${input.expectedVersion + 1n}` });
+        return versionMap(row, files);
       });
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
   }
@@ -153,6 +216,12 @@ export class PostgresDocumentRepository implements DocumentRepository {
       const commit = async (tx: DatabaseTransaction) => {
         const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).forUpdate().executeTakeFirst();
         if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        if (input.action === 'APPROVE') {
+          const files = await this.listVersionFiles(tx, input.id, true);
+          const expectedDigest = documentContentDigest({ documentId: old.document_id, revision: old.revision, files });
+          if (files.some((file) => file.state !== 'ACTIVE') || old.content_hash !== expectedDigest)
+            throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        }
         const values: Record<string, unknown> = { state: input.toState, version: input.expectedVersion + 1n };
         if (input.action === 'APPROVE') { values.approved_at = input.now; values.approved_by = input.actor.id; }
         if (input.action === 'MAKE_EFFECTIVE') values.effective_at = input.now;
@@ -161,9 +230,10 @@ export class PostgresDocumentRepository implements DocumentRepository {
         if (input.action === 'VOID') { values.voided_at = input.now; values.void_reason = input.reason?.trim() ?? null; }
         const row = await tx.updateTable('document_versions').set(values as never).where('id', '=', input.id).where('version', '=', input.expectedVersion).returningAll().executeTakeFirst();
         if (!row) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: input.action, transitionId: `TR-DOC-${input.action}`, oldState: old.state, newState: input.toState, reason: input.reason, requestId: input.requestId });
-        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_CHANGED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { action: input.action, state: input.toState }, dedupeKey: `document-version:${input.id}:v${input.expectedVersion + 1n}` });
-        return versionMap(row);
+        const bindingPayload = input.action === 'APPROVE' ? { revision: old.revision, contentHash: old.content_hash } : undefined;
+        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: input.action, transitionId: `TR-DOC-${input.action}`, oldState: old.state, newState: input.toState, reason: input.reason, requestId: input.requestId, ...(bindingPayload ? { payload: bindingPayload } : {}) });
+        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_CHANGED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { action: input.action, state: input.toState, ...(bindingPayload ?? {}) }, dedupeKey: `document-version:${input.id}:v${input.expectedVersion + 1n}` });
+        return versionMap(row, await this.listVersionFiles(tx, input.id));
       };
       return transaction ? await commit(transaction) : await this.database.transaction().execute(commit);
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
@@ -191,4 +261,18 @@ export class PostgresDocumentRepository implements DocumentRepository {
 
   private auditFor(tx: Transaction<DatabaseSchema>): AuditRepository | undefined { return this.audit instanceof PostgresAuditRepository ? new PostgresAuditRepository(tx) : this.audit; }
   private outboxFor(tx: Transaction<DatabaseSchema>): OutboxRepository | undefined { return this.outbox instanceof PostgresOutboxRepository ? new PostgresOutboxRepository(tx) : this.outbox; }
+
+  private async listVersionFiles(db: Kysely<DatabaseSchema> | Transaction<DatabaseSchema>, versionId: string, lock = false): Promise<DocumentVersionFile[]> {
+    const query = db
+      .selectFrom('document_version_files as link')
+      .innerJoin('files as file', 'file.id', 'link.file_id')
+      .select([
+        'link.id', 'link.document_version_id', 'link.file_id', 'link.file_role', 'link.linked_at', 'link.linked_by',
+        'file.original_filename as source_filename', 'file.size_bytes as source_size_bytes', 'file.sha256 as source_sha256', 'file.state as source_state',
+      ])
+      .where('link.document_version_id', '=', versionId)
+      .orderBy('link.linked_at');
+    const rows = lock ? await query.forUpdate().execute() : await query.execute();
+    return rows.map((row) => fileMap(row as JoinedDocumentFile));
+  }
 }

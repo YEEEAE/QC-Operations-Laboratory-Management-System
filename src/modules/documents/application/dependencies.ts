@@ -14,6 +14,7 @@ import { SupersedeVersionUseCase } from './supersede-version.js';
 import { UpdateVersionDraftUseCase } from './update-version-draft.js';
 import { VoidVersionUseCase } from './void-version.js';
 import { ListDocumentReviewQueueUseCase } from './list-review-queue.js';
+import { ListDocumentSourceFilesUseCase } from './list-source-files.js';
 
 export function documentsReadDependencies() {
   const database = getDatabase();
@@ -22,6 +23,7 @@ export function documentsReadDependencies() {
     get: new GetDocumentUseCase(repository),
     list: new ListDocumentsUseCase(repository),
     reviewQueue: new ListDocumentReviewQueueUseCase(new PostgresDocumentReviewQueueQuery(database)),
+    sourceFiles: new ListDocumentSourceFilesUseCase(repository),
   };
 }
 

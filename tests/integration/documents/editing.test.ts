@@ -6,6 +6,9 @@ import type { DocumentRepository } from '../../../src/modules/documents/ports/re
 import type { DocumentIdentity } from '../../../src/modules/documents/domain/document.js';
 import type { DocumentVersion } from '../../../src/modules/documents/domain/document-version.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
+import { documentContentDigest } from '../../../src/modules/documents/domain/document-content-digest.js';
+const sourceFileId = '01900000-0000-7000-8000-000000000099';
+const sourceFile = { id: sourceFileId, originalFilename: 'approved-instruction.pdf', sizeBytes: 120, uploadedAt: new Date('2026-01-01T00:00:00Z'), sha256: 'a'.repeat(64), state: 'ACTIVE' as const };
 
 const author: ActorContext = {
   id: '01900000-0000-7000-8000-000000000001', accountState: 'ACTIVE', roles: ['EMPLOYEE'],
@@ -21,14 +24,19 @@ function repository(): DocumentRepository & { documents: DocumentIdentity[]; ver
     ...state,
     async createDocument(input) { state.documents.push(input.document); return input.document; },
     async getDocument(id) { return state.documents.find((item) => item.id === id); },
+    async listSourceFiles() { return [sourceFile]; },
     async listDocuments() { return state.documents; },
-    async createVersion(input) { state.versions.push(input.version); return input.version; },
+    async createVersion(input) {
+      const files = input.sourceFiles.map((source) => ({ id: '01900000-0000-7000-8000-000000000098', documentVersionId: input.version.id, fileId: source.fileId, fileRole: source.fileRole, originalFilename: sourceFile.originalFilename, sizeBytes: sourceFile.sizeBytes, sha256: sourceFile.sha256, state: sourceFile.state, linkedAt: input.version.createdAt, linkedBy: input.actor.id }));
+      const version = { ...input.version, sourceBindingVerified: true, files, contentHash: documentContentDigest({ documentId: input.version.documentId, revision: input.version.revision, files }) };
+      state.versions.push(version); return version;
+    },
     async getVersion(id) { return state.versions.find((item) => item.id === id); },
     async listVersions(documentId) { return state.versions.filter((item) => item.documentId === documentId); },
     async updateDraft(input) {
       const current = state.versions.find((item) => item.id === input.id);
       if (!current || current.version !== input.expectedVersion || current.state !== 'DRAFT') throw new Error('stale or immutable');
-      const updated = { ...current, revision: input.revision, changeSummary: input.changeSummary, contentHash: input.contentHash, version: current.version + 1n, updatedAt: input.now };
+      const updated = { ...current, revision: input.revision, changeSummary: input.changeSummary, sourceBindingVerified: true, contentHash: documentContentDigest({ documentId: current.documentId, revision: input.revision, files: current.files }), version: current.version + 1n, updatedAt: input.now };
       state.versions.splice(state.versions.indexOf(current), 1, updated);
       return updated;
     },
@@ -47,9 +55,9 @@ describe('controlled document draft editing', () => {
   it('keeps identity separate and permits editing only on a Draft version', async () => {
     const repo = repository();
     const document = await new CreateDocumentUseCase(repo, () => new Date('2026-01-01T00:00:00Z')).execute({ actor: author, documentNo: 'WI-001', documentType: 'WI', title: 'Sampling work instruction', requestId: 'req-1' });
-    const draft = await new CreateVersionUseCase(repo, () => new Date('2026-01-01T00:00:00Z')).execute({ actor: author, documentId: document.id, revision: '1', changeSummary: 'Initial draft', requestId: 'req-2' });
+    const draft = await new CreateVersionUseCase(repo, () => new Date('2026-01-01T00:00:00Z')).execute({ actor: author, documentId: document.id, revision: '1', changeSummary: 'Initial draft', fileIds: [sourceFileId], requestId: 'req-2' });
     expect(draft.documentId).toBe(document.id);
-    const edited = await new UpdateVersionDraftUseCase(repo, () => new Date('2026-01-02T00:00:00Z')).execute({ actor: author, versionId: draft.id, expectedVersion: 1n, revision: '1', changeSummary: 'Clarified scope', contentHash: 'hash-1', requestId: 'req-3' });
+    const edited = await new UpdateVersionDraftUseCase(repo, () => new Date('2026-01-02T00:00:00Z')).execute({ actor: author, versionId: draft.id, expectedVersion: 1n, revision: '1', changeSummary: 'Clarified scope', requestId: 'req-3' });
     expect(edited.version).toBe(2n);
     expect(edited.state).toBe('DRAFT');
   });
@@ -57,7 +65,7 @@ describe('controlled document draft editing', () => {
   it('denies editing after the version is approved', async () => {
     const repo = repository();
     const document = await new CreateDocumentUseCase(repo).execute({ actor: author, documentNo: 'WI-002', documentType: 'WI', title: 'Approved instruction', requestId: 'req-4' });
-    const draft = await new CreateVersionUseCase(repo).execute({ actor: author, documentId: document.id, revision: '1', requestId: 'req-5' });
+    const draft = await new CreateVersionUseCase(repo).execute({ actor: author, documentId: document.id, revision: '1', fileIds: [sourceFileId], requestId: 'req-5' });
     await repo.transition({ id: draft.id, expectedVersion: 1n, actor: author, toState: 'APPROVED', action: 'APPROVE', now: new Date('2026-01-03T00:00:00Z'), requestId: 'req-6' });
     await expect(new UpdateVersionDraftUseCase(repo).execute({ actor: author, versionId: draft.id, expectedVersion: 2n, revision: '2', requestId: 'req-7' })).rejects.toThrow();
   });

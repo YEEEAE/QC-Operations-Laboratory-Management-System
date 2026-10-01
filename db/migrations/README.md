@@ -2,8 +2,10 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current source head is `0042_immutable_lab_equipment_usage` (42
-migration files). Migration 0042 makes laboratory equipment usage snapshots append-only.
+Current workspace source head is `0043_controlled_document_source_binding` (43
+migration files). Migration 0043 adds server-bound document file/revision digests,
+immutable usage snapshots, and file digest metadata guards. It is not verified as
+applied to any provider database. Migration 0042 makes laboratory equipment usage snapshots append-only.
 Migration 0041 adds partial indexes for the bounded,
 actor-scoped document review queue. Migration 0040 adds signed provider-evidence identity and
 append-only constraints; it has not been applied to a live database. Historical

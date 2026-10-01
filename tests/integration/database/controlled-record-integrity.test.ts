@@ -3,6 +3,7 @@ import { createPool } from '../../../src/shared/database/pool.js';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
+import { documentContentDigest } from '../../../src/modules/documents/domain/document-content-digest.js';
 
 const ACTOR_ID = '01900000-0000-7000-8000-00000000e001';
 const DOCUMENT_ID = '01900000-0000-7000-8000-00000000e002';
@@ -41,7 +42,7 @@ describe('QC-CLOSURE-009 controlled-record integrity', () => {
     );
     await pool.query(
       `INSERT INTO qc.document_versions (id, document_id, revision, state, content_hash, created_by)
-       VALUES ($1, $2, '1', 'APPROVED', 'hash-1', $3)`,
+       VALUES ($1, $2, '1', 'DRAFT', NULL, $3)`,
       [DOCUMENT_VERSION_ID, DOCUMENT_ID, ACTOR_ID],
     );
     await pool.query(
@@ -49,15 +50,29 @@ describe('QC-CLOSURE-009 controlled-record integrity', () => {
        VALUES ($1, $2, '2', 'DRAFT', 'hash-2', $3)`,
       [DRAFT_DOCUMENT_VERSION_ID, DOCUMENT_ID, ACTOR_ID],
     );
-    await pool.query(`UPDATE qc.document_versions SET state = 'EFFECTIVE' WHERE id = $1`, [
-      DOCUMENT_VERSION_ID,
-    ]);
     await pool.query(
       `INSERT INTO qc.files
         (id, original_filename, storage_key, storage_provider, mime_type, size_bytes, sha256, uploaded_by, state)
        VALUES ($1, 'procedure.pdf', 'qc-029/document-v2.pdf', 'OBJECT_STORAGE', 'application/pdf', 12, repeat('b', 64), $2, 'ACTIVE')`,
       [DOCUMENT_FILE_ID, ACTOR_ID],
     );
+    await pool.query(
+      `INSERT INTO qc.document_version_files (document_version_id, file_id, file_role, linked_by)
+       VALUES ($1, $2, 'SOURCE', $3)`,
+      [DOCUMENT_VERSION_ID, DOCUMENT_FILE_ID, ACTOR_ID],
+    );
+    const sourceContentHash = documentContentDigest({
+      documentId: DOCUMENT_ID,
+      revision: '1',
+      files: [{ fileId: DOCUMENT_FILE_ID, fileRole: 'SOURCE', sha256: 'b'.repeat(64) }],
+    });
+    await pool.query(
+      `UPDATE qc.document_versions SET state = 'APPROVED', content_hash = $2, source_binding_verified = true WHERE id = $1`,
+      [DOCUMENT_VERSION_ID, sourceContentHash],
+    );
+    await pool.query(`UPDATE qc.document_versions SET state = 'EFFECTIVE' WHERE id = $1`, [
+      DOCUMENT_VERSION_ID,
+    ]);
     await pool.query(
       `INSERT INTO qc.inspection_templates (id, template_code, name, active, created_by)
        VALUES ($1, 'TMPL-CLOSURE-009', 'Inspection template', true, $2)`,

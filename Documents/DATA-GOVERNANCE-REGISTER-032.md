@@ -1,7 +1,7 @@
 # Data Governance and Lineage Register — QC-100-FINAL-032-A
 
-**Status:** Source-derived governance map for candidate `a0d0661294cb7cba17d8a9a9068a9f696ec197cf`  
-**Schema source:** PostgreSQL schema `qc`; migration head `0034_template_document_link_variable_scope`
+**Status:** Source-derived governance map; QC-ADP26-24 worktree changes are uncommitted and not a releasable candidate
+**Schema source:** PostgreSQL schema `qc`; current workspace migration head `0043_controlled_document_source_binding` (NOT VERIFIED as provider-applied)
 **Applied provider schema:** NOT VERIFIED  
 **Purpose:** Route each persisted entity family to its owner, authoritative source, lineage, classification rule, steward, and safe correction path. This register does not create permissions, data retention periods, scientific rules, or approval authority.
 
@@ -47,6 +47,25 @@ ownership.
 | UAT Evidence (`uat-evidence`) | `uat_cycles`, `uat_session_evidence`, `uat_defects`, `uat_acceptances` | UUID PKs; candidate/cycle/session/evidence FKs and status/version checks | Human participant evidence tied to frozen candidate; technical tests cannot synthesize acceptance | Personal and session evidence SENSITIVE; tokens SECRET. Steward: UAT process owner; genuine acceptance remains external and excluded from this task. |
 | AI Advisory (`ai-advisory`) | No AI-interaction table is created by migrations `0001`–`0034` | No persisted entity key or database constraint in the current source schema | Advisory data remains in the implemented application/provider boundary; no database persistence is inferred from the logical model heading | Any future field classification and retention must follow the dictionary and approved processing/retention policy. Steward: Admin function for configuration; external-processing approval remains open. |
 | System migration ledger (`shared/database`) | `schema_migrations` | Migration identity/name key and SHA-256 checksum ledger (per migration runner); not a business entity | Forward-only SQL migration files are source schema truth; applied ledger is database-specific truth | Operational metadata INTERNAL; connection credentials SECRET. Steward: Database Engineering; production changes require separate authorization. |
+
+### QC-ADP26-24 controlled-document source binding
+
+`document_versions.content_hash` is now derived server-side from the document
+identity, revision, and sorted linked source-file IDs/roles/SHA-256 values. A
+version can be submitted or approved only while it has active bound files and
+the stored digest recomputes exactly. The browser cannot propose the digest.
+Migration 0043 snapshots the effective source revision, digest, and file
+manifest on inspection-template/document and laboratory-document usage inserts;
+the existing restrictive foreign keys and append-only triggers preserve the
+underlying file links and snapshots. The template administration form no longer
+accepts a free-text digest or source-document claim.
+
+The document-control owner has not approved the effectivity/effective-date
+policy (SD-023 / PD-13); approval therefore remains `APPROVED` and does not
+automatically transition a version to `EFFECTIVE`. File scan/MIME acceptance,
+retention, source ownership, and the definition of an approved source-file
+record remain policy-dependent. Migration 0043 is source-only until isolated
+PostgreSQL 18 execution and applied-schema inspection are evidenced.
 
 ## Stewardship and correction rules
 

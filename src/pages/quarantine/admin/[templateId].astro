@@ -36,8 +36,6 @@ let formValues = {
   versionNo: '',
   name: template.name,
   description: '',
-  contentHash: '',
-  sourceDocument: '',
 };
 
 function reasonFor(action: string): string | null {
@@ -62,8 +60,6 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     versionNo: field(formData, 'versionNo'),
     name: field(formData, 'name') || template.name,
     description: field(formData, 'description'),
-    contentHash: field(formData, 'contentHash'),
-    sourceDocument: field(formData, 'sourceDocument'),
   };
   const reauthenticationSecret = field(formData, 'reauthenticationSecret');
   const requestId = Astro.locals.requestContext?.requestId ?? `admin-${intent}-${Date.now()}`;
@@ -83,8 +79,6 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
         versionNo: formValues.versionNo,
         name: formValues.name,
         description: formValues.description || undefined,
-        contentHash: formValues.contentHash || undefined,
-        sourceDocument: formValues.sourceDocument || undefined,
         requestId,
       });
     else throw new AppError('VALIDATION_FAILED', { userSafe: true });
@@ -171,8 +165,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
             <label for="name">Template name<input id="name" name="name" required value={formValues.name} aria-invalid={formIntent === 'revise' && failure?.fieldErrors.name ? 'true' : undefined} aria-describedby={formIntent === 'revise' && failure?.fieldErrors.name ? 'name-error' : undefined} /></label>
             {formIntent === 'revise' && failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}
             <label for="description">Description<textarea id="description" name="description" rows="3">{formValues.description}</textarea></label>
-            <label for="contentHash">Content hash<input id="contentHash" name="contentHash" value={formValues.contentHash} /></label>
-            <label for="sourceDocument">Source document<input id="sourceDocument" name="sourceDocument" value={formValues.sourceDocument} /></label>
+            <p class="muted">The revision digest and controlled source reference are server-owned. This form accepts neither as free text.</p>
             <button type="submit">Create DRAFT revision</button>
           </form>
         )}

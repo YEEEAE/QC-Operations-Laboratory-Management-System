@@ -1,7 +1,9 @@
 ---
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../../ui/components/FormErrorSummary.astro';
 import { documentsReadDependencies } from '../../../../modules/documents/application/dependencies.js';
 import { actions } from 'astro:actions';
+import type { ReadFailure } from '../../../../shared/errors/read-failure.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
@@ -15,44 +17,100 @@ try {
 }
 if (!document) return Astro.redirect('/404');
 const canCreate = actor.permissions.some((permission) => ['PERM-DOC-CREATE','PERM-DOC-REVISE'].includes(permission.code) && permission.active !== false);
+let sourceFiles: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['sourceFiles']['execute']>> = [];
+let sourceFailure: ReadFailure | null = null;
+try {
+  sourceFiles = await documentsReadDependencies().sourceFiles.execute({ actor, documentId: document.id });
+} catch (error) {
+  sourceFailure = classifyReadFailure(error);
+}
 const formData = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
 const values = {
   revision: String(formData?.get('revision') ?? ''),
   changeSummary: String(formData?.get('changeSummary') ?? ''),
-  contentHash: String(formData?.get('contentHash') ?? ''),
+  fileIds: (formData?.getAll('fileId') ?? []).map(String),
 };
-let failure: string | undefined;
-let failureKind: string | undefined;
+let failure: { summary: string; recovery: string; kind: 'validation'|'denied'|'unavailable'|'unknown'; field?: 'revision'|'fileIds' } | undefined;
 if (formData && canCreate) {
-  const result = await Astro.callAction(actions.documents.createVersion, {
-    documentId: document.id,
-    revision: values.revision,
-    changeSummary: values.changeSummary || undefined,
-    contentHash: values.contentHash || undefined,
-  });
-  if (result.data) return Astro.redirect(`/documents/${document.id}/versions/${result.data.id}`, 303);
-  const code = String(result.error?.code ?? result.error?.message ?? '').toUpperCase();
-  failureKind = /CONFLICT|STALE/.test(code) ? 'conflict' : /AUTH|PERMISSION/.test(code) ? 'authorization' : /VALIDATION|INVALID|REQUIRED/.test(code) ? 'validation' : 'unavailable';
-  failure = failureKind === 'conflict'
-    ? 'The document changed while you were preparing this revision. Nothing was submitted. Review the current version history, then start a new revision if it is still needed.'
-    : failureKind === 'authorization'
-      ? 'This revision was not created because your access is no longer available. Your entries are preserved; return to the document or contact an administrator.'
-      : failureKind === 'validation'
-        ? 'The revision was not created because one or more values did not meet the document rules. Check the fields below and correct them.'
-        : 'The revision could not be created because the service is unavailable. Nothing was submitted; your entries are preserved below.';
+  if (sourceFailure === 'UNAVAILABLE') {
+    failure = { kind: 'unavailable', summary: 'The source file list is unavailable.', recovery: 'Your entries remain on this page. Retry when the source list is available.' };
+  } else if (sourceFailure === 'DENIED') {
+    failure = { kind: 'denied', summary: 'Your account cannot read the source file list for this document.', recovery: 'Ask Document Control to confirm the access scope before retrying.' };
+  } else if (sourceFailure === 'MISSING') {
+    failure = { kind: 'unknown', summary: 'The source document record is no longer available.', recovery: 'Return to the document register and reload before retrying.' };
+  } else if (!values.revision.trim()) {
+    failure = { kind: 'validation', field: 'revision', summary: 'The revision reference is required.', recovery: 'Enter the revision reference assigned by Document Control.' };
+  } else if (!values.fileIds.length) {
+    failure = { kind: 'validation', field: 'fileIds', summary: 'At least one registered source file is required.', recovery: 'Select a source file or ask Document Control to register one for this document.' };
+  } else {
+    const result = await Astro.callAction(actions.documents.createVersion, {
+      documentId: document.id,
+      revision: values.revision,
+      changeSummary: values.changeSummary || undefined,
+      fileIds: values.fileIds,
+    });
+    if (result.data) return Astro.redirect(`/documents/${document.id}/versions/${result.data.id}`, 303);
+    const code = `${String(result.error?.code ?? '')} ${String(result.error?.message ?? '')}`.toUpperCase();
+    const kind = /AUTH|PERMISSION|FORBIDDEN/.test(code) ? 'denied'
+      : /VALIDATION|INVALID|REQUIRED/.test(code) ? 'validation'
+        : /UNAVAILABLE|INTERNAL|PROVIDER/.test(code) ? 'unavailable' : 'unknown';
+    failure = kind === 'denied'
+      ? { kind, summary: 'The selected source file could not be used for this revision.', recovery: 'Return to the document and ask Document Control to register the correct source file.' }
+      : kind === 'validation'
+        ? { kind, field: 'fileIds', summary: 'The revision was not created because the selected source file could not be validated.', recovery: 'Choose a registered source file and check the revision reference.' }
+        : kind === 'unavailable'
+          ? { kind, summary: 'The document service is temporarily unavailable.', recovery: 'Your entries remain on this page. Retry after the source list is available.' }
+          : { kind, summary: 'The result was not confirmed.', recovery: 'Check the document history before trying again, to avoid creating a duplicate revision.' };
+  }
 }
 ---
-<AppLayout title={`New revision · ${document.documentNo}`} locale="en" direction="ltr"><section class="head"><div><p class="eyebrow">New version</p><h1>New controlled version</h1><p>{document.documentNo} · Creating a new draft leaves existing controlled history unchanged.</p></div><a href={`/documents/${document.id}`}>Back to document</a></section>{canCreate ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>{failure && <section class="error-summary" role="alert" tabindex="-1"><h2>Revision not created</h2><p>{failure}</p><ul>{failureKind === 'validation' ? <li><a href="#revision">Check the revision reference</a></li> : null}<li><a href="#revision">Review your preserved entries</a></li></ul></section>}<fieldset><legend>Draft version</legend><label for="revision">Revision reference<input id="revision" name="revision" required value={values.revision} aria-invalid={failureKind === 'validation' ? 'true' : undefined} aria-describedby={failureKind === 'validation' ? 'revision-error' : undefined} /></label>{failureKind === 'validation' ? <p class="field-error" id="revision-error">Enter a revision reference accepted by the controlled document rules.</p> : null}<label for="changeSummary">Change summary<textarea id="changeSummary" name="changeSummary">{values.changeSummary}</textarea></label><label for="contentHash">Controlled content hash<input id="contentHash" name="contentHash" value={values.contentHash} placeholder="Provide before approval" /></label><p class="hint">Upload files separately, then link them to this version. This form creates the draft version only.</p></fieldset><div class="actions"><a href={`/documents/${document.id}`}>Cancel</a><button type="submit" data-submit>Create draft version</button></div><p data-result role="status" aria-live="polite" tabindex="-1"></p></form> : <section class="denied" role="alert"><h2>Revision unavailable</h2><p>Creating a revision requires PERM-DOC-CREATE or PERM-DOC-REVISE. Contact an administrator if you need access.</p></section>}</AppLayout>
+<AppLayout title={`New revision · ${document.documentNo}`} locale="en" direction="ltr">
+  <section class="head"><div><p class="eyebrow">New version</p><h1>New controlled version</h1><p>{document.documentNo} · Creating a new draft leaves existing controlled history unchanged.</p></div><a href={`/documents/${document.id}`}>Back to document</a></section>
+  {canCreate ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>
+    {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.field === 'revision' ? [{fieldId:'revision', message:'Enter the revision reference assigned by Document Control.'}] : failure.field === 'fileIds' ? [{fieldId:'fileIds', message:'Select at least one registered source file.'}] : []} listHref={`/documents/${document.id}`} listLabel="document" />}
+    <fieldset><legend>Revision details</legend>
+      <label for="revision">Revision reference<input id="revision" name="revision" required value={values.revision} aria-invalid={failure?.field === 'revision' ? 'true' : undefined} aria-describedby={failure?.field === 'revision' ? 'revision-help revision-error' : 'revision-help'} /></label>
+      <p id="revision-help" class="hint">Use the revision reference assigned by Document Control.</p>
+      {failure?.field === 'revision' && <p id="revision-error" class="field-error">A revision reference is required.</p>}
+      <label for="changeSummary">Change summary<textarea id="changeSummary" name="changeSummary" rows="3">{values.changeSummary}</textarea></label>
+    </fieldset>
+    <fieldset id="fileIds" aria-invalid={failure?.field === 'fileIds' ? 'true' : undefined} aria-describedby={failure?.field === 'fileIds' ? 'fileIds-error' : undefined}><legend>Registered source files</legend>
+      <p class="hint">The system checks each file against this document and calculates the revision fingerprint on the server. A browser-provided hash is not accepted.</p>
+      {sourceFailure === 'UNAVAILABLE'
+        ? <p class="notice" role="status">The source file list is unavailable. Your revision cannot be submitted until the list is available.</p>
+        : sourceFailure === 'DENIED'
+          ? <p class="notice" role="alert">Your account cannot read the source file list for this document. Ask Document Control to confirm the access scope.</p>
+          : sourceFailure === 'MISSING'
+            ? <p class="notice" role="alert">The source document record is no longer available. Return to the document register and reload.</p>
+        : sourceFiles.length
+          ? <ul class="source-list">{sourceFiles.map((file) => <li><label class="file-option"><input type="checkbox" name="fileId" value={file.id} checked={values.fileIds.includes(file.id)} /><span><strong>{file.originalFilename}</strong><small>{file.sizeBytes.toLocaleString('en-US')} bytes · Added {file.uploadedAt.toLocaleDateString('en-GB',{timeZone:'Asia/Riyadh'})}</small></span></label></li>)}</ul>
+          : <p class="notice" role="status">No registered source file is available for this document. Ask Document Control to register the source file, then return here.</p>}
+      {failure?.field === 'fileIds' && <p id="fileIds-error" class="field-error">Select at least one registered source file.</p>}
+    </fieldset>
+    <div class="actions"><a href={`/documents/${document.id}`}>Cancel</a><button type="submit" data-submit disabled={!sourceFiles.length || sourceFailure !== null}>Create draft version</button></div>
+    <p data-result role="status" aria-live="polite" tabindex="-1"></p>
+  </form> : <section class="denied" role="alert"><h2>Revision unavailable</h2><p>Creating a revision requires PERM-DOC-CREATE or PERM-DOC-REVISE. Contact an administrator if you need access.</p></section>}
+</AppLayout>
 <script>
   import { actions } from 'astro:actions';
-  const form=document.querySelector<HTMLFormElement>('[data-action="documents.createVersion"]');
-  if(form){
-    form.setAttribute('method','post');
-    const status=form.querySelector<HTMLElement>('[data-result]');
-    const submit=form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    if(submit&&!submit.hasAttribute('data-submit'))submit.setAttribute('data-submit','');
-    form.addEventListener('submit',async(event)=>{event.preventDefault();if(form.getAttribute('aria-busy')==='true')return;form.setAttribute('aria-busy','true');if(submit)submit.disabled=true;if(status)status.textContent='Creating draft version…';try{const data=new FormData(form);const result=await actions.documents.createVersion({documentId:form.dataset.documentId!,revision:String(data.get('revision')),changeSummary:String(data.get('changeSummary')||'')||undefined,contentHash:String(data.get('contentHash')||'')||undefined});if(result.data){window.location.href=`/documents/${form.dataset.documentId}/versions/${result.data.id}`;return;}if(status){status.textContent='The revision was not created. Review the fields, current document access, and revision rules; no automatic resubmission occurred.';status.focus?.();}}catch{if(status){status.textContent='The service did not confirm the result. Your entries are preserved. Refresh this version and its history before deciding whether to try again.';status.focus?.();}}finally{form.removeAttribute('aria-busy');if(submit)submit.disabled=false;}});
+  import { enhanceClassifiedForm } from '../../../../ui/forms/enhance-with-classification';
+  import { guardUnsavedChanges } from '../../../../ui/forms/unsaved-changes';
+  const form = document.querySelector<HTMLFormElement>('[data-action="documents.createVersion"]');
+  if (form) {
+    enhanceClassifiedForm(form, {
+      invoke: (payload) => actions.documents.createVersion(payload as Parameters<typeof actions.documents.createVersion>[0]),
+      payload: (data) => ({
+        documentId: String(data.get('documentId') ?? form.dataset.documentId),
+        revision: String(data.get('revision') ?? ''),
+        changeSummary: String(data.get('changeSummary') ?? '') || undefined,
+        fileIds: data.getAll('fileId').map(String),
+      }),
+      progressText: 'Creating draft version…',
+      detailBaseHref: `/documents/${form.dataset.documentId}/versions`,
+    });
+    guardUnsavedChanges(form);
   }
 </script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.hint,.denied p{color:var(--text-muted);font-size:.85rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:840px;display:grid;gap:var(--space-5)}fieldset{display:grid;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}input,textarea{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}textarea{min-height:130px;resize:vertical}.hint{margin:0;line-height:1.5}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.actions{display:grid;justify-content:stretch}}
+<style>
+  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.hint,.denied p{color:var(--text-muted);font-size:.85rem}.head a,.actions a{color:var(--color-accent-primary-hover)}.form{max-width:840px;display:grid;gap:var(--space-5)}fieldset{display:grid;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}input:not([type=checkbox]),textarea{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}textarea{resize:vertical}.hint,.notice{margin:0;color:var(--text-muted);font-size:.84rem;line-height:1.5}.notice{padding:var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-raised)}.source-list{list-style:none;padding:0;margin:0;display:grid;gap:var(--space-3)}.file-option{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);background:var(--surface-raised)}.file-option input{width:1.15rem;height:1.15rem;flex:0 0 auto}.file-option span{display:grid;gap:.3rem;min-width:0}.file-option strong{overflow-wrap:anywhere}.file-option small{color:var(--text-muted)}.actions{display:flex;justify-content:flex-end;gap:var(--space-3);align-items:center}.actions button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}button[disabled]{opacity:.6}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.actions{display:grid;justify-content:stretch}}
 </style>

@@ -80,9 +80,7 @@ export class CreateDocumentVersionChangeRequestUseCase {
     const currentValue =
       field === 'revision'
         ? target.revision
-        : field === 'changeSummary'
-          ? (target.changeSummary ?? '')
-          : (target.contentHash ?? '');
+        : (target.changeSummary ?? '');
     // Immutable snapshot of the exact controlled context used at creation.
     const targetSnapshot: Record<string, unknown> = {
       documentId: target.documentId,

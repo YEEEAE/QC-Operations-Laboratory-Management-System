@@ -35,8 +35,6 @@ const templateFields = z.object({
   versionNo: z.string().trim().min(1).max(64),
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional(),
-  contentHash: z.string().trim().max(256).optional(),
-  sourceDocument: z.string().trim().max(256).optional(),
   reauthenticationSecret: z.string().optional(),
 });
 const POSTGRES_BIGINT_MAX = 9_223_372_036_854_775_807n;
@@ -143,8 +141,6 @@ const reviseTemplate = defineAction({
     versionNo: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1).max(200),
     description: z.string().trim().max(2000).optional(),
-    contentHash: z.string().trim().max(256).optional(),
-    sourceDocument: z.string().trim().max(256).optional(),
   }),
   handler: (input, context) =>
     run(() =>

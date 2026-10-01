@@ -204,8 +204,8 @@ describe('contextual DOCUMENT_VERSION change requests (Prompt 2)', () => {
         reason: 'Operator previewed an older version.',
         documentVersionId: versionId,
         expectedDocumentVersion: 7n,
-        changeField: 'contentHash',
-        proposedValue: 'hash-next',
+        changeField: 'revision',
+        proposedValue: '3',
         requestId: 'ctx-stale',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });

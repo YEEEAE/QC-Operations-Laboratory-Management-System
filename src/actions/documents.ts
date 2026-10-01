@@ -46,7 +46,7 @@ const createVersion = defineAction({
     documentId: id,
     revision: z.string().trim().min(1),
     changeSummary: z.string().optional(),
-    contentHash: z.string().optional(),
+    fileIds: z.array(id).min(1).max(20),
   }),
   handler: (input, context) =>
     run(
@@ -66,7 +66,6 @@ const updateDraft = defineAction({
     expectedVersion: version,
     revision: z.string().trim().min(1),
     changeSummary: z.string().optional(),
-    contentHash: z.string().optional(),
   }),
   handler: (input, context) =>
     run(

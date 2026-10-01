@@ -1226,7 +1226,8 @@ Do not invent calibration interval.
 | `voided_at`      | TIMESTAMPTZ |  YES | Void                    | CRITICAL |
 | `void_reason`    | TEXT        |  YES | Void reason             | CRITICAL |
 | `change_summary` | TEXT        |  YES | Revision summary        | HIGH     |
-| `content_hash`   | TEXT        |  YES | Controlled content hash | CRITICAL |
+| `content_hash`   | TEXT        |  YES | Server-derived SHA-256 binding the document identity, revision, and sorted linked file digests | CRITICAL |
+| `source_binding_verified` | BOOLEAN | NO | True only for server-created file/revision bindings; legacy rows default false | CRITICAL |
 | `created_by`     | UUID        |   NO | Author                  | HIGH     |
 | `created_at`     | TIMESTAMPTZ |   NO | Created                 | HIGH     |
 | `version`        | BIGINT      |   NO | Concurrency             | CRITICAL |
@@ -1236,6 +1237,13 @@ Unique:
 ```text
 (document_id, revision)
 ```
+
+Migration 0043 adds `source_revision`, `source_content_hash`,
+`source_files_snapshot`, and `source_snapshot_verified` to controlled-document
+usage tables. New inserts snapshot only an effective version with a verified
+server binding and active immutable file links. Historical usage rows remain
+unverified rather than having legacy hashes promoted or append-only snapshots
+rewritten.
 
 Revision format:
 

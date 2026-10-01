@@ -19,8 +19,6 @@ export class CreateTemplateUseCase {
     versionNo: string;
     name: string;
     description?: string;
-    contentHash?: string;
-    sourceDocument?: string;
     reauthenticationSecret?: string;
     requestId: string;
   }) {
@@ -71,8 +69,8 @@ export class CreateTemplateUseCase {
         versionNo: input.versionNo,
         name: input.name,
         description: input.description ?? null,
-        contentHash: input.contentHash ?? null,
-        sourceDocument: input.sourceDocument ?? null,
+        contentHash: null,
+        sourceDocument: null,
         createdBy: input.actor.id,
         initialState,
         now: new Date(),
@@ -106,8 +104,8 @@ export class CreateTemplateUseCase {
       versionNo: input.versionNo,
       name: input.name,
       description: input.description ?? null,
-      contentHash: input.contentHash ?? null,
-      sourceDocument: input.sourceDocument ?? null,
+      contentHash: null,
+      sourceDocument: null,
       createdBy: input.actor.id,
       initialState,
       now: new Date(),
