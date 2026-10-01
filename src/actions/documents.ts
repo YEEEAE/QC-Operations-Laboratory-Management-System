@@ -3,6 +3,7 @@ import { z } from 'astro:schema';
 import { documentsActionDependencies } from '../modules/documents/application/dependencies.js';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
+import { DOCUMENT_VERSION_STATES } from '../modules/documents/domain/document-version.js';
 
 type ActionContext = { locals: App.Locals };
 const actor = (context: ActionContext) => {
@@ -47,12 +48,28 @@ const createVersion = defineAction({
     revision: z.string().trim().min(1),
     changeSummary: z.string().optional(),
     fileIds: z.array(id).min(1).max(20),
+    expectedDocumentVersion: z.coerce.bigint().positive(),
+    expectedPredecessorId: id.optional(),
+    expectedPredecessorState: z.enum(DOCUMENT_VERSION_STATES).optional(),
+    expectedPredecessorVersion: version.optional(),
+  }).superRefine((input, context) => {
+    const predecessorFields = [input.expectedPredecessorId, input.expectedPredecessorState, input.expectedPredecessorVersion];
+    if (predecessorFields.some((value) => value !== undefined) && predecessorFields.some((value) => value === undefined)) {
+      context.addIssue({ code: 'custom', path: ['expectedPredecessorId'], message: 'Predecessor identity, state, and version must be supplied together.' });
+    }
   }),
   handler: (input, context) =>
     run(
       () =>
         documentsActionDependencies().createVersion.execute({
-          ...input,
+          documentId: input.documentId,
+          revision: input.revision,
+          changeSummary: input.changeSummary,
+          fileIds: input.fileIds,
+          expectedDocumentVersion: input.expectedDocumentVersion,
+          expectedPredecessor: input.expectedPredecessorId
+            ? { id: input.expectedPredecessorId, state: input.expectedPredecessorState!, version: input.expectedPredecessorVersion! }
+            : null,
           actor: actor(context),
           requestId: requestId(context),
         }),

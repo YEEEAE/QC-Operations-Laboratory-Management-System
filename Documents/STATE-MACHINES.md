@@ -3108,6 +3108,19 @@ Create version N+1 as DRAFT
 
 Version N remains effective until new revision becomes effective.
 
+### Creation and predecessor guard (QC-ADP26-28)
+
+- Select the predecessor deterministically by `created_at DESC, id DESC`.
+- An identity may have at most one open revision across `DRAFT`, `IN_REVIEW`,
+  and `RETURNED`; resume or resolve it before starting another.
+- A new revision requires the latest revision to be `EFFECTIVE`. `APPROVED` is
+  not treated as `EFFECTIVE`, and creating a draft never changes effectivity.
+- The application locks the document identity and its version history in the
+  create transaction, then verifies the submitted identity/version snapshot.
+- Effectivity transition rules remain `UNCONFIRMED` above. Document
+  Control/QMS must approve that policy before an `APPROVED` version can be
+  activated; no automatic or inferred activation is allowed.
+
 ---
 
 ## TR-DOC-009 — Supersede Previous Version

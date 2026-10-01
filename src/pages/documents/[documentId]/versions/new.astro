@@ -17,20 +17,30 @@ try {
 }
 if (!document) return Astro.redirect('/404');
 const canCreate = actor.permissions.some((permission) => ['PERM-DOC-CREATE','PERM-DOC-REVISE'].includes(permission.code) && permission.active !== false);
+const creationDecision = document.revisionCreation;
+const requiredPermission = creationDecision.allowed && creationDecision.predecessor ? 'PERM-DOC-REVISE' : 'PERM-DOC-CREATE';
+const canCreateForCurrentHistory = canCreate && creationDecision.allowed && actor.permissions.some((permission) => permission.code === requiredPermission && permission.active !== false);
 let sourceFiles: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['sourceFiles']['execute']>> = [];
 let sourceFailure: ReadFailure | null = null;
-try {
-  sourceFiles = await documentsReadDependencies().sourceFiles.execute({ actor, documentId: document.id });
-} catch (error) {
-  sourceFailure = classifyReadFailure(error);
+if (canCreateForCurrentHistory) {
+  try {
+    sourceFiles = await documentsReadDependencies().sourceFiles.execute({ actor, documentId: document.id });
+  } catch (error) {
+    sourceFailure = classifyReadFailure(error);
+  }
 }
 const formData = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
+const predecessorSnapshotRequired = creationDecision.allowed && Boolean(creationDecision.predecessor);
 const values = {
   revision: String(formData?.get('revision') ?? ''),
   changeSummary: String(formData?.get('changeSummary') ?? ''),
   fileIds: (formData?.getAll('fileId') ?? []).map(String),
+  expectedDocumentVersion: String(formData?.get('expectedDocumentVersion') ?? document.version),
+  expectedPredecessorId: String(formData?.get('expectedPredecessorId') ?? (creationDecision.allowed ? creationDecision.predecessor?.id ?? '' : '')),
+  expectedPredecessorState: String(formData?.get('expectedPredecessorState') ?? (creationDecision.allowed ? creationDecision.predecessor?.state ?? '' : '')),
+  expectedPredecessorVersion: String(formData?.get('expectedPredecessorVersion') ?? (creationDecision.allowed ? creationDecision.predecessor?.version.toString() ?? '' : '')),
 };
-let failure: { summary: string; recovery: string; kind: 'validation'|'denied'|'unavailable'|'unknown'; field?: 'revision'|'fileIds' } | undefined;
+let failure: { summary: string; recovery: string; kind: 'validation'|'denied'|'unavailable'|'stale'|'history'|'unknown'; field?: 'revision'|'fileIds' } | undefined;
 if (formData && canCreate) {
   if (sourceFailure === 'UNAVAILABLE') {
     failure = { kind: 'unavailable', summary: 'The source file list is unavailable.', recovery: 'Your entries remain on this page. Retry when the source list is available.' };
@@ -38,6 +48,16 @@ if (formData && canCreate) {
     failure = { kind: 'denied', summary: 'Your account cannot read the source file list for this document.', recovery: 'Ask Document Control to confirm the access scope before retrying.' };
   } else if (sourceFailure === 'MISSING') {
     failure = { kind: 'unknown', summary: 'The source document record is no longer available.', recovery: 'Return to the document register and reload before retrying.' };
+  } else if (
+    !formData.has('expectedDocumentVersion') ||
+    (predecessorSnapshotRequired && ['expectedPredecessorId', 'expectedPredecessorState', 'expectedPredecessorVersion'].some((name) => !formData.has(name))) ||
+    !/^[1-9][0-9]*$/.test(values.expectedDocumentVersion) ||
+    values.expectedDocumentVersion !== document.version.toString() ||
+    values.expectedPredecessorId !== (creationDecision.allowed ? creationDecision.predecessor?.id ?? '' : '') ||
+    values.expectedPredecessorState !== (creationDecision.allowed ? creationDecision.predecessor?.state ?? '' : '') ||
+    values.expectedPredecessorVersion !== (creationDecision.allowed ? creationDecision.predecessor?.version.toString() ?? '' : '')
+  ) {
+    failure = { kind: 'stale', summary: 'The document history reference is no longer valid.', recovery: 'Refresh the document history before entering the change again.' };
   } else if (!values.revision.trim()) {
     failure = { kind: 'validation', field: 'revision', summary: 'The revision reference is required.', recovery: 'Enter the revision reference assigned by Document Control.' };
   } else if (!values.fileIds.length) {
@@ -48,26 +68,44 @@ if (formData && canCreate) {
       revision: values.revision,
       changeSummary: values.changeSummary || undefined,
       fileIds: values.fileIds,
+      expectedDocumentVersion: BigInt(values.expectedDocumentVersion),
+      ...(values.expectedPredecessorId ? {
+        expectedPredecessorId: creationDecision.allowed ? creationDecision.predecessor?.id : undefined,
+        expectedPredecessorState: creationDecision.allowed ? creationDecision.predecessor?.state : undefined,
+        expectedPredecessorVersion: creationDecision.allowed ? creationDecision.predecessor?.version : undefined,
+      } : {}),
     });
     if (result.data) return Astro.redirect(`/documents/${document.id}/versions/${result.data.id}`, 303);
     const code = `${String(result.error?.code ?? '')} ${String(result.error?.message ?? '')}`.toUpperCase();
-    const kind = /AUTH|PERMISSION|FORBIDDEN/.test(code) ? 'denied'
+    const kind = /STALE_VERSION|CONFLICT_STALE/.test(code) ? 'stale'
+      : /DOMAIN_INVALID_TRANSITION/.test(code) ? 'history'
+      : /AUTH|PERMISSION|FORBIDDEN/.test(code) ? 'denied'
       : /VALIDATION|INVALID|REQUIRED/.test(code) ? 'validation'
         : /UNAVAILABLE|INTERNAL|PROVIDER/.test(code) ? 'unavailable' : 'unknown';
     failure = kind === 'denied'
       ? { kind, summary: 'The selected source file could not be used for this revision.', recovery: 'Return to the document and ask Document Control to register the correct source file.' }
+      : kind === 'stale'
+        ? { kind, summary: 'The document history changed after this form was opened.', recovery: 'Refresh the document history, confirm the latest revision, then enter the change again.' }
+      : kind === 'history'
+        ? { kind, summary: 'A new revision cannot be started from the current document history.', recovery: 'Open the latest revision and continue its existing workflow, or ask Document Control to confirm the next allowed step.' }
       : kind === 'validation'
         ? { kind, field: 'fileIds', summary: 'The revision was not created because the selected source file could not be validated.', recovery: 'Choose a registered source file and check the revision reference.' }
-        : kind === 'unavailable'
-          ? { kind, summary: 'The document service is temporarily unavailable.', recovery: 'Your entries remain on this page. Retry after the source list is available.' }
-          : { kind, summary: 'The result was not confirmed.', recovery: 'Check the document history before trying again, to avoid creating a duplicate revision.' };
+      : kind === 'unavailable'
+        ? { kind, summary: 'The document service is temporarily unavailable.', recovery: 'Your entries remain on this page. Retry after the source list is available.' }
+          : { kind, summary: 'The result could not be confirmed.', recovery: 'The revision may have been saved. Check the document history before retrying to avoid creating a duplicate.' };
   }
 }
 ---
 <AppLayout title={`New revision · ${document.documentNo}`} locale="en" direction="ltr">
   <section class="head"><div><p class="eyebrow">New version</p><h1>New controlled version</h1><p>{document.documentNo} · Creating a new draft leaves existing controlled history unchanged.</p></div><a href={`/documents/${document.id}`}>Back to document</a></section>
-  {canCreate ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>
+  {canCreateForCurrentHistory || (formData && canCreate) ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>
     {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.field === 'revision' ? [{fieldId:'revision', message:'Enter the revision reference assigned by Document Control.'}] : failure.field === 'fileIds' ? [{fieldId:'fileIds', message:'Select at least one registered source file.'}] : []} listHref={`/documents/${document.id}`} listLabel="document" />}
+    <input type="hidden" name="expectedDocumentVersion" value={values.expectedDocumentVersion} />
+    {values.expectedPredecessorId && <>
+      <input type="hidden" name="expectedPredecessorId" value={values.expectedPredecessorId} />
+      <input type="hidden" name="expectedPredecessorState" value={values.expectedPredecessorState} />
+      <input type="hidden" name="expectedPredecessorVersion" value={values.expectedPredecessorVersion} />
+    </>}
     <fieldset><legend>Revision details</legend>
       <label for="revision">Revision reference<input id="revision" name="revision" required value={values.revision} aria-invalid={failure?.field === 'revision' ? 'true' : undefined} aria-describedby={failure?.field === 'revision' ? 'revision-help revision-error' : 'revision-help'} /></label>
       <p id="revision-help" class="hint">Use the revision reference assigned by Document Control.</p>
@@ -87,9 +125,11 @@ if (formData && canCreate) {
           : <p class="notice" role="status">No registered source file is available for this document. Ask Document Control to register the source file, then return here.</p>}
       {failure?.field === 'fileIds' && <p id="fileIds-error" class="field-error">Select at least one registered source file.</p>}
     </fieldset>
-    <div class="actions"><a href={`/documents/${document.id}`}>Cancel</a><button type="submit" data-submit disabled={!sourceFiles.length || sourceFailure !== null}>Create draft version</button></div>
+    <div class="actions"><a href={`/documents/${document.id}`}>Cancel</a><button type="submit" data-submit disabled={!sourceFiles.length || sourceFailure !== null || !creationDecision.allowed}>Create draft version</button></div>
     <p data-result role="status" aria-live="polite" tabindex="-1"></p>
-  </form> : <section class="denied" role="alert"><h2>Revision unavailable</h2><p>Creating a revision requires PERM-DOC-CREATE or PERM-DOC-REVISE. Contact an administrator if you need access.</p></section>}
+  </form> : !canCreate ? <section class="denied" role="alert"><h2>Revision unavailable</h2><p>Creating a revision requires the permission assigned to the current document history. Contact an administrator if you need access.</p></section>
+    : !creationDecision.allowed ? <section class="denied" role="status"><h2>Revision unavailable</h2><p>{creationDecision.reason === 'REVISION_IN_PROGRESS' ? `Revision ${creationDecision.blockingVersion.revision} is already in progress (${creationDecision.blockingVersion.state}). Open it to continue the existing workflow.` : `The latest revision (${creationDecision.blockingVersion.revision}) is ${creationDecision.blockingVersion.state}. Ask Document Control to confirm the next allowed step.`}</p><a href={`/documents/${document.id}/versions/${creationDecision.blockingVersion.id}`}>Open latest revision</a></section>
+    : <section class="denied" role="status"><h2>Revision unavailable</h2><p>This account does not have the permission needed to create the next revision from the current history.</p></section>}
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -104,6 +144,12 @@ if (formData && canCreate) {
         revision: String(data.get('revision') ?? ''),
         changeSummary: String(data.get('changeSummary') ?? '') || undefined,
         fileIds: data.getAll('fileId').map(String),
+        expectedDocumentVersion: String(data.get('expectedDocumentVersion') ?? ''),
+        ...(data.get('expectedPredecessorId') ? {
+          expectedPredecessorId: String(data.get('expectedPredecessorId')),
+          expectedPredecessorState: String(data.get('expectedPredecessorState')),
+          expectedPredecessorVersion: String(data.get('expectedPredecessorVersion')),
+        } : {}),
       }),
       progressText: 'Creating draft version…',
       detailBaseHref: `/documents/${form.dataset.documentId}/versions`,

@@ -605,6 +605,8 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
     await repository.createVersion({
       version,
       sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
+      expectedDocumentVersion: 1n,
+      expectedPredecessor: null,
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-version',
     });
@@ -663,6 +665,8 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
         files: [],
       },
       sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
+      expectedDocumentVersion: 1n,
+      expectedPredecessor: null,
       actor: actor(AUTHOR_ID, ['EMPLOYEE'], [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'proof-document-version-admin',
     });

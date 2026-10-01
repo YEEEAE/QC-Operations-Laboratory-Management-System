@@ -174,8 +174,13 @@ describe('control surfaces and the JavaScript-only gap register', () => {
       'Astro.redirect(`/documents/${document.id}/versions/${result.data.id}`, 303)',
     );
     expect(source).toContain('value={values.revision}');
-    expect(source).toContain('Nothing was submitted');
-    expect(source).toContain('Nothing was submitted. Review the current version history');
+    expect(source).toContain('name="expectedDocumentVersion" value={values.expectedDocumentVersion}');
+    expect(source).toContain("expectedDocumentVersion: String(data.get('expectedDocumentVersion') ?? '')");
+    expect(source).toContain("!formData.has('expectedDocumentVersion')");
+    expect(source).toContain("'The document history changed after this form was opened.'");
+    expect(source).toContain('!creationDecision.allowed');
+    expect(source).toContain('The revision may have been saved. Check the document history before retrying');
+    expect(source).not.toContain('Nothing was submitted');
     expect(source).toContain('role="alert"');
     expect(source).toContain('aria-live="polite"');
   });

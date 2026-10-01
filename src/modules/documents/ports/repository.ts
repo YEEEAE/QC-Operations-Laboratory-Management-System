@@ -2,6 +2,7 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { DocumentIdentity } from '../domain/document.js';
 import type { DocumentVersion } from '../domain/document-version.js';
 import type { DocumentVersionAction } from '../domain/document-state.js';
+import type { ExpectedDocumentPredecessor } from '../domain/revision-creation.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export interface DocumentListFilter { search?: string; documentType?: string; state?: string; }
@@ -18,8 +19,9 @@ export interface DocumentRepository {
   getDocument(id: string): Promise<DocumentIdentity | undefined>;
   listSourceFiles(documentId: string): Promise<readonly DocumentSourceFileOption[]>;
   listDocuments(input: { actor: ActorContext; filter?: DocumentListFilter }): Promise<readonly DocumentIdentity[]>;
-  createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; actor: ActorContext; requestId: string }): Promise<DocumentVersion>;
+  createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; expectedDocumentVersion: bigint; expectedPredecessor: ExpectedDocumentPredecessor | null; actor: ActorContext; requestId: string }): Promise<DocumentVersion>;
   getVersion(id: string): Promise<DocumentVersion | undefined>;
+  /** Returns exact stored creation order: created_at DESC, then id DESC. */
   listVersions(documentId: string): Promise<readonly DocumentVersion[]>;
   updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion>;
   recordReview(input: { id: string; expectedVersion: bigint; actor: ActorContext; now: Date; requestId: string }): Promise<DocumentVersion>;

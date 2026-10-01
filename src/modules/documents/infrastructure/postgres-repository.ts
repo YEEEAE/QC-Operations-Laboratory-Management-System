@@ -15,6 +15,7 @@ import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { DocumentVersionAction } from '../domain/document-state.js';
 import type { DocumentListFilter, DocumentRepository, DocumentSourceFileOption } from '../ports/repository.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
+import { decideRevisionCreation, expectedPredecessorOf } from '../domain/revision-creation.js';
 
 const identityMap = (row: DatabaseRow<'document_identities'>, currentEffectiveVersionId?: string): DocumentIdentity => ({
   id: row.id,
@@ -131,11 +132,45 @@ export class PostgresDocumentRepository implements DocumentRepository {
     return result;
   }
 
-  async createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; actor: ActorContext; requestId: string }): Promise<DocumentVersion> {
+  async createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; expectedDocumentVersion: bigint; expectedPredecessor: { id: string; state: DocumentVersion['state']; version: bigint } | null; actor: ActorContext; requestId: string }): Promise<DocumentVersion> {
     try {
       return await this.database.transaction().execute(async (tx) => {
         const version = input.version;
         if (version.state !== 'DRAFT') throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        const document = await tx
+          .selectFrom('document_identities')
+          .selectAll()
+          .where('id', '=', version.documentId)
+          .forUpdate()
+          .executeTakeFirst();
+        if (!document) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        if (!document.active) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        if (BigInt(document.version) !== input.expectedDocumentVersion) {
+          throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        }
+        const historyRows = await tx
+          .selectFrom('document_versions')
+          .selectAll()
+          .where('document_id', '=', version.documentId)
+          .orderBy('created_at', 'desc')
+          .orderBy('id', 'desc')
+          .forUpdate()
+          .execute();
+        const history = historyRows.map((row) => versionMap(row));
+        const lockedPredecessor = expectedPredecessorOf(history);
+        const suppliedPredecessor = input.expectedPredecessor;
+        if (
+          lockedPredecessor === null
+            ? suppliedPredecessor !== null
+            : suppliedPredecessor === null ||
+              lockedPredecessor.id !== suppliedPredecessor.id ||
+              lockedPredecessor.state !== suppliedPredecessor.state ||
+              lockedPredecessor.version !== suppliedPredecessor.version
+        ) {
+          throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        }
+        const revisionDecision = decideRevisionCreation(history);
+        if (!revisionDecision.allowed) throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
         const selected = input.sourceFiles;
         if (!selected.length || new Set(selected.map((file) => file.fileId)).size !== selected.length)
           throw new AppError('VALIDATION_FAILED', { userSafe: true, fieldErrors: { files: ['select one or more unique source files'] } });
@@ -148,6 +183,7 @@ export class PostgresDocumentRepository implements DocumentRepository {
           .where('evidence.removed_at', 'is', null)
           .where('file.state', '=', 'ACTIVE')
           .where('file.id', 'in', selected.map((file) => file.fileId))
+          .orderBy('file.id')
           .forUpdate()
           .execute();
         if (sourceRows.length !== selected.length) throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -179,7 +215,7 @@ export class PostgresDocumentRepository implements DocumentRepository {
   }
 
   async listVersions(documentId: string): Promise<readonly DocumentVersion[]> {
-    const rows = await this.database.selectFrom('document_versions').selectAll().where('document_id', '=', documentId).orderBy('created_at', 'desc').execute();
+    const rows = await this.database.selectFrom('document_versions').selectAll().where('document_id', '=', documentId).orderBy('created_at', 'desc').orderBy('id', 'desc').execute();
     return Promise.all(rows.map(async (row) => versionMap(row, await this.listVersionFiles(this.database, row.id))));
   }
 

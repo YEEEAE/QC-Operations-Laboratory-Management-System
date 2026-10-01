@@ -2,6 +2,8 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { ApproveVersionUseCase } from '../../../src/modules/documents/application/approve-version.js';
+import { CreateVersionUseCase } from '../../../src/modules/documents/application/create-version.js';
+import { GetDocumentUseCase } from '../../../src/modules/documents/application/get-document.js';
 import type { DocumentIdentity } from '../../../src/modules/documents/domain/document.js';
 import type { DocumentVersion } from '../../../src/modules/documents/domain/document-version.js';
 import { PostgresDocumentRepository } from '../../../src/modules/documents/infrastructure/postgres-repository.js';
@@ -658,6 +660,8 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     await repository.createVersion({
       version,
       sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
+      expectedDocumentVersion: 1n,
+      expectedPredecessor: null,
       actor: actor(AUTHOR_ID, [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]),
       requestId: 'cm-doc-version',
     });
@@ -694,6 +698,146 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     expect(row.approved_by).toBe(APPROVER_ID);
     expect(await countAudit(versionId, 'APPROVE')).toBe(1);
     expect(await countOutbox(`document-version:${versionId}:v3`)).toBe(1);
+  });
+
+  it('serializes concurrent new revisions and commits only one draft with its audit/outbox', async () => {
+    const documentId = '01900000-0000-7000-8000-00000000b034';
+    const versionId = '01900000-0000-7000-8000-00000000b035';
+    const repository = new PostgresDocumentRepository(
+      db,
+      new PostgresAuditRepository(db),
+      new PostgresOutboxRepository(db),
+    );
+    const actorForCreate = actor(AUTHOR_ID, [
+      { code: 'PERM-DOC-CREATE', scopes: ['GLOBAL'] },
+      { code: 'PERM-DOC-REVISE', scopes: ['GLOBAL'] },
+    ]);
+    const identity: DocumentIdentity = {
+      id: documentId,
+      documentNo: 'WI-CM-002',
+      documentType: 'WI',
+      title: 'Concurrent revision fixture',
+      ownerId: AUTHOR_ID,
+      active: true,
+      createdBy: AUTHOR_ID,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+      version: 1n,
+    };
+    await repository.createDocument({ document: identity, actor: actorForCreate, requestId: 'cm-doc-create-2' });
+    const sourceFileId = await seedDocumentSource(documentId);
+    const first: DocumentVersion = {
+      id: versionId,
+      documentId,
+      revision: '1',
+      state: 'DRAFT',
+      createdBy: AUTHOR_ID,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      version: 1n,
+      files: [],
+    };
+    await repository.createVersion({
+      version: first,
+      sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }],
+      expectedDocumentVersion: 1n,
+      expectedPredecessor: null,
+      actor: actorForCreate,
+      requestId: 'cm-doc-first-version',
+    });
+    await repository.transition({ id: versionId, expectedVersion: 1n, actor: actorForCreate, action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'cm-doc-submit-2' });
+    await repository.transition({ id: versionId, expectedVersion: 2n, actor: actorForCreate, action: 'APPROVE', toState: 'APPROVED', now: new Date(), requestId: 'cm-doc-approve-2' });
+
+    const useCase = new CreateVersionUseCase(repository);
+    const outcomes = await Promise.allSettled([
+      useCase.execute({ actor: actorForCreate, documentId, revision: '2', fileIds: [sourceFileId], expectedDocumentVersion: 1n, expectedPredecessor: { id: versionId, state: 'APPROVED', version: 3n }, requestId: 'cm-doc-revise-1' }),
+      useCase.execute({ actor: actorForCreate, documentId, revision: '3', fileIds: [sourceFileId], expectedDocumentVersion: 1n, expectedPredecessor: { id: versionId, state: 'APPROVED', version: 3n }, requestId: 'cm-doc-revise-2' }),
+    ]);
+
+    expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+    expect(outcomes.map(rejectedCode).filter((code) => code === 'CONFLICT_STALE_VERSION')).toHaveLength(1);
+    const rows = (await pool!.query(
+      'SELECT id, revision, state FROM qc.document_versions WHERE document_id = $1 ORDER BY created_at DESC, id DESC',
+      [documentId],
+    )).rows as { id: string; revision: string; state: string }[];
+    expect(rows.filter((row) => row.state === 'DRAFT')).toHaveLength(1);
+    expect(rows).toHaveLength(2);
+    const createdRevision = rows.find((row) => row.state === 'DRAFT')!;
+    expect(await countAudit(createdRevision.id, 'CREATE_DOCUMENT_VERSION')).toBe(1);
+    expect(await countOutbox(`document-version-created:${createdRevision.id}`)).toBe(1);
+  });
+
+  it('keeps a readable effective revision unchanged when revision permission is denied', async () => {
+    const documentId = '01900000-0000-7000-8000-00000000b036';
+    const versionId = '01900000-0000-7000-8000-00000000b037';
+    const repository = new PostgresDocumentRepository(db, new PostgresAuditRepository(db), new PostgresOutboxRepository(db));
+    const editor = actor(AUTHOR_ID, [
+      { code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] },
+      { code: 'PERM-DOC-CREATE', scopes: ['GLOBAL'] },
+      { code: 'PERM-DOC-REVISE', scopes: ['GLOBAL'] },
+    ]);
+    const identity: DocumentIdentity = {
+      id: documentId, documentNo: 'WI-CM-003', documentType: 'WI', title: 'Revision refusal fixture',
+      ownerId: AUTHOR_ID, active: true, createdBy: AUTHOR_ID,
+      createdAt: new Date('2026-01-01T00:00:00Z'), updatedAt: new Date('2026-01-01T00:00:00Z'), version: 1n,
+    };
+    await repository.createDocument({ document: identity, actor: editor, requestId: 'cm-doc-create-3' });
+    const sourceFileId = await seedDocumentSource(documentId);
+    await repository.createVersion({
+      version: { id: versionId, documentId, revision: '1', state: 'DRAFT', createdBy: AUTHOR_ID, createdAt: new Date(), version: 1n, files: [] },
+      sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }], expectedDocumentVersion: 1n, expectedPredecessor: null,
+      actor: editor, requestId: 'cm-doc-initial-3',
+    });
+    await repository.transition({ id: versionId, expectedVersion: 1n, actor: editor, action: 'SUBMIT', toState: 'IN_REVIEW', now: new Date(), requestId: 'cm-doc-submit-3' });
+    await repository.transition({ id: versionId, expectedVersion: 2n, actor: editor, action: 'APPROVE', toState: 'APPROVED', now: new Date(), requestId: 'cm-doc-approve-3' });
+    await repository.transition({ id: versionId, expectedVersion: 3n, actor: editor, action: 'MAKE_EFFECTIVE', toState: 'EFFECTIVE', now: new Date(), requestId: 'cm-doc-effective-3' });
+    const readOnly = actor(AUTHOR_ID, [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]);
+    const readable = await new GetDocumentUseCase(repository).execute({ actor: readOnly, documentId });
+    expect(readable.versions[0]?.state).toBe('EFFECTIVE');
+
+    const beforeRow = (await pool!.query('SELECT revision, state, version FROM qc.document_versions WHERE id = $1', [versionId])).rows[0];
+    const beforeAudit = await pool!.query('SELECT count(*)::int AS count FROM qc.audit_events WHERE subject_id = $1', [versionId]);
+    const beforeOutbox = await pool!.query('SELECT count(*)::int AS count FROM qc.outbox_events WHERE aggregate_id = $1', [versionId]);
+    await expect(new CreateVersionUseCase(repository).execute({
+      actor: readOnly, documentId, revision: '2', fileIds: [sourceFileId], expectedDocumentVersion: 1n,
+      expectedPredecessor: { id: versionId, state: 'EFFECTIVE', version: 4n }, requestId: 'cm-doc-denied-revise',
+    })).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    const afterRow = (await pool!.query('SELECT revision, state, version FROM qc.document_versions WHERE id = $1', [versionId])).rows[0];
+    const afterAudit = await pool!.query('SELECT count(*)::int AS count FROM qc.audit_events WHERE subject_id = $1', [versionId]);
+    const afterOutbox = await pool!.query('SELECT count(*)::int AS count FROM qc.outbox_events WHERE aggregate_id = $1', [versionId]);
+    expect(afterRow).toEqual(beforeRow);
+    expect(afterAudit.rows[0].count).toBe(beforeAudit.rows[0].count);
+    expect(afterOutbox.rows[0].count).toBe(beforeOutbox.rows[0].count);
+  });
+
+  it('rolls back version, file link, audit, and outbox when outbox enqueue fails', async () => {
+    const documentId = '01900000-0000-7000-8000-00000000b038';
+    const versionId = '01900000-0000-7000-8000-00000000b039';
+    const normalRepository = new PostgresDocumentRepository(db, new PostgresAuditRepository(db), new PostgresOutboxRepository(db));
+    const editor = actor(AUTHOR_ID, [{ code: 'PERM-DOC-VIEW', scopes: ['GLOBAL'] }]);
+    const identity: DocumentIdentity = {
+      id: documentId, documentNo: 'WI-CM-004', documentType: 'WI', title: 'Rollback fixture',
+      ownerId: AUTHOR_ID, active: true, createdBy: AUTHOR_ID,
+      createdAt: new Date('2026-01-01T00:00:00Z'), updatedAt: new Date('2026-01-01T00:00:00Z'), version: 1n,
+    };
+    await normalRepository.createDocument({ document: identity, actor: editor, requestId: 'cm-doc-create-4' });
+    const sourceFileId = await seedDocumentSource(documentId);
+    const failingRepository = new PostgresDocumentRepository(db, new PostgresAuditRepository(db), {
+      async enqueue() { throw new Error('injected outbox failure'); },
+    } as never);
+    await expect(failingRepository.createVersion({
+      version: { id: versionId, documentId, revision: '1', state: 'DRAFT', createdBy: AUTHOR_ID, createdAt: new Date(), version: 1n, files: [] },
+      sourceFiles: [{ fileId: sourceFileId, fileRole: 'SOURCE' }], expectedDocumentVersion: 1n, expectedPredecessor: null,
+      actor: editor, requestId: 'cm-doc-outbox-fail',
+    })).rejects.toThrow('injected outbox failure');
+    const after = await pool!.query(
+      `SELECT
+        (SELECT count(*)::int FROM qc.document_versions WHERE id = $1) AS versions,
+        (SELECT count(*)::int FROM qc.document_version_files WHERE document_version_id = $1) AS file_links,
+        (SELECT count(*)::int FROM qc.audit_events WHERE subject_id = $1) AS audit_rows,
+        (SELECT count(*)::int FROM qc.outbox_events WHERE aggregate_id = $1) AS outbox_rows`,
+      [versionId],
+    );
+    expect(after.rows[0]).toEqual({ versions: 0, file_links: 0, audit_rows: 0, outbox_rows: 0 });
   });
 
   it('applies exactly one of two concurrent role permission updates on the same role version', async () => {
