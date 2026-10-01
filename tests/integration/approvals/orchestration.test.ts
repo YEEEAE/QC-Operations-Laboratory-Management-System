@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DecideApprovalUseCase } from '../../../src/modules/approvals/application/decide-approval.js';
 import { ListMyApprovalsUseCase } from '../../../src/modules/approvals/application/list-my-approvals.js';
+import { ResolveApprovalDecisionCapabilitiesUseCase } from '../../../src/modules/approvals/application/decision-capabilities.js';
 import type { ApprovalRepository } from '../../../src/modules/approvals/ports/repository.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
@@ -131,6 +132,12 @@ const required = {
     meaning: 'Approve the controlled document version.',
   }),
 };
+const approveOnly = (
+  execute: import('../../../src/modules/approvals/application/decide-approval.js').SubjectTransition['execute'],
+) => ({
+  decisions: ['APPROVE'] as const,
+  execute,
+});
 const signer: Pick<SignControlledActionUseCase, 'execute'> = {
   execute: vi.fn(
     async () =>
@@ -166,7 +173,7 @@ describe('approval orchestration', () => {
     const delegate = vi.fn();
     await expect(
       new DecideApprovalUseCase(repository(fixture({ authorId: approverId })), {
-        subjectTransitions: { DOCUMENT_VERSION: delegate },
+        subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
         signaturePolicy: notRequired,
       }).execute({
         actor: makeActor(approverId),
@@ -179,7 +186,7 @@ describe('approval orchestration', () => {
     ).rejects.toMatchObject({ code: 'AUTHZ_SOD_VIOLATION' });
     await expect(
       new DecideApprovalUseCase(repository(), {
-        subjectTransitions: { DOCUMENT_VERSION: delegate },
+        subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
         signaturePolicy: notRequired,
       }).execute({
         actor: makeActor(approverId),
@@ -196,7 +203,7 @@ describe('approval orchestration', () => {
   it('delegates final subject transition and is idempotent on replay', async () => {
     const delegate = vi.fn(async () => ({ subjectId, version: 8n, state: 'APPROVED' }));
     const useCase = new DecideApprovalUseCase(repository(), {
-      subjectTransitions: { DOCUMENT_VERSION: delegate },
+      subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
       signaturePolicy: notRequired,
     });
     const first = await useCase.execute({
@@ -230,7 +237,7 @@ describe('approval orchestration', () => {
     });
     const recordDecision = vi.spyOn(repo, 'recordDecision');
     await new DecideApprovalUseCase(repo, {
-      subjectTransitions: { DOCUMENT_VERSION: transition },
+      subjectTransitions: { DOCUMENT_VERSION: approveOnly(transition) },
       signaturePolicy: notRequired,
     }).execute({
       actor: makeActor(approverId),
@@ -253,7 +260,7 @@ describe('approval orchestration', () => {
     });
     await expect(
       new DecideApprovalUseCase(repo, {
-        subjectTransitions: { DOCUMENT_VERSION: transition },
+        subjectTransitions: { DOCUMENT_VERSION: approveOnly(transition) },
         signaturePolicy: notRequired,
       }).execute({
         actor: makeActor(approverId),
@@ -269,9 +276,12 @@ describe('approval orchestration', () => {
 
   it('does not bypass an unresolved signature policy and binds required evidence without password', async () => {
     const delegate = vi.fn(async () => ({ subjectId, version: 8n, state: 'APPROVED' }));
+    const repo = repository();
+    const runTransaction = vi.spyOn(repo, 'runDecisionTransaction');
+    const recordDecision = vi.spyOn(repo, 'recordDecision');
     await expect(
-      new DecideApprovalUseCase(repository(), {
-        subjectTransitions: { DOCUMENT_VERSION: delegate },
+      new DecideApprovalUseCase(repo, {
+        subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
       }).execute({
         actor: makeActor(approverId),
         approvalId,
@@ -281,8 +291,11 @@ describe('approval orchestration', () => {
         requestId: 'req-unresolved',
       }),
     ).rejects.toMatchObject({ code: 'DOMAIN_SIGNATURE_REQUIRED' });
+    expect(delegate).not.toHaveBeenCalled();
+    expect(runTransaction).not.toHaveBeenCalled();
+    expect(recordDecision).not.toHaveBeenCalled();
     const result = await new DecideApprovalUseCase(repository(), {
-      subjectTransitions: { DOCUMENT_VERSION: delegate },
+      subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
       signaturePolicy: required,
       signer,
     }).execute({
@@ -305,6 +318,94 @@ describe('approval orchestration', () => {
     );
   });
 
+  it('blocks an unapproved return before signing or domain execution', async () => {
+    const delegate = vi.fn(async () => ({ subjectId, version: 8n, state: 'APPROVED' }));
+    const signing = vi.spyOn(signer, 'execute');
+    const repo = repository();
+    const recordDecision = vi.spyOn(repo, 'recordDecision');
+    await expect(
+      new DecideApprovalUseCase(repo, {
+        subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
+        signaturePolicy: required,
+        signer,
+      }).execute({
+        actor: makeActor(approverId, [
+          'PERM-APR-VIEW-ASSIGNED',
+          'PERM-APR-APPROVE',
+          'PERM-DOC-APPROVE',
+          'PERM-APR-RETURN',
+          'PERM-DOC-RETURN',
+          'PERM-ESIG-SIGN',
+        ]),
+        approvalId,
+        workItemId,
+        decision: 'RETURN',
+        subjectVersion: 7n,
+        reason: 'Needs correction',
+        reauthenticationSecret: 'should-not-be-checked',
+        requestId: 'req-unsupported-return',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    expect(signing).not.toHaveBeenCalled();
+    expect(delegate).not.toHaveBeenCalled();
+    expect(recordDecision).not.toHaveBeenCalled();
+  });
+
+  it('derives decision capability from handler, assignment, permissions, state, version, SoD, and signature policy', () => {
+    const transition = approveOnly(async () => ({ subjectId, version: 8n, state: 'APPROVED' }));
+    const allDecisionActor = makeActor(approverId, [
+      'PERM-APR-VIEW-ASSIGNED',
+      'PERM-APR-APPROVE',
+      'PERM-DOC-APPROVE',
+      'PERM-APR-RETURN',
+      'PERM-DOC-RETURN',
+      'PERM-APR-REJECT',
+      'PERM-DOC-REJECT',
+    ]);
+    const resolver = new ResolveApprovalDecisionCapabilitiesUseCase({
+      subjectTransitions: { DOCUMENT_VERSION: transition },
+      signaturePolicy: notRequired,
+      signerAvailable: true,
+    });
+    const complete = resolver.execute({ record: fixture(), actor: allDecisionActor });
+    expect(complete.find((item) => item.decision === 'APPROVE')?.state).toBe('AVAILABLE');
+    // Return/Reject have no approved document-domain policy, so they remain
+    // unavailable even though the generic approval layer knows those labels.
+    expect(complete.find((item) => item.decision === 'RETURN')?.state).toBe('NOT_AUTHORIZED');
+    expect(complete.find((item) => item.decision === 'REJECT')?.state).toBe('NOT_AUTHORIZED');
+
+    const missingDomainGrant = makeActor(approverId, [
+      'PERM-APR-VIEW-ASSIGNED',
+      'PERM-APR-APPROVE',
+    ]);
+    expect(resolver.execute({ record: fixture(), actor: missingDomainGrant })[0]?.state).toBe(
+      'NOT_AUTHORIZED',
+    );
+    expect(
+      resolver.execute({
+        record: fixture({ authorId: approverId }),
+        actor: makeActor(approverId),
+      })[0]?.state,
+    ).toBe('NOT_AUTHORIZED');
+    expect(
+      resolver.execute({ record: fixture({ version: 8n }), actor: makeActor(approverId) })[0]
+        ?.state,
+    ).toBe('STALE');
+
+    const unresolved = new ResolveApprovalDecisionCapabilitiesUseCase({
+      subjectTransitions: { DOCUMENT_VERSION: transition },
+      signaturePolicy: { requirement: () => ({ status: 'UNRESOLVED' }) },
+      signerAvailable: true,
+    });
+    expect(
+      unresolved.execute({ record: fixture(), actor: makeActor(approverId) })[0],
+    ).toMatchObject({
+      decision: 'APPROVE',
+      state: 'POLICY_BLOCKED',
+      signature: 'UNRESOLVED',
+    });
+  });
+
   it('rejects a failed owning-domain transition without writing an approval decision', async () => {
     const repositoryInstance = repository();
     const delegate = vi.fn(async () => {
@@ -312,7 +413,7 @@ describe('approval orchestration', () => {
     });
     await expect(
       new DecideApprovalUseCase(repositoryInstance, {
-        subjectTransitions: { DOCUMENT_VERSION: delegate },
+        subjectTransitions: { DOCUMENT_VERSION: approveOnly(delegate) },
         signaturePolicy: notRequired,
       }).execute({
         actor: makeActor(approverId),

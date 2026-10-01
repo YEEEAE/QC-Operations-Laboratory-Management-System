@@ -8,7 +8,12 @@ import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastr
 import { SignControlledActionUseCase } from '../../e-signatures/application/sign-controlled-action.js';
 import { ListMyApprovalsUseCase } from './list-my-approvals.js';
 import { GetApprovalUseCase } from './get-approval.js';
-import { DecideApprovalUseCase, type SubjectTransition } from './decide-approval.js';
+import {
+  DecideApprovalUseCase,
+  type SubjectTransition,
+  type SignaturePolicy,
+} from './decide-approval.js';
+import { ResolveApprovalDecisionCapabilitiesUseCase } from './decision-capabilities.js';
 import { documentsActionDependencies } from '../../documents/application/dependencies.js';
 import { laboratoryActionDependencies } from '../../laboratory/application/dependencies.js';
 import { quarantineActionDependencies } from '../../quarantine/application/dependencies.js';
@@ -25,6 +30,7 @@ function transitionDependencies() {
   const quarantine = quarantineActionDependencies();
   const changeRequests = changeRequestsActionDependencies();
   const documentsTransition: SubjectTransition = {
+    decisions: ['APPROVE'],
     execute: async (input) => {
       if (input.action !== 'APPROVE') return blocked();
       const result = await documents.approve.execute({
@@ -38,6 +44,7 @@ function transitionDependencies() {
     },
   };
   const labTransition: SubjectTransition = {
+    decisions: ['APPROVE'],
     execute: async (input) => {
       if (input.action !== 'APPROVE') return blocked();
       const result = await laboratory.approve.execute({
@@ -51,6 +58,7 @@ function transitionDependencies() {
     },
   };
   const inspectionTransition: SubjectTransition = {
+    decisions: ['APPROVE', 'RETURN'],
     execute: async (input) => {
       if (input.action === 'RETURN') {
         const result = await quarantine.inspection.return.execute({
@@ -77,6 +85,7 @@ function transitionDependencies() {
     },
   };
   const changeRequestTransition: SubjectTransition = {
+    decisions: ['APPROVE', 'REJECT', 'RETURN'],
     execute: async (input) => {
       if (!['APPROVE', 'REJECT', 'RETURN'].includes(input.action)) return blocked();
       const result = await changeRequests.transition.execute({
@@ -119,8 +128,24 @@ function verifier(database: ReturnType<typeof getDatabase>) {
 }
 
 export function approvalsReadDependencies() {
-  const repository = new PostgresApprovalRepository(getDatabase());
-  return { list: new ListMyApprovalsUseCase(repository), get: new GetApprovalUseCase(repository) };
+  const database = getDatabase();
+  const repository = new PostgresApprovalRepository(database);
+  const transitions = transitionDependencies();
+  // PD-32 is still open. Keep decision signing unresolved until QMS supplies
+  // the approved action-to-signature map; capabilities expose that block.
+  const signaturePolicy: SignaturePolicy = {
+    requirement: () => ({ status: 'UNRESOLVED' }),
+  };
+  const capabilities = new ResolveApprovalDecisionCapabilitiesUseCase({
+    subjectTransitions: transitions,
+    signaturePolicy,
+    signerAvailable: true,
+  });
+  return {
+    list: new ListMyApprovalsUseCase(repository, capabilities),
+    get: new GetApprovalUseCase(repository, capabilities),
+    decisionPolicyStatus: 'UNRESOLVED' as const,
+  };
 }
 
 export function approvalsActionDependencies() {
@@ -135,6 +160,7 @@ export function approvalsActionDependencies() {
   return {
     decide: new DecideApprovalUseCase(repository, {
       subjectTransitions: transitionDependencies(),
+      signaturePolicy: { requirement: () => ({ status: 'UNRESOLVED' }) },
       signer,
     }),
   };

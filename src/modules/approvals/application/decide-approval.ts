@@ -20,6 +20,7 @@ export interface SubjectTransitionResult {
   state: string;
 }
 export interface SubjectTransition {
+  decisions: readonly ApprovalDecisionKind[];
   execute(input: {
     actor: ActorContext;
     subjectId: string;
@@ -30,9 +31,7 @@ export interface SubjectTransition {
     transaction: DatabaseTransaction;
   }): Promise<SubjectTransitionResult>;
 }
-export type SubjectTransitionHandler =
-  | SubjectTransition
-  | ((input: Parameters<SubjectTransition['execute']>[0]) => Promise<SubjectTransitionResult>);
+export type SubjectTransitionHandler = SubjectTransition;
 
 const unresolvedSignaturePolicy: SignaturePolicy = {
   requirement: () => ({ status: 'UNRESOLVED' }),
@@ -94,6 +93,9 @@ export class DecideApprovalUseCase {
     if (!isApprovalWorkItemActionable(record.workItem))
       throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     authorizeApprovalDecision(record, input.actor, input.decision, input.subjectVersion);
+    const transition = this.transitions[record.subject.subjectType];
+    if (!transition?.decisions.includes(input.decision))
+      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
     const signatureRequirement = this.signaturePolicy.requirement({
       record,
       decision: input.decision,
@@ -119,29 +121,16 @@ export class DecideApprovalUseCase {
         persist: false,
       });
     }
-    const transition = this.transitions[record.subject.subjectType];
-    if (!transition) throw new AppError('AUTHZ_DENIED', { userSafe: true });
     return this.repository.runDecisionTransaction(async (transaction) => {
-      const subject =
-        typeof transition === 'function'
-          ? await transition({
-              actor: input.actor,
-              subjectId: record.subject.subjectId,
-              expectedVersion: input.subjectVersion,
-              action: input.decision,
-              reason: input.reason,
-              requestId: input.requestId,
-              transaction,
-            })
-          : await transition.execute({
-              actor: input.actor,
-              subjectId: record.subject.subjectId,
-              expectedVersion: input.subjectVersion,
-              action: input.decision,
-              reason: input.reason,
-              requestId: input.requestId,
-              transaction,
-            });
+      const subject = await transition.execute({
+        actor: input.actor,
+        subjectId: record.subject.subjectId,
+        expectedVersion: input.subjectVersion,
+        action: input.decision,
+        reason: input.reason,
+        requestId: input.requestId,
+        transaction,
+      });
       if (subject.subjectId !== record.subject.subjectId || subject.version <= input.subjectVersion)
         throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
       return this.repository.recordDecision(

@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
+import OperationalState from '../../ui/components/feedback/OperationalState.astro';
 import LoadingState from '../../ui/components/feedback/LoadingState.astro';
 import StaleVersionState from '../../ui/components/feedback/StaleVersionState.astro';
 import JourneyContextPanel from '../../ui/components/workflow/JourneyContextPanel.astro';
@@ -11,22 +12,40 @@ const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 import { classifyReadFailure, providerUnavailableResponse } from '../../shared/errors/read-failure.js';
 let approval: Awaited<ReturnType<ReturnType<typeof approvalsReadDependencies>['get']['execute']>> | undefined;
-try {
-  approval = await approvalsReadDependencies().get.execute({ actor, approvalId: Astro.params.approvalId ?? '' });
-} catch (error) {
-  if (classifyReadFailure(error) === 'UNAVAILABLE') {
-    return providerUnavailableResponse('Approval details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+let readDenied = false;
+if (isUuid(Astro.params.approvalId)) {
+  try {
+    approval = await approvalsReadDependencies().get.execute({ actor, approvalId: Astro.params.approvalId ?? '' });
+  } catch (error) {
+    const failure = classifyReadFailure(error);
+    if (failure === 'UNAVAILABLE') {
+      return providerUnavailableResponse('Approval details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+    }
+    readDenied = failure === 'DENIED';
   }
 }
-if (!approval) return Astro.redirect('/404');
-const context = approval.subject.reviewContext;
-const subjectLabel = String(context['documentNo'] ?? context['inspectionNo'] ?? context['labTestNo'] ?? context['calibrationNo'] ?? approval.approvalCase.subjectType);
+const readState = readDenied ? 'denied' : !approval ? 'missing' : undefined;
+if (readState === 'denied') Astro.response.status = 403;
+else if (readState === 'missing') Astro.response.status = 404;
+if (readState) Astro.response.headers.set('Cache-Control', 'no-store');
+const context = approval?.subject.reviewContext ?? {};
 const humanSubjectType: Record<string, string> = {
   DOCUMENT_VERSION: 'Controlled document version',
   INSPECTION_REPORT: 'Inspection report',
   LAB_TEST: 'Laboratory test',
   CHANGE_REQUEST: 'Change request',
 };
+const subjectLabel = approval
+  ? String(
+      context['documentNo'] ??
+        context['inspectionNo'] ??
+        context['labTestNo'] ??
+        context['calibrationNo'] ??
+        context['changeNo'] ??
+        humanSubjectType[approval.approvalCase.subjectType] ??
+        'Controlled record',
+    )
+  : 'Approval review';
 const humanize = (key: string): string =>
   key
     .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
@@ -35,30 +54,32 @@ const humanize = (key: string): string =>
 const contextLabel = (key: string): string => humanize(key);
 const contextUuid = (key: string): string | undefined => typeof context[key] === 'string' && isUuid(context[key]) ? context[key] : undefined;
 const subjectHref = contextUuid('documentId') ? `/documents/${contextUuid('documentId')}` : contextUuid('inspectionId') ? `/quarantine/inspections/${contextUuid('inspectionId')}` : contextUuid('labTestId') ? `/laboratory/tests/${contextUuid('labTestId')}` : contextUuid('calibrationId') ? `/assets/calibrations/${contextUuid('calibrationId')}` : undefined;
-const approvalActionable = approval.workItem.state === 'PENDING' || approval.workItem.state === 'IN_PROGRESS';
-// The action dependency currently has no approved signature policy and the use case defaults to deny.
-// Keep the UI aligned with that fail-closed contract until the policy owner resolves it.
-const decisionPolicyUnresolved = true;
-const approvalNextAction = approvalActionable ? 'Submit controlled decision' : 'No approval action is available';
-const approvalNextOwner = approvalActionable ? (approval.workItem.assignedRoleRequirement ?? 'Assigned approver') : 'Owning domain';
-const approvalEvents = [
+const availableDecisions = approval?.decisionCapabilities.filter((capability) => capability.state === 'AVAILABLE') ?? [];
+const policyBlockedDecisions = approval?.decisionCapabilities.filter((capability) => capability.state === 'POLICY_BLOCKED') ?? [];
+const approvalActionable = availableDecisions.length > 0;
+const approvalNextAction = approvalActionable ? 'Submit a permitted controlled decision' : policyBlockedDecisions.length ? 'Decision blocked pending approved signature policy' : 'No permitted decision is available';
+const approvalNextOwner = approvalActionable ? (approval?.workItem.assignedRoleRequirement ?? 'Assigned approver') : policyBlockedDecisions.length ? 'QMS signature-policy owner' : 'Owning domain';
+const decisionLabel: Record<string, string> = { APPROVE: 'Approve', RETURN: 'Return for correction', REJECT: 'Reject' };
+const hasRequiredSignature = availableDecisions.some((capability) => capability.signature === 'REQUIRED');
+const approvalEvents = approval ? [
   { label: 'Approval requested', detail: approval.approvalCase.requestedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'business' as const },
   ...(approval.workItem.assignedAt ? [{ label: 'Approval work item assigned', detail: approval.workItem.assignedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'approval' as const }] : []),
   ...(approval.workItem.startedAt ? [{ label: 'Review started', detail: approval.workItem.startedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }), kind: 'approval' as const }] : []),
   { label: 'Source transition', detail: 'The owning domain applies the business transition after approval verification.', kind: 'business' as const },
-];
+] : [];
 ---
 <AppLayout title={`Approval · ${subjectLabel}`} locale="en" direction="ltr">
-  <div class="evidence-record">
+  {!approval ? <OperationalState state={readState === 'denied' ? 'denied' : 'empty'} title={readState === 'denied' ? 'Approval is not available to this account' : 'Approval case not found'} description={readState === 'denied' ? 'Your account cannot read this assigned approval. Return to My approvals or check your approved assignment and permission.' : 'No approval case matches this request. Return to My approvals to choose a current item.'} actionLabel="Return to My approvals" actionHref="/approvals" /> : <div class="evidence-record">
   <nav class="crumb"><a href="/approvals">My approvals</a><span>/</span><span>{subjectLabel}</span></nav>
   <section class="head workspace-header"><div><p class="eyebrow">Approval review</p><h1>{subjectLabel}</h1><p>{humanSubjectType[approval.approvalCase.subjectType] ?? 'Controlled record'} · Current version {approval.subject.version.toString()}</p></div><StatusBadge status="REVIEW" label={approval.workItem.state} /></section>
-  <JourneyContextPanel ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? 'state: this approval work item is no longer actionable' : undefined} waitingOn={approvalActionable ? approvalNextOwner : 'Owning domain transition'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Source-domain transition or audit trace'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={`/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
+  <JourneyContextPanel ownerDomain={approval.subject.domain ?? 'Reviews & Approvals'} currentState={`${approval.approvalCase.state} · Work item ${approval.workItem.state}`} nextAction={approvalNextAction} nextActionHref={subjectHref} nextOwner={approvalNextOwner} whyUnavailable={!approvalActionable ? policyBlockedDecisions.length ? 'policy: the required decision signature policy has no approved action-specific source' : 'authority or state: no supported decision is available to this actor for the current work item' : undefined} waitingOn={approvalActionable ? approvalNextOwner : policyBlockedDecisions.length ? 'QMS signature-policy owner' : 'Owning domain'} expectedEvent={approvalActionable ? 'Controlled decision' : 'Approved policy source or current owning-domain state'} controlledContext={`${humanSubjectType[approval.approvalCase.subjectType] ?? approval.approvalCase.subjectType} · version ${approval.subject.version.toString()}`} evidenceSummary={approval.subject.snapshotHash ? 'Controlled snapshot hash available' : 'Snapshot hash not available from owning domain'} auditHref={`/audit?subjectType=${encodeURIComponent(approval.approvalCase.subjectType)}&subjectId=${encodeURIComponent(approval.approvalCase.subjectId)}`} relatedLinks={subjectHref ? [{ label: subjectLabel, href: subjectHref, detail: 'Open owning-domain record' }] : [{ label: 'My approvals', href: '/approvals', detail: 'Approval queue' }]} />
   <HandoffTimeline events={approvalEvents} />
   <div class="grid"><section class="panel"><h2>Controlled subject snapshot</h2><dl><dt>Workflow</dt><dd>{humanize(approval.approvalCase.workflowType)}</dd><dt>Version under review</dt><dd>{approval.subject.version.toString()}</dd><dt>Requester</dt><dd>Recorded in the controlled audit trail</dd><dt>State</dt><dd>{humanize(approval.subject.state)}</dd><dt>Integrity reference</dt><dd>{approval.subject.snapshotHash ? 'Available in the controlled record' : 'Not available from the owning domain'}</dd></dl></section><section class="panel"><h2>Review context</h2><dl>{Object.entries(context).map(([key, value]) => <><dt>{contextLabel(key)}</dt><dd>{typeof value === 'string' || typeof value === 'number' ? String(value).match(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i) ? 'Available in the controlled record' : String(value) : value ? 'Available' : 'Not available'}</dd></>)}</dl></section></div>
-  {approvalActionable && decisionPolicyUnresolved ? <section class="panel decision" role="status"><h2>Decision unavailable</h2><p>The approval signature policy has no approved decision yet, so decisions remain blocked. Contact the policy owner. You can review this subject and its current version here; do not submit a decision or reauthentication secret.</p></section> : approvalActionable ? <section class="panel decision"><h2>Controlled decision</h2><p>Decision meaning, reauthentication, permission, scope, state, version, and SoD are checked again by the server. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision"><option value="APPROVE">Approve</option><option value="RETURN">Return for correction</option><option value="REJECT">Reject</option></select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required when returning or rejecting.</span><span id="reason-error" role="alert" hidden>Enter a reason before returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help reason-error"></textarea></label><label for="reauthenticationSecret">Re-enter password if the approved workflow policy requires an e-signature<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" /></label><button type="submit" data-submit>Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output><a data-recovery hidden href={Astro.url.pathname}>Reload the current approval before retrying</a></form></section> : null}
+  {approvalActionable ? <section class="panel decision"><h2>Controlled decision</h2><p>Only decisions supported by this subject's wired handler and currently authorized for your assignment, scope, state, version, and SoD are listed. A successful signature alone never changes the subject.</p><form method="post" data-approval-decision><input type="hidden" name="approvalId" value={approval.approvalCase.id} /><input type="hidden" name="workItemId" value={approval.workItem.id} /><input type="hidden" name="subjectVersion" value={approval.subject.version.toString()} /><label for="decision">Decision<select id="decision" name="decision">{availableDecisions.map((capability) => <option value={capability.decision}>{decisionLabel[capability.decision] ?? capability.decision}</option>)}</select></label><label for="reason">Reason / comments<span id="reason-help" class="hint">Required for Return or Reject when offered.</span><span id="reason-error" role="alert" hidden>Enter a reason before returning or rejecting.</span><textarea id="reason" name="reason" rows="4" maxlength="4000" aria-describedby="reason-help reason-error"></textarea></label>{hasRequiredSignature && <><p class="signing-meaning">{availableDecisions.filter((capability) => capability.signature === 'REQUIRED').map((capability) => capability.meaning).filter(Boolean).join(' ')}</p><label for="reauthenticationSecret">Re-enter your password to sign this decision<input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" aria-describedby="signature-help" /></label><span id="signature-help" class="hint">The password is used only to reauthenticate this signing action and is not retained.</span></>}<button type="submit" data-submit>Submit controlled decision</button><output data-result aria-live="polite" tabindex="-1"></output><a data-recovery hidden href={Astro.url.pathname}>Reload the current approval before retrying</a></form></section> : approval.workItem.state === 'PENDING' || approval.workItem.state === 'IN_PROGRESS' ? <section class="panel decision" role="status"><h2>{policyBlockedDecisions.length ? 'Decision unavailable' : 'Review only'}</h2>{policyBlockedDecisions.length ? <p>The action-specific electronic-signature policy has not been approved. This decision is blocked before reauthentication. Contact the QMS signature-policy owner. You can review the subject and its current version here; no password field or decision control is available.</p> : <p>No supported decision is currently authorized for your assignment and the subject's scope, state, version, and separation-of-duties rules. Review the subject or return to My approvals; do not retry with a password.</p>}</section> : null}
   <div data-loading-state hidden><LoadingState label="Checking authorization and controlled evidence" rows={3} /></div>
   <div data-stale-state hidden><StaleVersionState version={approval.subject.version.toString()} /></div>
   </div>
+  }
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
