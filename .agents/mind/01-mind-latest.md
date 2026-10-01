@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-COPY26-01 / full-page interface copy prompt**
+  - Changed: inserted one executable copy-cleanup prompt immediately after QC-ADP26-19, before QC-ADP26-20; 42 total prompts, 38 findings, 88-page linkage. Preserves language, controlled terminology, permissions, warnings, user data and historical records.
+  - Evidence: HTML/JSON order, unique IDs, anchors, copy targets and all-page linkage PASS. Writing coverage remains NOT VERIFIED; historical page scores unchanged. Report includes coverage denominator rules.
+  - State: DONE for prompt addition only; actual page copy cleanup remains planned.
+
 - **2026-10-01 — QC-ADP26-19 / release evidence boundaries:** Provider attestation DTOs/errors now live in `release-governance/application/ports`, signature verification and intake orchestration are application-owned, and the API route delegates through a composition factory. Task list presentation type now comes through application/ports; template authority pages use an application facade. No schema change. Architecture + route checker and build pass; focused unit 8/8 pass. PostgreSQL18 integration BLOCKED (no container runtime/DB URL); typecheck has 10 errors in unrelated verification/release scripts; authenticated browser/AT/UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-19.md`.
 
 - **2026-10-01 — QC-ADP26-18 / shell preferences and recovery:** Browser preference storage failures no longer block drawer use; help route links follow `pageAccessDecision`; 500 recovery distinguishes ended sessions/unknown results and offers guest sign-in. Focused UI unit 55/55 and local Astro build PASS under Node 24.19.0 (below contract); typecheck FAILS in unrelated verification `.mjs` declarations/implicit-any. Preview E2E hit sanitized config-invalid 503 before rendering; authenticated browser/AT/UAT NOT VERIFIED. `audit/2026-10-01/handoff-QC-ADP26-18.md`.

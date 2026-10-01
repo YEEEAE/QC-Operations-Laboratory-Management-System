@@ -117,5 +117,20 @@
     "pageChecklistUnchanged": true,
     "verdict": "NO-GO",
     "runtimeIdentity": "NOT VERIFIED: deployment was in progress at observation"
+  },
+  "copyAddendum": {
+    "date": "2026-10-01",
+    "promptId": "QC-COPY26-01",
+    "after": "QC-ADP26-19",
+    "before": "QC-ADP26-20",
+    "pagesInSnapshot": 88,
+    "currentCoverage": "NOT VERIFIED",
+    "totalPrompts": 42,
+    "totalFindings": 38,
+    "pageChecklistUnchanged": true
+  },
+  "currentTotals": {
+    "prompts": 42,
+    "findings": 38
   }
 }
