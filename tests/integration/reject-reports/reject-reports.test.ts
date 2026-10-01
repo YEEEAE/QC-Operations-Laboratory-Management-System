@@ -10,6 +10,7 @@ import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audi
 import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
 import { CreateIssueSlipUseCase } from '../../../src/modules/reject-reports/application/create-issue-slip.js';
 import { CreateDailyRejectUseCase } from '../../../src/modules/reject-reports/application/create-daily-reject.js';
+import { AppendDailyRejectEntryUseCase } from '../../../src/modules/reject-reports/application/append-daily-reject-entry.js';
 import { ConfirmIssueSlipApprovalUseCase } from '../../../src/modules/reject-reports/application/confirm-issue-slip-approval.js';
 import { VoidRejectReportUseCase } from '../../../src/modules/reject-reports/application/void-reject-report.js';
 import { GetRejectDashboardUseCase } from '../../../src/modules/reject-reports/application/get-reject-dashboard.js';
@@ -18,6 +19,7 @@ import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { seedFoundationData } from '../../../db/seeds/common.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
 import { createHash } from 'node:crypto';
+import { compareDecimalStrings } from '../../../src/modules/reject-reports/domain/reject-percentage.js';
 
 const stableId = (label: string): string => {
   const hex = createHash('sha256')
@@ -306,7 +308,7 @@ describe('Reject Reports PostgreSQL integration', () => {
     expect(created.status).toBe('DRAFT');
     expect(created.entries).toHaveLength(2);
     // paper-form convention: 42 / 303 * 100 ≈ 13.8614, computed server-side
-    expect(created.entries[0].rejectPct).toBeCloseTo(13.8614, 3);
+    expect(created.entries[0].rejectPct).toBe('13.8614');
     // divide-by-zero handled safely as null
     expect(created.entries[1].rejectPct).toBeNull();
 
@@ -332,6 +334,75 @@ describe('Reject Reports PostgreSQL integration', () => {
     });
     expect(finalized.status).toBe('FINALIZED');
     expect(finalized.finalizedAt).toBeDefined();
+  });
+
+  it('appends without replacing entries and rejects a concurrent replay without side effects', async () => {
+    const repository = new PostgresRejectReportRepository(
+      database,
+      (globalThis as { __rejectWiring?: { audit: PostgresAuditRepository } }).__rejectWiring!.audit,
+      (globalThis as { __rejectWiring?: { outbox: PostgresOutboxRepository } }).__rejectWiring!
+        .outbox,
+    );
+    const record = await new CreateDailyRejectUseCase(repository).execute({
+      actor: creator,
+      reportDate: new Date('2026-09-18'),
+      department: 'Append parity line',
+      entries: [
+        {
+          itemDescription: 'Original entry',
+          rmUnit: 'kg',
+          rejectQty: '9007199254740992.1',
+          goodQty: '10',
+          rejectReason: 'Original reason',
+        },
+      ],
+      requestId: 'req-daily-append-parity',
+    });
+    const originalEntryId = record.entries[0].id;
+    const appender = new AppendDailyRejectEntryUseCase(repository);
+    const append = () =>
+      appender.execute({
+        actor: creator,
+        reportId: record.id,
+        expectedVersion: record.version,
+        entry: {
+          itemDescription: 'Appended entry',
+          rmUnit: 'L',
+          rejectQty: '0.25',
+          goodQty: '0',
+          rejectReason: 'Appended reason',
+        },
+        requestId: 'req-daily-append-parity',
+      });
+    const results = await Promise.allSettled([append(), append()]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+
+    const current = await repository.getDailyReject(record.id);
+    expect(current?.entries).toHaveLength(2);
+    expect(current?.entries[0].id).toBe(originalEntryId);
+    expect(current?.entries.map((entry) => entry.position)).toEqual([1, 2]);
+    expect(current?.entries.map((entry) => entry.rejectQty)).toEqual([
+      '9007199254740992.1',
+      '0.25',
+    ]);
+
+    const beforeReplay = await pool!.query(
+      `SELECT
+         (SELECT count(*)::text FROM qc.daily_reject_entries WHERE report_id = $1) AS rows,
+         (SELECT count(*)::text FROM qc.audit_events WHERE subject_id = $1) AS audit,
+         (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_id = $1) AS outbox`,
+      [record.id],
+    );
+    await expect(append()).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    const afterReplay = await pool!.query(
+      `SELECT
+         (SELECT count(*)::text FROM qc.daily_reject_entries WHERE report_id = $1) AS rows,
+         (SELECT count(*)::text FROM qc.audit_events WHERE subject_id = $1) AS audit,
+         (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_id = $1) AS outbox`,
+      [record.id],
+    );
+    expect(afterReplay.rows[0]).toEqual(beforeReplay.rows[0]);
   });
 
   it('rejects anonymous/inactive actors and enforces optimistic concurrency', async () => {
@@ -410,7 +481,7 @@ describe('Reject Reports PostgreSQL integration', () => {
     expect(dashboard.analytics.trendByDate.length).toBeGreaterThanOrEqual(1);
     expect(dashboard.recent.length).toBeGreaterThan(0);
     const todaysTrend = dashboard.analytics.trendByDate.find((t) => t.date === '2026-09-18');
-    expect(todaysTrend?.rejectedQty).toBeGreaterThan(0);
+    expect(compareDecimalStrings(todaysTrend?.rejectedQty ?? '0', '0')).toBeGreaterThan(0);
 
     // Populated analytics regression: both report and confirmation tables are
     // populated at this point (confirmed + pending approvals from earlier
@@ -430,7 +501,7 @@ describe('Reject Reports PostgreSQL integration', () => {
 
     // Trend, by-item, by-department, by-reason come from persisted rows.
     const trendRow = analytics.trendByDate.find((t) => t.date === '2026-09-18');
-    expect(trendRow?.rejectedQty).toBeGreaterThanOrEqual(42);
+    expect(compareDecimalStrings(trendRow?.rejectedQty ?? '0', '42')).toBeGreaterThanOrEqual(0);
     expect(trendRow?.reportCount).toBeGreaterThanOrEqual(1);
     expect(analytics.byItem.length).toBeGreaterThanOrEqual(1);
     expect(analytics.byDepartment.some((d) => d.department === 'Production A')).toBe(true);

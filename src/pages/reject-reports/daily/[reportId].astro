@@ -2,7 +2,7 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
 import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
-import { dailyRejectTotals } from '../../../modules/reject-reports/application/view-model.js';
+import { compareRejectDecimalStrings, dailyRejectTotals } from '../../../modules/reject-reports/application/view-model.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
@@ -18,8 +18,10 @@ const creatorLabel = record?.createdBy === actor.id ? 'You' : 'Another authorize
 const hasPermission = (code: string) =>
   actor.permissions.some((grant) => grant.code === code && grant.active !== false);
 const isCreator = record?.createdBy === actor.id;
-const canManage = isCreator && record?.status === 'DRAFT';
+const canManage = isCreator && record?.status === 'DRAFT' && hasPermission('PERM-RREJ-EDIT');
 const totals = dailyRejectTotals(record?.entries ?? []);
+const overLimit = (rejectPct: string | null, rejectLimit?: string) =>
+  rejectPct !== null && rejectLimit !== undefined && compareRejectDecimalStrings(rejectPct, rejectLimit) > 0;
 const fmtDate = (d?: Date) =>
   d ? d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
 const fmtDateTime = (d?: Date) =>
@@ -65,13 +67,20 @@ const fmtDateTime = (d?: Date) =>
     </section>
     <section class="panel">
       <h2>Totals</h2>
-      <dl>
-        <dt>Total reject quantity</dt><dd>{totals.totalRejectQty}</dd>
-        <dt>Total good production quantity</dt><dd>{totals.totalGoodQty}</dd>
-        <dt>Reject %</dt><dd>{totals.rejectPct === null ? '—' : `${totals.rejectPct}%`}</dd>
-        <dt>Entries</dt><dd>{record.entries.length}</dd>
-      </dl>
-      <p class="hint">Reject % = total reject quantity ÷ total good production quantity × 100 (computed server-side).</p>
+      {totals.byRecordedUnit.length ? (
+        <>
+          {totals.byRecordedUnit.map((group) => (
+            <dl>
+              <dt>Reject quantity · {group.unit}</dt><dd>{group.totalRejectQty}</dd>
+              <dt>Good production quantity · {group.unit}</dt><dd>{group.totalGoodQty}</dd>
+              <dt>Reject % · {group.unit}</dt><dd>{group.rejectPct === null ? '—' : `${group.rejectPct}%`}</dd>
+              <dt>Entries · {group.unit}</dt><dd>{group.entryCount}</dd>
+            </dl>
+          ))}
+          <p class="hint">Quantities are grouped by the raw-material unit recorded on each entry. Different unit labels are never added together; confirm the unit’s meaning with QC/QMS before interpreting these totals.</p>
+        </>
+      ) : <p class="empty">No quantity totals yet.</p>}
+      <p class="hint">Reject % = reject quantity ÷ good production quantity × 100, rounded to four decimal places on the server. A good quantity of zero has no percentage.</p>
     </section>
   </div>
 
@@ -102,25 +111,7 @@ const fmtDateTime = (d?: Date) =>
           <tbody>
             {record.entries.map((entry) => (
               <tr
-                class={entry.rejectPct !== null && entry.rejectLimit && entry.rejectPct > Number(entry.rejectLimit) ? 'over-limit' : ''}
-                data-entry={JSON.stringify({
-                  machineName: entry.machineName,
-                  itemCode: entry.itemCode,
-                  itemDescription: entry.itemDescription,
-                  lotNo: entry.lotNo,
-                  buRmProductName: entry.buRmProductName,
-                  rmDescription: entry.rmDescription,
-                  rmUnit: entry.rmUnit,
-                  rmLotNo: entry.rmLotNo,
-                  rmType: entry.rmType,
-                  pumpOutQty: entry.pumpOutQty,
-                  rejectQty: entry.rejectQty,
-                  goodQty: entry.goodQty,
-                  rejectLimit: entry.rejectLimit,
-                  productionFormula: entry.productionFormula,
-                  rejectReason: entry.rejectReason,
-                  analysis: entry.analysis,
-                })}
+                class={overLimit(entry.rejectPct, entry.rejectLimit) ? 'over-limit' : ''}
               >
                 <td>{entry.position}</td>
                 <td>{entry.machineName ?? '—'}</td>
@@ -153,9 +144,6 @@ const fmtDateTime = (d?: Date) =>
         class="form"
         data-add-entry
         data-version={record.version.toString()}
-        data-report-date={record.reportDate.toISOString()}
-        data-department={record.department}
-        data-shift={record.shift ?? ''}
       >
         <div class="fields">
           <div><label for="machineName">Machine name<input id="machineName" name="machineName" maxlength="200" /></label></div>
@@ -167,10 +155,10 @@ const fmtDateTime = (d?: Date) =>
           <div><label for="rmUnit">RM unit<input id="rmUnit" name="rmUnit" maxlength="50" /></label></div>
           <div><label for="rmLotNo">RM lot number<input id="rmLotNo" name="rmLotNo" maxlength="100" /></label></div>
           <div><label for="rmType">RM type<input id="rmType" name="rmType" maxlength="100" /></label></div>
-          <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="number" min="0" step="any" /></label></div>
-          <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="number" min="0" step="any" required /></label></div>
-          <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="number" min="0" step="any" required /></label></div>
-          <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="number" min="0" step="any" /></label></div>
+          <div><label for="pumpOutQty">Pump out quantity<input id="pumpOutQty" name="pumpOutQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" /></label></div>
+          <div><label for="rejectQty">Reject quantity<input id="rejectQty" name="rejectQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required /></label></div>
+          <div><label for="goodQty">Good production quantity<input id="goodQty" name="goodQty" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" required /></label></div>
+          <div><label for="rejectLimit">Reject limit (%)<input id="rejectLimit" name="rejectLimit" type="text" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" /></label></div>
           <div><label for="productionFormula">Production formula / BOM<input id="productionFormula" name="productionFormula" maxlength="500" /></label></div>
           <div class="wide"><label for="rejectReason">Reject / defect reason<input id="rejectReason" name="rejectReason" required maxlength="2000" /></label></div>
           <div class="wide"><label for="analysis">Analysis / notes<textarea id="analysis" name="analysis" maxlength="4000"></textarea></label></div>
@@ -220,24 +208,62 @@ const fmtDateTime = (d?: Date) =>
       fail('The service did not confirm the result. Refresh the report and its history before deciding whether to try again.');
     }
   };
+  const showFieldErrors = (form: HTMLFormElement, error: unknown) => {
+    const fields = (error as { fields?: Record<string, string[]> } | null)?.fields;
+    if (!fields || Object.keys(fields).length === 0) return false;
+    let first: HTMLElement | null = null;
+    let rendered = 0;
+    for (const [name, messages] of Object.entries(fields)) {
+      const fieldName = name.replace(/^entry\./, '').split('.').at(-1) ?? name;
+      const field = form.elements.namedItem(fieldName);
+      if (!(field instanceof HTMLElement)) continue;
+      rendered += 1;
+      first ??= field;
+      const errorId = `${fieldName}-error`;
+      document.getElementById(errorId)?.remove();
+      const note = document.createElement('p');
+      note.id = errorId;
+      note.className = 'field-error';
+      note.textContent = messages.join(' ');
+      field.setAttribute('aria-invalid', 'true');
+      const describedBy = new Set((field.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean));
+      describedBy.add(errorId);
+      field.setAttribute('aria-describedby', [...describedBy].join(' '));
+      field.closest('div')?.append(note);
+    }
+    if (output) output.textContent = rendered > 0
+      ? 'Check the highlighted fields, then submit the entry again.'
+      : Object.values(fields).flat().join(' ');
+    first?.focus();
+    return true;
+  };
+  const showRecovery = (message: string) => {
+    if (!output) return;
+    output.replaceChildren(document.createTextNode(`${message} `));
+    const link = document.createElement('a');
+    link.href = location.pathname;
+    link.textContent = 'Refresh record';
+    output.append(link);
+    output.focus();
+  };
   const addForm = document.querySelector<HTMLFormElement>('[data-add-entry]');
   addForm?.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (addForm.dataset.pending === 'true' || addForm.dataset.unresolved === 'true') return;
+    addForm.dataset.pending = 'true';
+    addForm.setAttribute('aria-busy', 'true');
+    const submit = addForm.querySelector<HTMLButtonElement>('[data-submit]');
+    if (submit) submit.disabled = true;
+    document.querySelectorAll('.field-error').forEach((error) => error.remove());
+    addForm.querySelectorAll<HTMLElement>('[aria-invalid="true"]').forEach((field) => {
+      field.removeAttribute('aria-invalid');
+      const ids = (field.getAttribute('aria-describedby') ?? '').split(/\s+/).filter((id) => !id.endsWith('-error'));
+      if (ids.length) field.setAttribute('aria-describedby', ids.join(' '));
+      else field.removeAttribute('aria-describedby');
+    });
     const data = new FormData(addForm);
     const text = (key: string) => String(data.get(key) ?? '');
     const opt = (key: string) => text(key) || undefined;
-    // Re-read current entries from the rendered table is fragile; instead the
-    // server replaces the entry set on draft update. We send the existing
-    // entries (hydrated from the DOM) plus the new one.
-    const existing: {
-      machineName?: string; itemCode?: string; itemDescription: string; lotNo?: string;
-      buRmProductName?: string; rmDescription?: string; rmUnit?: string; rmLotNo?: string;
-      rmType?: string; pumpOutQty?: string; rejectQty: string; goodQty: string;
-      rejectLimit?: string; productionFormula?: string; rejectReason: string; analysis?: string;
-    }[] = [];
-    document.querySelectorAll<HTMLTableRowElement>('[data-entry]').forEach((row) => {
-      existing.push(JSON.parse(row.dataset.entry ?? '{}'));
-    });
     const entry = {
       machineName: opt('machineName'), itemCode: opt('itemCode'),
       itemDescription: text('itemDescription'), lotNo: opt('lotNo'),
@@ -248,16 +274,39 @@ const fmtDateTime = (d?: Date) =>
       productionFormula: opt('productionFormula'), rejectReason: text('rejectReason'),
       analysis: opt('analysis'),
     };
-    run(
-      actions.rejectReports.updateDailyRejectDraft({
-        reportId,
-        expectedVersion: BigInt(addForm.dataset.version || '0'),
-        reportDate: new Date(addForm.dataset.reportDate ?? Date.now()),
-        department: addForm.dataset.department ?? '',
-        shift: addForm.dataset.shift ? addForm.dataset.shift : undefined,
-        entries: [...existing, entry],
-      }),
-    );
+    const submitEntry = async () => {
+      try {
+        const result = await actions.rejectReports.appendDailyRejectEntry({
+          reportId,
+          expectedVersion: BigInt(addForm.dataset.version || '0'),
+          entry,
+        });
+        if (result.error) {
+          if (!showFieldErrors(addForm, result.error)) {
+            addForm.dataset.unresolved = 'true';
+            const code = String(result.error.code ?? '');
+            const message = code === 'FORBIDDEN' || code === 'UNAUTHORIZED'
+              ? 'You are not authorized to add an entry. Refresh the record or ask its owner or an administrator for the approved next step.'
+              : code === 'CONFLICT'
+                ? 'This record changed or is no longer a draft. Refresh it to review the latest entries before continuing.'
+                : code === 'NOT_FOUND'
+                  ? 'This record is no longer available. Return to the Reject reports list.'
+                  : 'The service could not confirm the entry. Refresh the record and its history before deciding whether to retry.';
+            showRecovery(message);
+          }
+          return;
+        }
+        location.reload();
+      } catch {
+        addForm.dataset.unresolved = 'true';
+        showRecovery('The service did not confirm the result. Refresh the record and its history before deciding whether to retry.');
+      } finally {
+        addForm.dataset.pending = 'false';
+        addForm.removeAttribute('aria-busy');
+        if (submit) submit.disabled = addForm.dataset.unresolved === 'true';
+      }
+    };
+    void submitEntry();
   });
   document.querySelector<HTMLElement>('[data-finalize]')?.addEventListener('click', (event) => {
     const button = event.currentTarget as HTMLElement;

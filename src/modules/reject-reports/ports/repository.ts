@@ -13,6 +13,8 @@ export interface RejectReportListFilter {
   itemName?: string;
   lot?: string;
   department?: string;
+  unit?: string;
+  unitMissing?: boolean;
   createdBy?: string;
   approvalState?: 'AWAITING' | 'COMPLETED';
   search?: string;
@@ -26,7 +28,12 @@ export interface PagedResult<T> {
 export interface RejectReportSummary {
   reportsToday: number;
   reportsThisMonth: number;
-  totalRejectedQuantity: number;
+  rejectedByUnit: readonly {
+    reportType: RejectReportType;
+    unit: string;
+    rejectedQty: string;
+    reportCount: number;
+  }[];
   totalIssueSlips: number;
   totalDailyRejects: number;
   awaitingApprovals: number;
@@ -35,13 +42,37 @@ export interface RejectReportSummary {
 }
 
 export interface RejectReportAnalytics {
-  trendByDate: readonly { date: string; rejectedQty: number; reportCount: number }[];
-  byItem: readonly { itemCode: string; itemName: string; rejectedQty: number }[];
-  byDepartment: readonly { department: string; rejectedQty: number; reportCount: number }[];
-  byReason: readonly { reason: string; count: number }[];
-  topRejectItems: readonly { itemCode: string; itemName: string; rejectedQty: number }[];
+  trendByDate: readonly {
+    date: string;
+    reportType: RejectReportType;
+    unit: string;
+    rejectedQty: string;
+    reportCount: number;
+  }[];
+  byItem: readonly {
+    reportType: RejectReportType;
+    unit: string;
+    itemCode: string;
+    itemName: string;
+    rejectedQty: string;
+  }[];
+  byDepartment: readonly {
+    reportType: RejectReportType;
+    unit: string;
+    department: string;
+    rejectedQty: string;
+    reportCount: number;
+  }[];
+  byReason: readonly { reportType: RejectReportType; reason: string; count: number }[];
+  topRejectItems: readonly {
+    reportType: RejectReportType;
+    unit: string;
+    itemCode: string;
+    itemName: string;
+    rejectedQty: string;
+  }[];
   approvalStatus: readonly { pending: number; completed: number }[];
-  rejectPctTrend: readonly { date: string; rejectPct: number | null }[];
+  rejectPctTrend: readonly { date: string; unit: string; rejectPct: string | null }[];
 }
 
 /**
@@ -132,15 +163,12 @@ export interface RejectReportRepository {
     page: Page;
   }): Promise<PagedResult<DailyReject>>;
 
-  updateDailyRejectDraft(input: {
+  appendDailyRejectEntry(input: {
     id: string;
     expectedVersion: bigint;
     actor: ActorContext;
     requestId: string;
-    reportDate: Date;
-    department: string;
-    shift?: string;
-    entries: readonly DailyRejectEntryInput[];
+    entry: DailyRejectEntryInput;
   }): Promise<DailyReject>;
 
   finalizeDailyReject(input: {
@@ -158,7 +186,15 @@ export interface RejectReportRepository {
     reason: string;
   }): Promise<IssueSlip | DailyReject>;
 
-  summary(now: Date): Promise<RejectReportSummary>;
-  analytics(input: { from?: Date; to?: Date }): Promise<RejectReportAnalytics>;
-  recent(limit: number): Promise<readonly (IssueSlip | DailyReject)[]>;
+  summary(now: Date, filter?: RejectReportListFilter): Promise<RejectReportSummary>;
+  analytics(input: {
+    filter?: RejectReportListFilter;
+    /** Legacy call compatibility; new consumers should pass a shared filter. */
+    from?: Date;
+    to?: Date;
+  }): Promise<RejectReportAnalytics>;
+  recent(
+    limit: number,
+    filter?: RejectReportListFilter,
+  ): Promise<readonly (IssueSlip | DailyReject)[]>;
 }

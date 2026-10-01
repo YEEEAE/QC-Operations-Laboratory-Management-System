@@ -1,3 +1,7 @@
+- **2026-10-02 — QC-ADP26-29 / Reject analytics parity**
+  - Changed: shared filters and exact per-type/unit quantities; daily entries append with version, audit, and outbox in one transaction.
+  - Evidence: Reject Reports unit 26/26 PASS; build/release identity PASS; PG18 BLOCKED and authenticated page/AT/UAT NOT VERIFIED. Quantity precision and daily percentage unit semantics remain QC/QMS decisions.
+  - State: PARTIAL. Handoff: `audit/2026-09-30/handoff-QC-ADP26-29.md`.
 - **2026-10-01 — QC-ADP26-28 / revision predecessor race:** Latest history ordering is explicit; only one open revision is allowed; create rechecks the parent/history under lock and writes version, files, audit and outbox atomically. Focused 7/7 and build PASS; PostgreSQL18, authenticated browser, AT and UAT NOT VERIFIED. Effectivity remains Document Control/QMS-owned. Handoff: `audit/2026-09-30/handoff-QC-ADP26-28.md`. State: PARTIAL.
 - **2026-10-01 — QC-ADP26-27 / health and recovery evidence:** Changed: health/connectivity/QC acceptance are source-timestamped and separate; permission-gated read-only outbox age/count diagnostics added; backup views now state the evidence boundary. No schema/production changes. Focused tests 36/36 and local build PASS; PostgreSQL18/browser/AT/drill BLOCKED or NOT VERIFIED; RPO/RTO and alert policy remain unapproved. Handoff: `audit/2026-09-30/handoff-QC-ADP26-27.md`. State: PARTIAL.
 - **2026-10-01 — QC-ADP26-26 / admin action capabilities:** UI controls map per action to canonical permissions; safe projections remain separately readable; role-grant form is gated and POST-only. Focused 55/55 and candidate build PASS; PG18, authenticated browser, AT/responsive and UAT remain unverified. See `audit/2026-09-30/handoff-QC-ADP26-26.md`. State: PARTIAL.
@@ -8,24 +12,19 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
 - **2026-10-01 — QC-ADP26-21 / restore intent atomicity:** Restore intent, audit, and outbox now share a transaction; the operator reason is persisted and replay fingerprints reject changed requests. Requests remain `PLANNED`, production stays denied, and PostgreSQL 18/browser proof is still open. Handoff: `audit/2026-09-30/handoff-QC-ADP26-21.md`.
-
 - **2026-10-01 — QC-ADP26-20 / UI contract reconciliation**
   - Changed: replaced the actual print hex colors with visual-system tokens; fixed Findings date formatting and reconciled stale date, register-bound, and mutation-copy assertions to live source and approved intent.
   - Evidence: four focused UI suites 45/45 PASS; build/release verification PASS on HEAD `318b3e7`; full Astro check still has one unrelated `ai-advisory.astro` error. Authenticated browser/AT/UAT NOT VERIFIED.
   - State: PARTIAL — contract and source fixes complete; human/render acceptance remains open. `audit/2026-09-30/handoff-QC-ADP26-20.md`.
-
 - **2026-10-01 — QC-COPY26-01 / interface copy implementation**
   - Changed: 207 documented text entries; plain English and confirmation labels, exact PASS/FAIL, unconfirmed-write recovery; no authority/schema change.
   - Evidence: focused 72/72 PASS; broader 103/105 (2 failures in baseline-identical classifier/500 source); diff check PASS. Full state/display coverage 0/88; complete text/defect denominator NOT VERIFIED; browser/AT/UAT NOT RUN.
   - State: PARTIAL — dynamic/shared review and rendered acceptance remain open. `audit/2026-10-01/handoff-QC-COPY26-01.md`.
-
 - **2026-10-01 — QC-COPY26-01 / full-page interface copy prompt**
   - Changed: inserted one executable copy-cleanup prompt immediately after QC-ADP26-19, before QC-ADP26-20; 42 total prompts, 38 findings, 88-page linkage. Preserves language, controlled terminology, permissions, warnings, user data and historical records.
   - Evidence: HTML/JSON order, unique IDs, anchors, copy targets and all-page linkage PASS. Writing coverage remains NOT VERIFIED; historical page scores unchanged. Report includes coverage denominator rules.
   - State: DONE for prompt addition only; actual page copy cleanup remains planned.
-
 - **2026-10-01 — QC-ADP26-19 / release evidence boundaries:** Provider attestation DTOs/errors now live in `release-governance/application/ports`, signature verification and intake orchestration are application-owned, and the API route delegates through a composition factory. Task list presentation type now comes through application/ports; template authority pages use an application facade. No schema change. Architecture + route checker and build pass; focused unit 8/8 pass. PostgreSQL18 integration BLOCKED (no container runtime/DB URL); typecheck has 10 errors in unrelated verification/release scripts; authenticated browser/AT/UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-19.md`.
-
 - **2026-10-01 — QC-ADP26-18 / shell preferences and recovery:** Browser preference storage failures no longer block drawer use; help route links follow `pageAccessDecision`; 500 recovery distinguishes ended sessions/unknown results and offers guest sign-in. Focused UI unit 55/55 and local Astro build PASS under Node 24.19.0 (below contract); typecheck FAILS in unrelated verification `.mjs` declarations/implicit-any. Preview E2E hit sanitized config-invalid 503 before rendering; authenticated browser/AT/UAT NOT VERIFIED. `audit/2026-10-01/handoff-QC-ADP26-18.md`.
 - **2026-10-01 — QC-ADP26-16 / AI advisory request transport**
   - Changed: `/ai-advisory` now keeps no-JavaScript transport POST-only with submission disabled until policy/configuration and client readiness; pending, refusal, provider timeout, ambiguous transport, consent reset, copy fallback, and local editing feedback are explicit. No AI provider activation or database change.
@@ -457,6 +456,7 @@
 
 ### P1 / live validation / pre-existing test estate
 - **QC-ADP26-25 / QC-PAGE-F-025 PARTIAL:** إنشاء الحساب يحتاج MANAGE عالميًا؛ المنح الأولي للدور/النطاق يحتاج إذن الإسناد المطابق، والرفض قبل hash/write. matrix تمنع MANAGE عن Manager/Admin بينما seed تمنح Admin ولا تمنح Manager؛ مالك المصالحة غير محدد، لذا Manager acceptance BLOCKED. PG18 المحلي مُثبت لكن `initdb` ممنوع بـ`shmget`; DB/browser-auth/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-25.md`.
+- **QC-ADP26-29 / QC-PAGE-F-029 PARTIAL:** source filters, exact decimal strings, mixed-unit separation, and append/version/audit/outbox transaction implemented; quantity scale and RM/good-unit semantics remain QC/QMS-owned. Unit 26/26 PASS and candidate build identity PASS; PG18 BLOCKED, Astro check retains one unrelated error, authenticated route/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-29.md`.
 - **QC-ADP26-26 / admin capability grant UI PARTIAL:** Per-action canonical capabilities, safe read separation and POST-only role grants are implemented. Focused 55/55 + candidate build PASS; Astro check has one unrelated `ai-advisory.astro` error. PG18 initdb BLOCKED by sandbox `shmget`; authenticated browser/AT/responsive/UAT NOT VERIFIED. Older audit reuses F-026 for search/notifications; see handoff.
 - **QC-ADP26-23 / QC-PAGE-F-023 PARTIAL:** wired decision capabilities now include authorization and per-decision signature policy; unresolved policy blocks before password, unsupported decisions are denied. Focused 16/16, architecture and build PASS; PG18 BLOCKED; Astro check one unrelated `ai-advisory.astro` error; browser/AT/UAT NOT VERIFIED. PD-32/QMS and RD-019/Document Control+QMS remain open. `audit/2026-09-30/handoff-QC-ADP26-23.md`.
 - **QC-ADP26-22 / QC-PAGE-F-022 PARTIAL:** approval subject transition and decision/signature/audit/outbox share one transaction in source; unresolved signature scope remains deny. Focused 9/9 + architecture PASS; PostgreSQL18 BLOCKED, authenticated route/AT/UAT NOT VERIFIED. QMS owns PD-11/PD-32 decisions; `audit/2026-09-30/handoff-QC-ADP26-22.md`.

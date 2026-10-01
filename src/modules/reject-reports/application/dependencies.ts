@@ -10,7 +10,7 @@ import { ReverseIssueSlipApprovalUseCase } from './reverse-issue-slip-approval.j
 import { GetIssueSlipUseCase } from './get-issue-slip.js';
 import { ListIssueSlipsUseCase } from './list-issue-slips.js';
 import { CreateDailyRejectUseCase } from './create-daily-reject.js';
-import { UpdateDailyRejectDraftUseCase } from './update-daily-reject-draft.js';
+import { AppendDailyRejectEntryUseCase } from './append-daily-reject-entry.js';
 import { FinalizeDailyRejectUseCase } from './finalize-daily-reject.js';
 import { GetDailyRejectUseCase } from './get-daily-reject.js';
 import { ListDailyRejectsUseCase } from './list-daily-rejects.js';
@@ -44,7 +44,7 @@ export function rejectReportActionDependencies() {
     confirmApproval: new ConfirmIssueSlipApprovalUseCase(repository),
     reverseApproval: new ReverseIssueSlipApprovalUseCase(repository),
     createDailyReject: new CreateDailyRejectUseCase(repository),
-    updateDailyRejectDraft: new UpdateDailyRejectDraftUseCase(repository),
+    appendDailyRejectEntry: new AppendDailyRejectEntryUseCase(repository),
     finalizeDailyReject: new FinalizeDailyRejectUseCase(repository),
     voidReport: new VoidRejectReportUseCase(repository),
   };

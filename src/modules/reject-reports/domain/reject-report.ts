@@ -70,22 +70,28 @@ export function assertNonBlank(value: string, field: string): string {
 
 export function assertPositiveNumberString(value: string, field: string): string {
   const trimmed = assertNonBlank(value, field);
-  const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed) || parsed <= 0)
+  if (!isNonNegativeDecimalString(trimmed) || /^0+(?:\.0+)?$/.test(trimmed))
     throw new AppError('VALIDATION_FAILED', {
       userSafe: true,
-      fieldErrors: { [field]: ['must be a positive number'] },
+      fieldErrors: {
+        [field]: ['enter a positive decimal number using digits and an optional decimal point'],
+      },
     });
   return trimmed;
 }
 
+export function isNonNegativeDecimalString(value: string): boolean {
+  return value.length <= 50 && /^\d+(?:\.\d+)?$/.test(value);
+}
+
 export function assertNonNegativeNumberString(value: string, field: string): string {
   const trimmed = assertNonBlank(value, field);
-  const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed) || parsed < 0)
+  if (!isNonNegativeDecimalString(trimmed))
     throw new AppError('VALIDATION_FAILED', {
       userSafe: true,
-      fieldErrors: { [field]: ['must be a non-negative number'] },
+      fieldErrors: {
+        [field]: ['enter a non-negative decimal number using digits and an optional decimal point'],
+      },
     });
   return trimmed;
 }

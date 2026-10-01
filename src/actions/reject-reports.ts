@@ -1,4 +1,4 @@
-import { defineAction, ActionError } from 'astro:actions';
+import { defineAction, ActionError, ActionInputError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
@@ -17,9 +17,36 @@ const run = async <T>(work: () => Promise<T>, context: ActionContext): Promise<T
     return await work();
   } catch (error) {
     const mapped = toActionError(error, requestId(context));
+    if (mapped.error.fieldErrors) {
+      const issues: z.ZodIssue[] = Object.entries(mapped.error.fieldErrors).flatMap(
+        ([fieldName, messages]) =>
+          messages.map((message) => ({
+            code: 'custom' as const,
+            message,
+            path: fieldName.split('.'),
+          })),
+      );
+      throw new ActionInputError(issues);
+    }
+    if (mapped.error.code === 'AUTHZ_DENIED')
+      throw new ActionError({ code: 'FORBIDDEN', message: mapped.error.messageKey });
+    if (mapped.error.code === 'AUTH_REQUIRED')
+      throw new ActionError({ code: 'UNAUTHORIZED', message: mapped.error.messageKey });
+    if (mapped.error.code === 'RESOURCE_NOT_FOUND')
+      throw new ActionError({ code: 'NOT_FOUND', message: mapped.error.messageKey });
+    if (mapped.error.code.startsWith('CONFLICT_'))
+      throw new ActionError({ code: 'CONFLICT', message: mapped.error.messageKey });
     throw new ActionError({ code: 'BAD_REQUEST', message: mapped.error.messageKey });
   }
 };
+
+const decimalString = z
+  .string()
+  .max(50)
+  .regex(
+    /^\d+(?:\.\d+)?$/,
+    'Enter a non-negative decimal using digits and an optional decimal point.',
+  );
 
 const issueSlipFields = z.object({
   goodsDescription: z.string().max(2000).optional(),
@@ -27,9 +54,9 @@ const issueSlipFields = z.object({
   itemName: z.string().max(500),
   lotNo: z.string().max(100).optional(),
   unit: z.string().max(50),
-  rejectedQty: z.string().max(50),
-  unitCost: z.string().max(50).optional(),
-  totalValue: z.string().max(50).optional(),
+  rejectedQty: decimalString,
+  unitCost: decimalString.optional(),
+  totalValue: decimalString.optional(),
   rejectReason: z.string().max(2000),
   remarks: z.string().max(4000).optional(),
 });
@@ -44,10 +71,10 @@ const dailyRejectEntry = z.object({
   rmUnit: z.string().max(50).optional(),
   rmLotNo: z.string().max(100).optional(),
   rmType: z.string().max(100).optional(),
-  pumpOutQty: z.string().max(50).optional(),
-  rejectQty: z.string().max(50),
-  goodQty: z.string().max(50),
-  rejectLimit: z.string().max(50).optional(),
+  pumpOutQty: decimalString.optional(),
+  rejectQty: decimalString,
+  goodQty: decimalString,
+  rejectLimit: decimalString.optional(),
   productionFormula: z.string().max(500).optional(),
   rejectReason: z.string().max(2000),
   analysis: z.string().max(4000).optional(),
@@ -175,20 +202,17 @@ const createDailyReject = defineAction({
     ),
 });
 
-const updateDailyRejectDraft = defineAction({
+const appendDailyRejectEntry = defineAction({
   accept: 'json',
   input: z.object({
     reportId: z.string().uuid(),
     expectedVersion: z.coerce.bigint(),
-    reportDate: z.coerce.date(),
-    department: z.string().max(200),
-    shift: z.string().max(50).optional(),
-    entries: z.array(dailyRejectEntry).max(200),
+    entry: dailyRejectEntry,
   }),
   handler: (input, context) =>
     run(
       () =>
-        repo().updateDailyRejectDraft.execute({
+        repo().appendDailyRejectEntry.execute({
           ...input,
           actor: actor(context),
           requestId: requestId(context),
@@ -241,7 +265,7 @@ export const rejectReports = {
   confirmApproval,
   reverseApproval,
   createDailyReject,
-  updateDailyRejectDraft,
+  appendDailyRejectEntry,
   finalizeDailyReject,
   voidReport,
 };

@@ -11,7 +11,11 @@ import {
   nextPendingApprovalRole,
   assertApprovalRoleIsNext,
 } from '../../../src/modules/reject-reports/domain/issue-slip.js';
-import { computeRejectPercent } from '../../../src/modules/reject-reports/domain/reject-percentage.js';
+import {
+  addDecimalStrings,
+  compareDecimalStrings,
+  computeRejectPercent,
+} from '../../../src/modules/reject-reports/domain/reject-percentage.js';
 import {
   formatReportNo,
   isReportNo,
@@ -19,6 +23,10 @@ import {
   REPORT_NO_PATTERN,
 } from '../../../src/modules/reject-reports/domain/report-number.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
+import {
+  dailyRejectTotals,
+  type DailyRejectEntry,
+} from '../../../src/modules/reject-reports/domain/daily-reject.js';
 import type { ApprovalConfirmation } from '../../../src/modules/reject-reports/domain/issue-slip.js';
 
 const confirmation = (
@@ -73,13 +81,53 @@ describe('Reject Reports — report numbers', () => {
 
 describe('Reject Reports — reject percentage (paper-form convention)', () => {
   it('computes rejectQty / goodQty * 100 server-side', () => {
-    expect(computeRejectPercent(42, 303)).toBeCloseTo(13.8614, 3);
-    expect(computeRejectPercent(0, 100)).toBe(0);
+    expect(computeRejectPercent('42', '303')).toBe('13.8614');
+    expect(computeRejectPercent('0', '100')).toBe('0');
   });
   it('handles divide-by-zero and invalid inputs safely', () => {
-    expect(computeRejectPercent(10, 0)).toBeNull();
-    expect(computeRejectPercent(-1, 100)).toBeNull();
-    expect(computeRejectPercent(Number.NaN, 100)).toBeNull();
+    expect(computeRejectPercent('10', '0')).toBeNull();
+    expect(computeRejectPercent('-1', '100')).toBeNull();
+    expect(computeRejectPercent('1e3', '100')).toBeNull();
+  });
+  it('keeps large quantities exact and rounds only at the approved four places', () => {
+    expect(addDecimalStrings(['9007199254740992.1', '0.01'])).toBe('9007199254740992.11');
+    expect(compareDecimalStrings('9007199254740993', '9007199254740992.99')).toBe(1);
+    expect(computeRejectPercent('0.00005', '1')).toBe('0.005');
+    const aggregate = addDecimalStrings(['9'.repeat(50), '9'.repeat(50)]);
+    expect(aggregate).toHaveLength(51);
+    expect(computeRejectPercent(aggregate, '1')).not.toBeNull();
+  });
+});
+
+describe('Reject Reports — daily totals by recorded unit', () => {
+  const entry = (overrides: Partial<DailyRejectEntry>): DailyRejectEntry => ({
+    id: 'entry',
+    reportId: 'report',
+    position: 1,
+    itemDescription: 'Item',
+    rejectQty: '0',
+    goodQty: '0',
+    rejectPct: null,
+    rejectReason: 'Reason',
+    version: 1n,
+    ...overrides,
+  });
+  it('keeps mixed units separate and preserves exact decimal totals', () => {
+    const result = dailyRejectTotals([
+      entry({ rmUnit: 'kg', rejectQty: '9007199254740992.1', goodQty: '100' }),
+      entry({ id: 'entry-2', position: 2, rmUnit: 'kg', rejectQty: '0.01', goodQty: '200' }),
+      entry({ id: 'entry-3', position: 3, rmUnit: 'L', rejectQty: '3', goodQty: '0' }),
+    ]);
+    expect(result.byRecordedUnit).toEqual([
+      {
+        unit: 'kg',
+        totalRejectQty: '9007199254740992.11',
+        totalGoodQty: '300',
+        rejectPct: '3002399751580330.7033',
+        entryCount: 2,
+      },
+      { unit: 'L', totalRejectQty: '3', totalGoodQty: '0', rejectPct: null, entryCount: 1 },
+    ]);
   });
 });
 

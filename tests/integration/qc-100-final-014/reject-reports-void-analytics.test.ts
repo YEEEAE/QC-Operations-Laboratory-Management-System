@@ -20,6 +20,7 @@ import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import type { IssueSlipApprovalRole } from '../../../src/modules/reject-reports/domain/issue-slip.js';
 import { seedFoundationData } from '../../../db/seeds/common.js';
 import { createHash } from 'node:crypto';
+import { compareDecimalStrings } from '../../../src/modules/reject-reports/domain/reject-percentage.js';
 
 /**
  * QC-100-FINAL-014 — Reject Reports & Issue Slip controlled-flow evidence.
@@ -515,7 +516,7 @@ describe('QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evi
     // that have daily entries; this suite seeds its own populated daily day
     // below so the percentage assertion does not depend on file ordering.
     const trendRow = analytics.trendByDate.find((row) => row.date === '2026-09-19');
-    expect(trendRow?.rejectedQty).toBeGreaterThan(0);
+    expect(compareDecimalStrings(trendRow?.rejectedQty ?? '0', '0')).toBeGreaterThan(0);
     expect(trendRow?.reportCount).toBeGreaterThan(0);
     const approvalRow = analytics.approvalStatus[0];
     expect(approvalRow.pending).toBeGreaterThanOrEqual(baseApproval.pending);
@@ -543,7 +544,7 @@ describe('QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evi
     const pctDay = pctAnalytics.rejectPctTrend.find((row) => row.date === '2026-09-18');
     expect(pctDay).toBeDefined();
     expect(pctDay?.rejectPct).not.toBeNull();
-    expect(Number.isFinite(pctDay?.rejectPct ?? NaN)).toBe(true);
+    expect(pctDay?.rejectPct).toMatch(/^\d+(?:\.\d+)?$/);
 
     // zero-denominator days that exist (not voided) must be NULL, never 0/Infinity
     await new CreateDailyRejectUseCase(repository).execute({

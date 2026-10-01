@@ -1,21 +1,18 @@
 import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import type { DailyRejectEntryInput } from '../domain/daily-reject.js';
-import { validateDailyRejectEntry } from '../domain/daily-reject.js';
+import { validateDailyRejectEntry, type DailyRejectEntryInput } from '../domain/daily-reject.js';
 import { assertDraftEditable } from '../domain/issue-slip.js';
 import type { RejectReportRepository } from '../ports/repository.js';
 
-export class UpdateDailyRejectDraftUseCase {
+export class AppendDailyRejectEntryUseCase {
   constructor(private readonly repository: RejectReportRepository) {}
+
   async execute(input: {
     actor: ActorContext;
     reportId: string;
     expectedVersion: bigint;
-    reportDate: Date;
-    department: string;
-    shift?: string;
-    entries: readonly DailyRejectEntryInput[];
+    entry: DailyRejectEntryInput;
     requestId: string;
   }) {
     const record = await this.repository.getDailyReject(input.reportId);
@@ -39,15 +36,12 @@ export class UpdateDailyRejectDraftUseCase {
       },
       { throwOnDeny: true },
     );
-    return this.repository.updateDailyRejectDraft({
+    return this.repository.appendDailyRejectEntry({
       id: record.id,
       expectedVersion: input.expectedVersion,
       actor: input.actor,
       requestId: input.requestId,
-      reportDate: input.reportDate,
-      department: input.department,
-      shift: input.shift,
-      entries: input.entries.map(validateDailyRejectEntry),
+      entry: validateDailyRejectEntry(input.entry),
     });
   }
 }

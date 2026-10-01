@@ -40,6 +40,85 @@ type EntryRow = DatabaseRow<'daily_reject_entries'>;
 
 const isUuid = (value: string) => /^[0-9a-f-]{36}$/i.test(value);
 
+function reportFilterSql(filter: RejectReportListFilter = {}) {
+  let where = sql`TRUE`;
+  if (filter.type) where = sql`${where} AND r.report_type = ${filter.type}`;
+  if (filter.status) where = sql`${where} AND r.status = ${filter.status}`;
+  else where = sql`${where} AND r.status <> 'VOID'`;
+  if (filter.from)
+    where = sql`${where} AND r.report_date >= ${filter.from.toISOString().slice(0, 10)}::date`;
+  if (filter.to)
+    where = sql`${where} AND r.report_date <= ${filter.to.toISOString().slice(0, 10)}::date`;
+  if (filter.department) where = sql`${where} AND r.department = ${filter.department}`;
+  if (filter.createdBy && isUuid(filter.createdBy))
+    where = sql`${where} AND r.created_by = ${filter.createdBy}`;
+  if (filter.approvalState === 'AWAITING')
+    where = sql`${where} AND r.report_type = 'ISSUE_SLIP' AND r.status IN ('ISSUED', 'APPROVAL_TRACKING')`;
+  if (filter.approvalState === 'COMPLETED')
+    where = sql`${where} AND r.report_type = 'ISSUE_SLIP' AND r.status = 'COMPLETED'`;
+  if (filter.unit) {
+    where = sql`${where} AND (
+      (r.report_type = 'ISSUE_SLIP' AND EXISTS (
+        SELECT 1 FROM qc.reject_issue_slips s WHERE s.report_id = r.id AND btrim(s.unit) = ${filter.unit}
+      )) OR (r.report_type = 'DAILY_REJECT' AND EXISTS (
+        SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id AND btrim(e.rm_unit) = ${filter.unit}
+      ))
+    )`;
+  }
+  if (filter.unitMissing) {
+    where = sql`${where} AND (
+      (r.report_type = 'ISSUE_SLIP' AND EXISTS (
+        SELECT 1 FROM qc.reject_issue_slips s WHERE s.report_id = r.id AND nullif(btrim(s.unit), '') IS NULL
+      )) OR (r.report_type = 'DAILY_REJECT' AND EXISTS (
+        SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id AND nullif(btrim(e.rm_unit), '') IS NULL
+      ))
+    )`;
+  }
+  if (filter.itemCode || filter.itemName || filter.lot || filter.search) {
+    const predicates = (alias: 's' | 'e') => {
+      const name = alias === 's' ? 'item_name' : 'item_description';
+      const exact = sql`${filter.itemCode ? sql`AND ${sql.raw(alias)}.item_code ILIKE ${`%${filter.itemCode}%`}` : sql``}
+        ${filter.itemName ? sql`AND ${sql.raw(alias)}.${sql.raw(name)} ILIKE ${`%${filter.itemName}%`}` : sql``}
+        ${filter.lot ? sql`AND ${sql.raw(alias)}.lot_no ILIKE ${`%${filter.lot}%`}` : sql``}`;
+      const search = filter.search
+        ? sql`(${sql.raw(alias)}.item_code ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.${sql.raw(name)} ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.lot_no ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.reject_reason ILIKE ${`%${filter.search}%`})`
+        : sql`TRUE`;
+      const exists = (detail: unknown) =>
+        alias === 's'
+          ? sql`EXISTS (SELECT 1 FROM qc.reject_issue_slips s WHERE s.report_id = r.id AND ${detail})`
+          : sql`EXISTS (SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id AND ${detail})`;
+      const hasExact = Boolean(filter.itemCode || filter.itemName || filter.lot);
+      return hasExact
+        ? sql`(${exists(sql`TRUE ${exact}`)} AND (${filter.search ? sql`r.report_no ILIKE ${`%${filter.search}%`} OR ${exists(sql`${search}`)}` : sql`TRUE`}))`
+        : sql`(${filter.search ? sql`r.report_no ILIKE ${`%${filter.search}%`} OR ${exists(sql`${search}`)}` : sql`FALSE`})`;
+    };
+    where = sql`${where} AND (
+      (r.report_type = 'ISSUE_SLIP' AND ${predicates('s')}) OR
+      (r.report_type = 'DAILY_REJECT' AND ${predicates('e')})
+    )`;
+  }
+  return where;
+}
+
+function detailRowFilterSql(filter: RejectReportListFilter, type: 'ISSUE_SLIP' | 'DAILY_REJECT') {
+  const alias = type === 'ISSUE_SLIP' ? 's' : 'e';
+  const name = type === 'ISSUE_SLIP' ? 'item_name' : 'item_description';
+  let where = sql`TRUE`;
+  if (filter.unit)
+    where = sql`${where} AND btrim(${sql.raw(alias)}.${sql.raw(type === 'ISSUE_SLIP' ? 'unit' : 'rm_unit')}) = ${filter.unit}`;
+  if (filter.unitMissing)
+    where = sql`${where} AND nullif(btrim(${sql.raw(alias)}.${sql.raw(type === 'ISSUE_SLIP' ? 'unit' : 'rm_unit')}), '') IS NULL`;
+  if (filter.itemCode)
+    where = sql`${where} AND ${sql.raw(alias)}.item_code ILIKE ${`%${filter.itemCode}%`}`;
+  if (filter.itemName)
+    where = sql`${where} AND ${sql.raw(alias)}.${sql.raw(name)} ILIKE ${`%${filter.itemName}%`}`;
+  if (filter.lot) where = sql`${where} AND ${sql.raw(alias)}.lot_no ILIKE ${`%${filter.lot}%`}`;
+  if (filter.search) {
+    where = sql`${where} AND (r.report_no ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.item_code ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.${sql.raw(name)} ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.lot_no ILIKE ${`%${filter.search}%`} OR ${sql.raw(alias)}.reject_reason ILIKE ${`%${filter.search}%`})`;
+  }
+  return where;
+}
+
 function mapApproval(row: ApprovalRow): ApprovalConfirmation {
   return {
     id: row.id,
@@ -108,7 +187,7 @@ function mapEntry(row: EntryRow): DailyRejectEntry {
     pumpOutQty: row.pump_out_qty === null ? undefined : String(row.pump_out_qty),
     rejectQty: String(row.reject_qty),
     goodQty: String(row.good_qty),
-    rejectPct: row.reject_pct === null ? null : Number(row.reject_pct),
+    rejectPct: row.reject_pct === null ? null : String(row.reject_pct),
     rejectLimit: row.reject_limit === null ? undefined : String(row.reject_limit),
     productionFormula: row.production_formula ?? undefined,
     rejectReason: row.reject_reason,
@@ -148,7 +227,7 @@ function entryValues(
   position: number;
   version: bigint;
 } {
-  const rejectPct = computeRejectPercent(Number(entry.rejectQty), Number(entry.goodQty));
+  const rejectPct = computeRejectPercent(entry.rejectQty, entry.goodQty);
   return {
     id: uuidv7(),
     report_id: reportId,
@@ -500,51 +579,19 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     filter: RejectReportListFilter;
     page: Page;
   }): Promise<PagedResult<IssueSlip>> {
-    const base = () =>
-      this.database
-        .selectFrom('reject_reports as r')
-        .innerJoin('reject_issue_slips as s', 's.report_id', 'r.id');
-    const applyFilter = (query: ReturnType<typeof base>, f: RejectReportListFilter) => {
-      let q = query.where('r.report_type', '=', 'ISSUE_SLIP');
-      if (f.status) q = q.where('r.status', '=', f.status);
-      if (f.from) q = q.where('r.report_date', '>=', f.from);
-      if (f.to) q = q.where('r.report_date', '<=', f.to);
-      if (f.department) q = q.where('r.department', '=', f.department);
-      if (f.createdBy && isUuid(f.createdBy)) q = q.where('r.created_by', '=', f.createdBy);
-      if (f.itemCode) q = q.where('s.item_code', 'ilike', `%${f.itemCode}%`);
-      if (f.itemName) q = q.where('s.item_name', 'ilike', `%${f.itemName}%`);
-      if (f.lot) q = q.where('s.lot_no', 'ilike', `%${f.lot}%`);
-      if (f.approvalState === 'AWAITING')
-        q = q.where('r.status', 'in', ['ISSUED', 'APPROVAL_TRACKING']);
-      if (f.approvalState === 'COMPLETED') q = q.where('r.status', '=', 'COMPLETED');
-      if (f.search)
-        q = q.where((eb) =>
-          eb.or([
-            eb('r.report_no', 'ilike', `%${f.search}%`),
-            eb('s.item_code', 'ilike', `%${f.search}%`),
-            eb('s.item_name', 'ilike', `%${f.search}%`),
-            eb('s.lot_no', 'ilike', `%${f.search}%`),
-            eb('s.reject_reason', 'ilike', `%${f.search}%`),
-          ]),
-        );
-      return q;
-    };
-    const countRow = await applyFilter(base(), input.filter)
-      .select(({ fn }) => fn.countAll().as('count'))
-      .executeTakeFirst();
-    const rows = await applyFilter(base(), input.filter)
-      .select(['r.id'])
-      .orderBy('r.report_date', 'desc')
-      .orderBy('r.report_no', 'desc')
-      .limit(input.page.pageSize)
-      .offset(input.page.offset)
-      .execute();
-    const items = await Promise.all(
-      rows.map((row: { id: string }) => this.loadSlip(this.database, row.id)),
-    );
+    const predicate = reportFilterSql({ ...input.filter, type: 'ISSUE_SLIP' });
+    const countRow = await sql<{ count: string }>`
+      SELECT COUNT(*)::text AS count FROM qc.reject_reports r WHERE ${predicate}
+    `.execute(this.database);
+    const rows = await sql<{ id: string }>`
+      SELECT r.id FROM qc.reject_reports r WHERE ${predicate}
+      ORDER BY r.report_date DESC, r.report_no DESC
+      LIMIT ${input.page.pageSize} OFFSET ${input.page.offset}
+    `.execute(this.database);
+    const items = await Promise.all(rows.rows.map((row) => this.loadSlip(this.database, row.id)));
     return {
       items: items.filter((item): item is IssueSlip => Boolean(item)),
-      total: Number((countRow as { count?: unknown } | undefined)?.count ?? 0),
+      total: Number(countRow.rows[0]?.count ?? 0),
     };
   }
 
@@ -861,99 +908,52 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     filter: RejectReportListFilter;
     page: Page;
   }): Promise<PagedResult<DailyReject>> {
-    const base = () => this.database.selectFrom('reject_reports as r');
-    const applyFilter = (query: ReturnType<typeof base>, f: RejectReportListFilter) => {
-      let q = query.where('r.report_type', '=', 'DAILY_REJECT');
-      if (f.status) q = q.where('r.status', '=', f.status);
-      if (f.from) q = q.where('r.report_date', '>=', f.from);
-      if (f.to) q = q.where('r.report_date', '<=', f.to);
-      if (f.department) q = q.where('r.department', '=', f.department);
-      if (f.createdBy && isUuid(f.createdBy)) q = q.where('r.created_by', '=', f.createdBy);
-      if (f.itemCode || f.itemName || f.lot || f.search) {
-        // Detail filters live on the entry rows, so they become a correlated
-        // EXISTS on the parent report — a report matches when one of its
-        // entries matches the supplied detail filters.
-        q = q.where((eb) =>
-          eb.exists(
-            eb
-              .selectFrom('daily_reject_entries as e')
-              .select(sql`1`.as('one'))
-              .whereRef('e.report_id', '=', 'r.id')
-              .where((inner) =>
-                inner.or([
-                  ...(f.itemCode ? [inner('e.item_code', 'ilike', `%${f.itemCode}%`)] : []),
-                  ...(f.itemName ? [inner('e.item_description', 'ilike', `%${f.itemName}%`)] : []),
-                  ...(f.lot ? [inner('e.lot_no', 'ilike', `%${f.lot}%`)] : []),
-                  ...(f.search
-                    ? [
-                        inner('e.item_code', 'ilike', `%${f.search}%`),
-                        inner('e.item_description', 'ilike', `%${f.search}%`),
-                        inner('e.lot_no', 'ilike', `%${f.search}%`),
-                        inner('e.reject_reason', 'ilike', `%${f.search}%`),
-                      ]
-                    : []),
-                ]),
-              ),
-          ),
-        );
-        if (f.search)
-          q = q.where((eb) =>
-            eb.or([
-              eb('r.report_no', 'ilike', `%${f.search}%`),
-              eb.exists(
-                eb
-                  .selectFrom('daily_reject_entries as e')
-                  .select(sql`1`.as('one'))
-                  .whereRef('e.report_id', '=', 'r.id'),
-              ),
-            ]),
-          );
-      }
-      return q;
-    };
-    const countRow = await applyFilter(base(), input.filter)
-      .select(({ fn }) => fn.countAll().as('count'))
-      .executeTakeFirst();
-    const rows = await applyFilter(base(), input.filter)
-      .select(['r.id'])
-      .orderBy('r.report_date', 'desc')
-      .orderBy('r.report_no', 'desc')
-      .limit(input.page.pageSize)
-      .offset(input.page.offset)
-      .execute();
-    const items = await Promise.all(
-      rows.map((row: { id: string }) => this.loadDaily(this.database, row.id)),
-    );
+    const predicate = reportFilterSql({ ...input.filter, type: 'DAILY_REJECT' });
+    const countRow = await sql<{ count: string }>`
+      SELECT COUNT(*)::text AS count FROM qc.reject_reports r WHERE ${predicate}
+    `.execute(this.database);
+    const rows = await sql<{ id: string }>`
+      SELECT r.id FROM qc.reject_reports r WHERE ${predicate}
+      ORDER BY r.report_date DESC, r.report_no DESC
+      LIMIT ${input.page.pageSize} OFFSET ${input.page.offset}
+    `.execute(this.database);
+    const items = await Promise.all(rows.rows.map((row) => this.loadDaily(this.database, row.id)));
     return {
       items: items.filter((item): item is DailyReject => Boolean(item)),
-      total: Number((countRow as { count?: unknown } | undefined)?.count ?? 0),
+      total: Number(countRow.rows[0]?.count ?? 0),
     };
   }
 
-  /** Draft entries are replaced as a set: delete + re-insert with fresh positions. */
-  async updateDailyRejectDraft(input: {
+  /**
+   * Appends one server-validated entry. The report version is compare-and-set
+   * in the same transaction before selecting the next position, so concurrent
+   * submits cannot replace/reorder prior rows or append twice at one version.
+   */
+  async appendDailyRejectEntry(input: {
     id: string;
     expectedVersion: bigint;
     actor: ActorContext;
     requestId: string;
-    reportDate: Date;
-    department: string;
-    shift?: string;
-    entries: readonly DailyRejectEntryInput[];
+    entry: DailyRejectEntryInput;
   }): Promise<DailyReject> {
     try {
       return await this.database.transaction().execute(async (tx) => {
-        await this.bumpReport(tx, input.id, input.expectedVersion, input.actor, {
-          report_date: input.reportDate,
-          department: input.department,
-          shift: input.shift ?? null,
-        });
-        await tx.deleteFrom('daily_reject_entries').where('report_id', '=', input.id).execute();
-        if (input.entries.length)
-          await tx
-            .insertInto('daily_reject_entries')
-            .values(input.entries.map((entry, index) => entryValues(input.id, entry, index + 1)))
-            .execute();
+        await this.bumpReport(tx, input.id, input.expectedVersion, input.actor, {});
+        const positionRow = await tx
+          .selectFrom('daily_reject_entries')
+          .select(({ fn }) => fn.max('position').as('position'))
+          .where('report_id', '=', input.id)
+          .executeTakeFirst();
+        const position = Number(positionRow?.position ?? 0) + 1;
+        if (!Number.isSafeInteger(position) || position > 2_147_483_647)
+          throw new AppError('VALIDATION_FAILED', {
+            userSafe: true,
+            fieldErrors: { entries: ['no more entries can be added to this record'] },
+          });
+        await tx
+          .insertInto('daily_reject_entries')
+          .values(entryValues(input.id, input.entry, position))
+          .execute();
         await this.auditFor(tx)?.append({
           actorType: 'USER',
           actorId: input.actor.id,
@@ -961,6 +961,14 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
           subjectId: input.id,
           action: 'REJECT_REPORT_UPDATED',
           requestId: input.requestId,
+          payload: { change: 'DAILY_REJECT_ENTRY_APPENDED', position },
+        });
+        await this.outboxFor(tx)?.enqueue({
+          eventType: 'REJECT_REPORT_UPDATED',
+          aggregateType: 'REJECT_REPORT',
+          aggregateId: input.id,
+          payload: { change: 'DAILY_REJECT_ENTRY_APPENDED', position },
+          dedupeKey: `daily-reject-entry-appended:${input.id}:${input.expectedVersion}`,
         });
         const updated = await this.loadDaily(tx, input.id);
         if (!updated) throw new AppError('SYSTEM_INTERNAL');
@@ -1063,10 +1071,15 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     }
   }
 
-  async summary(now: Date): Promise<RejectReportSummary> {
+  async summary(now: Date, filter: RejectReportListFilter = {}): Promise<RejectReportSummary> {
     const day = reportNoDateKey(now);
     const today = `${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6, 8)}`;
     const monthStart = `${day.slice(0, 4)}-${day.slice(4, 6)}-01`;
+    const filtered = sql`WITH filtered_reports AS (
+      SELECT r.* FROM qc.reject_reports r
+      WHERE ${filter.status === 'VOID' ? sql`TRUE` : sql`r.status <> 'VOID'`}
+        AND ${reportFilterSql(filter)}
+    )`;
     const counts = await sql<{
       reports_today: string;
       reports_this_month: string;
@@ -1076,6 +1089,7 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       completed_issue_slips: string;
       finalized_daily_rejects: string;
     }>`
+      ${filtered}
       SELECT
         COUNT(*) FILTER (WHERE report_date = ${today}::date) AS reports_today,
         COUNT(*) FILTER (WHERE report_date >= ${monthStart}::date) AS reports_this_month,
@@ -1084,25 +1098,42 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         COUNT(*) FILTER (WHERE report_type = 'ISSUE_SLIP' AND status IN ('ISSUED', 'APPROVAL_TRACKING')) AS awaiting_approvals,
         COUNT(*) FILTER (WHERE report_type = 'ISSUE_SLIP' AND status = 'COMPLETED') AS completed_issue_slips,
         COUNT(*) FILTER (WHERE report_type = 'DAILY_REJECT' AND status = 'FINALIZED') AS finalized_daily_rejects
-      FROM qc.reject_reports
-      WHERE status <> 'VOID'
+      FROM filtered_reports r
     `.execute(this.database);
-    const qty = await sql<{ total: string | null }>`
-      SELECT (
-        SELECT COALESCE(SUM(s.rejected_qty), 0)
-        FROM qc.reject_issue_slips s
-        JOIN qc.reject_reports r ON r.id = s.report_id AND r.status <> 'VOID'
-      ) + (
-        SELECT COALESCE(SUM(e.reject_qty), 0)
-        FROM qc.daily_reject_entries e
-        JOIN qc.reject_reports r ON r.id = e.report_id AND r.status <> 'VOID'
-      ) AS total
+    const quantities = await sql<{
+      report_type: 'ISSUE_SLIP' | 'DAILY_REJECT';
+      unit: string;
+      rejected_qty: string;
+      report_count: string;
+    }>`
+      ${filtered}
+      SELECT 'ISSUE_SLIP'::text AS report_type,
+        COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+        SUM(s.rejected_qty)::text AS rejected_qty,
+        COUNT(DISTINCT r.id)::text AS report_count
+      FROM filtered_reports r
+      JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+      GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')
+      UNION ALL
+      SELECT 'DAILY_REJECT'::text AS report_type,
+        COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+        SUM(e.reject_qty)::text AS rejected_qty,
+        COUNT(DISTINCT r.id)::text AS report_count
+      FROM filtered_reports r
+      JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+      GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
+      ORDER BY report_type, unit
     `.execute(this.database);
     const row = counts.rows[0];
     return {
       reportsToday: Number(row?.reports_today ?? 0),
       reportsThisMonth: Number(row?.reports_this_month ?? 0),
-      totalRejectedQuantity: Number(qty.rows[0]?.total ?? 0),
+      rejectedByUnit: quantities.rows.map((quantity) => ({
+        reportType: quantity.report_type,
+        unit: quantity.unit,
+        rejectedQty: quantity.rejected_qty,
+        reportCount: Number(quantity.report_count),
+      })),
       totalIssueSlips: Number(row?.total_issue_slips ?? 0),
       totalDailyRejects: Number(row?.total_daily_rejects ?? 0),
       awaitingApprovals: Number(row?.awaiting_approvals ?? 0),
@@ -1111,146 +1142,171 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
     };
   }
 
-  async analytics(input: { from?: Date; to?: Date }): Promise<RejectReportAnalytics> {
-    const bounds = (alias: string) => {
-      const fromClause = input.from
-        ? sql`AND ${sql.ref(alias)}.report_date >= ${input.from}`
-        : sql``;
-      const toClause = input.to ? sql`AND ${sql.ref(alias)}.report_date <= ${input.to}` : sql``;
-      return sql`${fromClause} ${toClause}`;
-    };
-    const b = bounds('r');
-    const [trend, byItem, byDepartment, byReason, topItems, approvalStatus, pctTrend] =
-      await Promise.all([
-        sql<{ date: string; rejected_qty: string; report_count: string }>`
-          SELECT r.report_date::text AS date,
-            (
-              SELECT COALESCE(SUM(s.rejected_qty), 0)
-              FROM qc.reject_issue_slips s WHERE s.report_id = r.id
-            ) + (
-              SELECT COALESCE(SUM(e.reject_qty), 0)
-              FROM qc.daily_reject_entries e WHERE e.report_id = r.id
-            ) AS rejected_qty,
-            COUNT(*) OVER () AS report_count
-          FROM qc.reject_reports r
-          WHERE r.status <> 'VOID' ${b}
-          ORDER BY r.report_date
-        `.execute(this.database),
-        sql<{ item_code: string; item_name: string; rejected_qty: string }>`
-          SELECT s.item_code, s.item_name, SUM(s.rejected_qty) AS rejected_qty
-          FROM qc.reject_issue_slips s
-          JOIN qc.reject_reports r ON r.id = s.report_id AND r.status <> 'VOID' ${b}
-          GROUP BY s.item_code, s.item_name
-          ORDER BY rejected_qty DESC
-          LIMIT 25
-        `.execute(this.database),
-        sql<{ department: string; rejected_qty: string; report_count: string }>`
-          SELECT r.department,
-            (
-              SELECT COALESCE(SUM(s.rejected_qty), 0) FROM qc.reject_issue_slips s WHERE s.report_id = r.id
-            ) + (
-              SELECT COALESCE(SUM(e.reject_qty), 0) FROM qc.daily_reject_entries e WHERE e.report_id = r.id
-            ) AS rejected_qty,
-            COUNT(*) OVER () AS report_count
-          FROM qc.reject_reports r
-          WHERE r.status <> 'VOID' ${b}
-          ORDER BY r.department
-        `.execute(this.database),
-        sql<{ reason: string; count: string }>`
-          SELECT reason, COUNT(*) AS count FROM (
-            SELECT s.reject_reason AS reason FROM qc.reject_issue_slips s
-            JOIN qc.reject_reports r ON r.id = s.report_id AND r.status <> 'VOID' ${b}
-            UNION ALL
-            SELECT e.reject_reason FROM qc.daily_reject_entries e
-            JOIN qc.reject_reports r ON r.id = e.report_id AND r.status <> 'VOID' ${b}
-          ) reasons GROUP BY reason ORDER BY count DESC LIMIT 25
-        `.execute(this.database),
-        sql<{ item_code: string; item_name: string; rejected_qty: string }>`
-          SELECT item_code, item_name, rejected_qty FROM (
-            SELECT s.item_code, s.item_name, s.rejected_qty
-            FROM qc.reject_issue_slips s
-            JOIN qc.reject_reports r ON r.id = s.report_id AND r.status <> 'VOID' ${b}
-            UNION ALL
-            SELECT COALESCE(e.item_code, '—'), e.item_description, e.reject_qty
-            FROM qc.daily_reject_entries e
-            JOIN qc.reject_reports r ON r.id = e.report_id AND r.status <> 'VOID' ${b}
-          ) items ORDER BY rejected_qty DESC LIMIT 10
-        `.execute(this.database),
-        sql<{ pending: string; completed: string }>`
-          SELECT
-            COUNT(*) FILTER (WHERE a.status IN ('PENDING', 'REVERSED')) AS pending,
-            COUNT(*) FILTER (WHERE a.status = 'CONFIRMED') AS completed
-          FROM qc.issue_slip_approval_confirmations a
-          JOIN qc.reject_reports r ON r.id = a.report_id AND r.status <> 'VOID' ${b}
-        `.execute(this.database),
-        sql<{ date: string; reject_pct: string | null }>`
-          SELECT r.report_date::text AS date,
-            CASE WHEN SUM(e.good_qty) > 0
-              THEN ROUND(SUM(e.reject_qty) / SUM(e.good_qty) * 100, 4)
-              ELSE NULL END AS reject_pct
-          FROM qc.reject_reports r
-          JOIN qc.daily_reject_entries e ON e.report_id = r.id
-          WHERE r.status <> 'VOID' ${b}
-          GROUP BY r.report_date
-          ORDER BY r.report_date
-        `.execute(this.database),
-      ]);
-    const trendMap = new Map<string, { rejectedQty: number; reportCount: number }>();
-    for (const row of trend.rows) {
-      const current = trendMap.get(row.date) ?? { rejectedQty: 0, reportCount: 0 };
-      current.rejectedQty += Number(row.rejected_qty);
-      current.reportCount += 1;
-      trendMap.set(row.date, current);
-    }
-    const departmentMap = new Map<string, { rejectedQty: number; reportCount: number }>();
-    for (const row of byDepartment.rows) {
-      const current = departmentMap.get(row.department) ?? { rejectedQty: 0, reportCount: 0 };
-      current.rejectedQty += Number(row.rejected_qty);
-      current.reportCount += 1;
-      departmentMap.set(row.department, current);
-    }
+  async analytics(input: {
+    filter?: RejectReportListFilter;
+    from?: Date;
+    to?: Date;
+  }): Promise<RejectReportAnalytics> {
+    const filter = input.filter ?? { from: input.from, to: input.to };
+    const filtered = sql`WITH filtered_reports AS (
+      SELECT r.* FROM qc.reject_reports r
+      WHERE ${filter.status === 'VOID' ? sql`TRUE` : sql`r.status <> 'VOID'`}
+        AND ${reportFilterSql(filter)}
+    )`;
+    const [trend, byItem, byDepartment, byReason, approvalStatus, pctTrend] = await Promise.all([
+      sql<{
+        date: string;
+        report_type: 'ISSUE_SLIP' | 'DAILY_REJECT';
+        unit: string;
+        rejected_qty: string;
+        report_count: string;
+      }>`
+        ${filtered}
+        SELECT r.report_date::text AS date, 'ISSUE_SLIP'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+          SUM(s.rejected_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+        FROM filtered_reports r
+        JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+        GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')
+        UNION ALL
+        SELECT r.report_date::text AS date, 'DAILY_REJECT'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+          SUM(e.reject_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+        FROM filtered_reports r
+        JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+        GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
+        ORDER BY date, report_type, unit
+      `.execute(this.database),
+      sql<{
+        report_type: 'ISSUE_SLIP' | 'DAILY_REJECT';
+        unit: string;
+        item_code: string;
+        item_name: string;
+        rejected_qty: string;
+      }>`
+        ${filtered}
+        SELECT 'ISSUE_SLIP'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+          s.item_code, s.item_name, SUM(s.rejected_qty)::text AS rejected_qty
+        FROM filtered_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+        GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded'), s.item_code, s.item_name
+        UNION ALL
+        SELECT 'DAILY_REJECT'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+          COALESCE(e.item_code, '—') AS item_code, e.item_description AS item_name,
+          SUM(e.reject_qty)::text AS rejected_qty
+        FROM filtered_reports r JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+        GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded'), e.item_code, e.item_description
+        ORDER BY rejected_qty::numeric DESC, report_type, unit, item_code, item_name
+        LIMIT 25
+      `.execute(this.database),
+      sql<{
+        report_type: 'ISSUE_SLIP' | 'DAILY_REJECT';
+        unit: string;
+        department: string;
+        rejected_qty: string;
+        report_count: string;
+      }>`
+        ${filtered}
+        SELECT 'ISSUE_SLIP'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+          r.department, SUM(s.rejected_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+        FROM filtered_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+        GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded'), r.department
+        UNION ALL
+        SELECT 'DAILY_REJECT'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+          r.department, SUM(e.reject_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+        FROM filtered_reports r JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+        GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded'), r.department
+        ORDER BY report_type, unit, department
+      `.execute(this.database),
+      sql<{ report_type: 'ISSUE_SLIP' | 'DAILY_REJECT'; reason: string; count: string }>`
+        ${filtered}
+        SELECT 'ISSUE_SLIP'::text AS report_type, s.reject_reason AS reason, COUNT(*)::text AS count
+        FROM filtered_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+        GROUP BY s.reject_reason
+        UNION ALL
+        SELECT 'DAILY_REJECT'::text AS report_type, e.reject_reason AS reason, COUNT(*)::text AS count
+        FROM filtered_reports r JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+        GROUP BY e.reject_reason
+        ORDER BY count::numeric DESC, report_type, reason
+        LIMIT 25
+      `.execute(this.database),
+      sql<{ pending: string; completed: string }>`
+        ${filtered}
+        SELECT
+          COUNT(*) FILTER (WHERE a.status IN ('PENDING', 'REVERSED'))::text AS pending,
+          COUNT(*) FILTER (WHERE a.status = 'CONFIRMED')::text AS completed
+        FROM filtered_reports r
+        JOIN qc.issue_slip_approval_confirmations a ON a.report_id = r.id
+      `.execute(this.database),
+      sql<{ date: string; unit: string; reject_pct: string | null }>`
+        ${filtered}
+        SELECT r.report_date::text AS date,
+          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+          CASE WHEN SUM(e.good_qty) > 0
+            THEN ROUND(SUM(e.reject_qty) / SUM(e.good_qty) * 100, 4)::text
+            ELSE NULL::text END AS reject_pct
+        FROM filtered_reports r JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+        GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
+        ORDER BY r.report_date, unit
+      `.execute(this.database),
+    ]);
+    const items = byItem.rows.map((row) => ({
+      reportType: row.report_type,
+      unit: row.unit,
+      itemCode: row.item_code,
+      itemName: row.item_name,
+      rejectedQty: row.rejected_qty,
+    }));
     return {
-      trendByDate: [...trendMap.entries()].map(([date, value]) => ({
-        date,
-        rejectedQty: value.rejectedQty,
-        reportCount: value.reportCount,
+      trendByDate: trend.rows.map((row) => ({
+        date: row.date,
+        reportType: row.report_type,
+        unit: row.unit,
+        rejectedQty: row.rejected_qty,
+        reportCount: Number(row.report_count),
       })),
-      byItem: byItem.rows.map((row) => ({
-        itemCode: row.item_code,
-        itemName: row.item_name,
-        rejectedQty: Number(row.rejected_qty),
+      byItem: items,
+      byDepartment: byDepartment.rows.map((row) => ({
+        reportType: row.report_type,
+        unit: row.unit,
+        department: row.department,
+        rejectedQty: row.rejected_qty,
+        reportCount: Number(row.report_count),
       })),
-      byDepartment: [...departmentMap.entries()].map(([department, value]) => ({
-        department,
-        rejectedQty: value.rejectedQty,
-        reportCount: value.reportCount,
+      byReason: byReason.rows.map((row) => ({
+        reportType: row.report_type,
+        reason: row.reason,
+        count: Number(row.count),
       })),
-      byReason: byReason.rows.map((row) => ({ reason: row.reason, count: Number(row.count) })),
-      topRejectItems: topItems.rows.map((row) => ({
-        itemCode: row.item_code,
-        itemName: row.item_name,
-        rejectedQty: Number(row.rejected_qty),
-      })),
+      topRejectItems: items.slice(0, 10),
       approvalStatus: approvalStatus.rows.map((row) => ({
         pending: Number(row.pending),
         completed: Number(row.completed),
       })),
       rejectPctTrend: pctTrend.rows.map((row) => ({
         date: row.date,
-        rejectPct: row.reject_pct === null ? null : Number(row.reject_pct),
+        unit: row.unit,
+        rejectPct: row.reject_pct,
       })),
     };
   }
 
-  async recent(limit: number): Promise<readonly (IssueSlip | DailyReject)[]> {
-    const rows = await this.database
-      .selectFrom('reject_reports')
-      .select(['id', 'report_type'])
-      .orderBy('created_at', 'desc')
-      .limit(Math.min(50, Math.max(1, limit)))
-      .execute();
+  async recent(
+    limit: number,
+    filter: RejectReportListFilter = {},
+  ): Promise<readonly (IssueSlip | DailyReject)[]> {
+    const predicate = reportFilterSql(filter);
+    const rows = await sql<{ id: string; report_type: 'ISSUE_SLIP' | 'DAILY_REJECT' }>`
+      SELECT r.id, r.report_type FROM qc.reject_reports r
+      WHERE ${predicate}
+      ORDER BY r.created_at DESC
+      LIMIT ${Math.min(50, Math.max(1, limit))}
+    `.execute(this.database);
     const items = await Promise.all(
-      rows.map((row) =>
+      rows.rows.map((row) =>
         row.report_type === 'ISSUE_SLIP'
           ? this.loadSlip(this.database, row.id)
           : this.loadDaily(this.database, row.id),

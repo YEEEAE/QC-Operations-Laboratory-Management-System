@@ -5,21 +5,40 @@ import { rejectReportReadDependencies } from '../../modules/reject-reports/appli
 import { parsePageInput } from '../../shared/pagination/page.js';
 import { stateLabel } from '../../shared/copy/ux-vocabulary.js';
 import type { RejectReportListFilter } from '../../modules/reject-reports/ports/repository.js';
+import { REJECT_REPORT_STATUSES } from '../../modules/reject-reports/application/view-model.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Freject-reports');
 
 const params = Astro.url.searchParams;
-const tab = (params.get('tab') ?? 'all') as 'all' | 'slips' | 'daily' | 'awaiting' | 'completed';
+const allowedTabs = ['all', 'slips', 'daily', 'awaiting', 'completed'] as const;
+const tabValue = params.get('tab') ?? 'all';
+const tab = allowedTabs.includes(tabValue as (typeof allowedTabs)[number]) ? tabValue as (typeof allowedTabs)[number] : 'all';
 const page = parsePageInput({ page: params.get('page'), pageSize: params.get('pageSize') });
+const dateFilter = (value: string | null) => {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? undefined : date;
+};
+const statusValue = params.get('status');
+const knownStatuses = REJECT_REPORT_STATUSES;
 const filter: RejectReportListFilter = {
   search: params.get('q')?.slice(0, 200) || undefined,
+  itemCode: params.get('itemCode')?.slice(0, 100) || undefined,
+  itemName: params.get('itemName')?.slice(0, 200) || undefined,
+  lot: params.get('lot')?.slice(0, 100) || undefined,
   department: params.get('department')?.slice(0, 200) || undefined,
-  status: (params.get('status') as RejectReportListFilter['status']) || undefined,
+  unit: params.get('unit')?.trim().slice(0, 40) || undefined,
+  unitMissing: params.get('unitMissing') === 'on',
+  type: tab === 'slips' || tab === 'awaiting' || tab === 'completed' ? 'ISSUE_SLIP' : tab === 'daily' ? 'DAILY_REJECT' : undefined,
+  status: knownStatuses.includes(statusValue as (typeof knownStatuses)[number]) ? statusValue as RejectReportListFilter['status'] : undefined,
   approvalState: tab === 'awaiting' ? 'AWAITING' : tab === 'completed' ? 'COMPLETED' : undefined,
-  from: params.get('from') ? new Date(params.get('from')!) : undefined,
-  to: params.get('to') ? new Date(params.get('to')!) : undefined,
+  from: dateFilter(params.get('from')),
+  to: dateFilter(params.get('to')),
 };
+const invalidDateRange = Boolean(filter.from && filter.to && filter.from > filter.to);
+if (invalidDateRange) { filter.from = undefined; filter.to = undefined; }
+const invalidDate = Boolean((params.has('from') && !dateFilter(params.get('from'))) || (params.has('to') && !dateFilter(params.get('to'))));
 const deps = rejectReportReadDependencies();
 // Fail closed with an honest availability state when the database behind this
 // deployment has not been provisioned for Reject reports. The previous
@@ -36,24 +55,24 @@ const availabilityError = availability.reason === 'SCHEMA_NOT_READY'
       description: 'The system could not confirm that Reject reports are ready to open. No records were changed. Try again later or contact your system administrator.',
     };
 const showSlips = tab !== 'daily';
-const showDaily = tab === 'all' || tab === 'daily' || tab === 'completed' || tab === 'awaiting';
+const showDaily = tab === 'all' || tab === 'daily';
 const emptyPage = { items: [], total: 0 } as const;
 const [slips, daily, dashboard] = availability.available
   ? await Promise.all([
       showSlips
         ? deps.listIssueSlips.execute({ actor, filter, page })
         : Promise.resolve(emptyPage),
-      showDaily && tab !== 'awaiting'
+      showDaily
         ? deps.listDailyRejects.execute({ actor, filter, page })
         : Promise.resolve(emptyPage),
-      deps.dashboard.execute({ actor }),
+      deps.dashboard.execute({ actor, filter }),
     ])
   : ([emptyPage, emptyPage, null] as const);
 const { summary, analytics, recent } = dashboard ?? {
   summary: {
     reportsToday: 0,
     reportsThisMonth: 0,
-    totalRejectedQuantity: 0,
+    rejectedByUnit: [],
     totalIssueSlips: 0,
     totalDailyRejects: 0,
     awaitingApprovals: 0,
@@ -71,6 +90,24 @@ const { summary, analytics, recent } = dashboard ?? {
   },
   recent: [],
 };
+const drilldownHref = (point: (typeof analytics.trendByDate)[number]) => {
+  const next = new URLSearchParams(params);
+  next.delete('page');
+  next.set('tab', point.reportType === 'ISSUE_SLIP' ? 'slips' : 'daily');
+  next.set('from', point.date);
+  next.set('to', point.date);
+  next.delete('unit');
+  next.delete('unitMissing');
+  if (point.unit === 'Unit not recorded') next.set('unitMissing', 'on');
+  else next.set('unit', point.unit);
+  return `/reject-reports?${next.toString()}`;
+};
+const tabHref = (value: (typeof allowedTabs)[number]) => {
+  const next = new URLSearchParams(params);
+  next.delete('page');
+  next.set('tab', value);
+  return `/reject-reports?${next.toString()}`;
+};
 const canCreate = actor.permissions.some(
   (grant) => grant.code === 'PERM-RREJ-CREATE' && grant.active !== false,
 );
@@ -82,7 +119,6 @@ const tabs = [
   { id: 'completed', label: 'Completed' },
 ] as const;
 const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' });
-const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty));
 ---
 <AppLayout title="Reject reports · QC Operations" locale="en" direction="ltr">
   {
@@ -99,10 +135,9 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
     {canCreate && <a class="button" href="/reject-reports/new">Create report</a>}
   </section>
 
-  <section class="cards" aria-label="Summary">
+  <section class="cards" aria-label="Summary for current filters">
     <div class="card"><span>Reports today</span><strong>{summary.reportsToday}</strong></div>
     <div class="card"><span>Reports this month</span><strong>{summary.reportsThisMonth}</strong></div>
-    <div class="card"><span>Total rejected quantity</span><strong>{summary.totalRejectedQuantity}</strong></div>
     <div class="card"><span>Issue slips</span><strong>{summary.totalIssueSlips}</strong></div>
     <div class="card"><span>Daily reject records</span><strong>{summary.totalDailyRejects}</strong></div>
     <div class="card warn"><span>Awaiting approvals</span><strong>{summary.awaitingApprovals}</strong></div>
@@ -110,18 +145,28 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
     <div class="card"><span>Finalized Daily reject</span><strong>{summary.finalizedDailyRejects}</strong></div>
   </section>
 
+  <section class="panel quantities" aria-labelledby="qty-heading">
+    <h2 id="qty-heading">Rejected quantity by report type and recorded unit</h2>
+    <p>Units are shown as recorded. Values from different units or report types are not added together.</p>
+    {summary.rejectedByUnit.length ? <ul class="rank">
+      {summary.rejectedByUnit.map((row) => (
+        <li><span>{row.reportType === 'ISSUE_SLIP' ? 'Issue slip' : 'Daily reject'} · {row.unit}</span><strong>{row.rejectedQty} ({row.reportCount} reports)</strong></li>
+      ))}
+    </ul> : <p class="empty">No quantities match the current filters.</p>}
+  </section>
+
   <section class="analytics" aria-label="Analytics">
     <div class="panel">
-      <h2>Reject trend by date</h2>
+      <h2>Reject trend by date, report type and recorded unit</h2>
       {analytics.trendByDate.length ? (
-        <div class="bars">
+        <div class="table-wrap"><table>
+          <caption>Exact recorded quantities; no unit conversion is applied.</caption>
+          <thead><tr><th scope="col">Date</th><th scope="col">Report type</th><th scope="col">Recorded unit</th><th scope="col">Rejected qty</th><th scope="col">Reports</th><th scope="col">Open matching records</th></tr></thead>
+          <tbody>
           {analytics.trendByDate.map((point) => (
-            <div class="bar" title={`${point.date}: ${point.rejectedQty}`}>
-              <span style={`height:${Math.max(4, (point.rejectedQty / maxTrend) * 100)}%`}></span>
-              <small>{point.date.slice(5)}</small>
-            </div>
+            <tr><td>{point.date}</td><td>{point.reportType === 'ISSUE_SLIP' ? 'Issue slip' : 'Daily reject'}</td><td>{point.unit}</td><td>{point.rejectedQty}</td><td>{point.reportCount}</td><td><a href={drilldownHref(point)}>Open date and unit filter</a></td></tr>
           ))}
-        </div>
+          </tbody></table></div>
       ) : <p class="empty">No data in range.</p>}
     </div>
     <div class="panel">
@@ -129,7 +174,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
       {analytics.topRejectItems.length ? (
         <ol class="rank">
           {analytics.topRejectItems.map((item) => (
-            <li><span>{item.itemCode} · {item.itemName}</span><strong>{item.rejectedQty}</strong></li>
+            <li><span>{item.reportType === 'ISSUE_SLIP' ? 'Issue slip' : 'Daily reject'} · {item.itemCode} · {item.itemName} · {item.unit}</span><strong>{item.rejectedQty}</strong></li>
           ))}
         </ol>
       ) : <p class="empty">No data.</p>}
@@ -149,7 +194,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
       {analytics.byDepartment.length ? (
         <ol class="rank">
           {analytics.byDepartment.map((row) => (
-            <li><span>{row.department}</span><strong>{row.rejectedQty} ({row.reportCount} reports)</strong></li>
+            <li><span>{row.reportType === 'ISSUE_SLIP' ? 'Issue slip' : 'Daily reject'} · {row.department} · {row.unit}</span><strong>{row.rejectedQty} ({row.reportCount} reports)</strong></li>
           ))}
         </ol>
       ) : <p class="empty">No data.</p>}
@@ -167,7 +212,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
       {analytics.rejectPctTrend.length ? (
         <ol class="rank">
           {analytics.rejectPctTrend.map((row) => (
-            <li><span>{row.date}</span><strong>{row.rejectPct === null ? '—' : `${row.rejectPct}%`}</strong></li>
+            <li><span>{row.date} · {row.unit}</span><strong>{row.rejectPct === null ? '—' : `${row.rejectPct}%`}</strong></li>
           ))}
         </ol>
       ) : <p class="empty">No data.</p>}
@@ -176,17 +221,25 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
 
   <nav class="tabs" aria-label="Report views">
     {tabs.map((t) => (
-      <a href={`/reject-reports?tab=${t.id}`} aria-current={tab === t.id ? 'page' : undefined}>{t.label}</a>
+      <a href={tabHref(t.id)} aria-current={tab === t.id ? 'page' : undefined}>{t.label}</a>
     ))}
   </nav>
 
   <form class="filters" method="get" action="/reject-reports">
     <input type="hidden" name="tab" value={tab} />
     <label>Search<input name="q" value={filter.search ?? ''} maxlength="200" placeholder="Report no, item, lot, reason" /></label>
+    <label>Item code<input name="itemCode" value={filter.itemCode ?? ''} maxlength="100" /></label>
+    <label>Item name<input name="itemName" value={filter.itemName ?? ''} maxlength="200" /></label>
+    <label>Lot<input name="lot" value={filter.lot ?? ''} maxlength="100" /></label>
     <label>Department<input name="department" value={filter.department ?? ''} maxlength="200" /></label>
+    <label>Recorded unit<input name="unit" value={filter.unit ?? ''} maxlength="40" /></label>
+    <label class="check">Include missing unit<input name="unitMissing" type="checkbox" checked={filter.unitMissing} /></label>
+    <label>Status<select name="status"><option value="">Any status</option>{knownStatuses.map((status) => <option value={status} selected={filter.status === status}>{stateLabel(status)}</option>)}</select></label>
     <label>From<input name="from" type="date" value={params.get('from') ?? ''} /></label>
     <label>To<input name="to" type="date" value={params.get('to') ?? ''} /></label>
     <button type="submit">Filter</button>
+    {invalidDateRange && <p role="alert">Start date must be on or before end date. Both date filters were ignored.</p>}
+    {invalidDate && <p role="alert">Enter dates in YYYY-MM-DD format. Invalid date filters were ignored.</p>}
   </form>
 
   {showSlips && (
@@ -231,7 +284,7 @@ const maxTrend = Math.max(1, ...analytics.trendByDate.map((t) => t.rejectedQty))
                   <td>{fmtDate(record.reportDate)}</td>
                   <td>{record.department}</td>
                   <td>{record.entries.length}</td>
-                  <td>{record.entries.reduce((sum, e) => sum + Number(e.rejectQty), 0)}</td>
+                  <td>Open record for exact totals by unit</td>
                   <td><span class={`status status-${record.status.toLowerCase()}`}>{stateLabel(record.status)}</span></td>
                 </tr>
               ))}

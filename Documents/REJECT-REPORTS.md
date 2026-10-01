@@ -24,6 +24,10 @@ Daily Reject records use `DRAFT → FINALIZED` (with controlled `VOID`) and requ
 
 Reject percentage is computed server-side as `reject quantity / good production quantity * 100`, rounded to four decimal places. A zero good quantity produces `NULL`, not infinity. Attachments use the existing file/evidence linkage contract; no parallel file subsystem is introduced.
 
+Dashboard summary, analytics, recent records, and paginated registers share the same report filters (date window, status/type, department, recorded unit or missing unit, item code/name, lot, and search). Rejected quantities remain exact decimal strings and are grouped by report type and the unit recorded on the source row. Values are not converted or added across units. Daily-entry totals use the same exact-string arithmetic and unit grouping. The approved maximum input scale for quantity fields is not defined in the source contract or migration; the application accepts decimal strings up to its transport length bound and does not round stored quantities. A QC/QMS owner decision is still required before claiming a domain-specific quantity precision.
+
+Adding a row to a DRAFT Daily Reject record is a server-side append. The client submits one new row and the expected report version, never a copy of existing entries. One PostgreSQL transaction compare-and-sets the report version, allocates the next position, inserts the entry, and writes the audit and outbox events. A stale/replayed version is rejected before row, audit, or outbox changes. No schema change is required by this contract.
+
 Audit actions include `REJECT_REPORT_CREATED`, `REJECT_REPORT_UPDATED`, `ISSUE_SLIP_ISSUED`, `ISSUE_SLIP_APPROVAL_CONFIRMED`, `ISSUE_SLIP_COMPLETED`, `DAILY_REJECT_FINALIZED`, `REJECT_REPORT_CORRECTED`, and `REJECT_REPORT_VOIDED`.
 
 The application use cases enforce ACTIVE-account access, creator-owned draft mutation, optimistic version checks, non-destructive correction/void semantics, and PostgreSQL-backed dashboard/search data.

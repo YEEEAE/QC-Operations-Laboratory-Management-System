@@ -6,7 +6,7 @@ import {
   assertOptionalNonNegativeNumberString,
   optionalTrimmed,
 } from './reject-report.js';
-import { computeRejectPercent } from './reject-percentage.js';
+import { addDecimalStrings, computeRejectPercent } from './reject-percentage.js';
 
 export interface DailyRejectEntryInput {
   machineName?: string;
@@ -32,7 +32,7 @@ export interface DailyRejectEntry extends DailyRejectEntryInput {
   reportId: string;
   position: number;
   /** Server-computed: rejectQty / goodQty * 100, null when goodQty = 0. */
-  rejectPct: number | null;
+  rejectPct: string | null;
   version: bigint;
 }
 
@@ -77,7 +77,7 @@ export function validateDailyRejectEntry(input: DailyRejectEntryInput): DailyRej
 }
 
 export function entryRejectPct(entry: Pick<DailyRejectEntryInput, 'rejectQty' | 'goodQty'>) {
-  return computeRejectPercent(Number(entry.rejectQty), Number(entry.goodQty));
+  return computeRejectPercent(entry.rejectQty, entry.goodQty);
 }
 
 export function assertFinalizable(entries: readonly DailyRejectEntryInput[]): void {
@@ -89,15 +89,32 @@ export function assertFinalizable(entries: readonly DailyRejectEntryInput[]): vo
 }
 
 export function dailyRejectTotals(entries: readonly DailyRejectEntry[]): {
-  totalRejectQty: number;
-  totalGoodQty: number;
-  rejectPct: number | null;
+  byRecordedUnit: readonly {
+    unit: string;
+    totalRejectQty: string;
+    totalGoodQty: string;
+    rejectPct: string | null;
+    entryCount: number;
+  }[];
 } {
-  const totalRejectQty = entries.reduce((sum, entry) => sum + Number(entry.rejectQty), 0);
-  const totalGoodQty = entries.reduce((sum, entry) => sum + Number(entry.goodQty), 0);
+  const groups = new Map<string, DailyRejectEntry[]>();
+  for (const entry of entries) {
+    const unit = entry.rmUnit?.trim() || 'Unit not recorded';
+    const group = groups.get(unit) ?? [];
+    group.push(entry);
+    groups.set(unit, group);
+  }
   return {
-    totalRejectQty,
-    totalGoodQty,
-    rejectPct: computeRejectPercent(totalRejectQty, totalGoodQty),
+    byRecordedUnit: [...groups.entries()].map(([unit, group]) => {
+      const totalRejectQty = addDecimalStrings(group.map((entry) => entry.rejectQty));
+      const totalGoodQty = addDecimalStrings(group.map((entry) => entry.goodQty));
+      return {
+        unit,
+        totalRejectQty,
+        totalGoodQty,
+        rejectPct: computeRejectPercent(totalRejectQty, totalGoodQty),
+        entryCount: group.length,
+      };
+    }),
   };
 }
