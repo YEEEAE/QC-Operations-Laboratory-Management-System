@@ -115,10 +115,14 @@ describe('mutation failure classes stay distinguishable', () => {
 
   it('keeps the stale message explicit about no resubmission and a refresh', () => {
     const vocabulary = read('src/shared/copy/ux-vocabulary.ts');
-    expect(vocabulary).toMatch(/CONFLICT_STALE:[\s\S]*?Reload the latest data/);
-    expect(vocabulary).toMatch(/CONFLICT_STALE:[\s\S]*?Nothing was resubmitted/);
+    const staleCopy = /CONFLICT_STALE:\s*'([^']+)'/.exec(vocabulary)?.[1];
+    expect(staleCopy).toMatch(/record changed after you opened it/i);
+    expect(staleCopy).toMatch(/reload .* before trying again/i);
+    expect(staleCopy).toMatch(/nothing was resubmitted/i);
     expect(vocabulary).toMatch(/AUTHORIZATION_CHANGED:[\s\S]*?preserved/);
-    expect(vocabulary).toMatch(/DEPENDENCY_UNAVAILABLE:[\s\S]*?Refresh this page to review the current options/);
+    const dependencyCopy = /DEPENDENCY_UNAVAILABLE:\s*'([^']+)'/.exec(vocabulary)?.[1];
+    expect(dependencyCopy).toMatch(/linked record is unavailable/i);
+    expect(dependencyCopy).toMatch(/refresh .* (?:check|review) current (?:options|state)/i);
   });
 });
 

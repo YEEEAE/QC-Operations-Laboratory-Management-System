@@ -63,7 +63,6 @@ const ADHOC_DATE_PAGES = [
   'src/pages/documents/[documentId]/index.astro',
   'src/pages/documents/[documentId]/versions/[versionId]/index.astro',
   'src/pages/documents/index.astro',
-  'src/pages/quality/findings/index.astro',
   'src/pages/quarantine/inspections/[inspectionId]/index.astro',
   'src/pages/quarantine/receiving/[receivingId].astro',
   'src/pages/reject-reports/daily/[reportId].astro',
@@ -73,7 +72,6 @@ const ADHOC_DATE_PAGES = [
   'src/pages/system/backups/[backupId]/restore.astro',
   'src/pages/system/backups/index.astro',
   'src/pages/system/control-center.astro',
-  'src/pages/tasks/[taskId].astro',
 ];
 
 /**
@@ -166,6 +164,9 @@ describe('design tokens — colour and date contracts', () => {
     expect(format).toContain("const LOCALE = 'en-GB'");
     expect(format).toContain('export function formatDate');
     expect(format).toContain('export function formatDateTime');
+
+    const findingsRegister = read('src/pages/quality/findings/index.astro');
+    expect(findingsRegister).toContain('formatDate(finding.createdAt)');
   });
 
   it('cannot grow the ad-hoc date-rendering list', () => {

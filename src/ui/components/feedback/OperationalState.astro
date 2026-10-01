@@ -37,5 +37,5 @@ const stateLabels: Record<State, string> = {
   .operational-state--success { border-inline-start-color: var(--state-success); }
   @media (max-width: 500px) { .operational-state { grid-template-columns: 1fr; } }
   @media (forced-colors: active) { .operational-state { border-color: CanvasText; border-inline-start-color: Highlight; } }
-  @media print { .operational-state { background: #fff !important; color: #111 !important; border-color: #333 !important; } }
+  @media print { .operational-state { background: var(--surface-evidence) !important; color: var(--text-primary) !important; border-color: var(--border-evidence) !important; } }
 </style>

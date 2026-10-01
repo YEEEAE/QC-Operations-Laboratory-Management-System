@@ -122,6 +122,15 @@ const tablePages = pages.filter((page) => read(page).includes('<table'));
  */
 const isBounded = (page: string): boolean => {
   const source = read(page);
+  if (page === 'src/pages/documents/index.astro') {
+    // The regular document library read is unbounded. Only the separate
+    // `review=mine` branch passes a limit, so that secondary read does not
+    // make the register itself bounded.
+    const primaryRead = /else documents = await reads\.list\.execute\(\{([\s\S]*?)\}\)/.exec(
+      source,
+    );
+    return Boolean(primaryRead && /\b(?:limit|offset|page)\s*:/.test(primaryRead[1]));
+  }
   return (
     source.includes('parsePageInput') ||
     source.includes('result.offset') ||
