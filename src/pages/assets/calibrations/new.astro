@@ -39,13 +39,17 @@ if (canCreate) {
   try {
     const readAssets = assetsReadDependencies();
     const equipment = await readAssets.equipment.list.execute({ actor });
-    equipmentOptions = await Promise.all(equipment.map(async (item) => ({
+    const eligibility = await readAssets.equipment.assessEligibility.assessMany(
+      actor,
+      equipment.map((item) => item.id),
+    );
+    equipmentOptions = equipment.map((item) => ({
       value: item.id,
       label: equipmentEligibilityOptionLabel(
         `${item.equipmentNo} · ${item.name}`,
-        await readAssets.equipment.assessEligibility.assess(actor, item.id),
+        eligibility.get(item.id) ?? { eligible: false, reason: 'NOT_ACTIVE' },
       ),
-    })));
+    }));
   } catch {
     // Fail closed into an error state below: the form stays submittable so
     // entries are preserved, and the server still validates the equipment

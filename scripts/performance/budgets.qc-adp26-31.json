@@ -1,0 +1,46 @@
+{
+  "taskId": "QC-ADP26-31",
+  "status": "PROPOSED_NOT_APPROVED_SLO",
+  "source": "audit/2026-09-19/2026-09-19-QC-100-FINAL-007-performance-capacity-monitoring.md",
+  "scope": [
+    "/login",
+    "/dashboard",
+    "/work",
+    "/tasks",
+    "/assets/calibrations/new",
+    "SystemBackground"
+  ],
+  "web": {
+    "typicalRegisterTtfbP95Ms": 100,
+    "tasksUnfilteredTtfbP95Ms": 150,
+    "laboratoryTtfbP95Ms": 200,
+    "listDocumentTransferBytes": 307200,
+    "lcpP95Ms": 500,
+    "clsP75": 0,
+    "inpP75Ms": null,
+    "inpStatus": "MEASURE_INTERACTION_FIRST"
+  },
+  "database": {
+    "criticalReadP95Ms": 50,
+    "calibrationCreateSelector": {
+      "representativeEquipmentRows": 80,
+      "maximumReadStatementsIncludingEquipmentList": 4
+    }
+  },
+  "login": {
+    "glbTransferBytesMax": 1048576,
+    "webglFrameDurationP95Ms": null,
+    "webglStatus": "REQUIRES_HARDWARE_TIMER_CAPTURE",
+    "maxDevicePixelRatio": {
+      "desktop": 1.65,
+      "tablet": 1.35,
+      "mobile": 1.15
+    }
+  },
+  "systemBackground": {
+    "runtimeScripts": 0,
+    "networkRequests": 0,
+    "webglCanvases": 0,
+    "motion": "static-css"
+  }
+}

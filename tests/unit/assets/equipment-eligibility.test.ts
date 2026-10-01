@@ -73,6 +73,58 @@ const context = {
 };
 
 describe('equipment eligibility capture', () => {
+  it('assesses a selector page through one bounded source batch and keeps authorization checks', async () => {
+    const otherId = '00000000-0000-7000-8000-000000000005';
+    let batchCalls = 0;
+    const useCase = new GetEquipmentEligibilityUseCase(
+      {
+        getEquipment: async () => undefined,
+        getCalibration: async () => undefined,
+        getAssessmentRecords: async (ids) => {
+          batchCalls += 1;
+          expect(ids).toEqual([equipmentId, otherId]);
+          return new Map([
+            [equipmentId, { equipment, calibration, maintenance: undefined }],
+            [
+              otherId,
+              { equipment: { ...equipment, id: otherId, currentCalibrationId: undefined } },
+            ],
+          ]);
+        },
+      },
+      () => new Date('2026-06-01T00:00:00.000Z'),
+    );
+
+    const results = await useCase.assessMany(actor, [equipmentId, otherId, 'invalid']);
+
+    expect(batchCalls).toBe(1);
+    expect(results.get(equipmentId)).toMatchObject({ eligible: true, calibrationNo: 'CAL-1' });
+    expect(results.get(otherId)).toMatchObject({
+      eligible: false,
+      reason: 'NO_CURRENT_CALIBRATION',
+    });
+    expect(results.get('invalid')).toMatchObject({ eligible: false, reason: 'NOT_ACTIVE' });
+  });
+
+  it('denies a valid equipment record when the actor cannot read its calibration source', async () => {
+    const actorWithoutCalibrationRead = {
+      ...actor,
+      permissions: [{ code: 'PERM-EQP-VIEW', scopes: ['GLOBAL'] as const }],
+    };
+    const useCase = new GetEquipmentEligibilityUseCase({
+      getEquipment: async () => undefined,
+      getCalibration: async () => undefined,
+      getAssessmentRecords: async () =>
+        new Map([[equipmentId, { equipment, calibration, maintenance: undefined }]]),
+    });
+
+    await expect(
+      useCase.assessMany(actorWithoutCalibrationRead, [equipmentId]),
+    ).rejects.toMatchObject({
+      code: 'AUTHZ_PERMISSION_MISSING',
+    });
+  });
+
   it('assesses eligible equipment with its current calibration dates', async () => {
     const useCase = new GetEquipmentEligibilityUseCase(
       { getEquipment: async () => equipment, getCalibration: async () => calibration },
@@ -146,8 +198,16 @@ describe('equipment eligibility capture', () => {
   });
 
   it.each([
-    ['expired calibration', equipment, { ...calibration, dueDate: new Date('2026-01-01T00:00:00.000Z') }],
-    ['equipment under maintenance', { ...equipment, state: 'UNDER_MAINTENANCE' as const }, calibration],
+    [
+      'expired calibration',
+      equipment,
+      { ...calibration, dueDate: new Date('2026-01-01T00:00:00.000Z') },
+    ],
+    [
+      'equipment under maintenance',
+      { ...equipment, state: 'UNDER_MAINTENANCE' as const },
+      calibration,
+    ],
   ])('rejects server-side capture for %s', async (_name, sourceEquipment, sourceCalibration) => {
     const useCase = new GetEquipmentEligibilityUseCase(
       {

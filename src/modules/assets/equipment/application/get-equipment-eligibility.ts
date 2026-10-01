@@ -12,6 +12,14 @@ export interface EquipmentEligibilityReader {
   getEquipment(id: string): Promise<Equipment | undefined>;
   getCalibration(id: string): Promise<CalibrationRecord | undefined>;
   getCurrentMaintenance?(equipmentId: string): Promise<MaintenanceRecord | undefined>;
+  getAssessmentRecords?(
+    equipmentIds: readonly string[],
+  ): Promise<
+    ReadonlyMap<
+      string,
+      { equipment?: Equipment; calibration?: CalibrationRecord; maintenance?: MaintenanceRecord }
+    >
+  >;
 }
 export interface EquipmentUsageRequest {
   equipmentId: string;
@@ -50,6 +58,38 @@ export class GetEquipmentEligibilityUseCase implements EquipmentEligibility {
       ? await this.reader.getCalibration(equipment.currentCalibrationId)
       : undefined;
     const maintenance = await this.reader.getCurrentMaintenance?.(equipment.id);
+    return this.assessment(actor, equipment, calibration, maintenance);
+  }
+  async assessMany(
+    actor: ActorContext,
+    equipmentIds: readonly string[],
+  ): Promise<ReadonlyMap<string, EquipmentEligibilityAssessment>> {
+    if (!this.reader.getAssessmentRecords) {
+      const values = await Promise.all(
+        equipmentIds.map(async (id) => [id, await this.assess(actor, id)] as const),
+      );
+      return new Map(values);
+    }
+    const validIds = equipmentIds.filter(isUuid);
+    const records = await this.reader.getAssessmentRecords(validIds);
+    return new Map(
+      equipmentIds.map((id) => {
+        if (!isUuid(id)) return [id, { eligible: false, reason: 'NOT_ACTIVE' } as const];
+        const record = records.get(id);
+        if (!record?.equipment) return [id, { eligible: false, reason: 'NOT_ACTIVE' } as const];
+        return [
+          id,
+          this.assessment(actor, record.equipment, record.calibration, record.maintenance),
+        ] as const;
+      }),
+    );
+  }
+  private assessment(
+    actor: ActorContext,
+    equipment: Equipment,
+    calibration?: CalibrationRecord,
+    maintenance?: MaintenanceRecord,
+  ): EquipmentEligibilityAssessment {
     this.authorizeSourceReads(actor, equipment, calibration, maintenance);
     const base = {
       equipmentState: equipment.state,

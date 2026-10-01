@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const componentPath = new URL('../../../src/ui/components/SystemBackground.astro', import.meta.url);
@@ -9,6 +9,11 @@ const login3dPath = new URL(
   import.meta.url,
 );
 const packagePath = new URL('../../../package.json', import.meta.url);
+const performanceBudgetPath = new URL(
+  '../../../scripts/performance/budgets.qc-adp26-31.json',
+  import.meta.url,
+);
+const loginModelPath = new URL('../../../public/assets/qc-medical-hero.glb', import.meta.url);
 
 describe('system background contracts', () => {
   it('serves an explicit local favicon from the shared document head', () => {
@@ -43,6 +48,16 @@ describe('system background contracts', () => {
       dependencies: Record<string, string>;
     };
     expect(packageJson.dependencies['@lottiefiles/dotlottie-web']).toBe('0.80.0');
+    const budget = JSON.parse(readFileSync(performanceBudgetPath, 'utf8')) as {
+      status: string;
+      systemBackground: { runtimeScripts: number; networkRequests: number; webglCanvases: number };
+    };
+    expect(budget.status).toBe('PROPOSED_NOT_APPROVED_SLO');
+    expect(budget.systemBackground).toMatchObject({
+      runtimeScripts: 0,
+      networkRequests: 0,
+      webglCanvases: 0,
+    });
   });
 
   it('keeps the operational content layer above the background through the shared layout', () => {
@@ -74,5 +89,20 @@ describe('system background contracts', () => {
     expect(component).toContain("matchMedia('(prefers-reduced-motion: reduce)')");
     expect(component).not.toMatch(/import \* as THREE from 'three'/);
     expect(component).not.toMatch(/import \{ GLTFLoader \}/);
+  });
+
+  it('keeps the login GLB within the proposed byte budget and DPR caps', () => {
+    const budget = JSON.parse(readFileSync(performanceBudgetPath, 'utf8')) as {
+      login: {
+        glbTransferBytesMax: number;
+        maxDevicePixelRatio: { desktop: number; tablet: number; mobile: number };
+      };
+    };
+    const login = readFileSync(login3dPath, 'utf8');
+    expect(statSync(loginModelPath).size).toBeLessThanOrEqual(budget.login.glbTransferBytesMax);
+    expect(budget.login.maxDevicePixelRatio).toEqual({ desktop: 1.65, tablet: 1.35, mobile: 1.15 });
+    expect(login).toContain('dprDesktop: 1.65');
+    expect(login).toContain('dprMobile: 1.15');
+    expect(login).toContain('setPixelRatio(Math.min(devicePixelRatio||1,1.35))');
   });
 });
