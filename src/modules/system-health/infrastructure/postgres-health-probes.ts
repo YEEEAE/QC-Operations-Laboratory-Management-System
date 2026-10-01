@@ -1,7 +1,7 @@
 import type { Kysely } from 'kysely';
 import {
   checkCanonicalDatabaseReadiness,
-  resolveCanonicalDatabaseUrl,
+  inspectCanonicalDatabaseConfiguration,
   type CanonicalDatabaseReadinessCheck,
 } from '../../../shared/health/canonical-database-readiness.js';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
@@ -35,12 +35,23 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
 
   async database(): Promise<DependencyHealth> {
     const checkedAt = new Date();
+    const configuration = inspectCanonicalDatabaseConfiguration();
+    if (configuration.status !== 'CONFIGURED') {
+      return {
+        dependency: 'database',
+        status: 'DEGRADED',
+        checkedAt,
+        detail:
+          configuration.status === 'MISSING' ? 'CONFIGURATION_MISSING' : 'CONFIGURATION_INVALID',
+      };
+    }
     try {
-      const reachable = await this.databaseReadiness(resolveCanonicalDatabaseUrl());
+      const reachable = await this.databaseReadiness(configuration.databaseUrl);
       return {
         dependency: 'database',
         status: reachable ? 'HEALTHY' : 'UNAVAILABLE',
         checkedAt,
+        ...(!reachable ? { detail: 'PROVIDER_UNAVAILABLE' } : {}),
       };
     } catch {
       void reportDependencyFailure({
@@ -48,7 +59,12 @@ export class PostgresSystemHealthProbes implements SystemHealthProbes {
         operation: 'health_probe',
         error: new Error('Database health probe failed'),
       });
-      return { dependency: 'database', status: 'UNAVAILABLE', checkedAt };
+      return {
+        dependency: 'database',
+        status: 'UNAVAILABLE',
+        checkedAt,
+        detail: 'PROVIDER_UNAVAILABLE',
+      };
     }
   }
 

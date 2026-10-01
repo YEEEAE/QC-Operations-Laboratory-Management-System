@@ -1,5 +1,10 @@
 # QC Operations & Laboratory Management System — Compact Project Mind
 
+- **2026-10-01 — QC-ENV26-01 / server migration parity**
+  - Changed: `/system/health` distinguishes missing/invalid `DATABASE_URL` from provider outage using sanitized classifications; no migration files changed.
+  - Evidence: frozen HEAD `ffc218ca`; source 42-migration manifest captured. Focused unit 19/19 PASS; PG18 rehearsal/integration BLOCKED by Testcontainers runtime and host `shmget` restriction. Render snapshot remains 18/42 and deploy-in-progress evidence is not candidate-bound.
+  - State: PARTIAL / BLOCKED — production remains NO-GO; forward upgrade, rollback, restore, exact applied ledger export, route acceptance and named-owner migration authority remain open. `audit/2026-10-01/handoff-QC-ENV26-01.md`.
+
 - **2026-10-01 — QC-ADP26-14 / search authorization and paging**
   - Changed: `/search` applies each source read permission and supported scope before rows/counts, searches task titles, uses bounded keyset pages plus exact total in a read-only repeatable-read transaction, and reports source latency in privacy-safe buckets; no schema change.
   - Evidence: focused search contracts and Node 24.20 build PASS; PostgreSQL 18/Testcontainers BLOCKED (runtime absent), applied schema and authenticated browser/AT/UAT NOT VERIFIED. Handoff: `audit/2026-10-01/handoff-QC-ADP26-14.md`.
@@ -376,6 +381,7 @@
 
 ### Database readiness
 - `/api/health/ready` و`/system/health` يستخدمان فحص قاعدة بيانات canonical واحد ونفس TLS config.
+- `/system/health` يميز `CONFIGURATION_MISSING` و`CONFIGURATION_INVALID` (DEGRADED) عن `PROVIDER_UNAVAILABLE` (UNAVAILABLE) دون إظهار تفاصيل الاتصال؛ عقد `/api/health/ready` يبقى `healthy|unhealthy`. QC-ENV26-01 لم يثبت بعد فصل سبب تعطيل AI في العرض، وتجربة PostgreSQL 18 بالمرشح الحالي BLOCKED.
 - `sslmode=disable` مرفوض؛ لا تُسرّب host/secret/exception raw.
 - failure يتحول إلى حالات منقحة مثل `false` / `UNAVAILABLE` / `503`.
 

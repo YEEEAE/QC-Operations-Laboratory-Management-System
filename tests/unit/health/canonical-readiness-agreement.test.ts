@@ -6,6 +6,7 @@ import type { BackupCatalogRepository } from '../../../src/modules/backup-recove
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import {
   checkCanonicalDatabaseReadiness,
+  inspectCanonicalDatabaseConfiguration,
   resolveCanonicalDatabaseUrl,
 } from '../../../src/shared/health/canonical-database-readiness.js';
 import { PostgresReadinessProbe } from '../../../src/shared/health/postgres-readiness-probe.js';
@@ -36,8 +37,8 @@ vi.mock('pg', () => ({
   },
 }));
 
-const VALID_URL = 'postgresql://qc_probe:probe_secret@db.internal:5432/qc_ops';
-const SSLMODE_URL = 'postgresql://qc_probe:probe_secret@db.internal:5432/qc_ops?sslmode=require';
+const VALID_URL = 'postgresql://localhost:5432/qc_ops';
+const SSLMODE_URL = 'postgresql://localhost:5432/qc_ops?sslmode=require';
 
 const viewer: ActorContext = {
   id: '01900000-0000-7000-8000-000000000211',
@@ -217,24 +218,34 @@ describe('canonical database readiness agreement (F-01)', () => {
     expect(await response.json()).toEqual({ status: 'unhealthy' });
     expect(view.checks.find((item) => item.dependency === 'database')?.status).toBe('UNAVAILABLE');
     expect(view.dependencyReadiness).toBe('NOT_READY');
-    expect(serialized).not.toContain('probe_secret');
-    expect(serialized).not.toContain('db.internal');
+    expect(serialized).not.toContain('postgresql://');
     expect(serialized).not.toContain('ECONNREFUSED');
   });
 
   it.each([
-    { label: 'missing url', url: undefined, resolvesToUndefined: true },
-    { label: 'malformed url', url: 'not-a-postgres-url', resolvesToUndefined: true },
+    {
+      label: 'missing url',
+      url: undefined,
+      resolvesToUndefined: true,
+      status: 'CONFIGURATION_MISSING',
+    },
+    {
+      label: 'malformed url',
+      url: 'not-a-postgres-url',
+      resolvesToUndefined: true,
+      status: 'CONFIGURATION_INVALID',
+    },
     // sslmode=disable passes env-shape validation but is rejected by the
     // canonical TLS policy inside the check, so the resolver still returns it.
     {
       label: 'tls disabled',
-      url: 'postgresql://qc_probe:probe_secret@db.internal:5432/qc_ops?sslmode=disable',
+      url: 'postgresql://localhost:5432/qc_ops?sslmode=disable',
       resolvesToUndefined: false,
+      status: 'CONFIGURATION_INVALID',
     },
   ])(
-    'treats a configuration error ($label) as unavailable on both surfaces',
-    async ({ url, resolvesToUndefined }) => {
+    'separates a configuration error ($label) from provider outage on the health view',
+    async ({ url, resolvesToUndefined, status }) => {
       if (url === undefined) vi.stubEnv('DATABASE_URL', '');
       else vi.stubEnv('DATABASE_URL', url);
       mockClientSuccess();
@@ -247,19 +258,20 @@ describe('canonical database readiness agreement (F-01)', () => {
         emptyCatalog,
         readyWorkflow,
       ).execute({ actor: viewer });
+      const databaseHealth = await new PostgresSystemHealthProbes().database();
       const serialized = JSON.stringify({ readiness: readinessBody, view });
 
       if (resolvesToUndefined) expect(resolveCanonicalDatabaseUrl()).toBeUndefined();
       expect(await checkCanonicalDatabaseReadiness(resolveCanonicalDatabaseUrl())).toBe(false);
       expect(await readiness.isReady()).toBe(false);
       expect(response.status).toBe(503);
-      expect(view.checks.find((item) => item.dependency === 'database')?.status).toBe(
-        'UNAVAILABLE',
-      );
+      expect(view.checks.find((item) => item.dependency === 'database')).toMatchObject({
+        status: 'DEGRADED',
+      });
+      expect(databaseHealth.detail).toBe(status);
       expect(view.dependencyReadiness).toBe('NOT_READY');
       expect(connectMock).not.toHaveBeenCalled();
-      expect(serialized).not.toContain('probe_secret');
-      expect(serialized).not.toContain('db.internal');
+      expect(serialized).not.toContain('postgresql://');
     },
   );
 
@@ -270,5 +282,14 @@ describe('canonical database readiness agreement (F-01)', () => {
     expect(await new PostgresReadinessProbe().isReady()).toBe(true);
     expect(seenConfigs).toHaveLength(1);
     expect(seenConfigs[0]).toEqual({ connectionString: SSLMODE_URL });
+  });
+
+  it('labels provider connectivity failure separately from missing configuration', async () => {
+    vi.stubEnv('DATABASE_URL', VALID_URL);
+    const health = await new PostgresSystemHealthProbes(undefined, async () => false).database();
+    expect(inspectCanonicalDatabaseConfiguration({ DATABASE_URL: '' })).toEqual({
+      status: 'MISSING',
+    });
+    expect(health).toMatchObject({ status: 'UNAVAILABLE', detail: 'PROVIDER_UNAVAILABLE' });
   });
 });

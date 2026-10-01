@@ -19,6 +19,23 @@ import { getDatabaseConnectionConfig } from '../database/pool.js';
  */
 export type CanonicalDatabaseReadinessCheck = (databaseUrl: string | undefined) => Promise<boolean>;
 
+export type CanonicalDatabaseConfiguration =
+  { status: 'CONFIGURED'; databaseUrl: string } | { status: 'MISSING' | 'INVALID' };
+
+/** Classifies only the safe configuration state; never returns a URL in diagnostics. */
+export function inspectCanonicalDatabaseConfiguration(
+  env: Record<string, string | undefined> = process.env,
+): CanonicalDatabaseConfiguration {
+  const databaseUrl = env.DATABASE_URL?.trim();
+  if (!databaseUrl) return { status: 'MISSING' };
+  try {
+    getDatabaseConnectionConfig(databaseUrl);
+    return { status: 'CONFIGURED', databaseUrl };
+  } catch {
+    return { status: 'INVALID' };
+  }
+}
+
 /**
  * Resolve the database URL through the same server-env validation used by the
  * readiness path. Any invalid environment collapses to `undefined`, which the
