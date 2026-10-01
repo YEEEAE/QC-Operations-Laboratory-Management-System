@@ -13,6 +13,7 @@ import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
 import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 import { sanitizeSpreadsheetCell } from '../../../src/modules/reporting/infrastructure/csv-exporter.js';
+import { reportSnapshotRef } from '../../../src/modules/reporting/application/report-snapshot.js';
 
 const LARGE_ROW_COUNT = 260;
 const OWNER_ROW_COUNT_WITH_SCOPE_FIXTURES = LARGE_ROW_COUNT + 5;
@@ -434,6 +435,33 @@ describe('Report screen/export parity and export privacy (PostgreSQL)', () => {
     const xlsx = await exportReport.execute(reportActor(ownerId), 'quarantine-aging', 'XLSX', {});
     expect(xlsx.bytes.subarray(0, 2).toString()).toBe('PK');
     expect(xlsx.rowCount).toBe(OWNER_ROW_COUNT_WITH_SCOPE_FIXTURES);
+  });
+
+  it('refuses to download when a concurrent source write changes the rendered dataset', async () => {
+    const actor = reportActor(ownerId);
+    const screen = await runReport.execute(actor, 'quarantine-aging', {});
+    const pinned = reportSnapshotRef(screen, actor, {});
+    await pool!.query(
+      `UPDATE qc.receiving_items SET description = description || ' updated' WHERE id = (
+        SELECT id FROM qc.receiving_items WHERE created_by = $1 ORDER BY receiving_date DESC, id DESC LIMIT 1
+      )`,
+      [ownerId],
+    );
+
+    await expect(
+      exportReport.execute(actor, 'quarantine-aging', 'CSV', {}, pinned),
+    ).rejects.toMatchObject({
+      code: 'CONFLICT_STALE_VERSION',
+    });
+    const refreshed = await runReport.execute(actor, 'quarantine-aging', {});
+    const valid = await exportReport.execute(
+      actor,
+      'quarantine-aging',
+      'CSV',
+      {},
+      reportSnapshotRef(refreshed, actor, {}),
+    );
+    expect(valid.rowCount).toBe(refreshed.rows.length);
   });
 
   it('treats LIKE wildcards inside lot/itemCode filters as literal data on screen and export', async () => {

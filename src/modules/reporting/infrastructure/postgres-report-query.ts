@@ -23,6 +23,7 @@ export class PostgresReportQuery implements ReportQuery {
   ): Promise<ReportDataset> {
     if (definition.code !== 'quarantine-aging') throw new Error('Unsupported report definition');
     const rows = await sql<{
+      snapshot_id: string;
       receiving_no: string;
       doc_no: string;
       item_code: string;
@@ -35,7 +36,7 @@ export class PostgresReportQuery implements ReportQuery {
       inspection_result: string;
       release_system: boolean;
     }>`
-      SELECT receiving_no, doc_no, item_code, description, lot, qty::text, receiving_date::text, expiry_date::text, workflow_state, inspection_result, release_system
+      SELECT id::text AS snapshot_id, receiving_no, doc_no, item_code, description, lot, qty::text, receiving_date::text, expiry_date::text, workflow_state, inspection_result, release_system
        FROM qc.receiving_items
        WHERE created_by = ${actor.id}
          AND (${filters.from ?? null}::date IS NULL OR receiving_date >= ${filters.from ?? null}::date)
@@ -62,6 +63,7 @@ export class PostgresReportQuery implements ReportQuery {
         inspectionResult: row.inspection_result,
         releaseSystem: row.release_system,
       })),
+      sourceRowIds: rows.rows.map((row) => row.snapshot_id),
     };
   }
 }

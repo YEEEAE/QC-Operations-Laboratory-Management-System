@@ -3,6 +3,7 @@ import { ExportReportUseCase } from '../../../src/modules/reporting/application/
 import { ReportRegistry } from '../../../src/modules/reporting/application/report-registry.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import type { ReportQuery } from '../../../src/modules/reporting/ports/report-query.js';
+import { reportSnapshotRef } from '../../../src/modules/reporting/application/report-snapshot.js';
 
 const actor = (
   permissions: ActorContext['permissions'] = [
@@ -63,5 +64,40 @@ describe('authorized report exports', () => {
         {},
       ),
     ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+  });
+
+  it('rejects a download when the page dataset snapshot is no longer current', async () => {
+    const current = await query.run(new ReportRegistry().get('quarantine-aging'), actor(), {});
+    const staleSnapshot = reportSnapshotRef(current, actor(), {});
+    const changedQuery: ReportQuery = {
+      run: async (definition) => ({
+        definition,
+        columns: definition.columns,
+        rows: [{ receivingNo: 'changed-after-screen-render' }],
+      }),
+    };
+    const useCase = new ExportReportUseCase(new ReportRegistry(), changedQuery);
+    await expect(
+      useCase.execute(actor(), 'quarantine-aging', 'CSV', {}, staleSnapshot),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+  });
+
+  it('preserves exact decimal text and writes boolean values as XLSX booleans', async () => {
+    const typedQuery: ReportQuery = {
+      run: async (definition) => ({
+        definition,
+        columns: definition.columns,
+        rows: [{ qty: '9007199254740993.0001', releaseSystem: true }],
+      }),
+    };
+    const result = await new ExportReportUseCase(new ReportRegistry(), typedQuery).execute(
+      actor(),
+      'quarantine-aging',
+      'XLSX',
+      {},
+    );
+    const xml = result.bytes.toString('utf8');
+    expect(xml).toContain('<t xml:space="preserve">9007199254740993.0001</t>');
+    expect(xml).toContain('r="K14" t="b"><v>1</v>');
   });
 });

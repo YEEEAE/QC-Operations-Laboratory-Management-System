@@ -9,6 +9,7 @@ const actor = Astro.locals.actor;
 if (!actor)
   return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const reportId = Astro.params.reportId ?? '';
+const printMode = Astro.url.searchParams.get('print') === '1';
 const deps = rejectReportReadDependencies();
 const availability = await deps.availability.execute({ actor });
 if (!availability.available) Astro.response.status = 503;
@@ -52,6 +53,7 @@ const fmtDateTime = (d?: Date) =>
     </div>
   </section>
 
+  {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
   <div class="grid">
     <section class="panel">
       <h2>Header</h2>
@@ -137,7 +139,7 @@ const fmtDateTime = (d?: Date) =>
     ) : <p class="empty">No entries yet. Add at least one entry before finalizing.</p>}
   </section>
 
-  {canManage && (
+  {canManage && !printMode && (
     <section class="panel">
       <h2>Add entry</h2>
       <form
@@ -177,7 +179,7 @@ const fmtDateTime = (d?: Date) =>
   )}
 
   {record.status !== 'VOID' && record.status !== 'DRAFT' ? null : null}
-  {record.status !== 'VOID' && isCreator && hasPermission('PERM-RREJ-VOID') && (
+  {!printMode && record.status !== 'VOID' && isCreator && hasPermission('PERM-RREJ-VOID') && (
     <section class="panel actions">
       <h2>Correction</h2>
       <form class="inline-form" data-void-form data-version={record.version.toString()}>
@@ -353,7 +355,9 @@ const fmtDateTime = (d?: Date) =>
   .status-void{color:var(--status-danger)}
   a{color:var(--color-accent-primary-hover)}
   @media(max-width:768px){.page-head,.grid,.fields{display:block}.fields > div{margin-bottom:var(--space-3)}}
+  .print-copy-watermark{border-block:2px solid #111;padding:4px;text-align:center;font-weight:700}
   @media print{
+    @page{size:A4 portrait;margin:12mm}
     .head-actions,form,.actions{display:none!important}
     body{background:#fff}
     .panel{border-color:#999;break-inside:avoid}

@@ -8,6 +8,7 @@ import { xlsxBytes } from '../infrastructure/xlsx-exporter.js';
 import { ReportRegistry } from './report-registry.js';
 import { RunReportUseCase } from './run-report.js';
 import { createReportProvenance } from './report-provenance.js';
+import { reportSnapshotRef } from './report-snapshot.js';
 export interface ExportResult {
   readonly filename: string;
   readonly mimeType: string;
@@ -25,6 +26,7 @@ export class ExportReportUseCase {
     code: string,
     format: 'CSV' | 'XLSX',
     filters: ReportFilters,
+    expectedSnapshot?: string,
   ): Promise<ExportResult> {
     const definition = this.registry.get(code);
     const entity = {
@@ -55,12 +57,16 @@ export class ExportReportUseCase {
       code,
       filters,
     );
+    const snapshot = reportSnapshotRef(dataset, actor, filters);
+    if (expectedSnapshot !== undefined && expectedSnapshot !== snapshot)
+      throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     const metadata: ReportExportMetadata = createReportProvenance(
       definition,
       actor,
       filters,
       dataset.rows.length,
       this.now(),
+      snapshot,
     );
     const bytes =
       format === 'CSV'

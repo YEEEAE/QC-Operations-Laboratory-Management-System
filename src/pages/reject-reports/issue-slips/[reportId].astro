@@ -12,6 +12,7 @@ const actor = Astro.locals.actor;
 if (!actor)
   return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const reportId = Astro.params.reportId ?? '';
+const printMode = Astro.url.searchParams.get('print') === '1';
 const deps = rejectReportReadDependencies();
 const availability = await deps.availability.execute({ actor });
 if (!availability.available) Astro.response.status = 503;
@@ -61,6 +62,7 @@ const fmtDateTime = (d?: Date) =>
     </div>
   </section>
 
+  {printMode && <p class="print-copy-watermark">UNAPPROVED INFORMATIONAL COPY — NOT A CONTROLLED RECORD</p>}
   <div class="grid">
     <section class="panel">
       <h2>Report</h2>
@@ -119,7 +121,7 @@ const fmtDateTime = (d?: Date) =>
               </span>
               {confirmation?.note && <span class="note">{confirmation.note}</span>}
             </div>
-            <div class="step-actions">
+            {!printMode && <div class="step-actions">
               {state === 'PENDING' && canConfirm && slip.status === 'APPROVAL_TRACKING' && role === nextApprovalRole && (
                 <form class="inline-form" data-confirm-form={role} data-version={slip.version.toString()}>
                   <label class="sr-only" for={`approver-${role}`}>Approver name (optional)</label>
@@ -137,7 +139,7 @@ const fmtDateTime = (d?: Date) =>
                   <button type="submit" class="secondary">Reverse confirmation</button>
                 </form>
               )}
-            </div>
+            </div>}
           </li>
         );
       })}
@@ -145,7 +147,7 @@ const fmtDateTime = (d?: Date) =>
     <p role="status" data-result tabindex="-1"></p>
   </section>
 
-  <section class="panel actions">
+  {!printMode && <section class="panel actions">
     <h2>Actions</h2>
     {slip.status === 'DRAFT' && canManage && (
       <button data-issue data-version={slip.version.toString()}>Issue slip (start approval tracking)</button>
@@ -158,7 +160,7 @@ const fmtDateTime = (d?: Date) =>
       </form>
     )}
     {slip.status === 'DRAFT' && !canManage && <p class="hint">Only the creator can issue or edit this draft.</p>}
-  </section>
+  </section>}
   </>
   )}
 </AppLayout>
@@ -253,7 +255,9 @@ const fmtDateTime = (d?: Date) =>
   .status{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;background:var(--surface-page);border:1px solid var(--color-border-subtle)}
   a{color:var(--color-accent-primary-hover)}
   @media(max-width:768px){.page-head,.grid{display:block}.step{flex-wrap:wrap}}
+  .print-copy-watermark{border-block:2px solid #111;padding:4px;text-align:center;font-weight:700}
   @media print{
+    @page{size:A4 portrait;margin:12mm}
     .head-actions,.step-actions,.actions,.tabs{display:none!important}
     body{background:#fff}
     .panel{border-color:#999;break-inside:avoid}

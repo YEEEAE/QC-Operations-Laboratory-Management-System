@@ -15,6 +15,7 @@ const input = z.object({
   workflowState: z.string().optional(),
   inspectionResult: z.string().optional(),
   releaseSystem: z.enum(['true', 'false']).optional(),
+  snapshot: z.string().regex(/^[a-f0-9]{64}$/),
 });
 const exportReport = defineAction({
   accept: 'json',
@@ -28,6 +29,7 @@ const exportReport = defineAction({
         value.reportCode,
         value.format,
         parseReportFilterValues(value),
+        value.snapshot,
       );
       return {
         ok: true,

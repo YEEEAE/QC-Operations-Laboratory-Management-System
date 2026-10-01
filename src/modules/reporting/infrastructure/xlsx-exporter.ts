@@ -76,6 +76,7 @@ export function xlsxBytes(
         ['Status', metadata.status],
         ['Source', metadata.source],
         ['Sort', metadata.sort],
+        ['Dataset snapshot (SHA-256)', metadata.datasetSnapshot],
         [],
       ]
     : [];
@@ -88,7 +89,22 @@ export function xlsxBytes(
       ),
     ),
   ];
-  const sheet = `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${all.map((line, r) => `<row r="${r + 1}">${line.map((value, c) => `<c r="${String.fromCharCode(65 + c)}${r + 1}" t="inlineStr"><is><t>${esc(sanitizeSpreadsheetCell(value))}</t></is></c>`).join('')}</row>`).join('')}</sheetData></worksheet>`;
+  const headerRow = metadataRows.length;
+  const sheet = `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${all
+    .map(
+      (line, r) =>
+        `<row r="${r + 1}">${line
+          .map((value, c) => {
+            const address = `${String.fromCharCode(65 + c)}${r + 1}`;
+            const sourceValue =
+              r > headerRow ? rows[r - headerRow - 1]?.[columns[c]?.key ?? ''] : undefined;
+            if (r > headerRow && columns[c]?.type === 'boolean' && typeof sourceValue === 'boolean')
+              return `<c r="${address}" t="b"><v>${sourceValue ? 1 : 0}</v></c>`;
+            return `<c r="${address}" t="inlineStr"><is><t xml:space="preserve">${esc(sanitizeSpreadsheetCell(value))}</t></is></c>`;
+          })
+          .join('')}</row>`,
+    )
+    .join('')}</sheetData></worksheet>`;
   const content = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
   return zip([
     {

@@ -30,12 +30,19 @@ export const GET: APIRoute = async ({ locals, params, url }) => {
   const format = (formatValues[0] ?? '').toLowerCase();
   if (formatValues.length !== 1 || !EXPORT_FORMATS.has(format))
     return problem(400, 'VALIDATION_INVALID_QUERY');
+  const snapshots = url.searchParams.getAll('snapshot');
+  if (snapshots.length !== 1 || !/^[a-f0-9]{64}$/.test(snapshots[0] ?? ''))
+    return problem(400, 'VALIDATION_INVALID_QUERY');
   try {
+    const filters = new URLSearchParams(url.searchParams);
+    filters.delete('format');
+    filters.delete('snapshot');
     const result = await reportingDependencies().exportReport.execute(
       actor,
       code,
       format.toUpperCase() as 'CSV' | 'XLSX',
-      parseReportFilters(url.searchParams),
+      parseReportFilters(filters),
+      snapshots[0],
     );
     return new Response(new Uint8Array(result.bytes), {
       status: 200,
@@ -50,6 +57,7 @@ export const GET: APIRoute = async ({ locals, params, url }) => {
     if (error instanceof AppError) {
       if (error.code === 'RESOURCE_NOT_FOUND') return problem(404, 'RESOURCE_NOT_FOUND');
       if (error.code.startsWith('AUTHZ_')) return problem(403, error.code);
+      if (error.code === 'CONFLICT_STALE_VERSION') return problem(409, 'REPORT_DATASET_CHANGED');
       return problem(400, error.code);
     }
     return problem(500, 'INTERNAL_ERROR');

@@ -1,3 +1,4 @@
+- **2026-10-02 — QC-ADP26-30 / report copy binding:** Added request-local dataset digest; changed-source downloads deny stale; report and reject print views mark informational/unapproved. No durable snapshot, report-run table, or retention policy. Focused reporting 24/24 and build/release PASS; PG18 BLOCKED, authenticated browser/print/AT/UAT NOT VERIFIED. Report-run persistence owner decision remains open. Handoff: `audit/2026-09-30/handoff-QC-ADP26-30.md`. State: PARTIAL.
 - **2026-10-02 — QC-ADP26-29 / Reject analytics parity**
   - Changed: shared filters and exact per-type/unit quantities; daily entries append with version, audit, and outbox in one transaction.
   - Evidence: Reject Reports unit 26/26 PASS; build/release identity PASS; PG18 BLOCKED and authenticated page/AT/UAT NOT VERIFIED. Quantity precision and daily percentage unit semantics remain QC/QMS decisions.
@@ -328,6 +329,10 @@
 - الأدلة: `tests/unit/dashboard/my-work-queue.test.ts` 11/11، `tests/integration/dashboard/my-work-parity.test.ts` 8/8 (parity فوق صفحة واحدة، ترتيب مزدوج، رفض عبر النطاق، حدود UTC، حجز مكرر، ≤60 statements ثابتة و<80KB payload).
 
 ## 10) UI / UX / Accessibility
+
+### Reporting copies
+- `/reports/[reportCode]` binds CSV/XLSX downloads to the displayed dataset digest; a changed dataset returns stale conflict and requires refresh. This is request-local, not a durable snapshot. Print output and Reject Reports print views are labeled unapproved/informational; laboratory template print remains transcription-only.
+- No report-run/artifact retention behavior is inferred. `REQ-RPT-005` persistence semantics and retention remain Reporting/QMS-owner decisions; current candidate evidence is `audit/2026-09-30/handoff-QC-ADP26-30.md`.
 
 ### Language/copy
 - الواجهة الحالية English-only, `lang="en"`, LTR؛ قرار المستخدم (2026-09-23) يؤكد الإنجليزية والنصوص القصيرة الطبيعية للمنتج. إشارات العربية/RTL في `Documents/UI-UX-SPECIFICATION.md` تحتاج قرارًا مستقلًا قبل توسيع النطاق.

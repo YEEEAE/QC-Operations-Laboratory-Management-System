@@ -42,6 +42,7 @@ export function toCsv(
         ['Status', metadata.status],
         ['Source', metadata.source],
         ['Sort', metadata.sort],
+        ['Dataset snapshot (SHA-256)', metadata.datasetSnapshot],
         [],
       ].map((row) => row.map(cell).join(','))
     : [];

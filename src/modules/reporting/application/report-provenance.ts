@@ -11,6 +11,7 @@ export function createReportProvenance(
   filters: ReportFilters,
   count: number,
   generatedAt: Date,
+  datasetSnapshot = 'NOT PROVIDED',
 ): ReportProvenance {
   const filterLabels: ReadonlyArray<readonly [keyof ReportFilters, string]> = [
     ['from', 'from'],
@@ -37,5 +38,6 @@ export function createReportProvenance(
     status: 'UNAPPROVED REPORT COPY — informational; not a controlled record',
     source: 'qc.receiving_items',
     sort: definition.sort,
+    datasetSnapshot,
   };
 }

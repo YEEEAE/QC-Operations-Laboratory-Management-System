@@ -3,6 +3,7 @@ import type { PermissionCode } from '../../../shared/authorization/permissions.j
 export interface ReportColumn {
   readonly key: string;
   readonly label: string;
+  readonly type?: 'text' | 'decimal' | 'date' | 'boolean';
 }
 export interface ReportFilters {
   readonly from?: string;
@@ -38,6 +39,7 @@ export interface ReportProvenance {
   readonly status: string;
   readonly source: string;
   readonly sort: string;
+  readonly datasetSnapshot: string;
 }
 
 export const QUARANTINE_AGING_REPORT: ReportDefinition = {
@@ -57,11 +59,11 @@ export const QUARANTINE_AGING_REPORT: ReportDefinition = {
     { key: 'itemCode', label: 'Item code' },
     { key: 'description', label: 'Description' },
     { key: 'lot', label: 'Lot' },
-    { key: 'qty', label: 'Quantity' },
-    { key: 'receivingDate', label: 'Receiving date' },
-    { key: 'expiryDate', label: 'Expiry date' },
+    { key: 'qty', label: 'Quantity', type: 'decimal' },
+    { key: 'receivingDate', label: 'Receiving date', type: 'date' },
+    { key: 'expiryDate', label: 'Expiry date', type: 'date' },
     { key: 'workflowState', label: 'Workflow state' },
     { key: 'inspectionResult', label: 'Inspection result' },
-    { key: 'releaseSystem', label: 'Release system state' },
+    { key: 'releaseSystem', label: 'Release system state', type: 'boolean' },
   ],
 };

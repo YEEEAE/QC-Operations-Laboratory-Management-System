@@ -24,6 +24,7 @@ describe('shared report provenance', () => {
       },
       2,
       new Date('2026-09-23T12:00:00.000Z'),
+      'a'.repeat(64),
     );
 
     expect(provenance).toEqual({
@@ -37,6 +38,7 @@ describe('shared report provenance', () => {
       status: 'UNAPPROVED REPORT COPY — informational; not a controlled record',
       source: 'qc.receiving_items',
       sort: 'Receiving date descending, then stable record id descending',
+      datasetSnapshot: 'a'.repeat(64),
     });
   });
 });
