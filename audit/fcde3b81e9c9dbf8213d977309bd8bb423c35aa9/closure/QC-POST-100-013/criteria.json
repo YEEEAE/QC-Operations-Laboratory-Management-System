@@ -1,0 +1,42 @@
+{
+  "taskId": "QC-POST-100-013",
+  "candidateSha": "fcde3b81e9c9dbf8213d977309bd8bb423c35aa9",
+  "classification": "PARTIAL",
+  "criteria": [
+    {
+      "id": "QC-POST-100-013/AC-01",
+      "status": "PARTIAL",
+      "observed": "Built-browser test verifies POST form, pending announcement, disabled submit and suppression of repeated submit event; native form and password autocomplete attributes are present.",
+      "notVerified": "True in-flight network request count under repeated user submissions; timeouts/interrupted request recovery; actual password-manager autofill; secret absence from all rendered/log evidence under real login requests."
+    },
+    {
+      "id": "QC-POST-100-013/AC-02",
+      "status": "PARTIAL",
+      "observed": "Session recovery unit contracts pass; built-browser no-JS form contract passes.",
+      "notVerified": "A genuine server-generated throttled Action response and retry display; browser session-expired flow/focus; delayed and interrupted network behavior; populated no-JS credential POST."
+    },
+    {
+      "id": "QC-POST-100-013/AC-03",
+      "status": "BLOCKED",
+      "observed": "Existing source test doubles cover credential-change use-case intent only.",
+      "notVerified": "PostgreSQL 18 credential/session/audit failure rollback, concurrency/race, expired-session mutation denial and unknown-write reconciliation. Docker/container runtime unavailable."
+    },
+    {
+      "id": "RT-AUTH-001 / six fixture personas",
+      "status": "NOT VERIFIED",
+      "notVerified": "No populated authenticated persona fixture was exercised on this candidate. Login page is public; persona-specific protected-session outcomes remain untested."
+    },
+    {
+      "id": "QC-PAGE-F-013 / RT-SHARED-003 credential atomicity",
+      "status": "BLOCKED",
+      "notVerified": "Required populated PostgreSQL 18 fault-injection and race evidence was not available."
+    },
+    {
+      "id": "QC-PAGE-F-034 / POST-C-04 / RT-AUTH-001-C1..C4",
+      "status": "PARTIAL",
+      "observed": "Current source retains native POST, accessible pending status, duplicate event guard, username/current-password autocomplete and server-derived retry copy; built browser suite passes 4/4.",
+      "notVerified": "End-to-end throttle, delayed/interrupted transport, real password-manager, authenticated session expiry and manual keyboard/AT/UAT acceptance."
+    }
+  ],
+  "overallAcceptance": "OPEN — current local evidence is partial; no source repair was reproduced as necessary."
+}
