@@ -1,5 +1,8 @@
 ---
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import { field, toFormFailure, type FormFailure } from '../../../../ui/forms/mutation-post.js';
 import { backupCatalogReadDependencies } from '../../../../modules/backup-recovery/application/dependencies.js';
 import { isUuid } from '../../../../shared/id/uuid.js';
 import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
@@ -32,6 +35,39 @@ const verificationLabel =
         ? 'RESTORE VERIFYING'
         : 'RESTORE NOT VERIFIED';
 const productionBlocked = true; // Production restore authority/e-signature (RD-020, BKP-DD-014/016) unresolved: DENY.
+let values = { restoreType: 'DRILL', targetEnvironment: 'test', reason: '' };
+let failure: FormFailure | null = null;
+
+// No-JavaScript baseline: submit the same server Action and preserve entered
+// values after a known failure. The Action/use case reauthorizes the actor.
+if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)) {
+  const formData = await Astro.request.formData();
+  values = {
+    restoreType: field(formData, 'restoreType') || 'DRILL',
+    targetEnvironment: field(formData, 'targetEnvironment') || 'test',
+    reason: field(formData, 'reason'),
+  };
+  try {
+    if (field(formData, 'confirmRestore') !== 'on') throw new Error('validation failed');
+    const result = await Astro.callAction(actions.system.requestRestore, {
+      backupId,
+      restoreType: values.restoreType as 'DRILL' | 'PRODUCTION',
+      targetEnvironment: values.targetEnvironment as 'local' | 'test' | 'staging' | 'production',
+      reason: values.reason,
+      confirmRestore: true,
+    });
+    if (!result.error) return Astro.redirect(`/system/backups/${backupId}`, 303);
+    failure = toFormFailure(result.error, {
+      entity: 'restore request', requiredFields: [], values,
+      listHref: `/system/backups/${backupId}`, listLabel: 'backup details',
+    });
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'restore request', requiredFields: [], values,
+      listHref: `/system/backups/${backupId}`, listLabel: 'backup details',
+    });
+  }
+}
 ---
 <AppLayout title={`Restore request · ${riyadh(backup.requestedAt)} · QC Operations`} locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Restore request</p><h1>Restore request</h1><p class="lede">This page records a controlled restore request. It never executes a restore: no recovery provider, production authority, or e-signature ceremony is approved in this baseline, so every recorded request stays planned.</p></div><a href={`/system/backups/${backup.id}`}>Back to backup</a></section>
@@ -53,22 +89,23 @@ const productionBlocked = true; // Production restore authority/e-signature (RD-
   {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
   {restorable && (canRequestDrill || canRequestProduction) && (
     <form class="decision" method="post" data-backup-id={backup.id}>
+      {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery ?? ''} errors={[]} listHref={`/system/backups/${backup.id}`} listLabel="backup details" />}
       <label for="restoreType">Restore type
         <select id="restoreType" name="restoreType">
-          {canRequestDrill && <option value="DRILL">Isolated drill — non-production target</option>}
-          <option value="PRODUCTION" disabled={productionBlocked}>Production restore — unavailable pending approval (RD-020)</option>
+          {canRequestDrill && <option value="DRILL" selected={values.restoreType === 'DRILL'}>Isolated drill — non-production target</option>}
+          <option value="PRODUCTION" selected={values.restoreType === 'PRODUCTION'} disabled={productionBlocked}>Production restore — unavailable pending approval (RD-020)</option>
         </select>
       </label>
       <label for="targetEnvironment">Target environment
         <select id="targetEnvironment" name="targetEnvironment">
-          <option value="test">test</option>
-          <option value="local">local</option>
-          <option value="staging">staging</option>
+          <option value="test" selected={values.targetEnvironment === 'test'}>test</option>
+          <option value="local" selected={values.targetEnvironment === 'local'}>local</option>
+          <option value="staging" selected={values.targetEnvironment === 'staging'}>staging</option>
           <option value="production" disabled>production — isolated drill targets only</option>
         </select>
       </label>
       <label for="reason">Reason (required; saved as recovery evidence)
-        <textarea id="reason" name="reason" rows="3" required minlength="3" maxlength="2000"></textarea>
+        <textarea id="reason" name="reason" rows="3" required minlength="3" maxlength="2000">{values.reason}</textarea>
       </label>
       <label class="confirm" for="confirmRestore"><input id="confirmRestore" name="confirmRestore" type="checkbox" required /> I understand this records a restore intent only, that no restore is executed by this system, and that the backup job state is not restore evidence.</label>
       <button type="submit" data-submit>Record restore request</button>

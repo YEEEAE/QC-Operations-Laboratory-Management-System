@@ -1,3 +1,5 @@
+- **2026-10-02 — QC-POST-100-007 / candidate-bound recheck:** on Node 24.20.0, report-draft unit 6/6 PASS; build, architecture and release identity PASS. Assigned form UX has three existing copy assertions failing (one on the lab migration-readiness message); asset integration files PASS, while report-draft PostgreSQL integration is BLOCKED before setup with three skipped cases because Docker is unavailable. QC/QMS source decisions, authenticated browser, AT and UAT remain NOT VERIFIED. Existing 31/31 handoff is historical to another SHA. No application repair reopened. State: PARTIAL/BLOCKED; local note `.ci-results/QC-POST-100-007/`.
+- **2026-10-02 — QC-POST-100-001 / native POST acceptance:** source POST paths confirmed; 87 atomic rows individually recorded. Candidate `2885e747…`, clean-freeze fingerprint `e3b0…`; current populated no-JS, PG18 rollback and negative-request evidence NOT VERIFIED/BLOCKED (Node 22.22.3, Docker unavailable). No repair reopened; see `audit/2885e747a206a7417203db168f4c3ba3459a5381/closure/QC-POST-100-001/`. State: PARTIAL.
 - **2026-10-02 — QC-POST-EXECUTION-PROMPT-PACK-OPTIMIZATION-002 / residual plan reconciliation**
   - Changed: one authoritative HTML pack, 20→36 prompts with component-level gap→acceptance→evidence links; completed source repairs excluded from renewed implementation; independent FINAL last.
   - Evidence: 47 findings, 88 pages/671 checks, 25 indicators, 22 report gates and 19 unresolved canonical gates mapped; ledger 2609 rows, structural 25/25 and DOM-model interaction 32/32 PASS. Actual browser rendering NOT VERIFIED; no application/production work or readiness score awarded.
@@ -121,24 +123,8 @@
   - Evidence: candidate `b3d2d476`; focused unit 63/63 PASS (synthetic/contracts only); PD-01/02/03/04/05/07 remain OPEN; PG18/browser/AT/UAT NOT RUN. `audit/2026-10-01/handoff-QC-ADP26-10.md`.
   - State: PARTIAL / BLOCKED pending QC/QMS + Document Control source/criteria decision.
 
-- **2026-10-01 — QC-ADP26-09 / authority and version transport on template pages**
-  - Changed: template pages now consume canonical P-06 authority; expectedVersion uses strict positive PostgreSQL BIGINT parsing with field recovery; secrets are not retained for redisplay.
-  - Evidence: focused 73/73 PASS; Astro build 1/1 PASS under Node 24.19.0 (contract requires >=24.20.0); typecheck has 1 unrelated pre-existing error; local unauthenticated routes redirect 303 to sign-in; PG18/authenticated role and UI checks blocked or NOT VERIFIED. Final identity: `.ci-results/run-context.json` and `build.json`; handoff `audit/2026-09-30/handoff-QC-ADP26-09.md`.
-  - State: PARTIAL — implementation closed in source; authenticated PG/HTTP/browser/AT/UAT acceptance remains open. Candidate HEAD differs from requested audit SHA.
-
-- **2026-10-01 — QC-ADP26-08 / provider read failure and partial-source handling**
-  - Changed: shared missing/denied/provider classification; count withholding on task/audit denial; primary/related read failures separated across cited health, asset, laboratory, task, quarantine and control-center routes. No schema or business-write change.
-  - Evidence: candidate HEAD `829218e4204939b07fc91458b05765f6506d2f24`, source fingerprint `ecf30cd7c723ccdf0241b8a910ec8a4907bd5716c608ab363938d7f2fc974b7e`; focused unit 3/3 and build 1/1 PASS. Typecheck remains FAIL on pre-existing `Date.formatDate` in `quality/findings/index.astro`. Database, per-route fault injection, HTTP/browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-08.md`.
-  - State: PARTIAL — F-008 spans 61 routes; remaining route reads and candidate-bound runtime evidence are open.
-
-- **2026-10-01 — QC-ADP26-07 / P-04 and equipment eligibility copy**
-  - Changed: copy now maps approved P-04/BR-CAL-004; CAPA aggregate reads include actions and signed snapshot/replay JSON preserves bigint versions. No policy/schema change.
-  - Evidence: Node 24.20.0; focused 31/31, isolated PostgreSQL18.6 5/5 and real browser/direct HTTP 1/1 PASS, four widths; Astro build PASS. AT/200%/human UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-07.md`.
-  - State: PARTIAL — technical F-007 acceptance passed; manual acceptance remains open.
-
 - **2026-10-01 — Mind rollover (QC-ADP26-17):** نُقلت أقدم سجلات Ledger بتاريخ 2026-09-30 إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والمشكلات المفتوحة في 01.
-- **2026-10-01 — QC-ADP26-17 / لوحة القرار والعمل:** Changed: ترتيب dashboard، تغطية document queue، lineage/empty لمجموعة العمل، نشاط بشري dedupe بهوية الحدث، مع بقاء CANCEL deny؛ بلا schema/write. Evidence: focused unit 33/33 وPrettier PASS؛ PG18 وHTTP/browser/AT/UAT/build evidence BLOCKED أو NOT VERIFIED. State: PARTIAL؛ `audit/2026-09-30/handoff-QC-ADP26-17.md`.
-
+- **2026-10-02 — Mind rollover (QC-POST-100-001):** نُقلت أقدم أربعة سجلات Ledger (QC-ADP26-07/08/09/17) إلى أعلى `02-mind-mid.md` بعد التحقق؛ بقيت الحالة الحالية والثوابت والمشكلات المفتوحة في 01.
 ## Current audit reality — 2026-09-18
 - **2026-09-20 — Mind rollover (QC-100-FINAL-026):** تجاوز `01` الحد الصلب (121,894 بايت)؛ نُقلت أقدم سجلات 2026-09-18 إلى أعلى `02-mind-mid.md` بعد التحقق من غيابها فيه، مع تثبيت ثوابت `NO-GO`/gates وانحراف Render في أقسام الحالة الحالية. لم تُمس القرارات الحالية ولا الـinvariants ولا المشاكل المفتوحة. الحالة: DONE.
 

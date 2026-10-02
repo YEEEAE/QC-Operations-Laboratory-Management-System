@@ -1,0 +1,1512 @@
+{
+  "promptId": "QC-POST-100-001",
+  "candidateSha": "2885e747a206a7417203db168f4c3ba3459a5381",
+  "sourceFingerprintAtFreeze": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "result": "PARTIAL — no owned component accepted as PASS; runtime/PG/positive-negative evidence absent",
+  "sourceOnlyObservations": [
+    {
+      "route": "/laboratory/tests/[labTestId]/review",
+      "status": "SOURCE REVIEW PASS",
+      "detail": "POST parser dispatches approve/final-approve/return to existing Actions. finalApprove form is method=post. Reauthentication is in POST body; client clears password after success, known failure, thrown/unknown result, and finally."
+    },
+    {
+      "route": "/reject-reports/daily/[reportId]",
+      "status": "SOURCE REVIEW PASS",
+      "detail": "POST parser dispatches append/finalize/void to existing Actions. Forms use method=post; posted field values are retained for rerender; error copy distinguishes known refusal from unknown result and directs record/history review."
+    },
+    {
+      "route": "/reject-reports/issue-slips/[reportId]",
+      "status": "SOURCE REVIEW PASS",
+      "detail": "POST parser dispatches confirm/reverse/issue/void to existing Actions. Forms use method=post; unknown result instructs review of report and approval history. Approval confirmation is explicitly not e-signature."
+    }
+  ],
+  "assignedAtomicRowsCount": 87,
+  "assignedAtomicRows": [
+    {
+      "rowId": "QC-PAGE-F-011",
+      "fullGapCriterion": "no-JS valid positive/denied/stale/replay ؛ no business fields GET ؛ network after commit لا false rollback claim ؛ reason/password ceremony حسب العقد؛ native/enhanced parity.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "QC-POST-F-002",
+      "fullGapCriterion": "finalApprove form has no method or action; native default GET serializes named password. Submit valid form with scripts disabled. Script also never clears password after failed attempt.; verify corrected outcome with populated exact-candidate test, direct negative request, persistence/rollback where applicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "A-05",
+      "fullGapCriterion": "Final reauthentication secret may enter URL without JavaScript",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "POST-C-01",
+      "fullGapCriterion": "Reject detail forms fall back to GET carrying business fields",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-001",
+      "fullGapCriterion": "All 6 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-001:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-001:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-001:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-001:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002",
+      "fullGapCriterion": "All 11 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:S4",
+      "fullGapCriterion": "كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:S5",
+      "fullGapCriterion": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:S6",
+      "fullGapCriterion": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:R4",
+      "fullGapCriterion": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-002:R5",
+      "fullGapCriterion": "PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003",
+      "fullGapCriterion": "All 12 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:S4",
+      "fullGapCriterion": "كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:S5",
+      "fullGapCriterion": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:S6",
+      "fullGapCriterion": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:R4",
+      "fullGapCriterion": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:R5",
+      "fullGapCriterion": "PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-003:R6",
+      "fullGapCriterion": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004",
+      "fullGapCriterion": "All 12 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:S4",
+      "fullGapCriterion": "كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:S5",
+      "fullGapCriterion": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:S6",
+      "fullGapCriterion": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:R4",
+      "fullGapCriterion": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:R5",
+      "fullGapCriterion": "PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "RT-REJ-004:R6",
+      "fullGapCriterion": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "POST-REPORT:41",
+      "fullGapCriterion": "Reconcile each finding/criterion/evidence claim in this section to this ledger; 0 omitted residual items and no historical evidence promoted to current PASS.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-001:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-001:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-001:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-001:R1",
+      "fullGapCriterion": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-001:R2",
+      "fullGapCriterion": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-001:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:S4",
+      "fullGapCriterion": "كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:S5",
+      "fullGapCriterion": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:S6",
+      "fullGapCriterion": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:R1",
+      "fullGapCriterion": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:R2",
+      "fullGapCriterion": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:R4",
+      "fullGapCriterion": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-002:R5",
+      "fullGapCriterion": "PG18transaction/failure-injection/replay/stale على samecandidate",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:S4",
+      "fullGapCriterion": "كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:S5",
+      "fullGapCriterion": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:S6",
+      "fullGapCriterion": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:R1",
+      "fullGapCriterion": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:R2",
+      "fullGapCriterion": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:R4",
+      "fullGapCriterion": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:R5",
+      "fullGapCriterion": "PG18transaction/failure-injection/replay/stale على samecandidate",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-003:R6",
+      "fullGapCriterion": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:S1",
+      "fullGapCriterion": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:S2",
+      "fullGapCriterion": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:S3",
+      "fullGapCriterion": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:S4",
+      "fullGapCriterion": "كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:S5",
+      "fullGapCriterion": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:S6",
+      "fullGapCriterion": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:R1",
+      "fullGapCriterion": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:R2",
+      "fullGapCriterion": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:R3",
+      "fullGapCriterion": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:R4",
+      "fullGapCriterion": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:R5",
+      "fullGapCriterion": "PG18transaction/failure-injection/replay/stale على samecandidate",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "BLOCKED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:PAGECHECK:RT-REJ-004:R6",
+      "fullGapCriterion": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:FINDING:QC-PAGE-F-011",
+      "fullGapCriterion": "إغلاق QC-PAGE-F-011 بمعيار القبول الأصلي في بطاقة التقرير أو تسجيل استمرار العيب؛ لا يعدّل السجل التاريخي.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:FINDING:QC-POST-F-002",
+      "fullGapCriterion": "finalApprove form has no method or action; native default GET serializes named password. Submit valid form with scripts disabled. Script also never clears password after failed attempt.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:TASK:QC-ADP26-11",
+      "fullGapCriterion": "تنفيذ شروط القبول المكتوبة في QC-ADP26-11 على المرشح الحالي، أو إثبات كل ما أُنجز بدليل صالح وتحديد الجزء المتبقي.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    },
+    {
+      "rowId": "BASE:TASK:QC-POST-100-001",
+      "fullGapCriterion": "تنفيذ شروط القبول المكتوبة في QC-POST-100-001 على المرشح الحالي، أو إثبات كل ما أُنجز بدليل صالح وتحديد الجزء المتبقي.",
+      "promptAcceptanceComponents": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-ROW"
+      ],
+      "expected": "Observed same-candidate positive control and applicable negative/runtime outcomes, with no secret in URL/log/retained HTML; exact PG18 rollback/replay/stale and unknown-result record/history reconciliation where applicable.",
+      "actualSourceObservation": "Current source review confirms native method=\"post\" forms and server Action dispatch are present on the three assigned routes; see commands-and-results.json. This is static source inspection only.",
+      "positiveCases": "NOT RUN on current candidate; no populated authenticated fixture/credentials supplied.",
+      "negativeCases": "NOT RUN on current candidate; denied/stale/duplicate/invalid-state/SoD and zero-write claims lack exact-candidate runtime evidence.",
+      "evidenceStatus": "NOT VERIFIED",
+      "evidenceReference": "commands-and-results.json#source-review; runtime evidence absent",
+      "findingDisposition": "OPEN/PARTIAL; no row or finding is closed by this component."
+    }
+  ],
+  "acceptance": {
+    "AC-01": "NOT VERIFIED — no populated no-JS browser observation, actual resulting UI, URL/network/log/retained-HTML evidence.",
+    "AC-02": "NOT VERIFIED — direct negative requests and before/after row/audit/outbox/signature counts not run.",
+    "AC-03": "BLOCKED — PostgreSQL 18 unavailable; audit/outbox/signature fault injection and transaction rollback/recovery not observed.",
+    "AC-ROW": "PARTIAL — each supplied row is retained individually and left open; required independent row evidence is absent."
+  },
+  "historicalEvidenceBoundary": "audit/2026-10-02/handoff-QC-POST-100-001.md names HEAD 6059e177... and source fingerprint 402846...; it is HISTORICAL for this candidate 2885e747... and is not promoted to PASS."
+}

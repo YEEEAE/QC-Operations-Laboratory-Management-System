@@ -1,0 +1,61 @@
+{
+  "promptId": "QC-POST-100-011",
+  "candidateSha": "2885e747a206a7417203db168f4c3ba3459a5381",
+  "sourceFingerprintAtFreeze": "c7561a3d8341330111d140a25e1dd6dcead397991f4fe5a208b2fe8ebc932069",
+  "migrationRequired": "YES — 0044_restore_request_idempotency adds the unique key required by ON CONFLICT replay handling; applied status NOT VERIFIED",
+  "runtimeDatabaseProof": "BLOCKED — PostgreSQL18/Testcontainers could not start; no application database connected",
+  "routes": [
+    "/system/backups",
+    "/system/backups/[backupId]",
+    "/system/backups/[backupId]/restore"
+  ],
+  "objects": [
+    {
+      "table": "qc.backup_runs",
+      "role": "catalog read; row locked while restore intent records",
+      "source": "0014_backup_recovery_metadata.sql; 0019_backup_catalog_identity.sql",
+      "runtimeSchema": "NOT VERIFIED"
+    },
+    {
+      "table": "qc.restore_runs",
+      "role": "intent insert/replay by backup_run_id/request_id",
+      "source": "0014_backup_recovery_metadata.sql; 0044_restore_request_idempotency.sql",
+      "constraint": "uq_restore_runs__backup_run_request_id",
+      "runtimeSchema": "NOT VERIFIED"
+    },
+    {
+      "table": "qc.audit_events",
+      "role": "transactional append",
+      "source": "backup-recovery/infrastructure/postgres-repository.ts",
+      "runtimeMutation": "NOT VERIFIED"
+    },
+    {
+      "table": "qc.outbox_events",
+      "role": "transactional enqueue",
+      "source": "backup-recovery/infrastructure/postgres-repository.ts",
+      "runtimeMutation": "NOT VERIFIED"
+    },
+    {
+      "table": "qc.files / qc.evidence_links",
+      "role": "metadata appears in DB dump; binary bytes outside DB dump",
+      "source": "0005_files.sql",
+      "objectRestore": "NOT VERIFIED"
+    }
+  ],
+  "authorization": [
+    {
+      "read": "PERM-BKP-VIEW",
+      "mutation": "PERM-BKP-RESTORE-DRILL",
+      "production": "DENY while policy/e-signature unresolved",
+      "serverEnforcement": "Action and use case; runtime personas and direct positive/negative controls NOT VERIFIED"
+    }
+  ],
+  "externalProvider": "R2 optional in source; durable round-trip, list, retention, alerts/export and integrated restore NOT VERIFIED. No provider writes.",
+  "ownerDecisions": [
+    "provider/plan and database+file scope",
+    "retention",
+    "approved RPO/RTO and target/operator",
+    "monitoring backend, thresholds, budget, escalation, redaction"
+  ],
+  "productionAccess": "NOT USED"
+}

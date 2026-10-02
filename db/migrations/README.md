@@ -2,8 +2,9 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current workspace source head is `0043_controlled_document_source_binding` (43
-migration files). Migration 0043 adds server-bound document file/revision digests,
+Current workspace source head is `0044_restore_request_idempotency` (44
+migration files). Migration 0044 adds the unique key required by restore request
+idempotency; it fails closed if duplicate pairs already exist. Migration 0043 adds server-bound document file/revision digests,
 immutable usage snapshots, and file digest metadata guards. It is not verified as
 applied to any provider database. Migration 0042 makes laboratory equipment usage snapshots append-only.
 Migration 0041 adds partial indexes for the bounded,

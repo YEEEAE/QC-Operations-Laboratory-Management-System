@@ -1,0 +1,26 @@
+{
+  "promptId": "QC-POST-100-001",
+  "frozenAt": "2026-10-02T04:39:31.191894+00:00",
+  "gitSha": "2885e747a206a7417203db168f4c3ba3459a5381",
+  "branch": "main",
+  "worktreeAtFreeze": "CLEAN",
+  "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sourceFingerprintMethod": "scripts/verification/evidence-identity.mjs; git diff --binary HEAD plus non-ignored untracked files, captured before this packet",
+  "migrationHead": "0043_controlled_document_source_binding.sql",
+  "migrationSourceCount": 43,
+  "migrationSourceDigestSha256": "8c0a80f8d1dfaa1d6fa6279f7819fb6d1a0f5fb277b178805d6ac30c2e3fc606",
+  "runtime": {
+    "node": "v22.22.3",
+    "nodeContract": ">=24.20.0 <25",
+    "contractSatisfied": false,
+    "pnpm": "11.25.0",
+    "platform": "darwin arm64"
+  },
+  "buildArtifact": null,
+  "buildDigest": null,
+  "appliedSchemaDigest": null,
+  "postgresMajor": null,
+  "fixtureIdentity": null,
+  "candidateScope": "source frozen at HEAD; acceptance evidence below is NOT a production/runtime acceptance claim",
+  "evidenceLimit": "Source HEAD matches this candidate; prior prompt handoff source fingerprint/build/Node evidence is HISTORICAL because it names a different source candidate."
+}

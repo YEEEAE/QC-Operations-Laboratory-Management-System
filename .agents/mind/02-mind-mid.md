@@ -1,3 +1,24 @@
+## Rollover from 01 — 2026-10-02 (QC-POST-100-001)
+
+> نُقلت أقدم سجلات Ledger التالية من 01 بعد التحقق من عدم وجودها سابقًا في الأرشيف؛ بقيت الحالة الحالية والثوابت والمشكلات المفتوحة في 01.
+
+- **2026-10-01 — QC-ADP26-09 / authority and version transport on template pages**
+  - Changed: template pages now consume canonical P-06 authority; expectedVersion uses strict positive PostgreSQL BIGINT parsing with field recovery; secrets are not retained for redisplay.
+  - Evidence: focused 73/73 PASS; Astro build 1/1 PASS under Node 24.19.0 (contract requires >=24.20.0); typecheck has 1 unrelated pre-existing error; local unauthenticated routes redirect 303 to sign-in; PG18/authenticated role and UI checks blocked or NOT VERIFIED. Final identity: `.ci-results/run-context.json` and `build.json`; handoff `audit/2026-09-30/handoff-QC-ADP26-09.md`.
+  - State: PARTIAL — implementation closed in source; authenticated PG/HTTP/browser/AT/UAT acceptance remains open. Candidate HEAD differs from requested audit SHA.
+
+- **2026-10-01 — QC-ADP26-08 / provider read failure and partial-source handling**
+  - Changed: shared missing/denied/provider classification; count withholding on task/audit denial; primary/related read failures separated across cited health, asset, laboratory, task, quarantine and control-center routes. No schema or business-write change.
+  - Evidence: candidate HEAD `829218e4204939b07fc91458b05765f6506d2f24`, source fingerprint `ecf30cd7c723ccdf0241b8a910ec8a4907bd5716c608ab363938d7f2fc974b7e`; focused unit 3/3 and build 1/1 PASS. Typecheck remains FAIL on pre-existing `Date.formatDate` in `quality/findings/index.astro`. Database, per-route fault injection, HTTP/browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-08.md`.
+  - State: PARTIAL — F-008 spans 61 routes; remaining route reads and candidate-bound runtime evidence are open.
+
+- **2026-10-01 — QC-ADP26-07 / P-04 and equipment eligibility copy**
+  - Changed: copy now maps approved P-04/BR-CAL-004; CAPA aggregate reads include actions and signed snapshot/replay JSON preserves bigint versions. No policy/schema change.
+  - Evidence: Node 24.20.0; focused 31/31, isolated PostgreSQL18.6 5/5 and real browser/direct HTTP 1/1 PASS, four widths; Astro build PASS. AT/200%/human UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-07.md`.
+  - State: PARTIAL — technical F-007 acceptance passed; manual acceptance remains open.
+
+- **2026-10-01 — QC-ADP26-17 / لوحة القرار والعمل:** Changed: ترتيب dashboard، تغطية document queue، lineage/empty لمجموعة العمل، نشاط بشري dedupe بهوية الحدث، مع بقاء CANCEL deny؛ بلا schema/write. Evidence: focused unit 33/33 وPrettier PASS؛ PG18 وHTTP/browser/AT/UAT/build evidence BLOCKED أو NOT VERIFIED. State: PARTIAL؛ `audit/2026-09-30/handoff-QC-ADP26-17.md`.
+
 ## Rollover from 01 — 2026-10-02 (QC-POST-100-007)
 
 > نُقلت سجلات Historical Ledger الأقدم QC-100-FINAL-037-B إلى QC-100-FINAL-027-A بعد التحقق من عدم وجودها في الأرشيف؛ لم تُنقل حالة حالية أو قرار مفتوح.

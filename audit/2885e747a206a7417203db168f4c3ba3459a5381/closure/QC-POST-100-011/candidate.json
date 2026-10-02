@@ -1,0 +1,25 @@
+{
+  "promptId": "QC-POST-100-011",
+  "frozenAt": "2026-10-02T05:25:21.880514+00:00",
+  "gitSha": "2885e747a206a7417203db168f4c3ba3459a5381",
+  "branch": "main",
+  "worktreeAtFreeze": "DIRTY — pre-existing user Mind edits and QC-POST-100-001 evidence preserved; task changes included",
+  "sourceFingerprint": "c7561a3d8341330111d140a25e1dd6dcead397991f4fe5a208b2fe8ebc932069",
+  "sourceFingerprintMethod": "scripts/verification/evidence-identity.mjs; git diff --binary HEAD plus non-ignored untracked files, captured before this packet",
+  "migrationHead": "0044_restore_request_idempotency.sql",
+  "migrationSourceCount": 44,
+  "migrationSourceDigestSha256": "bccfd862f111ed3cd5e3c44f1680d3c115f48019c57f34f8aa378eeb1edfc417",
+  "runtime": {
+    "node": "v22.22.3",
+    "nodeContract": ">=24.20.0 <25",
+    "contractSatisfied": false,
+    "pnpm": "11.25.0",
+    "platform": "darwin arm64"
+  },
+  "buildArtifact": null,
+  "appliedSchemaDigest": null,
+  "postgresMajor": null,
+  "fixtureIdentity": null,
+  "candidateScope": "source candidate only; no production/runtime acceptance claim",
+  "evidenceLimit": "Fingerprint includes pre-existing dirty user files. Packet is outside frozen source snapshot; later source changes require rebind/rerun."
+}
