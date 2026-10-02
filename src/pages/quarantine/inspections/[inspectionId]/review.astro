@@ -10,15 +10,23 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
 let inspection: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['get']['execute']>> | undefined;
 try { inspection = await inspectionReadDependencies().get.execute({ actor, id: Astro.params.inspectionId ?? '' }); } catch (error) { if (classifyReadFailure(error) === 'UNAVAILABLE') return providerUnavailableResponse('Inspection details are temporarily unavailable', Astro.url.pathname + Astro.url.search); return Astro.redirect('/404'); }
 if (!inspection) return Astro.redirect('/404');
-const canReview = actor.permissions.some((permission) => permission.code === 'PERM-INSP-REVIEW' && permission.active !== false) && actor.permissions.some((permission) => permission.code === 'PERM-APR-REVIEW' && permission.active !== false);
+const hasPermission = (code: string) => actor.permissions.some((permission) => permission.code === code && permission.active !== false);
 // QC-100-FINAL-004 two-stage chain: the UNDER_REVIEW decision is the
 // Supervisor stage approval (PERM-INSP-APPROVE only, no e-signature); the
 // PENDING_QCM_APPROVAL decision is the QCM final approval (ceremony grant +
 // binding e-signature + reauthentication).
-const canStageApprove = actor.permissions.some((permission) => permission.code === 'PERM-INSP-APPROVE' && permission.active !== false);
-const canFinalApprove = actor.permissions.some((permission) => permission.code === 'PERM-APR-APPROVE' && permission.active !== false) && actor.permissions.some((permission) => permission.code === 'PERM-ESIG-SIGN' && permission.active !== false);
-const canReturn = actor.permissions.some((permission) => permission.code === 'PERM-INSP-RETURN' && permission.active !== false) && actor.permissions.some((permission) => permission.code === 'PERM-APR-RETURN' && permission.active !== false);
-const canReject = actor.permissions.some((permission) => permission.code === 'PERM-INSP-REJECT' && permission.active !== false) && actor.permissions.some((permission) => permission.code === 'PERM-APR-REJECT' && permission.active !== false);
+const canStageApprove = hasPermission('PERM-INSP-APPROVE');
+const canFinalApprove = hasPermission('PERM-APR-APPROVE') && hasPermission('PERM-ESIG-SIGN');
+const canReturn = hasPermission('PERM-INSP-RETURN') && hasPermission('PERM-APR-RETURN');
+const canReject = hasPermission('PERM-INSP-REJECT') && hasPermission('PERM-APR-REJECT');
+// This is a presentation hint only; every action remains server-authorized.
+const canReview = inspection.state === 'SUBMITTED'
+  ? hasPermission('PERM-INSP-REVIEW') && hasPermission('PERM-APR-REVIEW')
+  : inspection.state === 'UNDER_REVIEW'
+    ? canStageApprove || canReturn || canReject
+    : inspection.state === 'PENDING_QCM_APPROVAL'
+      ? canFinalApprove || canReturn || canReject
+      : false;
 const atSupervisorStage = inspection.state === 'UNDER_REVIEW';
 const atQcmStage = inspection.state === 'PENDING_QCM_APPROVAL';
 // QC-100-FINAL-021: contextual guidance derived from the approved state — explains

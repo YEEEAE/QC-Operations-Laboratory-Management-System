@@ -11,6 +11,8 @@ import { PostgresCalibrationRepository } from '../../../src/modules/assets/calib
 import { createDraftMaintenance } from '../../../src/modules/assets/maintenance/domain/maintenance.js';
 import { PostgresMaintenanceRepository } from '../../../src/modules/assets/maintenance/infrastructure/postgres-repository.js';
 import { PostgresEquipmentRepository } from '../../../src/modules/assets/equipment/infrastructure/postgres-repository.js';
+import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audit-repository.js';
+import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 
 const actor = (id: string): ActorContext => ({
@@ -177,6 +179,72 @@ describe('QC-CLOSURE-008 asset lifecycle persistence', () => {
     expect(failed.state).toBe('FAILED');
     const history = await repository.history!(calibrationId, actor(userId));
     expect(history.at(-1)?.state).toBe('FAILED');
+  });
+
+  it('rolls back the calibration state, version, history, audit, and outbox when audit insertion fails', async () => {
+    const calibrationId = uuidv7();
+    const base = new PostgresCalibrationRepository(db);
+    const created = await base.create({
+      calibration: createDraftCalibration({
+        id: calibrationId,
+        calibrationNo: 'CAL-CLOSURE-008-AUDIT-ROLLBACK',
+        equipmentId,
+        calibrationDate: new Date('2026-03-01T00:00:00Z'),
+        createdBy: userId,
+        now: new Date('2026-03-01T00:00:00Z'),
+      }),
+      actor: actor(userId),
+      requestId: 'closure-008-audit-rollback-create',
+    });
+    const failing = new PostgresCalibrationRepository(
+      db,
+      new PostgresAuditRepository(db),
+      new PostgresOutboxRepository(db),
+    );
+    await pool.query(
+      `CREATE OR REPLACE FUNCTION qc.closure_008_fail_calibration_audit() RETURNS trigger AS $$
+       BEGIN
+         IF NEW.subject_id = '${calibrationId}'::uuid AND NEW.action = 'SUBMIT' THEN
+           RAISE EXCEPTION 'injected calibration audit failure';
+         END IF;
+         RETURN NEW;
+       END; $$ LANGUAGE plpgsql;
+       CREATE TRIGGER closure_008_fail_calibration_audit
+       BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.closure_008_fail_calibration_audit()`
+    );
+    const before = await pool.query(
+      `SELECT
+         (SELECT state || ':' || version::text FROM qc.calibration_records WHERE id=$1) AS record,
+         (SELECT count(*)::int FROM qc.calibration_history WHERE calibration_id=$1) AS history,
+         (SELECT count(*)::int FROM qc.audit_events WHERE subject_type='CALIBRATION_RECORD' AND subject_id=$1) AS audit,
+         (SELECT count(*)::int FROM qc.outbox_events WHERE aggregate_type='CALIBRATION_RECORD' AND aggregate_id=$1) AS outbox`,
+      [calibrationId],
+    );
+    try {
+      await expect(
+        failing.transition({
+          id: calibrationId,
+          expectedVersion: created.version,
+          actor: actor(userId),
+          action: 'SUBMIT',
+          requestId: 'closure-008-audit-rollback-submit',
+        }),
+      ).rejects.toThrow(/injected calibration audit failure/);
+    } finally {
+      await pool.query(
+        'DROP TRIGGER IF EXISTS closure_008_fail_calibration_audit ON qc.audit_events; DROP FUNCTION IF EXISTS qc.closure_008_fail_calibration_audit()',
+      );
+    }
+    const after = await pool.query(
+      `SELECT
+         (SELECT state || ':' || version::text FROM qc.calibration_records WHERE id=$1) AS record,
+         (SELECT count(*)::int FROM qc.calibration_history WHERE calibration_id=$1) AS history,
+         (SELECT count(*)::int FROM qc.audit_events WHERE subject_type='CALIBRATION_RECORD' AND subject_id=$1) AS audit,
+         (SELECT count(*)::int FROM qc.outbox_events WHERE aggregate_type='CALIBRATION_RECORD' AND aggregate_id=$1) AS outbox`,
+      [calibrationId],
+    );
+    expect(after.rows[0]).toEqual(before.rows[0]);
+    expect(after.rows[0]?.record).toBe('DRAFT:1');
   });
 
   it('locks equipment during maintenance, records downtime, and keeps the lock fail-safe', async () => {

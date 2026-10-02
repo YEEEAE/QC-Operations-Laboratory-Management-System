@@ -8,9 +8,10 @@ import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Finspections');
-const states = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'] as const;
+const states = ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'PENDING_QCM_APPROVAL', 'RETURNED', 'APPROVED', 'REJECTED', 'VOID'] as const;
 const params = Astro.url.searchParams;
 const requestedState = params.get('state') ?? params.get('workflowState');
+const stateParam = params.has('state') ? 'state' : params.has('workflowState') ? 'workflowState' : 'state';
 const state = states.find((value) => value === requestedState);
 const requestedResult = params.get('finalResult') ?? params.get('inspectionResult');
 const finalResult = FINAL_RESULTS.find((value) => value === requestedResult);
@@ -25,7 +26,7 @@ const chipHref = (drop: string) => {
   return `/quarantine/inspections${search ? `?${search}` : ''}`;
 };
 const appliedFilters = [
-  state && { label: 'Workflow state', value: stateLabel(state), href: chipHref('state') },
+  state && { label: 'Workflow state', value: stateLabel(state), href: chipHref(stateParam) },
   finalResult && {
     label: 'Inspection result',
     value: stateLabel(finalResult),

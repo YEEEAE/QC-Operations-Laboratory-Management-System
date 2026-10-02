@@ -1,0 +1,111 @@
+---
+import { actions } from 'astro:actions';
+import type { ActorContext } from '../../../shared/authorization/types.js';
+import { field, parseExpectedVersionField } from '../../forms/mutation-post.js';
+
+type ActionChoice = { action: string; label: string; permission: string; reasonRequired?: boolean };
+const { kind, record, actor, returnTo } = Astro.props as {
+  kind: 'calibration' | 'maintenance';
+  record: { id: string; state: string; version: bigint };
+  actor: ActorContext;
+  returnTo: string;
+};
+const hasPermission = (code: string) =>
+  actor.permissions.some((permission) => permission.code === code && permission.active !== false);
+const choices: ActionChoice[] = kind === 'calibration'
+  ? record.state === 'DRAFT'
+    ? [
+        { action: 'SCHEDULE', label: 'Schedule calibration', permission: 'PERM-CAL-EDIT-DRAFT' },
+        { action: 'SUBMIT', label: 'Submit calibration', permission: 'PERM-CAL-SUBMIT' },
+      ]
+    : record.state === 'SCHEDULED'
+      ? [{ action: 'SUBMIT', label: 'Submit calibration', permission: 'PERM-CAL-SUBMIT' }]
+      : record.state === 'SUBMITTED'
+        ? [{ action: 'APPROVE', label: 'Approve calibration', permission: 'PERM-CAL-APPROVE' }]
+        : record.state === 'APPROVED' || record.state === 'CURRENT'
+          ? [
+              { action: 'COMPLETE', label: 'Record calibration completion', permission: 'PERM-CAL-REVIEW' },
+              { action: 'FAIL', label: 'Record calibration failure', permission: 'PERM-CAL-REVIEW' },
+            ]
+          : []
+  : record.state === 'DRAFT'
+    ? [{ action: 'PLAN', label: 'Plan maintenance', permission: 'PERM-MNT-EDIT' }]
+    : record.state === 'PLANNED'
+      ? [
+          { action: 'START', label: 'Start maintenance', permission: 'PERM-MNT-EDIT' },
+          { action: 'CANCEL', label: 'Cancel maintenance', permission: 'PERM-MNT-EDIT', reasonRequired: true },
+        ]
+      : record.state === 'IN_PROGRESS'
+        ? [{ action: 'COMPLETE', label: 'Complete maintenance', permission: 'PERM-MNT-COMPLETE' }]
+        : [];
+const available = choices.filter((choice) => hasPermission(choice.permission));
+let failure = '';
+let retainedReason = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  retainedReason = String(form.get('reason') ?? '');
+  const action = field(form, 'intent');
+  if (available.some((choice) => choice.action === action)) {
+    try {
+      const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
+      const input = {
+        expectedVersion,
+        action,
+        reason: retainedReason,
+        requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
+      };
+      if (kind === 'calibration') {
+        const result = await Astro.callAction(actions.assets.transitionCalibration, {
+          ...input,
+          action: action as 'SCHEDULE' | 'SUBMIT' | 'APPROVE' | 'COMPLETE' | 'FAIL',
+          calibrationId: record.id,
+        });
+        if (result.error) throw new Error('Asset action refused');
+      } else {
+        const result = await Astro.callAction(actions.assets.transitionMaintenance, {
+          ...input,
+          action: action as 'PLAN' | 'START' | 'COMPLETE' | 'CANCEL',
+          maintenanceId: record.id,
+        });
+        if (result.error) throw new Error('Asset action refused');
+      }
+      return Astro.redirect(returnTo, 303);
+    } catch {
+      failure = 'The action was not confirmed. Refresh this record and its audit history before deciding whether to retry.';
+    }
+  } else {
+    failure = 'This action is not available for the current state and permissions. Refresh the record.';
+  }
+}
+---
+<section class="panel action-rail" aria-labelledby="asset-action-heading">
+  <h2 id="asset-action-heading">Available actions</h2>
+  {available.length ? (
+    available.map((choice) => (
+      <form method="post">
+        <input type="hidden" name="intent" value={choice.action} />
+        <input type="hidden" name="expectedVersion" value={record.version.toString()} />
+        {choice.reasonRequired && (
+          <label for={`${kind}-${choice.action}-reason`}>
+            Reason
+            <textarea id={`${kind}-${choice.action}-reason`} name="reason" required>{retainedReason}</textarea>
+          </label>
+        )}
+        <button type="submit">{choice.label}</button>
+      </form>
+    ))
+  ) : (
+    <p class="muted">No action is available for this state and account. The server checks permission, scope, state, and version again when an action is submitted.</p>
+  )}
+  {failure && <p role="alert">{failure}</p>}
+</section>
+<style>
+  .action-rail{display:grid;gap:var(--space-3);margin-top:var(--space-5);padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .action-rail h2{margin:0;font-size:1rem}
+  form{display:grid;gap:var(--space-3)}
+  label{display:grid;gap:.35rem}
+  textarea,button{font:inherit}
+  textarea{min-height:5rem}
+  button{min-height:var(--control-height);padding:.6rem .9rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}
+  .muted{color:var(--text-muted)}
+</style>

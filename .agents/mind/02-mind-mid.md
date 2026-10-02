@@ -1,3 +1,44 @@
+## Rollover from 01 — 2026-10-02 (QC-POST-100-007)
+
+> نُقلت سجلات Historical Ledger الأقدم QC-100-FINAL-037-B إلى QC-100-FINAL-027-A بعد التحقق من عدم وجودها في الأرشيف؛ لم تُنقل حالة حالية أو قرار مفتوح.
+
+- **2026-09-22 — QC-100-FINAL-037-B / unsaved-change + confirmation/recovery، تكامل وأدلة فنية (المرشّح HEAD `85dbe219689162afb0746cebbe0be9b38947ff5a`، بصمة dirty قبل `fa18d6d2…` وبعد `0a50dc64…` — الشجرة تحمل شغل laboratory غير مرتبط QC-DATA-003 وحُفظ، release محلي `rel-f841c47a20594672` verified)**
+  - Changed: وحدة `src/ui/forms/unsaved-changes.ts` جديدة (حارس beforeunload للحقول المتسخة فقط، يُمسح بحدث `qc:form-committed` الذي يبثّه enhance-with-classification داخل فرع SUCCESS فقط، أو بـPOST أصلي غير معترض) موصولة بصفحات الإنشاء الست المعتمدة فقط — لا توقيعات/اعتمادات/سجلات مقفلة. **Autosave غير منفذ عمدًا**: لا عقد draft معتمد (تفويض/نسخة/احتفاظ) — القرار POLICY-DEPENDENT لـ013/026، ولا بيانات حساسة في تخزين المتصفح. البند 2 تحقق عقدي لآليات قائمة: focus return وEscape-أمان وstale-refresh في dialog.ts، استرداد الجلسة SESSION_ENDED→login/returnTo (031)، حارس التكرار، مسار الطلب المقاطع بمفردات UNKNOWN_SAFE_ERROR.
+  - Evidence: عقد جديد `unsaved-navigation-contract` 18/18؛ عقود UI الست المتأثرة 113/113 PASS؛ typecheck 935/0 أخطاء؛ build + release:verify PASS؛ requirements:check PASS (domains=80). Unit الكامل 942/948 — 6 فشلات **سابقة كلها** (أُثبتت 4 UI منها على worktree نظيف عند HEAD؛ receiving-data-contract ×2 موثقة منذ 037-A). Node 22.22.3 خارج العقد كالسابق. Browser/E2E/AT/PG18 NOT RUN (003/006/040/002-027)؛ 012 يصالح. `PASS ≠ RELEASED`، gates 0/19 بلا تغيير.
+  - State: DONE (بالبندين محليًا). Report: `audit/2026-09-22/QC-100-FINAL-037-B-integration-technical-evidence.md`.
+- **2026-09-21 — QC-100-FINAL-029-B / integration and technical evidence (frozen candidate `e872260bf91c8a27dc6d58088b39b7a9b022e752`, dirty fingerprint `bf6e62e86e2c0c95128dfdd19f75b41c550dba25e018475d9ce20da8704d5e5e`, release `rel-31d58df694fb5944`)**
+  - Changed: migration source head `0033_controlled_document_execution_context`; version-specific WI/SOP links and immutable effective-version/result snapshots for lab tests and inspections; append-only UPDATE/DELETE/TRUNCATE guards.
+  - Evidence: Node 24.20.0 / pnpm 11.25.0; typecheck 883/0 errors/0 warnings/74 hints, build/release verify, selected lint/format, requirement reconciliation (80 domains), and audit/signature/document unit 8/8 PASS. Database integration BLOCKED (container unavailable; disposable PG14 `shmget: Operation not permitted`); migration unapplied, applied schema NOT VERIFIED. Report: `audit/2026-09-21/QC-100-FINAL-029-B-integration-technical-evidence.md`.
+  - State: PARTIAL; 002/027 PostgreSQL 18 verification and 013/026 authority decisions remain open; 003 authoring-surface E2E only if required; final evidence reconciliation 012. External human acceptance excluded. Scores and 80-domain denominator unchanged; `PASS ≠ RELEASED`.
+- **2026-09-21 — QC-100-FINAL-029-A / record, signature and document integrity (candidate `32652b93de4d4dede9f5427c47a3cb940a8f168e`, dirty fingerprint `8cea29755f1c27d6bacffa7f17951fca539a8aa024bdcebaa428f19de3ff56bc`, release `rel-efb56b6dceddb70f`)**
+  - Changed: source migration head is now `0032_document_version_file_integrity`; document-version file links are draft-only on insert and immutable against update/delete/truncate. Existing versioning/signature mechanics were traced; no policy-open signature edge was added.
+  - Evidence: typecheck 883/0/0/74 hints, build and exact-SHA release identity PASS on Node 22.22.3 (unsupported); focused signature/document contracts 5/5 PASS. PostgreSQL test 4 skipped/BLOCKED (no container runtime), so migration syntax/application and applied schema remain NOT VERIFIED; migration-ledger check BLOCKED (`tsx` IPC `EPERM`). Item 1 source trace DONE/DB control NOT VERIFIED; item 2 existing code traced/DB behavior NOT VERIFIED. Report: `audit/2026-09-21/QC-100-FINAL-029-A-core-contracts.md`.
+  - State: PARTIAL; 002/027 disposable-PostgreSQL verification, 013/026 approved policy/authority decisions, 003/006/040 applicable checks, external human evidence 004, and final reconciliation 012 remain dependencies. No score or 80-domain denominator change; `PASS ≠ RELEASED`.
+
+- **2026-09-21 — QC-100-FINAL-028-B / integration and technical evidence (candidate `32652b93de4d4dede9f5427c47a3cb940a8f168e`, implementation fingerprint empty-set `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, release `rel-068a28d3d71b279c`)**
+  - Changed: candidate-bound evidence handoff only; no source/test behavior changed. Lifecycle/QMS focused contracts 66/66, typecheck 883/0/0/74 hints, build and exact-SHA release identity PASS on Node 24.20.0. Source schema head `0031_qc_creation_parity_two_stage_approval` / checksum `44b160a6…`.
+  - Evidence: populated PostgreSQL invocation BLOCKED (47 cases skipped; 5 suites failed setup) because Docker runtime is unavailable and isolated PG18 `initdb` fails `shmget: Operation not permitted`. Candidate-specific atomic DB edges, immutability, replay/concurrency and QMS linkage therefore remain NOT VERIFIED; no policy-blocked edge was opened. Report: `audit/2026-09-21/QC-100-FINAL-028-B-integration-technical-evidence.md`.
+  - State: PARTIAL; 002/027 fresh disposable-PG regression, 013/026 approved policy sources, 003/006/040 where applicable, genuine 004 evidence, and final 012 reconciliation remain dependencies. Scores and 80-domain denominator unchanged; human acceptance excluded.
+
+- **2026-09-21 — QC-100-FINAL-028-A / core contracts and controls (candidate `0f25de0f54dbaf3249d56a25a863ec52a42b2f28`, source fingerprint `91ec238d37e2653fbe77dd3e6673199462a610889e72e68f3e176fb76465e3f0`, release `rel-5543d7477e453b02`)**
+  - Changed: lifecycle transition index added/reconciled; inspection/lab final-approval signature evidence now commits in the owning transaction; maintenance VOID denied at domain and use-case boundaries absent approved transition.
+  - Evidence: focused 9/9 tests, typecheck 883/0/0/74 hints, targeted format/lint and local build/release PASS on unsupported Node 22.22.3. PG18 integration BLOCKED (no container runtime); disposable PG14 fallback BLOCKED by sandbox System V shared-memory EPERM; migration CLI BLOCKED (tsx IPC EPERM); architecture gate retains known NCR/CAPA violations.
+  - State: PARTIAL; PG18 verification 002/027, E2E 003, accessibility 006/040, policy/source decisions 013/026, human evidence 004 and reconciliation 012 remain dependencies. Human acceptance excluded; denominator 80 and scores unchanged.
+  - Key files: `audit/2026-09-21/QC-100-FINAL-028-A-core-contracts.md`, `Documents/STATE-MACHINES.md`, `Documents/BUSINESS-RULES.md`, `src/shared/e-signatures/insert-signature-evidence.ts`.
+
+- **2026-09-21 — QC-100-FINAL-027-B / تكامل الأدلة الفنية (candidate `0f25de0f54dbaf3249d56a25a863ec52a42b2f28`, dirty fingerprint `ce83e6fa0a7ec51078776381bbe20878aceff8ca7cc5aac6850fa0cd741adff6`)**
+  - Changed: تصحيح fixture/teardown لاختبار QC-024، وتثبيت locator/مهلة اختبار login؛ لا تغيير runtime أو سياسة صلاحيات.
+  - Evidence: unit 785/785، PG integration 470/470، UI contracts 44/44، migrations 29/29، concurrency 12/12، security 52/52، typecheck 0 أخطاء، build/release identity PASS؛ authenticated E2E الواسع PARTIAL/FAIL (27 فشلًا، 12 skip بالتقرير) مع focused login 2/2 PASS؛ architecture gate FAIL بانتهاكات NCR/CAPA السابقة. PostgreSQL محلي disposable 18.6/schema 77 جدولًا؛ التفاصيل والتوقيت في التقرير.
+  - State: PARTIAL؛ 003 يصلح E2E fixtures/session، 006/040 يكملان فحوص الوصول، 004 يحتفظ بدليل القبول البشري؛ 012 يجمع الأدلة. لا تغيير للمقام 80 أو الدرجات.
+  - Key files: `audit/2026-09-21/QC-100-FINAL-027-B-integration-technical-evidence.md`.
+
+- **2026-09-20 — QC-100-FINAL-027-A / عقود جودة الاختبار الأساسية (candidate `2f0cfeff2d5f70d8a8b17b0cfedf07408ece70fd`, fingerprint `d8fe4e18a2686f1ec0e44828bbdd1d627c0dc2324e8b9c101fdf82d259eeb659`)**
+  - Changed: عزل cleanup للـunit globals، clock/random وfixture IDs حتمية، وعقود رفض الصلاحية على مستوى action/use case بلا كتابة؛ تقرير item-by-item.
+  - Evidence: unit 105/785 PASS، build/release identity محلي PASS؛ PostgreSQL contracts BLOCKED لعدم توفر container/`QC_TEST_DATABASE_URL`؛ typecheck وarchitecture gate FAIL كما بالتقرير.
+  - State وقت A: PARTIAL؛ تحققت عقود PostgreSQL لاحقًا محليًا ضمن 027-B؛ بقي هدف Docker/Testcontainers والعزل العام لـ21 reset sites غير محسوم، وE2E 003 وaccessibility 006/040 ومصالحة 012 مطلوبة. denominator 80 وgates 0/19 دون تغيير.
+  - Key files: `audit/2026-09-20/QC-100-FINAL-027-A-quality-engineering-core-contracts.md`.
+
+
 ## Rollover from 01 — 2026-10-01 (QC-ADP26-22 continuation)
 
 > استكمال compact للسجلات التاريخية الأقدم من 2026-09-20/21؛ لم تُنقل حالة حالية أو قرار مفتوح.

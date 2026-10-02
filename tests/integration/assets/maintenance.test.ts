@@ -5,6 +5,7 @@ import {
   type MaintenanceRecord,
 } from '../../../src/modules/assets/maintenance/domain/maintenance.js';
 import { TransitionMaintenanceUseCase } from '../../../src/modules/assets/maintenance/application/transition-maintenance.js';
+import { CreateMaintenanceUseCase } from '../../../src/modules/assets/maintenance/application/create-maintenance.js';
 import type { MaintenanceRepository } from '../../../src/modules/assets/maintenance/ports/repository.js';
 const actorId = '00000000-0000-7000-8000-000000000001';
 const equipmentId = '00000000-0000-7000-8000-000000000002';
@@ -41,6 +42,25 @@ const actor = (permission: string) => ({
   permissions: [{ code: permission as never, scopes: ['GLOBAL' as const] }],
 });
 describe('Assets maintenance controls', () => {
+  it('creates a corrective repair draft for ineligible equipment without granting laboratory use', async () => {
+    const repo = new FakeMaintenanceRepository();
+    const create = new CreateMaintenanceUseCase(repo);
+    const created = await create.execute({
+      actor: actor('PERM-MNT-CREATE'),
+      maintenanceNo: 'MNT-REPAIR-001',
+      equipmentId,
+      maintenanceType: 'CORRECTIVE',
+      description: 'Repair equipment whose calibration is expired',
+      requestId: 'req-repair-ineligible-equipment',
+    });
+    expect(created).toMatchObject({
+      maintenanceNo: 'MNT-REPAIR-001',
+      equipmentId,
+      state: 'DRAFT',
+      maintenanceType: 'CORRECTIVE',
+    });
+    expect(repo.value.id).toBe(created.id);
+  });
   it('requires reasons for cancellation and preserves the maintenance record', () => {
     expect(() => transitionMaintenance(make(), 'CANCEL', new Date())).toThrow();
     expect(transitionMaintenance(make(), 'CANCEL', new Date(), 'Vendor unavailable').state).toBe(

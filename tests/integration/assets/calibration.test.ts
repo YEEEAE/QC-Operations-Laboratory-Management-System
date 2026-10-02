@@ -96,6 +96,48 @@ describe('Assets calibration controls', () => {
       }),
     ).rejects.toThrow();
   });
+  it('allows an authorized QCM reviewer to approve a submitted record at its current version', async () => {
+    const repo = new FakeCalibrationRepository();
+    repo.value = { ...repo.value, state: 'SUBMITTED', createdBy: ids.equipment, version: 7n };
+    const qcm = {
+      ...actor('PERM-CAL-APPROVE'),
+      roles: ['Manager'],
+      permissions: [{ code: 'PERM-CAL-APPROVE' as never, scopes: ['GLOBAL' as const] }],
+    };
+    const result = await new TransitionCalibrationUseCase(repo).execute({
+      actor: qcm,
+      calibrationId: ids.calibration,
+      expectedVersion: 7n,
+      action: 'APPROVE',
+      requestId: 'req-cal-approved-stage',
+    });
+    expect(result).toMatchObject({ state: 'APPROVED', version: 8n });
+  });
+  it('denies a stale approval version and leaves current selection unavailable', async () => {
+    const repo = new FakeCalibrationRepository();
+    repo.value = { ...repo.value, state: 'SUBMITTED', createdBy: ids.equipment, version: 7n };
+    const qcm = {
+      ...actor('PERM-CAL-APPROVE'),
+      roles: ['Manager'],
+      permissions: [{ code: 'PERM-CAL-APPROVE' as never, scopes: ['GLOBAL' as const] }],
+    };
+    const transition = new TransitionCalibrationUseCase(repo);
+    await expect(transition.execute({
+      actor: qcm,
+      calibrationId: ids.calibration,
+      expectedVersion: 6n,
+      action: 'APPROVE',
+      requestId: 'req-cal-stale',
+    })).rejects.toThrow();
+    expect(repo.value).toMatchObject({ state: 'SUBMITTED', version: 7n });
+    await expect(transition.execute({
+      actor: { ...qcm, permissions: [{ code: 'PERM-CAL-REVIEW' as never, scopes: ['GLOBAL' as const] }] },
+      calibrationId: ids.calibration,
+      expectedVersion: 7n,
+      action: 'MAKE_CURRENT',
+      requestId: 'req-cal-current-policy',
+    })).rejects.toThrow();
+  });
   it('represents scheduled, due, overdue, completed, and failed outcomes explicitly', () => {
     expect(transitionCalibration(make(), 'SCHEDULE', new Date()).state).toBe('SCHEDULED');
     expect(

@@ -42,7 +42,7 @@ describe('authorization visibility presentation contract', () => {
     expect(execute).toContain('const canEdit = stateEditable');
     expect(execute).toContain('const canSubmit = canEdit');
     expect(execute).toContain('canSubmit ? <button');
-    expect(execute).toContain('Page visibility does not grant mutation authority.');
+    expect(execute).toContain('The current state allows draft work, but your account needs draft-edit permission');
   });
 
   it('makes laboratory next-workspace and retest policy states truthful', () => {
@@ -50,9 +50,28 @@ describe('authorization visibility presentation contract', () => {
     const execute = read('src/pages/laboratory/tests/[labTestId]/execute.astro');
 
     expect(detail).toContain("const canExecute = test.state === 'DRAFT'");
-    expect(detail).toContain("const canReview = ['SUBMITTED', 'UNDER_REVIEW']");
+    expect(detail).toContain("const atQcmStage = test.state === 'PENDING_QCM_APPROVAL'");
+    expect(detail).toContain('atQcmStage && ((hasPermission');
     expect(detail).not.toMatch(/href=\{`\/laboratory\/tests\/\$\{test\.id\}\/retests\/new`\}/);
     expect(detail).toContain('Retest authorization follows the approved P-05 policy');
     expect(execute).toContain('submission permission.');
+  });
+  it('routes the approved QCM inspection stage through the review workspace and state filter', () => {
+    const inspection = read('src/pages/quarantine/inspections/index.astro');
+    const review = read('src/pages/quarantine/inspections/[inspectionId]/review.astro');
+    expect(inspection).toContain("'PENDING_QCM_APPROVAL'");
+    expect(inspection).toContain('chipHref(stateParam)');
+    expect(review).toContain("inspection.state === 'PENDING_QCM_APPROVAL'");
+    expect(review).toContain('canFinalApprove || canReturn || canReject');
+  });
+  it('offers only existing permitted asset transitions and keeps unresolved transitions absent', () => {
+    const rail = read('src/ui/components/workflow/AssetActionRail.astro');
+    expect(rail).toContain("action: 'SUBMIT'");
+    expect(rail).toContain("action: 'APPROVE'");
+    expect(rail).toContain("action: 'START'");
+    expect(rail).toContain("action: 'COMPLETE'");
+    expect(rail).not.toContain("action: 'MAKE_CURRENT'");
+    expect(rail).not.toContain("action: 'VOID'");
+    expect(rail).toContain('name="expectedVersion" value={record.version.toString()}');
   });
 });
