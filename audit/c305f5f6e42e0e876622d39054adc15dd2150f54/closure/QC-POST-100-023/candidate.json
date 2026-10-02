@@ -1,0 +1,36 @@
+{
+  "promptId": "QC-POST-100-023",
+  "frozenAt": "2026-10-02T05:52:08.761Z",
+  "gitSha": "c305f5f6e42e0e876622d39054adc15dd2150f54",
+  "branch": "main",
+  "worktreeAtInitialFreeze": "CLEAN",
+  "candidateWorkingTree": "DIRTY (two source/test files and current Mind entry changed locally)",
+  "sourceFingerprint": "9aebdfc8db7f305f283b6f256a21c66d9b6cd06f513452af74c91aa408af11e5",
+  "sourceFingerprintMethod": "scripts/verification/evidence-identity.mjs, captured after source/test/Mind edits and before this closure packet was generated; closure output is candidate evidence, not application source",
+  "migrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+  "migrationSourceCount": 45,
+  "sourceMigrationManifestDigest": "NOT CALCULATED; applied schema digest and migration checksums NOT VERIFIED",
+  "runtime": {
+    "node": "v24.20.0",
+    "nodeContract": ">=24.20.0 <25",
+    "contractSatisfied": true,
+    "pnpm": "11.25.0",
+    "platform": "darwin arm64",
+    "runnerIdentity": "local shell / Vitest 5.0.0",
+    "fixtureIdentity": null,
+    "postgresMajor": null,
+    "appliedSchemaDigest": null
+  },
+  "build": {
+    "status": "PASS",
+    "releaseId": "rel-11cbb1a434690898",
+    "buildId": "local-c305f5f6e42e",
+    "artifactDigest": "4a7387e6894a9bf7da6b11e9fd15d5f621e0da9777340470223c799f9f392fcf",
+    "entryArtifactDigest": "ed8b8f2ef6174e65c7fa2f72572fcbf44d04dcfd80f5144971a16da84253c6bb",
+    "artifactPath": "dist/server/entry.mjs",
+    "artifactSha256": "ed8b8f2ef6174e65c7fa2f72572fcbf44d04dcfd80f5144971a16da84253c6bb",
+    "migrationHeadChecksum": "7a4634ada07b248dc5f59a07b9ebec419a0fe5f1c98e233cb1f201b6502b18fd"
+  },
+  "candidateScope": "Local source candidate only. Build identity is not deployed runtime, applied schema, provider state, UAT, or release acceptance.",
+  "evidenceLimit": "No accepted PostgreSQL18, authenticated route/E2E, owner policy, accessibility, human UAT, provider, or production evidence exists for this candidate."
+}

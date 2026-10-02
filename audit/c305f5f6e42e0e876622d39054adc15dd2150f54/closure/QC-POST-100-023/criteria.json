@@ -1,0 +1,2597 @@
+{
+  "schemaVersion": 1,
+  "promptId": "QC-POST-100-023",
+  "candidateSha": "c305f5f6e42e0e876622d39054adc15dd2150f54",
+  "sourceFingerprint": "9aebdfc8db7f305f283b6f256a21c66d9b6cd06f513452af74c91aa408af11e5",
+  "status": "PARTIAL",
+  "closurePermitted": false,
+  "assignedComponentCount": 103,
+  "passCount": 0,
+  "blockedCount": 25,
+  "notVerifiedCount": 78,
+  "components": [
+    {
+      "id": "QC-PAGE-F-029",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "QC-PAGE-F-029 | >safeinteger/precisionfixtures ؛ mixedunits ليس aggregate مضلل؛ filter/drilldownparity ؛ slipzeroerror ؛ existingdailyentriesretained/replay.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-01",
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": ">safeinteger/precisionfixtures ؛ mixedunits ليس aggregate مضلل؛ filter/drilldownparity ؛ slipzeroerror ؛ existingdailyentriesretained/replay.",
+      "actualOutcome": "Source inspection only: exact decimal string projection, unit grouping, report filter joins, and daily entry append CAS are present; populated precision/large-integer/mixed-unit/replay/retention outcomes are not verified on PostgreSQL18.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "QC-POST-F-008",
+      "status": "BLOCKED",
+      "fullGapCriterion": "QC-POST-F-008 | Fresh PostgreSQL18 integration fails invalid UNION/INTERSECT/EXCEPT ORDER BY clause. Compound-query ORDER BY rejected_qty::numeric/count::numeric expressions are invalid at this level. Analytics fails despite valid persisted data.; verify corrected outcome with populated exact-candidate test, direct negative request, persistence/rollback where applicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-01"
+      ],
+      "expectedOutcome": "Fresh PostgreSQL18 integration fails invalid UNION/INTERSECT/EXCEPT ORDER BY clause. Compound-query ORDER BY rejected_qty::numeric/count::numeric expressions are invalid at this level. Analytics fails despite valid persisted data.; verify corrected outcome with populated exact-candidate test, direct negative request, persistence/rollback where applicable.",
+      "actualOutcome": "Source query now selects UNION ALL output through an outer SELECT and applies numeric sort there. Populated PostgreSQL18 execution and control-query parity were not observed because Testcontainers could not find a container runtime.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "QC-POST-F-009",
+      "status": "BLOCKED",
+      "fullGapCriterion": "QC-POST-F-009 | Fresh PostgreSQL18 confirmation tests fail errors.validation_failed in PostgresAuditRepository. The approverName payload key normalizes to approver_name and is rejected by personalDataKey. Confirmation transaction rolls back instead of completing.; verify corrected outcome with populated exact-candidate test, direct negative request, persistence/rollback where applicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Fresh PostgreSQL18 confirmation tests fail errors.validation_failed in PostgresAuditRepository. The approverName payload key normalizes to approver_name and is rejected by personalDataKey. Confirmation transaction rolls back instead of completing.; verify corrected outcome with populated exact-candidate test, direct negative request, persistence/rollback where applicable.",
+      "actualOutcome": "Source no longer includes approverName in audit payload; approval name is still written to qc.issue_slip_approval_confirmations.approver_name. New PostgreSQL assertions cover business-row retention and zero audit payload key, but integration setup was blocked before any test case ran.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-001",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-001 | All 6 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "All 6 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-001:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-001:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-001:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-001:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-001:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-001:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-001:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-001:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-002 | All 11 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "All 11 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:S4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:S4 | كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:S5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:S5 | سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:S6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:S6 | nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-002:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:R4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:R4 | directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-002:R5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-002:R5 | PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-003 | All 12 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "All 12 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:S4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:S4 | كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:S5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:S5 | سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:S6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:S6 | nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-003:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:R4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:R4 | directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:R5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:R5 | PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-003:R6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-003:R6 | screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-004 | All 12 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "All 12 named page criteria below must be independently evidenced; no failed/unverified applicable criterion may remain.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:S4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:S4 | كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "كتابةالمجال متصلةبـ serverusecase يعيد authorization — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:S5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:S5 | سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:S6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:S6 | nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "RT-REJ-004:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:R4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:R4 | directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:R5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:R5 | PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "PG18transaction/failure-injection/replay/stale على samecandidate — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "RT-REJ-004:R6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "RT-REJ-004:R6 | screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls — PASS requires observed expected outcome on the final candidate, 0 contradictory evidence, and approved N/A only when inapplicable.",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "IND:02",
+      "status": "BLOCKED",
+      "fullGapCriterion": "IND:02 | Approve indicator applicability and denominator, then evidence every included criterion; no numerical100% claim without denominator. Approved production policy remains Go/NoGo.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Approve indicator applicability and denominator, then evidence every included criterion; no numerical100% claim without denominator. Approved production policy remains Go/NoGo.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "IND:03",
+      "status": "BLOCKED",
+      "fullGapCriterion": "IND:03 | Approve indicator applicability and denominator, then evidence every included criterion; no numerical100% claim without denominator. Approved production policy remains Go/NoGo.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Approve indicator applicability and denominator, then evidence every included criterion; no numerical100% claim without denominator. Approved production policy remains Go/NoGo.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "IND:17",
+      "status": "BLOCKED",
+      "fullGapCriterion": "IND:17 | Approve indicator applicability and denominator, then evidence every included criterion; no numerical100% claim without denominator. Approved production policy remains Go/NoGo.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Approve indicator applicability and denominator, then evidence every included criterion; no numerical100% claim without denominator. Approved production policy remains Go/NoGo.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "AUDIT-GATE:10",
+      "status": "BLOCKED",
+      "fullGapCriterion": "AUDIT-GATE:10 | Gate Audit integrity: all owner-approved criteria pass on the same candidate, with 0 mandatory FAIL/BLOCKED/NOT VERIFIED; keep distinct from canonical19 registry.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Gate Audit integrity: all owner-approved criteria pass on the same candidate, with 0 mandatory FAIL/BLOCKED/NOT VERIFIED; keep distinct from canonical19 registry.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "POST-REPORT:22",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "POST-REPORT:22 | Reconcile each finding/criterion/evidence claim in this section to this ledger; 0 omitted residual items and no historical evidence promoted to current PASS.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Reconcile each finding/criterion/evidence claim in this section to this ledger; 0 omitted residual items and no historical evidence promoted to current PASS.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "POST-REPORT:41",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "POST-REPORT:41 | Reconcile each finding/criterion/evidence claim in this section to this ledger; 0 omitted residual items and no historical evidence promoted to current PASS.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Reconcile each finding/criterion/evidence claim in this section to this ledger; 0 omitted residual items and no historical evidence promoted to current PASS.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:REQ:REQ-WFLOW-003",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:REQ:REQ-WFLOW-003 | يُثبت المطلب REQ-WFLOW-003 في كل نطاق تطبيق موثق (Quarantine reject path) باختبارات/قبول مناسبين ودليل مربوط بالمرشح الحالي؛ لا يكفي وجود الكود أو مرجع تاريخي.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "يُثبت المطلب REQ-WFLOW-003 في كل نطاق تطبيق موثق (Quarantine reject path) باختبارات/قبول مناسبين ودليل مربوط بالمرشح الحالي؛ لا يكفي وجود الكود أو مرجع تاريخي.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-001:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-001:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-001:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-001:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-001:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-001:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-001:R1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-001:R1 | زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-001:R2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-001:R2 | keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-001:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-001:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:S4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:S4 | كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:S5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:S5 | سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:S6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:S6 | nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:R1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:R1 | زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:R2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:R2 | keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:R4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:R4 | directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-002:R5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-002:R5 | PG18transaction/failure-injection/replay/stale على samecandidate",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "PG18transaction/failure-injection/replay/stale على samecandidate",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:S4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:S4 | كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:S5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:S5 | سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:S6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:S6 | nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:R1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:R1 | زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:R2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:R2 | keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:R4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:R4 | directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:R5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:R5 | PG18transaction/failure-injection/replay/stale على samecandidate",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "PG18transaction/failure-injection/replay/stale على samecandidate",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-003:R6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-003:R6 | screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:S1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:S1 | المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "المسار والفاعل الخادمي مساران محددان بالمصدر؛ الرؤية منفصلة عنالفعل",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:S2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:S2 | مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "مصدر القراءة/الكيانات أو عدمالاستعلام في landing محددبالمصدر",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:S3",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:S3 | واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "واجهةهذهالصفحة لا تحوّل فشل provider إلى empty أو 404 مضللة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:S4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:S4 | كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "كتابةالمجال متصلةبـ serverusecase يعيد authorization",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:S5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:S5 | سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "سجل business مع audit/outbox المطلوب يستخدم transactionexecutor نفسه",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:S6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:S6 | nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "nativePOSTbaseline له handler خادمي فعلي وليس method فقط",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:R1",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:R1 | زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "زيارةمصادقة samecandidate لحالات data/empty/error وال persona المنطبق",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:R2",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:R2 | keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "keyboard/axe/320px/200% و screenreader علىحالاتهذهالصفحة",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:R3",
+      "status": "BLOCKED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:R3 | قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "قبول بشري منمالكالمسار علىالرحلةوال copy",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:R4",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:R4 | directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "directPOSTnegative بسجل valid+positivecontrol ؛ norow/audit/outboxwrite عند denial",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:R5",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:R5 | PG18transaction/failure-injection/replay/stale على samecandidate",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "PG18transaction/failure-injection/replay/stale على samecandidate",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:PAGECHECK:RT-REJ-004:R6",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:PAGECHECK:RT-REJ-004:R6 | screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "screen/print/CSV/XLSX لنفس snapshot ودقةالقيم و pagecuts دونتسريب controls",
+      "actualOutcome": "Source route and policy definitions were inspected; candidate-bound authenticated rendering, page state outcomes, keyboard/axe/zoom/screen-reader and owner acceptance were not run.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:DOMAIN:D12",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:DOMAIN:D12 | إثبات معايير القبول الملزمة الخاصة بمجال D12 (Functional Workflow Correctness) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إثبات معايير القبول الملزمة الخاصة بمجال D12 (Functional Workflow Correctness) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:DOMAIN:D18",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:DOMAIN:D18 | إثبات معايير القبول الملزمة الخاصة بمجال D18 (State Machine / Lifecycle Design) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إثبات معايير القبول الملزمة الخاصة بمجال D18 (State Machine / Lifecycle Design) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:DOMAIN:D35",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:DOMAIN:D35 | إثبات معايير القبول الملزمة الخاصة بمجال D35 (Concurrency / Transaction Design) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إثبات معايير القبول الملزمة الخاصة بمجال D35 (Concurrency / Transaction Design) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:DOMAIN:D76",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:DOMAIN:D76 | إثبات معايير القبول الملزمة الخاصة بمجال D76 (Data Quality Engineering) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إثبات معايير القبول الملزمة الخاصة بمجال D76 (Data Quality Engineering) على المرشح الحالي؛ لا ترحيل score تاريخي ولا متوسط يخفي فجوة.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:FINDING:QC-PAGE-F-029",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:FINDING:QC-PAGE-F-029 | إغلاق QC-PAGE-F-029 بمعيار القبول الأصلي في بطاقة التقرير أو تسجيل استمرار العيب؛ لا يعدّل السجل التاريخي.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إغلاق QC-PAGE-F-029 بمعيار القبول الأصلي في بطاقة التقرير أو تسجيل استمرار العيب؛ لا يعدّل السجل التاريخي.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:FINDING:QC-POST-F-008",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:FINDING:QC-POST-F-008 | إغلاق QC-POST-F-008 بمعيار القبول الأصلي على المرشح الحالي.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إغلاق QC-POST-F-008 بمعيار القبول الأصلي على المرشح الحالي.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:FINDING:QC-POST-F-009",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:FINDING:QC-POST-F-009 | إغلاق QC-POST-F-009 بمعيار القبول الأصلي على المرشح الحالي.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "إغلاق QC-POST-F-009 بمعيار القبول الأصلي على المرشح الحالي.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "BASE:TASK:QC-ADP26-29",
+      "status": "NOT VERIFIED",
+      "fullGapCriterion": "BASE:TASK:QC-ADP26-29 | تنفيذ شروط القبول المكتوبة في QC-ADP26-29 على المرشح الحالي، أو إثبات كل ما أُنجز بدليل صالح وتحديد الجزء المتبقي.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "تنفيذ شروط القبول المكتوبة في QC-ADP26-29 على المرشح الحالي، أو إثبات كل ما أُنجز بدليل صالح وتحديد الجزء المتبقي.",
+      "actualOutcome": "No distinct current-candidate acceptance observation collected; see command results and route/database limitations in this packet.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:014:01",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:014:01 | Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence walks SUPERVISOR -> QC_MANAGER -> FACTORY_DIRECTOR in order and completes atomically against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence walks SUPERVISOR -> QC_MANAGER -> FACTORY_DIRECTOR in order and completes atomically against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:014:02",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:014:02 | Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence rejects out-of-order, non-creator, inactive, stale-version and replay confirmations with zero side effects against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence rejects out-of-order, non-creator, inactive, stale-version and replay confirmations with zero side effects against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:014:03",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:014:03 | Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence reverses a confirmed checkpoint with a mandatory reason and restarts the queue from that checkpoint against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence reverses a confirmed checkpoint with a mandatory reason and restarts the queue from that checkpoint against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:014:04",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:014:04 | Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence excludes VOID records from every analytics aggregate and keeps NULL for zero-denominator days against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Reproduce QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evidence excludes VOID records from every analytics aggregate and keeps NULL for zero-denominator days against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:015:01",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:015:01 | Reproduce Reject Reports PostgreSQL integration completes the Issue Slip only after all three confirmations and enforces creator-only recording against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Reproduce Reject Reports PostgreSQL integration completes the Issue Slip only after all three confirmations and enforces creator-only recording against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:015:02",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:015:02 | Reproduce Reject Reports PostgreSQL integration forbids voiding a COMPLETED slip and allows controlled void with reason against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-02",
+        "QC-POST-100-023/AC-03"
+      ],
+      "expectedOutcome": "Reproduce Reject Reports PostgreSQL integration forbids voiding a COMPLETED slip and allows controlled void with reason against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    },
+    {
+      "id": "TEST:integration:024:02",
+      "status": "BLOCKED",
+      "fullGapCriterion": "TEST:integration:024:02 | Reproduce Reject Reports readiness against disposable PostgreSQL reports workflow available after forward migrations but leaves QC release evidence unverified against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "promptAcceptanceComponents": [
+        "QC-POST-100-023/AC-ROW"
+      ],
+      "expectedOutcome": "Reproduce Reject Reports readiness against disposable PostgreSQL reports workflow available after forward migrations but leaves QC release evidence unverified against approved intent; correct the actual offender and require this exact test plus affected regressions to PASS without weakening policy/guards.",
+      "actualOutcome": "Target integration suite failed during beforeAll container startup; cases were skipped (13 total across the two focused files), so no row/write/audit/outbox runtime result was produced.",
+      "positiveCase": {
+        "status": "NOT RUN",
+        "case": "Required populated authorized positive control on final candidate; no authenticated PostgreSQL18 fixture was available."
+      },
+      "negativeCase": {
+        "status": "NOT RUN",
+        "case": "Required real-record direct denial/stale/replay or zero-side-effect case as applicable; no PostgreSQL18 fixture was available."
+      },
+      "evidenceRefs": [
+        "candidate.json",
+        "scope-db-auth-manifest.json",
+        "commands-and-results.json",
+        "handoff.md"
+      ],
+      "immutableEvidence": "Files in this packet are SHA256-listed by sha256-manifest.json; runtime/PG18 acceptance evidence is absent."
+    }
+  ]
+}

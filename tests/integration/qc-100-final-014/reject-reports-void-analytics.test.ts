@@ -178,6 +178,7 @@ describe('QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evi
         requestId: 'req-014-order',
       });
       expect(after.approvals.find((a) => a.role === role)?.status).toBe('CONFIRMED');
+      expect(after.approvals.find((a) => a.role === role)?.approverName).toBe(`Approver ${role}`);
       // creator attestation, never an approver signature
       expect(after.approvals.find((a) => a.role === role)?.confirmedBy).toBe(creator.id);
       current = after.version;
@@ -187,6 +188,27 @@ describe('QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evi
     expect(completed?.status).toBe('COMPLETED');
     expect(completed?.completedAt).toBeInstanceOf(Date);
     expect(completed?.approvals.every((a) => a.status === 'CONFIRMED')).toBe(true);
+
+    const businessNames = await pool!.query(
+      `SELECT approval_role, approver_name
+       FROM qc.issue_slip_approval_confirmations
+       WHERE report_id = $1
+       ORDER BY CASE approval_role
+         WHEN 'SUPERVISOR' THEN 1 WHEN 'QC_MANAGER' THEN 2 WHEN 'FACTORY_DIRECTOR' THEN 3 END`,
+      [slip.id],
+    );
+    expect(businessNames.rows).toEqual([
+      { approval_role: 'SUPERVISOR', approver_name: 'Approver SUPERVISOR' },
+      { approval_role: 'QC_MANAGER', approver_name: 'Approver QC_MANAGER' },
+      { approval_role: 'FACTORY_DIRECTOR', approver_name: 'Approver FACTORY_DIRECTOR' },
+    ]);
+    const auditNameLeak = await pool!.query(
+      `SELECT COUNT(*)::int AS count FROM qc.audit_events
+       WHERE subject_id = $1 AND action = 'ISSUE_SLIP_APPROVAL_CONFIRMED'
+         AND payload ? 'approverName'`,
+      [slip.id],
+    );
+    expect(auditNameLeak.rows[0]?.count).toBe(0);
   });
 
   it('rejects out-of-order, non-creator, inactive, stale-version and replay confirmations with zero side effects', async () => {
