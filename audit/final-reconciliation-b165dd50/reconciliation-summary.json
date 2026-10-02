@@ -1,0 +1,25 @@
+{
+  "run": "2026-10-02-b165dd50",
+  "sha": "b165dd50a66968d9d87d4fb341d0ae73978b5c55",
+  "migration": "0045_provider_attestation_nonce_replay_guard",
+  "generated": "2026-10-02T16:25:28+00:00",
+  "reports": 9,
+  "prompts": 56,
+  "historicalAdaptiveIdentifiers": 42,
+  "previousOptimizationPrompts": 36,
+  "newPrompts": 20,
+  "findings": 67,
+  "gaps": 40,
+  "gapPriorities": {
+    "P0": 23,
+    "P1": 16,
+    "P2": 1
+  },
+  "authorityGaps": 4,
+  "evidenceGaps": 27,
+  "knownRows": 354,
+  "mappedRows": 354,
+  "systemVerifiedPercent": 0,
+  "releasePosture": "NO_GO",
+  "sourceRoutesRegex": 0
+}
