@@ -1,0 +1,52 @@
+---
+import { RECEIVING_QUANTITY_UNITS } from '../../../modules/quarantine/receiving/application/presentation.js';
+
+interface Props {
+  actionHref: string;
+  canEdit: boolean;
+  correctable: boolean;
+  correcting: boolean;
+  values: Record<string, string>;
+  expectedVersion: string;
+}
+
+const { actionHref, canEdit, correctable, correcting, values, expectedVersion } = Astro.props;
+const value = (name: string, fallback: string) => values[name] ?? fallback;
+---
+
+{canEdit && correctable ? (
+  <section class="correction panel" aria-labelledby="correction-heading">
+    <h2 id="correction-heading">Correct receiving details</h2>
+    <p class="muted">Corrections apply only before inspection starts. The reason and previous values remain in the receiving history.</p>
+    {!correcting ? (
+      <p><a class="start" href={actionHref}>Start correction</a></p>
+    ) : (
+      <form method="post" class="fields">
+        <input type="hidden" name="intent" value="correct" />
+        <input type="hidden" name="expectedVersion" value={value('expectedVersion', expectedVersion)} />
+        <label for="correction-itemCode">Item code<input id="correction-itemCode" name="itemCode" required value={value('itemCode', '')} /></label>
+        <label for="correction-lot">Lot / batch<input id="correction-lot" name="lot" required value={value('lot', '')} /></label>
+        <label for="correction-supplier">Supplier<input id="correction-supplier" name="supplier" required value={value('supplier', '')} /></label>
+        <label for="correction-docNo">Document number<input id="correction-docNo" name="docNo" required value={value('docNo', '')} /></label>
+        <label for="correction-purchaseOrderNo">Purchase order<input id="correction-purchaseOrderNo" name="purchaseOrderNo" value={value('purchaseOrderNo', '')} /></label>
+        <label for="correction-description">Description<input id="correction-description" name="description" required value={value('description', '')} /></label>
+        <label for="correction-qty">Quantity<input id="correction-qty" name="qty" type="number" step="any" required value={value('qty', '')} /></label>
+        <label for="correction-quantityUnit">Quantity unit
+          <select id="correction-quantityUnit" name="quantityUnit" required>
+            <option value="">Select a unit</option>
+            {RECEIVING_QUANTITY_UNITS.map((unit) => <option value={unit} selected={value('quantityUnit', '') === unit}>{unit}</option>)}
+          </select>
+        </label>
+        <label for="correction-receivingDate">Receiving date<input id="correction-receivingDate" name="receivingDate" type="date" required value={value('receivingDate', '')} /></label>
+        <label for="correction-expiryDate">Expiry date (optional)<input id="correction-expiryDate" name="expiryDate" type="date" value={value('expiryDate', '')} /></label>
+        <label class="wide" for="correction-reason">Correction reason<textarea id="correction-reason" name="reason" required maxlength="500" rows="3">{value('reason', '')}</textarea></label>
+        <div class="wide actions"><button type="submit">Save correction</button><a href={`/quarantine/receiving/${actionHref.split('/').at(-1)?.split('?')[0]}`}>Cancel</a></div>
+      </form>
+    )}
+  </section>
+) : null}
+
+<style>
+  :global(.rail section.panel:has([data-show-correct])){display:none}
+  .correction{display:grid;gap:var(--space-3)}.correction h2{margin:0}.muted{color:var(--text-muted);font-size:.84rem}.start{display:inline-flex;align-items:center;min-height:44px;padding:.6rem .85rem;border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700;text-decoration:none}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:var(--font-size-xs)}input,select,textarea{width:100%;min-height:44px;padding:.55rem .6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}textarea{resize:vertical}.wide{grid-column:1/-1}.actions{display:flex;align-items:center;justify-content:flex-end;gap:var(--space-3)}button{min-height:44px;padding:.6rem .85rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font:inherit;font-weight:700}.actions a{color:var(--color-accent-primary-hover)}@media(max-width:560px){.fields{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>

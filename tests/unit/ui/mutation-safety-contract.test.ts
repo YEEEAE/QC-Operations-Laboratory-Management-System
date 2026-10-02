@@ -217,6 +217,36 @@ describe('control surfaces and the JavaScript-only gap register', () => {
     expect(source).toContain('aria-live="polite"');
   });
 
+  it('renders an authorized receiving correction form on demand with its original version', () => {
+    const route = read('src/pages/quarantine/receiving/[receivingId].astro');
+    const form = read('src/ui/components/workflow/ReceivingCorrectionForm.astro');
+
+    expect(route).toContain("Astro.url.searchParams.get('intent') === 'correct'");
+    expect(route).toContain('correcting={correcting}');
+    expect(route).toContain("const expectedVersion = field(formData, 'expectedVersion')");
+    expect(route).toContain('expectedVersion: item.version.toString()');
+    expect(route).toContain('if (!/^[1-9]\\d*$/.test(expectedVersion))');
+    expect(form).toContain('canEdit && correctable');
+    expect(form).toContain('href={actionHref}>Start correction</a>');
+    expect(form).toContain('<form method="post"');
+    expect(form).toContain('name="expectedVersion"');
+    expect(form).toContain('name="reason" required');
+
+    for (const name of [
+      'itemCode',
+      'lot',
+      'supplier',
+      'purchaseOrderNo',
+      'qty',
+      'quantityUnit',
+      'receivingDate',
+    ]) {
+      expect(form, name).toContain(`name="${name}"`);
+    }
+    expect(form).toContain('Start correction');
+    expect(form).not.toContain('type="button"');
+  });
+
   it('lists exactly the surfaces without an in-flight duplicate guard', () => {
     const withoutGuard = pages.filter((page) => {
       const source = read(page);
