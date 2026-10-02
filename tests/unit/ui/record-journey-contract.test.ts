@@ -64,12 +64,29 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
   it('loads an RCA by its route id and distinguishes not-found from provider outage', () => {
     const page = read('src/pages/quality/rca/[rcaId].astro');
     expect(page).toContain('rcaReadDependencies().get.execute({ actor, id: rcaId })');
-    expect(page).toContain('RESOURCE_NOT_FOUND');
+    expect(page).toContain("classifyReadFailure(error) === 'UNAVAILABLE'");
     expect(page).toContain('Astro.response.status = 404');
     expect(page).toContain('Astro.response.status = 503');
     expect(page).toContain('ncrReadDependencies().get.execute({ actor, id: rca!.ncrId })');
     expect(page).toContain('PD-17 decision owner: QMS process owner');
     expect(page).toContain('PD-18 · Quality-policy owner');
+  });
+
+  it('keeps denied quality detail reads separate from provider outages without exposing record existence', () => {
+    const pages = [
+      ['src/pages/quality/findings/[findingId].astro', 'providerUnavailable'],
+      ['src/pages/quality/ncr/[ncrId].astro', 'providerUnavailable'],
+      ['src/pages/quality/rca/[rcaId].astro', 'unavailable'],
+      ['src/pages/quality/capa/[capaId].astro', 'providerUnavailable'],
+    ] as const;
+
+    for (const [path, outageFlag] of pages) {
+      const page = read(path);
+      expect(page, path).toContain("import { classifyReadFailure }");
+      expect(page, path).toContain("classifyReadFailure(error) === 'UNAVAILABLE'");
+      expect(page, path).toContain(`${outageFlag} = true`);
+      expect(page, path).toContain('Astro.response.status = 404');
+    }
   });
 
   it('does not present Findings review links that merely return to the same register', () => {

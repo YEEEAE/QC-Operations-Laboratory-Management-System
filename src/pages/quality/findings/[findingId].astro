@@ -4,6 +4,7 @@ import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextP
 import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
 import { listRelatedNcrsForFinding } from '../../../modules/quality/findings/application/list-related-ncrs.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
 import { stateLabel, severityLabel } from '../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
@@ -15,8 +16,8 @@ let providerUnavailable = false;
 if (/^[0-9a-f-]{36}$/i.test(findingId)) {
   try { finding = await read.get.execute({ actor, id: findingId }); }
   catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'RESOURCE_NOT_FOUND') Astro.response.status = 404;
-    else providerUnavailable = true;
+    if (classifyReadFailure(error) === 'UNAVAILABLE') providerUnavailable = true;
+    else Astro.response.status = 404;
   }
 } else Astro.response.status = 404;
 // Related NCRs are resolved server-side through the NCR domain's own

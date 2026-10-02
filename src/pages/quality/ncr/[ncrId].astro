@@ -7,8 +7,8 @@ import { rcaReadDependencies } from '../../../modules/quality/rca/application/de
 import { listFindingsForActor } from '../../../modules/quality/findings/application/list-findings-for-actor.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { formatDateTime } from '../../../shared/copy/format.js';
-import { AppError } from '../../../shared/errors/app-error.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login');
 // F-05 baseline: a read failure renders the unavailable state, never a 500.
@@ -18,7 +18,7 @@ let providerUnavailable = false;
 if (/^[0-9a-f-]{36}$/i.test(ncrId)) {
   try { ncr = await ncrReadDependencies().get.execute({ id: ncrId, actor }); }
   catch (error) {
-    if (!(error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND')) providerUnavailable = true;
+    if (classifyReadFailure(error) === 'UNAVAILABLE') providerUnavailable = true;
   }
 } else Astro.response.status = 404;
 if (!ncr && !providerUnavailable) Astro.response.status = 404;

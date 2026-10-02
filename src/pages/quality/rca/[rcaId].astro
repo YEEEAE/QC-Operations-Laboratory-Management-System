@@ -5,10 +5,10 @@ import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextP
 import { rcaReadDependencies } from '../../../modules/quality/rca/application/dependencies.js';
 import { ncrReadDependencies } from '../../../modules/quality/ncr/application/dependencies.js';
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
-import { AppError } from '../../../shared/errors/app-error.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { formatDateTime } from '../../../shared/copy/format.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
+import { classifyReadFailure } from '../../../shared/errors/read-failure.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Frca');
@@ -19,7 +19,7 @@ let unavailable = false;
 if (validId) {
   try { rca = await rcaReadDependencies().get.execute({ actor, id: rcaId }); }
   catch (error) {
-    if (!(error instanceof AppError && error.code === 'RESOURCE_NOT_FOUND')) unavailable = true;
+    if (classifyReadFailure(error) === 'UNAVAILABLE') unavailable = true;
   }
 }
 if (!validId || (!rca && !unavailable)) Astro.response.status = 404;
