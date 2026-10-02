@@ -1,0 +1,49 @@
+{
+  "promptId": "QC-POST-100-029",
+  "route": "/ai-advisory",
+  "routeVisibility": {
+    "rule": "AUTHENTICATED",
+    "source": "Documents/ROUTE-MATRIX.md#RT-AI-001",
+    "evidence": "NOT VERIFIED in browser on this candidate"
+  },
+  "permissions": {
+    "pageCapability": "PERM-AI-USE",
+    "serverChecks": [
+      "PERM-AI-USE (USE)",
+      "PERM-AI-SUMMARIZE (SUMMARIZE)",
+      "PERM-AI-SUGGEST (SUGGEST)",
+      "PERM-AI-DRAFT (DRAFT)"
+    ],
+    "checks": "server-side authorize() with AI_ADVISORY domain, ACTIVE state and expectedVersion=1; page mode controls only presentation and are not the server boundary",
+    "readPermissionSubset": [],
+    "mutationPermissionSubset": [],
+    "dataClassPermission": "Policy-defined permittedDataClasses plus explicit consentToExternalProcessing=true for external provider calls",
+    "positiveControl": "Deterministic fake-provider tests grant the required permission tuple and observe AVAILABLE; no persisted real record exists for this stateless capability.",
+    "negativeControl": "Tests deny missing PERM-AI-USE/mode permission, missing consent, disallowed class, prompt injection, secret/PII patterns and authoritative provider output before any provider call; real authenticated HTTP negative control NOT VERIFIED."
+  },
+  "databaseManifest": {
+    "persistentBusinessTablesRead": [],
+    "persistentBusinessTablesWritten": [],
+    "auditTablesWritten": [],
+    "outboxTablesWritten": [],
+    "signatureTablesWritten": [],
+    "transaction": "N/A — advisory request is stateless and has no repository/database port; provider output is returned to the caller only.",
+    "migrationRequired": false,
+    "migrationRationale": "No AI interaction persistence, controlled-result mutation, audit row, outbox event, or signature write is implemented by the AI advisory use case.",
+    "sourceMigrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+    "appliedDatabaseSchema": "NOT VERIFIED; no database was queried for this read-only/evidence task.",
+    "constraintsIndexesForeignKeys": "N/A — no database object is touched by this use case.",
+    "faultInjectionOrCAS": "N/A for the AI advisory transaction; separate assigned release-provider integration is BLOCKED before PostgreSQL setup."
+  },
+  "externalBoundary": {
+    "providerEndpoints": "Exact Groq/Gemini allowlist in Documents/AI-PROVIDERS.md and ai-configuration.ts.",
+    "sendPolicy": "Requires complete approved policy artifact, server approval gate, eligible provider credentials, permitted classification and current per-request consent.",
+    "currentOwnerApprovedPolicy": "ABSENT per current Mind and Documents/AI-PROVIDERS.md.",
+    "liveProviderCalls": 0,
+    "liveEvaluation": "NOT RUN — owner authorization for provider/data/cost absent; no secrets or regulated records sent."
+  },
+  "audit": {
+    "newBusinessAuditWrites": "N/A — read-only/stateless advisory; no prompt/response logging or persistence in inspected use case.",
+    "operatorEvidence": "This candidate-bound packet and its checksums."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "suite": "build",
+  "runId": "8af40794-612b-4c3b-8a57-b727aed66a40",
+  "candidate": {
+    "gitSha": "ff608a0c18e4602a7bec48464cb47220374fa88f",
+    "sourceFingerprint": "de868c61f49f442aac98190421aa131a0dbf10701d802073e23d4ffd5202745a",
+    "migrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+    "nodeVersion": "v24.20.0",
+    "generatedAt": "2026-10-02T13:01:07.135Z",
+    "executionEnvironment": {
+      "kind": "local",
+      "platform": "darwin",
+      "architecture": "arm64"
+    }
+  },
+  "artifactDigest": "05ccb8bfdb3316d19230c8e9b285c4d29d220c15bcd4c465a2fd7cfe01bf2c7e",
+  "entryArtifactDigest": "ed8b8f2ef6174e65c7fa2f72572fcbf44d04dcfd80f5144971a16da84253c6bb",
+  "totals": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0
+  }
+}

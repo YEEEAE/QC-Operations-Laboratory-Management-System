@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "suite": "integration",
+  "runId": "8af40794-612b-4c3b-8a57-b727aed66a40",
+  "candidate": {
+    "gitSha": "ff608a0c18e4602a7bec48464cb47220374fa88f",
+    "sourceFingerprint": "de868c61f49f442aac98190421aa131a0dbf10701d802073e23d4ffd5202745a",
+    "migrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+    "nodeVersion": "v24.20.0",
+    "generatedAt": "2026-10-02T13:01:11.974Z",
+    "executionEnvironment": {
+      "kind": "local",
+      "platform": "darwin",
+      "architecture": "arm64"
+    }
+  },
+  "artifactDigest": "57dd50de4e907cc48888887a9f160af6addc768c9c9467f5c1ea5eb22bc06d19",
+  "totals": {
+    "total": 3,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 3
+  },
+  "report": {
+    "numTotalTestSuites": 2,
+    "numPassedTestSuites": 1,
+    "numFailedTestSuites": 1,
+    "numPendingTestSuites": 0,
+    "numTotalTests": 3,
+    "numPassedTests": 0,
+    "numFailedTests": 0,
+    "numPendingTests": 3,
+    "numTodoTests": 0,
+    "snapshot": {
+      "added": 0,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0,
+      "didUpdate": false
+    },
+    "startTime": 1790946071235,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "release provider evidence persistence and reconciliation"
+            ],
+            "fullName": "release provider evidence persistence and reconciliation rejects a replayed provider nonce and audits the first append atomically",
+            "status": "skipped",
+            "title": "rejects a replayed provider nonce and audits the first append atomically",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "release provider evidence persistence and reconciliation"
+            ],
+            "fullName": "release provider evidence persistence and reconciliation allows only one concurrent append for a signer nonce",
+            "status": "skipped",
+            "title": "allows only one concurrent append for a signer nonce",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "release provider evidence persistence and reconciliation"
+            ],
+            "fullName": "release provider evidence persistence and reconciliation rejects a foreign SHA and blocks mutation of stored evidence",
+            "status": "skipped",
+            "title": "rejects a foreign SHA and blocks mutation of stored evidence",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          }
+        ],
+        "startTime": 1790946071235,
+        "endTime": 1790946071235,
+        "status": "failed",
+        "message": "Could not find a working container runtime strategy",
+        "name": "/Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/tests/integration/release-governance/provider-ingestion.test.ts"
+      }
+    ]
+  }
+}

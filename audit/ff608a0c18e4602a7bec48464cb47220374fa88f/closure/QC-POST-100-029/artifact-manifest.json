@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "candidate": {
+    "gitSha": "ff608a0c18e4602a7bec48464cb47220374fa88f",
+    "sourceFingerprint": "de868c61f49f442aac98190421aa131a0dbf10701d802073e23d4ffd5202745a"
+  },
+  "hashAlgorithm": "SHA-256",
+  "hashes": {
+    "ai-evaluation.json": "a56a873c9871682b0455c772a3c8bc87f98c8d528fb98572a6e42c41bb0594d6",
+    "candidate.json": "255c553c3f386b25e26edcb139270866badba51cae7f048ba0334460fd21e396",
+    "commands-and-results.json": "33dc3e3d199026701169fdeab29663ff3b1dfe7383778cefed59ee79e2c64ed3",
+    "criteria.json": "1c72f969445bc797ed89784cb5919c9bdcc4481ee4797257a7360c8788040f59",
+    "handoff.md": "16c71efa77b865f5cbed38c487011916fb45c7a9b54ca959dbad578be4631af3",
+    "results/build.json": "69da5e930260762eda71957515cfc71c083439f31d46e0e3a5f332f294ebc6cf",
+    "results/integration.json": "5cc2b69e3c050f61e5f1bcd21a7765ea82de914df16ad2ee8b312255cd92450c",
+    "results/security.json": "c2ff9dd0fcdf618ceaca272681be534542f2ce092c422a317bbc647a4a6a400a",
+    "scope-db-auth-manifest.json": "d06b4fa8bd4b8f17dddb059d7ae517725905e8675a5e49df7761fa29fbd408a4"
+  }
+}

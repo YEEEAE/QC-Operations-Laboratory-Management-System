@@ -1,0 +1,32 @@
+{
+  "promptId": "QC-POST-100-029",
+  "gitSha": "ff608a0c18e4602a7bec48464cb47220374fa88f",
+  "sourceFingerprint": "de868c61f49f442aac98190421aa131a0dbf10701d802073e23d4ffd5202745a",
+  "sourceFingerprintSemantics": "scripts/verification/evidence-identity.mjs over tracked diff and non-ignored untracked files at verification time; audit packet created after verification and is an evidence output, not a runtime input",
+  "branch": "main",
+  "dirtyAtFreeze": true,
+  "migrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+  "migrationHeadChecksum": "7a4634ada07b248dc5f59a07b9ebec419a0fe5f1c98e233cb1f201b6502b18fd",
+  "nodeVersion": "v24.20.0",
+  "runner": {
+    "kind": "local",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "runId": "8af40794-612b-4c3b-8a57-b727aed66a40",
+  "build": {
+    "status": "PASS",
+    "buildId": "local-ff608a0c18e4",
+    "releaseId": "rel-31c5ba0a4884f277",
+    "entryArtifactSha256": "ed8b8f2ef6174e65c7fa2f72572fcbf44d04dcfd80f5144971a16da84253c6bb",
+    "buildEvidenceDigest": "05ccb8bfdb3316d19230c8e9b285c4d29d220c15bcd4c465a2fd7cfe01bf2c7e"
+  },
+  "dirtyPathsAtFreeze": [
+    ".agents/mind/01-mind-latest.md",
+    "audit/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.html",
+    "audit/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.md",
+    "src/pages/quarantine/index.astro",
+    "tests/integration/health/health-agreement.test.ts"
+  ],
+  "claim": "Candidate identity is bound to source before the closure evidence output was added; no Git/production write occurred."
+}

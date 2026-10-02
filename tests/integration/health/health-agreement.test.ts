@@ -118,7 +118,7 @@ describe('health surface agreement (F-01 integration)', () => {
     expect(health.serialized).not.toContain('ECONNREFUSED');
   });
 
-  it('agrees on unavailable for a configuration error without exposing connection details', async () => {
+  it('agrees on degraded for a configuration error without exposing connection details', async () => {
     vi.stubEnv(
       'DATABASE_URL',
       'postgresql://qc_int:integration_secret@db.internal:5432/qc_ops?sslmode=disable',
@@ -135,7 +135,7 @@ describe('health surface agreement (F-01 integration)', () => {
     expect(connectMock).not.toHaveBeenCalled();
     expect(readiness).toEqual({ status: 503, body: { status: 'unhealthy' } });
     expect(health.dependencyReadiness).toBe('NOT_READY');
-    expect(health.database).toBe('UNAVAILABLE');
+    expect(health.database).toBe('DEGRADED');
     expect(health.serialized).not.toContain('integration_secret');
     expect(health.serialized).not.toContain('db.internal');
   });
