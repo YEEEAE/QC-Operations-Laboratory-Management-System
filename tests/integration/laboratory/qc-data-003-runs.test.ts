@@ -5,12 +5,15 @@ import { migrate } from '../../../scripts/db/migrate.js';
 import { PostgresLabRepository } from '../../../src/modules/laboratory/infrastructure/postgres-repository.js';
 import { PostgresControlledLabSources } from '../../../src/modules/laboratory/infrastructure/postgres-controlled-sources.js';
 import { RecordLabRunUseCase } from '../../../src/modules/laboratory/application/record-lab-run.js';
+import { SaveMeasurementsUseCase } from '../../../src/modules/laboratory/application/save-measurements.js';
 import { RecordRunEquipmentUseCase } from '../../../src/modules/laboratory/application/record-run-equipment.js';
 import { SubmitLabTestUseCase } from '../../../src/modules/laboratory/application/submit-lab-test.js';
 import { GetEquipmentEligibilityUseCase } from '../../../src/modules/assets/equipment/application/get-equipment-eligibility.js';
 import { PostgresEquipmentEligibilityReader } from '../../../src/modules/assets/equipment/infrastructure/eligibility-reader.js';
 import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audit-repository.js';
+import type { AuditRepository } from '../../../src/shared/audit/audit-repository.js';
 import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
+import type { OutboxRepository } from '../../../src/shared/outbox/outbox-repository.js';
 import { stableJson } from '../../../src/shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import type { DatabaseSchema } from '../../../src/shared/database/db-types.js';
@@ -575,5 +578,345 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
       .update(stableJson(submitted.sampleResults ?? []))
       .digest('hex');
     expect(hashAgain).toMatch(/^[0-9a-f]{64}$/);
+  }, 180000);
+
+  it('round-trips typed raw values, exact numeric strings and point remarks through PostgreSQL', async () => {
+    const serverVersion = await pool!.query<{ version: string }>(
+      `SELECT current_setting('server_version') AS version`,
+    );
+    expect(serverVersion.rows[0]?.version).toMatch(/^18\./);
+    const stamp = Date.now();
+    const testId = '01900000-0000-7000-8000-00000000f300';
+    const templateId = '01900000-0000-7000-8000-00000000f301';
+    const versionId = '01900000-0000-7000-8000-00000000f302';
+    const numericId = '01900000-0000-7000-8000-00000000f303';
+    const textId = '01900000-0000-7000-8000-00000000f304';
+    const booleanId = '01900000-0000-7000-8000-00000000f305';
+    const testNo = `LAB-TYPED-${stamp}`;
+    await pool!.query(
+      `INSERT INTO qc.lab_test_templates (id, test_code, name, active, created_by)
+       VALUES ($1, $2, 'Typed values fixture', true, $3)`,
+      [templateId, `TPL-TYPED-${stamp}`, OWNER_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.lab_test_template_versions
+         (id, template_id, version_no, state, method_reference, content_hash, created_by)
+       VALUES ($1, $2, 'v1', 'APPROVED', 'TEST-ONLY-METHOD', 'TEST-ONLY-HASH', $3)`,
+      [versionId, templateId, OWNER_ID],
+    );
+    await pool!.query(
+      `INSERT INTO qc.lab_test_template_parameters
+         (id, template_version_id, parameter_code, label, data_type, unit, required, position,
+          acceptance_rule_payload, controlled_source_reference)
+       VALUES
+         ($1, $4, 'numeric', 'Numeric', 'NUMERIC', 'u', true, 1, '{}'::jsonb, 'TEST-ONLY-SOURCE'),
+         ($2, $4, 'text', 'Text', 'TEXT', null, true, 2, '{}'::jsonb, 'TEST-ONLY-SOURCE'),
+         ($3, $4, 'boolean', 'Boolean', 'BOOLEAN', null, true, 3, '{}'::jsonb, 'TEST-ONLY-SOURCE')`,
+      [numericId, textId, booleanId, versionId],
+    );
+    const context = await new PostgresControlledLabSources(db).resolve(versionId);
+    const repo = repository();
+    await repo.create(
+      {
+        id: testId,
+        labTestNo: testNo,
+        state: 'DRAFT',
+        scientificResult: null,
+        authorId: OWNER_ID,
+        createdBy: OWNER_ID,
+        version: 1n,
+        context,
+        samples: [],
+        measurements: [],
+        batches: [],
+        readings: [],
+        sampleResults: [],
+        derivedResult: null,
+        originalTestId: null,
+        retestSequence: 0,
+        retestReason: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        submittedAt: null,
+        reviewStartedAt: null,
+        approvedAt: null,
+        rejectedAt: null,
+      },
+      { actor: actor(), requestId: `req-create-typed-${stamp}`, action: 'CREATE' },
+    );
+    const samples = [
+      { id: '01900000-0000-7000-8000-00000000f306', identifier: 'S-TRUE' },
+      { id: '01900000-0000-7000-8000-00000000f307', identifier: 'S-FALSE' },
+    ];
+    const numeric = '-9007199254740993.000000000000000001';
+    const save = new SaveMeasurementsUseCase(repo);
+    await expect(
+      save.execute({
+        actor: actor(),
+        id: testId,
+        expectedVersion: 1n,
+        samples,
+        measurements: [
+          { sampleId: samples[0]!.id, parameterId: booleanId, raw: 'true', unit: null },
+        ],
+        requestId: `req-invalid-boolean-${stamp}`,
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    await expect(
+      save.execute({
+        actor: {
+          ...actor(),
+          permissions: actor().permissions.filter(
+            (permission) => permission.code !== 'PERM-LAB-ENTER-MEASUREMENT',
+          ),
+        },
+        id: testId,
+        expectedVersion: 1n,
+        samples,
+        measurements: [],
+        requestId: `req-denied-${stamp}`,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+    const deniedCount = await pool!.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM qc.lab_measurements WHERE lab_test_id = $1`,
+      [testId],
+    );
+    expect(deniedCount.rows[0]?.count).toBe('0');
+
+    await save.execute({
+      actor: actor(),
+      id: testId,
+      expectedVersion: 1n,
+      samples,
+      measurements: [
+        {
+          sampleId: samples[0]!.id,
+          parameterId: numericId,
+          raw: numeric,
+          unit: 'u',
+          remarks: 'Exact numeric observation',
+        },
+        {
+          sampleId: samples[0]!.id,
+          parameterId: textId,
+          raw: 'true',
+          unit: null,
+          remarks: 'Text true',
+        },
+        {
+          sampleId: samples[1]!.id,
+          parameterId: textId,
+          raw: 'false',
+          unit: null,
+          remarks: 'Text false',
+        },
+        { sampleId: samples[0]!.id, parameterId: booleanId, raw: true, unit: null },
+        { sampleId: samples[1]!.id, parameterId: booleanId, raw: false, unit: null },
+      ],
+      requestId: `req-save-typed-${stamp}`,
+    });
+
+    const stored = await pool!.query<{
+      sample_id: string;
+      template_parameter_id: string;
+      raw_numeric_value: string | null;
+      raw_text_value: string | null;
+      raw_boolean_value: boolean | null;
+      remarks: string | null;
+    }>(
+      `SELECT sample_id, template_parameter_id, raw_numeric_value::text AS raw_numeric_value,
+              raw_text_value, raw_boolean_value, remarks
+       FROM qc.lab_measurements WHERE lab_test_id = $1`,
+      [testId],
+    );
+    const textRow = (sampleId: string) =>
+      stored.rows.find((row) => row.sample_id === sampleId && row.template_parameter_id === textId);
+    const booleanRow = (sampleId: string) =>
+      stored.rows.find(
+        (row) => row.sample_id === sampleId && row.template_parameter_id === booleanId,
+      );
+    const numericRow = stored.rows.find((row) => row.template_parameter_id === numericId);
+    expect(stored.rows).toHaveLength(5);
+    expect(numericRow).toMatchObject({
+      raw_numeric_value: numeric,
+      raw_text_value: null,
+      raw_boolean_value: null,
+      remarks: 'Exact numeric observation',
+    });
+    expect(textRow(samples[0]!.id)).toMatchObject({
+      raw_text_value: 'true',
+      raw_numeric_value: null,
+      raw_boolean_value: null,
+      remarks: 'Text true',
+    });
+    expect(textRow(samples[1]!.id)).toMatchObject({
+      raw_text_value: 'false',
+      remarks: 'Text false',
+    });
+    expect(booleanRow(samples[0]!.id)?.raw_boolean_value).toBe(true);
+    expect(booleanRow(samples[1]!.id)?.raw_boolean_value).toBe(false);
+
+    const reloaded = (await repo.get(testId, actor()))!;
+    expect(reloaded.measurements.find((item) => item.parameterId === numericId)?.raw).toBe(numeric);
+    expect(
+      reloaded.measurements.find(
+        (item) => item.parameterId === textId && item.sampleId === samples[0]!.id,
+      )?.raw,
+    ).toBe('true');
+    expect(
+      reloaded.measurements.find(
+        (item) => item.parameterId === textId && item.sampleId === samples[1]!.id,
+      )?.raw,
+    ).toBe('false');
+    expect(
+      reloaded.measurements.find(
+        (item) => item.parameterId === booleanId && item.sampleId === samples[0]!.id,
+      )?.raw,
+    ).toBe(true);
+    expect(
+      reloaded.measurements.find(
+        (item) => item.parameterId === booleanId && item.sampleId === samples[1]!.id,
+      )?.raw,
+    ).toBe(false);
+    expect(reloaded.measurements.find((item) => item.parameterId === numericId)?.remarks).toBe(
+      'Exact numeric observation',
+    );
+
+    await expect(
+      save.execute({
+        actor: actor(),
+        id: testId,
+        expectedVersion: 1n,
+        samples,
+        measurements: [],
+        requestId: `req-stale-typed-${stamp}`,
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    await pool!.query(`UPDATE qc.lab_tests SET state = 'SUBMITTED' WHERE id = $1`, [testId]);
+    await expect(
+      save.execute({
+        actor: actor(),
+        id: testId,
+        expectedVersion: 2n,
+        samples,
+        measurements: [],
+        requestId: `req-state-typed-${stamp}`,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    await pool!.query(`UPDATE qc.lab_tests SET state = 'DRAFT' WHERE id = $1`, [testId]);
+
+    const unchanged = await pool!.query<{
+      measurements: string;
+      version: string;
+      saveAudits: string;
+      changeEvents: string;
+    }>(
+      `SELECT
+         (SELECT count(*)::text FROM qc.lab_measurements WHERE lab_test_id = $1) AS measurements,
+         (SELECT version::text FROM qc.lab_tests WHERE id = $1) AS version,
+         (SELECT count(*)::text FROM qc.audit_events WHERE subject_type = 'LAB_TEST' AND subject_id = $1 AND action = 'SAVE') AS "saveAudits",
+         (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_type = 'LAB_TEST' AND aggregate_id = $1 AND event_type = 'LAB_TEST_CHANGED') AS "changeEvents"`,
+      [testId],
+    );
+    expect(unchanged.rows[0]).toMatchObject({ measurements: '5', version: '2' });
+
+    const failedAudit: AuditRepository = {
+      async append() {
+        throw new Error('test-only injected audit failure');
+      },
+    };
+    const failingAuditRepository = new PostgresLabRepository(
+      db,
+      failedAudit,
+      new PostgresOutboxRepository(db),
+    );
+    await expect(
+      new SaveMeasurementsUseCase(failingAuditRepository).execute({
+        actor: actor(),
+        id: testId,
+        expectedVersion: 2n,
+        samples,
+        measurements: [
+          {
+            sampleId: samples[0]!.id,
+            parameterId: numericId,
+            raw: '12.34',
+            unit: 'u',
+          },
+        ],
+        requestId: `req-audit-fail-typed-${stamp}`,
+      }),
+    ).rejects.toThrow('test-only injected audit failure');
+    const afterAuditRollback = await pool!.query<{
+      measurements: string;
+      textTrue: string | null;
+      exactNumeric: string | null;
+    }>(
+      `SELECT
+         (SELECT count(*)::text FROM qc.lab_measurements WHERE lab_test_id = $1) AS measurements,
+         (SELECT raw_text_value FROM qc.lab_measurements WHERE lab_test_id = $1 AND sample_id = $2 AND template_parameter_id = $3) AS "textTrue",
+         (SELECT raw_numeric_value::text FROM qc.lab_measurements WHERE lab_test_id = $1 AND template_parameter_id = $4) AS "exactNumeric"`,
+      [testId, samples[0]!.id, textId, numericId],
+    );
+    expect(afterAuditRollback.rows[0]).toEqual({
+      measurements: '5',
+      textTrue: 'true',
+      exactNumeric: numeric,
+    });
+
+    const failedOutbox: OutboxRepository = {
+      async enqueue() {
+        throw new Error('test-only injected outbox failure');
+      },
+      async claim() {
+        return [];
+      },
+      async markProcessed() {},
+      async markRetry() {},
+    };
+    const failingRepository = new PostgresLabRepository(
+      db,
+      new PostgresAuditRepository(db),
+      failedOutbox,
+    );
+    await expect(
+      new SaveMeasurementsUseCase(failingRepository).execute({
+        actor: actor(),
+        id: testId,
+        expectedVersion: 2n,
+        samples,
+        measurements: [
+          {
+            sampleId: samples[0]!.id,
+            parameterId: numericId,
+            raw: '12.34',
+            unit: 'u',
+          },
+        ],
+        requestId: `req-outbox-fail-typed-${stamp}`,
+      }),
+    ).rejects.toThrow('test-only injected outbox failure');
+    const afterRollback = await pool!.query<{
+      measurements: string;
+      saveAudits: string;
+      changeEvents: string;
+      textTrue: string | null;
+      exactNumeric: string | null;
+    }>(
+      `SELECT
+         (SELECT count(*)::text FROM qc.lab_measurements WHERE lab_test_id = $1) AS measurements,
+         (SELECT count(*)::text FROM qc.audit_events WHERE subject_type = 'LAB_TEST' AND subject_id = $1 AND action = 'SAVE') AS "saveAudits",
+         (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_type = 'LAB_TEST' AND aggregate_id = $1 AND event_type = 'LAB_TEST_CHANGED') AS "changeEvents",
+         (SELECT raw_text_value FROM qc.lab_measurements WHERE lab_test_id = $1 AND sample_id = $2 AND template_parameter_id = $3) AS "textTrue",
+         (SELECT raw_numeric_value::text FROM qc.lab_measurements WHERE lab_test_id = $1 AND template_parameter_id = $4) AS "exactNumeric"`,
+      [testId, samples[0]!.id, textId, numericId],
+    );
+    expect(afterRollback.rows[0]).toMatchObject({
+      measurements: '5',
+      saveAudits: unchanged.rows[0]?.saveAudits,
+      changeEvents: unchanged.rows[0]?.changeEvents,
+      textTrue: 'true',
+      exactNumeric: numeric,
+    });
   }, 180000);
 });

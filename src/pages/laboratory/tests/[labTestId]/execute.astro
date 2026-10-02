@@ -125,6 +125,7 @@ if (canEdit && canViewEquipment) {
                           data-measurement
                           data-sample-id={sample.id}
                           data-parameter-id={parameter.id}
+                          data-data-type={parameter.dataType}
                           data-unit={parameter.unit ?? ''}
                           aria-label={`${parameter.label} for sample ${sample.identifier}`}
                         >
@@ -145,11 +146,21 @@ if (canEdit && canViewEquipment) {
                           data-measurement
                           data-sample-id={sample.id}
                           data-parameter-id={parameter.id}
+                          data-data-type={parameter.dataType}
                           data-unit={parameter.unit ?? ''}
                           value={cellValue(sample.id, parameter.id)}
                           aria-label={`${parameter.label}${parameter.unit ? ` (${parameter.unit})` : ''} for sample ${sample.identifier}`}
                         />
                       )}
+                      <label class="measurement-remarks">
+                        Remarks
+                        <textarea
+                          data-measurement-remarks
+                          data-sample-id={sample.id}
+                          data-parameter-id={parameter.id}
+                          aria-label={`Remarks for ${parameter.label} for sample ${sample.identifier}`}
+                        >{measurementOf(sample.id, parameter.id)?.remarks ?? ''}</textarea>
+                      </label>
                     </td>
                   ))}
                 </tr>
@@ -251,6 +262,7 @@ if (canEdit && canViewEquipment) {
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
+  import { measurementInputValue } from '../../../../modules/laboratory/domain/measurement-input';
   import { guardUnsavedChanges, FORM_COMMITTED_EVENT } from '../../../../ui/forms/unsaved-changes';
 
   const labId = location.pathname.split('/')[3] || '';
@@ -268,16 +280,43 @@ if (canEdit && canViewEquipment) {
     const samples = Array.from(form.querySelectorAll<HTMLInputElement>('[data-sample]')).map(
       (el) => ({ id: el.dataset.sampleId ?? '', identifier: el.value }),
     );
-    const measurements = Array.from(form.querySelectorAll<HTMLElement>('[data-measurement]'))
+    const remarksByPoint = new Map(
+      Array.from(form.querySelectorAll<HTMLTextAreaElement>('[data-measurement-remarks]')).map(
+        (el) => [`${el.dataset.sampleId ?? ''}:${el.dataset.parameterId ?? ''}`, el.value],
+      ),
+    );
+    const entries = Array.from(form.querySelectorAll<HTMLElement>('[data-measurement]'));
+    const remarksWithoutValue = entries.some((el) => {
+      const element = el as HTMLInputElement | HTMLSelectElement;
+      const key = `${element.dataset.sampleId ?? ''}:${element.dataset.parameterId ?? ''}`;
+      return element.value === '' && Boolean((remarksByPoint.get(key) ?? '').trim());
+    });
+    if (remarksWithoutValue) {
+      if (saveOut) {
+        saveOut.textContent = 'Enter a value before saving its remarks. A blank value is not a recorded result.';
+        saveOut.focus?.();
+      }
+      if (button) button.disabled = false;
+      form.removeAttribute('aria-busy');
+      return;
+    }
+    const measurements = entries
       .map((el) => {
         const element = el as HTMLInputElement | HTMLSelectElement;
         const value = element.value;
         if (value === '') return null;
+        const remark = remarksByPoint.get(
+          `${element.dataset.sampleId ?? ''}:${element.dataset.parameterId ?? ''}`,
+        );
         return {
           sampleId: element.dataset.sampleId ?? '',
           parameterId: element.dataset.parameterId ?? '',
-          raw: value === 'true' ? true : value === 'false' ? false : value,
+          raw: measurementInputValue(
+            element.dataset.dataType as 'NUMERIC' | 'TEXT' | 'BOOLEAN',
+            value,
+          ),
           unit: element.dataset.unit ? element.dataset.unit : null,
+          ...(remark ? { remarks: remark } : {}),
         };
       })
       .filter((m) => m !== null);
@@ -414,6 +453,7 @@ if (canEdit && canViewEquipment) {
     vertical-align: top;
   }
   .measurements input,
+  .measurements textarea,
   .measurements select {
     padding: 0.5rem;
     font: inherit;
@@ -424,6 +464,12 @@ if (canEdit && canViewEquipment) {
     font-weight: normal;
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+  .measurement-remarks {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
   }
   .snapshot-facts{display:grid;gap:.5rem;margin:.65rem 0}.snapshot-facts div{display:grid;grid-template-columns:minmax(10rem,auto) 1fr;gap:.4rem}.snapshot-facts dt{font-weight:700}.snapshot-facts dd{margin:0;min-width:0;overflow-wrap:anywhere}.snapshot-facts pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font:inherit;color:var(--text-muted)}
   .unit {

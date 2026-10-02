@@ -111,11 +111,13 @@ describe('laboratory draft measurement entry', () => {
           parameterId: 'parameter',
           raw: '9007199254740993.0000000001',
           unit: 'u',
+          remarks: 'Exact observed note',
         },
       ],
       requestId: 'test',
     });
     expect(result.measurements[0]?.raw).toBe('9007199254740993.0000000001');
+    expect(result.measurements[0]?.remarks).toBe('Exact observed note');
     await expect(
       useCase.execute({
         actor,
@@ -126,5 +128,47 @@ describe('laboratory draft measurement entry', () => {
         requestId: 'stale',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+  });
+
+  it.each(['true', 'false'])('persists TEXT observation %s as text', async (raw) => {
+    const repository = new MemoryRepository();
+    repository.value = {
+      ...test,
+      context: {
+        ...test.context,
+        parameters: [{ ...test.context.parameters[0]!, dataType: 'TEXT', unit: null }],
+      },
+    };
+    const result = await new SaveMeasurementsUseCase(repository).execute({
+      actor,
+      id: test.id,
+      expectedVersion: 1n,
+      samples: test.samples,
+      measurements: [{ sampleId: 'sample', parameterId: 'parameter', raw, unit: null }],
+      requestId: `text-${raw}`,
+    });
+    expect(result.measurements[0]?.raw).toBe(raw);
+    expect(typeof result.measurements[0]?.raw).toBe('string');
+  });
+
+  it('rejects values that are not booleans for a BOOLEAN parameter', async () => {
+    const repository = new MemoryRepository();
+    repository.value = {
+      ...test,
+      context: {
+        ...test.context,
+        parameters: [{ ...test.context.parameters[0]!, dataType: 'BOOLEAN', unit: null }],
+      },
+    };
+    await expect(
+      new SaveMeasurementsUseCase(repository).execute({
+        actor,
+        id: test.id,
+        expectedVersion: 1n,
+        samples: test.samples,
+        measurements: [{ sampleId: 'sample', parameterId: 'parameter', raw: 'yes', unit: null }],
+        requestId: 'boolean-invalid',
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
   });
 });
