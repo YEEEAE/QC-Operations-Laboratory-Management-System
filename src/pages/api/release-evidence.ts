@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
       return response(409, 'CANDIDATE_IDENTITY_MISMATCH');
     }
     if (error instanceof AppError && error.code === 'CONFLICT_DUPLICATE_COMMAND') {
-      return response(409, 'EVIDENCE_DIGEST_CONFLICT');
+      return response(409, 'EVIDENCE_REPLAY_REJECTED');
     }
     return response(503, 'EVIDENCE_STORE_UNAVAILABLE');
   }

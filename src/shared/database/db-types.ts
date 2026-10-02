@@ -1089,6 +1089,14 @@ export interface ReleaseGateEvidenceTable {
   created_at: Generated<Date>;
 }
 
+export interface ReleaseProviderNonceClaimsTable {
+  release_gate_evidence_id: string;
+  signer_id: string;
+  signer_key_id: string;
+  nonce: string;
+  created_at: Generated<Date>;
+}
+
 export interface ReleaseRiskEvidenceTable {
   id: Generated<string>;
   release_id: string;
@@ -1335,6 +1343,7 @@ export interface DatabaseSchema {
   release_candidates: ReleaseCandidatesTable;
   release_approvals: ReleaseApprovalsTable;
   release_gate_evidence: ReleaseGateEvidenceTable;
+  release_provider_nonce_claims: ReleaseProviderNonceClaimsTable;
   release_risk_evidence: ReleaseRiskEvidenceTable;
   uat_cycles: UatCyclesTable;
   uat_session_evidence: UatSessionEvidenceTable;

@@ -82,18 +82,37 @@ function attestation(
 }
 
 describe('release provider evidence persistence and reconciliation', () => {
-  it('persists signed evidence once and makes only the exact candidate gate current', async () => {
-    const proof = attestation();
+  it('rejects a replayed provider nonce and audits the first append atomically', async () => {
+    const proof = attestation({ nonce: 'provider-nonce-single-0001' });
     const first = await recordProviderGateEvidence(db, proof);
-    const replay = await recordProviderGateEvidence(db, proof);
     expect(first.replayed).toBe(false);
-    expect(replay).toEqual({ evidenceId: first.evidenceId, replayed: true });
+    await expect(recordProviderGateEvidence(db, proof)).rejects.toMatchObject({
+      code: 'CONFLICT_DUPLICATE_COMMAND',
+    });
+    await expect(
+      recordProviderGateEvidence(
+        db,
+        attestation({ evidenceDigest: 'd'.repeat(64), signatureDigest: 'e'.repeat(64) }),
+      ),
+    ).rejects.toMatchObject({ code: 'CONFLICT_DUPLICATE_COMMAND' });
 
     const repository = new PostgresReleaseGovernanceRepository(db);
     const candidate = await repository.getCandidate(releaseId);
     const evidence = await repository.getEvidence(releaseId);
     expect(candidate).toBeDefined();
     expect(evidence.gateRecords).toHaveLength(1);
+    const audit = await db
+      .selectFrom('audit_events')
+      .select(['action', 'subject_id', 'new_state'])
+      .where('subject_id', '=', first.evidenceId)
+      .execute();
+    expect(audit).toEqual([
+      expect.objectContaining({
+        action: 'RELEASE_GATE_EVIDENCE_RECORDED',
+        subject_id: first.evidenceId,
+        new_state: 'PASS',
+      }),
+    ]);
     expect(evidence.gateRecords[0]).toMatchObject({
       source: 'SIGNED_PROVIDER_ATTESTATION',
       evidenceDigest: 'b'.repeat(64),
@@ -105,6 +124,38 @@ describe('release provider evidence persistence and reconciliation', () => {
     expect(snapshot.gates.ci).toBe('PASS');
     expect(snapshot.gates.security).toBe('UNVERIFIED');
     expect(await repository.hasReconciledProductionGateDecision(releaseId)).toBe(false);
+  });
+
+  it('allows only one concurrent append for a signer nonce', async () => {
+    const nonce = 'provider-nonce-race-000001';
+    const attempts = await Promise.allSettled([
+      recordProviderGateEvidence(
+        db,
+        attestation({
+          evidenceType: 'security',
+          nonce,
+          evidenceDigest: 'f'.repeat(64),
+          signatureDigest: '1'.repeat(64),
+        }),
+      ),
+      recordProviderGateEvidence(
+        db,
+        attestation({
+          evidenceType: 'security',
+          nonce,
+          evidenceDigest: '0'.repeat(64),
+          signatureDigest: '2'.repeat(64),
+        }),
+      ),
+    ]);
+    expect(attempts.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(attempts.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    const claims = await db
+      .selectFrom('release_provider_nonce_claims')
+      .select('release_gate_evidence_id')
+      .where('nonce', '=', nonce)
+      .execute();
+    expect(claims).toHaveLength(1);
   });
 
   it('rejects a foreign SHA and blocks mutation of stored evidence', async () => {

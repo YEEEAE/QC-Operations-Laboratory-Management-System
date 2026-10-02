@@ -26,9 +26,9 @@ only; missing QMS/provider/UAT/runtime evidence remains `OPEN`, `PARTIAL`, or
 
 ## P-07 — Server-derived Production Release Evidence
 
-Release approval is traceable through `release_gate_evidence` and `release_risk_evidence`. Each record is tied to the exact release ID, Git SHA, build ID, application version, migration head, UAT cycle, candidate version, immutable reference, provenance, observed time, recorder, evidence version, and audit metadata. The browser submits only approval intent (`releaseId`, `expectedVersion`, and reauthentication secret); gate and risk truth is recomputed by the server and rechecked inside the approval transaction.
+Release approval is traceable through `release_gate_evidence` and `release_risk_evidence`. Each record is tied to the exact release ID, Git SHA, build ID, application version, migration head, UAT cycle, candidate version, immutable reference, provenance, observed time, recorder, evidence version, and audit metadata. Signed provider intake claims each signer/key/nonce once in `release_provider_nonce_claims`; nonce replay is rejected, and the evidence append and service audit event share one transaction. The browser submits only approval intent (`releaseId`, `expectedVersion`, and reauthentication secret); gate and risk truth is recomputed by the server and rechecked inside the approval transaction.
 
-The eight gates require trusted provenance; missing, stale, foreign-release, untrusted-CI, or unsigned-UAT evidence derives to `UNVERIFIED` and blocks approval. Controlled risk records, not browser JSON, determine critical/open and acceptance blockers. The read-only governance dashboard exposes status, reference, source, timestamp, identity, and the server-derived disabled reason.
+The eight internal evidence classes require trusted provenance; they are not the canonical 19-gate registry. Missing, stale, foreign-release, untrusted-CI, or unsigned-UAT evidence derives to `UNVERIFIED` and blocks approval. Controlled risk records, not browser JSON, determine critical/open and acceptance blockers. The read-only governance page exposes status, reference, source, timestamp, identity, and the server-derived disabled reason; candidate/evidence provider failures remain `UNAVAILABLE` and cannot appear as an empty result or enable approval.
 
 هذه الوثيقة هي المرجع المركزي لربط متطلبات:
 

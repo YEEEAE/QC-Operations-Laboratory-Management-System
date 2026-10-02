@@ -36,14 +36,15 @@
 
 ولا تحتوي SQL schema نهائيًا.
 
-## Current schema reconciliation — 2026-09-21
+## Current schema reconciliation — 2026-10-02
 
-The source migration set contains 37 forward-only files through
-`0037_qc_data_003_lab_batches_samples_readings`. Applied provider schema identity
-is **NOT VERIFIED** for this candidate. The last recorded Render applied head
-(`0018`) is historical evidence, not a current-state claim. Source migration
-head and provider-applied schema remain separate facts; no pending migration is
-a production claim until the credential-rotation and migration gates are open.
+The source migration set contains 45 forward-only files through
+`0045_provider_attestation_nonce_replay_guard`. Applied provider schema identity
+is **NOT VERIFIED** for the current candidate. The last recorded Render applied
+head (`0018`) is historical evidence, not a current-state claim. Source
+migration head and provider-applied schema remain separate facts; no pending
+migration is a production claim until the credential-rotation and migration
+gates are open.
 
 التفصيل النهائي للحقول والأنواع والـvalidation سيكون في:
 
