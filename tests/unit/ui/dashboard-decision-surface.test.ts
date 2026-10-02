@@ -85,7 +85,9 @@ describe('dashboard decision surface', () => {
     expect(decisionQueues).toBeGreaterThan(attention);
     expect(summary).toBeGreaterThan(decisionQueues);
     expect(dashboard).toContain('href="/documents?review=mine"');
-    expect(dashboard).toContain('Active IN_REVIEW versions you may review');
+    expect(dashboard).toContain(
+      'Active versions awaiting your review, excluding versions you authored',
+    );
     expect(dashboard).not.toContain('Review-specific document queue is not supplied');
   });
 
