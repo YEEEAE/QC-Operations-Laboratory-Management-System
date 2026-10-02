@@ -1,0 +1,19 @@
+{
+  "promptId": "QC-POST-100-025",
+  "candidateSha": "f97d9b2df65593e1d4dbcc6a89c8edf324ff2784",
+  "candidateTree": "a96e49a081df2bfcb78150ede71c25f01403a015",
+  "branch": "main",
+  "upstream": "origin/main",
+  "workingTreeStatusAtFreeze": "CLEAN",
+  "dirtySourceFingerprintSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sourceMigrationFiles": 45,
+  "sourceMigrationHead": "0045_provider_attestation_nonce_replay_guard",
+  "sourceMigrationManifestSha256": "69297d5310af2dbcaa235e34e528b1da6ce6c22d3616a37af6449fecf6585f1b",
+  "appliedSchemaDigest": "NOT VERIFIED",
+  "buildArtifactDigest": "NOT RUN",
+  "nodeVersion": "24.20.0",
+  "runner": "Codex local source inspection",
+  "fixtureIdentity": "NONE",
+  "runtimeState": "NOT RUN",
+  "candidateBinding": "Source candidate frozen before evidence packet creation. Evidence files are task outputs and are not application source; any source change requires new binding."
+}

@@ -1,0 +1,28 @@
+{
+  "promptId": "QC-POST-100-025",
+  "candidateSha": "f97d9b2df65593e1d4dbcc6a89c8edf324ff2784",
+  "hashAlgorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "candidate.json",
+      "sha256": "06a9f10828811417e6099f82b26d2feb1b62310e65d8eb7ea249ce73fa4568ce"
+    },
+    {
+      "path": "scope-db-auth-manifest.json",
+      "sha256": "8aa9f801f76ed10e6f5ed16704d64f209b1575c7f87f96f33d4207fbe6bb02dc"
+    },
+    {
+      "path": "criteria.json",
+      "sha256": "2a0825057d8e7e14b7b34c0b904b4080eed9f622463aa0d5a050b91f31d48108"
+    },
+    {
+      "path": "commands-and-results.json",
+      "sha256": "caf2bbfd16cfb83d54b0ff4a6cd81600246623fc5bb33b070112e09f92d6cadc"
+    },
+    {
+      "path": "handoff.md",
+      "sha256": "842b270611adc5bfa87417a6365dd26750c45450130ff59a773151e87106f812"
+    }
+  ],
+  "selfHash": "Omitted to avoid circular digest."
+}
