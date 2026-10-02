@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SearchService, type SearchRepository } from '../../../src/shared/search/search-service';
 import type { SearchPage, SearchQuery } from '../../../src/shared/search/search-result';
+import { searchResultDestination } from '../../../src/shared/search/search-result-destination';
 import { searchTypeLabel } from '../../../src/shared/copy/ux-vocabulary';
 import type { ProductAnalyticsEvent } from '../../../src/shared/analytics/product-analytics';
 
@@ -86,6 +87,19 @@ describe('authorized search boundary', () => {
   it('uses human-readable labels for every registered search result type', () => {
     expect(searchTypeLabel('TASK')).toBe('Task');
     expect(searchTypeLabel('INSPECTION_REPORT')).toBe('Inspection report');
+    expect(searchTypeLabel('RCA')).toBe('RCA');
     expect(searchTypeLabel('UNKNOWN_PRIVATE_ENUM')).toBe('Record');
+  });
+
+  it('opens RCA results at their authorized detail route', () => {
+    expect(
+      searchResultDestination({
+        entityType: 'RCA',
+        entityId: 'rca-id',
+        businessId: 'RCA-001',
+        descriptor: 'Root cause analysis',
+        state: 'IN_PROGRESS',
+      }),
+    ).toBe('/quality/rca/rca-id');
   });
 });

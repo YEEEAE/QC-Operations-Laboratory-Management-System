@@ -13,7 +13,8 @@ export function createQcOutboxHandler(database: Kysely<DatabaseSchema>) {
 
   return async (event: OutboxEvent): Promise<void> => {
     if (
-      event.payload.action !== 'APPROVE' ||
+      event.payload.action !== 'FINAL_APPROVE' ||
+      event.payload.state !== 'APPROVED' ||
       (event.eventType !== 'INSPECTION_CHANGED' && event.eventType !== 'LAB_TEST_CHANGED')
     )
       return;

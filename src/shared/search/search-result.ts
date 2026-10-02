@@ -5,6 +5,7 @@ export const SEARCHABLE_ENTITY_TYPES = [
   'LAB_TEST',
   'FINDING',
   'NCR',
+  'RCA',
   'CAPA',
   'EQUIPMENT',
   'DOCUMENT',

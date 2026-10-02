@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Kysely, PostgresDialect } from 'kysely';
+import { randomUUID } from 'node:crypto';
 
 import { migrate } from '../../../scripts/db/migrate.js';
 import { createPool } from '../../../src/shared/database/pool.js';
 import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
+import { createQcOutboxHandler } from '../../../src/shared/outbox/qc-event-handler.js';
 import { processOutboxBatch } from '../../../src/shared/outbox/worker.js';
 import { PostgresNotificationRepository } from '../../../src/shared/notifications/postgres-notification-repository.js';
 import { NotificationService } from '../../../src/shared/notifications/notification-service.js';
@@ -16,6 +18,14 @@ import { getTestDatabaseUrl } from '../../helpers/test-env.js';
 const recipientA = '01900000-0000-7000-8000-000000000d01';
 const recipientB = '01900000-0000-7000-8000-000000000d02';
 const recipientC = '01900000-0000-7000-8000-000000000d03';
+const EVENT_RUN = randomUUID();
+const eventLabTemplateId = randomUUID();
+const eventLabVersionId = randomUUID();
+const eventLabTestId = randomUUID();
+const eventReceivingId = randomUUID();
+const eventInspectionTemplateId = randomUUID();
+const eventInspectionVersionId = randomUUID();
+const eventInspectionId = randomUUID();
 
 const actorFor = (id: string): ActorContext => ({
   id,
@@ -84,6 +94,38 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
   });
 
   afterAll(async () => {
+    const eventPrefix = `qc-notification-test:${EVENT_RUN}:%`;
+    await pool?.query(
+      `DELETE FROM qc.notification_deliveries
+       WHERE notification_id IN (
+         SELECT id FROM qc.notifications
+         WHERE dedupe_key IN (
+           SELECT 'notification:' || id::text FROM qc.outbox_events WHERE dedupe_key LIKE $1
+         )
+       )`,
+      [eventPrefix],
+    );
+    await pool?.query(
+      `DELETE FROM qc.notifications
+       WHERE dedupe_key IN (
+         SELECT 'notification:' || id::text FROM qc.outbox_events WHERE dedupe_key LIKE $1
+       )`,
+      [eventPrefix],
+    );
+    await pool?.query('DELETE FROM qc.outbox_events WHERE dedupe_key LIKE $1', [eventPrefix]);
+    await pool?.query('DELETE FROM qc.inspection_reports WHERE id = $1', [eventInspectionId]);
+    await pool?.query('DELETE FROM qc.inspection_template_versions WHERE id = $1', [
+      eventInspectionVersionId,
+    ]);
+    await pool?.query('DELETE FROM qc.inspection_templates WHERE id = $1', [
+      eventInspectionTemplateId,
+    ]);
+    await pool?.query('DELETE FROM qc.receiving_items WHERE id = $1', [eventReceivingId]);
+    await pool?.query('DELETE FROM qc.lab_tests WHERE id = $1', [eventLabTestId]);
+    await pool?.query('DELETE FROM qc.lab_test_template_versions WHERE id = $1', [
+      eventLabVersionId,
+    ]);
+    await pool?.query('DELETE FROM qc.lab_test_templates WHERE id = $1', [eventLabTemplateId]);
     await pool?.end();
     await stopPostgresContainer();
   });
@@ -279,5 +321,241 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
     expect(finalCounts.rows[0]).toEqual(beforeCounts.rows[0]);
     await expect(service.listOwnPage(own, true, 1)).resolves.toMatchObject({ total: 50 });
     await expect(service.listOwnPage(own, false, 1)).resolves.toMatchObject({ total: 51 });
+  });
+
+  it('persists retry metadata for a failed outbox handler without writing a notification', async () => {
+    const dedupeKey = `qc-retry-test:${EVENT_RUN}`;
+    await outbox.enqueue({
+      eventType: 'TASK_CHANGED',
+      aggregateType: 'TASK',
+      aggregateId: recipientA,
+      payload: { title: 'retry fixture' },
+      dedupeKey,
+    });
+    await pool!.query(
+      `UPDATE qc.outbox_events SET available_at = now() - interval '1 second' WHERE dedupe_key = $1`,
+      [dedupeKey],
+    );
+    const auditBefore = await pool!.query(`SELECT COUNT(*)::int AS count FROM qc.audit_events`);
+    await processOutboxBatch(outbox, async () => {
+      throw new Error('provider unavailable with private-detail');
+    });
+    const event = await pool!.query<{
+      attempt_count: number;
+      last_error: string | null;
+      available_at: Date;
+      processed_at: Date | null;
+    }>(
+      `SELECT attempt_count, last_error, available_at, processed_at
+       FROM qc.outbox_events WHERE dedupe_key = $1`,
+      [dedupeKey],
+    );
+    expect(event.rows[0]?.attempt_count).toBe(1);
+    expect(event.rows[0]?.last_error).toBe('delivery failed');
+    expect(event.rows[0]?.last_error).not.toContain('private-detail');
+    expect(event.rows[0]?.available_at.getTime()).toBeGreaterThan(Date.now());
+    expect(event.rows[0]?.processed_at).toBeNull();
+    const notificationsForEvent = await pool!.query(
+      `SELECT COUNT(*)::int AS count FROM qc.notifications
+       WHERE dedupe_key = (
+         SELECT 'notification:' || id::text FROM qc.outbox_events WHERE dedupe_key = $1
+       )`,
+      [dedupeKey],
+    );
+    expect(notificationsForEvent.rows[0]?.count).toBe(0);
+    const auditAfter = await pool!.query(`SELECT COUNT(*)::int AS count FROM qc.audit_events`);
+    expect(auditAfter.rows[0]?.count).toBe(auditBefore.rows[0]?.count);
+  });
+
+  it('notifies authors only for final inspection/lab approval and deduplicates replay', async () => {
+    await pool!.query(
+      `INSERT INTO qc.lab_test_templates (id, test_code, name, active, created_by)
+       VALUES ($1, $2, 'Outbox lab template', TRUE, $3)`,
+      [eventLabTemplateId, `LAB-NOT-${EVENT_RUN}`, recipientB],
+    );
+    await pool!.query(
+      `INSERT INTO qc.lab_test_template_versions (id, template_id, version_no, state, created_by)
+       VALUES ($1, $2, 'v1', 'APPROVED', $3)`,
+      [eventLabVersionId, eventLabTemplateId, recipientB],
+    );
+    await pool!.query(
+      `INSERT INTO qc.lab_tests (id, lab_test_no, template_version_id, state, author_id, created_by)
+       VALUES ($1, $2, $3, 'PENDING_QCM_APPROVAL', $4, $4)`,
+      [eventLabTestId, `LAB-NOT-${EVENT_RUN}`, eventLabVersionId, recipientA],
+    );
+    await pool!.query(
+      `INSERT INTO qc.receiving_items
+         (id, receiving_no, doc_no, supplier_name, item_code, description, lot, qty, receiving_date, created_by)
+       VALUES ($1, $2, 'OUTBOX-DOC', 'Outbox supplier', 'OUTBOX-ITEM', 'Outbox item', 'OUTBOX-LOT', 1, CURRENT_DATE, $3)`,
+      [eventReceivingId, `RCV-NOT-${EVENT_RUN}`, recipientB],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_templates (id, template_code, name, active, created_by)
+       VALUES ($1, $2, 'Outbox inspection template', TRUE, $3)`,
+      [eventInspectionTemplateId, `INSP-NOT-${EVENT_RUN}`, recipientB],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_template_versions (id, template_id, version_no, state, created_by)
+       VALUES ($1, $2, 'v1', 'APPROVED', $3)`,
+      [eventInspectionVersionId, eventInspectionTemplateId, recipientB],
+    );
+    await pool!.query(
+      `INSERT INTO qc.inspection_reports
+         (id, inspection_no, receiving_item_id, template_version_id, state, author_id, created_by)
+       VALUES ($1, $2, $3, $4, 'PENDING_QCM_APPROVAL', $5, $5)`,
+      [
+        eventInspectionId,
+        `INSP-NOT-${EVENT_RUN}`,
+        eventReceivingId,
+        eventInspectionVersionId,
+        recipientA,
+      ],
+    );
+
+    const stageOneKeys = [
+      `qc-notification-test:${EVENT_RUN}:lab-stage-one`,
+      `qc-notification-test:${EVENT_RUN}:inspection-stage-one`,
+    ];
+    await outbox.enqueue({
+      eventType: 'LAB_TEST_CHANGED',
+      aggregateType: 'LAB_TEST',
+      aggregateId: eventLabTestId,
+      payload: { action: 'APPROVE', state: 'PENDING_QCM_APPROVAL' },
+      dedupeKey: stageOneKeys[0],
+    });
+    await outbox.enqueue({
+      eventType: 'INSPECTION_CHANGED',
+      aggregateType: 'INSPECTION_REPORT',
+      aggregateId: eventInspectionId,
+      payload: { action: 'APPROVE', state: 'PENDING_QCM_APPROVAL' },
+      dedupeKey: stageOneKeys[1],
+    });
+    await pool!.query(
+      `UPDATE qc.outbox_events SET available_at = now() - interval '1 second' WHERE dedupe_key LIKE $1`,
+      [`qc-notification-test:${EVENT_RUN}:%`],
+    );
+    const handler = createQcOutboxHandler(database);
+    await processOutboxBatch(outbox, handler);
+    const early = await pool!.query(
+      `SELECT COUNT(*)::int AS count FROM qc.notifications
+       WHERE dedupe_key IN (
+         SELECT 'notification:' || id::text FROM qc.outbox_events WHERE dedupe_key LIKE $1
+       )`,
+      [`qc-notification-test:${EVENT_RUN}:%`],
+    );
+    expect(early.rows[0]?.count).toBe(0);
+
+    await pool!.query('UPDATE qc.lab_tests SET state = $2 WHERE id = $1', [
+      eventLabTestId,
+      'APPROVED',
+    ]);
+    await pool!.query('UPDATE qc.inspection_reports SET state = $2 WHERE id = $1', [
+      eventInspectionId,
+      'APPROVED',
+    ]);
+    const finalKeys = [
+      `qc-notification-test:${EVENT_RUN}:lab-final`,
+      `qc-notification-test:${EVENT_RUN}:inspection-final`,
+    ];
+    await outbox.enqueue({
+      eventType: 'LAB_TEST_CHANGED',
+      aggregateType: 'LAB_TEST',
+      aggregateId: eventLabTestId,
+      payload: { action: 'FINAL_APPROVE', state: 'APPROVED' },
+      dedupeKey: finalKeys[0],
+    });
+    await outbox.enqueue({
+      eventType: 'INSPECTION_CHANGED',
+      aggregateType: 'INSPECTION_REPORT',
+      aggregateId: eventInspectionId,
+      payload: { action: 'FINAL_APPROVE', state: 'APPROVED' },
+      dedupeKey: finalKeys[1],
+    });
+    await pool!.query(
+      `UPDATE qc.outbox_events SET available_at = now() - interval '1 second' WHERE dedupe_key = ANY($1::text[])`,
+      [finalKeys],
+    );
+    const auditBefore = await pool!.query(`SELECT COUNT(*)::int AS count FROM qc.audit_events`);
+    await processOutboxBatch(outbox, handler);
+
+    const finalEvents = await pool!.query<{
+      id: string;
+      event_type: string;
+      aggregate_type: string;
+      aggregate_id: string;
+      payload: Record<string, unknown>;
+      dedupe_key: string;
+    }>(
+      `SELECT id, event_type, aggregate_type, aggregate_id, payload, dedupe_key
+       FROM qc.outbox_events WHERE dedupe_key = ANY($1::text[]) ORDER BY dedupe_key`,
+      [finalKeys],
+    );
+    expect(finalEvents.rows).toHaveLength(2);
+    for (const row of finalEvents.rows) {
+      await handler({
+        id: row.id,
+        eventType: row.event_type,
+        aggregateType: row.aggregate_type,
+        aggregateId: row.aggregate_id,
+        payload: row.payload,
+        dedupeKey: row.dedupe_key,
+        attemptCount: 1,
+        availableAt: new Date(),
+      });
+    }
+
+    const delivered = await pool!.query<{
+      recipient_user_id: string;
+      notification_type: string;
+      title: string;
+      subject_type: string;
+      subject_id: string;
+      dedupe_key: string;
+      read_at: Date | null;
+    }>(
+      `SELECT recipient_user_id, notification_type, title, subject_type, subject_id, dedupe_key, read_at
+       FROM qc.notifications WHERE dedupe_key IN (
+         SELECT 'notification:' || id::text FROM qc.outbox_events WHERE dedupe_key = ANY($1::text[])
+       ) ORDER BY notification_type`,
+      [finalKeys],
+    );
+    expect(delivered.rows).toHaveLength(2);
+    expect(delivered.rows).toMatchObject([
+      {
+        recipient_user_id: recipientA,
+        notification_type: 'INSPECTION_CHANGED_APPROVED',
+        title: 'Inspection approved',
+        subject_type: 'INSPECTION_REPORT',
+        subject_id: eventInspectionId,
+        read_at: null,
+      },
+      {
+        recipient_user_id: recipientA,
+        notification_type: 'LAB_TEST_CHANGED_APPROVED',
+        title: 'Laboratory test approved',
+        subject_type: 'LAB_TEST',
+        subject_id: eventLabTestId,
+        read_at: null,
+      },
+    ]);
+    expect(new Set(delivered.rows.map((row) => row.dedupe_key)).size).toBe(2);
+    const deliveryRows = await pool!.query(
+      `SELECT COUNT(*)::int AS count FROM qc.notification_deliveries
+       WHERE notification_id IN (SELECT id FROM qc.notifications WHERE dedupe_key = ANY($1::text[]))`,
+      [delivered.rows.map((row) => row.dedupe_key)],
+    );
+    expect(deliveryRows.rows[0]?.count).toBe(0);
+
+    const authorNotifications = await service.listOwn(actorFor(recipientA));
+    expect(
+      authorNotifications.filter((item) => item.dedupeKey?.startsWith('notification:')),
+    ).toHaveLength(2);
+    expect(
+      (await service.listOwn(actorFor(recipientB))).some(
+        (item) => item.subjectId === eventLabTestId,
+      ),
+    ).toBe(false);
+    const auditAfter = await pool!.query(`SELECT COUNT(*)::int AS count FROM qc.audit_events`);
+    expect(auditAfter.rows[0]?.count).toBe(auditBefore.rows[0]?.count);
   });
 });

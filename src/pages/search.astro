@@ -3,6 +3,7 @@ import AppLayout from '../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
 import { searchDependencies } from '../shared/search/search-dependencies.js';
 import type { SearchPage } from '../shared/search/search-result.js';
+import { searchResultDestination } from '../shared/search/search-result-destination.js';
 import { searchTypeLabel, stateLabel } from '../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
@@ -33,7 +34,6 @@ if (q && !invalidQuery && canUseSearch) {
   }
 }
 const results = page.items;
-const destination = (result: (typeof results)[number]) => ({ TASK: `/tasks/${result.entityId}`, RECEIVING_ITEM: `/quarantine/receiving/${result.entityId}`, INSPECTION_REPORT: `/quarantine/inspections/${result.entityId}`, LAB_TEST: `/laboratory/tests/${result.entityId}`, FINDING: `/quality/findings/${result.entityId}`, NCR: `/quality/ncr/${result.entityId}`, CAPA: `/quality/capa/${result.entityId}`, EQUIPMENT: `/assets/equipment/${result.entityId}`, DOCUMENT: `/documents/${result.entityId}`, CHANGE_REQUEST: `/change-requests/${result.entityId}`, REJECT_REPORT: `/reject-reports/${result.businessId.startsWith('RIS') ? 'issue-slips' : 'daily'}/${result.entityId}` } as Record<string, string>)[result.entityType] ?? '/dashboard';
 const nextHref = page.nextCursor ? `/search?q=${encodeURIComponent(q)}&cursor=${encodeURIComponent(page.nextCursor)}` : undefined;
 ---
 <AppLayout title="Search · QC Operations" locale="en" direction="ltr">
@@ -50,7 +50,7 @@ const nextHref = page.nextCursor ? `/search?q=${encodeURIComponent(q)}&cursor=${
       : q && !invalidQuery && !invalidCursor ? <p class="result-count" aria-live="polite">Showing {results.length} of {page.total} authorized result{page.total === 1 ? '' : 's'} for “{q}”.</p>
       : !q && !invalidQuery && <p class="empty">Start with a record number, document number, lot, task title, or description.</p>}
     {q && !invalidQuery && !invalidCursor && canUseSearch && !providerUnavailable && page.total === 0 && <section class="empty" aria-live="polite"><h2>No matching records found</h2><p>Check the identifier or try a broader term. Records outside your authorized read scope are not disclosed.</p></section>}
-    {results.length > 0 && <ul class="results" aria-label="Search results">{results.map((result) => <li><a href={destination(result)}><span class="type">{searchTypeLabel(result.entityType)}</span><strong>{result.businessId}</strong><span class="descriptor">{result.descriptor}</span><small>{stateLabel(result.state)}{result.context ? ` · ${result.context}` : ''}</small></a></li>)}</ul>}
+    {results.length > 0 && <ul class="results" aria-label="Search results">{results.map((result) => <li><a href={searchResultDestination(result)}><span class="type">{searchTypeLabel(result.entityType)}</span><strong>{result.businessId}</strong><span class="descriptor">{result.descriptor}</span><small>{stateLabel(result.state)}{result.context ? ` · ${result.context}` : ''}</small></a></li>)}</ul>}
     {nextHref && <nav class="pagination" aria-label="Search result pages"><a href={nextHref}>Next results</a></nav>}
   </section>
 </AppLayout>

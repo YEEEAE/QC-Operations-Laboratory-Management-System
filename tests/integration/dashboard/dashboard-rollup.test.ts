@@ -29,6 +29,8 @@ import { ListCalibrationsUseCase } from '../../../src/modules/assets/calibration
 import { PostgresCalibrationRepository } from '../../../src/modules/assets/calibration/infrastructure/postgres-repository.js';
 import { ListTasksUseCase } from '../../../src/modules/tasks/application/list.js';
 import { PostgresTaskRepository } from '../../../src/modules/tasks/infrastructure/postgres-repository.js';
+import { ListDocumentReviewQueueUseCase } from '../../../src/modules/documents/application/list-review-queue.js';
+import { PostgresDocumentReviewQueueQuery } from '../../../src/modules/documents/infrastructure/postgres-review-queue.js';
 import { NotificationService } from '../../../src/shared/notifications/notification-service.js';
 import { PostgresNotificationRepository } from '../../../src/shared/notifications/postgres-notification-repository.js';
 import { PostgresDashboardQuery } from '../../../src/modules/dashboard/infrastructure/postgres-dashboard-query.js';
@@ -56,6 +58,8 @@ import { parsePageInput } from '../../../src/shared/pagination/page.js';
 const MINE = '01900000-0000-7000-8000-00000000d601';
 const OTHER = '01900000-0000-7000-8000-00000000d602';
 const RUN = randomUUID().slice(0, 8);
+const REVIEW_DOCUMENT_ID = randomUUID();
+const REVIEW_VERSION_ID = randomUUID();
 const DAY = 24 * 60 * 60 * 1000;
 
 const mine = (): ActorContext => ({
@@ -69,6 +73,10 @@ const mine = (): ActorContext => ({
     'PERM-INSP-VIEW',
     'PERM-CAL-VIEW',
     'PERM-NOT-VIEW-OWN',
+    'PERM-TASK-VIEW',
+    'PERM-LAB-VIEW',
+    'PERM-DOC-REVIEW',
+    'PERM-APR-REVIEW',
   ].map((code) => ({ code: code as never, scopes: ['GLOBAL'] as const })),
 });
 
@@ -134,6 +142,7 @@ let inspections: ListInspectionsUseCase;
 let tasks: ListTasksUseCase;
 let calibrations: ListCalibrationsUseCase;
 let notifications: NotificationService;
+let documentReview: ListDocumentReviewQueueUseCase;
 
 /** The real approved series, read through the owning Quarantine module. */
 const liveSeries = (): DashboardSeriesProvider => ({
@@ -161,7 +170,9 @@ function sourceDependencies(
     },
     calibrations: { execute: (input) => calibrations.execute(input) },
     laboratory: laboratorySource,
-    documentReview: { execute: async () => ({ total: 0, items: [] }) },
+    documentReview: {
+      execute: (input) => documentReview.execute(input),
+    },
     ...overrides,
   };
 }
@@ -260,6 +271,8 @@ async function rowsForHref(href: string, actor: ActorContext): Promise<number> {
       });
       return page.total;
     }
+    case '/documents':
+      return (await documentReview.execute({ actor, limit: 100 })).total;
     default:
       throw new Error(`dashboard link is not mapped to a register: ${href}`);
   }
@@ -279,6 +292,7 @@ beforeAll(async () => {
   tasks = new ListTasksUseCase(new PostgresTaskRepository(db));
   calibrations = new ListCalibrationsUseCase(new PostgresCalibrationRepository(db));
   notifications = new NotificationService(new PostgresNotificationRepository(db));
+  documentReview = new ListDocumentReviewQueueUseCase(new PostgresDocumentReviewQueueQuery(db));
   await pool.query(
     `INSERT INTO qc.users (id, login_identity, display_name, password_hash)
      VALUES ($1, $2, 'Command center mine', 'test-only-placeholder'),
@@ -335,9 +349,22 @@ beforeAll(async () => {
      VALUES (gen_random_uuid(), $1, 'TEST', 'INFO', 'Command center read', 'Already read', now(), $2)`,
     [MINE, `cmd-read-${RUN}`],
   );
+  await pool.query(
+    `INSERT INTO qc.document_identities
+       (id, document_no, document_type, title, owner_id, active, created_by)
+     VALUES ($1, $2, 'POLICY', 'Review queue parity fixture', $3, TRUE, $4)`,
+    [REVIEW_DOCUMENT_ID, `DOC-REVIEW-${RUN}`, MINE, OTHER],
+  );
+  await pool.query(
+    `INSERT INTO qc.document_versions (id, document_id, revision, state, created_by)
+     VALUES ($1, $2, 'A', 'IN_REVIEW', $3)`,
+    [REVIEW_VERSION_ID, REVIEW_DOCUMENT_ID, OTHER],
+  );
 });
 
 afterAll(async () => {
+  await pool?.query('DELETE FROM qc.document_versions WHERE id = $1', [REVIEW_VERSION_ID]);
+  await pool?.query('DELETE FROM qc.document_identities WHERE id = $1', [REVIEW_DOCUMENT_ID]);
   await pool?.query('DELETE FROM qc.notifications WHERE dedupe_key LIKE $1', [`cmd-%-${RUN}`]);
   await pool?.query('DELETE FROM qc.calibration_records WHERE calibration_no LIKE $1', [
     `CMD-${RUN}%`,
@@ -372,6 +399,7 @@ describe('dashboard command center', () => {
       'tasks-on-hold',
       'calibrations-overdue',
       'lab-tests-returned',
+      'documents-pending-my-review',
     ]);
     for (const metric of model.metrics) {
       expect(metric.numerator.length, metric.key).toBeGreaterThan(0);
@@ -414,6 +442,7 @@ describe('dashboard command center', () => {
     // The laboratory counter reads the register's own total for the same filter
     // its link carries (state = RETURNED, authored by this actor).
     expect(value('lab-tests-returned')).toBe(1);
+    expect(value('documents-pending-my-review')).toBe(1);
   });
 
   it('reproduces every quarantine flow stage from the receiving register', async () => {
@@ -532,7 +561,6 @@ describe('dashboard command center', () => {
     const model = await dashboard().get(mine());
     const missing = model.coverage.filter((item) => item.state === 'NOT_SUPPLIED');
     expect(missing.map((item) => item.key)).toEqual([
-      'document-review',
       'blocked-reasons',
       'reject-analytics',
       'quality-summary',

@@ -11,6 +11,7 @@ const READ_PERMISSION: Record<SearchResult['entityType'], string> = {
   LAB_TEST: 'PERM-LAB-VIEW',
   FINDING: 'PERM-FIND-VIEW',
   NCR: 'PERM-NCR-VIEW',
+  RCA: 'PERM-RCA-VIEW',
   CAPA: 'PERM-CAPA-VIEW',
   EQUIPMENT: 'PERM-EQP-VIEW',
   DOCUMENT: 'PERM-DOC-VIEW',
@@ -60,6 +61,11 @@ export class PostgresSearch implements SearchRepository {
       UNION ALL
       SELECT 'NCR', n.id, n.ncr_no, n.description, n.state, n.affected_item_code FROM qc.ncrs n WHERE (n.ncr_no ILIKE ${pattern} ESCAPE '\\' OR n.description ILIKE ${pattern} ESCAPE '\\' OR COALESCE(n.affected_item_code, '') ILIKE ${pattern} ESCAPE '\\') AND ${readable(query, 'NCR', ['n.created_by', 'n.owner_id'])}
       UNION ALL
+      SELECT 'RCA', a.id, a.rca_no, COALESCE(a.root_cause, a.analysis, a.rca_no), a.state, NULL
+        FROM qc.rcas a
+        WHERE a.rca_no ILIKE ${pattern} ESCAPE '\\'
+          AND ${readable(query, 'RCA', 'a.created_by')}
+      UNION ALL
       SELECT 'CAPA', c.id, c.capa_no, c.description, c.state, NULL FROM qc.capas c WHERE (c.capa_no ILIKE ${pattern} ESCAPE '\\' OR c.description ILIKE ${pattern} ESCAPE '\\') AND ${readable(query, 'CAPA', ['c.created_by', 'c.owner_id'])}
       UNION ALL
       SELECT 'EQUIPMENT', e.id, e.equipment_no, e.equipment_no, e.state, e.serial_no FROM qc.equipment e WHERE e.equipment_no ILIKE ${pattern} ESCAPE '\\' AND ${readable(query, 'EQUIPMENT', 'e.created_by')}
@@ -68,13 +74,23 @@ export class PostgresSearch implements SearchRepository {
       UNION ALL
       SELECT 'CHANGE_REQUEST', c.id, c.change_no, c.change_no, c.state, NULL FROM qc.change_requests c WHERE c.change_no ILIKE ${pattern} ESCAPE '\\' AND ${readable(query, 'CHANGE_REQUEST', 'c.requested_by')}
       UNION ALL
-      SELECT 'REJECT_REPORT', r.id, r.report_no, COALESCE(s.item_name, r.report_no), r.status, s.item_code FROM qc.reject_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id
-        WHERE (r.report_no ILIKE ${pattern} ESCAPE '\\' OR s.item_code ILIKE ${pattern} ESCAPE '\\' OR s.item_name ILIKE ${pattern} ESCAPE '\\' OR COALESCE(s.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR s.reject_reason ILIKE ${pattern} ESCAPE '\\') AND ${readable(query, 'REJECT_REPORT', 'r.created_by')}
-      UNION ALL
-      SELECT 'REJECT_REPORT', r.id, r.report_no, r.department, r.status, NULL FROM qc.reject_reports r
-        WHERE r.report_type = 'DAILY_REJECT' AND (r.report_no ILIKE ${pattern} ESCAPE '\\' OR r.department ILIKE ${pattern} ESCAPE '\\' OR EXISTS (
-          SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id AND (COALESCE(e.item_code, '') ILIKE ${pattern} ESCAPE '\\' OR e.item_description ILIKE ${pattern} ESCAPE '\\' OR COALESCE(e.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR e.reject_reason ILIKE ${pattern} ESCAPE '\\')
-        )) AND ${readable(query, 'REJECT_REPORT', 'r.created_by')}
+      SELECT 'REJECT_REPORT', r.id, r.report_no,
+        COALESCE((SELECT s.item_name FROM qc.reject_issue_slips s WHERE s.report_id = r.id), r.department, r.report_no),
+        r.status,
+        (SELECT s.item_code FROM qc.reject_issue_slips s WHERE s.report_id = r.id)
+        FROM qc.reject_reports r
+        WHERE (
+          r.report_no ILIKE ${pattern} ESCAPE '\\'
+          OR (r.report_type = 'DAILY_REJECT' AND r.department ILIKE ${pattern} ESCAPE '\\')
+          OR EXISTS (
+            SELECT 1 FROM qc.reject_issue_slips s WHERE s.report_id = r.id
+              AND (s.item_code ILIKE ${pattern} ESCAPE '\\' OR s.item_name ILIKE ${pattern} ESCAPE '\\' OR COALESCE(s.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR s.reject_reason ILIKE ${pattern} ESCAPE '\\')
+          )
+          OR (r.report_type = 'DAILY_REJECT' AND EXISTS (
+            SELECT 1 FROM qc.daily_reject_entries e WHERE e.report_id = r.id
+              AND (COALESCE(e.item_code, '') ILIKE ${pattern} ESCAPE '\\' OR e.item_description ILIKE ${pattern} ESCAPE '\\' OR COALESCE(e.lot_no, '') ILIKE ${pattern} ESCAPE '\\' OR e.reject_reason ILIKE ${pattern} ESCAPE '\\')
+          ))
+        ) AND ${readable(query, 'REJECT_REPORT', 'r.created_by')}
     `;
   }
 

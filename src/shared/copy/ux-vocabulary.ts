@@ -105,6 +105,7 @@ export const uxVocabulary = {
     LAB_TEST: 'Laboratory test',
     FINDING: 'Finding',
     NCR: 'NCR',
+    RCA: 'RCA',
     CAPA: 'CAPA',
     EQUIPMENT: 'Equipment',
     DOCUMENT: 'Controlled document',

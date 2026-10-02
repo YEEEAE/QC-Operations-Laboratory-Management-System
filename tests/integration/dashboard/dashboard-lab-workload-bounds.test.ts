@@ -284,11 +284,12 @@ describe('bounded laboratory workload read', () => {
       limit: 25,
     });
     expect(global.total).toBe(own.total);
-    // A TEAM grant cannot match a laboratory-test row, so the register hides
-    // everything for it rather than silently presenting a zero-workload claim
-    // from a population it cannot read.
-    const teamPage = await list.execute({ actor: teamMine(), filter: returned, limit: 25 });
-    expect(teamPage).toEqual({ items: [], total: 0 });
+    // A TEAM grant cannot be resolved against laboratory-test ownership, so
+    // the register denies the read rather than presenting an unauthorized
+    // population as a successful empty result.
+    await expect(
+      list.execute({ actor: teamMine(), filter: returned, limit: 25 }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
   });
 
   it('reports a missing permission as a denial instead of a zero', async () => {

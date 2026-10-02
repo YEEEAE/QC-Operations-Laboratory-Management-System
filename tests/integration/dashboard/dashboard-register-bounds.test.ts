@@ -56,9 +56,14 @@ const mine = (): ActorContext => ({
   loginIdentity: 'bounds-mine',
   accountState: 'ACTIVE',
   roles: ['INSPECTOR'],
-  permissions: ['PERM-DASH-VIEW', 'PERM-QUAR-VIEW', 'PERM-INSP-VIEW', 'PERM-CAL-VIEW'].map(
-    (code) => ({ code: code as never, scopes: ['GLOBAL'] as const }),
-  ),
+  permissions: [
+    'PERM-DASH-VIEW',
+    'PERM-QUAR-VIEW',
+    'PERM-INSP-VIEW',
+    'PERM-CAL-VIEW',
+    'PERM-TASK-VIEW',
+    'PERM-TASK-VIEW',
+  ].map((code) => ({ code: code as never, scopes: ['GLOBAL'] as const })),
 });
 
 let pool: Pool | undefined;
@@ -230,9 +235,22 @@ describe('dashboard register query bounds', () => {
   it('keeps the whole dashboard snapshot inside a bounded, constant query count', async () => {
     const first = countingDatabase();
     const model = await dashboardOver(first.db).get(mine());
-    // QC-100-FINAL-022 added the still-open "assigned to me" counter and the
-    // recorded "on hold" counter, so the shared registry grew from 8 to 10.
-    expect(model.metrics).toHaveLength(10);
+    // The current source has 11 read-model-backed action counts, including the
+    // document review queue. Pin their identities so source additions/removals
+    // require an intentional parity update rather than a stale count assertion.
+    expect(model.metrics.map((metric) => metric.key)).toEqual([
+      'pending-review',
+      'unread-notifications',
+      'hold-items',
+      'returned-inspections',
+      'tasks-overdue',
+      'tasks-due-today',
+      'tasks-assigned',
+      'tasks-on-hold',
+      'calibrations-overdue',
+      'lab-tests-returned',
+      'documents-pending-my-review',
+    ]);
     const baseline = first.statements.length;
     expect(baseline).toBeGreaterThan(0);
     expect(baseline).toBeLessThanOrEqual(DASHBOARD_STATEMENT_CEILING);
