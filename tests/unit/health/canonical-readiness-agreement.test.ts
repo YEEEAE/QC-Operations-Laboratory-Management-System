@@ -204,7 +204,16 @@ describe('canonical database readiness agreement (F-01)', () => {
     });
     const database = {
       selectFrom: () => ({
-        select: () => ({ where: () => ({ executeTakeFirst: async () => ({ pending: '3' }) }) }),
+        select: () => ({
+          executeTakeFirst: async () => ({
+            pending: '3',
+            oldestPendingAt: new Date(Date.now() - 60_000),
+            availableNow: '3',
+            retrying: '0',
+            maxAttemptCount: '0',
+            lastProcessedAt: null,
+          }),
+        }),
       }),
     };
     try {

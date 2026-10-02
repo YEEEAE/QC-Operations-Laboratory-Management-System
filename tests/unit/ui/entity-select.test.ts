@@ -147,6 +147,8 @@ describe('selector and navigation contracts across the touched create forms (F-0
       const source = readPage(page);
       expect(source).toContain('<select id="equipmentId"');
       expect(source).toContain('equipment.list.execute');
+      expect(source).toContain('assessEligibility.assessMany');
+      expect(source).not.toMatch(/assessEligibility\.assess\(actor,\s*item\.id\)/);
       expect(source).not.toMatch(/<input[^>]*name="equipmentId"/);
       expect(source).toContain('no longer available in your authorized scope');
       expect(source).toContain('No equipment is available in your authorized scope');
