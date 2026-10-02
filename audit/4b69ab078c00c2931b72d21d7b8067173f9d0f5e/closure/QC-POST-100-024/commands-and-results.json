@@ -1,0 +1,43 @@
+{
+  "promptId": "QC-POST-100-024",
+  "candidate": {
+    "gitSha": "4b69ab078c00c2931b72d21d7b8067173f9d0f5e",
+    "verificationRunId": "b6714d2e-8cff-45bf-98f9-5ef58116c49a",
+    "node": "v24.20.0"
+  },
+  "results": [
+    {
+      "command": "pnpm verification:begin",
+      "status": "PASS",
+      "result": "b6714d2e-8cff-45bf-98f9-5ef58116c49a; SHA undefined; undefined"
+    },
+    {
+      "command": "pnpm exec vitest run tests/unit/reporting",
+      "status": "PASS",
+      "result": "4 files, 20 tests passed."
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/reporting/report-export-parity.test.ts",
+      "status": "BLOCKED",
+      "result": "Testcontainers could not find a working container runtime; 10 tests skipped before assertions."
+    },
+    {
+      "command": "pnpm test:unit -- tests/unit/reporting",
+      "status": "FAIL (broad command)",
+      "result": "Wrapper ran all unit tests: 20 failed, 1146 passed / 1166 in 160 files. Failures surfaced in unrelated UI, route acceptance and release environment suites; focused reporting suite passed."
+    },
+    {
+      "command": "git status and rev-parse at freeze",
+      "status": "PASS AT FREEZE",
+      "result": "main clean; 4b69ab078c00c2931b72d21d7b8067173f9d0f5e"
+    }
+  ],
+  "notRun": [
+    "Build/release identity",
+    "Applied database catalog/schema digest",
+    "Authenticated E2E/direct HTTP",
+    "Browser, print/PDF page cuts, responsive/axe/keyboard/manual AT",
+    "Human UAT/page-owner acceptance",
+    "Production/provider verification"
+  ]
+}

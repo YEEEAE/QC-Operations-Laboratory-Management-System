@@ -1,0 +1,18 @@
+{
+  "promptId": "QC-POST-100-024",
+  "frozenAt": "2026-10-02",
+  "branch": "main",
+  "gitSha": "4b69ab078c00c2931b72d21d7b8067173f9d0f5e",
+  "workingTreeAtFreeze": "clean",
+  "verificationRunId": "b6714d2e-8cff-45bf-98f9-5ef58116c49a",
+  "sourceMigrationHead": "0045_provider_attestation_nonce_replay_guard",
+  "migrationCount": 45,
+  "migrationDirectoryDigestSha256": "3eda39113a42bf93c4a22d236ca31d24d8c369b9b8cbb93a2b77c5f7ce21fe60",
+  "appliedSchemaDigest": null,
+  "buildDigest": null,
+  "buildStatus": "NOT RUN",
+  "runtimeIdentity": "NOT VERIFIED",
+  "node": "v24.20.0",
+  "packageManager": "pnpm 11.25.0",
+  "note": "Audit packet is recorded after the source freeze and is not application source."
+}

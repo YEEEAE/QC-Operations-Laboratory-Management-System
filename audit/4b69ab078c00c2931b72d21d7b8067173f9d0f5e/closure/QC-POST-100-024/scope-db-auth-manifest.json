@@ -1,0 +1,108 @@
+{
+  "candidate": {
+    "gitSha": "4b69ab078c00c2931b72d21d7b8067173f9d0f5e",
+    "sourceMigrationHead": "0045_provider_attestation_nonce_replay_guard",
+    "migrationCount": 45,
+    "migrationDirectoryDigestSha256": "3eda39113a42bf93c4a22d236ca31d24d8c369b9b8cbb93a2b77c5f7ce21fe60"
+  },
+  "manifestType": "read-only/source-derived; no provider connection or database writes",
+  "objects": [
+    {
+      "name": "qc.receiving_items",
+      "access": "SELECT only",
+      "selectedColumns": [
+        "id",
+        "receiving_no",
+        "doc_no",
+        "item_code",
+        "description",
+        "lot",
+        "qty",
+        "receiving_date",
+        "expiry_date",
+        "workflow_state",
+        "inspection_result",
+        "release_system"
+      ],
+      "scopePredicate": [
+        "created_by"
+      ],
+      "filterColumns": [
+        "receiving_date",
+        "lot",
+        "item_code",
+        "workflow_state",
+        "inspection_result",
+        "release_system"
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "unique": [
+        "uq_receiving_items__receiving_no(receiving_no)",
+        "uq_receiving_items__source_reference(source_system,source_reference) partial where both not null"
+      ],
+      "foreignKeys": [
+        "released_by->qc.users(id) RESTRICT",
+        "created_by->qc.users(id) RESTRICT",
+        "updated_by->qc.users(id) RESTRICT"
+      ],
+      "checks": [
+        "doc_no/item_code/description/lot nonblank",
+        "qty>0",
+        "workflow_state enum",
+        "inspection_result enum",
+        "version>0",
+        "quantity_unit vocabulary NOT VALID",
+        "expiry_date>=receiving_date NOT VALID",
+        "purchase_order_no nonblank when set NOT VALID",
+        "source_reference requires source_system and nonblank NOT VALID"
+      ],
+      "indexes": [
+        "workflow_state",
+        "inspection_result",
+        "doc_item_lot",
+        "expiry_date",
+        "receiving_date",
+        "item_code",
+        "lot",
+        "supplier_name",
+        "purchase_order_no",
+        "creator_date(created_by,receiving_date desc,id desc)",
+        "creator_filters(created_by,workflow_state,inspection_result,release_system,receiving_date desc,id desc)",
+        "partial uq source_reference"
+      ]
+    },
+    {
+      "name": "report_runs",
+      "status": "logical only in DATA-MODEL; no source migration creates table"
+    },
+    {
+      "name": "report_artifacts",
+      "status": "conditional on retention; no source migration creates table; retention UNCONFIRMED"
+    }
+  ],
+  "authorization": {
+    "page": "authenticated actor; PERM-RPT-VIEW + PERM-RPT-RUN",
+    "export": [
+      "PERM-RPT-EXPORT",
+      "PERM-RPT-EXPORT-CSV or PERM-RPT-EXPORT-XLSX"
+    ],
+    "scope": "actor.id enforced by created_by predicate; server derives actor and rechecks permissions",
+    "realRecordPositiveNegative": "NOT VERIFIED"
+  },
+  "transaction": {
+    "required": "NO for current report read/export path",
+    "rationale": "No mutation, durable snapshot, audit, signature or outbox write in current path."
+  },
+  "migration": {
+    "required": "NO for source-only evidence packet",
+    "rationale": "Do not choose durable contract/retention without signed Reporting/QMS decision."
+  },
+  "writeSet": [],
+  "limits": [
+    "Source schema is not applied database proof.",
+    "PG18 test blocked before setup.",
+    "No production or external operations authorized."
+  ]
+}
