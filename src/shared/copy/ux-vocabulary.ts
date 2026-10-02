@@ -23,6 +23,7 @@ export const uxVocabulary = {
     applyFilters: 'Apply filters',
     clearFilters: 'Clear filters',
     retry: 'Try again',
+    reviewBeforeRetry: 'Review the record before retrying',
     cancel: 'Cancel',
     close: 'Close',
     signAndContinue: 'Sign and continue',

@@ -454,8 +454,14 @@ describe('file telemetry', () => {
       linkedBy: 'u-1',
       linkedAt: new Date(),
     };
+    const storedObject: { bytes: Uint8Array; contentType: string } = {
+      bytes: new Uint8Array([1]),
+      contentType: 'application/pdf',
+    };
     const repository = {
-      async createWithEvidence() {
+      async createWithEvidence(createdFile: FileRecord, createdEvidence: EvidenceLink) {
+        Object.assign(file, createdFile);
+        Object.assign(evidence, createdEvidence);
         return undefined;
       },
       async findById() {
@@ -466,11 +472,13 @@ describe('file telemetry', () => {
       },
     } as unknown as FileRepository;
     const store = {
-      async put() {
+      async put(_key: string, object: { bytes: Uint8Array; contentType: string }) {
         if (options?.failOnPut) throw new Error('object store unavailable');
+        storedObject.bytes = object.bytes;
+        storedObject.contentType = object.contentType;
       },
       async get() {
-        return { bytes: new Uint8Array([1]), contentType: 'application/pdf' };
+        return storedObject;
       },
       async delete() {
         return undefined;

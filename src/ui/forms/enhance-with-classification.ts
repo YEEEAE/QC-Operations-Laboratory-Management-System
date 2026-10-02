@@ -108,7 +108,7 @@ export function enhanceClassifiedForm<TData>(
         if (outcome.state === 'UNKNOWN_SAFE_ERROR' || outcome.state === 'PROVIDER_UNAVAILABLE') {
           const link = document.createElement('a');
           link.href = config.unknownRecoveryHref ?? config.detailBaseHref;
-          link.textContent = 'Review the record before retrying';
+          link.textContent = copy.actions.reviewBeforeRetry;
           output.append(' ', link);
         }
         if (outcome.state === 'VALIDATION_ERROR') focusFirstInvalid(form, output);
@@ -121,7 +121,7 @@ export function enhanceClassifiedForm<TData>(
         output.textContent = copy.errorClasses.UNKNOWN_SAFE_ERROR;
         const link = document.createElement('a');
         link.href = config.unknownRecoveryHref ?? config.detailBaseHref;
-        link.textContent = 'Review the record before retrying';
+        link.textContent = copy.actions.reviewBeforeRetry;
         output.append(' ', link);
         output?.focus?.();
       }

@@ -67,7 +67,7 @@ describe('F-03 reflow guards at 320px', () => {
   it('gives System Health a small-viewport fallback for its header and facts', () => {
     const health = readRepo('src/pages/system/health.astro');
     expect(health).toContain('@media(max-width:650px)');
-    expect(health).toContain('.page-head{display:grid}');
+    expect(health).toContain('.page-head,.status-summary{display:grid;grid-template-columns:1fr}');
     expect(health).toContain('overflow-wrap:anywhere');
   });
 });

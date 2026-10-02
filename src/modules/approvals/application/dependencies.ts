@@ -19,6 +19,7 @@ import { laboratoryActionDependencies } from '../../laboratory/application/depen
 import { quarantineActionDependencies } from '../../quarantine/application/dependencies.js';
 import { changeRequestsActionDependencies } from '../../change-requests/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
+import { getDocumentApprovalEvidence } from './document-approval-evidence.js';
 
 const blocked = async (): Promise<never> => {
   throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -144,6 +145,9 @@ export function approvalsReadDependencies() {
   return {
     list: new ListMyApprovalsUseCase(repository, capabilities),
     get: new GetApprovalUseCase(repository, capabilities),
+    documentEvidence: {
+      execute: (versionId: string) => getDocumentApprovalEvidence(database, versionId),
+    },
     decisionPolicyStatus: 'UNRESOLVED' as const,
   };
 }

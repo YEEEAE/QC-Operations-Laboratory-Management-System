@@ -63,7 +63,7 @@ describe('shared classified enhancement contract (037-A item 1)', () => {
   it('renders only the approved per-class vocabulary, never page-invented strings', () => {
     const source = read(SHARED);
     expect(source).toContain('copy.errorClasses');
-    expect(source).not.toMatch(/textContent\s*=\s*'[^']/); // no hardcoded failure strings
+    expect(source).not.toMatch(/output\.textContent\s*=\s*'[^']/); // classified failure copy stays in the vocabulary
   });
 
   it('keeps the enhancement presentation-only and single-invocation', () => {

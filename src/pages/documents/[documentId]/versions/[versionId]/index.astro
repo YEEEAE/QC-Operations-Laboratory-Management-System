@@ -3,8 +3,7 @@ import AppLayout from '../../../../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../../../../ui/components/StatusBadge.astro';
 import JourneyContextPanel from '../../../../../ui/components/workflow/JourneyContextPanel.astro';
 import { documentsReadDependencies } from '../../../../../modules/documents/application/dependencies.js';
-import { getDocumentApprovalEvidence } from '../../../../../modules/approvals/application/document-approval-evidence.js';
-import { getDatabase } from '../../../../../shared/database/database.js';
+import { approvalsReadDependencies } from '../../../../../modules/approvals/application/dependencies.js';
 import { stateLabel } from '../../../../../shared/copy/ux-vocabulary.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -21,7 +20,7 @@ const version = document?.versions.find((item) => item.id === Astro.params.versi
 if (!document || !version) return Astro.redirect('/404');
 let approvalEvidence;
 try {
-  approvalEvidence = await getDocumentApprovalEvidence(getDatabase(), version.id);
+  approvalEvidence = await approvalsReadDependencies().documentEvidence.execute(version.id);
 } catch {
   return providerUnavailableResponse('Approval evidence is temporarily unavailable', Astro.url.pathname + Astro.url.search);
 }

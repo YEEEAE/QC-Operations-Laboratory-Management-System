@@ -47,7 +47,10 @@ const evidence = () => ({
 describe('route acceptance evidence boundary', () => {
   it('inventories every F-001 page and keeps domain acceptance NV', () => {
     const cards = readAuditCards(
-      readFileSync('audit/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html', 'utf8'),
+      readFileSync(
+        'audit/2026-10-02/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html',
+        'utf8',
+      ),
     );
     expect(cards).toHaveLength(88);
     for (const card of cards) {
@@ -59,7 +62,7 @@ describe('route acceptance evidence boundary', () => {
   });
   it('rejects a missing card instead of silently reducing the denominator', () => {
     const html = readFileSync(
-      'audit/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html',
+      'audit/2026-10-02/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html',
       'utf8',
     );
     expect(() =>

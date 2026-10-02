@@ -25,15 +25,15 @@
   --status-approved-bg: #233424;
   --status-pass: #79af70;
   --status-pass-bg: #253a25;
-  --status-released: #78bdb2;
+  --status-released: #4f9b91;
   --status-released-bg: #1f3532;
   --status-hold: #d2a24b;
   --status-hold-bg: #3b3020;
   --status-warning: #c9903d;
   --status-warning-bg: #382b1d;
-  --status-danger: #ed9292;
+  --status-danger: #c96666;
   --status-danger-bg: #3b2323;
-  --status-review: #95b5e0;
+  --status-review: #6d8dbb;
   --status-review-bg: #222e3e;
   --status-neutral: #8a918a;
   --status-neutral-bg: #2b2f2b;

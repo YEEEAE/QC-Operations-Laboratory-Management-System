@@ -148,8 +148,9 @@ describe('interruption, session expiry, duplicate, and slow-network safety (037-
     const unknownIndex = source.indexOf('copy.errorClasses.UNKNOWN_SAFE_ERROR', catchIndex);
     expect(unknownIndex).toBeGreaterThan(catchIndex);
     const vocabulary = read('src/shared/copy/ux-vocabulary.ts');
-    expect(vocabulary).toMatch(/UNKNOWN_SAFE_ERROR:[\s\S]*?result could not be confirmed/);
-    expect(source).toContain('Review the record before retrying');
+    expect(vocabulary).toMatch(/UNKNOWN_SAFE_ERROR:[\s\S]*?result is unconfirmed/);
+    expect(source).toContain('copy.actions.reviewBeforeRetry');
+    expect(vocabulary).toContain("reviewBeforeRetry: 'Review the record before retrying'");
     expect(source).toContain('unknownRecoveryHref');
   });
 

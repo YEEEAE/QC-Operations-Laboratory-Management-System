@@ -66,7 +66,7 @@ describe('My work today workspace', () => {
       expect(objectLiterals.toLowerCase(), invented).not.toContain(invented);
     }
     // Only whole UTC days appear, and they are stated as day boundaries.
-    expect(objectLiterals).toContain('UTC midnight of the current day');
+    expect(objectLiterals).toContain('current UTC day');
   });
 
   it('records the unresolved sources with a reason and an owner instead of a zero', () => {

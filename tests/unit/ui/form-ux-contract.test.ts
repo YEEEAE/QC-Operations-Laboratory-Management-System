@@ -24,9 +24,7 @@ describe('regulated form UX contracts', () => {
     const review = read('src/pages/quarantine/inspections/[inspectionId]/review.astro');
     expect(execute).toMatch(/for=\{remarksId\}/);
     expect(execute).toMatch(/aria-describedby=\{errorId\}/);
-    expect(execute).toMatch(
-      /General execution notes are not part of the approved draft save contract and are not saved/,
-    );
+    expect(execute).toMatch(/General execution notes are not saved/);
     expect(execute).not.toMatch(/name="notes"/);
     expect(execute).toMatch(/data-point-error/);
     expect(execute).toMatch(/<button[^>]*data-submit[^>]*>Save results<\/button>/);
@@ -36,12 +34,12 @@ describe('regulated form UX contracts', () => {
 
   it('makes approval reason dependency explicit without changing server truth', () => {
     const page = read('src/pages/approvals/[approvalId].astro');
-    expect(page).toMatch(/Required when returning or rejecting/);
+    expect(page).toMatch(/Required for Return or Reject when offered/);
     expect(page).toMatch(
       /reason\.required = decision\.value === 'RETURN' \|\| decision\.value === 'REJECT'/,
     );
     expect(page).toMatch(
-      /Decision meaning, reauthentication, permission, scope, state, version, and SoD/,
+      /Only decisions supported by this subject's wired handler and currently authorized for your assignment, scope, state, version, and SoD are listed/,
     );
   });
 
@@ -55,7 +53,9 @@ describe('regulated form UX contracts', () => {
     const page = read('src/pages/laboratory/report-templates.astro');
     expect(page).toContain('draftStorageUnavailable = true');
     expect(page).toContain('Saved drafts could not be loaded.');
-    expect(page).toContain('check database readiness and whether migration 0039 is applied');
+    expect(page).toContain(
+      'Saved drafts could not be loaded. Ask the system owner to restore access, then reload.',
+    );
     expect(page).toContain('selectedDraftUnavailable ?');
     expect(page).toContain('active ${id ?');
     expect(page).toContain('This does not grant review or approval authority.');

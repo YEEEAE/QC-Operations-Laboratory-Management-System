@@ -102,7 +102,7 @@ describe('journey handoff presentation contract', () => {
     expect(dashboard).toContain(
       '/quarantine/receiving?inspectionResult=PASS&amp;releaseState=NOT_RELEASED',
     );
-    expect(dashboard).toContain('PASS and Released are separate');
+    expect(dashboard).toContain('PASS and RELEASED are separate');
   });
 
   it('retains receiving and lab inputs after rejected or unavailable actions', () => {

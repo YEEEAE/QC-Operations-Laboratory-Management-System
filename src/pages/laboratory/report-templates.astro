@@ -104,7 +104,7 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
 ---
 <AppLayout title="Laboratory report templates" locale="en" direction="ltr">
   <div class="report-entry">
-    <p><a href="/laboratory/tests">← Laboratory tests</a></p>
+     <p><a href="/laboratory/tests">Back to laboratory tests</a></p>
     <h1>Laboratory report templates</h1>
     <p>Enter the report as a draft. Recorded PASS / FAIL values and names are transcribed observations; they do not approve a controlled laboratory test.</p>
     {!canView ? <p role="alert">You are not authorized to view laboratory reports. Ask the system owner to review your active PERM-LAB-VIEW grant and OWN or GLOBAL scope.</p> : <>

@@ -71,7 +71,7 @@ permission, scope, entity state, version, SoD, signature, and business rules.
 ## A new migration
 
 1. Add `db/migrations/NNNN_descriptive_name.sql` after the current source head
-   (`0043_controlled_document_source_binding`). This is the repository source
+   (`0045_provider_attestation_nonce_replay_guard`). This is the repository source
    head; it does not assert that migration 0043 has been applied to any live
    database. Confirm the current ledger and owner-approved rollout separately.
 2. Keep migrations forward-only, lexically ordered, checksummed, and immutable

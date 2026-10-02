@@ -5,6 +5,7 @@ import { ReleaseReceivingUseCase } from '../../../src/modules/quarantine/receivi
 import { ApproveVersionUseCase } from '../../../src/modules/documents/application/approve-version.js';
 import { VoidInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/void-inspection.js';
 import { VoidVersionUseCase } from '../../../src/modules/documents/application/void-version.js';
+import { documentContentDigest } from '../../../src/modules/documents/domain/document-content-digest.js';
 import { TransitionFindingUseCase } from '../../../src/modules/quality/findings/application/transition-finding.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 
@@ -142,10 +143,10 @@ describe('P-05 authority matrix', () => {
   it.each([
     ['Employee', EMPLOYEE, false],
     ['Supervisor', SUPERVISOR, true],
-    ['Manager/QCM', MANAGER, true],
+    ['Manager/QCM', MANAGER, false],
     ['Admin-only', ADMIN_ONLY, false],
     ['yazeed owner', YAZEED, true],
-    ['Admin+Manager', ADMIN_MANAGER, true],
+    ['Admin+Manager', ADMIN_MANAGER, false],
   ])('inspection approval for %s resolves to allow=%s', async (_name, currentActor, allowed) => {
     const useCase = new ApproveInspectionUseCase(inspectionRepo());
     if (allowed) {
@@ -287,13 +288,32 @@ describe('P-05 authority matrix', () => {
   });
 
   it('document approval and VOID preserve P-05 authority', async () => {
+    const sourceFile: any = {
+      id: 'doc-file-link-1',
+      fileId: 'file-1',
+      documentVersionId: 'doc-v-1',
+      fileRole: 'SOURCE',
+      originalFilename: 'controlled-source.pdf',
+      sizeBytes: 1,
+      sha256: 'a'.repeat(64),
+      state: 'ACTIVE',
+      linkedAt: new Date('2026-01-01T00:00:00Z'),
+      linkedBy: 'author-1',
+    };
     const version: any = {
       id: 'doc-v-1',
       documentId: 'doc-1',
+      revision: '1',
       state: 'IN_REVIEW',
       version: 2n,
       createdBy: 'author-1',
-      contentHash: 'hash-1',
+      files: [sourceFile],
+      sourceBindingVerified: true,
+      contentHash: documentContentDigest({
+        documentId: 'doc-1',
+        revision: '1',
+        files: [sourceFile],
+      }),
     };
     const repo: any = {
       async getVersion() {

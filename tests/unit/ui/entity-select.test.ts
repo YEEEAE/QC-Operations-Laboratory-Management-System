@@ -197,7 +197,7 @@ describe('selector and navigation contracts across the touched create forms (F-0
     );
     expect(vocabulary).toContain('revision');
     expect(vocabulary).toContain('changeSummary');
-    expect(vocabulary).toContain('contentHash');
+    expect(vocabulary).not.toContain('contentHash');
   });
 
   it('documents/new: controlled document-type vocabulary from the domain constant', () => {

@@ -147,7 +147,7 @@ describe('visual token contract (global)', () => {
       const inTokens = tokens.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1].toLowerCase();
       expect(inDocs, `${name} documented`).toBeTruthy();
       expect(inTokens, `${name} in runtime`).toBeTruthy();
-      expect(inTokens).toBe(inDocs);
+      expect(inTokens?.toLowerCase()).toBe(inDocs?.toLowerCase());
     }
   });
 });

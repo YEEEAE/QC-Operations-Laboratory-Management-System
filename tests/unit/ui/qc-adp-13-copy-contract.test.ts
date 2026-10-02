@@ -13,7 +13,7 @@ describe('QC-ADP-13 operator-facing copy', () => {
     const register = read('src/pages/tasks/index.astro');
     const detail = read('src/pages/tasks/[taskId].astro');
     expect(create).toContain("priority: field(formData, 'priority') || 'UNSPECIFIED'");
-    expect(create).toContain("priority:String(data.get('priority')||'UNSPECIFIED')");
+    expect(create).toContain("priority: String(data.get('priority') || 'UNSPECIFIED')");
     expect(create).toContain('placeholder="Not specified"');
     expect(register).toContain('priorityLabel(task.priority)');
     expect(detail).toContain('priorityLabel(task.priority)');
@@ -29,7 +29,7 @@ describe('QC-ADP-13 operator-facing copy', () => {
 
   it('keeps the reject-report outage human and recoverable', () => {
     const page = read('src/pages/reject-reports/index.astro');
-    expect(page).toContain("title: 'Reject Reports are temporarily unavailable'");
+    expect(page).toContain("title: 'Reject reports are temporarily unavailable'");
     expect(page).toContain('retryHref="/reject-reports"');
     expect(page).not.toContain('incomplete database schema');
     expect(page).not.toContain('Review migration readiness');
