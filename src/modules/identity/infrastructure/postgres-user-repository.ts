@@ -116,9 +116,20 @@ export class PostgresUserRepository implements UserRepository {
       .execute();
     return rows.map(map);
   }
+  async listUserDisplayNames(ids: readonly string[]) {
+    if (ids.length === 0) return [];
+    const rows = await this.db
+      .selectFrom('users')
+      .select(['id', 'display_name'])
+      .where('id', 'in', [...new Set(ids)])
+      .execute();
+    return rows.map((row) => ({ id: row.id, displayName: row.display_name }));
+  }
   async listUsersPage(filter: UserListFilter): Promise<UserListPage> {
-    const page = Math.max(1, Math.trunc(filter.page));
-    const pageSize = Math.min(100, Math.max(1, Math.trunc(filter.pageSize)));
+    const page = Number.isSafeInteger(filter.page) ? Math.max(1, filter.page) : 1;
+    const pageSize = Number.isSafeInteger(filter.pageSize)
+      ? Math.min(100, Math.max(1, filter.pageSize))
+      : 25;
     let countQuery = this.db.selectFrom('users').select((eb) => eb.fn.countAll().as('total'));
     let rowsQuery = this.db
       .selectFrom('users')
@@ -157,9 +168,17 @@ export class PostgresUserRepository implements UserRepository {
     const count = await countQuery.executeTakeFirstOrThrow();
     const total = Number(count.total);
     const effectivePage = Math.min(page, Math.max(1, Math.ceil(total / pageSize)));
+    const sortColumn = {
+      loginIdentity: 'login_identity',
+      displayName: 'display_name',
+      state: 'account_state',
+      lastLogin: 'last_login_at',
+    } as const;
+    const sortColumnName = sortColumn[filter.sortBy ?? 'loginIdentity'];
+    const direction = filter.sortDirection === 'desc' ? 'desc' : 'asc';
     const rows = await rowsQuery
-      .orderBy('login_identity')
-      .orderBy('id')
+      .orderBy(sortColumnName, direction)
+      .orderBy('id', direction)
       .limit(pageSize)
       .offset((effectivePage - 1) * pageSize)
       .execute();

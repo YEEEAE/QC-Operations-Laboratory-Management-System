@@ -39,6 +39,14 @@ export interface AuditQuery {
   list(actor: ActorContext, filter: AuditQueryFilter): Promise<AuditQueryResult>;
 }
 
+/** Typed application port for names of user actors on the authorized page. */
+export interface AuditActorLabelResolver {
+  resolve(input: {
+    actor: ActorContext;
+    userIds: readonly string[];
+  }): Promise<ReadonlyMap<string, string>>;
+}
+
 /**
  * Canonical audit-read contract (F-07).
  *
@@ -163,7 +171,10 @@ export function mapAuditRowToView(row: AuditEventRow): AuditEventView {
 }
 
 export class AuditQueryService {
-  constructor(private readonly repository: AuditQuery) {}
+  constructor(
+    private readonly repository: AuditQuery,
+    private readonly actorLabels?: AuditActorLabelResolver,
+  ) {}
   async list(actor: ActorContext, filter: AuditQueryFilter): Promise<AuditQueryResult> {
     const decision = authorize({
       actor,
@@ -177,6 +188,33 @@ export class AuditQueryService {
     });
     if (!decision.allowed) throw new AppError(decision.code ?? 'AUTHZ_DENIED');
     const normalized = normalizeAuditQueryFilter(filter);
-    return this.repository.list(actor, normalized);
+    const result = await this.repository.list(actor, normalized);
+    if (!this.actorLabels) return result;
+    const actorIds = [
+      ...new Set(
+        result.events
+          .filter((event) => event.actorType === 'USER' && event.actorId)
+          .map((event) => event.actorId as string),
+      ),
+    ];
+    try {
+      const names = await this.actorLabels.resolve({ actor, userIds: actorIds });
+      return {
+        ...result,
+        events: result.events.map((event) => ({
+          ...event,
+          ...(event.actorType === 'USER' && event.actorId && names.has(event.actorId)
+            ? { actorDisplayName: names.get(event.actorId) }
+            : { actorDisplayName: undefined }),
+        })),
+      };
+    } catch {
+      // Keep the authorized history visible, but let its view use the safe
+      // missing-account label rather than leaking an internal identifier.
+      return {
+        ...result,
+        events: result.events.map((event) => ({ ...event, actorDisplayName: undefined })),
+      };
+    }
   }
 }

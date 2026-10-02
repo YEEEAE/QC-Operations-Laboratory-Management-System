@@ -130,6 +130,41 @@ function overview() {
 }
 
 describe('owner control center PostgreSQL contracts', () => {
+  it('pages the account register beyond the old 500-row cap with matching totals and filters', async () => {
+    const prefix = `cc-page-${crypto.randomUUID()}`;
+    await pool!.query(
+      `INSERT INTO qc.users (id, login_identity, display_name, password_hash)
+       SELECT gen_random_uuid(), $1 || '-' || n::text, 'Page fixture ' || n::text, 'hash:fixture'
+       FROM generate_series(1, 501) AS n`,
+      [prefix],
+    );
+    try {
+      const repository = new PostgresUserRepository(db);
+      const first = await repository.listUsersPage({ page: 1, pageSize: 25, query: prefix });
+      const last = await repository.listUsersPage({ page: 21, pageSize: 25, query: prefix });
+      const filtered = await repository.listUsersPage({
+        page: 1,
+        pageSize: 25,
+        query: `${prefix}-501`,
+      });
+
+      expect(first.total).toBe(501);
+      expect(first.items).toHaveLength(25);
+      expect(last.items).toHaveLength(1);
+      expect(filtered.items.map((user) => user.loginIdentity)).toEqual([`${prefix}-501`]);
+      expect(first.items[0]).not.toHaveProperty('passwordHash');
+      const lastUserId = filtered.items[0]!.id;
+      const listUsers = new ListUsersUseCase(new PostgresUserRepository(db));
+      const labels = await listUsers.resolveDisplayNames({
+        actor: ownerActor(),
+        userIds: [lastUserId],
+      });
+      expect(labels.get(lastUserId)).toBe('Page fixture 501');
+    } finally {
+      await pool!.query('DELETE FROM qc.users WHERE login_identity LIKE $1', [`${prefix}-%`]);
+    }
+  });
+
   it('denies the live overview to every non-canonical actor, including a SYSTEM_OWNER role holder', async () => {
     const useCase = overview();
     for (const denied of [

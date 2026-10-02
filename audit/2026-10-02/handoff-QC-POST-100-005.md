@@ -1,5 +1,15 @@
 # QC-POST-100-005 — Candidate handoff
 
+## Current-source recheck — 2026-10-02
+
+- **Base HEAD:** `d3fb77dcd18dcc5505769cfd29827b16d9cf5acb`; final source fingerprint, Node, migration head, artifact digest, and focused unit report are recorded in `.ci-results/build.json` and `.ci-results/unit.json` for the same final candidate. The earlier candidate evidence below is HISTORICAL and not reused as current proof.
+- **Source classification:** PARTIAL. Existing `/tasks` filter reset and owner-only link work were preserved. `/system/control-center` Accounts now reads a 10-row SQL page with exact matching total; query, state, and allowlisted sort are applied to the same SQL count/page predicates. `/quality/findings` now has actor-scoped SQL count/page queries and native GET state paging. Identity display-name lookups are actor-gated and limited to 100 requested IDs; `/audit` uses that typed identity port for actors, and subject UUID is no longer rendered without an authorized business-subject resolver.
+- **Inventory:** The executable register inventory lists 18 routes; 7 have bounded source paging (tasks, audit, reject reports, findings, laboratory, admin users, backups), leaving 11 explicitly unbounded. Other affected register routes and selector sources remain to be reconciled. The admin scopes page is a static scope vocabulary/link surface, not a paged record register.
+- **Migration:** none. Source migration head remains `0045_provider_attestation_nonce_replay_guard`.
+- **Evidence:** focused unit/source contracts 40/40 PASS, 0 failed/0 skipped; typecheck 0 errors/0 warnings/114 hints; architecture and targeted lint PASS; TypeScript Prettier check PASS. Final build and release identity PASS; candidate-bound identity is in `.ci-results/build.json` (same run as `.ci-results/unit.json`).
+- **BLOCKED / NOT VERIFIED:** PostgreSQL 18/Testcontainers could not start (`Could not find a working container runtime strategy`), so both new real-record paging tests are NOT RUN. Authenticated browser/HTTP traces, exact runtime/provider state, manual AT and human UAT are NOT VERIFIED. No production migration, deployment, commit, or push.
+- **Residual acceptance:** all other unbounded registers and selectors; typed, per-domain authorized business-subject number resolution and deleted/denied/outage cases; final PG18 page/count/scope evidence; authenticated route and human acceptance. Completion remains PARTIAL, not CLOSED.
+
 - **State:** PARTIAL; required CLOSED proof is incomplete.
 - **Historical audit candidate:** `6059e177438d8ae110c99084d32758b048f22cd2` (not used for current evidence).
 - **Final candidate binding:** `.ci-results/build.json` and `.ci-results/unit.json` record the same final verification run and worktree fingerprint after this handoff and Mind update.

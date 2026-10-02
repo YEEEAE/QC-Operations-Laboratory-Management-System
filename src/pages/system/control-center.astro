@@ -25,7 +25,7 @@ type Overview = Awaited<
   ReturnType<ReturnType<typeof controlCenterReadDependencies>['overview']['execute']>
 >;
 type Users = Awaited<
-  ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['execute']>
+  ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['executePage']>
 >;
 type Roles = Awaited<
   ReturnType<ReturnType<typeof administrationDependencies>['listRoles']['execute']>
@@ -39,19 +39,37 @@ try {
   overview = undefined;
 }
 
-let users: Users = [];
+let users: Users | undefined;
 let usersError = false;
 let userAssignmentsUnavailable = false;
 const roleSummary = new Map<string, string>();
 const scopeSummary = new Map<string, string>();
 try {
-  users = await identityAdminReadDependencies().listUsers.execute({ actor });
+  const params = Astro.url.searchParams;
+  const query = (params.get('q') ?? '').trim().slice(0, 120);
+  const stateParam = params.get('state') ?? '';
+  const stateFilter = stateParam === 'ACTIVE' || stateParam === 'INACTIVE' || stateParam === 'DISABLED' ? stateParam : undefined;
+  const requestedPage = Number(params.get('page') ?? '1');
+  const sortParam = params.get('sort') ?? 'loginIdentity';
+  const sortBy = sortParam === 'displayName' || sortParam === 'state' || sortParam === 'lastLogin' ? sortParam : 'loginIdentity';
+  const sortDirection = params.get('dir') === 'desc' ? 'desc' : 'asc';
+  users = await identityAdminReadDependencies().listUsers.executePage({
+    actor,
+    filter: {
+      query: query || undefined,
+      accountState: stateFilter,
+      page: Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+      pageSize: 10,
+      sortBy,
+      sortDirection,
+    },
+  });
 } catch {
   usersError = true;
 }
-if (!usersError) {
+if (!usersError && users) {
   const auth = administrationDependencies();
-  const userIds = users.map((user) => user.id);
+  const userIds = users.items.map((user) => user.id);
   try {
     const [roles, scopes] = await Promise.all([
       auth.listUserRoles.executeForUsers({ actor, userIds }),
@@ -62,7 +80,7 @@ if (!usersError) {
       const label = uxVocabulary.scopeKindLabels[scope.kind] ?? scope.kind;
       return scope.value ? `${label} (${scope.kind}: ${scope.value})` : `${label} (${scope.kind})`;
     }).join(', ') || '—');
-    for (const user of users) {
+    for (const user of users.items) {
       roleSummary.set(user.id, roleSummary.get(user.id) ?? '—');
       scopeSummary.set(user.id, scopeSummary.get(user.id) ?? '—');
     }
@@ -88,42 +106,17 @@ try {
 }
 
 // Server-rendered search/filter/sort/pagination — fully functional without client JS.
-const query = (Astro.url.searchParams.get('q') ?? '').trim().toLowerCase();
-const stateFilter = Astro.url.searchParams.get('state') ?? '';
-const sortKey = Astro.url.searchParams.get('sort') ?? 'loginIdentity';
+const query = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 120);
+const stateParam = Astro.url.searchParams.get('state') ?? '';
+const stateFilter = stateParam === 'ACTIVE' || stateParam === 'INACTIVE' || stateParam === 'DISABLED' ? stateParam : '';
+const sortParam = Astro.url.searchParams.get('sort') ?? 'loginIdentity';
+const sortKey = sortParam === 'displayName' || sortParam === 'state' || sortParam === 'lastLogin' ? sortParam : 'loginIdentity';
 const sortDir = Astro.url.searchParams.get('dir') === 'desc' ? 'desc' : 'asc';
 const pageSize = 10;
-const requestedPage = Number.parseInt(Astro.url.searchParams.get('page') ?? '1', 10);
-
-const filtered = users
-  .filter((user) => (stateFilter ? user.accountState === stateFilter : true))
-  .filter((user) =>
-    query
-      ? [user.loginIdentity, user.displayName, user.email ?? ''].join(' ').toLowerCase().includes(query)
-      : true,
-  )
-  .sort((left, right) => {
-    const pick = (user: Users[number]): string =>
-      sortKey === 'displayName'
-        ? user.displayName
-        : sortKey === 'state'
-          ? user.accountState
-          : sortKey === 'lastLogin'
-            ? (user.lastLoginAt?.toISOString() ?? '')
-            : user.loginIdentity;
-    const order = pick(left).localeCompare(pick(right));
-    return sortDir === 'desc' ? -order : order;
-  });
-const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-const page = Math.min(Math.max(Number.isFinite(requestedPage) ? requestedPage : 1, 1), totalPages);
-const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-const counts = {
-  total: users.length,
-  active: users.filter((user) => user.accountState === 'ACTIVE').length,
-  inactive: users.filter((user) => user.accountState === 'INACTIVE').length,
-  disabled: users.filter((user) => user.accountState === 'DISABLED').length,
-};
+const totalPages = Math.max(1, Math.ceil((users?.total ?? 0) / pageSize));
+const page = users?.page ?? 1;
+const pageRows = users?.items ?? [];
+const counts = { total: users?.total ?? 0 };
 
 const pageParams = (overrides: Record<string, string>) => {
   const params = new URLSearchParams({
@@ -275,10 +268,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
         <>
           {userAssignmentsUnavailable && <p class="muted" role="alert">Account role and scope assignments are temporarily unavailable; those relationship values are withheld.</p>}
           <div class="cards">
-            <div class="card"><span class="card-label">Total</span><strong>{counts.total}</strong></div>
-            <div class="card"><span class="card-label">Active</span><strong>{counts.active}</strong></div>
-            <div class="card"><span class="card-label">Inactive</span><strong>{counts.inactive}</strong></div>
-            <div class="card"><span class="card-label">Disabled</span><strong>{counts.disabled}</strong></div>
+            <div class="card"><span class="card-label">Matching accounts</span><strong>{counts.total}</strong><small>Exact count for the current filters</small></div>
           </div>
           <form class="filters" method="get" action="/system/control-center">
             <label for="q">
@@ -303,7 +293,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
               <div class="table-wrap">
                 <table>
                   <caption>
-                    All member accounts — page {page} of {totalPages} ({filtered.length} matching)
+                    All member accounts — page {page} of {totalPages} ({counts.total} matching)
                   </caption>
                   <thead>
                     <tr>

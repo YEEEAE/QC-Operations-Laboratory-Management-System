@@ -39,6 +39,9 @@ describe('audit human labels and filter access', () => {
     expect(page).toContain('Changed by account reference');
     expect(page).toContain('Record reference');
     expect(page).toContain('Request reference');
+    expect(page).toContain('identityReads.listUsers.resolveDisplayNames');
+    expect(page).toContain('Business record number unavailable');
+    expect(page).not.toContain('{event.subjectId}');
     expect(page).toContain(
       'auditActorLabel({ actorType: event.actorType, displayName: event.actorDisplayName })',
     );

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { pageAccessDecision } from '../../../src/shared/routing/page-access.js';
 import { getRouteByPath, getRouteByPathname } from '../../../src/shared/routing/routes.js';
 import { navigationGroups, visibleNavigation } from '../../../src/ui/navigation/navigation.js';
@@ -22,6 +23,18 @@ describe('owner control center route contract', () => {
     expect(route?.visibility).toBe('YAZEED_ONLY');
     expect(route?.page).toBe('src/pages/system/control-center.astro');
     expect(route?.domain).toBe('system-health');
+  });
+
+  it('uses the filtered SQL page/count port for the account table, not a 500-row client slice', () => {
+    const page = readFileSync(
+      new URL('../../../src/pages/system/control-center.astro', import.meta.url),
+      'utf8',
+    );
+    expect(page).toContain('listUsers.executePage');
+    expect(page).toContain('pageSize: 10');
+    expect(page).toContain('Exact count for the current filters');
+    expect(page).not.toContain('listUsers.execute({ actor })');
+    expect(page).not.toContain('filtered.slice');
   });
 
   it('denies every non-canonical persona server-side, including SYSTEM_OWNER role holders', () => {

@@ -24,4 +24,20 @@ export class ListUsersUseCase {
       });
     return this.users.listUsersPage(input.filter);
   }
+
+  async resolveDisplayNames(input: {
+    actor: ActorContext;
+    userIds: readonly string[];
+  }): Promise<ReadonlyMap<string, string>> {
+    if (input.actor.accountState !== 'ACTIVE')
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (!this.users.listUserDisplayNames)
+      throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', {
+        userSafe: true,
+        retryability: 'INTERNAL_RETRY_ONLY',
+      });
+    const ids = [...new Set(input.userIds)].filter((id) => id.length > 0).slice(0, 100);
+    const rows = await this.users.listUserDisplayNames(ids);
+    return new Map(rows.map((row) => [row.id, row.displayName]));
+  }
 }

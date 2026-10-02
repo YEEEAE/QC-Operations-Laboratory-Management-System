@@ -15,6 +15,9 @@ export interface UserRepository {
   findByLoginIdentity(loginIdentity: string): Promise<User | undefined>;
   findById(id: string): Promise<User | undefined>;
   listUsers(): Promise<readonly User[]>;
+  listUserDisplayNames?(
+    ids: readonly string[],
+  ): Promise<readonly { id: string; displayName: string }[]>;
   listUsersPage?(filter: UserListFilter): Promise<UserListPage>;
   recordSuccessfulLogin(id: string, at: Date): Promise<void>;
   create(input: {
@@ -60,6 +63,8 @@ export interface UserListFilter {
   accountState?: User['accountState'];
   page: number;
   pageSize: number;
+  sortBy?: 'loginIdentity' | 'displayName' | 'state' | 'lastLogin';
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface UserListPage {

@@ -70,9 +70,13 @@ const BOUNDED_REGISTERS = [
   'src/pages/tasks/index.astro',
   'src/pages/audit.astro',
   'src/pages/reject-reports/index.astro',
+  'src/pages/quality/findings/index.astro',
   // QC-100-FINAL-017: the laboratory register reads a bounded newest-first page
   // plus the readable total, so it no longer loads the whole table to count it.
   'src/pages/laboratory/tests/index.astro',
+  // User administration and backup catalog already use SQL page/count ports.
+  'src/pages/admin/users/index.astro',
+  'src/pages/system/backups/index.astro',
 ];
 
 /**
@@ -134,6 +138,7 @@ const isBounded = (page: string): boolean => {
   return (
     source.includes('parsePageInput') ||
     source.includes('result.offset') ||
+    source.includes('executePage') ||
     source.includes('limit: DEFAULT_PAGE_SIZE')
   );
 };

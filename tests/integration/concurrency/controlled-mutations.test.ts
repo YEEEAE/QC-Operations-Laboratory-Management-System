@@ -146,6 +146,55 @@ async function seedDocumentSource(documentId: string): Promise<string> {
 }
 
 describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => {
+  it('pages findings after applying the authorized owner predicate and counts the same filtered set', async () => {
+    const batch = `FP-${crypto.randomUUID()}`;
+    for (let index = 0; index < 30; index += 1) {
+      await pool!.query(
+        `INSERT INTO qc.findings (id, finding_no, title, description, state, created_by)
+         VALUES (gen_random_uuid(), $1, $2, 'Paging fixture', 'OPEN', $3)`,
+        [`${batch}-${index}`, `Finding ${index}`, AUTHOR_ID],
+      );
+    }
+    await pool!.query(
+      `INSERT INTO qc.findings (id, finding_no, title, description, state, created_by)
+       VALUES (gen_random_uuid(), $1, 'Other owner', 'Paging fixture', 'OPEN', $2),
+              (gen_random_uuid(), $3, 'Draft', 'Paging fixture', 'DRAFT', $4)`,
+      [`${batch}-other`, ADMIN_ID, `${batch}-draft`, AUTHOR_ID],
+    );
+
+    const repository = new PostgresFindingRepository(db);
+    const visibleActor = actor(AUTHOR_ID, []);
+    const first = await repository.listPage({
+      actor: visibleActor,
+      state: 'OPEN',
+      page: { page: 1, pageSize: 25, offset: 0 },
+    });
+    const last = await repository.listPage({
+      actor: visibleActor,
+      state: 'OPEN',
+      page: { page: 2, pageSize: 25, offset: 25 },
+    });
+    const staleDeepLink = await repository.listPage({
+      actor: visibleActor,
+      state: 'OPEN',
+      page: { page: 99, pageSize: 25, offset: 2450 },
+    });
+    const draft = await repository.listPage({
+      actor: visibleActor,
+      state: 'DRAFT',
+      page: { page: 1, pageSize: 25, offset: 0 },
+    });
+
+    expect(first).toMatchObject({ total: 30, page: 1, pageSize: 25 });
+    expect(first.items).toHaveLength(25);
+    expect(last).toMatchObject({ total: 30, page: 2 });
+    expect(last.items).toHaveLength(5);
+    expect(staleDeepLink).toMatchObject({ total: 30, page: 2 });
+    expect(staleDeepLink.items).toHaveLength(5);
+    expect(draft).toMatchObject({ total: 1, page: 1 });
+    expect(draft.items[0]?.findingNo).toBe(`${batch}-draft`);
+  });
+
   it('advances quality aggregate versions so concurrent same-version transitions cannot both commit', async () => {
     const findingId = '01900000-0000-7000-8000-00000000b080';
     const ncrId = '01900000-0000-7000-8000-00000000b081';

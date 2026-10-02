@@ -57,14 +57,38 @@ export class PostgresFindingRepository implements FindingRepository {
     return r ? this.map(r) : undefined;
   }
   async list(i: Parameters<FindingRepository['list']>[0]) {
-    let q = this.db
-      .selectFrom('findings')
-      .selectAll()
-      .where((eb) => eb.or([eb('owner_id', '=', i.actor.id), eb('created_by', '=', i.actor.id)]));
-    if (i.state) q = q.where('state', '=', i.state);
+    const q = this.listQuery(i.actor, i.state);
     return (await q.orderBy('updated_at', 'desc').orderBy('id', 'desc').execute()).map((r) =>
       this.map(r),
     );
+  }
+  async listPage(i: Parameters<FindingRepository['listPage']>[0]) {
+    const countRow = await this.listQuery(i.actor, i.state)
+      .clearSelect()
+      .select(({ fn }) => fn.countAll().as('count'))
+      .executeTakeFirst();
+    const total = Number(countRow?.count ?? 0);
+    const page = Math.min(i.page.page, Math.max(1, Math.ceil(total / i.page.pageSize)));
+    const rows = await this.listQuery(i.actor, i.state)
+      .orderBy('updated_at', 'desc')
+      .orderBy('id', 'desc')
+      .limit(i.page.pageSize)
+      .offset((page - 1) * i.page.pageSize)
+      .execute();
+    return {
+      items: rows.map((row) => this.map(row)),
+      total,
+      page,
+      pageSize: i.page.pageSize,
+    };
+  }
+  private listQuery(actor: ActorContext, state?: Finding['state']) {
+    let q = this.db
+      .selectFrom('findings')
+      .selectAll()
+      .where((eb) => eb.or([eb('owner_id', '=', actor.id), eb('created_by', '=', actor.id)]));
+    if (state) q = q.where('state', '=', state);
+    return q;
   }
   async transition(i: Parameters<FindingRepository['transition']>[0]) {
     const next: Record<FindingAction, string> = {

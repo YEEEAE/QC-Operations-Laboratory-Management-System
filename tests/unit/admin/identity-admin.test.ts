@@ -42,6 +42,11 @@ class MemoryUsers implements UserRepository {
     [...this.store.values()].find((entry) => entry.loginIdentity === loginIdentity);
   findById = async (id: string) => this.store.get(id);
   listUsers = async () => [...this.store.values()];
+  listUserDisplayNames = async (ids: readonly string[]) =>
+    ids.flatMap((id) => {
+      const entry = this.store.get(id);
+      return entry ? [{ id: entry.id, displayName: entry.displayName }] : [];
+    });
   listUsersPage = async (filter: UserListFilter) => {
     const matches = [...this.store.values()]
       .filter((entry) => !filter.query || entry.loginIdentity.includes(filter.query))
@@ -195,6 +200,22 @@ describe('identity administration use cases', () => {
     expect(last.items).toHaveLength(1);
     expect(filtered.items.map((entry) => entry.loginIdentity)).toEqual(['member-500']);
     expect(first.items[0]).not.toHaveProperty('passwordHash');
+  });
+
+  it('resolves only requested user labels through the bounded identity port', async () => {
+    const seed = Array.from({ length: 501 }, (_, index) =>
+      user({ id: `user-${index}`, displayName: `Member ${index}` }),
+    );
+    const repository = new MemoryUsers(seed);
+    const allUsers = vi.spyOn(repository, 'listUsers');
+    const labels = await new ListUsersUseCase(repository).resolveDisplayNames({
+      actor: actor([]),
+      userIds: ['user-500', 'missing'],
+    });
+
+    expect(labels.get('user-500')).toBe('Member 500');
+    expect(labels.has('missing')).toBe(false);
+    expect(allUsers).not.toHaveBeenCalled();
   });
 
   it('allows active users to list safe member views without mutation authority', async () => {

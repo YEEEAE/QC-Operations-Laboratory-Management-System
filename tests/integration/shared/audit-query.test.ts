@@ -49,6 +49,30 @@ describe('explicit-permission audit query', () => {
     expect(result.events[0]).not.toHaveProperty('payload');
   });
 
+  it('resolves page actors through the typed identity port and never falls back to their IDs', async () => {
+    const repository = new MemoryAuditQuery();
+    const resolve = async (input: { actor: ActorContext; userIds: readonly string[] }) => {
+      expect(input.actor.id).toBe('u1');
+      expect(input.userIds).toEqual(['u1']);
+      return new Map([['u1', 'Samira Analyst']]);
+    };
+    const result = await new AuditQueryService(repository, { resolve }).list(actor(), {});
+
+    expect(result.events[0]?.actorDisplayName).toBe('Samira Analyst');
+  });
+
+  it('retains readable audit context if the identity source cannot resolve an actor', async () => {
+    const repository = new MemoryAuditQuery();
+    const result = await new AuditQueryService(repository, {
+      resolve: async () => {
+        throw new Error('identity source unavailable');
+      },
+    }).list(actor(), {});
+
+    expect(result.events[0]?.actorDisplayName).toBeUndefined();
+    expect(result.events[0]?.actorId).toBe('u1');
+  });
+
   it('denies audit viewing without the explicit permission, including Admin role alone', async () => {
     const repository = new MemoryAuditQuery();
     await expect(

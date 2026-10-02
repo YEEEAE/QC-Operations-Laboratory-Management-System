@@ -20,14 +20,12 @@ export class PostgresAuditQuery implements AuditQuery {
       .select((builder) => builder.fn.countAll().as('count'));
     let pageQuery = this.database
       .selectFrom('audit_events')
-      .leftJoin('users', 'users.id', 'audit_events.actor_id')
       .select([
         'audit_events.id',
         'audit_events.event_no',
         'audit_events.occurred_at',
         'audit_events.actor_type',
         'audit_events.actor_id',
-        'users.display_name as actor_display_name',
         'audit_events.subject_type',
         'audit_events.subject_id',
         'audit_events.action',
