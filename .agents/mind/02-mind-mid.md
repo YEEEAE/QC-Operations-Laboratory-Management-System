@@ -1,3 +1,25 @@
+## Rollover from 01 — 2026-10-02 (quality prerequisite repair)
+
+- **2026-10-01 — QC-ADP26-11 / POST baseline and unknown write outcomes**
+  - Changed: task lifecycle now has native POST and selected create forms use classified enhancement; shared unknown-write recovery no longer claims rollback. No schema/policy change.
+  - Evidence: focused 85/85 and Astro build 1/1 PASS; typecheck still FAILS on the existing `Date.formatDate` error. PostgreSQL18/authenticated HTTP/browser/AT/UAT NOT VERIFIED; route inventory remains open. `audit/2026-09-30/handoff-QC-ADP26-11.md`.
+  - State: PARTIAL / NO-GO for full acceptance; candidate HEAD differs from requested audit SHA.
+
+- **2026-10-01 — QC-ADP26-10 / scientific source and final judgment**
+  - Changed: no runtime/schema change; current-candidate trace confirms lab's default evaluator denies, while inspection point PASS/FAIL persistence lacks verified approved-source/hash binding.
+  - Evidence: candidate `b3d2d476`; focused unit 63/63 PASS (synthetic/contracts only); PD-01/02/03/04/05/07 remain OPEN; PG18/browser/AT/UAT NOT RUN. `audit/2026-10-01/handoff-QC-ADP26-10.md`.
+  - State: PARTIAL / BLOCKED pending QC/QMS + Document Control source/criteria decision.
+
+
+## Rollover from 01 — 2026-10-02 (document approval evidence)
+
+Historical entries moved unchanged from the top ledger of 01 after checking for duplicates.
+
+- **2026-10-01 — QC-ADP26-27 / health and recovery evidence:** Changed: health/connectivity/QC acceptance are source-timestamped and separate; permission-gated read-only outbox age/count diagnostics added; backup views now state the evidence boundary. No schema/production changes. Focused tests 36/36 and local build PASS; PostgreSQL18/browser/AT/drill BLOCKED or NOT VERIFIED; RPO/RTO and alert policy remain unapproved. Handoff: `audit/2026-09-30/handoff-QC-ADP26-27.md`. State: PARTIAL.
+- **2026-10-01 — QC-ADP26-26 / admin action capabilities:** UI controls map per action to canonical permissions; safe projections remain separately readable; role-grant form is gated and POST-only. Focused 55/55 and candidate build PASS; PG18, authenticated browser, AT/responsive and UAT remain unverified. See `audit/2026-09-30/handoff-QC-ADP26-26.md`. State: PARTIAL.
+- **2026-10-01 — QC-ADP26-25 / initial user grants:** Changed: MANAGE permits account-only creation; each initial role/scope grant needs its own permission; provider, missing-reference, stale and unknown outcomes have distinct recovery. Evidence: focused 94/94 + UI/copy contracts 4/4, lint PASS; Prettier covers app/docs (legacy test format exception); PostgreSQL18 BLOCKED, Astro check has one unrelated error, authenticated browser/AT/UAT NOT VERIFIED. Role matrix/seed conflict still needs the identity/RBAC policy owner. Handoff: `audit/2026-09-30/handoff-QC-ADP26-25.md`. State: PARTIAL.
+- **2026-10-01 — QC-ADP26-23 / decision capability and policy block:** Changed: approval UI/use cases derive actions from wiring, current state/version, permission/scope/assignment/SoD and per-decision signature policy; unresolved policy blocks before password. Evidence: 16 focused tests + architecture/build PASS; PostgreSQL18 BLOCKED; Astro check has 1 unrelated error; browser/AT/UAT NOT VERIFIED. PD-32 remains QMS-owned OPEN. Handoff: `audit/2026-09-30/handoff-QC-ADP26-23.md`. State: PARTIAL.
+- **2026-10-01 — QC-ADP26-22 / atomic domain approval evidence:** Changed: subject transition, optional signature, decision, audit and outbox now share one PostgreSQL transaction; unresolved signature policy remains deny. Evidence: focused approval tests 9/9 and architecture PASS; PG18 BLOCKED, typecheck 1 unrelated error, candidate-bound build evidence PASS; handoff `audit/2026-09-30/handoff-QC-ADP26-22.md`. State: PARTIAL.
 ## Rollover from 01 — 2026-10-02 (QC-POST-100-001)
 
 > نُقلت أقدم سجلات Ledger التالية من 01 بعد التحقق من عدم وجودها سابقًا في الأرشيف؛ بقيت الحالة الحالية والثوابت والمشكلات المفتوحة في 01.

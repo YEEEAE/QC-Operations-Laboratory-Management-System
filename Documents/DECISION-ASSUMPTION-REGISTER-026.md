@@ -7,6 +7,18 @@
 
 **Current-code reconciliation:** This register was refreshed against the working tree on 2026-09-23. The phase-B candidate SHA above is historical metadata, not the current code identity. Detailed code/test/fail-closed crosswalk for the requested inspection, laboratory, reject, release, signature, WI/SOP and recovery decisions is in §8. All unresolved PD/RD states remain open; no policy decision was inferred.
 
+**Evidence-display clarification (2026-10-02):** The user approved a system-generated
+authorization display after an actual account action. The current local change
+projects saved document-version workflow decisions, matching electronic
+signatures, and direct approval audit events on the document version page. The
+four photographed handwritten signatures are not electronic approval events,
+proof that their owners acted in this system, or approved text for PD-15–18.
+They do not change PD-15–18, PD-32, RD-019, or any other open policy row. The
+display implementation remains subject to PostgreSQL 18, authenticated browser,
+and human acceptance evidence on the final candidate.
+
+**Completion work (2026-10-02):** The proposed [quality decision pack](QUALITY-POLICY-DECISION-PACK-2026-10-02.md) records concrete PD-15–18/PD-32 rules awaiting content confirmation and the remaining implementation criteria. An independent repair rejects caller-supplied NCR/CAPA prerequisite flags; 23 focused synthetic/domain tests and typecheck pass. No policy closure or PostgreSQL/browser/human acceptance is inferred.
+
 ## 1. Register rules
 
 - The canonical decision state and authority remain in `audit/100-percent/POLICY-CLOSURE-MATRIX.md`. The risk model and acceptance authority remain in `Documents/RISK-REGISTER.md`.

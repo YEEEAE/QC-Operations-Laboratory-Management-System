@@ -11,6 +11,5 @@ export interface NcrRepository {
     action: NcrAction;
     reason?: string;
     requestId: string;
-    conditions?: { rcaComplete: boolean; capaComplete: boolean; verificationComplete: boolean };
   }): Promise<Ncr>;
 }

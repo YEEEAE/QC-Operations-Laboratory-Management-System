@@ -12,7 +12,6 @@ export interface CapaRepository {
     action: CapaActionType;
     reason?: string;
     requestId: string;
-    conditions?: { verified: boolean; effectivenessAccepted: boolean };
   }): Promise<Capa>;
   close(i: {
     id: string;

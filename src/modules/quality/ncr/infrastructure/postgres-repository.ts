@@ -67,6 +67,11 @@ export class PostgresNcrRepository implements NcrRepository {
     return (await q.execute()).map((r) => this.map(r));
   }
   async transition(i: Parameters<NcrRepository['transition']>[0]) {
+    if ('conditions' in i) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    // This repository has no persisted prerequisite-verification contract.
+    // Do not let a direct caller bypass the application evidence boundary.
+    if (['MOVE_TO_CAPA', 'READY_FOR_CLOSURE', 'CLOSE'].includes(i.action))
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const next: Record<NcrAction, string> = {
       OPEN: 'OPEN',
       START_INVESTIGATION: 'UNDER_INVESTIGATION',

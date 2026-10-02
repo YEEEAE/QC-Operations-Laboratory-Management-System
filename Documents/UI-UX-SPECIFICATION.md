@@ -2988,6 +2988,20 @@ Change Requests
 Audit
 ```
 
+**Current version-page behavior (2026-10-02):** The route
+`/documents/[documentId]/versions/[versionId]` shows a *Recorded authorization*
+table when saved workflow decisions or direct document approval audit events
+exist for that exact version. Each row shows the actor's current account display
+name and stable ID, action, timestamp, and decision/audit reference. Workflow
+rows also show the subject version at decision and the assigned role
+requirement, clearly labelled as an assignment requirement rather than the
+actor's historical role. Only a matching stored electronic-signature row earns
+the label *Electronically signed* and its signature reference/meaning. An
+unsigned decision or direct approval audit event is labelled as a recorded
+action. No rows means no recorded authorization evidence in those sources;
+provider failure is a separate unavailable state. This is a read-only display,
+not an approval control or a facsimile of a handwritten signature.
+
 ---
 
 # 115. Version History

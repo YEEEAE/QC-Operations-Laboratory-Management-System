@@ -25,8 +25,10 @@ export class TransitionNcrUseCase {
     action: NcrAction;
     reason?: string;
     requestId: string;
-    conditions?: { rcaComplete: boolean; capaComplete: boolean; verificationComplete: boolean };
   }) {
+    // Prerequisite claims are not evidence. No approved persisted closure
+    // evidence reader exists yet; dependent transitions remain fail-closed.
+    if ('conditions' in i) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const n = await this.repo.get(i.id, i.actor);
     if (!n) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     authorize(
@@ -42,7 +44,7 @@ export class TransitionNcrUseCase {
       },
       { throwOnDeny: true },
     );
-    transitionNcr(n, i.action, this.now(), i.reason, i.conditions);
+    transitionNcr(n, i.action, this.now(), i.reason);
     return this.repo.transition(i);
   }
 }

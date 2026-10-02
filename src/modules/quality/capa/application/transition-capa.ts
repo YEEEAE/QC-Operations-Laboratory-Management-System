@@ -25,11 +25,13 @@ export class TransitionCapaUseCase {
     action: CapaActionType;
     reason?: string;
     requestId: string;
-    conditions?: { verified: boolean; effectivenessAccepted: boolean };
   }) {
+    // Effectiveness is a persisted controlled decision, never a caller flag.
+    // P-04 closure uses the separate CloseCapaUseCase ceremony.
+    if ('conditions' in i) throw new AppError('VALIDATION_FAILED', { userSafe: true });
     if (i.action === 'CLOSE') throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const c = await this.repo.get(i.id, i.actor);
-    if (!c) throw new Error('not found');
+    if (!c) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     authorize(
       {
         actor: i.actor,
@@ -43,7 +45,7 @@ export class TransitionCapaUseCase {
       },
       { throwOnDeny: true },
     );
-    transitionCapa(c, i.action, this.now(), i.reason, i.conditions);
+    transitionCapa(c, i.action, this.now(), i.reason);
     return this.repo.transition(i);
   }
 }

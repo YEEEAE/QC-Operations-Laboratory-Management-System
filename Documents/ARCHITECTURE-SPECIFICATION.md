@@ -1482,6 +1482,30 @@ UNCONFIRMED
 
 E-Signature عملية مستقلة عن الضغط على Approve.
 
+### Current document-version evidence projection — 2026-10-02
+
+The controlled document version page reads authorization evidence only after
+the document read use case has authorized the viewer. It projects saved
+`approval_decisions` for the exact `DOCUMENT_VERSION` ID, joined to the actor's
+account name and the assigned work item's role requirement. A linked
+`electronic_signatures` row is labelled **electronically signed** only when its
+actor, subject type/ID/version, and action match the saved decision. A decision
+without that matching row is labelled **decision recorded**, with its decision
+ID; it is not represented as a signature. Direct document approval transitions
+are shown from committed `audit_events` as **document transition recorded**,
+with the audit ID. A transition sharing the workflow decision request ID is
+deduplicated. Provider failure withholds the whole evidence section rather
+than displaying an empty result.
+
+`assigned_role_requirement` describes the approval step, not a historical
+snapshot of the actor's roles. The current projection does not establish a
+historical role claim. It also does not create a signature, alter authority,
+make an `APPROVED` version `EFFECTIVE`, or extend to other record pages. The
+source is `src/modules/approvals/application/document-approval-evidence.ts`
+and `src/pages/documents/[documentId]/versions/[versionId]/index.astro`.
+Scanned handwritten signatures are source images only and cannot be treated as
+an account-bound electronic approval or a signed policy decision.
+
 Flow:
 
 ```text

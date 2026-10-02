@@ -110,6 +110,10 @@ export class PostgresCapaRepository implements CapaRepository {
     );
   }
   async transition(i: Parameters<CapaRepository['transition']>[0]) {
+    if ('conditions' in i) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    // Evidence-dependent progression needs a persisted verification ceremony.
+    if (['ACTIONS_COMPLETE', 'READY_FOR_CLOSURE'].includes(i.action))
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     if (i.action === 'CLOSE') throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const next: Record<CapaActionType, string> = {
       OPEN: 'OPEN',
