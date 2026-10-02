@@ -7,7 +7,7 @@ import type { DocumentRepository } from '../ports/repository.js';
 export class UpdateVersionDraftUseCase {
   constructor(private readonly repository: DocumentRepository, private readonly now = () => new Date()) {}
 
-  async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; revision: string; changeSummary?: string; requestId: string }) {
+  async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; expectedContentHash: string; revision: string; changeSummary?: string; requestId: string }) {
     const version = await this.repository.getVersion(input.versionId);
     if (!version) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const document = await this.repository.getDocument(version.documentId);

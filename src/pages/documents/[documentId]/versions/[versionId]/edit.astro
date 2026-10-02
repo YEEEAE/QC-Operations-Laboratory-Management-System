@@ -17,25 +17,36 @@ if (!document || !version) return Astro.redirect('/404');
 const canEdit = version.state === 'DRAFT' && actor.permissions.some((permission) => permission.code === 'PERM-DOC-EDIT-DRAFT' && permission.active !== false);
 const submitted = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
 const values = { revision: String(submitted?.get('revision') ?? version.revision), changeSummary: String(submitted?.get('changeSummary') ?? version.changeSummary ?? '') };
+const submittedExpectedVersion = String(submitted?.get('expectedVersion') ?? version.version.toString());
+const submittedContentHash = String(submitted?.get('expectedContentHash') ?? version.contentHash ?? '');
 let failure: { summary: string; recovery: string; kind: 'validation'|'denied'|'unavailable'|'stale'|'unknown' } | undefined;
-if (submitted && canEdit) {
-  const result = await Astro.callAction(actions.documents.updateDraft, { versionId: version.id, expectedVersion: version.version, revision: values.revision, changeSummary: values.changeSummary || undefined });
-  if (result.data) return Astro.redirect(`/documents/${document.id}/versions/${version.id}`, 303);
-  const code = `${String(result.error?.code ?? '')} ${String(result.error?.message ?? '')}`.toUpperCase();
-  const kind = /AUTH|PERMISSION|FORBIDDEN/.test(code) ? 'denied'
-    : /STALE|CONFLICT/.test(code) ? 'stale'
-      : /VALIDATION|INVALID|REQUIRED/.test(code) ? 'validation'
-        : /UNAVAILABLE|INTERNAL|PROVIDER/.test(code) ? 'unavailable' : 'unknown';
-  failure = kind === 'denied' ? { kind, summary: 'The draft was not changed because permission is no longer available.', recovery: 'Return to the version and ask a document controller to review your access.' }
-    : kind === 'stale' ? { kind, summary: 'This draft changed after you opened it.', recovery: 'Reload the version to review the current draft before editing again.' }
-      : kind === 'validation' ? { kind, summary: 'The draft was not saved because a required value is invalid.', recovery: 'Correct the highlighted revision reference and try again.' }
-        : kind === 'unavailable' ? { kind, summary: 'The document service is temporarily unavailable.', recovery: 'Your entries remain here. Retry when the service is available.' }
-          : { kind, summary: 'The save result could not be confirmed.', recovery: 'Check the version history before trying again.' };
+if (submitted) {
+  try {
+    if (!/^[1-9]\d*$/.test(submittedExpectedVersion) || !/^[0-9a-f]{64}$/i.test(submittedContentHash)) {
+      failure = { kind: 'validation', summary: 'The draft was not saved because its opened version information is invalid.', recovery: 'Reload the version, then enter your changes again.' };
+    } else {
+      const result = await Astro.callAction(actions.documents.updateDraft, { versionId: version.id, expectedVersion: BigInt(submittedExpectedVersion), expectedContentHash: submittedContentHash, revision: values.revision, changeSummary: values.changeSummary || undefined });
+      if (result.data) return Astro.redirect(`/documents/${document.id}/versions/${version.id}`, 303);
+      const code = `${String(result.error?.code ?? '')} ${String(result.error?.message ?? '')}`.toUpperCase();
+      const kind = /AUTH|PERMISSION|FORBIDDEN/.test(code) ? 'denied'
+        : /STALE|CONFLICT/.test(code) ? 'stale'
+          : /VALIDATION|INVALID|REQUIRED/.test(code) ? 'validation'
+            : /UNAVAILABLE|INTERNAL|PROVIDER/.test(code) ? 'unavailable' : 'unknown';
+      failure = kind === 'denied' ? { kind, summary: 'The draft was not changed because permission is no longer available.', recovery: 'Return to the version and ask a document controller to review your access.' }
+        : kind === 'stale' ? { kind, summary: 'This draft changed after you opened it.', recovery: 'Reload the version to review the current draft before editing again.' }
+          : kind === 'validation' ? { kind, summary: 'The draft was not saved because a required value is invalid.', recovery: 'Correct the highlighted revision reference and try again.' }
+            : kind === 'unavailable' ? { kind, summary: 'The document service is temporarily unavailable.', recovery: 'Your entries remain here. Retry when the service is available.' }
+              : { kind, summary: 'The save result could not be confirmed.', recovery: 'Check the version history before trying again.' };
+    }
+  } catch {
+    failure = { kind: 'unknown', summary: 'The save result could not be confirmed.', recovery: 'Check the version history before trying again.' };
+  }
 }
 ---
 <AppLayout title={`Edit draft · ${document.documentNo}`} locale="en" direction="ltr">
   <section class="head"><div><p class="eyebrow">Edit draft</p><h1>Edit draft revision {version.revision}</h1><p>{document.documentNo} · Record version {version.version.toString()}</p></div><a href={`/documents/${document.id}/versions/${version.id}`}>Back to version</a></section>
-  {canEdit ? <form class="form" method="post" data-action="documents.updateDraft" data-document-id={document.id} data-version-id={version.id} data-expected-version={version.version.toString()}>
+  {canEdit || (submitted && failure) ? <form class="form" method="post" data-action="documents.updateDraft" data-document-id={document.id} data-version-id={version.id} data-expected-version={submittedExpectedVersion}>
+    <input type="hidden" name="expectedVersion" value={submittedExpectedVersion} /><input type="hidden" name="expectedContentHash" value={submittedContentHash} />
     {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.kind === 'validation' ? [{fieldId:'revision',message:'Enter the revision reference assigned by Document Control.'}] : []} listHref={`/documents/${document.id}/versions/${version.id}`} listLabel="version" />}
     <label for="revision">Revision reference<input id="revision" name="revision" value={values.revision} required aria-describedby={failure?.kind === 'validation' ? 'revision-help revision-error' : 'revision-help'} aria-invalid={failure?.kind === 'validation' ? 'true' : undefined} /></label>
     <p class="hint" id="revision-help">Changing the revision recalculates its source fingerprint on the server.</p>
@@ -46,7 +57,7 @@ if (submitted && canEdit) {
       <p class="hint">Server source fingerprint: {version.contentHash ?? 'Not available'}</p>
     </section>
     <p class="hint">Only draft metadata is editable. Source file links are fixed when this draft is created.</p>
-    <button type="submit" data-submit>Save draft</button><p data-result role="status" aria-live="polite" tabindex="-1"></p>
+    <button type="submit" data-submit disabled={!canEdit}>Save draft</button><p data-result role="status" aria-live="polite" tabindex="-1"></p>
   </form> : <section class="denied" role="alert"><h2>Draft editing unavailable</h2><p>Only draft versions are editable. Editing requires PERM-DOC-EDIT-DRAFT.</p></section>}
 </AppLayout>
 <script>
@@ -57,7 +68,7 @@ if (submitted && canEdit) {
   if(form){
     enhanceClassifiedForm(form,{
       invoke:(payload)=>actions.documents.updateDraft(payload as Parameters<typeof actions.documents.updateDraft>[0]),
-      payload:(data)=>({versionId:form.dataset.versionId!,expectedVersion:BigInt(form.dataset.expectedVersion!),revision:String(data.get('revision')),changeSummary:String(data.get('changeSummary')||'')||undefined}),
+      payload:(data)=>({versionId:form.dataset.versionId!,expectedVersion:BigInt(form.dataset.expectedVersion!),expectedContentHash:String(data.get('expectedContentHash') ?? ''),revision:String(data.get('revision')),changeSummary:String(data.get('changeSummary')||'')||undefined}),
       progressText:'Saving draft…',
       detailBaseHref:`/documents/${form.dataset.documentId}/versions`,
     });

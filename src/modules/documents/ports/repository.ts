@@ -23,7 +23,7 @@ export interface DocumentRepository {
   getVersion(id: string): Promise<DocumentVersion | undefined>;
   /** Returns exact stored creation order: created_at DESC, then id DESC. */
   listVersions(documentId: string): Promise<readonly DocumentVersion[]>;
-  updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion>;
+  updateDraft(input: { id: string; expectedVersion: bigint; expectedContentHash: string; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion>;
   recordReview(input: { id: string; expectedVersion: bigint; actor: ActorContext; now: Date; requestId: string }): Promise<DocumentVersion>;
   transition(input: { id: string; expectedVersion: bigint; actor: ActorContext; action: DocumentVersionAction; toState: DocumentVersion['state']; reason?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion>;
   supersede(input: { currentId: string; currentExpectedVersion: bigint; replacementId: string; replacementExpectedVersion: bigint; actor: ActorContext; effectiveAt: Date; requestId: string }): Promise<{ current: DocumentVersion; replacement: DocumentVersion }>;

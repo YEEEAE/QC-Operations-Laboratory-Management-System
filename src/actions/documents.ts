@@ -97,7 +97,8 @@ const updateDraft = defineAction({
   accept: 'json',
   input: z.object({
     versionId: id,
-    expectedVersion: version,
+    expectedVersion: version.positive(),
+    expectedContentHash: z.string().regex(/^[0-9a-f]{64}$/i),
     revision: z.string().trim().min(1),
     changeSummary: z.string().optional(),
   }),

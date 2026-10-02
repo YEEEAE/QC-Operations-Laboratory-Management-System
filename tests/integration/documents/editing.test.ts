@@ -38,7 +38,7 @@ function repository(): DocumentRepository & { documents: DocumentIdentity[]; ver
     async listVersions(documentId) { return state.versions.filter((item) => item.documentId === documentId).sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime() || right.id.localeCompare(left.id)); },
     async updateDraft(input) {
       const current = state.versions.find((item) => item.id === input.id);
-      if (!current || current.version !== input.expectedVersion || current.state !== 'DRAFT') throw new Error('stale or immutable');
+      if (!current || current.version !== input.expectedVersion || current.contentHash !== input.expectedContentHash || current.state !== 'DRAFT') throw new Error('stale or immutable');
       const updated = { ...current, revision: input.revision, changeSummary: input.changeSummary, sourceBindingVerified: true, contentHash: documentContentDigest({ documentId: current.documentId, revision: input.revision, files: current.files }), version: current.version + 1n, updatedAt: input.now };
       state.versions.splice(state.versions.indexOf(current), 1, updated);
       return updated;
@@ -60,7 +60,7 @@ describe('controlled document draft editing', () => {
     const document = await new CreateDocumentUseCase(repo, () => new Date('2026-01-01T00:00:00Z')).execute({ actor: author, documentNo: 'WI-001', documentType: 'WI', title: 'Sampling work instruction', requestId: 'req-1' });
     const draft = await new CreateVersionUseCase(repo, () => new Date('2026-01-01T00:00:00Z')).execute({ actor: author, documentId: document.id, revision: '1', changeSummary: 'Initial draft', fileIds: [sourceFileId], expectedDocumentVersion: document.version, expectedPredecessor: null, requestId: 'req-2' });
     expect(draft.documentId).toBe(document.id);
-    const edited = await new UpdateVersionDraftUseCase(repo, () => new Date('2026-01-02T00:00:00Z')).execute({ actor: author, versionId: draft.id, expectedVersion: 1n, revision: '1', changeSummary: 'Clarified scope', requestId: 'req-3' });
+    const edited = await new UpdateVersionDraftUseCase(repo, () => new Date('2026-01-02T00:00:00Z')).execute({ actor: author, versionId: draft.id, expectedVersion: 1n, expectedContentHash: draft.contentHash!, revision: '1', changeSummary: 'Clarified scope', requestId: 'req-3' });
     expect(edited.version).toBe(2n);
     expect(edited.state).toBe('DRAFT');
   });
@@ -70,7 +70,22 @@ describe('controlled document draft editing', () => {
     const document = await new CreateDocumentUseCase(repo).execute({ actor: author, documentNo: 'WI-002', documentType: 'WI', title: 'Approved instruction', requestId: 'req-4' });
     const draft = await new CreateVersionUseCase(repo).execute({ actor: author, documentId: document.id, revision: '1', fileIds: [sourceFileId], expectedDocumentVersion: document.version, expectedPredecessor: null, requestId: 'req-5' });
     await repo.transition({ id: draft.id, expectedVersion: 1n, actor: author, toState: 'APPROVED', action: 'APPROVE', now: new Date('2026-01-03T00:00:00Z'), requestId: 'req-6' });
-    await expect(new UpdateVersionDraftUseCase(repo).execute({ actor: author, versionId: draft.id, expectedVersion: 2n, revision: '2', requestId: 'req-7' })).rejects.toThrow();
+    await expect(new UpdateVersionDraftUseCase(repo).execute({ actor: author, versionId: draft.id, expectedVersion: 2n, expectedContentHash: draft.contentHash!, revision: '2', requestId: 'req-7' })).rejects.toThrow();
+  });
+
+  it('rejects a second edit based on the same opened version and content hash without overwriting the first draft', async () => {
+    const repo = repository();
+    const document = await new CreateDocumentUseCase(repo).execute({ actor: author, documentNo: 'WI-007', documentType: 'WI', title: 'Concurrent draft fixture', requestId: 'req-20' });
+    const draft = await new CreateVersionUseCase(repo).execute({ actor: author, documentId: document.id, revision: '1', fileIds: [sourceFileId], expectedDocumentVersion: document.version, expectedPredecessor: null, requestId: 'req-21' });
+    const opened = { expectedVersion: draft.version, expectedContentHash: draft.contentHash! };
+    const useCase = new UpdateVersionDraftUseCase(repo);
+
+    const accepted = await useCase.execute({ actor: author, versionId: draft.id, ...opened, revision: '1A', changeSummary: 'First author update', requestId: 'req-22' });
+    await expect(useCase.execute({ actor: author, versionId: draft.id, ...opened, revision: '1B', changeSummary: 'Second author update', requestId: 'req-23' })).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    await expect(useCase.execute({ actor: author, versionId: draft.id, expectedVersion: accepted.version, expectedContentHash: opened.expectedContentHash, revision: '1C', requestId: 'req-24' })).rejects.toThrow('stale or immutable');
+
+    expect(repo.versions).toEqual([accepted]);
+    expect(accepted).toMatchObject({ revision: '1A', changeSummary: 'First author update', version: 2n });
   });
 
   it('selects the newest returned version and does not fall back to an older approved predecessor', async () => {

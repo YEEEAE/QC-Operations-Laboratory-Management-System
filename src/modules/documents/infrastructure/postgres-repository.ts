@@ -219,17 +219,17 @@ export class PostgresDocumentRepository implements DocumentRepository {
     return Promise.all(rows.map(async (row) => versionMap(row, await this.listVersionFiles(this.database, row.id))));
   }
 
-  async updateDraft(input: { id: string; expectedVersion: bigint; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion> {
+  async updateDraft(input: { id: string; expectedVersion: bigint; expectedContentHash: string; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion> {
     try {
       return await this.database.transaction().execute(async (tx) => {
-        const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).where('state', '=', 'DRAFT').forUpdate().executeTakeFirst();
+        const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).where('content_hash', '=', input.expectedContentHash).where('state', '=', 'DRAFT').forUpdate().executeTakeFirst();
         if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const files = await this.listVersionFiles(tx, input.id, true);
         const contentHash = documentContentDigest({ documentId: old.document_id, revision: input.revision, files });
-        const row = await tx.updateTable('document_versions').set({ revision: input.revision.trim(), change_summary: input.changeSummary?.trim() || null, content_hash: contentHash, source_binding_verified: true, version: input.expectedVersion + 1n }).where('id', '=', input.id).where('version', '=', input.expectedVersion).where('state', '=', 'DRAFT').returningAll().executeTakeFirst();
+        const row = await tx.updateTable('document_versions').set({ revision: input.revision.trim(), change_summary: input.changeSummary?.trim() || null, content_hash: contentHash, source_binding_verified: true, version: input.expectedVersion + 1n }).where('id', '=', input.id).where('version', '=', input.expectedVersion).where('content_hash', '=', input.expectedContentHash).where('state', '=', 'DRAFT').returningAll().executeTakeFirst();
         if (!row) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: 'EDIT_DOCUMENT_DRAFT', oldState: 'DRAFT', newState: 'DRAFT', requestId: input.requestId, payload: { revision: input.revision.trim(), contentHash } });
-        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_DRAFT_UPDATED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { revision: input.revision.trim(), contentHash }, dedupeKey: `document-version-draft-updated:${input.id}:v${input.expectedVersion + 1n}` });
+        await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: 'EDIT_DOCUMENT_DRAFT', oldState: 'DRAFT', newState: 'DRAFT', reason: input.changeSummary?.trim() || undefined, requestId: input.requestId, payload: { expectedVersion: input.expectedVersion.toString(), version: (input.expectedVersion + 1n).toString(), expectedContentHash: input.expectedContentHash, revision: input.revision.trim(), contentHash } });
+        await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_DRAFT_UPDATED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { version: (input.expectedVersion + 1n).toString(), revision: input.revision.trim(), contentHash }, dedupeKey: `document-version-draft-updated:${input.id}:v${input.expectedVersion + 1n}` });
         return versionMap(row, files);
       });
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
