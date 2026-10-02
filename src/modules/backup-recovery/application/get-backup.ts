@@ -9,12 +9,14 @@ import {
   type RestoreVerificationStatus,
 } from '../domain/backup-record.js';
 import type { BackupCatalogRepository } from '../ports/repository.js';
+import { backupEligibilityVersion } from '../domain/backup-eligibility.js';
 
 export interface BackupDetail {
   backup: BackupRun;
   restoreRuns: readonly RestoreRun[];
   restoreVerification: RestoreVerificationStatus;
   restorable: boolean;
+  eligibilityVersion: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export class GetBackupUseCase {
       restoreRuns,
       restoreVerification: restoreVerificationStatus(restoreRuns),
       restorable: isRestorableBackup(backup),
+      eligibilityVersion: backupEligibilityVersion(backup),
     };
   }
 }

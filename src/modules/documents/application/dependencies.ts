@@ -36,7 +36,7 @@ export function documentsActionDependencies() {
     updateDraft: new UpdateVersionDraftUseCase(repository),
     submit: new SubmitVersionUseCase(repository),
     review: new ReviewVersionUseCase(repository),
-    approve: new ApproveVersionUseCase(repository),
+    approve: new ApproveVersionUseCase(),
     supersede: new SupersedeVersionUseCase(repository),
     void: new VoidVersionUseCase(repository),
   };

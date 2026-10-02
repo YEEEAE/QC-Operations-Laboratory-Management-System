@@ -19,7 +19,7 @@ try {
 if (!detail) return Astro.redirect('/404');
 const { backup, restoreRuns, restoreVerification, restorable } = detail;
 const catalogCheckedAt = new Date();
-const canRequestDrill = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-RESTORE-DRILL');
+const canRequestDrill = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-BKP-RESTORE-DRILL' && permission.scopes.includes('GLOBAL'));
 const restoreLabel =
   restoreVerification === 'VERIFIED'
     ? 'RESTORE VERIFIED'

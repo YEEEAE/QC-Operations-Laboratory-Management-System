@@ -1,0 +1,70 @@
+{
+  "taskId": "QC-POST-100-035",
+  "sourceFingerprintReference": ".ci-results/run-context.json",
+  "results": [
+    {
+      "command": "node scripts/verification/run-vitest-evidence.mjs unit -- vitest run tests/integration/system/restore-authorization.test.ts tests/unit/backup-recovery/restore-form-contract.test.ts tests/unit/ui/qc-adp-13-copy-contract.test.ts tests/unit/ui/ux-writing-contract.test.ts",
+      "exit": 0,
+      "result": "PASS",
+      "counts": {"passed": 39, "failed": 0, "skipped": 0},
+      "candidateEnvelope": ".ci-results/unit.json"
+    },
+    {
+      "command": "node scripts/verification/run-vitest-evidence.mjs integration -- vitest run tests/integration/system/backup-restore-atomicity-postgres.test.ts",
+      "exit": 1,
+      "result": "BLOCKED",
+      "counts": {"passed": 0, "failed": 0, "skipped": 8},
+      "reason": "Could not find a working container runtime strategy; failure occurred before database setup. Skips are not passes.",
+      "candidateEnvelope": ".ci-results/integration.json"
+    },
+    {
+      "command": "pnpm exec prettier --check <task TypeScript files>",
+      "exit": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm exec eslint <task TypeScript files>",
+      "exit": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "pnpm db:migrate:check",
+      "exit": 0,
+      "result": "PASS",
+      "sourceMigrationCount": 45,
+      "appliedDatabaseLedger": "NOT VERIFIED; no PostgreSQL connection was used"
+    },
+    {
+      "command": "pnpm test:architecture",
+      "exit": 1,
+      "result": "FAIL / unrelated source offender",
+      "details": "Existing delivery-domain import in src/pages/laboratory/tests/[labTestId]/execute.astro:265; that path is not part of this task diff."
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "result": "PASS",
+      "counts": {"errors": 0, "warnings": 0, "hints": 114}
+    },
+    {
+      "command": "pnpm build",
+      "exit": 0,
+      "result": "PASS",
+      "artifact": "dist/server/entry.mjs",
+      "sha256": "ed8b8f2ef6174e65c7fa2f72572fcbf44d04dcfd80f5144971a16da84253c6bb",
+      "releaseIdentity": "rel-9a65e6c60e89574a",
+      "candidateEnvelope": ".ci-results/build.json"
+    },
+    {
+      "command": "Authenticated browser/no-JS/AT/UAT/provider restore",
+      "result": "NOT RUN",
+      "reason": "No authenticated PostgreSQL-backed fixture/runtime was available; no provider action was authorized or performed."
+    }
+  ],
+  "evidenceLimit": "No production or disposable PostgreSQL database writes, production restore, deployment, or human/provider acceptance occurred."
+}

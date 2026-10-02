@@ -7,6 +7,7 @@ import { backupCatalogReadDependencies } from '../../../../modules/backup-recove
 import { isUuid } from '../../../../shared/id/uuid.js';
 import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
+import { uuidv7 } from '../../../../shared/id/uuid.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
@@ -20,11 +21,10 @@ try {
   return Astro.redirect('/404');
 }
 if (!detail) return Astro.redirect('/404');
-const { backup, restoreVerification, restorable } = detail;
+const { backup, restoreVerification, restorable, eligibilityVersion } = detail;
 const catalogCheckedAt = new Date();
-const permission = (code: string) => actor.permissions.some((item) => item.active !== false && item.code === code);
-const canRequestDrill = permission('PERM-BKP-RESTORE-DRILL');
-const canRequestProduction = permission('PERM-BKP-RESTORE-PRODUCTION');
+const canRequestDrill = actor.permissions.some((item) => item.active !== false && item.code === 'PERM-BKP-RESTORE-DRILL' && item.scopes.includes('GLOBAL'));
+const canRequestProduction = actor.permissions.some((item) => item.active !== false && item.code === 'PERM-BKP-RESTORE-PRODUCTION' && item.scopes.includes('GLOBAL'));
 const riyadh = (date: Date) => date.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
 const verificationLabel =
   restoreVerification === 'VERIFIED'
@@ -35,7 +35,7 @@ const verificationLabel =
         ? 'RESTORE VERIFYING'
         : 'RESTORE NOT VERIFIED';
 const productionBlocked = true; // Production restore authority/e-signature (RD-020, BKP-DD-014/016) unresolved: DENY.
-let values = { restoreType: 'DRILL', targetEnvironment: 'test', reason: '' };
+let values = { restoreType: 'DRILL', targetEnvironment: 'test', reason: '', idempotencyKey: uuidv7() };
 let failure: FormFailure | null = null;
 
 // No-JavaScript baseline: submit the same server Action and preserve entered
@@ -46,6 +46,7 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
     restoreType: field(formData, 'restoreType') || 'DRILL',
     targetEnvironment: field(formData, 'targetEnvironment') || 'test',
     reason: field(formData, 'reason'),
+    idempotencyKey: field(formData, 'idempotencyKey'),
   };
   try {
     if (field(formData, 'confirmRestore') !== 'on') throw new Error('validation failed');
@@ -54,6 +55,8 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
       restoreType: values.restoreType as 'DRILL' | 'PRODUCTION',
       targetEnvironment: values.targetEnvironment as 'local' | 'test' | 'staging' | 'production',
       reason: values.reason,
+      expectedVersion: field(formData, 'expectedVersion'),
+      idempotencyKey: values.idempotencyKey,
       confirmRestore: true,
     });
     if (!result.error) return Astro.redirect(`/system/backups/${backupId}`, 303);
@@ -89,6 +92,8 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
   {restorable && !canRequestDrill && !canRequestProduction && <section class="denied" role="alert"><h2>Restore request unavailable</h2><p>Your account lacks an explicit restore permission. Role alone is not authorization, and Admin is not an automatic restore authority.</p></section>}
   {restorable && (canRequestDrill || canRequestProduction) && (
     <form class="decision" method="post" data-backup-id={backup.id}>
+      <input type="hidden" name="expectedVersion" value={eligibilityVersion} />
+      <input type="hidden" name="idempotencyKey" value={values.idempotencyKey} />
       {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery ?? ''} errors={[]} listHref={`/system/backups/${backup.id}`} listLabel="backup details" />}
       <label for="restoreType">Restore type
         <select id="restoreType" name="restoreType">
@@ -150,6 +155,8 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
           restoreType: String(data.get('restoreType') ?? 'DRILL') as 'DRILL' | 'PRODUCTION',
           targetEnvironment: String(data.get('targetEnvironment') ?? 'test') as 'local' | 'test' | 'staging' | 'production',
           reason: String(data.get('reason') ?? ''),
+          expectedVersion: String(data.get('expectedVersion') ?? ''),
+          idempotencyKey: String(data.get('idempotencyKey') ?? ''),
           confirmRestore: true,
         }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>;
       },

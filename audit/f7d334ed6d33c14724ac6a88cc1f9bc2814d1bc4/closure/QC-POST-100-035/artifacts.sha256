@@ -1,0 +1,7 @@
+1a5d6c1b9f2c75a5dd6ba5166acc89a5506dc0a9dd18b726a05e9b9f8e32afcd  candidate.json
+a9fce0ee8a40dc92583eb8535f4f001e53eda3129b8636c2b127a63dc1e35de9  scope-db-auth-manifest.json
+c4191e08751518abe2230fabe79336e3d2296f92c8a5dc8d6b73c7cfb9d9654d  criteria.json
+0974d7bb35a6aa09d93b7d43ef021f343aec9545a66654bd8c548199eaf805ee  commands-and-results.json
+ac3e20838e4ebfbfabf0838cfebda50bc741fd3962531a9f5eae8a4bfaafb6be  handoff.md
+
+# This manifest hashes the five evidence files listed above; it intentionally does not self-hash.

@@ -287,7 +287,7 @@ describe('P-05 authority matrix', () => {
     ).resolves.toMatchObject({ state: 'VOID' });
   });
 
-  it('document approval and VOID preserve P-05 authority', async () => {
+  it('document approval stays blocked without its approved source; VOID preserves P-05 authority', async () => {
     const sourceFile: any = {
       id: 'doc-file-link-1',
       fileId: 'file-1',
@@ -333,21 +333,21 @@ describe('P-05 authority matrix', () => {
       },
     };
     await expect(
-      new ApproveVersionUseCase(repo).execute({
+      new ApproveVersionUseCase().execute({
         actor: ADMIN_ONLY,
         versionId: version.id,
         expectedVersion: 2n,
         requestId: 'req-doc-admin',
       }),
-    ).rejects.toMatchObject({ code: expect.stringMatching(/AUTHZ|DOMAIN/) });
+    ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
     await expect(
-      new ApproveVersionUseCase(repo).execute({
+      new ApproveVersionUseCase().execute({
         actor: SUPERVISOR,
         versionId: version.id,
         expectedVersion: 2n,
         requestId: 'req-doc-sup',
       }),
-    ).resolves.toMatchObject({ state: 'APPROVED' });
+    ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
     await expect(
       new VoidVersionUseCase(repo).execute({
         actor: EMPLOYEE,

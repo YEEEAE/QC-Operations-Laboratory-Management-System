@@ -5,6 +5,7 @@ import { uuidv7 } from '../../../shared/id/uuid.js';
 import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { createRestoreRequest, type RestoreRun } from '../domain/backup-record.js';
+import { backupEligibilityVersion } from '../domain/backup-eligibility.js';
 import type { BackupCatalogRepository } from '../ports/repository.js';
 import {
   validateRestoreRequest,
@@ -37,6 +38,8 @@ export class RequestRestoreUseCase {
     targetEnvironment: string;
     reason: string;
     confirmation: boolean;
+    expectedVersion: string;
+    idempotencyKey: string;
     requestId: string;
   }): Promise<{
     restore: RestoreRun;
@@ -44,7 +47,6 @@ export class RequestRestoreUseCase {
   }> {
     const backup = await this.repository.getBackup(input.backupId);
     if (!backup) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-
     const validated = validateRestoreRequest({
       backupRun: backup,
       restoreType: input.restoreType,
@@ -77,6 +79,8 @@ export class RequestRestoreUseCase {
       },
       { throwOnDeny: true },
     );
+    if (backupEligibilityVersion(backup) !== input.expectedVersion)
+      throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
 
     const restore = createRestoreRequest({
       id: uuidv7(),
@@ -87,13 +91,15 @@ export class RequestRestoreUseCase {
       confirmation: input.confirmation,
       requestedBy: input.actor.id,
       now: this.now(),
-      requestId: input.requestId,
+      requestId: input.idempotencyKey,
     });
     const persisted = await this.repository.recordRestoreRequest({
       restore,
       actor: input.actor,
       requestId: input.requestId,
+      idempotencyKey: input.idempotencyKey,
       reason: validated.reason,
+      expectedVersion: input.expectedVersion,
       requestFingerprint: createHash('sha256')
         .update(
           stableJson({
@@ -102,6 +108,7 @@ export class RequestRestoreUseCase {
             restoreType: validated.restoreType,
             targetEnvironment: validated.targetEnvironment,
             reason: validated.reason,
+            expectedVersion: input.expectedVersion,
           }),
         )
         .digest('hex'),

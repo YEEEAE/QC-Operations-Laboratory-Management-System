@@ -113,7 +113,8 @@ describe('F-12 English-only action vocabulary', () => {
     const versionReview = readRepo(
       'src/pages/documents/[documentId]/versions/[versionId]/review.astro',
     );
-    expect(versionReview).toContain('Approve revision');
+    expect(versionReview).not.toContain('Approve revision');
+    expect(versionReview).toContain('an approver name alone is not a signature');
     const receivingDetail = readRepo('src/pages/quarantine/receiving/[receivingId].astro');
     expect(receivingDetail).toContain('Release item');
     expect(receivingDetail).toContain('PASS is recorded, but this item is not released');

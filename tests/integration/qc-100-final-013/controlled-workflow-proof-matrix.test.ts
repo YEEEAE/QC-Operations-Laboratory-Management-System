@@ -565,7 +565,7 @@ describe('QC-100-FINAL-013 · inspection approval and QMS consequence on populat
 });
 
 describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on populated PostgreSQL', () => {
-  it('[normal] approves a populated document version through the P-05 authority path', async () => {
+  it('[document] keeps a populated document version in review until approval and signature policy are approved', async () => {
     const documentId = crypto.randomUUID();
     const versionId = crypto.randomUUID();
     const repository = new PostgresDocumentRepository(
@@ -619,20 +619,22 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       now: new Date(),
       requestId: 'proof-document-submit',
     });
-    await new ApproveVersionUseCase(repository).execute({
-      actor: documentApprover(),
-      versionId,
-      expectedVersion: 2n,
-      requestId: 'proof-document-approve',
-    });
+    await expect(
+      new ApproveVersionUseCase().execute({
+        actor: documentApprover(),
+        versionId,
+        expectedVersion: 2n,
+        requestId: 'proof-document-approve',
+      }),
+    ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
     const row = (
       await pool!.query(
         'SELECT state, version, approved_by FROM qc.document_versions WHERE id = $1',
         [versionId],
       )
     ).rows[0];
-    expect(row).toMatchObject({ state: 'APPROVED', approved_by: SUPERVISOR_ID, version: '3' });
-    expect(await auditCount(versionId, 'APPROVE')).toBe(1);
+    expect(row).toMatchObject({ state: 'IN_REVIEW', approved_by: null, version: '2' });
+    expect(await auditCountByRequest('proof-document-approve')).toBe(0);
   });
 
   it('[wrong-role] denies document approval for an Admin-only actor', async () => {
@@ -688,13 +690,13 @@ describe('QC-100-FINAL-013 · controlled documents, signatures and tamper on pop
       requestId: 'proof-document-submit-admin',
     });
     await expect(
-      new ApproveVersionUseCase(repository).execute({
+      new ApproveVersionUseCase().execute({
         actor: adminOnly(),
         versionId,
         expectedVersion: 2n,
         requestId: 'proof-document-approve-admin',
       }),
-    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
     const row = (
       await pool!.query('SELECT state, version FROM qc.document_versions WHERE id = $1', [
         versionId,

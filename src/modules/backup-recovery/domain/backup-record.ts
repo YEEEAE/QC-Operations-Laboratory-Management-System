@@ -57,6 +57,8 @@ export interface BackupRun {
   sizeBytes?: bigint;
   /** Safe availability projection; the checksum value never leaves infrastructure. */
   hasChecksum: boolean;
+  /** Opaque checksum-derived token used only when deriving expectedVersion; never render. */
+  checksumVersionDigest?: string;
   artifactType?: 'LOGICAL_EXPORT';
   objectVersion?: string;
   gitSha?: string;

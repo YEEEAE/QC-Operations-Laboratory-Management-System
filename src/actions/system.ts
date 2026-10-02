@@ -44,6 +44,8 @@ const requestRestore = defineAction({
     restoreType: z.enum(['DRILL', 'PRODUCTION']),
     targetEnvironment: z.enum(['local', 'test', 'staging', 'production']),
     reason: z.string().trim().min(1).max(2000),
+    expectedVersion: z.string().regex(/^[a-f0-9]{64}$/i),
+    idempotencyKey: z.string().uuid(),
     confirmRestore: z.literal(true),
   }),
   handler: (input, context) =>
@@ -56,6 +58,8 @@ const requestRestore = defineAction({
           targetEnvironment: input.targetEnvironment,
           reason: input.reason,
           confirmation: input.confirmRestore,
+          expectedVersion: input.expectedVersion,
+          idempotencyKey: input.idempotencyKey,
           requestId: requestId(context),
         });
       return {

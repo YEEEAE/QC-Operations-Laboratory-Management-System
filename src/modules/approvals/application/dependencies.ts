@@ -34,14 +34,13 @@ function transitionDependencies() {
     decisions: ['APPROVE'],
     execute: async (input) => {
       if (input.action !== 'APPROVE') return blocked();
-      const result = await documents.approve.execute({
+      return documents.approve.execute({
         actor: input.actor,
         versionId: input.subjectId,
         expectedVersion: input.expectedVersion,
         requestId: input.requestId,
         transaction: input.transaction,
       });
-      return { subjectId: result.id, version: result.version, state: result.state };
     },
   };
   const labTransition: SubjectTransition = {

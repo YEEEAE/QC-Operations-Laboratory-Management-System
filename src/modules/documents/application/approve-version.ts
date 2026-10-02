@@ -1,26 +1,15 @@
 import { AppError } from '../../../shared/errors/app-error.js';
-import { authorizeDocument } from './authorization.js';
-import { assertApprovalEvidence, type DocumentVersion } from '../domain/document-version.js';
-import { transitionDocumentVersion } from '../domain/document-state.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
-import type { DocumentRepository } from '../ports/repository.js';
-import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
 
 export class ApproveVersionUseCase {
-  constructor(private readonly repository: DocumentRepository, private readonly now = () => new Date()) {}
-
-  async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; requestId: string; transaction?: DatabaseTransaction }) {
-    const version = await this.repository.getVersion(input.versionId);
-    if (!version) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    if (!isP05Authority(input.actor)) throw new AppError('AUTHZ_DENIED', { userSafe: true });
-    const document = await this.repository.getDocument(version.documentId);
-    if (!document) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-    authorizeDocument({ actor: input.actor, permission: 'PERM-DOC-APPROVE', action: 'APPROVE', document, state: version.state, version, expectedVersion: input.expectedVersion });
-    authorizeDocument({ actor: input.actor, permission: 'PERM-APR-APPROVE', action: 'APPROVE', document, state: version.state, version, expectedVersion: input.expectedVersion });
-    assertApprovalEvidence(version);
-    const next = transitionDocumentVersion(version as DocumentVersion, 'APPROVE', this.now());
-    const { transaction, ...transition } = input;
-    return this.repository.transition({ ...transition, id: version.id, action: 'APPROVE', toState: next.state, now: next.updatedAt ?? this.now() }, transaction);
+  async execute(input: { actor: ActorContext; versionId: string; expectedVersion: bigint; requestId: string; transaction?: DatabaseTransaction }): Promise<never> {
+    // RD-019 / PD-32 have no approved source defining document approval authority
+    // and its version-bound signature ceremony. Permission grants alone cannot
+    // stand in for that authority or an electronic signature.
+    throw new AppError('POLICY_SOURCE_REQUIRED', {
+      userSafe: true,
+      safeMetadata: { requestId: input.requestId },
+    });
   }
 }

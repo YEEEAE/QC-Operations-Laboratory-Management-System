@@ -8,6 +8,7 @@ import type {
 } from '../../../src/modules/backup-recovery/domain/backup-record.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
+import { backupEligibilityVersion } from '../../../src/modules/backup-recovery/domain/backup-eligibility.js';
 
 const requesterId = '01900000-0000-7000-8000-000000000501';
 const backupId = '01900000-0000-7000-8000-000000000502';
@@ -59,11 +60,10 @@ function catalog(
       return recorded.filter((item) => item.backupRunId === backupRunId);
     },
     async recordRestoreRequest(input) {
-      const key = `${input.restore.backupRunId}:${input.restore.requestId}`;
+      const key = `${input.restore.backupRunId}:${input.idempotencyKey}`;
       const replay = recorded.find(
         (item) =>
-          item.requestId === input.restore.requestId &&
-          item.backupRunId === input.restore.backupRunId,
+          item.requestId === input.idempotencyKey && item.backupRunId === input.restore.backupRunId,
       );
       if (replay) {
         if (fingerprints.get(key) !== input.requestFingerprint)
@@ -84,9 +84,22 @@ const drillInput = {
   targetEnvironment: 'test',
   reason: 'Isolated restore drill after schema change.',
   confirmation: true,
+  expectedVersion: backupEligibilityVersion(backup('VERIFIED')),
+  idempotencyKey: requestId,
 };
 
 describe('restore request authorization boundary', () => {
+  it('changes the expected snapshot version when backup eligibility or checksum identity changes', () => {
+    const original = backup('VERIFIED');
+    expect(backupEligibilityVersion({ ...original })).toBe(backupEligibilityVersion(original));
+    expect(backupEligibilityVersion({ ...original, checksumVersionDigest: 'changed' })).not.toBe(
+      backupEligibilityVersion(original),
+    );
+    expect(backupEligibilityVersion({ ...original, state: 'EXPIRED' })).not.toBe(
+      backupEligibilityVersion(original),
+    );
+  });
+
   it('records a planned drill restore for an actor holding the explicit drill restore permission', async () => {
     const repository = catalog([backup('VERIFIED')]);
     const result = await new RequestRestoreUseCase(repository).execute({
@@ -115,10 +128,27 @@ describe('restore request authorization boundary', () => {
     expect(repository.insertCount).toBe(0);
   });
 
+  it('rejects a stale backup snapshot after authorization and before persistence', async () => {
+    const repository = catalog([backup('VERIFIED')]);
+    await expect(
+      new RequestRestoreUseCase(repository).execute({
+        actor: actor(['PERM-BKP-RESTORE-DRILL']),
+        ...drillInput,
+        expectedVersion: '0'.repeat(64),
+        requestId,
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
+    expect(repository.insertCount).toBe(0);
+  });
+
   it('denies an Admin whose role does not carry the explicit restore permission', async () => {
     const repository = catalog([backup('VERIFIED')]);
     await expect(
-      new RequestRestoreUseCase(repository).execute({ actor: actor([]), ...drillInput, requestId }),
+      new RequestRestoreUseCase(repository).execute({
+        actor: actor([]),
+        ...drillInput,
+        requestId,
+      }),
     ).rejects.toThrowError(AppError);
     expect(repository.insertCount).toBe(0);
   });
@@ -214,12 +244,12 @@ describe('restore request authorization boundary', () => {
     const first = await useCase.execute({
       actor: actor(['PERM-BKP-VIEW', 'PERM-BKP-RESTORE-DRILL']),
       ...drillInput,
-      requestId,
+      requestId: 'http-correlation-first',
     });
     const second = await useCase.execute({
       actor: actor(['PERM-BKP-VIEW', 'PERM-BKP-RESTORE-DRILL']),
       ...drillInput,
-      requestId,
+      requestId: 'http-correlation-retry',
     });
     expect(second.restore.id).toBe(first.restore.id);
     expect(repository.insertCount).toBe(1);

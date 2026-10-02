@@ -669,7 +669,7 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
     expect(await countOutbox(`lab:${testId}:v3`)).toBe(1);
   });
 
-  it('executes exactly one of two concurrent document version approvals via the row lock barrier', async () => {
+  it('rejects both concurrent document approvals without an approved authority and signature source', async () => {
     const documentId = '01900000-0000-7000-8000-00000000b030';
     const versionId = '01900000-0000-7000-8000-00000000b031';
     const repository = new PostgresDocumentRepository(
@@ -723,7 +723,7 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       now: new Date(),
       requestId: 'cm-doc-submit',
     });
-    const useCase = new ApproveVersionUseCase(repository);
+    const useCase = new ApproveVersionUseCase();
 
     const outcomes = await Promise.allSettled([
       useCase.execute({
@@ -740,21 +740,22 @@ describe('Tier-1 controlled mutations under real PostgreSQL concurrency', () => 
       }),
     ]);
 
-    expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
-    expect(
-      outcomes.map(rejectedCode).filter((code) => code === 'CONFLICT_STALE_VERSION'),
-    ).toHaveLength(1);
+    expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(0);
+    expect(outcomes.map(rejectedCode)).toEqual([
+      'POLICY_SOURCE_REQUIRED',
+      'POLICY_SOURCE_REQUIRED',
+    ]);
     const row = (
       await pool!.query(
         'SELECT state, version, approved_by FROM qc.document_versions WHERE id = $1',
         [versionId],
       )
     ).rows[0];
-    expect(row.state).toBe('APPROVED');
-    expect(Number(row.version)).toBe(3);
-    expect(row.approved_by).toBe(APPROVER_ID);
-    expect(await countAudit(versionId, 'APPROVE')).toBe(1);
-    expect(await countOutbox(`document-version:${versionId}:v3`)).toBe(1);
+    expect(row.state).toBe('IN_REVIEW');
+    expect(Number(row.version)).toBe(2);
+    expect(row.approved_by).toBeNull();
+    expect(await countAudit(versionId, 'APPROVE')).toBe(0);
+    expect(await countOutbox(`document-version:${versionId}:v3`)).toBe(0);
   });
 
   it('serializes concurrent new revisions and commits only one draft with its audit/outbox', async () => {

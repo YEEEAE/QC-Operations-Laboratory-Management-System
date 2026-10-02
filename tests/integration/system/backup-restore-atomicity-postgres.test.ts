@@ -8,6 +8,7 @@ import { PostgresAuditRepository } from '../../../src/shared/audit/postgres-audi
 import { PostgresOutboxRepository } from '../../../src/shared/outbox/postgres-outbox-repository.js';
 import { RequestRestoreUseCase } from '../../../src/modules/backup-recovery/application/request-restore.js';
 import { GetBackupUseCase } from '../../../src/modules/backup-recovery/application/get-backup.js';
+import { backupEligibilityVersion } from '../../../src/modules/backup-recovery/domain/backup-eligibility.js';
 import { PostgresBackupCatalogRepository } from '../../../src/modules/backup-recovery/infrastructure/postgres-repository.js';
 import { migrate } from '../../../scripts/db/migrate.js';
 import { startPostgresContainer, stopPostgresContainer } from '../../helpers/postgres-container.js';
@@ -88,11 +89,19 @@ describe('restore intent PostgreSQL transaction', () => {
     );
   }
 
-  function request(
+  async function request(
     backupId: string,
     restoreRepository: PostgresBackupCatalogRepository,
-    input: { requestId?: string; reason?: string; restoreType?: 'DRILL' | 'PRODUCTION' } = {},
+    input: {
+      requestId?: string;
+      reason?: string;
+      restoreType?: 'DRILL' | 'PRODUCTION';
+      expectedVersion?: string;
+    } = {},
   ) {
+    const backup = await restoreRepository.getBackup(backupId);
+    if (!backup) throw new Error('Restore test backup was not found');
+    const idempotencyKey = input.requestId ?? `restore-${uuidv7()}`;
     return new RequestRestoreUseCase(restoreRepository).execute({
       actor: operator(
         input.restoreType === 'PRODUCTION'
@@ -104,7 +113,9 @@ describe('restore intent PostgreSQL transaction', () => {
       targetEnvironment: input.restoreType === 'PRODUCTION' ? 'production' : 'test',
       reason: input.reason ?? 'Approved isolated recovery drill after a schema change.',
       confirmation: true,
-      requestId: input.requestId ?? `restore-${uuidv7()}`,
+      expectedVersion: input.expectedVersion ?? backupEligibilityVersion(backup),
+      idempotencyKey,
+      requestId: idempotencyKey,
     });
   }
 
@@ -138,6 +149,9 @@ describe('restore intent PostgreSQL transaction', () => {
       }),
     ).resolves.toMatchObject({ backup: { id: backupId } });
     const before = await counts(backupId);
+    const currentBackup = await restoreRepository().getBackup(backupId);
+    expect(currentBackup).toBeDefined();
+    const deniedRequestId = `denied-${uuidv7()}`;
     await expect(
       new RequestRestoreUseCase(restoreRepository()).execute({
         actor: operator('PERM-BKP-VIEW'),
@@ -146,9 +160,20 @@ describe('restore intent PostgreSQL transaction', () => {
         targetEnvironment: 'test',
         reason: 'Not authorized for a restore drill.',
         confirmation: true,
-        requestId: `denied-${uuidv7()}`,
+        expectedVersion: backupEligibilityVersion(currentBackup!),
+        idempotencyKey: deniedRequestId,
+        requestId: deniedRequestId,
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    expect(await counts(backupId)).toEqual(before);
+  });
+
+  it('rejects a stale backup eligibility snapshot without writing intent, audit, or outbox rows', async () => {
+    const backupId = await seedBackup();
+    const before = await counts(backupId);
+    await expect(
+      request(backupId, restoreRepository(), { expectedVersion: '0'.repeat(64) }),
+    ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
     expect(await counts(backupId)).toEqual(before);
   });
 
@@ -205,10 +230,20 @@ describe('restore intent PostgreSQL transaction', () => {
       outbox: before.outbox + 1,
     });
     const event = await pool!.query(
-      `SELECT reason FROM qc.audit_events WHERE subject_id = $1 AND request_id = $2`,
+      `SELECT reason, payload->>'restoreRunId' AS restore_run_id,
+              payload->>'idempotencyKey' AS idempotency_key,
+              payload->>'expectedBackupVersion' AS expected_backup_version
+       FROM qc.audit_events WHERE subject_id = $1 AND request_id = $2`,
       [backupId, requestId],
     );
-    expect(event.rows[0].reason).toBe(reason);
+    const currentBackup = await restoreRepository().getBackup(backupId);
+    expect(currentBackup).toBeDefined();
+    expect(event.rows[0]).toMatchObject({
+      reason,
+      restore_run_id: first.restore.id,
+      idempotency_key: requestId,
+      expected_backup_version: backupEligibilityVersion(currentBackup!),
+    });
   });
 
   it('serializes concurrent retries and never executes a production restore request', async () => {

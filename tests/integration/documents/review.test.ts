@@ -46,11 +46,10 @@ describe('controlled document review and approval', () => {
     expect(reviewed.approvedAt).toBeUndefined();
   });
 
-  it('requires both document approval and shared approval permission plus SoD', async () => {
+  it('denies approval even when permissions exist until authority and signature policy is approved', async () => {
     const repo = repository({ ...draft(), state: 'IN_REVIEW', version: 3n });
-    await expect(new ApproveVersionUseCase(repo).execute({ actor: makeActor(authorId, reviewer.permissions), versionId: draft().id, expectedVersion: 3n, requestId: 'req-12' })).rejects.toThrow();
-    const approved = await new ApproveVersionUseCase(repo).execute({ actor: reviewer, versionId: draft().id, expectedVersion: 3n, requestId: 'req-13' });
-    expect(approved.state).toBe('APPROVED');
+    await expect(new ApproveVersionUseCase().execute({ actor: reviewer, versionId: draft().id, expectedVersion: 3n, requestId: 'req-12' })).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
+    expect((await repo.getVersion(draft().id))?.state).toBe('IN_REVIEW');
   });
 
   it('retains the old version when a policy-approved supersession occurs', async () => {

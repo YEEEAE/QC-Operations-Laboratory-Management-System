@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Kysely, Transaction } from 'kysely';
 import type { DatabaseRow, DatabaseSchema } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
@@ -6,6 +7,8 @@ import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditRepository } from '../../../shared/audit/audit-repository.js';
 import type { OutboxRepository } from '../../../shared/outbox/outbox-repository.js';
 import { isUuid } from '../../../shared/id/uuid.js';
+import { backupEligibilityVersion } from '../domain/backup-eligibility.js';
+import { isRestorableBackup } from '../domain/backup-record.js';
 import type {
   BackupRun,
   BackupRunState,
@@ -30,6 +33,10 @@ const mapBackup = (row: DatabaseRow<'backup_runs'>): BackupRun => ({
   ...(row.completed_at ? { completedAt: row.completed_at } : {}),
   ...(row.size_bytes !== null ? { sizeBytes: BigInt(row.size_bytes) } : {}),
   hasChecksum: typeof row.checksum === 'string' && /^[0-9a-f]{64}$/i.test(row.checksum),
+  checksumVersionDigest:
+    typeof row.checksum === 'string'
+      ? createHash('sha256').update(row.checksum, 'utf8').digest('hex')
+      : undefined,
   ...(row.database_schema_version ? { databaseSchemaVersion: row.database_schema_version } : {}),
   ...(row.artifact_type === 'LOGICAL_EXPORT' ? { artifactType: 'LOGICAL_EXPORT' as const } : {}),
   ...(row.object_version ? { objectVersion: row.object_version } : {}),
@@ -157,7 +164,9 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
     restore: RestoreRun;
     actor: ActorContext;
     requestId: string;
+    idempotencyKey: string;
     reason: string;
+    expectedVersion: string;
     requestFingerprint: string;
   }): Promise<RestoreRun> {
     const auditForTransaction = this.auditForTransaction;
@@ -169,16 +178,19 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
         const restore = input.restore;
         const backup = await tx
           .selectFrom('backup_runs')
-          .select(['id', 'state'])
+          .selectAll()
           .where('id', '=', restore.backupRunId)
           .forUpdate()
           .executeTakeFirst();
         if (!backup) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
-        if (backup.state !== 'CREATED' && backup.state !== 'VERIFIED')
+        const currentBackup = mapBackup(backup);
+        if (!isRestorableBackup(currentBackup))
           throw new AppError('DOMAIN_INVALID_TRANSITION', {
             userSafe: true,
             safeMetadata: { reason: 'BACKUP_NOT_RESTORABLE' },
           });
+        if (backupEligibilityVersion(currentBackup) !== input.expectedVersion)
+          throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
 
         const inserted = await tx
           .insertInto('restore_runs')
@@ -200,9 +212,10 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
               orchestrationStatus: 'NOT_AVAILABLE',
               restoreExecuted: false,
               operatorReason: input.reason,
+              expectedBackupVersion: input.expectedVersion,
               requestFingerprint: input.requestFingerprint,
             }),
-            request_id: restore.requestId,
+            request_id: input.idempotencyKey,
           })
           .onConflict((conflict) => conflict.columns(['backup_run_id', 'request_id']).doNothing())
           .returningAll()
@@ -213,7 +226,7 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
             .selectFrom('restore_runs')
             .selectAll()
             .where('backup_run_id', '=', restore.backupRunId)
-            .where('request_id', '=', restore.requestId)
+            .where('request_id', '=', input.idempotencyKey)
             .forUpdate()
             .executeTakeFirst();
           if (!existing) throw new AppError('SYSTEM_INTERNAL', { userSafe: false });
@@ -244,6 +257,9 @@ export class PostgresBackupCatalogRepository implements BackupCatalogRepository 
           reason: input.reason,
           requestId: input.requestId,
           payload: {
+            restoreRunId: restore.id,
+            idempotencyKey: input.idempotencyKey,
+            expectedBackupVersion: input.expectedVersion,
             restoreType: restore.restoreType,
             targetEnvironment: restore.targetEnvironment,
           },

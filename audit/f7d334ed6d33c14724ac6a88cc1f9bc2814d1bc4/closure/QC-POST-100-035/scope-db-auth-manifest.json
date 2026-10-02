@@ -1,0 +1,49 @@
+{
+  "taskId": "QC-POST-100-035",
+  "sourceSchema": {
+    "head": "0045_provider_attestation_nonce_replay_guard.sql",
+    "relevantMigrations": [
+      "0014_backup_recovery_metadata.sql",
+      "0044_restore_request_idempotency.sql"
+    ],
+    "migrationRequired": false,
+    "reason": "Expected version is a stable snapshot token over the existing backup record; restore idempotency uses the existing unique (backup_run_id, request_id) index. No production or local schema migration was applied."
+  },
+  "databaseObjects": {
+    "read": ["qc.backup_runs", "qc.restore_runs"],
+    "write": ["qc.restore_runs", "qc.audit_events", "qc.outbox_events"],
+    "transaction": "Lock backup_runs row FOR UPDATE; recheck eligibility and expected snapshot; insert one PLANNED restore_runs row, append audit, enqueue outbox in the same transaction. Matching idempotency replay returns existing row without paired writes; changed fingerprint denies."
+  },
+  "authorization": {
+    "routeVisibility": "AUTHENTICATED; separate from mutation authority",
+    "drillPermission": "PERM-BKP-RESTORE-DRILL with GLOBAL scope; checked server-side in RequestRestoreUseCase",
+    "productionPermission": "PERM-BKP-RESTORE-PRODUCTION remains denied by unresolved RD-020 policy, even if the grant is supplied",
+    "ui": "Only shows request entry when the explicit restore grant is active and has GLOBAL scope; UI is not the security boundary."
+  },
+  "authoritySources": [
+    {
+      "path": "Documents/PERMISSION-MATRIX.md",
+      "section": "§76–78",
+      "contract": "Restore drill is an explicit permission (Admin matrix ALLOW); production restore remains DENY UNTIL APPROVED (RD-020)."
+    },
+    {
+      "path": "src/shared/authorization/policy-registry.ts",
+      "contract": "PERM-BKP-RESTORE-DRILL and PERM-BKP-RESTORE-PRODUCTION apply to REQUEST_RESTORE on BACKUP_RESTORE only in CREATED/VERIFIED state."
+    },
+    {
+      "path": "src/modules/backup-recovery/application/validate-restore-request.ts",
+      "contract": "Production restore policy is false/default-deny; drill cannot target production; eligible states come from the existing backup-record domain rule."
+    },
+    {
+      "path": "Documents/BACKUP-RECOVERY-PLAN.md",
+      "decisions": ["RD-020", "BKP-DD-014", "BKP-DD-016"],
+      "contract": "Production restore authority/signature remains unresolved and deny-by-default."
+    }
+  ],
+  "idempotency": {
+    "keySource": "One UUID key rendered in the request form and reused by native POST and JavaScript enhancement",
+    "databaseConstraint": "uq_restore_runs__backup_run_request_id",
+    "semantics": "Same backup/key/fingerprint is one intent; changed reason/target/type/version with the same key is CONFLICT_DUPLICATE_COMMAND. Separate form intents have separate keys."
+  },
+  "securityBoundary": "Restore request records PLANNED only; no provider executor, file overwrite, database overwrite, or restore-completion claim is reachable from GET or POST."
+}
