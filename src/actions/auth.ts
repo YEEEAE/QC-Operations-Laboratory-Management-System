@@ -62,7 +62,12 @@ const login = defineAction({
           'login rate limit exceeded',
         );
         recordCounter('qc_rate_limit_denials_total', 1, { outcome: 'throttled' });
-        throw new ActionError({ code: 'TOO_MANY_REQUESTS', message: 'AUTH_RATE_LIMITED' });
+        throw new ActionError({
+          code: 'TOO_MANY_REQUESTS',
+          // Carry only the server-computed wait duration to the rendered
+          // native form result. Never accept a client-supplied throttle value.
+          message: `AUTH_RATE_LIMITED:${Math.max(1, decision.retryAfterSeconds)}`,
+        });
       }
       const deps = identityDependencies();
       const result = await new LoginUseCase(

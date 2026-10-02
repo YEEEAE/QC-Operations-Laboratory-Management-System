@@ -8,7 +8,10 @@ import QCLogin3DBackground from '../ui/components/QCLogin3DBackground.astro';
 const returnTo = safeReturnTo(Astro.url.searchParams.get('returnTo'));
 const actionResult = Astro.getActionResult(actions.login);
 if (actionResult?.data?.ok) return Astro.redirect(safeReturnTo(actionResult.data.redirectTo), 303);
-const error = Astro.url.searchParams.get('error') ?? actionResult?.error?.message;
+const actionError = actionResult?.error?.message;
+const throttledMatch = actionError?.match(/^AUTH_RATE_LIMITED:(\d{1,6})$/);
+const retryAfterSeconds = throttledMatch ? Number(throttledMatch[1]) : undefined;
+const error = Astro.url.searchParams.get('error') ?? actionError;
 const sessionNotice = sessionRecoveryNotice(Astro.url.searchParams.get('session'));
 // F-12: English-only product interface. The locale query parameter is
 // ignored so the page always renders English with lang="en" dir="ltr".
@@ -18,6 +21,7 @@ const copy = {
   description: 'Secure operational access',
   error: 'Sign-in could not be completed. Check your credentials and try again.',
   throttled: 'Too many sign-in attempts. Please try again later.',
+  throttledFor: (seconds: number) => `Too many sign-in attempts. Try again in about ${seconds} seconds.`,
   unavailable: 'Sign-in is temporarily unavailable. Please try again shortly.',
   identity: 'Login identity',
   password: 'Password',
@@ -31,7 +35,7 @@ const copy = {
       <h1 id="login-title">{copy.title}</h1>
       <p>{copy.description}</p>
       {sessionNotice && <p id="session-recovery" role="status">{sessionRecoveryCopy(sessionNotice)}</p>}
-      {error && <p id="form-error" role="alert">{error === 'AUTH_RATE_LIMITED' ? copy.throttled : error === 'AUTH_RATE_LIMIT_STORE_UNAVAILABLE' ? copy.unavailable : copy.error}</p>}
+      {error && <p id="form-error" role="alert">{retryAfterSeconds ? copy.throttledFor(retryAfterSeconds) : error.startsWith('AUTH_RATE_LIMITED') ? copy.throttled : error === 'AUTH_RATE_LIMIT_STORE_UNAVAILABLE' ? copy.unavailable : copy.error}</p>}
       <form class="login-form" method="POST" action={actions.login} aria-describedby={error ? 'form-error' : undefined}>
         <input type="hidden" name="returnTo" value={returnTo} />
         <label for="loginIdentity">{copy.identity}</label>
@@ -41,11 +45,30 @@ const copy = {
           <input id="password" name="password" type="password" autocomplete="current-password" required />
           <button type="button" data-password-toggle aria-pressed="false" aria-controls="password" aria-label="Show password">Show</button>
         </div>
-        <button type="submit">{copy.submit}</button>
+        <button type="submit" data-login-submit>{copy.submit}</button>
+        <p data-login-pending role="status" aria-live="polite" hidden>Signing in… Keep this page open while we check your access.</p>
       </form>
       <script>
         const toggle = document.querySelector<HTMLButtonElement>('[data-password-toggle]');
         const input = document.getElementById('password') as HTMLInputElement | null;
+        const form = document.querySelector<HTMLFormElement>('.login-form');
+        const submit = form?.querySelector<HTMLButtonElement>('[data-login-submit]');
+        const pending = form?.querySelector<HTMLElement>('[data-login-pending]');
+        let submitting = false;
+        form?.addEventListener('submit', (event) => {
+          if (submitting) {
+            event.preventDefault();
+            return;
+          }
+          // Keep the browser's native POST/navigation as the transport. This
+          // only guards repeated enhanced submits and leaves no-JS intact.
+          submitting = true;
+          if (submit) {
+            submit.disabled = true;
+            submit.textContent = 'Signing in…';
+          }
+          if (pending) pending.hidden = false;
+        });
         toggle?.addEventListener('click', () => {
           if (!input || !toggle) return;
           const show = input.type === 'password';

@@ -11059,7 +11059,7 @@
         "QC-ADP26-34"
       ],
       "closure": "OPEN",
-      "currentEvidence": "User correction authoritative; no current login pending implementation; present defect documented without declaring attempted implementation.",
+      "currentEvidence": "Source updated on the current working candidate; login Action returns only server-computed retryAfterSeconds in its throttled form result. Final local build PASS; focused identity/safe-return unit tests 8/8 PASS; final-artifact login Playwright 4/4 PASS for invalid-action handling, rejected credentials, pending/double-submit guard, and no-JS native form semantics. True rate-limit/retry flow, slow-network transport, expired-session browser case, password-manager, manual AT and UAT remain NOT VERIFIED. Candidate source fingerprint and artifact identity are recorded in the generated .ci-results/build.json; handoff: audit/2026-10-02/handoff-QC-ADP26-34.md.",
       "previousChecklist": 42.9,
       "currentChecklist": 42.9
     },
@@ -11889,8 +11889,8 @@
     },
     "QC-ADP26-34": {
       "id": "QC-ADP26-34",
-      "state": "NOT STARTED",
-      "assessment": "User correction authoritative; no current login pending implementation; present defect documented without declaring attempted implementation.",
+      "state": "PARTIAL",
+      "assessment": "Native POST retained; pending/double-submit status and server-derived retry duration are implemented. Build and focused source tests pass. Browser, true throttling, no-JS, expired-session, assistive-technology, password-manager and human acceptance are not fully verified.",
       "runtime": "NOT VERIFIED",
       "AT": "NOT VERIFIED",
       "UAT": "NOT VERIFIED"
@@ -15536,6 +15536,11 @@
         "QC-POST-100-001",
         "QC-POST-100-002"
       ],
+      "state": "PARTIAL",
+      "assessment": "Pending and double-submit guard plus server-derived throttle retry display implemented. Native POST/session recovery/safeReturnTo retained. Local browser acceptance, no-JS, rate-limit, expired-session, password-manager, keyboard, AT and UAT evidence remain incomplete.",
+      "runtime": "NOT VERIFIED",
+      "AT": "NOT VERIFIED",
+      "UAT": "NOT VERIFIED",
       "currentScore": 46.3,
       "target": 100,
       "gap": 53.7
