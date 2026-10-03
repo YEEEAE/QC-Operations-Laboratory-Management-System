@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import { actions } from 'astro:actions';
 import { changeRequestsReadDependencies } from '../../../modules/change-requests/application/dependencies.js';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
 import { isUuid } from '../../../shared/id/uuid.js';
@@ -14,35 +15,51 @@ if (!aggregate) return Astro.redirect('/404');
 const { changeRequest, changes } = aggregate;
 const permission = (code: string) => actor.permissions.some((item) => item.active !== false && item.code === code);
 const canStartReview = changeRequest.state === 'SUBMITTED' && permission('PERM-CHG-REVIEW') && permission('PERM-APR-REVIEW');
-const canDecide = changeRequest.state === 'UNDER_REVIEW' && permission('PERM-CHG-APPROVE') && permission('PERM-APR-APPROVE');
-const canReturn = changeRequest.state === 'UNDER_REVIEW' && permission('PERM-CHG-RETURN') && permission('PERM-APR-RETURN');
-const canReject = changeRequest.state === 'UNDER_REVIEW' && permission('PERM-CHG-REJECT') && permission('PERM-APR-REJECT');
+let reviewPostFailure = false;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const postedVersion = form.get('expectedVersion');
+  if (
+    canStartReview &&
+    form.get('action') === 'START_REVIEW' &&
+    typeof postedVersion === 'string' &&
+    /^[1-9]\d*$/.test(postedVersion)
+  ) {
+    try {
+      const result = await Astro.callAction(actions.changeRequests.transition, {
+        id,
+        action: 'START_REVIEW',
+        expectedVersion: BigInt(postedVersion),
+      });
+      if (result.data) return Astro.redirect(`/change-requests/${id}`, 303);
+    } catch {
+      // Keep the operator on this page; never imply an unconfirmed mutation succeeded.
+    }
+  }
+  reviewPostFailure = true;
+}
 const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, item) => typeof item === 'bigint' ? item.toString() : item); } catch { return '[unavailable]'; } };
 ---
 <AppLayout title={`Review ${changeRequest.changeNo} · QC Operations`} locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Change request review</p><h1>Review {changeRequest.changeNo}</h1><p class="lede">Version {changeRequest.version.toString()} · target version {changeRequest.targetVersion.toString()}</p></div><a href={`/change-requests/${changeRequest.id}`}>Back to record</a></section>
   <section class="notice" role="note"><strong>Controlled decision boundary</strong><span>Approval records a decision against this request version. It does not silently edit the target record or mean RELEASED.</span></section>
   <section class="panel"><h2>Proposed changes</h2><p>{changeRequest.reason}</p><ul>{changes.map((change) => <li><strong>{change.fieldPath}</strong>: <code>{stringify(change.currentValue)}</code> to <code>{stringify(change.proposedValue)}</code></li>)}</ul></section>
-  {canStartReview && <form class="decision" data-action="start-review" data-change-request-id={changeRequest.id} data-change-request-version={changeRequest.version.toString()}><input type="hidden" name="action" value="START_REVIEW" /><button type="submit" data-submit>Start review</button><p class="action-status" data-result role="status" tabindex="-1"></p></form>}
-  {(canDecide || canReturn || canReject) && <form class="decision" data-action="decision" data-change-request-id={changeRequest.id} data-change-request-version={changeRequest.version.toString()}><label for="reason">Decision reason (required to return or reject)<textarea id="reason" name="reason" rows="3"></textarea></label><div class="actions">{canReturn && <button type="submit" data-action-value="RETURN">Return</button>}{canReject && <button type="submit" data-action-value="REJECT">Reject</button>}{canDecide && <button type="submit" data-action-value="APPROVE">Approve change request</button>}</div><p class="muted">The system checks permission, scope, SoD, state, and version again before accepting your decision.</p><p class="action-status" data-result role="status" tabindex="-1"></p></form>}
-  {!canStartReview && !canDecide && !canReturn && !canReject && <section class="denied" role="alert"><h2>Review unavailable</h2><p>Review requires the relevant change-request and approval permissions. The request must also be in a state that allows the action.</p></section>}
+  {canStartReview && <form class="decision" method="post" data-action="start-review" data-change-request-id={changeRequest.id} data-change-request-version={changeRequest.version.toString()}><input type="hidden" name="action" value="START_REVIEW" /><input type="hidden" name="expectedVersion" value={changeRequest.version.toString()} /><button type="submit" data-submit>Start review</button><p class="action-status" data-result role="status" tabindex="-1"></p></form>}
+  {reviewPostFailure && <p class="action-status" role="alert">The review could not be started. The request may have changed or authorization may have changed; refresh and check the current state.</p>}
+  {!canStartReview && <section class="denied" role="note"><h2>Decision unavailable</h2><p>Only an assigned, authorized review step can move this request forward. Return, rejection, and approval are not available through this direct route; they require the controlled approval workflow and an applicable approved signature policy.</p></section>}
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
-  const validTransitions = ['SUBMIT', 'START_REVIEW', 'RETURN', 'RESUME', 'APPROVE', 'REJECT', 'CANCEL'] as const;
-  type ChangeRequestTransition = (typeof validTransitions)[number];
-  const isTransition = (value: string): value is ChangeRequestTransition => (validTransitions as readonly string[]).includes(value);
-  const transition = async (form: HTMLFormElement, action: ChangeRequestTransition, reason: string) => {
+  const transition = async (form: HTMLFormElement) => {
     if (form.getAttribute('aria-busy') === 'true') return;
-    // Per-form status region: this page has two decision forms, and an operator
-    // must hear the progress/failure of the one they submitted.
+    // Keep progress and recovery feedback scoped to this review action.
     const output = form.querySelector<HTMLElement>('[data-result]');
     const submit = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
     form.setAttribute('aria-busy', 'true');
     if (submit) submit.disabled = true;
-    if (output) output.textContent = 'Applying the controlled decision…';
+    if (output) output.textContent = 'Starting the controlled review…';
     try {
-      const result = await actions.changeRequests.transition({ id: String(form.dataset.changeRequestId), action, expectedVersion: BigInt(form.dataset.changeRequestVersion ?? '0'), reason: reason || undefined });
+      const result = await actions.changeRequests.transition({ id: String(form.dataset.changeRequestId), action: 'START_REVIEW', expectedVersion: BigInt(form.dataset.changeRequestVersion ?? '0') });
       if (result.data) { window.location.href = `/change-requests/${result.data.changeRequest.id}`; return; }
       if (output) { output.textContent = 'The decision was not applied. The request may have changed or authorization may have changed — refresh and try again if permitted.'; output.focus?.(); }
     } catch {
@@ -50,9 +67,6 @@ const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, i
     } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   };
   const startForm = document.querySelector<HTMLFormElement>('[data-action="start-review"]');
-  const decisionForm = document.querySelector<HTMLFormElement>('[data-action="decision"]');
-  const run = async (form: HTMLFormElement, action: string) => { if (!isTransition(action)) return; await transition(form, action, String(new FormData(form).get('reason') ?? '')); };
-  if (startForm) { if (!startForm.querySelector('[data-submit]')) startForm.querySelector('button[type="submit"]')?.setAttribute('data-submit',''); startForm.setAttribute('method','post'); startForm.addEventListener('submit', (event) => { event.preventDefault(); void run(startForm, 'START_REVIEW'); }); }
-  if (decisionForm) { decisionForm.setAttribute('method','post'); decisionForm.addEventListener('submit', (event) => { event.preventDefault(); const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null; void run(decisionForm, submitter?.dataset.actionValue ?? ''); }); }
+  if (startForm) { if (!startForm.querySelector('[data-submit]')) startForm.querySelector('button[type="submit"]')?.setAttribute('data-submit',''); startForm.addEventListener('submit', (event) => { event.preventDefault(); void transition(startForm); }); }
 </script>
 <style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.page-head a{color:var(--color-accent-primary-hover)}.notice,.panel,.decision,.denied{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}.notice{display:grid;gap:.35rem;border-inline-start:3px solid var(--status-warning)}.notice span{color:var(--text-muted);font-size:.85rem}.panel h2,.denied h2{margin-top:0;font-size:1rem}.panel li{margin:.6rem 0}.action-status{margin:0 0 var(--space-3);color:var(--text-secondary);font-size:.85rem;min-height:1.25rem}.decision{display:grid;gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}textarea{width:100%;padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.actions button,.decision>button{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font:inherit;font-weight:700}.actions button:first-child{background:transparent;color:var(--color-accent-primary-hover)}.denied{border-inline-start:3px solid var(--status-warning)}code{overflow-wrap:anywhere}@media(max-width:650px){.page-head{display:grid}.actions{display:grid}}</style>

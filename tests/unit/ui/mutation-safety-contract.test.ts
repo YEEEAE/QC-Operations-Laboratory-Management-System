@@ -49,7 +49,6 @@ const uiFiles = walk('src/ui').filter((path) => /\.(astro|ts)$/.test(path));
  * The register can only shrink.
  */
 const NO_JS_BASELINE_OPEN = [
-  'src/pages/change-requests/[changeRequestId]/review.astro',
   'src/pages/documents/[documentId]/versions/[versionId]/index.astro',
   'src/pages/laboratory/tests/[labTestId]/execute.astro',
   'src/pages/quality/capa/[capaId].astro',
@@ -189,6 +188,20 @@ describe('control surfaces and the JavaScript-only gap register', () => {
       (page) => read(page).includes('data-submit') && !hasPostBaseline(read(page)),
     );
     expect(withoutBaseline).toEqual(NO_JS_BASELINE_OPEN);
+  });
+
+  it('keeps change-request review on a native POST and out of the direct decision path', () => {
+    const route = read('src/pages/change-requests/[changeRequestId]/review.astro');
+    const useCase = read('src/modules/change-requests/application/transition-change-request.ts');
+    expect(route).toContain('<form class="decision" method="post"');
+    expect(route).toContain('name="expectedVersion"');
+    expect(route).toContain("form.get('action') === 'START_REVIEW'");
+    expect(route).toContain("action: 'START_REVIEW'");
+    expect(route).not.toContain('action-value="APPROVE"');
+    expect(route).not.toContain('action-value="REJECT"');
+    expect(route).not.toContain('action-value="RETURN"');
+    expect(useCase).toContain("['RETURN', 'APPROVE', 'REJECT'].includes(input.action)");
+    expect(useCase).toContain('&& !input.transaction');
   });
 
   it('keeps document revision creation on a server POST path with recoverable errors', () => {

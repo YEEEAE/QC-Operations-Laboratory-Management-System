@@ -12,6 +12,7 @@ import { TransitionChangeRequestUseCase } from '../../../src/modules/change-requ
 import type { ChangeRequestRepository } from '../../../src/modules/change-requests/ports/repository.js';
 import type { ChangeRequestAggregate } from '../../../src/modules/change-requests/ports/repository.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
+import type { DatabaseTransaction } from '../../../src/shared/database/transaction.js';
 
 const requesterId = '01900000-0000-7000-8000-000000000101';
 const reviewerId = '01900000-0000-7000-8000-000000000102';
@@ -55,9 +56,11 @@ const approver = actor(
   [
     'PERM-CHG-VIEW',
     'PERM-CHG-APPROVE',
+    'PERM-CHG-RETURN',
     'PERM-CHG-REJECT',
     'PERM-APR-VIEW-ASSIGNED',
     'PERM-APR-APPROVE',
+    'PERM-APR-RETURN',
     'PERM-APR-REJECT',
   ],
   ['GLOBAL'],
@@ -235,6 +238,7 @@ describe('change requests', () => {
         action: 'APPROVE',
         expectedVersion: 3n,
         requestId: 'approve-self',
+        transaction: {} as DatabaseTransaction,
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_SOD_VIOLATION' });
     await expect(
@@ -244,6 +248,7 @@ describe('change requests', () => {
         action: 'APPROVE',
         expectedVersion: 2n,
         requestId: 'approve-stale',
+        transaction: {} as DatabaseTransaction,
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
     const approved = await useCase.execute({
@@ -252,9 +257,37 @@ describe('change requests', () => {
       action: 'APPROVE',
       expectedVersion: 3n,
       requestId: 'approve-1',
+      transaction: {} as DatabaseTransaction,
     });
     expect(approved.changeRequest.state).toBe('APPROVED');
     expect(approved.changeRequest.targetVersion).toBe(4n);
+  });
+
+  it('requires the enclosing approval transaction for return, approve, and reject decisions', async () => {
+    const submitted = transitionChangeRequest(draft().changeRequest, {
+      action: 'SUBMIT',
+      now,
+    });
+    const underReview = transitionChangeRequest(submitted, {
+      action: 'START_REVIEW',
+      now,
+    });
+    for (const action of ['RETURN', 'APPROVE', 'REJECT'] as const) {
+      const repo = repository({ ...draft(), changeRequest: underReview });
+      const useCase = new TransitionChangeRequestUseCase(repo, { now: () => now });
+      await expect(
+        useCase.execute({
+          actor: approver,
+          id: requestId,
+          action,
+          expectedVersion: underReview.version,
+          reason: 'A direct decision must not bypass approval policy.',
+          requestId: `direct-${action.toLowerCase()}`,
+        }),
+      ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+      expect(repo.current.changeRequest.state).toBe('UNDER_REVIEW');
+      expect(repo.current.changeRequest.version).toBe(underReview.version);
+    }
   });
 
   it('does not allow a user to apply an approved request or choose an arbitrary final state', async () => {

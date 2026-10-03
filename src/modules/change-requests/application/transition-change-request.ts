@@ -24,6 +24,11 @@ export class TransitionChangeRequestUseCase {
     transaction?: DatabaseTransaction;
   }) {
     assertUserChangeRequestAction(input.action);
+    // Final review decisions must enter through DecideApprovalUseCase, which
+    // supplies the shared transaction after resolving signature applicability.
+    // The browser-facing transition action cannot supply a transaction.
+    if (['RETURN', 'APPROVE', 'REJECT'].includes(input.action) && !input.transaction)
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
     const aggregate = await this.repository.get({ id: input.id, actor: input.actor });
     if (!aggregate) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     const replay = await this.repository.findTransitionByRequestId({
