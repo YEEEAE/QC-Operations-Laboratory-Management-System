@@ -1,0 +1,6 @@
+QC System WI / SOP Pack — D0.2 — DRAFT FOR REVIEW
+
+SOPs: 30 PDF procedures. WIs: 68 editable Word instructions.
+References: start with Policy_and_Method_Decision_Book.pdf, Official_Physical_Records_Basis.pdf and Operational_Records.docx (20 blank continuation records).
+All 28 decision topics now have written proposals. Real technical adoption, missing manuals/clauses and actual signatures remain required as specified in the decision book. Original company records are official physical-use sources confirmed by the owner.
+Original_Company_Forms.zip preserves all 84 originals. Authoring_Sources.zip contains current Markdown and previous D0.1 sources.
