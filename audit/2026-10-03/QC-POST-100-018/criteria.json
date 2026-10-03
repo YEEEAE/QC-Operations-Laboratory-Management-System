@@ -1,0 +1,47 @@
+{
+  "taskId": "QC-POST-100-018",
+  "candidate": "39b76be4395811d653d23cc27e8e15496b6260de",
+  "criteria": [
+    {
+      "id": "AC-01",
+      "criterion": "Every rendered copy occurrence has before/after text, an eligible word-count baseline, and a disposition; eligible explanatory copy is at least 50% shorter or has an explicit approved exception.",
+      "result": "NOT_VERIFIED",
+      "reason": "No frozen rendered product-copy baseline or all-state occurrence inventory was found. Prompt-pack snapshots are not product-copy baselines.",
+      "measuredEligibleWordReduction": null
+    },
+    {
+      "id": "AC-02",
+      "criterion": "No scientific/control meaning is changed, no mandatory warning is lost, and no assurance is invented; PASS is distinct from RELEASED; unknown writes and P-04 effectiveness limits remain explicit.",
+      "result": "PARTIAL",
+      "evidence": [
+        "Documents/COPY-GLOSSARY.md",
+        "Documents/UX-WRITING-GUIDE.md",
+        "tests/unit/ui/ux-writing-contract.test.ts",
+        "audit/2026-10-03/QC-POST-100-018-reconciliation.md"
+      ],
+      "reason": "Core source vocabulary/contracts are present; no exhaustive candidate-bound rendered comparison was performed."
+    },
+    {
+      "id": "AC-03",
+      "criterion": "All applicable states, print, and accessible names render approved English/LTR text; operators correctly identify outcome and next action in approved scenarios.",
+      "result": "NOT_VERIFIED",
+      "reason": "No current route/state browser, print, accessibility, or signed human usability evidence was available."
+    },
+    {
+      "id": "AC-ROW",
+      "criterion": "Every assigned row ID has a separate component result and immutable candidate-bound evidence.",
+      "result": "NOT_VERIFIED",
+      "reason": "The 113 assigned row IDs in the frozen task specification have not been individually reconciled to current rendered evidence."
+    }
+  ],
+  "controlledExclusions": [
+    "Required regulated terms and labels",
+    "Warnings and decision-critical information",
+    "Signatures and evidence context",
+    "PASS/FAIL/HOLD",
+    "Approval versus release",
+    "Unknown outcome and uncertainty",
+    "P-04 closure versus effectiveness"
+  ],
+  "exclusionsApprovedByOwner": false
+}

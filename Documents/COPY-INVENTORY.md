@@ -3,7 +3,15 @@
 QC-100-FINAL-023 copy inventory. One row per canonical route family, covering the five
 copy surfaces: **labels/headings**, **help/hints**, **confirmations**, **notifications**,
 and **error/success messages**. Route IDs and paths are the registry source of truth
-(`src/shared/routing/routes.ts`, 87 routes / 26 families at this candidate).
+(`src/shared/routing/routes.ts`). At HEAD `39b76be4395811d653d23cc27e8e15496b6260de`,
+the registry contains 86 canonical routes; adding the separate `/404` and `/500` pages
+gives the 88-page source scope. The route count is candidate-specific and must be
+recomputed from the registry for each new inventory.
+
+This is a route-family source inventory, not proof that every rendered state, print
+view, accessible name, or record-dependent string has been captured or reviewed.
+Those require candidate-bound rendered-state evidence; do not treat this document alone
+as closure evidence for QC-POST-100-018.
 
 - **Shared copy sources:** `src/shared/copy/ux-vocabulary.ts` (labels, lifecycle, boundaries,
   error classes), `src/shared/copy/help-content.ts` (help + guidance matrix),

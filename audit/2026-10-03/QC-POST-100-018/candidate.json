@@ -1,0 +1,24 @@
+{
+  "taskId": "QC-POST-100-018",
+  "state": "PARTIAL",
+  "evidenceState": "EVIDENCE_PENDING",
+  "head": "39b76be4395811d653d23cc27e8e15496b6260de",
+  "branch": "main",
+  "trackedDirtyFingerprintAlgorithm": "SHA-256 over sorted git diff --name-only HEAD paths, each path NUL-delimited followed by byte length (8-byte big-endian) and current file bytes; evidence packet excluded",
+  "trackedDirtyFingerprint": "e6c1d55623171c79dffb3fcd6be8d92e2e17a0ed2df131e371989641b2b37ca0",
+  "initialWorkingTree": "CLEAN",
+  "currentTrackedChanges": [
+    ".agents/mind/01-mind-latest.md",
+    "Documents/COPY-INVENTORY.md"
+  ],
+  "untrackedEvidenceDirectory": "audit/2026-10-03/",
+  "routeSource": "src/shared/routing/routes.ts",
+  "canonicalRouteCount": 86,
+  "separateErrorPages": ["/404", "/500"],
+  "pageSourceScope": 88,
+  "baselineCandidate": "f284dc38b6c5bda68ad6a28ff91a419f0f85c7bc",
+  "baselineLimitation": "Frozen prompt-pack artifacts are not a rendered product-copy baseline.",
+  "copyChangesMade": false,
+  "productionOrDatabaseChanges": false,
+  "commitOrPush": false
+}

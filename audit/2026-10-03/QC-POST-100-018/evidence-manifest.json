@@ -1,0 +1,37 @@
+{
+  "taskId": "QC-POST-100-018",
+  "candidate": "39b76be4395811d653d23cc27e8e15496b6260de",
+  "trackedDirtyFingerprint": "e6c1d55623171c79dffb3fcd6be8d92e2e17a0ed2df131e371989641b2b37ca0",
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "audit/2026-10-03/QC-POST-100-018/candidate.json",
+      "sha256": "ab39c55b8e6efd88251cd904d1c17bccafc76a9a6c8223313c624eb145b82f60"
+    },
+    {
+      "path": "audit/2026-10-03/QC-POST-100-018/criteria.json",
+      "sha256": "835b3c53a115f145486a9285fcff42a496aa34929a5b64e1bc235849ba269c6d"
+    },
+    {
+      "path": "audit/2026-10-03/QC-POST-100-018/commands-and-results.json",
+      "sha256": "0afef9610763527c016d7ba589b4b15750459c05b937878064bc646003aadb8d"
+    },
+    {
+      "path": "audit/2026-10-03/QC-POST-100-018/scope-db-auth-manifest.json",
+      "sha256": "d7ce5b3cd791062eaf1bcfa3052226281511feeca8ee91f1182918248ca88e60"
+    },
+    {
+      "path": "audit/2026-10-03/QC-POST-100-018-reconciliation.md",
+      "sha256": "1cfbc1de6d727bd14de8e7d0da8907f64c1c03a8c9d77aae1690dd3e3bf02306"
+    },
+    {
+      "path": "Documents/COPY-INVENTORY.md",
+      "sha256": "2c1ea2a9b660458222ab13ed04a2845f3ae8cb69ec7d0277da99c3f07d083b8f"
+    },
+    {
+      "path": ".agents/mind/01-mind-latest.md",
+      "sha256": "d180b9a5b140617e747abbfae3ec9eb7690dda2ac879bb926caa5fcc7a2adcab"
+    }
+  ],
+  "manifestSelfHash": "NOT_INCLUDED"
+}
