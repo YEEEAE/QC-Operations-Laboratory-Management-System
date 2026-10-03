@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-POST-100-008",
+  "priority": "P0",
+  "status": "PARTIAL",
+  "acceptance": "BLOCKED / NOT VERIFIED",
+  "candidate": {
+    "gitSha": "64b5dcf7bc0a4bca7ae74e785bba7fcd950e6751",
+    "branch": "main",
+    "workingTree": "clean at candidate freeze before task evidence was written",
+    "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fingerprintAlgorithm": "scripts/verification/evidence-identity.mjs sourceFingerprint()",
+    "nodeVersion": "v22.22.3 (unsupported; project requires >=24.20.0 <25)",
+    "packageManager": "pnpm@11.25.0",
+    "migrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+    "migrationCount": 45,
+    "sourceMigrationManifestSha256": "290d0570d22496be5b8acbb037e0d1f563bf8afc89a6fc5aa91ff53104729588",
+    "schemaDigest": null,
+    "appliedMigrationLedger": null,
+    "buildIdentity": null,
+    "fixtureIdentity": null
+  },
+  "classification": {
+    "priorQcPost008Note": "STALE; bound to SHA 35284d53578b66b71adcf7f3e5b5a80e38c514a8 and source migration 0043",
+    "priorHistoricalIntegrationReport": "HISTORICAL; bound to SHA 6059e177438d8ae110c99084d32758b048f22cd2",
+    "currentCandidate": "PARTIAL; no current-candidate PostgreSQL 18 result"
+  },
+  "environment": {
+    "dockerCli": "available",
+    "dockerDaemon": "unavailable; unix socket absent",
+    "qcTestDatabaseUrl": "unset",
+    "databaseUrl": "unset",
+    "localPgClient": "PostgreSQL 14.19",
+    "pgIsReady": "reports local default endpoint accepting connections; not used as a test target",
+    "authorizedIsolatedPostgres18": "unavailable",
+    "productionDatabaseTouched": false
+  }
+}

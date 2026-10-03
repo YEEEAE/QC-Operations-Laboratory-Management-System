@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-POST-100-008",
+  "candidateSha": "64b5dcf7bc0a4bca7ae74e785bba7fcd950e6751",
+  "assignedEvidenceScope": "All persistent application use cases and PostgreSQL repository/migration behavior represented by the current prompt-pack row IDs; implementation routes/modules must be resolved from current route registry and current source before any repair or fixture execution.",
+  "rowIds": [
+    "QC-PAGE-F-002", "QC-PAGE-F-003", "QC-PAGE-F-004", "QC-PAGE-F-005", "QC-PAGE-F-009", "QC-PAGE-F-011", "QC-PAGE-F-013", "QC-PAGE-F-014", "QC-PAGE-F-015", "QC-PAGE-F-021", "QC-PAGE-F-022", "QC-PAGE-F-028", "QC-PAGE-F-029",
+    "QC-POST-F-001", "QC-POST-F-002", "QC-POST-F-003", "QC-POST-F-004", "QC-POST-F-008", "QC-POST-F-009",
+    "BASE:REQ:REQ-AUTHZ-001..012", "BASE:REQ:REQ-WFLOW-002/008/010", "BASE:REQ:REQ-DINT-005/006", "BASE:REQ:REQ-AUDF-003", "BASE:REQ:REQ-RCOV-009",
+    "TEST-SUITE:unit", "TEST-SUITE:integration", "TEST-SUITE:migrations", "TEST-SUITE:concurrency", "TEST-SUITE:security"
+  ],
+  "routeDiscovery": {
+    "authority": "Current route registry and source-derived mutation use cases, not guessed routes",
+    "resolvedRoutes": null,
+    "state": "NOT RUN: database/runtime task blocked before route/test scope expansion"
+  },
+  "database": {
+    "authorizedIsolatedTarget": null,
+    "majorVersion": null,
+    "schemaDigest": null,
+    "appliedLedger": null,
+    "sourceMigrationHead": "0045_provider_attestation_nonce_replay_guard.sql",
+    "sourceMigrationCount": 45,
+    "sourceMigrationManifestSha256": "290d0570d22496be5b8acbb037e0d1f563bf8afc89a6fc5aa91ff53104729588",
+    "tablesAndColumns": "NOT inventoried against a live schema",
+    "constraintsAndIndexes": "NOT verified against a live schema",
+    "fixtures": "NOT seeded; no normal/negative role or record identity exists for this candidate"
+  },
+  "authorization": {
+    "rolesPermissionsScopesStatesVersionsAndSod": "NOT executed against persistent records",
+    "authoritySource": "No new scientific/disposition decision required for this technical evidence task; preserve existing registered policy and fail-closed decisions"
+  },
+  "safety": {
+    "productionMigration": false,
+    "productionWrite": false,
+    "existingLocalPg14Used": false,
+    "mockOrSqliteSubstitution": false
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-POST-100-008",
+  "candidateSha": "64b5dcf7bc0a4bca7ae74e785bba7fcd950e6751",
+  "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "commands": [
+    {
+      "command": "git status --porcelain=v2 --branch && git rev-parse HEAD && git branch --show-current && git diff --stat",
+      "exit": 0,
+      "result": "HEAD 64b5dcf7bc0a4bca7ae74e785bba7fcd950e6751 on main; working tree clean; no staged or untracked files"
+    },
+    {
+      "command": "docker info --format '{{.ServerVersion}}'",
+      "exit": 1,
+      "result": "BLOCKED: Docker daemon socket unix:///Users/yzydalshmry/.docker/run/docker.sock does not exist"
+    },
+    {
+      "command": "psql --version; pg_isready; node --version",
+      "exit": 0,
+      "result": "PostgreSQL client 14.19; local default endpoint accepts connections (not used); Node v22.22.3, below required >=24.20.0 <25"
+    },
+    {
+      "command": "Check presence only: QC_TEST_DATABASE_URL, DATABASE_URL, QC_VERIFY_SYSTEM_OWNER_PASSWORD",
+      "exit": 0,
+      "result": "All unset; no connection value or secret emitted"
+    },
+    {
+      "command": "Source migration inventory/hash calculation over db/migrations/*.sql",
+      "exit": 0,
+      "result": "45 source migrations; head 0045_provider_attestation_nonce_replay_guard.sql; aggregate source manifest SHA-256 290d0570d22496be5b8acbb037e0d1f563bf8afc89a6fc5aa91ff53104729588. This is not an applied ledger/checksum verification."
+    },
+    {
+      "command": "pnpm test:migrations; pnpm test:integration; pnpm test:concurrency; pnpm test:security; pnpm db:migrate:check; pnpm db:schema:check",
+      "exit": null,
+      "result": "NOT RUN: no authorized isolated PostgreSQL 18 target; Docker daemon unavailable, QC_TEST_DATABASE_URL unset, and host Node is unsupported. No skipped test was counted as PASS."
+    }
+  ],
+  "suiteCounts": {
+    "migrations": { "passed": 0, "failed": 0, "skipped": 0, "notRun": true },
+    "integration": { "passed": 0, "failed": 0, "skipped": 0, "notRun": true },
+    "concurrency": { "passed": 0, "failed": 0, "skipped": 0, "notRun": true },
+    "security": { "passed": 0, "failed": 0, "skipped": 0, "notRun": true }
+  },
+  "databaseProof": {
+    "postgresMajor": null,
+    "migrationChecksumMismatches": null,
+    "orphanCount": null,
+    "constraintIndexProof": "NOT RUN",
+    "transactionRollback": "NOT RUN",
+    "concurrencyRace": "NOT RUN",
+    "authorizationNegativeWrites": "NOT RUN",
+    "recordHistoryAuditOutboxBeforeAfter": "NOT RUN"
+  },
+  "productionTouched": false
+}
