@@ -4,7 +4,9 @@ Status: **PARTIAL / NOT VERIFIED / NO-GO**. This is a derived execution
 inventory, not a new business policy or a UAT signature.
 
 The current scope is the **88 paths explicitly listed by QC-PAGE-F-001** in
-`audit/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html`. The generator
+`audit/2026-10-02/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html`.
+The report was filed under the 2026-10-02 audit folder; its 2026-09-30 basename
+does not indicate current-candidate evidence. The generator
 requires one card for every target path and checks its page filename against
 the canonical registry. `/404` and `/500` are Astro error conventions outside
 that registry; their source-function fallback checks do not prove middleware,

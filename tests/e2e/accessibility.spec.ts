@@ -1,6 +1,4 @@
 import AxeBuilder from '@axe-core/playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
@@ -15,9 +13,8 @@ const adminPassword = process.env.QC_E2E_ADMIN_PASSWORD;
  * rate-limited (RATE_LIMIT_LOGIN_MAX per window), and a per-test login made the
  * suite fail with AUTH_RATE_LIMITED instead of exercising accessibility.
  */
-const AUTHENTICATED_STATE_PATH = 'test-results/.a11y-authenticated-state.json';
-const ADMIN_STATE_PATH = 'test-results/.a11y-admin-state.json';
-const EMPTY_STATE = '{"cookies":[],"origins":[]}';
+const AUTHENTICATED_STATE_PATH = '.ci-results/accessibility-employee-state.json';
+const ADMIN_STATE_PATH = '.ci-results/accessibility-admin-state.json';
 
 function hasFixture(): boolean {
   return Boolean(loginIdentity && password);
@@ -32,11 +29,6 @@ function requireAuthenticatedFixture(): void {
 
 function hasAdminFixture(): boolean {
   return Boolean(adminIdentity && adminPassword);
-}
-
-function writeStateFile(path: string, contents: string): void {
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, contents, 'utf8');
 }
 
 async function signIn(page: Page): Promise<void> {
@@ -259,10 +251,18 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     await page.goto('/definitely-not-a-page-master034');
     await expect(page).toHaveTitle(/Page not found/i);
     await expect(page.getByRole('heading', { name: /could not find/i })).toBeVisible();
-    // QC-100-FINAL-018: the 404 keeps one clear recovery action (label updated
-    // from the duplicated "Continue safely"/"Go back" pair).
-    await expect(page.getByRole('link', { name: /go to dashboard/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Go to sign in', exact: true })).toBeVisible();
     await expectNoAxeViolations(page, 'safe 404');
+  });
+
+  test('authenticated safe 404 offers the dashboard recovery action', async ({ page }) => {
+    requireAuthenticatedFixture();
+    await signIn(page);
+    await page.goto('/definitely-not-a-page-master034');
+    await expect(page).toHaveTitle(/Page not found/i);
+    await expect(page.getByRole('heading', { name: /could not find/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Go to dashboard', exact: true })).toBeVisible();
+    await expectNoAxeViolations(page, 'authenticated safe 404');
   });
 
   // QC-100-FINAL-006: the 2026-09-18 explicit live axe scan recorded one serious
@@ -274,6 +274,7 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     page,
   }) => {
     requireAuthenticatedFixture();
+    await signIn(page);
     await page.goto('/dashboard');
 
     const result = await analyzeAccessibility(page);
@@ -299,6 +300,7 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     page,
   }) => {
     requireAuthenticatedFixture();
+    await signIn(page);
 
     for (const path of [
       '/dashboard',
@@ -363,6 +365,7 @@ test.describe('WCAG 2.2 AA accessibility baseline', () => {
     page,
   }) => {
     requireAuthenticatedFixture();
+    await signIn(page);
     for (const path of ['/dashboard', '/tasks']) {
       await page.goto(path);
       const result = await analyzeAccessibility(page);
@@ -444,18 +447,6 @@ test.describe('read-only role by operational surface keyboard matrix', () => {
 test.describe('authenticated keyboard-only, focus, and session recovery', () => {
   test.use({ storageState: AUTHENTICATED_STATE_PATH });
 
-  test.beforeAll(async ({ browser }) => {
-    if (!hasFixture()) {
-      writeStateFile(AUTHENTICATED_STATE_PATH, EMPTY_STATE);
-      return;
-    }
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await signIn(page);
-    await context.storageState({ path: AUTHENTICATED_STATE_PATH });
-    await context.close();
-  });
-
   test('skip link is reachable, becomes visible, and moves focus to the main content', async ({
     page,
   }) => {
@@ -534,10 +525,6 @@ test.describe('authenticated keyboard-only, focus, and session recovery', () => 
 
 test.describe('authenticated validation, target size, and forced colors', () => {
   test.use({ storageState: AUTHENTICATED_STATE_PATH });
-
-  test.beforeAll(() => {
-    if (!hasFixture()) writeStateFile(AUTHENTICATED_STATE_PATH, EMPTY_STATE);
-  });
 
   test('validation errors are announced, focused, and linked to their field', async ({ page }) => {
     requireAuthenticatedFixture();
@@ -665,18 +652,6 @@ test.describe('authenticated validation, target size, and forced colors', () => 
   test.describe('authenticated modal dialog keyboard contract (admin surface)', () => {
     test.use({ storageState: ADMIN_STATE_PATH });
 
-    test.beforeAll(async ({ browser }) => {
-      if (!hasAdminFixture()) {
-        writeStateFile(ADMIN_STATE_PATH, EMPTY_STATE);
-        return;
-      }
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await signInWith(page, adminIdentity ?? '', adminPassword ?? '');
-      await context.storageState({ path: ADMIN_STATE_PATH });
-      await context.close();
-    });
-
     test('dialog opens with focus inside, announces its title, closes on Escape, and returns focus', async ({
       page,
     }) => {
@@ -744,6 +719,7 @@ const MATRIX_VIEWPORTS: readonly MatrixViewport[] = [
   { name: '768', width: 768, height: 1024 },
   { name: '1024', width: 1024, height: 768 },
   { name: '1440', width: 1440, height: 900 },
+  { name: '1920', width: 1920, height: 1080 },
   { name: 'landscape-phone', width: 812, height: 375 },
   { name: 'landscape-tablet', width: 1024, height: 768 },
 ];
@@ -757,10 +733,6 @@ const MATRIX_SURFACES = [
 
 test.describe('authenticated responsive, zoom, and text-spacing matrix', () => {
   test.use({ storageState: AUTHENTICATED_STATE_PATH });
-
-  test.beforeAll(() => {
-    if (!hasFixture()) writeStateFile(AUTHENTICATED_STATE_PATH, EMPTY_STATE);
-  });
 
   for (const viewport of MATRIX_VIEWPORTS) {
     test(`reflows at ${viewport.name} (${viewport.width}x${viewport.height}) without overflow`, async ({

@@ -13,7 +13,8 @@ import {
 } from './route-acceptance.mjs';
 import { evidenceIdentity } from './evidence-identity.mjs';
 
-const auditPath = 'audit/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html';
+const auditPath =
+  'audit/2026-10-02/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html';
 const cards = readAuditCards(await readFile(auditPath, 'utf8'));
 const migrations = (await readdir('db/migrations'))
   .filter((name) => /^\d+_.+\.sql$/.test(name))
