@@ -1,3 +1,15 @@
+- **2026-10-04 — QC-POST-100-020 / read-only live execution stop**
+  - Changed: retained runtime preflight attempt; fresh custom-domain readiness GET had no HTTP response within 8 seconds. Exact runtime identity remains NOT VERIFIED; all eight scenarios NOT EXECUTED, 0/8 accepted.
+  - Evidence: `audit/2026-10-04/QC-POST-100-020/`; local enumeration 30 SOP/68 WI/84 originals; current hash check not completed. No business reads or production write requests; no historical screenshot acceptance.
+  - State: BLOCKED / EVIDENCE_PENDING; RF-020-LIVE-RUNTIME-UNAVAILABLE binds 020/FINAL. Existing 010/031 blockers and UAT/restore/release separation retained.
+
+- **2026-10-04 — QC-POST-100-019 / safe real-record demo preparation**
+  - Scope update: user excludes 010/031 closure and live session/readiness evaluation from local plan review only; no repeat probes or input requests for those items during local review. Live execution prerequisites remain mandatory; exclusion is not closure/waiver and 0/8 runtime acceptance remains.
+  - Local review: 8/8 scripts reviewed; corrected inspection/laboratory detail expectations to rendered summaries/context, not per-point or individual measurement display. No live checks; runtime acceptance remains 0/8.
+  - Changed: eight source-bound read-only scenario scripts, private real-record/persona binding and masking prerequisites; no fabricated records or production writes. D0.2 remains draft; DEMO is not UAT/GO.
+  - Evidence: inspected clean HEAD `d68ed83060be71cdd2f40b9b1052caf030911a1c`; 117/117 hashes, 84/84 originals and both ZIPs PASS. Fresh public GET at 03:01 UTC: readiness 503/unhealthy, liveness 200/healthy. Exact live identity and authorized registry/record bindings NOT VERIFIED; 0/8 executed.
+  - State: PARTIAL / EVIDENCE_PENDING; 010/031 and current read-only session/capture authorization block execution. Packet: `audit/2026-10-04/QC-POST-100-019/`. These documentation edits change the inspected clean tree; re-freeze before runtime evidence.
+
 - **2026-10-04 — Git oversized reference cleanup**
   - Changed: removed only two oversized References PDF/ZIP paths from five unpublished main commits; local copies preserved and exact paths ignored. HEAD is now `3a2c26c9f8b14770c3ebc1d454d5e839de66243e`; prior candidate SHAs remain historical evidence, not evidence for rewritten HEAD.
   - Evidence: other tracked tree entries identical; local SHA-256 unchanged. Pre-rewrite bundle: `/Users/yzydalshmry/Desktop/qc-git-history-backup-o6w5oc4_/before.bundle`. Existing malformed local ref `refs/remotes/origin/main 2` blocks ordinary fetch; left untouched.
