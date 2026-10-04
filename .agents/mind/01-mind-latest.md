@@ -1,3 +1,36 @@
+- **2026-10-05 — Docker PG18 focused stage-2 retest**
+  - Changed: Docker Desktop daemon became available locally; no product/schema/provider change. Testcontainers PG18 migration suite 5/5 PASS; selected concurrency/idempotency 11/17, six controlled-mutation failures requiring fixture/policy/implementation reconciliation.
+  - Evidence: local commands on dirty HEAD `6fc63e7`; exact candidate envelope/CI/production/UAT still NOT VERIFIED. State: PARTIAL / NO-GO. Key file: `audit/QC-READINESS-STAGE-2-ENVIRONMENT-EVIDENCE.md`.
+
+- **2026-10-05 — Stage 2 local environment preflight**
+  - Changed: no application change; recorded supported toolchain and local gates, with dirty-tree and verification-context limits.
+  - Evidence: Node24.20/pnpm11.25; requirements/architecture/typecheck PASS; Vitest 1200/1200 but `pnpm test:unit` exit 1 (run context mismatch); Docker socket absent; PG18/E2E/CI/runtime NOT RUN. State: PARTIAL/BLOCKED / NO-GO. Key file: `audit/QC-READINESS-STAGE-2-ENVIRONMENT-EVIDENCE.md`.
+
+- **2026-10-05 — Unmapped-item reconciliation prompts**
+  - Changed: 28 specific MAP-AUD research prompts added for 28 currently unmapped audit items, with explicit direct/related/audit-only/authority-blocked outcomes. No requirement or acceptance status invented.
+  - Evidence: prompt ID set matches exactly 28 unmapped rows; actual mapping decisions and runtime acceptance still pending. State: PARTIAL / NO-GO. Key file: `audit/unmapped_reconciliation_prompts.py`.
+
+- **2026-10-05 — Verification routing completion, acceptance still blocked**
+  - Changed: 49 evidence-acquisition cards added to the 13 existing execution cards, yielding 88/88 audit IDs explicitly routed with unique identifiers; no new remediation or product claim. Candidate requirement links remain 60/88, 28 unmapped.
+  - Evidence: machine coverage 88/88 with no unknown/duplicate prompt IDs; actual tests, named authority, exact release and UAT still open. State: PARTIAL / NO-GO.
+
+- **2026-10-05 — Phase 0 requirement reference continuation**
+  - Changed: 60/88 audit rows have candidate links to 73 unique IDs in the 100-row derived reconciliation register; 28 remain unmapped. These are not owner-approved source or acceptance mapping, and owning task is not authority. No readiness upgrade.
+  - Evidence: parsed 100/100 register rows and validated references; phase 0 remains PARTIAL pending 28 mappings, 80/19/671 reconciliation, named authority and clean candidate. Key files: `audit/requirement_links.py`, `audit/QC-READINESS-AUDIT-LEDGER.json`.
+
+- **2026-10-05 — Readiness plan phase 0 / integrity guard**
+  - Changed: generated an 88-row machine-readable evidence ledger and fail-closed score/coverage validator; 49 unlinked prompt IDs remain explicit, requirement-to-source/owner mapping and clean candidate freeze still open.
+  - Evidence: validator 7/7 PASS; score unchanged 6.5/268 (2.43% partial checklist), coverage 39/88. State: PARTIAL / NO-GO. Key files: `audit/QC-READINESS-AUDIT-LEDGER.json`, `audit/readiness_integrity.py`.
+
+- **2026-10-05 — Arabic audit report and execution coverage plan**
+  - Changed: Arabic RTL presentation of the same 88-row partial audit; audited the generated playbook: 13 execution cards + final, 39/88 explicit IDs linked and 49 unlinked. Added staged verification-first plan; no product/runtime changes or release claim.
+  - Evidence: generator score and row/status counts unchanged; coverage inventory and offline HTML parse checked. State: PARTIAL / NO-GO. Key files: `audit/readiness_report_ar.py`, `audit/QC-PRODUCTION-READINESS-EXECUTION-PLAN.md`.
+
+- **2026-10-04 — Read-only readiness audit inventory / partial delivery**
+  - Changed: local 88-item evidence classification and offline HTML report/playbook generated for HEAD `6fc63e776614a333fb7f88854ce27d44fc196383`; no application, database or provider mutation. Weighted checklist score is conservative, not product maturity.
+  - Evidence: supported Node24 requirements/architecture, selected unit 22/22, typecheck PASS; authenticated PG18/runtime/UAT/restore and per-page UX measurements NOT VERIFIED. Report is PARTIAL, NO-GO; generator `audit/generate-readiness-audit.py`.
+  - State: PARTIAL. Key files: `audit/QC-ULTIMATE-EVIDENCE-BASED-READINESS-REPORT.html`, `audit/QC-PRODUCTION-READINESS-EXECUTION-PROMPTS.html`.
+
 - **2026-10-04 — QC-POST-100-FINAL / independent release reconciliation**
   - Changed: NO-GO on clean-start HEAD `edbe35acc20076a8e9f4811faad7f9a2e339f9c2`; RF-FINAL-DOC-REGISTRATION binds current D0.2 controlled-version registration/workflow verification to FINAL without reopening historical 033. Audit report changes the tree and is not a committed release candidate.
   - Evidence: local D0.2 30 SOP/68 WI/20 References, 117/117 hashes and 84/84 original-image bytes PASS; Node 24.20 requirements/architecture/typecheck PASS. Exact-HEAD complete CI/PG/E2E/artifact/provider/restore/manual AT/human UAT remain NOT VERIFIED; upstream handoffs are bound to other SHAs.

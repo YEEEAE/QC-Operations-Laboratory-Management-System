@@ -1,0 +1,3244 @@
+{
+  "audit_identity": {
+    "git_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+    "observed_at": "2026-10-04T20:36:39Z",
+    "environment": "local source only",
+    "tree": "clean at audit start; audit outputs subsequently changed working tree",
+    "build_id": "NOT VERIFIED",
+    "deployed_migration_head": "NOT VERIFIED"
+  },
+  "denominator": {
+    "items": 88,
+    "weighted": 268,
+    "note": "88-item partial audit inventory; distinct from approved 100/80/19/671 registers"
+  },
+  "coverage": {
+    "explicit": 88,
+    "total": 88,
+    "unlinked": [],
+    "unknown": [],
+    "duplicate_prompt_ids": []
+  },
+  "rows": [
+    {
+      "id": "AUD-P0-001",
+      "title": "End-to-end QC record journey",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-SCOPE-001",
+        "REQ-WFLOW-001",
+        "REQ-WFLOW-002"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-09-001",
+          "source": "DOMAIN-MAP; QC-SYSTEM-DESIGN-CONSTITUTION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        },
+        {
+          "rc_id": "RC-02-001",
+          "source": "SYSTEM-INVARIANTS; STATE-MACHINES",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-02-002",
+          "source": "BR-QUAR-008; P-05 (Supervisor/Manager/yazeed)",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-03"
+      ]
+    },
+    {
+      "id": "AUD-P0-002",
+      "title": "RBAC + SoD adversarial analysis",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUTHZ-001",
+        "REQ-AUTHZ-003",
+        "REQ-AUTHZ-004",
+        "REQ-AUTHZ-006"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-01-001",
+          "source": "BR-GEN-001, BR-AUTH-001; PERMISSION-MATRIX",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002 (regression)"
+        },
+        {
+          "rc_id": "RC-01-003",
+          "source": "PERMISSION-MATRIX; P-05 authority sets",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-01-004",
+          "source": "BR-AUTH-002",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-01-006",
+          "source": "ROLE-MATRIX; BR-AUTH-004",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-05"
+      ]
+    },
+    {
+      "id": "AUD-P0-003",
+      "title": "ALCOA+ integrity",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; audit/2026-10-04/QC-POST-100-FINAL.md:24-38",
+      "finding": "Protected-record immutability and correction chain not proven on current deployed database.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-DINT-004",
+        "REQ-AUDF-001"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-03-004",
+          "source": "DATA-MODEL; SYSTEM-INVARIANTS",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-04-001",
+          "source": "SYSTEM-INVARIANTS; audit-query contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Protected-record immutability and correction chain not proven on current deployed database.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-06"
+      ]
+    },
+    {
+      "id": "AUD-P0-004",
+      "title": "Scientific calculation verification",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E2",
+      "evidence": "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:125-134; Documents/DECISION-ASSUMPTION-REGISTER-026.md:80-81",
+      "finding": "Controlled evaluator throws; no approved source-bound positive decision criteria. PD-01/02/07 remain open.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain signed QC/QMS source/revision/units/limits first; keep fail-closed; verify exact decimal and boundaries.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-004",
+        "REQ-WFLOW-014",
+        "REQ-DINT-007"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-004",
+          "source": "BR-INSP-004/006, BR-LAB-021",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-02-014",
+          "source": "BR-INSP-009, BR-LAB-002/008/011",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-03-007",
+          "source": "DATA-DICTIONARY",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Controlled evaluator throws; no approved source-bound positive decision criteria. PD-01/02/07 remain open.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-02"
+      ]
+    },
+    {
+      "id": "AUD-P0-005",
+      "title": "Illegal state transition attack",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-006",
+        "REQ-WFLOW-007",
+        "REQ-AUTHZ-005"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-006",
+          "source": "BR-INSP-010/011/012",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-02-007",
+          "source": "BR-INSP-013/014",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-01-005",
+          "source": "BR-GEN-011",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-03"
+      ]
+    },
+    {
+      "id": "AUD-P0-006",
+      "title": "Concurrent QC operations",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-DINT-001",
+        "REQ-DINT-002",
+        "REQ-DINT-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-03-001",
+          "source": "BR-GEN-009, BR-INSP-014, BR-CHG-007",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-03-002",
+          "source": "BR-GEN-010",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-025"
+        },
+        {
+          "rc_id": "RC-03-003",
+          "source": "BR-GEN-011",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-03"
+      ]
+    },
+    {
+      "id": "AUD-P0-007",
+      "title": "Wrong-action prevention",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-005",
+        "REQ-WFLOW-014"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-005",
+          "source": "BR-CAL-004; equipment/calibration state rules",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-02-014",
+          "source": "BR-INSP-009, BR-LAB-002/008/011",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-02"
+      ]
+    },
+    {
+      "id": "AUD-P0-008",
+      "title": "Traceability drill",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-001",
+        "REQ-WFLOW-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-001",
+          "source": "SYSTEM-INVARIANTS; audit-query contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-02-009",
+          "source": "BR-INSP-001/003; P-06",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-03"
+      ]
+    },
+    {
+      "id": "AUD-P0-009",
+      "title": "Evidence-to-claim consistency",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "audit/2026-10-04/QC-POST-100-FINAL.md:24-38; historical candidate only",
+      "finding": "Historical local PASS and prior NO-GO cannot substantiate a current release claim.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-READY-001",
+        "REQ-READY-004",
+        "REQ-READY-010"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-07-001",
+          "source": "REQUIREMENTS-TRACEABILITY §63; SYSTEM-INVARIANTS",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        },
+        {
+          "rc_id": "RC-07-004",
+          "source": "REQUIREMENTS-TRACEABILITY §16/§17",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        },
+        {
+          "rc_id": "RC-07-010",
+          "source": "REQUIREMENTS-TRACEABILITY §77/§80",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Historical local PASS and prior NO-GO cannot substantiate a current release claim.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-13"
+      ]
+    },
+    {
+      "id": "AUD-P0-010",
+      "title": "Zero-trust UI tampering",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md:7-22; tests/e2e/critical-workflows.spec.ts; no candidate-bound authenticated run.",
+      "finding": "End-to-end populated role/state/record evidence was not executed.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Provide isolated PG18, role fixtures and an approved policy source; execute the specified journey and denial matrix.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUTHZ-001",
+        "REQ-AUTHZ-010"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-01-001",
+          "source": "BR-GEN-001, BR-AUTH-001; PERMISSION-MATRIX",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002 (regression)"
+        },
+        {
+          "rc_id": "RC-01-010",
+          "source": "PERMISSION-MATRIX; Astro architecture",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "End-to-end populated role/state/record evidence was not executed.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-05"
+      ]
+    },
+    {
+      "id": "AUD-P0-011",
+      "title": "Policy drift detection",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E2",
+      "evidence": "Documents/STATE-MACHINES.md:3017-3093; src/modules/documents/application/approve-version.ts:5-14",
+      "finding": "RD-019 / PD-13 / PD-32 remain unresolved; document approval is deliberately denied.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain Document Control/QMS decision; implement version-bound approved ceremony without bypass.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-011",
+        "REQ-READY-005"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-011",
+          "source": "BR-DOC-009; change-request allowlist",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-07-005",
+          "source": "REQUIREMENTS-TRACEABILITY §95/§96",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "RD-019 / PD-13 / PD-32 remain unresolved; document approval is deliberately denied.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-04"
+      ]
+    },
+    {
+      "id": "AUD-P0-012",
+      "title": "Release readiness evidence gate",
+      "domain": "QC workflow",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "level": "E2",
+      "evidence": "src/modules/release-governance/infrastructure/postgres-repository.ts:90-98; .github/workflows/ci.yml:145-212",
+      "finding": "19-gate reconciliation returns false; no exact-SHA CI/provider/UAT/recovery proof.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Approve gate mapping and collect exact candidate CI, schema, runtime, restore and signed UAT evidence.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-READY-003",
+        "REQ-READY-007",
+        "REQ-READY-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-07-003",
+          "source": "REQUIREMENTS-TRACEABILITY P-07; PRODUCTION-READINESS-CHECKLIST",
+          "capability": "MANDATORY",
+          "owning_task": "QC-ADP-03"
+        },
+        {
+          "rc_id": "RC-07-007",
+          "source": "TESTING-STRATEGY; CI gate §58",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002 / QC-ADP-03"
+        },
+        {
+          "rc_id": "RC-07-009",
+          "source": "RENDER-MIGRATION-RUNBOOK",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-001 / QC-ADP-03"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "19-gate reconciliation returns false; no exact-SHA CI/provider/UAT/recovery proof.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-01",
+        "FIX-13"
+      ]
+    },
+    {
+      "id": "AUD-P1-001",
+      "title": "Database forensic integrity",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-DINT-004",
+        "REQ-DINT-005",
+        "REQ-DINT-006",
+        "REQ-DINT-008"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-03-004",
+          "source": "DATA-MODEL; SYSTEM-INVARIANTS",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-03-005",
+          "source": "SYSTEM-INVARIANTS; `db/migrations/README.md`",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-03-006",
+          "source": "DATA-MODEL",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-03-008",
+          "source": "DATA-MODEL; DATA-DICTIONARY",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-06"
+      ]
+    },
+    {
+      "id": "AUD-P1-002",
+      "title": "Audit trail completeness",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-001",
+        "REQ-AUDF-002"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-001",
+          "source": "SYSTEM-INVARIANTS; audit-query contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-04-002",
+          "source": "BR-AUD-007",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-06"
+      ]
+    },
+    {
+      "id": "AUD-P1-003",
+      "title": "Electronic signature verification",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E2",
+      "evidence": "src/modules/documents/application/approve-version.ts:5-14; Documents/DECISION-ASSUMPTION-REGISTER-026.md:104",
+      "finding": "Document-bound electronic-signature authority remains policy-blocked.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-010"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-010",
+          "source": "BR-ESIG-*; PERMISSION-MATRIX",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Document-bound electronic-signature authority remains policy-blocked.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-04"
+      ]
+    },
+    {
+      "id": "AUD-P1-004",
+      "title": "QC/lab exception analysis",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-003",
+        "REQ-WFLOW-008",
+        "REQ-WFLOW-012"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-003",
+          "source": "STATE-MACHINES; reject policy (PD-38 OPEN)",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013/026"
+        },
+        {
+          "rc_id": "RC-02-008",
+          "source": "BR-LAB-018; PERM-LAB-AUTHORIZE-RETEST",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-02-012",
+          "source": "STATE-MACHINES; BR-QUAL-*",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P1-004"
+      ]
+    },
+    {
+      "id": "AUD-P1-005",
+      "title": "Equipment eligibility",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-005"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-005",
+          "source": "BR-CAL-004; equipment/calibration state rules",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P1-005"
+      ]
+    },
+    {
+      "id": "AUD-P1-006",
+      "title": "Controlled documents effectivity",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/STATE-MACHINES.md:3017-3093; Documents/QC_System_WI_SOP_Pack/References/READ-ME.txt:1-6",
+      "finding": "D0.2 draft is not an approved/effective registered source.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-009",
+        "REQ-WFLOW-011"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-009",
+          "source": "BR-INSP-001/003; P-06",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-02-011",
+          "source": "BR-DOC-009; change-request allowlist",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "D0.2 draft is not an approved/effective registered source.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-04"
+      ]
+    },
+    {
+      "id": "AUD-P1-007",
+      "title": "Report provenance and export parity",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "level": "E2",
+      "evidence": "src/modules/reporting/application/report-snapshot.ts:6-23; export-report.ts:55-74",
+      "finding": "Request-local digest exists; durable report-run provenance/retention not approved.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-004"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-004",
+          "source": "BR-AUTH-003; export rules",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-011"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P1-007"
+      ]
+    },
+    {
+      "id": "AUD-P1-008",
+      "title": "Security attack surface",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUTHZ-001",
+        "REQ-AUTHZ-009",
+        "REQ-AUDF-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-01-001",
+          "source": "BR-GEN-001, BR-AUTH-001; PERMISSION-MATRIX",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002 (regression)"
+        },
+        {
+          "rc_id": "RC-01-009",
+          "source": "BR-IDN-004; SECURITY-ARCHITECTURE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-015"
+        },
+        {
+          "rc_id": "RC-04-003",
+          "source": "DATA-DICTIONARY; SECURITY-ARCHITECTURE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-05",
+        "FIX-07"
+      ]
+    },
+    {
+      "id": "AUD-P1-009",
+      "title": "Data export leakage",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUTHZ-007",
+        "REQ-AUDF-004"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-01-007",
+          "source": "BR-AUTH-003, BR-SRCH-003",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-011"
+        },
+        {
+          "rc_id": "RC-04-004",
+          "source": "BR-AUTH-003; export rules",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-011"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-05",
+        "FIX-07"
+      ]
+    },
+    {
+      "id": "AUD-P1-010",
+      "title": "Privacy and sensitive data",
+      "domain": "Data / security",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "db/migrations/README.md:3-19; tests/integration; PostgreSQL18 current-candidate run not executed.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-003",
+        "REQ-AUDF-005"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-003",
+          "source": "DATA-DICTIONARY; SECURITY-ARCHITECTURE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-04-005",
+          "source": "ERROR-ARCHITECTURE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-014"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "No current end-to-end acceptance evidence for this item.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-07"
+      ]
+    },
+    {
+      "id": "AUD-UX-001",
+      "title": "Operational reality",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-001",
+        "REQ-SCOPE-001"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-001",
+          "source": "ROLE-MATRIX; ROLE-OPERATING-GUIDES",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-020"
+        },
+        {
+          "rc_id": "RC-09-001",
+          "source": "DOMAIN-MAP; QC-SYSTEM-DESIGN-CONSTITUTION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-12"
+      ]
+    },
+    {
+      "id": "AUD-UX-002",
+      "title": "UX task completion",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-08"
+      ]
+    },
+    {
+      "id": "AUD-UX-003",
+      "title": "Time-to-complete benchmark",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-08"
+      ]
+    },
+    {
+      "id": "AUD-UX-004",
+      "title": "Clicks and keystrokes",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-08"
+      ]
+    },
+    {
+      "id": "AUD-UX-005",
+      "title": "Form friction",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-004"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-004",
+          "source": "DESIGN-SYSTEM; UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-005"
+      ]
+    },
+    {
+      "id": "AUD-UX-006",
+      "title": "Navigation efficiency",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-006"
+      ]
+    },
+    {
+      "id": "AUD-UX-007",
+      "title": "Search and findability",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-007"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-007",
+          "source": "BR-SRCH-003",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-007"
+      ]
+    },
+    {
+      "id": "AUD-UX-008",
+      "title": "Decision confidence",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-007"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-007",
+          "source": "UI-UX-SPECIFICATION; DOMAIN-MAP",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-021"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-008"
+      ]
+    },
+    {
+      "id": "AUD-UX-009",
+      "title": "Dashboard clarity",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-002"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-002",
+          "source": "QC-SYSTEM-DESIGN-CONSTITUTION; 017/022 contracts",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-017/022"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-009"
+      ]
+    },
+    {
+      "id": "AUD-UX-010",
+      "title": "Information density",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-010"
+      ]
+    },
+    {
+      "id": "AUD-UX-011",
+      "title": "Cognitive load",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-011"
+      ]
+    },
+    {
+      "id": "AUD-UX-012",
+      "title": "Visual hierarchy",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-012"
+      ]
+    },
+    {
+      "id": "AUD-UX-013",
+      "title": "Manager vs operator view",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-001"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-001",
+          "source": "ROLE-MATRIX; ROLE-OPERATING-GUIDES",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-020"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-013"
+      ]
+    },
+    {
+      "id": "AUD-UX-014",
+      "title": "Progressive disclosure",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-014"
+      ]
+    },
+    {
+      "id": "AUD-UX-015",
+      "title": "Text reduction audit",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-08"
+      ]
+    },
+    {
+      "id": "AUD-UX-016",
+      "title": "Content compression score",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-08"
+      ]
+    },
+    {
+      "id": "AUD-UX-017",
+      "title": "Controlled content protection",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/QC_System_WI_SOP_Pack/References/READ-ME.txt:1-6",
+      "finding": "Draft controlled material must not be shortened or represented as approved.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-011"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-011",
+          "source": "BR-DOC-009; change-request allowlist",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Draft controlled material must not be shortened or represented as approved.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-08"
+      ]
+    },
+    {
+      "id": "AUD-UX-018",
+      "title": "Readability",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-018"
+      ]
+    },
+    {
+      "id": "AUD-UX-019",
+      "title": "Label and terminology consistency",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-008"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-008",
+          "source": "COPY-GLOSSARY; UX-WRITING-GUIDE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-023"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-019"
+      ]
+    },
+    {
+      "id": "AUD-UX-020",
+      "title": "Terminology compliance",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-008"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-008",
+          "source": "COPY-GLOSSARY; UX-WRITING-GUIDE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-023"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-020"
+      ]
+    },
+    {
+      "id": "AUD-UX-021",
+      "title": "UI consistency",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-003",
+          "source": "UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-021"
+      ]
+    },
+    {
+      "id": "AUD-UX-022",
+      "title": "Error message quality",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-004"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-004",
+          "source": "DESIGN-SYSTEM; UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-022"
+      ]
+    },
+    {
+      "id": "AUD-UX-023",
+      "title": "Empty/loading/failure states",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-023"
+      ]
+    },
+    {
+      "id": "AUD-UX-024",
+      "title": "Confirmation and destructive actions",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-024"
+      ]
+    },
+    {
+      "id": "AUD-UX-025",
+      "title": "Failure recovery",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-025"
+      ]
+    },
+    {
+      "id": "AUD-UX-026",
+      "title": "Keyboard-first workflow",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-004",
+        "REQ-READY-011"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-004",
+          "source": "DESIGN-SYSTEM; UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        },
+        {
+          "rc_id": "RC-07-011",
+          "source": "UI-UX-SPECIFICATION; UAT-ACCEPTANCE-PLAN",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-006/040"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-09"
+      ]
+    },
+    {
+      "id": "AUD-UX-027",
+      "title": "Human error simulation",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-004"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-004",
+          "source": "DESIGN-SYSTEM; UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-027"
+      ]
+    },
+    {
+      "id": "AUD-UX-028",
+      "title": "Large data usability",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-003",
+          "source": "UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-028"
+      ]
+    },
+    {
+      "id": "AUD-UX-029",
+      "title": "Responsive usability",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-006"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-006",
+          "source": "UI-UX-SPECIFICATION",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-005"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-09"
+      ]
+    },
+    {
+      "id": "AUD-UX-030",
+      "title": "Accessibility WCAG 2.2 AA",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-009",
+        "REQ-READY-011"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-009",
+          "source": "UI-UX-SPECIFICATION §A11y",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-006/040"
+        },
+        {
+          "rc_id": "RC-07-011",
+          "source": "UI-UX-SPECIFICATION; UAT-ACCEPTANCE-PLAN",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-006/040"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-09"
+      ]
+    },
+    {
+      "id": "AUD-UX-031",
+      "title": "Notification quality",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-006"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-006",
+          "source": "SYSTEM-INVARIANTS; DEP-025-04 record",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-025"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-031"
+      ]
+    },
+    {
+      "id": "AUD-UX-032",
+      "title": "Cross-module consistency",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-032"
+      ]
+    },
+    {
+      "id": "AUD-UX-033",
+      "title": "Evidence quality score",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-033"
+      ]
+    },
+    {
+      "id": "AUD-UX-034",
+      "title": "Ten-evidence audit drill",
+      "domain": "UX",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/pages; Documents/ROUTE-ACCEPTANCE-MATRIX.md; no authenticated browser/participant measurements on this SHA.",
+      "finding": "No measured authenticated page-task, keyboard, viewport or text inventory for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Run page-by-page authorized task studies, count actions/words, preserve controlled wording, and retain screenshots plus machine-readable timings.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-UX-034"
+      ]
+    },
+    {
+      "id": "AUD-ENG-001",
+      "title": "Change impact",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-001"
+      ]
+    },
+    {
+      "id": "AUD-ENG-002",
+      "title": "Regression risk map",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-002"
+      ]
+    },
+    {
+      "id": "AUD-ENG-003",
+      "title": "Complexity hotspots",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-003"
+      ]
+    },
+    {
+      "id": "AUD-ENG-004",
+      "title": "Maintainability",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-004"
+      ]
+    },
+    {
+      "id": "AUD-ENG-005",
+      "title": "Dead feature/route",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-005"
+      ]
+    },
+    {
+      "id": "AUD-ENG-006",
+      "title": "Architecture boundaries",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "level": "E3",
+      "evidence": "pnpm test:architecture exit 0 at 2026-10-04T20:35Z on HEAD; static boundary only.",
+      "finding": "Static architectural boundary passes; runtime architecture and all dependency contracts not proven.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-SCOPE-008",
+        "REQ-SCOPE-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-09-008",
+          "source": "ROUTE-MANIFEST-SPECIFICATION; SYSTEM-INVARIANTS",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-002"
+        },
+        {
+          "rc_id": "RC-09-009",
+          "source": "REQUIREMENTS-TRACEABILITY §87-§89",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-026"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT LOCAL TEST ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-006"
+      ]
+    },
+    {
+      "id": "AUD-ENG-007",
+      "title": "Dependency supply chain",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-007"
+      ]
+    },
+    {
+      "id": "AUD-ENG-008",
+      "title": "Configuration drift",
+      "domain": "Engineering",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "package.json:16-26; .github/workflows/ci.yml; targeted architecture check on current SHA.",
+      "finding": "No current end-to-end acceptance evidence for this item.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Obtain candidate-bound controlled evidence; repair only reproduced defects.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-RCOV-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-05-009",
+          "source": "RENDER-DEPLOYMENT; release scripts",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-001"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-ENG-008"
+      ]
+    },
+    {
+      "id": "AUD-OBS-001",
+      "title": "Production observability",
+      "domain": "Observability",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "level": "E2",
+      "evidence": "src/shared/observability/telemetry.ts:4-9,58-95; src/modules/system-health/infrastructure/postgres-health-probes.ts:86-154",
+      "finding": "No-op telemetry exporter and unrecorded worker heartbeat/delivery; production metrics unproven.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Approve privacy-safe exporter/worker/alert policy; prove delivery and failure detection on runtime.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-RCOV-005",
+        "REQ-RCOV-010"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-05-005",
+          "source": "OBSERVABILITY-ARCHITECTURE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-007"
+        },
+        {
+          "rc_id": "RC-05-010",
+          "source": "OBSERVABILITY-ARCHITECTURE; migration `0029`",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-014"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OBS-001"
+      ]
+    },
+    {
+      "id": "AUD-OBS-002",
+      "title": "Data quality dashboard",
+      "domain": "Observability",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "level": "E2",
+      "evidence": "src/shared/observability/telemetry.ts:4-9,58-95; src/modules/system-health/infrastructure/postgres-health-probes.ts:86-154",
+      "finding": "No-op telemetry exporter and unrecorded worker heartbeat/delivery; production metrics unproven.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Approve privacy-safe exporter/worker/alert policy; prove delivery and failure detection on runtime.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-009",
+          "source": "REQUIREMENTS-TRACEABILITY §Dashboard; QC-100-FINAL-017 count contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-017"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OBS-002"
+      ]
+    },
+    {
+      "id": "AUD-OPS-001",
+      "title": "Aging and bottlenecks",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-SCOPE-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-09-003",
+          "source": "DOMAIN-MAP; 017 contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-017"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-11"
+      ]
+    },
+    {
+      "id": "AUD-OPS-002",
+      "title": "Workload balance",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-SCOPE-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-09-003",
+          "source": "DOMAIN-MAP; 017 contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-017"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-002"
+      ]
+    },
+    {
+      "id": "AUD-OPS-003",
+      "title": "SLA/turnaround",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-SCOPE-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-09-003",
+          "source": "DOMAIN-MAP; 017 contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-017"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-11"
+      ]
+    },
+    {
+      "id": "AUD-OPS-004",
+      "title": "Repeat failures",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-004"
+      ]
+    },
+    {
+      "id": "AUD-OPS-005",
+      "title": "Near misses",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-005"
+      ]
+    },
+    {
+      "id": "AUD-OPS-006",
+      "title": "Reject trends",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-SCOPE-002"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-09-002",
+          "source": "REJECT-REPORTS; BUSINESS-RULES",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-014"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-11"
+      ]
+    },
+    {
+      "id": "AUD-OPS-007",
+      "title": "NCR trends",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-012"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-012",
+          "source": "STATE-MACHINES; BR-QUAL-*",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-007"
+      ]
+    },
+    {
+      "id": "AUD-OPS-008",
+      "title": "Equipment downtime",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-008"
+      ]
+    },
+    {
+      "id": "AUD-OPS-009",
+      "title": "Calibration risk",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-WFLOW-005"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-02-005",
+          "source": "BR-CAL-004; equipment/calibration state rules",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-009"
+      ]
+    },
+    {
+      "id": "AUD-OPS-010",
+      "title": "Closure rate",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-010"
+      ]
+    },
+    {
+      "id": "AUD-OPS-011",
+      "title": "Approval delay",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [],
+      "mapping_status": "NOT MAPPED",
+      "requirement_register_refs": [],
+      "source_authority": "NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-OPS-011"
+      ]
+    },
+    {
+      "id": "AUD-OPS-012",
+      "title": "Data quality trend",
+      "domain": "Operational intelligence",
+      "priority": "P1",
+      "status": "NOT VERIFIED",
+      "level": "E1",
+      "evidence": "src/modules/dashboard; no current populated record-based metric reconciliation or approved SLA on this candidate.",
+      "finding": "Some read models exist; these particular metric numerators, grains, scope and source parity are unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Define source-backed grain and window with owner; reconcile SQL, UI and authorized export on real records.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AUDF-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-04-009",
+          "source": "REQUIREMENTS-TRACEABILITY §Dashboard; QC-100-FINAL-017 count contract",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-017"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-11"
+      ]
+    },
+    {
+      "id": "AUD-P2-001",
+      "title": "Recovery integrity simulation",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-RCOV-001"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-05-001",
+          "source": "BACKUP-RECOVERY-PLAN; RESTORE-DRILL-RUNBOOK",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-008"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-10"
+      ]
+    },
+    {
+      "id": "AUD-P2-002",
+      "title": "Performance under QC workload",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-RCOV-010"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-05-010",
+          "source": "OBSERVABILITY-ARCHITECTURE; migration `0029`",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-014"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-10"
+      ]
+    },
+    {
+      "id": "AUD-P2-003",
+      "title": "Slow network/high latency",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-RCOV-007"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-05-007",
+          "source": "ERROR-ARCHITECTURE; OBSERVABILITY-ARCHITECTURE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-025"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P2-003"
+      ]
+    },
+    {
+      "id": "AUD-P2-004",
+      "title": "Human UAT",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-READY-002"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-07-002",
+          "source": "UAT-ACCEPTANCE-PLAN",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-004"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-12"
+      ]
+    },
+    {
+      "id": "AUD-P2-005",
+      "title": "Role-based UAT",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-READY-002"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-07-002",
+          "source": "UAT-ACCEPTANCE-PLAN",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-004"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-12"
+      ]
+    },
+    {
+      "id": "AUD-P2-006",
+      "title": "AI advisory safety",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "PARTIAL",
+      "level": "E2",
+      "evidence": "src/modules/ai-advisory; audit/100-percent/ai-evals/results-2026-09-24.json (HISTORICAL/foreign SHA)",
+      "finding": "Advisory-only source exists; live provider and current-model safety unverified.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AIGV-001",
+        "REQ-AIGV-003",
+        "REQ-AIGV-005"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-06-001",
+          "source": "BR-AI-003..008",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-009, QC-ADP-11"
+        },
+        {
+          "rc_id": "RC-06-003",
+          "source": "BR-AI-010/011",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-009, QC-ADP-11"
+        },
+        {
+          "rc_id": "RC-06-005",
+          "source": "AI-PROVIDERS governance dataset `qc-ai-governance-v2` / 4.0.0",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-009, QC-ADP-11"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": null,
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P2-006"
+      ]
+    },
+    {
+      "id": "AUD-P2-007",
+      "title": "AI provider failure/fail-safe",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-AIGV-006",
+        "REQ-AIGV-008"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-06-006",
+          "source": "AI-PROVIDERS",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-009, QC-ADP-11"
+        },
+        {
+          "rc_id": "RC-06-008",
+          "source": "DOMAIN-MAP",
+          "capability": "OPTIONAL",
+          "owning_task": "QC-100-FINAL-009"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P2-007"
+      ]
+    },
+    {
+      "id": "AUD-P2-008",
+      "title": "Backup retention/restore",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-RCOV-001",
+        "REQ-RCOV-002",
+        "REQ-RCOV-003"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-05-001",
+          "source": "BACKUP-RECOVERY-PLAN; RESTORE-DRILL-RUNBOOK",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-008"
+        },
+        {
+          "rc_id": "RC-05-002",
+          "source": "BR-BKP-006",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        },
+        {
+          "rc_id": "RC-05-003",
+          "source": "BR-BKP-007",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-013"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-10"
+      ]
+    },
+    {
+      "id": "AUD-P2-009",
+      "title": "Release rollback simulation",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-READY-003",
+        "REQ-RCOV-009"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-07-003",
+          "source": "REQUIREMENTS-TRACEABILITY P-07; PRODUCTION-READINESS-CHECKLIST",
+          "capability": "MANDATORY",
+          "owning_task": "QC-ADP-03"
+        },
+        {
+          "rc_id": "RC-05-009",
+          "source": "RENDER-DEPLOYMENT; release scripts",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-001"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "FIX-10"
+      ]
+    },
+    {
+      "id": "AUD-P2-010",
+      "title": "Operational support readiness",
+      "domain": "Reliability / validation",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "level": "E1",
+      "evidence": "Documents/UAT-ACCEPTANCE-PLAN.md; Documents/BACKUP-RECOVERY-PLAN.md; no candidate-bound operator drill.",
+      "finding": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "impact": "Release claim cannot be accepted for this requirement.",
+      "fix": "Use approved isolated target and human participants; never run destructive checks in production.",
+      "retest": "Run positive and negative tests on an isolated PG18 candidate, then authorized runtime/UAT as applicable.",
+      "related_requirement_ids": [
+        "REQ-OPS-011",
+        "REQ-RCOV-012"
+      ],
+      "mapping_status": "CANDIDATE_LINK_NOT_ACCEPTANCE",
+      "requirement_register_refs": [
+        {
+          "rc_id": "RC-08-011",
+          "source": "SUPPORT-OWNERSHIP-REGISTER; INCIDENT-QUICK-REFERENCE",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-020"
+        },
+        {
+          "rc_id": "RC-05-012",
+          "source": "INCIDENT-PROBLEM-RUNBOOK; FIRST-DAY-OPERATING-CHECKLIST",
+          "capability": "MANDATORY",
+          "owning_task": "QC-100-FINAL-025"
+        }
+      ],
+      "source_authority": "REGISTER SOURCE REFERENCE ONLY — APPROVAL NOT VERIFIED",
+      "owner": "NOT VERIFIED — owning task is not a named authority",
+      "evidence_freshness": "CURRENT SOURCE ONLY",
+      "evidence_environment": "local source / selected local checks",
+      "evidence_sha": "6fc63e776614a333fb7f88854ce27d44fc196383",
+      "evidence_observed_at": "2026-10-04T20:36:39Z",
+      "blocking_reason": "Required human/provider/load/recovery proof not performed for this candidate.",
+      "next_action": "ACQUIRE_EVIDENCE",
+      "explicit_prompt_ids": [
+        "EVID-AUD-P2-010"
+      ]
+    }
+  ]
+}
