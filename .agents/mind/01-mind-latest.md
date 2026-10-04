@@ -1,3 +1,8 @@
+- **2026-10-04 — QC-POST-100-031 / full artifact identity**
+  - Changed: local CI seals/attests/uploads full runtime archive only after completeness passes; no provider deployment change. RF-031-ARTIFACT-PROMOTION binds 031/FINAL: Render rebuild is not same-byte promotion.
+  - Evidence: focused 7/7 and YAML/order checks PASS; D0.2 117 hashes and 84 originals match. Exact HEAD `a2071eef8086f919fd4877456c9b621111d16e4f` has no GitHub Actions run; 030 final completeness exit 1. Full archive CI/provider runtime/signatures NOT VERIFIED.
+  - State: PARTIAL / EVIDENCE_PENDING; provider/architecture approval and passing 030 block acceptance. Handoff: `audit/2026-10-04/QC-POST-100-031/handoff.md`.
+
 - **2026-10-04 — QC-POST-100-030 / local gate continuation**
   - Changed: reconciled clean base HEAD `cd87faea079ca2d1812103068b7ac421842675ee`; laboratory measurement conversion crosses application boundary; source formatting/tool lint fixes only. Historical audit artifacts remain unchanged.
   - Evidence: PostgreSQL18.6 isolated startup works with LC_ALL=C; final candidate gates pending in `.ci-results/QC-POST-100-030-continuation/`. Remote CI/trusted attestation remain NOT VERIFIED; no commit/push/deploy authorized.

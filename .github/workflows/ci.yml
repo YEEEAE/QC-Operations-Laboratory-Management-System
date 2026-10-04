@@ -178,6 +178,39 @@ jobs:
           --expect build
           --expect e2e
 
+      # Seal only after every mandatory verification gate passes. This archive
+      # includes the identity sidecar and production dependencies; the existing
+      # dist tree digest deliberately excludes that sidecar and is NOT this
+      # archive's digest. No provider deployment is triggered here.
+      - name: Seal verified runtime artifact
+        run: |
+          mkdir -p .ci-results/sealed
+          pnpm release:manifest -- --dir dist --verify .ci-results/build-manifest.json
+          cp .ci-results/build-manifest.json .ci-results/sealed/build-manifest.json
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json")); fs.writeFileSync(".ci-results/sealed/runtime-contract.json", JSON.stringify({sourceSha:process.env.GITHUB_SHA,buildId:`github-${process.env.GITHUB_RUN_ID}.${process.env.GITHUB_RUN_ATTEMPT}`,nodeVersion:process.version,serviceVersion:p.version,startCommand:"node dist/server/entry.mjs",scope:"dist + installed dependencies + package metadata; not an OS/container image",excludedRuntimePaths:["Documents/QC_System_WI_SOP_Pack/","QC_Controlled_Forms_and_Operational_Evidence/"]},null,2)+"\n")'
+          tar -czf .ci-results/sealed/runtime-artifact.tar.gz dist node_modules package.json pnpm-lock.yaml
+          cd .ci-results/sealed
+          sha256sum runtime-artifact.tar.gz build-manifest.json runtime-contract.json > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Attest complete verified runtime artifact
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            .ci-results/sealed/runtime-artifact.tar.gz
+            .ci-results/sealed/build-manifest.json
+            .ci-results/sealed/runtime-contract.json
+            .ci-results/sealed/SHA256SUMS
+
+      - name: Preserve immutable verified runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-runtime-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci-results/sealed/
+          if-no-files-found: error
+          overwrite: false
+
       - name: Upload release-candidate evidence
         if: always() && hashFiles('dist/release-identity.json') != ''
         uses: actions/upload-artifact@v4
