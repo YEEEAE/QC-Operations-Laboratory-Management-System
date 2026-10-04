@@ -282,7 +282,7 @@ const reviewInspection = defineAction({
 });
 const approveInspection = defineAction({
   accept: 'json',
-  input: inspectionVersion,
+  input: inspectionVersion.extend({ reauthenticationSecret: z.string().min(1) }),
   handler: (input, context) =>
     run(() =>
       quarantineActionDependencies().inspection.approve.execute({

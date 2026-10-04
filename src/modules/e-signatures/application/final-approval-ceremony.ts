@@ -6,21 +6,8 @@ import { createSignatureEvidence } from '../domain/signature-evidence.js';
 import type { SignatureEvidence } from '../domain/signature-evidence.js';
 import type { ReauthenticationVerifier } from '../ports/repository.js';
 
-/**
- * QC-100-FINAL-004 — final (QCM) approval ceremony.
- *
- * Owner-approved policy: the Supervisor stage approval is a workflow event,
- * while the QCM final approval carries the single binding electronic
- * signature. This ceremony is the only place a two-stage record can obtain
- * that signature, so it enforces, in order:
- *
- *   1. a reauthentication secret that the verifier accepts;
- *   2. the explicit `PERM-ESIG-SIGN` grant through `authorize()`;
- *   3. signature evidence bound to the exact subject id/version/snapshot.
- *
- * The stored evidence is what makes the final approval traceable; a caller
- * that skips it cannot reach the APPROVED state.
- */
+/** Each approval stage reauthenticates independently. Evidence is persisted only
+ * inside the owning domain transaction, never by the ceremony itself. */
 export interface FinalApprovalCeremony {
   createFinalApprovalEvidence(input: {
     actor: ActorContext;
@@ -28,6 +15,7 @@ export interface FinalApprovalCeremony {
     subjectId: string;
     subjectVersion: bigint;
     currentState: string;
+    action?: 'STAGE1_APPROVE' | 'FINAL_APPROVE';
     meaning: string;
     snapshotHash: string;
     reason?: string;
@@ -71,8 +59,8 @@ export function createFinalApprovalCeremony(
         subjectType: input.subjectType,
         subjectId: input.subjectId,
         subjectVersion: input.subjectVersion,
-        action: 'FINAL_APPROVE',
-        meaning: input.meaning,
+        action: input.action ?? 'FINAL_APPROVE',
+        meaning: input.action ?? 'FINAL_APPROVE',
         signedAt: new Date(),
         snapshotHash: input.snapshotHash,
         ...(input.reason?.trim() ? { reason: input.reason.trim() } : {}),
