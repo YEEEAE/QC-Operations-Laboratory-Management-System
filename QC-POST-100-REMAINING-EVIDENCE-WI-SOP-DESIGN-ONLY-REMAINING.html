@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html data-theme="dark" dir="rtl" lang="ar"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>QC Remaining Prompts — Evidence + WI/SOP D0.2 + Design Linked</title><style>*{box-sizing:border-box}html{color-scheme:dark;--bg:#0f1714;--panel:#18231f;--ink:#f1f7f2;--muted:#afc2b6;--line:#425c4e;--accent:#d9f09d;--warn:#ffb2a8}html[data-theme=light]{color-scheme:light;--bg:#f4f6f1;--panel:#fff;--ink:#17241b;--muted:#4d6255;--line:#9fb0a4;--accent:#365800;--warn:#8c281c}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1180px;margin:auto;padding:26px 18px 60px}header{border-bottom:1px solid var(--line)}h1{font-size:clamp(1.6rem,4vw,2.5rem);line-height:1.3}.notice{background:var(--panel);border-inline-start:4px solid var(--accent);padding:12px 16px;margin:12px 0}.warn{border-color:var(--warn)}.metrics,.paths{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.metrics span,.paths code,.frozen code{border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--panel);direction:ltr;unicode-bidi:isolate}.toolbar{display:flex;gap:9px;flex-wrap:wrap;position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:5}input,select,button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:9px 12px}input{flex:1;min-width:220px}button{cursor:pointer}.frozen{background:var(--panel);padding:14px;border:1px solid var(--line);border-radius:10px;overflow-wrap:anywhere}.task{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:14px 0;overflow:hidden}summary{display:flex;gap:12px;align-items:center;padding:15px;cursor:pointer}summary strong,summary small{display:block}summary small{color:var(--muted)}.badge{color:var(--accent);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-weight:700}.body{padding:0 16px 16px}pre{white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left;background:var(--bg);border:1px solid var(--line);padding:16px;border-radius:10px;max-height:850px;overflow:auto;font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace}.copy-state{color:var(--accent);margin-inline-start:8px}[hidden]{display:none!important}@media(max-width:650px){main{padding:12px 9px}pre{font-size:12px}}@media print{.toolbar,.copy,.copy-state{display:none}pre{max-height:none;overflow:visible}details:not([open])>.body{display:block}}</style></head><body><main><header><p>QC Operations &amp; Laboratory Management System</p><h1>Active Remaining Execution Prompts — Evidence + WI/SOP D0.2 + Design Linked</h1><div class="metrics"><span>Remaining execution: 7</span><span>Added design hardening: 1</span><span>Remote main observed: 435f9f70</span></div><div class="notice"><strong>Operational evidence:</strong> <bdi>QC_Controlled_Forms_and_Operational_Evidence/</bdi></div><div class="notice"><strong>Documentation pack:</strong> <bdi>Documents/QC_System_WI_SOP_Pack/</bdi></div><div class="notice"><strong>Design authority:</strong> <bdi>Documents/DESIGN-SYSTEM.md</bdi> + <bdi>Documents/UI-UX-SPECIFICATION.md</bdi> + <bdi>Documents/UX-WRITING-GUIDE.md</bdi>. Added prompt <bdi>QC-POST-100-DESIGN-001</bdi> must run before exact-candidate CI because any UI change changes the candidate.</div><div class="notice warn"><strong>Review limitation:</strong> D0.2 could not be independently opened from the current remote repository or Files surface during generation. The user's stated 30 SOP / 68 WI / 28 proposed decisions / 20 fillable forms are embedded as declared local metadata and every remaining prompt requires local enumeration before relying on them.</div><p>Historical pack remains read-only: <bdi>audit/final-reconciliation-b165dd50/QC-100-PERCENT-MASTER-EXECUTION-PROMPT-PACK.html</bdi></p></header><div class="notice"><strong>Updated execution order:</strong> <bdi>QC-POST-100-DESIGN-001 → QC-POST-100-030 → QC-POST-100-031 → QC-POST-100-010 → QC-POST-100-019 → QC-POST-100-020 → QC-POST-100-016 → QC-POST-100-FINAL</bdi>. Design changes must happen before exact-candidate CI/artifact identity.</div><section><h2>D0.2 state model</h2><div class="notice">Document available ≠ approved. Source/hash matched ≠ effective. Proposed decision ≠ approved decision. Fillable form ≠ signed record. Historical signature ≠ current electronic signature/UAT. Future prompts must ask only for the smallest unresolved approval/signature/technical input after searching both canonical paths.</div></section><div class="toolbar"><input id="q" placeholder="Search prompts…" type="search"/><select id="prio"><option value="">All priorities</option><option>P0</option><option>P1</option><option>P2</option></select><button id="expand">Expand all</button><button id="collapse">Collapse all</button><button id="theme">Light/Dark</button></div><p aria-live="polite" id="status"></p><section><details class="task" data-priority="P1" data-search="qc-post-100-design-001 p1 design hardening · qc-post-100-design-001 converge the live ui to the approved enterprise qc design system without changing controlled meaning qc-post-100-design-001 — converge the live ui to the approved enterprise qc design system without changing controlled meaning priority/severity: p1 / p1 current state: new / design_hardening_required. why: the repository already defines an approved dark enterprise qc control-room design language, but visual consistency must be verified against the real authenticated application before final-candidate ci/uat. improve usability and visual hierarchy without changing business rules, permissions, controlled terminology, scientific logic, workflow state semantics, or release authority. dependencies: inspect current head, documents/design-system.md, documents/ui-ux-specification.md, documents/ux-writing-guide.md, documents/route-matrix.md, documents/role-matrix.md, documents/state-machines.md, and current application routes. this design task must execute before qc-post-100-030 because any committed ui change changes the exact candidate sha. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original operational images were preserved unchanged. generation-time limitation: at generation time, remote github main exposed qc_controlled_forms_and_operational_evidence/ but documents/qc_system_wi_sop_pack/ was not visible through the github connector. treat d0.2 counts/status as user-declared local state until the executing agent enumerates the local checkout. do not mark d0.2 approved/effective merely because files exist. search order — hard rule: 1. inspect current head and working tree. 2. read the approved design authority chain, especially documents/design-system.md and documents/ui-ux-specification.md. 3. recursively inspect documents/qc_system_wi_sop_pack/ and qc_controlled_forms_and_operational_evidence/ for terminology, form density, actual field groupings, and workflow context. 4. inspect the current authenticated application in read-only mode across representative routes. 5. map inconsistencies before changing code. 6. change only residual design/ux gaps proven by the audit. 7. rerun affected accessibility, browser and visual regression checks. design authority — do not invent a new brand the canonical repository design direction is: - unified dark enterprise qc control room. - operational clarity before decoration. - dark-first / dark-only baseline for v1. - inter for latin and ibm plex sans arabic for arabic unless the repository explicitly changes this contract. - canvas/surface/border/text/accent/status semantic tokens from documents/design-system.md. - pass and released must remain visually and semantically distinct. - status meaning must never depend on color alone. - dense, readable tables and structured forms are first-class components. - responsive desktop/tablet/mobile behavior must preserve primary state and critical actions. - no gaming, crypto, marketing, glassmorphism-heavy, neon, or dribbble-concept styling. plugin-assisted design workflow — advisory only where available, use these tools only as design/review aids: - browser use: authenticated read-only visual audit of representative current routes; never mutate records during design review. - magicpath: prototype isolated ui concepts/components only. a prototype is not production authority and must not replace repository design tokens/business rules. do not copy a generated prototype blindly. - adobe: typography/asset review only where it improves clarity. do not replace canonical fonts merely because another font is recommended; any font change requires explicit repository design-contract update and accessibility review. - ahrefs: not a design authority. use only if a public-route discoverability/metadata question materially affects a public page. it must not influence authenticated enterprise workflow ui. authenticated read-only visual audit review, where accessible without mutation: - dashboard / operational command center - receiving - inspection - laboratory - documents - reject / rejection / disposition - internal transfer - findings / ncr / rca / capa - equipment / calibration / maintenance - approvals / change requests - reports / analytics - administration / system health for each route capture: - shell/sidebar/top-context consistency - page-title hierarchy and breadcrumbs - spacing rhythm and density - form grouping and label clarity - table density, column hierarchy, filter ergonomics, row actions - status semantics and pass vs released distinction - loading/empty/denied/error state distinction - evidence/attachment presentation - timeline/history readability - critical-action prominence and safe confirmation - focus visibility and keyboard flow - rtl/ltr resilience where applicable - responsive behavior at desktop/tablet/mobile widths - copy length and controlled terminology preservation do not redesign business logic the following are forbidden design shortcuts: - merging business states because they look similar - changing accepted/hold/rejected/released semantics - hiding mandatory provenance/revision/source context for cleaner visuals - removing required audit/evidence fields - turning a controlled action into an ambiguous icon-only action - using disabled ui as the only authorization boundary - changing approval/release authority - changing sampling/scientific criteria - changing document approval/effectivity semantics - converting ai advisory output into official decision styling target component system converge pages toward the approved component families where they materially help: - appshell / sidebar / top context bar / breadcrumb / pageheader - recordheader with business id, version, owner, primary state and allowed actions - metriccard only for true kpis with scope/time/source context - datapanel as the default container for tables/charts/details/forms/evidence - datatable + filterbar with server-authorized scope - formsection / formfield / errorsummary - statusbadge with icon+text+semantic token - alert including blocking alert with what/why/next action - evidencelist / attachment presentation - timeline / audittimeline - approvalpanel for controlled review actions - contextrail for detail pages - chartcontainer using a restrained operational palette page-family expectations dashboard: - command center, not chart gallery - answer what needs attention, what is blocked, due, changed, and awaiting approval - role/scope aware - priority order: kpis → attention required → trends → approvals/holds/exceptions → domain pulse → recent activity operational list/work queue: - title/scope → summary only if useful → filter/search toolbar → table/list → safe actions - advanced filters progressive-disclosure, not all equally prominent - preserve dense but readable data record workspace: - clear recordheader - primary and secondary states separated where domain has multiple axes - evidence, approvals, related records, and history discoverable without clutter laboratory execution: - method/version, sample context, equipment/calibration, measurement grid, criteria/calculation, raw observations, result summary, evidence and review readiness - preserve raw vs calculated distinction and units - compact density is allowed but keyboard/focus must remain strong controlled documents: - emphasize current effective version only when truly approved/effective - keep version history, superseded versions and approval trail clear - d0.2 drafts must visually remain draft/pending review, never effective by default reports: - screen/export/print must share canonical authorized dataset and filter context - show scope/date/unit/last-updated where relevant visual quality bar - calm, high-trust enterprise qc aesthetic - use repository semantic tokens; no arbitrary page-by-page hex drift - consistent border radii/elevation/density - no excessive cardization - no oversized hero typography inside operational pages - no decorative gradients/animations that delay reading - animation 150–220ms and respect reduced-motion - tabular numerals for measurements/quantities/kpis where useful - minimum accessible contrast; do not assume palette is accessible without checking - visible focus on every interactive control responsive requirements desktop: - full operational shell and dense data where appropriate tablet: - collapsible navigation and reduced columns without losing state/actions mobile: - drawer navigation, single-column priority flow, critical state/actions visible - data tables may use horizontal scroll with frozen key column, column priority, or mobile list depending on domain - do not hide critical controlled actions in obscure overflow only copy / terminology preserve controlled meaning while making labels short and human. prefer action-specific copy: - submit for review - approve inspection - release item - return for correction - sign approval rather than generic submit/ok/done when the operation has controlled meaning. d0.2 / operational forms impact on design use forms and records only to understand: - field grouping - terminology - real workflow density - repeated operational patterns - document metadata/provenance needs they do not authorize current scientific criteria or approvals. if the app lacks a document/form family represented in d0.2 or operational evidence, create new_residual_finding rather than silently reopening completed. implementation strategy 1. produce a route/component inconsistency matrix. 2. identify shared-root causes first: tokens, shell, table, form, status badge, modal/drawer, record header. 3. fix shared primitives before route-specific polish. 4. avoid route-wide rewrites if existing components already meet the contract. 5. preserve dom semantics/data-testid/contracts where tests rely on them unless change is necessary and tests are updated intentionally. 6. no commit/push/deploy without explicit user authorization. required tests after design changes run at least: - format/lint/typecheck/build for changed candidate - affected unit/component tests - affected authenticated playwright routes - axe/accessibility on every changed page/state - keyboard-only checks for changed forms/tables/dialogs - focus order/return for dialogs/drawers - responsive checks at representative desktop/tablet/mobile widths - stale-version/error/empty/loading/denied states where the changed component participates - screenshot/visual comparison if repository tooling supports it important: is already historical-complete. do not rewrite it. if this design task changes a route previously covered by 015, regenerate accessibility evidence only for the affected route/state set and attach it to this new task/final candidate evidence. evidence output create a new design evidence package under the current audit continuation run, including: - route-component-design-gap matrix - before/after screenshots or equivalent browser evidence for changed representative pages - token/component changes - changed route list - accessibility rerun results - responsive verification - any new_residual_finding - exact sha/worktree identity used for evidence hard fail - visual improvement changes controlled meaning - pass and released collapse into one state/style semantics - required fields/evidence/revision/provenance hidden for aesthetics - draft d0.2 material presented as approved/effective - accessibility regression - keyboard/focus regression - mobile critical action/state loss - shared component change breaks unaffected routes - ui-only authorization assumption introduced acceptance: - representative authenticated route audit completed read-only. - repository design-system authority preserved. - visual inconsistencies affecting trust/usability are fixed at the correct shared/component level. - no business/scientific/authorization semantics changed. - affected routes pass accessibility/keyboard/responsive verification. - d0.2 drafts remain visually draft/pending review unless separately approved. - no hidden release-impacting design regression remains." id="QC-POST-100-DESIGN-001"><summary><span class="badge">P1</span><span><small>Design hardening · QC-POST-100-DESIGN-001</small><strong>Converge the live UI to the approved enterprise QC design system without changing controlled meaning</strong></span></summary><div class="body"><div class="paths"><code>Documents/DESIGN-SYSTEM.md</code><code>Documents/UI-UX-SPECIFICATION.md</code><code>Documents/QC_System_WI_SOP_Pack/</code><code>QC_Controlled_Forms_and_Operational_Evidence/</code></div><button class="copy" data-target="p-QC-POST-100-DESIGN-001">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-DESIGN-001">QC-POST-100-DESIGN-001 — Converge the live UI to the approved enterprise QC design system without changing controlled meaning
+Priority/Severity: P1 / P1
+Current state: NEW / DESIGN_HARDENING_REQUIRED.
+Why: The repository already defines an approved dark enterprise QC control-room design language, but visual consistency must be verified against the real authenticated application before final-candidate CI/UAT. Improve usability and visual hierarchy without changing business rules, permissions, controlled terminology, scientific logic, workflow state semantics, or release authority.
+Dependencies: inspect current HEAD, Documents/DESIGN-SYSTEM.md, Documents/UI-UX-SPECIFICATION.md, Documents/UX-WRITING-GUIDE.md, Documents/ROUTE-MATRIX.md, Documents/ROLE-MATRIX.md, Documents/STATE-MACHINES.md, and current application routes. This design task MUST execute before QC-POST-100-030 because any committed UI change changes the exact candidate SHA.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+At generation time, remote GitHub main exposed QC_Controlled_Forms_and_Operational_Evidence/ but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector. Treat D0.2 counts/status as USER-DECLARED LOCAL STATE until the executing agent enumerates the local checkout. Do not mark D0.2 approved/effective merely because files exist.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Read the approved design authority chain, especially Documents/DESIGN-SYSTEM.md and Documents/UI-UX-SPECIFICATION.md.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/ and QC_Controlled_Forms_and_Operational_Evidence/ for terminology, form density, actual field groupings, and workflow context.
+4. Inspect the current authenticated application in read-only mode across representative routes.
+5. Map inconsistencies before changing code.
+6. Change only residual design/UX gaps proven by the audit.
+7. Rerun affected accessibility, browser and visual regression checks.
+
+DESIGN AUTHORITY — DO NOT INVENT A NEW BRAND
+The canonical repository design direction is:
+- Unified Dark Enterprise QC Control Room.
+- Operational clarity before decoration.
+- Dark-first / dark-only baseline for v1.
+- Inter for Latin and IBM Plex Sans Arabic for Arabic unless the repository explicitly changes this contract.
+- Canvas/surface/border/text/accent/status semantic tokens from Documents/DESIGN-SYSTEM.md.
+- PASS and RELEASED MUST remain visually and semantically distinct.
+- Status meaning must never depend on color alone.
+- Dense, readable tables and structured forms are first-class components.
+- Responsive desktop/tablet/mobile behavior must preserve primary state and critical actions.
+- No gaming, crypto, marketing, glassmorphism-heavy, neon, or Dribbble-concept styling.
+
+PLUGIN-ASSISTED DESIGN WORKFLOW — ADVISORY ONLY
+Where available, use these tools only as design/review aids:
+- Browser Use: authenticated read-only visual audit of representative current routes; never mutate records during design review.
+- MagicPath: prototype isolated UI concepts/components only. A prototype is NOT production authority and must not replace repository design tokens/business rules. Do not copy a generated prototype blindly.
+- Adobe: typography/asset review only where it improves clarity. Do not replace canonical fonts merely because another font is recommended; any font change requires explicit repository design-contract update and accessibility review.
+- Ahrefs: NOT a design authority. Use only if a public-route discoverability/metadata question materially affects a public page. It must not influence authenticated enterprise workflow UI.
+
+AUTHENTICATED READ-ONLY VISUAL AUDIT
+Review, where accessible without mutation:
+- Dashboard / operational command center
+- Receiving
+- Inspection
+- Laboratory
+- Documents
+- Reject / Rejection / Disposition
+- Internal Transfer
+- Findings / NCR / RCA / CAPA
+- Equipment / Calibration / Maintenance
+- Approvals / Change Requests
+- Reports / Analytics
+- Administration / System Health
+
+For each route capture:
+- shell/sidebar/top-context consistency
+- page-title hierarchy and breadcrumbs
+- spacing rhythm and density
+- form grouping and label clarity
+- table density, column hierarchy, filter ergonomics, row actions
+- status semantics and PASS vs RELEASED distinction
+- loading/empty/denied/error state distinction
+- evidence/attachment presentation
+- timeline/history readability
+- critical-action prominence and safe confirmation
+- focus visibility and keyboard flow
+- RTL/LTR resilience where applicable
+- responsive behavior at desktop/tablet/mobile widths
+- copy length and controlled terminology preservation
+
+DO NOT REDESIGN BUSINESS LOGIC
+The following are forbidden design shortcuts:
+- merging business states because they look similar
+- changing ACCEPTED/HOLD/REJECTED/RELEASED semantics
+- hiding mandatory provenance/revision/source context for cleaner visuals
+- removing required audit/evidence fields
+- turning a controlled action into an ambiguous icon-only action
+- using disabled UI as the only authorization boundary
+- changing approval/release authority
+- changing sampling/scientific criteria
+- changing document approval/effectivity semantics
+- converting AI advisory output into official decision styling
+
+TARGET COMPONENT SYSTEM
+Converge pages toward the approved component families where they materially help:
+- AppShell / Sidebar / Top Context Bar / Breadcrumb / PageHeader
+- RecordHeader with business ID, version, owner, primary state and allowed actions
+- MetricCard only for true KPIs with scope/time/source context
+- DataPanel as the default container for tables/charts/details/forms/evidence
+- DataTable + FilterBar with server-authorized scope
+- FormSection / FormField / ErrorSummary
+- StatusBadge with icon+text+semantic token
+- Alert including Blocking Alert with what/why/next action
+- EvidenceList / Attachment presentation
+- Timeline / AuditTimeline
+- ApprovalPanel for controlled review actions
+- ContextRail for detail pages
+- ChartContainer using a restrained operational palette
+
+PAGE-FAMILY EXPECTATIONS
+Dashboard:
+- command center, not chart gallery
+- answer what needs attention, what is blocked, due, changed, and awaiting approval
+- role/scope aware
+- priority order: KPIs → Attention Required → trends → approvals/holds/exceptions → domain pulse → recent activity
+
+Operational list/work queue:
+- title/scope → summary only if useful → filter/search toolbar → table/list → safe actions
+- advanced filters progressive-disclosure, not all equally prominent
+- preserve dense but readable data
+
+Record workspace:
+- clear RecordHeader
+- primary and secondary states separated where domain has multiple axes
+- evidence, approvals, related records, and history discoverable without clutter
+
+Laboratory execution:
+- method/version, sample context, equipment/calibration, measurement grid, criteria/calculation, raw observations, result summary, evidence and review readiness
+- preserve raw vs calculated distinction and units
+- compact density is allowed but keyboard/focus must remain strong
+
+Controlled documents:
+- emphasize current effective version only when truly approved/effective
+- keep version history, superseded versions and approval trail clear
+- D0.2 drafts must visually remain Draft/Pending Review, never Effective by default
+
+Reports:
+- screen/export/print must share canonical authorized dataset and filter context
+- show scope/date/unit/last-updated where relevant
+
+VISUAL QUALITY BAR
+- calm, high-trust enterprise QC aesthetic
+- use repository semantic tokens; no arbitrary page-by-page hex drift
+- consistent border radii/elevation/density
+- no excessive cardization
+- no oversized hero typography inside operational pages
+- no decorative gradients/animations that delay reading
+- animation 150–220ms and respect reduced-motion
+- tabular numerals for measurements/quantities/KPIs where useful
+- minimum accessible contrast; do not assume palette is accessible without checking
+- visible focus on every interactive control
+
+RESPONSIVE REQUIREMENTS
+Desktop:
+- full operational shell and dense data where appropriate
+Tablet:
+- collapsible navigation and reduced columns without losing state/actions
+Mobile:
+- drawer navigation, single-column priority flow, critical state/actions visible
+- data tables may use horizontal scroll with frozen key column, column priority, or mobile list depending on domain
+- do not hide critical controlled actions in obscure overflow only
+
+COPY / TERMINOLOGY
+Preserve controlled meaning while making labels short and human.
+Prefer action-specific copy:
+- Submit for Review
+- Approve Inspection
+- Release Item
+- Return for Correction
+- Sign Approval
+rather than generic Submit/OK/Done when the operation has controlled meaning.
+
+D0.2 / OPERATIONAL FORMS IMPACT ON DESIGN
+Use forms and records only to understand:
+- field grouping
+- terminology
+- real workflow density
+- repeated operational patterns
+- document metadata/provenance needs
+They do NOT authorize current scientific criteria or approvals.
+If the app lacks a document/form family represented in D0.2 or operational evidence, create NEW_RESIDUAL_FINDING rather than silently reopening completed.
+
+IMPLEMENTATION STRATEGY
+1. Produce a route/component inconsistency matrix.
+2. Identify shared-root causes first: tokens, shell, table, form, status badge, modal/drawer, record header.
+3. Fix shared primitives before route-specific polish.
+4. Avoid route-wide rewrites if existing components already meet the contract.
+5. Preserve DOM semantics/data-testid/contracts where tests rely on them unless change is necessary and tests are updated intentionally.
+6. No commit/push/deploy without explicit user authorization.
+
+REQUIRED TESTS AFTER DESIGN CHANGES
+Run at least:
+- format/lint/typecheck/build for changed candidate
+- affected unit/component tests
+- affected authenticated Playwright routes
+- axe/accessibility on every changed page/state
+- keyboard-only checks for changed forms/tables/dialogs
+- focus order/return for dialogs/drawers
+- responsive checks at representative desktop/tablet/mobile widths
+- stale-version/error/empty/loading/denied states where the changed component participates
+- screenshot/visual comparison if repository tooling supports it
+
+IMPORTANT: is already historical-complete. Do not rewrite it. If this design task changes a route previously covered by 015, regenerate accessibility evidence only for the affected route/state set and attach it to this new task/final candidate evidence.
+
+EVIDENCE OUTPUT
+Create a NEW design evidence package under the current audit continuation run, including:
+- route-component-design-gap matrix
+- before/after screenshots or equivalent browser evidence for changed representative pages
+- token/component changes
+- changed route list
+- accessibility rerun results
+- responsive verification
+- any NEW_RESIDUAL_FINDING
+- exact SHA/worktree identity used for evidence
+
+HARD FAIL
+- visual improvement changes controlled meaning
+- PASS and RELEASED collapse into one state/style semantics
+- required fields/evidence/revision/provenance hidden for aesthetics
+- draft D0.2 material presented as approved/effective
+- accessibility regression
+- keyboard/focus regression
+- mobile critical action/state loss
+- shared component change breaks unaffected routes
+- UI-only authorization assumption introduced
+
+Acceptance:
+- representative authenticated route audit completed read-only.
+- repository design-system authority preserved.
+- visual inconsistencies affecting trust/usability are fixed at the correct shared/component level.
+- no business/scientific/authorization semantics changed.
+- affected routes pass accessibility/keyboard/responsive verification.
+- D0.2 drafts remain visually Draft/Pending Review unless separately approved.
+- no hidden release-impacting design regression remains.
+</pre></div></details><details class="task" data-priority="P0" data-search="qc-post-100-030 p0 1/7 · qc-post-100-030 close exact-candidate ci and complete evidence envelopes qc-post-100-030 — close exact-candidate ci and complete evidence envelopes priority/severity: p0 / p0 current state: partial / evidence_pending — reconcile exact head and working tree first. why: freeze intended final candidate and source fingerprint. use approved node&gt;=24.20.0&lt;25 and current pnpm contract; run verification:begin immediately before final build. execute current format/lint/typecheck/architecture/unit/integration/migrations/concurrency/security/build/authenticated e2e/evidence-completeness gates. bind run url/id/sha/runner/commands/counts/artifact/schema/fixture/expiry and preserve raw output. this prompt does not authorize commit/push/deploy. dependencies: current repository state must already contain the required prior implementation and evidence. do not carry historical prompt ids into this continuation pack. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: - enumerate both canonical paths before verification:begin. - if d0.2 or operational evidence is untracked/dirty/local-only, record that in the source fingerprint; do not claim exact clean candidate. - if those files are later committed, prior exact-sha ci is stale for the new candidate even when runtime code did not change. - determine whether pdfs/docx/forms/images are build inputs, excluded repository evidence, or shipped static assets. - documentation source/hash integrity never replaces ci, postgresql, e2e, security, accessibility, or release evidence. acceptance: - ci sha == candidate sha and full fingerprint == intended candidate. - 0 required fail/blocked/not verified/unapproved skip. - current gates retain candidate/schema/build identity and exact counts. - verified build bytes and sha256 exported once with trusted evidence manifest. - historical ci reused as current acceptance = 0. hard fail: old-sha evidence, skipped test treated pass, dirty/unidentified candidate, missing mandatory pg/e2e/security evidence." id="QC-POST-100-030"><summary><span class="badge">P0</span><span><small>1/7 · QC-POST-100-030</small><strong>Close exact-candidate CI and complete evidence envelopes</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-030">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-030">QC-POST-100-030 — Close exact-candidate CI and complete evidence envelopes
+Priority/Severity: P0 / P0
+Current state: PARTIAL / EVIDENCE_PENDING — reconcile exact HEAD and working tree first.
+Why: Freeze intended final candidate and source fingerprint. Use approved Node&gt;=24.20.0&lt;25 and current pnpm contract; run verification:begin immediately before final build. Execute current format/lint/typecheck/architecture/unit/integration/migrations/concurrency/security/build/authenticated E2E/evidence-completeness gates. Bind run URL/id/SHA/runner/commands/counts/artifact/schema/fixture/expiry and preserve raw output. This prompt does not authorize commit/push/deploy.
+Dependencies: current repository state must already contain the required prior implementation and evidence. Do not carry historical prompt IDs into this continuation pack.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+- Enumerate both canonical paths before verification:begin.
+- If D0.2 or operational evidence is untracked/dirty/local-only, record that in the source fingerprint; do not claim exact clean candidate.
+- If those files are later committed, prior exact-SHA CI is stale for the new candidate even when runtime code did not change.
+- Determine whether PDFs/DOCX/forms/images are build inputs, excluded repository evidence, or shipped static assets.
+- Documentation source/hash integrity never replaces CI, PostgreSQL, E2E, security, accessibility, or release evidence.
+
+Acceptance:
+- CI SHA == candidate SHA and full fingerprint == intended candidate.
+- 0 required FAIL/BLOCKED/NOT VERIFIED/unapproved SKIP.
+- Current gates retain candidate/schema/build identity and exact counts.
+- Verified build bytes and SHA256 exported once with trusted evidence manifest.
+- Historical CI reused as current acceptance = 0.
+Hard fail: old-SHA evidence, skipped test treated PASS, dirty/unidentified candidate, missing mandatory PG/E2E/security evidence.
+</pre></div></details><details class="task" data-priority="P0" data-search="qc-post-100-031 p0 2/7 · qc-post-100-031 build once and prove identical promoted/deployed artifact bytes qc-post-100-031 — build once and prove identical promoted/deployed artifact bytes priority/severity: p0 / p0 current state: partial / evidence_pending. why: inspect the current ci/provider pipeline. establish immutable verified artifact and sha256 manifest, then prove promotion/deployment identity or an architecture-approved byte-for-byte equivalent mechanism. verify deployed git sha, runtime node/service/start command and provider attestation. no deployment/provider setting write is authorized. dependencies: qc-post-100-030. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: - determine explicitly whether documents/qc_system_wi_sop_pack/ and qc_controlled_forms_and_operational_evidence/ are part of deployable artifact bytes. - distinguish source_sha, build_input_set, and deployed_artifact_bytes. - a docs-only commit may change source sha while runtime artifact bytes remain unchanged; prove the actual architecture. - if d0.2/evidence is intentionally excluded from runtime artifact, record that exclusion in release identity/parity evidence. acceptance: - verified artifact sha256 == promoted/deployed artifact sha256 where same-byte promotion is required. - deployed git sha/service version/node/start command match signed build manifest. - rebuild is never presumed identical. - unavailable provider permission =&gt; blocked/not verified, never guessed." id="QC-POST-100-031"><summary><span class="badge">P0</span><span><small>2/7 · QC-POST-100-031</small><strong>Build once and prove identical promoted/deployed artifact bytes</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-031">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-031">QC-POST-100-031 — Build once and prove identical promoted/deployed artifact bytes
+Priority/Severity: P0 / P0
+Current state: PARTIAL / EVIDENCE_PENDING.
+Why: Inspect the current CI/provider pipeline. Establish immutable verified artifact and SHA256 manifest, then prove promotion/deployment identity or an architecture-approved byte-for-byte equivalent mechanism. Verify deployed Git SHA, runtime Node/service/start command and provider attestation. No deployment/provider setting write is authorized.
+Dependencies: QC-POST-100-030.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+- Determine explicitly whether Documents/QC_System_WI_SOP_Pack/ and QC_Controlled_Forms_and_Operational_Evidence/ are part of deployable artifact bytes.
+- Distinguish SOURCE_SHA, BUILD_INPUT_SET, and DEPLOYED_ARTIFACT_BYTES.
+- A docs-only commit may change source SHA while runtime artifact bytes remain unchanged; prove the actual architecture.
+- If D0.2/evidence is intentionally excluded from runtime artifact, record that exclusion in release identity/parity evidence.
+
+Acceptance:
+- verified artifact SHA256 == promoted/deployed artifact SHA256 where same-byte promotion is required.
+- deployed Git SHA/service version/Node/start command match signed build manifest.
+- rebuild is never presumed identical.
+- unavailable provider permission =&gt; BLOCKED/NOT VERIFIED, never guessed.
+</pre></div></details><details class="task" data-priority="P0" data-search="qc-post-100-010 p0 3/7 · qc-post-100-010 collect authorized deployed database and environment parity qc-post-100-010 — collect authorized deployed database and environment parity priority/severity: p0 / p0 current state: partial / evidence_pending. why: obtain authorized read-only provider/database evidence: deployed sha, artifact digest, node contract, service version, start command, health/readiness, schema digest, migration/checksum ledger, runtime/operator env contract. never export secret values. isolated rehearsal first; production mutation requires separate explicit authorization. dependencies: qc-post-100-030 and qc-post-100-031. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: - d0.2 and operational images can inform expected workflow/data/document shapes only. - they do not prove deployed db contents, schema head, environment variables, provider identity, or production parity. - if the app documents module is expected to contain d0.2 items, verify actual registration by authorized live/database reads. acceptance: - all identity/parity fields present and equal candidate/verified artifact/approved schema. - 0 migration/checksum/config mismatch. - readiness verified from provider/runtime/database reads. - production writes remain unexecuted without explicit authorization." id="QC-POST-100-010"><summary><span class="badge">P0</span><span><small>3/7 · QC-POST-100-010</small><strong>Collect authorized deployed database and environment parity</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-010">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-010">QC-POST-100-010 — Collect authorized deployed database and environment parity
+Priority/Severity: P0 / P0
+Current state: PARTIAL / EVIDENCE_PENDING.
+Why: Obtain authorized read-only provider/database evidence: deployed SHA, artifact digest, Node contract, service version, start command, health/readiness, schema digest, migration/checksum ledger, runtime/operator env contract. Never export secret values. Isolated rehearsal first; production mutation requires separate explicit authorization.
+Dependencies: QC-POST-100-030 and QC-POST-100-031.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+- D0.2 and operational images can inform expected workflow/data/document shapes only.
+- They do NOT prove deployed DB contents, schema head, environment variables, provider identity, or production parity.
+- If the app Documents module is expected to contain D0.2 items, verify actual registration by authorized live/database reads.
+
+Acceptance:
+- all identity/parity fields present and equal candidate/verified artifact/approved schema.
+- 0 migration/checksum/config mismatch.
+- readiness verified from provider/runtime/database reads.
+- production writes remain unexecuted without explicit authorization.
+</pre></div></details><details class="task" data-priority="P2" data-search="qc-post-100-019 p2 4/7 · qc-post-100-019 prepare a real-record demonstration plan with safe prerequisites qc-post-100-019 — prepare a real-record demonstration plan with safe prerequisites priority/severity: p2 / p2 current state: partial / evidence_pending. why: build a read-only route/state/persona script using authorized real records with identities safely masked. verify live candidate readiness first. keep mutating scenarios for separately authorized isolated environments; never create fake production data. dependencies: qc-post-100-010 and qc-post-100-031. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: - build scenarios from actual d0.2 sop/wi/references/forms plus operational evidence, not generic assumptions. - search references for the 20 fillable forms first; reuse suitable forms rather than asking the user to recreate them. - search the 28 decision proposals for already-documented unresolved choices. do not ask the user to restate proposal content; ask only for the exact approval/choice still required. - because d0.2 is draft-for-review, label scenarios derived only from it draft-based scenario until current authority is confirmed where required. - use actual evidence families for receiving, inspection, hold, laboratory, rejection/disposition, production reject, internal transfer, and documents where in scope. acceptance: - each scenario identifies an authorized real record, expected read outcome, actor, candidate identity, and capture method. - 0 invented production records or writes. - no duplicate request for operational forms/examples already in either canonical path. - demo evidence stays demo, never uat/production go." id="QC-POST-100-019"><summary><span class="badge">P2</span><span><small>4/7 · QC-POST-100-019</small><strong>Prepare a real-record demonstration plan with safe prerequisites</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-019">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-019">QC-POST-100-019 — Prepare a real-record demonstration plan with safe prerequisites
+Priority/Severity: P2 / P2
+Current state: PARTIAL / EVIDENCE_PENDING.
+Why: Build a read-only route/state/persona script using authorized real records with identities safely masked. Verify live candidate readiness first. Keep mutating scenarios for separately authorized isolated environments; never create fake production data.
+Dependencies: QC-POST-100-010 and QC-POST-100-031.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+- Build scenarios from actual D0.2 SOP/WI/References/forms plus operational evidence, not generic assumptions.
+- Search References for the 20 fillable forms first; reuse suitable forms rather than asking the user to recreate them.
+- Search the 28 decision proposals for already-documented unresolved choices. Do not ask the user to restate proposal content; ask only for the exact approval/choice still required.
+- Because D0.2 is draft-for-review, label scenarios derived only from it DRAFT-BASED SCENARIO until current authority is confirmed where required.
+- Use actual evidence families for Receiving, Inspection, HOLD, Laboratory, Rejection/Disposition, Production Reject, Internal Transfer, and Documents where in scope.
+
+Acceptance:
+- each scenario identifies an authorized real record, expected read outcome, actor, candidate identity, and capture method.
+- 0 invented production records or writes.
+- no duplicate request for operational forms/examples already in either canonical path.
+- demo evidence stays DEMO, never UAT/production GO.
+</pre></div></details><details class="task" data-priority="P2" data-search="qc-post-100-020 p2 5/7 · qc-post-100-020 execute and retain the authorized read-only live demonstration qc-post-100-020 — execute and retain the authorized read-only live demonstration priority/severity: p2 / p2 current state: partial / evidence_pending. why: run the frozen read-only script against verified live runtime. capture actual state, current identity, actor/scope, dates, safe evidence refs and observed errors. if runtime is old/unidentified/unavailable, remain blocked. dependencies: qc-post-100-019. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: - compare live behavior to the source-mapped scenarios from 019. - if expectation comes from d0.2 draft only, label result conformance_to_draft_expectation, not policy compliance. - if expectation comes from operational images, label it historical/operational workflow comparison, not current authority. - never seed historical paper values into live production to make a demo pass. acceptance: - every live read has candidate/runtime/actor/record/state proof and observed outcome. - 0 inherited historical screenshot acceptance. - 0 production writes or sensitive disclosure. - failures produce explicit residual findings; uat/restore/release stay separate." id="QC-POST-100-020"><summary><span class="badge">P2</span><span><small>5/7 · QC-POST-100-020</small><strong>Execute and retain the authorized read-only live demonstration</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-020">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-020">QC-POST-100-020 — Execute and retain the authorized read-only live demonstration
+Priority/Severity: P2 / P2
+Current state: PARTIAL / EVIDENCE_PENDING.
+Why: Run the frozen read-only script against verified live runtime. Capture actual state, current identity, actor/scope, dates, safe evidence refs and observed errors. If runtime is old/unidentified/unavailable, remain BLOCKED.
+Dependencies: QC-POST-100-019.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+- Compare live behavior to the source-mapped scenarios from 019.
+- If expectation comes from D0.2 draft only, label result CONFORMANCE_TO_DRAFT_EXPECTATION, not policy compliance.
+- If expectation comes from operational images, label it historical/operational workflow comparison, not current authority.
+- Never seed historical paper values into live production to make a demo pass.
+
+Acceptance:
+- every live read has candidate/runtime/actor/record/state proof and observed outcome.
+- 0 inherited historical screenshot acceptance.
+- 0 production writes or sensitive disclosure.
+- failures produce explicit residual findings; UAT/restore/release stay separate.
+</pre></div></details><details class="task" data-priority="P1" data-search="qc-post-100-016 p1 6/7 · qc-post-100-016 obtain genuine human uat acceptance qc-post-100-016 — obtain genuine human uat acceptance priority/severity: p1 / p1 current state: partial / evidence_pending. why: recruit actual applicable personas; confirm authority, environment, exact candidate/artifact/schema identity and scenario acceptance form. execute receiving/inspection, laboratory, reject, admin/security and recovery journeys as applicable; retain observations, defects, remediation, retest and sign-off. dependencies: qc-post-100-020, qc-post-100-030, and qc-post-100-031. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: - before asking for any uat template/checklist/form/signature field/expected workflow, inspect documents/qc_system_wi_sop_pack/references/ and relevant sop/wi material. - reuse suitable fillable forms; do not duplicate them. - d0.2 complete-draft status does not count as participant approval. - 28 proposed decisions are inputs, not accepted owner decisions unless separately approved. - technical gaps explicitly listed in the decision book remain open; never invent values to complete uat. - uat sign-off must bind exact candidate/artifact/schema/environment. - historical signatures/images never count as current uat signatures. acceptance: - genuine current participants/authority + exact-candidate observations + required current signatures. - failed scenarios have assigned closure and human retest. - 0 unaccepted mandatory scenario or missing required current sign-off." id="QC-POST-100-016"><summary><span class="badge">P1</span><span><small>6/7 · QC-POST-100-016</small><strong>Obtain genuine human UAT acceptance</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-016">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-016">QC-POST-100-016 — Obtain genuine human UAT acceptance
+Priority/Severity: P1 / P1
+Current state: PARTIAL / EVIDENCE_PENDING.
+Why: Recruit actual applicable personas; confirm authority, environment, exact candidate/artifact/schema identity and scenario acceptance form. Execute receiving/inspection, laboratory, reject, admin/security and recovery journeys as applicable; retain observations, defects, remediation, retest and sign-off.
+Dependencies: QC-POST-100-020, QC-POST-100-030, and QC-POST-100-031.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+- Before asking for any UAT template/checklist/form/signature field/expected workflow, inspect Documents/QC_System_WI_SOP_Pack/References/ and relevant SOP/WI material.
+- Reuse suitable fillable forms; do not duplicate them.
+- D0.2 complete-draft status does NOT count as participant approval.
+- 28 proposed decisions are inputs, not accepted owner decisions unless separately approved.
+- Technical gaps explicitly listed in the decision book remain open; never invent values to complete UAT.
+- UAT sign-off must bind exact candidate/artifact/schema/environment.
+- Historical signatures/images never count as current UAT signatures.
+
+Acceptance:
+- genuine current participants/authority + exact-candidate observations + required current signatures.
+- failed scenarios have assigned closure and human retest.
+- 0 unaccepted mandatory scenario or missing required current sign-off.
+</pre></div></details><details class="task" data-priority="P0" data-search="qc-post-100-final p0 7/7 · qc-post-100-final independently reconcile every required criterion and issue go/no-go qc-post-100-final — independently reconcile every required criterion and issue go/no-go priority/severity: p0 / p0 current state: partial / evidence_pending. why: independently freeze final candidate, review all upstream handoffs, rerun current gates on the same candidate, and re-audit all applicable pages/indicators/gates. verify postgresql/checksums/concurrency, exact-head ci/e2e, artifact identity, runtime/env parity, restore/dr, manual at and human uat. missing mandatory evidence =&gt; no-go. do not implement features in this independent audit. dependencies: qc-post-100-design-001, qc-post-100-030, qc-post-100-031, qc-post-100-010, qc-post-100-019, qc-post-100-020, qc-post-100-016, and every release-impacting new_residual_finding. mandatory source discovery — before asking the user for any document or evidence canonical operational evidence directory: qc_controlled_forms_and_operational_evidence/ canonical qc documentation pack: documents/qc_system_wi_sop_pack/ expected d0.2 structure: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ user-declared d0.2 metadata — verify at execution time: - version: d0.2. - status: complete drafts for review; not approved/effective by default. - 30 sops in pdf. - 68 wis in word. - references includes supporting references, 28 proposed decisions, and 20 fillable operational forms. - user states that 98 sop/wi documents were matched to their sources/hashes and sample pdf/word rendering was checked. - user states approval, signatures, and missing technical information are explicitly identified in the decision book and were not marked completed. - user states the original 84 operational images were preserved unchanged. generation-time limitation: remote github main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed qc_controlled_forms_and_operational_evidence/, but documents/qc_system_wi_sop_pack/ was not visible through the github connector and was not available as an attached/library artifact. therefore the d0.2 metadata above is user-declared local state, not independently verified here. when executing this prompt in the local checkout, enumerate and inspect the actual d0.2 pack before relying on it. search order — hard rule: 1. inspect current head and working tree. 2. search repository source and documents/. 3. recursively inspect documents/qc_system_wi_sop_pack/. 4. recursively inspect qc_controlled_forms_and_operational_evidence/. 5. search current application documents/controlled-source registry/database where authorized. 6. search current audits and handoffs. 7. only then identify the smallest genuinely unresolved user input. classification rules: - sop/wi draft found in d0.2 =&gt; draft_source_available, not approved_authority. - proposed decision =&gt; proposal_available, not owner_approved_decision. - fillable form =&gt; fillable_form_available, not signed_record or uat_acceptance. - historical photographed signature =&gt; historical_signature_present only. - operational image =&gt; user_supplied_operational_evidence / workflow context. - source/hash match =&gt; source_integrity_evidence only; it does not prove approval/effectivity. - missing approval/signature/effective date/technical input =&gt; keep only that exact residual item open; do not ask again for the underlying document if it already exists. no generic user requests: do not say “provide the document/form/wi/sop/evidence/signature” until both canonical paths above and the current documents registry have been searched. if input is still required, output a structured missing input request containing: exact missing item; why required; paths searched; related d0.2/evidence already found; why insufficient; minimum additional input; gate blocked. historical work protection: do not reopen prior historical work solely because new evidence or documentation folders are available. if new documentation/evidence reveals a material contradiction, create new_residual_finding and bind it to the affected remaining release gate, especially final. d0.2 / operational-evidence impact: final must enumerate and reconcile at execution time: - documents/qc_system_wi_sop_pack/sops/ - documents/qc_system_wi_sop_pack/wis/ - documents/qc_system_wi_sop_pack/references/ - qc_controlled_forms_and_operational_evidence/ do not trust declared counts without enumeration. report separately: 1. documentation availability 2. source/hash integrity 3. review status 4. approval/effectivity status 5. signature status 6. technical-authority completeness 7. system document registration / workflow binding 8. runtime / release evidence a complete d0.2 draft pack may close missing-draft/source-material gaps but must not close approval/effectivity/signature/technical-authority gates without their own current evidence. if d0.2 shows a controlled document/form exists locally but is absent from the system documents module, create new_residual_finding rather than silently reopening completed 033. acceptance: - unmapped gaps=0; open p0=0; open p1=0; regressions=0; unsupported n/a=0. - required fail/blocked/not verified=0 across approved gates. - each applicable criterion has candidate-bound evidence. - missing ci/pg/artifact/provider/restore/manual at/human uat =&gt; no-go. - no draft d0.2 file treated as approved authority, no proposed decision treated approved, no fillable form treated signed, and no operational image treated runtime proof." id="QC-POST-100-FINAL"><summary><span class="badge">P0</span><span><small>7/7 · QC-POST-100-FINAL</small><strong>Independently reconcile every required criterion and issue GO/NO-GO</strong></span></summary><div class="body"><div class="paths"><code>QC_Controlled_Forms_and_Operational_Evidence/</code><code>Documents/QC_System_WI_SOP_Pack/</code></div><button class="copy" data-target="p-QC-POST-100-FINAL">Copy Prompt</button><span class="copy-state"></span><pre id="p-QC-POST-100-FINAL">QC-POST-100-FINAL — Independently reconcile every required criterion and issue GO/NO-GO
+Priority/Severity: P0 / P0
+Current state: PARTIAL / EVIDENCE_PENDING.
+Why: Independently freeze final candidate, review all upstream handoffs, rerun current gates on the same candidate, and re-audit all applicable pages/indicators/gates. Verify PostgreSQL/checksums/concurrency, exact-head CI/E2E, artifact identity, runtime/env parity, restore/DR, manual AT and human UAT. Missing mandatory evidence =&gt; NO-GO. Do not implement features in this independent audit.
+Dependencies: QC-POST-100-DESIGN-001, QC-POST-100-030, QC-POST-100-031, QC-POST-100-010, QC-POST-100-019, QC-POST-100-020, QC-POST-100-016, and every release-impacting NEW_RESIDUAL_FINDING.
+
+MANDATORY SOURCE DISCOVERY — BEFORE ASKING THE USER FOR ANY DOCUMENT OR EVIDENCE
+
+Canonical operational evidence directory:
+QC_Controlled_Forms_and_Operational_Evidence/
+
+Canonical QC documentation pack:
+Documents/QC_System_WI_SOP_Pack/
+
+Expected D0.2 structure:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+
+USER-DECLARED D0.2 METADATA — VERIFY AT EXECUTION TIME:
+- Version: D0.2.
+- Status: complete drafts for review; NOT approved/effective by default.
+- 30 SOPs in PDF.
+- 68 WIs in Word.
+- References includes supporting references, 28 proposed decisions, and 20 fillable operational forms.
+- User states that 98 SOP/WI documents were matched to their sources/hashes and sample PDF/Word rendering was checked.
+- User states approval, signatures, and missing technical information are explicitly identified in the decision book and were NOT marked completed.
+- User states the original 84 operational images were preserved unchanged.
+
+GENERATION-TIME LIMITATION:
+Remote GitHub main at 435f9f704049dee4916223b24b96866d7fa9af2e exposed QC_Controlled_Forms_and_Operational_Evidence/, but Documents/QC_System_WI_SOP_Pack/ was not visible through the GitHub connector and was not available as an attached/library artifact. Therefore the D0.2 metadata above is USER-DECLARED LOCAL STATE, not independently verified here. When executing this prompt in the local checkout, enumerate and inspect the actual D0.2 pack before relying on it.
+
+SEARCH ORDER — HARD RULE:
+1. Inspect current HEAD and working tree.
+2. Search repository source and Documents/.
+3. Recursively inspect Documents/QC_System_WI_SOP_Pack/.
+4. Recursively inspect QC_Controlled_Forms_and_Operational_Evidence/.
+5. Search current application Documents/controlled-source registry/database where authorized.
+6. Search current audits and handoffs.
+7. Only then identify the smallest genuinely unresolved user input.
+
+CLASSIFICATION RULES:
+- SOP/WI draft found in D0.2 =&gt; DRAFT_SOURCE_AVAILABLE, not APPROVED_AUTHORITY.
+- Proposed decision =&gt; PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION.
+- Fillable form =&gt; FILLABLE_FORM_AVAILABLE, not SIGNED_RECORD or UAT_ACCEPTANCE.
+- Historical photographed signature =&gt; HISTORICAL_SIGNATURE_PRESENT only.
+- Operational image =&gt; USER_SUPPLIED_OPERATIONAL_EVIDENCE / workflow context.
+- Source/hash match =&gt; SOURCE_INTEGRITY_EVIDENCE only; it does not prove approval/effectivity.
+- Missing approval/signature/effective date/technical input =&gt; keep only that exact residual item OPEN; do not ask again for the underlying document if it already exists.
+
+NO GENERIC USER REQUESTS:
+Do not say “provide the document/form/WI/SOP/evidence/signature” until both canonical paths above and the current Documents registry have been searched.
+If input is still required, output a structured MISSING INPUT REQUEST containing: exact missing item; why required; paths searched; related D0.2/evidence already found; why insufficient; minimum additional input; gate blocked.
+
+HISTORICAL WORK PROTECTION:
+Do not reopen prior historical work solely because new evidence or documentation folders are available. If new documentation/evidence reveals a material contradiction, create NEW_RESIDUAL_FINDING and bind it to the affected remaining release gate, especially FINAL.
+D0.2 / OPERATIONAL-EVIDENCE IMPACT:
+FINAL must enumerate and reconcile at execution time:
+- Documents/QC_System_WI_SOP_Pack/SOPs/
+- Documents/QC_System_WI_SOP_Pack/WIs/
+- Documents/QC_System_WI_SOP_Pack/References/
+- QC_Controlled_Forms_and_Operational_Evidence/
+Do not trust declared counts without enumeration.
+
+Report separately:
+1. DOCUMENTATION AVAILABILITY
+2. SOURCE/HASH INTEGRITY
+3. REVIEW STATUS
+4. APPROVAL/EFFECTIVITY STATUS
+5. SIGNATURE STATUS
+6. TECHNICAL-AUTHORITY COMPLETENESS
+7. SYSTEM DOCUMENT REGISTRATION / WORKFLOW BINDING
+8. RUNTIME / RELEASE EVIDENCE
+
+A complete D0.2 draft pack may close missing-draft/source-material gaps but MUST NOT close approval/effectivity/signature/technical-authority gates without their own current evidence.
+If D0.2 shows a controlled document/form exists locally but is absent from the system Documents module, create NEW_RESIDUAL_FINDING rather than silently reopening completed 033.
+
+Acceptance:
+- unmapped gaps=0; open P0=0; open P1=0; regressions=0; unsupported N/A=0.
+- required FAIL/BLOCKED/NOT VERIFIED=0 across approved gates.
+- each applicable criterion has candidate-bound evidence.
+- missing CI/PG/artifact/provider/restore/manual AT/human UAT =&gt; NO-GO.
+- no draft D0.2 file treated as approved authority, no proposed decision treated approved, no fillable form treated signed, and no operational image treated runtime proof.
+</pre></div></details></section><footer><p>This continuation pack contains only the active design-hardening task, the remaining release prompts, and FINAL. New contradictions become residual findings.</p></footer></main><script>const tasks=[...document.querySelectorAll('.task')],q=document.getElementById('q'),pr=document.getElementById('prio'),status=document.getElementById('status');function fil(){const s=q.value.trim().toLowerCase(),p=pr.value;let n=0;for(const t of tasks){const ok=(!s||t.dataset.search.includes(s))&&(!p||t.dataset.priority===p);t.hidden=!ok;if(ok)n++}status.textContent=`Visible: ${n} / ${tasks.length}`}q.oninput=fil;pr.onchange=fil;fil();document.getElementById('expand').onclick=()=>tasks.filter(x=>!x.hidden).forEach(x=>x.open=true);document.getElementById('collapse').onclick=()=>tasks.forEach(x=>x.open=false);document.getElementById('theme').onclick=()=>document.documentElement.dataset.theme=document.documentElement.dataset.theme==='light'?'dark':'light';document.addEventListener('click',async e=>{const b=e.target.closest('.copy');if(!b)return;const p=document.getElementById(b.dataset.target);try{await navigator.clipboard.writeText(p.innerText);const s=b.nextElementSibling;s.textContent='Copied';setTimeout(()=>s.textContent='',1000)}catch{}});</script></body></html>
