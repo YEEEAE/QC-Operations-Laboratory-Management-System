@@ -1,0 +1,46 @@
+# QC-POST-100-FINAL — independent release reconciliation
+
+**Decision: NO-GO / BLOCKED / EVIDENCE_PENDING.** Inspection baseline: local `main` HEAD `edbe35acc20076a8e9f4811faad7f9a2e339f9c2`, clean at initial freeze. This report and the Mind update change the working tree; they do not constitute a new committed, CI-attested release candidate. No product feature, production mutation, deployment, approval, or signature was performed.
+
+## Source discovery and classifications
+
+Search order: HEAD/working tree; repository source and `Documents/`; recursive `Documents/QC_System_WI_SOP_Pack/{SOPs,WIs,References}/`; recursive `QC_Controlled_Forms_and_Operational_Evidence/`; Documents registry source and the authorized dated read-only export `audit/2026-10-04/QC-POST-100-010/documents-registry.json`; then current audits/handoffs. No current authorized database connection or authenticated registry session was used. The dated export is historical to this candidate.
+
+| Required distinction | Independent result on this checkout | Release classification |
+| --- | --- | --- |
+| 1. Documentation availability | Enumerated 30 PDF SOPs, 68 DOCX WIs and 20 References files (15 PDF, 2 ZIP, 2 TXT, 1 DOCX). READ-ME identifies D0.2 DRAFT FOR REVIEW; decision book and operational records are present. | DRAFT_SOURCE_AVAILABLE; not an approved instruction. |
+| 2. Source/hash integrity | `References/SHA256SUMS.txt`: 117/117 referenced files exist and match SHA-256 (30 SOP, 68 WI, 19 References). Both ZIP CRC tests pass; `Original_Company_Forms.zip` has 84 entries, whose names and bytes match all 84 local images (39 JPG, 30 HEIC, 11 JPEG, 4 PNG). This run did not independently re-render every PDF/Word body or prove upstream scientific-source correctness. | SOURCE_INTEGRITY_EVIDENCE only. |
+| 3. Review status | D0.2 README says draft for review; no candidate-bound completed document-control review was established. Earlier sampled rendering and source/body-match claims are historical, not rerun here. | Review completion NOT VERIFIED. |
+| 4. Approval/effectivity | 28 proposals are identified in the decision book per README and prior inspected handoffs; no current owner-approved decision, document approval/effective date, or technical adoption was verified. | PROPOSAL_AVAILABLE, not OWNER_APPROVED_DECISION. |
+| 5. Signature | `Operational_Records.docx` describes 20 blank continuation records. Photographed signatures on operational images, if any, are historical only. No current signed controlled record/UAT acceptance verified. | FILLABLE_FORM_AVAILABLE / HISTORICAL_SIGNATURE_PRESENT only. |
+| 6. Technical authority | Missing manuals/clauses and technical adoption remain explicitly identified in D0.2; approved scientific criteria, signature/effectivity policy and applicable owner decisions not verified. | OPEN only for those exact approvals/inputs; do not request the draft again. |
+| 7. System registration/binding | Dated 010 authorized export reported `rows: []`, `controlledSourceSchemaAvailable: false` (2026-10-04T02:48:09.430Z). Current candidate registry and workflow binding not queried; local files cannot establish registered active revisions or use-case source snapshots. | **NEW_RESIDUAL_FINDING RF-FINAL-DOC-REGISTRATION**, bound to FINAL/010/033 as applicable, not a reopening of historical 033 implementation: verify current registry, register/bind controlled versions under separately authorized process, then prove approved/effective state. |
+| 8. Runtime/release | No exact-HEAD signed CI/full-bundle/provider identity, applied-schema parity, completed restore/DR, manual AT or signed human UAT on this candidate. | NOT VERIFIED/BLOCKED; local hashes and static checks do not substitute. |
+
+The 84 images are USER_SUPPLIED_OPERATIONAL_EVIDENCE/workflow context, not runtime proof. The local ZIP and manifest do not establish official approval or effectivity.
+
+## Upstream handoff and gate disposition
+
+| Dependency/gate | Evidence reviewed and candidate-bound outcome |
+| --- | --- |
+| DESIGN-001 | No current candidate-bound signed/rendered design acceptance handoff identified in searched current audit packets; design criterion-by-criterion browser acceptance NOT VERIFIED. Do not infer from source tests. |
+| 030 | Earlier 030 continuation described in 031 has completeness exit 1: integration 30 failures/11 skips, migrations 1 failure, concurrency 6 failures, E2E 13 failures/5 skips, bound to `cd87fae…`, not this HEAD. Current exact-HEAD complete run NOT VERIFIED. |
+| 031 | Handoff at `a2071ee…` identifies RF-031-ARTIFACT-PROMOTION: full archive workflow locally authored but no successful CI execution, architecture approval or provider same-byte promotion. Current HEAD artifact digest and provider match NOT VERIFIED. |
+| 010 | Dated packet at `275ab3c…`: isolated PG18.6 45 migrations/86 tables/zero orphans; read-only live export had 18 applied, 27 pending, zero applied checksum mismatches; provider SHA `435f9f…` differed from that candidate, registry empty. These are historical observations, not a fresh live read on this HEAD. Current PG18 checksum/concurrency, query-role/runtime binding and production parity NOT VERIFIED. RF-010-CURRENT-PARITY remains open. |
+| 019/020 | Eight scripts reviewed locally, but 0/8 real-record scenarios accepted. 020 custom-domain readiness had no HTTP response in eight seconds; exact identity unavailable, so no business route execution. RF-020-LIVE-RUNTIME-UNAVAILABLE remains open. Demo is not UAT. |
+| 016 | Handoff `a916a77…` reports 0 verified human sessions/signatures and RF-016-SCENARIO-COVERAGE; blank QC-REC-017 exists, no current signed acceptance. Still BLOCKED. |
+| All remaining release-impacting findings | Existing scientific-source/decision, registration, provider attestation, backup/restore, security/permission and route coverage gaps in current Mind and post-implementation ledger retain their prior OPEN/PARTIAL state. This pass did not independently certify 671 page checks, 80 domains, 25 indicators, 22 audit gates, or 19 approved release gates on the current candidate; unmapped gaps=0, P0/P1=0, regressions=0 and unsupported N/A=0 therefore cannot be asserted. No N/A credit was awarded. |
+
+## Fresh local checks and limitations
+
+On supported Node 24.20.0 / pnpm 11.25.0 at initial clean HEAD: `pnpm requirements:check` PASS (100 requirements, 34 risks, 20 gaps, 80 domains), `pnpm test:architecture` PASS, `pnpm typecheck` 0 errors/0 warnings (114 hints). These source checks are not the required complete same-candidate unit/integration/migration/concurrency/security/build/E2E/CI gates. No current PostgreSQL test database or signed CI run was used in this pass; no current full release/evidence gate is marked PASS. No authenticated browser/AT/UAT or restore drill was performed. A claim of no regressions would be unsupported.
+
+**Acceptance reconciliation:** mandatory FAIL/BLOCKED/NOT VERIFIED = 0 is false; each applicable criterion has candidate-bound evidence = false. Missing CI, PG18 end-to-end checksum/concurrency proof, full artifact/provider identity, restore/DR, manual AT and human UAT each independently forces NO-GO. Do not promote D0.2 source integrity to approval, draft decisions to policy, blank forms to signatures or operational photographs to runtime acceptance. Historical work is not reopened merely because the local folders now exist.
+
+## MISSING INPUT REQUEST — exact residuals only
+
+1. **Approved technical/document authority:** approval reference, signatory/authority, effective revision/date and missing technical manual/clauses or scientifically approved criteria for the applicable D0.2 decisions. Required for scientific evaluation, controlled document approval/effectivity and workflow binding. Searched both canonical trees, README/decision book references, current Documents source/registry export and 010/016/019/020/031 handoffs. Drafts/proposals and hashes already exist but are not approved. Minimum: decisions and exact approved source/revision/hash/effectivity, **not replacement SOP/WI/form/image**. Blocks scientific/document/FINAL gates.
+2. **Current candidate operational attestation:** successful exact-HEAD CI gate packet, signed complete artifact digest and approved byte-scope/promotion, provider deployment identity, applied PG18 ledger/checksums and runtime/environment comparison, authorized restore/DR result and RPO/RTO decisions. Existing local rehearsal and old provider export are candidate-mismatched or incomplete. Minimum: sanitized signed exports or authorized read-only access for this candidate; no secrets and no permission to migrate/deploy. Blocks 030/031/010/FINAL.
+3. **Human acceptance:** approved scenario applicability/persona/scope, actual manual AT findings, human UAT sessions/retests and current authorized signatures tied to the same ready artifact. Blank QC-REC-017 and historical images are already available but unsigned. Minimum: completed signed references and evidence, not a new blank form. Blocks 016/FINAL.
+
+No GO can be issued until every applicable row is mapped and independently evidenced on one final candidate, the release-impacting findings are resolved and the required gates contain no FAIL/BLOCKED/NOT VERIFIED. This report deliberately does not authorize production operations or sign on behalf of a person.

@@ -1,3 +1,8 @@
+- **2026-10-04 — QC-POST-100-FINAL / independent release reconciliation**
+  - Changed: NO-GO on clean-start HEAD `edbe35acc20076a8e9f4811faad7f9a2e339f9c2`; RF-FINAL-DOC-REGISTRATION binds current D0.2 controlled-version registration/workflow verification to FINAL without reopening historical 033. Audit report changes the tree and is not a committed release candidate.
+  - Evidence: local D0.2 30 SOP/68 WI/20 References, 117/117 hashes and 84/84 original-image bytes PASS; Node 24.20 requirements/architecture/typecheck PASS. Exact-HEAD complete CI/PG/E2E/artifact/provider/restore/manual AT/human UAT remain NOT VERIFIED; upstream handoffs are bound to other SHAs.
+  - State: BLOCKED / EVIDENCE_PENDING. Key file: `audit/2026-10-04/QC-POST-100-FINAL.md`.
+
 - **2026-10-04 — Owner RBAC reaffirmation / report subtype coverage**
   - Changed: recorded Yazeed's decision in controlled RBAC/role/permission/state/decision sources, enumerated two laboratory drafts and two reject variants, and aligned release-role copy; no schema or live user mutation.
   - Evidence: focused source tests 71/71 PASS on Node 24.20.0; current database target/credentials and six persistent-account read-back unavailable. Handoff `audit/2026-10-04/owner-rbac-reaffirmation-handoff.md`.
