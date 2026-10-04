@@ -1,3 +1,8 @@
+- **2026-10-04 — Git oversized reference cleanup**
+  - Changed: removed only two oversized References PDF/ZIP paths from five unpublished main commits; local copies preserved and exact paths ignored. HEAD is now `3a2c26c9f8b14770c3ebc1d454d5e839de66243e`; prior candidate SHAs remain historical evidence, not evidence for rewritten HEAD.
+  - Evidence: other tracked tree entries identical; local SHA-256 unchanged. Pre-rewrite bundle: `/Users/yzydalshmry/Desktop/qc-git-history-backup-o6w5oc4_/before.bundle`. Existing malformed local ref `refs/remotes/origin/main 2` blocks ordinary fetch; left untouched.
+  - State: DONE locally; no push performed. Remote acceptance NOT VERIFIED; malformed-ref cleanup remains separate.
+
 - **2026-10-04 — QC-POST-100-031 / full artifact identity**
   - Changed: local CI seals/attests/uploads full runtime archive only after completeness passes; no provider deployment change. RF-031-ARTIFACT-PROMOTION binds 031/FINAL: Render rebuild is not same-byte promotion.
   - Evidence: focused 7/7 and YAML/order checks PASS; D0.2 117 hashes and 84 originals match. Exact HEAD `a2071eef8086f919fd4877456c9b621111d16e4f` has no GitHub Actions run; 030 final completeness exit 1. Full archive CI/provider runtime/signatures NOT VERIFIED.

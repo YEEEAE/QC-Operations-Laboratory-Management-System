@@ -26,3 +26,7 @@ test-results/
 Thumbs.db
 .idea/
 .vscode/
+
+# Local-only oversized reference artifacts (preserve on disk)
+/Documents/QC_System_WI_SOP_Pack/References/Company_Forms_Visual_Reference.pdf
+/Documents/QC_System_WI_SOP_Pack/References/Original_Company_Forms.zip

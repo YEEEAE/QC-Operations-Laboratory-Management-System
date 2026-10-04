@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-10-04T02:47:48.749227+00:00",
+  "mode": "GET only; secret values excluded",
+  "service": {
+    "id": "srv-dadqj67qj5pc7395rv2g",
+    "name": "QC-Operations-Laboratory-Management-System",
+    "type": "web_service",
+    "updatedAt": "2026-10-03T14:27:17.341807Z"
+  },
+  "contract": {
+    "runtime": "rust",
+    "healthCheckPath": "",
+    "url": "https://qc-operations-laboratory-management.onrender.com"
+  },
+  "commands": {
+    "buildCommand": "corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build",
+    "startCommand": "SYSTEM_OWNER_LOGIN_IDENTITY=yazeed pnpm access:grant-system-owner; node dist/server/entry.mjs"
+  },
+  "deployments": [
+    {
+      "id": "dep-db0h06ivcj2c7399tiig",
+      "status": "live",
+      "commit": {
+        "id": "435f9f704049dee4916223b24b96866d7fa9af2e",
+        "message": "update site",
+        "createdAt": "2026-10-03T14:21:39Z"
+      },
+      "finishedAt": "2026-10-03T14:27:17.256248Z"
+    }
+  ],
+  "environment": [
+    {
+      "name": "DATABASE_URL",
+      "nonempty": true,
+      "matchesLocal": null
+    },
+    {
+      "name": "Value",
+      "nonempty": true,
+      "matchesLocal": null
+    },
+    {
+      "name": "Key",
+      "nonempty": true,
+      "matchesLocal": null
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "nonempty": true,
+      "matchesLocal": true
+    },
+    {
+      "name": "RATE_LIMIT_LOGIN_WINDOW_SECONDS",
+      "nonempty": true,
+      "matchesLocal": false
+    },
+    {
+      "name": "RATE_LIMIT_LOGIN_MAX",
+      "nonempty": true,
+      "matchesLocal": false
+    },
+    {
+      "name": "SESSION_SECRET",
+      "nonempty": true,
+      "matchesLocal": null
+    },
+    {
+      "name": "NODE_VERSION",
+      "nonempty": true,
+      "matchesLocal": null
+    },
+    {
+      "name": "NODE_ENV",
+      "nonempty": true,
+      "matchesLocal": false
+    },
+    {
+      "name": "HOST",
+      "nonempty": true,
+      "matchesLocal": null
+    }
+  ],
+  "health": [
+    {
+      "path": "/api/health/live",
+      "httpStatus": 404
+    },
+    {
+      "path": "/api/health/ready",
+      "httpStatus": 404
+    }
+  ]
+}

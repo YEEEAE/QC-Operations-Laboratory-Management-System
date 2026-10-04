@@ -1,0 +1,265 @@
+{
+  "timestamp": "2026-10-04T02:47:12.452Z",
+  "mode": "read-only transaction; canonical DATABASE_URL; no secret export",
+  "identity": [
+    {
+      "server_version": "18.6 (Debian 18.6-1.pgdg12+2)",
+      "transaction_read_only": "on",
+      "database": "qc_operations",
+      "query_role": "qc_operations_user"
+    }
+  ],
+  "ledger": [
+    {
+      "version": "0001",
+      "name": "0001_core_schema",
+      "checksum": "a92572b6e26f5f993a1035d2bd6a45e5bf6265098cec2bf26b3f359d773023c1"
+    },
+    {
+      "version": "0002",
+      "name": "0002_identity",
+      "checksum": "545f3ae472f40bc4f42ce47e82685e1131731bc2b3b3956eb95235db8d35d629"
+    },
+    {
+      "version": "0003",
+      "name": "0003_authorization",
+      "checksum": "ab043158ff8e64aca9e0af7b0c449cb6e23709d76d9cb3005aeecec4fb0a8b46"
+    },
+    {
+      "version": "0004",
+      "name": "0004_audit_outbox_idempotency",
+      "checksum": "771a4dcf6fd073a026907b711d2a6baf01eee56cbd6d3dc074d9ac3922f51e62"
+    },
+    {
+      "version": "0005",
+      "name": "0005_files_notifications",
+      "checksum": "cb3d4a26cbea20a4fc9c298bc43339b62dfce33a7019c1b54f54483307c0cb12"
+    },
+    {
+      "version": "0006",
+      "name": "0006_tasks",
+      "checksum": "cadb09d6dd3f8a5dd3a648fc80680b3b41de6bae269a71854e03ec9be75ebd29"
+    },
+    {
+      "version": "0007",
+      "name": "0007_quality",
+      "checksum": "0c84fa183c69eda4237e138073046617a5f64cb20276c015b7b04c2046d075f7"
+    },
+    {
+      "version": "0008",
+      "name": "0008_quarantine",
+      "checksum": "6b186e3c1968d89ab31fca4182c64a96fe86c54a1dd93b3b37c02bb60a7f963f"
+    },
+    {
+      "version": "0009",
+      "name": "0009_laboratory",
+      "checksum": "50ee5514504f239b74be83783bf76989f2ca08e03a7c4ffd019fff20a3dcc208"
+    },
+    {
+      "version": "0010",
+      "name": "0010_assets",
+      "checksum": "67a56b385d87f92e709cbb5fea28ae476d554dafbe1786ad0787ca19c324cdfb"
+    },
+    {
+      "version": "0011",
+      "name": "0011_documents",
+      "checksum": "ae2be82bc30c44fd8f7574af487e2a8331205afa4544d598762ad8418054378d"
+    },
+    {
+      "version": "0012",
+      "name": "0012_approvals_esignatures",
+      "checksum": "299b48e4b9b7e7bc7a4bc4cc4a52183a64f371251ac8cd8ad5d1fea08a56a124"
+    },
+    {
+      "version": "0013",
+      "name": "0013_change_requests",
+      "checksum": "ce95f9113e0991aa36a15b175da8b162cd4d6170d9d8bbda04165f08c0db926a"
+    },
+    {
+      "version": "0014",
+      "name": "0014_backup_recovery_metadata",
+      "checksum": "c7c18979fd77945237145f76f64b6f4a02b4fe9eff3a174e84616f0f1f97f536"
+    },
+    {
+      "version": "0015",
+      "name": "0015_idempotency_records",
+      "checksum": "7ea6a2275b11891ad05a213a1b127442f5b6703c02ba41de8a334180930e53f3"
+    },
+    {
+      "version": "0016",
+      "name": "0016_authorization_scopes",
+      "checksum": "2a17fad291c45618f7421c8d18cda01ad98bd18aba685099b917c1fb759ea9cc"
+    },
+    {
+      "version": "0017",
+      "name": "0017_quality_source_context",
+      "checksum": "dd1cfe8dd25c16cdfe8876e0135ed7e808342c6d01f79e413446520a05fd6c9b"
+    },
+    {
+      "version": "0018",
+      "name": "0018_rate_limit_windows",
+      "checksum": "8c77a34b3368a156e96368363081ba82fdd8fd9fb4035ae26d8f0d0e9f2b0822"
+    }
+  ],
+  "schemaColumnDigest": "718fb7a8d37f17aa5c492a4c64a28528a98291c826877107ecaff79f2a45a1f8",
+  "schemaDigestScope": "ordered information_schema columns only; not complete DDL",
+  "tableCount": 63,
+  "documentRegistryColumns": [
+    {
+      "table_name": "document_identities",
+      "column_name": "id"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "document_no"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "document_type"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "title"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "owner_id"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "active"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "created_by"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "created_at"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "updated_at"
+    },
+    {
+      "table_name": "document_identities",
+      "column_name": "version"
+    },
+    {
+      "table_name": "document_version_files",
+      "column_name": "id"
+    },
+    {
+      "table_name": "document_version_files",
+      "column_name": "document_version_id"
+    },
+    {
+      "table_name": "document_version_files",
+      "column_name": "file_id"
+    },
+    {
+      "table_name": "document_version_files",
+      "column_name": "file_role"
+    },
+    {
+      "table_name": "document_version_files",
+      "column_name": "linked_at"
+    },
+    {
+      "table_name": "document_version_files",
+      "column_name": "linked_by"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "id"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "document_id"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "revision"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "state"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "effective_at"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "approved_at"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "approved_by"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "superseded_at"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "archived_at"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "voided_at"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "void_reason"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "change_summary"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "content_hash"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "created_by"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "created_at"
+    },
+    {
+      "table_name": "document_versions",
+      "column_name": "version"
+    },
+    {
+      "table_name": "lab_document_usage",
+      "column_name": "id"
+    },
+    {
+      "table_name": "lab_document_usage",
+      "column_name": "lab_test_id"
+    },
+    {
+      "table_name": "lab_document_usage",
+      "column_name": "document_version_id"
+    },
+    {
+      "table_name": "lab_document_usage",
+      "column_name": "usage_type"
+    },
+    {
+      "table_name": "lab_document_usage",
+      "column_name": "document_snapshot"
+    },
+    {
+      "table_name": "lab_document_usage",
+      "column_name": "created_at"
+    }
+  ],
+  "sourceMigrationCount": 45,
+  "mismatches": [],
+  "pendingCount": 27,
+  "status": "VERIFIED read-only observation"
+}

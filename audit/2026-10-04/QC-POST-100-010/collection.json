@@ -1,0 +1,325 @@
+{
+  "timestamp": "2026-10-04T02:33:44.665791+00:00",
+  "candidateSha": "275ab3c8bcd545c5720f54c7041cdd7e3226cd68",
+  "mode": "provider GET only; no secret values exported",
+  "provider": {
+    "matches": 1,
+    "service": {
+      "id": "srv-dadqj67qj5pc7395rv2g",
+      "name": "QC-Operations-Laboratory-Management-System",
+      "type": "web_service",
+      "suspended": "not_suspended",
+      "autoDeploy": "yes"
+    },
+    "contract": {
+      "runtime": "rust",
+      "healthCheckPath": "",
+      "buildCommand": null,
+      "startCommand": null
+    },
+    "envSpecificDetails": {
+      "buildCommand": "corepack pnpm install --frozen-lockfile && corepack pnpm verification:begin && corepack pnpm run build",
+      "startCommand": "SYSTEM_OWNER_LOGIN_IDENTITY=yazeed pnpm access:grant-system-owner; node dist/server/entry.mjs"
+    },
+    "deployments": [
+      {
+        "id": "dep-db0h06ivcj2c7399tiig",
+        "status": "live",
+        "createdAt": "2026-10-03T14:24:26.347745Z",
+        "finishedAt": "2026-10-03T14:27:17.256248Z",
+        "commit": {
+          "id": "435f9f704049dee4916223b24b96866d7fa9af2e",
+          "message": "update site",
+          "createdAt": "2026-10-03T14:21:39Z"
+        }
+      },
+      {
+        "id": "dep-db064srm8hqs73cqb720",
+        "status": "deactivated",
+        "createdAt": "2026-10-03T02:03:31.682906Z",
+        "finishedAt": "2026-10-03T02:06:06.113931Z",
+        "commit": {
+          "id": "1343e65987a78477d8f9bc851a036766badf189a",
+          "message": "update site",
+          "createdAt": "2026-10-03T02:03:28Z"
+        }
+      },
+      {
+        "id": "dep-db05qhvf3r2c73aosng0",
+        "status": "deactivated",
+        "createdAt": "2026-10-03T01:41:27.73328Z",
+        "finishedAt": "2026-10-03T01:43:55.298554Z",
+        "commit": {
+          "id": "39b76be4395811d653d23cc27e8e15496b6260de",
+          "message": "update site",
+          "createdAt": "2026-10-03T01:41:24Z"
+        }
+      },
+      {
+        "id": "dep-db05mu2vcj2c7390op40",
+        "status": "deactivated",
+        "createdAt": "2026-10-03T01:33:44.634975Z",
+        "finishedAt": "2026-10-03T01:36:08.680828Z",
+        "commit": {
+          "id": "64b5dcf7bc0a4bca7ae74e785bba7fcd950e6751",
+          "message": "update site",
+          "createdAt": "2026-10-03T01:33:41Z"
+        }
+      },
+      {
+        "id": "dep-db04213tqb8s7382l4bg",
+        "status": "deactivated",
+        "createdAt": "2026-10-02T23:40:52.430219Z",
+        "finishedAt": "2026-10-02T23:43:33.901082Z",
+        "commit": {
+          "id": "1f3993421276efb989d938a0e29a1f11179e741b",
+          "message": "update site",
+          "createdAt": "2026-10-02T23:40:49Z"
+        }
+      }
+    ],
+    "environment": [
+      {
+        "name": "DATABASE_URL",
+        "nonempty": true,
+        "matchesLocal": false
+      },
+      {
+        "name": "Value",
+        "nonempty": true,
+        "matchesLocal": null
+      },
+      {
+        "name": "Key",
+        "nonempty": true,
+        "matchesLocal": null
+      },
+      {
+        "name": "SERVICE_VERSION",
+        "nonempty": true,
+        "matchesLocal": true
+      },
+      {
+        "name": "RATE_LIMIT_LOGIN_WINDOW_SECONDS",
+        "nonempty": true,
+        "matchesLocal": false
+      },
+      {
+        "name": "RATE_LIMIT_LOGIN_MAX",
+        "nonempty": true,
+        "matchesLocal": false
+      },
+      {
+        "name": "SESSION_SECRET",
+        "nonempty": true,
+        "matchesLocal": false
+      },
+      {
+        "name": "NODE_VERSION",
+        "nonempty": true,
+        "matchesLocal": null
+      },
+      {
+        "name": "NODE_ENV",
+        "nonempty": true,
+        "matchesLocal": false
+      },
+      {
+        "name": "HOST",
+        "nonempty": true,
+        "matchesLocal": null
+      }
+    ]
+  },
+  "sourceDiscovery": {
+    "sops": 30,
+    "wis": 68,
+    "hashChecks": 117,
+    "hashMismatches": 0,
+    "operationalOriginals": 84,
+    "classification": "DRAFT_SOURCE_AVAILABLE; PROPOSAL_AVAILABLE; FILLABLE_FORM_AVAILABLE; SOURCE_INTEGRITY_EVIDENCE"
+  },
+  "sourceMigrations": [
+    {
+      "name": "0001_core_schema",
+      "sha256": "a92572b6e26f5f993a1035d2bd6a45e5bf6265098cec2bf26b3f359d773023c1"
+    },
+    {
+      "name": "0002_identity",
+      "sha256": "545f3ae472f40bc4f42ce47e82685e1131731bc2b3b3956eb95235db8d35d629"
+    },
+    {
+      "name": "0003_authorization",
+      "sha256": "ab043158ff8e64aca9e0af7b0c449cb6e23709d76d9cb3005aeecec4fb0a8b46"
+    },
+    {
+      "name": "0004_audit_outbox_idempotency",
+      "sha256": "771a4dcf6fd073a026907b711d2a6baf01eee56cbd6d3dc074d9ac3922f51e62"
+    },
+    {
+      "name": "0005_files_notifications",
+      "sha256": "cb3d4a26cbea20a4fc9c298bc43339b62dfce33a7019c1b54f54483307c0cb12"
+    },
+    {
+      "name": "0006_tasks",
+      "sha256": "cadb09d6dd3f8a5dd3a648fc80680b3b41de6bae269a71854e03ec9be75ebd29"
+    },
+    {
+      "name": "0007_quality",
+      "sha256": "0c84fa183c69eda4237e138073046617a5f64cb20276c015b7b04c2046d075f7"
+    },
+    {
+      "name": "0008_quarantine",
+      "sha256": "6b186e3c1968d89ab31fca4182c64a96fe86c54a1dd93b3b37c02bb60a7f963f"
+    },
+    {
+      "name": "0009_laboratory",
+      "sha256": "50ee5514504f239b74be83783bf76989f2ca08e03a7c4ffd019fff20a3dcc208"
+    },
+    {
+      "name": "0010_assets",
+      "sha256": "67a56b385d87f92e709cbb5fea28ae476d554dafbe1786ad0787ca19c324cdfb"
+    },
+    {
+      "name": "0011_documents",
+      "sha256": "ae2be82bc30c44fd8f7574af487e2a8331205afa4544d598762ad8418054378d"
+    },
+    {
+      "name": "0012_approvals_esignatures",
+      "sha256": "299b48e4b9b7e7bc7a4bc4cc4a52183a64f371251ac8cd8ad5d1fea08a56a124"
+    },
+    {
+      "name": "0013_change_requests",
+      "sha256": "ce95f9113e0991aa36a15b175da8b162cd4d6170d9d8bbda04165f08c0db926a"
+    },
+    {
+      "name": "0014_backup_recovery_metadata",
+      "sha256": "c7c18979fd77945237145f76f64b6f4a02b4fe9eff3a174e84616f0f1f97f536"
+    },
+    {
+      "name": "0015_idempotency_records",
+      "sha256": "7ea6a2275b11891ad05a213a1b127442f5b6703c02ba41de8a334180930e53f3"
+    },
+    {
+      "name": "0016_authorization_scopes",
+      "sha256": "2a17fad291c45618f7421c8d18cda01ad98bd18aba685099b917c1fb759ea9cc"
+    },
+    {
+      "name": "0017_quality_source_context",
+      "sha256": "dd1cfe8dd25c16cdfe8876e0135ed7e808342c6d01f79e413446520a05fd6c9b"
+    },
+    {
+      "name": "0018_rate_limit_windows",
+      "sha256": "8c77a34b3368a156e96368363081ba82fdd8fd9fb4035ae26d8f0d0e9f2b0822"
+    },
+    {
+      "name": "0019_backup_catalog_identity",
+      "sha256": "a3b5e087400758b84919740996b4e5646e5e5f9a2e14322ee76b6e90ca4cdf37"
+    },
+    {
+      "name": "0020_capa_close_evidence",
+      "sha256": "fcf82965da796bd647c3b4deb492bffe069347b2aaab4621759b9344546b4673"
+    },
+    {
+      "name": "0021_release_governance",
+      "sha256": "f4f0525905e58d8d524e65d10b14eed425b3a2a5fe60434b88d12b9bb4ef139b"
+    },
+    {
+      "name": "0022_server_release_evidence",
+      "sha256": "ca1a4dddb703709f218a988066139dbdab62c14977bfbd7f359eae3aab34af61"
+    },
+    {
+      "name": "0023_uat_evidence",
+      "sha256": "a1ff60a7dbffbc8906b3f648f88a50bbeb96e63e45de8d4b8169f4235d1b2fd6"
+    },
+    {
+      "name": "0024_identity_rbac_grant_integrity",
+      "sha256": "23656e8abf2419595be5db9b7853f01b8c43f6b48ea3c3d50826bc29c411bd0f"
+    },
+    {
+      "name": "0025_qc_closure_006_workflow",
+      "sha256": "4fed4b130ecef1263136a53cd1e9a3b986e3bea5091ea8c584e57df632175f66"
+    },
+    {
+      "name": "0026_reject_reports",
+      "sha256": "a411f2e9ae36f8594639cedc4c984e5c6ecd976a69c631e3730b26008a917062"
+    },
+    {
+      "name": "0027_equipment_calibration_maintenance_closure",
+      "sha256": "739e7800463e5d13d2c0a2c1bbd620bbdb304427fa2fdb7fd17a8eb6a42bc960"
+    },
+    {
+      "name": "0028_qc_closure_009_controlled_records",
+      "sha256": "48b5535141860615e6e9e808f7dac4995db71948c98198ac9425ed38832f0313"
+    },
+    {
+      "name": "0029_performance_query_indexes",
+      "sha256": "0d59b6afc2b5e1ab86cdf392f6b35cce3cfb7c32b6d55df96946bdf15b9aeda6"
+    },
+    {
+      "name": "0030_reject_reports_role_parity",
+      "sha256": "8297eb76a726ee1313dfa69946cca51115e93308ea5a3d90510300b922c46859"
+    },
+    {
+      "name": "0031_qc_creation_parity_two_stage_approval",
+      "sha256": "44b160a6b8c09769fd7f18e19c29b2e29c98635cbf81de603a2cbbbd6324ec61"
+    },
+    {
+      "name": "0032_document_version_file_integrity",
+      "sha256": "caba57067c08cdd4e28ea38d934cfe834001ccccd6b323d632ad1a3f99168b0a"
+    },
+    {
+      "name": "0033_controlled_document_execution_context",
+      "sha256": "6b4cf38ab8974ba0dbb30fc4cccb766dac3351796f4d84eb5bf226de0d75c472"
+    },
+    {
+      "name": "0034_template_document_link_variable_scope",
+      "sha256": "628dc3dcb228906e813e532d093c3284a5b220f5226b0346bb762265a9e5f2ab"
+    },
+    {
+      "name": "0035_receiving_normalization",
+      "sha256": "c1f6aae49023e8a8a428f2fed4dadbfb21cd9fe153a24b75bbe0f883c306ac00"
+    },
+    {
+      "name": "0036_qc_data_002_inspection_templates_measurements",
+      "sha256": "e8ddfb7367d6077a0501f3044c78c4be8a48b8752c683236ec013e0e953fbe48"
+    },
+    {
+      "name": "0037_qc_data_003_lab_batches_samples_readings",
+      "sha256": "1389f763f09706cd8f8c5bb20bc52fe6331cfe29a9b1a13d3e030bb8a2e6e597"
+    },
+    {
+      "name": "0038_owner_qc_report_access",
+      "sha256": "52cbd094d9b993ed1f01cb185da777cc56ccd8ee2bf233ade2ad70a608c620ca"
+    },
+    {
+      "name": "0039_laboratory_report_drafts",
+      "sha256": "b52e70d5dc45aab6f1553a3d761b8d2dab2e455eb5db5f27e44caf27d0e823a9"
+    },
+    {
+      "name": "0040_signed_release_gate_evidence",
+      "sha256": "c63984a6066c9d7eaafb1e7febcc531840405badc9c176d459d006ff3ebe2fa4"
+    },
+    {
+      "name": "0041_document_review_queue_indexes",
+      "sha256": "41fe296853afe831a8932ad03000dfe60bfa00ecad112ec1ed3cf2f73b246a0a"
+    },
+    {
+      "name": "0042_immutable_lab_equipment_usage",
+      "sha256": "d9b2531390b4ee00516b9bea07de0e706c3b78c1b13d2925481b29a4ff5340ab"
+    },
+    {
+      "name": "0043_controlled_document_source_binding",
+      "sha256": "bba7c163956c82fe0fa829828bfc0bab9e7b47c1895d197a04e5d82d802ef35c"
+    },
+    {
+      "name": "0044_restore_request_idempotency",
+      "sha256": "4438398375f5ab213bb7a6e466fc138d3cf5802650abf288583f996a8b973ea0"
+    },
+    {
+      "name": "0045_provider_attestation_nonce_replay_guard",
+      "sha256": "7a4634ada07b248dc5f59a07b9ebec419a0fe5f1c98e233cb1f201b6502b18fd"
+    }
+  ],
+  "database": "NOT RUN: isolated rehearsal prerequisite not established for this candidate; live registry likewise NOT VERIFIED"
+}
