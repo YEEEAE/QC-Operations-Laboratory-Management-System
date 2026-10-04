@@ -4782,3 +4782,6 @@ ceremony. QC `EMPLOYEE` is denied every review/approval/signature transition.
 Transitions still require current version, domain preconditions, SoD, and
 transactional audit. Missing official result/source remains fail-closed under
 PD-01/PD-02/PD-07.
+# Owner RBAC decision reaffirmation — 2026-10-04
+
+For the already implemented inspection and laboratory controlled-report stages, `EMPLOYEE` (QC 01/02/03) creates an eligible `DRAFT`, enters evidence and submits; `SUBMITTED` enters `UNDER_REVIEW` under Supervisor review. The authorized Supervisor first-stage approval moves `UNDER_REVIEW` to `PENDING_QCM_APPROVAL` without a formal signature in this chain. QCM (`MANAGER`) normally final-approves and signs the exact version to `APPROVED`; ordinary edits are then locked. The named active `yazeed/SYSTEM_OWNER` exception uses only explicit server use cases and the required ceremony. Return/resubmit/reopen follow existing transitions; no direct manual state change, generic override or new transition is granted. Scientific result generation still requires separate approved PD-01/02/07 sources and may prevent a positive inspection/lab path. See `OWNER-DECISION-RBAC-2026-09-23.md` for the decision and per-report matrix; this note does not change the existing state vocabulary.

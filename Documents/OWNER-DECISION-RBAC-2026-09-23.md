@@ -6,6 +6,8 @@
 **Scope:** Persistent users and role mapping, QC report creation, approval/signature separation, server authorization, audit, and local UAT evidence.  
 **Source:** Owner decision supplied in the Codex task on 2026-09-23. This record documents that instruction; it does not claim an electronic signature ceremony occurred.
 
+**Owner reaffirmation (2026-10-04):** Yazeed explicitly reaffirmed the six-account role mapping, equal QC creation access, first-stage Supervisor and final QCM authority, named-owner administrative capabilities, database persistence and server enforcement. This is an approved RBAC/workflow decision, not a signed electronic event, a deployment authorization, or approval of scientific criteria, document effectivity, generic WI/SOP signatures, production restore or additional undefined transitions. The source is the owner's 2026-10-04 instruction. Implementation and live-user provisioning require separate verification below.
+
 ## Decision
 
 1. Keep the application role codes already used by the authorization model: Owner = `SYSTEM_OWNER` (only the active named `yazeed` identity has owner authority), QCM = `MANAGER`, Supervisor = `SUPERVISOR`, and QC 01/02/03 = `EMPLOYEE`. Display names are `Yazeed`, `QCM`, `Supervisor`, `QC 01`, `QC 02`, and `QC 03`.
@@ -24,18 +26,24 @@
 | --- | --- | --- | --- | --- | --- |
 | Receiving record | `/quarantine/receiving/new` | `PERM-QUAR-CREATE` | CREATE | CREATE | CREATE |
 | Laboratory report | `/laboratory/tests/new` | `PERM-LAB-CREATE` | CREATE | CREATE | CREATE |
+| Subatmospheric pressure air leakage transcription draft | `/laboratory/report-templates?type=SUBATMOSPHERIC_AIR_LEAKAGE` | `PERM-LAB-CREATE` (save); `PERM-LAB-VIEW` (open) | CREATE DRAFT | CREATE DRAFT | CREATE DRAFT |
+| Pressure decay transcription draft | `/laboratory/report-templates?type=PRESSURE_DECAY` | `PERM-LAB-CREATE` (save); `PERM-LAB-VIEW` (open) | CREATE DRAFT | CREATE DRAFT | CREATE DRAFT |
 | NCR | `/quality/ncr/new` | `PERM-NCR-CREATE` | CREATE | CREATE | CREATE |
 | CAPA | `/quality/capa/new` | `PERM-CAPA-CREATE` | CREATE | CREATE | CREATE |
 | Finding | `/quality/findings/new` | `PERM-FIND-CREATE` | CREATE | CREATE | CREATE |
 | Change request | `/change-requests/new` | `PERM-CHG-CREATE` | CREATE | CREATE | CREATE |
 | Document | `/documents/new` | `PERM-DOC-CREATE` | CREATE | CREATE | CREATE |
 | Reject report | `/reject-reports/new` | `PERM-RREJ-CREATE` | CREATE | CREATE | CREATE |
+| Rejected material/product issue slip | `/reject-reports/new?type=slip` | `PERM-RREJ-CREATE` | CREATE | CREATE | CREATE |
+| Daily production & rejection record | `/reject-reports/new?type=daily` | `PERM-RREJ-CREATE` | CREATE | CREATE | CREATE |
 | Task | `/tasks/new` | `PERM-TASK-CREATE` | CREATE | CREATE | CREATE |
 | Equipment record | `/assets/equipment/new` | `PERM-EQP-CREATE` | CREATE | CREATE | CREATE |
 | Calibration record | `/assets/calibrations/new` | `PERM-CAL-CREATE` | CREATE | CREATE | CREATE |
 | Maintenance record | `/assets/maintenance/new` | `PERM-MNT-CREATE` | CREATE | CREATE | CREATE |
 
 Starting an inspection from a receiving record is a distinct domain action and additionally requires `PERM-QUAR-START-INSPECTION`; creating an inspection does not produce an official result. Each new QC report/form surface must be added to this matrix, the explicit foundation grants, and the authorization tests before it is considered covered.
+
+The parent laboratory and reject-report rows are navigation families; the four subtype rows enumerate their actual distinct create choices. The two laboratory report templates are transcription-only drafts, not scientific tests or electronic approvals. The daily reject record has no approval confirmation; an issue slip's physical approval checkpoints are not electronic signatures by those physical approvers. RCA has a read/detail route but no QC data-entry creation route; retest creation and document revisions are governed transitions, not independent unrestricted report types. No department/per-user report-type whitelist is approved for these QC create choices. Ownership, state, scope, source eligibility and permitted evidence remain server-side conditions; a team scope must not silently become GLOBAL for non-creation reads or approvals.
 
 ## Approval and signature matrix
 
@@ -54,6 +62,8 @@ For inspection/laboratory stage 1, `MANAGER` is not an authority. The named
 permits it; this does not turn QCM final approval into a stage-1 action.
 
 The matrix does not grant an action that a domain's state machine does not implement. `PASS ≠ RELEASED` remains in force.
+
+`PERM-ESIG-SIGN` in the Supervisor foundation bundle covers other expressly authorized ceremonies; it is **not** a signature on inspection/laboratory stage 1. No generic owner bypass of source validation, SoD, immutable approved history, or production recovery is created by the phrase “full authority.” Delete means an explicitly permitted draft operation, not deletion of controlled history. Final approval locks ordinary edits; use only the registered reopen/revision/amendment path with renewed controls. No unimplemented override transition is authorized.
 
 ## Requirements and verification linkage
 

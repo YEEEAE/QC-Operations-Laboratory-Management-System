@@ -31,6 +31,10 @@ and human acceptance evidence on the final candidate.
 
 ### Approved owner decision — OD-2026-09-23-RBAC-01
 
+The owner's 2026-10-04 reaffirmation is recorded in `OWNER-DECISION-RBAC-2026-09-23.md`. Its additional explicit creation choices are the two transcription-only laboratory templates and the two reject-report variants. This closes neither live account provisioning nor any unapproved generic workflow/signature scope. PD-01/PD-02/PD-07 remain **OPEN — OWNER/CONTROLLED-SOURCE INPUT REQUIRED** for scientific criteria, source revision/hash and manual judgment. PD-11/12/32 retain their unenumerated/technical scope; RD-019 and PD-38 retain their distinct document/laboratory policy dependencies. No numeric acceptance criterion is inferred from this RBAC instruction.
+
+Owner decision request crosswalk (RBAC fields only): signing roles = QCM normal final signature, named Owner explicit exception, Supervisor first-stage workflow approval without inspection/lab stage-1 signature, QC 01/02/03 no approval signature; explicit permissions = `PERMISSION-MATRIX.md` and the decision's create/approval matrices; creator restriction = same `EMPLOYEE` bundle for all three QC users with domain state/scope/ownership checks, no report-subtype whitelist; reviewer/approver separation = Supervisor stage 1 then QCM final with existing SoD; prohibited users = QC users for approval/override and Supervisor for final approval; audit = recorded server transaction for authorized controlled transitions. This is a decision reference, not evidence that all runtime gates passed. The inspection acceptance criteria, controlled source identity/revision/hash and manual scientific judgment remain **OPEN — OWNER/CONTROLLED-SOURCE INPUT REQUIRED**. No standalone Owner Decision Request file was located under `Documents/`; this register and `audit/100-percent/POLICY-CLOSURE-MATRIX.md` are the present decision crosswalks.
+
 Yazeed (Owner) approved the role and workflow authority slice on 2026-09-23.
 The system role codes remain `SYSTEM_OWNER` (named active login `yazeed`),
 `MANAGER` (visible name QCM), `SUPERVISOR`, and `EMPLOYEE` (QC 01/02/03).

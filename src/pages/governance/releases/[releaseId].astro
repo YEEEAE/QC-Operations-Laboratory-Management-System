@@ -7,7 +7,7 @@ const releaseId = Astro.params.releaseId ?? '';
 const model = await getReleaseApprovalPageModel({ actor, releaseId });
 const { candidate, evidence } = model;
 const reasonCopy = (reason: string) => {
-      if (reason === 'AUTHORITY') return 'An active Manager or the named yazeed / SYSTEM_OWNER signer is required.';
+      if (reason === 'AUTHORITY') return 'An active QCM or the named Yazeed / SYSTEM_OWNER signer is required.';
   if (reason === 'RELEASE_NOT_FOUND') return 'The release candidate is unavailable.';
   if (reason === 'IDENTITY_NOT_VERIFIED') return 'The current server artifact is missing, stale, or does not match all six fields on this candidate; approval remains blocked.';
   if (reason === 'STATE_NOT_PENDING') return 'This candidate is no longer pending approval.';
@@ -23,7 +23,7 @@ const reasonCopy = (reason: string) => {
       <p class="lede">Release {candidate.releaseId} · State: {candidate.state} · Version: {candidate.version.toString()}</p>
       <section class="decision" aria-labelledby="decision-heading"><h2 id="decision-heading">Production decision: NO-GO</h2><p>The approved production baseline requires 19/19 mandatory gates on this exact candidate. This page currently reconciles eight release evidence classes; it does not contain an accepted 19-gate register, so these rows cannot produce an overall GO or RELEASED decision.</p><ul><li>Current candidate SHA: <code>{candidate.gitSha}</code></li><li>Current build: <code>{candidate.buildId}</code></li><li>Full 19-gate reconciliation: NOT VERIFIED</li></ul></section>
       <dl class="identity"><div><dt>Git SHA</dt><dd>{candidate.gitSha}</dd></div><div><dt>Build ID</dt><dd>{candidate.buildId}</dd></div><div><dt>Application version</dt><dd>{candidate.applicationVersion}</dd></div><div><dt>Migration head</dt><dd>{candidate.migrationHead}</dd></div><div><dt>UAT cycle</dt><dd>{candidate.uatCycleId}</dd></div></dl>
-      {!model.authorized && <p role="alert" class="denied">Your account is not a release authority. Final approval requires Manager or yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}
+       {!model.authorized && <p role="alert" class="denied">Your account is not a release authority. Final approval requires QCM or Yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}
       {candidate.state !== 'PENDING' && <p role="status" class="denied">This release candidate is not pending approval.</p>}
       <section aria-labelledby="evidence-heading" class="approve-panel">
         <h2 id="evidence-heading">Server-derived release evidence</h2>

@@ -7,6 +7,8 @@
  * bundle. Item 6: Supervisor holds stage-1 approval only; the final
  * ceremony grant (PERM-APR-APPROVE) is MANAGER / named-owner only.
  */
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 import {
   APPROVED_PERMISSION_CODES,
@@ -16,6 +18,7 @@ import {
   CREATE_ROUTES,
   CREATE_SURFACE_PERMISSION_MATRIX,
 } from '../../../scripts/uat/scenario-support.js';
+import { reportTypes } from '../../../src/modules/laboratory/domain/report-draft.js';
 
 const EMPLOYEE = FOUNDATION_ROLE_PERMISSIONS.EMPLOYEE;
 const SUPERVISOR = FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR;
@@ -79,6 +82,26 @@ describe('QC-100-FINAL-004 — EMPLOYEE (QC data entry) permission contract', ()
     for (const grant of QC_CREATE_GRANTS) {
       expect(EMPLOYEE, `EMPLOYEE missing ${grant}`).toContain(grant);
     }
+  });
+
+  it('covers both laboratory transcription choices and both reject-report choices without per-user grants', () => {
+    expect(Object.keys(reportTypes).sort()).toEqual([
+      'PRESSURE_DECAY',
+      'SUBATMOSPHERIC_AIR_LEAKAGE',
+    ]);
+    const labPage = readFileSync('src/pages/laboratory/report-templates.astro', 'utf8');
+    const rejectPage = readFileSync('src/pages/reject-reports/new.astro', 'utf8');
+    expect(labPage).toContain("has('PERM-LAB-CREATE')");
+    expect(labPage).toContain('Object.entries(reportTypes).map');
+    expect(rejectPage).toContain("grant.code === 'PERM-RREJ-CREATE'");
+    expect(rejectPage).toContain(
+      "Astro.url.searchParams.get('type') === 'daily' ? 'daily' : 'slip'",
+    );
+    expect(EMPLOYEE).toContain('PERM-LAB-CREATE');
+    expect(EMPLOYEE).toContain('PERM-RREJ-CREATE');
+    const decision = readFileSync('Documents/OWNER-DECISION-RBAC-2026-09-23.md', 'utf8');
+    for (const type of Object.keys(reportTypes)) expect(decision).toContain(`?type=${type}`);
+    for (const type of ['slip', 'daily']) expect(decision).toContain(`?type=${type}`);
   });
 
   it('grants no approval, review, return, reject, release, close or signature permission', () => {

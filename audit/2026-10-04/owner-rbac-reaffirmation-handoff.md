@@ -1,0 +1,27 @@
+# Owner RBAC reaffirmation — local implementation handoff
+
+**State: PARTIAL / BLOCKED for live database and human acceptance.** Source HEAD at start: `a916a7784d71c91567f1ddd25b6fc805f0e9c936`, branch `main`; existing unrelated QC-POST-100-016 Mind/handoff working-tree changes preserved. No commit, push, PR, merge, production migration or deployment.
+
+## Decision and source boundary
+
+Yazeed's 2026-10-04 instruction reaffirms `Documents/OWNER-DECISION-RBAC-2026-09-23.md`. The project codes are `SYSTEM_OWNER` (only active `yazeed`), `MANAGER` (visible QCM), `SUPERVISOR` and `EMPLOYEE` (QC 01/02/03). The existing foundation bundle already grants the three QC identities the same domain-level creation permissions and denies their approval/signature grants. Inspection/lab stage 1 and final stage are separate domain use cases. The complete current registered create-route matrix is in the decision document; this task added explicit rows for the two laboratory transcription drafts and both reject-report variants. D0.2 forms are physical/draft source context, not automatically implemented digital report types or scientific authority.
+
+The named owner is not an unconditional wildcard: explicit permission, state/version, SoD, signature, source and audit checks remain. Supervisor's generic sign grant cannot be used to sign inspection/lab stage 1; QCM normally signs final stage. The physical Reject Issue Slip checkpoints are not automatically digital e-signatures. Scientific PD-01/02/07, lab reject PD-38, generic document RD-019 and incomplete signature scope PD-32 remain open and fail-closed. Existing `audit/users.md` contains the supplied Owner Decision Request wording; the controlled decision crosswalk is in `Documents/DECISION-ASSUMPTION-REGISTER-026.md` and the canonical open policy matrix.
+
+## Database and account boundary
+
+`db/seeds/common.ts` contains persisted foundation role/permission grants; migration `0038_owner_qc_report_access.sql` and PostgreSQL tables contain the prior schema/data path. `scripts/uat/seed-uat-personas.ts` provisions five real **disposable** PostgreSQL UAT identities and only verifies the existing `yazeed` owner, requiring explicit non-production guards and five individual secret passwords. These disposable 72-hour `uat-*` identities are not a substitute for permanent named operational accounts. The current shell has no `DATABASE_URL` or QC_UAT password variables; the local `.env` has a `DATABASE_URL` key but no QC_UAT passwords. Its target was not used or disclosed. No independently identified authorized non-production application database or operator credential set was provided. Therefore **0 of 6 newly created/updated accounts verified** in this task. No live read, seed, migration, role assignment or privilege change occurred; no new schema migration is justified by the observed documentation/coverage changes. Existing provider database history remains historical, not current parity evidence.
+
+Before persistent-account provisioning, the operator must identify the exact non-production target, verify existing rows/grants without leaking credentials, select unique login identities/display names and securely supply initial passwords, then use the existing authorized identity administration path with audit and read-back. Production writes require a separate target-specific authorization and preflight. Do not reuse the disposable UAT seeder for permanent operational identities or infer that a user's display name is their legal login identity.
+
+## Verification and residuals
+
+- Supported Node 24.20.0 focused unit suite: authorization, lab draft/workflow, reject approval order and identity-admin tests **71/71 PASS** (8 files). This proves source contracts only, not authenticated endpoint behavior or populated persistence.
+- Focused Prettier and `git diff --check`: PASS. No PostgreSQL integration, migration application, E2E, live audit-row inspection, current six-user login, UAT or signatures were performed.
+- No role whitelist code change was needed for the four newly enumerated subtypes: both laboratory drafts use `PERM-LAB-CREATE` and both reject variants use `PERM-RREJ-CREATE`, with server-side use cases behind them. Their real creation with representative inputs remains unverified for this working tree.
+- Application source audit log capture for every requested operation and a full user-facing QCM label inventory remain unverified; the release approval denial copy was aligned to QCM. No blanket audit-completeness or owner override pass is claimed.
+- Only this RBAC decision is accepted. A generic approval, physical disposition, scientific official result, controlled-document effectivity, release GO or production deployment is **not** accepted.
+
+## Minimum unresolved input
+
+Exact target and authorization for a persistent six-account database (distinct from production or explicitly authorized for that environment), existing-user/grant read-back, securely delivered individual account credentials, scope/assignment for QCM/Supervisor/QC accounts and approved account-provisioning operator. The owner decision establishes role intent but does not provide passwords, a safe database identity, or license an unsafe connection. Once available, run a non-destructive preflight, provision through the existing application administration transactions, then verify all six login/role/scope/permission sets, audit rows, report subtype creation, negative API cases and stage transitions on that same target. Push/deployment remain forbidden by this request.

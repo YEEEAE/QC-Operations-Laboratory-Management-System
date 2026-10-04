@@ -1,3 +1,13 @@
+- **2026-10-04 — Owner RBAC reaffirmation / report subtype coverage**
+  - Changed: recorded Yazeed's decision in controlled RBAC/role/permission/state/decision sources, enumerated two laboratory drafts and two reject variants, and aligned release-role copy; no schema or live user mutation.
+  - Evidence: focused source tests 71/71 PASS on Node 24.20.0; current database target/credentials and six persistent-account read-back unavailable. Handoff `audit/2026-10-04/owner-rbac-reaffirmation-handoff.md`.
+  - State: PARTIAL / BLOCKED for live persistence/API/audit acceptance; PD-01/02/07 scientific inputs remain OPEN.
+
+- **2026-10-04 — QC-POST-100-016 / human UAT source reconciliation**
+  - Changed: identified reusable blank D0.2 QC-REC-017 and RF-016-SCENARIO-COVERAGE; no participant execution or signature.
+  - Evidence: clean HEAD `a916a7784d71c91567f1ddd25b6fc805f0e9c936`; 030/031/020 entry gates and current actor/environment binding unverified. Packet `audit/2026-10-04/QC-POST-100-016/handoff.md`.
+  - State: BLOCKED / EVIDENCE_PENDING; 0 current sessions/signatures verified; FINAL remains open.
+
 - **2026-10-04 — QC-POST-100-020 / read-only live execution stop**
   - Changed: retained runtime preflight attempt; fresh custom-domain readiness GET had no HTTP response within 8 seconds. Exact runtime identity remains NOT VERIFIED; all eight scenarios NOT EXECUTED, 0/8 accepted.
   - Evidence: `audit/2026-10-04/QC-POST-100-020/`; local enumeration 30 SOP/68 WI/84 originals; current hash check not completed. No business reads or production write requests; no historical screenshot acceptance.
