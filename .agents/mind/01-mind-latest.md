@@ -1,3 +1,8 @@
+- **2026-10-04 — QC-POST-100-030 / local gate continuation**
+  - Changed: reconciled clean base HEAD `cd87faea079ca2d1812103068b7ac421842675ee`; laboratory measurement conversion crosses application boundary; source formatting/tool lint fixes only. Historical audit artifacts remain unchanged.
+  - Evidence: PostgreSQL18.6 isolated startup works with LC_ALL=C; final candidate gates pending in `.ci-results/QC-POST-100-030-continuation/`. Remote CI/trusted attestation remain NOT VERIFIED; no commit/push/deploy authorized.
+  - State: PARTIAL / EVIDENCE_PENDING.
+
 - **2026-10-04 — Shell surface/token alignment**
   - Changed: shell surfaces use approved tokens; sidebar branding reserves control space in expanded/collapsed/mobile layouts. Current SystemBackground reconciled to static CSS, not the historical Lottie renderer.
   - Evidence: focused UI 85/85 PASS; typecheck 0 errors/114 hints on Node 24.20.0. Authenticated visual/AT acceptance NOT VERIFIED.

@@ -42,7 +42,9 @@ describe('authorization visibility presentation contract', () => {
     expect(execute).toContain('const canEdit = stateEditable');
     expect(execute).toContain('const canSubmit = canEdit');
     expect(execute).toContain('canSubmit ? <button');
-    expect(execute).toContain('The current state allows draft work, but your account needs draft-edit permission');
+    expect(execute).toContain(
+      'The current state allows draft work, but your account needs draft-edit permission',
+    );
   });
 
   it('makes laboratory next-workspace and retest policy states truthful', () => {

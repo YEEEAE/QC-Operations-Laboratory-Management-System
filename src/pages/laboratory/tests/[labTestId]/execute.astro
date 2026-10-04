@@ -262,7 +262,7 @@ if (canEdit && canViewEquipment) {
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
-  import { measurementInputValue } from '../../../../modules/laboratory/domain/measurement-input';
+  import { measurementInputValue } from '../../../../modules/laboratory/application/measurement-input';
   import { guardUnsavedChanges, FORM_COMMITTED_EVENT } from '../../../../ui/forms/unsaved-changes';
 
   const labId = location.pathname.split('/')[3] || '';

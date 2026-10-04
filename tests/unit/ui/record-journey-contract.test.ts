@@ -82,7 +82,7 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
 
     for (const [path, outageFlag] of pages) {
       const page = read(path);
-      expect(page, path).toContain("import { classifyReadFailure }");
+      expect(page, path).toContain('import { classifyReadFailure }');
       expect(page, path).toContain("classifyReadFailure(error) === 'UNAVAILABLE'");
       expect(page, path).toContain(`${outageFlag} = true`);
       expect(page, path).toContain('Astro.response.status = 404');

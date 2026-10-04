@@ -210,7 +210,7 @@ describe('QC-CLOSURE-008 asset lifecycle persistence', () => {
          RETURN NEW;
        END; $$ LANGUAGE plpgsql;
        CREATE TRIGGER closure_008_fail_calibration_audit
-       BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.closure_008_fail_calibration_audit()`
+       BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.closure_008_fail_calibration_audit()`,
     );
     const before = await pool.query(
       `SELECT

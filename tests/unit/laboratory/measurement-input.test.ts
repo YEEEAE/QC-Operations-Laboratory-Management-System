@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { measurementInputValue } from '../../../src/modules/laboratory/domain/measurement-input.js';
+import { measurementInputValue } from '../../../src/modules/laboratory/application/measurement-input.js';
 import { validateMeasurement } from '../../../src/modules/laboratory/domain/measurement.js';
 
 const executePage = readFileSync('src/pages/laboratory/tests/[labTestId]/execute.astro', 'utf8');

@@ -122,21 +122,28 @@ describe('Assets calibration controls', () => {
       permissions: [{ code: 'PERM-CAL-APPROVE' as never, scopes: ['GLOBAL' as const] }],
     };
     const transition = new TransitionCalibrationUseCase(repo);
-    await expect(transition.execute({
-      actor: qcm,
-      calibrationId: ids.calibration,
-      expectedVersion: 6n,
-      action: 'APPROVE',
-      requestId: 'req-cal-stale',
-    })).rejects.toThrow();
+    await expect(
+      transition.execute({
+        actor: qcm,
+        calibrationId: ids.calibration,
+        expectedVersion: 6n,
+        action: 'APPROVE',
+        requestId: 'req-cal-stale',
+      }),
+    ).rejects.toThrow();
     expect(repo.value).toMatchObject({ state: 'SUBMITTED', version: 7n });
-    await expect(transition.execute({
-      actor: { ...qcm, permissions: [{ code: 'PERM-CAL-REVIEW' as never, scopes: ['GLOBAL' as const] }] },
-      calibrationId: ids.calibration,
-      expectedVersion: 7n,
-      action: 'MAKE_CURRENT',
-      requestId: 'req-cal-current-policy',
-    })).rejects.toThrow();
+    await expect(
+      transition.execute({
+        actor: {
+          ...qcm,
+          permissions: [{ code: 'PERM-CAL-REVIEW' as never, scopes: ['GLOBAL' as const] }],
+        },
+        calibrationId: ids.calibration,
+        expectedVersion: 7n,
+        action: 'MAKE_CURRENT',
+        requestId: 'req-cal-current-policy',
+      }),
+    ).rejects.toThrow();
   });
   it('represents scheduled, due, overdue, completed, and failed outcomes explicitly', () => {
     expect(transitionCalibration(make(), 'SCHEDULE', new Date()).state).toBe('SCHEDULED');
