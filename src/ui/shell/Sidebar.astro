@@ -109,10 +109,12 @@ const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((ite
 
 <style>
   .sidebar { position: sticky; top: 0; display: flex; flex-direction: column; gap: var(--space-3); min-height: 100vh; min-inline-size: 0; max-inline-size: 100%; padding: var(--space-5) var(--space-3); background: var(--color-sidebar); border-inline-end: 1px solid var(--color-border-subtle); }
-  .brand { display: flex; align-items: center; gap: 10px; min-inline-size: 0; padding: 0 var(--space-2) var(--space-4); font-weight: 700; color: var(--text-primary); }
+  .brand { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: 44px; padding: 0 var(--space-2) var(--space-4); padding-inline-end: var(--space-12); font-weight: var(--font-weight-bold); color: var(--text-primary); }
   .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 9px; background: var(--color-accent-primary); color: var(--color-text-inverse); font-size: var(--font-size-xs); letter-spacing: .06em; }
   .brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-inline-size: 0; }
-  .collapse-button, .drawer-close { position: absolute; inset-block-start: 10px; inset-inline-end: 6px; display: grid; place-items: center; inline-size: 44px; min-inline-size: 44px; block-size: 44px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+  .collapse-button, .drawer-close { position: absolute; inset-block-start: var(--space-3); inset-inline-end: var(--space-2); display: grid; place-items: center; inline-size: 44px; min-inline-size: 44px; block-size: 44px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+  .collapse-button:hover { background: var(--surface-raised); color: var(--text-primary); }
+  .sidebar[data-collapsed='true'] .brand { padding-block-start: var(--space-12); }
   .drawer-close { display: none; border-color: var(--border-default); background: var(--surface-raised); color: var(--text-primary); }
   .collapse-button:focus-visible, .drawer-close:focus-visible, .nav-group-toggle:focus-visible, .nav-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   .nav-groups, .nav-items, .nav-utilities ul { list-style: none; margin: 0; padding: 0; }
@@ -152,6 +154,7 @@ const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((ite
     .collapse-button { display: none; }
     .drawer-close { display: grid; }
     .brand { padding-inline-end: 48px; }
+    .sidebar[data-collapsed='true'] .brand { padding-block-start: 0; padding-inline-end: var(--space-12); }
     .sidebar[data-collapsed='true'] { inline-size: auto; }
     .sidebar[data-collapsed='true'] .brand-name, .sidebar[data-collapsed='true'] .nav-group-name, .sidebar[data-collapsed='true'] .nav-label, .sidebar[data-collapsed='true'] .current-indicator { display: initial; }
     .sidebar[data-collapsed='true'] .nav-utilities h2 { display: block; }

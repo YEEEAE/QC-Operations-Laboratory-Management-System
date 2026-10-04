@@ -1,3 +1,8 @@
+- **2026-10-04 — Shell surface/token alignment**
+  - Changed: shell surfaces use approved tokens; sidebar branding reserves control space in expanded/collapsed/mobile layouts. Current SystemBackground reconciled to static CSS, not the historical Lottie renderer.
+  - Evidence: focused UI 85/85 PASS; typecheck 0 errors/114 hints on Node 24.20.0. Authenticated visual/AT acceptance NOT VERIFIED.
+  - State: PARTIAL (source contracts verified; live layout acceptance pending).
+
 - **2026-10-04 — QC document pack D0.2**
   - Changed: `Documents/QC_System_WI_SOP_Pack`: 30 SOP PDFs, 68 WI DOCX, References; 28 decision proposals, 20 blank operating records, official physical workflow basis. Supersedes earlier HTML delivery paths.
   - Evidence: 98 body/hash checks, 84 original hashes and both archives PASS; new PDF/Word layouts sampled visually.
@@ -379,10 +384,7 @@
 ### Motion/backgrounds
 - **QC-PAGE-F-031 / QC-POST-100-012:** `/assets/maintenance/new` uses `assessMany`; same-dataset PG18.6 selector comparison confirmed 233→4 SQL calls per 80-equipment list (old per-item `assess` fan-out vs current batch), with 32 warm matched samples per mode and five first-request-after-restart samples per mode. On the current supported Node 24.20.0 release artifact, the authenticated synthetic actor returned 80 equipment options. Six route read-only HTTP/query samples and desktop browser LCP/load-CLS observations are recorded in `.ci-results/QC-POST-100-012/`; their same-candidate browser p95/payload are not cross-release before/after comparisons, and INP remains NOT VERIFIED (Tab-only probes). Three.js chunk inventory is 734,439 B (189,567 gzip), no route transfer comparison. Budgets QC-ADP26-31 remain `PROPOSED_NOT_APPROVED_SLO`; QC-POST-100-012 stays PARTIAL until owner-approved budgets and reviewed artifacts. Separate `/reject-reports` read currently measures 164 SQL calls/page with per-row `loadSlip`/`loadDaily` fan-out; do not implement an additional optimization without confirming its batch-hydration scope. No science/signature policy change.
 - `/login` له `QCLogin3DBackground` مستقل؛ `systemBackground={false}`.
-- authenticated workspaces تستخدم `SystemBackground` مع `background.lottie` المحلي عبر `@lottiefiles/dotlottie-web@0.80.0`.
-- WASM محلي `/assets/dotlottie-player.wasm`; لا CDN ولا توسيع CSP بـ`unsafe-inline`/`unsafe-eval`.
-- gradient veil fallback يبقى عند reduced-motion/load/render/WASM failure.
-- renderer lazy، DPR محدود، cleanup عبر `destroy()`/`pagehide`, `pointer-events:none`, `aria-hidden`.
+- Current source: authenticated workspaces use a static CSS `SystemBackground` (gradient/grid/veil), `pointer-events:none`, `aria-hidden`, hidden in print; no runtime script/network/WebGL renderer. Earlier Lottie/WASM renderer notes are HISTORICAL, not the current contract.
 - Lottie metadata/asset غير مستخدم موجود داخل المصدر؛ تنظيف الحاوية نفسها قرار asset-pipeline مستقل.
 - performance live CPU/GPU/heap/Web Vitals ما زالت تحتاج evidence حية.
 

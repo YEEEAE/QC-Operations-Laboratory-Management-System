@@ -5,6 +5,26 @@ const readUi = (path: string) =>
   readFileSync(new URL(`../../../src/ui/${path}`, import.meta.url), 'utf8');
 
 describe('enterprise application shell contracts', () => {
+  it('uses the approved opaque surface hierarchy without hardcoded shell colours', () => {
+    const layout = readUi('layouts/AppLayout.astro');
+    const styles = layout.split('<style>')[1]?.split('</style>')[0] ?? '';
+    expect(styles).toContain('background: var(--surface-page)');
+    expect(styles).toContain('background: var(--color-sidebar)');
+    expect(styles).toContain('background: var(--surface-panel)');
+    expect(styles).not.toMatch(/(?:rgba?|hsla?)\(/);
+  });
+
+  it('reserves space for navigation controls in expanded, collapsed and mobile branding', () => {
+    const sidebar = readUi('shell/Sidebar.astro');
+    expect(sidebar).toContain('padding-inline-end: var(--space-12)');
+    expect(sidebar).toContain(
+      ".sidebar[data-collapsed='true'] .brand { padding-block-start: var(--space-12); }",
+    );
+    expect(sidebar).toContain(
+      ".sidebar[data-collapsed='true'] .brand { padding-block-start: 0; padding-inline-end: var(--space-12); }",
+    );
+  });
+
   it('derives context from the current route and passes the server actor to navigation', () => {
     const layout = readUi('layouts/AppLayout.astro');
     expect(layout).toContain('routeBreadcrumbs(Astro.url.pathname)');
