@@ -1,3 +1,12 @@
+- **2026-10-05 — Neon schema and owner bootstrap / hosting blocked**
+  - Changed: applied source migrations `0001`–`0045` on fresh Neon `wispy-hat-00021838 / production`, seeded Foundation authorization, created active `yazeed` ADMIN and granted exclusive SYSTEM_OWNER. Owner rejected Render; Koyeb was selected then found to require a paid plan for new users, and owner selected Vercel Hobby for personal testing.
+  - Evidence: 45 applied / 0 pending; Bootstrap ADMIN/GLOBAL/audit check PASS; SYSTEM_OWNER 205/205 active permissions and GLOBAL scope PASS. Astro 4 compatible Vercel adapter 7.8.2 built locally but emitted `nodejs18.x` against the project Node 24 contract and is affected by GHSA-mr6q-rp88-fx84; experimental adapter/config removed. Koyeb and Vercel service deploy NOT RUN. State: PARTIAL / hosting BLOCKED.
+
+- **2026-10-05 — Neon project setup / fresh database**
+  - Changed: owner authorized Neon CLI/login/skills/MCP/link/config/deploy for `wispy-hat-00021838`, branch `production`, and stated old Render data is not needed. CLI 8.0.8; eight project skills; project OAuth MCP; bare `neon.ts`; local ignored `.env` now points to Neon. Existing Codex settings preserved.
+  - Evidence: plan/deploy exit 0, no remote policy changes; config import and diff check PASS; read-only Neon PostgreSQL `18.6 (4e955f5)`, `qc` tables=0. MCP session authentication NOT VERIFIED; Render environment untouched; application migrations/seed/account bootstrap NOT RUN.
+  - State: DONE for requested Neon setup / PARTIAL for service recovery. Key files: `neon.ts`, `.codex/config.toml`, `package.json`, `pnpm-lock.yaml`, `skills-lock.json`.
+
 - **2026-10-05 — Current-candidate readiness report addendum**
   - Changed: separate Arabic offline addendum records owner all-approval signature intent, partial stage-one implementation, failed broad suite, and why old `6fc63e7` score cannot describe HEAD `2b50b8ce`. The prior report remains historical; five generator support files are locally deleted and were not restored.
   - Evidence: source/handoff reconciliation only; no current acceptance rerun. State: PARTIAL / NO-GO. Key file: `audit/QC-READINESS-REPORT-CURRENT-ADDENDUM.html`.
@@ -499,6 +508,7 @@
 - لا تخترع record links أو notification status إذا read model لا يوفرها.
 
 ## 12) Architecture / Deployment / Assets
+- **Neon setup 2026-10-05:** workspace linked to `wispy-hat-00021838 / production`; local `.env` uses Neon. PostgreSQL18.6 connection VERIFIED; migrations `0001`–`0045` applied, Foundation seeded, `yazeed` ADMIN/SYSTEM_OWNER/GLOBAL and 205/205 owner grants verified. Owner does not require old Render data and rejected Render for hosting. Koyeb requires a paid plan for new users; Vercel Hobby was selected for personal testing, but Astro 4's compatible Vercel adapter emits Node 18 and has a known path override advisory. No new web service was deployed; application recovery and release readiness remain BLOCKED. Existing Render snapshots below remain HISTORICAL.
 - Local `.env` loading is split: `loadLocalEnv()` accepts canonical runtime keys only; guarded operator/verification CLIs opt in to their separate allowlist. Provider API/connection exports are not loaded by either path.
 - **2026-09-23 fresh live/source discrepancy:** التطبيق واختباراته يثبتون RPO=24h وRTO=4h، بينما `Documents/BACKUP-RECOVERY-PLAN.md` ومصفوفة القرارات يتركانهما `POLICY-DEPENDENT` ويحظران الرقم غير المعتمد؛ code correction remains open. في المشاهدة نفسها `/system/health`: NOT READY، 0018 مطبق/0038 مشحون، 20 ترحيلًا معلّقًا، هوية الإصدار UNVERIFIED، backup catalog فارغ وrestore NOT VERIFIED. هذه لقطة زمنية لا تثبت SHA النشر.
 - **Historical — 2026-09-21 (035-B):** فشل architecture على المرشح `4fa6ac3` بسبب استيرادات delivery مباشرة؛ أُعيد التحقق وأُغلقت محليًا على HEAD `0ba087c` بتاريخ 2026-09-23 (انظر ARCH-DELIVERY-BOUNDARY أعلاه).
