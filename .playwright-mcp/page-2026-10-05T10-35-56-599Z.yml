@@ -1,0 +1,118 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - paragraph [ref=e4]: تدقيق جديد — الأدلة المجمعة لهذه الإعادة فقط · 5 أكتوبر 2026 · بدون اتصال بأي قاعدة بيانات
+    - heading "تقرير الجاهزية المبني على الأدلة" [level=1] [ref=e5]
+    - paragraph [ref=e6]:
+      - strong [ref=e7]: "قرار الإطلاق: NO-GO"
+      - text: — لا توجد بوابة P0 مقبولة بالكامل. نتيجة القياس تخص قائمة التدقيق ذات 88 بندًا، وليست نسبة «نضج المنتج».
+    - paragraph
+  - generic [ref=e8]:
+    - heading "الملخص التنفيذي" [level=2] [ref=e9]
+    - paragraph [ref=e10]: درجة PASS=1، PARTIAL=0.5، وبقية الحالات=0. الأوزان P0=5، P1=3، P2=1. المقام الثابت 268. الاستثناء من المقام لا يحدث إلا لـNOT APPLICABLE مع مصدر applicability معتمد — لا توجد أي حالة N/A في هذا التدقيق.
+  - generic [ref=e11]:
+    - heading "بوابة الإنتاج" [level=2] [ref=e12]
+    - generic [ref=e13]:
+      - strong [ref=e14]: NOT READY · NO-GO
+      - list
+    - heading "عوائق P0" [level=2] [ref=e15]
+  - generic [ref=e16]:
+    - heading "نضج الدليل وحالات البنود" [level=2] [ref=e17]
+    - table [ref=e19]:
+      - caption [ref=e20]: عدد البنود بحسب الحالة؛ الجدول والمصفوفة هما مصدر النتيجة
+      - rowgroup [ref=e21]:
+        - row [ref=e22]:
+          - columnheader "الحالة" [ref=e23]
+          - columnheader "العدد" [ref=e24]
+          - columnheader "الوزن المكتسب" [ref=e25]
+      - rowgroup
+  - generic [ref=e26]:
+    - heading "مؤشرات التغطية والنتائج الإضافية" [level=2] [ref=e27]
+    - table [ref=e29]:
+      - caption [ref=e30]: البسط/المقام وتعريف القياس ومعرفات النطاق
+      - rowgroup [ref=e31]:
+        - row [ref=e32]:
+          - columnheader "المؤشر" [ref=e33]
+          - columnheader "النسبة" [ref=e34]
+          - columnheader "البسط" [ref=e35]
+          - columnheader "المقام" [ref=e36]
+          - columnheader "الصيغة والنطاق" [ref=e37]
+      - rowgroup
+  - heading "بطاقات المجال المطلوبة" [level=2] [ref=e39]
+  - generic [ref=e40]:
+    - heading "المصفوفة الكاملة — 88 بندًا" [level=2] [ref=e41]
+    - paragraph [ref=e42]: كل بند يحتفظ بمعرفه وتعريفه. «غير منفذ» لا يعني فشلًا وظيفيًا؛ ووجود المصدر لا يعني قبولًا.
+    - text: تصفية المعرف/النص/الحالة
+    - searchbox "تصفية المعرف/النص/الحالة" [ref=e43]
+    - status
+    - table [ref=e45]:
+      - caption [ref=e46]: نتائج التدقيق لكل عنصر؛ مساهمة الدرجة موزونة
+      - rowgroup [ref=e47]:
+        - row [ref=e48]:
+          - columnheader "ID" [ref=e49]
+          - columnheader "المجال" [ref=e50]
+          - columnheader "الأولوية" [ref=e51]
+          - columnheader "الاختبار" [ref=e52]
+          - columnheader "الحالة" [ref=e53]
+          - columnheader "الدليل" [ref=e54]
+          - columnheader "المساهمة" [ref=e55]
+          - columnheader "الدليل/المصدر" [ref=e56]
+          - columnheader "النتيجة والأثر" [ref=e57]
+          - columnheader "الإصلاح/إعادة الاختبار" [ref=e58]
+      - rowgroup
+  - generic [ref=e59]:
+    - heading "جرد الصفحات التشغيلية" [level=2] [ref=e60]
+    - paragraph [ref=e61]: جرد ملفات routes فقط؛ لا يعد صفحات منفذة أو مستخدمين مصادقين.
+    - table [ref=e63]:
+      - caption [ref=e64]: المسار والدور المسموح مبدئيًا من route registry وحالة UX
+      - rowgroup [ref=e65]:
+        - row [ref=e66]:
+          - columnheader "الصفحة" [ref=e67]
+          - columnheader "الظهور" [ref=e68]
+          - columnheader "وضوح" [ref=e69]
+          - columnheader "تنقل" [ref=e70]
+          - columnheader "إتمام مهمة" [ref=e71]
+          - columnheader "احتكاك" [ref=e72]
+          - columnheader "كثافة" [ref=e73]
+          - columnheader "ضغط محتوى" [ref=e74]
+          - columnheader "هرمية" [ref=e75]
+          - columnheader "وصول" [ref=e76]
+          - columnheader "استجابة" [ref=e77]
+          - columnheader "اتساق/استرجاع/بحث" [ref=e78]
+          - columnheader "درجة UX" [ref=e79]
+          - columnheader "الدليل" [ref=e80]
+      - rowgroup
+  - generic [ref=e81]:
+    - heading "سجل خفض النصوص" [level=2] [ref=e82]
+    - paragraph [ref=e83]: العينة الحرفية تقرأ من المصدر الحالي. «النص الضروري» ليس حكمًا آليًا، ولا نحسب تقليلًا دون baseline مصرح ومطابق.
+    - table [ref=e85]:
+      - caption [ref=e86]: عينات نصية؛ العناصر المحكومة لا تُختصر
+      - rowgroup [ref=e87]:
+        - row [ref=e88]:
+          - columnheader "المكون" [ref=e89]
+          - columnheader "النص الحرفي الحالي" [ref=e90]
+          - columnheader "عدد الكلمات الحالي" [ref=e91]
+          - columnheader "الكلمات الضرورية" [ref=e92]
+          - columnheader "إمكان الخفض" [ref=e93]
+          - columnheader "مكرر" [ref=e94]
+          - columnheader "محكوم" [ref=e95]
+          - columnheader "التوصية/الخطر" [ref=e96]
+      - rowgroup
+  - generic [ref=e97]:
+    - heading "مصفوفة رحلة QC" [level=2] [ref=e98]
+    - heading "مصفوفة الدور والصلاحية" [level=2] [ref=e99]
+  - generic [ref=e100]:
+    - heading "المخاطر حسب الشدة" [level=2] [ref=e101]
+    - heading "أعلى 20 عائقًا أمام الإطلاق" [level=2] [ref=e102]
+    - list
+  - generic [ref=e103]:
+    - heading "ما ثبت فعليًا" [level=2] [ref=e104]
+    - list
+    - heading "ما لم يثبت" [level=2] [ref=e105]
+    - list
+  - generic [ref=e106]:
+    - heading "ملحق الأدلة" [level=2] [ref=e107]
+    - paragraph [ref=e108]:
+      - text: الأدلة كاملة في
+      - code [ref=e109]: evidence-appendix.md
+      - text: ضمن مجلد التدقيق. لا يحتوي التقرير على أسرار أو محتوى قاعدة بيانات.
+    - paragraph [ref=e110]: "عمر الأدلة: الأوامر والفحوص المحلية مرتبطة بـSHA الحالي وقت التنفيذ، وليست release envelope؛ تشغيل CI المرتبط بالـSHA ليس دليل نجاح ولا يمثل Application CI."
