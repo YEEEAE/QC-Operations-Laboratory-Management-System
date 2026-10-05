@@ -1,3 +1,7 @@
+- **2026-10-05 — Current-candidate readiness report addendum**
+  - Changed: separate Arabic offline addendum records owner all-approval signature intent, partial stage-one implementation, failed broad suite, and why old `6fc63e7` score cannot describe HEAD `2b50b8ce`. The prior report remains historical; five generator support files are locally deleted and were not restored.
+  - Evidence: source/handoff reconciliation only; no current acceptance rerun. State: PARTIAL / NO-GO. Key file: `audit/QC-READINESS-REPORT-CURRENT-ADDENDUM.html`.
+
 - **2026-10-05 — Stage-one signature product implementation**
   - Changed: inspection/lab stage-one use cases require an injected password ceremony and ESIG grant, producing STAGE1_APPROVE evidence on the previous version; domain repositories require/persist it with transition/audit/outbox. Actions and review UI collect reauthentication. Final signature remains separate; sources and authority unchanged.
   - Evidence: focused unit+Docker postgres:18-alpine integration 18 PASS / 7 deselected; full two-stage suite 10 PASS / 6 FAIL (remaining callers/expectations not reconciled). tsc exit 2; Node22.22.3 below contract. HTTP/E2E, rollback injection, replay contract and all-approval inventory NOT VERIFIED. State: PARTIAL, not release-ready.
