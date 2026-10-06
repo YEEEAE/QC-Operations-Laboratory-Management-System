@@ -173,3 +173,7 @@ This table records current implementation, not policy approval. `Existing test` 
 | RD-018 — REQ-WFLOW-012 | Quality-policy owner; `PERMISSION-MATRIX.md` CAPA closure. Who closes CAPA and is effectiveness check required? | CAPA close enforces permission, reason, reauthentication, SoD and signature; criteria remain open under PD-18. | `tests/unit/quality/capa-close.test.ts`; `tests/integration/quality/capa.test.ts`; approved effectiveness evidence absent. | Missing close preconditions deny; no effectiveness criterion invented. | BLOCKED — policy decision absent. |
 
 The complete PD register above, together with the canonical matrix's complete PD rows, is the source of truth for all remaining open decisions. The matrix records exact decision owner, question, normative source, code, tests/evidence and fail-closed behavior; this §8 adds the current working-tree use-case trace for the user-prioritized decisions. No absent source is converted into an implementation rule.
+
+## Inspection source decisions still unresolved — 2026-10-06
+
+Rev 14 governs identity; conflicting photographs do not amend it. Revision conflicts T102/T30/T83, title conflicts T90/T37/T5, nonmember T132 and unreadable pages require controlled-source authority/rescan. White Label has no available source in the supplied PDF. No decision here defines scientific final-result aggregation, critical-point designation, thresholds, AQL values or automatic General Products fallback. See [controlled contract](QUARANTINE-CONTROLLED-REPORT-CATALOG.md).

@@ -72,7 +72,7 @@ const createInspectionFromReceiving = defineAction({
     templateVersionId: z.string().uuid(),
     inspectionNo: z.string().trim().min(1).max(80),
     assignedTo: z.string().uuid().optional(),
-  }),
+  }).strict(),
   handler: (input, context) =>
     run(() =>
       quarantineActionDependencies().receiving.createInspection.execute({
@@ -253,11 +253,8 @@ const linkInspectionEquipment = defineAction({
     usage: z.object({
       equipmentId: z.string().uuid(),
       calibrationRecordId: z.string().uuid(),
-      usedAt: z.string().min(4).max(64),
-      equipmentSnapshot: z.record(z.unknown()),
-      calibrationSnapshot: z.record(z.unknown()),
       usageRole: z.string().trim().max(80).optional(),
-    }),
+    }).strict(),
   }),
   handler: (input, context) =>
     run(() =>
@@ -359,7 +356,10 @@ const resumeInspection = defineAction({
     ),
 });
 
+const saveControlledInspectionForm=defineAction({accept:'json',input:idVersion.extend({values:z.unknown()}).strict(),handler:(input,context)=>run(()=>quarantineActionDependencies().inspection.saveControlledForm.execute({...input,values:input.values,actor:requireActor(context),requestId:requestId(context)}))});
+
 export const quarantine = {
+  saveControlledInspectionForm,
   createReceiving,
   updateReceivingDraft,
   transitionReceiving,

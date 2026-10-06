@@ -351,7 +351,18 @@ export interface ReceivingItemsTable {
   updated_at: Generated<Date>;
   version: Generated<bigint>;
 }
+export interface InspectionReportCatalogTable {
+ id: string; doc_code: string; normalized_doc_code: string; official_title: string; normalized_search_title: string;
+ master_revision: string; source_list_revision: number; source_row_no: number; source_sha256: string;
+ catalog_state: string; source_document_status: string; created_at: Generated<Date>; updated_at: Generated<Date>;
+}
+export interface InspectionReportSourceEvidenceTable {
+ id: Generated<string>; catalog_id: string|null; doc_code: string|null; source_title: string|null; source_revision: string|null;
+ source_file: string; source_page: number|null; source_sha256: string; content_sha256: string; status: string;
+ resolution_status: Generated<string>; created_at: Generated<Date>;
+}
 export interface InspectionTemplatesTable {
+  catalog_id: Generated<string | null>;
   id: Generated<string>;
   template_code: string;
   name: string;
@@ -363,6 +374,7 @@ export interface InspectionTemplatesTable {
   version: Generated<bigint>;
 }
 export interface InspectionTemplateVersionsTable {
+ report_revision: Generated<string|null>; digital_form: Generated<unknown|null>; source_evidence_id: Generated<string|null>;
   id: Generated<string>;
   template_id: string;
   version_no: string;
@@ -401,6 +413,7 @@ export interface InspectionTemplatePointsTable {
   position: number;
 }
 export interface InspectionReportsTable {
+ form_values: Generated<unknown|null>;
   id: Generated<string>;
   inspection_no: string;
   receiving_item_id: string;
@@ -1290,6 +1303,8 @@ export interface DatabaseSchema {
   task_comments: TaskCommentsTable;
   task_dependencies: TaskDependenciesTable;
   receiving_items: ReceivingItemsTable;
+  inspection_report_catalog: InspectionReportCatalogTable;
+  inspection_report_source_evidence: InspectionReportSourceEvidenceTable;
   inspection_templates: InspectionTemplatesTable;
   inspection_template_versions: InspectionTemplateVersionsTable;
   inspection_template_sections: InspectionTemplateSectionsTable;

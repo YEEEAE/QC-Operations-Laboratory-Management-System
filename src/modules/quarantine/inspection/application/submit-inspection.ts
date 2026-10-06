@@ -1,3 +1,4 @@
+import {controlledFormSchema,validateControlledFormValues} from '../../catalog/domain/controlled-form.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import { applyInspectionAction } from '../domain/inspection.js';
@@ -18,6 +19,7 @@ export class SubmitInspectionUseCase {
         userSafe: true,
         messageKey: 'errors.inspection_evidence_required',
       });
+    if(x.template.templateSnapshot.digitalForm)validateControlledFormValues(controlledFormSchema.parse(x.template.templateSnapshot.digitalForm),x.formValues,true);
     applyInspectionAction(x, 'SUBMIT');
     authorize(
       {

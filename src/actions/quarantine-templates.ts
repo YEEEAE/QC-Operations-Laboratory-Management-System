@@ -1,3 +1,4 @@
+import { inspectionCatalogDependencies } from '../modules/quarantine/catalog/application/catalog.js';
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { AppError } from '../shared/errors/app-error.js';
@@ -30,13 +31,6 @@ const run = async <T>(work: () => Promise<T>) => {
   }
 };
 
-const templateFields = z.object({
-  templateCode: z.string().trim().min(1).max(64),
-  versionNo: z.string().trim().min(1).max(64),
-  name: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(2000).optional(),
-  reauthenticationSecret: z.string().optional(),
-});
 const POSTGRES_BIGINT_MAX = 9_223_372_036_854_775_807n;
 const idVersion = z.object({
   id: z.string().uuid(),
@@ -50,7 +44,7 @@ const idVersion = z.object({
 
 const createTemplate = defineAction({
   accept: 'json',
-  input: templateFields,
+  input: z.object({catalogId:z.string().uuid(),description:z.string().max(2000).optional(),reauthenticationSecret:z.string().optional()}).strict(),
   handler: (input, context) =>
     run(() =>
       templateActionDependencies().create.execute({
@@ -152,7 +146,10 @@ const reviseTemplate = defineAction({
     ),
 });
 
+const importSourceDrafts=defineAction({accept:'json',input:z.object({}).strict(),handler:(_input,context)=>run(()=>inspectionCatalogDependencies().importSources.execute({actor:requireActor(context),requestId:requestId(context)}))});
+
 export const quarantineTemplates = {
+  importSourceDrafts,
   createTemplate,
   reviewTemplate,
   approveTemplate,

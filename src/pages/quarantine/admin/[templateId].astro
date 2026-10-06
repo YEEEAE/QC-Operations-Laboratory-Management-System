@@ -1,4 +1,6 @@
 ---
+import ControlledInspectionForm from '../../../ui/components/quarantine/ControlledInspectionForm.astro';
+import { controlledFormSchema, type ControlledFormValues } from '../../../modules/quarantine/inspection/application/save-controlled-form.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { field, parseExpectedVersionField, toFormFailure, type FormFailure } from '../../../ui/forms/mutation-post.js';
@@ -101,6 +103,8 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     });
   }
 }
+const digitalPreview=controlledFormSchema.safeParse(template.digitalForm);
+
 ---
 <AppLayout title={`${template.templateCode} ${template.versionNo} · Quarantine Administration`} locale="en" direction="ltr">
   <p class="crumb"><a href="/quarantine/admin">Quarantine administration</a> / {template.templateCode} {template.versionNo}</p>
@@ -162,7 +166,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
             <input type="hidden" name="expectedVersion" value={template.version.toString()} />
             <label for="versionNo">New version number<input id="versionNo" name="versionNo" required value={formValues.versionNo} aria-invalid={formIntent === 'revise' && failure?.fieldErrors.versionNo ? 'true' : undefined} aria-describedby={formIntent === 'revise' && failure?.fieldErrors.versionNo ? 'versionNo-error' : undefined} /></label>
             {formIntent === 'revise' && failure?.fieldErrors.versionNo && <p class="field-error" id="versionNo-error">{failure.fieldErrors.versionNo}</p>}
-            <label for="name">Template name<input id="name" name="name" required value={formValues.name} aria-invalid={formIntent === 'revise' && failure?.fieldErrors.name ? 'true' : undefined} aria-describedby={formIntent === 'revise' && failure?.fieldErrors.name ? 'name-error' : undefined} /></label>
+            <label for="name">Template name<input id="name" name="name" readonly required value={formValues.name} aria-invalid={formIntent === 'revise' && failure?.fieldErrors.name ? 'true' : undefined} aria-describedby={formIntent === 'revise' && failure?.fieldErrors.name ? 'name-error' : undefined} /></label>
             {formIntent === 'revise' && failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}
             <label for="description">Description<textarea id="description" name="description" rows="3">{formValues.description}</textarea></label>
             <p class="muted">The revision digest and controlled source reference are server-owned. This form accepts neither as free text.</p>
@@ -179,6 +183,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
       </section>
     </aside>
   </section>
+{digitalPreview.success && <ControlledInspectionForm schema={digitalPreview.data} values={{headers:{},points:{}}} receiving={{}} editable={false} canSubmit={false} inspectionId={template.id} version={template.version.toString()} />}
 </AppLayout>
 <style>
   .crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a{color:var(--color-accent-primary-hover)}.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.notice{color:var(--text-muted);font-size:.84rem}.state{padding:.45rem .7rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--space-5)}main,aside{display:grid;gap:var(--space-5);align-content:start}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}h2{margin:0 0 var(--space-3);font-size:1rem}.actions{display:grid;gap:var(--space-4)}form{display:grid;gap:.6rem;padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.field-error{color:var(--status-danger);font-size:.85rem}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}button{min-height:var(--control-height);padding:.6rem .8rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}button[disabled]{opacity:.55}.revise{margin-top:var(--space-3)}dl{display:grid;gap:var(--space-3);margin:var(--space-4) 0 0}dt{color:var(--text-muted);font-size:.75rem}dd{margin:.25rem 0 0;font-weight:600}.notice{padding:.7rem;border-inline-start:3px solid var(--status-success);background:var(--surface-panel)}@media(max-width:820px){.layout{grid-template-columns:1fr}}

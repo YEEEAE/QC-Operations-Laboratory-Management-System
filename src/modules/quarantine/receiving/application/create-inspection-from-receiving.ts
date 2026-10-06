@@ -1,3 +1,4 @@
+import type { ResolveInspectionTemplateUseCase } from '../../inspection/application/resolve-inspection-template.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
@@ -29,6 +30,7 @@ export interface InspectionOriginDependencies {
   receiving: Pick<ReceivingRepository, 'get'>;
   inspection: Pick<InspectionRepository, 'create'>;
   template: Pick<TemplateRepository, 'get'>;
+  mapping?: Pick<ResolveInspectionTemplateUseCase,'verifyExplicitSelection'>;
 }
 
 const IN_FLIGHT_REPORT_STATES = [
@@ -85,6 +87,8 @@ export class CreateInspectionFromReceivingUseCase {
     );
     if (inFlight) throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
 
+    if(!this.deps.mapping) throw new AppError('AUTHZ_DENIED',{userSafe:true});
+    await this.deps.mapping.verifyExplicitSelection({actor:i.actor,itemCode:item.itemCode,templateVersionId:i.templateVersionId});
     const templateVersion = await this.deps.template.get(i.templateVersionId, i.actor);
     if (!templateVersion || templateVersion.state !== 'APPROVED') {
       // Fail-closed: an inspection can only be created from an approved

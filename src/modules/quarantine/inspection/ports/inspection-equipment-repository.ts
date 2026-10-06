@@ -10,6 +10,7 @@ export interface InspectionEquipmentRepository {
   link(i: {
     id: string;
     inspectionReportId: string;
+    expectedVersion: bigint;
     usage: EquipmentContext;
     actor: ActorContext;
     requestId: string;

@@ -522,6 +522,12 @@ const policies: readonly AuthorizationPolicy[] = [
   {
     permission: 'PERM-ADM-TEMPLATES',
     action: 'CREATE',
+    entityType: 'INSPECTION_ITEM_MAPPING',
+    states: ['ACTIVE'],
+  },
+  {
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'CREATE',
     entityType: 'INSPECTION_TEMPLATE_VERSION',
     states: ['DRAFT'],
   },

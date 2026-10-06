@@ -40,7 +40,7 @@ export class ReviseTemplateUseCase {
       expectedVersion: input.expectedVersion,
       actor: input.actor,
       versionNo: input.versionNo,
-      name: input.name,
+      name: current.name,
       description: input.description ?? null,
       contentHash: null,
       sourceDocument: null,

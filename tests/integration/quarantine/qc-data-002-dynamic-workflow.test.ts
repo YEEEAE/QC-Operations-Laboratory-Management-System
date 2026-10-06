@@ -1,3 +1,4 @@
+import { ImportControlledInspectionSourcesUseCase } from '../../../src/modules/quarantine/catalog/application/import-controlled-sources.js';
 import { Kysely, PostgresDialect } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrate } from '../../../scripts/db/migrate.js';
@@ -46,7 +47,9 @@ const repository = () =>
     new PostgresAuditRepository(db),
     new PostgresOutboxRepository(db),
   );
-const record = (repo = repository()) => new RecordInspectionResultsUseCase(repo, repo);
+// Concurrency/evaluation fixture deliberately supplies only its synthetic criterion;
+// production structured-form completeness is covered by controlled-report-catalog.
+const record = (repo = repository()) => new RecordInspectionResultsUseCase(repo, {listPointCriteria:async(id)=>(await repo.listPointCriteria(id)).filter(point=>point.pointId===POINT_ID)});
 const snapshot = async () => {
   const row = await pool!.query('SELECT * FROM qc.inspection_reports WHERE id=$1', [reportId]);
   const results = await pool!.query(
@@ -91,33 +94,18 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       new PostgresOutboxRepository(db),
     );
 
-    // 1. Approved template version bound to the report.
-    const templateVersionId = '01900000-0000-7000-8000-00000000e010';
-    await pool!.query(
-      `INSERT INTO qc.inspection_templates (id, template_code, name, active, created_by)
-       VALUES ('01900000-0000-7000-8000-00000000e011', 'TPL-DATA002-${stamp}', 'Nasal cannula QC', true, $1)
-       ON CONFLICT (id) DO NOTHING`,
-      [OWNER_ID],
-    );
-    await pool!.query(
-      `INSERT INTO qc.inspection_template_versions (id, template_id, version_no, state, name, effective_at, created_by)
-       VALUES ($1, '01900000-0000-7000-8000-00000000e011', 'v1', 'APPROVED', 'Nasal cannula QC', now(), $2)
-       ON CONFLICT (id) DO NOTHING`,
-      [templateVersionId, OWNER_ID],
-    );
-
+    // Bound source DRAFT, with synthetic numeric criteria added before fixture approval.
+    await new ImportControlledInspectionSourcesUseCase(db).execute({actor:{...systemOwner(),roles:['SUPERVISOR'],permissions:[...systemOwner().permissions,{code:'PERM-ADM-TEMPLATES',scopes:['GLOBAL']}]},requestId:'synthetic-data002-import'});
+    const imported=await db.selectFrom('inspection_template_versions as v').innerJoin('inspection_templates as t','t.id','v.template_id').select(['v.id','v.template_id']).where('t.template_code','=','F-823-T40').executeTakeFirstOrThrow();
+    const templateVersionId=imported.id;
+    const templateId=imported.template_id;
     // 2. Deterministic item → template mapping.
     await pool!.query(
       `INSERT INTO qc.inspection_item_templates
          (id, item_code, template_id, state, effective_from, created_by, created_at)
-       VALUES (qc.uuidv7(), $1, '01900000-0000-7000-8000-00000000e011', 'ACTIVE', CURRENT_DATE, $2, now())`,
-      [`ITEM-DATA002-${stamp}`, OWNER_ID],
+       VALUES (qc.uuidv7(), $1, $3, 'ACTIVE', CURRENT_DATE, $2, now())`,
+      [`ITEM-DATA002-${stamp}`, OWNER_ID,templateId],
     );
-
-    const resolution = await new ResolveInspectionTemplateUseCase(
-      new PostgresItemMappingReader(db),
-    ).resolve({ actor: systemOwner(), itemCode: `ITEM-DATA002-${stamp}` });
-    expect(resolution.unique?.templateVersionId).toBe(templateVersionId);
 
     // 3. Start inspection from an existing receiving row (pre-filled header).
     const receivingId = '01900000-0000-7000-8000-00000000e020';
@@ -156,6 +144,13 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
       [pointId, sectionId],
     );
 
+    // Engineering fixture state only, not human approval evidence.
+    await pool!.query("UPDATE qc.inspection_template_versions SET state='APPROVED',effective_at=now(),approved_at=now(),approved_by=$2 WHERE id=$1",[templateVersionId,OWNER_ID]);
+    const resolution = await new ResolveInspectionTemplateUseCase(
+      new PostgresItemMappingReader(db),
+    ).resolve({ actor: systemOwner(), itemCode: `ITEM-DATA002-${stamp}` });
+    expect(resolution.unique?.templateVersionId).toBe(templateVersionId);
+
     const inspection = await new StartInspectionUseCase(repo, () => new Date()).execute({
       actor: systemOwner(),
       inspectionNo: `INSP-DATA002-${stamp}`,
@@ -170,9 +165,9 @@ describe('QC-DATA-002 full workflow on PostgreSQL', () => {
         receivingDate: new Date(),
       },
       template: {
-        templateId: '01900000-0000-7000-8000-00000000e011',
+        templateId,
         templateVersionId,
-        versionNo: 'v1',
+        versionNo: '3',
         templateSnapshot: {},
         approved: true,
       },

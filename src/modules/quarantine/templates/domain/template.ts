@@ -3,6 +3,8 @@ import type { TemplateVersionAction, TemplateVersionState } from './template-sta
 import { requireTemplateReason, transitionTemplateVersion } from './template-state.js';
 
 export interface TemplateVersion {
+  digitalForm?: unknown;
+  reportRevision?: string;
   id: string;
   templateId: string;
   templateCode: string;

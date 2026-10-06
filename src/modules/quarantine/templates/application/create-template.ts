@@ -19,6 +19,8 @@ export class CreateTemplateUseCase {
     versionNo: string;
     name: string;
     description?: string;
+    /** Server-only catalog authoring starts as DRAFT until a source is bound. */
+    draftOnly?: boolean;
     reauthenticationSecret?: string;
     requestId: string;
   }) {
@@ -35,7 +37,7 @@ export class CreateTemplateUseCase {
     // reauthentication + E-Signature.
     let signatureId: string | undefined;
     let initialState: 'DRAFT' | 'APPROVED' = 'DRAFT';
-    if (authority) {
+    if (authority && !input.draftOnly) {
       if (!this.ceremony) throw new AppError('DOMAIN_SIGNATURE_REQUIRED', { userSafe: true });
       const id = uuidv7();
       signatureId = await this.ceremony.verifySignature({

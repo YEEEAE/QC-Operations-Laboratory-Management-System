@@ -21,6 +21,8 @@ export interface InspectionItemMapping {
 }
 
 export interface MappedTemplateCandidate {
+  catalogId?: string;
+  reportRevision?: string;
   templateId: string;
   templateCode: string;
   templateVersionId: string;

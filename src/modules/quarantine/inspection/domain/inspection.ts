@@ -26,6 +26,7 @@ export interface TemplateContext {
   sourceDocument?: string;
 }
 export interface Inspection {
+  formValues?: unknown;
   id: string;
   inspectionNo: string;
   receiving: ReceivingContext;
@@ -63,7 +64,7 @@ export function createInspection(i: {
 }
 export function applyInspectionAction(x: Inspection, a: InspectionAction, reason?: string) {
   if (['RETURN', 'REJECT', 'VOID', 'REOPEN'].includes(a)) requireReason(reason);
-  if (a === 'SUBMIT' && x.results.length === 0)
+  if (a === 'SUBMIT' && x.results.length === 0 && !x.formValues)
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
   return {
     ...x,

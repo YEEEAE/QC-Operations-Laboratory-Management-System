@@ -1,4 +1,8 @@
 ---
+import ControlledInspectionForm from '../../../../ui/components/quarantine/ControlledInspectionForm.astro';
+import { controlledFormSchema, type ControlledFormValues } from '../../../../modules/quarantine/inspection/application/save-controlled-form.js';
+import { decodeControlledFormPost } from '../../../../modules/quarantine/inspection/application/controlled-form-post.js';
+import { quarantineActionDependencies } from '../../../../modules/quarantine/application/dependencies.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
@@ -18,6 +22,32 @@ const permitted = (permission: 'PERM-INSP-EDIT-DRAFT' | 'PERM-INSP-SUBMIT', acti
 const canEdit = stateEditable && permitted('PERM-INSP-EDIT-DRAFT', 'EDIT');
 const canSubmit = canEdit && permitted('PERM-INSP-SUBMIT', 'SUBMIT');
 const canResume = inspection.state === 'RETURNED' && permitted('PERM-INSP-EDIT-DRAFT', 'RESUME');
+const digitalResult = controlledFormSchema.safeParse(inspection.template.templateSnapshot?.digitalForm);
+const digitalForm = digitalResult.success ? digitalResult.data : undefined;
+let formValues: ControlledFormValues = (inspection.formValues as ControlledFormValues | undefined) ?? {headers:{},points:{}};
+let formError: string | undefined;
+let addedRow: string | undefined;
+if (Astro.request.method === 'POST' && digitalForm) {
+  try {
+    const data=await Astro.request.formData();
+    const version=String(data.get('expectedVersion') ?? '');
+    if (!/^[1-9]\d{0,18}$/.test(version)) throw new Error('Invalid version');
+    const expectedVersion=BigInt(version);
+    formValues=decodeControlledFormPost(digitalForm,data);
+    const requestId=Astro.locals.requestContext?.requestId ?? 'unknown';
+    const add=data.get('addRow');
+    if (typeof add==='string' && add) {
+      if (!canEdit || !digitalForm.sections.some(s=>s.points.some(p=>p.key===add && p.dataType==='TABLE'))) throw new Error('Invalid table');
+      addedRow=add;
+    } else if (data.get('intent')==='submit') {
+      await quarantineActionDependencies().inspection.submit.execute({actor,id:inspection.id,expectedVersion,requestId});
+      return Astro.redirect(`/quarantine/inspections/${inspection.id}`,303);
+    } else if (data.get('intent')==='save') {
+      await quarantineActionDependencies().inspection.saveControlledForm.execute({actor,id:inspection.id,expectedVersion,values:formValues,requestId});
+      return Astro.redirect(Astro.url.pathname,303);
+    } else throw new Error('Invalid action');
+  } catch { formError='The controlled action was not applied. Check required fields, source context, equipment evidence and current version.'; }
+}
 // QC-DATA-002: the dynamic points come from the immutable CREATION snapshot
 // of the bound template version — never from the current template state.
 const pointCriteria: Array<{
@@ -40,6 +70,7 @@ const pointResultLabel: Record<string, string> = { PASS: 'Acceptable', FAIL: 'No
   <section class="head"><div><p class="eyebrow">Inspection</p><h1>Execute inspection</h1><p class="lede">{inspection.inspectionNo} · {inspection.receiving.receivingNo} · {inspection.receiving.itemCode}</p></div><div class="version">Reviewing version <strong>{inspection.version.toString()}</strong></div></section>
   {(!canEdit && stateEditable) ? <section class="readonly" role="alert"><strong>Execution is read-only for this account.</strong><span>The current state allows draft work, but your account needs draft-edit permission within this record’s scope. Ask your supervisor to check access.</span></section> : null}
   {(!canResume && inspection.state === 'RETURNED') ? <section class="readonly" role="alert"><strong>Resume is unavailable.</strong><span>The inspection was returned for correction, but your account lacks the explicit draft-edit permission.</span></section> : null}
+  {digitalForm ? <ControlledInspectionForm schema={digitalForm} values={formValues} receiving={{...inspection.receiving}} editable={canEdit} canSubmit={canSubmit} inspectionId={inspection.id} version={inspection.version.toString()} error={formError} addedRow={addedRow} /> : (
   <form class="workspace" method="post" data-action="quarantine.recordInspectionResults" data-inspection-id={inspection.id} data-version={inspection.version.toString()}><main><section class="panel"><h2>Receiving snapshot</h2><dl><div><dt>Document</dt><dd>{inspection.receiving.docNo}</dd></div><div><dt>Lot / batch</dt><dd>{inspection.receiving.lot}</dd></div><div><dt>Quantity</dt><dd>{inspection.receiving.qty}</dd></div><div><dt>Template version</dt><dd>{inspection.template.versionNo}</dd></div></dl></section>
     {sectioned.length ? sectioned.map((section) => (<section class="panel"><h2>{section.title}</h2>
       {section.points.map((point, index) => { const entry = recorded.get(point.pointId); const numeric = point.dataType === 'NUMERIC_MEASUREMENT' || point.dataType === 'MULTI_MEASUREMENT'; const valueId = `inspection-value-${point.pointId}`; const errorId = `inspection-error-${point.pointId}`; const remarksId = `inspection-remarks-${point.pointId}`; return (<div class="point" data-point data-point-id={point.pointId} data-data-type={point.dataType} data-required={String(point.required)}>
@@ -52,6 +83,7 @@ const pointResultLabel: Record<string, string> = { PASS: 'Acceptable', FAIL: 'No
       </div>); })}
     </section>)) : <section class="panel"><h2>Inspection points</h2><p class="muted">The approved template version has no recorded inspection points. Complete the template before executing this report.</p></section>}
     <section class="panel"><h2>Point remarks</h2><p class="muted">Remarks are saved with their inspection point. General execution notes are not saved.</p></section></main><aside><section class="panel"><h2>Submission readiness</h2><ul class="checks"><li>Approved template context captured</li><li>Required points complete — verify before submit</li><li>Required evidence — verify before submit</li><li>Acceptance criteria source — server validation</li></ul><p data-result role="status" tabindex="-1" class="action-status"></p><a href={`/quarantine/inspections/${inspection.id}`} target="_blank" rel="noopener">Check current record and history</a><div class="actions">{canEdit ? <><button type="submit" data-submit>Save results</button>{canSubmit ? <button class="controlled" type="button" data-action="quarantine.submitInspection">Submit for review</button> : <p class="note">Submit for review is unavailable because your account lacks the explicit submission permission.</p>}</> : inspection.state === 'RETURNED' && canResume ? <button type="button" data-action="quarantine.resumeInspection">Resume for correction</button> : <a class="secondary" href={`/quarantine/inspections/${inspection.id}`}>Back to record</a>}</div></section></aside></form>
+  )}
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';

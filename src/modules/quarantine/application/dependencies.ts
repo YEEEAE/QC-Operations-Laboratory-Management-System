@@ -1,3 +1,4 @@
+import {SaveControlledInspectionFormUseCase} from '../inspection/application/save-controlled-form.js';
 import { getDatabase } from '../../../shared/database/database.js';
 import { PostgresQuarantineReadModel } from '../infrastructure/postgres-quarantine-read-model.js';
 import { PostgresReceivingRepository } from '../receiving/infrastructure/postgres-repository.js';
@@ -91,9 +92,11 @@ export function quarantineActionDependencies() {
         receiving: receivingRepository,
         inspection: inspectionRepository,
         template: templateRepository,
+        mapping: new ResolveInspectionTemplateUseCase(new PostgresItemMappingReader(database)),
       }),
     },
     inspection: {
+      saveControlledForm: new SaveControlledInspectionFormUseCase(database),
       saveDraft: new SaveInspectionDraftUseCase(inspectionRepository),
       // QC-DATA-002: server-side evaluation of approved acceptance rules.
       recordResults: new RecordInspectionResultsUseCase(inspectionRepository, inspectionRepository),
@@ -121,6 +124,7 @@ export function quarantineActionDependencies() {
 export function inspectionMappingDependencies() {
   const database = getDatabase();
   return {
+    catalogContext: {execute:async(i:{actor:App.Locals['actor'];itemCode:string})=> {if(!i.actor || i.actor.accountState!=='ACTIVE')return [];return new PostgresItemMappingReader(database).listCatalogContext(i.itemCode);}},
     resolve: new ResolveInspectionTemplateUseCase(new PostgresItemMappingReader(database)),
     manageMapping: new ManageItemTemplateMappingUseCase(database),
   };

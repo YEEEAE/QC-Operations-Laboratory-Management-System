@@ -2865,3 +2865,7 @@ DO NOT MIGRATE when schema-blocking
 Status:
 FOUNDATION — APPROVED DATABASE ARCHITECTURE BASELINE
 ```
+
+## Inspection catalogue additive schema — 2026-10-06
+
+Migration `0046_inspection_report_catalog` adds master identities, append-only source evidence, catalogue/template linkage, source-bound digital schema and versioned form observations. Historical rows are not backfilled or relabelled; new execution requires matching approved sources. See [controlled contract](QUARANTINE-CONTROLLED-REPORT-CATALOG.md). Production application is NOT VERIFIED.

@@ -72,9 +72,9 @@ describe('template PostgreSQL concurrency and idempotency (P-06)', () => {
     const stamp = Date.now();
     const draft = await new CreateTemplateUseCase(repo).execute({
       actor: actor(EMPLOYEE_ID, ['EMPLOYEE']),
-      templateCode: `AUTH-${stamp}`,
-      versionNo: 'v1',
-      name: 'Authority acceptance template',
+      templateCode: 'F-823-T1',
+      versionNo: '2',
+      name: 'Inspection & Test Report for Raw Material',
       requestId: `auth-create-${stamp}`,
     });
     const supervisor = actor(SUPERVISOR_ID, ['SUPERVISOR']);
@@ -138,9 +138,9 @@ describe('template PostgreSQL concurrency and idempotency (P-06)', () => {
         ...actor(EMPLOYEE_ID, ['EMPLOYEE']),
         permissions: [{ code: 'PERM-ADM-TEMPLATES', scopes: ['GLOBAL'] }],
       },
-      templateCode: `CONC-${stamp}`,
-      versionNo: 'v1',
-      name: 'Concurrency template',
+      templateCode: 'F-823-T2',
+      versionNo: '1',
+      name: 'Inspection & Test Report for General Material',
       requestId: `conc-create-${stamp}`,
     });
     expect(draft.state).toBe('DRAFT');
@@ -177,9 +177,9 @@ describe('template PostgreSQL concurrency and idempotency (P-06)', () => {
         ...actor(EMPLOYEE_ID, ['EMPLOYEE']),
         permissions: [{ code: 'PERM-ADM-TEMPLATES', scopes: ['GLOBAL'] }],
       },
-      templateCode: `REPLAY-${stamp}`,
-      versionNo: 'v1',
-      name: 'Replay template',
+      templateCode: 'F-823-T3',
+      versionNo: '3',
+      name: 'Inspection & Test Report for Aluminum Strip',
       requestId: `replay-create-${stamp}`,
     });
     const requestId = `replay-review-${stamp}`;

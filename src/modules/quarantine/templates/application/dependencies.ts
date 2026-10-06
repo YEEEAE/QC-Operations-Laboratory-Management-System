@@ -1,3 +1,4 @@
+import { InspectionReportCatalog, CreateCatalogTemplateUseCase } from '../../catalog/application/catalog.js';
 import { getDatabase } from '../../../../shared/database/database.js';
 import { PostgresAuditRepository } from '../../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../../shared/outbox/postgres-outbox-repository.js';
@@ -45,7 +46,7 @@ export function templateActionDependencies() {
   const signatures = new PostgresSignatureEvidenceRepository(database);
   const ceremony = createTemplateCeremony(signatures, verifier(database));
   return {
-    create: new CreateTemplateUseCase(repository, ceremony),
+    create: new CreateCatalogTemplateUseCase(new InspectionReportCatalog(database),new CreateTemplateUseCase(repository, ceremony)),
     review: new ReviewTemplateUseCase(repository),
     approve: new ApproveTemplateUseCase(repository, ceremony),
     stop: new StopTemplateUseCase(repository, ceremony),

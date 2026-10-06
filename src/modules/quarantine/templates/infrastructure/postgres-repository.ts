@@ -19,6 +19,8 @@ type HeaderRow = DatabaseRow<'inspection_templates'>;
 function map(header: HeaderRow, row: TemplateRow): TemplateVersion {
   return {
     id: row.id,
+    digitalForm: row.digital_form ?? undefined,
+    reportRevision: row.report_revision ?? undefined,
     templateId: row.template_id,
     templateCode: header.template_code,
     versionNo: row.version_no,
@@ -115,19 +117,23 @@ export class PostgresTemplateRepository implements TemplateRepository {
       const created = await this.db.transaction().execute(async (tx) => {
         const replay = await this.findReplayTx(tx, input.requestId, input.template.id);
         if (replay) return replay;
+        const catalog = await tx.selectFrom('inspection_report_catalog').selectAll().where('doc_code','=',input.templateCode.trim()).where('catalog_state','=','ACTIVE').forShare().executeTakeFirst();
+        if(!catalog || catalog.official_title.trim()!==input.template.name || catalog.master_revision!==input.template.versionNo) throw new AppError('VALIDATION_FAILED',{userSafe:true});
         const header = await tx
           .selectFrom('inspection_templates')
           .selectAll()
           .where('template_code', '=', input.templateCode.trim())
           .executeTakeFirst();
+        if(header && header.catalog_id!==catalog.id)throw new AppError('VALIDATION_FAILED',{userSafe:true});
         let templateId = header?.id;
         if (!templateId) {
           const inserted = await tx
             .insertInto('inspection_templates')
             .values({
               id: input.template.templateId,
+              catalog_id: catalog.id,
               template_code: input.templateCode.trim(),
-              name: input.template.name,
+              name: catalog.official_title,
               description: input.template.description,
               active: true,
               created_by: input.actor.id,
@@ -150,7 +156,7 @@ export class PostgresTemplateRepository implements TemplateRepository {
             approved_at: input.template.state === 'APPROVED' ? now : null,
             approved_by: input.template.state === 'APPROVED' ? input.actor.id : null,
             source_document: input.template.sourceDocument ?? null,
-            name: input.template.name,
+            name: catalog.official_title,
             description: input.template.description,
             created_by: input.actor.id,
             content_hash: input.template.contentHash ?? null,

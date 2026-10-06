@@ -1,3 +1,4 @@
+import { controlledFormSchema, validateControlledFormValues } from '../../catalog/domain/controlled-form.js';
 import { sql, type Kysely, type Transaction } from 'kysely';
 import type { DatabaseSchema, DatabaseRow } from '../../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../../shared/database/database.js';
@@ -24,6 +25,11 @@ import { createHash } from 'node:crypto';
 import { insertSignatureEvidence } from '../../../../shared/e-signatures/insert-signature-evidence.js';
 import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 
+function reviveReceivingSnapshot(input: unknown): Inspection['receiving'] {
+ const s=input as Inspection['receiving'];
+ return {...s,receivingDate:new Date(s.receivingDate),...(s.expiryDate ? {expiryDate:new Date(s.expiryDate)} : {})};
+}
+
 const map = (
   r: DatabaseRow<'inspection_reports'>,
   rec: DatabaseRow<'receiving_items'>,
@@ -44,8 +50,11 @@ const map = (
     lot: rec.lot,
     qty: String(rec.qty),
     receivingDate: new Date(rec.receiving_date),
+    purchaseOrderNo: rec.purchase_order_no ?? undefined,
+    quantityUnit: rec.quantity_unit ?? undefined,
     expiryDate: rec.expiry_date ? new Date(rec.expiry_date) : undefined,
   },
+  ...(snapshot ? {receiving: reviveReceivingSnapshot(snapshot.receiving_snapshot)} : {}),
   template: {
     templateId: tv.template_id,
     templateVersionId: tv.id,
@@ -66,8 +75,9 @@ const map = (
     // existing execution. The immutable execution snapshot is authoritative
     // for that historical fact; only new executions consult current state.
     approved: Boolean(snapshot) || tv.state === 'APPROVED',
-    sourceDocument: tv.source_document ?? undefined,
+    sourceDocument: snapshot ? ((snapshot.template_snapshot as Record<string,unknown>).sourceDocument as string | undefined) : tv.source_document ?? undefined,
   },
+  formValues: r.form_values ?? undefined,
   state: r.state as Inspection['state'],
   finalResult: r.final_result as Inspection['finalResult'],
   authorId: r.author_id,
@@ -306,6 +316,13 @@ export class PostgresInspectionRepository implements InspectionRepository {
     try {
       const x = i.inspection;
       await this.db.transaction().execute(async (tx) => {
+        authorize({actor:i.actor,permission:'PERM-INSP-CREATE',action:'CREATE',entity:{type:'INSPECTION_REPORT',id:x.id,state:'DRAFT',authorId:i.actor.id},scope:{ownerId:i.actor.id},currentVersion:1n,expectedVersion:1n,businessCondition:x.authorId===i.actor.id},{throwOnDeny:true});
+        const receivingRow=await tx.selectFrom('receiving_items').selectAll().where('id','=',x.receiving.receivingId).forUpdate().executeTakeFirstOrThrow();
+        const capturedReceiving: Inspection['receiving']={receivingId:receivingRow.id,receivingNo:receivingRow.receiving_no,docNo:receivingRow.doc_no,itemCode:receivingRow.item_code,description:receivingRow.description,lot:receivingRow.lot,qty:String(receivingRow.qty),supplier:receivingRow.supplier_name ?? undefined,purchaseOrderNo:receivingRow.purchase_order_no ?? undefined,quantityUnit:receivingRow.quantity_unit ?? undefined,receivingDate:new Date(receivingRow.receiving_date),expiryDate:receivingRow.expiry_date ? new Date(receivingRow.expiry_date) : undefined};
+        const controlled = await tx.selectFrom('inspection_template_versions as v').innerJoin('inspection_templates as t','t.id','v.template_id').innerJoin('inspection_report_catalog as c','c.id','t.catalog_id').select(['v.template_id','v.version_no','v.digital_form','v.report_revision','v.content_hash','v.source_document','c.id as catalogId','c.doc_code','c.official_title','c.master_revision','c.source_list_revision','c.source_sha256']).where('v.id','=',x.template.templateVersionId).forShare('v').executeTakeFirst();
+        if(!controlled)throw new AppError('VALIDATION_FAILED',{userSafe:true});
+        const digitalForm=controlledFormSchema.parse(controlled.digital_form);
+        if(createHash('sha256').update(stableJson(digitalForm)).digest('hex')!==controlled.content_hash)throw new AppError('VALIDATION_FAILED',{userSafe:true});
         await tx
           .insertInto('inspection_reports')
           .values({
@@ -332,9 +349,13 @@ export class PostgresInspectionRepository implements InspectionRepository {
           .execute();
         const templateSnapshot: Record<string, unknown> = {
           ...x.template.templateSnapshot,
-          templateId: x.template.templateId,
+          catalogId: controlled.catalogId, docCode: controlled.doc_code, officialTitle: controlled.official_title,
+          reportRevision: controlled.report_revision, sourceListRevision: controlled.source_list_revision,
+          sourceSha256: controlled.source_sha256, sourceDocument: controlled.source_document,
+          digitalForm, contentHash: controlled.content_hash,
+          templateId: controlled.template_id,
           templateVersionId: x.template.templateVersionId,
-          versionNo: x.template.versionNo,
+          versionNo: controlled.version_no,
         };
         const controlledSources = await tx
           .selectFrom('inspection_template_document_sources as source')
@@ -386,7 +407,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             inspection_report_id: x.id,
             snapshot_version: 1,
             snapshot_stage: 'CREATION',
-            receiving_snapshot: stableJson(x.receiving),
+            receiving_snapshot: stableJson(capturedReceiving),
             template_snapshot: stableJson(templateSnapshot),
             controlled_source_snapshot: stableJson(controlledSources),
             criteria_snapshot: stableJson(criteria),
@@ -395,7 +416,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
             snapshot_hash: createHash('sha256')
               .update(
                 stableJson({
-                  receiving: x.receiving,
+                  receiving: capturedReceiving,
                   template: templateSnapshot,
                   controlledSources,
                   criteria,
@@ -411,6 +432,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
           .set({ snapshot_id: snapshot.id })
           .where('id', '=', x.id)
           .execute();
+        await new PostgresAuditRepository(tx).append({actorType:'USER',actorId:i.actor.id,subjectType:'INSPECTION_REPORT',subjectId:x.id,action:'INSPECTION_CREATED',requestId:i.requestId,payload:{receivingId:x.receiving.receivingId,templateVersionId:x.template.templateVersionId,catalogId:controlled.catalogId,reportRevision:controlled.report_revision,snapshotId:snapshot.id}});
         if (i.originAudit) {
           await this.auditFor(tx)?.append({
             actorType: 'USER',
@@ -472,11 +494,15 @@ export class PostgresInspectionRepository implements InspectionRepository {
   async linkEquipment(i: {
     id: string;
     inspectionReportId: string;
+    expectedVersion:bigint;
     usage: EquipmentContext;
     actor: ActorContext;
     requestId: string;
   }) {
     await this.db.transaction().execute(async (tx) => {
+      const current=await tx.selectFrom('inspection_reports').selectAll().where('id','=',i.inspectionReportId).forUpdate().executeTakeFirstOrThrow();
+      authorize({actor:i.actor,permission:'PERM-INSP-EDIT-DRAFT',action:'EDIT',entity:{type:'INSPECTION_REPORT',id:current.id,state:current.state,authorId:current.author_id,executorId:current.author_id},scope:{ownerId:current.author_id,assigneeId:current.assigned_user_id ?? current.author_id},currentVersion:BigInt(current.version),expectedVersion:i.expectedVersion,businessCondition:current.state==='DRAFT'},{throwOnDeny:true});
+      await tx.updateTable('inspection_reports').set({version:i.expectedVersion+1n,updated_by:i.actor.id,updated_at:new Date()}).where('id','=',i.inspectionReportId).execute();
       await tx
         .insertInto('inspection_equipment_usage')
         .values({
@@ -721,6 +747,11 @@ export class PostgresInspectionRepository implements InspectionRepository {
         if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         if (i.action === 'FINAL_APPROVE' || i.action === 'APPROVE') await insertSignatureEvidence(tx, i.signatureEvidence!);
         if (i.action === 'SUBMIT') {
+          const formContext=old.template.templateSnapshot.digitalForm;
+          if(formContext) {
+            validateControlledFormValues(controlledFormSchema.parse(formContext),old.formValues,true);
+            if(!r.aql || !r.aql_source_reference || !r.aql_sample_size || r.aql_accept_number===null || r.aql_reject_number===null || !r.aql_sampling_result)throw new AppError('VALIDATION_FAILED',{userSafe:true});
+          }
           const creationSnapshot = await tx
             .selectFrom('inspection_report_snapshots')
             .select(['controlled_source_snapshot', 'criteria_snapshot'])
@@ -739,12 +770,15 @@ export class PostgresInspectionRepository implements InspectionRepository {
           }));
           const controlledSources = creationSnapshot?.controlled_source_snapshot ?? [];
           const criteria = creationSnapshot?.criteria_snapshot ?? [];
+          const equipmentUsage=await tx.selectFrom('inspection_equipment_usage').selectAll().where('inspection_report_id','=',i.id).orderBy('id').execute();
+          const aql={aql:r.aql,codeLetter:r.aql_code_letter,inspectionLevel:r.aql_inspection_level,sampleSize:r.aql_sample_size,acceptNumber:r.aql_accept_number,rejectNumber:r.aql_reject_number,samplingResult:r.aql_sampling_result,sourceReference:r.aql_source_reference};
           const submission = {
             receiving: old.receiving,
             template: old.template.templateSnapshot,
             controlledSources,
             criteria,
             results: resultsSnapshot,
+            formValues: old.formValues ?? null, aql,equipmentUsage,
           };
           const snapshot = await tx
             .insertInto('inspection_report_snapshots')
@@ -757,7 +791,7 @@ export class PostgresInspectionRepository implements InspectionRepository {
               template_snapshot: old.template.templateSnapshot,
               controlled_source_snapshot: stableJson(controlledSources),
               criteria_snapshot: stableJson(criteria),
-              results_snapshot: stableJson(resultsSnapshot),
+              results_snapshot: stableJson({points:resultsSnapshot,formValues:old.formValues ?? null,aql,equipmentUsage}),
               created_at: now,
               snapshot_hash: createHash('sha256').update(stableJson(submission)).digest('hex'),
             })

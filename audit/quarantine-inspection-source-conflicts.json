@@ -1,0 +1,232 @@
+[
+  {
+    "docCode": "F-823-T102",
+    "masterTitle": "Inspection & Test Report for Needle Veress",
+    "masterRevision": "3",
+    "sourceTitle": "Inspection & Test Report for Needle Veress",
+    "sourceRevision": "4",
+    "status": "SOURCE_REVISION_CONFLICT",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 1,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "b5602303b522d3b9443bebd6056e85949f0fd9ee2e89296e54d3036bdf2e9f2d",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "SOURCE_REVISION_CONFLICT",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 1,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T83",
+    "masterTitle": "Inspection & Test Report for Breathing Bag",
+    "masterRevision": "1",
+    "sourceTitle": "Inspection & Test Report for Breathing Bag",
+    "sourceRevision": "2",
+    "status": "SOURCE_REVISION_CONFLICT",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 3,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "57304858cc63f3faeaa2e585a3e8d21d14cd45cc39d83d8df2a6672dcec6cb86",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "SOURCE_REVISION_CONFLICT",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 3,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T90",
+    "masterTitle": "Inspection & Test Report for Genrel Products",
+    "masterRevision": "2",
+    "sourceTitle": "Inspection & Test Report for General products",
+    "sourceRevision": "2",
+    "status": "SOURCE_TITLE_CONFLICT",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 4,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "b7c62006af4b94150fa10b89c2e8a730ffb643ce7bf2c8b3d031f5f428c6e3ac",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "SOURCE_TITLE_CONFLICT",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 4,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T30",
+    "masterTitle": "Inspection & Test Report for Endotracheal Tube",
+    "masterRevision": "3",
+    "sourceTitle": "Inspection & Test Report for Endotracheal Tube",
+    "sourceRevision": "4",
+    "status": "SOURCE_REVISION_CONFLICT",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 5,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "0094b03cb9ec637ffae7e89a04127b7f581f6941b76ad17d32324c2b7812b818",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "SOURCE_REVISION_CONFLICT",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 5,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T50",
+    "masterTitle": "Inspection & Test Report for Packaging Film & Papper",
+    "masterRevision": "3",
+    "sourceTitle": "Inspection & Test Report for Packaging Film & Paper",
+    "sourceRevision": null,
+    "status": "NEEDS_SOURCE_RESCAN",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 10,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "93dff79d380945fcf85af6d612254be8c350e4ab076a503f4cbf7cf67e366ad8",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "NEEDS_SOURCE_RESCAN",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 10,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T76",
+    "masterTitle": "Inspection & Test Report for Blood Line Parts",
+    "masterRevision": "1",
+    "sourceTitle": "Inspection & Test Report for Blood Line Parts",
+    "sourceRevision": "1",
+    "status": "NEEDS_SOURCE_RESCAN",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 12,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "75e9c0e5fde274065b90f390b7f28427d58b6f259743e9e1b90c5ee4bfffae01",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "NEEDS_SOURCE_RESCAN",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 12,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T35",
+    "masterTitle": "Inspection & Test Report for Guedel Airway",
+    "masterRevision": "2",
+    "sourceTitle": "Inspection & Test Report for Guedel Airway",
+    "sourceRevision": null,
+    "status": "NEEDS_SOURCE_RESCAN",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 13,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "96bec0a6686682a53700033a16eabcbda6c7370b781ebe8e916c87f6e3926d80",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "NEEDS_SOURCE_RESCAN",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 13,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T132",
+    "masterTitle": null,
+    "masterRevision": null,
+    "sourceTitle": "Inspection & Test Report for Phototherapy Mask",
+    "sourceRevision": "1",
+    "status": "NOT_IN_MASTER_LIST",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 17,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "c75d085e1da4763de3a8918c91b453279a5f6e1d2defbf73b0e6cb1417b8b475",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "NOT_IN_MASTER_LIST",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 17,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T132",
+    "masterTitle": null,
+    "masterRevision": null,
+    "sourceTitle": "Inspection & Test Report for Phototherapy Mask",
+    "sourceRevision": "1",
+    "status": "NOT_IN_MASTER_LIST",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 18,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "3558b6592597667bdd9011183615253984340140337ac53f0faff6a63cf446de",
+    "resolutionStatus": "UNRESOLVED",
+    "duplicateIdentityOfPage": 17,
+    "conflictType": "NOT_IN_MASTER_LIST",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 18,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T37",
+    "masterTitle": "Inspection & Test Report for Hypodermic Needle ",
+    "masterRevision": "2",
+    "sourceTitle": "Inspection & Test Report for Hypodermic Needle - Syringes",
+    "sourceRevision": "2",
+    "status": "SOURCE_TITLE_CONFLICT",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 19,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "e17a07bd9cce213e0ea514a476d5e8b6968dc784fae0452dab40d2f0e0ba2ce2",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "SOURCE_TITLE_CONFLICT",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 19,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T61",
+    "masterTitle": "Inspection & Test Report for Syringes",
+    "masterRevision": "3",
+    "sourceTitle": "Inspection & Test Report for Syringes",
+    "sourceRevision": "3",
+    "status": "NEEDS_SOURCE_RESCAN",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 23,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "b7a12e26588e733960bad909ab8f01f579ae87bf0fac643202ba1c2e10bb2cc0",
+    "resolutionStatus": "UNRESOLVED",
+    "duplicateIdentityOfPage": 14,
+    "conflictType": "NEEDS_SOURCE_RESCAN",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 23,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  },
+  {
+    "docCode": "F-823-T5",
+    "masterTitle": "Inspection & Test Report for Liquid Chemicals",
+    "masterRevision": "2",
+    "sourceTitle": "Inspection & Test Report for Received Liquid chemicals",
+    "sourceRevision": "2",
+    "status": "SOURCE_TITLE_CONFLICT",
+    "sourceFile": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+    "sourcePage": 25,
+    "sourceSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "contentSha256": "f106525e1f5d45de2b423e50cbd823e899d70d62a8ef4cef419efb224e780387",
+    "resolutionStatus": "UNRESOLVED",
+    "conflictType": "SOURCE_TITLE_CONFLICT",
+    "evidence": {
+      "file": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+      "page": 25,
+      "sha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da"
+    }
+  }
+]

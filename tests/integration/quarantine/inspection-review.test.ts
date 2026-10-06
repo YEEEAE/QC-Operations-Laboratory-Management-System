@@ -1,3 +1,4 @@
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 import { describe, expect, it } from 'vitest';
 import { ApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/approve-inspection.js';
 import { ReviewInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/review-inspection.js';
@@ -53,6 +54,7 @@ const actor = (id: string): ActorContext => ({
     { code: 'PERM-INSP-RETURN', scopes: ['GLOBAL'] },
     { code: 'PERM-APR-RETURN', scopes: ['GLOBAL'] },
     { code: 'PERM-INSP-APPROVE', scopes: ['GLOBAL'] },
+    { code: 'PERM-ESIG-SIGN', scopes: ['GLOBAL'] },
     { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
   ],
 });
@@ -85,7 +87,7 @@ function repository(initial: Inspection): InspectionRepository {
             ? 'UNDER_REVIEW'
             : input.action === 'RETURN'
               ? 'RETURNED'
-              : 'APPROVED',
+              : input.action==='APPROVE' ? 'PENDING_QCM_APPROVAL' : 'APPROVED',
         version: current.version + 1n,
       };
       return current;
@@ -116,13 +118,14 @@ describe('Quarantine inspection review and approval', () => {
   it('approves under the approved P-05 policy but still denies with an explicit deny policy', async () => {
     const repo = repository({ ...inspection('UNDER_REVIEW'), version: 3n });
     await expect(
-      new ApproveInspectionUseCase(repo).execute({
+      new ApproveInspectionUseCase(repo,undefined,createFinalApprovalCeremony({verify:async()=>true})).execute({
         actor: actor(reviewerId),
         id: inspection().id,
         expectedVersion: 3n,
+        reauthenticationSecret:'synthetic-test-only',
         requestId: 'req',
       }),
-    ).resolves.toMatchObject({ state: 'APPROVED' });
+    ).resolves.toMatchObject({ state: 'PENDING_QCM_APPROVAL' });
     const deniedRepo = repository({ ...inspection('UNDER_REVIEW'), version: 3n });
     await expect(
       new ApproveInspectionUseCase(deniedRepo, { canApprove: () => false }).execute({

@@ -1,0 +1,2917 @@
+[
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T40",
+    "reportRevision": "3",
+    "sourceTitle": "Inspection & Test Report for Intubating Stylet",
+    "sourceDate": "20.01.2024",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good without any damaged",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Clarity / Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear / Good Appearance",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Free from Irregularities",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No Damaged / No Defected",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Size",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "CH 6 , CH 10 , CH 14 ,",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Length & O.D",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Length & O.D as per size specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Size Printing Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and accurate printing",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Plastic cover & Aluminium rod",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Both have smooth surface & good fitting, flexible , no cracks",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "9",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T141",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Uretheral Catheter",
+    "sourceDate": "24.11.2022",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should be proper packed by primary packaging poly bag with sealed edges",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Catheter clarity",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Surface should be clear and smooth",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Catheter Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Catheter should be flexible, latex material without and surface defects",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Catheter Tip Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and smooth Soft rounded close tip, tip should not sharp",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Catheter Dimension",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Catheter OD, ID & length as per specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Catheter eye status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Eye should be smooth cutting edges round shape, accurate in dimension, no flashing and blockage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Eye dimension",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Eye Length 5.73mm / width 2.17mm, distance between eye to tip 6.96mm",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "9",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T29",
+    "reportRevision": "1",
+    "sourceTitle": "Inspection & Test Report for E.T.T Tube Holder",
+    "sourceDate": "11.01.2018",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "colorConnector",
+        "label": "Color / Connector",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good without any damaged",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Clarity / Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear / Good Appearance",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Free from Irregularities",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No flashing / No black spot / No sharp edges Flexible not broken / smooth surface",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Tube holding area",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth surface round shape / accurate fitting",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Tube holder screw knob",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Strong gripp , smooth moment , accurate fixing ,",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Screw cap status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No flashing , No sharpness , fixed cap",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Inner side spong fitting",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Soft spong , strong gluing , smooth edges",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Holder wings status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Accurate hole , not broken , flexible",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Lace fitting",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Strached at wings area and adjustable at other end",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Lace clip",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Strong gripp , flexible , no crack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "11",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "12",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T162",
+    "reportRevision": "1",
+    "sourceTitle": "Inspection & Test Report for Biopsy Needle",
+    "sourceDate": "02.05.2024",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "gaugeType",
+        "label": "Gauge / Type",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good without any damaged.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth surface, no roughness, no damage and crack.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Needle",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Stainless steel needle, smooth surface, no blockage.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Needle Dimension (ID x OD x Length)",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should be as per specification.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Indication ring",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth movement over needle, no damage,no crack and should not loose.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Needle Holder",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Holder should be clear and transparent, strong gluing with needle, no damage, no crack.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Stylet",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Stainless steel stylet, smooth surface, inserted inside needle, easy to insert and withdraw.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "End Cap",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good fitting with needle holder, no loose, no damage and crack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Needle Gluing with holder",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "The gluing between needle and holder should be strong and needle should not pullout from holder.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Needle Protector",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and transparent protector good fitting, no loose, no short shot.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "11",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Mais Logo / Without Logo.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Mais Logo",
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "12",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T159",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Pipette Tips",
+    "sourceDate": "03.12.2023",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "volume",
+        "label": "Volume",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "filter",
+        "label": "Filter",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good without any damaged .",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear , Transparent , no damaged, no holes, no black spots, no fish eyes.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Body",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth surface, no crack, no damage free from irregularities",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Body Top",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Round smooth surface, no flashing, no crack, no damage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Body Bottom tip",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth and round open hole, accurate hole as per required volume, no flashing, no blockage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Pipette Dimensions",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Body top & bottom tip ID / OD and length should be as per specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Filter Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "White Filter proper inserted inside in pipette tip, no loose, no backout",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Fitting Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good and proper fitting, no loose",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Mais Logo / Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Mais Logo",
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "10",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T151",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Syringe Bulb",
+    "sourceDate": "25.09.2023",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good without any damaged",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Clarity / Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear / Good Appearance",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Free from Irregularities",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No black spots, no leakage, no blockage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Body",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and smooth surface, no black spots, no holes, no color faded",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Nozzle",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth nozzle, no damage, no crack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Color",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Light blue color",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Dimensions",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should be as per specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Mais Logo / Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Mais Logo",
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "9",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T61",
+    "reportRevision": "3",
+    "sourceTitle": "Inspection & Test Report for Syringes",
+    "sourceDate": "20.03.2024",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "equipmentId",
+        "label": "Equipment record",
+        "dataType": "TEXT",
+        "required": true
+      },
+      {
+        "key": "calibrationId",
+        "label": "Calibration record",
+        "dataType": "TEXT",
+        "required": true
+      },
+      {
+        "key": "certificate",
+        "label": "Certificate No.",
+        "dataType": "TEXT",
+        "required": true
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good & without damage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Without any damage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Type",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "LL , LT , Cath tip , Side nozzle",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "LL",
+              "LT",
+              "Cath tip",
+              "Side nozzle"
+            ]
+          },
+          {
+            "key": "4",
+            "label": "Free from Irregularities",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No Flashing, No short short",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Graduation Scale",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Printed clearly & accurate",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Rubber Piston Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good fitting / without damage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Nozzle Tip status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No flashing , Accurate hole , No blockage , Good luer fitting",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Plunger & Barrel Wings Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Without any damage / No Crack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Testing for Clinical Fitting",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should not be leak",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Testing for Liquid",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should not be leak",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "11",
+            "label": "Testing for Air During Aspiration",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should not be leak",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "12",
+            "label": "Testing for Liquid Spillage",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should not be leak",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "13",
+            "label": "Dead Space Determination",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "As per specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "14",
+            "label": "pH Determination",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "5.0 ~ 6.0 Units",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "15",
+            "label": "Lubrication Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "16",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "17",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      },
+      {
+        "code": "measurement",
+        "title": "Testing Reference / Measurement",
+        "points": [
+          {
+            "key": "readings",
+            "label": "Testing Reference / Measurement",
+            "dataType": "TABLE",
+            "required": true,
+            "requirementText": "Accuracy : (1 - 5ml : ± 5%) (10 - 60ml : ± 4%)",
+            "criticalInspectionPoint": null,
+            "resultRequired": false,
+            "remarksAllowed": true,
+            "columns": [
+              {
+                "key": "standard",
+                "label": "Standard Reading",
+                "dataType": "DECIMAL",
+                "required": true
+              },
+              {
+                "key": "equipment",
+                "label": "Equipment Reading",
+                "dataType": "DECIMAL",
+                "required": true
+              },
+              {
+                "key": "result",
+                "label": "Results",
+                "dataType": "OPTION",
+                "required": true,
+                "allowedValues": [
+                  "PASS",
+                  "FAIL",
+                  "REMARK",
+                  "NA"
+                ]
+              }
+            ],
+            "equipmentReference": "Calibrated Cylinder",
+            "accuracyText": "Accuracy : (1 - 5ml : ± 5%) (10 - 60ml : ± 4%)"
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T172",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Stainless Steel Trocar",
+    "sourceDate": "09.09.2024",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good without any damaged",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth surface, No rusts particles",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Color appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Trocar Natural stainless steel",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Protector Color",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Blue Color",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Protector Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Rigid PVC tube, good fitting with trocar, no loose.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Trocar Tip",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Sharp tip, no tip bend, no hooks and damage",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Bending Angle",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "proper bended 25 degree angle",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Corrosion Resistance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should be corrosion free",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Trocar fitting",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good fitting with tube by tight insertion and should not loose",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Mais Logo / Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Mais Logo",
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "11",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Non Sterile / Sterile / Bulk pack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Non Sterile",
+              "Sterile",
+              "Bulk pack"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T189",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Feeding Bottle",
+    "sourceDate": "25.03.2026",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Receiving Date",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "docRef",
+        "label": "Doc. Ref.",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "capacity",
+        "label": "Capacity",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "productCode",
+        "label": "Product Code",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "itemCode"
+      },
+      {
+        "key": "equipmentId",
+        "label": "Equipment record",
+        "dataType": "TEXT",
+        "required": true
+      },
+      {
+        "key": "calibrationId",
+        "label": "Calibration record",
+        "dataType": "TEXT",
+        "required": true
+      },
+      {
+        "key": "certificate",
+        "label": "Certificate No.",
+        "dataType": "TEXT",
+        "required": true
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection — Critical Inspection Points column present; source cells blank",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Carton intact, no moisture, no any damaged.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Quantity Verification",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Matches PO and delivery note.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Visual Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear./ transparent, no cracks, deformation, or breakage, no sharp edges.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Cleanliness",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Free from dust, oil, foreign particles.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Surface Finish",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth, no sharp edges, burrs not allowed.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Bottle dimensions",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Accurate dimensions & capacity, as per required.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Odor",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Odorless (no plastic or chemical smell).",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Graduation Marks",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear, permanent, aligned, readable.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Liquid Leakage",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No leakage when filled and closed.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Nipple Integrity",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Uniform hole, no tear, no deformation, or collapse & no flashing.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "11",
+            "label": "Nipple fitting",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Proper fit with bottle, no leakage at joint.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "12",
+            "label": "Nipple cap fitting",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Secure closure, no looseness.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "13",
+            "label": "Stability",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Must stand upright on flat surface.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "14",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo / Mais Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo",
+              "Mais Logo"
+            ]
+          },
+          {
+            "key": "15",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile / Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      },
+      {
+        "code": "measurement",
+        "title": "Bottle Measurement",
+        "points": [
+          {
+            "key": "readings",
+            "label": "Bottle Measurement",
+            "dataType": "TABLE",
+            "required": true,
+            "requirementText": "Accuracy: (0 - 60ml: ± 3%) / (100-150ml: ± 2%)",
+            "criticalInspectionPoint": null,
+            "resultRequired": false,
+            "remarksAllowed": true,
+            "columns": [
+              {
+                "key": "standard",
+                "label": "Standard Reading",
+                "dataType": "DECIMAL",
+                "required": true
+              },
+              {
+                "key": "equipment",
+                "label": "Equipment Reading",
+                "dataType": "DECIMAL",
+                "required": true
+              },
+              {
+                "key": "result",
+                "label": "Results",
+                "dataType": "OPTION",
+                "required": true,
+                "allowedValues": [
+                  "PASS",
+                  "FAIL",
+                  "REMARK",
+                  "NA"
+                ]
+              }
+            ],
+            "equipmentReference": "Measuring Cylinder",
+            "accuracyText": "Accuracy: (0 - 60ml: ± 3%) / (100-150ml: ± 2%)"
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ],
+    "criticalInspectionColumn": true
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T147",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Instruments Cleaning Brushes",
+    "sourceDate": "13.09.2023",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Good and proper packed without damaged",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Clarity / Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Free from surface defects and dust particles",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Twisted Wire Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Pure stainless steel wires, straight, twisted type, no damage, no bend, corrosion free.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Wires Dimension",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Wires should be accurate in dimension as per specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Wire Protector",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and dark blue color protector proper covered twisted wire up to the bristles and protector, no damage and crack.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Bristles Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Bristles should be soft and smooth nylon type, clear surface, no damage, no bend, no pullout from Wires during cleaning.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Bristles Dimension",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Bristles should be accurate in dimension as per specification",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Handle Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Handle smooth surface, no flashing, no black spots, no crack and damage.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Bristles Cover",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Transparent cover, accurate in dimension, good fitting with bristles, no damage, no crack marks, no loose.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Label Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Label should be clear prined with complete details information as per approved label.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "11",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "12",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T187",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Oral Care Set",
+    "sourceDate": "08.01.2026",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Receiving Date",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "docRef",
+        "label": "Doc. Ref.",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "productCode",
+        "label": "Product Code",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "itemCode"
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection — Critical Inspection Points column present; source cells blank",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Carton intact, no moisture, no any damaged.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "2",
+            "label": "Quantity Verification",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Matches PO and delivery note.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "3",
+            "label": "Visual Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "No cracks, deformation, or breakage, no sharp edges.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "4",
+            "label": "Cleanliness",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Free from dust, oil, foreign particles.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "5",
+            "label": "Suction toothbrush status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and clean surface, smooth edges no any irregularities.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "6",
+            "label": "Suction toothbrush Handle",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth surface, no flashing, no black spots, no damage, no crack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "7",
+            "label": "Suction toothbrush Head",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Smooth curved edges, no sharp edges, no flashing, no damage and crack",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "8",
+            "label": "Suction toothbrush Bristles",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Soft and smooth bristles, proper fixed inside head, no pullout, no short shot",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "9",
+            "label": "Sponge gluing with brush",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should be proper adhesive with stick, no pull out, no loose.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "10",
+            "label": "Suction Toothbrush dimension",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Toothbrush should be 193 ±2mm in total length, no short shot.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "11",
+            "label": "Oral swabs status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear and white plastic stick, no damaged, no bend, no crack.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "12",
+            "label": "Oral swabs dimension",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Oral swabs should be 145 ±3mm in total length, no short shot.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "13",
+            "label": "Sponge Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Clear soft sponge, straight cutting edges, no fibers and should be dust & stain free.",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "14",
+            "label": "Sponge gluing with Stick Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "requirementText": "Should be proper adhesive with stick, no pull out, no loose",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true
+          },
+          {
+            "key": "15",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Without Logo / Mais Logo",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Without Logo",
+              "Mais Logo"
+            ]
+          },
+          {
+            "key": "16",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "requirementText": "Sterile / Bulk",
+            "criticalInspectionPoint": null,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ],
+    "criticalInspectionColumn": true
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T76",
+    "reportRevision": "1",
+    "sourceTitle": "Inspection & Test Report for Blood Line Parts",
+    "sourceDate": "13.01.2018",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "components",
+        "title": "Blood Line Parts",
+        "points": [
+          {
+            "key": "components",
+            "label": "Component lines",
+            "dataType": "TABLE",
+            "required": true,
+            "requirementText": null,
+            "criticalInspectionPoint": null,
+            "resultRequired": false,
+            "remarksAllowed": true,
+            "columns": [
+              {
+                "key": "description",
+                "label": "Description",
+                "dataType": "TEXT",
+                "required": true
+              },
+              {
+                "key": "lot",
+                "label": "Lot Number",
+                "dataType": "TEXT",
+                "required": true
+              },
+              {
+                "key": "quantity",
+                "label": "Quantity",
+                "dataType": "DECIMAL",
+                "required": true
+              },
+              {
+                "key": "level",
+                "label": "Sample Level",
+                "dataType": "TEXT",
+                "required": true
+              },
+              {
+                "key": "size",
+                "label": "Sample Size",
+                "dataType": "INTEGER",
+                "required": true
+              },
+              {
+                "key": "colourDimensions",
+                "label": "Colour & I.D. O.D",
+                "dataType": "TEXT",
+                "required": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "docCode": "F-823-T158",
+    "reportRevision": "0",
+    "sourceTitle": "Inspection & Test Report for Pasteur Pipette",
+    "sourceDate": "03.12.2023",
+    "headerFields": [
+      {
+        "key": "supplier",
+        "label": "Supplier Name",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "supplier"
+      },
+      {
+        "key": "lot",
+        "label": "Lot No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "lot"
+      },
+      {
+        "key": "po",
+        "label": "P.O. No.",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "purchaseOrderNo"
+      },
+      {
+        "key": "qty",
+        "label": "Received Qty",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "qty"
+      },
+      {
+        "key": "received",
+        "label": "Date.#",
+        "dataType": "TEXT",
+        "required": false,
+        "receivingKey": "receivingDate"
+      },
+      {
+        "key": "inspectionDate",
+        "label": "Inspection Date",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "wi",
+        "label": "According to WI",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "dataType": "TEXT",
+        "required": false
+      },
+      {
+        "key": "volume",
+        "label": "Volume",
+        "dataType": "TEXT",
+        "required": false
+      }
+    ],
+    "sections": [
+      {
+        "code": "inspection",
+        "title": "Inspection",
+        "points": [
+          {
+            "key": "1",
+            "label": "Packing Condition",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Good without any damaged",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "2",
+            "label": "Appearance",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Clear , Transparent , no damaged, no holes, no black spots, no fish eyes.",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "3",
+            "label": "Pipette Function Status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Proper suctioning as per mentioned mL.",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "4",
+            "label": "Edges status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Should be smooth, no sharp edges and free from flashing.",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "5",
+            "label": "Bulb status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Clear and soft bulb, no damaged, no holes, no burns, no leakage.",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "6",
+            "label": "Tip status",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Tip should be soft and conical type, narrow tip, no damaged, no blockage.",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "7",
+            "label": "Graduation marking scale",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Clear printed graduation scale in ml, as per required size.",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "8",
+            "label": "Pipette Length",
+            "dataType": "PASS_FAIL_NA",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Pipette length as per specification",
+            "criticalInspectionPoint": null
+          },
+          {
+            "key": "9",
+            "label": "Logo",
+            "dataType": "OPTION",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Mais Logo / Without Logo",
+            "criticalInspectionPoint": null,
+            "allowedValues": [
+              "Mais Logo",
+              "Without Logo"
+            ]
+          },
+          {
+            "key": "10",
+            "label": "Sterility Condition",
+            "dataType": "OPTION",
+            "required": true,
+            "resultRequired": true,
+            "remarksAllowed": true,
+            "requirementText": "Sterile Or Bulk",
+            "criticalInspectionPoint": null,
+            "allowedValues": [
+              "Sterile",
+              "Bulk"
+            ]
+          }
+        ]
+      }
+    ],
+    "aqlFields": [
+      "AQL",
+      "Code Letter",
+      "Accept",
+      "Reject",
+      "Results",
+      "Status"
+    ],
+    "resultVocabulary": "PASS_FAIL_REMARK_NA",
+    "finalDisposition": [
+      "Accepted",
+      "Rejected"
+    ],
+    "reviewResponsibilities": [
+      "Checked by: OBM Inspectors",
+      "Reviewed by: Q.C.M."
+    ]
+  }
+]

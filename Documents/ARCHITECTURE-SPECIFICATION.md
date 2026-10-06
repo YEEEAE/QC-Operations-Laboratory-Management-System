@@ -4015,3 +4015,7 @@ DENY / BLOCK UNTIL APPROVED
 Status:
 FOUNDATION — APPROVED ARCHITECTURE BASELINE
 ```
+
+## Quarantine controlled report catalogue — 2026-10-06
+
+Rev 14 identity membership, matched digital sources, effective item mapping and immutable execution snapshots are enforced by the catalogue/application and migration 0046 database guards. Native structured-form writes extend the existing inspection workflow. See [controlled contract](QUARANTINE-CONTROLLED-REPORT-CATALOG.md). Scientific aggregation and source-authority blockers remain open.

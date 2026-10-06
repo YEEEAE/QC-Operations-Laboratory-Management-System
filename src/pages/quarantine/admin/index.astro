@@ -1,4 +1,5 @@
 ---
+import { inspectionCatalogDependencies } from '../../../modules/quarantine/catalog/application/catalog.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { field, optionalField, toFormFailure, extractDetailId, type FormFailure } from '../../../ui/forms/mutation-post.js';
@@ -18,27 +19,31 @@ let templates: Awaited<ReturnType<ReturnType<typeof templateReadDependencies>['l
 const denied = templateResult.status === 'NOT_VISIBLE';
 const listUnavailable = templateResult.status === 'UNAVAILABLE';
 
-let values = { templateCode: '', versionNo: '', name: '', description: '' };
+const search = (Astro.url.searchParams.get('search') ?? '').slice(0,120);
+const page = Math.max(1, Number(Astro.url.searchParams.get('page')) || 1);
+const catalogResult = !denied ? await readOutcome(() => inspectionCatalogDependencies().catalog.search({ actor, search, page })) : null;
+const catalog = catalogResult?.status === 'AVAILABLE' ? catalogResult.value : [];
+let values = { catalogId: '', description: '' };
 let reauthenticationSecret = '';
 let failure: FormFailure | null = null;
 
 if (Astro.request.method === 'POST' && hasTemplatePermission) {
   const formData = await Astro.request.formData();
   values = {
-    templateCode: field(formData, 'templateCode'),
-    versionNo: field(formData, 'versionNo'),
-    name: field(formData, 'name'),
+    catalogId: field(formData, 'catalogId'),
     description: field(formData, 'description'),
     // Keep credentials out of the retained form state so they can never be
     // echoed into SSR output after a failed request.
   };
   reauthenticationSecret = field(formData, 'reauthenticationSecret');
   try {
+    if(formData.get('intent')==='import-sources') {
+      await inspectionCatalogDependencies().importSources.execute({actor,requestId:Astro.locals.requestContext?.requestId ?? 'unknown'});
+      return Astro.redirect('/quarantine/admin',303);
+    }
     const created = await templateActionDependencies().create.execute({
       actor,
-      templateCode: values.templateCode,
-      versionNo: values.versionNo,
-      name: values.name,
+      catalogId: values.catalogId,
       ...(values.description ? { description: values.description } : {}),
       ...(reauthenticationSecret ? { reauthenticationSecret } : {}),
       requestId: Astro.locals.requestContext?.requestId ?? `admin-create-${Date.now()}`,
@@ -46,16 +51,13 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     const id = extractDetailId(created);
     if (id) return Astro.redirect(`/quarantine/admin/${id}`, 303);
     templates = await templateReadDependencies().list.execute({ actor });
-    values = { templateCode: '', versionNo: '', name: '', description: '' };
+    values = { catalogId: '', description: '' };
     reauthenticationSecret = '';
   } catch (error) {
     failure = toFormFailure(error, {
       entity: 'Template',
       requiredFields: [
-        { name: 'templateCode', label: 'Template code' },
-        { name: 'versionNo', label: 'Version number' },
-        { name: 'name', label: 'Template name' },
-        { name: 'reauthenticationSecret', label: 'Password confirmation' },
+        { name: 'catalogId', label: 'Inspection Report' },
       ],
       values,
       listHref: '/quarantine/admin',
@@ -69,10 +71,7 @@ type FieldName = keyof typeof values | 'reauthenticationSecret';
 function describedBy(name: FieldName): string | undefined {
   const parts: string[] = [];
   if (failure?.fieldErrors[name]) parts.push(`${name}-error`);
-  if (name === 'templateCode') parts.push('templateCode-help');
-  if (name === 'versionNo') parts.push('versionNo-help');
-  if (name === 'name') parts.push('name-help');
-  if (name === 'reauthenticationSecret') parts.push('reauthenticationSecret-help');
+  if (name === 'catalogId') parts.push('catalogId-help');
   return parts.length ? parts.join(' ') : undefined;
 }
 function invalid(name: FieldName): 'true' | undefined {
@@ -110,6 +109,13 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       <p>This area requires the explicit Quarantine administration permission. Admin role alone is not business authority.</p>
     </section>
   ) : (
+    <section class="panel" aria-labelledby="catalog-title"><h2 id="catalog-title">Inspection Report catalogue · Rev 14</h2>
+      <form method="get"><label for="catalog-search">Search Doc. Code or official title<input id="catalog-search" name="search" type="search" maxlength="120" value={search} /></label><button type="submit">Search catalogue</button></form>
+      {catalogResult?.status === 'UNAVAILABLE' ? <p role="alert">Catalogue is temporarily unavailable. Reload before creating a template.</p> : <div class="table-wrap"><table><caption>Master identities, source status and digital readiness</caption><thead><tr><th>Doc. Code</th><th>Official title</th><th>Master Rev</th><th>Digital template</th><th>Version</th><th>Item mappings</th><th>Source</th></tr></thead><tbody>{catalog.map(c => <tr><th scope="row">{c.doc_code}</th><td>{c.official_title}</td><td>{c.master_revision}</td><td>{c.digitalTemplateStatus ?? 'NOT_DIGITIZED'}</td><td>{c.templateVersion ?? '—'}</td><td>{c.mappingCount}</td><td>{c.source_document_status}</td></tr>)}</tbody></table></div>}
+      {isAuthority && hasTemplatePermission && <form method="post"><input type="hidden" name="intent" value="import-sources"/><p>Import the verified source transcriptions as DRAFT. This records conflicts and source digests; it creates no approval or item mapping.</p><button type="submit">Import source drafts</button></form>}
+      {!catalog.length && catalogResult?.status === 'AVAILABLE' && <p role="status">No controlled identities match this search.</p>}
+      <nav aria-label="Catalogue pages">{page > 1 && <a href={`?search=${encodeURIComponent(search)}&page=${page-1}`}>Previous</a>} {catalog.length === 50 && <a href={`?search=${encodeURIComponent(search)}&page=${page+1}`}>Next</a>}</nav>
+    </section>
     <div class="grid">
       <section class="panel">
         <div class="panel-head"><div><p class="eyebrow">TEMPLATE LIFECYCLE</p><h2>Inspection template versions</h2></div></div>
@@ -117,7 +123,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
           <p class="note" role="note">Employee accounts create DRAFT only and cannot review, approve, stop, void, or supersede (P-06). Supervisor, Manager, and yazeed (SYSTEM_OWNER) act with reauthentication and E-Signature.</p>
         )}
         {isAuthority && (
-          <p class="note" role="note">Authority creation produces APPROVED immediately and always requires password re-entry (E-Signature). Reviewer may also approve the same template: an explicit template-only exception to the general SoD rule.</p>
+          <p class="note" role="note">Catalogue authoring creates a draft until matching source evidence and digital content are bound. Approval retains the authorized E-Signature ceremony and the template-only SoD exception.</p>
         )}
         {listUnavailable ? (
           <p class="empty" role="status">The template list is temporarily unavailable. Retry this page before treating the list as empty.</p>
@@ -164,20 +170,12 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
           <form method="post" data-template-create>
             {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
             <fieldset><legend>Template identity <span class="req-note">All fields marked * are required</span></legend>
-            <label for="templateCode">Template code<span aria-hidden="true"> *</span><span class="hint" id="templateCode-help">Use the code from your approved source.</span><input id="templateCode" name="templateCode" required value={values.templateCode} aria-invalid={invalid('templateCode')} aria-describedby={describedBy('templateCode')} /></label>
-            {failure?.fieldErrors.templateCode && <p class="field-error" id="templateCode-error">{failure.fieldErrors.templateCode}</p>}
-            <label for="versionNo">Version number<span aria-hidden="true"> *</span><span class="hint" id="versionNo-help">New revisions use Supersede; approved content is never edited.</span><input id="versionNo" name="versionNo" required value={values.versionNo} aria-invalid={invalid('versionNo')} aria-describedby={describedBy('versionNo')} /></label>
-            {failure?.fieldErrors.versionNo && <p class="field-error" id="versionNo-error">{failure.fieldErrors.versionNo}</p>}
-            <label for="name">Template name<span aria-hidden="true"> *</span><span class="hint" id="name-help">Human-readable template title.</span><input id="name" name="name" required value={values.name} aria-invalid={invalid('name')} aria-describedby={describedBy('name')} /></label>
-            {failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}
+            <label for="catalogId">Inspection Report<span aria-hidden="true"> *</span><span class="hint" id="catalogId-help">Choose the exact Rev 14 master identity. Source-conflicted entries cannot be used.</span><select id="catalogId" name="catalogId" required aria-invalid={invalid('catalogId')} aria-describedby={describedBy('catalogId')}><option value="">Choose Inspection Report…</option>{catalog.filter(c => c.catalog_state === 'ACTIVE').map(c => <option value={c.id} selected={values.catalogId === c.id}>{c.doc_code} · {c.official_title} · Rev {c.master_revision}</option>)}</select></label>
+            {failure?.fieldErrors.catalogId && <p class="field-error" id="catalogId-error">{failure.fieldErrors.catalogId}</p>}
             <label for="templateDescription">Description<textarea id="templateDescription" name="description" rows="3">{values.description}</textarea></label>
             </fieldset>
             <p class="note">Source document evidence is bound through Document Control. This form does not accept a browser-provided digest or free-text source reference.</p>
-            <fieldset><legend>E-Signature</legend>
-            <label for="reauthenticationSecret">Password confirmation{isAuthority && <span aria-hidden="true"> *</span>}<span class="hint" id="reauthenticationSecret-help">Required for Supervisor, Manager, yazeed. Never stored as evidence.</span><input id="reauthenticationSecret" name="reauthenticationSecret" type="password" autocomplete="current-password" required={isAuthority} aria-invalid={invalid('reauthenticationSecret')} aria-describedby={describedBy('reauthenticationSecret')} /></label>
-            {failure?.fieldErrors.reauthenticationSecret && <p class="field-error" id="reauthenticationSecret-error">{failure.fieldErrors.reauthenticationSecret}</p>}
-            </fieldset>
-            <p class="hint">{isAuthority ? 'Creates APPROVED immediately with E-Signature.' : 'Creates DRAFT. Approval requires an authorized reviewer.'}</p>
+            <p class="hint">Creates DRAFT. Approval requires matched source content and the authorized E-Signature ceremony.</p>
             <p class="hint" data-result role="status" aria-live="polite" tabindex="-1"></p>
             <div class="actions"><button type="submit" data-submit>Create template</button></div>
           </form>
@@ -197,16 +195,14 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       progressText: 'Creating template…',
       copy: {
         VALIDATION_ERROR: 'The template was not created. Review the highlighted fields and try again.',
-        CONFLICT_STALE: 'A template with the same code and version may already exist. Change the code or version, or check the list before trying again. Your other entries are preserved.',
+        CONFLICT_STALE: 'A template with the same code and version may already exist. Check the selected catalogue identity and its existing version before trying again. Your other entries are preserved.',
         AUTHORIZATION_CHANGED: 'Your authorization changed. This action needs the explicit template administration permission. Your entries are preserved.',
         DEPENDENCY_UNAVAILABLE: 'A referenced record could not be found. Verify the source document and try again. Your entries are preserved.',
         UNKNOWN_SAFE_ERROR: 'The creation result could not be confirmed. Your entries are preserved. Check the template list before trying again.',
       },
       invoke: (data) =>
         actions.quarantineTemplates.createTemplate({
-          templateCode: String(data.get('templateCode') ?? ''),
-          versionNo: String(data.get('versionNo') ?? ''),
-          name: String(data.get('name') ?? ''),
+          catalogId: String(data.get('catalogId') ?? ''),
           description: String(data.get('description') ?? '') || undefined,
           reauthenticationSecret: String(data.get('reauthenticationSecret') ?? '') || undefined,
         }) as unknown as Promise<{ data?: { id?: string }; error?: unknown }>,
@@ -218,5 +214,5 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
   }
 </script>
 <style>
-  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty,.note,.denied p,.hint{color:var(--text-muted);font-size:.84rem}.head a{color:var(--color-accent-primary-hover)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel-head{display:flex;justify-content:space-between;align-items:flex-start}.table-wrap{overflow-x:auto;margin-top:var(--space-4)}table{width:100%;min-width:520px;border-collapse:collapse}caption{text-align:start;padding:.75rem 0;color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem 0;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}.states{list-style:none;margin:var(--space-4) 0;padding:0;display:grid;gap:.6rem}.states li{display:grid;gap:.3rem;font-size:.8rem}.states small{display:grid;gap:.2rem;color:var(--text-muted)}.on{color:var(--text-primary)}.off{color:var(--text-muted)}form{display:grid;gap:.7rem;margin-top:var(--space-4)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.actions{display:flex;justify-content:flex-end}button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}.note{margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:760px){.head,.grid{display:grid}}
+  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.empty,.note,.denied p,.hint{color:var(--text-muted);font-size:.84rem}.head a{color:var(--color-accent-primary-hover)}.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:var(--space-5)}.panel{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel-head{display:flex;justify-content:space-between;align-items:flex-start}.table-wrap{overflow-x:auto;margin-top:var(--space-4)}table{width:100%;min-width:520px;border-collapse:collapse}caption{text-align:start;padding:.75rem 0;color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem 0;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}.states{list-style:none;margin:var(--space-4) 0;padding:0;display:grid;gap:.6rem}.states li{display:grid;gap:.3rem;font-size:.8rem}.states small{display:grid;gap:.2rem;color:var(--text-muted)}.on{color:var(--text-primary)}.off{color:var(--text-muted)}form{display:grid;gap:.7rem;margin-top:var(--space-4)}label{display:grid;gap:.35rem;font-size:.8rem}input,textarea,select{padding:.6rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit}.actions{display:flex;justify-content:flex-end}button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;font-weight:700}.note{margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--color-border-subtle);line-height:1.5}.denied{padding:var(--space-5);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:760px){.head,.grid{display:grid}}
 </style>

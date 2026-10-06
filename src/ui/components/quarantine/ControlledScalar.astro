@@ -1,0 +1,8 @@
+---
+interface Props { field: {label:string;dataType:string;allowedValues?:string[];unit?:string|null}; name:string; id:string; value?:string|boolean; disabled:boolean }
+const {field,name,id,value,disabled}=Astro.props;
+---
+<label for={id}>{field.label}{field.unit ? ` (${field.unit})` : ''}
+{field.dataType==='OPTION' || field.dataType==='YES_NO' ? <select id={id} name={name} disabled={disabled}><option value="">Choose…</option>{(field.dataType==='YES_NO' ? ['true','false'] : field.allowedValues ?? []).map(option=><option value={option} selected={String(value ?? '')===option}>{field.dataType==='YES_NO' ? option==='true' ? 'Yes' : 'No' : option}</option>)}</select> : field.dataType==='REMARK' ? <textarea id={id} name={name} disabled={disabled} maxlength="2000">{String(value ?? '')}</textarea> : <input id={id} name={name} type="text" inputmode={['INTEGER','DECIMAL','MEASUREMENT'].includes(field.dataType) ? 'decimal' : 'text'} value={String(value ?? '')} disabled={disabled} maxlength="2000" />}
+</label>
+<style>label{display:grid;gap:.4rem;margin:.7rem 0;font-size:.85rem}input,select,textarea{width:100%;min-height:2.5rem;padding:.6rem;border:1px solid var(--border-default);background:var(--surface-raised);color:inherit;border-radius:var(--radius-sm);font:inherit;box-sizing:border-box}textarea{min-height:4rem}</style>
