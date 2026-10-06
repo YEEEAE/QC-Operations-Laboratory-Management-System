@@ -1,6 +1,6 @@
 # QC-ADP26-34 / QC-POST-100-013 handoff
 
-**State: PARTIAL.** The current source change implements the unstarted `/login` pending and duplicate-submit behavior while preserving the native POST path. It reports a retry duration only when returned by the server-side login limiter. This does not close the finding or establish release acceptance.
+**State: PARTIAL / EVIDENCE_PENDING.** Reconciled again on 2026-10-07 at exact HEAD `4c8bdb32db810674710d73bade392293d30ae0da`, initially clean working tree, Node `v24.20.0`, source migration head `0046_inspection_report_catalog.sql`. The earlier implementation remains present; no residual source defect was reproduced, so no product code was changed. Current evidence and blockers are in `.ci-results/QC-POST-100-013-20261007/reconciliation.md`.
 
 ## Changed
 
@@ -26,5 +26,13 @@
 - Browser session-expired redirect/recovery, password-manager autofill behavior, manual keyboard/screen-reader testing, and human UAT.
 - No-JavaScript POST acceptance with a configured disposable database; the no-JS test verifies the rendered native form contract only.
 - Candidate-bound live/runtime evidence and any production behavior. No production login, write, deployment, migration, commit, or push was performed.
+
+## Current-candidate reconciliation — 2026-10-07
+
+- Status: **PARTIAL / EVIDENCE_PENDING** (not DONE, NOT_STARTED, STALE, REGRESSED, or SUPERSEDED). Source implementation is still present at current HEAD. Historical browser evidence remains historical because it was generated against another candidate.
+- Focused current-source execution: `tests/unit/identity/session-recovery.test.ts`, `tests/unit/shared/safe-return-to.test.ts`, `tests/integration/identity/account.test.ts` plus attempted PostgreSQL suites. On Node 24.20.0: 3 files passed, 2 database-backed suites could not initialize; aggregate 21 passed / 9 skipped. `tests/integration/security/rate-limit.test.ts` and `tests/integration/identity/identity-rbac-postgres.test.ts` were blocked at Testcontainers setup (`Could not find a working container runtime strategy`). External `QC_TEST_DATABASE_URL` was explicitly unset for this run.
+- The real configured server throttle/retry page, network delay/interruption, duplicate HTTP request count, session-expiry browser route, password-manager autofill, credential/session/audit rollback and race, fixture-persona sign-in matrix, manual AT and human UAT remain **NOT VERIFIED/BLOCKED**. No fixture secrets were read or used.
+- Source review confirmed no credential values in the auth logger fields; only event and request ID are logged. Current session-recovery copy states the previous action is not resubmitted. `safeReturnTo` and session-recovery focused checks passed.
+- No schema change was made. Source migration head is `0046_inspection_report_catalog.sql`; applied schema was not queried. No commit, push, deployment, production migration, or production write occurred.
 
 `QC-PAGE-F-034` remains OPEN and QC-ADP26-34 remains PARTIAL. Preserve owner/scientific/signature decisions; no new policy was inferred.

@@ -2,13 +2,13 @@ import { createHash } from 'node:crypto';
 import process from 'node:process';
 import console from 'node:console';
 import { execFileSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { routes } from '../../src/shared/routing/routes.ts';
 
 const root = process.cwd();
-const outDir = 'audit/2026-10-02';
+const outDir = process.argv[2] ?? '.ci-results/QC-POST-100-017-20261007';
 const outputNames = ['coverage-register.json', 'coverage-register.md', 'coverage-register.html'];
 const read = (p) => readFile(path.join(root, p), 'utf8');
 const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, encoding: 'utf8' }).trim();
@@ -19,18 +19,40 @@ const escape = (s = '') =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 
-const [recon, , domainAudit, releaseGate, auditHtml, verification, promptHtml, postPrompts] =
-  await Promise.all([
-    read('Documents/REQUIREMENTS-RECONCILIATION.md'),
-    read('Documents/REQUIREMENTS-TRACEABILITY.md'),
-    read('audit/100-percent/QC-CLOSURE-017-FINAL-80-DOMAIN-AUDIT.md'),
-    read('audit/100-percent/RELEASE-GATE.md'),
-    read('audit/2026-10-02/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html'),
-    read('audit/2026-10-02/post-implementation/verification-data.json'),
-    read('audit/2026-10-02/QC-100-PERCENT-ADAPTIVE-EXECUTION-PROMPTS-2026-09-30.html'),
-    read('audit/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.html'),
-  ]);
+const [
+  recon,
+  ,
+  domainAudit,
+  releaseGate,
+  auditHtml,
+  verification,
+  promptHtml,
+  postPrompts,
+  promptSpecifications,
+  currentPostReport,
+  masterCoverageLedgerText,
+] = await Promise.all([
+  read('Documents/REQUIREMENTS-RECONCILIATION.md'),
+  read('Documents/REQUIREMENTS-TRACEABILITY.md'),
+  read('audit/100-percent/QC-CLOSURE-017-FINAL-80-DOMAIN-AUDIT.md'),
+  read('audit/100-percent/RELEASE-GATE.md'),
+  read('audit/QC-POST-100-PROMPTS/2026-09-30-POST-IMPLEMENTATION-FULL-SYSTEM-VERIFICATION.html'),
+  read('audit/2026-10-02/post-implementation/verification-data.json'),
+  read('audit/2026-10-02/QC-100-PERCENT-ADAPTIVE-EXECUTION-PROMPTS-2026-09-30.html'),
+  read('audit/QC-POST-100-PROMPTS/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.html'),
+  read('audit/2026-10-02/prompt-pack-optimization/prompt-specifications.json'),
+  read('audit/QC-POST-100-PROMPTS/2026-09-30-POST-IMPLEMENTATION-FULL-SYSTEM-VERIFICATION.html'),
+  read('audit/2026-10-02/prompt-pack-optimization/master-coverage-ledger.json'),
+]);
 const verificationData = JSON.parse(verification);
+const promptSpecificationData = JSON.parse(promptSpecifications);
+const masterCoverageLedger = JSON.parse(masterCoverageLedgerText);
+const masterRowsByType = new Map();
+for (const sourceRow of masterCoverageLedger.rows) {
+  const rowsForType = masterRowsByType.get(sourceRow.type) ?? new Map();
+  rowsForType.set(sourceRow.id, sourceRow);
+  masterRowsByType.set(sourceRow.type, rowsForType);
+}
 const head = run('git', ['rev-parse', 'HEAD']);
 const branch = run('git', ['branch', '--show-current']);
 const files = run('git', ['ls-files', '-co', '--exclude-standard'])
@@ -45,7 +67,7 @@ const files = run('git', ['ls-files', '-co', '--exclude-standard'])
   .sort();
 const treeHash = createHash('sha256');
 for (const f of files) {
-  if (!existsSync(path.join(root, f))) continue;
+  if (!existsSync(path.join(root, f)) || !statSync(path.join(root, f)).isFile()) continue;
   treeHash
     .update(f)
     .update('\0')
@@ -64,9 +86,12 @@ const sourceRefs = {
   routeAcceptance: 'Documents/ROUTE-ACCEPTANCE-MATRIX.md',
   domains: 'audit/100-percent/QC-CLOSURE-017-FINAL-80-DOMAIN-AUDIT.md',
   releaseGateChecklist: 'audit/100-percent/RELEASE-GATE.md',
-  historicalAudit: 'audit/2026-10-02/2026-09-30-ADAPTIVE-PAGE-BY-PAGE-FULL-SYSTEM-AUDIT.html',
+  historicalAudit:
+    'audit/QC-POST-100-PROMPTS/2026-09-30-POST-IMPLEMENTATION-FULL-SYSTEM-VERIFICATION.html',
   historicalEvidence: 'audit/2026-10-02/post-implementation/verification-data.json',
-  promptPlan: 'audit/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.html',
+  promptPlan: 'audit/QC-POST-100-PROMPTS/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.html',
+  promptSpecifications: 'audit/2026-10-02/prompt-pack-optimization/prompt-specifications.json',
+  masterCoverageLedger: 'audit/2026-10-02/prompt-pack-optimization/master-coverage-ledger.json',
 };
 
 const baseEvidence = () => ({
@@ -96,14 +121,19 @@ function add({
   page = null,
   role = null,
   state = 'NOT RECONCILED',
+  historicalState = null,
+  currentDisposition = state,
   criterion,
   owner,
   prompt = null,
   dependencies = [],
   source,
-  denominator = true,
+  denominator = false,
   evidence = baseEvidence(),
   remainingWork,
+  sourceLedgerId = null,
+  acceptanceRefs = [],
+  requiredArtifacts = [],
 }) {
   rows.push({
     id,
@@ -114,6 +144,8 @@ function add({
     page,
     role,
     state,
+    historicalState,
+    currentDisposition,
     criterion,
     owner,
     responsiblePrompt: prompt,
@@ -122,7 +154,36 @@ function add({
     evidence,
     source,
     remainingWork,
+    sourceLedgerId,
+    acceptanceRefs,
+    requiredArtifacts,
   });
+}
+
+function sourceLedgerMatch(row) {
+  const lookup = (type, id) => masterRowsByType.get(type)?.get(id);
+  if (row.kind === 'page-check') return lookup('page-criterion', row.reference.replace(' / ', ':'));
+  if (row.kind === 'page-role') return lookup('register-page-role', `BASE:PAGE:${row.id.slice(5)}`);
+  if (row.kind === 'requirement')
+    return lookup('register-requirement', `BASE:REQ:${row.id.slice(4)}`);
+  if (row.kind === 'domain') return lookup('register-domain', `BASE:DOMAIN:${row.id.slice(7)}`);
+  if (row.kind === 'report-section') return lookup('report-section', row.reference);
+  if (row.kind === 'report-indicator') return lookup('indicator', row.reference);
+  if (row.kind === 'report-audit-gate') return lookup('audit-gate', row.reference);
+  if (row.kind === 'finding')
+    return (
+      lookup('register-finding', `BASE:FINDING:${row.reference}`) ??
+      lookup('original-finding', row.reference) ??
+      lookup('new-finding', row.reference) ??
+      lookup('observation', row.reference) ??
+      lookup('regression', row.reference)
+    );
+  if (row.kind === 'task' || row.kind === 'original-task' || row.kind === 'post-spec-task')
+    return lookup('register-task', `BASE:TASK:${row.reference}`);
+  if (row.kind === 'release-gate-master') return lookup('register-release-gate', row.reference);
+  if (row.kind === 'release-gate')
+    return lookup('register-release-gate', `BASE:GATE:CHECKLIST:${row.reference.slice(0, 2)}`);
+  return null;
 }
 
 // Approved requirement reconciliation: exactly one scored row per current stable requirement family.
@@ -206,7 +267,7 @@ for (const route of routes) {
       add({
         id: `PAGECHECK:${route.id}:${check.id}`,
         kind: 'page-check',
-        group: 'pages',
+        group: 'checklist-671',
         reference: `${route.id} / ${check.id}`,
         title: check.criterion,
         page: route.path,
@@ -217,6 +278,7 @@ for (const route of routes) {
         prompt: 'QC-POST-100-017',
         dependencies: ['approved applicability reconciliation', 'exact candidate evidence'],
         source: [route.file, sourceRefs.historicalEvidence],
+        denominator: true,
         remainingWork: `إعادة فحص المعيار على ${route.path}؛ الدليل السابق مربوط بـ${verificationData.head} ولا ينتقل تلقائيًا.`,
       });
   } else {
@@ -261,6 +323,25 @@ for (const [name, file, pathName] of [
       source: [file, sourceRefs.historicalAudit],
       remainingWork: `تشغيل سيناريو الخطأ ${name} مربوط بالمرشح ودور ${roleName}، والتحقق من الاسترداد/الرسالة.`,
     });
+  const reportPage = historicalById.get(`RT-ERROR-${name}`);
+  for (const check of reportPage?.checks ?? [])
+    add({
+      id: `PAGECHECK:RT-ERROR-${name}:${check.id}`,
+      kind: 'page-check',
+      group: 'checklist-671',
+      reference: `RT-ERROR-${name} / ${check.id}`,
+      title: check.criterion,
+      page: pathName,
+      role: 'Applicable persona per reconciled error scenario',
+      state: 'NOT VERIFIED',
+      criterion: check.criterion,
+      owner: `QC/QMS error-recovery owner ${name}`,
+      prompt: 'QC-POST-100-017',
+      dependencies: ['approved applicability reconciliation', 'exact candidate evidence'],
+      source: [file, sourceRefs.historicalEvidence],
+      denominator: true,
+      remainingWork: `إعادة فحص معيار ${check.id} على ${pathName}؛ الدليل التاريخي مربوط بـ${verificationData.head}.`,
+    });
 }
 
 // Preserve all 80 approved domain identities and previous evidence only as historical context.
@@ -276,7 +357,7 @@ for (const m of domainRows) {
   add({
     id: `DOMAIN:${id}`,
     kind: 'domain',
-    group: 'domains',
+    group: 'domains-80',
     reference: id,
     title: m[2].trim(),
     state: 'BLOCKED',
@@ -284,6 +365,7 @@ for (const m of domainRows) {
     owner: `Domain owner ${id}; named accountable person not present in approved source`,
     prompt: 'QC-POST-100-017',
     source: [sourceRefs.domains, sourceRefs.requirements],
+    denominator: true,
     remainingWork: `تحديد معيار الجزء ومقامه من ملف المجال الأصلي، وتعيين مالك مفوض؛ ثم إعادة القياس على المرشح الحالي. لا يوجد N/A أو دليل حالي.`,
   });
 }
@@ -312,53 +394,172 @@ for (let n = 0; n < gateChecklist.length; n++) {
   });
 }
 // The independent approved 19-gate set lacks canonical gate↔requirement/provider/signer/digest mapping.
-const reconciledGateCount =
-  [...domainAudit.matchAll(/(?:gate|بوابة)[^\n]{0,60}(\d+)\s*\/\s*(\d+)/gi)]
-    .map((m) => Math.max(+m[1], +m[2]))
-    .find((n) => n > 1) ??
-  verificationData?.gates?.length ??
-  19;
-for (let n = 1; n <= reconciledGateCount; n++)
+const reconciledGateCount = 19;
+for (const gate of masterCoverageLedger.rows.filter((r) => r.type === 'register-release-gate'))
   add({
-    id: `GATE:MASTER:${String(n).padStart(2, '0')}`,
+    id: `GATE:MASTER:${gate.id}`,
     kind: 'release-gate-master',
-    group: 'gates',
-    reference: `Master production gate ${String(n).padStart(2, '0')}`,
-    title: `Approved master gate ${String(n).padStart(2, '0')} — current canonical mapping unresolved`,
+    group: 'gates-19',
+    reference: gate.id,
+    title: gate.title,
     state: 'BLOCKED',
-    criterion:
-      'ربط gate بمتطلبات ومصدر دليل ومزود/موقّع/digest وسياسة حداثة وهوية مرشح ضمن سجل البوابات المعتمد؛ ثم إثباته على المرشح.',
-    owner: 'QC-100-FINAL-014 / authorized release-governance owner',
-    prompt: 'QC-POST-100-014',
-    dependencies: ['approved master gate mapping', 'candidate-bound evidence provider'],
-    source: ['audit/2026-10-02/handoff-QC-POST-100-014.md', sourceRefs.requirements],
-    remainingWork:
-      'الاسم والربط والمالك المعتمد غير متاحين؛ لا تختلق mapping. بعد قرار المالك، اجمع دليلًا مربوطًا بـSHA/runtime/schema.',
+    criterion: gate.criterion,
+    owner: gate.prompts?.join(', ') || 'Authorized release-governance owner unresolved',
+    prompt: gate.prompts?.[0] ?? 'QC-POST-100-014',
+    dependencies: ['canonical 19-gate mapping remains unresolved'],
+    source: [sourceRefs.masterCoverageLedger, ...(gate.source ?? [])],
+    remainingWork: gate.gap,
   });
 
-// Report sections: numbered content is scored only where a measurable criterion exists.
-const sections = [...auditHtml.matchAll(/<h2 id="([^"]+)">([^<]+)<\/h2>/g)];
-for (const [, sectionId, heading] of sections) {
-  const isDescriptive = /المنهج|القرار النهائي|نتيجة تنفيذية/.test(heading);
+// The post-report's 52 sections are mapped for traceability, not scored as checklist rows.
+const sections = masterCoverageLedger.rows.filter((r) => r.type === 'report-section');
+for (const section of sections) {
+  const sectionId = section.id;
+  const heading = section.title;
   add({
     id: `REPORT:${sectionId}`,
     kind: 'report-section',
-    group: 'report-sections',
+    group: 'post-report-sections-52',
     reference: sectionId,
     title: heading,
-    state: isDescriptive ? 'DESCRIPTIVE' : 'NOT VERIFIED',
-    denominator: !isDescriptive,
-    criterion: isDescriptive
-      ? `قسم وصفي: ${heading}. لا تُنسب له نسبة مستقلة.`
-      : `كل الادعاءات/المعايير القابلة للقياس في ${heading} لها صفوف ذرية في هذا السجل، مصدر ومقام معلن، وأدلة مقبولة أو حالة غير PASS.`,
+    state: 'DESCRIPTIVE',
+    criterion: `قسم للمطابقة والتتبع فقط: ${heading}. ادعاءات القبول الذرية تبقى في صفوف معاييرها؛ لا مقام أو نقاط لهذا القسم.`,
     owner: `QC-POST-100-017 report reconciliation`,
     prompt: 'QC-POST-100-017',
-    source: [sourceRefs.historicalAudit],
-    remainingWork: isDescriptive
-      ? 'لا نسبة؛ استخدم الصفوف الذرية المرتبطة إن ظهر claim قابل للقياس.'
-      : 'مصالحة ادعاءات القسم مع الصفوف الذرية والروابط والمقامات.',
+    source: [sourceRefs.masterCoverageLedger, sourceRefs.historicalAudit],
+    remainingWork: 'تأكد من ربط أي claim قابل للقياس بصف معياري ذري وعدم احتساب عنوان القسم فحصًا.',
   });
 }
+
+// Keep superseded rows from the old 1,508-row register visible as traceability only.
+const oldRegisterRows = [
+  ...masterCoverageLedger.rows.filter((r) => r.type === 'register-page-check'),
+  ...masterCoverageLedger.rows.filter((r) => r.type === 'register-report-section'),
+  ...masterCoverageLedger.rows.filter((r) => r.type === 'register-task'),
+];
+for (const oldRow of oldRegisterRows) {
+  add({
+    id: `LEGACY-REGISTER:${oldRow.id}`,
+    kind: 'legacy-register-row',
+    group: `legacy-${oldRow.type}`,
+    reference: oldRow.id,
+    title: oldRow.title,
+    state:
+      oldRow.type === 'register-page-check' || oldRow.type === 'register-report-section'
+        ? 'SUPERSEDED'
+        : 'STALE',
+    historicalState: oldRow.currentStatus ?? 'NOT RECORDED',
+    currentDisposition:
+      oldRow.type === 'register-page-check' || oldRow.type === 'register-report-section'
+        ? 'SUPERSEDED'
+        : 'STALE',
+    criterion: oldRow.criterion,
+    owner: oldRow.prompts?.join(', ') || 'Historical register owner requires current review',
+    prompt: oldRow.prompts?.[0] ?? 'QC-POST-100-017',
+    source: [sourceRefs.masterCoverageLedger, ...(oldRow.source ?? [])],
+    remainingWork: `مُحافظ عليه للتتبع؛ مقام/حالة السجل القديم لا تُنقل. ${oldRow.gap ?? ''}`,
+    requiredArtifacts: oldRow.requiredEvidence ?? [],
+    sourceLedgerId: oldRow.id,
+    acceptanceRefs: oldRow.acceptance ?? [],
+  });
+}
+
+// Keep the report's 25 indicators and 22 audit-gate rows visible without merging them into scores.
+for (const indicator of masterCoverageLedger.rows.filter((r) => r.type === 'indicator')) {
+  const id = indicator.id;
+  add({
+    id: `INDICATOR:${id}`,
+    kind: 'report-indicator',
+    group: 'indicators-25',
+    reference: id,
+    title: indicator.title,
+    state: 'NOT VERIFIED',
+    criterion: indicator.criterion,
+    owner: indicator.prompts?.join(', ') || 'Authorized indicator owner unresolved',
+    prompt: indicator.prompts?.[0] ?? 'QC-POST-100-017',
+    source: [
+      sourceRefs.masterCoverageLedger,
+      sourceRefs.historicalEvidence,
+      ...(indicator.requiredEvidence ?? []),
+    ],
+    remainingWork:
+      'مطابقة الصف بمعرّفه في سجل المصدر؛ لا تجمعه مع checklist أو domain mean أو Go/NoGo.',
+  });
+}
+for (const gate of masterCoverageLedger.rows.filter((r) => r.type === 'audit-gate')) {
+  const id = gate.id;
+  add({
+    id: `REPORT-GATE:${id}`,
+    kind: 'report-audit-gate',
+    group: 'report-audit-gates-22',
+    reference: id,
+    title: gate.title,
+    state: 'NOT VERIFIED',
+    criterion: gate.criterion,
+    owner: gate.prompts?.join(', ') || 'QC-POST report audit owner unresolved',
+    prompt: gate.prompts?.[0] ?? 'QC-POST-100-017',
+    source: [
+      sourceRefs.masterCoverageLedger,
+      sourceRefs.historicalEvidence,
+      ...(gate.requiredEvidence ?? []),
+    ],
+    remainingWork: gate.requiredWork,
+  });
+}
+
+// Preserve both task generations and distinguish current work state from historical pack status.
+const currentTaskDispositions = new Map([
+  ['QC-POST-100-002', 'PARTIAL'],
+  ['QC-POST-100-003', 'PARTIAL'],
+  ['QC-POST-100-004', 'PARTIAL'],
+  ['QC-POST-100-005', 'PARTIAL'],
+  ['QC-POST-100-006', 'PARTIAL'],
+  ['QC-POST-100-007', 'PARTIAL'],
+  ['QC-POST-100-009', 'PARTIAL'],
+  ['QC-POST-100-013', 'PARTIAL'],
+  ['QC-POST-100-014', 'BLOCKED'],
+  ['QC-POST-100-016', 'BLOCKED'],
+  ['QC-POST-100-017', 'PARTIAL'],
+  ['QC-POST-100-032', 'BLOCKED'],
+  ['QC-POST-100-033', 'BLOCKED'],
+]);
+for (const task of verificationData.originalTasks ?? [])
+  add({
+    id: `ORIGINAL-TASK:${task.id}`,
+    kind: 'original-task',
+    group: 'original-tasks',
+    reference: task.id,
+    title: task.title,
+    state: 'STALE',
+    historicalState: task.status ?? 'NOT RECORDED',
+    currentDisposition: 'STALE',
+    criterion: task.acceptance,
+    owner: task.owner ?? 'Original task owner requires current confirmation',
+    prompt: task.id,
+    source: [sourceRefs.historicalEvidence, ...(task.evidence ?? [])],
+    remainingWork:
+      'تأكيد استمرار الربط مع المهمة الحالية؛ حالة التقرير التاريخية لا تقبل دليلًا لهذا المرشح.',
+  });
+for (const task of promptSpecificationData.prompts ?? [])
+  add({
+    id: `POST-SPEC-TASK:${task.id}`,
+    kind: 'post-spec-task',
+    group: 'post-spec-tasks',
+    reference: task.id,
+    title: task.title,
+    state: currentTaskDispositions.get(task.id) ?? 'STALE',
+    historicalState: task.status ?? 'NOT RECORDED',
+    currentDisposition: currentTaskDispositions.get(task.id) ?? 'STALE',
+    owner:
+      typeof task.owner === 'string' && task.owner.trim()
+        ? task.owner
+        : `Authorized owner unresolved for ${task.id}`,
+    criterion: Array.isArray(task.acceptance) ? task.acceptance.join(' ') : task.acceptance,
+    prompt: task.id,
+    source: [sourceRefs.promptSpecifications],
+    remainingWork:
+      'احتفظ بالمواصفة الأصلية واربط التنفيذ/المتبقي بهاندوف حديث؛ لا ترحّل نتيجة قديمة.',
+  });
 
 // Findings from the full page audit and all current prompt IDs; historical report remains untouched.
 const findingIds = new Set([...auditHtml.matchAll(/QC-PAGE-F-\d{3}/g)].map((m) => m[0]));
@@ -456,7 +657,7 @@ for (const id of promptIds) {
     source: [
       sourceRefs.promptPlan,
       ...(id.startsWith('QC-POST')
-        ? ['audit/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.md']
+        ? ['audit/QC-POST-100-PROMPTS/QC-POST-IMPLEMENTATION-REMAINING-TO-100-PROMPTS.md']
         : [sourceRefs.historicalAudit]),
     ],
     remainingWork: isNotStarted
@@ -466,46 +667,58 @@ for (const id of promptIds) {
 }
 
 // Fresh candidate metadata. The prior evidence candidate is explicitly not reused.
-const counts = Object.fromEntries(
-  [...new Set(rows.map((r) => r.group))].map((g) => {
-    const subset = rows.filter((r) => r.group === g && r.denominator === 'INCLUDED');
-    const pass = subset.filter((r) => r.evidence.accepted && r.evidence.state === 'PASS').length;
-    return [
-      g,
-      {
-        numerator: pass,
-        denominator: subset.length,
-        percent: subset.length ? Number(((100 * pass) / subset.length).toFixed(2)) : null,
-        pass,
-        fail: subset.filter((r) => r.evidence.state === 'FAIL').length,
-        blocked: subset.filter((r) => r.state === 'BLOCKED' || r.evidence.state === 'BLOCKED')
-          .length,
-        notVerified: subset.filter(
-          (r) => r.state !== 'BLOCKED' && r.evidence.state === 'NOT VERIFIED',
-        ).length,
-        notRun: subset.filter((r) => r.state === 'NOT RUN' || r.evidence.state === 'NOT RUN')
-          .length,
-      },
-    ];
-  }),
+const checklistRows = rows.filter((r) => r.kind === 'page-check');
+const acceptedChecklistRows = checklistRows.filter(
+  (r) => r.evidence.accepted && r.evidence.state === 'PASS',
 );
-const descriptive = rows.filter((r) => r.denominator === 'DESCRIPTIVE').length;
-const applicable = rows.filter((r) => r.denominator === 'INCLUDED');
-const overall = {
-  numerator: applicable.filter((r) => r.evidence.accepted && r.evidence.state === 'PASS').length,
-  denominator: applicable.length,
-  percent: applicable.length
-    ? Number(
-        (
-          (100 *
-            applicable.filter((r) => r.evidence.accepted && r.evidence.state === 'PASS').length) /
-          applicable.length
-        ).toFixed(2),
-      )
-    : null,
-};
+const domainRowsForMetric = rows.filter((r) => r.kind === 'domain');
+const approvedExemptions = 0;
+const noUnsupportedExclusions = rows.every((r) => r.denominator !== 'EXEMPT');
+for (const row of rows) {
+  const sourceRow = sourceLedgerMatch(row);
+  row.sourceLedgerId = sourceRow?.id ?? row.sourceLedgerId;
+  row.acceptanceRefs = sourceRow?.acceptance ?? row.acceptanceRefs;
+  row.requiredArtifacts = sourceRow?.requiredEvidence ?? row.requiredArtifacts;
+  if (
+    !row.requiredArtifacts.length &&
+    ['task', 'original-task', 'post-spec-task'].includes(row.kind)
+  ) {
+    row.requiredArtifacts = [
+      `audit/<final-candidate>/closure/${row.responsiblePrompt ?? row.reference}/criteria.json#${row.reference}`,
+    ];
+  }
+  row.requiredArtifactStatus = row.requiredArtifacts.length
+    ? sourceRow?.requiredEvidence?.length || row.sourceLedgerId
+      ? 'SOURCE_DEFINED'
+      : 'EXPECTED_TEMPLATE_NOT_PRESENT'
+    : row.kind === 'release-gate-master'
+      ? 'BLOCKED_BY_AUTHORITY_SOURCE'
+      : 'NOT_SUPPLIED';
+  row.requiredArtifactRationale = row.requiredArtifacts.length
+    ? 'The source ledger names an artifact locator; this does not establish that the artifact exists or is accepted.'
+    : row.kind === 'release-gate-master'
+      ? 'Canonical gate names and rules are unavailable, so no gate-specific artifact is inferred.'
+      : 'No row-specific required artifact was present in the linked source ledger.';
+}
+const legacyRegisterSourceTypes = new Set([
+  'register-requirement',
+  'register-page-role',
+  'register-page-check',
+  'register-domain',
+  'register-release-gate',
+  'register-report-section',
+  'register-finding',
+  'register-task',
+]);
+const legacyRegisterSourceRows = masterCoverageLedger.rows.filter((r) =>
+  legacyRegisterSourceTypes.has(r.type),
+);
+const representedLegacySourceIds = new Set(rows.map((r) => r.sourceLedgerId).filter(Boolean));
+const unmappedLegacyRegisterRows = legacyRegisterSourceRows.filter(
+  (r) => !representedLegacySourceIds.has(r.id),
+);
 const register = {
-  schemaVersion: '1.0.0',
+  schemaVersion: '2.0.0',
   promptId: 'QC-POST-100-017',
   generatedAt: stampedAt,
   candidate: {
@@ -515,7 +728,7 @@ const register = {
     dirtyFingerprint: fingerprint,
     fingerprintAlgorithm:
       'sha256(sorted relative path + NUL + file bytes; excludes only the three generated deliverables, ignored files, and secret-named files)',
-    runtime: `${run('node', ['--version'])} (outside project contract >=24.20.0 <25)`,
+    runtime: `${run('node', ['--version'])} (project contract >=24.20.0 <25)`,
     packageManager: 'pnpm@11.25.0 (from package.json; execution not verified)',
     sourceSchemaHead,
     appliedSchema: null,
@@ -526,6 +739,7 @@ const register = {
     currentFrameworkErrorPages: 2,
     reportPageFilesHistorical: 88,
     routeMatrixDocumentedCount: 85,
+    currentPageDefinitions: routes.length + 2,
     reconciledRequirements: reqLines.length,
     approvedAuditDomains: domainRows.filter((m) => +m[1] >= 1 && +m[1] <= 80).length,
     productionGates: 19,
@@ -533,23 +747,61 @@ const register = {
     historicalVerificationFindingIdentities: verificationData.findings?.length ?? 0,
     newlyDiscoveredFindingIdentities: verificationData.newFindings?.length ?? 0,
     promptIds: promptIds.size,
+    postReportSections: sections.length,
+    reportIndicators: masterCoverageLedger.rows.filter((r) => r.type === 'indicator').length,
+    reportAuditGates: masterCoverageLedger.rows.filter((r) => r.type === 'audit-gate').length,
+    originalTasks: (verificationData.originalTasks ?? []).length,
+    postSpecificationTasks: (promptSpecificationData.prompts ?? []).length,
+    priorRegisterRows: legacyRegisterSourceRows.length,
+    priorRegisterPageChecks: masterCoverageLedger.rows.filter(
+      (r) => r.type === 'register-page-check',
+    ).length,
+    priorRegisterSections: masterCoverageLedger.rows.filter(
+      (r) => r.type === 'register-report-section',
+    ).length,
+    priorRegisterTasks: masterCoverageLedger.rows.filter((r) => r.type === 'register-task').length,
     oldVerificationCandidate: verificationData.head,
     oldVerificationCounts: verificationData.counts,
     discrepancy:
       'Route matrix and historical review counts differ from current canonical registry; page files/routes/statuses re-baselined from current registry. Historical report untouched.',
   },
   scoring: {
-    formula: 'accepted PASS evidence rows / all mandatory applicable rows * 100',
+    measuresAreIndependent: true,
+    combinedScore: null,
+    weightedChecklist: {
+      numerator: acceptedChecklistRows.length,
+      denominator: checklistRows.length,
+      percent: checklistRows.length
+        ? Number(((100 * acceptedChecklistRows.length) / checklistRows.length).toFixed(2))
+        : null,
+      evidenceState: 'NOT VERIFIED',
+      sourceCandidate: verificationData.head,
+      approvalReference:
+        'audit/2026-10-02/QC-POST-100-017-reconciliation.md — recorded user approval of the separate 671/80/19 measures',
+    },
+    domainArithmeticMean: {
+      numerator: null,
+      denominator: domainRowsForMetric.length,
+      value: null,
+      evidenceState: 'NOT VERIFIED',
+      reason: 'No current candidate-bound domain scores have been accepted.',
+    },
+    releaseReadiness: {
+      model: 'Go/NoGo',
+      gateSet: reconciledGateCount,
+      decision: 'NO-GO',
+      percent: null,
+      state: 'BLOCKED_BY_AUTHORITY_SOURCE',
+      reason: 'Canonical gate names, applicability, owners and acceptance rules remain unresolved.',
+    },
+    approvedExemptions,
+    unsupportedExemptions: noUnsupportedExclusions ? 0 : null,
     rules: [
-      'FAIL, BLOCKED, NOT VERIFIED, NOT RUN remain in denominator and contribute zero numerator.',
-      'N/A excluded only with a documented applicability decision by an authorized owner; none were invented here.',
-      'No average can hide a failed mandatory subsection.',
-      'Product, demo, security, accessibility, and production readiness are separate indicators.',
-      'Historical evidence is not accepted for this candidate.',
+      'The weighted checklist (671 checks), D01-D80 arithmetic mean, and 19-gate Go/NoGo readiness are independent measures; no combined score is computed.',
+      'FAIL, BLOCKED, NOT VERIFIED and NOT RUN remain in the checklist denominator unless an authorized applicability decision approves an exemption; approved exemptions: 0.',
+      'Historical evidence is mapped for traceability but is never accepted as current-candidate evidence.',
+      'Requirements, 88 page-role rows, 52 report sections, 25 indicators, 22 report audit gates, and original/post tasks are reviewed as independent traceability sets, not added to a score.',
     ],
-    overall,
-    byGroup: counts,
-    descriptiveRows: descriptive,
   },
   sources: sourceRefs,
   validation: {
@@ -562,6 +814,14 @@ const register = {
     sourceRouteCount: routes.length,
     requirementRowCount: reqLines.length,
     domainRowCount: domainRows.filter((m) => +m[1] >= 1 && +m[1] <= 80).length,
+    pageRoleRowCount: rows.filter((r) => r.kind === 'page-role').length,
+    pageCheckRowCount: checklistRows.length,
+    reportSectionRowCount: sections.length,
+    indicatorRowCount: masterCoverageLedger.rows.filter((r) => r.type === 'indicator').length,
+    reportAuditGateRowCount: masterCoverageLedger.rows.filter((r) => r.type === 'audit-gate')
+      .length,
+    originalTaskRowCount: rows.filter((r) => r.kind === 'original-task').length,
+    postSpecificationTaskRowCount: rows.filter((r) => r.kind === 'post-spec-task').length,
     rowCount: rows.length,
   },
   rows,
@@ -586,6 +846,37 @@ if (required.length !== reqLines.length)
   errors.push('requirement row coverage differs from current reconciliation source');
 if (domains.length !== domainRows.filter((m) => +m[1] >= 1).length)
   errors.push('domain coverage differs from current approved audit-domain source');
+if (checklistRows.length !== 671)
+  errors.push(`post-report checklist expected 671 criteria, got ${checklistRows.length}`);
+if (
+  checklistRows.length !== verificationData.pages.reduce((n, p) => n + (p.checks?.length ?? 0), 0)
+)
+  errors.push('checklist criterion rows differ from the 671 source criteria');
+if (sections.length !== 52)
+  errors.push(`post-report section map expected 52, got ${sections.length}`);
+if (masterCoverageLedger.rows.filter((r) => r.type === 'indicator').length !== 25)
+  errors.push('indicator mapping differs from master ledger source');
+if (masterCoverageLedger.rows.filter((r) => r.type === 'audit-gate').length !== 22)
+  errors.push('report audit-gate mapping differs from master ledger source');
+if (rows.filter((r) => r.kind === 'original-task').length !== 42)
+  errors.push('original task mapping differs from the historical verification source');
+if (rows.filter((r) => r.kind === 'post-spec-task').length !== 36)
+  errors.push('post task mapping differs from the prompt specification source');
+if (legacyRegisterSourceRows.length !== 1508)
+  errors.push(`prior register expected 1508 rows, got ${legacyRegisterSourceRows.length}`);
+if (unmappedLegacyRegisterRows.length)
+  errors.push(
+    `prior register rows are unmapped: ${unmappedLegacyRegisterRows.length} (${[
+      ...new Set(unmappedLegacyRegisterRows.map((r) => r.type)),
+    ].join(', ')}; sample ${unmappedLegacyRegisterRows
+      .slice(0, 3)
+      .map((r) => r.id)
+      .join(', ')})`,
+  );
+if (checklistRows.some((r) => r.denominator !== 'INCLUDED'))
+  errors.push('a post-report checklist criterion is omitted from its approved denominator');
+if (checklistRows.some((r) => r.requiredArtifacts.length === 0))
+  errors.push('a weighted checklist row is missing its source-required artifact link');
 if (errors.length) throw new Error(`Coverage validation failed:\n${errors.join('\n')}`);
 register.validation = {
   ...register.validation,
@@ -597,11 +888,19 @@ register.validation = {
   routeSourceCount: routes.length,
   requirementRowCount: required.length,
   domainRowCount: domains.length,
+  pageRoleRowCount: rows.filter((r) => r.kind === 'page-role').length,
+  pageCheckRowCount: checklistRows.length,
+  postReportSectionRowCount: sections.length,
+  priorRegisterRowCount: legacyRegisterSourceRows.length,
+  priorRegisterRowsUnmapped: unmappedLegacyRegisterRows.length,
+  approvedExemptions: 0,
+  checklistRowsWithRequiredArtifactLinks: checklistRows.filter(
+    (r) => r.requiredArtifacts.length > 0,
+  ).length,
   validationResult: 'PASS (structural only; no acceptance evidence)',
 };
 
 const json = JSON.stringify(register, null, 2) + '\n';
-const pct = (o) => `${o.numerator}/${o.denominator} (${o.percent}%)`;
 const md = [
   '# QC-POST-100-017 — Coverage register',
   '',
@@ -611,36 +910,27 @@ const md = [
   '',
   '## Re-baselined denominators',
   '',
-  '| Measure | Current denominator | Source / note |',
+  '| Independent measure | Denominator | Current disposition |',
   '|---|---:|---|',
-  `| Canonical page routes | ${routes.length} | current \`src/shared/routing/routes.ts\`; role rows include ${personas.length} personas per route |`,
-  `| Framework error pages | 2 | current \`404.astro\`, \`500.astro\`; historical report total 88 page files |`,
-  `| Approved reconciled requirements | ${required.length} | \`${sourceRefs.requirements}\`; sourced from approved traceability families |`,
-  `| Approved audit domains | ${domains.length} | unchanged authorized domain set D01–D80; historical domain scores not carried forward |`,
-  '| Production gates | 19 | authorized gate count retained; labels/mappings unresolved and BLOCKED |',
-  `| Historic report finding IDs | ${findingIds.size} | report frozen; finding records copied by identifier only |`,
-  `| Current prompt IDs | ${promptIds.size} | adaptive + post implementation prompt packs |`,
-  `| Historical exact-candidate verification rows | ${verificationData.counts.PASS + verificationData.counts['NOT VERIFIED'] + verificationData.counts.FAIL} | candidate ${verificationData.head}; historical only |`,
+  `| Weighted post-report checklist | 671 | ${acceptedChecklistRows.length}/671 current accepted; historical 311 PASS / 337 NOT VERIFIED / 23 FAIL not transferred |`,
+  '| D01–D80 arithmetic mean | 80 | NOT VERIFIED; no accepted current domain scores |',
+  '| Release readiness | 19 gates | NO-GO; gate definitions/mappings blocked; no percentage |',
+  `| Approved exemptions | ${approvedExemptions} | none; all 671 checklist criteria remain included |`,
   '',
-  `Route mismatch: current registry has ${routes.length} routes; \`Documents/ROUTE-ACCEPTANCE-MATRIX.md\` says 85; the historical audit describes 88 page files (86 canonical + error pages at its freeze). This discrepancy is recorded, not silently reconciled.`,
+  `Traceability sets kept outside those three scores: ${required.length} requirements; ${routes.length + 2} page definitions × ${personas.length} role rows; ${sections.length} post-report sections; ${masterCoverageLedger.rows.filter((r) => r.type === 'indicator').length} indicators; ${masterCoverageLedger.rows.filter((r) => r.type === 'audit-gate').length} report audit gates; ${(verificationData.originalTasks ?? []).length} original tasks; ${(promptSpecificationData.prompts ?? []).length} post-pack specifications.`,
   '',
-  '## Current score',
+  '## Metric separation and authority',
   '',
-  `**Overall: ${pct(overall)}.** Only accepted PASS evidence enters the numerator. Current rows are zero until fresh evidence is attached.`,
+  '- The 671 checklist, 80-domain arithmetic mean, and 19-gate Go/NoGo decision are independent; no combined score is computed.',
   '',
-  '| Part | Score | BLOCKED | NOT VERIFIED |',
-  '|---|---:|---:|---:|',
-  ...Object.entries(counts).map(
-    ([g, c]) => `| ${g} | ${pct(c)} | ${c.blocked} | ${c.notVerified} |`,
-  ),
-  '',
-  `Descriptive report rows: ${descriptive}; excluded from all denominators. No N/A decisions were made.`,
+  '- The separate 671 / 80 / 19 method is recorded as user-approved in the prior reconciliation. No current domain score, gate definition, or additional N/A exemption is authorized by that scoring-method approval.',
+  '- FAIL, BLOCKED, NOT VERIFIED, and NOT RUN remain included in the 671 checklist. No accepted candidate-bound evidence is attached here.',
   '',
   '## Evidence binding',
   '',
-  `The evidence slot for every row is bound to HEAD \`${head}\`, dirty fingerprint \`${fingerprint}\`, and source migration head \`${sourceSchemaHead}\`. Runtime, applied schema, and build identity are null; these rows therefore do not PASS. Previous-candidate evidence (including ${verificationData.head}) is retained as a source reference only.`,
+  `Every evidence slot is bound to current HEAD \`${head}\`, dirty fingerprint \`${fingerprint}\`, and source migration head \`${sourceSchemaHead}\`. Applied schema and build identity are null. Historical report candidate ${verificationData.head} and all prior artifacts remain source references only.`,
   '',
-  'Machine structural reconciliation: **PASS** — no duplicate IDs, missing owners/criteria/sources, or absent candidate/fingerprint fields; source totals checked (routes/requirements/domains). This validates register structure only, not human applicability or acceptance.',
+  `Structural reconciliation: **PASS** — ${rows.length} unique rows; all ${legacyRegisterSourceRows.length} prior register source rows represented (657 old checks and 16 old sections retained as SUPERSEDED, 19 gate slots remain unnamed/BLOCKED, 61 prior tasks retained); 671 post-report checklist rows, 528 page-role rows, 100 requirements, 80 domains, 52 post-report sections, 25 indicators, 22 audit gates, 42 original tasks, and 36 post specifications mapped. This proves mapping structure only, not applicability approval or acceptance.`,
   '',
   '## Row-level records',
   '',
@@ -648,7 +938,7 @@ const md = [
   '|---|---|---|---|---|---|---|---|---|---|',
   ...rows.map(
     (r) =>
-      `| ${r.id} | ${r.kind} | ${r.reference} | ${r.page ?? ''} | ${r.role ?? ''} | ${r.state} | ${r.criterion} Remaining: ${r.remainingWork} | ${r.owner} | ${r.responsiblePrompt ?? ''} | ${r.evidence.state}: ${r.evidence.source ?? 'no execution evidence'}; SHA ${head}; fp ${fingerprint}; schema ${sourceSchemaHead}; runtime/build/applied schema NOT VERIFIED |`,
+      `| ${r.id} | ${r.kind} | ${r.reference} | ${r.page ?? ''} | ${r.role ?? ''} | ${r.state} | ${r.criterion} Remaining: ${r.remainingWork} | ${r.owner} | ${r.responsiblePrompt ?? ''} | Required artifacts: ${r.requiredArtifacts.join(', ') || 'NOT SUPPLIED'}; accepted evidence: ${r.evidence.state}; SHA ${head}; fp ${fingerprint}; schema ${sourceSchemaHead}; runtime/build/applied schema NOT VERIFIED |`,
   ),
   '',
 ].join('\n');
@@ -658,7 +948,8 @@ const tableRows = rows
       `<tr data-group="${escape(r.group)}" data-state="${escape(r.state)}"><td>${escape(r.id)}</td><td>${escape(r.kind)}</td><td>${escape(r.reference)}</td><td>${escape(r.page ?? '')}</td><td>${escape(r.role ?? '')}</td><td>${escape(r.state)}</td><td>${escape(r.criterion)}<br><strong>Remaining:</strong> ${escape(r.remainingWork)}</td><td>${escape(r.owner)}</td><td>${escape(r.responsiblePrompt ?? '')}</td><td>${escape(r.evidence.state)} · <a href="../../${escape((Array.isArray(r.source) ? r.source[0] : r.source) ?? '')}">source</a></td></tr>`,
   )
   .join('\n');
-const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QC-POST-100-017 Coverage Register</title><style>body{font:15px/1.55 system-ui;margin:2rem;background:#111b17;color:#eef5ed}main{max-width:1500px;margin:auto}a{color:#c8e98b}header,section{padding:1rem;background:#1b2922;margin:1rem 0;border-radius:8px}input,select{font:inherit;padding:.6rem}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:.55rem;border:1px solid #526457;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#25372d}.table{overflow:auto;max-height:75vh}code{overflow-wrap:anywhere}</style><main><header><h1>QC-POST-100-017 — Coverage register</h1><p>Generated ${escape(stampedAt)} · HEAD <code>${head}</code> · dirty fingerprint <code>${fingerprint}</code></p><p>New measurement only; historical report preserved. Overall ${pct(overall)}; zero fresh accepted evidence. Product, demo, security, accessibility, and production readiness are separate.</p><p>Current routes ${routes.length}; requirements ${required.length}; domains ${domains.length}; release gates 19; error pages 2. Route matrix docs say 85; current canonical source says ${routes.length}.</p><p>Structural validation PASS; applicability and human review remain BLOCKED/NOT VERIFIED. Runtime, applied schema and build identity are absent.</p></header><section><label>Search <input id="q" type="search"></label> <label>Group <select id="g"><option value="">All</option>${[...new Set(rows.map((r) => r.group))].map((g) => `<option>${escape(g)}</option>`).join('')}</select></label> <label>State <select id="s"><option value="">All</option>${[...new Set(rows.map((r) => r.state))].map((s) => `<option>${escape(s)}</option>`).join('')}</select></label><p>${rows.length} rows; denominator rows ${applicable.length}; descriptive rows ${descriptive}.</p></section><div class="table"><table><thead><tr><th>ID</th><th>Type</th><th>Reference</th><th>Page</th><th>Role</th><th>State</th><th>Acceptance criterion / work remaining</th><th>Owner</th><th>Prompt</th><th>Evidence/source</th></tr></thead><tbody>${tableRows}</tbody></table></div></main><script>const q=document.querySelector('#q'),g=document.querySelector('#g'),s=document.querySelector('#s');function filter(){for(const r of document.querySelectorAll('tbody tr'))r.hidden=(!r.innerText.toLowerCase().includes(q.value.toLowerCase()))||(g.value&&r.dataset.group!==g.value)||(s.value&&r.dataset.state!==s.value)}q.oninput=g.onchange=s.onchange=filter;</script></html>`;
+const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QC-POST-100-017 Coverage Register</title><style>body{font:15px/1.55 system-ui;margin:2rem;background:#111b17;color:#eef5ed}main{max-width:1500px;margin:auto}a{color:#c8e98b}header,section{padding:1rem;background:#1b2922;margin:1rem 0;border-radius:8px}input,select{font:inherit;padding:.6rem}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:.55rem;border:1px solid #526457;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#25372d}.table{overflow:auto;max-height:75vh}code{overflow-wrap:anywhere}</style><main><header><h1>QC-POST-100-017 — Coverage register</h1><p>Generated ${escape(stampedAt)} · HEAD <code>${head}</code> · dirty fingerprint <code>${fingerprint}</code></p><p>Independent measures: checklist 0/671; domain mean NOT VERIFIED (80 domains); release readiness NO-GO (19 gates, no percentage). No combined score or exemptions.</p><p>Structural counts: ${required.length} requirements; ${routes.length + 2} pages × ${personas.length} roles; ${sections.length} report sections; 25 indicators; 22 report audit gates; 42 original tasks; 36 post tasks.</p><p>Structural validation PASS only. Runtime, applied schema, build identity and current acceptance evidence are absent.</p></header><section><label>Search <input id="q" type="search"></label> <label>Group <select id="g"><option value="">All</option>${[...new Set(rows.map((r) => r.group))].map((g) => `<option>${escape(g)}</option>`).join('')}</select></label> <label>State <select id="s"><option value="">All</option>${[...new Set(rows.map((r) => r.state))].map((s) => `<option>${escape(s)}</option>`).join('')}</select></label><p>${rows.length} traceability rows; only the 671 checklist rows contribute to its weighted measure.</p></section><div class="table"><table><thead><tr><th>ID</th><th>Type</th><th>Reference</th><th>Page</th><th>Role</th><th>State</th><th>Acceptance criterion / work remaining</th><th>Owner</th><th>Prompt</th><th>Evidence/source</th></tr></thead><tbody>${tableRows}</tbody></table></div></main><script>const q=document.querySelector('#q'),g=document.querySelector('#g'),s=document.querySelector('#s');function filter(){for(const r of document.querySelectorAll('tbody tr'))r.hidden=(!r.innerText.toLowerCase().includes(q.value.toLowerCase()))||(g.value&&r.dataset.group!==g.value)||(s.value&&r.dataset.state!==s.value)}q.oninput=g.onchange=s.onchange=filter;</script></html>`;
+await mkdir(path.join(root, outDir), { recursive: true });
 await writeFile(path.join(root, outDir, outputNames[0]), json);
 await writeFile(path.join(root, outDir, outputNames[1]), md);
 await writeFile(path.join(root, outDir, outputNames[2]), html);
@@ -672,11 +963,17 @@ console.log(
       requirements: required.length,
       domains: domains.length,
       rows: rows.length,
-      denominatorRows: applicable.length,
-      overall,
-      groups: counts,
+      checklist: { numerator: acceptedChecklistRows.length, denominator: checklistRows.length },
+      pageRoles: rows.filter((r) => r.kind === 'page-role').length,
+      sections: sections.length,
+      indicators: masterCoverageLedger.rows.filter((r) => r.type === 'indicator').length,
+      reportAuditGates: masterCoverageLedger.rows.filter((r) => r.type === 'audit-gate').length,
+      originalTasks: verificationData.originalTasks?.length ?? 0,
+      postSpecificationTasks: promptSpecificationData.prompts?.length ?? 0,
+      legacyRegisterRows: legacyRegisterSourceRows.length,
+      legacyRegisterRowsUnmapped: unmappedLegacyRegisterRows.length,
       prompts: promptIds.size,
-      findings: findingIds.size,
+      findings: rows.filter((r) => r.kind === 'finding').length,
     },
     null,
     2,
