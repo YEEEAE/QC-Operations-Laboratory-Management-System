@@ -45,6 +45,7 @@ export class ProviderAttestationError extends Error {
     readonly reason:
       | 'CONFIGURATION'
       | 'POLICY_NOT_CONFIGURED'
+      | 'REGISTRY_NOT_APPROVED'
       | 'SIGNATURE'
       | 'SCOPE'
       | 'IDENTITY'

@@ -17,6 +17,8 @@ export function providerEvidenceIntakeDependencies() {
   return new IngestProviderEvidenceUseCase(
     {
       getCandidate: (releaseId) => ensureInfrastructure().releaseRepository.getCandidate(releaseId),
+      hasReconciledProductionGateDecision: (releaseId) =>
+        ensureInfrastructure().releaseRepository.hasReconciledProductionGateDecision(releaseId),
       record: (attestation: VerifiedProviderAttestation) => {
         const infrastructure = ensureInfrastructure();
         return recordProviderGateEvidence(infrastructure.database, attestation);

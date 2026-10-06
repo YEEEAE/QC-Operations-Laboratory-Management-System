@@ -36,6 +36,8 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     if (error instanceof ProviderAttestationError) {
+      if (error.reason === 'REGISTRY_NOT_APPROVED')
+        return response(503, 'BLOCKED_BY_AUTHORITY_SOURCE');
       if (error.reason === 'POLICY_NOT_CONFIGURED')
         return response(503, 'PROVIDER_SIGNER_POLICY_NOT_CONFIGURED');
       if (error.reason === 'CONFIGURATION') return response(503, 'PROVIDER_SIGNER_POLICY_INVALID');
@@ -57,6 +59,9 @@ export const POST: APIRoute = async ({ request }) => {
     }
     if (error instanceof AppError && error.code === 'CONFLICT_DUPLICATE_COMMAND') {
       return response(409, 'EVIDENCE_REPLAY_REJECTED');
+    }
+    if (error instanceof AppError && error.code === 'DOMAIN_INVALID_TRANSITION') {
+      return response(409, 'CANDIDATE_STATE_REJECTED');
     }
     return response(503, 'EVIDENCE_STORE_UNAVAILABLE');
   }

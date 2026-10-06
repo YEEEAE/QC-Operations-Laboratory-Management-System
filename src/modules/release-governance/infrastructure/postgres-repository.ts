@@ -243,6 +243,12 @@ export class PostgresReleaseGovernanceRepository implements ReleaseGovernanceRep
       }
       if (row.state !== 'PENDING')
         throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+      if (!(await this.hasReconciledProductionGateDecision(row.id))) {
+        throw new AppError('AUTHZ_DENIED', {
+          userSafe: true,
+          messageKey: 'release.productionGateRegisterNotReconciled',
+        });
+      }
       const rows = await Promise.all([
         trx
           .selectFrom('release_gate_evidence')

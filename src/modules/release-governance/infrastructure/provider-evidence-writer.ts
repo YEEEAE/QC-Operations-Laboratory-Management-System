@@ -1,4 +1,4 @@
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 import type { DatabaseSchema } from '../../../shared/database/db-types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import type { VerifiedProviderAttestation } from '../application/ports/provider-attestation.js';
@@ -18,6 +18,8 @@ export async function recordProviderGateEvidence(
         .forUpdate()
         .executeTakeFirst();
       if (!candidate) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      if (candidate.state !== 'PENDING')
+        throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
       if (
         candidate.git_sha.toLowerCase() !== attestation.identity.gitSha ||
         candidate.build_id !== attestation.identity.buildId ||
@@ -45,7 +47,7 @@ export async function recordProviderGateEvidence(
         .orderBy('evidence_version', 'desc')
         .limit(1)
         .executeTakeFirst();
-      const evidenceVersion = (latest?.evidence_version ?? 0n) + 1n;
+      const evidenceVersion = BigInt(latest?.evidence_version ?? 0) + 1n;
       const auditInfo = {
         provider: attestation.provider,
         signerId: attestation.signerId,
@@ -79,7 +81,7 @@ export async function recordProviderGateEvidence(
           evidence_digest: attestation.evidenceDigest,
           signer_id: attestation.signerId,
           signer_key_id: attestation.keyId,
-          signer_scope: attestation.signerScope,
+          signer_scope: sql`${JSON.stringify(attestation.signerScope)}::jsonb`,
           signature_digest: attestation.signatureDigest,
         })
         .returning('id')

@@ -24,6 +24,8 @@
 - System Health وControl Center تظهران فقط لـ`SYSTEM_OWNER` المرتبط بـ`yazeed`. أما صفحات Member/Role/Permission/Scope Administration فهي صفحات مصادق عليها قابلة للفتح، وتبقى قراءتها وmutations فيها محكومة بصلاحياتها الخادمية.
 - Admin العادي لا يفتح مساحتي الصحة والتحكم الحصريتين، ولا يحصل تلقائيًا على صلاحية اعتماد أعمال الجودة.
 
+**Release evidence boundary (2026-10-07):** The release page retains NO-GO and read-only evidence while the canonical nineteen-gate registry is unapproved. A signed intake request receives `503 / BLOCKED_BY_AUTHORITY_SOURCE` before evidence writes; candidate identity/state/replay errors remain separate. Existing signed provider rows are historical assertions, not proof of retrieved artifacts or a nineteen-gate PASS decision. The endpoint changes do not establish authenticated browser, no-JS, keyboard/zoom/mobile/print, assistive-technology or human acceptance.
+
 ---
 **UI Authority:** Presentation only — never Business Truth
 **Dashboard Direction:** QC Operational Command Center

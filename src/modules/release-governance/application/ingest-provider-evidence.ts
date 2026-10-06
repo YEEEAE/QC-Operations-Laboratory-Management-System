@@ -11,6 +11,7 @@ import {
 
 export interface ProviderEvidenceIntakeRepository {
   getCandidate(releaseId: string): Promise<ReleaseCandidateRecord | undefined>;
+  hasReconciledProductionGateDecision(releaseId: string): Promise<boolean>;
   record(
     attestation: VerifiedProviderAttestation,
   ): Promise<{ evidenceId: string; replayed: boolean }>;
@@ -36,6 +37,18 @@ export class IngestProviderEvidenceUseCase {
     const attestation = verifyProviderAttestation({ ...input, policies });
     const candidate = await this.repository.getCandidate(attestation.identity.releaseId);
     if (!candidate) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    verifyProviderAttestation({
+      ...input,
+      policies,
+      expectedIdentity: { ...candidate, releaseVersion: candidate.version },
+    });
+    if (candidate.state !== 'PENDING')
+      throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    // Signer authentication does not approve the canonical gate requirements
+    // or prove the referenced artifact. Intake must not mint evidence before
+    // the authority-owned registry and its acceptance rules are reconciled.
+    if (!(await this.repository.hasReconciledProductionGateDecision(candidate.releaseId)))
+      throw new ProviderAttestationError('REGISTRY_NOT_APPROVED');
     return {
       attestation,
       result: await this.repository.record(attestation),

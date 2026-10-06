@@ -15,6 +15,12 @@
 **Authorization:** Centralized Server-Side
 **Operational Timezone:** `Asia/Riyadh`
 
+## Release intake reconciliation — 2026-10-07
+
+`/api/release-evidence` authenticates the provider statement, then checks every candidate identity field and pending state before persistence. Until the authority-owned nineteen-gate registry and evidence acceptance rules are reconciled, the application denies intake with `BLOCKED_BY_AUTHORITY_SOURCE`; a signed PASS assertion alone is not accepted through the runtime port. Approval persistence repeats the registry guard inside its transaction. Eight internal classes and 22 audit rows are separate sets; no relationship is inferred.
+
+The provider writer binds JSON signer scope explicitly as JSONB and normalizes PostgreSQL bigint evidence versions before incrementing. Evidence, nonce claim and service audit append remain one transaction. Synthetic adapter tests establish these mechanics only. Approved gate IDs/names/applicability, producer and signer authority, artifact/schema/digest validation and actual artifact result recomputation remain blocked by missing owner sources. Later CI/PG/AT/UAT/restore/provider evidence does not approve those sources, and the registry contract must not depend on a final all-gates-PASS decision.
+
 ## Current implementation reconciliation — 2026-09-18
 
 The source freeze is `a6876f0fb0de6acbead7f62b3d1fbdf6c61e5de7` on `main`.
