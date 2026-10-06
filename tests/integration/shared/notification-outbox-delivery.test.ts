@@ -1,3 +1,4 @@
+import { seedControlledInspectionReadVersion } from '../../helpers/controlled-inspection-read-fixture.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Kysely, PostgresDialect } from 'kysely';
 import { randomUUID } from 'node:crypto';
@@ -116,6 +117,9 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
     await pool?.query('DELETE FROM qc.inspection_reports WHERE id = $1', [eventInspectionId]);
     await pool?.query('DELETE FROM qc.inspection_template_versions WHERE id = $1', [
       eventInspectionVersionId,
+    ]);
+    await pool?.query('DELETE FROM qc.inspection_item_templates WHERE template_id=$1', [
+      eventInspectionTemplateId,
     ]);
     await pool?.query('DELETE FROM qc.inspection_templates WHERE id = $1', [
       eventInspectionTemplateId,
@@ -395,10 +399,16 @@ describe('Notification delivery, outbox replay and deduplication (PostgreSQL)', 
       [eventInspectionTemplateId, `INSP-NOT-${EVENT_RUN}`, recipientB],
     );
     await pool!.query(
-      `INSERT INTO qc.inspection_template_versions (id, template_id, version_no, state, created_by)
-       VALUES ($1, $2, 'v1', 'APPROVED', $3)`,
-      [eventInspectionVersionId, eventInspectionTemplateId, recipientB],
+      "UPDATE qc.receiving_items SET workflow_state='READY_FOR_INSPECTION' WHERE id=$1",
+      [eventReceivingId],
     );
+    await seedControlledInspectionReadVersion(pool!, {
+      templateId: eventInspectionTemplateId,
+      versionId: eventInspectionVersionId,
+      versionNo: 'v1',
+      actorId: recipientB,
+      receivingId: eventReceivingId,
+    });
     await pool!.query(
       `INSERT INTO qc.inspection_reports
          (id, inspection_no, receiving_item_id, template_version_id, state, author_id, created_by)

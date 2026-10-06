@@ -1,3 +1,4 @@
+import { seedControlledInspectionReadVersion } from '../../helpers/controlled-inspection-read-fixture.js';
 /**
  * QC-100-FINAL-022 item 3 — "My work today" parity, scope, time and bounds.
  *
@@ -202,6 +203,10 @@ afterAll(async () => {
   await pool?.query('DELETE FROM qc.inspection_template_versions WHERE version_no = $1', [
     `MYW-${RUN}-v1`,
   ]);
+  await pool?.query(
+    'DELETE FROM qc.inspection_item_templates WHERE template_id IN (SELECT id FROM qc.inspection_templates WHERE template_code=$1)',
+    [`MYW-${RUN}`],
+  );
   await pool?.query('DELETE FROM qc.inspection_templates WHERE template_code = $1', [`MYW-${RUN}`]);
   await pool?.query('DELETE FROM qc.users WHERE id IN ($1, $2)', [MINE, OTHER]);
   await db?.destroy();
@@ -461,14 +466,12 @@ async function seedInspection(tag: string, authorId: string, state: 'RETURNED'):
      RETURNING id`,
     [`MYW-${RUN}`, authorId],
   );
-  const version = await pool!.query<{ id: string }>(
-    `INSERT INTO qc.inspection_template_versions
-       (id, template_id, version_no, state, name, created_by)
-     VALUES (gen_random_uuid(), $1, $2, 'APPROVED', 'My work template', $3)
-     ON CONFLICT (template_id, version_no) DO UPDATE SET state = 'APPROVED'
-     RETURNING id`,
-    [template.rows[0]!.id, `MYW-${RUN}-v1`, authorId],
-  );
+  const version = await seedControlledInspectionReadVersion(pool!, {
+    templateId: template.rows[0]!.id,
+    versionNo: `MYW-${RUN}-v1`,
+    actorId: authorId,
+    receivingId: receiving.rows[0]!.id,
+  });
   await pool!.query(
     `INSERT INTO qc.inspection_reports
        (id, inspection_no, receiving_item_id, template_version_id, state, final_result,
