@@ -61,7 +61,7 @@ afterAll(async () => {
 describe('laboratory report drafts on PostgreSQL', () => {
   it('applies migration 0039 and preserves create/load/update/audit data', async () => {
     const applied = await pool!.query(
-      `SELECT 1 FROM qc.schema_migrations WHERE version = '0039' AND name = 'laboratory_report_drafts'`,
+      `SELECT 1 FROM qc.schema_migrations WHERE version = '0039' AND name = '0039_laboratory_report_drafts'`,
     );
     expect(applied.rowCount).toBe(1);
     const schema = await pool!.query(
@@ -216,5 +216,97 @@ describe('laboratory report drafts on PostgreSQL', () => {
       [id],
     );
     expect(audit.rows).toEqual([{ action: 'CREATE', subject_type: 'LAB_REPORT_DRAFT' }]);
+  });
+  it.each(['SUBATMOSPHERIC_AIR_LEAKAGE', 'PRESSURE_DECAY'] as const)(
+    'preserves every field of all 12 %s rows without controlled side effects',
+    async (reportType) => {
+      const owner = actor(OWNER, [
+        grant('PERM-LAB-VIEW', 'OWN'),
+        grant('PERM-LAB-CREATE', 'OWN'),
+        grant('PERM-LAB-EDIT-DRAFT', 'OWN'),
+      ]);
+      const data = emptyReportDraft(reportType);
+      data.samples.forEach((sample, index) => {
+        for (const key of Object.keys(sample) as Array<keyof typeof sample>) {
+          sample[key] =
+            index % 3 === 0
+              ? ''
+              : index % 3 === 1
+                ? 'NA'
+                : ` 9007199254740993.000000000${index} kPa `;
+        }
+      });
+      const counts = async () =>
+        (
+          await pool!.query(
+            `SELECT (SELECT count(*) FROM qc.lab_tests)::int AS labs, (SELECT count(*) FROM qc.electronic_signatures)::int AS signatures, (SELECT count(*) FROM qc.outbox_events)::int AS outbox`,
+          )
+        ).rows[0];
+      const before = await counts();
+      const id = await operations.save({ actor: owner, data, requestId: `all-rows-${reportType}` });
+      expect((await operations.get(owner, id)).data).toEqual(data);
+      data.remarks = 'Exact transcription only';
+      await operations.save({
+        actor: owner,
+        id,
+        expectedVersion: 1n,
+        data,
+        requestId: `all-rows-update-${reportType}`,
+      });
+      expect((await operations.get(owner, id)).data).toEqual(data);
+      expect(await counts()).toEqual(before);
+      const audit = await pool!.query(
+        "SELECT payload FROM qc.audit_events WHERE subject_id=$1 AND action='SAVE'",
+        [id],
+      );
+      expect(audit.rows[0].payload).toMatchObject({ expectedVersion: '1', version: '2' });
+    },
+  );
+
+  it('rolls back create and update when the audit insert fails', async () => {
+    const owner = actor(OWNER, [
+      grant('PERM-LAB-VIEW', 'OWN'),
+      grant('PERM-LAB-CREATE', 'OWN'),
+      grant('PERM-LAB-EDIT-DRAFT', 'OWN'),
+    ]);
+    const data = emptyReportDraft('PRESSURE_DECAY');
+    const id = await operations.save({ actor: owner, data, requestId: 'rollback-control' });
+    const before = await pool!.query(
+      'SELECT count(*)::int AS count FROM qc.laboratory_report_drafts',
+    );
+    await pool!.query(
+      `CREATE FUNCTION qc.fail_007_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.request_id = '007-audit-fail' THEN RAISE EXCEPTION 'injected audit failure'; END IF; RETURN NEW; END $$; CREATE TRIGGER fail_007_audit BEFORE INSERT ON qc.audit_events FOR EACH ROW EXECUTE FUNCTION qc.fail_007_audit()`,
+    );
+    try {
+      await expect(
+        operations.save({ actor: owner, data, requestId: '007-audit-fail' }),
+      ).rejects.toThrow();
+      await expect(
+        operations.save({
+          actor: owner,
+          id,
+          expectedVersion: 1n,
+          data: { ...data, remarks: 'Must roll back' },
+          requestId: '007-audit-fail',
+        }),
+      ).rejects.toThrow();
+      expect((await operations.get(owner, id)).version).toBe(1n);
+      expect((await operations.get(owner, id)).data).toEqual(data);
+      expect(
+        (await pool!.query('SELECT count(*)::int AS count FROM qc.laboratory_report_drafts')).rows,
+      ).toEqual(before.rows);
+      expect(
+        (
+          await pool!.query(
+            'SELECT count(*)::int AS count FROM qc.audit_events WHERE request_id=$1',
+            ['007-audit-fail'],
+          )
+        ).rows[0].count,
+      ).toBe(0);
+    } finally {
+      await pool!.query(
+        'DROP TRIGGER fail_007_audit ON qc.audit_events; DROP FUNCTION qc.fail_007_audit()',
+      );
+    }
   });
 });

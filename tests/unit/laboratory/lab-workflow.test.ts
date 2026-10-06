@@ -260,7 +260,12 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
   it('approve (stage-1): UNDER_REVIEW → PENDING_QCM_APPROVAL stores the provider-evaluated result without locking (QC-100-FINAL-004)', async () => {
     const repository = new MemoryRepository(labTest('UNDER_REVIEW'));
     const ceremony = createFinalApprovalCeremony({ verify: async () => true });
-    const saved = await new ApproveLabTestUseCase(repository, matchingSources, undefined, ceremony).execute({
+    const saved = await new ApproveLabTestUseCase(
+      repository,
+      matchingSources,
+      undefined,
+      ceremony,
+    ).execute({
       actor: approverActor(),
       id: labTest().id,
       expectedVersion: 1n,
@@ -272,7 +277,9 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
     // Stage-1 has its own signature; approvedAt stays empty until QCM final approval.
     expect(saved.approvedAt).toBeNull();
     expect(repository.mutations.at(-1)?.signatureEvidence).toMatchObject({
-      action: 'STAGE1_APPROVE', meaning: 'STAGE1_APPROVE', subjectVersion: 1n,
+      action: 'STAGE1_APPROVE',
+      meaning: 'STAGE1_APPROVE',
+      subjectVersion: 1n,
     });
   });
 
@@ -305,7 +312,12 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
       roles: ['MANAGER'],
     };
     await expect(
-      new ApproveLabTestUseCase(repository, matchingSources, undefined, createFinalApprovalCeremony({ verify: async () => true })).execute({
+      new ApproveLabTestUseCase(
+        repository,
+        matchingSources,
+        undefined,
+        createFinalApprovalCeremony({ verify: async () => true }),
+      ).execute({
         actor: qcmActor,
         id: labTest().id,
         expectedVersion: 1n,
@@ -403,6 +415,19 @@ describe('lab reject transition (TR-LAB-007)', () => {
 });
 
 describe('retest governance (TR-RETEST-003)', () => {
+  it('denies the default policy even for an authorized actor without mutating the original', async () => {
+    const original = labTest('APPROVED');
+    const repository = new MemoryRepository(original);
+    await expect(
+      new CreateRetestUseCase(repository, matchingSources).execute({
+        actor: retesterActor(),
+        originalId: original.id,
+        reason: 'Requested retest',
+        requestId: 'unapproved-retest',
+      }),
+    ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
+    expect(repository.value).toEqual(original);
+  });
   it('creates a linked retest as a new DRAFT and never mutates the original', async () => {
     const original = { ...labTest('APPROVED'), scientificResult: 'FAIL' as const };
     const repository = new MemoryRepository(original);

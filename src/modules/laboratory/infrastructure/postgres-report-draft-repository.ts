@@ -7,7 +7,7 @@ import type { ReportDraftRepository, ReportDraftRow } from '../ports/report-draf
 export class PostgresReportDraftRepository implements ReportDraftRepository {
   constructor(private readonly db: Kysely<DatabaseSchema>) {}
 
-  list(input: { authorId?: string; limit: number }): Promise<ReportDraftRow[]> {
+  async list(input: { authorId?: string; limit: number }): Promise<ReportDraftRow[]> {
     let query = this.db
       .selectFrom('laboratory_report_drafts')
       .selectAll()
@@ -15,15 +15,17 @@ export class PostgresReportDraftRepository implements ReportDraftRepository {
       .orderBy('id', 'desc')
       .limit(Math.max(1, Math.min(input.limit, 100)));
     if (input.authorId) query = query.where('author_id', '=', input.authorId);
-    return query.execute() as Promise<ReportDraftRow[]>;
+    const rows = await query.execute();
+    return rows.map((row) => ({ ...row, version: BigInt(row.version) })) as ReportDraftRow[];
   }
 
   async get(id: string): Promise<ReportDraftRow | undefined> {
-    return this.db
+    const row = await this.db
       .selectFrom('laboratory_report_drafts')
       .selectAll()
       .where('id', '=', id)
-      .executeTakeFirst() as Promise<ReportDraftRow | undefined>;
+      .executeTakeFirst();
+    return row ? ({ ...row, version: BigInt(row.version) } as ReportDraftRow) : undefined;
   }
 
   async create(input: {
@@ -57,7 +59,7 @@ export class PostgresReportDraftRepository implements ReportDraftRepository {
           reason: null,
           request_id: input.requestId,
           signature_id: null,
-          payload: null,
+          payload: { reportType: input.reportType, version: '1' },
         })
         .execute();
     });
@@ -100,7 +102,11 @@ export class PostgresReportDraftRepository implements ReportDraftRepository {
           reason: null,
           request_id: input.requestId,
           signature_id: null,
-          payload: null,
+          payload: {
+            reportType: input.reportType,
+            expectedVersion: input.expectedVersion.toString(),
+            version: (input.expectedVersion + 1n).toString(),
+          },
         })
         .execute();
     });

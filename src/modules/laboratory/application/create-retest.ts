@@ -6,18 +6,16 @@ import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
 import { assertRetestLink } from '../domain/retest.js';
 import type { ControlledLabSources, RetestPolicy } from '../ports/controlled-sources.js';
 import type { LabRepository } from '../ports/repository.js';
-const p05RetestPolicy: RetestPolicy = {
-  authorize: async ({ original }) => ({
-    sequence: original.retestSequence + 1,
-    labTestNo: `${original.labTestNo}-R${original.retestSequence + 1}`,
-    templateVersionId: original.context.templateVersionId,
-  }),
+const unresolvedRetestPolicy: RetestPolicy = {
+  authorize: async () => {
+    throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
+  },
 };
 export class CreateRetestUseCase {
   constructor(
     private readonly repository: LabRepository,
     private readonly sources: ControlledLabSources,
-    private readonly policy: RetestPolicy = p05RetestPolicy,
+    private readonly policy: RetestPolicy = unresolvedRetestPolicy,
     private readonly now = () => new Date(),
   ) {}
   async execute(input: {

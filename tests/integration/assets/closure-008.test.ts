@@ -229,7 +229,7 @@ describe('QC-CLOSURE-008 asset lifecycle persistence', () => {
           action: 'SUBMIT',
           requestId: 'closure-008-audit-rollback-submit',
         }),
-      ).rejects.toThrow(/injected calibration audit failure/);
+      ).rejects.toMatchObject({ code: 'SYSTEM_DATABASE_UNAVAILABLE' });
     } finally {
       await pool.query(
         'DROP TRIGGER IF EXISTS closure_008_fail_calibration_audit ON qc.audit_events; DROP FUNCTION IF EXISTS qc.closure_008_fail_calibration_audit()',

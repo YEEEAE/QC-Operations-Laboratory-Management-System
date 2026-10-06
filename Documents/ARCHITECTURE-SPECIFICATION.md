@@ -4019,3 +4019,8 @@ FOUNDATION — APPROVED ARCHITECTURE BASELINE
 ## Quarantine controlled report catalogue — 2026-10-06
 
 Rev 14 identity membership, matched digital sources, effective item mapping and immutable execution snapshots are enforced by the catalogue/application and migration 0046 database guards. Native structured-form writes extend the existing inspection workflow. See [controlled contract](QUARANTINE-CONTROLLED-REPORT-CATALOG.md). Scientific aggregation and source-authority blockers remain open.
+
+
+## Laboratory transcription draft persistence
+
+Laboratory report drafts persist independently in `laboratory_report_drafts`; no controlled test, electronic signature, release or outbox is produced. Repository reads normalize PostgreSQL BIGINT versions to bigint. Create/save and secret-free audit metadata (report type, prior/current version) commit in one transaction. Native failed POST retains the submitted expected version; only an explicit reload can open a newer version. Retest production composition defaults to `POLICY_SOURCE_REQUIRED` until an approved retest policy is supplied through QC-POST-100-006.

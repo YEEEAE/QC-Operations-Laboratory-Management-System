@@ -5213,3 +5213,8 @@ dynamic-copy, responsive/keyboard/AT and human acceptance are not established.
 ## Controlled Inspection Report selection — 2026-10-06
 
 Quarantine Administration searches the Rev 14 catalogue in bounded server pages and submits stable catalogue IDs. Receiving shows only mapped approved digital candidates; ambiguity requires explicit selection and missing sources fail closed. Execution renders the frozen source schema and supports native form saves, repeatable rows, remarks and disposition. Read-only source preview appears during template review and historical inspection review. See [controlled contract](QUARANTINE-CONTROLLED-REPORT-CATALOG.md).
+
+
+## Laboratory transcription draft conflict recovery
+
+The two laboratory transcription templates retain exactly 12 rows and source text including units, decimal precision, blanks, NA text and surrounding spaces. NA remains literal transcription text, not a controlled laboratory parameter type. Failed native POST preserves the entered values and submitted expected version; a stale save instructs the user to reload and never silently adopts the latest version. Print view uses persisted values and labels names/results as transcription only. Approved scientific print, signatures, release and retest disposition require separate approved authority sources.

@@ -4,6 +4,13 @@ import { describe, expect, it } from 'vitest';
 const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
 
 describe('regulated form UX contracts', () => {
+  it('retains the submitted lab draft version and exact transcription after a failed POST', () => {
+    const page = read('src/pages/laboratory/report-templates.astro');
+    expect(page).toContain("submittedVersion = text('version')");
+    expect(page).toContain('value={submittedVersion ?? version.toString()}');
+    expect(page).toContain("String(form.get(key) ?? '')");
+    expect(page).not.toContain("String(form.get(key) ?? '').trim()");
+  });
   it('does not ask operators to type technical member UUIDs', () => {
     const scopes = read('src/pages/admin/scopes/index.astro');
     expect(scopes).not.toMatch(/Member ID \(UUID\)|valid member UUID|name="userId"/i);
