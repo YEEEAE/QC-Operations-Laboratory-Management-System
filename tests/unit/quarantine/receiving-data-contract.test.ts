@@ -29,6 +29,10 @@ import {
 } from '../../../src/modules/quarantine/receiving/domain/receiving-status.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
 import { parseReceivingFilters } from '../../../src/modules/quarantine/receiving/application/receiving-filters.js';
+import {
+  assertReceivingCorrectable,
+  isReceivingCorrectable,
+} from '../../../src/modules/quarantine/receiving/domain/receiving-state.js';
 
 describe('quantity and unit contract', () => {
   it('separates a legacy "250 PCS" value into a number and a unit', () => {
@@ -195,6 +199,27 @@ describe('derived status projections', () => {
     expect(deriveInspectionStatus(facts({ latestInspectionReportState: 'RETURNED' }))).toBe(
       'RETURNED',
     );
+  });
+});
+
+describe('receiving correction state contract', () => {
+  it('keeps repository correction states aligned with the receiving workflow policy', () => {
+    for (const state of ['PENDING', 'READY_FOR_INSPECTION', 'HOLD'] as const) {
+      expect(isReceivingCorrectable(state)).toBe(true);
+      expect(() => assertReceivingCorrectable(state)).not.toThrow();
+    }
+
+    for (const state of [
+      'UNDER_INSPECTION',
+      'INSPECTION_COMPLETE',
+      'RELEASE_PENDING',
+      'RELEASED',
+      'EXPIRED',
+      'CANCELLED',
+    ] as const) {
+      expect(isReceivingCorrectable(state)).toBe(false);
+      expect(() => assertReceivingCorrectable(state)).toThrow(AppError);
+    }
   });
 });
 

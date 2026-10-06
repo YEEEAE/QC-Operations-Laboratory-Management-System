@@ -260,6 +260,17 @@ describe('control surfaces and the JavaScript-only gap register', () => {
     expect(form).not.toContain('type="button"');
   });
 
+  it('rechecks correction eligibility under the receiving row lock using the domain policy', () => {
+    const repository = read(
+      'src/modules/quarantine/receiving/infrastructure/postgres-repository.ts',
+    );
+
+    expect(repository).toContain('import { isReceivingCorrectable, type ReceivingAction }');
+    expect(repository).toContain('.forUpdate()');
+    expect(repository).toContain('if (!isReceivingCorrectable(previous.workflow_state))');
+    expect(repository).not.toContain("previous.workflow_state !== 'PENDING'");
+  });
+
   it('lists exactly the surfaces without an in-flight duplicate guard', () => {
     const withoutGuard = pages.filter((page) => {
       const source = read(page);

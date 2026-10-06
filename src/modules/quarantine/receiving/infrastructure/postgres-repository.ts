@@ -7,7 +7,7 @@ import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { actorHasScope } from '../../../../shared/authorization/scope-evaluator.js';
 import type { ReceivingRepository } from '../ports/repository.js';
 import type { ReceivingItem } from '../domain/receiving-item.js';
-import type { ReceivingAction } from '../domain/receiving-state.js';
+import { isReceivingCorrectable, type ReceivingAction } from '../domain/receiving-state.js';
 import { applyReceivingAction } from '../domain/receiving-item.js';
 import type { AuditRepository } from '../../../../shared/audit/audit-repository.js';
 import { PostgresAuditRepository } from '../../../../shared/audit/postgres-audit-repository.js';
@@ -417,7 +417,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
         if (!previous) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
         if (previous.version !== i.expectedVersion)
           throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        if (previous.workflow_state !== 'PENDING')
+        if (!isReceivingCorrectable(previous.workflow_state))
           throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const row = await tx
           .updateTable('receiving_items')

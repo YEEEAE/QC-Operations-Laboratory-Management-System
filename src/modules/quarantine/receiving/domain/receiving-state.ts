@@ -70,11 +70,10 @@ export const RECEIVING_CORRECTABLE_STATES: readonly ReceivingWorkflowState[] = [
   'PENDING',
   'READY_FOR_INSPECTION',
   'HOLD',
-  'EXPIRED',
 ];
 
-export function isReceivingCorrectable(state: ReceivingWorkflowState): boolean {
-  return RECEIVING_CORRECTABLE_STATES.includes(state);
+export function isReceivingCorrectable(state: string): boolean {
+  return RECEIVING_CORRECTABLE_STATES.some((correctableState) => correctableState === state);
 }
 
 export function assertReceivingCorrectable(state: ReceivingWorkflowState): void {
