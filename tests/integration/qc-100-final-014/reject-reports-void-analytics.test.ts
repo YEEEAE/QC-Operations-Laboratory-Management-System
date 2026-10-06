@@ -202,13 +202,28 @@ describe('QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evi
       { approval_role: 'QC_MANAGER', approver_name: 'Approver QC_MANAGER' },
       { approval_role: 'FACTORY_DIRECTOR', approver_name: 'Approver FACTORY_DIRECTOR' },
     ]);
-    const auditNameLeak = await pool!.query(
-      `SELECT COUNT(*)::int AS count FROM qc.audit_events
+    const approvalAudit = await pool!.query(
+      `SELECT actor_type, actor_id, subject_type, subject_id, action, request_id,
+         occurred_at, payload
+       FROM qc.audit_events
        WHERE subject_id = $1 AND action = 'ISSUE_SLIP_APPROVAL_CONFIRMED'
-         AND payload ? 'approverName'`,
+       ORDER BY occurred_at`,
       [slip.id],
     );
-    expect(auditNameLeak.rows[0]?.count).toBe(0);
+    expect(approvalAudit.rows).toHaveLength(3);
+    expect(
+      approvalAudit.rows.every(
+        (row) =>
+          row.actor_type === 'USER' &&
+          row.actor_id === creator.id &&
+          row.subject_type === 'REJECT_REPORT' &&
+          row.subject_id === slip.id &&
+          row.action === 'ISSUE_SLIP_APPROVAL_CONFIRMED' &&
+          row.request_id === 'req-014-order' &&
+          row.occurred_at instanceof Date &&
+          !('approverName' in (row.payload as Record<string, unknown>)),
+      ),
+    ).toBe(true);
   });
 
   it('rejects out-of-order, non-creator, inactive, stale-version and replay confirmations with zero side effects', async () => {
@@ -617,5 +632,117 @@ describe('QC-100-FINAL-014 — Issue Slip correction, ordering and analytics evi
       `SELECT COUNT(*)::int AS voided FROM qc.reject_reports WHERE status = 'VOID'`,
     );
     expect(Number(summaryAudit.rows[0]?.voided ?? 0)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('matches independent source-table controls for filtered exact-decimal analytics totals and units', async () => {
+    const department = 'Analytics parity 014';
+    const reportDate = new Date('2026-09-22');
+    await issuedSlip(repository, {
+      department,
+      rejectedQty: '0.125',
+      reportDate,
+    });
+    await new CreateDailyRejectUseCase(repository).execute({
+      actor: creator,
+      reportDate,
+      department,
+      entries: [
+        {
+          itemDescription: 'Parity entry one',
+          rmUnit: 'KG',
+          rejectQty: '0.2',
+          goodQty: '1',
+          rejectReason: 'Parity check',
+        },
+        {
+          itemDescription: 'Parity entry two',
+          rmUnit: 'KG',
+          rejectQty: '0.3',
+          goodQty: '1',
+          rejectReason: 'Parity check',
+        },
+      ],
+      requestId: 'req-014-analytics-parity',
+    });
+
+    const from = new Date('2026-09-01');
+    const to = new Date('2026-09-30');
+    const analytics = await repository.analytics({
+      filter: { department, from, to },
+    });
+    const issueSlipControl = await pool!.query<{
+      date: string;
+      unit: string;
+      rejected_qty: string;
+      report_count: string;
+    }>(
+      `SELECT r.report_date::text AS date,
+         COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+         SUM(s.rejected_qty)::text AS rejected_qty,
+         COUNT(DISTINCT r.id)::text AS report_count
+       FROM qc.reject_reports r
+       JOIN qc.reject_issue_slips s ON s.report_id = r.id
+       WHERE r.status <> 'VOID' AND r.department = $1
+         AND r.report_date >= $2::date AND r.report_date <= $3::date
+       GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')`,
+      [department, from, to],
+    );
+    const dailyRejectControl = await pool!.query<{
+      date: string;
+      unit: string;
+      rejected_qty: string;
+      report_count: string;
+    }>(
+      `SELECT r.report_date::text AS date,
+         COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+         SUM(e.reject_qty)::text AS rejected_qty,
+         COUNT(DISTINCT r.id)::text AS report_count
+       FROM qc.reject_reports r
+       JOIN qc.daily_reject_entries e ON e.report_id = r.id
+       WHERE r.status <> 'VOID' AND r.department = $1
+         AND r.report_date >= $2::date AND r.report_date <= $3::date
+       GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')`,
+      [department, from, to],
+    );
+
+    const controlRows = [
+      ...issueSlipControl.rows.map((row) => ({ ...row, reportType: 'ISSUE_SLIP' as const })),
+      ...dailyRejectControl.rows.map((row) => ({ ...row, reportType: 'DAILY_REJECT' as const })),
+    ].sort((left, right) =>
+      `${left.date}|${left.reportType}|${left.unit}`.localeCompare(
+        `${right.date}|${right.reportType}|${right.unit}`,
+      ),
+    );
+    const analyticsRows = analytics.trendByDate
+      .map((row) => ({
+        date: row.date,
+        reportType: row.reportType,
+        unit: row.unit,
+        rejected_qty: row.rejectedQty,
+        report_count: String(row.reportCount),
+      }))
+      .sort((left, right) =>
+        `${left.date}|${left.reportType}|${left.unit}`.localeCompare(
+          `${right.date}|${right.reportType}|${right.unit}`,
+        ),
+      );
+
+    expect(analyticsRows).toEqual(controlRows);
+    expect(analyticsRows).toEqual([
+      {
+        date: '2026-09-22',
+        reportType: 'DAILY_REJECT',
+        unit: 'KG',
+        rejected_qty: '0.5',
+        report_count: '1',
+      },
+      {
+        date: '2026-09-22',
+        reportType: 'ISSUE_SLIP',
+        unit: 'PCS',
+        rejected_qty: '0.125',
+        report_count: '1',
+      },
+    ]);
   });
 });

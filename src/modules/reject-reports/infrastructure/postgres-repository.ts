@@ -1106,22 +1106,25 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
       report_count: string;
     }>`
       ${filtered}
-      SELECT 'ISSUE_SLIP'::text AS report_type,
-        COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
-        SUM(s.rejected_qty)::text AS rejected_qty,
-        COUNT(DISTINCT r.id)::text AS report_count
-      FROM filtered_reports r
-      JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
-      GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')
-      UNION ALL
-      SELECT 'DAILY_REJECT'::text AS report_type,
-        COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
-        SUM(e.reject_qty)::text AS rejected_qty,
-        COUNT(DISTINCT r.id)::text AS report_count
-      FROM filtered_reports r
-      JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
-      GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
-      ORDER BY report_type, unit
+      SELECT combined.report_type, combined.unit, combined.rejected_qty, combined.report_count
+      FROM (
+        SELECT 'ISSUE_SLIP'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+          SUM(s.rejected_qty)::text AS rejected_qty,
+          COUNT(DISTINCT r.id)::text AS report_count
+        FROM filtered_reports r
+        JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+        GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')
+        UNION ALL
+        SELECT 'DAILY_REJECT'::text AS report_type,
+          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+          SUM(e.reject_qty)::text AS rejected_qty,
+          COUNT(DISTINCT r.id)::text AS report_count
+        FROM filtered_reports r
+        JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+        GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
+      ) AS combined
+      ORDER BY combined.report_type, combined.unit
     `.execute(this.database);
     const row = counts.rows[0];
     return {
@@ -1161,20 +1164,24 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         report_count: string;
       }>`
         ${filtered}
-        SELECT r.report_date::text AS date, 'ISSUE_SLIP'::text AS report_type,
-          COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
-          SUM(s.rejected_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
-        FROM filtered_reports r
-        JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
-        GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')
-        UNION ALL
-        SELECT r.report_date::text AS date, 'DAILY_REJECT'::text AS report_type,
-          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
-          SUM(e.reject_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
-        FROM filtered_reports r
-        JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
-        GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
-        ORDER BY date, report_type, unit
+        SELECT combined.date, combined.report_type, combined.unit,
+          combined.rejected_qty, combined.report_count
+        FROM (
+          SELECT r.report_date::text AS date, 'ISSUE_SLIP'::text AS report_type,
+            COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+            SUM(s.rejected_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+          FROM filtered_reports r
+          JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+          GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded')
+          UNION ALL
+          SELECT r.report_date::text AS date, 'DAILY_REJECT'::text AS report_type,
+            COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+            SUM(e.reject_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+          FROM filtered_reports r
+          JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+          GROUP BY r.report_date, COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded')
+        ) AS combined
+        ORDER BY combined.date, combined.report_type, combined.unit
       `.execute(this.database),
       sql<{
         report_type: 'ISSUE_SLIP' | 'DAILY_REJECT';
@@ -1209,18 +1216,22 @@ export class PostgresRejectReportRepository implements RejectReportRepository {
         report_count: string;
       }>`
         ${filtered}
-        SELECT 'ISSUE_SLIP'::text AS report_type,
-          COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
-          r.department, SUM(s.rejected_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
-        FROM filtered_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
-        GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded'), r.department
-        UNION ALL
-        SELECT 'DAILY_REJECT'::text AS report_type,
-          COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
-          r.department, SUM(e.reject_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
-        FROM filtered_reports r JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
-        GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded'), r.department
-        ORDER BY report_type, unit, department
+        SELECT combined.report_type, combined.unit, combined.department,
+          combined.rejected_qty, combined.report_count
+        FROM (
+          SELECT 'ISSUE_SLIP'::text AS report_type,
+            COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded') AS unit,
+            r.department, SUM(s.rejected_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+          FROM filtered_reports r JOIN qc.reject_issue_slips s ON s.report_id = r.id AND ${detailRowFilterSql(filter, 'ISSUE_SLIP')}
+          GROUP BY COALESCE(NULLIF(BTRIM(s.unit), ''), 'Unit not recorded'), r.department
+          UNION ALL
+          SELECT 'DAILY_REJECT'::text AS report_type,
+            COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded') AS unit,
+            r.department, SUM(e.reject_qty)::text AS rejected_qty, COUNT(DISTINCT r.id)::text AS report_count
+          FROM filtered_reports r JOIN qc.daily_reject_entries e ON e.report_id = r.id AND ${detailRowFilterSql(filter, 'DAILY_REJECT')}
+          GROUP BY COALESCE(NULLIF(BTRIM(e.rm_unit), ''), 'Unit not recorded'), r.department
+        ) AS combined
+        ORDER BY combined.report_type, combined.unit, combined.department
       `.execute(this.database),
       sql<{ report_type: 'ISSUE_SLIP' | 'DAILY_REJECT'; reason: string; count: string }>`
         ${filtered}
