@@ -7,6 +7,7 @@ import { VoidInspectionUseCase } from '../../../src/modules/quarantine/inspectio
 import { VoidVersionUseCase } from '../../../src/modules/documents/application/void-version.js';
 import { documentContentDigest } from '../../../src/modules/documents/domain/document-content-digest.js';
 import { TransitionFindingUseCase } from '../../../src/modules/quality/findings/application/transition-finding.js';
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
 
 function actor(id: string, roles: string[], permissions: string[]): ActorContext {
@@ -28,6 +29,7 @@ const SUPERVISOR = actor(
   [
     'PERM-INSP-APPROVE',
     'PERM-APR-APPROVE',
+    'PERM-ESIG-SIGN',
     'PERM-QUAR-RELEASE',
     'PERM-DOC-APPROVE',
     'PERM-DOC-VOID',
@@ -41,6 +43,7 @@ const MANAGER = actor(
   [
     'PERM-INSP-APPROVE',
     'PERM-APR-APPROVE',
+    'PERM-ESIG-SIGN',
     'PERM-QUAR-RELEASE',
     'PERM-DOC-APPROVE',
     'PERM-DOC-VOID',
@@ -68,6 +71,7 @@ const YAZEED = {
     [
       'PERM-INSP-APPROVE',
       'PERM-APR-APPROVE',
+      'PERM-ESIG-SIGN',
       'PERM-QUAR-RELEASE',
       'PERM-DOC-APPROVE',
       'PERM-DOC-VOID',
@@ -148,13 +152,18 @@ describe('P-05 authority matrix', () => {
     ['yazeed owner', YAZEED, true],
     ['Admin+Manager', ADMIN_MANAGER, false],
   ])('inspection approval for %s resolves to allow=%s', async (_name, currentActor, allowed) => {
-    const useCase = new ApproveInspectionUseCase(inspectionRepo());
+    const useCase = new ApproveInspectionUseCase(
+      inspectionRepo(),
+      undefined,
+      createFinalApprovalCeremony({ verify: async () => true } as any),
+    );
     if (allowed) {
       await expect(
         useCase.execute({
           actor: currentActor,
           id: 'insp-1',
           expectedVersion: 4n,
+          reauthenticationSecret: 'test-reauth',
           requestId: `req-${currentActor.id}`,
         }),
       ).resolves.toMatchObject({ state: 'APPROVED' });

@@ -4,6 +4,8 @@
 **Prepared:** 2026-10-02.
 **Scope:** PD-15, PD-16, PD-17, PD-18 and PD-32. The user authorized completion work; this packet makes the remaining business choices explicit for review. Approval of the electronic evidence display does not answer these business questions.
 
+**Current authority note (2026-10-06):** The owner decision effective 2026-10-04 and recorded in `QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` supersedes this proposal's stage-one signature row and its general wording that leaves unlisted approvals unsigned. In-system approval actions require a separate account-bound signature and fresh reauthentication. This packet remains **PROPOSED** for PD-15–18 and does not close the complete PD-32 action map, scientific sources, document effectivity, or other owner inputs.
+
 ## Proposed decisions
 
 | Decision | Proposed rule | Required persisted evidence |

@@ -21,6 +21,7 @@ import type { DocumentIdentity } from '../../../src/modules/documents/domain/doc
 import type { DocumentVersion } from '../../../src/modules/documents/domain/document-version.js';
 import { PostgresDocumentRepository } from '../../../src/modules/documents/infrastructure/postgres-repository.js';
 import { ApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/approve-inspection.js';
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 import { PostgresInspectionRepository } from '../../../src/modules/quarantine/inspection/infrastructure/postgres-repository.js';
 import { ReleaseReceivingUseCase } from '../../../src/modules/quarantine/receiving/application/release-receiving.js';
 import { PostgresReceivingRepository } from '../../../src/modules/quarantine/receiving/infrastructure/postgres-repository.js';
@@ -71,6 +72,8 @@ const globalGrants = ALL_CONTROLLED_PERMISSIONS.map((code) => ({
 
 /** P-05 authority with every permission: the allowed case. */
 const manager = () => actor(MANAGER_ID, ['MANAGER'], globalGrants);
+const supervisor = () => actor(SUPERVISOR_ID, ['SUPERVISOR'], globalGrants);
+const stageOneCeremony = () => createFinalApprovalCeremony({ verify: async () => true } as never);
 /** Holds every explicit permission but is not a P-05 authority actor. */
 const employeeWithEveryPermission = () => actor(EMPLOYEE_ID, ['EMPLOYEE'], globalGrants);
 /** May release, but its read grant is limited to its own records. */
@@ -494,10 +497,11 @@ describe('QC-100-FINAL-013 · inspection approval and QMS consequence on populat
       new PostgresAuditRepository(db),
       new PostgresOutboxRepository(db),
     );
-    await new ApproveInspectionUseCase(repository).execute({
-      actor: manager(),
+    await new ApproveInspectionUseCase(repository, undefined, stageOneCeremony()).execute({
+      actor: supervisor(),
       id: reportId,
       expectedVersion: 3n,
+      reauthenticationSecret: 'test-reauth',
       requestId: 'proof-inspection-approve',
     });
 
@@ -545,11 +549,14 @@ describe('QC-100-FINAL-013 · inspection approval and QMS consequence on populat
         new PostgresAuditRepository(db),
         new PostgresOutboxRepository(db),
       ),
+      undefined,
+      stageOneCeremony(),
     );
     await useCase.execute({
-      actor: manager(),
+      actor: supervisor(),
       id: reportId,
       expectedVersion: 3n,
+      reauthenticationSecret: 'test-reauth',
       requestId: 'proof-inspection-approve-once',
     });
     await expect(

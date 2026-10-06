@@ -8,6 +8,7 @@ import type {
   RetestPolicy,
 } from '../../../src/modules/laboratory/ports/controlled-sources.js';
 import type { LabTest } from '../../../src/modules/laboratory/domain/lab-test.js';
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 import { validateMeasurement } from '../../../src/modules/laboratory/domain/measurement.js';
 import { PostgresControlledLabSources } from '../../../src/modules/laboratory/infrastructure/postgres-controlled-sources.js';
 import { ReleaseReceivingUseCase } from '../../../src/modules/quarantine/receiving/application/release-receiving.js';
@@ -32,6 +33,7 @@ function labActor(): ActorContext {
     permissions: [
       { code: 'PERM-LAB-APPROVE', scopes: ['GLOBAL'] },
       { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
+      { code: 'PERM-ESIG-SIGN', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-VIEW', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-RETEST', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-AUTHORIZE-RETEST', scopes: ['GLOBAL'] },
@@ -178,14 +180,17 @@ describe('controlled policy fail-closed defaults (R-007)', () => {
 
   it('lab approval proceeds only with an explicitly supplied approval policy (stage-1, QC-100-FINAL-004)', async () => {
     const allow: LabApprovalPolicy = { authorize: async () => {} };
+    const ceremony = createFinalApprovalCeremony({ verify: async () => true });
     const saved = await new ApproveLabTestUseCase(
       labRepository(labTest()),
       matchingSources,
       allow,
+      ceremony,
     ).execute({
       actor: labSupervisorActor(),
       id: labTest().id,
       expectedVersion: 3n,
+      reauthenticationSecret: 'test-password',
       requestId: 'req-lab-approve-allow',
     });
     expect(saved.state).toBe('PENDING_QCM_APPROVAL');

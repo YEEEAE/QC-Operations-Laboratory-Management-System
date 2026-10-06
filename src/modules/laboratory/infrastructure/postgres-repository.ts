@@ -506,16 +506,17 @@ export class PostgresLabRepository implements LabRepository {
     mutation: Mutation,
     transaction?: DatabaseTransaction,
   ) {
-    if (mutation.action === 'FINAL_APPROVE') {
+    if (mutation.action === 'FINAL_APPROVE' || mutation.action === 'APPROVE') {
       const evidence = mutation.signatureEvidence;
+      const expectedAction = mutation.action === 'APPROVE' ? 'STAGE1_APPROVE' : 'FINAL_APPROVE';
       if (
         !evidence ||
         evidence.subjectType !== 'LAB_TEST' ||
         evidence.subjectId !== next.id ||
         evidence.subjectVersion !== previous?.version ||
         evidence.actorId !== mutation.actor.id ||
-        evidence.action !== 'FINAL_APPROVE' ||
-        evidence.meaning !== 'FINAL_APPROVE' ||
+        evidence.action !== expectedAction ||
+        evidence.meaning !== expectedAction ||
         evidence.requestId !== mutation.requestId
       )
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
@@ -598,7 +599,7 @@ export class PostgresLabRepository implements LabRepository {
           .executeTakeFirst();
         if (!changed.numUpdatedRows)
           throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        if (mutation.action === 'FINAL_APPROVE')
+        if (mutation.action === 'FINAL_APPROVE' || mutation.action === 'APPROVE')
           await insertSignatureEvidence(tx, mutation.signatureEvidence!);
       }
       await this.reconcileRunContent(tx, next, mutation);

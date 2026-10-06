@@ -697,16 +697,17 @@ export class PostgresInspectionRepository implements InspectionRepository {
     requestId: string;
     transaction?: DatabaseTransaction;
   }) {
-    if (i.action === 'FINAL_APPROVE') {
+    if (i.action === 'FINAL_APPROVE' || i.action === 'APPROVE') {
       const evidence = i.signatureEvidence;
+      const expectedAction = i.action === 'APPROVE' ? 'STAGE1_APPROVE' : 'FINAL_APPROVE';
       if (
         !evidence ||
         evidence.subjectType !== 'INSPECTION_REPORT' ||
         evidence.subjectId !== i.id ||
         evidence.subjectVersion !== i.expectedVersion ||
         evidence.actorId !== i.actor.id ||
-        evidence.action !== 'FINAL_APPROVE' ||
-        evidence.meaning !== 'FINAL_APPROVE' ||
+        evidence.action !== expectedAction ||
+        evidence.meaning !== expectedAction ||
         evidence.requestId !== i.requestId
       )
         throw new AppError('VALIDATION_FAILED', { userSafe: true });
@@ -745,7 +746,8 @@ export class PostgresInspectionRepository implements InspectionRepository {
           .returningAll()
           .executeTakeFirst();
         if (!r) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
-        if (i.action === 'FINAL_APPROVE') await insertSignatureEvidence(tx, i.signatureEvidence!);
+        if (i.action === 'FINAL_APPROVE' || i.action === 'APPROVE')
+          await insertSignatureEvidence(tx, i.signatureEvidence!);
         if (i.action === 'SUBMIT') {
           const formContext=old.template.templateSnapshot.digitalForm;
           if(formContext) {

@@ -14,6 +14,7 @@ import type {
   RetestPolicy,
 } from '../../../src/modules/laboratory/ports/controlled-sources.js';
 import type { LabTest } from '../../../src/modules/laboratory/domain/lab-test.js';
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 
 const AUTHOR_ID = '01900000-0000-7000-8000-0000000000a1';
 const DECIDER_ID = '01900000-0000-7000-8000-0000000000a2';
@@ -41,6 +42,7 @@ function deciderActor(): ActorContext {
       { code: 'PERM-LAB-REJECT', scopes: ['GLOBAL'] },
       { code: 'PERM-APR-REJECT', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-APPROVE', scopes: ['GLOBAL'] },
+      { code: 'PERM-ESIG-SIGN', scopes: ['GLOBAL'] },
       { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-RETEST', scopes: ['GLOBAL'] },
       { code: 'PERM-LAB-AUTHORIZE-RETEST', scopes: ['GLOBAL'] },
@@ -345,10 +347,12 @@ describe('scientific result boundary on approval (BR-LAB-003)', () => {
         };
       },
     };
-    const saved = await new ApproveLabTestUseCase(repository, holdSources, allow).execute({
+    const ceremony = createFinalApprovalCeremony({ verify: async () => true });
+    const saved = await new ApproveLabTestUseCase(repository, holdSources, allow, ceremony).execute({
       actor: supervisorActor(),
       id: labTest().id,
       expectedVersion: 3n,
+      reauthenticationSecret: 'test-password',
       requestId: 'req-lab-approve-hold',
     });
     expect(saved.state).toBe('PENDING_QCM_APPROVAL');

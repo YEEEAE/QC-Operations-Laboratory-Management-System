@@ -75,7 +75,7 @@ export function quarantineActionDependencies() {
   const receivingRepository = new PostgresReceivingRepository(database, audit, outbox);
   const inspectionRepository = new PostgresInspectionRepository(database, audit, outbox);
   const templateRepository = new PostgresTemplateRepository(database);
-  // Final-approval evidence is persisted by the owning domain transaction.
+  // Each approval-stage signature is persisted by the owning domain transaction.
   const finalApprovalCeremony = createFinalApprovalCeremony(
     createPasswordReauthenticationVerifier(database),
   );
@@ -108,9 +108,9 @@ export function quarantineActionDependencies() {
       ),
       submit: new SubmitInspectionUseCase(inspectionRepository),
       review: new ReviewInspectionUseCase(inspectionRepository),
-      // Stage-1 (Supervisor) approval: workflow transition without e-signature.
-      approve: new ApproveInspectionUseCase(inspectionRepository),
-      // Stage-2 (QCM / named owner) approval: the binding e-signature.
+      // Each approval stage reauthenticates and records its own bound signature.
+      approve: new ApproveInspectionUseCase(inspectionRepository, undefined, finalApprovalCeremony),
+      // Stage-2 (QCM / named owner) approval: a separate binding signature.
       finalApprove: new FinalApproveInspectionUseCase(inspectionRepository, finalApprovalCeremony),
       reopen: new ReopenInspectionUseCase(inspectionRepository),
       return: new ReturnInspectionUseCase(inspectionRepository),

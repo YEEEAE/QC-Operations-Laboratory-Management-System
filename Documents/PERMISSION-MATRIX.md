@@ -1218,13 +1218,13 @@ PERM-ESIG-SIGN
 
 ---
 
-# 61A. Two-Stage Approval Permission Split (2026-09-19)
+# 61A. Two-Stage Approval Permission Split (owner decision effective 2026-10-04)
 
 ```text
 Stage 1 (Supervisor, P-05)
-  INSPECTION_REPORT: UNDER_REVIEW      PERM-INSP-APPROVE
-  LAB_TEST:          UNDER_REVIEW      PERM-LAB-APPROVE
-  -> PENDING_QCM_APPROVAL (no formal e-signature)
+  INSPECTION_REPORT: UNDER_REVIEW      PERM-INSP-APPROVE + PERM-ESIG-SIGN
+  LAB_TEST:          UNDER_REVIEW      PERM-LAB-APPROVE + PERM-ESIG-SIGN
+  -> PENDING_QCM_APPROVAL with fresh reauthentication and STAGE1_APPROVE signature
 
 Stage 2 (QCM = MANAGER, or named yazeed/SYSTEM_OWNER)
   INSPECTION_REPORT: PENDING_QCM_APPROVAL   PERM-APR-APPROVE + PERM-ESIG-SIGN
@@ -2999,12 +2999,17 @@ each create action runs against isolated PostgreSQL with valid domain inputs.
 
 ## 153.3 Signature and scientific-source boundary
 
-QC `EMPLOYEE` has no approval-signature authority. Supervisor is the
-first-stage workflow approver without a formal signature in this chain. QCM
-(`MANAGER`) is the normal final signing authority. Owner authority never
-substitutes for an approved inspection source or acceptance criterion.
+QC `EMPLOYEE` has no approval-signature authority. Under the owner decision
+effective 2026-10-04 and recorded in
+`QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md`, Supervisor is the
+first-stage approver and must reauthenticate and sign `STAGE1_APPROVE` on the
+pre-transition version. QCM (`MANAGER`) is the normal final signing authority
+and signs `FINAL_APPROVE`. This supersedes the stage-1 signature description
+in the 2026-09-23 RBAC decision; other role, scope and SoD limits remain.
+Owner authority never substitutes for an approved inspection source or
+acceptance criterion.
 PD-01/PD-02/PD-07 remain open; see the decision register and QC-100-FINAL-013
 request.
 ## Owner reaffirmation — 2026-10-04 (OD-2026-09-23-RBAC-01)
 
-The official six-account role and permission decision is in `OWNER-DECISION-RBAC-2026-09-23.md`. `Yazeed` maps to the named `SYSTEM_OWNER` (not an unrestricted generic role); `QCM` displays in place of `MANAGER`; `Supervisor` is `SUPERVISOR`; `QC 01/02/03` share the same `EMPLOYEE` grant set. The report creation matrix there enumerates every registered QC create surface and, separately, both laboratory transcription drafts and both reject-report variants. Each QC account has CREATE for all those choices under its domain permission, with no per-account report-type whitelist. Create, draft edit, upload, submit and resubmit remain distinct from review, return, approve, sign and override. The server enforces identity, explicit permission, scope, state, version, separation of duties, source policy and audit; navigation visibility never grants a mutation. Supervisor is first stage only for inspection/lab, without a stage-1 e-signature; QCM is the normal final signer after Supervisor. Owner actions exist only on explicit server paths and do not bypass controlled sources or immutable history. `APPROVED` blocks ordinary editing. Scientific PD-01/02/07, document RD-019, lab reject PD-38 and the unspecified parts of PD-11/12/32 remain open; this decision does not manufacture those policies or a new transition.
+The official six-account role and permission decision is in `OWNER-DECISION-RBAC-2026-09-23.md`, as amended for signatures by `QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (effective 2026-10-04). `Yazeed` maps to the named `SYSTEM_OWNER` (not an unrestricted generic role); `QCM` displays in place of `MANAGER`; `Supervisor` is `SUPERVISOR`; `QC 01/02/03` share the same `EMPLOYEE` grant set. The report creation matrix there enumerates every registered QC create surface and, separately, both laboratory transcription drafts and both reject-report variants. Each QC account has CREATE for all those choices under its domain permission, with no per-account report-type whitelist. Create, draft edit, upload, submit and resubmit remain distinct from review, return, approve, sign and override. The server enforces identity, explicit permission, scope, state, version, separation of duties, source policy and audit; navigation visibility never grants a mutation. Supervisor is first stage for inspection/lab and must sign that decision separately; QCM is the normal final signer after Supervisor. Owner actions exist only on explicit server paths and do not bypass controlled sources or immutable history. `APPROVED` blocks ordinary editing. Scientific PD-01/02/07, document RD-019, lab reject PD-38 and the unspecified parts of PD-11/12/32 remain open; this decision does not manufacture those policies or a new transition.

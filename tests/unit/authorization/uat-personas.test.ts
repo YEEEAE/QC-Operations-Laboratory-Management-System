@@ -114,7 +114,7 @@ describe('QC-100-FINAL-004 Task 4 UAT persona contract', () => {
   it('keeps the QCM final-approval ceremony grant on MANAGER and off SUPERVISOR', () => {
     expect(FOUNDATION_ROLE_PERMISSIONS.MANAGER).toContain('PERM-APR-APPROVE');
     expect(FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR).not.toContain('PERM-APR-APPROVE');
-    // Supervisor stage approval remains a workflow event (no e-sign ceremony).
+    // Supervisor stage approval requires its own e-sign ceremony.
     expect(FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR).toContain('PERM-INSP-APPROVE');
     expect(FOUNDATION_ROLE_PERMISSIONS.SUPERVISOR).toContain('PERM-ESIG-SIGN');
     expect(FOUNDATION_ROLE_PERMISSIONS.MANAGER).not.toContain('PERM-INSP-APPROVE');

@@ -1,5 +1,6 @@
+- **2026-10-07 — QC-POST-100-006 / owner-decision reconciliation:** amended the earlier same-day QC-POST-100-004 stage-one conclusion: owner decision effective 2026-10-04, amended 2026-10-05, requires fresh reauthentication and version/action-bound electronic signature for Supervisor stage 1 as well as final approval. Implemented locally in inspection/laboratory actions, ceremonies, transaction persistence and native/server-rendered review forms; corrected the lab QCM stage-one authority gap. Focused source/authorization tests 66/66 PASS on Node 24.19.0 (below 24.20.0 contract); typecheck 0 errors. PG18, authenticated browser/no-JS, AT and UAT NOT VERIFIED. Scientific criteria, PD-13/RD-019, PD-15–18, full PD-32 action map, retest/release policy, 19 release-gate mappings, report retention, provider/data retention, storage/telemetry, performance/RPO/RTO remain BLOCKED_BY_OWNER_INPUT. Candidate packet: `.ci-results/QC-POST-100-006-20261007/reconciliation.md`. State: PARTIAL.
 - **2026-10-06 — QC-POST-100-004 / stage-one signature contract reconciliation**
-  - Changed: inspection and laboratory Supervisor stage 1 now advances without e-signature; repository writes, server-rendered UI, and Actions reserve reauthentication/signature for QCM final approval, following `OWNER-DECISION-RBAC-2026-09-23.md`. Historical audit artifacts untouched.
+  - Changed: historical conclusion superseded by the 2026-10-05 owner decision; see QC-POST-100-006. Do not use this entry as current authority.
   - Evidence: Node 24.20.0; unit 1285/1285 PASS; architecture and route registry PASS; typecheck 0 errors; focused P-05 matrix 15/15 and inspection review 5/5 PASS. Integration had 280 skipped and 0 failed tests; PG18, migrations, concurrency, authenticated browser/AT and UAT NOT VERIFIED because no container runtime. Full format check FAIL on 52 files, including historical artifacts; no broad formatting applied.
   - State: PARTIAL / OPEN; G-010 traceability closure and exact-candidate PostgreSQL/browser/UAT evidence remain outstanding.
 - **2026-10-06 — QC-POST-100-002 / receiving correction state parity**
@@ -161,7 +162,7 @@
 - الـowner control center يستدعي `GetControlCenterOverviewUseCase` (بوابة `isNamedSystemOwner`) ولا ينفّذ SQL أو منطق أعمال؛ الإنشاء/التعديل/الأدوار/النطاقات تمر عبر الـuse cases وactions القائمة نفسها.
 
 ### P-05 authority
-- **2026-10-05 current owner change (implementation pending):** every in-system approval, including Supervisor inspection/lab stage 1, is intended as a formal account-bound electronic signature with fresh reauthentication and version/meaning binding. Existing stage-1 audit-only behavior and earlier owner decision are superseded *as target policy*, not silently rewritten as current implementation. Do not claim compliance or backfill; enumerate all approval actions and secure approved sources before modifying execution. See `audit/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md`.
+- **2026-10-05 current owner change:** every in-system approval, including Supervisor inspection/lab stage 1, requires a formal account-bound electronic signature with fresh reauthentication and version/action binding. This working tree implements the stage-one inspection/lab slice; broader action applicability remains open. See `audit/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md`.
 - OD-2026-09-23-RBAC-01 يحسم مسار التفتيش/المختبر: Supervisor وحده بصفة الدور يمنح المرحلة الأولى؛ QCM/MANAGER نهائي فقط؛ المالك المسمى يبقى استثناءً صريحًا داخل use case. أدلة الوحدة PASS، لكن التحقق على PostgreSQL 18 ما زال BLOCKED.
 - QC 01/02/03 يستخدمون EMPLOYEE bundle واحدًا لأسطح الإنشاء الـ12؛ لا مراجعة/إرجاع/اعتماد/توقيع/إغلاق/تجاوز. لم تُنشأ حسابات UAT لأن PostgreSQL المعزولة غير متاحة.
 - أدلة UAT تُسجل عبر authenticated actions مع participant login/role matching، وتكتب مع audit داخل transaction؛ PostgreSQL write/read round-trip لم يُتحقق.
@@ -221,7 +222,7 @@
 - مسار release يفرض SoD مشتقًا خادميًا بين منفذ التفتيش ومنفذ الإفراج، ويعيد الطلب المكرر بعد نجاحه عبر idempotency؛ لا يوجد بعد دليل runtime مطبق للـmigration الجديدة.
 - Laboratory retest يخضع للسياسة/السلطة المطبقة ولا تُخترع limits غير موجودة في الوثائق.
 - Finding/NCR/CAPA/VOID تبقى مرتبطة بآلات الحالة والأدلة والتوقيعات المعتمدة.
-- E-signature الخاصة بالاعتماد النهائي تُحضّر بعد reauthentication/authorization وتُكتب داخل معاملة الدومين نفسها مع الانتقال والآثار المتزامنة؛ الفشل يتراجع عن التوقيع. Maintenance `VOID` يبقى deny-by-default لغياب انتقال/مصدر معتمد.
+- E-signature لكل مرحلة اعتماد inspection/lab تُحضّر بعد reauthentication/authorization وتُكتب داخل معاملة الدومين نفسها مع الانتقال والآثار المتزامنة؛ الفشل يتراجع عن التوقيع. Maintenance `VOID` يبقى deny-by-default لغياب انتقال/مصدر معتمد.
 - أي handoff أو Journey Context هو read context؛ لا ينقل ملكية mutation بين الدومينات.
 
 ## 7) Change Requests / Documents

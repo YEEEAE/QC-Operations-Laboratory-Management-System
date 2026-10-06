@@ -8,7 +8,7 @@ export interface Mutation {
   requestId: string;
   action: string;
   reason?: string;
-  /** Final-approval evidence is committed atomically with the state transition. */
+  /** Approval-stage evidence is committed atomically with the state transition. */
   signatureEvidence?: SignatureEvidence;
 }
 

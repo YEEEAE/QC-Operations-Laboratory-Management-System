@@ -5,6 +5,7 @@ import { ReturnInspectionUseCase } from '../../../src/modules/quarantine/inspect
 import type { InspectionRepository } from '../../../src/modules/quarantine/inspection/ports/repository.js';
 import type { Inspection } from '../../../src/modules/quarantine/inspection/domain/inspection.js';
 import type { ActorContext } from '../../../src/shared/authorization/types.js';
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 
 const authorId = '01900000-0000-7000-8000-000000000001';
 const reviewerId = '01900000-0000-7000-8000-000000000002';
@@ -116,11 +117,13 @@ describe('Quarantine inspection review and approval', () => {
   });
   it('approves under the approved P-05 policy but still denies with an explicit deny policy', async () => {
     const repo = repository({ ...inspection('UNDER_REVIEW'), version: 3n });
+    const ceremony = createFinalApprovalCeremony({ verify: async () => true });
     await expect(
-      new ApproveInspectionUseCase(repo).execute({
+      new ApproveInspectionUseCase(repo, undefined, ceremony).execute({
         actor: actor(reviewerId),
         id: inspection().id,
         expectedVersion: 3n,
+        reauthenticationSecret: 'test-password',
         requestId: 'req',
       }),
     ).resolves.toMatchObject({ state: 'PENDING_QCM_APPROVAL' });

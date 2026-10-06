@@ -1835,21 +1835,23 @@ Approver
 
 ## BR-APR-012 — Two-Stage Controlled Approval for Inspection and Laboratory
 
-**Status:** APPROVED (owner decision 2026-09-19, clarified by `OD-2026-09-23-RBAC-01`; migration `0031_qc_creation_parity_two_stage_approval` + grant reconciliation `0038_owner_qc_report_access.sql`)
+**Status:** APPROVED (owner decision 2026-09-19, authority clarified by `OD-2026-09-23-RBAC-01`, signature requirement superseded by owner decision effective 2026-10-04 and recorded 2026-10-05 in `QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md`; implementation remains subject to current-candidate verification)
 
 اعتماد تقرير التفتيش واختبار المختبر يمرّ بمرحلتين إلزاميتين:
 
 ```text
-UNDER_REVIEW --[stage-1: Supervisor, PERM-INSP-APPROVE / PERM-LAB-APPROVE]--> PENDING_QCM_APPROVAL
+UNDER_REVIEW --[stage-1: Supervisor, PERM-INSP-APPROVE / PERM-LAB-APPROVE + PERM-ESIG-SIGN + fresh reauthentication]--> PENDING_QCM_APPROVAL
 PENDING_QCM_APPROVAL --[stage-2: QCM, PERM-APR-APPROVE + PERM-ESIG-SIGN]--> APPROVED (locked)
 ```
 
 `MANAGER`/QCM has no stage-1 grant. Only the named `SYSTEM_OWNER` may use an
-explicit domain owner exception; stage-1 has no formal e-signature. QC
+explicit domain owner exception. Each approval stage records an independent,
+account-bound signature on the pre-transition version; stage 1 uses
+`STAGE1_APPROVE`, and final approval uses `FINAL_APPROVE`. QC
 `EMPLOYEE` cannot review, return, approve, sign, release, or close a report.
 
-* stage-1 حدث سير عمل موثّق بالتدقيق ولا يحمل توقيعًا إلكترونيًا رسميًا.
-* stage-2 هو الانتقال الوحيد الذي يقفل السجل، ويتطلب reauthentication + توقيعًا إلكترونيًا ملزمًا بمعنى `FINAL_APPROVE`.
+* كل مرحلة اعتماد تتطلب إعادة مصادقة حديثة وتوقيعًا إلكترونيًا منفصلًا مربوطًا بالفاعل والنسخة السابقة ومعنى الإجراء.
+* stage-2 هو الانتقال الوحيد الذي يقفل السجل، ويحمل توقيعًا ملزمًا بمعنى `FINAL_APPROVE`؛ stage-1 يحمل `STAGE1_APPROVE` ولا يقفل السجل.
 * لا يوجد مسار `UNDER_REVIEW → APPROVED` مباشر، ولا يجوز تجاوز مرحلة.
 * المرحلة الوسطى اعتماد داخلي وليست إفراجًا ماديًا: `PASS != RELEASED`.
 * `REOPEN` من `APPROVED` مسار مدقّق بسبب مطلوب ومحصور في سلطة الاعتماد النهائي، ولا يمحو سجل التوقيع.

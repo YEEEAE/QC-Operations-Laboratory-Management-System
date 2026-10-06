@@ -4,8 +4,8 @@
  *
  * Owner-approved chain (P-05 + migration 0031, QC-100-FINAL-004):
  *
- *   draft → submit → review → [stage-1 Supervisor approve: workflow event, no
- *   signature] → PENDING_QCM_APPROVAL → [QCM = MANAGER, or named owner: final
+ *   draft → submit → review → [stage-1 Supervisor approve + binding signature]
+ *   → PENDING_QCM_APPROVAL → [QCM = MANAGER, or named owner: final
  *   approve + binding electronic signature] → APPROVED (locked) → [audited
  *   REOPEN with reason] → UNDER_REVIEW
  *
@@ -515,16 +515,17 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       finalResult: 'PASS',
     });
 
-    // Stage-1 (Supervisor) is a workflow approval without an e-signature.
-    const staged = await new ApproveInspectionUseCase(inspectionRepository()).execute({
+    // Stage-1 (Supervisor) records a separate version-bound signature.
+    const staged = await new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
       actor: supervisor(),
       id: reportId,
       expectedVersion: 3n,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-stage1-e11',
     });
     expect(staged.state).toBe('PENDING_QCM_APPROVAL');
     expect((await record('inspection_reports', reportId)).approved_at).toBeNull();
-    expect(await signatures(reportId)).toHaveLength(0);
+    expect(await signatures(reportId)).toHaveLength(1);
     expect(await auditCount(reportId, 'APPROVE')).toBe(1);
     expect(await outboxCount(`inspection:${reportId}:v4`)).toBe(1);
 
@@ -574,12 +575,12 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
         requestId: 'f013-insp-final-e11-replay',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
-    expect(await signatures(reportId)).toHaveLength(1);
+    expect(await signatures(reportId)).toHaveLength(2);
     expect(await auditCountByRequest('f013-insp-final-e11-replay')).toBe(0);
     expect(await record('inspection_reports', reportId)).toMatchObject({ version: '5' });
   });
 
-  it('[normal] returns for correction, resumes, resubmits and completes with exactly one signature', async () => {
+  it('[normal] returns for correction, resumes, resubmits and completes with two stage signatures', async () => {
     const reportId = '01900000-0000-7000-8000-000000000e12';
     await seedInspection({
       tag: 'e12',
@@ -600,10 +601,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       expectedVersion: 5n,
       requestId: 'f013-insp-review-e12',
     });
-    await new ApproveInspectionUseCase(inspectionRepository()).execute({
+    await new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
       actor: supervisor(),
       id: reportId,
       expectedVersion: 6n,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-stage1-e12',
     });
     expect((await record('inspection_reports', reportId)).state).toBe('PENDING_QCM_APPROVAL');
@@ -674,10 +676,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       expectedVersion: 11n,
       requestId: 'f013-insp-review2-e12',
     });
-    await new ApproveInspectionUseCase(inspectionRepository()).execute({
+    await new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
       actor: supervisor(),
       id: reportId,
       expectedVersion: 12n,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-stage1b-e12',
     });
     await new FinalApproveInspectionUseCase(inspectionRepository(), ceremony()).execute({
@@ -703,9 +706,8 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
     expect(executionHistory.rows[1]?.results_snapshot).toMatchObject([
       { value: 'corrected by the author' },
     ]);
-    // The whole correction cycle produced exactly one binding signature on
-    // final approval, and one audit row per controlled transition.
-    expect(await signatures(reportId)).toHaveLength(1);
+    // Both approval stages produced a binding signature.
+    expect(await signatures(reportId)).toHaveLength(2);
     // The seeded submission predates the fixture, so the only SUBMIT transition
     // recorded by a use case here is the resubmission after correction.
     expect(await auditCount(reportId, 'SUBMIT')).toBe(1);
@@ -760,10 +762,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
 
     // QCM is final-stage only under OD-2026-09-23-RBAC-01.
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: qcm(),
         id: skipReport,
         expectedVersion: 3n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-qcm-stage1-e14',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
@@ -786,10 +789,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
 
     // An employee holding every controlled permission still has no stage authority.
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: employeeWithEveryPermission(),
         id: skipReport,
         expectedVersion: 3n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-employee-stage1-e14',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
@@ -797,7 +801,7 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
 
     // A disabled account is refused before any authority check succeeds.
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: actor(SUPERVISOR_ID, ['SUPERVISOR'], ['PERM-INSP-VIEW', 'PERM-INSP-APPROVE'], {
           accountState: 'DISABLED',
         }),
@@ -819,10 +823,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       authorId: SUPERVISOR_ID,
     });
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: supervisor(),
         id: reportId,
         expectedVersion: 3n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-sod-e15',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_SOD_VIOLATION' });
@@ -842,10 +847,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       finalResult: 'PASS',
     });
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: ownScopeManager(),
         id: reportId,
         expectedVersion: 3n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-scope-e16',
       }),
     ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
@@ -862,29 +868,32 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       finalResult: 'PASS',
     });
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: supervisor(),
         id: reportId,
         expectedVersion: 2n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-stale-e17',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
     expect(await record('inspection_reports', reportId)).toMatchObject({ version: '3' });
     expect(await auditCountByRequest('f013-insp-stale-e17')).toBe(0);
 
-    await new ApproveInspectionUseCase(inspectionRepository()).execute({
+    await new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
       actor: supervisor(),
       id: reportId,
       expectedVersion: 3n,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-repeat-e17',
     });
     // The same request replayed after the commit is refused and, crucially, the
     // stored state and history gain nothing.
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: supervisor(),
         id: reportId,
         expectedVersion: 3n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-repeat-e17',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
@@ -967,10 +976,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       finalResult: null,
     });
     await expect(
-      new ApproveInspectionUseCase(inspectionRepository()).execute({
+      new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
         actor: supervisor(),
         id: unreachableReport,
         expectedVersion: 3n,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-insp-no-result-e24',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
@@ -994,7 +1004,7 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
         finalResult: 'PASS',
       });
       const attempt = (requestId: string) =>
-        new ApproveInspectionUseCase(inspectionRepository()).execute({
+        new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
           actor: supervisor(),
           id: reportId,
           expectedVersion: 3n,
@@ -1086,7 +1096,7 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
     expect((await record('inspection_reports', reportId)).state).toBe('UNDER_REVIEW');
     expect(await auditCount(reportId, 'REOPEN')).toBe(1);
     // The signature history is preserved; reopening does not erase the approval.
-    expect(await signatures(reportId)).toHaveLength(1);
+    expect(await signatures(reportId)).toHaveLength(2);
 
     // Stage order is mandatory again after a reopen: no direct final approval.
     await expect(
@@ -1098,10 +1108,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
         requestId: 'f013-insp-final-after-reopen-e20',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
-    await new ApproveInspectionUseCase(inspectionRepository()).execute({
+    await new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
       actor: supervisor(),
       id: reportId,
       expectedVersion: 6n,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-stage1-after-reopen-e20',
     });
     expect(await record('inspection_reports', reportId)).toMatchObject({
@@ -1119,10 +1130,11 @@ describe('QC-100-FINAL-013 · inspection two-stage chain on populated PostgreSQL
       state: 'UNDER_REVIEW',
       finalResult: 'HOLD',
     });
-    await new ApproveInspectionUseCase(inspectionRepository()).execute({
+    await new ApproveInspectionUseCase(inspectionRepository(), undefined, ceremony()).execute({
       actor: supervisor(),
       id: holdReport,
       expectedVersion: 3n,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-insp-hold-stage1-e21',
     });
     await new FinalApproveInspectionUseCase(inspectionRepository(), ceremony()).execute({
@@ -1248,15 +1260,18 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
     const staged = await new ApproveLabTestUseCase(
       context.repository,
       context.sources,
+      undefined,
+      ceremony(),
     ).execute({
       actor: supervisor(),
       id: reviewed.id,
       expectedVersion: reviewed.version,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-lab-stage1-e31',
     });
     expect(staged.state).toBe('PENDING_QCM_APPROVAL');
     expect(staged.scientificResult).toBe('PASS');
-    expect(await signatures(staged.id)).toHaveLength(0);
+    expect(await signatures(staged.id)).toHaveLength(1);
 
     const approved = await new FinalApproveLabTestUseCase(context.repository, ceremony()).execute({
       actor: qcm(),
@@ -1270,7 +1285,7 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
     expect(committed).toMatchObject({ state: 'APPROVED' });
     expect(committed.approved_at).not.toBeNull();
     expect(await auditCount(staged.id, 'FINAL_APPROVE')).toBe(1);
-    expect(await signatures(staged.id)).toHaveLength(1);
+    expect(await signatures(staged.id)).toHaveLength(2);
 
     // A locked laboratory record cannot be edited or re-approved.
     await expect(
@@ -1303,7 +1318,7 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
     });
     expect(reopened.state).toBe('UNDER_REVIEW');
     expect(await auditCount(staged.id, 'REOPEN')).toBe(1);
-    expect(await signatures(staged.id)).toHaveLength(1);
+    expect(await signatures(staged.id)).toHaveLength(2);
   });
 
   it('[wrong-role] denies stage-1, final and named-owner stage order to non-authorities', async () => {
@@ -1330,10 +1345,11 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
 
     // An employee with every controlled permission has no stage authority.
     await expect(
-      new ApproveLabTestUseCase(context.repository, context.sources).execute({
+      new ApproveLabTestUseCase(context.repository, context.sources, undefined, ceremony()).execute({
         actor: employeeWithEveryPermission(),
         id: reviewed.id,
         expectedVersion: reviewed.version,
+        reauthenticationSecret: REAUTH_SECRET,
         requestId: 'f013-lab-employee-stage1-e32',
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
@@ -1366,10 +1382,11 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
       expectedVersion: submitted.version,
       requestId: 'f013-lab-review-e34',
     });
-    const staged = await new ApproveLabTestUseCase(context.repository, context.sources).execute({
+    const staged = await new ApproveLabTestUseCase(context.repository, context.sources, undefined, ceremony()).execute({
       actor: supervisor(),
       id: reviewed.id,
       expectedVersion: reviewed.version,
+      reauthenticationSecret: REAUTH_SECRET,
       requestId: 'f013-lab-stage1-e34',
     });
     await expect(
@@ -1381,7 +1398,7 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
         requestId: 'f013-lab-reauth-e34',
       }),
     ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
-    expect(await signatures(staged.id)).toHaveLength(0);
+    expect(await signatures(staged.id)).toHaveLength(2);
     expect(await auditCount(staged.id, 'FINAL_APPROVE')).toBe(0);
     expect(await record('lab_tests', staged.id)).toMatchObject({
       state: 'PENDING_QCM_APPROVAL',
@@ -1400,17 +1417,18 @@ describe('QC-100-FINAL-013 · laboratory two-stage chain on populated PostgreSQL
         requestId: `f013-lab-review-${tag}`,
       });
       await expect(
-        new ApproveLabTestUseCase(context.repository, context.sources).execute({
+        new ApproveLabTestUseCase(context.repository, context.sources, undefined, ceremony()).execute({
           actor: supervisor(),
           id: reviewed.id,
           expectedVersion: reviewed.version - 1n,
+          reauthenticationSecret: REAUTH_SECRET,
           requestId: `f013-lab-stale-${tag}`,
         }),
       ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
       expect(await record('lab_tests', reviewed.id)).toMatchObject({ state: 'UNDER_REVIEW' });
 
       const attempt = (requestId: string) =>
-        new ApproveLabTestUseCase(context.repository, context.sources).execute({
+        new ApproveLabTestUseCase(context.repository, context.sources, undefined, ceremony()).execute({
           actor: supervisor(),
           id: reviewed.id,
           expectedVersion: reviewed.version,

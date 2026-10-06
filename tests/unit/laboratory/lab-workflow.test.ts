@@ -15,6 +15,8 @@ import type {
 import type { LabRepository } from '../../../src/modules/laboratory/ports/repository.js';
 import { AppError } from '../../../src/shared/errors/app-error.js';
 import type { ActorContext, PermissionGrant } from '../../../src/shared/authorization/types.js';
+import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
+import type { SignatureEvidence } from '../../../src/modules/e-signatures/domain/signature-evidence.js';
 
 const AUTHOR_ID = '01900000-0000-7000-8000-0000000000a1';
 const REVIEWER_ID = '01900000-0000-7000-8000-0000000000a2';
@@ -47,6 +49,7 @@ const approverActor = (): ActorContext =>
   p05Reviewer([
     { code: 'PERM-LAB-APPROVE', scopes: ['GLOBAL'] },
     { code: 'PERM-APR-APPROVE', scopes: ['GLOBAL'] },
+    { code: 'PERM-ESIG-SIGN', scopes: ['GLOBAL'] },
   ]);
 const rejecterActor = (): ActorContext =>
   p05Reviewer([
@@ -118,6 +121,7 @@ function labTest(state: LabTest['state'] = 'DRAFT'): LabTest {
 interface PersistedMutation {
   action: string;
   reason?: string;
+  signatureEvidence?: SignatureEvidence;
 }
 
 class MemoryRepository implements LabRepository {
@@ -255,17 +259,21 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
 
   it('approve (stage-1): UNDER_REVIEW → PENDING_QCM_APPROVAL stores the provider-evaluated result without locking (QC-100-FINAL-004)', async () => {
     const repository = new MemoryRepository(labTest('UNDER_REVIEW'));
-    const saved = await new ApproveLabTestUseCase(repository, matchingSources).execute({
+    const ceremony = createFinalApprovalCeremony({ verify: async () => true });
+    const saved = await new ApproveLabTestUseCase(repository, matchingSources, undefined, ceremony).execute({
       actor: approverActor(),
       id: labTest().id,
       expectedVersion: 1n,
+      reauthenticationSecret: 'test-password',
       requestId: 'r-approve',
     });
     expect(saved.state).toBe('PENDING_QCM_APPROVAL');
     expect(saved.scientificResult).toBe('HOLD');
-    // Stage-1 is a workflow event, not the final approval: approvedAt stays
-    // empty until the QCM final approval with the binding e-signature.
+    // Stage-1 has its own signature; approvedAt stays empty until QCM final approval.
     expect(saved.approvedAt).toBeNull();
+    expect(repository.mutations.at(-1)?.signatureEvidence).toMatchObject({
+      action: 'STAGE1_APPROVE', meaning: 'STAGE1_APPROVE', subjectVersion: 1n,
+    });
   });
 
   it('approve denies a non-P-05 authority even with both permissions', async () => {
@@ -288,6 +296,24 @@ describe('laboratory workflow transitions (TR-LAB-002..006)', () => {
       }),
     ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
     expect(repository.value.state).toBe('UNDER_REVIEW');
+  });
+
+  it('approve denies QCM stage-one authority even when the domain permission is present', async () => {
+    const repository = new MemoryRepository(labTest('UNDER_REVIEW'));
+    const qcmActor: ActorContext = {
+      ...approverActor(),
+      roles: ['MANAGER'],
+    };
+    await expect(
+      new ApproveLabTestUseCase(repository, matchingSources, undefined, createFinalApprovalCeremony({ verify: async () => true })).execute({
+        actor: qcmActor,
+        id: labTest().id,
+        expectedVersion: 1n,
+        reauthenticationSecret: 'test-password',
+        requestId: 'r-qcm-stage1-denied',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+    expect(repository.mutations).toHaveLength(0);
   });
 });
 

@@ -44,8 +44,7 @@ export function laboratoryActionDependencies() {
     new PostgresOutboxRepository(db),
   );
   const sources = new PostgresControlledLabSources(db);
-  // QC-100-FINAL-004: the final (QCM) lab approval carries the binding
-  // e-signature; the Supervisor stage approval has its own signature.
+  // Each approval stage reauthenticates and records its own bound signature.
   const finalApprovalCeremony = createFinalApprovalCeremony(
     createPasswordReauthenticationVerifier(db),
   );
@@ -62,7 +61,7 @@ export function laboratoryActionDependencies() {
     return: new ReturnLabTestUseCase(repository),
     resume: new ResumeLabTestUseCase(repository),
     // Stage-1 (Supervisor): validates the evaluated scientific result.
-    approve: new ApproveLabTestUseCase(repository, sources),
+    approve: new ApproveLabTestUseCase(repository, sources, undefined, finalApprovalCeremony),
     // Stage-2 (QCM / named owner): final approval + binding e-signature.
     finalApprove: new FinalApproveLabTestUseCase(repository, finalApprovalCeremony),
     reopen: new ReopenLabTestUseCase(repository),

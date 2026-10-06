@@ -19,6 +19,8 @@ and human acceptance evidence on the final candidate.
 
 **Completion work (2026-10-02):** The proposed [quality decision pack](QUALITY-POLICY-DECISION-PACK-2026-10-02.md) records concrete PD-15–18/PD-32 rules awaiting content confirmation and the remaining implementation criteria. An independent repair rejects caller-supplied NCR/CAPA prerequisite flags; 23 focused synthetic/domain tests and typecheck pass. No policy closure or PostgreSQL/browser/human acceptance is inferred.
 
+**Owner decision amendment (effective 2026-10-04; recorded 2026-10-05):** `QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` supersedes the 2026-09-23 stage-one no-signature statement. Every in-system approval requires independent account-bound reauthentication and a signature bound to the pre-transition version and action meaning; inspection/laboratory Supervisor stage 1 uses `STAGE1_APPROVE`, with QCM final approval remaining `FINAL_APPROVE`. The current working tree implements this inspection/laboratory slice; exact-candidate runtime evidence is still required. This amendment does not resolve PD-01/02/07, PD-13, PD-15–18, RD-019, the full PD-32 action map beyond the owner rule, release-gate definitions, provider/data-retention decisions, storage/telemetry requirements, or performance/recovery budgets.
+
 ## 1. Register rules
 
 - The canonical decision state and authority remain in `audit/100-percent/POLICY-CLOSURE-MATRIX.md`. The risk model and acceptance authority remain in `Documents/RISK-REGISTER.md`.
@@ -33,7 +35,7 @@ and human acceptance evidence on the final candidate.
 
 The owner's 2026-10-04 reaffirmation is recorded in `OWNER-DECISION-RBAC-2026-09-23.md`. Its additional explicit creation choices are the two transcription-only laboratory templates and the two reject-report variants. This closes neither live account provisioning nor any unapproved generic workflow/signature scope. PD-01/PD-02/PD-07 remain **OPEN — OWNER/CONTROLLED-SOURCE INPUT REQUIRED** for scientific criteria, source revision/hash and manual judgment. PD-11/12/32 retain their unenumerated/technical scope; RD-019 and PD-38 retain their distinct document/laboratory policy dependencies. No numeric acceptance criterion is inferred from this RBAC instruction.
 
-Owner decision request crosswalk (RBAC fields only): signing roles = QCM normal final signature, named Owner explicit exception, Supervisor first-stage workflow approval without inspection/lab stage-1 signature, QC 01/02/03 no approval signature; explicit permissions = `PERMISSION-MATRIX.md` and the decision's create/approval matrices; creator restriction = same `EMPLOYEE` bundle for all three QC users with domain state/scope/ownership checks, no report-subtype whitelist; reviewer/approver separation = Supervisor stage 1 then QCM final with existing SoD; prohibited users = QC users for approval/override and Supervisor for final approval; audit = recorded server transaction for authorized controlled transitions. This is a decision reference, not evidence that all runtime gates passed. The inspection acceptance criteria, controlled source identity/revision/hash and manual scientific judgment remain **OPEN — OWNER/CONTROLLED-SOURCE INPUT REQUIRED**. No standalone Owner Decision Request file was located under `Documents/`; this register and `audit/100-percent/POLICY-CLOSURE-MATRIX.md` are the present decision crosswalks.
+Owner decision request crosswalk (RBAC fields only): QCM normal final signature and named-owner explicit exception remain; the separate 2026-10-05 owner decision now requires Supervisor stage-one signatures for inspection/laboratory approvals. QC 01/02/03 retain no approval-signature authority; explicit permissions = `PERMISSION-MATRIX.md` and the decision's create/approval matrices; creator restriction = same `EMPLOYEE` bundle for all three QC users with domain state/scope/ownership checks, no report-subtype whitelist; reviewer/approver separation = Supervisor stage 1 then QCM final with existing SoD; audit = recorded server transaction for authorized controlled transitions. This is a decision reference, not evidence that all runtime gates passed. The inspection acceptance criteria, controlled source identity/revision/hash and manual scientific judgment remain **OPEN — OWNER/CONTROLLED-SOURCE INPUT REQUIRED**. No standalone Owner Decision Request file was located under `Documents/`; this register and `audit/100-percent/POLICY-CLOSURE-MATRIX.md` are the present decision crosswalks.
 
 Yazeed (Owner) approved the role and workflow authority slice on 2026-09-23.
 The system role codes remain `SYSTEM_OWNER` (named active login `yazeed`),
@@ -41,8 +43,9 @@ The system role codes remain `SYSTEM_OWNER` (named active login `yazeed`),
 The three QC users share the same create/submit/draft-edit bundle across all
 currently registered QC creation surfaces; approval, review, signature,
 release, closure, and workflow override remain denied to them. Supervisor owns
-inspection/laboratory stage 1 without e-signature; QCM (`MANAGER`) owns the
-normal final approval and signature. Named-owner administrative authority is
+inspection/laboratory stage 1 with its own e-signature per the later
+2026-10-05 owner decision; QCM (`MANAGER`) owns the normal final approval and
+separate signature. Named-owner administrative authority is
 limited to explicit server use cases and cannot create a scientific result or
 resolve a missing controlled source. See
 [`OWNER-DECISION-RBAC-2026-09-23.md`](OWNER-DECISION-RBAC-2026-09-23.md).

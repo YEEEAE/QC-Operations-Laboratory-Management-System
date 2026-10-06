@@ -35,3 +35,30 @@ it('rejects a failed reauthentication before producing evidence', async () => {
     snapshotHash: 'snapshot', reauthenticationSecret: 'wrong', requestId: 'request',
   })).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
 });
+
+it('binds the Supervisor stage approval to its own action and prior record version', async () => {
+  const ceremony = createFinalApprovalCeremony({ verify: async () => true });
+  const evidence = await ceremony.createFinalApprovalEvidence({
+    actor: {
+      id: 'supervisor',
+      accountState: 'ACTIVE',
+      roles: ['SUPERVISOR'],
+      permissions: [{ code: 'PERM-ESIG-SIGN', scopes: ['GLOBAL'] }],
+    },
+    subjectType: 'INSPECTION_REPORT',
+    subjectId: 'inspection',
+    subjectVersion: 7n,
+    currentState: 'UNDER_REVIEW',
+    action: 'STAGE1_APPROVE',
+    meaning: 'STAGE1_APPROVE',
+    snapshotHash: 'inspection:inspection:v7:stage1-approval',
+    reauthenticationSecret: 'password',
+    requestId: 'stage-one-request',
+  });
+  expect(evidence).toMatchObject({
+    action: 'STAGE1_APPROVE',
+    meaning: 'STAGE1_APPROVE',
+    subjectVersion: 7n,
+    subjectType: 'INSPECTION_REPORT',
+  });
+});
