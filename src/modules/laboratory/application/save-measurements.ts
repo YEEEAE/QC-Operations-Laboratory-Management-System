@@ -26,7 +26,9 @@ export class SaveMeasurementsUseCase {
       !input.samples.length ||
       input.samples.some((s) => !s.id || !s.identifier.trim()) ||
       new Set(input.samples.map((s) => s.id)).size !== input.samples.length ||
-      input.measurements.some((m) => !input.samples.some((s) => s.id === m.sampleId))
+      input.measurements.some((m) => !input.samples.some((s) => s.id === m.sampleId)) ||
+      new Set(input.measurements.map((m) => `${m.sampleId}:${m.parameterId}`)).size !==
+        input.measurements.length
     )
       throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const at = this.now().toISOString();

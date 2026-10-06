@@ -32,6 +32,17 @@ function storedRaw(row: {
   return value;
 }
 
+/** Choose storage from the frozen declared type, never the shape of text. */
+function rawColumns(raw: string | boolean | null, parameterId: string, test: LabTest) {
+  const parameter = test.context.parameters.find((item) => item.id === parameterId);
+  if (!parameter) throw new AppError('VALIDATION_FAILED');
+  return {
+    raw_numeric_value: parameter.dataType === 'NUMERIC' && typeof raw === 'string' ? raw : null,
+    raw_text_value: parameter.dataType === 'TEXT' && typeof raw === 'string' ? raw : null,
+    raw_boolean_value: parameter.dataType === 'BOOLEAN' && typeof raw === 'boolean' ? raw : null,
+  };
+}
+
 type LabTestRow = Selectable<DatabaseSchema['lab_tests']>;
 type SnapshotRow = Selectable<DatabaseSchema['lab_test_snapshots']>;
 type BatchRow = Selectable<DatabaseSchema['lab_test_batches']>;
@@ -804,17 +815,7 @@ export class PostgresLabRepository implements LabRepository {
             batch_id: measurement.batchId ?? null,
             sample_id: measurement.sampleId,
             template_parameter_id: measurement.parameterId,
-            raw_numeric_value:
-              typeof measurement.raw === 'string' &&
-              /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(measurement.raw)
-                ? measurement.raw
-                : null,
-            raw_text_value:
-              typeof measurement.raw === 'string' &&
-              !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(measurement.raw)
-                ? measurement.raw
-                : null,
-            raw_boolean_value: typeof measurement.raw === 'boolean' ? measurement.raw : null,
+            ...rawColumns(measurement.raw, measurement.parameterId, next),
             unit: measurement.unit,
             calculated_value: measurement.calculatedValue ?? null,
             calculated_unit: measurement.calculatedUnit ?? null,
@@ -860,15 +861,7 @@ export class PostgresLabRepository implements LabRepository {
             sample_id: reading.sampleId,
             template_parameter_id: reading.parameterId,
             reading_index: reading.readingIndex,
-            raw_numeric_value:
-              typeof reading.raw === 'string' && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
-                ? reading.raw
-                : null,
-            raw_text_value:
-              typeof reading.raw === 'string' && !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(reading.raw)
-                ? reading.raw
-                : null,
-            raw_boolean_value: typeof reading.raw === 'boolean' ? reading.raw : null,
+            ...rawColumns(reading.raw, reading.parameterId, next),
             unit: reading.unit,
             remarks: reading.remarks ?? null,
             entered_by: reading.enteredBy,

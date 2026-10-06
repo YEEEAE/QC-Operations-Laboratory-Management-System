@@ -647,6 +647,7 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
     const samples = [
       { id: '01900000-0000-7000-8000-00000000f306', identifier: 'S-TRUE' },
       { id: '01900000-0000-7000-8000-00000000f307', identifier: 'S-FALSE' },
+      { id: '01900000-0000-7000-8000-00000000f308', identifier: 'S-TEXT-NUMERIC' },
     ];
     const numeric = '-9007199254740993.000000000000000001';
     const save = new SaveMeasurementsUseCase(repo);
@@ -710,6 +711,13 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
           unit: null,
           remarks: 'Text false',
         },
+        {
+          sampleId: samples[2]!.id,
+          parameterId: textId,
+          raw: '+0009007199254740993.000000000000000001',
+          unit: null,
+          remarks: 'Numeric-looking text',
+        },
         { sampleId: samples[0]!.id, parameterId: booleanId, raw: true, unit: null },
         { sampleId: samples[1]!.id, parameterId: booleanId, raw: false, unit: null },
       ],
@@ -736,7 +744,7 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
         (row) => row.sample_id === sampleId && row.template_parameter_id === booleanId,
       );
     const numericRow = stored.rows.find((row) => row.template_parameter_id === numericId);
-    expect(stored.rows).toHaveLength(5);
+    expect(stored.rows).toHaveLength(6);
     expect(numericRow).toMatchObject({
       raw_numeric_value: numeric,
       raw_text_value: null,
@@ -752,6 +760,12 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
     expect(textRow(samples[1]!.id)).toMatchObject({
       raw_text_value: 'false',
       remarks: 'Text false',
+    });
+    expect(textRow(samples[2]!.id)).toMatchObject({
+      raw_text_value: '+0009007199254740993.000000000000000001',
+      raw_numeric_value: null,
+      raw_boolean_value: null,
+      remarks: 'Numeric-looking text',
     });
     expect(booleanRow(samples[0]!.id)?.raw_boolean_value).toBe(true);
     expect(booleanRow(samples[1]!.id)?.raw_boolean_value).toBe(false);
@@ -818,7 +832,7 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
          (SELECT count(*)::text FROM qc.outbox_events WHERE aggregate_type = 'LAB_TEST' AND aggregate_id = $1 AND event_type = 'LAB_TEST_CHANGED') AS "changeEvents"`,
       [testId],
     );
-    expect(unchanged.rows[0]).toMatchObject({ measurements: '5', version: '2' });
+    expect(unchanged.rows[0]).toMatchObject({ measurements: '6', version: '2' });
 
     const failedAudit: AuditRepository = {
       async append() {
@@ -859,7 +873,7 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
       [testId, samples[0]!.id, textId, numericId],
     );
     expect(afterAuditRollback.rows[0]).toEqual({
-      measurements: '5',
+      measurements: '6',
       textTrue: 'true',
       exactNumeric: numeric,
     });
@@ -912,11 +926,130 @@ describe('QC-DATA-003 laboratory runs on PostgreSQL', () => {
       [testId, samples[0]!.id, textId, numericId],
     );
     expect(afterRollback.rows[0]).toMatchObject({
-      measurements: '5',
+      measurements: '6',
       saveAudits: unchanged.rows[0]?.saveAudits,
       changeEvents: unchanged.rows[0]?.changeEvents,
       textTrue: 'true',
       exactNumeric: numeric,
     });
+
+    // Rejected writes must preserve all rows, snapshots, audit and outbox, not only counts.
+    const digest = async () => {
+      const result = await pool!.query<{ payload: unknown }>(
+        `SELECT jsonb_build_object(
+        'test', (SELECT to_jsonb(t) FROM qc.lab_tests t WHERE id=$1),
+        'values', (SELECT jsonb_agg(to_jsonb(m) ORDER BY id) FROM qc.lab_measurements m WHERE lab_test_id=$1),
+        'samples', (SELECT jsonb_agg(to_jsonb(s) ORDER BY id) FROM qc.lab_samples s WHERE lab_test_id=$1),
+        'snapshots', (SELECT jsonb_agg(to_jsonb(s) ORDER BY id) FROM qc.lab_test_snapshots s WHERE lab_test_id=$1),
+        'audit', (SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM qc.audit_events a WHERE subject_id=$1),
+        'outbox', (SELECT jsonb_agg(to_jsonb(o) ORDER BY id) FROM qc.outbox_events o WHERE aggregate_id=$1)
+      ) AS payload`,
+        [testId],
+      );
+      return stableJson(result.rows[0]?.payload);
+    };
+    const beforeDenials = await digest();
+    const good = {
+      actor: actor(),
+      id: testId,
+      expectedVersion: 2n,
+      samples,
+      measurements: [{ sampleId: samples[0]!.id, parameterId: numericId, raw: numeric, unit: 'u' }],
+      requestId: 'negative-control',
+    };
+    for (const patch of [
+      { measurements: [{ ...good.measurements[0]!, unit: 'wrong' }] },
+      { measurements: [{ ...good.measurements[0]!, raw: 'N/A' }] },
+      { measurements: [{ ...good.measurements[0]!, raw: '' }] },
+      { measurements: [good.measurements[0]!, good.measurements[0]!] },
+      { actor: { ...actor(), accountState: 'DISABLED' as const } },
+      {
+        actor: {
+          ...actor(),
+          permissions: actor().permissions.map((p) => ({
+            ...p,
+            scopes: p.code === 'PERM-LAB-VIEW' ? (['GLOBAL'] as const) : (['OWN'] as const),
+          })),
+          id: crypto.randomUUID(),
+        },
+      },
+    ]) {
+      await expect(save.execute({ ...good, ...patch })).rejects.toBeDefined();
+      expect(await digest()).toBe(beforeDenials);
+    }
+    await expect(
+      pool!.query(
+        `UPDATE qc.lab_measurements SET raw_boolean_value=true WHERE lab_test_id=$1 AND template_parameter_id=$2`,
+        [testId, numericId],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+    expect(await digest()).toBe(beforeDenials);
+
+    const results = await Promise.allSettled([
+      save.execute({
+        ...good,
+        requestId: 'race-a',
+        measurements: reloaded.measurements.map(
+          ({ sampleId, parameterId, raw, unit, remarks }) => ({
+            sampleId,
+            parameterId,
+            raw: raw!,
+            unit,
+            ...(remarks ? { remarks } : {}),
+          }),
+        ),
+      }),
+      save.execute({
+        ...good,
+        requestId: 'race-b',
+        measurements: reloaded.measurements.map(
+          ({ sampleId, parameterId, raw, unit, remarks }) => ({
+            sampleId,
+            parameterId,
+            raw: raw!,
+            unit,
+            ...(remarks ? { remarks } : {}),
+          }),
+        ),
+      }),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({
+      reason: { code: 'CONFLICT_STALE_VERSION' },
+    });
+    const afterRace = await digest();
+    await expect(save.execute({ ...good, requestId: 'race-a' })).rejects.toMatchObject({
+      code: 'CONFLICT_STALE_VERSION',
+    });
+    expect(await digest()).toBe(afterRace);
+
+    // Replicate storage uses the same declared TEXT type, even for decimal-looking text.
+    const run = await new RecordLabRunUseCase(repo).execute({
+      actor: actor(),
+      id: testId,
+      expectedVersion: 3n,
+      run: { batchNo: 'TEXT-RUN' },
+      samples: [{ identifier: 'TEXT-RUN-SAMPLE' }],
+      readings: [
+        {
+          sampleIdentifier: 'TEXT-RUN-SAMPLE',
+          parameterId: textId,
+          readingIndex: 1,
+          raw: '+0001.2300',
+          unit: null,
+          remarks: 'Replicate note',
+        },
+      ],
+      requestId: 'typed-reading',
+    });
+    const reading = await pool!.query(
+      `SELECT raw_text_value,raw_numeric_value,remarks FROM qc.lab_readings WHERE lab_test_id=$1`,
+      [testId],
+    );
+    expect(reading.rows).toEqual([
+      { raw_text_value: '+0001.2300', raw_numeric_value: null, remarks: 'Replicate note' },
+    ]);
+    expect((await repo.get(testId, actor()))?.readings?.[0]?.raw).toBe('+0001.2300');
+    expect(run.scientificResult).toBeNull();
   }, 180000);
 });
