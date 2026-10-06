@@ -18,7 +18,7 @@ try {
   return Astro.redirect('/404');
 }
 // QC-100-FINAL-004 two-stage chain: stage-1 (Supervisor) approval needs
-// PERM-LAB-APPROVE; the QCM final approval needs PERM-APR-APPROVE plus
+// PERM-LAB-APPROVE. QCM final approval needs PERM-APR-APPROVE plus
 // PERM-ESIG-SIGN and a reauthentication password in the request body.
 const hasPermission = (code: string) =>
   actor.permissions.some((permission) => permission.code === code && permission.active !== false);
@@ -51,7 +51,7 @@ if (Astro.request.method === 'POST') {
   try {
     const expectedVersion = parseExpectedVersionField(field(form, 'expectedVersion'));
     const result = decisionIntent === 'approve'
-      ? await Astro.callAction(actions.laboratory.approve, { id: test.id, expectedVersion, reauthenticationSecret: String(form.get('reauthenticationSecret') ?? '') })
+      ? await Astro.callAction(actions.laboratory.approve, { id: test.id, expectedVersion })
       : decisionIntent === 'final-approve'
         ? await Astro.callAction(actions.laboratory.finalApprove, { id: test.id, expectedVersion, reauthenticationSecret: String(form.get('reauthenticationSecret') ?? '') })
         : decisionIntent === 'return'
@@ -155,8 +155,7 @@ if (Astro.request.method === 'POST') {
     {
       atSupervisorStage && canStageApprove ? (
       <form method="post" data-action="laboratory.approve">
-        <p>Formal signature: STAGE1_APPROVE · {actor.loginIdentity ?? actor.id} · {test.id} · version {test.version.toString()}. Sends to QCM, not final approval or release.</p>
-        <label>Reauthentication password<input name="reauthenticationSecret" type="password" autocomplete="current-password" required /></label>
+        <p>Supervisor stage approval sends this report to QCM for final review. It does not approve or release the report.</p>
         <input type="hidden" name="intent" value="approve" />
         <input type="hidden" name="expectedVersion" value={test.version.toString()} />
         <button type="submit" data-submit>
@@ -228,7 +227,7 @@ if (Astro.request.method === 'POST') {
   import{actions}from'astro:actions';
 const context=document.querySelector<HTMLElement>('[data-lab-id]');const id=context?.dataset.labId??'';const version=context?.dataset.version??'0';
 const busy=(scope:Element|null,on:boolean)=>{if(on)scope?.setAttribute('aria-busy','true');else scope?.removeAttribute('aria-busy');};
-document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.approve"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();const btn=form.querySelector<HTMLButtonElement>('[data-submit]');if(!btn||btn.disabled||form.getAttribute('aria-busy')==='true')return;btn.disabled=true;busy(form,true);btn.textContent='Applying Supervisor stage approval…';try{const result=await actions.laboratory.approve({id,expectedVersion:BigInt(version),reauthenticationSecret:String(new FormData(form).get('reauthenticationSecret')??'')});if(result.data)location.reload();else{btn.textContent='Not applied — refresh and verify the current version.';btn.disabled=false;}}catch{btn.textContent='The service did not confirm the result. Refresh the test and its history before deciding whether to try again.';btn.disabled=false;}finally{busy(form,false);}}));
+document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.approve"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();const btn=form.querySelector<HTMLButtonElement>('[data-submit]');if(!btn||btn.disabled||form.getAttribute('aria-busy')==='true')return;btn.disabled=true;busy(form,true);btn.textContent='Sending for QCM review…';try{const result=await actions.laboratory.approve({id,expectedVersion:BigInt(version)});if(result.data)location.reload();else{btn.textContent='Not applied — refresh and verify the current version.';btn.disabled=false;}}catch{btn.textContent='The service did not confirm the result. Refresh the test and its history before deciding whether to try again.';btn.disabled=false;}finally{busy(form,false);}}));
 document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.returnTest"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();if(form.getAttribute('aria-busy')==='true')return;const btn=form.querySelector<HTMLButtonElement>('[data-submit]');const out=form.querySelector<HTMLElement>('[data-result]');const reason=String(new FormData(form).get('reason')??'');if(btn)btn.disabled=true;busy(form,true);if(out)out.textContent='Returning for correction…';try{const result=await actions.laboratory.returnTest({id,expectedVersion:BigInt(version),reason});if(result.data)location.reload();else if(out){out.textContent='Return was not applied. Refresh and verify the current version.';out.focus?.();}}catch{if(out){out.textContent='The service did not confirm the result. Your reason is kept. Refresh the record and its history before deciding whether to try again.';out.focus?.();}}finally{busy(form,false);if(btn)btn.disabled=false;}}));
 document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.finalApprove"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();if(form.getAttribute('aria-busy')==='true')return;const btn=form.querySelector<HTMLButtonElement>('[data-submit]');const out=form.querySelector<HTMLElement>('[data-result]');const password=form.querySelector<HTMLInputElement>('[name="reauthenticationSecret"]');let reauthenticationSecret=password?.value??'';if(btn)btn.disabled=true;busy(form,true);if(out)out.textContent='Applying QCM final approval with signature…';try{const result=await actions.laboratory.finalApprove({id,expectedVersion:BigInt(version),reauthenticationSecret});reauthenticationSecret='';if(password)password.value='';if(result.data)location.reload();else if(out){out.textContent='The final approval was not applied. Verify your reauthentication password and the current version, then try again.';out.focus?.();}}catch{reauthenticationSecret='';if(password)password.value='';if(out){out.textContent='The service did not confirm the result. Refresh the test and its approval history before deciding whether to try again.';out.focus?.();}}finally{reauthenticationSecret='';if(password)password.value='';busy(form,false);if(btn)btn.disabled=false;}}));
 </script>

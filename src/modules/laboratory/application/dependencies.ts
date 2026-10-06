@@ -62,7 +62,7 @@ export function laboratoryActionDependencies() {
     return: new ReturnLabTestUseCase(repository),
     resume: new ResumeLabTestUseCase(repository),
     // Stage-1 (Supervisor): validates the evaluated scientific result.
-    approve: new ApproveLabTestUseCase(repository, sources, undefined, undefined, finalApprovalCeremony),
+    approve: new ApproveLabTestUseCase(repository, sources),
     // Stage-2 (QCM / named owner): final approval + binding e-signature.
     finalApprove: new FinalApproveLabTestUseCase(repository, finalApprovalCeremony),
     reopen: new ReopenLabTestUseCase(repository),

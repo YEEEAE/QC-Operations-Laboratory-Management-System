@@ -108,8 +108,8 @@ export function quarantineActionDependencies() {
       ),
       submit: new SubmitInspectionUseCase(inspectionRepository),
       review: new ReviewInspectionUseCase(inspectionRepository),
-      // Stage-1 (Supervisor) approval: distinct binding e-signature.
-      approve: new ApproveInspectionUseCase(inspectionRepository, undefined, finalApprovalCeremony),
+      // Stage-1 (Supervisor) approval: workflow transition without e-signature.
+      approve: new ApproveInspectionUseCase(inspectionRepository),
       // Stage-2 (QCM / named owner) approval: the binding e-signature.
       finalApprove: new FinalApproveInspectionUseCase(inspectionRepository, finalApprovalCeremony),
       reopen: new ReopenInspectionUseCase(inspectionRepository),

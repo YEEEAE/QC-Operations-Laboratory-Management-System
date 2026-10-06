@@ -1,4 +1,3 @@
-import { createFinalApprovalCeremony } from '../../../src/modules/e-signatures/application/final-approval-ceremony.js';
 import { describe, expect, it } from 'vitest';
 import { ApproveInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/approve-inspection.js';
 import { ReviewInspectionUseCase } from '../../../src/modules/quarantine/inspection/application/review-inspection.js';
@@ -118,11 +117,10 @@ describe('Quarantine inspection review and approval', () => {
   it('approves under the approved P-05 policy but still denies with an explicit deny policy', async () => {
     const repo = repository({ ...inspection('UNDER_REVIEW'), version: 3n });
     await expect(
-      new ApproveInspectionUseCase(repo,undefined,createFinalApprovalCeremony({verify:async()=>true})).execute({
+      new ApproveInspectionUseCase(repo).execute({
         actor: actor(reviewerId),
         id: inspection().id,
         expectedVersion: 3n,
-        reauthenticationSecret:'synthetic-test-only',
         requestId: 'req',
       }),
     ).resolves.toMatchObject({ state: 'PENDING_QCM_APPROVAL' });
