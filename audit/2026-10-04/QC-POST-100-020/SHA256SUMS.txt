@@ -1,2 +1,0 @@
-43245bbef5e16c8b375df5d32d37a0c5ded213653c216925c35a469f666e6381  execution-evidence.json
-c09efe78c23b46786d8f7ff4bcb4bb7f2388f014d1b6f9b5755c17ced62ccffc  handoff.md

@@ -1,3 +1,0 @@
-{
-  "changedTables": ["audit_events", "outbox_events", "sessions", "tasks"]
-}
