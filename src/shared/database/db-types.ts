@@ -197,6 +197,11 @@ export interface TasksTable {
   updated_by: string | null;
   updated_at: Generated<Date>;
   version: Generated<bigint>;
+  specialized_record_type: string | null;
+  specialized_record_id: string | null;
+  recurrence_rule_id: string | null;
+  occurrence_key: string | null;
+  occurrence_fingerprint: string | null;
 }
 export interface FindingsTable {
   id: Generated<string>;

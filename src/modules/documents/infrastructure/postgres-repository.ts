@@ -219,9 +219,13 @@ export class PostgresDocumentRepository implements DocumentRepository {
     return Promise.all(rows.map(async (row) => versionMap(row, await this.listVersionFiles(this.database, row.id))));
   }
 
-  async updateDraft(input: { id: string; expectedVersion: bigint; expectedContentHash: string; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }): Promise<DocumentVersion> {
+  async updateDraft(input: { id: string; expectedVersion: bigint; expectedContentHash: string; actor: ActorContext; revision: string; changeSummary?: string; now: Date; requestId: string }, transaction?: DatabaseTransaction): Promise<DocumentVersion> {
     try {
-      return await this.database.transaction().execute(async (tx) => {
+      const commit = async (tx: DatabaseTransaction) => {
+        const context = await tx.selectFrom('document_versions').select('document_id').where('id', '=', input.id).executeTakeFirst();
+        if (!context) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        const identity = await tx.selectFrom('document_identities').selectAll().where('id', '=', context.document_id).forUpdate().executeTakeFirst();
+        if (!identity || !identity.active) throw new AppError('AUTHZ_DENIED', { userSafe: true });
         const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).where('content_hash', '=', input.expectedContentHash).where('state', '=', 'DRAFT').forUpdate().executeTakeFirst();
         if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const files = await this.listVersionFiles(tx, input.id, true);
@@ -231,7 +235,8 @@ export class PostgresDocumentRepository implements DocumentRepository {
         await this.auditFor(tx)?.append({ actorType: 'USER', actorId: input.actor.id, subjectType: 'DOCUMENT_VERSION', subjectId: input.id, action: 'EDIT_DOCUMENT_DRAFT', oldState: 'DRAFT', newState: 'DRAFT', reason: input.changeSummary?.trim() || undefined, requestId: input.requestId, payload: { expectedVersion: input.expectedVersion.toString(), version: (input.expectedVersion + 1n).toString(), expectedContentHash: input.expectedContentHash, revision: input.revision.trim(), contentHash } });
         await this.outboxFor(tx)?.enqueue({ eventType: 'DOCUMENT_VERSION_DRAFT_UPDATED', aggregateType: 'DOCUMENT_VERSION', aggregateId: input.id, payload: { version: (input.expectedVersion + 1n).toString(), revision: input.revision.trim(), contentHash }, dedupeKey: `document-version-draft-updated:${input.id}:v${input.expectedVersion + 1n}` });
         return versionMap(row, files);
-      });
+      };
+      return transaction ? await commit(transaction) : await this.database.transaction().execute(commit);
     } catch (error) { if (error instanceof AppError) throw error; throw translateDatabaseError(error); }
   }
 

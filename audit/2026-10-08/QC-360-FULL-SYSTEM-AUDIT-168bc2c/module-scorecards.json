@@ -1,0 +1,2828 @@
+{
+  "scope": "Canonical requirement families; additional domains below do not acquire an invented denominator",
+  "families": [
+    {
+      "domain": "ADM",
+      "requirements": 5,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "full_source_weight": 0,
+      "total_weight": 5,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-ADM-001",
+          "source": [
+            "src/modules/administration/application/manage-user-role.ts",
+            "src/modules/administration/application/update-role-permissions.ts",
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/identity/application/disable-user.ts"
+          ],
+          "gap": "User disable remains non-atomic across state/session/audit; all admin commands, correction semantics, denied scope and concurrent grants need mapped acceptance. Repository audit dependency is optional, so production composition matters."
+        },
+        {
+          "id": "REQ-ADM-002",
+          "source": [
+            "src/modules/administration/application/manage-user-role.ts",
+            "src/modules/administration/application/update-role-permissions.ts",
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/identity/application/disable-user.ts"
+          ],
+          "gap": "User disable remains non-atomic across state/session/audit; all admin commands, correction semantics, denied scope and concurrent grants need mapped acceptance. Repository audit dependency is optional, so production composition matters."
+        },
+        {
+          "id": "REQ-ADM-003",
+          "source": [
+            "src/modules/administration/application/manage-user-role.ts",
+            "src/modules/administration/application/update-role-permissions.ts",
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/identity/application/disable-user.ts"
+          ],
+          "gap": "User disable remains non-atomic across state/session/audit; all admin commands, correction semantics, denied scope and concurrent grants need mapped acceptance. Repository audit dependency is optional, so production composition matters."
+        },
+        {
+          "id": "REQ-ADM-004",
+          "source": [
+            "src/modules/administration/application/manage-user-role.ts",
+            "src/modules/administration/application/update-role-permissions.ts",
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/identity/application/disable-user.ts"
+          ],
+          "gap": "User disable remains non-atomic across state/session/audit; all admin commands, correction semantics, denied scope and concurrent grants need mapped acceptance. Repository audit dependency is optional, so production composition matters."
+        },
+        {
+          "id": "REQ-ADM-005",
+          "source": [
+            "Documents/DECISION-ASSUMPTION-REGISTER-026.md:100",
+            "Documents/BUSINESS-RULES.md:2955"
+          ],
+          "gap": "Approved reference-data catalog, field classification, authority and change evidence remain external policy inputs; absence of a decision is not audit authority to invent one."
+        }
+      ]
+    },
+    {
+      "domain": "AI",
+      "requirements": 10,
+      "PARTIALLY_IMPLEMENTED": 10,
+      "full_source_weight": 0,
+      "total_weight": 10,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-AI-001",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-002",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-003",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-004",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-005",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-006",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "sourceId/sourceType/citation bypass the screens in the reproduced synthetic probe; input context is caller-supplied rather than a server-fetched source authorization resolver. Live AI is policy-disabled."
+        },
+        {
+          "id": "REQ-AI-007",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-008",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts",
+            ".ci-results/QC-360-20261008/ops-synthetic-probe.json"
+          ],
+          "gap": "These are bounded architectural safeguards; all output attack cases and independent deployed core workflows remain unverified. No real external provider invocation was made."
+        },
+        {
+          "id": "REQ-AI-009",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts"
+          ],
+          "gap": "A durable per-invocation audit record and approved retention authority were not established; returned metadata alone is not an auditable retained invocation."
+        },
+        {
+          "id": "REQ-AI-010",
+          "source": [
+            "src/modules/ai-advisory/application/get-advisory.ts",
+            "src/modules/ai-advisory/domain/advisory-response.ts"
+          ],
+          "gap": "A durable per-invocation audit record and approved retention authority were not established; returned metadata alone is not an auditable retained invocation."
+        }
+      ]
+    },
+    {
+      "domain": "APR",
+      "requirements": 9,
+      "PARTIALLY_IMPLEMENTED": 4,
+      "FULLY_IMPLEMENTED": 5,
+      "full_source_weight": 15,
+      "total_weight": 27,
+      "source_lower_bound_percent": 55.56,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-APR-001",
+          "source": [
+            "src/modules/approvals/application/decide-approval.ts",
+            "src/modules/change-requests/application/transition-change-request.ts"
+          ],
+          "gap": "Unresolved signature applicability blocks the positive path; complete return history/audit persistence and current all-subject decision coverage remain unverified."
+        },
+        {
+          "id": "REQ-APR-002",
+          "source": [
+            "src/modules/approvals/application/dependencies.ts:148",
+            "src/modules/approvals/application/dependencies.ts:180",
+            "src/modules/approvals/application/decide-approval.ts:112"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-APR-003",
+          "source": [
+            "src/modules/approvals/application/dependencies.ts:148",
+            "src/modules/approvals/application/dependencies.ts:180",
+            "src/modules/approvals/application/decide-approval.ts:112"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-APR-004",
+          "source": [
+            "src/modules/approvals/application/dependencies.ts:148",
+            "src/modules/approvals/application/dependencies.ts:180",
+            "src/modules/approvals/application/decide-approval.ts:112"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-APR-005",
+          "source": [
+            "src/modules/approvals/application/dependencies.ts:148",
+            "src/modules/approvals/application/dependencies.ts:180",
+            "src/modules/approvals/application/decide-approval.ts:112"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-APR-006",
+          "source": [
+            "src/modules/approvals/application/dependencies.ts:148",
+            "src/modules/approvals/application/dependencies.ts:180",
+            "src/modules/approvals/application/decide-approval.ts:112"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-APR-007",
+          "source": [
+            "src/modules/approvals/application/decide-approval.ts",
+            "src/modules/change-requests/application/transition-change-request.ts"
+          ],
+          "gap": "Unresolved signature applicability blocks the positive path; complete return history/audit persistence and current all-subject decision coverage remain unverified."
+        },
+        {
+          "id": "REQ-APR-008",
+          "source": [
+            "src/modules/approvals/application/decide-approval.ts",
+            "src/modules/change-requests/application/transition-change-request.ts"
+          ],
+          "gap": "Unresolved signature applicability blocks the positive path; complete return history/audit persistence and current all-subject decision coverage remain unverified."
+        },
+        {
+          "id": "REQ-APR-009",
+          "source": [
+            "src/modules/approvals/application/dependencies.ts:148",
+            "src/modules/approvals/application/dependencies.ts:180",
+            "src/modules/approvals/application/decide-approval.ts:112"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "ARCH",
+      "requirements": 12,
+      "FULLY_IMPLEMENTED": 4,
+      "PARTIALLY_IMPLEMENTED": 8,
+      "full_source_weight": 4,
+      "total_weight": 12,
+      "source_lower_bound_percent": 33.33,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-ARCH-001",
+          "source": [
+            "astro.config.mjs"
+          ],
+          "gap": "Deployed adapter/startup promotion acceptance remains separate from this source configuration."
+        },
+        {
+          "id": "REQ-ARCH-002",
+          "source": [
+            "astro.config.mjs"
+          ],
+          "gap": "Deployed adapter/startup promotion acceptance remains separate from this source configuration."
+        },
+        {
+          "id": "REQ-ARCH-003",
+          "source": [
+            "astro.config.mjs"
+          ],
+          "gap": "Deployed adapter/startup promotion acceptance remains separate from this source configuration."
+        },
+        {
+          "id": "REQ-ARCH-004",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "tests/unit/architecture/boundary-guard.test.ts"
+          ],
+          "gap": "Boundary guard is bounded proof; every delivery/use-case path and cross-module exception must still be mapped."
+        },
+        {
+          "id": "REQ-ARCH-005",
+          "source": [
+            "src/shared/database/pool.ts",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Pending production migration is a distinct parity gap, not evidence of a different database technology."
+        },
+        {
+          "id": "REQ-ARCH-006",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "tests/unit/architecture/boundary-guard.test.ts"
+          ],
+          "gap": "Boundary guard is bounded proof; every delivery/use-case path and cross-module exception must still be mapped."
+        },
+        {
+          "id": "REQ-ARCH-007",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "tests/unit/architecture/boundary-guard.test.ts"
+          ],
+          "gap": "Boundary guard is bounded proof; every delivery/use-case path and cross-module exception must still be mapped."
+        },
+        {
+          "id": "REQ-ARCH-008",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "tests/unit/architecture/boundary-guard.test.ts"
+          ],
+          "gap": "Boundary guard is bounded proof; every delivery/use-case path and cross-module exception must still be mapped."
+        },
+        {
+          "id": "REQ-ARCH-009",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "tests/unit/architecture/boundary-guard.test.ts"
+          ],
+          "gap": "Boundary guard is bounded proof; every delivery/use-case path and cross-module exception must still be mapped."
+        },
+        {
+          "id": "REQ-ARCH-010",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "tests/unit/architecture/boundary-guard.test.ts"
+          ],
+          "gap": "Boundary guard is bounded proof; every delivery/use-case path and cross-module exception must still be mapped."
+        },
+        {
+          "id": "REQ-ARCH-011",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-ARCH-012",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        }
+      ]
+    },
+    {
+      "domain": "AUD",
+      "requirements": 7,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "FULLY_IMPLEMENTED": 2,
+      "full_source_weight": 6,
+      "total_weight": 21,
+      "source_lower_bound_percent": 28.57,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-AUD-001",
+          "source": [
+            "src/shared/audit/audit-service.ts",
+            "src/shared/audit/postgres-audit-repository.ts",
+            "src/shared/audit/audit-event.ts",
+            "db/migrations/0001_core_schema.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+        },
+        {
+          "id": "REQ-AUD-002",
+          "source": [
+            "db/migrations/0028_qc_closure_009_controlled_records.sql:40",
+            "db/migrations/0033_controlled_document_execution_context.sql:116",
+            "src/modules/identity/infrastructure/postgres-credential-mutation-commit.ts:36"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUD-003",
+          "source": [
+            "db/migrations/0028_qc_closure_009_controlled_records.sql:40",
+            "db/migrations/0033_controlled_document_execution_context.sql:116",
+            "src/modules/identity/infrastructure/postgres-credential-mutation-commit.ts:36"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUD-004",
+          "source": [
+            "src/shared/audit/audit-service.ts",
+            "src/shared/audit/postgres-audit-repository.ts",
+            "src/shared/audit/audit-event.ts",
+            "db/migrations/0001_core_schema.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+        },
+        {
+          "id": "REQ-AUD-005",
+          "source": [
+            "src/shared/audit/audit-service.ts",
+            "src/shared/audit/postgres-audit-repository.ts",
+            "src/shared/audit/audit-event.ts",
+            "db/migrations/0001_core_schema.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+        },
+        {
+          "id": "REQ-AUD-006",
+          "source": [
+            "src/shared/audit/audit-service.ts",
+            "src/shared/audit/postgres-audit-repository.ts",
+            "src/shared/audit/audit-event.ts",
+            "db/migrations/0001_core_schema.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+        },
+        {
+          "id": "REQ-AUD-007",
+          "source": [
+            "src/shared/audit/audit-service.ts",
+            "src/shared/audit/postgres-audit-repository.ts",
+            "src/shared/audit/audit-event.ts",
+            "db/migrations/0001_core_schema.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+        }
+      ]
+    },
+    {
+      "domain": "AUTH",
+      "requirements": 11,
+      "PARTIALLY_IMPLEMENTED": 4,
+      "FULLY_IMPLEMENTED": 7,
+      "full_source_weight": 21,
+      "total_weight": 33,
+      "source_lower_bound_percent": 63.64,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-AUTH-001",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/administration/application/update-role-permissions.ts"
+          ],
+          "gap": "Every registered action and API endpoint still needs independent authorization/scope denial mapping; selected source controls cannot establish universal security compliance."
+        },
+        {
+          "id": "REQ-AUTH-002",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-003",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-004",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-005",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-006",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-007",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-008",
+          "source": [
+            "src/modules/reporting/application/run-report.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts",
+            "src/modules/reporting/application/report-registry.ts"
+          ],
+          "gap": "This proves bounded OWN report behavior only; full report inventory, approved scope breadth and deployed negative tests remain unmapped."
+        },
+        {
+          "id": "REQ-AUTH-009",
+          "source": [
+            "src/shared/search/search-service.ts",
+            "src/shared/search/postgres-search.ts"
+          ],
+          "gap": "Backslash literal-pattern defect remains; complete entity/role/TEAM-scope and runtime positive/negative acceptance is not established."
+        },
+        {
+          "id": "REQ-AUTH-010",
+          "source": [
+            "src/shared/authorization/authorize.ts:11",
+            "src/shared/authorization/visibility.ts:10",
+            "src/modules/approvals/application/authorization.ts:1"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-AUTH-011",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/administration/application/update-role-permissions.ts"
+          ],
+          "gap": "Every registered action and API endpoint still needs independent authorization/scope denial mapping; selected source controls cannot establish universal security compliance."
+        }
+      ]
+    },
+    {
+      "domain": "BKP",
+      "requirements": 8,
+      "PARTIALLY_IMPLEMENTED": 8,
+      "full_source_weight": 0,
+      "total_weight": 8,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-BKP-001",
+          "source": [
+            "src/modules/backup-recovery/application/run-backup-job.ts",
+            "src/modules/backup-recovery/application/request-restore.ts"
+          ],
+          "gap": "Verified manifest is returned in memory; catalog persistence and real current storage access/restore acceptance are absent from this job and production observations."
+        },
+        {
+          "id": "REQ-BKP-002",
+          "source": [
+            "src/modules/backup-recovery/application/run-backup-job.ts",
+            "src/modules/backup-recovery/application/request-restore.ts"
+          ],
+          "gap": "Verified manifest is returned in memory; catalog persistence and real current storage access/restore acceptance are absent from this job and production observations."
+        },
+        {
+          "id": "REQ-BKP-003",
+          "source": [
+            "src/modules/backup-recovery/application/run-backup-job.ts",
+            "src/modules/backup-recovery/application/request-restore.ts"
+          ],
+          "gap": "Verified manifest is returned in memory; catalog persistence and real current storage access/restore acceptance are absent from this job and production observations."
+        },
+        {
+          "id": "REQ-BKP-004",
+          "source": [
+            "Documents/QC360-ISOLATED-RESTORE-TECHNICAL-POLICY-2026-10-08.md"
+          ],
+          "gap": "Production backup catalog, provider recovery, RPO/RTO acceptance and operational restore orchestration remain open."
+        },
+        {
+          "id": "REQ-BKP-005",
+          "source": [
+            "src/modules/backup-recovery/application/run-backup-job.ts",
+            "src/modules/backup-recovery/application/request-restore.ts"
+          ],
+          "gap": "Verified manifest is returned in memory; catalog persistence and real current storage access/restore acceptance are absent from this job and production observations."
+        },
+        {
+          "id": "REQ-BKP-006",
+          "source": [
+            "src/modules/backup-recovery/application/validate-restore-request.ts",
+            "src/modules/backup-recovery/application/production-recovery-authorization.ts"
+          ],
+          "gap": "Approved RPO,RTO and production restore authority/ceremony remain open policy inputs. They must not be invented by an auditor."
+        },
+        {
+          "id": "REQ-BKP-007",
+          "source": [
+            "src/modules/backup-recovery/application/validate-restore-request.ts",
+            "src/modules/backup-recovery/application/production-recovery-authorization.ts"
+          ],
+          "gap": "Approved RPO,RTO and production restore authority/ceremony remain open policy inputs. They must not be invented by an auditor."
+        },
+        {
+          "id": "REQ-BKP-008",
+          "source": [
+            "src/modules/backup-recovery/application/validate-restore-request.ts",
+            "src/modules/backup-recovery/application/production-recovery-authorization.ts"
+          ],
+          "gap": "Approved RPO,RTO and production restore authority/ceremony remain open policy inputs. They must not be invented by an auditor."
+        }
+      ]
+    },
+    {
+      "domain": "CAL",
+      "requirements": 6,
+      "PARTIALLY_IMPLEMENTED": 6,
+      "full_source_weight": 0,
+      "total_weight": 6,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-CAL-001",
+          "source": [
+            "src/modules/assets/calibration/domain/calibration.ts",
+            "src/modules/assets/calibration/application/create-calibration.ts"
+          ],
+          "gap": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified."
+        },
+        {
+          "id": "REQ-CAL-002",
+          "source": [
+            "src/modules/assets/calibration/domain/calibration.ts",
+            "src/modules/assets/calibration/application/create-calibration.ts"
+          ],
+          "gap": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified."
+        },
+        {
+          "id": "REQ-CAL-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:751",
+            "src/modules/assets/calibration/domain/calibration.ts:89",
+            "src/modules/assets/calibration/application/transition-calibration.ts:36"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-CAL-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:752",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:87",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:185"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-CAL-005",
+          "source": [
+            "src/modules/assets/calibration/domain/calibration.ts",
+            "src/modules/assets/calibration/application/create-calibration.ts"
+          ],
+          "gap": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified."
+        },
+        {
+          "id": "REQ-CAL-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:754",
+            "src/modules/assets/calibration/application/transition-calibration.ts:6",
+            "src/modules/assets/calibration/application/transition-calibration.ts:36"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "CHG",
+      "requirements": 8,
+      "PARTIALLY_IMPLEMENTED": 6,
+      "FULLY_IMPLEMENTED": 2,
+      "full_source_weight": 2,
+      "total_weight": 8,
+      "source_lower_bound_percent": 25.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-CHG-001",
+          "source": [
+            "src/modules/change-requests/domain/change-request.ts",
+            "src/modules/change-requests/application/transition-change-request.ts",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts"
+          ],
+          "gap": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping."
+        },
+        {
+          "id": "REQ-CHG-002",
+          "source": [
+            "src/modules/change-requests/application/transition-change-request.ts:27",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts:182",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts:443",
+            "src/modules/change-requests/domain/change-request.ts:132"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-CHG-003",
+          "source": [
+            "src/modules/change-requests/application/transition-change-request.ts:27",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts:182",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts:443",
+            "src/modules/change-requests/domain/change-request.ts:132"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-CHG-004",
+          "source": [
+            "src/modules/change-requests/domain/change-request.ts",
+            "src/modules/change-requests/application/transition-change-request.ts",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts"
+          ],
+          "gap": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping."
+        },
+        {
+          "id": "REQ-CHG-005",
+          "source": [
+            "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+          ],
+          "gap": "Effective/approved document replacement and other domain adapters remain open."
+        },
+        {
+          "id": "REQ-CHG-006",
+          "source": [
+            "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+          ],
+          "gap": "Populated PostgreSQL application failure/replay and human acceptance remain open."
+        },
+        {
+          "id": "REQ-CHG-007",
+          "source": [
+            "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+          ],
+          "gap": "Real PostgreSQL rollback/race coverage for this application adapter remains open."
+        },
+        {
+          "id": "REQ-CHG-008",
+          "source": [
+            "src/modules/change-requests/domain/change-request.ts",
+            "src/modules/change-requests/application/transition-change-request.ts",
+            "src/modules/change-requests/infrastructure/postgres-repository.ts"
+          ],
+          "gap": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping."
+        }
+      ]
+    },
+    {
+      "domain": "DASH",
+      "requirements": 5,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "full_source_weight": 0,
+      "total_weight": 5,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-DASH-001",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        },
+        {
+          "id": "REQ-DASH-002",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        },
+        {
+          "id": "REQ-DASH-003",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        },
+        {
+          "id": "REQ-DASH-004",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        },
+        {
+          "id": "REQ-DASH-005",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        }
+      ]
+    },
+    {
+      "domain": "DATA",
+      "requirements": 19,
+      "PARTIALLY_IMPLEMENTED": 17,
+      "FULLY_IMPLEMENTED": 2,
+      "full_source_weight": 6,
+      "total_weight": 57,
+      "source_lower_bound_percent": 10.53,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-DATA-001",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-002",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-003",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-004",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-005",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-006",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-007",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-008",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-009",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-010",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        },
+        {
+          "id": "REQ-DATA-011",
+          "source": [
+            "db/migrations/README.md:6",
+            "db/migrations/0028_qc_closure_009_controlled_records.sql:40",
+            "db/migrations/0033_controlled_document_execution_context.sql:116",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DATA-012",
+          "source": [
+            "db/migrations/README.md:6",
+            "db/migrations/0028_qc_closure_009_controlled_records.sql:40",
+            "db/migrations/0033_controlled_document_execution_context.sql:116",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DATA-020",
+          "source": [
+            "db/migrations/README.md:6",
+            "db/migrations/0028_qc_closure_009_controlled_records.sql:40",
+            "db/migrations/0033_controlled_document_execution_context.sql:116",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DATA-021",
+          "source": [
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/backup-recovery/application/request-restore.ts",
+            ".ci-results/QC-360-20261008/workflows.json"
+          ],
+          "gap": "Universal command replay, stale edit, atomic inspection consequences and calibration supersession proof remains missing. Existing selected controls cannot establish every critical transaction."
+        },
+        {
+          "id": "REQ-DATA-022",
+          "source": [
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/backup-recovery/application/request-restore.ts",
+            ".ci-results/QC-360-20261008/workflows.json"
+          ],
+          "gap": "Universal command replay, stale edit, atomic inspection consequences and calibration supersession proof remains missing. Existing selected controls cannot establish every critical transaction."
+        },
+        {
+          "id": "REQ-DATA-023",
+          "source": [
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/backup-recovery/application/request-restore.ts",
+            ".ci-results/QC-360-20261008/workflows.json"
+          ],
+          "gap": "Universal command replay, stale edit, atomic inspection consequences and calibration supersession proof remains missing. Existing selected controls cannot establish every critical transaction."
+        },
+        {
+          "id": "REQ-DATA-024",
+          "source": [
+            "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+          ],
+          "gap": "Other domains and populated PostgreSQL rollback/race acceptance remain open."
+        },
+        {
+          "id": "REQ-DATA-025",
+          "source": [
+            "db/migrations/README.md:6",
+            "db/migrations/0028_qc_closure_009_controlled_records.sql:40",
+            "db/migrations/0033_controlled_document_execution_context.sql:116",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DATA-026",
+          "source": [
+            "src/modules/administration/infrastructure/postgres-authorization-repository.ts",
+            "src/modules/backup-recovery/application/request-restore.ts",
+            ".ci-results/QC-360-20261008/workflows.json"
+          ],
+          "gap": "Universal command replay, stale edit, atomic inspection consequences and calibration supersession proof remains missing. Existing selected controls cannot establish every critical transaction."
+        }
+      ]
+    },
+    {
+      "domain": "DOC",
+      "requirements": 9,
+      "FULLY_IMPLEMENTED": 7,
+      "PARTIALLY_IMPLEMENTED": 2,
+      "full_source_weight": 21,
+      "total_weight": 27,
+      "source_lower_bound_percent": 77.78,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-DOC-001",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-002",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-003",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-004",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-005",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-006",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-007",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-008",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-DOC-009",
+          "source": [
+            "src/modules/documents/application/approve-version.ts:6",
+            "src/modules/documents/application/supersede-version.ts:13",
+            "src/modules/documents/infrastructure/postgres-repository.ts:137",
+            "db/migrations/0011_documents.sql:52",
+            "db/migrations/0043_controlled_document_source_binding.sql:93"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "EQP",
+      "requirements": 5,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "full_source_weight": 0,
+      "total_weight": 5,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-EQP-001",
+          "source": [
+            "src/modules/assets/equipment/domain/equipment.ts",
+            "src/modules/assets/equipment/application/update-equipment.ts"
+          ],
+          "gap": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+        },
+        {
+          "id": "REQ-EQP-002",
+          "source": [
+            "src/modules/assets/equipment/domain/equipment.ts",
+            "src/modules/assets/equipment/application/update-equipment.ts"
+          ],
+          "gap": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+        },
+        {
+          "id": "REQ-EQP-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:739",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:87",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:185"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-EQP-004",
+          "source": [
+            "src/modules/assets/equipment/domain/equipment.ts",
+            "src/modules/assets/equipment/application/update-equipment.ts"
+          ],
+          "gap": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+        },
+        {
+          "id": "REQ-EQP-005",
+          "source": [
+            "src/modules/assets/equipment/domain/equipment.ts",
+            "src/modules/assets/equipment/application/update-equipment.ts"
+          ],
+          "gap": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+        }
+      ]
+    },
+    {
+      "domain": "ESIG",
+      "requirements": 8,
+      "PARTIALLY_IMPLEMENTED": 4,
+      "FULLY_IMPLEMENTED": 4,
+      "full_source_weight": 12,
+      "total_weight": 24,
+      "source_lower_bound_percent": 50.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-ESIG-001",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts",
+            "src/ui/components/governance/ESignatureDialog.astro",
+            "src/modules/approvals/application/decide-approval.ts"
+          ],
+          "gap": "Complete per-action ceremony UI/persisted snapshot recomputation and rollback remain unverified. Reproduced template detached signature/identity hash gap prevents a universal binding claim."
+        },
+        {
+          "id": "REQ-ESIG-002",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts:34",
+            "src/modules/e-signatures/infrastructure/postgres-repository.ts:29",
+            "src/modules/approvals/application/decide-approval.ts:128"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-ESIG-003",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts:34",
+            "src/modules/e-signatures/infrastructure/postgres-repository.ts:29",
+            "src/modules/approvals/application/decide-approval.ts:128"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-ESIG-004",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts",
+            "src/ui/components/governance/ESignatureDialog.astro",
+            "src/modules/approvals/application/decide-approval.ts"
+          ],
+          "gap": "Complete per-action ceremony UI/persisted snapshot recomputation and rollback remain unverified. Reproduced template detached signature/identity hash gap prevents a universal binding claim."
+        },
+        {
+          "id": "REQ-ESIG-005",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts:34",
+            "src/modules/e-signatures/infrastructure/postgres-repository.ts:29",
+            "src/modules/approvals/application/decide-approval.ts:128"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-ESIG-006",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts:34",
+            "src/modules/e-signatures/infrastructure/postgres-repository.ts:29",
+            "src/modules/approvals/application/decide-approval.ts:128"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-ESIG-007",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts",
+            "src/ui/components/governance/ESignatureDialog.astro",
+            "src/modules/approvals/application/decide-approval.ts"
+          ],
+          "gap": "Complete per-action ceremony UI/persisted snapshot recomputation and rollback remain unverified. Reproduced template detached signature/identity hash gap prevents a universal binding claim."
+        },
+        {
+          "id": "REQ-ESIG-008",
+          "source": [
+            "src/modules/e-signatures/application/sign-controlled-action.ts:34",
+            "src/modules/e-signatures/infrastructure/postgres-repository.ts:29",
+            "src/modules/approvals/application/decide-approval.ts:128"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "FILE",
+      "requirements": 8,
+      "PARTIALLY_IMPLEMENTED": 8,
+      "full_source_weight": 0,
+      "total_weight": 8,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-FILE-001",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        },
+        {
+          "id": "REQ-FILE-002",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        },
+        {
+          "id": "REQ-FILE-003",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        },
+        {
+          "id": "REQ-FILE-004",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        },
+        {
+          "id": "REQ-FILE-005",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/postgres-file-repository.ts"
+          ],
+          "gap": "Controlled removal/retention authority and an audited application removal workflow were not demonstrated."
+        },
+        {
+          "id": "REQ-FILE-006",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        },
+        {
+          "id": "REQ-FILE-007",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        },
+        {
+          "id": "REQ-FILE-008",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/file-record.ts",
+            "src/shared/files/postgres-file-repository.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Search of all src finds FileService definition only, with instantiation in tests; no application upload/download composition was found. Approved scanner policy, production storage and end-to-end evidence remain missing."
+        }
+      ]
+    },
+    {
+      "domain": "HLTH",
+      "requirements": 5,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "full_source_weight": 0,
+      "total_weight": 5,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-HLTH-001",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/health/readiness.ts",
+            "src/shared/health/postgres-readiness-probe.ts",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Canonical /health and /readiness wording differs from implemented API paths; route authorization matrix and deployment failure injection remain unverified."
+        },
+        {
+          "id": "REQ-HLTH-002",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/health/readiness.ts",
+            "src/shared/health/postgres-readiness-probe.ts",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Canonical /health and /readiness wording differs from implemented API paths; route authorization matrix and deployment failure injection remain unverified."
+        },
+        {
+          "id": "REQ-HLTH-003",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/health/readiness.ts",
+            "src/shared/health/postgres-readiness-probe.ts",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Canonical /health and /readiness wording differs from implemented API paths; route authorization matrix and deployment failure injection remain unverified."
+        },
+        {
+          "id": "REQ-HLTH-004",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/health/readiness.ts",
+            "src/shared/health/postgres-readiness-probe.ts",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Canonical /health and /readiness wording differs from implemented API paths; route authorization matrix and deployment failure injection remain unverified."
+        },
+        {
+          "id": "REQ-HLTH-005",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/health/readiness.ts",
+            "src/shared/health/postgres-readiness-probe.ts",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Canonical /health and /readiness wording differs from implemented API paths; route authorization matrix and deployment failure injection remain unverified."
+        }
+      ]
+    },
+    {
+      "domain": "IDN",
+      "requirements": 6,
+      "PARTIALLY_IMPLEMENTED": 3,
+      "FULLY_IMPLEMENTED": 3,
+      "full_source_weight": 9,
+      "total_weight": 18,
+      "source_lower_bound_percent": 50.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-IDN-001",
+          "source": [
+            "src/middleware.ts",
+            "src/modules/identity/application/session-service.ts"
+          ],
+          "gap": "Complete controlled-action inventory and all unauthenticated direct action/API negative cases remain unverified."
+        },
+        {
+          "id": "REQ-IDN-002",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "src/shared/authorization/authorize.ts"
+          ],
+          "gap": "No technical shared-account detection or negative controlled-action scenario was established; unique username is not proof that a human account is never shared."
+        },
+        {
+          "id": "REQ-IDN-003",
+          "source": [
+            "src/modules/identity/application/login.ts:17",
+            "src/modules/identity/application/session-service.ts:14",
+            "src/modules/identity/infrastructure/postgres-credential-mutation-commit.ts:12",
+            "src/middleware.ts:193"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-IDN-004",
+          "source": [
+            "src/modules/identity/application/login.ts:17",
+            "src/modules/identity/application/session-service.ts:14",
+            "src/modules/identity/infrastructure/postgres-credential-mutation-commit.ts:12",
+            "src/middleware.ts:193"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-IDN-005",
+          "source": [
+            "src/modules/identity/application/login.ts:17",
+            "src/modules/identity/application/session-service.ts:14",
+            "src/modules/identity/infrastructure/postgres-credential-mutation-commit.ts:12",
+            "src/middleware.ts:193"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-IDN-006",
+          "source": [
+            "db/migrations/0001_core_schema.sql",
+            "db/migrations/0002_identity.sql",
+            ".ci-results/QC-360-20261008/database.json"
+          ],
+          "gap": "Complete column-by-column date/version/type/normalization/snapshot and historical FK deletion review remains open;14NOT VALID constraints are not evidence of current row violations."
+        }
+      ]
+    },
+    {
+      "domain": "INSP",
+      "requirements": 16,
+      "PARTIALLY_IMPLEMENTED": 16,
+      "full_source_weight": 0,
+      "total_weight": 48,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-INSP-001",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:686",
+            "src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts:111",
+            "src/modules/quarantine/inspection/application/resolve-inspection-template.ts:56"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-002",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:687",
+            "src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts:111",
+            "src/modules/quarantine/inspection/application/resolve-inspection-template.ts:56"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:688",
+            "src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts:111",
+            "src/modules/quarantine/inspection/application/resolve-inspection-template.ts:56"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:689",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:113",
+            "src/modules/quarantine/inspection/application/approve-inspection.ts:69",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:334"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-005",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:690",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:73",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:94"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:691",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:113",
+            "src/modules/quarantine/inspection/application/approve-inspection.ts:69",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:334"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-007",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:692",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:73",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:94"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-008",
+          "source": [
+            "src/modules/quarantine/inspection/application/submit-inspection.ts",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700"
+          ],
+          "gap": "Missing evidenceCount is not rejected by the application check; actual repository count mapping matters. Source-dependent evidence sufficiency, digital-source positive fixtures, races and deployed submit remain unverified."
+        },
+        {
+          "id": "REQ-INSP-009",
+          "source": [
+            "src/modules/quarantine/inspection/application/submit-inspection.ts",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700"
+          ],
+          "gap": "Missing evidenceCount is not rejected by the application check; actual repository count mapping matters. Source-dependent evidence sufficiency, digital-source positive fixtures, races and deployed submit remain unverified."
+        },
+        {
+          "id": "REQ-INSP-010",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:695",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:73",
+            "src/modules/quarantine/inspection/application/record-inspection-results.ts:94"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-011",
+          "source": [
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700",
+            "src/modules/ai-advisory/application/get-advisory.ts"
+          ],
+          "gap": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command."
+        },
+        {
+          "id": "REQ-INSP-012",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:697",
+            "src/modules/quarantine/inspection/application/approve-inspection.ts:6",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:750"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-013",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:698",
+            "src/modules/quarantine/inspection/application/approve-inspection.ts:6",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:750"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-014",
+          "source": [
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700",
+            "src/modules/ai-advisory/application/get-advisory.ts"
+          ],
+          "gap": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command."
+        },
+        {
+          "id": "REQ-INSP-015",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:700",
+            "src/modules/quarantine/inspection/application/approve-inspection.ts:6",
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:750"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-INSP-016",
+          "source": [
+            "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700",
+            "src/modules/ai-advisory/application/get-advisory.ts"
+          ],
+          "gap": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command."
+        }
+      ]
+    },
+    {
+      "domain": "LAB",
+      "requirements": 21,
+      "PARTIALLY_IMPLEMENTED": 19,
+      "IMPLEMENTATION_DEFECT": 2,
+      "full_source_weight": 0,
+      "total_weight": 63,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-LAB-001",
+          "source": [
+            "src/modules/laboratory/application/submit-lab-test.ts",
+            "src/modules/laboratory/domain/measurement.ts"
+          ],
+          "gap": "Official evaluator is fail-closed; approved methods/source, full approval journey and runtime evidence are required before scientific operational acceptance."
+        },
+        {
+          "id": "REQ-LAB-002",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:710",
+            "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:34"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:711",
+            "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:34"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:712",
+            "src/modules/laboratory/application/save-measurements.ts:41",
+            "src/modules/laboratory/domain/measurement.ts:51",
+            "src/modules/laboratory/infrastructure/postgres-repository.ts:676"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-005",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:713",
+            "src/modules/laboratory/application/save-measurements.ts:41",
+            "src/modules/laboratory/domain/measurement.ts:51",
+            "src/modules/laboratory/infrastructure/postgres-repository.ts:676"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:714",
+            "src/modules/laboratory/application/save-measurements.ts:41",
+            "src/modules/laboratory/domain/measurement.ts:51",
+            "src/modules/laboratory/infrastructure/postgres-repository.ts:676"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-007",
+          "source": [
+            "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md"
+          ],
+          "gap": "Actual approved scientific conversion sources and native alternate-unit entry acceptance remain open."
+        },
+        {
+          "id": "REQ-LAB-008",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:716",
+            "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:125",
+            "src/modules/laboratory/application/submit-lab-test.ts:58"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-009",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:717",
+            "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:125",
+            "src/modules/laboratory/application/submit-lab-test.ts:58"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-010",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:718",
+            "src/modules/laboratory/infrastructure/postgres-repository.ts:619"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-011",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:719",
+            "src/modules/laboratory/application/record-run-equipment.ts:36",
+            "src/modules/laboratory/infrastructure/postgres-repository.ts:428"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-012",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:720",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:87",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:185"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-013",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:721",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:87",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:185"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-014",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:722",
+            "src/modules/laboratory/application/create-retest.ts:9",
+            "src/modules/laboratory/application/dependencies.ts:71"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-015",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:723",
+            "src/modules/laboratory/application/create-retest.ts:9",
+            "src/modules/laboratory/application/dependencies.ts:71"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-016",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:724",
+            "src/modules/laboratory/application/create-retest.ts:9",
+            "src/modules/laboratory/application/dependencies.ts:71"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-017",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:725",
+            "src/modules/laboratory/application/create-retest.ts:9",
+            "src/modules/laboratory/application/dependencies.ts:71"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-018",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:726",
+            "src/modules/laboratory/application/create-retest.ts:9",
+            "src/modules/laboratory/application/dependencies.ts:71"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-019",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:727",
+            "src/modules/laboratory/application/record-run-equipment.ts:36",
+            "src/modules/laboratory/infrastructure/postgres-repository.ts:428"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-LAB-020",
+          "source": [
+            "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md"
+          ],
+          "gap": "Actual effective scientific method thresholds and signed aggregation policy are not created by technical authorship."
+        },
+        {
+          "id": "REQ-LAB-021",
+          "source": [
+            "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md"
+          ],
+          "gap": "Alternate-unit bulk input is denied; populated browser and role acceptance remain open."
+        }
+      ]
+    },
+    {
+      "domain": "MNT",
+      "requirements": 3,
+      "PARTIALLY_IMPLEMENTED": 3,
+      "full_source_weight": 0,
+      "total_weight": 3,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-MNT-001",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:762",
+            "src/modules/assets/maintenance/domain/maintenance.ts:105",
+            "src/modules/assets/maintenance/application/transition-maintenance.ts:26"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-MNT-002",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:763",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:87",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:185"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-MNT-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:764",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:87",
+            "src/modules/assets/equipment/application/get-equipment-eligibility.ts:185"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "NOT",
+      "requirements": 5,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "full_source_weight": 0,
+      "total_weight": 5,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-NOT-001",
+          "source": [
+            "src/shared/notifications/notification-service.ts",
+            "src/shared/notifications/postgres-notification-repository.ts",
+            "src/shared/outbox/qc-event-handler.ts",
+            "src/shared/outbox/worker.ts"
+          ],
+          "gap": "Bounded projection handles only final inspection/lab approval; worker scheduling/liveness and external delivery are not established by empty queue or source retry code."
+        },
+        {
+          "id": "REQ-NOT-002",
+          "source": [
+            "src/shared/notifications/notification-service.ts",
+            "src/shared/notifications/postgres-notification-repository.ts",
+            "src/shared/outbox/qc-event-handler.ts",
+            "src/shared/outbox/worker.ts"
+          ],
+          "gap": "Bounded projection handles only final inspection/lab approval; worker scheduling/liveness and external delivery are not established by empty queue or source retry code."
+        },
+        {
+          "id": "REQ-NOT-003",
+          "source": [
+            "src/shared/notifications/notification-service.ts",
+            "src/shared/notifications/postgres-notification-repository.ts",
+            "src/shared/outbox/qc-event-handler.ts",
+            "src/shared/outbox/worker.ts"
+          ],
+          "gap": "Bounded projection handles only final inspection/lab approval; worker scheduling/liveness and external delivery are not established by empty queue or source retry code."
+        },
+        {
+          "id": "REQ-NOT-004",
+          "source": [
+            "src/shared/notifications/notification-service.ts",
+            "src/shared/notifications/postgres-notification-repository.ts",
+            "src/shared/outbox/qc-event-handler.ts",
+            "src/shared/outbox/worker.ts"
+          ],
+          "gap": "Bounded projection handles only final inspection/lab approval; worker scheduling/liveness and external delivery are not established by empty queue or source retry code."
+        },
+        {
+          "id": "REQ-NOT-005",
+          "source": [
+            "src/shared/notifications/notification-service.ts",
+            "src/shared/notifications/postgres-notification-repository.ts",
+            "src/shared/outbox/qc-event-handler.ts",
+            "src/shared/outbox/worker.ts"
+          ],
+          "gap": "Bounded projection handles only final inspection/lab approval; worker scheduling/liveness and external delivery are not established by empty queue or source retry code."
+        }
+      ]
+    },
+    {
+      "domain": "QUAL",
+      "requirements": 10,
+      "PARTIALLY_IMPLEMENTED": 10,
+      "full_source_weight": 0,
+      "total_weight": 30,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-QUAL-001",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:634",
+            "src/modules/quality/findings/application/create-finding.ts:17",
+            "src/modules/quality/ncr/application/create-ncr.ts:16",
+            "src/modules/quality/capa/application/create-capa.ts:21"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAL-002",
+          "source": [
+            "src/modules/quality/findings/application/create-finding.ts",
+            "src/modules/quality/ncr/application/create-ncr.ts"
+          ],
+          "gap": "Complete source-link authorization and all automatic NCR call sites need verification; no approved automatic-trigger policy was demonstrated."
+        },
+        {
+          "id": "REQ-QUAL-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:636",
+            "src/modules/quality/findings/application/create-finding.ts:17",
+            "src/modules/quality/ncr/application/create-ncr.ts:16",
+            "src/modules/quality/capa/application/create-capa.ts:21"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAL-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:637",
+            "src/modules/quality/findings/application/create-finding.ts:17",
+            "src/modules/quality/ncr/application/create-ncr.ts:16",
+            "src/modules/quality/capa/application/create-capa.ts:21"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAL-005",
+          "source": [
+            "Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md"
+          ],
+          "gap": "Final approval, return and void remain denied pending approved signature/SoD policy; populated runtime acceptance remains open."
+        },
+        {
+          "id": "REQ-QUAL-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:639",
+            "src/modules/quality/findings/application/create-finding.ts:17",
+            "src/modules/quality/ncr/application/create-ncr.ts:16",
+            "src/modules/quality/capa/application/create-capa.ts:21"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAL-007",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:640",
+            "src/modules/quality/capa/application/transition-capa.ts:31",
+            "src/modules/quality/capa/domain/capa.ts:76"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAL-008",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:641",
+            "src/modules/quality/capa/application/close-capa.ts:38",
+            "src/modules/quality/capa/domain/capa.ts:52"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAL-009",
+          "source": [
+            "src/modules/quality/findings/application/create-finding.ts",
+            "src/modules/quality/ncr/application/create-ncr.ts"
+          ],
+          "gap": "Complete source-link authorization and all automatic NCR call sites need verification; no approved automatic-trigger policy was demonstrated."
+        },
+        {
+          "id": "REQ-QUAL-010",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:643",
+            "src/modules/quality/capa/application/transition-capa.ts:31",
+            "src/modules/quality/capa/domain/capa.ts:76"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "QUAR",
+      "requirements": 11,
+      "PARTIALLY_IMPLEMENTED": 7,
+      "IMPLEMENTATION_DEFECT": 1,
+      "FULLY_IMPLEMENTED": 3,
+      "full_source_weight": 3,
+      "total_weight": 11,
+      "source_lower_bound_percent": 27.27,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-QUAR-001",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:651",
+            "src/modules/quarantine/receiving/domain/receiving-item.ts:118",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:109"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-002",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:652",
+            "src/modules/quarantine/receiving/domain/receiving-item.ts:118",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:109"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-003",
+          "source": [
+            "Documents/BUSINESS-RULES.md:969",
+            "src/modules/quarantine/receiving/application/create-receiving.ts",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:116"
+          ],
+          "gap": "BR-QUAR-003 explicitly requires a system-generated Receiving ID; reconcile business-number meaning and approved source numbering before calling this requirement complete. No system business-number allocator was found in this path."
+        },
+        {
+          "id": "REQ-QUAR-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:654",
+            "src/modules/quarantine/receiving/domain/receiving-item.ts:101",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:122"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-005",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:655",
+            "src/modules/quarantine/receiving/domain/receiving-item.ts:118",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:109",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:539"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:656",
+            "src/modules/quarantine/receiving/domain/receiving-item.ts:118",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:109",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:539"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-007",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:657",
+            "src/modules/quarantine/receiving/application/release-receiving.ts:18",
+            "src/modules/quarantine/receiving/application/release-receiving.ts:49"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-008",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:658",
+            "src/modules/quarantine/receiving/application/release-receiving.ts:18",
+            "src/modules/quarantine/receiving/application/release-receiving.ts:49"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-009",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:659",
+            "src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts:111",
+            "src/modules/quarantine/inspection/application/resolve-inspection-template.ts:56"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-QUAR-010",
+          "source": [
+            "src/modules/quarantine/receiving/application/create-receiving.ts",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts"
+          ],
+          "gap": "Approved duplicate definition and positive/negative operational examples remain policy inputs; uniqueness of one field does not define a business duplicate."
+        },
+        {
+          "id": "REQ-QUAR-011",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:661",
+            "src/modules/quarantine/receiving/application/correct-receiving.ts:9",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:392",
+            "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:392"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "RPT",
+      "requirements": 7,
+      "PARTIALLY_IMPLEMENTED": 7,
+      "full_source_weight": 0,
+      "total_weight": 7,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-RPT-001",
+          "source": [
+            "src/modules/reporting/application/run-report.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts",
+            "src/modules/reporting/application/report-registry.ts"
+          ],
+          "gap": "This proves bounded OWN report behavior only; full report inventory, approved scope breadth and deployed negative tests remain unmapped."
+        },
+        {
+          "id": "REQ-RPT-002",
+          "source": [
+            "src/modules/reporting/application/export-report.ts"
+          ],
+          "gap": "PDF format required by canonical row is absent from this reporting export use case; XLSX container integrity defect reproduced separately."
+        },
+        {
+          "id": "REQ-RPT-003",
+          "source": [
+            "src/modules/reporting/application/run-report.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts",
+            "src/modules/reporting/application/report-registry.ts"
+          ],
+          "gap": "This proves bounded OWN report behavior only; full report inventory, approved scope breadth and deployed negative tests remain unmapped."
+        },
+        {
+          "id": "REQ-RPT-004",
+          "source": [
+            "src/modules/reporting/application/run-report.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts",
+            "src/modules/reporting/application/report-registry.ts"
+          ],
+          "gap": "This proves bounded OWN report behavior only; full report inventory, approved scope breadth and deployed negative tests remain unmapped."
+        },
+        {
+          "id": "REQ-RPT-005",
+          "source": [
+            "src/modules/reporting/application/report-provenance.ts",
+            "src/modules/reporting/application/export-report.ts"
+          ],
+          "gap": "Generation metadata is built into the artifact; a durable database generation register was not found in this use case."
+        },
+        {
+          "id": "REQ-RPT-006",
+          "source": [
+            "src/modules/reporting/application/run-report.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts",
+            "src/modules/reporting/application/report-registry.ts"
+          ],
+          "gap": "This proves bounded OWN report behavior only; full report inventory, approved scope breadth and deployed negative tests remain unmapped."
+        },
+        {
+          "id": "REQ-RPT-007",
+          "source": [
+            "src/modules/reporting/infrastructure/csv-exporter.ts",
+            "src/modules/reporting/infrastructure/xlsx-exporter.ts",
+            ".ci-results/QC-360-20261008/unit.json"
+          ],
+          "gap": "Full adversarial spreadsheet-client acceptance and XLSX container repair remain open; sanitizer source success does not prove whole export valid."
+        }
+      ]
+    },
+    {
+      "domain": "SEC",
+      "requirements": 10,
+      "PARTIALLY_IMPLEMENTED": 8,
+      "FULLY_IMPLEMENTED": 2,
+      "full_source_weight": 6,
+      "total_weight": 30,
+      "source_lower_bound_percent": 20.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-SEC-001",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/administration/application/update-role-permissions.ts"
+          ],
+          "gap": "Every registered action and API endpoint still needs independent authorization/scope denial mapping; selected source controls cannot establish universal security compliance."
+        },
+        {
+          "id": "REQ-SEC-002",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/administration/application/update-role-permissions.ts"
+          ],
+          "gap": "Every registered action and API endpoint still needs independent authorization/scope denial mapping; selected source controls cannot establish universal security compliance."
+        },
+        {
+          "id": "REQ-SEC-003",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/administration/application/update-role-permissions.ts"
+          ],
+          "gap": "Every registered action and API endpoint still needs independent authorization/scope denial mapping; selected source controls cannot establish universal security compliance."
+        },
+        {
+          "id": "REQ-SEC-004",
+          "source": [
+            "src/modules/identity/application/session-service.ts:14",
+            "src/modules/identity/security/argon2-password-hasher.ts:25",
+            "src/modules/identity/application/safe-user-view.ts:23",
+            "src/shared/authorization/authorize.ts:11"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-SEC-005",
+          "source": [
+            "src/modules/identity/application/session-service.ts:14",
+            "src/modules/identity/security/argon2-password-hasher.ts:25",
+            "src/modules/identity/application/safe-user-view.ts:23",
+            "src/shared/authorization/authorize.ts:11"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-SEC-006",
+          "source": [
+            ".ci-results/QC-360-20261008/security-data.json"
+          ],
+          "gap": "Entire Git history, all possible secret formats, credential validity and provider rotation remain unverified; heuristic absence is not proof of no committed secrets."
+        },
+        {
+          "id": "REQ-SEC-007",
+          "source": [
+            "src/shared/authorization/authorize.ts",
+            "src/shared/search/postgres-search.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts"
+          ],
+          "gap": "Full actual-record positive-control and cross-account/role direct endpoint matrix remains unverified; invalid input/not-found refusal is not IDOR proof."
+        },
+        {
+          "id": "REQ-SEC-008",
+          "source": [
+            "src/shared/files/file-service.ts",
+            "src/shared/files/s3-object-store.ts"
+          ],
+          "gap": "Deployment object ACL/URLs, upload/download route composition and live cross-scope/tampered-object controls remain unverified."
+        },
+        {
+          "id": "REQ-SEC-009",
+          "source": [
+            "src/modules/reporting/application/run-report.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/reporting/infrastructure/postgres-report-query.ts",
+            "src/modules/reporting/application/report-registry.ts"
+          ],
+          "gap": "This proves bounded OWN report behavior only; full report inventory, approved scope breadth and deployed negative tests remain unmapped."
+        },
+        {
+          "id": "REQ-SEC-010",
+          "source": [
+            "src/middleware.ts",
+            "src/shared/authorization/authorize.ts",
+            "src/modules/reporting/application/export-report.ts",
+            "src/modules/administration/application/update-role-permissions.ts"
+          ],
+          "gap": "Every registered action and API endpoint still needs independent authorization/scope denial mapping; selected source controls cannot establish universal security compliance."
+        }
+      ]
+    },
+    {
+      "domain": "SRCH",
+      "requirements": 4,
+      "PARTIALLY_IMPLEMENTED": 4,
+      "full_source_weight": 0,
+      "total_weight": 4,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-SRCH-001",
+          "source": [
+            "src/shared/search/search-service.ts",
+            "src/shared/search/postgres-search.ts"
+          ],
+          "gap": "Backslash literal-pattern defect remains; complete entity/role/TEAM-scope and runtime positive/negative acceptance is not established."
+        },
+        {
+          "id": "REQ-SRCH-002",
+          "source": [
+            "src/shared/search/search-service.ts",
+            "src/shared/search/postgres-search.ts"
+          ],
+          "gap": "Backslash literal-pattern defect remains; complete entity/role/TEAM-scope and runtime positive/negative acceptance is not established."
+        },
+        {
+          "id": "REQ-SRCH-003",
+          "source": [
+            "src/shared/search/search-service.ts",
+            "src/shared/search/postgres-search.ts"
+          ],
+          "gap": "Backslash literal-pattern defect remains; complete entity/role/TEAM-scope and runtime positive/negative acceptance is not established."
+        },
+        {
+          "id": "REQ-SRCH-004",
+          "source": [
+            "src/shared/search/search-service.ts",
+            "src/shared/search/postgres-search.ts"
+          ],
+          "gap": "Backslash literal-pattern defect remains; complete entity/role/TEAM-scope and runtime positive/negative acceptance is not established."
+        }
+      ]
+    },
+    {
+      "domain": "TASK",
+      "requirements": 8,
+      "PARTIALLY_IMPLEMENTED": 6,
+      "FULLY_IMPLEMENTED": 2,
+      "full_source_weight": 2,
+      "total_weight": 8,
+      "source_lower_bound_percent": 25.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-TASK-001",
+          "source": [
+            "src/modules/tasks/application/create.ts",
+            "src/modules/tasks/application/transition.ts",
+            "src/modules/tasks/application/update-draft.ts"
+          ],
+          "gap": "Assignment update omissions and comments/dependency no-ops from workflow review prevent complete general task management; positive browser creation was not executed on production."
+        },
+        {
+          "id": "REQ-TASK-002",
+          "source": [
+            "Documents/QC360-TASK-POLICY-2026-10-08.md"
+          ],
+          "gap": "Receiving/equipment reference coverage and complete role/runtime acceptance remain open."
+        },
+        {
+          "id": "REQ-TASK-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:621",
+            "src/modules/tasks/infrastructure/postgres-repository.ts:92",
+            "src/modules/tasks/infrastructure/postgres-repository.ts:349",
+            "src/actions/tasks.ts:100"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TASK-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:622",
+            "src/modules/tasks/domain/model.ts:116",
+            "src/actions/tasks.ts:100"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TASK-005",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:623",
+            "src/modules/tasks/domain/state.ts:26",
+            "src/modules/tasks/application/transition.ts:47",
+            "src/modules/tasks/domain/state.ts:29",
+            "src/modules/tasks/infrastructure/postgres-repository.ts:466"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TASK-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:624",
+            "src/modules/tasks/domain/state.ts:26",
+            "src/modules/tasks/application/transition.ts:47",
+            "Documents/STATE-MACHINES.md:583"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TASK-007",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:625",
+            "src/modules/tasks/domain/state.ts:26",
+            "src/modules/tasks/application/transition.ts:47",
+            "src/modules/tasks/domain/state.ts:29",
+            "src/modules/tasks/infrastructure/postgres-repository.ts:466"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TASK-008",
+          "source": [
+            "Documents/QC360-TASK-POLICY-2026-10-08.md"
+          ],
+          "gap": "Generation is operator-driven; autonomous schedule/rule activation and missed-run policy remain open."
+        }
+      ]
+    },
+    {
+      "domain": "TMPL",
+      "requirements": 6,
+      "PARTIALLY_IMPLEMENTED": 5,
+      "IMPLEMENTATION_DEFECT": 1,
+      "full_source_weight": 0,
+      "total_weight": 6,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-TMPL-001",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:669",
+            "src/modules/quarantine/templates/application/create-template.ts:40",
+            "src/modules/quarantine/templates/application/lifecycle.ts:47"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TMPL-002",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:670",
+            "src/modules/quarantine/templates/application/create-template.ts:40",
+            "src/modules/quarantine/templates/application/lifecycle.ts:47"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TMPL-003",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:671",
+            "src/modules/quarantine/templates/application/create-template.ts:40",
+            "src/modules/quarantine/templates/application/lifecycle.ts:47"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TMPL-004",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:672",
+            "src/modules/quarantine/templates/application/template-ceremony.ts:55",
+            "src/modules/quarantine/templates/infrastructure/postgres-repository.ts:211"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TMPL-005",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:673",
+            "src/modules/quarantine/catalog/application/catalog.ts:77",
+            "src/modules/quarantine/catalog/domain/source-match.ts:20"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        },
+        {
+          "id": "REQ-TMPL-006",
+          "source": [
+            "Documents/REQUIREMENTS-TRACEABILITY.md:674",
+            "src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts:111",
+            "src/modules/quarantine/inspection/application/resolve-inspection-template.ts:56"
+          ],
+          "gap": "Complete bounded source review and map fresh positive/negative/failure acceptance evidence."
+        }
+      ]
+    },
+    {
+      "domain": "TST",
+      "requirements": 15,
+      "PARTIALLY_IMPLEMENTED": 15,
+      "full_source_weight": 0,
+      "total_weight": 15,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-TST-001",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-002",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-003",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-004",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-005",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-006",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-007",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-008",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-009",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-010",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-011",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-012",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-013",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-014",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        },
+        {
+          "id": "REQ-TST-015",
+          "source": [
+            ".ci-results/QC-360-20261008/unit.json",
+            ".ci-results/QC-360-20261008/integration-pg18.json",
+            "scripts/verification/run-authenticated-e2e.ts",
+            "playwright.config.ts"
+          ],
+          "gap": "Registered-test and route manifests are not complete acceptance mappings; failed/setup/pending suites remain. Full current authenticated journeys, manual accessibility and every upgrade/concurrency/rollback scenario are not verified."
+        }
+      ]
+    },
+    {
+      "domain": "UX",
+      "requirements": 11,
+      "PARTIALLY_IMPLEMENTED": 11,
+      "full_source_weight": 0,
+      "total_weight": 11,
+      "source_lower_bound_percent": 0.0,
+      "readiness": "PERCENTAGE_NOT_ESTABLISHED",
+      "evidence_and_gaps": [
+        {
+          "id": "REQ-UX-001",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        },
+        {
+          "id": "REQ-UX-002",
+          "source": [
+            "src/modules/dashboard/application/get-dashboard.ts",
+            "src/modules/dashboard/infrastructure/postgres-dashboard-query.ts"
+          ],
+          "gap": "Provider composition and all drill-down filter/count mappings need loaded-data runtime reconciliation; a read model design is not universal KPI parity evidence."
+        },
+        {
+          "id": "REQ-UX-003",
+          "source": [
+            "src/ui/components/data/DataTable.astro",
+            "https://qclevel.top/tasks"
+          ],
+          "gap": "Only empty live registers were observed; large loaded tables, operational desktop journeys and all table keyboard/screen-reader paths remain unverified."
+        },
+        {
+          "id": "REQ-UX-004",
+          "source": [
+            "src/ui/components/FormErrorSummary.astro",
+            "src/ui/forms/enhance-with-classification.ts",
+            "src/ui/forms/unsaved-changes.ts",
+            "https://qclevel.top/tasks/new"
+          ],
+          "gap": "Shared script does not establish every form behavior; server summary focus differs from first-invalid requirement. Mobile header overlap observed; full keyboard, contrast, assistive technology and populated register checks remain open."
+        },
+        {
+          "id": "REQ-UX-005",
+          "source": [
+            "src/ui/components/FormErrorSummary.astro",
+            "src/ui/forms/enhance-with-classification.ts",
+            "src/ui/forms/unsaved-changes.ts",
+            "https://qclevel.top/tasks/new"
+          ],
+          "gap": "Shared script does not establish every form behavior; server summary focus differs from first-invalid requirement. Mobile header overlap observed; full keyboard, contrast, assistive technology and populated register checks remain open."
+        },
+        {
+          "id": "REQ-UX-006",
+          "source": [
+            "src/ui/components/FormErrorSummary.astro",
+            "src/ui/forms/enhance-with-classification.ts",
+            "src/ui/forms/unsaved-changes.ts",
+            "https://qclevel.top/tasks/new"
+          ],
+          "gap": "Shared script does not establish every form behavior; server summary focus differs from first-invalid requirement. Mobile header overlap observed; full keyboard, contrast, assistive technology and populated register checks remain open."
+        },
+        {
+          "id": "REQ-UX-007",
+          "source": [
+            "src/ui/components/FormErrorSummary.astro",
+            "src/ui/forms/enhance-with-classification.ts",
+            "src/ui/forms/unsaved-changes.ts",
+            "https://qclevel.top/tasks/new"
+          ],
+          "gap": "Shared script does not establish every form behavior; server summary focus differs from first-invalid requirement. Mobile header overlap observed; full keyboard, contrast, assistive technology and populated register checks remain open."
+        },
+        {
+          "id": "REQ-UX-008",
+          "source": [
+            "src/ui/components/FormErrorSummary.astro",
+            "src/ui/forms/enhance-with-classification.ts",
+            "src/ui/forms/unsaved-changes.ts",
+            "https://qclevel.top/tasks/new"
+          ],
+          "gap": "Shared script does not establish every form behavior; server summary focus differs from first-invalid requirement. Mobile header overlap observed; full keyboard, contrast, assistive technology and populated register checks remain open."
+        },
+        {
+          "id": "REQ-UX-009",
+          "source": [
+            "src/pages/laboratory/tests/[labTestId]/execute.astro:138",
+            "src/pages/laboratory/tests/[labTestId]/review.astro:106",
+            "src/pages/laboratory/report-templates.astro:143"
+          ],
+          "gap": "Populated real method/measurement forms and all scientific fields have not been visually verified; missing source unit cannot be invented."
+        },
+        {
+          "id": "REQ-UX-010",
+          "source": [
+            "src/ui/components/data/DataTable.astro",
+            "https://qclevel.top/tasks"
+          ],
+          "gap": "Only empty live registers were observed; large loaded tables, operational desktop journeys and all table keyboard/screen-reader paths remain unverified."
+        },
+        {
+          "id": "REQ-UX-011",
+          "source": [
+            "src/ui/components/FormErrorSummary.astro",
+            "src/ui/forms/enhance-with-classification.ts",
+            "src/ui/forms/unsaved-changes.ts",
+            "https://qclevel.top/tasks/new"
+          ],
+          "gap": "Shared script does not establish every form behavior; server summary focus differs from first-invalid requirement. Mobile header overlap observed; full keyboard, contrast, assistive technology and populated register checks remain open."
+        }
+      ]
+    }
+  ],
+  "additional_domain_inventory": [
+    "Authentication and sessions",
+    "Users roles and permissions",
+    "Administration and configuration",
+    "Dashboard and KPIs",
+    "Tasks and assignments",
+    "Work management",
+    "Receiving",
+    "Quarantine",
+    "Inspection execution",
+    "Inspection templates and report catalog",
+    "Laboratory tests and measurements",
+    "Laboratory templates and retests",
+    "Rejection Issue Slips and disposition",
+    "Production rejection",
+    "Quality findings",
+    "NCR",
+    "RCA",
+    "CAPA",
+    "Equipment",
+    "Calibration",
+    "Maintenance",
+    "Controlled Documents",
+    "Document versioning and effectivity",
+    "Approvals and electronic signatures",
+    "Change Requests",
+    "Reports and exports",
+    "Search",
+    "Notifications and background workers",
+    "AI Advisory",
+    "Audit Trail and record history",
+    "Backup and restore",
+    "System health and monitoring",
+    "Release governance and CI/CD",
+    "Shared UI and accessibility",
+    "External integrations and providers",
+    "Architecture database and test infrastructure"
+  ]
+}

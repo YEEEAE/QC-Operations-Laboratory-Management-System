@@ -1,0 +1,1290 @@
+{
+  "candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b + local working-tree changes",
+  "scope": "11 baseline NOT_IMPLEMENTED requirements now have bounded implementation; none claims full operational acceptance",
+  "requirements": [
+    {
+      "id": "REQ-TASK-002",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Task reference resolution uses owning-domain reads and explicit view permission; no ownership transfer.",
+      "missing_work": "Receiving/equipment reference coverage and complete role/runtime acceptance remain open.",
+      "source_refs": [
+        "Documents/QC360-TASK-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-TASK-008",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Canonical occurrence key plus rule ID, immutable request fingerprint, unique index and transaction prevent duplicate tasks/audit/outbox.",
+      "missing_work": "Generation is operator-driven; autonomous schedule/rule activation and missed-run policy remain open.",
+      "source_refs": [
+        "Documents/QC360-TASK-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-QUAL-005",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Independent RCA creation, scoped NCR linkage, versioned draft edits and START/SUBMIT workflow.",
+      "missing_work": "Final approval, return and void remain denied pending approved signature/SoD policy; populated runtime acceptance remains open.",
+      "source_refs": [
+        "Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-LAB-007",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Exact affine conversion retains original value/unit and controlled calculation trace; no guessed conversion.",
+      "missing_work": "Actual approved scientific conversion sources and native alternate-unit entry acceptance remain open.",
+      "source_refs": [
+        "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-LAB-020",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Official evaluation resolves frozen controlled criteria and explicit declared aggregation policy; missing/changed sources deny.",
+      "missing_work": "Actual effective scientific method thresholds and signed aggregation policy are not created by technical authorship.",
+      "source_refs": [
+        "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-LAB-021",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Excel TSV paste previews rows using the same measurement validation; explicit manual save preserves version and atomic audit.",
+      "missing_work": "Alternate-unit bulk input is denied; populated browser and role acceptance remain open.",
+      "source_refs": [
+        "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-CHG-005",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Owning Documents module applies approved metadata change to DRAFT document versions with target/source/version checks.",
+      "missing_work": "Effective/approved document replacement and other domain adapters remain open.",
+      "source_refs": [
+        "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-CHG-006",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Approval and application outcomes are distinct; failure preserves APPROVED and successful replay requires committed proof.",
+      "missing_work": "Populated PostgreSQL application failure/replay and human acceptance remain open.",
+      "source_refs": [
+        "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-CHG-007",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Shared transaction includes supported draft document mutation, request state, successful attempt, audit and outbox.",
+      "missing_work": "Real PostgreSQL rollback/race coverage for this application adapter remains open.",
+      "source_refs": [
+        "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-BKP-004",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Actual local isolated PG18 dump/restore reconciles schema, relation rows, sequence state and migration ledger.",
+      "missing_work": "Production backup catalog, provider recovery, RPO/RTO acceptance and operational restore orchestration remain open.",
+      "source_refs": [
+        "Documents/QC360-ISOLATED-RESTORE-TECHNICAL-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    },
+    {
+      "id": "REQ-DATA-024",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "implementation_detail": "Supported document change application uses a shared owning-domain transaction and version locks.",
+      "missing_work": "Other domains and populated PostgreSQL rollback/race acceptance remain open.",
+      "source_refs": [
+        "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md"
+      ],
+      "test_evidence": "Fresh focused checks and isolated restore below; coverage bounded per requirement, not full acceptance.",
+      "runtime_evidence": "Local-only; production observation belongs to baseline; no deployment.",
+      "authority_dependency": "Technical source authorized by user 2026-10-08; approved scientific/effectivity/signature inputs remain distinct."
+    }
+  ],
+  "technical_sources": [
+    {
+      "path": "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md",
+      "sha256": "100f1454d7e7c559e986b0bbe1411f3aacb7bb3b2275303aa0bbc1d5a796e010",
+      "status": "USER_AUTHORIZED_TECHNICAL_SOURCE; scientific/QMS effectivity NOT ESTABLISHED",
+      "content": "# QC360 controlled change application technical source\n\nDate: 2026-10-08. Source scope: REQ-CHG-005/006/007 and REQ-DATA-024.\nAuthority: the workspace owner requested implementation of the missing requirements and creation of their sources in this chat. This technical implementation source records that authorized scope. It is not an electronic signature, human UAT record, scientific approval, or document effectivity approval.\n\nAn APPROVED change request authorizes an application attempt only. APPLIED requires a successful owning-domain operation. For DOCUMENT_VERSION the supported scope is one text metadata change to revision or changeSummary on the exact captured DRAFT version, through Documents draft editing and its existing permissions. APPROVED, EFFECTIVE, superseded and other historical versions cannot be edited. Changes to those versions require a separately authorized revision and the existing controlled approval/effectivity workflow; this implementation does not infer that policy.\n\nApplication requires explicit scoped PERM-CHG-APPLY in addition to CHG view and the owning Documents edit permission. Current grants are rechecked under lock, including replay and safe failed-attempt evidence. APPLIED is admitted only for a persisted successful replay; it cannot start a new application.\n\nRequest state/version, target version/content hash/document identity/state and captured current value are checked under shared row locks. Document identity locks precede version locks, matching the owning Documents revision workflow. Documents mutates its target and appends its audit/outbox in the same transaction as the request START_APPLY/APPLY_SUCCESS, application success evidence and request audit/outbox. Any failure rolls back this transaction. Approval evidence remains preserved. A replay with the same request ID and original expected version returns the persisted success; a conflicting replay is denied. Safe stale-target or invalid-state failures record sanitized FAILED attempt evidence after rollback while retaining APPROVED; permission denials do not create application evidence. Controlled-version revision application remains an acceptance gap; a failed command must never be presented as APPLIED.\n\nVerification scope: focused automated synthetic tests and local source checks are technical evidence only; PostgreSQL rollback/race, authenticated native POST, accessibility and human acceptance require their own evidence. Existing signature and effectivity gates remain authoritative.\n"
+    },
+    {
+      "path": "Documents/QC360-ISOLATED-RESTORE-TECHNICAL-POLICY-2026-10-08.md",
+      "sha256": "78e3dea911fdf8efe1f3628ad30155519fb9c655d10e7bfcae9e6ee98ed8326a",
+      "status": "USER_AUTHORIZED_TECHNICAL_SOURCE; scientific/QMS effectivity NOT ESTABLISHED",
+      "content": "# QC360 isolated restore technical source\n\nDate: 2026-10-08. Requirement: REQ-BKP-004.\nAuthority scope: workspace owner requested local implementation and authoring technical sources. This is a technical execution contract, not provider approval, an electronic signature or human UAT evidence.\n\nThe operator supplies both source and target explicitly through --source / --target or QC_LOCAL_DRILL_SOURCE_URL / QC_LOCAL_DRILL_TARGET_URL, plus --evidence-dir and --pg-bin. DATABASE_URL and inherited libpq settings are ignored. Both connections must name a qc_local_drill_* database on localhost, 127.0.0.1 or ::1. Source and target must differ and target must contain no user relations. No drop, reset, cleanup or production restore is performed.\n\nThe CLI uses read-only source connections, a custom-format pg_dump, archive inspection and pg_restore --single-transaction --exit-on-error. It compares full normalized schema dump hashes, relation definition hashes, exact table counts, ordered JSON row hashes and qc.schema_migrations ledger hashes before/after. It rejects a changed source or mismatched restoration. Archive corruption is denied by pg_restore inspection or rollback of the restore transaction. Errors expose fixed classifications only, never raw provider diagnostics, rows or credentials.\n\nEvidence is restore-drill.json plus local-drill.dump in the explicit directory. The dump contains source data and must be handled as local controlled evidence; credentials are not embedded in its commands or report. Elapsed time is a measurement, with no approved SLO/RPO/RTO claim. This is an operator database drill; application restore requests remain PLANNED and production/provider DR, object-store recovery, scheduling, application smoke and human acceptance require their own evidence.\n"
+    },
+    {
+      "path": "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md",
+      "sha256": "3f17142bf53f35c0973e73784d319131e5016430b84b3228313cc9bcb9d2d40b",
+      "status": "USER_AUTHORIZED_TECHNICAL_SOURCE; scientific/QMS effectivity NOT ESTABLISHED",
+      "content": "# Laboratory technical policy — QC360 residual implementation\n\nDate: 2026-10-08. Version: 1. Status: user-authorized technical source authorship; scientific approval/effectivity NOT ESTABLISHED.\n\nScope: REQ-LAB-007 and REQ-LAB-020. This document authorizes the software contract only. It supplies no method thresholds, conversion factors, sample acceptance policy, QC signatures or effective laboratory method. Those inputs must enter the existing approved controlled-template process with its existing authority checks.\n\n## Traceable conversion contract\n\nAn approved parameter acceptance payload may contain `conversionRules`. Each rule declares `ruleType: EXACT_AFFINE`, exact `fromUnit`, `toUnit`, decimal-string `factor`, decimal-string `offset`, `sourceReference` matching the parameter source, and nonempty `version`. Arithmetic is `input * factor + offset`, computed with scaled integers without rounding. No conversion exists by default. Missing, ambiguous, malformed or foreign-source rules deny alternate units. The saved observation retains the original input and unit; calculated value/unit, rule reference/version and calculation inputs retain the conversion trace. Existing Action save transport supports this; native bulk entry requires the displayed unit and does not offer alternate-unit conversion.\n\n## Official evaluation contract\n\nEvery approved parameter payload must declare the same `evaluationPolicy`. The supported explicit policy declares `ruleType: ALL_PARAMETERS_ALL_SAMPLES`, `onAnyFail: FAIL`, `onIncomplete: HOLD`, `onAllPass: PASS`, plus `sourceReference` and `version` matching the frozen controlled context. This is a supported vocabulary, not an assigned method policy. Absent or unsupported declarations deny official evaluation. Every parameter for every recorded sample is evaluated from its controlled acceptance payload; missing/indeterminate observations use the declared incomplete branch. Calculated observations require the controlled target unit. The PostgreSQL provider re-resolves approved definitions and compares the frozen context before evaluation; changed or withdrawn source denies.\n\nExisting approval, signatures, separation of duties and effectivity remain authoritative. Synthetic tests demonstrate technical behavior only. Scientific source approval, real populated PostgreSQL/runtime acceptance and human UAT are not established by this document.\n"
+    },
+    {
+      "path": "Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md",
+      "sha256": "c1207f49a776242728fe6221d6c628e4da85067bbd41a6cd98b5f7290c068ea3",
+      "status": "USER_AUTHORIZED_TECHNICAL_SOURCE; scientific/QMS effectivity NOT ESTABLISHED",
+      "content": "# RCA technical source — separate analysis workflow\n\nDate: 2026-10-08. Version: 1. Scope: REQ-QUAL-005. Status: user-authorized technical source authorship; controlled QMS acceptance and electronic approval NOT ESTABLISHED.\n\nThe user authorized local residual implementation and source creation. This source defines the technical draft/edit/submit contract only. It does not establish QMS review authority, signatures, separation of duties, scientific acceptance, source effectivity, NCR closure or CAPA effectiveness.\n\nRCA is a separate entity linked to an NCR. Create requires authorized scoped NCR VIEW and RCA CREATE, the exact opened NCR version and an NCR that is not CLOSED or VOID. The owning NCR application read facade rechecks the source in the RCA creation transaction with a share lock. The NCR is never mutated. A draft has version 1 and no approval evidence.\n\nThe existing RCA state model permits START from DRAFT/RETURNED and SUBMIT from IN_PROGRESS with recorded nonblank analysis and root cause. Editing is limited to DRAFT, IN_PROGRESS or RETURNED. Every write requires the submitted expectedVersion, server authorization, an owner-scoped row lock and state recheck. Mutation and audit insert share one transaction; audit failure rolls back the RCA mutation. Audit records the linked NCR, prior/current version and technical source identity. The analysis text stays in its owning RCA record and is not duplicated into audit.\n\nNative POST create/edit/start/submit forms are reachable on the existing RCA register/detail routes. Failed edits retain submitted content and the opened version; successful mutations redirect with 303. SUBMITTED means pending controlled review, not approval. APPROVE, RETURN and VOID stay denied at use-case and repository boundaries pending approved QMS policy and electronic signature ceremony. No source document here substitutes for that ceremony or enables closure in another module.\n\nVerification: focused source/use-case tests establish bounded technical behavior using synthetic records. Actual PostgreSQL concurrency/rollback, authenticated browser, accessibility and human UAT require separate evidence.\n"
+    },
+    {
+      "path": "Documents/QC360-TASK-POLICY-2026-10-08.md",
+      "sha256": "37f15832c40882cf778504c259822f6f6de20685dd2d5143fc5770059c99152b",
+      "status": "USER_AUTHORIZED_TECHNICAL_SOURCE; scientific/QMS effectivity NOT ESTABLISHED",
+      "content": "# QC360 Task reference and recurrence technical policy\n\nPolicy identity: `QC360-TASK-POLICY-2026-10-08/v1`.\nAuthored on 2026-10-08 under the user's explicit request to create sources for QC360 residual requirements. Status: USER-AUTHORIZED TECHNICAL IMPLEMENTATION SOURCE. This document records the implemented contract; no named QMS ratification, electronic signature, effectivity approval, production execution or human UAT is asserted.\n\n## REQ-TASK-002 / BR-TASK-002\n\nA Task may carry one immutable reference to DOCUMENT, LAB_TEST, CHANGE_REQUEST, FINDING, NCR, RCA or CAPA. The caller must hold the active owning application's VIEW permission, and its application read facade must resolve that identity in the caller's scope before Task creation. Each detail read rechecks this access. Missing or denied records expose no related title or link; provider failure is shown separately as unavailable. Task ownership, assignee and lifecycle stay Task-owned. Task creation, completion, reopen and deletion never transfer ownership, mutate, approve or release the foreign record. A reference supplies context, never mandatory evidence or approval authority. Other foreign record categories require an explicit adapter and source extension before use.\n\n## REQ-TASK-008 / BR-TASK-009\n\nThis version authorizes the smallest recurrence-generation contract: an active operator with PERM-TASK-CREATE submits one explicit rule identity and one canonical UTC occurrence instant (`YYYY-MM-DDTHH:mm:ss.sssZ`) through the existing native/Action creation path. Each occurrence starts DRAFT and follows the existing permissioned lifecycle. The operator supplies the established schedule occurrence; the application does not infer frequencies, working days, missed intervals, time zones, scientific tasks, escalation, assignment or disposition.\n\nThe global pair `(rule identity, occurrence instant)` identifies exactly one Task. A transaction advisory lock serializes concurrent generators, followed by a unique database index. An identical normalized request by the same owner returns the original Task in its current state and creates no new business row, audit event or outbox event. A changed owner, task number, title, description, priority, due date, assignee or specialized reference for that pair yields CONFLICT_DUPLICATE_COMMAND. Replay rechecks current creation, assignment and foreign-record view authorization. Request IDs and generation timestamps do not affect equivalence. Generated occurrences cannot be deleted through the draft-delete application path, preserving deduplication history; they can use existing lifecycle actions where authorized. Ordinary draft editing does not redefine the immutable original request fingerprint.\n\nNew creation, audit and outbox stay atomic in the repository transaction. This implementation does not activate an autonomous scheduler, external cron, paid service or system-actor permission. An autonomous schedule/rule catalogue, missed-run policy, cancellation/retention authority and production activation remain separate owner decisions. The implemented operator-driven generation must not be reported as an activated autonomous scheduler.\n\n## Verification boundary\n\nFocused unit checks and local PostgreSQL probes, when performed, prove only the candidate technical behavior. Applied production migration, provider runtime, authenticated browser/assistive-technology acceptance and human UAT remain NOT VERIFIED unless independently evidenced. The source migration is 0047_task_references_occurrences.sql; execution on production is outside this request.\n"
+    }
+  ],
+  "fresh_checks": [
+    {
+      "name": "final-focused-unit",
+      "total": 69,
+      "passed": 69,
+      "failed": 0,
+      "success": true,
+      "path": ".ci-results/QC-360-20261008/completion/final-focused-unit.json",
+      "failures": []
+    },
+    {
+      "name": "tasks-postgres-final",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "success": true,
+      "path": ".ci-results/QC-360-20261008/completion/tasks-postgres-final.json",
+      "failures": []
+    },
+    {
+      "name": "final-all-unit",
+      "total": 1382,
+      "passed": 1381,
+      "failed": 1,
+      "success": false,
+      "path": ".ci-results/QC-360-20261008/completion/final-all-unit.json",
+      "failures": [
+        {
+          "name": "control surfaces and the JavaScript-only gap register lists exactly the surfaces without a no-JS POST baseline",
+          "message": "AssertionError: expected [ …(2) ] to deeply equal [ …(3) ]\n    at /Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/tests/unit/ui/mutation-safety-contract.test.ts:190:29\n    at file:///Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/node_modules/.pnpm/vitest@5.0.0_@opentelemetry+api@1.9.1_@types+node@26.4.1_@vitest+coverage-v8@5.0.0_vite_28821a98de950ca0e7c0c07028ee47d5/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:1628:35\n    at file:///Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/node_modules/.pnpm/vitest@5.0.0_@opentelemetry+api@1.9.1_@types+node@26.4.1_@vitest+coverage-v8@5.0.0_vite_28821a98de950ca0e7c0c07028ee47d5/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:26\n    at file:///Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/node_modules/.pnpm/vitest@5.0.0_@opentelemetry+api@1.9.1_@types+node@26.4.1_@vitest+coverage-v8@5.0.0_vite_28821a98de950ca0e7c0c07028ee47d5/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3319:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/node_modules/.pnpm/vitest@5.0.0_@opentelemetry+api@1.9.1_@types+node@26.4.1_@vitest+coverage-v8@5.0.0_vite_28821a98de950ca0e7c0c07028ee47d5/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3314:10)\n    at file:///Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/node_modules/.pnpm/vitest@5.0.0_@opentelemetry+api@1.9.1_@types+node@26.4.1_@vitest+coverage-v8@5.0.0_vite_28821a98de950ca0e7c0c07028ee47d5/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3299:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/node_modules/.pnpm/vitest@5."
+        }
+      ]
+    }
+  ],
+  "restore": {
+    "scope": "LOCAL_ISOLATED_OPERATOR_DRILL",
+    "result": "PASS",
+    "sourceDatabase": "qc_local_drill_source",
+    "targetDatabase": "qc_local_drill_restore",
+    "elapsedMs": 10394,
+    "artifactSha256": "0dedde0079633447b16cb2cd05a284c85024c5a32b69ceb5022abee5aabfde80",
+    "source": {
+      "schemaHash": "08955f1776980a3594f929603f6943692cd712eabc9f600396549531c58e3ac7",
+      "relationDefinitionsHash": "dcbadef5eba4e44c58040dcd36a86c44fd181040d2ded1f9c037d1704a6cb097",
+      "sequenceStateHash": "60f585a5a33f212bf9c75721538b3cb2a8ce571f0674a0dc24f55c56a7d36f14",
+      "tables": [
+        {
+          "schema": "qc",
+          "table": "approval_cases",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "approval_decisions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "approval_work_items",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "audit_events",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "backup_runs",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "calibration_history",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "calibration_records",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "capa_actions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "capa_close_snapshots",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "capas",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "change_application_attempts",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "change_request_changes",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "change_requests",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "daily_reject_entries",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "document_identities",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "document_version_files",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "document_versions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "electronic_signatures",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "equipment",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "equipment_status_history",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "evidence_links",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "files",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "findings",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "idempotency_records",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_equipment_usage",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_item_templates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_catalog",
+          "count": "194",
+          "rowsHash": "e735b945776c052409abc9bbe06bb5d6d9a062d42370ab6590b9e7baff51109c"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_results",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_snapshots",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_source_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_reports",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_document_sources",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_points",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_sections",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_versions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_templates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "issue_slip_approval_confirmations",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_document_usage",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_equipment_usage",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_measurements",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_readings",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_sample_results",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_samples",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_batches",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_snapshots",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_document_sources",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_parameters",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_sections",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_versions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_templates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_tests",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "laboratory_report_drafts",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "maintenance_history",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "maintenance_records",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "ncrs",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "notification_deliveries",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "notifications",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "outbox_events",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "password_reset_requests",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "permissions",
+          "count": "7",
+          "rowsHash": "b6e1066e1899e04b1924a993fcf9bdd0d4ebd697d5b98a5cef1ac6805d1ef814"
+        },
+        {
+          "schema": "qc",
+          "table": "rate_limit_windows",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "rcas",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "receiving_items",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "recovery_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "reject_issue_slips",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "reject_reports",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_approvals",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_candidates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_gate_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_provider_nonce_claims",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_risk_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "restore_runs",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "role_permissions",
+          "count": "22",
+          "rowsHash": "a32d48e374900db6099b14bb7e0936faaea25b6fbf6040d6168b856e6bb1df9c"
+        },
+        {
+          "schema": "qc",
+          "table": "roles",
+          "count": "4",
+          "rowsHash": "119ed3ddcc32d471af45648d781f495f5809ec8f8a117dfadefe112000c8d0fd"
+        },
+        {
+          "schema": "qc",
+          "table": "schema_migrations",
+          "count": "47",
+          "rowsHash": "9409871fb0df1382353f8c3b742d161e78954cf2c713007ad7467550415ab374"
+        },
+        {
+          "schema": "qc",
+          "table": "sessions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_assignments",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_checklist_items",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_comments",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_dependencies",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "tasks",
+          "count": "1",
+          "rowsHash": "15e649746874d632f8a0b3f373dd51e4acfff8d5836033a2342bc4d194e36e83"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_acceptances",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_cycles",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_defects",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_session_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "user_roles",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "user_scopes",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "users",
+          "count": "1",
+          "rowsHash": "2f3286a946d824a0b49949eabb0073e82d709e3292ac6d9d792b866d3add854a"
+        }
+      ],
+      "migrationLedgerHash": "9409871fb0df1382353f8c3b742d161e78954cf2c713007ad7467550415ab374"
+    },
+    "restored": {
+      "schemaHash": "08955f1776980a3594f929603f6943692cd712eabc9f600396549531c58e3ac7",
+      "relationDefinitionsHash": "dcbadef5eba4e44c58040dcd36a86c44fd181040d2ded1f9c037d1704a6cb097",
+      "sequenceStateHash": "60f585a5a33f212bf9c75721538b3cb2a8ce571f0674a0dc24f55c56a7d36f14",
+      "tables": [
+        {
+          "schema": "qc",
+          "table": "approval_cases",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "approval_decisions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "approval_work_items",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "audit_events",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "backup_runs",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "calibration_history",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "calibration_records",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "capa_actions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "capa_close_snapshots",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "capas",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "change_application_attempts",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "change_request_changes",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "change_requests",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "daily_reject_entries",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "document_identities",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "document_version_files",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "document_versions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "electronic_signatures",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "equipment",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "equipment_status_history",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "evidence_links",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "files",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "findings",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "idempotency_records",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_equipment_usage",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_item_templates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_catalog",
+          "count": "194",
+          "rowsHash": "e735b945776c052409abc9bbe06bb5d6d9a062d42370ab6590b9e7baff51109c"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_results",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_snapshots",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_report_source_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_reports",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_document_sources",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_points",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_sections",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_template_versions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "inspection_templates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "issue_slip_approval_confirmations",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_document_usage",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_equipment_usage",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_measurements",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_readings",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_sample_results",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_samples",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_batches",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_snapshots",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_document_sources",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_parameters",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_sections",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_template_versions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_test_templates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "lab_tests",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "laboratory_report_drafts",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "maintenance_history",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "maintenance_records",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "ncrs",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "notification_deliveries",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "notifications",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "outbox_events",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "password_reset_requests",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "permissions",
+          "count": "7",
+          "rowsHash": "b6e1066e1899e04b1924a993fcf9bdd0d4ebd697d5b98a5cef1ac6805d1ef814"
+        },
+        {
+          "schema": "qc",
+          "table": "rate_limit_windows",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "rcas",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "receiving_items",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "recovery_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "reject_issue_slips",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "reject_reports",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_approvals",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_candidates",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_gate_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_provider_nonce_claims",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "release_risk_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "restore_runs",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "role_permissions",
+          "count": "22",
+          "rowsHash": "a32d48e374900db6099b14bb7e0936faaea25b6fbf6040d6168b856e6bb1df9c"
+        },
+        {
+          "schema": "qc",
+          "table": "roles",
+          "count": "4",
+          "rowsHash": "119ed3ddcc32d471af45648d781f495f5809ec8f8a117dfadefe112000c8d0fd"
+        },
+        {
+          "schema": "qc",
+          "table": "schema_migrations",
+          "count": "47",
+          "rowsHash": "9409871fb0df1382353f8c3b742d161e78954cf2c713007ad7467550415ab374"
+        },
+        {
+          "schema": "qc",
+          "table": "sessions",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_assignments",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_checklist_items",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_comments",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "task_dependencies",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "tasks",
+          "count": "1",
+          "rowsHash": "15e649746874d632f8a0b3f373dd51e4acfff8d5836033a2342bc4d194e36e83"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_acceptances",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_cycles",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_defects",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "uat_session_evidence",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "user_roles",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "user_scopes",
+          "count": "0",
+          "rowsHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "schema": "qc",
+          "table": "users",
+          "count": "1",
+          "rowsHash": "2f3286a946d824a0b49949eabb0073e82d709e3292ac6d9d792b866d3add854a"
+        }
+      ],
+      "migrationLedgerHash": "9409871fb0df1382353f8c3b742d161e78954cf2c713007ad7467550415ab374"
+    },
+    "sourceUnchanged": true,
+    "limits": "No production/provider DR, application restore execution, RPO/RTO/SLO or human acceptance claim"
+  },
+  "typecheck": "PASS; 0 errors",
+  "architecture": "PASS boundaries and canonical route coverage",
+  "baseline_evidence": "HISTORICAL relative to current product changes; baseline findings preserved for traceability",
+  "production_schema": "Historical live observation:45 applied; local source now47. Production migration NOT AUTHORIZED/NOT EXECUTED."
+}

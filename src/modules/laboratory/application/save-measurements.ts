@@ -1,3 +1,4 @@
+import { convertMeasurement } from '../domain/unit-conversion.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
@@ -45,6 +46,10 @@ export class SaveMeasurementsUseCase {
           (() => {
             throw new AppError('VALIDATION_FAILED');
           })(),
+      ),
+      ...convertMeasurement(
+        m,
+        test.context.parameters.find((p) => p.id === m.parameterId)!,
       ),
       id: uuidv7(),
       enteredBy: input.actor.id,

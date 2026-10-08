@@ -1,9 +1,14 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { authorize } from '../../../shared/authorization/authorize.js';
+import type { TaskRecordSource } from './ports/record-source.js';
+import { taskRecordHref } from './record-source.js';
 import type { TaskRepository } from '../ports/repository.js';
 export class GetTaskUseCase {
-  constructor(private readonly repository: TaskRepository) {}
+  constructor(
+    private readonly repository: TaskRepository,
+    private readonly recordSource?: TaskRecordSource,
+  ) {}
   async execute(input: { actor: ActorContext; taskId: string }) {
     if (input.actor.accountState !== 'ACTIVE') throw new AppError('AUTHZ_DENIED');
     if (
@@ -37,6 +42,36 @@ export class GetTaskUseCase {
     }
     const labels = await this.repository.getIdentityLabels(task);
     const history = await this.repository.listHistory(task.id, input.actor.id);
-    return { task, ownerDisplayName: labels.owner, assigneeDisplayName: labels.assignee, history };
+    let specializedRecordHref: string | undefined;
+    let specializedRecordUnavailable = false;
+    if (task.specializedRecord && this.recordSource) {
+      try {
+        await this.recordSource.assertVisible({
+          actor: input.actor,
+          reference: task.specializedRecord,
+        });
+        specializedRecordHref = taskRecordHref(task.specializedRecord);
+      } catch (error) {
+        if (
+          !(error instanceof AppError) ||
+          ![
+            'AUTHZ_DENIED',
+            'AUTHZ_PERMISSION_MISSING',
+            'AUTHZ_SCOPE_DENIED',
+            'RESOURCE_NOT_FOUND',
+          ].includes(error.code)
+        ) {
+          specializedRecordUnavailable = true;
+        }
+      }
+    }
+    return {
+      specializedRecordHref,
+      specializedRecordUnavailable,
+      task,
+      ownerDisplayName: labels.owner,
+      assigneeDisplayName: labels.assignee,
+      history,
+    };
   }
 }

@@ -22,6 +22,14 @@ export interface ChangeRequestListFilter {
 }
 
 export interface ChangeRequestRepository {
+  applyApproved?(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+    now: Date;
+    apply: (aggregate: ChangeRequestAggregate, transaction: DatabaseTransaction) => Promise<bigint>;
+  }): Promise<ChangeRequestAggregate>;
   create(input: {
     aggregate: ChangeRequestAggregate;
     actor: ActorContext;
@@ -62,6 +70,8 @@ export interface ChangeRequestRepository {
     transaction?: DatabaseTransaction;
   }): Promise<ChangeRequestAggregate>;
   recordApplicationAttempt(input: {
+    actor?: ActorContext;
+    expectedVersion?: bigint;
     attempt: ChangeRequestApplicationAttempt;
     actorId: string;
     requestId: string;

@@ -33,6 +33,8 @@ export function validateReading(input: ReadingInput, parameter: Parameter): Read
       userSafe: true,
       messageKey: 'errors.reading_index_must_be_positive',
     });
+  // Run replicates require the displayed target unit until their own conversion trace is stored.
+  if (input.unit !== parameter.unit) throw new AppError('VALIDATION_FAILED');
   const value = validateMeasurement(
     {
       sampleId: input.sampleId,

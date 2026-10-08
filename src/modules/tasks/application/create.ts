@@ -2,6 +2,9 @@ import { authorize } from '../../../shared/authorization/authorize.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
+import { taskOccurrence } from './occurrence.js';
+import type { TaskRecordSource } from './ports/record-source.js';
+import type { TaskRecordReference } from '../domain/model.js';
 import { createDraftTask } from '../domain/model.js';
 import type { TaskRepository } from '../ports/repository.js';
 
@@ -9,8 +12,12 @@ export class CreateTaskUseCase {
   constructor(
     private readonly repository: TaskRepository,
     private readonly now = () => new Date(),
+    private readonly recordSource?: TaskRecordSource,
   ) {}
-  execute(input: {
+  async execute(input: {
+    specializedRecord?: TaskRecordReference;
+    recurrenceRuleId?: string;
+    occurrenceKey?: string;
     actor: ActorContext;
     taskNo: string;
     title: string;
@@ -61,7 +68,20 @@ export class CreateTaskUseCase {
         },
         { throwOnDeny: true },
       );
+    if (input.specializedRecord) {
+      if (!this.recordSource) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+      await this.recordSource.assertVisible({
+        actor: input.actor,
+        reference: input.specializedRecord,
+      });
+    }
+    const recurrence = taskOccurrence({
+      ...input,
+      ruleId: input.recurrenceRuleId,
+      ownerId: input.actor.id,
+    });
     const task = createDraftTask({
+      recurrence,
       ...input,
       id: uuidv7(),
       createdBy: input.actor.id,

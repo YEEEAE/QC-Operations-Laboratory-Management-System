@@ -5,9 +5,12 @@ import type {
   ApprovedLabTemplateOption,
   ControlledLabSources,
 } from '../ports/controlled-sources.js';
+import { stableJson } from '../../../shared/json/stable-stringify.js';
+import { evaluateControlledTest } from '../domain/controlled-evaluation.js';
+import type { LabTest } from '../domain/lab-test.js';
 import type { ControlledContext } from '../domain/lab-test.js';
 
-/** Reads only approved controlled definitions. It deliberately does not calculate official outcomes. */
+/** Reads approved controlled definitions; outcomes require an explicit method-declared policy. */
 export class PostgresControlledLabSources implements ControlledLabSources {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
   async listApprovedTemplates(): Promise<readonly ApprovedLabTemplateOption[]> {
@@ -86,6 +89,18 @@ export class PostgresControlledLabSources implements ControlledLabSources {
         templateId: version.template_id,
         versionNo: version.version_no,
         contentHash: version.content_hash,
+        evaluationPolicy:
+          parameters.length &&
+          parameters.every((parameter) => {
+            const payload = parameter.acceptance_rule_payload as Record<string, unknown> | null;
+            const first = parameters[0]!.acceptance_rule_payload as Record<string, unknown> | null;
+            return (
+              payload?.evaluationPolicy &&
+              stableJson(payload.evaluationPolicy) === stableJson(first?.evaluationPolicy)
+            );
+          })
+            ? (parameters[0]!.acceptance_rule_payload as Record<string, unknown>).evaluationPolicy
+            : null,
       },
       documents: linkedDocuments.map((document) => ({
         documentVersionId: document.documentVersionId,
@@ -110,6 +125,8 @@ export class PostgresControlledLabSources implements ControlledLabSources {
         sourceReference: parameter.controlled_source_reference!,
         criteria: parameter.acceptance_rule_payload as Record<string, unknown>,
         acceptanceRuleType: parameter.acceptance_rule_type,
+        unitConversionRules: (parameter.acceptance_rule_payload as Record<string, unknown>)
+          ?.conversionRules,
         // QC-DATA-003: the approved calculation rule travels with the frozen
         // context, so a calculation is reproducible from the same source the
         // acceptance criteria came from.
@@ -125,11 +142,18 @@ export class PostgresControlledLabSources implements ControlledLabSources {
   async validateExecution(): Promise<void> {
     /* Exact execution requirements are supplied by the approved provider. */
   }
-  async evaluate(): Promise<{
+  async evaluate(test?: LabTest): Promise<{
     result: 'PASS' | 'FAIL' | 'HOLD';
     sourceReference: string;
     contentHash: string;
   }> {
-    throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (!test) throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    const evaluation = evaluateControlledTest(test);
+    const current = await this.resolve(test.context.templateVersionId);
+    if (
+      stableJson({ ...current, equipment: [] }) !== stableJson({ ...test.context, equipment: [] })
+    )
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    return evaluation;
   }
 }

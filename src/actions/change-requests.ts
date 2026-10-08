@@ -109,4 +109,17 @@ const transition = defineAction({
     ),
 });
 
-export const changeRequests = { create, createForDocumentVersion, transition };
+const apply = defineAction({
+  accept: 'form',
+  input: z.object({ id, expectedVersion: z.coerce.bigint().positive() }),
+  handler: (input, context) =>
+    run(() =>
+      changeRequestsActionDependencies().apply.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+
+export const changeRequests = { create, createForDocumentVersion, transition, apply };

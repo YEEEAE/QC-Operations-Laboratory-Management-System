@@ -10,3 +10,18 @@ export function rcaReadDependencies() {
     list: new ListRcaUseCase(repository),
   };
 }
+
+import { ncrReadDependencies } from '../../ncr/application/dependencies.js';
+import { CreateRcaUseCase } from './create-rca.js';
+import { UpdateRcaUseCase } from './update-rca.js';
+import { TransitionRcaUseCase } from './transition-rca.js';
+export function rcaActionDependencies() {
+  const repository = new PostgresRcaRepository(getDatabase());
+  return {
+    create: new CreateRcaUseCase(repository, {
+      get: (input) => ncrReadDependencies().get.execute(input),
+    }),
+    update: new UpdateRcaUseCase(repository),
+    transition: new TransitionRcaUseCase(repository),
+  };
+}

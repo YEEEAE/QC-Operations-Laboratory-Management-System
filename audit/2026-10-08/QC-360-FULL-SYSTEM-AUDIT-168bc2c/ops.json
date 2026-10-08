@@ -1,0 +1,1236 @@
+{
+  "requirements": [
+    {
+      "id": "REQ-AUDF-004",
+      "reconciliation_id": "RC-04-004",
+      "requirement": "Report/export scope equals UI scope; spreadsheet formula injection prevented (REQ-RPT-*, REQ-SEC-009, RISK-022/023)",
+      "canonical_source": "BR-AUTH-003; export rules",
+      "business_goal": "Exports disclose exactly what the user may see",
+      "applicability": "Reporting / export",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-011",
+      "historical_evidence_not_accepted": "export scope tests; `audit/2026-09-19/QC-100-FINAL-011-*.md`; QC-ADP-10 candidate parity `audit/2026-09-24/QC-ADP-10-report-parity-handoff.md` (live/PERSISTED snapshot still blocked)",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:117",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/reporting/application/run-report.ts:62",
+          "src/modules/reporting/application/export-report.ts:27",
+          "src/modules/reporting/application/report-snapshot.ts:7"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AUDF-006",
+      "reconciliation_id": "RC-04-006",
+      "requirement": "Notifications in-app only until an external channel is explicitly approved; no external notification claimed (REQ-NOT-*)",
+      "canonical_source": "SYSTEM-INVARIANTS; DEP-025-04 record",
+      "business_goal": "No phantom alerting",
+      "applicability": "Notification module",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-025",
+      "historical_evidence_not_accepted": "first-day checklist dependency register DEP-025",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:119",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/shared/outbox/qc-event-handler.ts:13",
+          "src/shared/notifications/notification-service.ts:1"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AUDF-007",
+      "reconciliation_id": "RC-04-007",
+      "requirement": "Search never reveals unauthorized records (REQ-AUTH-009, REQ-SRCH-*)",
+      "canonical_source": "BR-SRCH-003",
+      "business_goal": "Discovery surface is scope-safe",
+      "applicability": "Search",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-002",
+      "historical_evidence_not_accepted": "negative search tests",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:120",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/shared/search/postgres-search.ts:22",
+          "src/shared/search/postgres-search.ts:97",
+          "src/shared/search/search-service.ts:24"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AUDF-009",
+      "reconciliation_id": "RC-04-009",
+      "requirement": "Dashboard/report counts reproduce the exact row set of their link target; `null` means not available, never shown as zero (REQ-DASH-*)",
+      "canonical_source": "REQUIREMENTS-TRACEABILITY §Dashboard; QC-100-FINAL-017 count contract",
+      "business_goal": "Numbers are auditable",
+      "applicability": "Dashboard / KPIs",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-017",
+      "historical_evidence_not_accepted": "count-contract tests `tests/unit` dashboard suites",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:122",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/dashboard/application/dashboard-sources.ts:1",
+          "src/modules/dashboard/application/get-dashboard.ts:6"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-001",
+      "reconciliation_id": "RC-05-001",
+      "requirement": "Backups exist, are restorable, and restores are drilled on an isolated explicit target (REQ-BKP-*; RISK-028)",
+      "canonical_source": "BACKUP-RECOVERY-PLAN; RESTORE-DRILL-RUNBOOK",
+      "business_goal": "Backup is a recovery capability, not a file",
+      "applicability": "Backup / recovery",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-008",
+      "historical_evidence_not_accepted": "populated-bundle isolated restore `audit/2026-09-19/QC-100-FINAL-008-*.md`; 025 re-drill on head `0031` PASS (local)",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:129",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL",
+        "refs": [
+          "src/modules/backup-recovery/application/run-backup-job.ts:14",
+          "src/modules/backup-recovery/ports/recovery-orchestrator.ts:3",
+          "scripts/recovery/run-daily-backup.ts:25"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-002",
+      "reconciliation_id": "RC-05-002",
+      "requirement": "RPO explicitly approved before claimed (REQ-BKP-006)",
+      "canonical_source": "BR-BKP-006",
+      "business_goal": "Recovery point is a decision, not a guess",
+      "applicability": "Production operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-013",
+      "historical_evidence_not_accepted": "BLOCKED — implementation hard-codes 86,400s, but PD-26 is OPEN; no approved target or provider measurement",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:130",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "UNASSESSED_IN_THIS_SUBTASK",
+        "refs": [],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "UNASSESSED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "BLOCKED_BY_AUTHORITY_SOURCE; not treated as a code defect",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-003",
+      "reconciliation_id": "RC-05-003",
+      "requirement": "RTO explicitly approved before claimed (REQ-BKP-007)",
+      "canonical_source": "BR-BKP-007",
+      "business_goal": "Recovery time is a decision",
+      "applicability": "Production operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-013",
+      "historical_evidence_not_accepted": "BLOCKED — implementation hard-codes 14,400s, but PD-27 is OPEN; local restore 435 ms is not production RTO",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:131",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "UNASSESSED_IN_THIS_SUBTASK",
+        "refs": [],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "UNASSESSED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "BLOCKED_BY_AUTHORITY_SOURCE; not treated as a code defect",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-004",
+      "reconciliation_id": "RC-05-004",
+      "requirement": "Daily-backup scheduler and monthly restore drill are calendar-contract only until an approved scheduler is wired (DEP-025-02)",
+      "canonical_source": "BACKUP-RECOVERY-PLAN; FIRST-DAY-OPERATING-CHECKLIST",
+      "business_goal": "No unmonitored silent gap",
+      "applicability": "Production operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-025",
+      "historical_evidence_not_accepted": "BLOCKED — no scheduler; recorded as external dependency",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:132",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL",
+        "refs": [
+          "src/modules/backup-recovery/application/schedule-backup-recovery.ts:12",
+          "scripts/recovery/run-monthly-restore-drill.ts:1",
+          "render.yaml:1"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-005",
+      "reconciliation_id": "RC-05-005",
+      "requirement": "No provider monitoring/alerting channel exists; do not claim it (DEP-025-03)",
+      "canonical_source": "OBSERVABILITY-ARCHITECTURE",
+      "business_goal": "Honest operability",
+      "applicability": "Production operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-007",
+      "historical_evidence_not_accepted": "BLOCKED — provider telemetry NOT VERIFIED",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:133",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL",
+        "refs": [
+          "src/shared/observability/telemetry.ts:82"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-006",
+      "reconciliation_id": "RC-05-006",
+      "requirement": "Health/readiness use one canonical DB check with canonical TLS config (REQ-HLTH-*)",
+      "canonical_source": "DATABASE-ARCHITECTURE; RENDER-DATABASE-CONNECTION",
+      "business_goal": "Readiness means what it says",
+      "applicability": "Health endpoints",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-014",
+      "historical_evidence_not_accepted": "canonical readiness check evidence",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:134",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/shared/health/canonical-database-readiness.ts:57",
+          "src/modules/system-health/infrastructure/postgres-health-probes.ts:46"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-007",
+      "reconciliation_id": "RC-05-007",
+      "requirement": "External dependency failure degrades sanitized and fail-closed; never corrupts local business outcome (RISK-029; REQ-HLTH-*; outbox pattern)",
+      "canonical_source": "ERROR-ARCHITECTURE; OBSERVABILITY-ARCHITECTURE",
+      "business_goal": "Dependency failure ≠ data corruption",
+      "applicability": "All integration edges",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-025",
+      "historical_evidence_not_accepted": "exercise S1/S3 PASS (local) `audit/2026-09-20/QC-100-FINAL-025-*.md`",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:135",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/shared/outbox/worker.ts:16",
+          "src/modules/ai-advisory/application/get-advisory.ts:201"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-008",
+      "reconciliation_id": "RC-05-008",
+      "requirement": "Incident/problem runbook and first-day checklist derived from approved policy with explicit READY(local)/PENDING(external) split",
+      "canonical_source": "INCIDENT-PROBLEM-RUNBOOK; FIRST-DAY-OPERATING-CHECKLIST",
+      "business_goal": "Operable first day, honestly bounded",
+      "applicability": "Operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-025",
+      "historical_evidence_not_accepted": "runbook + checklist documents; recovery exercise 6/6 exit 0",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:136",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "UNASSESSED_IN_THIS_SUBTASK",
+        "refs": [],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "UNASSESSED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-009",
+      "reconciliation_id": "RC-05-009",
+      "requirement": "Deployment identity reproducible: release identity bound to SHA/build/version/migration head (REQ-BKP/HLTH family)",
+      "canonical_source": "RENDER-DEPLOYMENT; release scripts",
+      "business_goal": "Deployments are attributable",
+      "applicability": "Deployment",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-001",
+      "historical_evidence_not_accepted": "`release:identity` / `release:verify` scripts; production migration gate BLOCKED",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:137",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          ".github/workflows/ci.yml:100",
+          "src/shared/release/deployed-identity.ts:1",
+          "render.yaml:11"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-010",
+      "reconciliation_id": "RC-05-010",
+      "requirement": "Performance/observability: no N+1 on admin grant reads; indexes present; request IDs consistent in responses and logs (REQ-TST/HLTH family)",
+      "canonical_source": "OBSERVABILITY-ARCHITECTURE; migration `0029`",
+      "business_goal": "System diagnosable under load",
+      "applicability": "Platform-wide",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-014",
+      "historical_evidence_not_accepted": "focused 41/41 PASS; representative volume NOT VERIFIED",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:138",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/shared/observability/telemetry.ts:107",
+          "src/modules/system-health/infrastructure/postgres-health-probes.ts:90"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-011",
+      "reconciliation_id": "RC-05-011",
+      "requirement": "Uptime/availability claims require provider evidence; none claimed",
+      "canonical_source": "DEPLOYMENT-ARCHITECTURE",
+      "business_goal": "No availability fiction",
+      "applicability": "Production operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-001",
+      "historical_evidence_not_accepted": "BLOCKED — provider parity drift recorded; gates 0/19",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:139",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "UNASSESSED_IN_THIS_SUBTASK",
+        "refs": [],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "UNASSESSED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-RCOV-012",
+      "reconciliation_id": "RC-05-012",
+      "requirement": "Production incident response has a documented owner chain and reversible first actions before any external escalation",
+      "canonical_source": "INCIDENT-PROBLEM-RUNBOOK; FIRST-DAY-OPERATING-CHECKLIST",
+      "business_goal": "Incidents are handled, not improvised",
+      "applicability": "Production operations",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-025",
+      "historical_evidence_not_accepted": "runbook DEP-025 register; external paging/notification BLOCKED (DEP-025-04)",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:140",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "UNASSESSED_IN_THIS_SUBTASK",
+        "refs": [],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "UNASSESSED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-001",
+      "reconciliation_id": "RC-06-001",
+      "requirement": "AI is advisory-only; cannot approve/reject/release/sign or set official PASS/FAIL (REQ-AI-003/004/005; RISK-030)",
+      "canonical_source": "BR-AI-003..008",
+      "business_goal": "AI never acquires controlled authority",
+      "applicability": "AI surfaces",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-009, QC-ADP-11",
+      "historical_evidence_not_accepted": "Current HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`: focused AI/advisory 90/90 PASS; deterministic synthetic only; authenticated least-privilege route denial E2E PASS; no release/QC decision path",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:146",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-002",
+      "reconciliation_id": "RC-06-002",
+      "requirement": "AI receives only authorized context; detected PII/secret-like input blocked before provider access (REQ-AI-006)",
+      "canonical_source": "BR-AI-009; SECURITY-ARCHITECTURE",
+      "business_goal": "No data leakage to providers",
+      "applicability": "AI surfaces",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-009, QC-ADP-11",
+      "historical_evidence_not_accepted": "Current HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`: focused AI/advisory 90/90 PASS; least-privilege direct action denied with sanitized 403; no provider call; live-provider behavior NOT VERIFIED",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:147",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-003",
+      "reconciliation_id": "RC-06-003",
+      "requirement": "Structured AI output schema-validated; output visibly advisory; authority-claiming text rejected (REQ-AI-007/008)",
+      "canonical_source": "BR-AI-010/011",
+      "business_goal": "AI output cannot masquerade as decision",
+      "applicability": "AI surfaces",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-009, QC-ADP-11",
+      "historical_evidence_not_accepted": "Focused AI/advisory 90/90 PASS on current HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`; browser/AT readability NOT VERIFIED",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:148",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-004",
+      "reconciliation_id": "RC-06-004",
+      "requirement": "AI invocation metadata auditable; prompt/output retention policy explicit (REQ-AI-009/010)",
+      "canonical_source": "BR-AI-012; DATA-DICTIONARY",
+      "business_goal": "AI usage is reviewable",
+      "applicability": "AI surfaces",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-013",
+      "historical_evidence_not_accepted": "REQ-AI-010 retention POLICY-DEPENDENT",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:149",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "BLOCKED_BY_AUTHORITY_SOURCE; not treated as a code defect",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-005",
+      "reconciliation_id": "RC-06-005",
+      "requirement": "Fail-safe refusal for high-risk unsupported-source requests; source identity/citations preserved when supplied",
+      "canonical_source": "AI-PROVIDERS governance dataset `qc-ai-governance-v2` / 4.0.0",
+      "business_goal": "Unsupported advice refused, not guessed",
+      "applicability": "AI surfaces",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-009, QC-ADP-11",
+      "historical_evidence_not_accepted": "Current HEAD `6b999b71c54e7e9c29399f8bae6a25b83ee39385`: 33 synthetic cases; all category disposition error rates 0%; no live model evaluated",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:150",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-006",
+      "reconciliation_id": "RC-06-006",
+      "requirement": "Provider configuration server-only; sanitized provider metadata; Groq primary / Gemini fallback / DisabledAiProvider final fallback",
+      "canonical_source": "AI-PROVIDERS",
+      "business_goal": "No client-side provider secrets",
+      "applicability": "AI configuration",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-009, QC-ADP-11",
+      "historical_evidence_not_accepted": "Focused AI/advisory 90/90 PASS on current HEAD; exact official endpoint allowlist; Render provider config NOT VERIFIED",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:151",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-007",
+      "reconciliation_id": "RC-06-007",
+      "requirement": "External data-processing approval is an explicit external dependency before live provider use",
+      "canonical_source": "AI-PROVIDERS",
+      "business_goal": "Legal/organizational consent precedes data flow",
+      "applicability": "AI surfaces",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-013, QC-ADP-11",
+      "historical_evidence_not_accepted": "BLOCKED — no approved provider/location/retention/deletion/data-class/consent artifact; external processing remains disabled",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:152",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "BLOCKED_BY_AUTHORITY_SOURCE; not treated as a code defect",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-AIGV-008",
+      "reconciliation_id": "RC-06-008",
+      "requirement": "AI capability is not required for any core QC workflow; system fully operable with DisabledAiProvider",
+      "canonical_source": "DOMAIN-MAP",
+      "business_goal": "AI is an enhancement surface, not a dependency",
+      "applicability": "AI surfaces",
+      "capability": "OPTIONAL",
+      "historical_task": "QC-100-FINAL-009",
+      "historical_evidence_not_accepted": "disabled-provider fallback path tests",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:153",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          "src/modules/ai-advisory/application/get-advisory.ts:164",
+          "src/actions/ai-advisory.ts:42",
+          "src/modules/ai-advisory/infrastructure/http-ai-provider.ts:14"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-READY-003",
+      "reconciliation_id": "RC-07-003",
+      "requirement": "Production release evidence server-derived via release_gate_evidence / release_risk_evidence; provider evidence requires signed signer/scope/digest, and approval additionally requires the approved 19-gate register reconciled to exact candidate; browser submits intent only (P-07)",
+      "canonical_source": "REQUIREMENTS-TRACEABILITY P-07; PRODUCTION-READINESS-CHECKLIST",
+      "business_goal": "Release approval cannot be forged client-side or inferred from a partial gate model",
+      "applicability": "Release governance",
+      "capability": "MANDATORY",
+      "historical_task": "QC-ADP-03",
+      "historical_evidence_not_accepted": "PARTIAL — signed provider intake implemented locally; approved 19-gate reconciliation unavailable, so approval fails closed; `audit/2026-09-24/QC-ADP-03-release-evidence-handoff.md`",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:161",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL",
+        "refs": [
+          "src/modules/release-governance/application/approve-release.ts:95",
+          "src/modules/release-governance/application/ingest-provider-evidence.ts:46",
+          "src/modules/release-governance/infrastructure/postgres-repository.ts:93"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "BLOCKED_BY_AUTHORITY_SOURCE; not treated as a code defect",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-READY-007",
+      "reconciliation_id": "RC-07-007",
+      "requirement": "Exact-head CI evidence for the release candidate",
+      "canonical_source": "TESTING-STRATEGY; CI gate §58",
+      "business_goal": "CI proves the shipped thing",
+      "applicability": "CI/CD",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-002 / QC-ADP-03",
+      "historical_evidence_not_accepted": "BLOCKED — GitHub status set empty on source HEAD `7e0a3535f80b956bcfe0143201ddfee2e4277e4c`; edited worktree has no exact-SHA run",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:165",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          ".github/workflows/ci.yml:32",
+          ".github/workflows/ci.yml:182"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    },
+    {
+      "id": "REQ-READY-008",
+      "reconciliation_id": "RC-07-008",
+      "requirement": "Node/toolchain contract honored on all verification runs (>=24.20.0 <25)",
+      "canonical_source": "package.json engines",
+      "business_goal": "Reproducible toolchain",
+      "applicability": "All verification",
+      "capability": "MANDATORY",
+      "historical_task": "QC-100-FINAL-002",
+      "historical_evidence_not_accepted": "host runs v22.22.3 — recorded deviation; CI uses contract version",
+      "source_ref": "Documents/REQUIREMENTS-RECONCILIATION.md:166",
+      "priority": {
+        "value": null,
+        "origin": "Requirement source does not assign a uniform P0/P1/P2; findings below have explicit auditor priorities."
+      },
+      "implementation": {
+        "status": "PARTIAL_SOURCE_REVIEW",
+        "refs": [
+          ".github/workflows/ci.yml:48",
+          "render.yaml:23"
+        ],
+        "limit": "Source inspection only; no runtime acceptance inferred."
+      },
+      "acceptance": {
+        "source": "INSPECTED",
+        "tests": "PARENT_OWNS_FRESH_EXECUTION",
+        "runtime": "NOT_VERIFIED_IN_THIS_SUBTASK",
+        "authority": "NOT_VERIFIED; owner decisions may apply",
+        "uat": "NOT_RUN_IN_THIS_SUBTASK"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "QC360-OPS-001",
+      "title": "AI source metadata bypasses the sensitive-data screen",
+      "priority": "P1",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "IMPLEMENTATION_DEFECT",
+      "requirement_ids": [
+        "REQ-AIGV-002",
+        "REQ-AI-006"
+      ],
+      "existing_ids": [],
+      "implementation_status": "PARTIAL",
+      "source_refs": [
+        "src/modules/ai-advisory/application/get-advisory.ts:134",
+        "src/modules/ai-advisory/application/get-advisory.ts:122",
+        "src/actions/ai-advisory.ts:51",
+        "src/modules/ai-advisory/infrastructure/groq-ai-provider.ts:13",
+        "src/modules/ai-advisory/infrastructure/gemini-ai-provider.ts:13"
+      ],
+      "business_impact": "When external processing is validly enabled, an authorized request with safe question/label/content but citation= password=synthetic-audit-marker passes checks and sends that metadata to Groq/Gemini. sourceId/sourceType have the same gap. Current disabled provider is not evidence of a live leak.",
+      "repair_scope": "Screen every field serialized into external prompts, including sourceId/sourceType/citation, with the same bounded secret/PII rules; retain fail-closed policy/consent and no raw-content logs.",
+      "repair_acceptance": "Synthetic provider-spy tests for secret/PII markers in each metadata field must refuse before availability/complete; safe citations still work. Verify both provider request serializers without external calls.",
+      "complexity": "LOW",
+      "dependencies": [
+        "AI processing policy approval required only for live acceptance; local synthetic verification needs no provider"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "LOCAL_USE_CASE_AND_SERIALIZER_SYNTHETIC_ONLY",
+        "tests": "PASS_REPRODUCTION — 13 synthetic cases on Node24.20.0; 3 spy metadata bypasses, 2 existing-screen controls, 2 consent/class denials, 6 Groq/Gemini serializer mocked-fetch captures",
+        "provider": "ZERO_REAL_NETWORK_CALLS; global fetch fully replaced",
+        "uat": "NOT_RUN",
+        "probe_source": ".ci-results/QC-360-20261008/ops-synthetic-probe.mts",
+        "probe_result": ".ci-results/QC-360-20261008/ops-synthetic-probe.json",
+        "probe_sha256": "86228046591f97c6ca4f8f4c774128000a17af2ad8e7731609b3e71741b765aa",
+        "databaseEnv": "DATABASE_URL and QC_TEST_DATABASE_URL unset",
+        "command": "rtk env -u DATABASE_URL -u QC_TEST_DATABASE_URL /Users/yzydalshmry/.nvm/versions/node/v24.20.0/bin/node --import=tsx .ci-results/QC-360-20261008/ops-synthetic-probe.mts",
+        "exit_code": 0,
+        "authority_limit": "Production policy/config loader not invoked. Approved-policy activation remains conditional; injected local fake/adapter config is synthetic test setup, not organizational approval."
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b"
+    },
+    {
+      "id": "QC360-OPS-002",
+      "title": "Logical backup success is not persisted into the application catalog or durable manifest",
+      "priority": "P1",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "IMPLEMENTATION_GAP",
+      "requirement_ids": [
+        "REQ-RCOV-001",
+        "REQ-BKP-003"
+      ],
+      "existing_ids": [
+        "QC-ENV-F-003"
+      ],
+      "implementation_status": "PARTIAL",
+      "source_refs": [
+        "src/modules/backup-recovery/application/run-backup-job.ts:50",
+        "src/modules/backup-recovery/application/run-backup-job.ts:66",
+        "scripts/recovery/run-daily-backup.ts:25",
+        "scripts/recovery/run-daily-backup.ts:33",
+        "src/modules/backup-recovery/ports/repository.ts:37"
+      ],
+      "business_impact": "The script stores and checks dump bytes, returns an in-memory manifest, prints only status/failure/catalog ID, and exits. The catalog interface has no backup recording operation. A successful job does not create the record read by /system/backups or retain full release/migration/checksum context for discovery and restore. This source gap persists independently of provider runtime availability.",
+      "repair_scope": "Persist an immutable manifest and application catalog entry with artifact reference/release identity/checksum; define failed-job and catalog-commit reconciliation so artifact-only completion cannot masquerade as a recoverable catalog record.",
+      "repair_acceptance": "Isolated backup yields one discoverable catalog entry plus durable manifest; process restart preserves it; retrieved bytes match manifest; injected catalog/storage failure does not report complete application backup; explicit isolated restore reproduces DB/files before restore-proven status.",
+      "complexity": "HIGH",
+      "dependencies": [
+        "Approved provider/storage topology",
+        "Authorized isolated target",
+        "retention and recovery owner decisions"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "NOT_RUN",
+        "tests": "NOT_RUN_IN_THIS_SUBTASK",
+        "provider": "NO_CALLS",
+        "uat": "NOT_RUN"
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b"
+    },
+    {
+      "id": "QC360-OPS-003",
+      "title": "R2 adapter cannot enumerate objects for the retention implementation",
+      "priority": "P2",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "IMPLEMENTATION_GAP",
+      "requirement_ids": [
+        "REQ-RCOV-001"
+      ],
+      "existing_ids": [
+        "QC-ENV-F-003"
+      ],
+      "implementation_status": "PARTIAL",
+      "source_refs": [
+        "src/modules/backup-recovery/infrastructure/cloudflare-r2-artifact-store.ts:144",
+        "src/modules/backup-recovery/application/retention.ts:14"
+      ],
+      "business_impact": "expireBackupArtifacts always calls store.list(), while the actual R2 adapter always throws. Even after an approved retention policy is supplied, the shipped R2 path cannot inventory or expire eligible objects. No current deletion failure is claimed because no policy/job was run.",
+      "repair_scope": "Provide controlled paginated R2 inventory or catalog-backed enumeration compatible with retention; preserve protected recovery chains and approved-policy gates.",
+      "repair_acceptance": "Multi-page synthetic inventory covers eligible/protected objects; unapproved policy deletes none; approved expiry preserves last valid recovery chain; provider listing failure is explicit and performs no deletion.",
+      "complexity": "MEDIUM",
+      "dependencies": [
+        "Retention authority PD-24/PD-25",
+        "R2 topology and credential owner"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "NOT_RUN",
+        "tests": "NOT_RUN_IN_THIS_SUBTASK",
+        "provider": "NO_CALLS",
+        "uat": "NOT_RUN"
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b"
+    },
+    {
+      "id": "QC360-OPS-004",
+      "title": "Telemetry configuration has no wired exporter",
+      "priority": "P2",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "IMPLEMENTATION_GAP_WITH_AUTHORITY_DEPENDENCY",
+      "requirement_ids": [
+        "REQ-RCOV-005",
+        "REQ-RCOV-010"
+      ],
+      "existing_ids": [
+        "QC-ENV-F-003"
+      ],
+      "implementation_status": "PARTIAL",
+      "source_refs": [
+        "src/shared/observability/telemetry.ts:82",
+        "src/shared/observability/telemetry.ts:88",
+        "src/config/runtime.ts:42"
+      ],
+      "business_impact": "OTEL variables are parsed but active providers remain no-ops; repository search found no production caller of setTelemetryProviders. Metric/span call sites therefore supply no exported operational evidence or alert delivery. Optional unset configuration is not itself a configuration defect.",
+      "repair_scope": "After backend required/optional decision, wire an approved exporter or explicitly retain documented disabled capability. Implement bounded redaction and non-blocking failure isolation before operational claims.",
+      "repair_acceptance": "Approved backend receives sanitized request/outbox metrics and traces; exporter outage leaves business transaction outcome unchanged; alerts tested through authorized receiver; disabled optional mode remains honest.",
+      "complexity": "MEDIUM",
+      "dependencies": [
+        "Named owner required/optional/backend decision",
+        "Approved alert receiver/SLO thresholds"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "NOT_RUN",
+        "tests": "NOT_RUN_IN_THIS_SUBTASK",
+        "provider": "NO_CALLS",
+        "uat": "NOT_RUN"
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b"
+    },
+    {
+      "id": "QC360-OPS-005",
+      "title": "Canonical release gate reconciliation remains an unconditional deny",
+      "priority": "P1",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "AUTHORITY_DEPENDENCY_NOT_IMPLEMENTATION_BUG",
+      "requirement_ids": [
+        "REQ-READY-003"
+      ],
+      "existing_ids": [
+        "F-013-2"
+      ],
+      "implementation_status": "INTENTIONAL_FAIL_CLOSED_AUTHORITY_BLOCKED",
+      "source_refs": [
+        "src/modules/release-governance/infrastructure/postgres-repository.ts:93",
+        "src/modules/release-governance/application/ingest-provider-evidence.ts:46",
+        "src/modules/release-governance/application/approve-release.ts:95"
+      ],
+      "business_impact": "hasReconciledProductionGateDecision returns false. Signed intake and production approval are intentionally blocked until the approved nineteen-gate register and acceptance/artifact rules exist. Correct fail-closed behavior prevents release, while functionality remains partial.",
+      "repair_scope": "Obtain approved canonical nineteen IDs/names/applicability/source evidence and mapping first; implement candidate-bound reconciliation and artifact verification without weakening deny-by-default.",
+      "repair_acceptance": "Missing/unapproved/stale/other-candidate register denies; approved complete register maps every required gate and recomputed artifact; real signed UAT/provider evidence is separately required.",
+      "complexity": "HIGH",
+      "dependencies": [
+        "Approved nineteen-gate authority",
+        "22 audit-row mapping decision",
+        "Signer/artifact/freshness authority",
+        "Real UAT and provider acceptance"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "NOT_RUN",
+        "tests": "NOT_RUN_IN_THIS_SUBTASK",
+        "provider": "NO_CALLS",
+        "uat": "NOT_RUN"
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b"
+    },
+    {
+      "id": "QC360-OPS-006",
+      "title": "Search does not escape the declared LIKE escape character",
+      "priority": "P2",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "IMPLEMENTATION_DEFECT",
+      "requirement_ids": [
+        "REQ-SRCH-004",
+        "REQ-AUDF-007"
+      ],
+      "existing_ids": [],
+      "implementation_status": "PARTIAL",
+      "source_refs": [
+        "src/shared/search/postgres-search.ts:98",
+        "src/shared/search/postgres-search.ts:49"
+      ],
+      "business_impact": "The pattern escapes percent/underscore but not backslash while every ILIKE declares backslash as ESCAPE. Literal searches containing backslash change the next character/wildcard interpretation; e.g. a backslash before percent can restore wildcard behavior within already-authorized rows. This is search correctness, not a demonstrated authorization bypass.",
+      "repair_scope": "Escape backslash before percent and underscore in a shared literal-LIKE pattern builder; preserve authorization predicates before total/page.",
+      "repair_acceptance": "PostgreSQL fixture titles containing literal backslash, percent, underscore and combined forms return exact expected authorized rows/counts across cursor pages; foreign-scope controls remain zero.",
+      "complexity": "LOW",
+      "dependencies": [
+        "Fresh disposable PostgreSQL18 fixture acceptance"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "POSTGRESQL_NOT_RUN — source-model only",
+        "tests": "2 independent source-model assertions PASS",
+        "provider": "NO_CALLS",
+        "uat": "NOT_RUN",
+        "probe_result": ".ci-results/QC-360-20261008/ops-synthetic-probe.json",
+        "probe_sha256": "86228046591f97c6ca4f8f4c774128000a17af2ad8e7731609b3e71741b765aa"
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+      "reproduction": {
+        "status": "SOURCE_MODEL_CONFIRMED",
+        "postgresRuntime": "NOT_RUN",
+        "cases": [
+          {
+            "q": "A\\B",
+            "value": "A\\B",
+            "expectedLiteral": true,
+            "pattern": "%A\\B%",
+            "observedLikeModel": false
+          },
+          {
+            "q": "\\%",
+            "value": "\\anything",
+            "expectedLiteral": false,
+            "pattern": "%\\\\%%",
+            "observedLikeModel": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "QC360-OPS-007",
+      "title": "Scheduled backup/drill and worker execution are not wired in the deployment source",
+      "priority": "P1",
+      "priority_origin": "AUDITOR_ASSIGNED",
+      "classification": "IMPLEMENTATION_GAP_WITH_AUTHORITY_DEPENDENCY",
+      "requirement_ids": [
+        "REQ-RCOV-004",
+        "REQ-AUDF-006"
+      ],
+      "existing_ids": [
+        "QC-PAGE-F-015",
+        "QC-ENV-F-003"
+      ],
+      "implementation_status": "PARTIAL",
+      "source_refs": [
+        "src/modules/backup-recovery/application/schedule-backup-recovery.ts:12",
+        "scripts/recovery/run-monthly-restore-drill.ts:1",
+        "scripts/workers/outbox.ts:1",
+        "render.yaml:1"
+      ],
+      "business_impact": "CalendarBackupScheduler constructs test-environment commands only; monthly drill CLI exits with an isolated-target requirement; render.yaml defines only a web service. The outbox CLI processes one batch and exits. There is no source-wired durable cadence, loop, worker heartbeat or external paging. This does not establish current provider configuration.",
+      "repair_scope": "After owner approval, wire a durable scheduler/worker execution path with bounded retries, heartbeat, monitored failure and explicit isolated drill target; do not auto-activate billable resources.",
+      "repair_acceptance": "Restart-safe schedule identity, duplicate tick denial, worker crash/reclaim, backlog drain and heartbeat aging verified; isolated monthly drill and approved failure alert exercised with candidate identity.",
+      "complexity": "HIGH",
+      "dependencies": [
+        "Scheduler/provider/cost authority",
+        "Backup catalog/manifest gap",
+        "Explicit isolated target",
+        "Notification event/recipient catalogue"
+      ],
+      "evidence": {
+        "source": "VERIFIED_BY_INSPECTION",
+        "runtime": "NOT_RUN",
+        "tests": "NOT_RUN_IN_THIS_SUBTASK",
+        "provider": "NO_CALLS",
+        "uat": "NOT_RUN"
+      },
+      "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b"
+    }
+  ],
+  "coverage": [
+    {
+      "scope": "Architecture boundaries",
+      "status": "SOURCE_PARTIAL",
+      "evidence": [
+        "scripts/architecture/check-boundaries.mjs:1",
+        "src/modules/release-governance/application/ports/provider-attestation.ts:1"
+      ],
+      "limit": "Delivery guard and application facade pattern inspected; parent runs architecture gate. No exhaustive cross-domain mutation ownership review in this subtask."
+    },
+    {
+      "scope": "CI/CD and artifact identity",
+      "status": "SOURCE_INSPECTED_RUNTIME_UNASSESSED",
+      "evidence": [
+        ".github/workflows/ci.yml:1",
+        "render.yaml:1"
+      ],
+      "notes": "Exact SHA checkout, Node24.20, frozen install, seven evidence reports, fail-on-skip, build manifest and sealed artifact/attestations declared. Render source still rebuilds; no claim of promoted byte identity, exact-SHA CI success or current provider gate configuration."
+    },
+    {
+      "scope": "Release governance",
+      "status": "PARTIAL_AUTHORITY_BLOCKED",
+      "evidence": [
+        "src/modules/release-governance/application/approve-release.ts:1",
+        "src/modules/release-governance/application/ingest-provider-evidence.ts:1",
+        "src/modules/release-governance/infrastructure/postgres-repository.ts:93"
+      ],
+      "notes": "Candidate identity, runtime identity, trusted evidence, registry guard, reauthentication and signature preparation inspected; database lock/atomicity acceptance belongs to parent."
+    },
+    {
+      "scope": "Backup/restore",
+      "status": "PARTIAL_SOURCE",
+      "notes": "Dump-byte integrity is implemented; durable manifest/catalog and real orchestrator are absent. Restore intent is separate from restore proof. No production or provider calls."
+    },
+    {
+      "scope": "Monitoring/health/workers",
+      "status": "PARTIAL_SOURCE",
+      "evidence": [
+        "src/shared/health/canonical-database-readiness.ts:1",
+        "src/modules/system-health/application/get-system-health.ts:1",
+        "src/modules/system-health/infrastructure/postgres-health-probes.ts:1",
+        "src/shared/outbox/worker.ts:1"
+      ],
+      "notes": "Canonical TLS DB probe and sanitized statuses inspected. Backlog diagnostics explicitly report heartbeat NOT_RECORDED and delivery NOT_REPRESENTED. Source connectivity health is not runtime/operability/release acceptance."
+    },
+    {
+      "scope": "Notifications",
+      "status": "PARTIAL_SOURCE_AUTHORITY_PENDING",
+      "evidence": [
+        "src/shared/outbox/qc-event-handler.ts:13",
+        "Documents/BUSINESS-RULES.md:2319"
+      ],
+      "notes": "Only inspection/lab FINAL_APPROVE+APPROVED projects author in-app notifications; dedupe by event ID. Other events return without projection and worker marks them processed. Exhaustive workflow criticality/recipient applicability is not approved, so no invented missing-event implementation defect. External delivery not claimed."
+    },
+    {
+      "scope": "AI",
+      "status": "PARTIAL_SOURCE",
+      "notes": "Advisory-only, mode permissions, classification/consent/policy gates, output schema and sanitizer inspected. Metadata screening omission is a concrete defect. Actor/feature/model/timestamp/outcome durable audit not present in use case/action; BR-AI-012 says where relevant and owner retention/applicability unresolved, so metadata-audit acceptance stays authority-dependent rather than an unqualified defect. No provider or live-model evaluation."
+    },
+    {
+      "scope": "Instrument and integration contracts",
+      "status": "SANDBOX_ONLY",
+      "evidence": [
+        "src/shared/integrations/instrument-sandbox-adapter.ts:1"
+      ],
+      "notes": "HMAC/idempotency/sequence maps are process-local, appendAudit injected, businessDecision always UNDECIDED. This is an explicit sandbox, not durable production integration. Six source/provider contract inventory and real provider acceptance unassessed."
+    },
+    {
+      "scope": "Reports/export",
+      "status": "SOURCE_PARTIAL_RUNTIME_UNASSESSED",
+      "evidence": [
+        "src/modules/reporting/application/run-report.ts:1",
+        "src/modules/reporting/application/export-report.ts:1",
+        "src/modules/reporting/application/report-snapshot.ts:7",
+        "Documents/BUSINESS-RULES.md:2117"
+      ],
+      "notes": "View/run/export permissions, shared query and expected dataset digest inspected. Snapshot request-local; durable generation metadata/retention semantics need owner reconciliation REQ-RPT-005 versus BR-RPT-005 where applicable. No fresh CSV/XLSX/print runtime parity executed here."
+    },
+    {
+      "scope": "Search/dashboard",
+      "status": "SOURCE_PARTIAL_RUNTIME_UNASSESSED",
+      "evidence": [
+        "src/shared/search/postgres-search.ts:22",
+        "src/shared/search/postgres-search.ts:108",
+        "src/modules/dashboard/application/dashboard-sources.ts:1"
+      ],
+      "notes": "Search permissions before UNION counts/pages and read-only repeatable-read; dashboard domain read sources and explicit NOT_SUPPLIED/authorization-null states inspected. Exhaustive source scope matrix and count/link runtime parity unassessed."
+    },
+    {
+      "scope": "Shared UI/performance",
+      "status": "UNASSESSED_RUNTIME",
+      "notes": "Only shared source contracts read via Mind/maps; no rendered authenticated states, manual AT, all viewport matrix, representative workload p95/LCP/INP/CPU/GPU measurement in this subtask. Historical measurements not accepted as current. Platform-wide source/mutation UI is parent/other subtask responsibility."
+    },
+    {
+      "scope": "Operations runbooks/availability/RPO/RTO",
+      "status": "SOURCE_PARTIAL_AUTHORITY_UNVERIFIED",
+      "notes": "Canonical backup policy and requirement tables inspected; no current provider restore, PITR/WAL, accepted retention/object store, incident paging, uptime or approved recovery target attestation. Absence of runtime evidence is not recorded as an implementation defect."
+    },
+    {
+      "scope": "Task boundaries",
+      "status": "READ_ONLY_EXCEPT_REQUESTED_OUTPUT",
+      "candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+      "notes": "No code/tests/Git/database/Mind mutation. No external calls. Tests owned by parent. Relevant audit/verification skills read; parent confirms 387 discovered project skills (2.3MB) and relevant-only reading, disclosed procedural limitation centrally."
+    },
+    {
+      "scope": "Independent local synthetic reproduction",
+      "status": "PASS_REPRODUCTION_NOT_PRODUCT_ACCEPTANCE",
+      "source": ".ci-results/QC-360-20261008/ops-synthetic-probe.mts",
+      "result": ".ci-results/QC-360-20261008/ops-synthetic-probe.json",
+      "sha256": "86228046591f97c6ca4f8f4c774128000a17af2ad8e7731609b3e71741b765aa",
+      "notes": "Node24.20; AI 13 cases and source-level LIKE 2 cases pass. No real provider calls/database access; all fetch calls mocked. These assertions confirm defects and surviving controls, not a fix or live/provider/UAT acceptance."
+    }
+  ]
+}

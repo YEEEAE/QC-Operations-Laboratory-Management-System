@@ -196,6 +196,13 @@ const policies: readonly AuthorizationPolicy[] = [
     entityType: 'RCA',
     states: ['DRAFT', 'RETURNED'],
   },
+  { permission: 'PERM-RCA-CREATE', action: 'CREATE', entityType: 'RCA', states: ['DRAFT'] },
+  {
+    permission: 'PERM-RCA-EDIT',
+    action: 'UPDATE',
+    entityType: 'RCA',
+    states: ['DRAFT', 'IN_PROGRESS', 'RETURNED'],
+  },
   { permission: 'PERM-RCA-SUBMIT', action: 'SUBMIT', entityType: 'RCA', states: ['IN_PROGRESS'] },
   { permission: 'PERM-RCA-REVIEW', action: 'RETURN', entityType: 'RCA', states: ['SUBMITTED'] },
   { permission: 'PERM-RCA-APPROVE', action: 'APPROVE', entityType: 'RCA', states: ['SUBMITTED'] },
@@ -943,6 +950,12 @@ const policies: readonly AuthorizationPolicy[] = [
     action: 'CANCEL',
     entityType: 'CHANGE_REQUEST',
     states: ['DRAFT', 'RETURNED'],
+  },
+  {
+    permission: 'PERM-CHG-APPLY',
+    action: 'APPLY',
+    entityType: 'CHANGE_REQUEST',
+    states: ['APPROVED', 'APPLIED'],
   },
   {
     permission: 'PERM-BKP-VIEW',

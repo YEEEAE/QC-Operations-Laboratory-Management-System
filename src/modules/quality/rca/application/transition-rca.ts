@@ -1,3 +1,4 @@
+import { AppError } from '../../../../shared/errors/app-error.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import { transitionRca, type RcaAction } from '../domain/rca.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
@@ -23,8 +24,13 @@ export class TransitionRcaUseCase {
     reason?: string;
     requestId: string;
   }) {
+    if (!['START', 'SUBMIT'].includes(i.action))
+      throw new AppError('AUTHZ_DENIED', {
+        userSafe: true,
+        messageKey: 'errors.policy_source_required',
+      });
     const r = await this.repo.get(i.id, i.actor);
-    if (!r) throw new Error('not found');
+    if (!r) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     authorize(
       {
         actor: i.actor,

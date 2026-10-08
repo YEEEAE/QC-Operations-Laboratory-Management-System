@@ -1,0 +1,95 @@
+{
+  "scope": "Single HTML embeds all 8 baseline report bodies and local residual/source chapter",
+  "merged_html_removed": [
+    "QC-360-COMPLETE-GAP-REGISTER.html",
+    "QC-360-CURRENT-STATE-DASHBOARD.html",
+    "QC-360-DATABASE-SECURITY-INTEGRITY.html",
+    "QC-360-EXECUTABLE-REMEDIATION-PROMPTS.html",
+    "QC-360-FULL-SYSTEM-AUDIT.html",
+    "QC-360-MODULE-SCORECARDS.html",
+    "QC-360-OPERATIONAL-WORKFLOWS-UX.html",
+    "QC-360-PRODUCTION-READINESS.html",
+    "index.html"
+  ],
+  "preserved_requirements": 268,
+  "original_baseline_findings_preserved": 37,
+  "html_count": 1,
+  "artifacts": [
+    {
+      "path": "QC-360-COMPREHENSIVE-AUDIT.html",
+      "sha256": "bf1e5bb43ea08f451a7c0282e42cc4449bd3c13771161da98a4f8efc8d835e1e"
+    },
+    {
+      "path": "baseline.json",
+      "sha256": "f3adc51a9e5d4e3c4772aa96e7d95ac07dcd6521776bc341569ce19d2991012f"
+    },
+    {
+      "path": "database.json",
+      "sha256": "151874ad1d8f33b7b454204048d9f66c4653e9d2ffb19f4c3444c693fd972d2e"
+    },
+    {
+      "path": "final-packet-identity.json",
+      "sha256": "b24e9be18c78e1ec73840347b262abff607b997ca6676aae7f88f0e5358422b2"
+    },
+    {
+      "path": "final-review.json",
+      "sha256": "9da0598db55680e4339aec0ed005526f5521f4a98cc840f030925fc0d4efe247"
+    },
+    {
+      "path": "findings.json",
+      "sha256": "eff3e0770676257e5abcf51159942a25b2d3414a8e93c6eeefd22f849860dcd7"
+    },
+    {
+      "path": "module-scorecards.json",
+      "sha256": "b8dc9d400baabc0807db39e8d464087d646513ec1152cd35bb7ca8da4a840dfa"
+    },
+    {
+      "path": "ops-synthetic-probe.json",
+      "sha256": "2e5a3731e5803f25b85b9749b10de141ddc8d846142fe9fe7dcf26e7d89582cb"
+    },
+    {
+      "path": "ops.json",
+      "sha256": "7ad59843f80f8e86d3371eb88a0f3dd37534a45ece6ecb9ca8628f76d423d3c2"
+    },
+    {
+      "path": "release-gates.json",
+      "sha256": "6d2f364e4417ad63017396ddf2d9820c2c3b309507ebaedb1b7364fd85e14a07"
+    },
+    {
+      "path": "report-integrity-verification.json",
+      "sha256": "151021e668e8cd35d66769aca24a503887384817fdb77f79c510bd9af1ae78f8"
+    },
+    {
+      "path": "requirements-register.json",
+      "sha256": "daf3fefd88a00feecd800bd3d2f18dd7c5ad0b7c8bc0fbbbbc3276339155c1d7"
+    },
+    {
+      "path": "residual-implementation.json",
+      "sha256": "cf99d08766bad2479b8533486f0dbc4d8c942382dccb9ba81afa7da9dd14b22b"
+    },
+    {
+      "path": "scorecard.json",
+      "sha256": "7900bbf4b780d64f98414e626328348073654cf68c0b68b787f0777c08553d32"
+    },
+    {
+      "path": "security-data.json",
+      "sha256": "f8d0b6e7bb1a777f4302ec18f68884b553645c70360d8eb87021ea7b33cd6fea"
+    },
+    {
+      "path": "supplemental-review.json",
+      "sha256": "3eae6c246e7c70ed589863faa1a215d601be488285315adf2fb8252dc1e275f4"
+    },
+    {
+      "path": "test-results.json",
+      "sha256": "d3bf0f2be915a36479322f221cea5647e2ebe6c1112d89c1492b5a60ae9d7080"
+    },
+    {
+      "path": "workflow-synthetic-probe.json",
+      "sha256": "b91049f40eb21ae95a4b117f561d1dd9e8c0ecba8b5f8bf39335228cb4283d28"
+    },
+    {
+      "path": "workflows.json",
+      "sha256": "fe1266bb6df125e46db278d562a9e42c0daa76303f6d63091e92d37d537cdff2"
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 ---
+import { actions } from 'astro:actions';
+import { field, extractDetailId } from '../../../ui/forms/mutation-post.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import { rcaReadDependencies } from '../../../modules/quality/rca/application/dependencies.js';
@@ -8,6 +10,20 @@ import { readOutcome } from '../../../shared/errors/read-outcome.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Frca');
+let createError = '';
+let submittedNcr = '';
+let submittedNcrVersion = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  submittedNcr = field(form, 'ncrId');
+  submittedNcrVersion = field(form, 'expectedNcrVersion');
+  try {
+    const result = await Astro.callAction(actions.rca.create, { ncrId: submittedNcr, expectedNcrVersion: BigInt(submittedNcrVersion) });
+    const id = extractDetailId(result);
+    if (id) return Astro.redirect(`/quality/rca/${id}`, 303);
+    createError = 'Creation could not be confirmed. Check the register before retrying.';
+  } catch { createError = 'The draft could not be created. Verify your access and reload the linked NCR version before retrying.'; }
+}
 const states = ['DRAFT', 'IN_PROGRESS', 'SUBMITTED', 'APPROVED', 'RETURNED', 'VOID'] as const;
 const requestedState = Astro.url.searchParams.get('state');
 const state = states.find((value) => value === requestedState);
@@ -30,7 +46,12 @@ const rows = rcas.map((rca) => ({ rca, ncr: ncrById.get(rca.ncrId) }));
 ---
 <AppLayout title="RCA · Quality" locale="en" direction="ltr">
   <section class="page-head"><div><p class="eyebrow">Quality register</p><h1>Root-cause analyses</h1><p class="lede">Authorized analyses linked to NCR records. Open an analysis to review its current state and approved next step.</p></div></section>
-  <section class="policy" role="status"><h2>Controlled decisions</h2><p><strong>PD-17 · QMS owner:</strong> NCR closure authority remains unresolved. This register is read-only; no transition is inferred from a linked analysis.</p></section>
+  <section class="policy" role="status"><h2>Controlled decisions</h2><p><strong>PD-17 · QMS owner:</strong> NCR closure authority remains unresolved. RCA drafts and analysis submission are available. Approval and NCR closure require the controlled QMS decision; submission does not approve or close the source NCR.</p></section>
+  {ncrs.filter((ncr) => !['CLOSED', 'VOID'].includes(ncr.state)).length > 0 && <section class="policy"><h2>Create linked RCA draft</h2>
+    {createError && <p role="alert">{createError}</p>}
+    <p>Select the scoped NCR source. Each draft remains a separate analysis record.</p>
+    {ncrs.filter((ncr) => !['CLOSED', 'VOID'].includes(ncr.state)).map((ncr) => <form method="post"><input type="hidden" name="ncrId" value={ncr.id} /><input type="hidden" name="expectedNcrVersion" value={submittedNcr === ncr.id && createError ? submittedNcrVersion : ncr.version.toString()} /><button type="submit">Create RCA draft for {ncr.ncrNo}</button></form>)}
+  </section>}
   <form class="filters" method="get"><label for="state">State<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>{ncrId && <input type="hidden" name="ncrId" value={ncrId} />}<button type="submit">Apply filter</button>{(state || ncrId) && <a href="/quality/rca">Clear filters</a>}</form>
   {ncrId && !requestedNcrVisible && ncrResult.status === 'UNAVAILABLE' && <p class="context" role="status">The selected NCR source is temporarily unavailable. No linked analysis details are shown.</p>}
   {ncrId && ncrResult.status === 'AVAILABLE' && !requestedNcrVisible && <p class="context" role="status">The selected NCR is not visible in your authorized scope. Showing no record details for that reference.</p>}

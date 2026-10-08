@@ -2,6 +2,7 @@ import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import { toActionError } from '../shared/errors/action-error.js';
 import { AppError } from '../shared/errors/app-error.js';
+import { TASK_RECORD_TYPES } from '../modules/tasks/application/ports/record-vocabulary.js';
 import { tasksActionDependencies } from '../modules/tasks/application/dependencies.js';
 const repo = () => tasksActionDependencies();
 type ActionContext = { locals: App.Locals };
@@ -21,6 +22,11 @@ const run = async <T>(work: () => Promise<T>, context: ActionContext): Promise<T
 const createTask = defineAction({
   accept: 'json',
   input: z.object({
+    specializedRecord: z
+      .object({ type: z.enum(TASK_RECORD_TYPES), id: z.string().uuid() })
+      .optional(),
+    recurrenceRuleId: z.string().max(120).optional(),
+    occurrenceKey: z.string().max(24).optional(),
     taskNo: z.string(),
     title: z.string(),
     description: z.string().optional(),

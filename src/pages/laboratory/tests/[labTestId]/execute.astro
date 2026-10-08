@@ -1,5 +1,7 @@
 ---
 import { laboratoryActionDependencies } from '../../../../modules/laboratory/application/dependencies.js';
+import { bulkMeasurementPreviewForm } from '../../../../modules/laboratory/application/measurement-bulk-preview.js';
+import { authorizeLab } from '../../../../modules/laboratory/application/lab-authorization.js';
 import { decodeMeasurementPost } from '../../../../modules/laboratory/application/measurement-post.js';
 import { parseExpectedVersionField } from '../../../../ui/forms/mutation-post.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
@@ -23,12 +25,23 @@ try {
 }
 let submitted: FormData | undefined;
 let saveError: string | undefined;
+let bulkRows = '';
+let bulkPreviewReady = false;
 let openedVersion = test.version.toString();
 if (Astro.request.method === 'POST') {
   try {
     submitted = await Astro.request.formData();
     openedVersion = String(submitted.get('expectedVersion') ?? '');
     const expectedVersion = parseExpectedVersionField(openedVersion);
+    if (submitted.get('intent') === 'preview-bulk') {
+      authorizeLab(actor, test, 'PERM-LAB-EDIT-DRAFT', 'SAVE', expectedVersion);
+      authorizeLab(actor, test, 'PERM-LAB-ENTER-MEASUREMENT', 'SAVE', expectedVersion);
+      bulkRows = String(submitted.get('bulkRows') ?? '');
+      if (test.state !== 'DRAFT' || [...submitted.keys()].some((key) => !['expectedVersion', 'intent', 'bulkRows'].includes(key) || submitted!.getAll(key).length !== 1))
+        throw new AppError('VALIDATION_FAILED');
+      submitted = bulkMeasurementPreviewForm(test, bulkRows, openedVersion);
+      bulkPreviewReady = true;
+    } else {
     if (submitted.get('intent') !== 'save') throw new AppError('VALIDATION_FAILED');
     const measurements = decodeMeasurementPost(test, submitted);
     await laboratoryActionDependencies().saveMeasurements.execute({
@@ -36,9 +49,11 @@ if (Astro.request.method === 'POST') {
       requestId: Astro.locals.requestContext?.requestId ?? 'unknown',
     });
     return Astro.redirect(Astro.url.pathname, 303);
+    }
   } catch (error) {
     Astro.response.status = error instanceof AppError && error.category === 'AUTHORIZATION' ? 403
       : error instanceof AppError && error.code === 'CONFLICT_STALE_VERSION' ? 409 : 400;
+    if (bulkRows) submitted = undefined;
     saveError = error instanceof AppError && error.code === 'CONFLICT_STALE_VERSION'
       ? 'This record changed. Your entries are kept below. Check the current record and refresh before saving again.'
       : 'Observations were not confirmed as saved. Your entries are kept below. Check the values, access, current record and history before trying again.';
@@ -115,6 +130,19 @@ if (canEdit && canViewEquipment) {
             <li>{sample.identifier}</li>
           ))}
         </ul>
+        <details class="bulk-entry">
+          <summary>Paste observations from Excel</summary>
+          <p>Copy five columns with this exact header: Sample, Parameter, Value, Unit, Remarks. Use the sample identifiers below and the parameter codes shown in the table. Leave Unit empty for a unitless parameter; Boolean values use true or false.</p>
+          <p>Preview keeps other saved observations. Review the entire entry form, then choose Save observations. Preview does not save data.</p>
+          <form method="post" action={Astro.url.pathname}>
+            <input type="hidden" name="expectedVersion" value={openedVersion} />
+            <input type="hidden" name="intent" value="preview-bulk" />
+            <label for="bulkRows">Excel clipboard rows</label>
+            <textarea id="bulkRows" name="bulkRows" rows="8" required>{bulkRows}</textarea>
+            <button type="submit">Preview observations</button>
+          </form>
+        </details>
+        {bulkPreviewReady && <p role="status">Bulk observations validated for preview. Review the values and remarks below before saving. No observations have been saved.</p>}
         <form method="post" action={Astro.url.pathname} data-lab-measurements data-expected-version={openedVersion}>
           <input type="hidden" name="expectedVersion" value={openedVersion} />
           <input type="hidden" name="intent" value="save" />
@@ -133,7 +161,7 @@ if (canEdit && canViewEquipment) {
                 <th scope="col">Sample</th>
                 {parameters.map((parameter) => (
                   <th scope="col">
-                    {parameter.label}
+                    {parameter.label} <span class="param-meta">Code: {parameter.code}</span>
                     {parameter.required ? <span aria-hidden="true"> *</span> : null}
                     {parameter.unit ? <span class="unit"> ({parameter.unit})</span> : null}
                     <span class="param-meta">
@@ -474,6 +502,9 @@ if (canEdit && canViewEquipment) {
   button[disabled] {
     opacity: 0.6;
   }
+  .bulk-entry { margin-block: 1rem; }
+  .bulk-entry textarea { width: 100%; box-sizing: border-box; }
+  .bulk-entry form { display: grid; gap: .75rem; }
   .measurements {
     border-collapse: collapse;
     margin: 1rem 0;

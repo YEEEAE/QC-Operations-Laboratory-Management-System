@@ -1,3 +1,5 @@
+import { uuidv7 } from '../../../shared/id/uuid.js';
+import { authorizeChangeRequestApply } from '../application/authorization.js';
 import { createHash } from 'node:crypto';
 import type { Kysely, Transaction } from 'kysely';
 import type { DatabaseRow, DatabaseSchema } from '../../../shared/database/db-types.js';
@@ -441,13 +443,33 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
   }
 
   async recordApplicationAttempt(input: {
+    actor?: ActorContext;
+    expectedVersion?: bigint;
     attempt: ChangeRequestApplicationAttempt;
     actorId: string;
     requestId: string;
   }): Promise<ChangeRequestAggregate> {
     try {
       return await this.database.transaction().execute(async (tx) => {
-        const attempt = input.attempt;
+        const locked = await tx
+          .selectFrom('change_requests')
+          .selectAll()
+          .where('id', '=', input.attempt.changeRequestId)
+          .forUpdate()
+          .executeTakeFirst();
+        if (!locked || locked.state !== 'APPROVED' || input.attempt.result !== 'FAILED')
+          throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+        if (!input.actor || input.expectedVersion === undefined || input.actor.id !== input.actorId)
+          throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        authorizeChangeRequestApply(requestMap(locked), input.actor, input.expectedVersion);
+        const previous = await tx
+          .selectFrom('change_application_attempts')
+          .selectAll()
+          .where('change_request_id', '=', input.attempt.changeRequestId)
+          .execute();
+        if (previous.some((attempt) => attempt.request_id === input.requestId))
+          return this.getWithin(tx, input.attempt.changeRequestId);
+        const attempt = { ...input.attempt, attemptNo: previous.length + 1 };
         await tx
           .insertInto('change_application_attempts')
           .values({
@@ -469,12 +491,129 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
           subjectType: 'CHANGE_REQUEST',
           subjectId: attempt.changeRequestId,
           action: `CHANGE_REQUEST_APPLICATION_${attempt.result}`,
-          newState: attempt.result === 'SUCCESS' ? 'APPLIED' : 'APPLICATION_FAILED',
+          oldState: locked.state,
+          newState: locked.state,
           reason: attempt.errorCode,
           requestId: input.requestId,
           payload: { attemptNo: attempt.attemptNo },
         });
         return this.getWithin(tx, attempt.changeRequestId);
+      });
+    } catch (error) {
+      throw error instanceof AppError ? error : translateDatabaseError(error);
+    }
+  }
+
+  async applyApproved(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+    now: Date;
+    apply: (aggregate: ChangeRequestAggregate, transaction: DatabaseTransaction) => Promise<bigint>;
+  }): Promise<ChangeRequestAggregate> {
+    try {
+      return await this.database.transaction().execute(async (tx) => {
+        const row = await tx
+          .selectFrom('change_requests')
+          .selectAll()
+          .where('id', '=', input.id)
+          .forUpdate()
+          .executeTakeFirst();
+        if (!row) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+        const aggregate = await this.loadAggregate(tx, requestMap(row));
+        const replay = aggregate.applicationAttempts.find(
+          (attempt) => attempt.requestId === input.requestId,
+        );
+        if (replay) {
+          const evidence = await tx
+            .selectFrom('audit_events')
+            .select('payload')
+            .where('subject_id', '=', input.id)
+            .where('request_id', '=', input.requestId)
+            .where('action', '=', 'CHANGE_APPLICATION_COMMITTED')
+            .executeTakeFirst();
+          const payload =
+            typeof evidence?.payload === 'string'
+              ? JSON.parse(evidence.payload)
+              : evidence?.payload;
+          if (
+            replay.result !== 'SUCCESS' ||
+            (payload as Record<string, unknown> | undefined)?.expectedVersion !==
+              input.expectedVersion.toString()
+          )
+            throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
+          authorizeChangeRequestApply(
+            aggregate.changeRequest,
+            input.actor,
+            input.expectedVersion,
+            true,
+          );
+          return aggregate;
+        }
+        authorizeChangeRequestApply(aggregate.changeRequest, input.actor, input.expectedVersion);
+        if (aggregate.changeRequest.version !== input.expectedVersion)
+          throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        if (aggregate.changeRequest.state !== 'APPROVED')
+          throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+        if (aggregate.changeRequest.targetType === 'DOCUMENT_VERSION') {
+          const documentId = aggregate.changeRequest.targetSnapshot.documentId;
+          if (typeof documentId !== 'string')
+            throw new AppError('AUTHZ_DENIED', { userSafe: true });
+          await tx
+            .selectFrom('document_identities')
+            .select('id')
+            .where('id', '=', documentId)
+            .forUpdate()
+            .executeTakeFirst();
+          await tx
+            .selectFrom('document_versions')
+            .select('id')
+            .where('id', '=', aggregate.changeRequest.targetId)
+            .forUpdate()
+            .executeTakeFirst();
+        }
+        const targetVersionAfter = await input.apply(aggregate, tx);
+        const applying = await this.transition({
+          ...input,
+          action: 'START_APPLY',
+          transaction: tx,
+        });
+        const result = await this.transition({
+          ...input,
+          expectedVersion: applying.changeRequest.version,
+          action: 'APPLY_SUCCESS',
+          transaction: tx,
+        });
+        await tx
+          .insertInto('change_application_attempts')
+          .values({
+            id: uuidv7(),
+            change_request_id: input.id,
+            attempt_no: aggregate.applicationAttempts.length + 1,
+            started_at: input.now,
+            finished_at: input.now,
+            result: 'SUCCESS',
+            target_version_before: aggregate.changeRequest.targetVersion,
+            target_version_after: targetVersionAfter,
+            error_code: null,
+            request_id: input.requestId,
+          })
+          .execute();
+        // Replay binds to the original command, rather than the intermediate APPLYING version.
+        await this.auditFor(tx)?.append({
+          actorType: 'USER',
+          actorId: input.actor.id,
+          subjectType: 'CHANGE_REQUEST',
+          subjectId: input.id,
+          action: 'CHANGE_APPLICATION_COMMITTED',
+          requestId: input.requestId,
+          payload: {
+            expectedVersion: input.expectedVersion.toString(),
+            targetVersionAfter: targetVersionAfter.toString(),
+          },
+        });
+        return this.getWithin(tx, result.changeRequest.id);
       });
     } catch (error) {
       throw error instanceof AppError ? error : translateDatabaseError(error);

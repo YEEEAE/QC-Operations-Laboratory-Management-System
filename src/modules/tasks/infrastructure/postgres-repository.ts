@@ -1,3 +1,5 @@
+import { sql } from 'kysely';
+import { assertOccurrenceReplay } from '../application/occurrence.js';
 import type { Kysely, Transaction } from 'kysely';
 import type { DatabaseSchema, DatabaseRow } from '../../../shared/database/db-types.js';
 import { translateDatabaseError } from '../../../shared/database/database.js';
@@ -20,6 +22,21 @@ function mapTask(
 ): Task {
   return {
     id: row.id,
+    specializedRecord:
+      row.specialized_record_type && row.specialized_record_id
+        ? {
+            type: row.specialized_record_type as NonNullable<Task['specializedRecord']>['type'],
+            id: row.specialized_record_id,
+          }
+        : undefined,
+    recurrence:
+      row.recurrence_rule_id && row.occurrence_key && row.occurrence_fingerprint
+        ? {
+            ruleId: row.recurrence_rule_id,
+            occurrenceKey: row.occurrence_key,
+            fingerprint: row.occurrence_fingerprint,
+          }
+        : undefined,
     taskNo: row.task_no,
     title: row.title,
     description: row.description ?? undefined,
@@ -68,10 +85,33 @@ export class PostgresTaskRepository implements TaskRepository {
     try {
       return await this.database.transaction().execute(async (tx) => {
         const t = input.task;
+        if (t.recurrence) {
+          // All workers serialize the same pair before checking/inserting; the unique index is the final backstop.
+          await sql`select pg_advisory_xact_lock(hashtextextended(${JSON.stringify([t.recurrence.ruleId, t.recurrence.occurrenceKey])}, 0))`.execute(
+            tx,
+          );
+          const existing = await tx
+            .selectFrom('tasks')
+            .selectAll()
+            .where('recurrence_rule_id', '=', t.recurrence.ruleId)
+            .where('occurrence_key', '=', t.recurrence.occurrenceKey)
+            .executeTakeFirst();
+          if (existing) {
+            const replay = await this.readTask(tx, existing.id);
+            if (!replay) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+            assertOccurrenceReplay(replay, t.recurrence, input.actor.id);
+            return replay;
+          }
+        }
         const row = await tx
           .insertInto('tasks')
           .values({
             id: t.id,
+            specialized_record_type: t.specializedRecord?.type ?? null,
+            specialized_record_id: t.specializedRecord?.id ?? null,
+            recurrence_rule_id: t.recurrence?.ruleId ?? null,
+            occurrence_key: t.recurrence?.occurrenceKey ?? null,
+            occurrence_fingerprint: t.recurrence?.fingerprint ?? null,
             task_no: t.taskNo,
             title: t.title,
             description: t.description ?? null,
@@ -121,6 +161,10 @@ export class PostgresTaskRepository implements TaskRepository {
           subjectType: 'TASK',
           subjectId: t.id,
           action: 'CREATE_TASK',
+          payload: {
+            specializedRecord: t.specializedRecord ?? null,
+            recurrence: t.recurrence ?? null,
+          },
           newState: 'DRAFT',
           requestId: input.requestId,
         });
@@ -430,6 +474,8 @@ export class PostgresTaskRepository implements TaskRepository {
     reason: string;
   }) {
     await this.database.transaction().execute(async (tx) => {
+      const task = await this.readTask(tx, input.id, true);
+      if (task?.recurrence) throw new AppError('CONFLICT_DUPLICATE_COMMAND', { userSafe: true });
       const deps = await tx
         .selectFrom('task_checklist_items')
         .select('id')

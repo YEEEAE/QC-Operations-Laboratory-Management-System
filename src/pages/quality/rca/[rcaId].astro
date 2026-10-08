@@ -1,4 +1,6 @@
 ---
+import { actions } from 'astro:actions';
+import { field } from '../../../ui/forms/mutation-post.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
@@ -38,6 +40,21 @@ if (rca) {
   if (ncrResult.status === 'AVAILABLE') ncr = ncrResult.value;
   if (capaResult.status === 'AVAILABLE') relatedCapas = capaResult.value.filter((capa) => capa.ncrId === rca?.ncrId);
 }
+let mutationError = '';
+let submittedValues: { method: string; analysis: string; rootCause: string; expectedVersion: string } | undefined;
+if (Astro.request.method === 'POST' && rca) {
+  const form = await Astro.request.formData();
+  const expectedVersion = field(form, 'expectedVersion');
+  submittedValues = { method: field(form, 'method'), analysis: field(form, 'analysis'), rootCause: field(form, 'rootCause'), expectedVersion };
+  try {
+    const operation = field(form, 'operation');
+    const result = operation === 'UPDATE'
+      ? await Astro.callAction(actions.rca.update, { rcaId: rca.id, ...submittedValues, expectedVersion: BigInt(expectedVersion) })
+      : await Astro.callAction(actions.rca.transition, { id: rca.id, expectedVersion: BigInt(expectedVersion), action: operation as 'START' | 'SUBMIT' });
+    if (!result.error) return Astro.redirect(`/quality/rca/${rca.id}`, 303);
+    mutationError = 'The change was not confirmed. Check the saved record before retrying; your submitted values are retained.';
+  } catch { mutationError = 'The change was refused. Check access, state and the opened version. Your submitted values are retained.'; }
+}
 const reference = rca?.rcaNo ?? (ncr ? `RCA for ${ncr.ncrNo}` : 'Root-cause analysis');
 const nextOwner = rca?.state === 'DRAFT' || rca?.state === 'IN_PROGRESS' || rca?.state === 'RETURNED' ? 'Assigned RCA analyst' : rca?.state === 'SUBMITTED' ? 'Authorized RCA reviewer' : undefined;
 const nextStep = rca?.state === 'SUBMITTED' ? 'Await the authorized review decision' : rca?.state === 'APPROVED' ? 'Return to the linked NCR and review its permitted next step' : rca?.state === 'VOID' ? 'Record is void; history remains available' : 'Continue analysis through the authorized RCA workflow';
@@ -46,10 +63,19 @@ const nextStep = rca?.state === 'SUBMITTED' ? 'Await the authorized review decis
   {unavailable ? <main class="shell"><h1>RCA details are temporarily unavailable</h1><ProviderUnavailableState title="The record source could not be reached" /><p><a href="/quality/rca">Return to the RCA register</a> and retry when the source is available.</p></main> : rca ? <main class="shell">
     <p class="eyebrow">Root-cause analysis</p><h1>{reference}</h1>
     <JourneyContextPanel ownerDomain="Quality / RCA" recordReference={`${reference} · version ${rca.version.toString()}`} currentState={stateLabel(rca.state)} nextOwner={nextOwner} waitingOn={rca.state === 'SUBMITTED' ? 'Authorized RCA review' : undefined} expectedEvent={nextStep} whyUnavailable={rca.state === 'APPROVED' ? 'state: the analysis is approved; NCR closure remains subject to the QMS owner decision (PD-17)' : rca.state === 'VOID' ? 'state: this analysis is void and read-only' : undefined} controlledContext={`${reference} · version ${rca.version.toString()}`} evidenceSummary={`Method ${rca.method ?? 'not recorded'} · analysis ${rca.analysis ? 'recorded' : 'not recorded'} · root cause ${rca.rootCause ? 'recorded' : 'not recorded'}`} auditHref={`/audit?subjectType=RCA&subjectId=${encodeURIComponent(rca.id)}`} relatedLinks={[{ label: ncr ? `NCR ${ncr.ncrNo}` : 'NCR register', href: ncr ? `/quality/ncr/${ncr.id}` : '/quality/ncr', detail: 'Source non-conformance record' }, ...relatedCapas.map((capa) => ({ label: `CAPA ${capa.capaNo}`, href: `/quality/capa/${capa.id}`, detail: stateLabel(capa.state) }))]} />
+    {mutationError && <p role="alert">{mutationError}</p>}
+    {['DRAFT', 'IN_PROGRESS', 'RETURNED'].includes(rca.state) && <section class="details"><h2>Edit analysis</h2><form method="post"><input type="hidden" name="operation" value="UPDATE" /><input type="hidden" name="expectedVersion" value={submittedValues?.expectedVersion ?? rca.version.toString()} />
+      <label for="method">Method<input id="method" name="method" maxlength="200" value={submittedValues?.method ?? rca.method ?? ''} /></label>
+      <label for="analysis">Analysis<textarea id="analysis" name="analysis" maxlength="50000">{submittedValues?.analysis ?? rca.analysis ?? ''}</textarea></label>
+      <label for="rootCause">Root cause<textarea id="rootCause" name="rootCause" maxlength="10000">{submittedValues?.rootCause ?? rca.rootCause ?? ''}</textarea></label><button type="submit">Save analysis</button></form>
+      {['DRAFT', 'RETURNED'].includes(rca.state) && <form method="post"><input type="hidden" name="operation" value="START" /><input type="hidden" name="expectedVersion" value={submittedValues?.expectedVersion ?? rca.version.toString()} /><button type="submit">Start analysis</button></form>}
+      {rca.state === 'IN_PROGRESS' && <form method="post"><input type="hidden" name="operation" value="SUBMIT" /><input type="hidden" name="expectedVersion" value={submittedValues?.expectedVersion ?? rca.version.toString()} /><button type="submit">Submit recorded analysis for review</button></form>}
+    </section>}
+    {rca.state === 'SUBMITTED' && <p role="status">Awaiting controlled RCA approval policy and electronic signature ceremony. Approval, return and void remain unavailable.</p>}
     <section class="details" aria-labelledby="details-heading"><h2 id="details-heading">Analysis details</h2><dl><dt>State</dt><dd>{stateLabel(rca.state)}</dd><dt>Version</dt><dd>{rca.version.toString()}</dd><dt>Method</dt><dd>{rca.method ?? 'Not recorded'}</dd><dt>Analysis</dt><dd>{rca.analysis ?? 'Not recorded'}</dd><dt>Root cause</dt><dd>{rca.rootCause ?? 'Not recorded'}</dd><dt>Submitted</dt><dd>{rca.submittedAt ? formatDateTime(rca.submittedAt) : 'Not submitted'}</dd><dt>Approved</dt><dd>{rca.approvedAt ? formatDateTime(rca.approvedAt) : 'Not approved'}</dd></dl></section>
     <section class="related"><h2>Source NCR</h2>{ncr ? <p><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> · {stateLabel(ncr.state)} · {ncr.title}</p> : <p>{ncrStatus === 'UNAVAILABLE' ? 'The linked NCR source is temporarily unavailable. Retry this relationship.' : 'The source NCR is not visible in your authorized scope.'}</p>}</section>
     <section class="related"><h2>Related CAPAs</h2>{capaStatus === 'UNAVAILABLE' ? <p>The CAPA source is temporarily unavailable. Retry this relationship.</p> : capaStatus === 'NOT_VISIBLE' ? <p>Related CAPA details are not available in your authorized scope.</p> : relatedCapas.length ? <ul>{relatedCapas.map((capa) => <li><a href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a> · {stateLabel(capa.state)}</li>)}</ul> : <p>No linked CAPA is visible in your authorized scope.</p>}<p class="owner"><strong>PD-18 · Quality-policy owner:</strong> effectiveness requirement and criteria remain undecided. No effectiveness verdict is inferred.</p></section>
     <p class="next"><strong>Next step:</strong> {nextStep}. <span>PD-17 decision owner: QMS process owner.</span> {ncrStatus === 'UNAVAILABLE' && <span role="status">NCR relationship data is temporarily unavailable.</span>} {capaStatus === 'UNAVAILABLE' && <span role="status">CAPA relationship data is temporarily unavailable.</span>}</p>
   </main> : <main class="shell"><h1>RCA record not found</h1><p>This record does not exist or is outside your authorized scope.</p><p><a href="/quality/rca">Return to the RCA register</a> to find an accessible record.</p></main>}
 </AppLayout>
-<style>.shell{max-width:64rem;margin:0 auto;padding:var(--space-6) var(--space-4)}h1{margin:.25rem 0 var(--space-5)}h2{font-size:1rem}.eyebrow{color:var(--text-muted);font-size:.75rem;font-weight:700;letter-spacing:.1em}.details,.related,.next{margin-top:var(--space-4);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}dl{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:.6rem 1rem}dt{font-weight:700}dd{margin:0;white-space:pre-wrap}.related a,.shell a{color:var(--color-accent-primary-hover)}.related ul{display:grid;gap:.5rem;padding-inline-start:1.25rem}.owner,.next span{color:var(--text-muted)}@media(max-width:480px){dl{grid-template-columns:1fr;gap:.25rem}.details dd{margin-bottom:.65rem}}</style>
+<style>form,label{display:grid;gap:.5rem}form{margin-block:1rem}input,textarea{max-width:100%;width:100%;box-sizing:border-box;background:var(--surface-panel);color:inherit;padding:.7rem;border:1px solid var(--border-default)}button{width:max-content;max-width:100%;padding:.7rem}textarea{min-height:8rem}.shell{max-width:64rem;margin:0 auto;padding:var(--space-6) var(--space-4)}h1{margin:.25rem 0 var(--space-5)}h2{font-size:1rem}.eyebrow{color:var(--text-muted);font-size:.75rem;font-weight:700;letter-spacing:.1em}.details,.related,.next{margin-top:var(--space-4);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}dl{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:.6rem 1rem}dt{font-weight:700}dd{margin:0;white-space:pre-wrap}.related a,.shell a{color:var(--color-accent-primary-hover)}.related ul{display:grid;gap:.5rem;padding-inline-start:1.25rem}.owner,.next span{color:var(--text-muted)}@media(max-width:480px){dl{grid-template-columns:1fr;gap:.25rem}.details dd{margin-bottom:.65rem}}</style>

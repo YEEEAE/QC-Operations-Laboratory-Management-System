@@ -1,6 +1,12 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Rca, RcaAction } from '../domain/rca.js';
 export interface RcaRepository {
+  create(i: {
+    rca: Rca;
+    expectedNcrVersion: bigint;
+    actor: ActorContext;
+    requestId: string;
+  }): Promise<Rca>;
   get(id: string, actor: ActorContext): Promise<Rca | undefined>;
   list(i: { actor: ActorContext; ncrId?: string }): Promise<readonly Rca[]>;
   update(i: {

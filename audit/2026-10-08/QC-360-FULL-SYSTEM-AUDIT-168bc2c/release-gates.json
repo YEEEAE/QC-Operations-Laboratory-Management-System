@@ -1,0 +1,42 @@
+{
+  "authority": "Auditor screening only; not the canonical19gate authority mapping",
+  "decision": "NO_GO",
+  "gates": [
+    {
+      "id": "QC360-GATE-01",
+      "name": "Production source/schema parity",
+      "status": "FAIL",
+      "evidence": "45/46migrations"
+    },
+    {
+      "id": "QC360-GATE-02",
+      "name": "Required automated checks",
+      "status": "FAIL",
+      "evidence": "unit1failure; integration requires per-suite interpretation; lint/formatfail"
+    },
+    {
+      "id": "QC360-GATE-03",
+      "name": "Approved controlled policy and signatures",
+      "status": "BLOCKED",
+      "evidence": "approval/effectivity/retest/evaluator dependencies"
+    },
+    {
+      "id": "QC360-GATE-04",
+      "name": "Backup restore storage and worker acceptance",
+      "status": "NOT VERIFIED",
+      "evidence": "live empty/unavailable states"
+    },
+    {
+      "id": "QC360-GATE-05",
+      "name": "Human operational UAT",
+      "status": "NOT VERIFIED",
+      "evidence": "no executed human acceptance supplied"
+    },
+    {
+      "id": "QC360-GATE-06",
+      "name": "Complete requirement and acceptance coverage",
+      "status": "BLOCKED",
+      "evidence": "incomplete denominator/review scope"
+    }
+  ]
+}

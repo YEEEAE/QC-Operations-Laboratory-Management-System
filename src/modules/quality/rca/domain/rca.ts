@@ -28,7 +28,7 @@ export function updateRca(
   r: Rca,
   input: { method?: string; analysis?: string; rootCause?: string; now: Date },
 ): Rca {
-  if (r.state === 'APPROVED' || r.state === 'VOID')
+  if (!['DRAFT', 'IN_PROGRESS', 'RETURNED'].includes(r.state))
     throw new AppError('AUTHZ_DENIED', { userSafe: true });
   return { ...r, ...input, updatedAt: input.now, version: r.version + 1n };
 }

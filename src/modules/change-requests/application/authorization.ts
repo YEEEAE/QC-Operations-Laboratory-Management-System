@@ -50,6 +50,30 @@ export function authorizeChangeRequestView(request: ChangeRequest, actor: ActorC
   );
 }
 
+/** APPLIED is admitted solely for an already-persisted successful replay. */
+export function authorizeChangeRequestApply(
+  request: ChangeRequest,
+  actor: ActorContext,
+  expectedVersion: bigint,
+  verifiedReplay = false,
+): void {
+  authorizeChangeRequestView(request, actor);
+  authorize(
+    {
+      actor,
+      permission: 'PERM-CHG-APPLY',
+      action: 'APPLY',
+      entity: entity(request),
+      scope: { ownerId: request.requestedBy, domain: 'CHANGE_REQUESTS' },
+      currentVersion: request.version,
+      expectedVersion: verifiedReplay ? request.version : expectedVersion,
+      businessCondition:
+        request.state === 'APPROVED' || (request.state === 'APPLIED' && verifiedReplay),
+    },
+    { throwOnDeny: true },
+  );
+}
+
 export function authorizeChangeRequestAction(
   request: ChangeRequest,
   actor: ActorContext,

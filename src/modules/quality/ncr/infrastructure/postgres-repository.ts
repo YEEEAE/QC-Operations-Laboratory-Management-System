@@ -5,7 +5,7 @@ import type { Ncr, NcrAction } from '../domain/ncr.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 export class PostgresNcrRepository implements NcrRepository {
-  constructor(private db: Kysely<DatabaseSchema>) {}
+  constructor(private db: Kysely<DatabaseSchema>, private readonly lockForShare = false) {}
   private map(r: DatabaseRow<'ncrs'>): Ncr {
     return {
       id: r.id,
@@ -50,12 +50,13 @@ export class PostgresNcrRepository implements NcrRepository {
   }
   async get(id: string, a: ActorContext) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;
-    const r = await this.db
+    let query = this.db
       .selectFrom('ncrs')
       .selectAll()
       .where('id', '=', id)
-      .where((eb) => eb.or([eb('owner_id', '=', a.id), eb('created_by', '=', a.id)]))
-      .executeTakeFirst();
+      .where((eb) => eb.or([eb('owner_id', '=', a.id), eb('created_by', '=', a.id)]));
+    if (this.lockForShare) query = query.forShare();
+    const r = await query.executeTakeFirst();
     return r && this.map(r);
   }
   async list(i: Parameters<NcrRepository['list']>[0]) {

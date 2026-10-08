@@ -23,7 +23,29 @@ export interface TaskChecklistItem {
   version: bigint;
 }
 
+export const TASK_RECORD_TYPES = [
+  'DOCUMENT',
+  'LAB_TEST',
+  'CHANGE_REQUEST',
+  'FINDING',
+  'NCR',
+  'RCA',
+  'CAPA',
+] as const;
+export type TaskRecordType = (typeof TASK_RECORD_TYPES)[number];
+export interface TaskRecordReference {
+  type: TaskRecordType;
+  id: string;
+}
+export interface TaskOccurrence {
+  ruleId: string;
+  occurrenceKey: string;
+  fingerprint: string;
+}
+
 export interface Task {
+  specializedRecord?: TaskRecordReference;
+  recurrence?: TaskOccurrence;
   id: string;
   taskNo: string;
   title: string;
@@ -59,6 +81,8 @@ export interface TaskListItem extends Task {
 }
 
 export interface NewTaskInput {
+  specializedRecord?: TaskRecordReference;
+  recurrence?: TaskOccurrence;
   id: string;
   taskNo: string;
   title: string;
@@ -92,6 +116,8 @@ export function createDraftTask(input: NewTaskInput): Task {
   }));
   return {
     id: input.id,
+    specializedRecord: input.specializedRecord,
+    recurrence: input.recurrence,
     taskNo: nonBlank(input.taskNo, 'taskNo'),
     title: nonBlank(input.title, 'title'),
     description: input.description?.trim() || undefined,

@@ -125,3 +125,8 @@ environment in `audit/`. Do not rewrite historical audit evidence to match a
 later implementation. Update the current documents and
 `.agents/mind/01-mind-latest.md` only after the implementation and verification
 are complete.
+# QC360 local extension note — 2026-10-08
+
+The current source migration head is `0047_task_references_occurrences` (47 migrations). It adds nullable specialized-record references and operator-supplied recurrence identities to Tasks; the unique rule/occurrence index and immutable command fingerprint support atomic replay. This source addition has not been deployed to production. The new owning-domain change adapter shares the Documents transaction; it supports draft metadata only and does not alter controlled effectivity.
+
+Technical contracts authored under the user request are `QC360-TASK-POLICY-2026-10-08.md`, `QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md`, `QC360-RCA-TECHNICAL-POLICY-2026-10-08.md`, `QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md` and `QC360-ISOLATED-RESTORE-TECHNICAL-POLICY-2026-10-08.md` in this directory. Their explicit authority limits apply: scientific values, signatures, effectivity and human acceptance are not inferred from these software contracts.

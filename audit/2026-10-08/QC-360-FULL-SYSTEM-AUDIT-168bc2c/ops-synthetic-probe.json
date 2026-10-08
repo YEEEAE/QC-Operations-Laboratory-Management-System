@@ -1,0 +1,117 @@
+{
+  "candidateSha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+  "node": "v24.20.0",
+  "databaseEnvAbsent": true,
+  "probeSha256": "86228046591f97c6ca4f8f4c774128000a17af2ad8e7731609b3e71741b765aa",
+  "status": "PASS_REPRODUCTION",
+  "realNetworkCalls": 0,
+  "aiObservations": [
+    {
+      "case": "metadata_sourceId",
+      "status": "BYPASS_REPRODUCED",
+      "outcome": "AVAILABLE",
+      "providerCalls": 1,
+      "availabilityCalls": 1,
+      "markerPreserved": true
+    },
+    {
+      "case": "metadata_sourceType",
+      "status": "BYPASS_REPRODUCED",
+      "outcome": "AVAILABLE",
+      "providerCalls": 1,
+      "availabilityCalls": 1,
+      "markerPreserved": true
+    },
+    {
+      "case": "metadata_citation",
+      "status": "BYPASS_REPRODUCED",
+      "outcome": "AVAILABLE",
+      "providerCalls": 1,
+      "availabilityCalls": 1,
+      "markerPreserved": true
+    },
+    {
+      "case": "positive_screen_control_label",
+      "status": "SCREEN_REJECTED",
+      "providerCalls": 0,
+      "availabilityCalls": 0
+    },
+    {
+      "case": "positive_screen_control_content",
+      "status": "SCREEN_REJECTED",
+      "providerCalls": 0,
+      "availabilityCalls": 0
+    },
+    {
+      "case": "missing_consent",
+      "status": "REFUSED",
+      "providerCalls": 0
+    },
+    {
+      "case": "unapproved_class",
+      "status": "REFUSED",
+      "providerCalls": 0
+    },
+    {
+      "case": "groq_serializer_sourceId",
+      "status": "SYNTHETIC_HTTP_BODY_CONTAINS_MARKER",
+      "mockFetchCalls": 1,
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "groq_serializer_sourceType",
+      "status": "SYNTHETIC_HTTP_BODY_CONTAINS_MARKER",
+      "mockFetchCalls": 1,
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "groq_serializer_citation",
+      "status": "SYNTHETIC_HTTP_BODY_CONTAINS_MARKER",
+      "mockFetchCalls": 1,
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "gemini_serializer_sourceId",
+      "status": "SYNTHETIC_HTTP_BODY_CONTAINS_MARKER",
+      "mockFetchCalls": 1,
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "gemini_serializer_sourceType",
+      "status": "SYNTHETIC_HTTP_BODY_CONTAINS_MARKER",
+      "mockFetchCalls": 1,
+      "realNetworkCalls": 0
+    },
+    {
+      "case": "gemini_serializer_citation",
+      "status": "SYNTHETIC_HTTP_BODY_CONTAINS_MARKER",
+      "mockFetchCalls": 1,
+      "realNetworkCalls": 0
+    }
+  ],
+  "search": {
+    "status": "SOURCE_MODEL_CONFIRMED",
+    "postgresRuntime": "NOT_RUN",
+    "cases": [
+      {
+        "q": "A\\B",
+        "value": "A\\B",
+        "expectedLiteral": true,
+        "pattern": "%A\\B%",
+        "observedLikeModel": false
+      },
+      {
+        "q": "\\%",
+        "value": "\\anything",
+        "expectedLiteral": false,
+        "pattern": "%\\\\%%",
+        "observedLikeModel": true
+      }
+    ]
+  },
+  "limitations": [
+    "Injected spy bypasses production processing-policy loader intentionally; provider-policy approval not manufactured.",
+    "Actual Groq/Gemini serializers run with fetch entirely replaced; synthetic bodies never leave this process.",
+    "LIKE model validates source logic against specified escape grammar, not database execution."
+  ]
+}

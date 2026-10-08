@@ -1,4 +1,5 @@
 import { AppError } from '../../../shared/errors/app-error.js';
+import { convertMeasurement } from './unit-conversion.js';
 import type { CalculationRuleSource } from './calculation.js';
 export interface Parameter {
   id: string;
@@ -17,6 +18,7 @@ export interface Parameter {
   acceptanceRuleType?: string | null;
   /** QC-DATA-003 approved calculation rule; absent when the reviewer owns the value. */
   calculationRule?: CalculationRuleSource | null;
+  unitConversionRules?: unknown;
   precisionGuidance?: string;
   roundingReference?: string;
 }
@@ -56,7 +58,7 @@ export function validateMeasurement(
   if (
     Object.keys(input).some((key) => !allowed.includes(key)) ||
     input.parameterId !== parameter.id ||
-    input.unit !== parameter.unit ||
+    (input.unit !== parameter.unit && !convertMeasurement(input, parameter)) ||
     !parameter.sourceReference.trim()
   )
     throw new AppError('VALIDATION_FAILED');

@@ -1,0 +1,36 @@
+{
+  "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+  "executed_at": "2026-10-08T17:26:42.495Z",
+  "node": "v24.20.0",
+  "method": "Actual imported domain/use-case/ceremony with explicitly synthetic fake persistence and password verifier. No DB, provider, real credentials, human acceptance or production side effects.",
+  "receiving": {
+    "checks": "PASS: rounding and exponent coercion reproduced in actual validator/create domain",
+    "cases": [
+      {
+        "input": "9007199254740993",
+        "actual": "9007199254740992"
+      },
+      {
+        "input": "0.12345678901234567890123456789",
+        "actual": "0.12345678901234568"
+      },
+      {
+        "input": "1000000000000000000000",
+        "actual": "1e+21"
+      }
+    ],
+    "created_qty": "9007199254740992"
+  },
+  "template": {
+    "checks": "PASS: detached signature ordering reproduced through actual StopTemplateUseCase/createTemplateCeremony",
+    "events": [
+      "reauth.accepted.synthetic",
+      "signature.persisted",
+      "transition.failed.stale.synthetic"
+    ],
+    "exception": "CONFLICT_STALE_VERSION",
+    "signatures_retained": 1,
+    "snapshot_hash": "template:synthetic-template:v1",
+    "limits": "Fake persistence proves call ordering and absence of rollback coordination; not PostgreSQL transaction execution, and no human signature approval."
+  }
+}

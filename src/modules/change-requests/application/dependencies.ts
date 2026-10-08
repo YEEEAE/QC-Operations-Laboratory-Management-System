@@ -1,3 +1,5 @@
+import { ApplyApprovedChangeRequestUseCase } from './apply-approved-change-request.js';
+import { PostgresDocumentRepository } from '../../documents/infrastructure/postgres-repository.js';
 import { getDatabase } from '../../../shared/database/database.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
 import { PostgresOutboxRepository } from '../../../shared/outbox/postgres-outbox-repository.js';
@@ -33,6 +35,15 @@ export function changeRequestsActionDependencies() {
     createForDocumentVersion: new CreateDocumentVersionChangeRequestUseCase(
       repository,
       new PostgresChangeTargetSource(database),
+    ),
+    apply: new ApplyApprovedChangeRequestUseCase(
+      repository,
+      (tx) =>
+        new PostgresDocumentRepository(
+          tx,
+          new PostgresAuditRepository(tx),
+          new PostgresOutboxRepository(tx),
+        ),
     ),
     transition: new TransitionChangeRequestUseCase(repository),
   };

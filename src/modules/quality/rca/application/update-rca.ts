@@ -1,3 +1,4 @@
+import { AppError } from '../../../../shared/errors/app-error.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
 import { updateRca } from '../domain/rca.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
@@ -10,22 +11,23 @@ export class UpdateRcaUseCase {
   async execute(i: {
     actor: ActorContext;
     rcaId: string;
+    expectedVersion: bigint;
     method?: string;
     analysis?: string;
     rootCause?: string;
     requestId: string;
   }) {
     const r = await this.repo.get(i.rcaId, i.actor);
-    if (!r) throw new Error('not found');
+    if (!r) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
     authorize(
       {
         actor: i.actor,
         permission: 'PERM-RCA-EDIT',
-        action: 'START',
+        action: 'UPDATE',
         entity: { type: 'RCA', id: r.id, state: r.state },
         scope: { ownerId: r.createdBy },
         currentVersion: r.version,
-        expectedVersion: r.version,
+        expectedVersion: i.expectedVersion,
         businessCondition: true,
       },
       { throwOnDeny: true },
@@ -37,7 +39,7 @@ export class UpdateRcaUseCase {
         rootCause: i.rootCause,
         now: this.now(),
       }),
-      expectedVersion: r.version,
+      expectedVersion: i.expectedVersion,
       actor: i.actor,
       requestId: i.requestId,
     });

@@ -2,8 +2,13 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current workspace source head is `0045_provider_attestation_nonce_replay_guard` (45
-migration files). Migration 0045 adds a signed-provider nonce claim table and a
+Current workspace source head is `0047_task_references_occurrences` (47 migration
+files). Migration 0047 adds scoped task references and an immutable, uniquely
+keyed recurring occurrence contract. Migration 0046 adds the controlled inspection
+report catalogue and source-bound selection guards. These are source changes;
+provider application requires a separate authorized migration operation.
+
+Migration 0045 adds a signed-provider nonce claim table and a
 unique signer/key/nonce guard; it backfills from immutable `audit_info` and fails
 closed for invalid or duplicate historical nonce values. Migration 0044 adds the unique key required by restore request
 idempotency; it fails closed if duplicate pairs already exist. Migration 0043 adds server-bound document file/revision digests,

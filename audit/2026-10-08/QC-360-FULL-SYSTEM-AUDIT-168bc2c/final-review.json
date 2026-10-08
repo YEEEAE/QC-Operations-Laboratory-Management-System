@@ -1,0 +1,574 @@
+{
+  "requirements": [
+    {
+      "id": "REQ-TASK-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/tasks/application/create.ts",
+        "src/modules/tasks/application/transition.ts",
+        "src/modules/tasks/application/update-draft.ts"
+      ],
+      "assessment_detail": "Creation authorizes explicit create and optional assignment, constructs UUID draft and persists through repository; transition/edit paths exist.",
+      "missing_work": "Assignment update omissions and comments/dependency no-ops from workflow review prevent complete general task management; positive browser creation was not executed on production.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-QUAL-002",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quality/findings/application/create-finding.ts",
+        "src/modules/quality/ncr/application/create-ncr.ts"
+      ],
+      "assessment_detail": "Finding stores supplied sourceContext without mutating the source domain. NCR creation is an explicit separate authorized command requiring findingId.",
+      "missing_work": "Complete source-link authorization and all automatic NCR call sites need verification; no approved automatic-trigger policy was demonstrated.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Complete source-link authorization and all automatic NCR call sites need verification; no approved automatic-trigger policy was demonstrated."
+    },
+    {
+      "id": "REQ-QUAL-009",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quality/findings/application/create-finding.ts",
+        "src/modules/quality/ncr/application/create-ncr.ts"
+      ],
+      "assessment_detail": "Finding stores supplied sourceContext without mutating the source domain. NCR creation is an explicit separate authorized command requiring findingId.",
+      "missing_work": "Complete source-link authorization and all automatic NCR call sites need verification; no approved automatic-trigger policy was demonstrated.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Complete source-link authorization and all automatic NCR call sites need verification; no approved automatic-trigger policy was demonstrated."
+    },
+    {
+      "id": "REQ-QUAR-003",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "Documents/BUSINESS-RULES.md:969",
+        "src/modules/quarantine/receiving/application/create-receiving.ts",
+        "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:116"
+      ],
+      "assessment_detail": "Technical UUID is generated; receiving_no is taken from caller receivingNo and persisted unchanged. UI asks for the number from an approved source.",
+      "missing_work": "BR-QUAR-003 explicitly requires a system-generated Receiving ID; reconcile business-number meaning and approved source numbering before calling this requirement complete. No system business-number allocator was found in this path.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "BR-QUAR-003 explicitly requires a system-generated Receiving ID; reconcile business-number meaning and approved source numbering before calling this requirement complete. No system business-number allocator was found in this path."
+    },
+    {
+      "id": "REQ-QUAR-010",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quarantine/receiving/application/create-receiving.ts",
+        "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts"
+      ],
+      "assessment_detail": "Creation relies on domain validation and database conflict handling rather than defining a broad supplier/item/lot duplicate policy in the reviewed application command.",
+      "missing_work": "Approved duplicate definition and positive/negative operational examples remain policy inputs; uniqueness of one field does not define a business duplicate.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Approved duplicate definition and positive/negative operational examples remain policy inputs; uniqueness of one field does not define a business duplicate."
+    },
+    {
+      "id": "REQ-INSP-008",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quarantine/inspection/application/submit-inspection.ts",
+        "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700"
+      ],
+      "assessment_detail": "Submit rejects an explicit evidenceCount below1, validates controlled form completeness and writes a SHA256 submission snapshot with receiving/template/sources/criteria/results/AQL/equipment inside the transition transaction.",
+      "missing_work": "Missing evidenceCount is not rejected by the application check; actual repository count mapping matters. Source-dependent evidence sufficiency, digital-source positive fixtures, races and deployed submit remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-INSP-009",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quarantine/inspection/application/submit-inspection.ts",
+        "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700"
+      ],
+      "assessment_detail": "Submit rejects an explicit evidenceCount below1, validates controlled form completeness and writes a SHA256 submission snapshot with receiving/template/sources/criteria/results/AQL/equipment inside the transition transaction.",
+      "missing_work": "Missing evidenceCount is not rejected by the application check; actual repository count mapping matters. Source-dependent evidence sufficiency, digital-source positive fixtures, races and deployed submit remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-INSP-011",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700",
+        "src/modules/ai-advisory/application/get-advisory.ts"
+      ],
+      "assessment_detail": "Reviewed inspection transition changes workflow/timestamps/version separately from final_result; submission preserves prior result snapshots. AI advisory exposes no inspection mutation repository.",
+      "missing_work": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command."
+    },
+    {
+      "id": "REQ-INSP-014",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700",
+        "src/modules/ai-advisory/application/get-advisory.ts"
+      ],
+      "assessment_detail": "Reviewed inspection transition changes workflow/timestamps/version separately from final_result; submission preserves prior result snapshots. AI advisory exposes no inspection mutation repository.",
+      "missing_work": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command."
+    },
+    {
+      "id": "REQ-INSP-016",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:700",
+        "src/modules/ai-advisory/application/get-advisory.ts"
+      ],
+      "assessment_detail": "Reviewed inspection transition changes workflow/timestamps/version separately from final_result; submission preserves prior result snapshots. AI advisory exposes no inspection mutation repository.",
+      "missing_work": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Complete reviewer editing/correction permission paths and independent snapshots must be tested; official inspection aggregate remains unavailable without approved scientific source. Selected transition inspection cannot prove every reviewer command."
+    },
+    {
+      "id": "REQ-LAB-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/laboratory/application/submit-lab-test.ts",
+        "src/modules/laboratory/domain/measurement.ts"
+      ],
+      "assessment_detail": "Laboratory record has source-bound context, typed samples/measurements, controlled version/state and server-derived submission aggregate.",
+      "missing_work": "Official evaluator is fail-closed; approved methods/source, full approval journey and runtime evidence are required before scientific operational acceptance.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Official evaluator is fail-closed; approved methods/source, full approval journey and runtime evidence are required before scientific operational acceptance."
+    },
+    {
+      "id": "REQ-LAB-007",
+      "implementation": "NOT_IMPLEMENTED",
+      "current_status": "NOT_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/laboratory/domain/measurement.ts",
+        "src/modules/laboratory/domain/calculation.ts"
+      ],
+      "assessment_detail": "Measurement validation requires the exact parameter unit. Calculation carries rule source/version/inputs and exact decimals; calculation types MEAN/SUM/MIN/MAX/RANGE are not unit conversion.",
+      "missing_work": "No unit conversion implementation or source/version trace was found in laboratory source search. Approved conversion semantics and examples are required; rejecting mismatched units is not a conversion feature.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "No unit conversion implementation or source/version trace was found in laboratory source search. Approved conversion semantics and examples are required; rejecting mismatched units is not a conversion feature."
+    },
+    {
+      "id": "REQ-LAB-021",
+      "implementation": "NOT_IMPLEMENTED",
+      "current_status": "NOT_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/laboratory/application/measurement-post.ts",
+        "src/modules/laboratory/domain/measurement.ts"
+      ],
+      "assessment_detail": "Native per-point entry is validated against frozen point identities/types/units. Laboratory source search found no Excel/bulk import path.",
+      "missing_work": "Implement an approved Excel/bulk intake using the same validator only in a separately authorized repair; establish file/row/duplicate/error policy and atomicity. Existing individual measurement forms are not bulk intake.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Implement an approved Excel/bulk intake using the same validator only in a separately authorized repair; establish file/row/duplicate/error policy and atomicity. Existing individual measurement forms are not bulk intake."
+    },
+    {
+      "id": "REQ-EQP-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/equipment/domain/equipment.ts",
+        "src/modules/assets/equipment/application/update-equipment.ts"
+      ],
+      "assessment_detail": "Equipment has stable UUID plus equipmentNo, explicit DRAFT/ACTIVE/OUT_OF_SERVICE/UNDER_MAINTENANCE/DECOMMISSIONED states, versioned draft-only editing and reason-bound decommission transition retaining aggregate history fields.",
+      "missing_work": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+    },
+    {
+      "id": "REQ-EQP-002",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/equipment/domain/equipment.ts",
+        "src/modules/assets/equipment/application/update-equipment.ts"
+      ],
+      "assessment_detail": "Equipment has stable UUID plus equipmentNo, explicit DRAFT/ACTIVE/OUT_OF_SERVICE/UNDER_MAINTENANCE/DECOMMISSIONED states, versioned draft-only editing and reason-bound decommission transition retaining aggregate history fields.",
+      "missing_work": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+    },
+    {
+      "id": "REQ-EQP-004",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/equipment/domain/equipment.ts",
+        "src/modules/assets/equipment/application/update-equipment.ts"
+      ],
+      "assessment_detail": "Equipment has stable UUID plus equipmentNo, explicit DRAFT/ACTIVE/OUT_OF_SERVICE/UNDER_MAINTENANCE/DECOMMISSIONED states, versioned draft-only editing and reason-bound decommission transition retaining aggregate history fields.",
+      "missing_work": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+    },
+    {
+      "id": "REQ-EQP-005",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/equipment/domain/equipment.ts",
+        "src/modules/assets/equipment/application/update-equipment.ts"
+      ],
+      "assessment_detail": "Equipment has stable UUID plus equipmentNo, explicit DRAFT/ACTIVE/OUT_OF_SERVICE/UNDER_MAINTENANCE/DECOMMISSIONED states, versioned draft-only editing and reason-bound decommission transition retaining aggregate history fields.",
+      "missing_work": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Activation policy denies by default; all persisted history/decommission tests and approved controlled-field Change Request classification remain missing. Domain state fields alone do not prove retained history."
+    },
+    {
+      "id": "REQ-CAL-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/calibration/domain/calibration.ts",
+        "src/modules/assets/calibration/application/create-calibration.ts"
+      ],
+      "assessment_detail": "Calibration has stable record/equipment link, provider/certificateNo, separate calibration/due dates, version and lifecycle timestamps. dueDate is a caller-supplied optional field and no approved interval is invented.",
+      "missing_work": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified."
+    },
+    {
+      "id": "REQ-CAL-002",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/calibration/domain/calibration.ts",
+        "src/modules/assets/calibration/application/create-calibration.ts"
+      ],
+      "assessment_detail": "Calibration has stable record/equipment link, provider/certificateNo, separate calibration/due dates, version and lifecycle timestamps. dueDate is a caller-supplied optional field and no approved interval is invented.",
+      "missing_work": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified."
+    },
+    {
+      "id": "REQ-CAL-005",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/assets/calibration/domain/calibration.ts",
+        "src/modules/assets/calibration/application/create-calibration.ts"
+      ],
+      "assessment_detail": "Calibration has stable record/equipment link, provider/certificateNo, separate calibration/due dates, version and lifecycle timestamps. dueDate is a caller-supplied optional field and no approved interval is invented.",
+      "missing_work": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "A policy/source link for dueDate was not demonstrated; certificateNo metadata is not a verified attached certificate. Historical SQL immutability, make-current/supersession and active file linkage remain unverified."
+    },
+    {
+      "id": "REQ-APR-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/approvals/application/decide-approval.ts",
+        "src/modules/change-requests/application/transition-change-request.ts"
+      ],
+      "assessment_detail": "Generic approval resolves supported decisions, assignment/view/action authorization and per-decision signature requirement, then subject transition and recordDecision within the shared transaction. Return is distinct from final approval and history is appended.",
+      "missing_work": "Unresolved signature applicability blocks the positive path; complete return history/audit persistence and current all-subject decision coverage remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-APR-007",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/approvals/application/decide-approval.ts",
+        "src/modules/change-requests/application/transition-change-request.ts"
+      ],
+      "assessment_detail": "Generic approval resolves supported decisions, assignment/view/action authorization and per-decision signature requirement, then subject transition and recordDecision within the shared transaction. Return is distinct from final approval and history is appended.",
+      "missing_work": "Unresolved signature applicability blocks the positive path; complete return history/audit persistence and current all-subject decision coverage remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-APR-008",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/approvals/application/decide-approval.ts",
+        "src/modules/change-requests/application/transition-change-request.ts"
+      ],
+      "assessment_detail": "Generic approval resolves supported decisions, assignment/view/action authorization and per-decision signature requirement, then subject transition and recordDecision within the shared transaction. Return is distinct from final approval and history is appended.",
+      "missing_work": "Unresolved signature applicability blocks the positive path; complete return history/audit persistence and current all-subject decision coverage remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-ESIG-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/e-signatures/application/sign-controlled-action.ts",
+        "src/ui/components/governance/ESignatureDialog.astro",
+        "src/modules/approvals/application/decide-approval.ts"
+      ],
+      "assessment_detail": "Signature requires password reauthentication and explicit sign permission; evidence carries actor/action/meaning/version/time/snapshotHash. Dialog renders actionMeaning before secret entry. Generic decision prepares persist:false evidence for transaction-bound persistence.",
+      "missing_work": "Complete per-action ceremony UI/persisted snapshot recomputation and rollback remain unverified. Reproduced template detached signature/identity hash gap prevents a universal binding claim.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-ESIG-004",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/e-signatures/application/sign-controlled-action.ts",
+        "src/ui/components/governance/ESignatureDialog.astro",
+        "src/modules/approvals/application/decide-approval.ts"
+      ],
+      "assessment_detail": "Signature requires password reauthentication and explicit sign permission; evidence carries actor/action/meaning/version/time/snapshotHash. Dialog renders actionMeaning before secret entry. Generic decision prepares persist:false evidence for transaction-bound persistence.",
+      "missing_work": "Complete per-action ceremony UI/persisted snapshot recomputation and rollback remain unverified. Reproduced template detached signature/identity hash gap prevents a universal binding claim.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-ESIG-007",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/e-signatures/application/sign-controlled-action.ts",
+        "src/ui/components/governance/ESignatureDialog.astro",
+        "src/modules/approvals/application/decide-approval.ts"
+      ],
+      "assessment_detail": "Signature requires password reauthentication and explicit sign permission; evidence carries actor/action/meaning/version/time/snapshotHash. Dialog renders actionMeaning before secret entry. Generic decision prepares persist:false evidence for transaction-bound persistence.",
+      "missing_work": "Complete per-action ceremony UI/persisted snapshot recomputation and rollback remain unverified. Reproduced template detached signature/identity hash gap prevents a universal binding claim.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-CHG-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/change-requests/domain/change-request.ts",
+        "src/modules/change-requests/application/transition-change-request.ts",
+        "src/modules/change-requests/infrastructure/postgres-repository.ts"
+      ],
+      "assessment_detail": "Controlled request has target version/snapshot, separate state machine/history/application attempts. Contextual DOCUMENT_VERSION create locks target and compares version. Request transitions lock current version and append history/outbox.",
+      "missing_work": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping."
+    },
+    {
+      "id": "REQ-CHG-004",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/change-requests/domain/change-request.ts",
+        "src/modules/change-requests/application/transition-change-request.ts",
+        "src/modules/change-requests/infrastructure/postgres-repository.ts"
+      ],
+      "assessment_detail": "Controlled request has target version/snapshot, separate state machine/history/application attempts. Contextual DOCUMENT_VERSION create locks target and compares version. Request transitions lock current version and append history/outbox.",
+      "missing_work": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping."
+    },
+    {
+      "id": "REQ-CHG-008",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/modules/change-requests/domain/change-request.ts",
+        "src/modules/change-requests/application/transition-change-request.ts",
+        "src/modules/change-requests/infrastructure/postgres-repository.ts"
+      ],
+      "assessment_detail": "Controlled request has target version/snapshot, separate state machine/history/application attempts. Contextual DOCUMENT_VERSION create locks target and compares version. Request transitions lock current version and append history/outbox.",
+      "missing_work": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Application coordinator is absent; contextual create stale protection does not establish stale-target rejection at actual application. Raw create receives supplied target snapshot; all target kinds require approved mapping."
+    },
+    {
+      "id": "REQ-AUD-001",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/audit/audit-service.ts",
+        "src/shared/audit/postgres-audit-repository.ts",
+        "src/shared/audit/audit-event.ts",
+        "db/migrations/0001_core_schema.sql",
+        ".ci-results/QC-360-20261008/database.json"
+      ],
+      "assessment_detail": "Business audit is a separate PostgreSQL table/repository from application logs; selected commands pass server actor; database supplies occurred_at by default. Payload/reason validation rejects secrets and audit table has restrictive actor FK and observed append-only/truncate guards.",
+      "missing_work": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+    },
+    {
+      "id": "REQ-AUD-004",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/audit/audit-service.ts",
+        "src/shared/audit/postgres-audit-repository.ts",
+        "src/shared/audit/audit-event.ts",
+        "db/migrations/0001_core_schema.sql",
+        ".ci-results/QC-360-20261008/database.json"
+      ],
+      "assessment_detail": "Business audit is a separate PostgreSQL table/repository from application logs; selected commands pass server actor; database supplies occurred_at by default. Payload/reason validation rejects secrets and audit table has restrictive actor FK and observed append-only/truncate guards.",
+      "missing_work": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+    },
+    {
+      "id": "REQ-AUD-005",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/audit/audit-service.ts",
+        "src/shared/audit/postgres-audit-repository.ts",
+        "src/shared/audit/audit-event.ts",
+        "db/migrations/0001_core_schema.sql",
+        ".ci-results/QC-360-20261008/database.json"
+      ],
+      "assessment_detail": "Business audit is a separate PostgreSQL table/repository from application logs; selected commands pass server actor; database supplies occurred_at by default. Payload/reason validation rejects secrets and audit table has restrictive actor FK and observed append-only/truncate guards.",
+      "missing_work": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+    },
+    {
+      "id": "REQ-AUD-006",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/audit/audit-service.ts",
+        "src/shared/audit/postgres-audit-repository.ts",
+        "src/shared/audit/audit-event.ts",
+        "db/migrations/0001_core_schema.sql",
+        ".ci-results/QC-360-20261008/database.json"
+      ],
+      "assessment_detail": "Business audit is a separate PostgreSQL table/repository from application logs; selected commands pass server actor; database supplies occurred_at by default. Payload/reason validation rejects secrets and audit table has restrictive actor FK and observed append-only/truncate guards.",
+      "missing_work": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+    },
+    {
+      "id": "REQ-AUD-007",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/audit/audit-service.ts",
+        "src/shared/audit/postgres-audit-repository.ts",
+        "src/shared/audit/audit-event.ts",
+        "db/migrations/0001_core_schema.sql",
+        ".ci-results/QC-360-20261008/database.json"
+      ],
+      "assessment_detail": "Business audit is a separate PostgreSQL table/repository from application logs; selected commands pass server actor; database supplies occurred_at by default. Payload/reason validation rejects secrets and audit table has restrictive actor FK and observed append-only/truncate guards.",
+      "missing_work": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Not every audit producer was independently verified. Direct writes under the configured privileged maintenance role, every void/supersede preservation case and accepted cryptographic-chain policy remain unverified; no cryptographic tamper-proof claim is made."
+    },
+    {
+      "id": "REQ-ADM-005",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "Documents/DECISION-ASSUMPTION-REGISTER-026.md:100",
+        "Documents/BUSINESS-RULES.md:2955"
+      ],
+      "assessment_detail": "PD-30 is OPEN; BD-020 requests classification of controlled reference-data fields and required change approvals.",
+      "missing_work": "Approved reference-data catalog, field classification, authority and change evidence remain external policy inputs; absence of a decision is not audit authority to invent one.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "Approved reference-data catalog, field classification, authority and change evidence remain external policy inputs; absence of a decision is not audit authority to invent one."
+    },
+    {
+      "id": "REQ-SEC-006",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        ".ci-results/QC-360-20261008/security-data.json"
+      ],
+      "assessment_detail": "Bounded current tracked-file heuristic scan covered4303files and found no private-key/provider-token signatures; credential-like URLs occurred in test files.",
+      "missing_work": "Entire Git history, all possible secret formats, credential validity and provider rotation remain unverified; heuristic absence is not proof of no committed secrets.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-SEC-007",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/authorization/authorize.ts",
+        "src/shared/search/postgres-search.ts",
+        "src/modules/reporting/infrastructure/postgres-report-query.ts"
+      ],
+      "assessment_detail": "Selected reads enforce explicit scope before results/counts; authorize rejects missing canonical permission/inactive account/scope/state/version/SoD.",
+      "missing_work": "Full actual-record positive-control and cross-account/role direct endpoint matrix remains unverified; invalid input/not-found refusal is not IDOR proof.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-SEC-008",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/shared/files/file-service.ts",
+        "src/shared/files/s3-object-store.ts"
+      ],
+      "assessment_detail": "Private object service resolves actual evidence parent and authorizes it before returning bytes; checks MIME,size,SHA256. No application FileService composition was found.",
+      "missing_work": "Deployment object ACL/URLs, upload/download route composition and live cross-scope/tampered-object controls remain unverified.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    },
+    {
+      "id": "REQ-UX-009",
+      "implementation": "PARTIALLY_IMPLEMENTED",
+      "current_status": "PARTIALLY_IMPLEMENTED",
+      "source_refs": [
+        "src/pages/laboratory/tests/[labTestId]/execute.astro:138",
+        "src/pages/laboratory/tests/[labTestId]/review.astro:106",
+        "src/pages/laboratory/report-templates.astro:143"
+      ],
+      "assessment_detail": "Execution labels and sample controls render frozen parameter unit; review table displays row.unit; transcription draft explicitly instructs exact source value/unit/precision with no conversion.",
+      "missing_work": "Populated real method/measurement forms and all scientific fields have not been visually verified; missing source unit cannot be invented.",
+      "test_evidence": "NOT VERIFIED against the complete requirement acceptance contract",
+      "runtime_evidence": "NOT VERIFIED across all required operational scenarios",
+      "authority_dependency": "See linked decisions"
+    }
+  ]
+}
