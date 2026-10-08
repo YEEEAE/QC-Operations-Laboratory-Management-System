@@ -1,0 +1,85 @@
+{
+  "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+  "generated_date": "2026-10-08",
+  "audit_type": "SOURCE_DELTA_AND_PRIOR_EVIDENCE_RECONCILIATION",
+  "system_full_denominator_established": false,
+  "production_decision": "NO-GO",
+  "current_percentages": {
+    "implementation": "PERCENTAGE_NOT_ESTABLISHED",
+    "functional_verification": "PERCENTAGE_NOT_ESTABLISHED",
+    "evidence_completeness": "PERCENTAGE_NOT_ESTABLISHED",
+    "overall_verified_readiness": "PERCENTAGE_NOT_ESTABLISHED",
+    "database_integrity": "PERCENTAGE_NOT_ESTABLISHED",
+    "security_authorization": "PERCENTAGE_NOT_ESTABLISHED",
+    "document_control": "PERCENTAGE_NOT_ESTABLISHED",
+    "ui_ux_accessibility": "PERCENTAGE_NOT_ESTABLISHED",
+    "deployment_recovery": "PERCENTAGE_NOT_ESTABLISHED"
+  },
+  "inventories": {
+    "tracked_files": 4345,
+    "src_files": 715,
+    "astro_page_files": 88,
+    "test_source_files": 321,
+    "source_migrations": 47,
+    "sop_files": 30,
+    "wi_files": 68,
+    "evidence_root_files": 86,
+    "evidence_root_images": 84,
+    "prior_canonical_requirements": 268,
+    "prior_requirement_families": 30
+  },
+  "prior_source_metric": {
+    "name": "Documented fully implemented source lower bound, NOT overall completion or verified readiness",
+    "formula": "sum weights of FULLY_IMPLEMENTED / sum weights of all268 inventoried rows *100",
+    "weights": {
+      "P0": 5,
+      "P1": 3,
+      "P2": 1
+    },
+    "priority_authority": "AUDITOR_ASSIGNED",
+    "denominator_weight": 520,
+    "earned_full_weight": 107,
+    "percent": 20.58,
+    "unknown_weight": 0,
+    "counts": {
+      "FULLY_IMPLEMENTED": 43,
+      "PARTIALLY_IMPLEMENTED": 221,
+      "IMPLEMENTATION_DEFECT": 4
+    },
+    "candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "scope": "HISTORICAL_SOURCE_LOWER_BOUND_ONLY_NOT_CURRENT_OR_PRODUCTION_READY"
+  },
+  "prior_finding_counts": {
+    "P1": 29,
+    "P2": 8
+  },
+  "current_bounded_observations": 4,
+  "observed_ci_runs": [
+    {
+      "name": "Verification CI",
+      "run": 37834418071,
+      "status": "completed",
+      "conclusion": "failure",
+      "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+      "link": "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418071",
+      "note": "No current test PASS inferred; job logs unavailable via available connection"
+    },
+    {
+      "name": "GitHub Pages",
+      "run": 37834418110,
+      "status": "completed",
+      "conclusion": "failure",
+      "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+      "link": "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418110",
+      "note": "Jekyll failed trying to parse Astro frontmatter; not equivalent to Render app build"
+    }
+  ],
+  "limits": [
+    "No complete exact-candidate accepted denominator",
+    "No executable local clone/current application tests in this connector environment",
+    "No applied database ledger or environment state access",
+    "Current GitHub Verification CI failed",
+    "No current human/QMS approval or UAT",
+    "No direct authorized production verification"
+  ]
+}

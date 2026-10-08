@@ -1,0 +1,611 @@
+{
+  "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+  "observation_date": "2026-10-08",
+  "source_metadata_only": true,
+  "not_document_approval": true,
+  "repo_public": true,
+  "source_paths": [
+    {
+      "type": "Baseline / document chain",
+      "path": "Documents/REQUIREMENTS-TRACEABILITY.md",
+      "note": "Prior 268 assessments from bounded historical audit"
+    },
+    {
+      "type": "Workflows",
+      "path": "src/modules/quarantine/inspection/application/approve-inspection.ts",
+      "note": "Supervisory inspection stage requires finalResult and signature"
+    },
+    {
+      "type": "Scientific evaluator",
+      "path": "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts",
+      "note": "Current evaluator implementation present, controlled scientific payload approval remains separate"
+    },
+    {
+      "type": "Task recurrence",
+      "path": "db/migrations/0047_task_references_occurrences.sql",
+      "note": "Source migration only, production application not proven"
+    },
+    {
+      "type": "CI",
+      "path": ".github/workflows/ci.yml",
+      "note": "Verification job covers unit/integration/PostgreSQL tests, security and authenticated E2E"
+    },
+    {
+      "type": "Technical policy",
+      "path": "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md",
+      "note": "Explicit technical source not scientific QMS approval"
+    },
+    {
+      "type": "Technical policy",
+      "path": "Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md",
+      "note": "Submission is not approval"
+    },
+    {
+      "type": "Technical policy",
+      "path": "Documents/QC360-ISOLATED-RESTORE-TECHNICAL-POLICY-2026-10-08.md",
+      "note": "Local drill not provider disaster recovery"
+    },
+    {
+      "type": "Operational evidence",
+      "path": "QC_Controlled_Forms_and_Operational_Evidence/",
+      "note": "Physical directory exists; individual content authority not attested"
+    },
+    {
+      "type": "Historical audit",
+      "path": "audit/2026-10-08/QC-360-FULL-SYSTEM-AUDIT-168bc2c/QC-360-COMPREHENSIVE-AUDIT.html",
+      "note": "Previous larger audit at old SHA"
+    }
+  ],
+  "qc_wi_sop_pack": {
+    "wi_files": 68,
+    "sop_files": 30,
+    "content_approval": "NOT_VERIFIED",
+    "effectivity": "NOT_VERIFIED"
+  },
+  "operational_evidence_directory": {
+    "path": "QC_Controlled_Forms_and_Operational_Evidence/",
+    "entries": [
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/01D2413C-B61A-42FC-88EE-BC9E2C7A063C.JPEG",
+        "size": 1138285,
+        "blob_sha": "ca85c47fbabf796c8541c19ba1b8c8297d7a2c73",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/07D84358-7E7B-467B-BC04-773540A70667.JPG",
+        "size": 1483753,
+        "blob_sha": "9057718e0248da5f1460a20c6a3c1164b1d41b35",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/12E764A7-368A-49BB-B99A-523182658227.PNG",
+        "size": 2269163,
+        "blob_sha": "0d87d0a6aa901656236a94fd121a042343b764dc",
+        "file_type": "PNG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/16741A6D-F072-4D17-906E-D621947D71B7.JPG",
+        "size": 1848025,
+        "blob_sha": "b255c6db302f1699c1f051d4265da06d7fe3d3b2",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/19A7B240-6261-4C78-9F53-8763F38F07DD.JPG",
+        "size": 1680673,
+        "blob_sha": "aa7498e1813fdefa89cd8694b3a7d4f2f7740c8f",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/2060FC83-C7AC-493D-B5C9-FF5B9C99CE2F.JPG",
+        "size": 1726314,
+        "blob_sha": "49960d5c04a295d0bf73f48151103ee4e21cbadd",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/24B61406-9684-4B7E-901F-7FDC1874593F.JPG",
+        "size": 1129454,
+        "blob_sha": "aaeb219e92a29812f3af7c0708f3d00f0a69dd4b",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/291321EB-BE85-4D7A-B90F-60C172E08109.JPEG",
+        "size": 463307,
+        "blob_sha": "0a2e7a3fdb7bf121943b0a9720a9b11c54f16eda",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/3701e170-9511-444a-9973-1864377a1d65.JPG",
+        "size": 337986,
+        "blob_sha": "05c924c43d0e7d64120ca2327b1a26aa1715b7e7",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/373dad92-7bbc-44ee-ad2b-7254ec0576eb.JPG",
+        "size": 373002,
+        "blob_sha": "9ebda62422511e9514e213d89516f1c26cbd3ec1",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/37E3E4EF-4982-408C-BB26-38CD010FF6B5.JPEG",
+        "size": 1132322,
+        "blob_sha": "4983e016dcfacfe7ba9ee34c1a94447135ef757e",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/3a1031d4-1791-49fc-9186-155f3cd9e6ef.JPG",
+        "size": 336715,
+        "blob_sha": "462af09ea61fe2d125ca5822e86c3dd78fb39744",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/4EB9D719-355F-422C-B045-46EFAD6E4498.JPG",
+        "size": 1840555,
+        "blob_sha": "a1b65068e8fbb2b5bf390805c536e18197c6e625",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/5391E029-D214-44A0-B041-8E061F1910B6.JPG",
+        "size": 1494682,
+        "blob_sha": "7794c8d634684e24727ab5dceb5f396b81b932ed",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/54763D07-AB91-4000-8FD8-B569739BE553.JPG",
+        "size": 1701023,
+        "blob_sha": "02b24f885bbe3201ccbb3c25a3a91f43cdaa991e",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/55215897-154E-4FCE-BD1D-9128750BA560.JPEG",
+        "size": 1769128,
+        "blob_sha": "5acfa9a8be3625b06eeddc35e7b2e1db82ca56ae",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/5734F374-70A6-406B-B5D8-286EECD92FA1.JPEG",
+        "size": 1583554,
+        "blob_sha": "7faccdb97c2839b14b9fd19a3e0ca26a65f80833",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/5734F374-70A6-406B-B5D8-286EECD92FA1.JPG",
+        "size": 1622204,
+        "blob_sha": "056af0c46bd4e02aaed8b778bdd2cfc0531e805c",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/58E57A9A-2037-4B9B-9B44-6309BC52CE0A.JPG",
+        "size": 1737958,
+        "blob_sha": "641159f758fbb74dcaf9e46521574c516fd798ab",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/64033573-A314-458C-85AE-EC1334673A93.JPG",
+        "size": 1445183,
+        "blob_sha": "95e5d4aedfa805dc483a0aedaa505f9f4fd9e88e",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/7E5F6DCB-A790-4859-A806-5F5A84CD0F59.JPG",
+        "size": 1717877,
+        "blob_sha": "3005ef47885a2e2dea5846394630430a5ea555dc",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/7EC7C60B-C3B9-45E8-8CB8-68AB142DADEA.JPG",
+        "size": 1563142,
+        "blob_sha": "f6e4173fa3f40b307405e32e37cc15d6b00d0627",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/808C9271-800E-4738-B2B7-E65CCEBFFBE3.JPG",
+        "size": 1642908,
+        "blob_sha": "32604c2f9096229863141d882f206ba92174a34f",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/93C7AB4A-49E1-4F3F-8E05-FE31AF889D7B.PNG",
+        "size": 2173063,
+        "blob_sha": "c482ced23c9336dabf89a9bb2823461a2ffdc13b",
+        "file_type": "PNG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/95491052-6658-4BD9-8B7C-B42B611D88E1.JPG",
+        "size": 1538797,
+        "blob_sha": "1619365e17fd50edf5cc97ee8cc350855e86757b",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/A95F8F47-435D-4AFA-8BDB-707C85FF8FF2.PNG",
+        "size": 2319477,
+        "blob_sha": "eb30f32cba5ec5920d5af4406ddf7d89e49ca211",
+        "file_type": "PNG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/ABB0CE9F-4BFB-40A4-9D9A-D9305C4C05A2.JPEG",
+        "size": 498040,
+        "blob_sha": "106ba2fcaeafd77bc0086826dd23f9984284442b",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/B3C2B7BB-E747-43E6-A727-FD3603D2995D.JPEG",
+        "size": 481740,
+        "blob_sha": "ac0a9df37bee93bb691d428333189d80af950f06",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/B5BB44F6-39EC-4709-82BD-4ABA93345C3E.JPG",
+        "size": 1842675,
+        "blob_sha": "f25d031576a783c34c73bed388cad7248726e6a2",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/BF3C4557-5A58-4033-9FC6-EC5ADA15E9F0.JPEG",
+        "size": 479424,
+        "blob_sha": "709f801fcf8e655867fe2e73c7543755a5663ec6",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/C616FED4-6C9D-466B-9585-A13786DC63B0.JPG",
+        "size": 1663972,
+        "blob_sha": "84f716b5d5fc235f9b95731e2127009eba14156b",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/CC47165B-47CB-42ED-A2DB-CD8C4A025AF8.JPEG",
+        "size": 376118,
+        "blob_sha": "37e91aeba2e49226f1dad895b3674767bb36d111",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/D3EC40FF-9B19-47BB-88A7-F68B5B65F5F4.JPEG",
+        "size": 1075264,
+        "blob_sha": "c430e2b8b16d0710459e08b51dea53156ff3a69b",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/D67499F5-D291-4CBB-A8B5-3AD31A71CC42.JPG",
+        "size": 2051879,
+        "blob_sha": "36d3e80857890d001b0101e68a5412a8d5b1733c",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/DE344F5C-EAEE-4B6C-87D8-34DABBA9F783.PNG",
+        "size": 2244124,
+        "blob_sha": "68b2146eb7fbce4977c24cd474b5191b0cafd33f",
+        "file_type": "PNG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/E7B7B6BE-DCB5-4124-BE79-8F42EA8AF92E.JPG",
+        "size": 1829219,
+        "blob_sha": "8f92cb6a2e715a90ca0626f52cca6dc958f16544",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/F-8-2-3-T Inspection & Testing of  Received OBM products List (Rev 14).xlsx",
+        "size": 24838,
+        "blob_sha": "db88a79189ef7057537bfedf98f4301127a033df",
+        "file_type": "xlsx"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/F0DF597E-9E38-4F09-B3AF-2598AF284F30.JPG",
+        "size": 1810869,
+        "blob_sha": "7f26585444c0e31206aed6efcdffe9d0810ff60b",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/FC267EFE-F40D-46D6-B1B7-6C9CC2C9454C.JPEG",
+        "size": 484469,
+        "blob_sha": "8c5984290157fdbb380eb43460f9ce9a96ed3988",
+        "file_type": "JPEG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/FFAE0C89-6A00-4F8B-9DAA-8412914B9D2D.JPG",
+        "size": 1890316,
+        "blob_sha": "502873e22491ecb4754345208f65028c6504f86c",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0242.HEIC",
+        "size": 2156684,
+        "blob_sha": "e00fc81022fbdb865d12dfe617314355a0743e39",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0243.HEIC",
+        "size": 2010014,
+        "blob_sha": "8a3b699f83ff5fe7e5b7eabfb4893fd221f0438e",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0244.HEIC",
+        "size": 2021730,
+        "blob_sha": "1f9c7e5340f94af995d107ae1f1ba2aa64010304",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0245.HEIC",
+        "size": 2004399,
+        "blob_sha": "1f61bc6386b97a3017147bc9e6f47397b6430c9d",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0246.HEIC",
+        "size": 1944709,
+        "blob_sha": "45af5949f771c88f90b343beb45e099ed5b738b9",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0247.HEIC",
+        "size": 1974677,
+        "blob_sha": "602b3384188e8f129b78542832f529e93ce56d7e",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0248.HEIC",
+        "size": 2039189,
+        "blob_sha": "c6669e6a607ce66c76ce9394d46317386c9ced20",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0249.HEIC",
+        "size": 1855662,
+        "blob_sha": "cff42c25cb1e884c2860a28b40eb69e9021c1571",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0265.HEIC",
+        "size": 2610271,
+        "blob_sha": "07fb40d04b876db06bfef3b82d9a6dd099df1fb6",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0266.HEIC",
+        "size": 2637984,
+        "blob_sha": "e4aca9b256518cc5c94811b72d7ae4dfdbe34957",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_0267.HEIC",
+        "size": 2605389,
+        "blob_sha": "94e0793dd782c70277e7f231085dac3755559fbf",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1215.HEIC",
+        "size": 3347390,
+        "blob_sha": "9e5ffbf1047ef7e9f39f71f8ee5feda52e2c2919",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1216.HEIC",
+        "size": 3441523,
+        "blob_sha": "11560541be1b73c044bce2681f438889b24df723",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1217.HEIC",
+        "size": 3442639,
+        "blob_sha": "8e713e386f64c9c3209e82781663781d54af9784",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1218.HEIC",
+        "size": 3022544,
+        "blob_sha": "14049d21dcfbf13c412acc6ccde371ace03ed58d",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1219.HEIC",
+        "size": 3307141,
+        "blob_sha": "f127473cc9f99676a9560394bbd31e4a2e697a14",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1220.HEIC",
+        "size": 3075453,
+        "blob_sha": "528f1f186a5d2d04d3377e7d2ac8560ae69d07bb",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1503.HEIC",
+        "size": 1046962,
+        "blob_sha": "c358341df092b0d5ddcb0ec28dacf32b10075bd1",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1504.HEIC",
+        "size": 960864,
+        "blob_sha": "c3235daa587d516e029563c838b2baff73d46540",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1505.HEIC",
+        "size": 978300,
+        "blob_sha": "5a88634291ccb0b2342a74f34a416845057f1aab",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1506.HEIC",
+        "size": 884370,
+        "blob_sha": "56b784d10937071a3ce3c6e456ffe6cd80cc9974",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1507.HEIC",
+        "size": 1155340,
+        "blob_sha": "b9107fa2363e3383a7a749904e1da145dcf713e0",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1512.JPG",
+        "size": 1777104,
+        "blob_sha": "ae70da8ca6013e270e109d074ede9a388fa3876e",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1513.JPG",
+        "size": 1802145,
+        "blob_sha": "ddeebf51a6d70869f85ddb8cf76582787e80c74a",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1587.JPG",
+        "size": 349868,
+        "blob_sha": "d24a11c3b81d1b7d4cb9e764275c281bcdd57aa5",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_1637.HEIC",
+        "size": 1098795,
+        "blob_sha": "82350179ac9ebec94a3397a82be1f9967d410818",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_2005.heic",
+        "size": 1017186,
+        "blob_sha": "79ea0c12933aa0dde0d615a1637162e1c314a88c",
+        "file_type": "heic"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_2006.heic",
+        "size": 822581,
+        "blob_sha": "1e697a1ac1707199886d142dd553e3c82fd46e92",
+        "file_type": "heic"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_2007.heic",
+        "size": 824051,
+        "blob_sha": "0fdaad6f31315d94153b6c494ace81a2c319ac9f",
+        "file_type": "heic"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_2042.HEIC",
+        "size": 2207687,
+        "blob_sha": "67a5a822660336955ff0d39bf8c191576c795b50",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_2077.jpg",
+        "size": 295549,
+        "blob_sha": "18b336cd6b928516f7cf021828826c91b6628e88",
+        "file_type": "jpg"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_6989.HEIC",
+        "size": 1351270,
+        "blob_sha": "c4f77960cfeaaf664184c97720c3ae7d0694f028",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_6990.HEIC",
+        "size": 1307635,
+        "blob_sha": "e1dcebf782a392439bf003be730e0e77fee07421",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/IMG_6991.HEIC",
+        "size": 1365746,
+        "blob_sha": "cbc8bec4f1a553f53967cd95643e775336cd229d",
+        "file_type": "HEIC"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-14-12-53-56.JPG",
+        "size": 190104,
+        "blob_sha": "7b88283a392b1c10ec7ed62e9afb6f079b6b1142",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-14-12-53-59.JPG",
+        "size": 220835,
+        "blob_sha": "41e316ab0b53187ba4fb3b56febd70cc1693a3c7",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-14-15-12-59.JPG",
+        "size": 208580,
+        "blob_sha": "2bca02109c8b5f4ae0137cc68dd48d53938d75b8",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-23-23-42-30 2.JPG",
+        "size": 197102,
+        "blob_sha": "864dbe1b5fb28d50b728472c4130c6b6e98f82e3",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-23-23-42-30 3.JPG",
+        "size": 188072,
+        "blob_sha": "a0a0ca8e51eb8a4d705685d0769e1b11c717ecc8",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-23-23-42-30 4.JPG",
+        "size": 155493,
+        "blob_sha": "6b2336d50ffd712f52114ea98875884454a9b48a",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/PHOTO-2026-09-23-23-42-30.JPG",
+        "size": 144464,
+        "blob_sha": "dc048edf6b742581c04217d882d4a9c6905834d4",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/dd8d9ca6-1af0-41af-b0d3-154f0002b88d.JPG",
+        "size": 390960,
+        "blob_sha": "c844c174dbdcdda58f7a801ddcafe6ab9badedb8",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/edac174b-7b75-4ef6-b528-08dcfb9a0bee.JPG",
+        "size": 360946,
+        "blob_sha": "6b4954dea12d8083c3e472736798c00edc7cceaf",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/f3cf0fb9-cf5c-481a-acf1-c1e98804967a.JPG",
+        "size": 297194,
+        "blob_sha": "5679e5ae77b4d1c87369c15014194c2e744ddfb2",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/ff9f9a1b-c636-4497-8169-35cbbd2198d9.JPG",
+        "size": 398966,
+        "blob_sha": "590170433c0418c29365984b68c4539461a27bfe",
+        "file_type": "JPG"
+      },
+      {
+        "path": "QC_Controlled_Forms_and_Operational_Evidence/inspection-repr.pdf",
+        "size": 28568795,
+        "blob_sha": "9325bff914c68605a81a7f67bf5ca35dd6af4584",
+        "file_type": "pdf"
+      }
+    ],
+    "file_count": 86,
+    "image_count": 84,
+    "inspected_content_count": 0,
+    "approved_and_in_use_count": "NOT_ESTABLISHED"
+  },
+  "old_evidence_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+  "current_ci_runs": [
+    {
+      "name": "Verification CI",
+      "run": 37834418071,
+      "status": "completed",
+      "conclusion": "failure",
+      "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+      "link": "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418071",
+      "note": "No current test PASS inferred; job logs unavailable via available connection"
+    },
+    {
+      "name": "GitHub Pages",
+      "run": 37834418110,
+      "status": "completed",
+      "conclusion": "failure",
+      "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+      "link": "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418110",
+      "note": "Jekyll failed trying to parse Astro frontmatter; not equivalent to Render app build"
+    }
+  ]
+}

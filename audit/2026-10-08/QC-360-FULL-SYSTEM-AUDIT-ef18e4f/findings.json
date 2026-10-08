@@ -1,0 +1,1097 @@
+[
+  {
+    "id": "QC-360-WF-001",
+    "title": "Official laboratory evaluator unavailable",
+    "requirement_ids": [
+      "REQ-LAB-020"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_GAP",
+    "root_cause": "Production evaluator is an unconditional denial stub; source authority is also missing.",
+    "source_refs": [
+      "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:128"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-002",
+    "title": "Inspection overall official result cannot be completed",
+    "requirement_ids": [
+      "REQ-INSP-004",
+      "REQ-INSP-006"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_GAP",
+    "root_cause": "Only point results are derived; new report starts final_result null and approval requires a non-null finalResult; approved aggregation/manual authority absent.",
+    "source_refs": [
+      "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:334",
+      "src/modules/quarantine/inspection/application/approve-inspection.ts:69"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-003",
+    "title": "Quality controlled prerequisite paths remain unreachable",
+    "requirement_ids": [
+      "TR-NCR-004",
+      "TR-NCR-005",
+      "TR-NCR-006",
+      "REQ-QUAL-007"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "AUTHORITY_AND_IMPLEMENTATION_BLOCKER",
+    "root_cause": "NCR uses default false rca/capa/verification conditions; CAPA uses default false verification/effectiveness; application refuses caller conditions and composes no persisted-evidence reader.",
+    "source_refs": [
+      "src/modules/quality/ncr/domain/ncr.ts:50",
+      "src/modules/quality/capa/domain/capa.ts:76"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-004",
+    "title": "Task reassignment and checklist completion lack production operations",
+    "requirement_ids": [
+      "REQ-TASK-003",
+      "REQ-TASK-004"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_GAP",
+    "root_cause": "Action export has create/update/transition/delete only; assignee is persisted at creation, never in update; checklist has inserts/reads but no completion write in production src.",
+    "source_refs": [
+      "src/actions/tasks.ts:100",
+      "src/modules/tasks/infrastructure/postgres-repository.ts:349"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-005",
+    "title": "Calibration current-setting and aging unavailable through application",
+    "requirement_ids": [
+      "REQ-CAL-003",
+      "REQ-CAL-006"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "AUTHORITY_AND_IMPLEMENTATION_BLOCKER",
+    "root_cause": "Permission map excludes MAKE_CURRENT/MARK_DUE/MARK_OVERDUE/SUPERSEDE; use case denies these domain actions before repository.",
+    "source_refs": [
+      "src/modules/assets/calibration/application/transition-calibration.ts:6"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-006",
+    "title": "Issue Slip confirmations remain creator attestations",
+    "requirement_ids": [
+      "QC-POST-F-008",
+      "QC-POST-F-009"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "AUTHORITY_BLOCKER",
+    "root_cause": "One creator records all three role checkpoints; no independent signer/reauth ceremony. Canonical module docs explicitly allow attestations, while per-action signature mapping remains owner-unresolved; cannot claim three signer approval.",
+    "source_refs": [
+      "src/modules/reject-reports/application/confirm-issue-slip-approval.ts:10",
+      "Documents/REJECT-REPORTS.md:17"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-007",
+    "title": "Source-dependent execution validation empty",
+    "requirement_ids": [
+      "REQ-LAB-008",
+      "REQ-LAB-009"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_GAP",
+    "root_cause": "Production validateExecution does nothing while Submit invokes it; source-dependent execution/environment checks need approved authority and implementation.",
+    "source_refs": [
+      "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:125"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-008",
+    "title": "Retest remains unavailable",
+    "requirement_ids": [
+      "REQ-LAB-018"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "AUTHORITY_BLOCKER",
+    "root_cause": "Default policy throws POLICY_SOURCE_REQUIRED; no approved retest authority/count/effect policy is composed.",
+    "source_refs": [
+      "src/modules/laboratory/application/create-retest.ts:9"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-009",
+    "title": "Template signature commits outside domain transaction",
+    "requirement_ids": [
+      "REQ-TMPL-004",
+      "REQ-ESIG-007"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_DEFECT",
+    "root_cause": "Signature repository inserts directly before template transition transaction; orphan signature possible on stale version or audit/outbox failure. Literal template identity/version snapshotHash does not bind content.",
+    "source_refs": [
+      "src/modules/quarantine/templates/application/template-ceremony.ts:55",
+      "src/modules/quarantine/templates/infrastructure/postgres-repository.ts:211"
+    ],
+    "test": "PASS — synthetic defect reproduction on Node v24.20.0",
+    "runtime": "NOT VERIFIED — no PostgreSQL/browser/human acceptance",
+    "state": "OPEN",
+    "fresh_evidence": ".ci-results/QC-360-20261008/workflow-synthetic-probe.json",
+    "reproduction": {
+      "checks": "PASS: detached signature ordering reproduced through actual StopTemplateUseCase/createTemplateCeremony",
+      "events": [
+        "reauth.accepted.synthetic",
+        "signature.persisted",
+        "transition.failed.stale.synthetic"
+      ],
+      "exception": "CONFLICT_STALE_VERSION",
+      "signatures_retained": 1,
+      "snapshot_hash": "template:synthetic-template:v1",
+      "limits": "Fake persistence proves call ordering and absence of rollback coordination; not PostgreSQL transaction execution, and no human signature approval."
+    },
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-010",
+    "title": "Receiving creation rounds exact decimal input",
+    "requirement_ids": [
+      "REQ-QUAR-004"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_DEFECT",
+    "root_cause": "Number(raw).toString() changes valid decimal input before PostgreSQL NUMERIC; correction persists original text, creating operation inconsistency.",
+    "source_refs": [
+      "src/modules/quarantine/receiving/domain/receiving-item.ts:101"
+    ],
+    "test": "PASS — synthetic defect reproduction on Node v24.20.0",
+    "runtime": "NOT VERIFIED — no PostgreSQL/browser/human acceptance",
+    "state": "OPEN",
+    "fresh_evidence": ".ci-results/QC-360-20261008/workflow-synthetic-probe.json",
+    "reproduction": {
+      "checks": "PASS: rounding and exponent coercion reproduced in actual validator/create domain",
+      "cases": [
+        {
+          "input": "9007199254740993",
+          "actual": "9007199254740992"
+        },
+        {
+          "input": "0.12345678901234567890123456789",
+          "actual": "0.12345678901234568"
+        },
+        {
+          "input": "1000000000000000000000",
+          "actual": "1e+21"
+        }
+      ],
+      "created_qty": "9007199254740992"
+    },
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-011",
+    "title": "RCA mutation transport always forbids",
+    "requirement_ids": [
+      "REQ-QUAL-005"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "AUTHORITY_AND_IMPLEMENTATION_BLOCKER",
+    "root_cause": "Exported transition action unconditionally throws FORBIDDEN, so backend state-machine/use-case presence is not an operational RCA workflow.",
+    "source_refs": [
+      "src/actions/rca.ts:10"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-012",
+    "title": "Task dependencies/comments lack production operations and blocker enforcement",
+    "requirement_ids": [
+      "TR-TASK-005",
+      "REQ-TASK-002"
+    ],
+    "priority": "P2",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_GAP",
+    "root_cause": "Canonical foundation model names task_comments/task_dependencies; DB types exist, but tasks production module has no reader/writer/action for either. mapTask hardcodes unresolvedMandatoryBlocker:false, so no mandatory-dependency/blocker truth is consulted by assertCompletable. Specialized record link is also absent; recurrence remains explicitly deferred.",
+    "source_refs": [
+      "Documents/DATA-MODEL.md:821",
+      "Documents/DATA-MODEL.md:836",
+      "Documents/STATE-MACHINES.md:583",
+      "src/modules/tasks/infrastructure/postgres-repository.ts:47",
+      "src/actions/tasks.ts:100"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "limits": "Logical comments/dependencies foundation is not a standalone approved operational REQ ID; retained as architecture/functionality gap, not invented approval policy. Mandatory blockers are explicit TR-TASK-005 precondition.",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-013",
+    "title": "Task completion idempotency and locked prerequisite recheck unavailable",
+    "requirement_ids": [
+      "TR-TASK-005",
+      "REQ-TASK-006"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_GAP",
+    "root_cause": "TransitionTaskUseCase reads/validates before repository mutation. Repository locks task but does not call assertCompletable or transitionTask against locked checklist/evidence; it writes mapped next state. It has no idempotency-record/replay path; a repeated successful COMPLETE encounters COMPLETED and is denied instead of returning prior success. Canonical TR-TASK-005 explicitly requires idempotent YES.",
+    "source_refs": [
+      "src/modules/tasks/application/transition.ts:66",
+      "src/modules/tasks/infrastructure/postgres-repository.ts:466",
+      "src/modules/tasks/infrastructure/postgres-repository.ts:482",
+      "Documents/STATE-MACHINES.md:583"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "limits": "Static evidence of missing coordination; race reproduction and actual PostgreSQL completion retries not run.",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC-360-WF-014",
+    "title": "Lab equipment append does not lock/recheck parent state or version",
+    "requirement_ids": [
+      "REQ-LAB-010",
+      "REQ-LAB-011",
+      "REQ-LAB-019"
+    ],
+    "priority": "P1",
+    "priority_basis": "Auditor assigned",
+    "classification": "IMPLEMENTATION_DEFECT",
+    "root_cause": "Use case authorizes expectedVersion/DRAFT before asset capture; linkRunEquipment accepts neither expectedVersion nor prior state and begins independent insert/audit/outbox transaction without locking parent. Another submit/approve can commit before insert, so frozen evidence can gain new equipment rows without lab version change.",
+    "source_refs": [
+      "src/modules/laboratory/application/record-run-equipment.ts:47",
+      "src/modules/laboratory/infrastructure/postgres-repository.ts:428"
+    ],
+    "test": "NOT VERIFIED",
+    "runtime": "NOT VERIFIED",
+    "state": "OPEN",
+    "limits": "Direct source race analysis; PostgreSQL contention reproduction and trigger behavior not executed by subtask.",
+    "origin_review": "workflows",
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-001",
+    "priority": "P1",
+    "type": "POLICY_BLOCKER",
+    "requirements": [
+      "REQ-DOC-007",
+      "REQ-DOC-008",
+      "REQ-APR-009",
+      "REQ-ESIG-008"
+    ],
+    "title": "Document approval/effectivity and generic approval decisions remain blocked",
+    "source_refs": [
+      "src/modules/documents/application/approve-version.ts:6",
+      "src/modules/documents/application/supersede-version.ts:13",
+      "src/modules/approvals/application/dependencies.ts:148",
+      "src/modules/approvals/application/dependencies.ts:180",
+      "Documents/STATE-MACHINES.md:3072"
+    ],
+    "finding": "ApproveVersionUseCase always throws POLICY_SOURCE_REQUIRED; supersession requires approved policy defaulting false; both generic read/action factories resolve signature applicability UNRESOLVED. Correct fail-closed behavior does not fulfill end-to-end controlled approval/effectivity.",
+    "acceptance": "Approved action/subject/state/signer/meaning/evidence policy and fresh authenticated positive/denial/rollback tests required.",
+    "status": "BLOCKED_BY_AUTHORITY_SOURCE",
+    "origin_review": "security-data",
+    "state": "BLOCKED_BY_AUTHORITY_SOURCE",
+    "requirement_ids": [
+      "REQ-DOC-007",
+      "REQ-DOC-008",
+      "REQ-APR-009",
+      "REQ-ESIG-008"
+    ],
+    "repair_acceptance": "Approved action/subject/state/signer/meaning/evidence policy and fresh authenticated positive/denial/rollback tests required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-002",
+    "priority": "P1",
+    "type": "IMPLEMENTATION_GAP",
+    "requirements": [
+      "REQ-CHG-005",
+      "REQ-CHG-006",
+      "REQ-CHG-007"
+    ],
+    "title": "Approved change application coordinator absent",
+    "source_refs": [
+      "src/modules/change-requests/domain/change-request.ts:132",
+      "src/modules/change-requests/domain/change-request.ts:165",
+      "src/modules/change-requests/infrastructure/postgres-repository.ts:443",
+      "src/modules/change-requests/ports/repository.ts:64"
+    ],
+    "finding": "START_APPLY/APPLY_SUCCESS/APPLICATION_FAILED exist only in domain state vocabulary; recordApplicationAttempt has repository implementation but no src caller. No application use case/worker applies approved change through owning domain and atomically commits target/request/audit. Recorder writes attempt/audit but alone does not change target or request state.",
+    "acceptance": "Use real approved document change; owning-domain version lock, stale refusal, successful target+request+audit atomicity, failure history, and race/replay controls.",
+    "status": "SOURCE_GAP_RUNTIME_NOT_VERIFIED",
+    "origin_review": "security-data",
+    "state": "SOURCE_GAP_RUNTIME_NOT_VERIFIED",
+    "requirement_ids": [
+      "REQ-CHG-005",
+      "REQ-CHG-006",
+      "REQ-CHG-007"
+    ],
+    "repair_acceptance": "Use real approved document change; owning-domain version lock, stale refusal, successful target+request+audit atomicity, failure history, and race/replay controls.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-003",
+    "priority": "P1",
+    "type": "AUTHORITY_EVIDENCE_GAP",
+    "requirements": [
+      "REQ-DOC-006",
+      "REQ-DOC-007",
+      "REQ-DOC-008"
+    ],
+    "title": "Mandatory WI/SOP pack is available as draft, not approved/effective evidence",
+    "source_refs": [
+      "Documents/QC_System_WI_SOP_Pack/References/READ-ME.txt:1",
+      "Documents/QC_System_WI_SOP_Pack/References/Authoring_Sources.zip!/Registers/master-document-register.md:3",
+      "Documents/QC_System_WI_SOP_Pack/References/Authoring_Sources.zip!/Registers/Final_Review.md:19"
+    ],
+    "finding": "Parsed actual archived master register: 98 entries, all 98 DRAFT FOR REVIEW, all 98 effective_date None, all 98 approval_signature None. Final Review explicitly says no real execution record, approval, effectivity or human UAT generated. Source pack proposals and historical physical forms do not establish adopted digital criteria.",
+    "acceptance": "Retain availability separately from approved/effective source and executed evidence. Obtain actual approved/effective records without manufacturing signatures.",
+    "status": "NOT_VERIFIED",
+    "origin_review": "security-data",
+    "state": "NOT_VERIFIED",
+    "requirement_ids": [
+      "REQ-DOC-006",
+      "REQ-DOC-007",
+      "REQ-DOC-008"
+    ],
+    "repair_acceptance": "Retain availability separately from approved/effective source and executed evidence. Obtain actual approved/effective records without manufacturing signatures.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-004",
+    "priority": "P2",
+    "type": "SOURCE_AVAILABILITY_GAP",
+    "requirements": [
+      "REQ-DOC-006"
+    ],
+    "title": "Requested controlled forms/evidence directory absent",
+    "source_refs": [
+      "Documents/QC_Controlled_Forms_and_Operational_Evidence",
+      "Documents/QC_System_WI_SOP_Pack/References/Authoring_Sources.zip!/Registers/form-register.md:3"
+    ],
+    "finding": "Exact requested Documents/QC_Controlled_Forms_and_Operational_Evidence path does not exist. WI/SOP archive has a form register with observed identities, effectivity/original-control requirements, source gaps and conflicting units/limits. It cannot silently substitute for missing separately requested evidence pack.",
+    "status": "SOURCE_NOT_AVAILABLE",
+    "origin_review": "security-data",
+    "state": "SOURCE_NOT_AVAILABLE",
+    "requirement_ids": [
+      "REQ-DOC-006"
+    ],
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-005",
+    "priority": "P2",
+    "type": "DOCUMENTATION_DRIFT",
+    "requirements": [
+      "REQ-DATA-012"
+    ],
+    "title": "Migration README reports stale source head",
+    "source_refs": [
+      "db/migrations/README.md:5",
+      "db/migrations/0046_inspection_report_catalog.sql:1"
+    ],
+    "finding": "README declares 0045/45 files while actual source directory contains 0046. Applied provider state not inferred.",
+    "status": "SOURCE_CONFIRMED",
+    "origin_review": "security-data",
+    "state": "SOURCE_CONFIRMED",
+    "requirement_ids": [
+      "REQ-DATA-012"
+    ],
+    "repair_acceptance": "Reproduce the stated gap on an isolated current-candidate fixture; verify positive, denial, stale version, rollback and audit binding as applicable. Obtain approved policy where required.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-006",
+    "priority": "P1",
+    "type": "APPLIED_SCHEMA_GAP",
+    "requirements": [
+      "REQ-DATA-006",
+      "REQ-DATA-009",
+      "REQ-DATA-020"
+    ],
+    "title": "Configured read-only database is one migration behind current inspection source",
+    "source_refs": [
+      ".ci-results/QC-360-20261008/database.json",
+      "db/migrations/0046_inspection_report_catalog.sql:2",
+      "db/migrations/0046_inspection_report_catalog.sql:17",
+      "db/migrations/0046_inspection_report_catalog.sql:32",
+      "src/modules/quarantine/templates/infrastructure/postgres-repository.ts:120",
+      "src/modules/quarantine/inspection/application/resolve-inspection-template.ts:33",
+      "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:322"
+    ],
+    "finding": "45/45 saved applied name/checksum rows exactly match source. 0046 is pending; its two catalog/source-evidence tables are absent from actual table inventory. Current catalog/template creation/resolution and inspection creation paths depend on these tables and new columns, plus new source/mapping origin guards. Schema mismatch blocks new current inspection functionality on this database. Missing columns/guard definitions inferred from unapplied migration, not individually queried.",
+    "acceptance": "Authorized migration process, exact ledger/columns/catalog/trigger read-back, separately approved source import and item mapping, positive/denial current workflow proof. Source migration/import alone supplies no QC approval. No migration authorization implied.",
+    "status": "OBSERVED_SCHEMA_GAP_CURRENT_WORKFLOW_RUNTIME_NOT_VERIFIED",
+    "origin_review": "security-data",
+    "state": "OBSERVED_SCHEMA_GAP_CURRENT_WORKFLOW_RUNTIME_NOT_VERIFIED",
+    "requirement_ids": [
+      "REQ-DATA-006",
+      "REQ-DATA-009",
+      "REQ-DATA-020"
+    ],
+    "repair_acceptance": "Authorized migration process, exact ledger/columns/catalog/trigger read-back, separately approved source import and item mapping, positive/denial current workflow proof. Source migration/import alone supplies no QC approval. No migration authorization implied.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SD-007",
+    "priority": "P1",
+    "type": "ATOMICITY_GAP",
+    "requirements": [
+      "REQ-DATA-020"
+    ],
+    "business_rule": "BR-GEN-009",
+    "title": "Disabling account commits state before session revocation and audit",
+    "source_refs": [
+      "src/modules/identity/application/disable-user.ts:49",
+      "src/modules/identity/infrastructure/postgres-user-repository.ts:268",
+      "src/modules/identity/infrastructure/postgres-session-repository.ts:51",
+      "src/modules/identity/application/admin-dependencies.ts:28",
+      "src/shared/audit/audit-service.ts:5"
+    ],
+    "finding": "Current actual composition supplies base users/session repositories and a separate AuditService. DisableUserUseCase executes user state CAS, session revoke and audit as separate awaited writes; no shared transaction. Failure in revoke/audit leaves earlier write committed. Session resolution checks ACTIVE, so disabled account authentication remains denied; issue is partial controlled write and audit integrity, not claimed session bypass.",
+    "acceptance": "Inject revocation/audit failure on disposable PG; all account/session/audit writes must roll back atomically; authorized success writes all once. Existing failure test not run in subtask.",
+    "status": "SOURCE_CONFIRMED_RUNTIME_NOT_VERIFIED",
+    "origin_review": "security-data",
+    "state": "SOURCE_CONFIRMED_RUNTIME_NOT_VERIFIED",
+    "requirement_ids": [
+      "REQ-DATA-020"
+    ],
+    "repair_acceptance": "Inject revocation/audit failure on disposable PG; all account/session/audit writes must roll back atomically; authorized success writes all once. Existing failure test not run in subtask.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-001",
+    "title": "AI source metadata bypasses the sensitive-data screen",
+    "priority": "P1",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "IMPLEMENTATION_DEFECT",
+    "requirement_ids": [
+      "REQ-AIGV-002",
+      "REQ-AI-006"
+    ],
+    "existing_ids": [],
+    "implementation_status": "PARTIAL",
+    "source_refs": [
+      "src/modules/ai-advisory/application/get-advisory.ts:134",
+      "src/modules/ai-advisory/application/get-advisory.ts:122",
+      "src/actions/ai-advisory.ts:51",
+      "src/modules/ai-advisory/infrastructure/groq-ai-provider.ts:13",
+      "src/modules/ai-advisory/infrastructure/gemini-ai-provider.ts:13"
+    ],
+    "business_impact": "When external processing is validly enabled, an authorized request with safe question/label/content but citation= password=synthetic-audit-marker passes checks and sends that metadata to Groq/Gemini. sourceId/sourceType have the same gap. Current disabled provider is not evidence of a live leak.",
+    "repair_scope": "Screen every field serialized into external prompts, including sourceId/sourceType/citation, with the same bounded secret/PII rules; retain fail-closed policy/consent and no raw-content logs.",
+    "repair_acceptance": "Synthetic provider-spy tests for secret/PII markers in each metadata field must refuse before availability/complete; safe citations still work. Verify both provider request serializers without external calls.",
+    "complexity": "LOW",
+    "dependencies": [
+      "AI processing policy approval required only for live acceptance; local synthetic verification needs no provider"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "LOCAL_USE_CASE_AND_SERIALIZER_SYNTHETIC_ONLY",
+      "tests": "PASS_REPRODUCTION — 13 synthetic cases on Node24.20.0; 3 spy metadata bypasses, 2 existing-screen controls, 2 consent/class denials, 6 Groq/Gemini serializer mocked-fetch captures",
+      "provider": "ZERO_REAL_NETWORK_CALLS; global fetch fully replaced",
+      "uat": "NOT_RUN",
+      "probe_source": ".ci-results/QC-360-20261008/ops-synthetic-probe.mts",
+      "probe_result": ".ci-results/QC-360-20261008/ops-synthetic-probe.json",
+      "probe_sha256": "86228046591f97c6ca4f8f4c774128000a17af2ad8e7731609b3e71741b765aa",
+      "databaseEnv": "DATABASE_URL and QC_TEST_DATABASE_URL unset",
+      "command": "rtk env -u DATABASE_URL -u QC_TEST_DATABASE_URL /Users/yzydalshmry/.nvm/versions/node/v24.20.0/bin/node --import=tsx .ci-results/QC-360-20261008/ops-synthetic-probe.mts",
+      "exit_code": 0,
+      "authority_limit": "Production policy/config loader not invoked. Approved-policy activation remains conditional; injected local fake/adapter config is synthetic test setup, not organizational approval."
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-002",
+    "title": "Logical backup success is not persisted into the application catalog or durable manifest",
+    "priority": "P1",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "IMPLEMENTATION_GAP",
+    "requirement_ids": [
+      "REQ-RCOV-001",
+      "REQ-BKP-003"
+    ],
+    "existing_ids": [
+      "QC-ENV-F-003"
+    ],
+    "implementation_status": "PARTIAL",
+    "source_refs": [
+      "src/modules/backup-recovery/application/run-backup-job.ts:50",
+      "src/modules/backup-recovery/application/run-backup-job.ts:66",
+      "scripts/recovery/run-daily-backup.ts:25",
+      "scripts/recovery/run-daily-backup.ts:33",
+      "src/modules/backup-recovery/ports/repository.ts:37"
+    ],
+    "business_impact": "The script stores and checks dump bytes, returns an in-memory manifest, prints only status/failure/catalog ID, and exits. The catalog interface has no backup recording operation. A successful job does not create the record read by /system/backups or retain full release/migration/checksum context for discovery and restore. This source gap persists independently of provider runtime availability.",
+    "repair_scope": "Persist an immutable manifest and application catalog entry with artifact reference/release identity/checksum; define failed-job and catalog-commit reconciliation so artifact-only completion cannot masquerade as a recoverable catalog record.",
+    "repair_acceptance": "Isolated backup yields one discoverable catalog entry plus durable manifest; process restart preserves it; retrieved bytes match manifest; injected catalog/storage failure does not report complete application backup; explicit isolated restore reproduces DB/files before restore-proven status.",
+    "complexity": "HIGH",
+    "dependencies": [
+      "Approved provider/storage topology",
+      "Authorized isolated target",
+      "retention and recovery owner decisions"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "NOT_RUN",
+      "tests": "NOT_RUN_IN_THIS_SUBTASK",
+      "provider": "NO_CALLS",
+      "uat": "NOT_RUN"
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-003",
+    "title": "R2 adapter cannot enumerate objects for the retention implementation",
+    "priority": "P2",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "IMPLEMENTATION_GAP",
+    "requirement_ids": [
+      "REQ-RCOV-001"
+    ],
+    "existing_ids": [
+      "QC-ENV-F-003"
+    ],
+    "implementation_status": "PARTIAL",
+    "source_refs": [
+      "src/modules/backup-recovery/infrastructure/cloudflare-r2-artifact-store.ts:144",
+      "src/modules/backup-recovery/application/retention.ts:14"
+    ],
+    "business_impact": "expireBackupArtifacts always calls store.list(), while the actual R2 adapter always throws. Even after an approved retention policy is supplied, the shipped R2 path cannot inventory or expire eligible objects. No current deletion failure is claimed because no policy/job was run.",
+    "repair_scope": "Provide controlled paginated R2 inventory or catalog-backed enumeration compatible with retention; preserve protected recovery chains and approved-policy gates.",
+    "repair_acceptance": "Multi-page synthetic inventory covers eligible/protected objects; unapproved policy deletes none; approved expiry preserves last valid recovery chain; provider listing failure is explicit and performs no deletion.",
+    "complexity": "MEDIUM",
+    "dependencies": [
+      "Retention authority PD-24/PD-25",
+      "R2 topology and credential owner"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "NOT_RUN",
+      "tests": "NOT_RUN_IN_THIS_SUBTASK",
+      "provider": "NO_CALLS",
+      "uat": "NOT_RUN"
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-004",
+    "title": "Telemetry configuration has no wired exporter",
+    "priority": "P2",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "IMPLEMENTATION_GAP_WITH_AUTHORITY_DEPENDENCY",
+    "requirement_ids": [
+      "REQ-RCOV-005",
+      "REQ-RCOV-010"
+    ],
+    "existing_ids": [
+      "QC-ENV-F-003"
+    ],
+    "implementation_status": "PARTIAL",
+    "source_refs": [
+      "src/shared/observability/telemetry.ts:82",
+      "src/shared/observability/telemetry.ts:88",
+      "src/config/runtime.ts:42"
+    ],
+    "business_impact": "OTEL variables are parsed but active providers remain no-ops; repository search found no production caller of setTelemetryProviders. Metric/span call sites therefore supply no exported operational evidence or alert delivery. Optional unset configuration is not itself a configuration defect.",
+    "repair_scope": "After backend required/optional decision, wire an approved exporter or explicitly retain documented disabled capability. Implement bounded redaction and non-blocking failure isolation before operational claims.",
+    "repair_acceptance": "Approved backend receives sanitized request/outbox metrics and traces; exporter outage leaves business transaction outcome unchanged; alerts tested through authorized receiver; disabled optional mode remains honest.",
+    "complexity": "MEDIUM",
+    "dependencies": [
+      "Named owner required/optional/backend decision",
+      "Approved alert receiver/SLO thresholds"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "NOT_RUN",
+      "tests": "NOT_RUN_IN_THIS_SUBTASK",
+      "provider": "NO_CALLS",
+      "uat": "NOT_RUN"
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-005",
+    "title": "Canonical release gate reconciliation remains an unconditional deny",
+    "priority": "P1",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "AUTHORITY_DEPENDENCY_NOT_IMPLEMENTATION_BUG",
+    "requirement_ids": [
+      "REQ-READY-003"
+    ],
+    "existing_ids": [
+      "F-013-2"
+    ],
+    "implementation_status": "INTENTIONAL_FAIL_CLOSED_AUTHORITY_BLOCKED",
+    "source_refs": [
+      "src/modules/release-governance/infrastructure/postgres-repository.ts:93",
+      "src/modules/release-governance/application/ingest-provider-evidence.ts:46",
+      "src/modules/release-governance/application/approve-release.ts:95"
+    ],
+    "business_impact": "hasReconciledProductionGateDecision returns false. Signed intake and production approval are intentionally blocked until the approved nineteen-gate register and acceptance/artifact rules exist. Correct fail-closed behavior prevents release, while functionality remains partial.",
+    "repair_scope": "Obtain approved canonical nineteen IDs/names/applicability/source evidence and mapping first; implement candidate-bound reconciliation and artifact verification without weakening deny-by-default.",
+    "repair_acceptance": "Missing/unapproved/stale/other-candidate register denies; approved complete register maps every required gate and recomputed artifact; real signed UAT/provider evidence is separately required.",
+    "complexity": "HIGH",
+    "dependencies": [
+      "Approved nineteen-gate authority",
+      "22 audit-row mapping decision",
+      "Signer/artifact/freshness authority",
+      "Real UAT and provider acceptance"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "NOT_RUN",
+      "tests": "NOT_RUN_IN_THIS_SUBTASK",
+      "provider": "NO_CALLS",
+      "uat": "NOT_RUN"
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-006",
+    "title": "Search does not escape the declared LIKE escape character",
+    "priority": "P2",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "IMPLEMENTATION_DEFECT",
+    "requirement_ids": [
+      "REQ-SRCH-004",
+      "REQ-AUDF-007"
+    ],
+    "existing_ids": [],
+    "implementation_status": "PARTIAL",
+    "source_refs": [
+      "src/shared/search/postgres-search.ts:98",
+      "src/shared/search/postgres-search.ts:49"
+    ],
+    "business_impact": "The pattern escapes percent/underscore but not backslash while every ILIKE declares backslash as ESCAPE. Literal searches containing backslash change the next character/wildcard interpretation; e.g. a backslash before percent can restore wildcard behavior within already-authorized rows. This is search correctness, not a demonstrated authorization bypass.",
+    "repair_scope": "Escape backslash before percent and underscore in a shared literal-LIKE pattern builder; preserve authorization predicates before total/page.",
+    "repair_acceptance": "PostgreSQL fixture titles containing literal backslash, percent, underscore and combined forms return exact expected authorized rows/counts across cursor pages; foreign-scope controls remain zero.",
+    "complexity": "LOW",
+    "dependencies": [
+      "Fresh disposable PostgreSQL18 fixture acceptance"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "POSTGRESQL_NOT_RUN — source-model only",
+      "tests": "2 independent source-model assertions PASS",
+      "provider": "NO_CALLS",
+      "uat": "NOT_RUN",
+      "probe_result": ".ci-results/QC-360-20261008/ops-synthetic-probe.json",
+      "probe_sha256": "86228046591f97c6ca4f8f4c774128000a17af2ad8e7731609b3e71741b765aa"
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "reproduction": {
+      "status": "SOURCE_MODEL_CONFIRMED",
+      "postgresRuntime": "NOT_RUN",
+      "cases": [
+        {
+          "q": "A\\B",
+          "value": "A\\B",
+          "expectedLiteral": true,
+          "pattern": "%A\\B%",
+          "observedLikeModel": false
+        },
+        {
+          "q": "\\%",
+          "value": "\\anything",
+          "expectedLiteral": false,
+          "pattern": "%\\\\%%",
+          "observedLikeModel": true
+        }
+      ]
+    },
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-OPS-007",
+    "title": "Scheduled backup/drill and worker execution are not wired in the deployment source",
+    "priority": "P1",
+    "priority_origin": "AUDITOR_ASSIGNED",
+    "classification": "IMPLEMENTATION_GAP_WITH_AUTHORITY_DEPENDENCY",
+    "requirement_ids": [
+      "REQ-RCOV-004",
+      "REQ-AUDF-006"
+    ],
+    "existing_ids": [
+      "QC-PAGE-F-015",
+      "QC-ENV-F-003"
+    ],
+    "implementation_status": "PARTIAL",
+    "source_refs": [
+      "src/modules/backup-recovery/application/schedule-backup-recovery.ts:12",
+      "scripts/recovery/run-monthly-restore-drill.ts:1",
+      "scripts/workers/outbox.ts:1",
+      "render.yaml:1"
+    ],
+    "business_impact": "CalendarBackupScheduler constructs test-environment commands only; monthly drill CLI exits with an isolated-target requirement; render.yaml defines only a web service. The outbox CLI processes one batch and exits. There is no source-wired durable cadence, loop, worker heartbeat or external paging. This does not establish current provider configuration.",
+    "repair_scope": "After owner approval, wire a durable scheduler/worker execution path with bounded retries, heartbeat, monitored failure and explicit isolated drill target; do not auto-activate billable resources.",
+    "repair_acceptance": "Restart-safe schedule identity, duplicate tick denial, worker crash/reclaim, backlog drain and heartbeat aging verified; isolated monthly drill and approved failure alert exercised with candidate identity.",
+    "complexity": "HIGH",
+    "dependencies": [
+      "Scheduler/provider/cost authority",
+      "Backup catalog/manifest gap",
+      "Explicit isolated target",
+      "Notification event/recipient catalogue"
+    ],
+    "evidence": {
+      "source": "VERIFIED_BY_INSPECTION",
+      "runtime": "NOT_RUN",
+      "tests": "NOT_RUN_IN_THIS_SUBTASK",
+      "provider": "NO_CALLS",
+      "uat": "NOT_RUN"
+    },
+    "candidate_sha": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "origin_review": "ops",
+    "state": "OPEN",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-LIVE-001",
+    "priority": "P1",
+    "title": "Production schema is one migration behind",
+    "finding": "Read-only PostgreSQL ledger:45 applied, source46; live health DEGRADED. Applied45 checksums match45/45.",
+    "source_refs": [
+      ".ci-results/QC-360-20261008/database.json"
+    ],
+    "repair_acceptance": "Apply0046 only through separately authorized production change; verify checksum, health and inspection catalog runtime.",
+    "state": "OPEN",
+    "requirement_ids": [],
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-TEST-001",
+    "priority": "P1",
+    "title": "Current unit contract fails",
+    "finding": "1312/1313 unit assertions pass; mutation-safety-contract expects3 no-JS gap surfaces but current list has2. Whether expectation or register is stale needs reconciliation.",
+    "source_refs": [
+      ".ci-results/QC-360-20261008"
+    ],
+    "repair_acceptance": "Reconcile actual native POST surfaces and gap register against approved contract; run unit suite without weakening acceptance.",
+    "state": "OPEN",
+    "requirement_ids": [],
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-TOOL-001",
+    "priority": "P2",
+    "title": "Repository-wide lint and format checks fail",
+    "finding": "eslint scans ignored scratch evidence, including current audit scripts; also tracked scripts/audit/build-coverage-register.mjs unused binding. Prettier reports53files. This is not103 product defects.",
+    "source_refs": [
+      ".ci-results/QC-360-20261008"
+    ],
+    "repair_acceptance": "Define intended lint scope and fix actual tracked violations; remove audit-induced noise without suppressing product checks.",
+    "state": "OPEN",
+    "requirement_ids": [],
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-SCOPE-001",
+    "priority": "P1",
+    "title": "Full-system acceptance denominator and coverage are incomplete",
+    "finding": "268 canonical table rows are inventoried; reconciliation100rows and additional domain contracts are not fully deduplicated. Source reviews and live read browsing do not cover all acceptance paths.",
+    "source_refs": [
+      ".ci-results/QC-360-20261008"
+    ],
+    "repair_acceptance": "Complete traceability across invariants/rules/state machines/routes/tests and all applicable domain contracts. Approve priorities and acceptance rubric before overall percentages.",
+    "state": "OPEN",
+    "requirement_ids": [],
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-LIVE-002",
+    "priority": "P1",
+    "title": "No current restoration or delivery proof",
+    "finding": "Live backup catalog empty, storage unavailable; outbox heartbeat not recorded and delivery not represented. Empty queue does not prove worker liveness.",
+    "source_refs": [
+      ".ci-results/QC-360-20261008"
+    ],
+    "repair_acceptance": "Provide separately authorized isolated restore/reconcile drill and provider/worker/delivery evidence, approved RPO/RTO, artifact hashes and current operator runbook.",
+    "state": "OPEN",
+    "requirement_ids": [],
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-TEST-002",
+    "priority": "P1",
+    "title": "Fresh isolated PostgreSQL integration run fails",
+    "finding": "PG18.6:580passed/42failed/18pending of640 assertions.23failures contain CONTROLLED_TEMPLATE_SOURCE_REQUIRED;19have other assertion/database/identity failures. Setup errors in other suites also remain. These results do not automatically distinguish stale fixtures from product defects.",
+    "source_refs": [
+      ".ci-results/QC-360-20261008/integration-pg18.json"
+    ],
+    "repair_acceptance": "Reconcile each failed suite with current schema and approved policy, create explicitly synthetic valid fixtures without disabling controls, rerun isolated PostgreSQL suite and preserve failures until independently explained.",
+    "state": "OPEN",
+    "requirement_ids": [
+      "REQ-TST-011",
+      "REQ-TST-013"
+    ],
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-RPT-008",
+    "priority": "P1",
+    "title": "XLSX central directory entry count is invalid",
+    "finding": "xlsx-exporter zip writes EOCD entry counts8 while providing5entries. Synthetic xlsxBytes output declares8; unzip -t validates five members then fails missing file6,exit3. Existing nine export safety tests do not detect this packaging defect.",
+    "source_refs": [
+      "src/modules/reporting/infrastructure/xlsx-exporter.ts",
+      ".ci-results/QC-360-20261008/completion/export-probe.xlsx"
+    ],
+    "requirement_ids": [
+      "REQ-RPT-002"
+    ],
+    "state": "OPEN",
+    "repair_acceptance": "Derive ZIP entry counts from actual entries; independently validate generated archive and open workbook with a standards-aware reader, preserving escaping and dataset parity.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-FILE-009",
+    "priority": "P1",
+    "title": "File service lacks application composition",
+    "finding": "Recursive src search finds FileService declaration only; instantiation occurs in integration tests. Library validation/scanning/parent authorization therefore does not establish deployed evidence upload/download workflows.",
+    "source_refs": [
+      "src/shared/files/file-service.ts"
+    ],
+    "requirement_ids": [
+      "REQ-FILE-002",
+      "REQ-FILE-007",
+      "REQ-SEC-008"
+    ],
+    "state": "OPEN",
+    "repair_acceptance": "Wire an authorized application upload/download path only after approved scanner/storage policy; verify parent IDOR denial, integrity, object/database compensation and audit with isolated fixtures.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-UX-012",
+    "priority": "P2",
+    "title": "Mobile breadcrumb overlaps user menu",
+    "finding": "Live authenticated dashboard at320CSSpx has breadcrumb rectangle x68,width73.1875,y12,height44 and user menu x71.773,width232.2266,y12,height39.5. These intersect despite document scrollWidth320. Task register and create form also reflow without horizontal document overflow; that does not establish header usability.",
+    "source_refs": [
+      "src/ui/shell/Topbar.astro",
+      "src/ui/shell/UserMenu.astro",
+      "https://qclevel.top/dashboard"
+    ],
+    "requirement_ids": [
+      "REQ-UX-011"
+    ],
+    "state": "OPEN",
+    "repair_acceptance": "Reflow or truncate header context without hiding account/navigation controls; verify nonoverlap, touch target usability and keyboard access at320,375,768 and desktop widths.",
+    "source_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+    "current_candidate_status": "HISTORICAL_REVALIDATION_REQUIRED",
+    "current_production_claim": false
+  },
+  {
+    "id": "QC360-20261008-CI-001",
+    "title": "Verification CI failed on current candidate",
+    "priority": "P1",
+    "classification": "RELEASE_GAP",
+    "state": "CONFIRMED_CURRENT",
+    "source_refs": [
+      "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418071"
+    ],
+    "repair_acceptance": "Investigate exact failed job using fresh logs; rerun all mandatory source-bound checks with no skips. No CI PASS until completed successful run at candidate SHA.",
+    "test": "GITHUB_ACTIONS_FAILURE",
+    "runtime": "NOT_VERIFIED"
+  },
+  {
+    "id": "QC360-20261008-PAGES-002",
+    "title": "GitHub Pages Jekyll build failed on Astro repository",
+    "priority": "P2",
+    "classification": "RELEASE_CONFIGURATION_GAP",
+    "state": "CONFIRMED_CURRENT",
+    "source_refs": [
+      "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418110"
+    ],
+    "repair_acceptance": "Disable unintended Jekyll site build or configure Pages from a proper Astro static artifact if Pages is intended. Keep this separate from Render runtime.",
+    "test": "GITHUB_PAGES_FAILURE",
+    "runtime": "NOT_EVIDENCE_OF_RENDER_FAILURE"
+  },
+  {
+    "id": "QC360-20261008-MIG-003",
+    "title": "Source migration 0047 exists; applied database parity is not reverified",
+    "priority": "P1",
+    "classification": "VERIFICATION_GAP",
+    "state": "CURRENT_UNVERIFIED",
+    "source_refs": [
+      "db/migrations/0047_task_references_occurrences.sql",
+      "Documents/QC360-TASK-POLICY-2026-10-08.md"
+    ],
+    "repair_acceptance": "Use authorized read-only ledger/checksum and schema comparison on the actual target with candidate 0047. Do not run migration as part of audit.",
+    "test": "NOT_VERIFIED",
+    "runtime": "NOT_VERIFIED"
+  },
+  {
+    "id": "QC360-20261008-EVIDENCE-004",
+    "title": "Previously reported missing evidence directory exists in current repository root",
+    "priority": "P2",
+    "classification": "STALE_PRIOR_FINDING",
+    "state": "CORRECTED_INVENTORY_ONLY",
+    "source_refs": [
+      "QC_Controlled_Forms_and_Operational_Evidence/",
+      "audit/2026-10-08/QC-360-FULL-SYSTEM-AUDIT-168bc2c/findings.json"
+    ],
+    "repair_acceptance": "Reconcile source path mismatch in historical findings; then inspect and register each artifact. Directory presence alone does not prove approval or use.",
+    "test": "DIRECTORY_LIST_CONFIRMED",
+    "runtime": "NOT_VERIFIED"
+  }
+]

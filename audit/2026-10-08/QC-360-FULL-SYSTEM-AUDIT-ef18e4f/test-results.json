@@ -1,0 +1,61 @@
+{
+  "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+  "executed_new_application_test_suites": 0,
+  "observed_current_github_runs": [
+    {
+      "name": "Verification CI",
+      "run": 37834418071,
+      "status": "completed",
+      "conclusion": "failure",
+      "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+      "link": "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418071",
+      "note": "No current test PASS inferred; job logs unavailable via available connection"
+    },
+    {
+      "name": "GitHub Pages",
+      "run": 37834418110,
+      "status": "completed",
+      "conclusion": "failure",
+      "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+      "link": "https://github.com/YEEEAE/QC-Operations-Laboratory-Management-System/actions/runs/37834418110",
+      "note": "Jekyll failed trying to parse Astro frontmatter; not equivalent to Render app build"
+    }
+  ],
+  "historical_candidate": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+  "historical_automated_tests": [
+    {
+      "id": "unit",
+      "passed": 1312,
+      "failed": 1,
+      "total": 1313,
+      "success": false,
+      "origin": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+      "acceptance": "HISTORICAL_NOT_CURRENT"
+    },
+    {
+      "id": "integration",
+      "passed": 355,
+      "failed": 0,
+      "total": 645,
+      "success": false,
+      "origin": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+      "acceptance": "HISTORICAL_NOT_CURRENT"
+    },
+    {
+      "id": "integration-pg18",
+      "passed": 580,
+      "failed": 42,
+      "total": 640,
+      "success": false,
+      "origin": "168bc2cffd2a2c75e7a0b867a93dea0c2eec8e1b",
+      "acceptance": "HISTORICAL_NOT_CURRENT"
+    }
+  ],
+  "skipped_as_pass": false,
+  "limitations": [
+    "Previous tests were not re-run on current head by this audit",
+    "Actions job status is not a count of passed assertions",
+    "CI current failure blocks all release acceptance",
+    "Provider and UAT not verified"
+  ]
+}

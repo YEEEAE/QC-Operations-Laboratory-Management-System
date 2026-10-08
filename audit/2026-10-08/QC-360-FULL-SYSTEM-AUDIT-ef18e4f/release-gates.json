@@ -1,0 +1,97 @@
+{
+  "candidate": "ef18e4ffdfd70024829482810ac1ddee1c96bc22",
+  "decision": "NO-GO",
+  "gates": [
+    {
+      "id": "CURRENT-GATE-01",
+      "name": "Candidate CI complete",
+      "status": "FAIL",
+      "evidence": "Verification CI current commit conclusion failure; exact underlying job step logs unavailable"
+    },
+    {
+      "id": "CURRENT-GATE-02",
+      "name": "Data migration parity",
+      "status": "NOT VERIFIED",
+      "evidence": "0047 source exists; previous live observation reported 45/46 at older candidate"
+    },
+    {
+      "id": "CURRENT-GATE-03",
+      "name": "Scientific acceptance / authorized WI",
+      "status": "BLOCKED",
+      "evidence": "New technical policy docs disclaim QMS approval and effectivity"
+    },
+    {
+      "id": "CURRENT-GATE-04",
+      "name": "RBAC + E-Signature positive/negative E2E",
+      "status": "NOT VERIFIED",
+      "evidence": "No exact-commit comprehensive persona matrix run proven"
+    },
+    {
+      "id": "CURRENT-GATE-05",
+      "name": "Restore/backup/worker chain",
+      "status": "NOT VERIFIED",
+      "evidence": "Old backup catalog empty, storage unavailable; local isolated drill does not prove prod recovery"
+    },
+    {
+      "id": "CURRENT-GATE-06",
+      "name": "Human UAT",
+      "status": "NOT VERIFIED",
+      "evidence": "No current approved signoff / role-based UAT submitted"
+    },
+    {
+      "id": "CURRENT-GATE-07",
+      "name": "Requirements denominator & evidence mapping",
+      "status": "BLOCKED",
+      "evidence": "Previous 268-row register explicitly not full-system denominator"
+    },
+    {
+      "id": "CURRENT-GATE-08",
+      "name": "GitHub Pages publication",
+      "status": "FAIL (independent)",
+      "evidence": "Jekyll YAML parsing of Astro frontmatter; not proof of Render runtime failure"
+    }
+  ],
+  "prior_gate_record": {
+    "authority": "Auditor screening only; not the canonical19gate authority mapping",
+    "decision": "NO_GO",
+    "gates": [
+      {
+        "id": "QC360-GATE-01",
+        "name": "Production source/schema parity",
+        "status": "FAIL",
+        "evidence": "45/46migrations"
+      },
+      {
+        "id": "QC360-GATE-02",
+        "name": "Required automated checks",
+        "status": "FAIL",
+        "evidence": "unit1failure; integration requires per-suite interpretation; lint/formatfail"
+      },
+      {
+        "id": "QC360-GATE-03",
+        "name": "Approved controlled policy and signatures",
+        "status": "BLOCKED",
+        "evidence": "approval/effectivity/retest/evaluator dependencies"
+      },
+      {
+        "id": "QC360-GATE-04",
+        "name": "Backup restore storage and worker acceptance",
+        "status": "NOT VERIFIED",
+        "evidence": "live empty/unavailable states"
+      },
+      {
+        "id": "QC360-GATE-05",
+        "name": "Human operational UAT",
+        "status": "NOT VERIFIED",
+        "evidence": "no executed human acceptance supplied"
+      },
+      {
+        "id": "QC360-GATE-06",
+        "name": "Complete requirement and acceptance coverage",
+        "status": "BLOCKED",
+        "evidence": "incomplete denominator/review scope"
+      }
+    ]
+  },
+  "prior_gate_credit": false
+}
