@@ -1,0 +1,339 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "QC-LAUNCH-002",
+  "generatedAt": "2026-10-09T02:22:19+03:00",
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "branch": "main",
+    "gitSha": "f72fde0c41c8f373066210f337c6c1c3921a52f1",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceIsAncestor": true,
+    "commitsAheadOfReference": 1,
+    "sourceFingerprint": "1e374370a139f2dc1e3f15f43b8be1a6e68125c926a70e15f30ed3f94f8fa974",
+    "sourceFingerprintMethod": "SHA-256 over git diff --binary HEAD followed by sorted, NUL-delimited path and exact bytes for non-ignored untracked files; excludes .ci-results/ and this task output packet. Recompute with source-fingerprint.mjs after source changes.",
+    "sourceFingerprintScript": "audit/launch-readiness/QC-LAUNCH-002/source-fingerprint.mjs",
+    "frozenAt": "2026-10-09T02:38:09+03:00",
+    "workingTreeAtFreeze": "Candidate includes the global e-signature policy reconciliation, updated QC-LAUNCH-002 packet, and Mind ledger entry. The current untracked صلاحيات.md matches the supplied global policy attachment by SHA-256; no edits to it were made in this task. QC-LAUNCH-002 packet and .ci-results are excluded from source fingerprint. No product code or controlled source documents changed.",
+    "nodeVersion": "v24.20.0",
+    "pnpmVersion": "11.25.0",
+    "environment": "Local macOS checkout; isolated source/document review only; no production database, runtime provider or live AI access",
+    "migrationHead": "0047_task_references_occurrences.sql"
+  },
+  "sourceEvidence": [
+    {
+      "sourcePath": "/Users/yzydalshmry/.codex/attachments/39551697-4e41-4e69-bb7c-8c908ab51dd1/نص ملصق.txt",
+      "revision": "user-supplied QC-LAUNCH-002 prompt",
+      "sha256": "d3986d09dfdbeb1a743dfcfb020e93acf945f46c4f5e6e652d6972e5d7198ee4",
+      "line": "1-57"
+    },
+    {
+      "sourcePath": "Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md",
+      "revision": "owner decision; effective 2026-10-04, recorded 2026-10-05",
+      "sha256": "e6acc55f2ba0c7178c4c0419c6a770bfa30d13e4d56ccc34cced30ef3e57ba87",
+      "lines": "9-18,22-36"
+    },
+    {
+      "sourcePath": "Documents/QUALITY-POLICY-DECISION-PACK-2026-10-02.md",
+      "revision": "PROPOSED; prepared 2026-10-02",
+      "sha256": "ca790df81c1b73cb65fce989bcd47c99d4875d1197aee5d03a52eb3f02dd0aa7",
+      "lines": "3-7,19-36"
+    },
+    {
+      "sourcePath": "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md",
+      "revision": "Version 1; technical contract; science approval/effectivity not established",
+      "sha256": "3f17142bf53f35c0973e73784d319131e5016430b84b3228313cc9bcb9d2d40b",
+      "lines": "3-15"
+    },
+    {
+      "sourcePath": "Documents/QUARANTINE-CONTROLLED-REPORT-CATALOG.md",
+      "revision": "Rev 14; implementation/source inventory",
+      "sha256": "86230b465c7e563f11b387ba724c0cd18c65404aa3ac754ee603d90d91f63087",
+      "lines": "1-25"
+    },
+    {
+      "sourcePath": "Documents/RISK-REGISTER.md",
+      "revision": "v1.0; approved risk-governance foundation",
+      "sha256": "d5bfa36194fef507dda6eecb161277100d70b38d9f5c02bdf63e3aede9b99935",
+      "lines": "7-18,384-405,437-470,1434-1452"
+    },
+    {
+      "sourcePath": "Documents/DECISION-ASSUMPTION-REGISTER-026.md",
+      "revision": "integration register; open decisions; candidate metadata historical",
+      "sha256": "07384f121156af8288898ea1fb0c1163098f64869abf50467c4977acfffccc2f",
+      "lines": "22-32,166-173"
+    },
+    {
+      "sourcePath": "Documents/AI-PROVIDERS.md",
+      "revision": "current repository policy source; external processing gate",
+      "sha256": "a02664136e1346722509f94fb609b116e86e0d4cbd812be325774bbf55ba284a",
+      "lines": "29,57,174"
+    },
+    {
+      "sourcePath": ".env.example",
+      "revision": "repository example default only; not runtime evidence",
+      "sha256": "485e0baadc67b262e3a60b3f69d72730ac2f6230797018db0d6167b3dffa3091",
+      "line": "21"
+    },
+    {
+      "sourcePath": "Documents/STATE-MACHINES.md",
+      "revision": "current source",
+      "sha256": "1dffcc72fc11a567f04c56da748c6a625861cec5f445473074ca7f427a81c296",
+      "lines": "183-185"
+    },
+    {
+      "sourcePath": "Documents/BUSINESS-RULES.md",
+      "revision": "current source; superseded stage-one wording referenced by owner decision",
+      "sha256": "5285253cbf3d77003674e4a303039ef26f5e8b67f32283b3571d2bcb90600c67",
+      "lines": "1843-1852 (as cited by owner decision)"
+    },
+    {
+      "sourcePath": "صلاحيات.md",
+      "revision": "current untracked user file matches the global e-signature policy attachment; the earlier conversational role direction is separately transcribed",
+      "sha256": "f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08",
+      "lines": "1-235"
+    },
+    {
+      "sourcePath": "audit/launch-readiness/QC-LAUNCH-002/owner-input-2026-10-09.md",
+      "revision": "transcription of role direction, earlier yazeed all-control request, and later policy that supersedes silent signature/audit bypass; scientific-source exception unresolved; not controlled approval/e-signature",
+      "sha256": "570c1f67f3ff71622a590fc6f9a12305add53a08651be711a453f9f53a58f91a",
+      "lines": "1-24"
+    },
+    {
+      "sourcePath": "Documents/OWNER-DECISION-RBAC-2026-09-23.md",
+      "revision": "existing owner RBAC decision; current source; conflicts with newly supplied unrestricted override request",
+      "sha256": "a805cf656f82219d4a62bdb7ef455abc97e406683be0b548bef41874a9e347d4",
+      "lines": "13-19,50-62"
+    },
+    {
+      "sourcePath": "Documents/ROLE-MATRIX.md",
+      "revision": "existing role matrix; current source; separates page visibility from action grants and preserves SoD",
+      "sha256": "4750d9e263a1d900c63a907ea1e2e4467baa07a17cd92809aa089a9af2bef227",
+      "lines": "13-18,199-204"
+    },
+    {
+      "sourcePath": "Documents/PERMISSION-MATRIX.md",
+      "revision": "existing permission matrix; current source; Admin route visibility/action permission boundary",
+      "sha256": "0b6c473f97903af86fb242fe99764a1f87fb4b8ed4ee862151d7491d8a52ca43",
+      "lines": "13-18,356-358"
+    },
+    {
+      "sourcePath": "user-supplied attachment: GLOBAL ELECTRONIC SIGNATURE & APPROVAL POLICY",
+      "revision": "owner-described functional requirement; revision/effective date not stated; not a controlled QMS record",
+      "sha256": "f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08",
+      "lines": "1-235"
+    },
+    {
+      "sourcePath": "audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md",
+      "revision": "local source-to-requirement crosswalk; not controlled policy",
+      "sha256": "7de8f9ef526cc7866fb36ec958c55a60508ab0b83d9c1662c02d9e3bf16e4404",
+      "lines": "1-48"
+    }
+  ],
+  "verifiedRequirementIds": [],
+  "verificationChecks": [
+    {
+      "criterionId": "QC-LAUNCH-002-REQUIREMENTS-CHECK",
+      "expectedOutcome": "Requirements reconciliation completes against the authoritative policy-closure matrix on the exact candidate.",
+      "testKind": "automated_requirements_reconciliation",
+      "command": "PATH=/Users/yzydalshmry/.nvm/versions/node/v24.20.0/bin:$PATH rtk pnpm requirements:check",
+      "realExitCode": 1,
+      "evidenceURI": "audit/launch-readiness/QC-LAUNCH-002/verification/requirements-check.log",
+      "evidenceSha256": "dd4399b804060ad7f751b88c9f3cc11fecf69a649685e7a4ce6ccd4385131466",
+      "actorRole": "local verification agent; not an approving authority",
+      "sourceRevision": "f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 1e374370a139f2dc1e3f15f43b8be1a6e68125c926a70e15f30ed3f94f8fa974",
+      "timestamp": "2026-10-09T02:38:09+03:00 (observation time; command invocation time not separately captured)",
+      "status": "BLOCKED",
+      "actual": "Latest rerun: ENOENT for audit/100-percent/POLICY-CLOSURE-MATRIX.md at scripts/requirements/check-reconciliation.mjs:16,22. No replacement source or checker edit was made."
+    },
+    {
+      "criterionId": "QC-LAUNCH-002-SOURCE-RECONCILIATION",
+      "expectedOutcome": "Current controlled sources, supersession boundaries, missing owners, dates, revisions and required signature records are reconciled without inventing decisions.",
+      "testKind": "read_only_source_review",
+      "command": "Manual review of sourceEvidence paths and line references in this packet; no approval/signature command or authorized human review was available.",
+      "realExitCode": null,
+      "evidenceURI": "audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md",
+      "evidenceSha256": "7de8f9ef526cc7866fb36ec958c55a60508ab0b83d9c1662c02d9e3bf16e4404",
+      "actorRole": "AI assistant / read-only source reviewer; not an authorized QC, QMS or release signer",
+      "sourceRevision": "f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 1e374370a139f2dc1e3f15f43b8be1a6e68125c926a70e15f30ed3f94f8fa974",
+      "timestamp": "2026-10-09T02:22:19+03:00",
+      "status": "PARTIAL",
+      "actual": "Later global e-signature policy reconciled as user-supplied functional direction. It supersedes the earlier silent signature/audit bypass request by requiring explicit justified recorded overrides. Scientific-source exception and complete action applicability/policy revision map remain unresolved; no controlled disposition or candidate-bound system e-signature evidence exists. Implementation crosswalk is PARTIAL."
+    }
+  ],
+  "criteria": [
+    {
+      "criterionId": "QC360-SC-01-05",
+      "expectedOutcome": "QMS-approved acceptance sources and effective WI/SOP/templates are identified by exact revision/hash and signer authority.",
+      "status": "BLOCKED",
+      "verifiedPoints": 0.0,
+      "testKind": "authority_and_source_review",
+      "evidenceURI": "Documents/QUARANTINE-CONTROLLED-REPORT-CATALOG.md#L1-L25; Documents/DECISION-ASSUMPTION-REGISTER-026.md#L166-L167",
+      "evidenceDigest": "86230b465c7e563f11b387ba724c0cd18c65404aa3ac754ee603d90d91f63087; 07384f121156af8288898ea1fb0c1163098f64869abf50467c4977acfffccc2f",
+      "actorRole": "read-only AI reviewer; authorized human review NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:56:44+03:00",
+      "authenticApprovalEvidence": null
+    },
+    {
+      "criterionId": "QC360-SC-02-05",
+      "expectedOutcome": "Scientific methods, limits, units, evaluation and acceptance are approved against an effective source for each test/product.",
+      "status": "BLOCKED",
+      "verifiedPoints": 0.0,
+      "testKind": "scientific_authority_review",
+      "evidenceURI": "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md#L3-L15; Documents/DECISION-ASSUMPTION-REGISTER-026.md#L166-L167",
+      "evidenceDigest": "3f17142bf53f35c0973e73784d319131e5016430b84b3228313cc9bcb9d2d40b; 07384f121156af8288898ea1fb0c1163098f64869abf50467c4977acfffccc2f",
+      "actorRole": "read-only AI reviewer; QC method owner/Document Control approval NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:55:14+03:00",
+      "authenticApprovalEvidence": null
+    },
+    {
+      "criterionId": "QC360-SC-04-05",
+      "expectedOutcome": "The complete action × subject × state × signer × signature-meaning map is approved and candidate-bound e-signature evidence exists.",
+      "status": "BLOCKED",
+      "verifiedPoints": 0.0,
+      "testKind": "signature_scope_authority_review",
+      "evidenceURI": "Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md; audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md",
+      "evidenceDigest": "e6acc55f2ba0c7178c4c0419c6a770bfa30d13e4d56ccc34cced30ef3e57ba87; ca790df81c1b73cb65fce989bcd47c99d4875d1197aee5d03a52eb3f02dd0aa7",
+      "actorRole": "read-only AI reviewer; authentic authorized signature evidence NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T02:22:19+03:00",
+      "authenticApprovalEvidence": null,
+      "actual": "Later user-supplied global functional policy supersedes the earlier request for silent yazeed signature/audit bypass and requires explicit, justified, recorded overrides. It is not a controlled effective revision; no complete action map, scientific-source exception, policy reference/version binding, or candidate-bound e-signature evidence is available. Status remains BLOCKED."
+    },
+    {
+      "criterionId": "QC360-SC-05-05",
+      "expectedOutcome": "QMS document authority approves the exact version, signature/SoD rules and effective date for the controlled document.",
+      "status": "BLOCKED",
+      "verifiedPoints": 0.0,
+      "testKind": "document_authority_effectivity_review",
+      "evidenceURI": "Documents/DECISION-ASSUMPTION-REGISTER-026.md#L171; Documents/RISK-REGISTER.md#L384-L405",
+      "evidenceDigest": "07384f121156af8288898ea1fb0c1163098f64869abf50467c4977acfffccc2f; d5bfa36194fef507dda6eecb161277100d70b38d9f5c02bdf63e3aede9b99935",
+      "actorRole": "read-only AI reviewer; Document Control/QMS authorized signer NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:55:14+03:00",
+      "authenticApprovalEvidence": null
+    },
+    {
+      "criterionId": "QC360-SC-06-05",
+      "expectedOutcome": "Migration impact, execution authority, isolated rehearsal, rollback and approval evidence are accepted for the exact candidate.",
+      "status": "NOT_TESTED",
+      "verifiedPoints": 0.0,
+      "testKind": "migration_authority_and_execution_review",
+      "command": null,
+      "realExitCode": null,
+      "evidenceURI": "Documents/RISK-REGISTER.md#L462; QC-LAUNCH-002 task request",
+      "evidenceDigest": "d5bfa36194fef507dda6eecb161277100d70b38d9f5c02bdf63e3aede9b99935; d3986d09dfdbeb1a743dfcfb020e93acf945f46c4f5e6e652d6972e5d7198ee4",
+      "actorRole": "read-only AI reviewer; Database/Platform and Release authority NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:55:14+03:00",
+      "authenticApprovalEvidence": null
+    },
+    {
+      "criterionId": "QC360-SC-07-05",
+      "expectedOutcome": "Independent security review and authorized residual-risk decisions are recorded against the exact candidate.",
+      "status": "NOT_TESTED",
+      "verifiedPoints": 0.0,
+      "testKind": "security_review_and_risk_acceptance",
+      "command": null,
+      "realExitCode": null,
+      "evidenceURI": "Documents/RISK-REGISTER.md#L13,L384-L405,L1434-L1452; QC-LAUNCH-002 task request",
+      "evidenceDigest": "d5bfa36194fef507dda6eecb161277100d70b38d9f5c02bdf63e3aede9b99935; d3986d09dfdbeb1a743dfcfb020e93acf945f46c4f5e6e652d6972e5d7198ee4",
+      "actorRole": "read-only AI reviewer; independent security/risk authority NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:55:14+03:00",
+      "authenticApprovalEvidence": null
+    },
+    {
+      "criterionId": "QC360-SC-14-05",
+      "expectedOutcome": "Approved SLO/SLI targets and authentic operational alert evidence are reviewed and accepted by the owner.",
+      "status": "NOT_TESTED",
+      "verifiedPoints": 0.0,
+      "testKind": "operations_owner_review",
+      "command": null,
+      "realExitCode": null,
+      "evidenceURI": "QC-LAUNCH-002 task request; no approved SLO/SLI source located in reviewed source set",
+      "evidenceDigest": "d3986d09dfdbeb1a743dfcfb020e93acf945f46c4f5e6e652d6972e5d7198ee4",
+      "actorRole": "read-only AI reviewer; operations/release approver NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:55:14+03:00",
+      "authenticApprovalEvidence": null
+    },
+    {
+      "criterionId": "QC360-SC-15-05",
+      "expectedOutcome": "External data processing policy is approved with scope/provider/retention and valid authority; runtime remains within it.",
+      "status": "NOT_TESTED",
+      "testKind": "external_processing_policy_and_runtime_review",
+      "command": null,
+      "realExitCode": null,
+      "evidenceURI": "Documents/AI-PROVIDERS.md#L29,L57,L174; .env.example#L21; runtime environment NOT INSPECTED",
+      "evidenceDigest": "a02664136e1346722509f94fb609b116e86e0d4cbd812be325774bbf55ba284a; 485e0baadc67b262e3a60b3f69d72730ac2f6230797018db0d6167b3dffa3091",
+      "actorRole": "read-only AI reviewer; AI/Integration and security/QMS approvers NOT PROVIDED",
+      "sourceRevision": "candidate f72fde0c41c8f373066210f337c6c1c3921a52f1 / fingerprint 84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994",
+      "timestamp": "2026-10-09T01:55:14+03:00",
+      "authenticApprovalEvidence": null,
+      "verifiedPoints": 0.0
+    }
+  ],
+  "scoring": {
+    "targetPoints": 12.4,
+    "verifiedPoints": 0.0,
+    "independentRubricReviewer": "NOT PROVIDED",
+    "reviewerAcceptedPoints": null,
+    "reason": "No criterion has fresh authority/runtime evidence accepted by an independent rubric reviewer; unresolved criterion weights remain zero."
+  },
+  "decisions": [
+    {
+      "decision": "2026-10-05 owner approval-signature rule supersedes older 2026-10-02 stage-one no-signature proposal from its stated 2026-10-04 effective date; historical records are not retroactively changed.",
+      "status": "SOURCE_RECONCILED; controlled/e-sign record and full action map still missing"
+    },
+    {
+      "decision": "No N/A disposition is assigned; applicability requires an authorized domain decision with rationale.",
+      "status": "BLOCKED_BY_AUTHORITY"
+    },
+    {
+      "decision": "Scientific acceptance and Receiving/item release remain separate; PASS does not release an item.",
+      "status": "PRESERVED"
+    },
+    {
+      "decision": "No source decisions, controlled-document edits, production actions or remote operations were performed.",
+      "status": "APPLIED"
+    },
+    {
+      "decision": "Owner supplied role/page/action direction; later supplied a global e-signature policy requiring explicit, justified and recorded owner overrides. This supersedes the earlier request for silent signature/audit bypass. Scientific-source exception remains undefined; report approval status mark remains presentation-only.",
+      "status": "LATEST FUNCTIONAL DIRECTION RECORDED / NOT EFFECTIVE AS CONTROLLED QMS POLICY; no implementation or scoring change."
+    },
+    {
+      "decision": "A visible report approval mark is a presentation of persisted approval evidence only; it does not create or replace an account-bound electronic signature.",
+      "status": "PRESENTATION PREFERENCE RECORDED; mark must project persisted signature evidence."
+    }
+  ],
+  "signoff": {
+    "QCManager": "NOT PROVIDED",
+    "QMSDocumentControl": "NOT PROVIDED",
+    "SecurityReleaseAuthority": "NOT PROVIDED",
+    "independentRubricReviewer": "NOT PROVIDED",
+    "controlledSignatureEvidence": "NOT PROVIDED",
+    "ownerRoleDirection": "USER-SUPPLIED functional direction; latest policy requires explicit justified recorded overrides; no controlled QMS effective revision or system e-signature"
+  },
+  "ownerInputs": {
+    "status": "USER-SUPPLIED / NOT EFFECTIVE AS CONTROLLED QMS POLICY",
+    "transcript": "audit/launch-readiness/QC-LAUNCH-002/owner-input-2026-10-09.md",
+    "transcriptSha256": "570c1f67f3ff71622a590fc6f9a12305add53a08651be711a453f9f53a58f91a",
+    "userFile": "صلاحيات.md",
+    "userFileSha256": "f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08",
+    "roleMapping": {
+      "yazeed": "owner + Admin pages/features; all actions; explicitly requested bypass of every control",
+      "QCM": "all except Admin pages; report creation and final approval",
+      "Supervisor": "all except Admin/owner pages; preliminary approval",
+      "QC": "Employee; report creation and ordinary work; no approvals; no Admin pages",
+      "QC 2": "same as QC",
+      "QC 3": "same as QC",
+      "QC 4": "same as QC"
+    },
+    "reportMarker": "Display preference only; must reflect persisted approval evidence; no handwritten signature was requested.",
+    "authorizationBoundary": "No code, data, permissions, signature record, controlled source, production resource, or external system was changed.",
+    "yazeedOverride": "Later policy supersedes silent signature/audit bypass; scientific-source exception and per-action override boundaries unresolved.",
+    "globalPolicyCrosswalk": "audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md"
+  }
+}

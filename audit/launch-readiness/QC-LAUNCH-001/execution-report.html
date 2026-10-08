@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-001 — Baseline execution report</title>
+  <style>
+    :root{color-scheme:dark;--bg:#101923;--panel:#182635;--line:#3b5063;--text:#edf3f8;--muted:#b7c6d3;--blue:#8bd0f2;--amber:#ffd28b;--red:#ffaaaa}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1150px;margin:auto;padding:28px 18px 55px}h1,h2{line-height:1.3}h1{font-size:clamp(26px,4vw,38px)}h2{font-size:21px;margin-top:30px}p{margin:8px 0 14px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}.warn{color:var(--amber)}.fail{color:var(--red)}.muted{color:var(--muted)}code{direction:ltr;unicode-bidi:isolate;overflow-wrap:anywhere}a{color:var(--blue)}table{width:100%;border-collapse:collapse}th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}th{color:var(--blue)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.ltr{direction:ltr;text-align:left}
+  </style>
+</head>
+<body><main>
+  <p class="muted">QC-LAUNCH-001 · Phase 0 baseline · 2026-10-09 · Local evidence only</p>
+  <h1>تقرير تجميد المرشح والجرد وسجل الأدلة</h1>
+  <div class="panel"><strong class="warn">قرار المرشح: NO-GO / baseline only.</strong>
+    <p>لم يُعدّل GitHub أو الإنتاج، ولم تُنفذ migrations أو تغييرات في الصلاحيات. لم تُمنح نقاط. أُنشئت هذه الحزمة محليًا بعد تجميد الشيفرة، لذلك بصمة المرشح أدناه تخص الشيفرة قبل ملفات هذا التقرير.</p>
+  </div>
+
+  <h2>هوية المرشح وحدودها</h2>
+  <div class="tablewrap"><table><tbody>
+    <tr><th>الفرع / الحالة عند البداية</th><td class="ltr">main · clean · main...origin/main</td></tr>
+    <tr><th>HEAD الحالي</th><td><code>f72fde0c41c8f373066210f337c6c1c3921a52f1</code></td></tr>
+    <tr><th>SHA المرجعي</th><td><code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> — سلف مباشر للمرشح؛ الفرق commit واحد وفق <code>git rev-list --count reference..HEAD</code>.</td></tr>
+    <tr><th>بصمة الشيفرة/الوثائق المرافقة للأدلة</th><td><code>6fb9dbb731131038b41f87822e904e1629e3cd4da191589ab12aee826c1e24d5</code> — تشمل تحديث Mind المطلوب، وتستبعد مجلد حزمة الأدلة و<code>.ci-results/</code> لتجنب مرجع ذاتي دائري. بصمة الشجرة النظيفة قبل أي مخرج كانت <code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>.</td></tr>
+    <tr><th>بيئة الأوامر</th><td>macOS local · Node 24.20.0 للأدلة المؤهلة · pnpm 11.25.0؛ لا اتصال قاعدة بيانات أو مزوّد.</td></tr>
+    <tr><th>Migration source head</th><td><code>0047_task_references_occurrences.sql</code></td></tr>
+  </tbody></table></div>
+
+  <h2>إعادة الجرد</h2>
+  <div class="tablewrap"><table><thead><tr><th>المجموعة</th><th>العدد المرصود</th><th>طريقة وحدود التحقق</th></tr></thead><tbody>
+    <tr><td>المسارات القانونية</td><td>86</td><td>تحميل <code>routes</code> من <code>src/shared/routing/routes.ts</code>؛ اجتاز فحص تغطية الملفات واتساق السجل في architecture check.</td></tr>
+    <tr><td>صفحات Astro الفعلية</td><td>88</td><td>إعادة تعداد ملفات <code>src/pages/**/*.astro</code>؛ جرد ملفات فقط، لا قبول صفحات/صلاحيات.</td></tr>
+    <tr><td>ملفات migrations المصدرية</td><td>47</td><td>ملفات SQL المطابقة لنمط migration؛ الرأس 0047. لا يثبت هذا أي schema مطبق.</td></tr>
+    <tr><td>حزمة QC System WI/SOP</td><td>118 ملفًا: 45 PDF، 69 DOCX، 2 ZIP، 2 TXT</td><td>جرد ملفات تحت <code>Documents/QC_System_WI_SOP_Pack</code> (References/SOPs/WIs). العدّ لا يثبت الاعتماد أو النفاذ.</td></tr>
+    <tr><td>كتالوج مصادر نماذج التفتيش</td><td>7 ملفات</td><td><code>src/modules/quarantine/catalog</code>؛ يتضمن master Rev 14 وsource-evidence وdigitized forms. التسجيل/البصمة المصدرية لا تعني موافقة تشغيلية أو علمية.</td></tr>
+  </tbody></table></div>
+  <p>المراجع الدقيقة وبصمات SHA-256 للمسارات والصفحات والهجرات والحزمة المضبوطة موجودة في <a href="evidence.json">evidence.json</a>.</p>
+
+  <h2>قبل / بعد ومراجع المصدر الدقيقة</h2>
+  <div class="tablewrap"><table><thead><tr><th>الملاحظة</th><th>المصدر</th><th>قبل / بعد التجميد</th><th>الحالة</th></tr></thead><tbody>
+    <tr><td>هوية المصدر</td><td><code>git rev-parse HEAD</code>؛ العلاقة في Git ancestry</td><td>قبل: مرجع <code>60e78cc6…</code>. بعد: <code>f72fde0c…</code>، commit واحد بعده.</td><td>المرجع السابق لا يثبت المرشح الحالي؛ الأدلة القديمة STALE حتى إعادة إثباتها.</td></tr>
+    <tr><td>سجل المسارات القانونية</td><td><code>src/shared/routing/routes.ts:11</code> و<code>:539</code></td><td>قبل: قائمة المرجع لا تستخدم كدليل حالي. بعد: 86 تعريفًا مستوردًا من المصدر الحالي؛ تحقق architecture من السجل والملفات.</td><td>جرد مصدر/آلي فقط، لا قبول runtime أو صلاحيات.</td></tr>
+    <tr><td>سياسة الإغلاق</td><td><code>Documents/REQUIREMENTS-TRACEABILITY.md:20-25</code>؛ قراءة الأداة في <code>scripts/requirements/check-reconciliation.mjs:22</code></td><td>قبل: الوثيقة تتطلب مصفوفة الإغلاق. بعد: الملف المشار إليه غير موجود والأمر يتوقف عند قراءته.</td><td>BLOCKED؛ لم أستعد ملفًا تاريخيًا أو أغير checker.</td></tr>
+    <tr><td>المعايير والدرجة</td><td><code>audit/QC360-LAUNCH-EXECUTION-PROMPTS.html:9</code> (ملخص الدرجة وبطاقات المعايير)</td><td>قبل: snapshot يقول 23.95 أولي، 3 فاشل، 73.05 غير مختبر/معلق، و45/75 ناقص. بعد: كل 75 مرصود في ledger، و45 لها مالك أولي واحد؛ لا نقاط مرشحة مقبولة.</td><td>3 نقاط الفشل والـ30 المكتسبة تاريخيًا لا تملك ربطًا صفّيًا أو أوزانًا؛ لا تُوزع بالتخمين.</td></tr>
+  </tbody></table></div>
+  <p><strong>معرفات الإجراء المنجزة في هذا الأساس:</strong> QC-LAUNCH-001 (تثبيت SHA، جرد الملفات، إنشاء سجل 75 عنصرًا وملكية 45 عنصرًا). لا يوجد QC360-SC حصل على اعتماد أو نقاط. نتائج التنفيذ الآلي المعروضة منفصلة في سجل <code>EXEC-HEAD</code> و<code>EXEC-ARCHITECTURE</code> و<code>EXEC-REQUIREMENTS</code>.</p>
+
+  <h2>75 عنصرًا وموقف الدرجة</h2>
+  <p>المصدر المتاح لحزمة القياس هو <code>audit/QC360-LAUNCH-EXECUTION-PROMPTS.html</code>، الذي يعلن مصفوفة مؤقتة <code>QC360-PROVISIONAL-VERIFICATION-MATRIX-v1</code>: 75 معيارًا، 45 ناقصًا/فاشلًا، 23.95 نقطة إثبات أولي، 3 نقاط فشل و73.05 غير مختبرة/معلقة. هذه مجاميع snapshot وليست معيارًا رسميًا أو مراجعة مستقلة.</p>
+  <p class="warn">حالة المعيار على SHA الحالي: لا نقاط مقبولة. الـ30 الباقية من المقام موصوفة كـHISTORICAL_ROLLUP_ONLY، والـ45 المعرّفة كـNOT_VERIFIED_STALE حتى إعادة إثبات كل معيار. المصدر المتاح لا يربط نقاط الفشل الثلاث بمعرّفات صفية؛ سُجلت كـunmapped roll-up ولا نُسبت إلى صفوف بالتخمين.</p>
+  <p>لكل معيار غير مكتمل يوجد مالك أساسي وظيفي واحد مشتق من مالك بطاقة التنفيذ، مع حفظ أصحاب المساندة في السجل. هذا تعيين عمل محلي وليس تعيينًا رسميًا لشخص أو اعتمادًا تنظيميًا. المراجِع المستقل: غير معيّن/غير متاح؛ النقاط المقبولة: <strong>0.00</strong>.</p>
+
+  <h2>التحقق المطلوب</h2>
+  <div class="tablewrap"><table><thead><tr><th>الأمر</th><th>النتيجة</th><th>الدليل</th></tr></thead><tbody>
+    <tr><td><code>git rev-parse HEAD</code></td><td>PASS — <code>f72fde0c41c8f373066210f337c6c1c3921a52f1</code></td><td>أعيد تشغيله وسُجل في evidence.json.</td></tr>
+    <tr><td><code>pnpm test:architecture</code> على Node 24.20.0</td><td>PASS — فحص الحدود وتغطية المسارات</td><td><code>.ci-results/QC-LAUNCH-001/test-architecture.log</code>؛ SHA-256 في evidence.json.</td></tr>
+    <tr><td><code>pnpm requirements:check</code> على Node 24.20.0</td><td class="fail">FAIL / BLOCKED — exit 1 بسبب ملف مصدر مفقود</td><td>لا يوجد <code>audit/100-percent/POLICY-CLOSURE-MATRIX.md</code>؛ الفشل عند القراءة في <code>scripts/requirements/check-reconciliation.mjs:22</code>. سجل الأمر محفوظ في <code>.ci-results/QC-LAUNCH-001/requirements-check.log</code>.</td></tr>
+  </tbody></table></div>
+
+  <h2>التغييرات والقرارات والعوائق</h2>
+  <ul>
+    <li>تغير بعد التجميد: إضافة ثلاثة artifacts محلية فقط ضمن هذا المجلد. لا تغيير في كود التطبيق أو GitHub أو الإنتاج.</li>
+    <li>المسار المرجعي التفصيلي <code>audit/2026-10-08/QC-360-FULL-SYSTEM-AUDIT-168bc2c/QC-360-COMPREHENSIVE-AUDIT.html</code> المذكور في الـMind غير موجود في checkout؛ المتاح هو ملفات audit مختلفة. كذلك لا يظهر تقرير تفصيلي للـ75 صفًا في شجرة commit المرجعي.</li>
+    <li>يظل الدليل القديم مرتبطًا بـSHA المرجع أو بهوية غير مفصلة؛ يُعامل STALE بالنسبة إلى مرشح <code>f72fde0</code> حتى يثبت العكس على مستوى كل criterion.</li>
+    <li>مصادر QMS/العلم/النفاذ والتوقيعات، runtime/PG18 المطبق، provider، UAT، وقرار release authority لم تُحسم بهذا الجرد. لا يوجد Production GO.</li>
+    <li>التراجع: إزالة مجلد artifacts الثلاثة محليًا فقط إن تقرر إلغاؤه. لا rollback مطلوب للشيفرة.</li>
+  </ul>
+  <p><strong>Sign-off:</strong> baseline prepared by local verification agent; independent rubric reviewer and release authority sign-off: NOT PROVIDED.</p>
+  <p class="muted">الحالة: PARTIAL. Evidence references and criterion-level ledger: <a href="evidence.json">evidence.json</a>. Local decision/remediation plan: <a href="patch-or-decision-plan.md">patch-or-decision-plan.md</a>.</p>
+</main></body></html>

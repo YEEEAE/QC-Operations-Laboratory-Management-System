@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-002 — تقرير قرارات السلطة الناقصة</title>
+  <style>
+    :root{color-scheme:dark;--bg:#101923;--panel:#182635;--line:#3b5063;--text:#edf3f8;--muted:#b7c6d3;--blue:#8bd0f2;--amber:#ffd28b;--red:#ffaaaa;--green:#b7e4c7}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.75 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1250px;margin:auto;padding:28px 18px 56px}h1,h2,h3{line-height:1.35}h1{font-size:clamp(27px,4vw,39px)}h2{font-size:22px;margin-top:32px}p{margin:8px 0 14px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}.warn{color:var(--amber)}.fail{color:var(--red)}.ok{color:var(--green)}.muted{color:var(--muted)}code{direction:ltr;unicode-bidi:isolate;overflow-wrap:anywhere}a{color:var(--blue)}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0}table{width:100%;min-width:850px;border-collapse:collapse}th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}th{color:var(--blue);background:#1d2d3d}tr:last-child td{border-bottom:0}.ltr{direction:ltr;text-align:left}ul{padding-right:24px}.small{font-size:13px}
+  </style>
+</head>
+<body><main>
+  <p class="muted">QC-LAUNCH-002 · Phase 0 — Baseline · 2026-10-09 · مراجعة محلية للمصادر</p>
+  <h1>تقرير قرارات QC/QMS والسلطات الناقصة</h1>
+  <section class="panel"><strong class="warn">حالة المهمة: BLOCKED / NO-GO.</strong>
+    <p>وردت توجيهات للأدوار، ثم سياسة وظيفية أحدث للتوقيع الإلكتروني. السياسة الأحدث تطلب تجاوزًا صريحًا ومسببًا ومسجلًا لمالك النظام، وبذلك تستبدل طلب التجاوز الصامت للتوقيع وسجل التدقيق. لكنها لا تحدد استثناءً للمصدر العلمي ولا خريطة اعتماد كاملة لكل إجراء. لم تُحوّل إلى سياسة QMS نافذة أو صلاحيات مطبقة، ولم تُغلق معايير QC360 أو تُحتسب نقاط.</p>
+    <p>لا تُعد هذه الوثيقة اعتمادًا مضبوطًا أو توقيعًا إلكترونيًا. لم تُعدّل وثيقة محكومة أو كود أو قاعدة بيانات أو صلاحية، ولم يُتصل بمزود حي أو GitHub.</p>
+  </section>
+
+  <section class="panel"><strong class="warn">مدخل مالك جديد — USER-SUPPLIED / NOT EFFECTIVE.</strong>
+    <p>التوزيع المطلوب: yazeed = Owner + Admin features؛ QCM = إنشاء تقارير واعتماد نهائي؛ Supervisor = اعتماد أولي؛ QC وQC 2 وQC 3 وQC 4 = Employee وإنشاء بلا موافقات. أكد المستخدم لاحقًا في سياسة وظيفية أن تجاوز المالك يجب أن يكون صريحًا ومسببًا ومسجلًا. لا تزال حدود تجاوز المصدر العلمي غير محددة.</p>
+    <p>التفريغ القابل للتتبع: <a href="owner-input-2026-10-09.md">owner-input-2026-10-09.md</a>. هذه الرسالة دليل على تعليمات المستخدم، وليست سجل e-signature داخل النظام أو موافقة QMS/Security/Release.</p>
+  </section>
+
+  <h2>هوية المرشح وسلامة الدليل</h2>
+  <div class="tablewrap"><table><tbody>
+    <tr><th>المستودع / الفرع</th><td class="ltr">YEEEAE/QC-Operations-Laboratory-Management-System · main</td></tr>
+    <tr><th>HEAD</th><td><code>f72fde0c41c8f373066210f337c6c1c3921a52f1</code></td></tr>
+    <tr><th>مرجع التدقيق</th><td><code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> — سلف للمرشح بفارق commit واحد.</td></tr>
+    <tr><th>بصمة حالة المصدر</th><td><code>84ab38823a99e5c790d75743de3c4aa27151df1ba61f41476dcf541888371994</code> — تشمل ملف الصلاحيات غير المتتبع وتغييرات Mind السابقة. الأدلة مرتبطة بهذه البصمة؛ أي تغيير خارج حزمة المهمة يتطلب إعادة الحساب والفحوص المتأثرة.</td></tr>
+    <tr><th>إعادة حساب البصمة</th><td><a href="source-fingerprint.mjs">source-fingerprint.mjs</a>. تغيّر أي مصدر خارج حزمة هذه المهمة يبطل ربط الدليل ويلزم إعادة الحساب والفحوص المتأثرة.</td></tr>
+    <tr><th>بيئة الفحص</th><td>macOS محلي؛ Node 24.20.0؛ pnpm 11.25.0؛ رأس migration المصدر `0047_task_references_occurrences.sql`. لم تُفحص قاعدة production أو إعداد runtime أو مزود حي.</td></tr>
+    <tr><th>حالة البداية</th><td>حُفظت تغييرات `.agents/mind/01-mind-latest.md` وحزمة QC-LAUNCH-001 وملف المستخدم غير المتتبع `صلاحيات.md`. تحديث Mind لهذه المتابعة داخل البصمة. لا توجد تغييرات على ملفات المنتج أو المصادر الخمسة المحددة.</td></tr>
+  </tbody></table></div>
+
+  <h2>مصادر القرار والمصالحة</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>المصدر / revision</th><th>موضع الدليل</th><th>ما يقوله المصدر</th><th>الوضع قبل / بعد المراجعة</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../../../Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md">قرار المالك — 2026-10-05</a></td><td>الأسطر 9–18، 22–36</td><td>يسري من 2026-10-04؛ يلغي استثناء توقيع المرحلة الأولى؛ كل `APPROVE/FINAL_APPROVE` عند انطباقه يحتاج توقيعًا إلكترونيًا مستقلًا مربوطًا بالفاعل والفعل والنسخة السابقة. لا يغيّر التاريخ بأثر رجعي ولا يعتمد WI/SOP أو العلم.</td><td>المصدر الأحدث هو الحاكم لهذه القاعدة. الدليل المتاح نص القرار؛ لا يوجد سجل توقيع إلكتروني مضبوط أو تفويض شخصي ظاهر للحساب في هذا الملف.</td></tr>
+      <tr><td><a href="../../../Documents/QUALITY-POLICY-DECISION-PACK-2026-10-02.md">حزمة القرار المقترحة — 2026-10-02</a></td><td>الأسطر 3–7، 19–36؛ صف المرحلة الأولى 23–24</td><td>الحالة PROPOSED. صف إعفاء المرحلة الأولى من التوقيع وعمومية الأفعال غير المدرجة قد عفا عليهما قرار المالك اللاحق وفق الملاحظة الموجودة في الحزمة نفسها.</td><td>يبقى الملف دون تعديل كسجل اقتراح تاريخي؛ لا يُستخدم صف الإعفاء كسياسة حالية.</td></tr>
+      <tr><td><a href="../../../Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md">المصدر التقني للمختبر — Version 1</a></td><td>الأسطر 3–15</td><td>يوثق عقد التحويل والتقييم البرمجي فقط. لا يحدد طريقة اختبار فعالة أو حدودًا أو سياسة قبول أو توقيع QC.</td><td>لا يصلح كمصدر قبول علمي؛ تبقى نتيجة الاختبار الرسمية محجوبة حتى اعتماد مصدر الطريقة.</td></tr>
+      <tr><td><a href="../../../Documents/QUARANTINE-CONTROLLED-REPORT-CATALOG.md">فهرس تقارير الحجر — Rev 14</a></td><td>الأسطر 1–25</td><td>فهرس الهوية الرئيسي يضم 194 بندًا، و13 قالبًا مسودة مرتبطة بمصادر. توجد تعارضات وصفحات غير متاحة؛ الاستيراد لا ينشئ اعتمادًا أو ربطًا.</td><td>جرد تنفيذ/مصدر فقط؛ لا يثبت اعتماد محتوى النماذج أو حدود القبول أو السريان.</td></tr>
+      <tr><td><a href="../../../Documents/RISK-REGISTER.md">سجل المخاطر — v1.0</a></td><td>الأسطر 7–18، 384–405، 437–470، 1434–1452</td><td>قبول المخاطر مشروط بالسياسة ولا يملكه المطور أو AI. يسرد أدوارًا وظيفية، ويقول إن إسناد الأفراد يأتي لاحقًا.</td><td>يوفر أدوارًا مرشحة للطلبات فقط؛ لا أسماء معتمدة أو قبول مخاطر أو تواريخ مراجعة.</td></tr>
+      <tr><td><a href="../../../Documents/OWNER-DECISION-RBAC-2026-09-23.md">قرار RBAC السابق</a> و<a href="../../../Documents/ROLE-MATRIX.md">ROLE-MATRIX</a> و<a href="../../../Documents/PERMISSION-MATRIX.md">PERMISSION-MATRIX</a></td><td>RBAC الأسطر 13–19، 50–62؛ ROLE-MATRIX 13–18، 199–204؛ PERMISSION-MATRIX 13–18، 356–358</td><td>القرار السابق يحصر override في حالات صريحة ويحفظ التوقيع وسجل التدقيق ومصدر العلم؛ Role Matrix يمنع دورًا من تجاوز SoD؛ سياسة الصفحات تعرض Admin route shell وتبقي أفعالها permission-gated.</td><td>تعارض مباشر مع طلب المالك الجديد بتجاوز كل شيء وإخفاء Admin pages عن بقية الأدوار. لا تحديث لهذه المصادر أو للتطبيق حتى مراجعة QMS/Security/Release المضبوطة.</td></tr>
+      <tr><td><a href="../../../صلاحيات.md">صلاحيات.md</a> ومدخل المحادثة <a href="owner-input-2026-10-09.md">المفرغ محليًا</a></td><td>الملف الحالي يطابق مرفق السياسة، SHA-256 <code>f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08</code>؛ التوجيه الأول محفوظ من المحادثة</td><td>التوجيه الأول للأدوار والصفحات محفوظ كتفريغ محادثة. المرفق الحالي هو سياسة التوقيع العالمية؛ السياسة الأحدث تتطلب تجاوزًا صريحًا ومسببًا ومسجلًا، وتفضيل العلامة لا يحل محل دليل محفوظ.</td><td>USER-SUPPLIED / NOT EFFECTIVE كسياسة QMS مضبوطة؛ لا revision أو سريان. التفريغ دليل تعليمات، وليس توقيعًا داخل النظام.</td></tr>
+      <tr><td><a href="../../../Documents/DECISION-ASSUMPTION-REGISTER-026.md">سجل القرارات والافتراضات</a></td><td>الأسطر 22–32، 166–173</td><td>PD-01/02/07 وRD-019 وPD-32 مفتوحة. `PERM-DOC-APPROVE` DENY إلى حين القرار.</td><td>تأكيد استمرار المنع؛ لا ينشئ القرار هنا.</td></tr>
+      <tr><td><a href="../../../Documents/AI-PROVIDERS.md">سياسة مزودي AI</a> و<a href="../../../.env.example">الإعداد النموذجي</a></td><td>AI-PROVIDERS الأسطر 29، 57، 174؛ env الأسطر 21</td><td>تتطلب موافقة معالجة قبل تفعيل الإرسال؛ مثال الإعداد الافتراضي false.</td><td>حالة runtime غير مفحوصة. لا استدعاء مزود ولا ادعاء بتعطيل الإنتاج.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>جدول القرارات المطلوبة</h2>
+  <p>التفصيل الكامل في <a href="patch-or-decision-plan.md">طلب القرار وخطة الإغلاق</a>. لكل بند يجب أن يملأ صاحبه عنوان المصدر المضبوط، revision/hash، الشخص المفوض، الإجراء المقصود، السريان، وتوقيع مضبوط قابل للتحقق. جميع الأسماء والمواعيد غير المتوفرة معلّمة بوضوح بأنها غير متاحة.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>المعيار</th><th>القرار/المصدر المطلوب</th><th>الدور المالِك الذي تشير إليه المصادر</th><th>السريان / المدة</th><th>السلوك المؤقت</th></tr></thead>
+    <tbody>
+      <tr><td>QC360-SC-01-05</td><td>WI/SOP/spec/ISO أو مصدر اختبار/منتج دقيق ومعتمد، revision وhash، قبول النموذج، وصلاحية المصدر.</td><td>QC method owner + Document Control؛ الأفراد غير مسمّين.</td><td>غير متوفر.</td><td>حظر الاعتماد الرسمي؛ HOLD قائم عند انطباقه.</td></tr>
+      <tr><td>QC360-SC-02-05</td><td>حدود علمية، وحدات ودقة وتحويل وتجميع وبيانات ناقصة وAQL والحكم اليدوي لكل طريقة.</td><td>QC method owner + Document Control.</td><td>غير متوفر.</td><td>لا تقييم علمي رسمي دون المصدر.</td></tr>
+      <tr><td>QC360-SC-04-05</td><td>خريطة كاملة للفعل × الموضوع × الحالة × الموقّع × معنى التوقيع والنسخة.</td><td>QMS owner + مالك كل مجال؛ لا سجل توقيع إلكتروني مكتمل.</td><td>قاعدة المالك من 2026-10-04؛ لا أثر رجعي.</td><td>لا ادعاء بإغلاق جميع الأفعال أو اعتبار الأفعال غير المدرجة N/A.</td></tr>
+      <tr><td>QC360-SC-05-05</td><td>سلطة اعتماد الوثيقة، الفصل بين الأدوار، الإصدار والسريان/الإلغاء والاحتفاظ.</td><td>Document Control/QMS owner؛ الأفراد غير مسمّين.</td><td>غير متوفر؛ `APPROVED` لا تعني `EFFECTIVE`.</td><td>منع `PERM-DOC-APPROVE` للاستخدام العام؛ لا وثيقة فعالة جديدة.</td></tr>
+      <tr><td>QC360-SC-06-05</td><td>تحليل أثر migration، مراجعة hash، rehearsal معزول، rollback وتفويض تنفيذ واضح.</td><td>Database/Platform + Release/Quality Governance roles؛ الشخص غير مسمّى.</td><td>غير متوفر.</td><td>لا migration إنتاجي؛ لم تُشغّل migration في هذه المهمة.</td></tr>
+      <tr><td>QC360-SC-07-05</td><td>مراجعة أمنية مستقلة، معالجة الثغرات، وقبول مخاطر متبقٍ بصلاحية ومدة.</td><td>Identity/Security + سلطة المخاطر/الإصدار المصرح بها؛ الشخص غير مسمّى.</td><td>غير متوفر.</td><td>لا تخفيض للمخاطر بالوثائق وحدها؛ الاختبار NOT_TESTED.</td></tr>
+      <tr><td>QC360-SC-14-05</td><td>SLO/SLI ونوافذ القياس والحدود والتوجيه والاستجابة والاحتفاظ بأدلة التنبيه.</td><td>مالك تشغيل/خدمة يعيّنه Release authority؛ غير محدد في المصدر.</td><td>غير متوفر.</td><td>لا عتبات أو تغطية تنبيه مفترضة؛ NOT_TESTED.</td></tr>
+      <tr><td>QC360-SC-15-05</td><td>الغرض والبيانات ومكان المعالجة والمزود والاحتفاظ والحذف والموافقة والتدقيق.</td><td>AI/Integration مع أدوار الخصوصية/الأمن وQMS حسب سياسة معتمدة؛ الأفراد غير مسمّين.</td><td>غير متوفر؛ حالة runtime غير مفحوصة.</td><td>لا تفعيل ولا استدعاء مزود خارجي؛ NOT_TESTED.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>السياسة العالمية للتوقيع الإلكتروني — مطابقة لاحقة</h2>
+  <div class="panel"><p>وصلت سياسة وظيفية من المستخدم بتاريخ 2026-10-09، SHA-256 <code>f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08</code>. توصف بأنها متطلب وظيفي معتمد من المالك، لكن لا تحمل revision أو تاريخ سريان ولا سجل اعتماد QMS مضبوط.</p><p>تتطلب التوقيع المرتبط بالفعل والنسخة، إعادة المصادقة، تحقق المتطلبات السابقة، ذرية القرار/التوقيع/التدقيق، حماية التزامن وإعادة الإرسال، وعرض تفاصيل الاعتماد. توجد مكونات مشتركة للتوقيع، لكن سياسة الموافقة العامة UNRESOLVED والاستخدام موزع، ولا توجد حقول مرجع/نسخة السياسة ضمن دليل التوقيع. خريطة الأحداث وحدودها غير مكتملة، وسجل التاريخ الشامل غير متحقق. راجع <a href="global-esign-policy-reconciliation.md">مطابقة السياسة</a>.</p><p>الحالة: PARTIAL / BLOCKED. التوجيه الأحدث ينسخ طلب تجاوز التوقيع والتدقيق الصامت، لكنه لا يحدد السماح بتجاوز المصدر العلمي. تبقى الإجراءات غير المعيّنة محجوبة. لم تُغيّر الشيفرة أو المصادر المضبوطة ولم تُشغّل اختبارات المنتج.</p></div>
+
+  <h2>نتائج التحقق</h2>
+  <div class="panel"><p><strong class="fail">`pnpm requirements:check`: BLOCKED، exit 1.</strong> Node 24.20.0 وpnpm 11.25.0. الملف المطلوب `audit/100-percent/POLICY-CLOSURE-MATRIX.md` مفقود؛ موضع القراءة `scripts/requirements/check-reconciliation.mjs:16,22`. السجل الخام: <a href="verification/requirements-check.log">verification/requirements-check.log</a>.</p>
+    <p>مراجعة المصادر تمت قراءةً فقط. لا يوجد توقيع QMS/QC بشري، مراجعة يدوية من سلطة مختصة، UAT، فحص runtime أو قبول مستقل للـrubric. لذلك لا يترقى أي معيار إلى VERIFIED_PASS.</p></div>
+
+  <h2>النتيجة والوزن</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>المعيار</th><th>الحالة المدعاة في الطلب</th><th>نتيجة هذه المهمة</th><th>النقاط الموثقة</th></tr></thead>
+    <tbody>
+      <tr><td>QC360-SC-01-05</td><td>BLOCKED</td><td>BLOCKED — لا مصدر قبول أو سريان مضبوط</td><td>0.00 / 2.80</td></tr>
+      <tr><td>QC360-SC-02-05</td><td>BLOCKED</td><td>BLOCKED — السياسة التقنية لا تعتمد علمًا أو حدودًا</td><td>0.00 / 2.40</td></tr>
+      <tr><td>QC360-SC-04-05</td><td>BLOCKED</td><td>BLOCKED — قاعدة التوقيع محددة؛ خريطة الإجراءات والدليل المضبوط غير مكتملين</td><td>0.00 / 2.00</td></tr>
+      <tr><td>QC360-SC-05-05</td><td>BLOCKED</td><td>BLOCKED — RD-019 وPD-13 مفتوحان</td><td>0.00 / 1.80</td></tr>
+      <tr><td>QC360-SC-06-05</td><td>NOT_TESTED</td><td>NOT_TESTED — لا اعتماد migration أو rehearsal ضمن هذه المهمة</td><td>0.00 / 1.40</td></tr>
+      <tr><td>QC360-SC-07-05</td><td>NOT_TESTED</td><td>NOT_TESTED — لا مراجعة/قبول أمني مستقل</td><td>0.00 / 1.40</td></tr>
+      <tr><td>QC360-SC-14-05</td><td>NOT_TESTED</td><td>NOT_TESTED — لا أهداف SLO/SLI أو أدلة تشغيل</td><td>0.00 / 0.40</td></tr>
+      <tr><td>QC360-SC-15-05</td><td>NOT_TESTED</td><td>NOT_TESTED — لا قرار معالجة خارجية ولا فحص runtime</td><td>0.00 / 0.20</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Verified points لهذا المرشح: 0.00 / 12.40.</strong> لا يوجد مراجع مستقل أو نقاط مقبولة منه؛ قيمة النقاط المقبولة من المراجع: NOT PROVIDED. لا تُعامل 12.40 كنقاط مكتسبة.</p>
+
+  <h2>الملاك والعوائق والخطوة اللازمة</h2>
+  <ul>
+    <li>RD-019 وPD-13: Document Control/QMS؛ يلزم تعيين شخص مفوض، مصدر محكوم، قواعد التوقيع/الفصل والسريان.</li>
+    <li>PD-32: QMS؛ يلزم جرد جميع إجراءات الاعتماد حسب موضوعها وحالتها وموقّعها ومعنى التوقيع، مع سجل إلكتروني مضبوط.</li>
+    <li>PD-01/02/07: QC method owner + Document Control؛ يلزم مصدر علمي محدد لكل اختبار/منتج وrevision/hash وقواعد القبول.</li>
+    <li>Migration: Database/Platform + Release/Quality Governance؛ يلزم تحليل الأثر والتفويض وبيانات rehearsal المعزولة.</li>
+    <li>Security: Identity/Security + سلطة المخاطر المعتمدة؛ يلزم مراجع مستقل وتوثيق قرار قبول محدد.</li>
+    <li>SLO/SLI: مالك تشغيل/خدمة يجب أن يحدده Release authority؛ يلزم أهداف وتنبيهات قابلة للقياس.</li>
+    <li>AI الخارجي: AI/Integration والأدوار المعتمدة للخصوصية/الأمن/QMS؛ يلزم سياسة معالجة مفصلة، ولا دليل على حالة runtime في هذا التقرير.</li>
+    <li>المواعيد النهائية وأسماء الأشخاص غير واردة في المصادر؛ يجب أن تعيّنها السلطة المخولة. لا توجد N/A مبررة حتى الآن.</li>
+  </ul>
+
+  <h2>أثر التغييرات والمخاطر المتبقية</h2>
+  <p><strong>قبل:</strong> قرار 2026-10-02 المقترح احتوى صفًا يقول إن توقيع Supervisor للمرحلة الأولى غير مطلوب. <strong>بعد المصالحة:</strong> قرار 2026-10-05 اللاحق يلغي ذلك، بسريان 2026-10-04، ولا يسمح بتغيير السجلات السابقة بأثر رجعي. لم تُعدّل أي من الوثائق الخمس؛ التغيير المحلي هو حزمة قرار/دليل وملخص Mind فقط.</p>
+  <p>المخاطر المتبقية: مصادر QC/SOP الفعالة غير محددة، خريطة PD-32 الكاملة وسجل التوقيعات غير متاحين، سلطة الوثيقة وسريانها غير معتمدة، إجراءات migration/security/SLO/AI تنتظر قرارًا، ومتطلبات checker محجوبة بمصفوفة سياسة مفقودة. قبول العنصر/إطلاقه مستقل عن النتيجة العلمية: `PASS ≠ RELEASED`.</p>
+  <p class="muted small">التواقيع: QC Manager — NOT PROVIDED · QMS Document Control — NOT PROVIDED · Security/Release authority — NOT PROVIDED · Independent rubric reviewer — NOT PROVIDED.</p>
+</main></body></html>
