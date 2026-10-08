@@ -45,7 +45,7 @@ const ncrById = new Map(ncrs.map((ncr) => [ncr.id, ncr]));
 const rows = rcas.map((rca) => ({ rca, ncr: ncrById.get(rca.ncrId) }));
 ---
 <AppLayout title="RCA · Quality" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Quality register</p><h1>Root-cause analyses</h1><p class="lede">Authorized analyses linked to NCR records. Open an analysis to review its current state and approved next step.</p></div></section>
+  <section class="page-head"><div><p class="eyebrow">Quality register</p><h1>Root-cause analyses</h1><p class="lede">Root cause analyses linked to NCRs.</p></div></section>
   <section class="policy" role="status"><h2>Controlled decisions</h2><p><strong>PD-17 · QMS owner:</strong> NCR closure authority remains unresolved. RCA drafts and analysis submission are available. Approval and NCR closure require the controlled QMS decision; submission does not approve or close the source NCR.</p></section>
   {ncrs.filter((ncr) => !['CLOSED', 'VOID'].includes(ncr.state)).length > 0 && <section class="policy"><h2>Create linked RCA draft</h2>
     {createError && <p role="alert">{createError}</p>}

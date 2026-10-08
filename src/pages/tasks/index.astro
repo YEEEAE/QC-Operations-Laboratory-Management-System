@@ -100,7 +100,7 @@ const canCreate = actor.permissions.some(
 ---
 <AppLayout title="Tasks · QC Operations" locale="en" direction="ltr">
   <div class="scientific-register">
-  <section class="page-head"><div><p class="eyebrow">Work queue</p><h1>Tasks</h1><p class="lede">View operational work. Actions remain limited to your explicit permissions.</p></div>{canCreate && <a class="button" href="/tasks/new">Create task</a>}</section>
+  <section class="page-head"><div><p class="eyebrow">Work queue</p><h1>Tasks</h1></div>{canCreate && <a class="button" href="/tasks/new">Create task</a>}</section>
   <FilterBar clearHref={hasFilters ? '/tasks' : undefined}>
     <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Task number or title" /></label>
     <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>

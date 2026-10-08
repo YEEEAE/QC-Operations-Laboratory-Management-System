@@ -20,7 +20,7 @@ const reasonCopy = (reason: string) => {
   <main class="release-shell">
     <h1>Production release approval</h1>
     {model.candidateReadUnavailable ? <p role="alert" class="denied">Release details are temporarily unavailable. <a href={Astro.url.pathname + Astro.url.search}>Refresh this page</a> before reviewing or retrying an approval.</p> : candidate ? <>
-      <p class="lede">Release {candidate.releaseId} · State: {candidate.state} · Version: {candidate.version.toString()}</p>
+      <p class="lede">Read-only evidence for this release. Only trusted evidence can establish gate status.</p>
       <section class="decision" aria-labelledby="decision-heading"><h2 id="decision-heading">Production decision: NO-GO</h2><p>The approved production baseline requires 19/19 mandatory gates on this exact candidate. This page currently reconciles eight release evidence classes; it does not contain an accepted 19-gate register, so these rows cannot produce an overall GO or RELEASED decision.</p><ul><li>Current candidate SHA: <code>{candidate.gitSha}</code></li><li>Current build: <code>{candidate.buildId}</code></li><li>Full 19-gate reconciliation: NOT VERIFIED</li></ul></section>
       <dl class="identity"><div><dt>Git SHA</dt><dd>{candidate.gitSha}</dd></div><div><dt>Build ID</dt><dd>{candidate.buildId}</dd></div><div><dt>Application version</dt><dd>{candidate.applicationVersion}</dd></div><div><dt>Migration head</dt><dd>{candidate.migrationHead}</dd></div><div><dt>UAT cycle</dt><dd>{candidate.uatCycleId}</dd></div></dl>
        {!model.authorized && <p role="alert" class="denied">Your account is not a release authority. Final approval requires QCM or Yazeed / SYSTEM_OWNER; Admin alone is denied.</p>}

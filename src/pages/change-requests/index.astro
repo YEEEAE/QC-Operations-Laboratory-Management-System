@@ -30,7 +30,7 @@ const hasFilters = Boolean(state || targetType);
 ---
 <AppLayout title="Change requests · QC Operations" locale="en" direction="ltr">
   <section class="page-head">
-    <div><p class="eyebrow">Change requests</p><h1>Change requests</h1><p class="lede">Proposed changes are versioned, reviewed, and audited. Approval does not rewrite the target record automatically.</p></div>
+    <div><p class="eyebrow">Change requests</p><h1>Change requests</h1><p class="lede">Review proposed changes. Approval does not automatically update the record.</p></div>
     {canCreate && <a class="button" href="/change-requests/new">New change request</a>}
   </section>
   <form class="filters" method="get" aria-label="Change request filters">

@@ -33,6 +33,15 @@ state machines, SoD, or the audit contract.
 9. **English-only UI.** English LTR is the approved product language for this baseline.
    Do not introduce Arabic/RTL scope without an approved localization decision.
 
+## Compact page content
+
+- Start with the page title and primary action. Omit introductions that repeat the title.
+- Keep useful introductions to one short sentence; show instructions beside the relevant control.
+- Keep current state, next action, approval prerequisites and blocking reasons visible.
+- Put secondary record metadata and evidence trace in native disclosure controls that work without JavaScript.
+- Keep safety boundaries and uncertain-write recovery instructions at the point of action.
+- Avoid repeating general permission explanations on every page. Server authorization remains unchanged.
+
 ## 2. Status and state labels
 
 - Raw enum values (`UNDER_REVIEW`, `OUT_OF_SERVICE`, …) never render directly in pages.

@@ -29,7 +29,7 @@ const unresolved = queue?.unresolvedSources ?? [];
     <div>
       <p class="eyebrow">Your queue</p>
       <h1>My work today</h1>
-      <p class="lede">View assigned, due, overdue and blocked work. Each group shows its source, next step and responsible role. Opening a record does not change it or grant permission to act.</p>
+      <p class="lede">Assigned, due, overdue and blocked work.</p>
     </div>
     {queue && <p class="snapshot"><time datetime={queue.generatedAt.toISOString()}>Server snapshot · {formatDateTime(queue.generatedAt)}</time><span>All windows in {queue.timezone}</span><a href="/work">Refresh</a></p>}
   </section>

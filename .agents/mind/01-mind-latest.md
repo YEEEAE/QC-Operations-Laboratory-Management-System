@@ -289,6 +289,7 @@
 - No report-run/artifact retention behavior is inferred. `REQ-RPT-005` persistence semantics and retention remain Reporting/QMS-owner decisions; current candidate evidence is `audit/2026-09-30/handoff-QC-ADP26-30.md`.
 
 ### Language/copy
+- **2026-10-09 compact content:** 34 page introductions shortened or removed; shared record overview keeps state/actions/blockers visible and uses native disclosures for secondary metadata and evidence. English and controlled terminology preserved. Focused UI contracts64/64 PASS; Astro check0errors. Browser acceptance NOT VERIFIED. Rule: `Documents/UX-WRITING-GUIDE.md` compact page content.
 - الواجهة الحالية English-only, `lang="en"`, LTR؛ قرار المستخدم (2026-09-23) يؤكد الإنجليزية والنصوص القصيرة الطبيعية للمنتج. إشارات العربية/RTL في `Documents/UI-UX-SPECIFICATION.md` تحتاج قرارًا مستقلًا قبل توسيع النطاق.
 - الأفعال والعناوين تستخدم sentence case.
 - المصطلحات المنظمة مثل NCR/CAPA/PASS/RELEASED لا يُعاد تعريف معناها.

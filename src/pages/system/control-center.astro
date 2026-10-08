@@ -159,11 +159,7 @@ const migrationBlocker = (migration: Overview['migration']) =>
     <div>
       <p class="eyebrow">Owner console</p>
       <h1>System control center</h1>
-      <p class="lede">
-        Owner-only operational console. Every mutation below executes through audited
-        server-side use cases; protected owner grants can never be removed, and raw
-        secrets, connection strings, and stack traces are never shown.
-      </p>
+      <p class="lede">Manage system access and operations.</p>
     </div>
     <span class={`banner ${overview?.coreStatus === 'READY' ? 'ok' : 'bad'}`}>
       {overview

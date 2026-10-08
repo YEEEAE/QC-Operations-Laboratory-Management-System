@@ -65,7 +65,7 @@ const restoreLabel = backup
 ---
 <AppLayout title="System health · QC Operations" locale="en" direction="ltr">
   {providerUnavailable ? <ProviderUnavailableState title="System health checks are temporarily unavailable" description="The health read did not return a confirmed result. No dependency or release status is inferred." retryHref="/system/health" /> : view && <>
-  <section class="page-head"><div><h1>System health</h1><p class="lede">Status is derived from live server-side checks. Raw infrastructure errors, credentials, and endpoints are intentionally never shown.</p></div><span class={`banner ${serviceBanner.class}`}>{serviceBanner.title}</span></section>
+  <section class="page-head"><div><h1>System health</h1><p class="lede">Live system checks.</p></div><span class={`banner ${serviceBanner.class}`}>{serviceBanner.title}</span></section>
   <section class="notice" role="note"><strong>Separate health layers</strong><span>Liveness at <code>/api/health/live</code> reports only whether the process responds. Readiness at <code>/api/health/ready</code> checks PostgreSQL and the same Reject Reports schema probe used by this page. Neither confirms QC completion or release approval. This health snapshot was generated {formatDateTime(view.generatedAt)} (Asia/Riyadh).</span></section>
   <section class="status-summary" aria-label="Current system status labels">
     <div><span>Application and database connectivity</span><strong class={view.dependencyReadiness === 'READY' ? 'good' : 'warn'}>{view.dependencyReadiness === 'READY' ? 'READY' : 'NOT READY'}</strong><small>Evaluated {formatDateTime(view.generatedAt)} (Asia/Riyadh)</small></div>

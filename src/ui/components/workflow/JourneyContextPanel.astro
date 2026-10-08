@@ -67,21 +67,21 @@ const {
 <section class="journey-panel" aria-labelledby="journey-context-title">
   <div class="journey-heading">
     <div>
-      <p class="eyebrow">SERVICE HANDOFF</p>
-      <h2 id="journey-context-title">Journey context</h2>
+      
+      <h2 id="journey-context-title">Record overview</h2>
     </div>
     <span class="owner">Owning domain: {ownerDomain}</span>
   </div>
 
+  <p class="state-value">{currentState}</p>
   <div class="journey-grid">
-    <section class="journey-block state-block" aria-labelledby="journey-state-title">
-      <h3 id="journey-state-title">Current state</h3>
+    <details class="journey-block state-block"><summary id="journey-state-title">Record details</summary>
+      <h3>Current state</h3>
       <p><span class="label">Record</span>{recordReference ?? 'Not supplied by record source'}</p>
-      <p class="state-value">{currentState}</p>
       <p><span class="label">Record owner</span>{recordOwner ?? 'Not supplied by record source'}</p>
       {lastAction ? <p class="muted">Last committed action: {lastAction}</p> : null}
       {lastUpdated ? <p class="muted">Last updated: {lastUpdated}</p> : null}
-    </section>
+    </details>
 
     <section class="journey-block" aria-labelledby="journey-next-title">
       <h3 id="journey-next-title">Next action</h3>
@@ -97,25 +97,23 @@ const {
           ))}
         </ul>
       ) : null}
-      <p class="mutation-note">Links on this panel only open workspaces. A mutation commits solely when the server accepts it; page visibility never grants authority.</p>
-      <p class="reason"><span class="label">Why unavailable</span>{whyUnavailable ?? 'No reason supplied by record source'}</p>
+      <details class="mutation-note"><summary>About actions</summary><p>Links on this panel only open workspaces. A mutation commits solely when the server accepts it; page visibility never grants authority.</p></details>
+      {whyUnavailable ? <p class="reason"><span class="label">Why unavailable</span>{whyUnavailable}</p> : null}
       {recoveryHref ? <a class="recovery-link" href={recoveryHref}>{recoveryLabel}</a> : null}
     </section>
 
-    <section class="journey-block" aria-labelledby="journey-wait-title">
-      <h3 id="journey-wait-title">Waiting / dependency</h3>
+    <details class="journey-block" open={Boolean(waitingOn)}><summary id="journey-wait-title">Waiting / dependency</summary>
       {waitingOn ? <p><span class="label">Waiting on</span>{waitingOn}</p> : <p class="muted">Not waiting on another handoff.</p>}
       {waitingSince ? <p><span class="label">Since</span>{waitingSince}</p> : null}
       {expectedEvent ? <p><span class="label">Expected event</span>{expectedEvent}</p> : null}
-    </section>
+    </details>
 
-    <section class="journey-block" aria-labelledby="journey-evidence-title">
-      <h3 id="journey-evidence-title">Evidence and trace</h3>
+    <details class="journey-block"><summary id="journey-evidence-title">Evidence and trace</summary>
       {controlledContext ? <p><span class="label">Controlled context</span>{controlledContext}</p> : null}
       <p><span class="label">Evidence recorded</span>{evidenceSummary ?? 'Not supplied by record source'}</p>
       <p><span class="label">Evidence required</span>{requiredEvidence ?? 'Required-evidence list not supplied by record source'}</p>
       {auditHref ? <a class="recovery-link" href={auditHref}>View audit history for this record</a> : null}
-    </section>
+    </details>
   </div>
 
   {relatedLinks.length ? (
@@ -129,7 +127,7 @@ const {
 </section>
 
 <style>
-  .journey-panel{margin:var(--space-5) 0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  summary{cursor:pointer;font-size:.82rem;font-weight:700;min-height:2.75rem;display:list-item;align-content:center}summary:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:3px}.journey-panel{margin:var(--space-5) 0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
   .journey-heading{display:flex;justify-content:space-between;gap:var(--space-4);align-items:flex-start;margin-bottom:var(--space-4)}
   .eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.journey-heading h2{margin:.25rem 0 0;font-size:1.05rem}.owner{padding:.35rem .55rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);color:var(--text-secondary);font-size:.75rem;white-space:nowrap}
   .journey-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}.journey-block{min-width:0;padding:var(--space-4);background:var(--surface-raised);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.journey-block h3,.related h3{margin:0 0 .65rem;font-size:.78rem}.journey-block p{margin:.45rem 0;font-size:.82rem;line-height:1.45}.state-value{font-weight:800;color:var(--text-primary)}.muted{color:var(--text-muted)}.label{display:block;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em}.next-link,.recovery-link{display:inline-block;color:var(--color-accent-primary-hover);font-weight:700}.next-link{margin-bottom:.35rem}.reason{padding-inline-start:.6rem;border-inline-start:3px solid var(--status-warning)}
