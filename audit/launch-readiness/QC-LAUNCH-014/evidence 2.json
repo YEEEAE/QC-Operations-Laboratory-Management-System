@@ -1,0 +1,112 @@
+{
+  "taskId": "QC-LAUNCH-014",
+  "title": "دورة مستندات WI/SOP والنسخ الفعالة",
+  "taskStatus": "BLOCKED",
+  "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+  "sourceRevision": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "branch": "main",
+    "headSha": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+    "referenceIsAncestor": true,
+    "commitsAfterReference": 12,
+    "scopedDiffEmpty": true,
+    "productWorkingTreeFingerprint": {
+      "algorithm": "SHA-256",
+      "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "basis": "sha256 of git diff --binary HEAD; working tree clean at capture"
+    },
+    "migrationHead": "0047_task_references_occurrences.sql"
+  },
+  "capturedAt": "2026-10-09T08:30:00+03:00",
+  "environment": {
+    "kind": "local source checkout",
+    "node": "v24.20.0",
+    "pnpm": "11.25.0",
+    "docker": "UNAVAILABLE",
+    "isolatedPostgres18": "NOT PROVISIONED / NOT USED",
+    "authenticatedBrowser": "NOT AVAILABLE / NOT USED",
+    "syntheticDataset": "NOT CREATED",
+    "productionDataOrDatabase": "NOT ACCESSED"
+  },
+  "criteria": [
+    {
+      "criterionId": "QC360-SC-05-03",
+      "alias": "n-03",
+      "expectedOutcome": "Document version / effectivity / immutable-records tests pass on the frozen candidate; all mismatches fail closed.",
+      "testKind": "runtime PostgreSQL 18 document lifecycle (positive + negative)",
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "status": "NOT_TESTED",
+      "points": { "target": 2.25, "acceptedByIndependentRubricReviewer": 0.0, "reviewer": null },
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-014/execution-report.html#criterion-sc-05-03",
+      "evidenceDigest": "6e22ea5e622187282198341d0ba309a055dbb4e85c0bd05c8ad5ecd233215498",
+      "actorRole": "Automated test runner; no authorized QC/QMS acceptance actor",
+      "sourceRevision": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+      "timestamp": "2026-10-09T08:29:00+03:00",
+      "blockers": [
+        "No approved document approval authority/effectivity source: RD-019/PD-13 OPEN; ApproveVersionUseCase throws POLICY_SOURCE_REQUIRED (src/modules/documents/application/approve-version.ts:10-13); EffectiveDatePolicy default denies (supersede-version.ts:13).",
+        "PostgreSQL 18 runtime unavailable: Docker/Testcontainers not found; tests/integration/documents/review-queue.test.ts blocked at container setup.",
+        "Authenticated E2E blocked at release-artifact SHA binding; no isolated DB/credentials."
+      ],
+      "note": "Source lifecycle guards (DRAFT-only edit, submit evidence+digest, SoD self-review denial, transition map) exist and mismatch paths fail closed, but the criterion requires runtime/effectivity proof and cannot be earned from source."
+    },
+    {
+      "criterionId": "QC360-SC-05-04",
+      "alias": "n-04",
+      "expectedOutcome": "An authorized user retrieves the effective WI/SOP/template revision that matches the record's captured revision and within the user's scope.",
+      "testKind": "authenticated browser historical-revision retrieval (inspection + laboratory records)",
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 2,
+      "status": "NOT_TESTED",
+      "points": { "target": 2.7, "acceptedByIndependentRubricReviewer": 0.0, "reviewer": null },
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-014/execution-report.html#criterion-sc-05-04",
+      "evidenceDigest": "66d654755f00eb4ba2a8ed640089a6e9a7705d7771fef1c0f22007af2068cad5",
+      "actorRole": "No authorized user session; browser run not performed",
+      "sourceRevision": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+      "timestamp": "2026-10-09T08:29:00+03:00",
+      "blockers": [
+        "No approved/effective WI/SOP revision exists to retrieve; the authoring pack is D0.2 DRAFT FOR REVIEW (Documents/QC_System_WI_SOP_Pack/References/READ-ME.txt:1).",
+        "Authenticated E2E requires a candidate-bound release artifact and isolated DB; run failed preflight with expected 960dc79f vs actual 60e78cc6.",
+        "No isolated PostgreSQL 18 to seed read-only synthetic document versions and template-source snapshots."
+      ]
+    }
+  ],
+  "sourceReviewEvidence": [
+    {
+      "testKind": "source inspection (non-acceptance)",
+      "files": [
+        "src/modules/documents/domain/document-state.ts:4-37",
+        "src/modules/documents/domain/document-version.ts:72-94",
+        "src/modules/documents/application/authorization.ts:11-37",
+        "src/modules/documents/application/approve-version.ts:6-14",
+        "src/modules/documents/application/supersede-version.ts:12-23",
+        "src/modules/documents/application/create-version.ts:12-31",
+        "src/modules/documents/infrastructure/postgres-repository.ts:135-208,255-301",
+        "db/migrations/0032_document_version_file_integrity.sql",
+        "db/migrations/0033_controlled_document_execution_context.sql",
+        "db/migrations/0043_controlled_document_source_binding.sql",
+        "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:360-402",
+        "src/modules/laboratory/infrastructure/postgres-repository.ts:575-585,624-634"
+      ],
+      "exitCode": 0,
+      "status": "SOURCE_REVIEW_ONLY",
+      "actorRole": "Automated source reviewer; not a QC or QMS acceptance actor",
+      "sourceRevision": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85"
+    },
+    {
+      "testKind": "controlled pack integrity verification",
+      "command": "shasum -a 256 -c Documents/QC_System_WI_SOP_Pack/References/SHA256SUMS.txt",
+      "exitCode": 0,
+      "entriesVerified": 117,
+      "entriesFailed": 0,
+      "sha256sumsDigest": "43a4b3f8b83f62702e9c85680a06be466b176c5353461e633e783f2529abae91",
+      "status": "PASS (hash preservation only; does not establish approval or effectivity)",
+      "actorRole": "Automated verifier"
+    }
+  ],
+  "runtimeControlledTemplateTraceability": "audit/launch-readiness/QC-LAUNCH-014/runtime-controlled-template-traceability.json",
+  "noProductionAccess": true,
+  "noRemoteAction": true,
+  "notes": "PASS ≠ RELEASED; APPROVED ≠ EFFECTIVE. No code, migration, controlled document, role, or remote repository change was made. No electronic signature was created and no controlled original was altered."
+}
