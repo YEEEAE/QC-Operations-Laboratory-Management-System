@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-012 — Audit Trail, Atomicity and Failure Rollback</title>
+  <style>
+    :root{color-scheme:light;--ink:#14232d;--muted:#51636d;--line:#d5dee3;--paper:#fff;--wash:#f3f7f8;--warn:#7b3e00;--warn-bg:#fff1d8;--ok:#175c42;--ok-bg:#e7f5ed}
+    *{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1120px;margin:32px auto;padding:0 20px}header,.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:18px}h1{margin:0 0 6px;font-size:1.7rem}h2{font-size:1.16rem;margin:0 0 14px}h3{font-size:1rem;margin:16px 0 8px}.eyebrow,.muted{color:var(--muted)}.status{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--warn-bg);color:var(--warn);font-weight:700}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.metric{background:var(--wash);padding:12px;border-radius:8px}.metric strong{display:block;font-size:1.14rem}table{width:100%;border-collapse:collapse;font-size:.93rem}th,td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--line)}th{background:var(--wash)}code{overflow-wrap:anywhere}ul{padding-left:22px}.pass{color:var(--ok);background:var(--ok-bg);padding:2px 6px;border-radius:4px}.blocked{color:var(--warn);font-weight:700}details{border-top:1px solid var(--line);padding:12px 0}summary{font-weight:650;cursor:pointer}@media(max-width:650px){main{margin:12px auto;padding:0 10px}header,.panel{padding:16px}table{display:block;overflow-x:auto}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Priority P0 · Phase 1 Safety · Database + Compliance QA</p>
+    <h1>QC-LAUNCH-012 — Audit Trail, Atomicity and Failure Rollback</h1>
+    <p><span class="status">BLOCKED — PostgreSQL 18 runtime proof not available</span></p>
+    <p>Current-candidate source review and required test commands were bound to one SHA. The PostgreSQL-backed rollback, tamper, migration and race cases could not execute because the local Docker daemon is unavailable. No controlled record or database was modified.</p>
+    <div class="grid">
+      <div class="metric"><span>Candidate SHA</span><strong><code>acf7b5a74ab6…f7c5fb3</code></strong></div>
+      <div class="metric"><span>Reference distance</span><strong>8 commits ahead</strong></div>
+      <div class="metric"><span>Source fingerprint at run</span><strong><code>e3b0c442…b855</code></strong></div>
+      <div class="metric"><span>Targeted / accepted points</span><strong>5.50 / 0</strong></div>
+    </div>
+    <p class="muted">Migration head 0047 · Node 24.20.0 · pnpm 11.25.0 · Local macOS arm64 · Run ID <code>a306d569-6935-4929-81c6-572846251157</code></p>
+  </header>
+
+  <section class="panel">
+    <h2>Acceptance status</h2>
+    <table><thead><tr><th>Criterion</th><th>Expected proof</th><th>Observed</th><th>Points</th></tr></thead><tbody>
+      <tr><td>QC360-SC-03-03</td><td>Current-SHA PostgreSQL tests for audit tamper rejection and controlled-history immutability.</td><td class="blocked">BLOCKED — PG tests skipped/not initialized.</td><td>0 / 2.50</td></tr>
+      <tr><td>QC360-SC-03-04</td><td>PG18 rollback, audit/outbox atomicity, concurrency, replay and read consistency.</td><td class="blocked">BLOCKED — no PostgreSQL runtime result.</td><td>0 / 3.00</td></tr>
+    </tbody></table>
+    <p>Independent rubric review: <strong>NOT AVAILABLE</strong>. Points are not earned by source inspection or test files alone.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Candidate-bound verification</h2>
+    <table><thead><tr><th>Command</th><th>Result</th><th>What ran</th><th>Evidence</th></tr></thead><tbody>
+      <tr><td><code>pnpm test:integration</code></td><td class="blocked">Exit 1 · 316 passed · 2 failed · 294 skipped</td><td>PG cases skipped; two unrelated task-use-case failures/unhandled rejections in <code>tests/integration/tasks/use-cases.test.ts</code>.</td><td><code>.ci-results/integration.json</code><br>SHA-256 <code>d97b689c645e39b7…0ac1e562</code></td></tr>
+      <tr><td><code>pnpm test:migrations</code></td><td class="blocked">Exit 1 · 33 skipped</td><td>8 test files failed during Testcontainers startup; no migration test ran.</td><td><code>.ci-results/migrations.json</code><br>SHA-256 <code>8d5d0861f255be92…cb1286c4</code></td></tr>
+      <tr><td><code>pnpm test:concurrency</code></td><td class="blocked">Exit 1 · 17 skipped</td><td>2 concurrency suites failed during Testcontainers startup; no race test ran.</td><td><code>.ci-results/concurrency.json</code><br>SHA-256 <code>04bcae025e262967…b89701dbb72</code></td></tr>
+    </tbody></table>
+    <p>Runner error: <code>Could not find a working container runtime strategy</code>. <code>DATABASE_URL</code>, <code>QC_TEST_DATABASE_URL</code>, and <code>PGHOST</code> were unset. No external database endpoint was used.</p>
+    <p>Non-PG contract checks in that integration run passed: audit service 11/11, audit query 7/7, audit/dashboard parity 9/9, outbox worker 1/1, document editing 7/7 and document review 3/3. These 38 checks use source-level/test-double behavior and do not prove PostgreSQL transactions.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Regulated mutation and transaction inventory</h2>
+    <p>Transaction boundaries below are source-inspected. Their PostgreSQL behavior is not runtime-verified in this run.</p>
+    <table><thead><tr><th>Domain</th><th>Mutation coverage</th><th>Owning transaction boundary</th><th>Current-SHA test coverage</th></tr></thead><tbody>
+      <tr><td>Documents</td><td>Create identity/version; draft CAS; submit; review; approve; void; archive; make effective; supersede and replace effective version.</td><td><code>PostgresDocumentRepository</code> transaction; version supersession updates both versions and appends paired events in one transaction.</td><td><code>documents/editing.test.ts</code>, <code>documents/review.test.ts</code>, <code>concurrency/controlled-mutations.test.ts</code> — PG cases skipped.</td></tr>
+      <tr><td>Quarantine receiving</td><td>Create; draft update; correct; hold; release; cancel/void; generic transition; create linked inspection.</td><td><code>PostgresReceivingRepository</code>; inspection-origin record/effects are created inside inspection repository transaction.</td><td><code>receiving-use-cases.test.ts</code>, <code>release-state.test.ts</code>, <code>controlled-mutations.test.ts</code> — PG cases skipped.</td></tr>
+      <tr><td>Quarantine inspection</td><td>Create; link equipment; record AQL; save draft/form/results; start; submit; review; stage-one/final approve; return; reject; reopen; resume; void.</td><td><code>PostgresInspectionRepository</code>; controlled form persistence has its own database transaction. Result replacement, snapshot, audit and lifecycle outbox are transaction-bound.</td><td><code>inspection-execution.test.ts</code>, <code>inspection-review.test.ts</code>, <code>qc-data-002-dynamic-workflow.test.ts</code>, <code>controlled-report-catalog.test.ts</code> — PG cases skipped.</td></tr>
+      <tr><td>Inspection templates</td><td>Create; new revision; review; approve; stop; void; supersede.</td><td><code>PostgresTemplateRepository</code> transaction, with audit/outbox from action dependency factory.</td><td><code>template-lifecycle.test.ts</code>, <code>template-concurrency.test.ts</code> — PG cases skipped.</td></tr>
+      <tr><td>Laboratory controlled test</td><td>Create; save runs/replicates/readings/results; link equipment; submit; review; stage-one/final approve; return; reject; reopen; resume; attempt VOID (currently denied while policy source is absent); create linked retest.</td><td><code>PostgresLaboratoryRepository</code> transaction; measurement/run snapshots and audit/outbox are persisted through transaction-bound repositories.</td><td><code>execution.test.ts</code>, <code>governance.test.ts</code>, <code>qc-data-003-runs.test.ts</code>, <code>scientific-boundaries.test.ts</code> — PG cases skipped.</td></tr>
+      <tr><td>Laboratory report drafts</td><td>Create transcription-only draft; update by expected version.</td><td><code>PostgresReportDraftRepository</code> transaction writes draft and audit together; it is separate from controlled lab-test workflow/outbox.</td><td><code>report-drafts.test.ts</code> — PG cases skipped.</td></tr>
+    </tbody></table>
+    <p>CAPA corrective-action workflows are outside this prompt's explicit target paths. Quarantine correction and laboratory retest are included above.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Source observations</h2>
+    <ul>
+      <li><code>db/migrations/0001_core_schema.sql:51-89</code> defines audit fields and a unique outbox dedupe key.</li>
+      <li><code>db/migrations/0004_audit_outbox_idempotency.sql:1-8</code> adds indexes only; it does not itself make audit immutable.</li>
+      <li><code>db/migrations/0028_qc_closure_009_controlled_records.sql:32-65</code> adds audit <code>UPDATE</code>/<code>DELETE</code> rejection triggers; <code>0033_controlled_document_execution_context.sql:116-138</code> adds <code>TRUNCATE</code> guards.</li>
+      <li>Production action dependency factories supply audit/outbox repositories for document, receiving/inspection, template and laboratory mutation paths. Read-only factories are separately constructed.</li>
+      <li>Repository constructors permit omitted audit/outbox ports for read-only construction. The transaction guarantees therefore still require the verified action factory path; skipped PG18 tests cannot confirm actual DB outcomes.</li>
+    </ul>
+    <p><strong>Before / after:</strong> before testing, no product diff existed. After testing, no product source or database changed. The launch packet was authored afterward and is the only requested local deliverable.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Blockers, remediation and signoff</h2>
+    <ul>
+      <li><strong>Database runtime owner:</strong> make a disposable PostgreSQL 18/Testcontainers runtime available.</li>
+      <li><strong>Database QA:</strong> start a fresh candidate-bound verification run and repeat the three required commands; inspect rollback, audit tamper, source-version consistency and same-version races.</li>
+      <li><strong>Compliance QA:</strong> review authentic exact-SHA evidence for actor, timestamp, old/new state, reason and source-version context.</li>
+      <li><strong>Independent rubric reviewer:</strong> determine acceptance and any earned points after reviewing the runtime artifacts.</li>
+    </ul>
+    <p>No implementation patch is proposed; no patch rollback is needed. Residual risk remains <strong>NOT VERIFIED</strong> for PostgreSQL 18 rollback, append-only enforcement at the DB boundary, concurrent version behavior, idempotency replay and audit read consistency. Unlogged regulated transitions remain a release blocker until these gates close.</p>
+    <p><strong>Signoff:</strong> Database QA — NOT SIGNED · Compliance QA — NOT SIGNED · Independent reviewer — NOT AVAILABLE</p>
+  </section>
+  <p class="muted">Generated 2026-10-09 04:33 UTC. Full machine details and digests: <code>evidence.json</code>. This report does not claim UAT, production acceptance, release readiness or rubric points.</p>
+</main>
+</body>
+</html>

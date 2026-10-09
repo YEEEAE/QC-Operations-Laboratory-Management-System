@@ -1,0 +1,240 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "QC-LAUNCH-012",
+  "generatedAt": "2026-10-09T04:33:10Z",
+  "criterionResults": [
+    {
+      "id": "QC360-SC-03-03",
+      "expectedOutcome": "Current-candidate PostgreSQL tests prove audit denial/immutability and that approved controlled history cannot be modified.",
+      "observedStatus": "BLOCKED",
+      "executionStatus": "BLOCKED",
+      "targetWeight": 2.5,
+      "acceptedPoints": 0,
+      "independentRubricReviewer": "NOT AVAILABLE",
+      "reason": "PG18 tests did not execute because no container runtime or isolated PostgreSQL URL was available. The immutable-history trigger and focused tamper tests were source-inspected only."
+    },
+    {
+      "id": "QC360-SC-03-04",
+      "expectedOutcome": "Current-candidate PostgreSQL 18 runtime evidence proves rollback, audit/outbox atomicity, concurrent version behavior, idempotency and consistent audit reads.",
+      "observedStatus": "BLOCKED",
+      "executionStatus": "BLOCKED",
+      "targetWeight": 3.0,
+      "acceptedPoints": 0,
+      "independentRubricReviewer": "NOT AVAILABLE",
+      "reason": "All migration tests and all concurrency tests were skipped or failed during Testcontainers startup. No PostgreSQL 18 business records or rollback/tamper/read consistency outcomes were observed."
+    }
+  ],
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "branch": "main",
+    "gitSha": "acf7b5a74ab62845f95f1134e61f34d72f7c5fb3",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceIsAncestor": true,
+    "commitsAheadOfReference": 8,
+    "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceFingerprintMethod": "scripts/verification/begin-verification-run.mjs candidate-bound run context; clean working tree relative to HEAD when test commands ran. The launch packet was authored after the runs and is an audit deliverable, not executable source.",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "pnpmVersion": "11.25.0",
+    "environment": "Local macOS arm64; Docker daemon unavailable; DATABASE_URL, QC_TEST_DATABASE_URL and PGHOST unset; no external database or QMS connection used."
+  },
+  "sourceEvidence": [
+    {
+      "sourcePath": "db/migrations/0001_core_schema.sql",
+      "lines": "51-89",
+      "sha256": "a92572b6e26f5f993a1035d2bd6a45e5bf6265098cec2bf26b3f359d773023c1",
+      "disposition": "Defines audit_events actor, subject, action, transition, old/new state, reason, request and signature fields, plus the outbox dedupe key."
+    },
+    {
+      "sourcePath": "db/migrations/0004_audit_outbox_idempotency.sql",
+      "lines": "1-8",
+      "sha256": "771a4dcf6fd073a026907b711d2a6baf01eee56cbd6d3dc074d9ac3922f51e62",
+      "disposition": "Adds audit/outbox indexes only; comments explicitly defer idempotent_commands pending an approved command strategy. This migration alone does not establish audit immutability."
+    },
+    {
+      "sourcePath": "db/migrations/0028_qc_closure_009_controlled_records.sql",
+      "lines": "32-65",
+      "sha256": "48b5535141860615e6e9e808f7dac4995db71948c98198ac9425ed38832f0313",
+      "disposition": "Adds BEFORE UPDATE OR DELETE append-only triggers for audit_events and controlled evidence tables."
+    },
+    {
+      "sourcePath": "db/migrations/0033_controlled_document_execution_context.sql",
+      "lines": "116-138",
+      "sha256": "6b4cf38ab8974ba0dbb30fc4cccb766dac3351796f4d84eb5bf226de0d75c472",
+      "disposition": "Adds TRUNCATE guards for audit and controlled history, extending the row-level append-only controls."
+    },
+    {
+      "sourcePath": "src/modules/documents/infrastructure/postgres-repository.ts",
+      "lines": "77-90, 135-208, 222-303",
+      "sha256": "8153ecb6a6e2ccd1524fea68f3ebbc7a4b28d289c1f11a9c275fdc2e7501a431",
+      "disposition": "Document identity/version create, draft CAS, review/transition and two-version supersession execute in database transactions with paired audit/outbox calls when production action dependencies are supplied."
+    },
+    {
+      "sourcePath": "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts",
+      "lines": "103-159, 331-390, 392-483, 486-595",
+      "sha256": "52af3ba24b2c71221ea5e0095c78dc64b2fc4ea726359e4a81b184373df6baf4",
+      "disposition": "Receiving create, draft update, correction and state transition are transactional and append audit/outbox through transaction-bound repositories when injected."
+    },
+    {
+      "sourcePath": "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts",
+      "lines": "305-465, 494-590, 594-689, 690-877",
+      "sha256": "b6c32993faaef51f4e7260116712e209fa98be735b67a18a17dbe45c993d606e",
+      "disposition": "Inspection creation, equipment/AQL/form/result writes and state transitions use transactions; result and lifecycle evidence is appended in the same transaction. Production mutation factory passes audit/outbox; inspection creation also binds the receiving-origin audit/outbox event."
+    },
+    {
+      "sourcePath": "src/modules/quarantine/templates/infrastructure/postgres-repository.ts",
+      "lines": "109-195, 197-259, 261-346",
+      "sha256": "21e9d2041cf419efa8ace48ab979754a6e87459cbf5a2ae881574294a66ce4ca",
+      "disposition": "Template create, lifecycle transition and revision creation are transactional with audit/outbox calls."
+    },
+    {
+      "sourcePath": "src/modules/laboratory/infrastructure/postgres-repository.ts",
+      "lines": "410-478, 594-667",
+      "sha256": "b2cdbf6634cef898bbdc7d0357de2e1e20bc6355e56e22d429887424e90920b7",
+      "disposition": "Laboratory create/save and run-equipment evidence are transaction-scoped; lifecycle snapshots, audit and outbox are committed together when the action factory dependencies are present."
+    },
+    {
+      "sourcePath": "src/modules/laboratory/infrastructure/postgres-report-draft-repository.ts",
+      "lines": "31-110",
+      "sha256": "a8c7cdbf8b82202f52b0555ca56e1cec392f925b4bbef664b7bc1300502c066b",
+      "disposition": "Transcription-only laboratory report draft create/update write the draft and audit row in one transaction; these separate draft records do not enqueue a controlled lab workflow event."
+    },
+    {
+      "sourcePath": "src/modules/documents/application/dependencies.ts",
+      "lines": "25-34",
+      "sha256": "25eadb1cb0eee2ece90768a5e8fdba458eec6866359dedb5ea510fd3029d76ee",
+      "disposition": "Document action dependency factory supplies PostgreSQL audit and outbox repositories; read-only factory is separate."
+    },
+    {
+      "sourcePath": "src/modules/quarantine/application/dependencies.ts",
+      "lines": "70-78",
+      "sha256": "511899bb90e70a0244890680cfa51ae6251ae95acac827b4e4d0bb2de494a32f",
+      "disposition": "Quarantine action factory supplies transaction-capable audit/outbox repositories to receiving and inspection mutation repositories."
+    },
+    {
+      "sourcePath": "src/modules/quarantine/templates/application/dependencies.ts",
+      "lines": "37-47",
+      "sha256": "35edaa892ee748d03b9abb51faedf8cd6a4019d3de6b831c41055205c1c7df34",
+      "disposition": "Template action factory supplies audit/outbox repositories; read-only dependencies are separately constructed."
+    },
+    {
+      "sourcePath": "src/modules/laboratory/application/dependencies.ts",
+      "lines": "35-48",
+      "sha256": "2b25cd42c14668a394d16886857cddc05e6817b1697f3fc42f1f3c476be8049e",
+      "disposition": "Laboratory action factory supplies PostgreSQL audit/outbox repositories to mutation use cases."
+    }
+  ],
+  "mutationInventory": [
+    {
+      "domain": "Documents",
+      "mutations": ["create document identity", "create revision/version", "update draft with expected version and content hash", "submit", "review", "approve", "void", "archive", "make effective", "supersede old and activate replacement"],
+      "transactionOwner": "PostgresDocumentRepository",
+      "source": "src/modules/documents/infrastructure/postgres-repository.ts:79-90,135-208,222-303",
+      "evidenceTests": ["tests/integration/documents/editing.test.ts", "tests/integration/documents/review.test.ts", "tests/integration/concurrency/controlled-mutations.test.ts"]
+    },
+    {
+      "domain": "Quarantine receiving",
+      "mutations": ["create", "update draft", "correct receiving data", "generic transition", "hold", "release", "cancel/void", "create linked inspection"],
+      "transactionOwner": "PostgresReceivingRepository; linked inspection creation is coordinated by the inspection repository transaction",
+      "source": "src/modules/quarantine/receiving/infrastructure/postgres-repository.ts:109-159,331-595; src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:305-465",
+      "evidenceTests": ["tests/integration/quarantine/receiving-use-cases.test.ts", "tests/integration/quarantine/release-state.test.ts", "tests/integration/concurrency/controlled-mutations.test.ts"]
+    },
+    {
+      "domain": "Quarantine inspection",
+      "mutations": ["create from receiving", "link equipment", "record AQL", "save draft/controlled form", "record result measurements", "start", "submit", "review", "stage-one approve", "final approve", "return", "reject", "reopen", "resume", "void"],
+      "transactionOwner": "PostgresInspectionRepository; controlled form save uses SaveControlledInspectionFormUseCase transaction",
+      "source": "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:305-877; src/modules/quarantine/inspection/application/save-controlled-form.ts:124+",
+      "evidenceTests": ["tests/integration/quarantine/inspection-execution.test.ts", "tests/integration/quarantine/inspection-review.test.ts", "tests/integration/quarantine/qc-data-002-dynamic-workflow.test.ts", "tests/integration/quarantine/controlled-report-catalog.test.ts"]
+    },
+    {
+      "domain": "Inspection templates",
+      "mutations": ["create", "revise as a new version", "review", "approve", "stop", "void", "supersede"],
+      "transactionOwner": "PostgresTemplateRepository",
+      "source": "src/modules/quarantine/templates/infrastructure/postgres-repository.ts:109-346",
+      "evidenceTests": ["tests/integration/quarantine/template-lifecycle.test.ts", "tests/integration/quarantine/template-concurrency.test.ts"]
+    },
+    {
+      "domain": "Laboratory controlled test",
+      "mutations": ["create", "save runs/replicates/readings/results", "link run equipment", "submit", "review", "stage-one approve", "final approve", "return", "reject", "reopen", "resume", "attempt VOID (denied while approved policy is absent)", "create retest linked to original"],
+      "transactionOwner": "PostgresLaboratoryRepository",
+      "source": "src/modules/laboratory/infrastructure/postgres-repository.ts:410-667",
+      "evidenceTests": ["tests/integration/laboratory/execution.test.ts", "tests/integration/laboratory/governance.test.ts", "tests/integration/laboratory/qc-data-003-runs.test.ts", "tests/integration/laboratory/scientific-boundaries.test.ts"]
+    },
+    {
+      "domain": "Laboratory report transcription drafts",
+      "mutations": ["create draft", "save draft by expected version"],
+      "transactionOwner": "PostgresReportDraftRepository",
+      "source": "src/modules/laboratory/infrastructure/postgres-report-draft-repository.ts:31-110",
+      "evidenceTests": ["tests/integration/laboratory/report-drafts.test.ts"]
+    }
+  ],
+  "verification": [
+    {
+      "kind": "test",
+      "criterionIds": ["QC360-SC-03-03", "QC360-SC-03-04"],
+      "expectedOutcome": "Run current-candidate PostgreSQL 18 integration rollback, audit immutability/read-consistency, migration and controlled mutation coverage.",
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "status": "BLOCKED_WITH_FAILURES",
+      "totals": {"total": 612, "passed": 316, "failed": 2, "skipped": 294},
+      "runnerErrors": 2,
+      "actorRole": "Synthetic integration fixtures; PostgreSQL-backed actor cases skipped; no live QMS actor.",
+      "sourceRevision": "acf7b5a74ab62845f95f1134e61f34d72f7c5fb3",
+      "timestamp": "2026-10-09T04:30:51Z",
+      "runId": "a306d569-6935-4929-81c6-572846251157",
+      "machineEvidenceUri": ".ci-results/integration.json",
+      "machineEvidenceSha256": "d97b689c645e39b7f81c844ee841f4457cf8505e2afee3709d93a04b0ac1e562",
+      "testReportDigest": "d7df8e0b63215505c1dcc829668f88a32793064754e4be2a67d89d8e20ea6f9d",
+      "notes": "294 tests skipped when Testcontainers could not start. Two unrelated task use-case assertions produced failures/unhandled rejections at tests/integration/tasks/use-cases.test.ts; overall command exits 1. Target audit rollback, tamper and concurrency assertions are among the skipped PostgreSQL cases. Non-PG contracts in this run passed: audit service 11/11, audit query 7/7, audit/dashboard parity 9/9, outbox worker 1/1, document editing 7/7 and document review 3/3; these do not prove PostgreSQL behavior."
+    },
+    {
+      "kind": "test",
+      "criterionIds": ["QC360-SC-03-03", "QC360-SC-03-04"],
+      "expectedOutcome": "Apply and verify the complete migration set, append-only audit controls and rollback behavior on disposable PostgreSQL 18.",
+      "command": "pnpm test:migrations",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "totals": {"total": 33, "passed": 0, "failed": 0, "skipped": 33},
+      "setupErrors": 8,
+      "actorRole": "N/A — database migration test fixtures did not start.",
+      "sourceRevision": "acf7b5a74ab62845f95f1134e61f34d72f7c5fb3",
+      "timestamp": "2026-10-09T04:31:15Z",
+      "runId": "a306d569-6935-4929-81c6-572846251157",
+      "machineEvidenceUri": ".ci-results/migrations.json",
+      "machineEvidenceSha256": "8d5d0861f255be9289bce80962ba9debab6339c29164fc86175e358cb1286c4a",
+      "testReportDigest": "bf3fdbd4aff58aecb2069c110651c700829f0ed3c0a22100062019efde08ba9f",
+      "notes": "33 tests skipped; 8 migration test files failed to initialize after Testcontainers reported 'Could not find a working container runtime strategy'."
+    },
+    {
+      "kind": "test",
+      "criterionIds": ["QC360-SC-03-03", "QC360-SC-03-04"],
+      "expectedOutcome": "Exercise PG18 version races, rollback, idempotent replay and audit/outbox atomicity on the current candidate.",
+      "command": "pnpm test:concurrency",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "totals": {"total": 17, "passed": 0, "failed": 0, "skipped": 17},
+      "setupErrors": 2,
+      "actorRole": "N/A — database concurrency test fixtures did not start.",
+      "sourceRevision": "acf7b5a74ab62845f95f1134e61f34d72f7c5fb3",
+      "timestamp": "2026-10-09T04:31:20Z",
+      "runId": "a306d569-6935-4929-81c6-572846251157",
+      "machineEvidenceUri": ".ci-results/concurrency.json",
+      "machineEvidenceSha256": "04bcae025e262967db509b96469c199ec32e1441432b48ad1fbb6b89701dbb72",
+      "testReportDigest": "a5aaa18d26b676411bb31278aeb5e9ac6bd040b440e3411ab146e42c568c3f1e",
+      "notes": "17 tests skipped; 2 concurrency suites failed to initialize because no Testcontainers runtime was available."
+    }
+  ],
+  "decisions": [
+    "No product code, migration, controlled QMS source, signature, real record or database was changed.",
+    "No PostgreSQL 18 runtime result is claimed; repository source shows transaction-bound audit/outbox writes in production action factories, but source inspection is not runtime proof.",
+    "No implementation patch is justified from the available source review; mutations must remain blocked from acceptance until current-SHA PG18 evidence exists.",
+    "Both QC360 criteria remain 0 accepted points; independent rubric review was unavailable."
+  ],
+  "blockers": [
+    "Docker daemon is absent; Testcontainers reports no working container runtime strategy.",
+    "DATABASE_URL, QC_TEST_DATABASE_URL and PGHOST are unset; there is no isolated direct PostgreSQL 18 endpoint.",
+    "The integration suite has two unrelated task-use-case failures in addition to PG18-skipped cases.",
+    "Independent rubric reviewer acceptance is unavailable."
+  ],
+  "evidenceBoundary": "Repository source was inspected at the exact candidate SHA. The named integration/migration/concurrency suites did not provide PostgreSQL runtime proof because their PG cases were skipped or could not initialize. Passing non-PG cases do not establish PG18 rollback, immutability, concurrency, QMS effectivity, UAT, production readiness or earned points."
+}
