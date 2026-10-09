@@ -1,0 +1,90 @@
+{
+  "taskId": "QC-LAUNCH-013",
+  "criterionId": "QC360-SC-03-05",
+  "expectedOutcome": "An appointed QC Record Owner and QMS reviewer accept immutable audit and signature behavior for this exact candidate after inspecting synthetic cross-module sign/review/correct/void history and replay denial in an authenticated browser; signed evidence binds the release identity.",
+  "taskStatus": "BLOCKED",
+  "criterionStatus": "NOT_TESTED",
+  "points": {
+    "target": 2.0,
+    "acceptedByIndependentRubricReviewer": 0.0,
+    "reviewer": null
+  },
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "referenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "sourceRevision": "1289f44c3aff68fc2f77e5b8063a961a49a77fd1",
+    "isReferenceAncestor": true,
+    "commitsAfterReference": 9,
+    "firstParent": "acf7b5a74ab62845f95f1134e61f34d72f7c5fb3",
+    "productWorkingTreeFingerprint": {
+      "algorithm": "SHA-256",
+      "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "basis": "SHA-256 of git diff --binary HEAD; evidence packet and .agents/mind/01-mind-latest.md excluded. No product source or scoped requirement document diff at capture."
+    }
+  },
+  "capturedAt": "2026-10-09T07:37:46+03:00",
+  "environment": {
+    "kind": "local source checkout",
+    "authenticatedBrowser": "NOT AVAILABLE / NOT USED",
+    "isolatedPostgres18": "NOT PROVISIONED / NOT USED",
+    "syntheticDataset": "NOT CREATED",
+    "productionDataOrDatabase": "NOT ACCESSED"
+  },
+  "evidence": [
+    {
+      "testKind": "source inspection (non-acceptance)",
+      "command": "rtk nl -ba src/pages/audit.astro; rtk nl -ba 'src/pages/approvals/[approvalId].astro' | sed -n '35,105p'; rtk nl -ba Documents/REQUIREMENTS-TRACEABILITY.md | sed -n '784,860p'; rtk nl -ba Documents/UAT-ACCEPTANCE-PLAN.md | sed -n '1018,1045p;834,856p;1450,1485p'",
+      "exitCode": 0,
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-013/execution-report.html#observed-source-review",
+      "evidenceDigest": null,
+      "digestNote": "No command log was persisted. Source authenticity is bound by the candidate SHA and the per-file SHA-256 values below; this source review is not UAT evidence.",
+      "actorRole": "Automated source reviewer; not a QC or QMS acceptance actor",
+      "sourceRevision": "1289f44c3aff68fc2f77e5b8063a961a49a77fd1",
+      "timestamp": "2026-10-09T07:37:46+03:00",
+      "status": "SOURCE_REVIEW_ONLY"
+    },
+    {
+      "criterionId": "QC360-SC-03-05",
+      "testKind": "manual QC record-owner and QMS acceptance",
+      "command": null,
+      "exitCode": null,
+      "evidenceUri": null,
+      "evidenceDigest": null,
+      "actorRole": "QC Record Owner + QMS reviewer (not appointed/present)",
+      "actorIdentity": null,
+      "sourceRevision": "1289f44c3aff68fc2f77e5b8063a961a49a77fd1",
+      "timestamp": "2026-10-09T07:37:46+03:00",
+      "status": "NOT_TESTED",
+      "blockers": [
+        "No named authorized participants or signed acceptance authority",
+        "No authenticated browser session or isolated PostgreSQL 18 UAT database",
+        "Effective action-specific signature policy is not available for sign/correct/void"
+      ]
+    }
+  ],
+  "sourceEvidence": [
+    {
+      "uri": "src/pages/audit.astro",
+      "sha256": "abaec2b92b2a160f196889259e8ed49a1598f28dae0464a6539dc16837d9d156",
+      "relevantLines": "69-74"
+    },
+    {
+      "uri": "src/pages/approvals/[approvalId].astro",
+      "sha256": "76114a8c90006a0b1c94ee6e9c86c6f32f5e74bdb4344fd542476ce11a9834fe",
+      "relevantLines": "65-78"
+    },
+    {
+      "uri": "Documents/UAT-ACCEPTANCE-PLAN.md",
+      "sha256": "06dc0c033f8c16868518bb32581159d1eab4d78d0126d624902bd6ca9adb2fff",
+      "relevantLines": "834-849,1018-1045,1450-1482"
+    },
+    {
+      "uri": "Documents/REQUIREMENTS-TRACEABILITY.md",
+      "sha256": "33534685f8b7515546cca62630ba56ac28fdfed541e2e88130ec90fbeccf56bb",
+      "relevantLines": "784-854"
+    }
+  ],
+  "humanFindings": [],
+  "humanSignoff": null,
+  "remoteChanges": false
+}

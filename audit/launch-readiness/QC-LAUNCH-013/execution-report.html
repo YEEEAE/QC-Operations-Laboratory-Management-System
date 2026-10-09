@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-013 — Audit and signature acceptance</title>
+  <style>
+    :root{color-scheme:light;--ink:#17212b;--muted:#526273;--line:#d5dde5;--panel:#f4f7fa;--warn:#754500;--red:#8a2020}
+    body{max-width:1000px;margin:2rem auto;padding:0 1rem 3rem;font:16px/1.55 system-ui,sans-serif;color:var(--ink)}
+    h1,h2{line-height:1.2}h1{font-size:1.8rem}h2{font-size:1.2rem;margin-top:2rem}
+    .state{padding:.8rem 1rem;background:#fff2db;border-left:4px solid #d18a15;color:var(--warn)}
+    .meta,.finding{padding:1rem;background:var(--panel);border:1px solid var(--line);border-radius:.4rem}
+    table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.55rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+    code{overflow-wrap:anywhere} .pending{color:var(--red);font-weight:700}
+  </style>
+</head>
+<body>
+  <h1>QC-LAUNCH-013 — Human acceptance of audit records and signatures</h1>
+  <p class="state"><strong>Task result: BLOCKED.</strong> Human acceptance was not held. Criterion QC360-SC-03-05 remains <strong>NOT_TESTED</strong>; earned points accepted by an independent rubric reviewer: <strong>0.00 / 2.00</strong>.</p>
+
+  <section class="meta" aria-label="Candidate identity">
+    <p><strong>Audit reference:</strong> <code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code></p>
+    <p><strong>Candidate HEAD:</strong> <code>1289f44c3aff68fc2f77e5b8063a961a49a77fd1</code>; direct descendant, 9 commits after the reference; first parent <code>acf7b5a74ab62845f95f1134e61f34d72f7c5fb3</code>.</p>
+    <p><strong>Product working-tree fingerprint:</strong> SHA-256 <code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>, defined as SHA-256 of <code>git diff --binary HEAD</code> after excluding this evidence packet and the Project Mind ledger. Product source and scoped documents were unchanged at capture.</p>
+    <p><strong>Captured:</strong> 2026-10-09 07:37:46 Asia/Riyadh. <strong>Environment:</strong> local source checkout only; no authenticated browser session, isolated PostgreSQL 18 dataset, or human UAT environment was used.</p>
+  </section>
+
+  <h2 id="observed-source-review">Observed source review</h2>
+  <table>
+    <thead><tr><th>Source</th><th>Observed behavior</th><th>Acceptance implication</th></tr></thead>
+    <tbody>
+      <tr><td><code>src/pages/audit.astro:69-74</code></td><td>The authenticated audit page queries authorized events. Its table renders occurred time, action, actor, subject type, state transition, reason, and request ID.</td><td>The rendered columns do not show a record version. This source-only observation does not establish what a populated browser record will expose elsewhere.</td></tr>
+      <tr><td><code>src/pages/approvals/[approvalId].astro:65-68, 73-78</code></td><td>The approval timeline is assembled from requested/assigned/started timestamps and a descriptive source-transition entry. The current subject version and review controls are rendered separately; an audit link is provided.</td><td>The timeline itself does not show the historical decision actor, decision time, reason, or version. The owner/QMS browser review must establish whether linked record/audit views together provide the required source-to-approval chain.</td></tr>
+      <tr><td><code>Documents/UAT-ACCEPTANCE-PLAN.md:834-849, 1018-1032, 1036-1045</code></td><td>Signature UAT requires exact subject/version, meaning, reauthentication, stale-version and SoD checks; audit UAT requires actor/action/entity/trusted time/transition/reason/version; VOID must preserve history.</td><td>These are the acceptance checks to execute on this exact release identity.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Prepared synthetic workflow (not executed)</h2>
+  <ol>
+    <li>In a disposable PostgreSQL 18 UAT database, create clearly synthetic records using supported cross-module creation paths. Capture generated IDs and initial versions; use no real QC, supplier, patient, or production data.</li>
+    <li>For a record with an approved action-specific signature policy, have the authorized reviewer inspect the exact subject and version, review it, reauthenticate, and sign only the displayed meaning. Capture the resulting approval and audit references.</li>
+    <li>Return/correct through the supported controlled workflow with a reason. Verify the new version and that the earlier review/signature history remains readable and unchanged.</li>
+    <li>Void only where an effective controlled policy permits it. Verify the void reason, actor, trusted time, version/reference, preserved record/history, and linked replacement if applicable.</li>
+    <li>Attempt an authorized replay of the same captured request in the isolated fixture and verify denial or idempotent reconciliation without duplicate business, signature, or audit writes, per the approved operation contract.</li>
+    <li>QC Record Owner and QMS reviewer independently inspect the complete source-to-approval chain in the browser, compare every event to the evidence register, record findings/remediation, then sign the acceptance record with their actual identities and this candidate SHA.</li>
+  </ol>
+  <p>No synthetic records were created in this turn; no electronic signature, audit event, screenshot, or human finding was fabricated.</p>
+
+  <h2>Requirements and decisions</h2>
+  <p>Reviewed requirement identifiers: UAT-DEC-002/003/004/005/006/009/010/016; REQ-APR-001–008; REQ-ESIG-001–007; REQ-AUD-001–006. This is a source-document review only, not runtime verification. REQ-APR-009, REQ-ESIG-008, and REQ-AUD-007 remain policy-dependent in <code>Documents/REQUIREMENTS-TRACEABILITY.md:796, 811, 854</code>. The UAT plan also leaves the named acceptance authority, participant names, and signature-action policy undecided at lines 1471–1482.</p>
+  <p><strong>Before/after:</strong> no product source or controlled requirement changed. The audit and approval pages retain the same candidate-bound SHA-256 digests recorded in <code>evidence.json</code>. No code patch is proposed pending human determination of whether the displayed history meets the controlled requirement.</p>
+
+  <h2>Blockers, remediation, and residual risk</h2>
+  <ul>
+    <li><span class="pending">BLOCKED:</span> no appointed/named QC Record Owner or QMS participant, no authentication/session for them, and no signed acceptance artifact. Owner roles must be supplied through controlled appointment; do not infer a participant from repository history.</li>
+    <li><span class="pending">BLOCKED:</span> exact approval/signature action authority remains policy-dependent (UAT-DD-008, REQ-APR-009, REQ-ESIG-008). QMS must identify the effective controlled policy/revision before any sign/correct/void action is exercised.</li>
+    <li><span class="pending">NOT TESTED:</span> synthetic isolated PG18 workflow, authenticated browser inspection, actor/version/time/reason comparison, signature/replay denial, and append-only history checks.</li>
+    <li>After authority and environment are available, execute the workflow in <code>patch-or-decision-plan.md</code>. If the browser cannot show historical version and decision provenance, raise a controlled finding and obtain owner disposition before any code change.</li>
+    <li>Residual risk: current page source alone cannot demonstrate the complete historical source-to-approval chain or database immutability. No production GO or release conclusion follows from this report.</li>
+  </ul>
+
+  <h2>Signoff</h2>
+  <table>
+    <tbody>
+      <tr><th>QC Record Owner name / role</th><td>Not appointed / not signed</td></tr>
+      <tr><th>QMS reviewer name / role</th><td>Not appointed / not signed</td></tr>
+      <tr><th>Acceptance decision / date</th><td>NOT TESTED; pending authorized human review</td></tr>
+      <tr><th>Release identity accepted</th><td><code>1289f44c3aff68fc2f77e5b8063a961a49a77fd1</code> — identity recorded, not accepted</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>
