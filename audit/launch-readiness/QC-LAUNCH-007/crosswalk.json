@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "taskId": "QC-LAUNCH-007",
-  "generatedAt": "2026-10-09T05:48:34+03:00",
+  "generatedAt": "2026-10-09T18:46:11.843Z",
   "candidate": {
     "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
     "referenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
-    "sourceSha": "b3db4d91ca2483e8fcdc908e581409474b62d4f9",
+    "sourceSha": "3207ec9fc958ce9eba33d0f5476f19afc11e20c2",
     "branch": "main",
     "migrationHead": "0047_task_references_occurrences.sql"
   },
@@ -4260,5 +4260,16 @@
     "NEEDS_SOURCE_RESCAN": 4,
     "NOT_IN_MASTER_LIST": 2
   },
-  "controls": "Exact code/title/revision matching only. Official titles remain byte-for-byte as extracted from the Rev14 workbook. No scientific criterion, AQL threshold, approval, effectivity, item mapping, or QC signature is inferred."
+  "controls": "Exact code/title/revision matching only. Official titles remain byte-for-byte as extracted from the Rev14 workbook. No scientific criterion, AQL threshold, approval, effectivity, item mapping, or QC signature is inferred.",
+  "validation": {
+    "method": "Re-derived every machine-checkable field from src/modules/quarantine/catalog/*.json using the same source-match logic as the import use case.",
+    "mismatches": [],
+    "result": "PASS",
+    "masterSha256MatchesWorkbook": true,
+    "pdfSha256MatchesEvidenceRows": true,
+    "humanObservationsCarriedForward": [
+      "pageConflictMatrix.resolutionStatus",
+      "pageConflictMatrix.visualNote"
+    ]
+  }
 }

@@ -1,1 +1,158 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QC-LAUNCH-007 — تقرير حالة كتالوج Inspection Report</title><style>body{font:16px/1.75 system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#17212b}h1,h2{line-height:1.3}table{width:100%;border-collapse:collapse;margin:1rem 0}td,th{border:1px solid #bcc7d1;padding:.55rem;text-align:right}th{background:#eef3f7}.status{padding:.2rem .5rem;border-radius:.3rem;font-weight:700;background:#fff2cc}.blocked{background:#ffe0dc}code{direction:ltr;unicode-bidi:embed;background:#f1f3f5;padding:.1rem .25rem}a{color:#075a9c}</style></head><body><h1>QC-LAUNCH-007 — كتالوج 194 Inspection Report و13 Draft</h1><p><strong>الحالة: PARTIAL / BLOCKED.</strong> فُحص المصدر والصفحات؛ لا إثبات لاعتماد قالب رقمي أو فعاليته أو ربطه بعنصر. تبقى إدخالات الـ13 مسودات.</p><h2>هوية المرشح</h2><ul><li>الفرع: <code>main</code>؛ HEAD: <code>b3db4d91ca2483e8fcdc908e581409474b62d4f9</code></li><li>مرجع المقارنة: <code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> (سلف بخمسة commits)</li><li>بصمة التحقق: <code>d8517457f8eb11aeb3b9c088994a2e6dfd8261d6ca915d69a837e77275d89d66</code>؛ migration head: <code>0047_task_references_occurrences.sql</code></li><li>Rev14 Master SHA-256: <code>199f1a8c453e4340fdf3e0c79ba93c53510f35b4b2b5875f6ef8e55750f128e4</code>؛ PDF SHA-256: <code>e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da</code>.</li></ul><h2>نتيجة المصالحة</h2><p>استخراج Rev14 تحقق: 194 هوية غير فارغة؛ استُبعد <code>F-823-T175</code> لعنوان فارغ. ملف PDF فيه 28 صفحة، ومصفوفة الصفحات كاملة مرفقة. الـMaster يحكم الهوية والكود والعنوان والمراجعة، والصور تحكم بنية النموذج ومحتواه. لا fuzzy matching ولا تصحيح صامت.</p><table><thead><tr><th>حالة الصفحة</th><th>العدد</th><th>الإجراء</th></tr></thead><tbody><tr><td>MATCHED</td><td>16</td><td>تطابق حسب سجل المصدر؛ لا يعني اعتمادًا رقميًا.</td></tr><tr><td>SOURCE_REVISION_CONFLICT</td><td>3</td><td>قرار مراقبة الوثائق مطلوب.</td></tr><tr><td>SOURCE_TITLE_CONFLICT</td><td>3</td><td>قرار عنوان من المصدر المحكوم مطلوب.</td></tr><tr><td>NOT_IN_MASTER_LIST</td><td>2</td><td>لا ربط أو fuzzy match؛ قرار إدراج/استبعاد رسمي مطلوب.</td></tr><tr><td>NEEDS_SOURCE_RESCAN</td><td>4</td><td>إعادة مسح مقروءة ومضبوطة مطلوبة.</td></tr></tbody></table><p>إعادة المسح: الصفحات 10 و12 و13 و23. الصفحة 19 تحتاج حسم الاتجاه/الوضوح. التكرارات وبصمات المحتوى موثقة في JSON: T187 في الصفحتين 21 و28 له بصمة واحدة؛ مجموعات T159 وT172 وT61 وT76 وT132 لها أدلة منفصلة أو متعارضة وتحتاج قرارًا موثقًا.</p><p><a href="crosswalk.json">مصفوفة الهوية وتعارض كل صفحة</a> · <a href="source-file-manifest.json">مانيفست 87 مصدرًا</a> · <a href="evidence.json">سجل الأدلة والبصمات</a> · <a href="patch-or-decision-plan.md">خطة القرارات المطلوبة</a></p><h2>المسار البرمجي</h2><p>المستورد يحفظ مصدر الصفحة وبصمتها وينشئ النسخ كـ<code>DRAFT</code> بلا موافقة أو وقت فعالية. محلل القالب والحفظ يشترطان ربطًا صريحًا وقالبًا معتمدًا وفعالًا ومصدرًا مطابقًا، ويتحققان من اختيار المستخدم ومنع التكرار الجاري. لا يثبت هذا وجود اعتماد أو ربط قائم في قاعدة البيانات.</p><h2>التحقق</h2><table><thead><tr><th>الفحص</th><th>النتيجة</th><th>السجل</th></tr></thead><tbody><tr><td><code>pnpm test:migrations</code></td><td>BLOCKED — خروج 1؛ Testcontainers تعذر؛ 33 تخطيًا؛ لا PostgreSQL 18.</td><td><a href="../../../.ci-results/QC-LAUNCH-007/migrations.log">فتح السجل</a></td></tr><tr><td><code>pnpm test:integration</code></td><td>PARTIAL / BLOCKED — 316 PASS، 2 FAIL، 294 skipped.</td><td><a href="../../../.ci-results/QC-LAUNCH-007/integration.log">فتح السجل</a></td></tr><tr><td><code>pnpm test:unit</code></td><td>FAIL — 1,371 PASS، 12 FAIL خارج اختبارات الكتالوج.</td><td><a href="../../../.ci-results/QC-LAUNCH-007/unit.log">فتح السجل</a></td></tr><tr><td>وحدة الكتالوج المركزة</td><td>PASS — 64/64.</td><td><a href="../../../.ci-results/QC-LAUNCH-007/controlled-catalog-unit.log">فتح السجل</a></td></tr></tbody></table><p>Docker غير متاح، والمتاح محليًا PostgreSQL 14.19؛ لم تستخدم قاعدة اختبار أو مزود. لا هجرة إنتاجية أو UAT مصادق أو مراجعة Rubric مستقلة. Rubric <code>QC360-SC-05-02</code>؛ النقاط المقبولة: <strong>0</strong>.</p><h2>القرار</h2><p class="status blocked">لا تغيير كود أو بيانات منظمة قبل قرار مصدر رسمي، إعادة المسح، ربط منتج/قالب مخول، مطابقة كل مسودة، ثم التوقيع والفعالية حسب QMS. NO-GO للاعتماد أو الاستيراد الإنتاجي. النجاح المركّز لا يثبت سلامة PostgreSQL أو التشغيل أو UAT.</p></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QC-LAUNCH-007 — تقرير تنفيذ كتالوج Inspection Report (Rev14)</title>
+  <style>
+    body{font:15px/1.8 system-ui,Segoe UI,sans-serif;max-width:1120px;margin:2rem auto;padding:0 1rem;color:#16202b;background:#fbfcfe}
+    h1{font-size:1.5rem}h2{font-size:1.15rem;margin-top:2rem;border-bottom:2px solid #dfe6ee;padding-bottom:.3rem}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.86rem}
+    td,th{border:1px solid #c6d0da;padding:.5rem;text-align:right;vertical-align:top}
+    th{background:#eef3f7}
+    code{direction:ltr;unicode-bidi:embed;background:#f1f3f5;padding:.1rem .3rem;font-size:.82em;word-break:break-all}
+    .pill{padding:.15rem .5rem;border-radius:.35rem;font-weight:700;font-size:.78rem;white-space:nowrap}
+    .pass{background:#dcf3e1;color:#155724}.blocked{background:#ffe0dc;color:#8a1c12}
+    .fail{background:#ffe9c7;color:#7a4b00}.info{background:#e7eefc;color:#153a78}
+    .muted{color:#5b6675}.ltr{direction:ltr;text-align:left}
+    ul{margin:.4rem 0 .8rem;padding-inline-start:1.4rem}
+  </style>
+</head>
+<body>
+  <h1>QC-LAUNCH-007 — كتالوج 194 Inspection Report و13 Draft</h1>
+  <p><strong>الحالة النهائية: <span class="pill blocked">PARTIAL / BLOCKED</span></strong> — اكتملت المصالحة والتحقق المصدري والاختبارات المركّزة، لكن لا يوجد أي قالب رقمي معتمد/فعال ولا ربط عنصر مصدره مخوّل، ولا UAT ولا مراجعة Rubric مستقلة. عُدّت النقاط المقبولة = <strong>0</strong> (لم يجُر أي مراجع مستقل).</p>
+
+  <h2>1) هوية المرشح والحزمة</h2>
+  <table>
+    <tr><th>المرجع التدقيقي</th><td><code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code></td></tr>
+    <tr><th>HEAD الفعلي عند التنفيذ</th><td><code>3207ec9fc958ce9eba33d0f5476f19afc11e20c2</code> (الفرع main؛ working tree نظيف)</td></tr>
+    <tr><th>فارق المرجع عن HEAD</th><td>23 commits لاحقة — أعيد الأساس (rebaseline) بالكامل؛ دليل الجلسة السابقة على <code>b3db4d91</code> أصبح <strong>HISTORICAL/STALE</strong>.</td></tr>
+    <tr><th>بصمة شجرة المصدر</th><td><code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code> (فرق نظيف؛ .ci-results مستثنى)</td></tr>
+    <tr><th>migration head</th><td><code>0047_task_references_occurrences.sql</code></td></tr>
+    <tr><th>بيئة التشغيل</th><td>Node <code>v24.20.0</code> / pnpm <code>11.25.0</code> / darwin arm64 / run <code>114d0ecf-ffb9-409a-a5b8-b54e7c8d272d</code></td></tr>
+  </table>
+
+  <h2>2) النتيجة المرصودة (Observed result)</h2>
+  <ul>
+    <li>Rev14 master: <strong>194 هوية صالحة</strong> غير فارغة؛ استُبعد <code>F-823-T175</code> (Row 186) لعنوان فارغ. بصمة الـXLSX مطابقة للمصدر: <code>199f1a8c…f128e4</code>.</li>
+    <li>PDF المصوّر: <strong>28 صفحة</strong> فقط متاحة؛ بصمتها <code>e0b227cb…658da</code>. 16 MATCHED، 3 تعارض مراجعة، 3 تعارض عنوان، 2 خارج القائمة، 4 تحتاج إعادة مسح.</li>
+    <li>نماذج مرقمنة: <strong>13 مسودة DRAFT</strong> مصدرية؛ صفر قوالب معتمدة/فعالة، صفر ربط عنصر مثبت.</li>
+    <li>ملاحظة تصنيف: الأرقام 194/13/28 هي <strong>جرد مصدري مرصود</strong> وليست عدًّا معتمدًا حاليًا ولا دليل موافقة/فعالية.</li>
+    <li>مصفوفة الصفحات العشرية أُعيد اشتقاقها آليًا من <code>master-rev14.json</code> + <code>source-evidence.json</code> + <code>digitized-forms.json</code> ومنطق <code>source-match.ts</code> نفسه: <strong>0 اختلافات</strong> مقابل المصفوفة المرجعية (تثبت صلاحيتها على HEAD الحالي).</li>
+  </ul>
+
+  <h2>3) أدلة الأوامر (exit codes حقيقية)</h2>
+  <table>
+    <thead><tr><th>الأمر</th><th>Kind</th><th>Exit</th><th>الحالة</th><th>النتيجة</th><th>log / digest</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="ltr">vitest run tests/unit/quarantine/controlled-report-catalog.test.ts</td><td>unit-focused</td><td>0</td>
+        <td><span class="pill pass">PASS</span></td><td>64/64 PASS</td>
+        <td class="ltr"><code>.ci-results/QC-LAUNCH-007/controlled-catalog-unit.log</code><br><code>720d8320…1e5e423</code></td>
+      </tr>
+      <tr>
+        <td class="ltr">pnpm test:migrations</td><td>migrations</td><td>1</td>
+        <td><span class="pill blocked">BLOCKED</span></td><td>8/8 ملفات فشلت عند Testcontainers؛ 33 skipped؛ 0 assertions نُفّذت. لا PostgreSQL 18 runtime.</td>
+        <td class="ltr"><code>.ci-results/QC-LAUNCH-007/migrations.log</code><br><code>1f67dfa6…77a3e1c0</code></td>
+      </tr>
+      <tr>
+        <td class="ltr">pnpm test:integration</td><td>integration</td><td>1</td>
+        <td><span class="pill blocked">PARTIAL/BLOCKED</span></td><td>116 ملفًا: 63 pass/52 fail/1 skip؛ 628 حالة: 316 pass، 2 fail، 310 skip، 2 errors. فشلان حقيقيان خارج النطاق في tasks.</td>
+        <td class="ltr"><code>.ci-results/QC-LAUNCH-007/integration.log</code><br><code>f7459d20…4dec5c58</code></td>
+      </tr>
+      <tr>
+        <td class="ltr">pnpm test:unit</td><td>unit</td><td>1</td>
+        <td><span class="pill fail">FAIL (سابقة خارج النطاق)</span></td><td>179 ملفًا: 169 pass/10 fail؛ 1410 حالة: 1385 pass، 25 fail. اختبار الكتالوج المركّز ضمنها PASS.</td>
+        <td class="ltr"><code>.ci-results/QC-LAUNCH-007/unit.log</code><br><code>385cabcf…47e57f2d</code></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted">الفشل البنيوي في migrations/integration سببه غياب Docker/Testcontainers وليس فشل المنتج؛ لذلك سُجّل <strong>BLOCKED / NOT RUN</strong> لا FAIL. الاختبار التكاملي للكتالوج <code>tests/integration/quarantine/controlled-report-catalog.test.ts</code> لم يُنفّذ (skipped).</p>
+
+  <h2>4) Before / After</h2>
+  <table>
+    <thead><tr><th>البند</th><th>Before (evidence السابقة على b3db4d91 / المرجع)</th><th>After (هذه المهمة على 3207ec9f)</th></tr></thead>
+    <tbody>
+      <tr><td>ربط الأدلة بالـSHA</td><td>sourceSha = <code>b3db4d91</code> (متقادم)</td><td>sourceSha = <code>3207ec9f</code>؛ بصمة الشجرة مربوطة</td></tr>
+      <tr><td>مصفوفة الصفحات</td><td>28 صفًا على مرجع قديم</td><td>أُعيد اشتقاقها على HEAD؛ 0 اختلافات (PASS)</td></tr>
+      <tr><td>واجهات admin</td><td>head مخصص</td><td><code>PageHeader</code> + صفّ pagination خادمي (SOP-FRS-013/014) — لا تغيير في الضوابط</td></tr>
+      <tr><td>الأرقام 194/13/28</td><td>عُرضت كأرقام</td><td>مصنّفة صريحًا كجرد مصدري مرصود لا عدّ معتمد</td></tr>
+      <tr><td>ملف الكتالوج</td><td><code>Documents/QUARANTINE-CONTROLLED-REPORT-CATALOG.md</code> موجود</td><td>محذوف على HEAD (commit 70c7b725)؛ سُجّل كحقيقة إعادة أساس، والجوهر محفوظ في crosswalk</td></tr>
+      <tr><td>مخرجات الاختبار</td><td>logs على b3db4d91</td><td>أُعيد تشغيلها فعليًا على HEAD (digests جديدة)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5) مراجع الكود الدقيقة والحدود</h2>
+  <table>
+    <thead><tr><th>الملف</th><th>الأسطر</th><th>الضابط</th></tr></thead>
+    <tbody>
+      <tr><td class="ltr"><code>src/modules/quarantine/catalog/application/import-controlled-sources.ts</code></td><td>35-62، 124-217</td><td>تحقق كامل من الكتالوج مقابل master المجمّد؛ إنشاء DRAFT فقط (بلا approval/effectivity)؛ idempotent؛ الاختلاف يفشل fail-closed.</td></tr>
+      <tr><td class="ltr"><code>src/modules/quarantine/catalog/domain/source-match.ts</code></td><td>18-33</td><td>مطابقة كود/عنوان/مراجعة دقيقة بلا fuzzy؛ تصنيف التعارضات منفصل.</td></tr>
+      <tr><td class="ltr"><code>src/modules/quarantine/inspection/application/resolve-inspection-template.ts</code></td><td>35-72، 88-103، 111-187</td><td>يتطلب mapping ACTIVE + version APPROVED/فعالة + مطابقة + digital_form، وإلا fail-closed؛ الاختيار الصريح عند الغموض.</td></tr>
+      <tr><td class="ltr"><code>src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts</code></td><td>77-97</td><td>يمنع in-flight المكرر ويتطلب قالبًا معتمدًا مقروءًا خادميًا + تحقق الربط.</td></tr>
+      <tr><td class="ltr"><code>db/migrations/0046_inspection_report_catalog.sql</code></td><td>37-73</td><td>Triggers تكرر شروط الأصل داخل معاملة INSERT وترفض <code>CONTROLLED_INSPECTION_SOURCE_REQUIRED</code>؛ المحتوى المعتمد immutable.</td></tr>
+      <tr><td class="ltr"><code>src/ui/components/quarantine/ControlledInspectionForm.astro</code></td><td>4-28</td><td>يعرض المخطط المجمّد فقط؛ disposition ملاحظة مفتش لا تفعّل final_result ولا الإفراج.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6) معرّفات المتطلبات المُتحقَّقة</h2>
+  <ul>
+    <li><strong>QC360-SC-05-02</strong> — لم تُثبت: لا ربط معتمد/فعال بين Rev14 والقوالب التنفيذية (الحالة تبقى SOURCE_ONLY، النقاط المقبولة 0).</li>
+    <li>المتطلبات الفرعية المتحققة كدليل مصدري: 194 هوية، تصنيف 28 صفحة، 13 مسودة، 6 مجموعات مصدر مكررة، 0 اختلافات في إعادة الاشتقاق.</li>
+    <li>غير متحقق (NOT RUN): migrations على PG18، integration المُشغّل بالحاويات، UAT المصادق، المراجعة المستقلة.</li>
+  </ul>
+
+  <h2>7) مصفوفة القرار/التعارض (ملخص)</h2>
+  <table>
+    <thead><tr><th>الحالة</th><th>العدد</th><th>الإجراء المطلوب</th></tr></thead>
+    <tbody>
+      <tr><td>MATCHED</td><td>16</td><td>أصل مطابق؛ تبقى مسودة مراجعة، لا اعتماد رقمي.</td></tr>
+      <tr><td>SOURCE_REVISION_CONFLICT</td><td>3 (ص1 T102، ص3 T83، ص5 T30)</td><td>قرار مصدر محكوم: أيهما المرجع (Rev14 أم الصفحة) مع إعادة مسح/اعتماد.</td></tr>
+      <tr><td>SOURCE_TITLE_CONFLICT</td><td>3 (ص4 T90، ص19 T37، ص25 T5)</td><td>لا تطبيع للعنوان؛ يلزم تعريف عنوان محكوم من QC/QMS.</td></tr>
+      <tr><td>NOT_IN_MASTER_LIST</td><td>2 (ص17/18 T132)</td><td>لا هوية Rev14 مطابقة؛ لا مطابقة بالعنوان.</td></tr>
+      <tr><td>NEEDS_SOURCE_RESCAN</td><td>4 (ص10 T50، ص12 T76، ص13 T35، ص23 T61)</td><td>إعادة مسح/تحسين جودة؛ لا تُعتمد الحقول الظاهرة.</td></tr>
+      <tr><td>مجموعات مصدر مكررة</td><td>6</td><td>T132(17/18)، T159(9/27)، T172(15/22)، T187(21/28 تطابق تام)، T61(14/23)، T76(12/26).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8) القرارات</h2>
+  <ul>
+    <li>الإبقاء على الـ13 إدخالًا كمسودات؛ لا اعتماد ولا فعالية ولا ربط عنصر.</li>
+    <li>الحفاظ على العناوين/المراجعات كما هي حرفيًا بما فيها الأخطاء الإملائية والمسافات؛ ممنوع التطبيع في حقول السلطة.</li>
+    <li>عدم اعتماد أو ترميم ملف <code>Documents/QUARANTINE-CONTROLLED-REPORT-CATALOG.md</code> كوثيقة محكومة دون تفويض؛ تسجيل حذفه وحفظ جوهره في crosswalk.</li>
+    <li>عدم إجراء أي تغيير في كود المنتج أو المخطط أو المصدر العلمي (لا سلطة).</li>
+  </ul>
+
+  <h2>9) العوائق (Blockers)</h2>
+  <ul>
+    <li>Docker/Testcontainers غير متاح ⇒ migration + integration المُشغّل <strong>BLOCKED</strong> (0 assertions هجرات نُفّذت).</li>
+    <li>لا مصدر سلطة لربط item-code ⇒ الربط يبقى NOT_PROVIDED.</li>
+    <li>لا موافقة/فعالية/موقّع مستقل لأي من الـ13 قالبًا.</li>
+    <li>حذف مستند الكتالوج المحكوم على HEAD (commit 70c7b725).</li>
+  </ul>
+
+  <h2>10) المعالجة (Remediation) والخطوات التالية</h2>
+  <ol>
+    <li>QC/QMS: حسم تعارضات العنوان/المراجعة ومجموعات التكرار مع تتبع الصفحة والهوية؛ إعادة مسح 4 صفحات.</li>
+    <li>توثيق نسخة Rev14 مصححة/معتمدة إن اختلفت عن المجمّد، مع بصمة جديدة وforward migration مراجعة.</li>
+    <li>مصدر مخوّل: تزويد ربط item-code صريح لكل منتج/صنف (Doc Code + Revision + سريان).</li>
+    <li>بعد اكتمال المصادر: تنفيذ الموافقة/التوقيع/الفعالية حسب P-06، ثم تشغيل migrations/integration على PG18 معزولة ببيانات اصطناعية.</li>
+    <li>مراجعة Rubric مستقلة على الأدلة المكتملة قبل أي نقاط.</li>
+  </ol>
+
+  <h2>11) المخاطر المتبقية</h2>
+  <p>بدون قالب معتمد فعال وربط معتمد، لا يجوز تفعيل التنفيذ. ضوابط المنع fail-closed موجودة في المصدر والـmigration لكنها غير مثبتة وقت التشغيل على PostgreSQL 18 في هذه البيئة؛ أي خلل كامن في trigger قاعدة البيانات لن يُكتشف حتى توفر container runtime. PASS ≠ RELEASED، APPROVED ≠ EFFECTIVE، وFAIL/HOLD/REJECTED تبقى متميزة.</p>
+
+  <h2>12) التوقيع والمراجعة المستقلة</h2>
+  <table>
+    <tr><th>المُعِدّ</th><td>Engineering + QC (هذه المهمة)</td></tr>
+    <tr><th>مراجع Rubric مستقل</th><td><span class="pill info">NOT RUN</span> — لا نقاط مقبولة</td></tr>
+    <tr><th>مراجع بشري/UAT</th><td><span class="pill blocked">NOT RUN</span></td></tr>
+    <tr><th>النقاط المستحقة المقبولة</th><td><strong>0 / 1.35</strong> (المستهدف، وليس المقبول)</td></tr>
+    <tr><th>الحالة النهائية</th><td><span class="pill blocked">PARTIAL / BLOCKED</span> — لا إعلان GO</td></tr>
+  </table>
+
+  <h2>13) حدود الأدلة</h2>
+  <p>لا تغيير في كود المنتج أو المخطط أو ملفات المصدر المحكومة أو الربط أو التوقيع. أُضيفت ملفات تدقيق محلية فقط (+ مولّد محلي <code>build-crosswalk.mjs</code>). GitHub للقراءة فقط؛ لا commit/push/فرع/PR/deploy. الأدلة مربوطة بالـHEAD أعلاه وتصبح متقادمة عند تغيّره.</p>
+</body>
+</html>
