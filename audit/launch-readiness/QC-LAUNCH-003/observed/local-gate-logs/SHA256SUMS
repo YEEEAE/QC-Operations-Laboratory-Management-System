@@ -1,0 +1,15 @@
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/architecture.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/build.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/concurrency.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/debt.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/dependency-audit.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/format.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/integration.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/lint.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/migrations.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/parity.log
+0be8ccd9c071d10926851675a8796e228066a2ff1dde16c2ba617622c64a87bd  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/sbom.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/security.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/typecheck.log
+cc408494d499bd082064ab4d1f0e9c6f59db16d97ca97b41c62e12fcbb520f34  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/unit.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  audit/launch-readiness/QC-LAUNCH-003/observed/local-gate-logs/whitespace.log

@@ -1,0 +1,13 @@
+Candidate SHA: fca5e4b9695de12945f80a228ecad1b0351e7376
+Candidate sourceFingerprint (clean working tree): e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Migration head captured by verification: 0047_task_references_occurrences.sql
+Verification nonce: 06939d6f-a7fb-4439-b1f8-1c8d34aefc79
+Node: v24.20.0
+pnpm: 11.25.0
+Platform: darwin/arm64
+An initial frozen offline install returned exit 0 while the command was still in the original checkout; it is not counted as isolated evidence and may have reconciled ignored node_modules only. In the isolated clone, frozen install offline exited 1 because the locked @lottiefiles/dotlottie-web@0.80.0 tarball was absent from pnpm store.
+Frozen install online: npm registry DNS failed with ENOTFOUND; retries were interrupted and install did not complete (no final exit code recorded).
+Local gate dispatch attempts: SBOM generation exited 0; format, lint, typecheck, architecture, tech-debt, parity, unit, integration, migrations, concurrency, security and build dispatches exited 1 before gate execution. pnpm refused to operate on an external node_modules symlink (ERR_PNPM_UNSAFE_MODULES_DIR). See local-gate-dispatch-status.txt and pnpm-wrapper-error.log. These are harness/setup outcomes, not candidate gate results.
+SBOM and license inventory were generated from the source lockfile and available local dependency tree, but are not based on a fresh frozen install. Dependency advisory audit is BLOCKED by unavailable registry access.
+A fresh verification context was written to .ci-results/run-context.json for this candidate and preserved as observed/run-context.json. No source file was edited. No GitHub CI rerun, branch, commit, push, PR, or deployment was performed.
+The external CI first failing step and run SHA remain unavailable; local setup failures do not establish the remote failure cause.
