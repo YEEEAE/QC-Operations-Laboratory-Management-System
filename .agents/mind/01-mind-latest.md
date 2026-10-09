@@ -1,3 +1,11 @@
+- **2026-10-09 — FRS-SOP-APPROVAL / اعتماد ملفات SOP-FRS-001–012**
+  - Changed: بناءً على أمر المستخدم الصريح، اعتُمدت ملفات Word الاثنا عشر باسم yazeed بتاريخ 2026-10-09 ونُقلت إلى `Documents/QC_System_WI_SOP_Pack/SOPs/approved/`، مع MD الخاص بـ012. تحديث الحالة والترويسات/التذييلات والإحالات؛ معرفات المراجعات الحالية محفوظة بلا رفع تلقائي. سجل الاعتماد يربط المصدر/النسخة المعتمدة ببصمات SHA-256؛ النسخ الأصلية محفوظة في `SOPs/approval-history/2026-10-09-preapproval.zip`.
+  - Evidence: تحقق بنية الحزم وأرقام 001–012 والحالة والترويسات وبقاء styles/media/relationships وبصمات السجل؛ لا تغيير كود/DB أو صلاحيات أو توقيع داخل التطبيق. تاريخ السريان NOT ASSIGNED؛ WIs تبقى مسودات.
+  - State: DONE (اعتماد الملفات بتوجيه المالك، لا verified in-application e-signature أو effectivity/runtime/UAT).
+- **2026-10-09 — SOP-FRS-012 / التوقيع الإلكتروني وسلطة الاعتماد**
+  - Changed: أعيدت صياغة نسخة الجذر `سياسة وصلاحيات.md` بالرقم الذي حدده المستخدم SOP-FRS-012، مسودة D0.1 إنجليزية بسبعة أقسام، مع خطوات تشغيل وصلاحيات واستثناءات موثقة. المصدر المسجل في Documents لم يتغير؛ المسودة لا تسجل اعتمادًا أو فعالية ولا تغيّر سياسة التطبيق.
+  - Evidence: مراجعة الأقسام الأصلية العشرة؛ حفظ الوحدات 21/21 وحدود الأدوار والتوقيع والنسخة والتدقيق؛ فحص بنية الجداول PASS. أُنشئت نسخة `SOP-FRS-012-D0.1-Electronic-Signatures-and-Approval-Authority.docx` بجوار MD في `SOPs/review-drafts/` بقالب SOP-FRS-011؛ تطابق النص بالترتيب 264/264 كتلة/خلية و8 جداول وبنية DOCX PASS؛ العرض البصري NOT VERIFIED. لا runtime/UAT.
+  - State: DONE (صياغة مسودة)؛ approval NOT RECORDED / effective date NOT ASSIGNED.
 - **2026-10-09 — WI-FRS-100 / تعليمة عمل موحّدة لـSOP-FRS-001**
   - Changed: أُنشئت `WI-FRS-100-Document-Control-and-Sources.docx` (كود مرشّح) في `WIs/review-drafts/` بنفس قالب WI-FRS-001–005 وترويسته/تذييله؛ تغطي كامل دورة SOP-FRS-001 (استلام المصادر → الإعداد/ربط المصدر → المراجعة → الاعتماد بالتوقيع → التفعيل → التوزيع/التغيير/السحب) في 6 مراحل/21 خطوة، وتفصل المنفّذ عن المحجوب (POLICY_SOURCE_REQUIRED؛ MAKE_EFFECTIVE/ARCHIVE غير موصولين؛ Supersede deny-by-default). لم يُعدّل SOP-FRS-001 ولا الخمس. المراجع المسمّاة R1–R3 موثّقة كغير متاحة في شجرة Documents الحالية بلا بصمة حالية.
   - Evidence: فحص zip/بنية PASS؛ 6 جداول بعناوين/صفوف صحيحة؛ الترويسة والتذييل يحملان WI-FRS-100؛ 10 أقسام؛ بصمات المصادر الحالية محسوبة (SOP + WI-FRS-001–005 + 11 ملف تنفيذ). لا PostgreSQL/متصفح/UAT.
@@ -397,6 +405,7 @@
 - Page-route contract: `definePageRoute` centralizes `id/path/page/domain/title/breadcrumb/visibility`; new browser pages default to `AUTHENTICATED`, and the explicit `YAZEED_ONLY` set is currently `/system/health` + `/system/control-center`; the architecture gate rejects registry/page/navigation drift. Route visibility remains separate from server-side mutation authority.
 
 ## 13) الوثائق والملفات المرجعية الأعلى أولوية
+- **FRS SOP file approval (2026-10-09):** SOP-FRS-001–SOP-FRS-012 are owner-approved local files under `Documents/QC_System_WI_SOP_Pack/SOPs/approved/`; `APPROVAL-REGISTER.md` records the explicit human instruction, revisions and original/approved hashes. Effective dates remain NOT ASSIGNED; application registration/signature/effectivity and runtime/UAT are separate and unchanged. WI-FRS files remain drafts. Earlier draft-authoring entries are HISTORICAL for current file approval/location.
 - **مسار الوثائق:** شجرة `docs/` نُقلت مسطّحة إلى `Documents/` (2026-09-19)؛ أي مسار `docs/...` في السجل التاريخي أو في مفاتيح ملفات قديمة تاريخي. المرجع: `Documents/DOCUMENTATION-INVENTORY.md`.
 - `Documents/SYSTEM-INVARIANTS.md`
 - `Documents/DOMAIN-MAP.md`
