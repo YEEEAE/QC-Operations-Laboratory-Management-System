@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-010 — Global electronic-signature policy closure</title>
+  <style>
+    :root{font:16px/1.55 system-ui,sans-serif;color:#182431;background:#f4f6f8}body{max-width:1100px;margin:2rem auto;padding:0 1rem}h1,h2{line-height:1.2}section{background:#fff;border:1px solid #d6dee6;border-radius:10px;padding:1rem 1.25rem;margin:1rem 0}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #d6dee6;padding:.55rem}th{width:20%}code{overflow-wrap:anywhere}.blocked{color:#842029;font-weight:700}.muted{color:#4a5b6c}
+  </style>
+</head>
+<body>
+  <h1>QC-LAUNCH-010 — إغلاق سياسة التوقيع الإلكتروني العامة</h1>
+  <p class="blocked">الحالة: BLOCKED — السياسة العامة لا تزال UNRESOLVED؛ لا تُفعّل أي خريطة توقيع مستنتجة.</p>
+  <section>
+    <h2>هوية المرشح وحدود الدليل</h2>
+    <table>
+      <tr><th>المستودع / الفرع</th><td>YEEEAE/QC-Operations-Laboratory-Management-System / main</td></tr>
+      <tr><th>HEAD</th><td><code>f9409b298fadb2270f28e8658ab39740db4b4e61</code></td></tr>
+      <tr><th>مرجع التدقيق</th><td><code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> — سلف؛ HEAD متقدم 7 commits.</td></tr>
+      <tr><th>حالة المصدر عند الفحوص</th><td>Working tree نظيف من تعديلات المصدر؛ بصمة sourceFingerprint من run context هي <code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>. رأس الهجرات المحلي: <code>0047_task_references_occurrences.sql</code>.</td></tr>
+      <tr><th>البيئة والوقت</th><td>Node v24.20.0، pnpm 11.25.0، macOS arm64، محلي. لا DATABASE_URL أو QC_TEST_DATABASE_URL أو PGHOST كانت مضبوطة. وقت التشغيل محفوظ في evidence.json.</td></tr>
+      <tr><th>حدود الحالة</th><td>لا اتصال QMS خارجي، لا قاعدة إنتاج، لا تعديل صلاحيات/وثائق مضبوطة، لا توقيعات تاريخية مصطنعة، لا تحديث بعيد. التغييرات محصورة في حزمة التدقيق وMind وفهرس التوجيه.</td></tr>
+    </table>
+  </section>
+  <section>
+    <h2>قرار السلطة</h2>
+    <p>قرار المالك <code>Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md</code> (SHA-256 <code>e6acc55f2ba0c7178c4c0419c6a770bfa30d13e4d56ccc34cced30ef3e57ba87</code>) نافذ حسب نصه من 2026-10-04 وموثق في 2026-10-05. يوجب توقيعًا إلكترونيًا رسميًا لكل اعتماد APPROVE/FINAL_APPROVE ضمن النطاق الذي يصفه، ويُبقي non-approval actions خارج التفويض إلى أن يصدر لها قرار منفصل. الوثيقة نفسها تنص أن اعتماد WI/SOP، الفعالية، النطاق الكامل، والتنفيذ ما زالت مفتوحة؛ وهي ليست سجل اعتماد QMS لنسخة سياسة عامة.</p>
+    <p>السياسة الوظيفية المقدمة في QC-LAUNCH-002 أُعيدت مطابقتها في <code>audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md</code>: لا revision أو effective date أو سجل اعتماد QMS، ولا خريطة مكتملة action × subject × state × signer × permission × meaning × policy revision/effectivity. البحث الحالي لم يعثر على سجل سياسة/مصفوفة توقيع محكومة بديلة. إذن شرط التفويض الفني في QC-LAUNCH-010 غير متحقق.</p>
+  </section>
+  <section>
+    <h2>جرد مسارات الاعتماد</h2>
+    <table>
+      <tr><th>المجال والفعل</th><th>الملاحظة على المصدر الحالي</th><th>التصرف</th></tr>
+      <tr><td>Inspection: APPROVE / FINAL_APPROVE</td><td>المعنى التنفيذي stage 1 هو STAGE1_APPROVE، والنهائي FINAL_APPROVE. يوجد توقيع للمراسم المنفصلة؛ لا يثبت ذلك سياسة عامة لكل subject/state.</td><td>لا تغيير؛ يلزم ربط نسخة السياسة وتغطية قاعدة البيانات/runtime.</td></tr>
+      <tr><td>Laboratory: APPROVE / FINAL_APPROVE</td><td>المعنى التنفيذي stage 1 هو STAGE1_APPROVE، والنهائي FINAL_APPROVE. مصدر العلم والفعالية شرط مستقل عن التوقيع.</td><td>لا تغيير؛ لا استثناء علمي مستنتج.</td></tr>
+      <tr><td>Generic approvals: DOCUMENT_VERSION / LAB_TEST / INSPECTION_REPORT / CHANGE_REQUEST — APPROVE</td><td><code>dependencies.ts</code> يوفّر الانتقالات، لكنه يربط signature policy دائمًا بحالة UNRESOLVED. <code>decide-approval.ts</code> يرفض قبل المصادقة؛ capability resolver يعرض POLICY_BLOCKED.</td><td>يبقى محجوبًا حتى مصفوفة QMS معتمدة.</td></tr>
+      <tr><td>Document version: APPROVE</td><td>موجود كذلك كانتقال منفصل للوثيقة؛ اعتماد نسخة لا يجعلها EFFECTIVE.</td><td>لا دمج بين APPROVED وEFFECTIVE؛ تعيين الفاعل والمعنى والسريان مطلوب.</td></tr>
+      <tr><td>Change request: APPROVE</td><td>انتقال موصول في generic approvals؛ لا يحدد القرار العام حالة الموضوع ومعنى التوقيع لكل نوع تغيير.</td><td>يبقى generic decision محجوبًا.</td></tr>
+      <tr><td>CAPA: CLOSE (ليس APPROVE)</td><td>يستخدم مراسم إغلاق وتوقيعًا مستقلة حسب P-04. إغلاق CAPA لا يقرر الفعالية تلقائيًا.</td><td>لا نعيد تسميته اعتمادًا ولا نستنتج استثناءات.</td></tr>
+      <tr><td>Calibration: APPROVE</td><td>يوجد action في state machine، لكنه ليس subject ضمن generic transition map التي تمت مراجعتها.</td><td>التطبيق والنطاق والمعنى بحاجة قرار صريح.</td></tr>
+      <tr><td>Inspection template: APPROVE / creation as APPROVED</td><td>هناك مراسم توقيع منفصلة للموافقة، وقرار/حالة template ليسا بديلًا عن mapping السياسة وإصدارها.</td><td>لا تغيير؛ يلزم تحديد الإجراء والحالة والتوقيع المطلوب صراحة.</td></tr>
+      <tr><td>Release governance: RELEASE_APPROVE</td><td>مراسم توقيع مستقلة تربط مرشح الإصدار ونسخته وهوية البناء؛ ليست دليلًا على اكتمال مصفوفة الموافقات العامة.</td><td>تبقى آلية الإصدار منفصلة ولا تُعمم.</td></tr>
+      <tr><td>UAT cycle: APPROVE authorization / ACCEPTED outcome</td><td>قبول أدلة دورة UAT يمر بإعادة مصادقة وتقييم للدورة؛ علاقته بتصنيف موافقات السياسة العامة تحتاج قرارًا صريحًا.</td><td>تبقى مراسم UAT منفصلة إلى أن يحدد QMS تصنيفها.</td></tr>
+      <tr><td>RCA: APPROVE token</td><td>الفعل موجود في مفردات الدومين، لكن transition use case يرفضه حاليًا.</td><td>لا تحويل وجود الرمز إلى صلاحية أو سياسة.</td></tr>
+      <tr><td>REJECT / RETURN / VOID / REOPEN / RELEASE وما شابه</td><td>أسماء أحداث وقرارات أخرى موجودة. قرار المالك لا يحدد لها mandate توقيعًا عامًا، والطلب يمنع استنتاج إلزام أو N/A.</td><td>لا يُضاف ولا يُستثنى إلزام توقيع لها دون قرار QMS محدد.</td></tr>
+    </table>
+    <p class="muted">مراجع المصدر: <code>src/modules/approvals/application/dependencies.ts:28-112,130-168</code>; <code>decide-approval.ts:95-120</code>; <code>decision-capabilities.ts:68-94</code>; <code>src/pages/approvals/index.astro:43-44</code>; وحدات inspection/laboratory وCAPA وcalibration وtemplates وrelease-governance المشار إليها في source inventory داخل evidence.json.</p>
+  </section>
+  <section>
+    <h2>قبل / بعد</h2>
+    <table>
+      <tr><th>قبل</th><td><code>dependencies.ts:134-150,164-168</code> يجعل generic signature requirement وdecision policy status UNRESOLVED. <code>decide-approval.ts:103-104</code> يرفض القرار قبل المصادقة؛ و<code>decision-capabilities.ts:76-85</code> يعرض POLICY_BLOCKED. الصفحة تقول للمستخدم إن السياسة غير محسومة وتمنعه من إدخال كلمة مرور.</td></tr>
+      <tr><th>بعد</th><td>بقي السلوك والمصدر كما هما. لم توجد مصفوفة QMS revisioned/effective لتمكين تغيير آمن؛ لم تُكتب policy resolver أو migration أو test يزعم إغلاق الإجراء. لا توجد تواقيع تاريخية منشأة أو معدلة.</td></tr>
+      <tr><th>Verified requirement IDs</th><td>لا يوجد ID مكتمل. QC360-SC-04-02 يبقى VERIFIED_FAIL عند هذا المرشح؛ النقاط المقبولة 0 من 1.50، ولا يوجد قبول مستقل من مراجع rubric.</td></tr>
+    </table>
+  </section>
+  <section>
+    <h2>التحقق الفعلي</h2>
+    <p>كل الأوامر أدناه نُفذت على HEAD والبصمة نفسيهما بعد إنشاء run context. النتائج التفصيلية وأرقام SHA-256 وسجلات الآلة في <code>evidence.json</code>.</p>
+    <ul>
+      <li><code>pnpm test:unit</code> — exit 1؛ 1371/1383 PASS و12 FAIL. الإخفاقات تشمل أدوات/وثائق تدقيق مفقودة وعدم تطابق عقد UI في نطاقات أخرى.</li>
+      <li><code>pnpm test:integration</code> — exit 1؛ 316 PASS، 294 SKIPPED، 2 FAIL، و2 runner/container errors. Testcontainers لم يجد container runtime؛ بقيت اختبارات PostgreSQL غير منفذة.</li>
+      <li><code>pnpm test:security</code> — exit 1؛ 36 PASS، 1 SKIPPED، واثنان من suites لم يكتملوا: PostgreSQL container غير متاح وdataset تقييم AI مفقود.</li>
+    </ul>
+    <p>هذه الفحوص ليست قبولًا لنظام توقيع أو دليل PG18/runtime/UAT. فحص اعتماد السياسة محجوب لغياب مصدر السلطة.</p>
+  </section>
+  <section>
+    <h2>المعالجة المتبقية ومخاطر البقاء</h2>
+    <p>QMS authority ومالكو المجال يزوّدون سجل سياسة مضبوطًا وموقعًا ذا revision وتاريخ سريان، يحدد كل action × subject × state × signer role/scope × signature meaning × permission × prerequisite × override boundary. يحدد السجل أيضًا الانطباق الصريح للـnon-approval actions دون استنتاج. بعد اعتماده، Approval engineer ينفذ resolver versioned من جهة الخادم، ثم اختبارات السياسة والرفض والتاريخ، وatomic PostgreSQL18 rollback/race/replay، وauthenticated runtime/UAT. المراجع المستقل وحده يبتّ النقاط.</p>
+    <p class="blocked">المخاطر المتبقية: إجراءات الموافقة العامة غير قابلة للتنفيذ لأن السياسة غير محسومة. لا يوجد ادعاء GO أو RELEASED أو EFFECTIVE. الإجراء الموصى به: BLOCKED مع إبقاء المنع الحالي.</p>
+    <p><strong>Signoff:</strong> QMS authority decision and independent rubric review are NOT AVAILABLE. This technical reconciliation is not an approval or effectivity signature.</p>
+  </section>
+</body>
+</html>

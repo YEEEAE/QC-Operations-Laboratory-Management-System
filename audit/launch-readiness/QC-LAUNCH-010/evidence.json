@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "QC-LAUNCH-010",
+  "generatedAt": "2026-10-09T04:24:00Z",
+  "criterion": {
+    "id": "QC360-SC-04-02",
+    "expectedOutcome": "A QMS-controlled, effective global e-signature action map is implemented without conflicting with the owner decision.",
+    "observedStatus": "VERIFIED_FAIL",
+    "executionStatus": "BLOCKED",
+    "targetWeight": 1.5,
+    "acceptedPoints": 0,
+    "independentRubricReviewer": "NOT AVAILABLE",
+    "reason": "No QMS-approved revisioned/effective action-to-signature registry is present. Generic approvals remain UNRESOLVED and fail closed. No points are claimed."
+  },
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "branch": "main",
+    "gitSha": "f9409b298fadb2270f28e8658ab39740db4b4e61",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceIsAncestor": true,
+    "commitsAheadOfReference": 7,
+    "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceFingerprintMethod": "Candidate-bound run context from scripts/verification/begin-verification-run.mjs; clean source working tree relative to HEAD during all three runs; report packet, .ci-results and Mind updates are audit artifacts, not product-source inputs.",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "pnpmVersion": "11.25.0",
+    "environment": "Local macOS arm64; no DATABASE_URL, QC_TEST_DATABASE_URL, or PGHOST; no external QMS/provider connection used."
+  },
+  "sourceEvidence": [
+    {
+      "sourcePath": "Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md",
+      "revision": "owner decision recorded 2026-10-05; stated effective 2026-10-04",
+      "sha256": "e6acc55f2ba0c7178c4c0419c6a770bfa30d13e4d56ccc34cced30ef3e57ba87",
+      "disposition": "Controls APPROVE/FINAL_APPROVE at the stated scope; explicitly leaves other actions and wider applicability decisions unresolved. Not a controlled versioned global action registry."
+    },
+    {
+      "sourcePath": "audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md",
+      "revision": "previous candidate-bound user functional policy reconciliation; historical context only",
+      "sha256": "7de8f9ef526cc7866fb36ec958c55a60508ab0b83d9c1662c02d9e3bf16e4404",
+      "disposition": "Confirms supplied functional text lacks QMS approval record, revision/effective date, and complete action/subject/state/signer/meaning/policy-version map. Rechecked source findings against current HEAD."
+    },
+    {
+      "sourcePath": "src/modules/approvals/application/dependencies.ts",
+      "lines": "28-112, 130-168",
+      "sha256": "7d1677fd93b5e6d11e115f8009e26b3c60bd0776baa0d76461efc6383b9c391f",
+      "disposition": "Generic transition handlers exist for DOCUMENT_VERSION, LAB_TEST, INSPECTION_REPORT, CHANGE_REQUEST; read and action policies both return UNRESOLVED."
+    },
+    {
+      "sourcePath": "src/modules/approvals/application/decide-approval.ts",
+      "lines": "95-120",
+      "sha256": "17c1ab99f3d4f64d82fd7ef880d0a0f16e17769f45f9f0e264512f1c4713b105",
+      "disposition": "UNRESOLVED denies before signature reauthentication and transaction."
+    },
+    {
+      "sourcePath": "src/modules/approvals/application/decision-capabilities.ts",
+      "lines": "68-94",
+      "sha256": "686eccd51369d3783a80344792009179a007d13e790c87db25f5fba1a2e89ca9",
+      "disposition": "Unresolved or unavailable signature mappings resolve to POLICY_BLOCKED."
+    },
+    {
+      "sourcePath": "src/pages/approvals/index.astro",
+      "lines": "43-44",
+      "sha256": "f63728a870a21eff00425b6962b7abfb94dd4d061a48094c18f87d09e499bc89",
+      "disposition": "Explains unresolved signing policy and blocked decision status."
+    },
+    {
+      "sourcePath": "src/modules/quarantine/inspection/application/approve-inspection.ts; src/modules/quarantine/inspection/application/final-approve-inspection.ts; src/modules/laboratory/application/approve-lab-test.ts; src/modules/laboratory/application/final-approve-lab-test.ts",
+      "revision": "current source at candidate SHA",
+      "disposition": "Separate stage-one and final signing ceremonies exist; not evidence of a complete generic policy registry or runtime acceptance."
+    },
+    {
+      "sourcePath": "src/modules/quality/capa/application/close-capa.ts; src/modules/assets/calibration/application/transition-calibration.ts; src/modules/quarantine/templates/application/lifecycle.ts; src/modules/release-governance/application/approve-release.ts; src/modules/quality/rca/application/transition-rca.ts",
+      "revision": "current source at candidate SHA",
+      "disposition": "Contains distinct controlled actions/ceremonies, including CAPA CLOSE, calibration APPROVE, template APPROVE, RELEASE_APPROVE, and an RCA APPROVE token whose use case denies it. These cannot safely be collapsed into one inferred mapping."
+    },
+    {
+      "sourcePath": "src/modules/uat-evidence/application/use-cases.ts",
+      "lines": "215-246",
+      "revision": "current source at candidate SHA",
+      "disposition": "Records an ACCEPTED/REJECTED/BLOCKED UAT cycle through an APPROVE authorization and reauthentication path; its signer meaning and relationship to the general approval registry require explicit classification."
+    }
+  ],
+  "actionInventory": [
+    { "subject": "INSPECTION_REPORT", "action": "APPROVE", "meaning": "STAGE1_APPROVE", "currentDisposition": "Separate signed ceremony; no general policy-version registry verified." },
+    { "subject": "INSPECTION_REPORT", "action": "FINAL_APPROVE", "meaning": "FINAL_APPROVE", "currentDisposition": "Separate final signed ceremony; PG18/runtime evidence not run here." },
+    { "subject": "LAB_TEST", "action": "APPROVE", "meaning": "STAGE1_APPROVE", "currentDisposition": "Separate signed ceremony; science-source prerequisites remain independent." },
+    { "subject": "LAB_TEST", "action": "FINAL_APPROVE", "meaning": "FINAL_APPROVE", "currentDisposition": "Separate final signed ceremony; PG18/runtime evidence not run here." },
+    { "subject": "DOCUMENT_VERSION", "action": "APPROVE", "meaning": "UNRESOLVED in generic approvals", "currentDisposition": "Fail closed in generic path; approval and EFFECTIVE are separate states." },
+    { "subject": "CHANGE_REQUEST", "action": "APPROVE", "meaning": "UNRESOLVED in generic approvals", "currentDisposition": "Fail closed in generic path." },
+    { "subject": "CAPA", "action": "CLOSE", "meaning": "P-04 ceremony meaning includes CAPA identity/version", "currentDisposition": "Distinct signed close action; not renamed APPROVE; effectiveness not implied." },
+    { "subject": "CALIBRATION", "action": "APPROVE", "meaning": "No global mapping established", "currentDisposition": "Action exists outside the reviewed generic transition registry; applicability unresolved." },
+    { "subject": "INSPECTION_TEMPLATE", "action": "APPROVE / CREATE as APPROVED", "meaning": "Template-specific signing ceremony", "currentDisposition": "Distinct local ceremony; revisioned global policy relation unverified." },
+    { "subject": "RELEASE_CANDIDATE", "action": "RELEASE_APPROVE", "meaning": "Release id, SHA, and build identity", "currentDisposition": "Separate signed release gate; not generalized." },
+    { "subject": "UAT_CYCLE", "action": "APPROVE authorization / ACCEPTED outcome", "meaning": "UAT cycle and evidence snapshot", "currentDisposition": "Separate reauthenticated evidence acceptance; relationship to global action registry needs explicit QMS classification." },
+    { "subject": "RCA", "action": "APPROVE", "meaning": "Not applicable as executable policy; use case denies", "currentDisposition": "Token exists but no approval path is enabled." },
+    { "subject": "OTHER CONTROLLED ACTIONS", "action": "REJECT / RETURN / VOID / REOPEN / RELEASE / others", "meaning": "No mandate inferred", "currentDisposition": "Need explicit QMS applicability decision; no signature-required or N/A assumption." }
+  ],
+  "verification": [
+    {
+      "kind": "test",
+      "command": "pnpm test:unit",
+      "actorRole": "N/A — unit test fixtures; no authenticated business actor",
+      "sourceRevision": "f9409b298fadb2270f28e8658ab39740db4b4e61",
+      "timestamp": "2026-10-09T04:23:01.902Z",
+      "exitCode": 1,
+      "status": "FAIL",
+      "totals": { "total": 1383, "passed": 1371, "failed": 12, "skipped": 0 },
+      "runId": "e2624ffe-0833-4541-bf00-b6cb1507e974",
+      "machineEvidenceUri": ".ci-results/unit.json",
+      "machineEvidenceSha256": "e4c925ddc46da8c3e401c2c4555f9306c3bf5e3a4f943aa1da3737d8f8352c02",
+      "vitestReportDigest": "23449af449ef0a7f69d023264c3549dea8cd1ceca886373f9c8d185e36aa9442",
+      "notes": "Failures are outside this policy task and include missing audit files, outdated audit contracts, and one no-JS surface inventory mismatch."
+    },
+    {
+      "kind": "test",
+      "command": "pnpm test:integration",
+      "actorRole": "N/A — synthetic test fixtures; no live QMS actor",
+      "sourceRevision": "f9409b298fadb2270f28e8658ab39740db4b4e61",
+      "timestamp": "2026-10-09T04:23:42.923Z",
+      "exitCode": 1,
+      "status": "BLOCKED_WITH_FAILURES",
+      "totals": { "total": 612, "passed": 316, "failed": 2, "skipped": 294, "runnerErrors": 2 },
+      "runId": "9fea7fbb-0024-43e1-9fe9-5e3fdb6078b3",
+      "machineEvidenceUri": ".ci-results/integration.json",
+      "machineEvidenceSha256": "7281e635c4300f5593b0d0251cc2947ed6d980701dc6272778ca3d9aaaabe6fb",
+      "vitestReportDigest": "8eeb704ed2566a4429a72b86a937b97e227bf32b793998192e929802c37b980c",
+      "notes": "Testcontainers reported no working container runtime; 294 tests were skipped. Two additional suite/test errors remain visible in the full machine report."
+    },
+    {
+      "kind": "test",
+      "command": "pnpm test:security",
+      "actorRole": "N/A — synthetic security test fixtures; no live QMS actor",
+      "sourceRevision": "f9409b298fadb2270f28e8658ab39740db4b4e61",
+      "timestamp": "2026-10-09T04:23:52.859Z",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "totals": { "total": 37, "passed": 36, "failed": 0, "skipped": 1, "failedSuites": 2 },
+      "runId": "87e17d58-c581-40d3-aeab-85da64275df6",
+      "machineEvidenceUri": ".ci-results/security.json",
+      "machineEvidenceSha256": "72dd428a14ed1d5b2ae6f279e9458d1ad722825c89c941cffbc908dea7c73287",
+      "vitestReportDigest": "60c3c62090398f74b05887f8767b0750f4544ecfcd50017cef331c91ba40b4be",
+      "notes": "PostgreSQL rate-limit suite could not start without a container runtime; AI evaluation suite could not load audit/100-percent/ai-evals/deterministic-eval-dataset.json."
+    }
+  ],
+  "decisions": [
+    "No product source or controlled QMS document changed.",
+    "No generic signature mapping, action exclusion, role, override, N/A, or effective policy version was inferred.",
+    "Historical signatures and records remain untouched.",
+    "QC360-SC-04-02 remains VERIFIED_FAIL with 0 accepted points; independent review is unavailable."
+  ],
+  "blockers": [
+    "QMS-controlled policy artifact with revision, approval record, effective date, and action-specific signature map is unavailable.",
+    "Accountable QMS and domain signers/owners have not established action, state, role, scope, meaning, permissions, prerequisites, and override limits across all controlled decisions.",
+    "PG18 transaction rollback/race/replay and authenticated UI/UAT acceptance were not verified; local integration was blocked by absent container runtime.",
+    "Independent rubric reviewer acceptance was not available."
+  ],
+  "evidenceBoundary": "Source inspection verifies the current unresolved implementation state only. Passing individual tests do not establish global policy approval, PostgreSQL 18 behavior, QMS effectivity, production readiness, UAT, or points earned."
+}
