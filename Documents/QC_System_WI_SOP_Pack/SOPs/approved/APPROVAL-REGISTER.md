@@ -1,13 +1,18 @@
-# SOP-FRS-001–SOP-FRS-012 — Owner approval register
+# SOP-FRS-001–SOP-FRS-014 — Owner approval register
 
 Status: **APPROVED**. Approved by: **yazeed (System Owner)**. Approval date: **2026-10-09**.
 
-Authority evidence: direct owner instruction in the current chat (01a12168-4c31-7a90-b1aa-73fccbef6522):
+Authority evidence (SOP-FRS-001–012): direct owner instruction in the current chat (01a12168-4c31-7a90-b1aa-73fccbef6522):
 > جيد الان كل ملفاتSOP-FRS-001 TO SOP-FRS-012 انقلها من الدرافت واجعلها معتمدة
+
+Authority evidence (SOP-FRS-013/014): direct owner instruction in the current chat:
+> انقلهم من درافت الى موافقة
 
 Scope: approval of these local SOP files. Effective dates remain NOT ASSIGNED. No verified in-application electronic signature or production document-registration event is asserted. Existing revision identifiers are retained; the D prefix is historical and does not determine the current APPROVED status.
 
-Exact pre-approval files are retained in [pre-approval archive](../approval-history/2026-10-09-preapproval.zip). Historical draft-authoring entries remain historical. Application controls, scientific criteria and runtime/UAT evidence are unchanged.
+Exact pre-approval files for SOP-FRS-001–012 are retained in [pre-approval archive](../approval-history/2026-10-09-preapproval.zip); the SOP-FRS-013/014 originals are retained in [pre-approval archive 013-014](../approval-history/2026-10-09-preapproval-013-014.zip). Historical draft-authoring entries remain historical. Application controls, scientific criteria and runtime/UAT evidence are unchanged.
+
+Note: the SOP-FRS-013/014 improvements `IMP-013-01..15` and `UX-014-01..14` were implemented locally in the working tree (see [implementation register](../review-drafts/SOP-FRS-013-014-IMPLEMENTATION-REGISTER.md)); local implementation does not by itself make them controlled, effective or verified.
 
 | Document | Revision | Approved file | Original SHA-256 | Approved SHA-256 |
 | --- | --- | --- | --- | --- |
@@ -23,3 +28,5 @@ Exact pre-approval files are retained in [pre-approval archive](../approval-hist
 | SOP-FRS-010 | D0.1 | [SOP-FRS-010-D0.1-System-Pages.docx](SOP-FRS-010-D0.1-System-Pages.docx) | b1eb18eec277276a589461c8da167cf8d656727bbda584b01f20ef29b0738250 | c3ce9bdfeacbc3ed3a9a6c5fd0e27fcbb2c36f275db28f58881a8c436ffd17bc |
 | SOP-FRS-011 | D0.1 | [SOP-FRS-011-D0.1-Workspace-Tools.docx](SOP-FRS-011-D0.1-Workspace-Tools.docx) | 267358f4dd08ccc9246bd9a6f2c5261f85b29f89b4b4a960869e705dc2695df6 | 008b3271704562c8cf240977dd0dbb26201c6ad8c142bd6b79a3e38f9528a973 |
 | SOP-FRS-012 | D0.1 | [SOP-FRS-012-D0.1-Electronic-Signatures-and-Approval-Authority.docx](SOP-FRS-012-D0.1-Electronic-Signatures-and-Approval-Authority.docx) | 1505c8122dc891dbbc4166d030c65a60e65aec377a9bfbd228f803b900f4acd0 | 53070aa78597c7ee80ffe314564a7d91b98263523e6f1439cab8f8c21fabee3c |
+| SOP-FRS-013 | D0.1 | [SOP-FRS-013-D0.1-System-Design-and-Page-Map.docx](SOP-FRS-013-D0.1-System-Design-and-Page-Map.docx) | 563bdc20781351dd40aa2af77317bc76841c34c37e02d95c2e885deae9e25137 | 837557a177226734d4d948241a4fb556085f1a3b5a804090bb4ceb19b963836c |
+| SOP-FRS-014 | D0.1 | [SOP-FRS-014-D0.1-User-Experience-All-Pages.docx](SOP-FRS-014-D0.1-User-Experience-All-Pages.docx) | d7be04c774b43a91b98d7966074b6a55cd2cf3c2bafe3afe77085a1f4c409261 | 42192d23d32aa196be6ca0570bbb001f7479b3290ea0fe13ecaa4e787a7859ab |
