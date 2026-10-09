@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SynQC Operations — Approval Review</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#00504a",
+            "error-container": "#ffdad6",
+            "secondary-container": "#d0e0ff",
+            "primary": "#0037b0",
+            "secondary-fixed": "#d5e3ff",
+            "inverse-surface": "#213145",
+            "on-error": "#ffffff",
+            "on-surface-variant": "#434655",
+            "on-error-container": "#93000a",
+            "surface-dim": "#cbdbf5",
+            "primary-fixed-dim": "#b7c4ff",
+            "tertiary-container": "#006861",
+            "surface-bright": "#f8f9ff",
+            "outline-variant": "#c4c5d7",
+            "outline": "#747686",
+            "secondary-fixed-dim": "#b7c7e5",
+            "on-primary-fixed-variant": "#0039b5",
+            "surface-variant": "#d3e4fe",
+            "on-secondary-fixed-variant": "#384760",
+            "primary-fixed": "#dce1ff",
+            "error": "#ba1a1a",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#8fe4da",
+            "surface-container-low": "#eff4ff",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#505f79",
+            "surface-container-highest": "#d3e4fe",
+            "surface-container": "#e5eeff",
+            "on-primary-fixed": "#001551",
+            "tertiary-fixed-dim": "#80d5cb",
+            "inverse-primary": "#b7c4ff",
+            "on-surface": "#0b1c30",
+            "on-primary-container": "#cad3ff",
+            "on-tertiary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "inverse-on-surface": "#eaf1ff",
+            "surface": "#f8f9ff",
+            "on-secondary-fixed": "#0b1c32",
+            "tertiary-fixed": "#9cf2e8",
+            "on-secondary-container": "#54637d",
+            "surface-tint": "#2151da",
+            "surface-container-high": "#dce9ff",
+            "on-background": "#0b1c30",
+            "on-primary": "#ffffff",
+            "primary-container": "#1d4ed8",
+            "tertiary": "#004e48",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1rem",
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin": "1.5rem",
+            "gutter-lg": "1.5rem",
+            "space-md": "0.75rem",
+            "space-xxs": "0.125rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "code-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-xs": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-sm": ["15px", { "lineHeight": "20px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "code-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-xs": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md select-none">
+<!-- PERSISTENT REGULATORY GOVERNANCE TOP BANNER (DEMONSTRATION DISCLAIMER) -->
+<div class="w-full bg-[#f1f5f9] border-b border-[#cbd5e1] text-[#475569] px-space-xl py-1 text-label-xs font-label-xs flex items-center justify-between z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-[#64748b]" data-icon="policy">policy</span>
+<span class="font-semibold text-on-surface">SYNTHETIC DEMONSTRATION WORKBENCH</span>
+<span class="text-[#94a3b8]">|</span>
+<span>Proposed design — not implemented</span>
+<span class="text-[#94a3b8]">|</span>
+<span>Synthetic demonstration data</span>
+</div>
+<div class="flex items-center gap-4 text-label-xs">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Non-Production Staging</span>
+<span class="font-mono text-[#64748b]">SYS_ENV: SYNTH-ALPHA-DEMO</span>
+</div>
+</div>
+<div class="flex flex-1 relative">
+<!-- SHARED COMPONENT: SideNavBar -->
+<aside class="fixed top-0 left-0 h-screen w-[260px] bg-inverse-surface border-r border-outline-variant/30 flex flex-col justify-between p-space-md z-40">
+<div class="flex flex-col gap-6">
+<!-- Brand / Header -->
+<div class="flex items-center gap-3 px-2 pt-2">
+<div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="verified_user">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-semibold text-inverse-on-surface">SynQC Operations</span>
+<span class="text-label-xs font-label-xs text-secondary-fixed-dim">Enterprise Release Desk</span>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav aria-label="Main Navigation" class="flex flex-col gap-1.5">
+<!-- Item 1: Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface hover:bg-surface-variant/20 font-label-md transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Item 2: Receiving Register -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface hover:bg-surface-variant/20 font-label-md transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="inventory_2">inventory_2</span>
+<span>Receiving Register</span>
+</a>
+<!-- Item 3: Approval Reviews (ACTIVE MATCH) -->
+<a aria-current="page" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-on-primary font-label-md transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="fact_check">fact_check</span>
+<span>Approval Reviews</span>
+</a>
+<!-- Item 4: Audit Logs -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface hover:bg-surface-variant/20 font-label-md transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="history_edu">history_edu</span>
+<span>Audit Logs</span>
+</a>
+<!-- Item 5: Quality Policies -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface hover:bg-surface-variant/20 font-label-md transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="policy">policy</span>
+<span>Quality Policies</span>
+</a>
+</nav>
+</div>
+<!-- Footer & CTA Section -->
+<div class="flex flex-col gap-4 pb-2">
+<!-- Emergency Hold Action -->
+<div class="border-t border-outline-variant/20 pt-3 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="tune">tune</span>
+<span>System Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="verified_user">verified_user</span>
+<span>Compliance Standards</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- MAIN OPERATIONAL WORKSPACE WRAPPER -->
+<div class="flex flex-col flex-1 pl-[260px] min-w-[1024px]">
+<!-- SHARED COMPONENT: TopNavBar -->
+<header class="sticky top-0 z-30 w-full bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center h-14 px-space-xl">
+<!-- Left Section: Search & System Scope -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-[#f8fafc] border border-[#cbd5e1] rounded-lg px-3 py-1.5 w-72">
+<span class="material-symbols-outlined text-[18px] text-[#64748b]" data-icon="search">search</span>
+<input class="bg-transparent border-0 p-0 text-body-sm font-body-sm text-on-surface focus:ring-0 w-full placeholder:text-[#94a3b8]" placeholder="Search report or lot ID..." readonly="" type="text" value="DEMO-001"/>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-secondary hover:text-on-surface font-label-md text-label-md" href="#">Facility 04-Alpha</a>
+<a class="text-primary font-label-md text-label-md border-b-2 border-primary pb-1" href="#">Batch Review Console</a>
+<a class="text-secondary hover:text-on-surface font-label-md text-label-md" href="#">Audit Trails</a>
+</nav>
+</div>
+<!-- Right Section: Trailing Actions, Status & Auditor Identity -->
+<div class="flex items-center gap-4">
+<!-- Notification & Help Icons -->
+<div class="flex items-center gap-1">
+<button aria-label="Notifications" class="w-9 h-9 rounded-lg hover:bg-surface-variant/20 flex items-center justify-center text-[#64748b]">
+<span class="material-symbols-outlined text-[18px]" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="Help &amp; Documentation" class="w-9 h-9 rounded-lg hover:bg-surface-variant/20 flex items-center justify-center text-[#64748b]">
+<span class="material-symbols-outlined text-[18px]" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<!-- Auditor Avatar & Meta -->
+<div class="flex items-center gap-2.5 pl-2">
+<div class="w-8 h-8 rounded-full bg-[#cbd5e1] border border-[#94a3b8] flex items-center justify-center text-xs font-semibold text-[#1e293b]">
+              LA
+            </div>
+<div class="flex flex-col text-left">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Lead Quality Auditor</span>
+<span class="text-[10px] text-[#64748b]">ID: AUD-7402-GEN</span>
+</div>
+</div>
+</div>
+</header>
+<!-- CANVAS CONTENT CONTAINER (1440px target width staging) -->
+<main class="flex-1 px-8 py-6 max-w-[1440px] w-full mx-auto flex flex-col gap-6">
+<!-- TITLE HEADER & METADATA -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<h1 class="text-headline-xl font-headline-xl text-on-surface">Approval Review — Report DEMO-001 (Version 3)</h1>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wider uppercase bg-[#fffbeb] text-[#b45309] border border-[#fde68a]">
+                HOLD / UNDER REVIEW
+              </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-[#64748b]">
+            Fictional Demonstration Record | Generic Item A | Inbound Lot L-901
+          </p>
+</div>
+<!-- SECTION 1: HEADER SUMMARY & MANDATORY CORE PRINCIPLE GOVERNANCE BANNER -->
+<section class="bg-surface-container-lowest rounded-lg border border-[#e2e8f0] p-5 flex flex-col gap-4">
+<div class="flex items-center justify-between pb-3 border-b border-[#e2e8f0]"><div class="flex items-center gap-3"><span class="inline-flex items-center px-2.5 py-1 rounded text-label-xs font-label-xs uppercase bg-[#d0e0ff] text-primary border border-secondary-fixed">VERSION 3 (PENDING REVIEW)</span><span class="text-[#cbd5e1]">•</span><span class="text-body-sm font-body-sm text-[#475569]">System Segregation: <strong class="text-on-surface font-semibold">Tier-2 High Consequence</strong></span></div><div class="flex items-center gap-2 text-label-xs font-label-xs text-[#64748b]"><span class="material-symbols-outlined text-[14px]">info</span><span>Demonstration Workflow Architecture</span></div></div>
+<!-- Core Principle Notice Banner (Crucial Governance Directive) -->
+<div class="bg-[#f8fafc] border-l-4 border-primary rounded-r-lg p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-[20px] text-primary flex-shrink-0 mt-0.5" data-icon="gavel">gavel</span>
+<div class="flex flex-col gap-0.5">
+<span class="text-label-sm font-label-sm text-on-surface uppercase tracking-wide">Core Governance Enforcement Mandate</span>
+<p class="text-body-sm font-body-sm text-[#334155] leading-relaxed">PASS does not authorize release. State permission, version separation-of-duties, and audit checks cannot be bypassed.</p>
+</div>
+</div>
+</section>
+<!-- SECTION 3: SEQUENTIAL APPROVAL STAGES (STEPPER WORKFLOW) -->
+<section class="bg-surface-container-lowest rounded-lg border border-[#e2e8f0] p-6">
+<div class="flex items-center justify-between mb-5">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Dual Sequential Authorization Workflow</h2>
+<p class="text-body-sm font-body-sm text-[#64748b]">Two independent verified sign-offs are enforced by regulatory policy before material distribution.</p>
+</div>
+<span class="text-label-xs font-label-xs text-[#64748b] bg-[#f1f5f9] px-2.5 py-1 rounded border border-[#cbd5e1]">
+              Strict Order: Stage 1 → Stage 2
+            </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative"><div class="rounded-lg border border-[#cbd5e1] bg-[#f8fafc] p-5 flex flex-col justify-between"><div class="flex flex-col gap-3"><div class="flex items-center justify-between"><span class="text-label-xs font-label-xs font-semibold px-2 py-0.5 rounded bg-[#f1f5f9] text-[#64748b] border border-[#cbd5e1]">STAGE 1: PREVIOUS STAGE</span><span class="material-symbols-outlined text-[#64748b] text-[20px]">pending</span></div><div><h3 class="text-headline-sm font-headline-sm text-on-surface">Previous stage (illustrative workflow only; signature evidence not supplied)</h3><p class="text-body-sm font-body-sm text-[#475569] mt-1">Technical quality review checkpoint in sequence. Sign-off evidence is illustrative only and not supplied.</p></div></div><div class="mt-4 pt-3 border-t border-[#e2e8f0] flex flex-col gap-1 text-label-xs font-label-xs text-[#64748b]"><div class="flex items-center justify-between"><span>Sign-off Evidence: <strong class="text-[#94a3b8]">None supplied</strong></span><span class="text-[#94a3b8]">Unverified</span></div></div></div><div class="rounded-lg border-2 border-primary bg-surface-bright p-5 flex flex-col justify-between relative shadow-sm"><div class="absolute -top-3 right-4 px-2 py-0.5 rounded bg-primary text-on-primary text-[10px] font-semibold tracking-wider uppercase">Current Active Step</div><div class="flex flex-col gap-3"><div class="flex items-center justify-between"><span class="text-label-xs font-label-xs font-semibold px-2 py-0.5 rounded bg-[#fef3c7] text-[#78350f] border border-[#fcd34d]">STAGE 2: PENDING FINAL REVIEW</span><span class="material-symbols-outlined text-primary text-[20px]">hourglass_empty</span></div><div><h3 class="text-headline-sm font-headline-sm text-on-surface">Stage 2: Pending final review (illustrative)</h3><p class="text-body-sm font-body-sm text-[#475569] mt-1">Sequential disposition staged for review. Authorization requirements apply at execution.</p></div></div><div class="mt-4 pt-3 border-t border-[#e2e8f0] flex flex-col gap-1 text-label-xs font-label-xs text-[#64748b]"><div class="flex items-center justify-between"><span>Authority Determination</span><span class="text-primary font-semibold">Review Step</span></div></div></div></div>
+</section>
+<!-- SECTION 2: EVIDENCE SUMMARY & VERSION HISTORY BENTO GRID -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- PARAMETER VERIFICATION TABLE (8 Cols) -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-lg border border-[#e2e8f0] p-5 flex flex-col justify-between"><div class="flex flex-col"><div class="flex items-center justify-between pb-3 border-b border-[#e2e8f0] mb-4"><div><h2 class="text-headline-sm font-headline-sm text-on-surface">Evidence summary</h2><p class="text-body-sm font-body-sm text-[#64748b]">Qualitative documentation status for demonstration review</p></div><span class="text-label-xs font-label-xs bg-[#eff4ff] text-primary px-2.5 py-1 rounded font-semibold border border-[#d0e0ff]">Status Overview</span></div><div class="overflow-x-auto border border-[#e2e8f0] rounded-lg"><table class="w-full text-left text-body-sm font-body-sm border-collapse"><tbody class="divide-y divide-[#e2e8f0]"><tr class="h-12"><td class="px-4 py-3 font-medium text-on-surface w-1/2">Demonstration attachment A</td><td class="px-4 py-3 text-secondary text-right font-medium">illustrative only</td></tr><tr class="h-12"><td class="px-4 py-3 font-medium text-on-surface w-1/2">Source authority</td><td class="px-4 py-3 text-secondary text-right font-medium">Not verified</td></tr><tr class="h-12"><td class="px-4 py-3 font-medium text-on-surface w-1/2">Scientific evaluation</td><td class="px-4 py-3 text-secondary text-right font-medium">Not supplied</td></tr></tbody></table></div></div><div class="mt-4 pt-3 flex items-center justify-between text-label-xs font-label-xs text-[#64748b]"><span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-[#64748b]">info</span>Synthetic Demonstration Workflow</span><span>Non-production representation</span></div></div>
+<!-- VERSION HISTORY LOG (4 Cols) -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-lg border border-[#e2e8f0] p-5 flex flex-col justify-between"><div><div class="flex items-center justify-between pb-3 border-b border-[#e2e8f0] mb-4"><h2 class="text-headline-sm font-headline-sm text-on-surface">Version Audit Trail</h2><span class="material-symbols-outlined text-[18px] text-[#64748b]">history</span></div><div class="relative pl-6 space-y-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-[#cbd5e1]"><div class="relative"><div class="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#94a3b8] ring-4 ring-white"></div><div class="flex flex-col"><span class="font-semibold text-on-surface text-label-sm font-label-sm">Version 1.0</span><p class="text-body-sm font-body-sm text-[#475569] mt-0.5">Initial demonstration entry staging.</p><span class="text-[11px] text-[#94a3b8] mt-0.5">Illustrative workflow entry</span></div></div><div class="relative"><div class="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#94a3b8] ring-4 ring-white"></div><div class="flex flex-col"><span class="font-semibold text-on-surface text-label-sm font-label-sm">Version 2.0</span><p class="text-body-sm font-body-sm text-[#475569] mt-0.5">Technical progression review point.</p><span class="text-[11px] text-[#94a3b8] mt-0.5">Illustrative workflow entry</span></div></div><div class="relative"><div class="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-white"></div><div class="flex flex-col"><span class="font-semibold text-primary text-label-sm font-label-sm">Version 3.0 (Pending Review)</span><p class="text-body-sm font-body-sm text-on-surface font-medium mt-0.5">Staged for disposition review.</p><span class="text-[11px] text-primary mt-0.5">Pending Action</span></div></div></div></div><div class="mt-4 pt-3 border-t border-[#e2e8f0] text-label-xs font-label-xs text-[#64748b]"><span>Illustrative workflow history</span></div></div>
+</div>
+<!-- SECTION 4: ELECTRONIC SIGNATURE & REAUTHENTICATION MODULE -->
+<section class="bg-surface-container-lowest rounded-lg border border-[#cbd5e1] p-6 shadow-sm">
+<div class="flex items-center justify-between pb-4 border-b border-[#e2e8f0] mb-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-[#e5eeff] text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]" data-icon="draw">draw</span>
+</div>
+<div>
+<h2 class="text-headline-md font-headline-md text-on-surface">Account-Bound Electronic Signature Module</h2>
+<p class="text-body-sm font-body-sm text-[#64748b]">Statutory release action requires active credentials and non-delegable personal attestation.</p>
+</div>
+</div>
+<div class="flex items-center gap-2"></div>
+</div>
+<!-- Explicit Policy Notice -->
+<div class="bg-[#eff4ff] border border-[#cbd5e1] rounded-lg p-3.5 mb-6 flex items-center gap-3 text-body-sm font-body-sm text-[#1e293b]"><span class="material-symbols-outlined text-primary text-[20px]">verified</span><span><strong>Review Requirement:</strong> Fresh reauthentication required prior to proceeding to signature review.</span></div>
+<!-- Form Fields & Inputs Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"><div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-label-md font-label-md text-on-surface font-semibold">Session Identity Binding</label><div class="min-h-[44px] bg-[#f8fafc] border border-[#cbd5e1] rounded-lg px-3.5 py-2.5 flex items-center justify-between"><div class="flex items-center gap-2 text-body-sm font-body-sm text-[#1e293b]"><span class="material-symbols-outlined text-[18px] text-[#475569]">badge</span><span>Bound to authenticated account at runtime</span></div></div></div></div>
+<!-- Legal Attestation Checkbox -->
+<div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg p-4 mb-6"><label class="flex items-center gap-3 cursor-pointer"><input class="h-5 w-5 rounded border-[#cbd5e1] text-primary focus:ring-primary/30" id="legal-attest" type="checkbox"/><span class="text-body-md font-body-md text-on-surface">I have reviewed this proposed screen</span></label></div>
+<!-- Action Buttons Bar (Strict 44px min-height targets) -->
+<div class="flex items-center justify-between pt-4 border-t border-[#e2e8f0]">
+<button class="min-h-[44px] px-5 rounded-lg border border-[#cbd5e1] bg-[#ffffff] hover:bg-[#f8fafc] text-[#334155] text-label-md font-label-md font-semibold flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_back">arrow_back</span>
+<span>Return to Register</span>
+</button>
+<div class="flex items-center gap-3">
+<button class="min-h-[44px] px-6 rounded-lg bg-primary hover:bg-[#1d4ed8] text-on-primary text-label-md font-label-md font-semibold flex items-center gap-2 transition-colors shadow-sm">
+<span>Continue to signature review</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- MANDATORY BOTTOM AUDIT DISCLAIMER CALLOUT -->
+<footer class="mt-2 mb-8 bg-[#f1f5f9] border-l-4 border-[#64748b] border-y border-r border-[#cbd5e1] rounded-r-lg p-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[20px] text-[#64748b] flex-shrink-0 mt-0.5" data-icon="info">info</span>
+<div class="flex flex-col gap-1 text-label-xs font-label-xs text-[#475569]">
+<span class="font-semibold text-on-surface uppercase tracking-wider">Mandatory Demonstration Governance Notice</span>
+<p class="leading-relaxed">
+                These are visual proposals only, not live application functionality, approved policy or compliance evidence. Use no real people, suppliers, credentials, scientific limits or uploaded source documents. All lot identifiers, quality roles, and cryptographic stamps depicted within this interface represent synthetic scaffolding designed solely for ergonomic validation.
+              </p>
+</div>
+</div>
+</footer>
+</main>
+</div>
+</div>
+</body></html>

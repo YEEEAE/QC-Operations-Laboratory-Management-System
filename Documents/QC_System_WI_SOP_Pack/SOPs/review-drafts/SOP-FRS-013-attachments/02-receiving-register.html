@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SynQC Operations — Receiving Register</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#00504a",
+            "error-container": "#ffdad6",
+            "secondary-container": "#d0e0ff",
+            "primary": "#0037b0",
+            "secondary-fixed": "#d5e3ff",
+            "inverse-surface": "#213145",
+            "on-error": "#ffffff",
+            "on-surface-variant": "#434655",
+            "on-error-container": "#93000a",
+            "surface-dim": "#cbdbf5",
+            "primary-fixed-dim": "#b7c4ff",
+            "tertiary-container": "#006861",
+            "surface-bright": "#f8f9ff",
+            "outline-variant": "#c4c5d7",
+            "outline": "#747686",
+            "secondary-fixed-dim": "#b7c7e5",
+            "on-primary-fixed-variant": "#0039b5",
+            "surface-variant": "#d3e4fe",
+            "on-secondary-fixed-variant": "#384760",
+            "primary-fixed": "#dce1ff",
+            "error": "#ba1a1a",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#8fe4da",
+            "surface-container-low": "#eff4ff",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#505f79",
+            "surface-container-highest": "#d3e4fe",
+            "surface-container": "#e5eeff",
+            "on-primary-fixed": "#001551",
+            "tertiary-fixed-dim": "#80d5cb",
+            "inverse-primary": "#b7c4ff",
+            "on-surface": "#0b1c30",
+            "on-primary-container": "#cad3ff",
+            "on-tertiary-fixed": "#00201d",
+            "background": "#f8f9ff",
+            "inverse-on-surface": "#eaf1ff",
+            "surface": "#f8f9ff",
+            "on-secondary-fixed": "#0b1c32",
+            "tertiary-fixed": "#9cf2e8",
+            "on-secondary-container": "#54637d",
+            "surface-tint": "#2151da",
+            "surface-container-high": "#dce9ff",
+            "on-background": "#0b1c30",
+            "on-primary": "#ffffff",
+            "primary-container": "#1d4ed8",
+            "tertiary": "#004e48",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "2rem",
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1rem",
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin": "1.5rem",
+            "gutter-lg": "1.5rem",
+            "space-md": "0.75rem",
+            "space-xxs": "0.125rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-xl": ["Inter"],
+            "code-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-xs": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-sm": ["15px", { "lineHeight": "20px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "code-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-xs": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen antialiased flex selection:bg-secondary-container">
+<!-- SideNavBar Anchor Component -->
+<aside class="fixed top-0 left-0 h-screen w-[260px] bg-inverse-surface border-r border-outline-variant/30 flex flex-col justify-between p-space-md z-40 transition-colors duration-150 ease-in-out">
+<div class="flex flex-col gap-6">
+<!-- Header / Logo Cluster -->
+<div class="px-3 pt-2">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+</div>
+<div>
+<div class="text-headline-sm font-headline-sm font-semibold text-inverse-on-surface">SynQC Operations</div>
+<div class="text-label-xs font-label-xs text-secondary-fixed-dim">Enterprise Release Desk</div>
+</div>
+</div>
+</div>
+<!-- Emergency Hold CTA -->
+<div class="px-3">
+<button class="w-full min-h-[44px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-error-container text-on-error-container font-label-md border border-outline-variant/40 hover:bg-error hover:text-on-error transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-base" data-icon="emergency">emergency</span>
+<span>Emergency Hold</span>
+</button>
+</div>
+<!-- Primary Navigation Cluster -->
+<nav aria-label="Main Navigation" class="flex flex-col gap-1 px-1">
+<!-- Inactive: Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-md hover:bg-surface-variant/20 transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- ACTIVE: Receiving Register (Exact Match) -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-on-primary font-label-md shadow-sm" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="inventory_2">inventory_2</span>
+<span>Receiving Register</span>
+</a>
+<!-- Inactive: Approval Reviews -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-md hover:bg-surface-variant/20 transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="fact_check">fact_check</span>
+<span>Approval Reviews</span>
+</a>
+<!-- Inactive: Audit Logs -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-md hover:bg-surface-variant/20 transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="history_edu">history_edu</span>
+<span>Audit Logs</span>
+</a>
+<!-- Inactive: Quality Policies -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-md hover:bg-surface-variant/20 transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="policy">policy</span>
+<span>Quality Policies</span>
+</a>
+</nav>
+</div>
+<!-- Footer Utility Navigation -->
+<div class="flex flex-col gap-1 border-t border-outline-variant/20 pt-4 px-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-md hover:bg-surface-variant/20 transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="tune">tune</span>
+<span>System Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-secondary-fixed-dim hover:text-inverse-on-surface font-label-md hover:bg-surface-variant/20 transition-colors duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="verified_user">verified_user</span>
+<span>Compliance Standards</span>
+</a>
+<div class="px-3 pt-3 mt-1 flex items-center justify-between text-secondary-fixed-dim text-label-xs font-label-xs">
+<span>ISO-9001 / cGMP v4.2</span>
+<span class="inline-block w-2 h-2 rounded-full bg-tertiary-fixed"></span>
+</div>
+</div>
+</aside>
+<!-- Main Canvas Wrapper -->
+<div class="flex-1 flex flex-col min-w-[1024px] pl-[260px]">
+<!-- TopNavBar Anchor Component -->
+<header class="sticky top-0 z-30 w-full bg-surface-container-lowest border-b border-outline-variant/40 flex justify-between items-center h-14 px-space-xl transition-all duration-150">
+<div class="flex items-center gap-6">
+<!-- Search bar on left -->
+<div class="relative w-72">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-lg" data-icon="search">search</span>
+</span>
+<input class="w-full h-9 pl-9 pr-3 rounded-lg bg-surface border border-outline-variant/60 text-body-sm font-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Search operational registry..." type="text"/>
+</div>
+<!-- Navigation Links Cluster -->
+<nav aria-label="Workbench Context" class="hidden md:flex items-center gap-6">
+<a class="text-secondary hover:text-on-surface font-label-md transition-colors" href="#">Facility 04-Alpha</a>
+<a class="text-primary font-label-md border-b-2 border-primary pb-1 font-semibold" href="#">Batch Review Console</a>
+<a class="text-secondary hover:text-on-surface font-label-md transition-colors" href="#">Audit Trails</a>
+</nav>
+</div>
+<!-- Trailing Status & Actions -->
+<div class="flex items-center gap-3">
+<span class="text-label-xs font-label-xs font-semibold tracking-wider uppercase text-on-surface-variant px-2.5 py-1 rounded bg-surface-variant/40 border border-outline-variant/30">
+          Synthetic Demonstration Data — Proposed design — not implemented
+        </span>
+<div class="flex items-center gap-1 border-l border-outline-variant/40 pl-3">
+<button aria-label="Notifications" class="h-9 w-9 rounded-lg flex items-center justify-center text-secondary hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="Help" class="h-9 w-9 rounded-lg flex items-center justify-center text-secondary hover:bg-surface-container-low hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<!-- Auditor Avatar Profile -->
+<div class="flex items-center gap-2 pl-2">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-fixed flex items-center justify-center text-label-sm font-semibold border border-outline-variant/50" title="Lead Quality Auditor Avatar">
+            QA
+          </div>
+</div>
+</div>
+</header>
+<!-- Main Operational Workspace Body -->
+<main class="flex-1 p-space-xl flex flex-col gap-5">
+<!-- Prominent Compliance Disclaimer Callout Banner -->
+<section aria-label="Regulatory Notice" class="rounded-lg bg-surface-container-low border border-outline-variant/60 p-4 border-l-4 border-l-outline">
+<div class="flex items-start justify-between gap-4">
+<div class="flex items-start gap-3">
+<div class="p-1 rounded bg-surface-container text-secondary mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="info">info</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-error font-bold">Proposed design — not implemented</span>
+<span class="text-outline text-label-xs">•</span>
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Synthetic demonstration data</span>
+</div>
+<p class="text-body-sm font-body-sm text-secondary mt-0.5">
+                All rows, entities, and states are synthetic demonstration artifacts. Strictly designed for operational workflow validation under cGMP segregation policies.
+              </p>
+</div>
+</div>
+<div class="flex items-center gap-2 text-label-xs font-label-xs text-secondary shrink-0 pt-0.5">
+<span class="material-symbols-outlined text-base" data-icon="lock">lock</span>
+<span>READ-ONLY CONSOLE</span>
+</div>
+</div>
+</section>
+<!-- Page Title & Key Metrics Bento Cluster -->
+<section class="grid grid-cols-12 gap-4">
+<!-- Title & Ledger Descriptor Card -->
+<div class="col-span-12 xl:col-span-6 bg-surface-container-lowest border border-outline-variant/40 rounded-lg p-5 flex flex-col justify-between shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]">
+<div>
+<div class="flex items-center gap-2 text-label-xs font-label-xs text-secondary uppercase tracking-wider mb-1">
+<span>Facility 04-Alpha</span>
+<span>/</span>
+<span class="text-primary font-semibold">Inbound Goods Control</span>
+</div>
+<h1 class="text-headline-xl font-headline-xl text-on-surface tracking-tight">Receiving Register</h1>
+<p class="text-body-sm font-body-sm text-secondary mt-1 max-w-xl">
+              Forensic ledger for inbound receipt verification. Tracks formal segregation between chemical/biological testing and regulatory dispatch authority.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/30 flex items-center gap-6 text-label-sm font-label-sm text-secondary">
+<div class="flex items-center gap-1.5">
+<span class="inline-block w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+<span>8 Total Inbound Batches</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+<span>Last synchronized: 10:42 UTC</span>
+</div>
+</div>
+</div>
+<!-- Metric Micro-Card 1: Segregated Quarantine -->
+<div class="col-span-4 xl:col-span-2 bg-surface-container-lowest border border-outline-variant/40 rounded-lg p-4 flex flex-col justify-between">
+<div class="flex items-center justify-between text-secondary">
+<span class="text-label-xs font-label-xs uppercase tracking-wider font-semibold">Active Quarantine</span>
+<span class="material-symbols-outlined text-base" data-icon="gpp_bad">gpp_bad</span>
+</div>
+<div class="my-2">
+<div class="text-headline-lg font-headline-lg text-on-surface">2</div>
+<div class="text-label-xs font-label-xs text-error font-medium">DEMO-002, DEMO-008</div>
+</div>
+<div class="text-label-xs font-label-xs text-secondary border-t border-outline-variant/30 pt-2">
+            Physical Isolation Enforced
+          </div>
+</div>
+<!-- Metric Micro-Card 2: Pending Disposition -->
+<div class="col-span-4 xl:col-span-2 bg-surface-container-lowest border border-outline-variant/40 rounded-lg p-4 flex flex-col justify-between">
+<div class="flex items-center justify-between text-secondary">
+<span class="text-label-xs font-label-xs uppercase tracking-wider font-semibold">Unreleased PASS</span>
+<span class="material-symbols-outlined text-base" data-icon="pending_actions">pending_actions</span>
+</div>
+<div class="my-2">
+<div class="text-headline-lg font-headline-lg text-on-surface">3</div>
+<div class="text-label-xs font-label-xs text-amber-700 font-medium">Awaiting QA Disposition</div>
+</div>
+<div class="text-label-xs font-label-xs text-secondary border-t border-outline-variant/30 pt-2">
+            Segregation Verification Hold
+          </div>
+</div>
+<!-- Metric Micro-Card 3: Final Released -->
+<div class="col-span-4 xl:col-span-2 bg-surface-container-lowest border border-outline-variant/40 rounded-lg p-4 flex flex-col justify-between">
+<div class="flex items-center justify-between text-secondary">
+<span class="text-label-xs font-label-xs uppercase tracking-wider font-semibold">Full Released</span>
+<span class="material-symbols-outlined text-base" data-icon="task_alt">task_alt</span>
+</div>
+<div class="my-2">
+<div class="text-headline-lg font-headline-lg text-on-surface">2</div>
+<div class="text-label-xs font-label-xs text-tertiary font-medium">DEMO-003, DEMO-007</div>
+</div>
+<div class="text-label-xs font-label-xs text-secondary border-t border-outline-variant/30 pt-2">
+            Authorized for Production
+          </div>
+</div>
+</section>
+<!-- Standardized Filter & Control Bar (Strict 44px min-height interactive controls) -->
+<section aria-label="Register Filters" class="bg-surface-container-lowest border border-outline-variant/40 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Search input -->
+<div class="relative min-w-[280px]">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-lg" data-icon="filter_alt">filter_alt</span>
+</span>
+<input class="w-full min-h-[44px] pl-9 pr-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Search ID, generic item, or lot number..." type="text"/>
+</div>
+<!-- Inspection Result Filter Dropdown -->
+<div class="min-w-[170px]">
+<label class="sr-only" for="filter-inspection">State Filter</label>
+<select class="w-full min-h-[44px] px-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" id="filter-inspection">
+<option selected="">All Inspection Results</option>
+<option>PASS</option>
+<option>HOLD</option>
+<option>FAIL</option>
+</select>
+</div>
+<!-- Release System State Filter Dropdown -->
+<div class="min-w-[180px]">
+<label class="sr-only" for="filter-release">Release State Filter</label>
+<select class="w-full min-h-[44px] px-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" id="filter-release">
+<option selected="">All Release States</option>
+<option>NOT_RELEASED</option>
+<option>RELEASED</option>
+<option>QUARANTINE</option>
+</select>
+</div>
+<!-- Date Range filter picker -->
+<div class="relative min-w-[190px]">
+<button class="w-full min-h-[44px] px-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-body-md font-body-md text-on-surface flex items-center justify-between hover:bg-surface-container-low transition-colors" type="button">
+<span class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span>
+<span class="text-on-surface">Current Review Cycle</span>
+</span>
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<!-- Clear Filters button with reset icon -->
+<button class="min-h-[44px] px-4 rounded-lg bg-surface-container-lowest border border-outline-variant text-secondary hover:text-on-surface hover:bg-surface-container-low flex items-center gap-2 font-label-md transition-colors" title="Reset current ledger criteria" type="button">
+<span class="material-symbols-outlined text-base" data-icon="restart_alt">restart_alt</span>
+<span>Clear Filters</span>
+</button>
+</div>
+<!-- Right Side: Density & Export Tools (STRICTLY NO BULK RELEASE) -->
+<div class="flex items-center gap-2 border-l border-outline-variant/40 pl-3">
+<!-- Density Control Toggle -->
+<div aria-label="Table Density Control" class="flex items-center bg-surface-container rounded-lg p-0.5 border border-outline-variant/60" role="group">
+<button class="min-h-[40px] px-3 py-1 rounded bg-surface-container-lowest text-primary font-label-xs font-semibold shadow-xs" type="button">
+              Compact (14px)
+            </button>
+<button class="min-h-[40px] px-3 py-1 rounded text-secondary hover:text-on-surface font-label-xs transition-colors" type="button">
+              Standard
+            </button>
+<button class="min-h-[40px] px-3 py-1 rounded text-secondary hover:text-on-surface font-label-xs transition-colors" type="button">
+              Relaxed
+            </button>
+</div>
+<!-- Export Audit Log button -->
+<button class="min-h-[44px] px-4 rounded-lg bg-surface-container-lowest border border-outline-variant text-secondary hover:text-on-surface hover:bg-surface-container-low flex items-center gap-2 font-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-base" data-icon="download">download</span>
+<span>Export Audit Log</span>
+</button>
+</div>
+</section>
+<!-- Main Tabular Container -->
+<section aria-label="Inbound Goods Ledger Table" class="bg-surface-container-lowest border border-outline-variant/40 rounded-lg overflow-hidden shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<!-- Table Header -->
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/60 text-label-xs font-label-xs text-secondary uppercase tracking-wider">
+<th class="w-12 px-4 py-3 text-center" scope="col">
+<input aria-label="Select all rows for inspection grouping" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</th>
+<th class="px-4 py-3 font-semibold" scope="col">Record ID</th>
+<th class="px-4 py-3 font-semibold" scope="col">Generic Item</th>
+<th class="px-4 py-3 font-semibold" scope="col">Inbound Lot</th>
+<th class="px-4 py-3 font-semibold" scope="col">Receiving Date</th>
+<th class="px-4 py-3 font-semibold" scope="col">Inspection Result</th>
+<th class="px-4 py-3 font-semibold" scope="col">Release System State</th>
+<th class="px-4 py-3 font-semibold text-center" scope="col">Integrity Flag</th>
+<th class="px-4 py-3 font-semibold text-right" scope="col">Row Detail Action</th>
+</tr>
+</thead>
+<!-- Table Body: Exactly 8 synthetic demonstration rows -->
+<tbody class="divide-y divide-outline-variant/30 text-body-md font-body-md text-on-surface">
+<!-- Row 1: DEMO-001 -->
+<tr class="hover:bg-surface transition-colors">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-001" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-001
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item A
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-901
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 08:30
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#047857]"></span>
+                    PASS
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#fcd34d] bg-[#fef3c7] text-[#78350f]">
+<span class="material-symbols-outlined text-[13px]" data-icon="lock_clock">lock_clock</span>
+                    NOT_RELEASED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-tertiary" title="Cryptographic Checksum Intact">
+<span class="material-symbols-outlined text-base" data-icon="verified">verified</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: DEMO-002 -->
+<tr class="hover:bg-surface transition-colors bg-surface-container-low/20">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-002" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-002
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item B
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-902
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 09:15
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#fde68a] bg-[#fffbeb] text-[#b45309]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#b45309]"></span>
+                    HOLD
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-error/30 bg-error-container text-on-error-container">
+<span class="material-symbols-outlined text-[13px]" data-icon="block">block</span>
+                    QUARANTINED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-error" title="Deviation Flagged: Out of Spec Temp">
+<span class="material-symbols-outlined text-base" data-icon="flag">flag</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: DEMO-003 -->
+<tr class="hover:bg-surface transition-colors">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-003" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-003
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item A
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-903
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 10:00
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#047857]"></span>
+                    PASS
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#cbd5e1] bg-[#f1f5f9] text-[#334155]">
+<span class="material-symbols-outlined text-[13px]" data-icon="check_circle">check_circle</span>
+                    RELEASED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-tertiary" title="Cryptographic Checksum Intact">
+<span class="material-symbols-outlined text-base" data-icon="verified">verified</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: DEMO-004 -->
+<tr class="hover:bg-surface transition-colors">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-004" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-004
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item C
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-904
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 11:10
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-secondary/30 bg-surface-container text-secondary">
+<span class="material-symbols-outlined text-[13px]" data-icon="sync">sync</span>
+                    IN_REVIEW
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#fcd34d] bg-[#fef3c7] text-[#78350f]">
+<span class="material-symbols-outlined text-[13px]" data-icon="lock_clock">lock_clock</span>
+                    NOT_RELEASED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-outline" title="Verification In Flight">
+<span class="material-symbols-outlined text-base" data-icon="hourglass_empty">hourglass_empty</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 5: DEMO-005 -->
+<tr class="hover:bg-surface transition-colors">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-005" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-005
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item B
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-905
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 11:45
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#047857]"></span>
+                    PASS
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#fcd34d] bg-[#fef3c7] text-[#78350f]">
+<span class="material-symbols-outlined text-[13px]" data-icon="lock_clock">lock_clock</span>
+                    NOT_RELEASED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-tertiary" title="Cryptographic Checksum Intact">
+<span class="material-symbols-outlined text-base" data-icon="verified">verified</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 6: DEMO-006 -->
+<tr class="hover:bg-surface transition-colors bg-surface-container-low/20">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-006" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-006
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item A
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-906
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 12:20
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#fde68a] bg-[#fffbeb] text-[#b45309]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#b45309]"></span>
+                    HOLD
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-amber-300 bg-amber-50 text-amber-900 font-medium">
+<span class="material-symbols-outlined text-[13px]" data-icon="pause_circle">pause_circle</span>
+                    HOLD_PENDING_INVESTIGATION
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-amber-600" title="Investigation Ticket Opened">
+<span class="material-symbols-outlined text-base" data-icon="report">report</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 7: DEMO-007 -->
+<tr class="hover:bg-surface transition-colors">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-007" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-007
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item D
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-907
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 13:00
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#047857]"></span>
+                    PASS
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-[#cbd5e1] bg-[#f1f5f9] text-[#334155]">
+<span class="material-symbols-outlined text-[13px]" data-icon="check_circle">check_circle</span>
+                    RELEASED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-tertiary" title="Cryptographic Checksum Intact">
+<span class="material-symbols-outlined text-base" data-icon="verified">verified</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 8: DEMO-008 -->
+<tr class="hover:bg-surface transition-colors bg-surface-container-low/20">
+<td class="w-12 px-4 py-2.5 text-center">
+<input aria-label="Select row DEMO-008" class="rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+</td>
+<td class="px-4 py-2.5 font-code-sm text-code-sm font-semibold text-primary">
+                  DEMO-008
+                </td>
+<td class="px-4 py-2.5 font-medium">
+                  Generic Item C
+                </td>
+<td class="px-4 py-2.5 text-secondary font-code-sm text-code-sm">
+                  Lot L-908
+                </td>
+<td class="px-4 py-2.5 text-secondary text-body-sm">
+                  2025-02-14 14:15
+                </td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-error/40 bg-error-container text-error font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                    REJECT
+                  </span>
+</td>
+<td class="px-4 py-2.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-label-xs tracking-wider border border-error/30 bg-error-container text-on-error-container">
+<span class="material-symbols-outlined text-[13px]" data-icon="block">block</span>
+                    QUARANTINED
+                  </span>
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center text-error" title="Critical Assay Failure">
+<span class="material-symbols-outlined text-base" data-icon="error">error</span>
+</span>
+</td>
+<td class="px-4 py-2.5 text-right">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-secondary hover:text-on-surface font-label-sm inline-flex items-center gap-1 transition-colors" type="button">
+<span>View Detail</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer Pagination Standard Control -->
+<div class="px-4 py-3 bg-surface-container-low/40 border-t border-outline-variant/40 flex items-center justify-between">
+<div class="text-label-sm font-label-sm text-secondary">
+            Showing <span class="font-semibold text-on-surface">1</span> to <span class="font-semibold text-on-surface">8</span> of <span class="font-semibold text-on-surface">8</span> synthetic demo records
+          </div>
+<div class="flex items-center gap-2">
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant/50 text-outline text-label-sm cursor-not-allowed flex items-center gap-1 opacity-60" disabled="" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+<span>Previous</span>
+</button>
+<div class="flex items-center gap-1 px-2">
+<span class="min-h-[32px] w-8 rounded bg-primary text-on-primary text-label-xs font-semibold flex items-center justify-center">1</span>
+</div>
+<button class="min-h-[44px] px-3 py-1 rounded bg-surface-container-lowest border border-outline-variant/50 text-outline text-label-sm cursor-not-allowed flex items-center gap-1 opacity-60" disabled="" type="button">
+<span>Next</span>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Explanatory Governance Footnote -->
+<footer class="rounded-lg bg-surface-container border border-outline-variant/40 p-3.5 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-lg shrink-0 mt-0.5" data-icon="gavel">gavel</span>
+<p class="text-body-sm font-body-sm text-secondary leading-relaxed">
+<span class="font-semibold text-on-surface">Notice:</span> Separate inspection result and release system state columns reflect strict segregation of verification and disposition. Scientific PASS does not authorize release. Release dispositions require dual cryptographic signature under operational procedure SOP-709.
+        </p>
+</footer>
+</main>
+</div>
+</body></html>
