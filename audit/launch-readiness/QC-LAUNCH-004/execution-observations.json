@@ -1,0 +1,42 @@
+{
+  "observedAt": "2026-10-09T00:47:36.424Z",
+  "databaseChecks": [
+    {
+      "command": "pnpm db:migrate:check",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "environment": "Node v24.20.0; DATABASE_URL explicitly set to postgresql://qc_test@127.0.0.1:1/qc_test?sslmode=verify-full",
+      "outcome": "Checker launched, then connection returned ECONNREFUSED 127.0.0.1:1. No remote or shared database contacted."
+    },
+    {
+      "command": "pnpm db:schema:check",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "environment": "Node v24.20.0; DATABASE_URL explicitly set to postgresql://qc_test@127.0.0.1:1/qc_test?sslmode=verify-full",
+      "outcome": "Checker launched, then connection returned ECONNREFUSED 127.0.0.1:1. No remote or shared database contacted."
+    },
+    {
+      "command": "docker info",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "outcome": "No Docker daemon socket. /Applications/Docker.app exists but launch returned kLSNoExecutableErr; direct nested UI executable exited with signal 6."
+    },
+    {
+      "command": "node -v",
+      "exitCode": 0,
+      "status": "PASS",
+      "outcome": "v24.20.0 from /Users/yzydalshmry/.nvm/versions/node/v24.20.0/bin/node"
+    }
+  ],
+  "neonReadOnlyParity": {
+    "command": "pnpm exec tsx /tmp/qc-launch-004-neon-readonly.ts",
+    "exitCode": 0,
+    "status": "VERIFIED_FAIL",
+    "evidenceUri": "audit/launch-readiness/QC-LAUNCH-004/neon-readonly-parity.json",
+    "evidenceDigest": "ad4e00820299c2f172f8f4718fa156cafbda94172bbce52c118c49be4cc391bd",
+    "connection": "existing direct Neon endpoint; credential omitted",
+    "transaction": "BEGIN READ ONLY; rolled back after SELECT-only catalog and ledger queries",
+    "outcome": "PostgreSQL 18.6; applied through 0045; exact checksums match for 45 applied migrations; 0046 and 0047 pending; expected tables inspection_report_catalog and inspection_report_source_evidence absent; no row-level data scanned.",
+    "limitation": "Neon role is neondb_owner, so this proves transaction-level read-only for this capture, not an intrinsically read-only role. No canonical schema hash is defined by the repository."
+  }
+}

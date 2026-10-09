@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-LAUNCH-004",
+  "observedAt": "2026-10-09T00:47:36.424Z",
+  "candidate": {
+    "gitSha": "ccd4648def4abec22a785c85b439b7d10b69976c",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "commitsAheadOfReference": 3,
+    "commitsBehindReference": 0,
+    "previousLaunchFreezeSha": "f72fde0c41c8f373066210f337c6c1c3921a52f1",
+    "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+    "fingerprintScope": "captured before the latest evidence packet update; test and checker code inputs were unchanged by report generation",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "requiredNode": ">=24.20.0 <25",
+    "environment": "local macOS arm64",
+    "pg18Testcontainers": "BLOCKED: Docker Desktop daemon unavailable; app launch failed",
+    "productionDatabaseAccess": "USED only for SELECT-only parity within explicit PostgreSQL READ ONLY transaction via existing direct Neon endpoint; no writes or row-level data scans",
+    "databaseRuntime": "PostgreSQL 18.6; database neondb; transaction_read_only=on"
+  },
+  "migrationSnapshot": {
+    "count": 47,
+    "contiguousVersions1To47": true,
+    "duplicateVersions": [],
+    "migrations": [
+      {
+        "name": "0001_core_schema.sql",
+        "sha256": "a92572b6e26f5f993a1035d2bd6a45e5bf6265098cec2bf26b3f359d773023c1"
+      },
+      {
+        "name": "0002_identity.sql",
+        "sha256": "545f3ae472f40bc4f42ce47e82685e1131731bc2b3b3956eb95235db8d35d629"
+      },
+      {
+        "name": "0003_authorization.sql",
+        "sha256": "ab043158ff8e64aca9e0af7b0c449cb6e23709d76d9cb3005aeecec4fb0a8b46"
+      },
+      {
+        "name": "0004_audit_outbox_idempotency.sql",
+        "sha256": "771a4dcf6fd073a026907b711d2a6baf01eee56cbd6d3dc074d9ac3922f51e62"
+      },
+      {
+        "name": "0005_files_notifications.sql",
+        "sha256": "cb3d4a26cbea20a4fc9c298bc43339b62dfce33a7019c1b54f54483307c0cb12"
+      },
+      {
+        "name": "0006_tasks.sql",
+        "sha256": "cadb09d6dd3f8a5dd3a648fc80680b3b41de6bae269a71854e03ec9be75ebd29"
+      },
+      {
+        "name": "0007_quality.sql",
+        "sha256": "0c84fa183c69eda4237e138073046617a5f64cb20276c015b7b04c2046d075f7"
+      },
+      {
+        "name": "0008_quarantine.sql",
+        "sha256": "6b186e3c1968d89ab31fca4182c64a96fe86c54a1dd93b3b37c02bb60a7f963f"
+      },
+      {
+        "name": "0009_laboratory.sql",
+        "sha256": "50ee5514504f239b74be83783bf76989f2ca08e03a7c4ffd019fff20a3dcc208"
+      },
+      {
+        "name": "0010_assets.sql",
+        "sha256": "67a56b385d87f92e709cbb5fea28ae476d554dafbe1786ad0787ca19c324cdfb"
+      },
+      {
+        "name": "0011_documents.sql",
+        "sha256": "ae2be82bc30c44fd8f7574af487e2a8331205afa4544d598762ad8418054378d"
+      },
+      {
+        "name": "0012_approvals_esignatures.sql",
+        "sha256": "299b48e4b9b7e7bc7a4bc4cc4a52183a64f371251ac8cd8ad5d1fea08a56a124"
+      },
+      {
+        "name": "0013_change_requests.sql",
+        "sha256": "ce95f9113e0991aa36a15b175da8b162cd4d6170d9d8bbda04165f08c0db926a"
+      },
+      {
+        "name": "0014_backup_recovery_metadata.sql",
+        "sha256": "c7c18979fd77945237145f76f64b6f4a02b4fe9eff3a174e84616f0f1f97f536"
+      },
+      {
+        "name": "0015_idempotency_records.sql",
+        "sha256": "7ea6a2275b11891ad05a213a1b127442f5b6703c02ba41de8a334180930e53f3"
+      },
+      {
+        "name": "0016_authorization_scopes.sql",
+        "sha256": "2a17fad291c45618f7421c8d18cda01ad98bd18aba685099b917c1fb759ea9cc"
+      },
+      {
+        "name": "0017_quality_source_context.sql",
+        "sha256": "dd1cfe8dd25c16cdfe8876e0135ed7e808342c6d01f79e413446520a05fd6c9b"
+      },
+      {
+        "name": "0018_rate_limit_windows.sql",
+        "sha256": "8c77a34b3368a156e96368363081ba82fdd8fd9fb4035ae26d8f0d0e9f2b0822"
+      },
+      {
+        "name": "0019_backup_catalog_identity.sql",
+        "sha256": "a3b5e087400758b84919740996b4e5646e5e5f9a2e14322ee76b6e90ca4cdf37"
+      },
+      {
+        "name": "0020_capa_close_evidence.sql",
+        "sha256": "fcf82965da796bd647c3b4deb492bffe069347b2aaab4621759b9344546b4673"
+      },
+      {
+        "name": "0021_release_governance.sql",
+        "sha256": "f4f0525905e58d8d524e65d10b14eed425b3a2a5fe60434b88d12b9bb4ef139b"
+      },
+      {
+        "name": "0022_server_release_evidence.sql",
+        "sha256": "ca1a4dddb703709f218a988066139dbdab62c14977bfbd7f359eae3aab34af61"
+      },
+      {
+        "name": "0023_uat_evidence.sql",
+        "sha256": "a1ff60a7dbffbc8906b3f648f88a50bbeb96e63e45de8d4b8169f4235d1b2fd6"
+      },
+      {
+        "name": "0024_identity_rbac_grant_integrity.sql",
+        "sha256": "23656e8abf2419595be5db9b7853f01b8c43f6b48ea3c3d50826bc29c411bd0f"
+      },
+      {
+        "name": "0025_qc_closure_006_workflow.sql",
+        "sha256": "4fed4b130ecef1263136a53cd1e9a3b986e3bea5091ea8c584e57df632175f66"
+      },
+      {
+        "name": "0026_reject_reports.sql",
+        "sha256": "a411f2e9ae36f8594639cedc4c984e5c6ecd976a69c631e3730b26008a917062"
+      },
+      {
+        "name": "0027_equipment_calibration_maintenance_closure.sql",
+        "sha256": "739e7800463e5d13d2c0a2c1bbd620bbdb304427fa2fdb7fd17a8eb6a42bc960"
+      },
+      {
+        "name": "0028_qc_closure_009_controlled_records.sql",
+        "sha256": "48b5535141860615e6e9e808f7dac4995db71948c98198ac9425ed38832f0313"
+      },
+      {
+        "name": "0029_performance_query_indexes.sql",
+        "sha256": "0d59b6afc2b5e1ab86cdf392f6b35cce3cfb7c32b6d55df96946bdf15b9aeda6"
+      },
+      {
+        "name": "0030_reject_reports_role_parity.sql",
+        "sha256": "8297eb76a726ee1313dfa69946cca51115e93308ea5a3d90510300b922c46859"
+      },
+      {
+        "name": "0031_qc_creation_parity_two_stage_approval.sql",
+        "sha256": "44b160a6b8c09769fd7f18e19c29b2e29c98635cbf81de603a2cbbbd6324ec61"
+      },
+      {
+        "name": "0032_document_version_file_integrity.sql",
+        "sha256": "caba57067c08cdd4e28ea38d934cfe834001ccccd6b323d632ad1a3f99168b0a"
+      },
+      {
+        "name": "0033_controlled_document_execution_context.sql",
+        "sha256": "6b4cf38ab8974ba0dbb30fc4cccb766dac3351796f4d84eb5bf226de0d75c472"
+      },
+      {
+        "name": "0034_template_document_link_variable_scope.sql",
+        "sha256": "628dc3dcb228906e813e532d093c3284a5b220f5226b0346bb762265a9e5f2ab"
+      },
+      {
+        "name": "0035_receiving_normalization.sql",
+        "sha256": "c1f6aae49023e8a8a428f2fed4dadbfb21cd9fe153a24b75bbe0f883c306ac00"
+      },
+      {
+        "name": "0036_qc_data_002_inspection_templates_measurements.sql",
+        "sha256": "e8ddfb7367d6077a0501f3044c78c4be8a48b8752c683236ec013e0e953fbe48"
+      },
+      {
+        "name": "0037_qc_data_003_lab_batches_samples_readings.sql",
+        "sha256": "1389f763f09706cd8f8c5bb20bc52fe6331cfe29a9b1a13d3e030bb8a2e6e597"
+      },
+      {
+        "name": "0038_owner_qc_report_access.sql",
+        "sha256": "52cbd094d9b993ed1f01cb185da777cc56ccd8ee2bf233ade2ad70a608c620ca"
+      },
+      {
+        "name": "0039_laboratory_report_drafts.sql",
+        "sha256": "b52e70d5dc45aab6f1553a3d761b8d2dab2e455eb5db5f27e44caf27d0e823a9"
+      },
+      {
+        "name": "0040_signed_release_gate_evidence.sql",
+        "sha256": "c63984a6066c9d7eaafb1e7febcc531840405badc9c176d459d006ff3ebe2fa4"
+      },
+      {
+        "name": "0041_document_review_queue_indexes.sql",
+        "sha256": "41fe296853afe831a8932ad03000dfe60bfa00ecad112ec1ed3cf2f73b246a0a"
+      },
+      {
+        "name": "0042_immutable_lab_equipment_usage.sql",
+        "sha256": "d9b2531390b4ee00516b9bea07de0e706c3b78c1b13d2925481b29a4ff5340ab"
+      },
+      {
+        "name": "0043_controlled_document_source_binding.sql",
+        "sha256": "bba7c163956c82fe0fa829828bfc0bab9e7b47c1895d197a04e5d82d802ef35c"
+      },
+      {
+        "name": "0044_restore_request_idempotency.sql",
+        "sha256": "4438398375f5ab213bb7a6e466fc138d3cf5802650abf288583f996a8b973ea0"
+      },
+      {
+        "name": "0045_provider_attestation_nonce_replay_guard.sql",
+        "sha256": "7a4634ada07b248dc5f59a07b9ebec419a0fe5f1c98e233cb1f201b6502b18fd"
+      },
+      {
+        "name": "0046_inspection_report_catalog.sql",
+        "sha256": "704ec864d8eab97f37fae13c2e85c5e04e82a832241191160f23d5cc9849de57"
+      },
+      {
+        "name": "0047_task_references_occurrences.sql",
+        "sha256": "325276180b66321858f8a6239f55e9a05c48ac89141d5cf6c2d0efc4b1b2304c"
+      }
+    ],
+    "sourceOnlyCheck": "PASS",
+    "limit": "Applied ledger checksum comparison was not run."
+  },
+  "criteria": [
+    {
+      "criterionId": "QC360-SC-06-03",
+      "expectedOutcome": "PostgreSQL 18 runtime migration/concurrency verification",
+      "testKind": "PostgreSQL 18 Testcontainers migration integration",
+      "command": "pnpm test:migrations",
+      "exitCode": 1,
+      "evidenceUri": ".ci-results/migrations.json",
+      "evidenceDigest": "e3f6027bb241c6310bff85732f2f084b9cf10fcf8823d205765bf3529ece2698",
+      "runnerArtifactDigest": "1a4edd409cbfbd9080eabbce45b333e9c047a395a429bd566e9aaadad358c9ca",
+      "actorRole": "local verification process; no human signoff",
+      "sourceRevision": "ccd4648def4abec22a785c85b439b7d10b69976c",
+      "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+      "timestamp": "2026-10-09T00:43:59.597Z",
+      "status": "BLOCKED",
+      "result": "33/33 skipped; all 8 database test files stopped at Testcontainers setup before PostgreSQL execution."
+    },
+    {
+      "criterionId": "QC360-SC-06-03",
+      "expectedOutcome": "PostgreSQL 18 runtime migration/concurrency verification",
+      "testKind": "PostgreSQL 18 Testcontainers concurrency integration",
+      "command": "pnpm test:concurrency",
+      "exitCode": 1,
+      "evidenceUri": ".ci-results/concurrency.json",
+      "evidenceDigest": "1d38b587e32e1eb919cccb50bd23fa11b0e9c4b9b03c3cfc22c62ae61c99c07e",
+      "runnerArtifactDigest": "8301bfb504c1399175330feaa2435c9e78ae88ffbaaa5bb830e0066ee9bae438",
+      "actorRole": "local verification process; no human signoff",
+      "sourceRevision": "ccd4648def4abec22a785c85b439b7d10b69976c",
+      "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+      "timestamp": "2026-10-09T00:44:03.115Z",
+      "status": "BLOCKED",
+      "result": "17/17 skipped; both concurrency test files stopped at Testcontainers setup before PostgreSQL execution."
+    },
+    {
+      "criterionId": "QC360-SC-06-04",
+      "expectedOutcome": "Applied migration ledger and schema parity verification",
+      "testKind": "migration integrity checker, safe localhost override",
+      "command": "pnpm db:migrate:check",
+      "exitCode": 1,
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-004/execution-observations.json",
+      "evidenceDigest": "0cb8ecd30df1a9e72c75237ec83af96392b81abeeffc29457747865b792cb074",
+      "runnerArtifactDigest": null,
+      "actorRole": "local verification process; no human signoff",
+      "sourceRevision": "ccd4648def4abec22a785c85b439b7d10b69976c",
+      "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+      "timestamp": "2026-10-09T00:44:20Z",
+      "status": "BLOCKED",
+      "result": "Checker launched with a safe localhost-only URL, then returned ECONNREFUSED. Applied or deployment parity remains NOT_TESTED. Not pointed at Neon: verifyMigrationIntegrity calls CREATE SCHEMA IF NOT EXISTS, so those commands are not strictly read-only."
+    },
+    {
+      "criterionId": "QC360-SC-06-04",
+      "expectedOutcome": "Applied migration ledger and schema parity verification",
+      "testKind": "schema checker, safe localhost override",
+      "command": "pnpm db:schema:check",
+      "exitCode": 1,
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-004/execution-observations.json",
+      "evidenceDigest": "0cb8ecd30df1a9e72c75237ec83af96392b81abeeffc29457747865b792cb074",
+      "runnerArtifactDigest": null,
+      "actorRole": "local verification process; no human signoff",
+      "sourceRevision": "ccd4648def4abec22a785c85b439b7d10b69976c",
+      "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+      "timestamp": "2026-10-09T00:44:20Z",
+      "status": "BLOCKED",
+      "result": "Checker launched with a safe localhost-only URL, then returned ECONNREFUSED. Applied or deployment parity remains NOT_TESTED. Not pointed at Neon: verifyMigrationIntegrity calls CREATE SCHEMA IF NOT EXISTS, so those commands are not strictly read-only."
+    },
+    {
+      "criterionId": "QC360-SC-06-04",
+      "expectedOutcome": "Applied migration ledger and schema parity verification",
+      "testKind": "source-only migration inventory",
+      "command": "Node SHA-256 inventory",
+      "exitCode": 0,
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-004/evidence.json#/migrationSnapshot",
+      "evidenceDigest": "f25c13303977f778e887757a6dfd84812f67358583d0d909c213976c900e974c",
+      "runnerArtifactDigest": null,
+      "actorRole": "local verification process; no human signoff",
+      "sourceRevision": "ccd4648def4abec22a785c85b439b7d10b69976c",
+      "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+      "timestamp": "2026-10-09T00:35:30Z",
+      "status": "PASS_SOURCE_ONLY",
+      "result": "47/47 migration files contiguous 0001–0047, unique; current source checksums recorded. Not applied-ledger parity."
+    },
+    {
+      "criterionId": "QC360-SC-06-04",
+      "expectedOutcome": "Read-only applied migration ledger and schema parity against this candidate",
+      "testKind": "live Neon PostgreSQL 18.6; bounded SELECT-only queries in BEGIN READ ONLY transaction",
+      "command": "pnpm exec tsx /tmp/qc-launch-004-neon-readonly.ts",
+      "exitCode": 0,
+      "evidenceUri": "audit/launch-readiness/QC-LAUNCH-004/neon-readonly-parity.json",
+      "evidenceDigest": "ad4e00820299c2f172f8f4718fa156cafbda94172bbce52c118c49be4cc391bd",
+      "runnerArtifactDigest": null,
+      "actorRole": "local verification process; database role neondb_owner; transaction read-only",
+      "sourceRevision": "ccd4648def4abec22a785c85b439b7d10b69976c",
+      "sourceFingerprint": "fb1265bac829d7fa9657646857b08250db688202bcb279c4e6f7d32ea49ebc76",
+      "timestamp": "2026-10-09T00:47:36.424Z",
+      "status": "VERIFIED_FAIL",
+      "result": "45 applied migrations have exact source checksums. Migrations 0046 and 0047 are pending; two expected tables are absent. Actual table-set digest recorded without claiming a canonical schema hash. No row data scanned."
+    }
+  ],
+  "migrationReview": {
+    "db/migrations/0046_inspection_report_catalog.sql": {
+      "sourceLines": "19, 32–56, 60–73, 275–315",
+      "findings": [
+        "Adds source catalog/evidence and ON DELETE RESTRICT references.",
+        "Triggers require active matched source, effective approved version and item mapping before inspection creation.",
+        "Catalog/source evidence, approved child content and completed report form values have immutability guards."
+      ],
+      "postgres18Execution": "NOT_TESTED"
+    },
+    "db/migrations/0047_task_references_occurrences.sql": {
+      "sourceLines": "2–19",
+      "findings": [
+        "Adds paired specialized record references with constrained types.",
+        "Adds all-or-none occurrence identity/fingerprint format checks.",
+        "Adds a partial unique index on recurrence_rule_id and occurrence_key; does not schedule occurrences."
+      ],
+      "postgres18Execution": "NOT_TESTED"
+    },
+    "scripts/db/migrate.ts": {
+      "sourceLines": "29–48,84–112,164–191",
+      "findings": [
+        "Loads ordered migrations and hashes exact source SQL.",
+        "Rejects duplicate versions and unsupported applied checksum mismatch.",
+        "Uses advisory lock and records applied checksum in qc.schema_migrations."
+      ],
+      "runtime": "NOT_ESTABLISHED"
+    }
+  },
+  "parity": {
+    "status": "VERIFIED_FAIL",
+    "evidenceUri": "audit/launch-readiness/QC-LAUNCH-004/neon-readonly-parity.json",
+    "evidenceDigest": "ad4e00820299c2f172f8f4718fa156cafbda94172bbce52c118c49be4cc391bd",
+    "capturedAt": "2026-10-09T00:47:36.424Z",
+    "connection": "existing direct Neon endpoint; endpoint credential omitted",
+    "database": "neondb",
+    "databaseRole": "neondb_owner",
+    "transactionReadOnly": "on",
+    "serverVersion": "PostgreSQL 18.6",
+    "appliedHead": "0045",
+    "appliedCount": 45,
+    "pendingVersions": [
+      "0046",
+      "0047"
+    ],
+    "appliedChecksumsMatchSource": true,
+    "mismatchVersions": [],
+    "schemaTableSetMatches": false,
+    "missingTables": [
+      "inspection_report_catalog",
+      "inspection_report_source_evidence"
+    ],
+    "unexpectedTables": [],
+    "actualTableSetSha256": "0c259ee3ed924b24c941f65de68f322105e44bc780fe6bf52eab7ba8e503b60f",
+    "canonicalSchemaHashAvailable": false,
+    "reason": "Neon is at migration 0045; 0046/0047 are pending and their two expected tables are absent. All 45 applied checksums match current source. Repository defines no canonical schema hash; table-set SHA-256 is observation only. Row-level orphan scan was intentionally not run."
+  },
+  "scoring": {
+    "independentRubricReviewer": "NOT_AVAILABLE",
+    "acceptedPoints": 0,
+    "targetedPoints": 3.85,
+    "unresolvedCriteriaRemainZero": true
+  },
+  "integrity": {
+    "productionWrites": false,
+    "remoteWrites": false,
+    "productionMigrations": false,
+    "realSupplierOrPatientDataUsed": false,
+    "applicationOrMigrationSourceChanged": false,
+    "productionReadOnlyTransaction": true
+  }
+}
