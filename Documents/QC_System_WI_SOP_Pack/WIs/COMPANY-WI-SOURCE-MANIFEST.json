@@ -1,0 +1,520 @@
+{
+  "schema": "qc.controlled-document-source-manifest.v1",
+  "generatedAt": "2026-10-09T08:41:53+03:00",
+  "authorityStatus": "RECEIVED_CONTROLLED_COPY_NOT_QMS_VERIFIED",
+  "approved": false,
+  "effective": false,
+  "note": "Scanned company-controlled WI copies received from the owner. Original controlled copies were not altered. Added as source inventory under WIs/. This does NOT assert QMS approval or effectivity (RD-019/PD-13 remain OPEN). Page images are compressed renderings of the source scans; hashes below bind each rendering and per-product PDF.",
+  "sourcePdfs": {
+    "audit/Wi.pdf": {
+      "sha256": "20cd5fe4bf26cb1867e29fdcf43cd7dd150c0f5ef25cdd60f2e32c2e167b6317"
+    },
+    "audit/Wi2.pdf": {
+      "sha256": "998bf30542fa15df77367918a593a789914a282d87abbf4f7448f48e822b50b7"
+    }
+  },
+  "documents": [
+    {
+      "documentCode": "WI-8-2-2-53",
+      "revision": "0",
+      "datePrinted": "17.10.2020",
+      "title": "Production & Test Procedure for Semi Auto Biopsy Needle",
+      "sourcePdf": "audit/Wi.pdf",
+      "sourcePdfSha256": "20cd5fe4bf26cb1867e29fdcf43cd7dd150c0f5ef25cdd60f2e32c2e167b6317",
+      "controlledCopyStamp": true,
+      "totalPages": 4,
+      "pagesPresent": 4,
+      "missingPages": [],
+      "preparedByPrinted": "Q.S Esmayaden Alango",
+      "approvedByPrinted": "Q.C.M Mr. Javeed Gafoor",
+      "pdf": "WI-8-2-2-53_Production-Test-Procedure-for-Semi-Auto-Biopsy-Needle_Rev0.pdf",
+      "pdfSha256": "6b2a04593c892ea7dd5be7153ef14ddebecf98bae9222d218041ca661cdbc46b",
+      "pdfBytes": 869629,
+      "images": [
+        {
+          "documentPage": 1,
+          "sourcePdfPage": 1,
+          "file": "company-controlled-pages/WI-8-2-2-53/page-01_of_04.jpg",
+          "sha256": "50ff278a403c2741f9c70fced8c87f06cd3b378cbecb64eea969d8a59bf82b8c",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 240221
+        },
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 2,
+          "file": "company-controlled-pages/WI-8-2-2-53/page-02_of_04.jpg",
+          "sha256": "6187856be4a219daf129b89d2980c7d288c40728de1a4b89f0c90f5e043e25aa",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 213121
+        },
+        {
+          "documentPage": 3,
+          "sourcePdfPage": 3,
+          "file": "company-controlled-pages/WI-8-2-2-53/page-03_of_04.jpg",
+          "sha256": "c6b02544c77ce22740a4bb0574870e026effa6439c4247541692e9cd3a91d20b",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 220008
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 4,
+          "file": "company-controlled-pages/WI-8-2-2-53/page-04_of_04.jpg",
+          "sha256": "08ceeddf3948b36cd722c6cf6d5c166144235f7b6c96f6f07e794d2f5a59c3bc",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 162809
+        }
+      ]
+    },
+    {
+      "documentCode": "WI-8-2-2-16",
+      "revision": "8",
+      "datePrinted": "19.11.2018",
+      "title": "Production & Test Procedure for Ureteric Catheter",
+      "sourcePdf": "audit/Wi.pdf",
+      "sourcePdfSha256": "20cd5fe4bf26cb1867e29fdcf43cd7dd150c0f5ef25cdd60f2e32c2e167b6317",
+      "controlledCopyStamp": true,
+      "totalPages": 4,
+      "pagesPresent": 3,
+      "missingPages": [
+        1
+      ],
+      "preparedByPrinted": "Q.S Mr. Esmayaden",
+      "approvedByPrinted": "Q.C.M Mr. Javeed Gafoor",
+      "pdf": "WI-8-2-2-16_Production-Test-Procedure-for-Ureteric-Catheter_Rev8.pdf",
+      "pdfSha256": "386ffd29a0cecb82bea52cecc767a52437bae821b10544d6e329f74c02627e21",
+      "pdfBytes": 655237,
+      "images": [
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 5,
+          "file": "company-controlled-pages/WI-8-2-2-16/page-02_of_04.jpg",
+          "sha256": "f5e799b5fe6fce4f0763bf105b187ce2bf2f7a91b3f4326446075d479cb6f4c6",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 248750
+        },
+        {
+          "documentPage": 3,
+          "sourcePdfPage": 6,
+          "file": "company-controlled-pages/WI-8-2-2-16/page-03_of_04.jpg",
+          "sha256": "33cfbf1440342d0d3dd98cef919c8cf11c935a0b70f40cf096a5183836a6f4f0",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 245376
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 7,
+          "file": "company-controlled-pages/WI-8-2-2-16/page-04_of_04.jpg",
+          "sha256": "f0fc391ab8715e66d496e5ce3380a0e34f0b77af3d07428b19212c7f400dad72",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 134604
+        }
+      ]
+    },
+    {
+      "documentCode": "WI-8-2-2-06-1",
+      "revision": "00",
+      "datePrinted": "05.12.2023",
+      "title": "Inspection Procedure for Endobronchial Tube",
+      "sourcePdf": "audit/Wi.pdf",
+      "sourcePdfSha256": "20cd5fe4bf26cb1867e29fdcf43cd7dd150c0f5ef25cdd60f2e32c2e167b6317",
+      "controlledCopyStamp": true,
+      "totalPages": 11,
+      "pagesPresent": 11,
+      "missingPages": [],
+      "preparedByPrinted": "QA Coordinator M. Azeem",
+      "approvedByPrinted": "Q.C.M Mr. Javeed Gafoor; Q.A.M Mr. Salman Rashid",
+      "pdf": "WI-8-2-2-06-1_Inspection-Procedure-for-Endobronchial-Tube_Rev00.pdf",
+      "pdfSha256": "f1fac864212a2ce1620de401599075def0e6e3a004ee96cca457932bef867cd7",
+      "pdfBytes": 2626972,
+      "images": [
+        {
+          "documentPage": 1,
+          "sourcePdfPage": 8,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-01_of_11.jpg",
+          "sha256": "c5821b46b403b1632c2c89f10b554ce9f7f6d0c761c9a1e12732f9ffaf1a5efc",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 218290
+        },
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 9,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-02_of_11.jpg",
+          "sha256": "124bee94e698471f0ced35d4d534ad9797076af1d94a41c54472b5554352aa11",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 250179
+        },
+        {
+          "documentPage": 3,
+          "sourcePdfPage": 10,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-03_of_11.jpg",
+          "sha256": "01c4ddf5d12f78c18e0b025c6b2bb7f85b752a8a623efeb51ed18e7f21c9c829",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 267307
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 11,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-04_of_11.jpg",
+          "sha256": "27bdb7b9e7278e6e34999bf8275b133d1983584b954dbe6b49062a9c75397376",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 207800
+        },
+        {
+          "documentPage": 5,
+          "sourcePdfPage": 12,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-05_of_11.jpg",
+          "sha256": "8ebc51f47ebf542c8660848119566dbe9db0b8c0608ffe4f2f37c33bc4b74e05",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 229244
+        },
+        {
+          "documentPage": 6,
+          "sourcePdfPage": 13,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-06_of_11.jpg",
+          "sha256": "6d3025bdc4f9668e3e94018d56251fc7d26038678e8c071650ee8986f9431fb1",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 227135
+        },
+        {
+          "documentPage": 7,
+          "sourcePdfPage": 14,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-07_of_11.jpg",
+          "sha256": "4220514323751e4f0209123251480d86ebf3d17519947a89371b55f1fd25ba54",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 221094
+        },
+        {
+          "documentPage": 8,
+          "sourcePdfPage": 15,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-08_of_11.jpg",
+          "sha256": "dbce9f65d35329b3e8a7bea7e0746cab39b3803182ea274585907dae4ad9bd81",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 261561
+        },
+        {
+          "documentPage": 9,
+          "sourcePdfPage": 16,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-09_of_11.jpg",
+          "sha256": "3a1212095eb3c89544b1197da03b5e493fd9b9b4aaa02a085c23943f93c51597",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 238603
+        },
+        {
+          "documentPage": 10,
+          "sourcePdfPage": 17,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-10_of_11.jpg",
+          "sha256": "8e3384743e9d7e2441bfcb81915cd786ee015c4988b58dfecc11409cf40b0024",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 236115
+        },
+        {
+          "documentPage": 11,
+          "sourcePdfPage": 18,
+          "file": "company-controlled-pages/WI-8-2-2-06-1/page-11_of_11.jpg",
+          "sha256": "8bb099188c4aff64b2070e0be03b81de07defae6223fb333f1cc75299696fe38",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 194467
+        }
+      ]
+    },
+    {
+      "documentCode": "WI-8-2-2-21",
+      "revision": "5",
+      "datePrinted": "01.09.2023",
+      "title": "Production & Test Procedure for Sterile Blood Lines",
+      "sourcePdf": "audit/Wi2.pdf",
+      "sourcePdfSha256": "998bf30542fa15df77367918a593a789914a282d87abbf4f7448f48e822b50b7",
+      "controlledCopyStamp": true,
+      "totalPages": 9,
+      "pagesPresent": 9,
+      "missingPages": [],
+      "preparedByPrinted": "M. Azeem",
+      "approvedByPrinted": "Q.C.M Mr. Javeed Gafoor",
+      "pdf": "WI-8-2-2-21_Production-Test-Procedure-for-Sterile-Blood-Lines_Rev5.pdf",
+      "pdfSha256": "f2bbb8c0cc5fbc314b7eb3349187939af41728d101d4b36144093b3f740aa66e",
+      "pdfBytes": 1928988,
+      "images": [
+        {
+          "documentPage": 1,
+          "sourcePdfPage": 1,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-01_of_09.jpg",
+          "sha256": "eaa6a4b5f67ac0379dbf6cc310647abc28a5fa1e1b92c9e9ab49ac27275cef4e",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 238435
+        },
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 2,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-02_of_09.jpg",
+          "sha256": "9d7360a704f42d3f8dc85259738f9ca79e9b55667da342425c3952050ea5fe57",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 218291
+        },
+        {
+          "documentPage": 3,
+          "sourcePdfPage": 3,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-03_of_09.jpg",
+          "sha256": "7a322a337009bedc0bedec021219bed9882fcb0beb3f6055c7a0eed9a6bed6de",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 110227
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 4,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-04_of_09.jpg",
+          "sha256": "2585936b46f66cf30a4a215bf53858b599e0f3ce17a829b0f07567d8a05ae8bb",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 153796
+        },
+        {
+          "documentPage": 5,
+          "sourcePdfPage": 5,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-05_of_09.jpg",
+          "sha256": "f3ff6d3f6bc10bd2453670ec446c1085932690dd14933b5deabc4c43e3a01770",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 173809
+        },
+        {
+          "documentPage": 6,
+          "sourcePdfPage": 6,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-06_of_09.jpg",
+          "sha256": "a99fca97f3e0ba53f5626a98cb08dd1e40b24026d27ad67e6d1ab9c4748b91a9",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 268624
+        },
+        {
+          "documentPage": 7,
+          "sourcePdfPage": 7,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-07_of_09.jpg",
+          "sha256": "7f60bbfcf41f56fbe4b763a3075a156dac8e3dffc5c0cd80c034c4a0db2a58ee",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 269268
+        },
+        {
+          "documentPage": 8,
+          "sourcePdfPage": 8,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-08_of_09.jpg",
+          "sha256": "fba20feed3c400d417ef5e6cbae1027336ea259120bdd2b3f7b41f89cde0fe15",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 221107
+        },
+        {
+          "documentPage": 9,
+          "sourcePdfPage": 9,
+          "file": "company-controlled-pages/WI-8-2-2-21/page-09_of_09.jpg",
+          "sha256": "499b75210739a1bc03e19065c6d1305f31b3f789436415625b94d0195fa9c67d",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 203358
+        }
+      ]
+    },
+    {
+      "documentCode": "WI-8-2-2-5",
+      "revision": "7",
+      "datePrinted": "01.09.2023",
+      "title": "Production & Test Procedure for Sterile Syringes",
+      "sourcePdf": "audit/Wi2.pdf",
+      "sourcePdfSha256": "998bf30542fa15df77367918a593a789914a282d87abbf4f7448f48e822b50b7",
+      "controlledCopyStamp": true,
+      "totalPages": 5,
+      "pagesPresent": 4,
+      "missingPages": [
+        3
+      ],
+      "preparedByPrinted": "Q.A.C Ohidur Rahman; Reviewed by Q.S Mr. E. Alango",
+      "approvedByPrinted": "Q.C.M Mr. Javeed Gafoor",
+      "pdf": "WI-8-2-2-5_Production-Test-Procedure-for-Sterile-Syringes_Rev7.pdf",
+      "pdfSha256": "147c5c55efc5a4aa51ad9b9d2ad666af405e3db0627339b96841a3290827b808",
+      "pdfBytes": 811993,
+      "images": [
+        {
+          "documentPage": 1,
+          "sourcePdfPage": 10,
+          "file": "company-controlled-pages/WI-8-2-2-5/page-01_of_05.jpg",
+          "sha256": "76561fb4bcefbe6e7269e82c267ff1606d70c8437dc8ad4db9dbf187e61a370c",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 207042
+        },
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 11,
+          "file": "company-controlled-pages/WI-8-2-2-5/page-02_of_05.jpg",
+          "sha256": "02fd13c3e035c68ddc91bf5229d738012a62d39348adbbc1a05f1f84521d666b",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 205437
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 12,
+          "file": "company-controlled-pages/WI-8-2-2-5/page-04_of_05.jpg",
+          "sha256": "3ea8e84d25e1f05988bf01df2210d1a8e9e6e369089eb8520f9c96b240661ec5",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 178782
+        },
+        {
+          "documentPage": 5,
+          "sourcePdfPage": 13,
+          "file": "company-controlled-pages/WI-8-2-2-5/page-05_of_05.jpg",
+          "sha256": "0f51f348be7a6c82ebd8753937844436150f7a1182b99602eec2c13990d84c7f",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 191473
+        }
+      ]
+    },
+    {
+      "documentCode": "WI-8-2-2-64",
+      "revision": "3",
+      "datePrinted": "10.12.2022",
+      "title": "Production & Test Procedure for Hypodermic Needle",
+      "sourcePdf": "audit/Wi2.pdf",
+      "sourcePdfSha256": "998bf30542fa15df77367918a593a789914a282d87abbf4f7448f48e822b50b7",
+      "controlledCopyStamp": true,
+      "totalPages": 4,
+      "pagesPresent": 4,
+      "missingPages": [],
+      "preparedByPrinted": null,
+      "approvedByPrinted": null,
+      "pdf": "WI-8-2-2-64_Production-Test-Procedure-for-Hypodermic-Needle_Rev3.pdf",
+      "pdfSha256": "fcf4a4f73d40bf43193213683186264e21d3607bb23c3f417e221bc231ac6b73",
+      "pdfBytes": 923707,
+      "images": [
+        {
+          "documentPage": 1,
+          "sourcePdfPage": 14,
+          "file": "company-controlled-pages/WI-8-2-2-64/page-01_of_04.jpg",
+          "sha256": "53c9367dd2ec663a9bdf65bce8f1c02439aea8c9f87fe51dc3a9ec3723e68fde",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 223189
+        },
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 15,
+          "file": "company-controlled-pages/WI-8-2-2-64/page-02_of_04.jpg",
+          "sha256": "21f59c33901adddfdf994ba0845e5176d8379e7e621d781957b17e3352a370a1",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 277051
+        },
+        {
+          "documentPage": 3,
+          "sourcePdfPage": 16,
+          "file": "company-controlled-pages/WI-8-2-2-64/page-03_of_04.jpg",
+          "sha256": "f97e8b3d58bdcee34905fa1fc9741420c64dd1750b6b4ffd9f2bfa06357def0f",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 214128
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 17,
+          "file": "company-controlled-pages/WI-8-2-2-64/page-04_of_04.jpg",
+          "sha256": "a268f70e8578931be8ed5b6d7fa039b60eeeccab4076967f6b181e2ede31fc13",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 175942
+        }
+      ]
+    },
+    {
+      "documentCode": "WI-8-2-2-27",
+      "revision": "7",
+      "datePrinted": "29.08.2020",
+      "title": "Production & Test Procedure for Guidel Air Way",
+      "sourcePdf": "audit/Wi2.pdf",
+      "sourcePdfSha256": "998bf30542fa15df77367918a593a789914a282d87abbf4f7448f48e822b50b7",
+      "controlledCopyStamp": true,
+      "totalPages": 5,
+      "pagesPresent": 5,
+      "missingPages": [],
+      "preparedByPrinted": null,
+      "approvedByPrinted": null,
+      "pdf": "WI-8-2-2-27_Production-Test-Procedure-for-Guidel-Air-Way_Rev7.pdf",
+      "pdfSha256": "dc3cd1b2d6cfe96924a912c8323e28857b84d3d9243086455cb5d0c653981847",
+      "pdfBytes": 1110978,
+      "images": [
+        {
+          "documentPage": 1,
+          "sourcePdfPage": 18,
+          "file": "company-controlled-pages/WI-8-2-2-27/page-01_of_05.jpg",
+          "sha256": "78fa7e42dc1e38dfadafc7eb97e491769c6e4d4f06aa788a0b13f0e4e3d9a933",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 206479
+        },
+        {
+          "documentPage": 2,
+          "sourcePdfPage": 19,
+          "file": "company-controlled-pages/WI-8-2-2-27/page-02_of_05.jpg",
+          "sha256": "2c4882f2cc57c48acaf506d65aaa9db1a408ed53bcf9701c0649595b7ad44960",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 222529
+        },
+        {
+          "documentPage": 3,
+          "sourcePdfPage": 20,
+          "file": "company-controlled-pages/WI-8-2-2-27/page-03_of_05.jpg",
+          "sha256": "97fb6a2e2664c9b13cca6af4e0cfbcb425968e5708db7df5d29058a4daf48af8",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 203969
+        },
+        {
+          "documentPage": 4,
+          "sourcePdfPage": 21,
+          "file": "company-controlled-pages/WI-8-2-2-27/page-04_of_05.jpg",
+          "sha256": "fc30fe90f58357f2b8ac2bdd239b454e04baa262d656eab539302782efed8091",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 224722
+        },
+        {
+          "documentPage": 5,
+          "sourcePdfPage": 22,
+          "file": "company-controlled-pages/WI-8-2-2-27/page-05_of_05.jpg",
+          "sha256": "4e13992b65b648b52594288ee107056c9940f75dbd69c24f5f5322f1f8043b1e",
+          "width": 1240,
+          "height": 1755,
+          "bytes": 217396
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "documents": 7,
+    "pagesPresent": 40,
+    "bytesAdded": 17549242
+  }
+}

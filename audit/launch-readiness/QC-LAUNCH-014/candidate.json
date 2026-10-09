@@ -1,0 +1,35 @@
+{
+  "taskId": "QC-LAUNCH-014",
+  "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+  "branch": "main",
+  "headSha": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+  "headShort": "960dc79f",
+  "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+  "referenceIsAncestor": true,
+  "commitsAfterReference": 12,
+  "scopedDiffReferenceToHeadEmpty": true,
+  "scopedPaths": [
+    "src/modules/documents",
+    "src/pages/documents",
+    "db/migrations/0032_document_version_file_integrity.sql",
+    "db/migrations/0033_controlled_document_execution_context.sql",
+    "db/migrations/0043_controlled_document_source_binding.sql",
+    "Documents/QC_System_WI_SOP_Pack"
+  ],
+  "workingTreeFingerprint": {
+    "algorithm": "SHA-256",
+    "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "basis": "sha256 of `git diff --binary HEAD`; working tree clean at capture (empty diff = SHA-256 of empty input)."
+  },
+  "migrationHead": "0047_task_references_occurrences.sql",
+  "environment": {
+    "node": "v24.20.0",
+    "pnpm": "11.25.0",
+    "platform": "darwin arm64",
+    "docker": "UNAVAILABLE",
+    "isolatedPostgres18": "NOT PROVISIONED / NOT USED",
+    "productionDatabase": "NOT ACCESSED",
+    "authenticatedBrowser": "NOT AVAILABLE / NOT USED"
+  },
+  "capturedAt": "2026-10-09T08:30:00+03:00"
+}

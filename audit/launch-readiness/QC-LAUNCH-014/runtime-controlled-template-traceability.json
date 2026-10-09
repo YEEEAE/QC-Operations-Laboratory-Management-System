@@ -1,0 +1,134 @@
+{
+  "taskId": "QC-LAUNCH-014",
+  "title": "WI/SOP controlled-document lifecycle and effective revisions",
+  "capturedAt": "2026-10-09T08:30:00+03:00",
+  "candidate": {
+    "headSha": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceIsAncestor": true,
+    "commitsAfterReference": 12,
+    "workingTreeFingerprintSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "migrationHead": "0047_task_references_occurrences.sql"
+  },
+  "authorityReconciliation": {
+    "authoringPack": "Documents/QC_System_WI_SOP_Pack",
+    "packStatus": "D0.2 DRAFT FOR REVIEW — not approved, not effective",
+    "packEvidence": {
+      "readme": "Documents/QC_System_WI_SOP_Pack/References/READ-ME.txt:1",
+      "sopCount": 30,
+      "wiCount": 68,
+      "referenceFileCount": 20,
+      "sha256sumsFile": "Documents/QC_System_WI_SOP_Pack/References/SHA256SUMS.txt",
+      "sha256sumsDigest": "43a4b3f8b83f62702e9c85680a06be466b176c5353461e633e783f2529abae91",
+      "checksumEntriesVerified": 117,
+      "checksumFailures": 0
+    },
+    "approvedEffectiveRevision": "NONE FOUND",
+    "decisionRows": {
+      "RD-019": "OPEN — WI/SOP approval authority/SoD/signature ceremony unresolved (Documents/DECISION-ASSUMPTION-REGISTER-026.md:109; Documents/STATE-MACHINES.md:3036,3054)",
+      "PD-13": "OPEN — document effectivity/effective-date policy unresolved",
+      "PD-32": "PARTIAL — full action-to-signature map unresolved",
+      "PERM-DOC-APPROVE": "DENY UNTIL EXPLICITLY APPROVED (Documents/PERMISSION-MATRIX.md:1138-1148,2413)"
+    },
+    "runtimeRegistrationOfPackIntoDocumentIdentityCatalog": "NONE (no seed/import maps the pack to qc.document_identities; only synthetic PERF-* seed exists at scripts/performance/seed-synthetic-dataset.ts)"
+  },
+  "runtimeControlledTemplateBinding": {
+    "inspection": {
+      "linkTable": "qc.inspection_template_document_sources",
+      "templateTable": "qc.inspection_template_versions",
+      "documentTable": "qc.document_versions",
+      "linkRule": "draft inspection template + EFFECTIVE document version; append-only (0019/0033)",
+      "snapshotRule": "source must be EFFECTIVE, source_binding_verified = true, valid sha256 content_hash, all bound files ACTIVE (0043)",
+      "readBack": "src/modules/quarantine/inspection/infrastructure/postgres-repository.ts:360-402 — snapshots controlled_sources (revision/contentHash/state) into inspection_report_snapshots.controlled_source_snapshot; creation denies any non-EFFECTIVE source at :379-380"
+    },
+    "laboratory_template": {
+      "linkTable": "qc.lab_test_template_document_sources",
+      "templateTable": "qc.lab_test_template_versions",
+      "documentTable": "qc.document_versions",
+      "linkRule": "draft lab template + EFFECTIVE document version; append-only (0033)",
+      "snapshotRule": "same 0043 guard"
+    },
+    "laboratory_execution": {
+      "linkTable": "qc.lab_document_usage",
+      "linkRule": "execution may only link an EFFECTIVE document version; append-only (0033:89-114)",
+      "snapshotRule": "0043 trigger writes document_snapshot with revision/contentHash/files",
+      "readBack": "src/modules/laboratory/infrastructure/postgres-repository.ts:575-585 (lab_document_usage) and :624-634 (lab_test_snapshots.document_snapshot)"
+    }
+  },
+  "lifecycleEnforcement": {
+    "states": ["CATALOG_ONLY", "DRAFT", "IN_REVIEW", "RETURNED", "APPROVED", "EFFECTIVE", "SUPERSEDED", "ARCHIVED", "VOID"],
+    "transitions": {
+      "CREATE_IDENTITY": { "permission": "PERM-DOC-CREATE", "useCase": "src/modules/documents/application/create-document.ts:11", "status": "IMPLEMENTED" },
+      "CREATE_VERSION": { "permission": "PERM-DOC-CREATE / PERM-DOC-REVISE", "useCase": "src/modules/documents/application/create-version.ts", "status": "IMPLEMENTED", "notes": "requires >=1 source file, expected document version + predecessor CAS, server-derived content hash" },
+      "EDIT_DRAFT": { "permission": "PERM-DOC-EDIT-DRAFT", "useCase": "src/modules/documents/application/update-version-draft.ts:16-18", "status": "IMPLEMENTED", "notes": "DRAFT only; CAS on version + content hash; non-DRAFT denied at domain/document-version.ts:72-74" },
+      "SUBMIT": { "permission": "PERM-DOC-SUBMIT", "useCase": "src/modules/documents/application/submit-version.ts", "status": "IMPLEMENTED", "notes": "assertApprovalEvidence (files + sourceBindingVerified + ACTIVE + digest match) at domain/document-version.ts:76-94" },
+      "REVIEW": { "permission": "PERM-DOC-REVIEW + PERM-APR-REVIEW", "useCase": "src/modules/documents/application/review-version.ts", "status": "IMPLEMENTED", "notes": "records review only; never approves; SoD self-review denied" },
+      "APPROVE": { "permission": "PERM-DOC-APPROVE + PERM-APR-APPROVE", "useCase": "src/modules/documents/application/approve-version.ts:6-14", "status": "FAIL-CLOSED", "notes": "throws POLICY_SOURCE_REQUIRED (RD-019/PD-32); no signature ceremony exists" },
+      "MAKE_EFFECTIVE": { "permission": "n/a", "useCase": "none", "status": "NOT WIRED", "notes": "state machine + repository support MAKE_EFFECTIVE; no application use case; effectivity policy UNCONFIRMED (Documents/STATE-MACHINES.md:3072-3093)" },
+      "SUPERSEDE": { "permission": "PERM-DOC-SUPERSEDE", "useCase": "src/modules/documents/application/supersede-version.ts", "status": "FAIL-CLOSED", "notes": "requires EffectiveDatePolicy.isApproved() (default false) and explicit effectiveAt; current EFFECTIVE + replacement APPROVED; transactional in repository :283-301" },
+      "ARCHIVE": { "permission": "n/a", "useCase": "none", "status": "NOT WIRED", "notes": "state machine + repository support ARCHIVE; no application use case; retention policy dependent" },
+      "VOID": { "permission": "PERM-DOC-VOID + P-05 authority", "useCase": "src/modules/documents/application/void-version.ts", "status": "IMPLEMENTED", "notes": "reason required" }
+    },
+    "separationOfDuties": "authorizeDocument passes sod {actorId, authorId: version.createdBy}; self-review denied (tests/integration/documents/authorization-matrix.test.ts:12-15)",
+    "effectiveDate": "deny-by-default (EffectiveDatePolicy.isApproved default false)",
+    "signedAuthorizations": "NONE for documents; approve blocked pending RD-019/PD-32 authority+signature map"
+  },
+  "criteria": [
+    {
+      "criterionId": "QC360-SC-05-03",
+      "alias": "n-03",
+      "points": 2.25,
+      "expectedOutcome": "document version/effectivity/immutable-records tests pass on the same SHA",
+      "status": "NOT_TESTED",
+      "acceptedByIndependentRubricReviewer": 0.0,
+      "reason": "Requires a runtime (PostgreSQL 18) lifecycle proof including EFFECTIVE/immutable records, but approval/effectivity are deliberately fail-closed (POLICY_SOURCE_REQUIRED / unapproved EffectiveDatePolicy) with no approved authority source; PostgreSQL 18 runtime unavailable (Docker). Source-level guards exist and mismatch paths fail closed, but source-only does not earn points."
+    },
+    {
+      "criterionId": "QC360-SC-05-04",
+      "alias": "n-04",
+      "points": 2.7,
+      "expectedOutcome": "authorized user can retrieve the effective WI/SOP/template revision matching the record's revision within scope",
+      "status": "NOT_TESTED",
+      "acceptedByIndependentRubricReviewer": 0.0,
+      "reason": "Requires authenticated browser + PostgreSQL 18 historical retrieval against an authorized effective revision; no approved/effective WI/SOP exists and no isolated runtime is available. Snapshot plumbing exists in source but is not runtime-proven on this candidate."
+    }
+  ],
+  "verification": [
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 1,
+      "totals": { "total": 1388, "passed": 1376, "failed": 12, "skipped": 0 },
+      "artifactDigest": "c56fdd78e6a3002a61c4a2e60d3f37980edba3f3dcf1160dda0f44b7bd76de6c",
+      "candidateGitSha": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+      "log": "audit/launch-readiness/QC-LAUNCH-014/verify-unit.log",
+      "logDigest": "8052404ccf8860159287df8d38e26612e19f4cc2e65c95ec3a9a51b06a63e291",
+      "note": "12 failures are pre-existing and outside the documents scope (backup-recovery, requirements reconciliation, uat-record-validator, route-acceptance, mutation-safety). Documents-scope unit suites pass."
+    },
+    {
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "totals": { "total": 612, "passed": 316, "failed": 2, "skipped": 294 },
+      "artifactDigest": "6e22ea5e622187282198341d0ba309a055dbb4e85c0bd05c8ad5ecd233215498",
+      "candidateGitSha": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+      "log": "audit/launch-readiness/QC-LAUNCH-014/verify-integration.log",
+      "logDigest": "2ca3d93dc0317c8cae157aff62842a1e4372729ffd174ec550cd14b043a57b95",
+      "note": "2 failures in tests/integration/tasks/use-cases.test.ts (out of scope). tests/integration/documents/review-queue.test.ts is BLOCKED at container setup (no Docker); documents editing/review/repository/authorization-matrix suites pass."
+    },
+    {
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 2,
+      "status": "BLOCKED",
+      "totals": { "passed": 0, "failed": 0, "skipped": 0 },
+      "artifactDigest": "66d654755f00eb4ba2a8ed640089a6e9a7705d7771fef1c0f22007af2068cad5",
+      "candidateGitSha": "960dc79f1f4e5ff9b06ec73b19ee34941713ee85",
+      "log": "audit/launch-readiness/QC-LAUNCH-014/verify-e2e-authenticated.log",
+      "logDigest": "8747b6199d505eb7118695be1d8cbd2727de69257d71781516d809c51859d759",
+      "blockedReason": "Release evidence Git SHA is not bound to the expected checkout: expected 960dc79f..., actual 60e78cc6... (stale dist release artifact); no isolated DB/credentials."
+    }
+  ],
+  "taskStatus": "BLOCKED",
+  "pointsAccepted": 0.0,
+  "independentRubricReviewer": null,
+  "noProductionAccess": true,
+  "noRemoteAction": true
+}
