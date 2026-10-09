@@ -1,0 +1,66 @@
+[
+  {
+    "command": "pnpm verify:e2e:authenticated",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T04:13:02.078736+00:00",
+    "completedAt": "2026-10-09T04:13:02.630514+00:00",
+    "log": "verify-e2e-authenticated.log",
+    "sha256": "f93775a8e813509ef1679dcbcacdac9b519596dd7c73d86aa2ce6e56e5d68e28",
+    "environment": "isolated source archive; no .env; no credentials or DATABASE_URL provided",
+    "status": "BLOCKED",
+    "testKind": "authenticated-runtime-attempt",
+    "actorRole": null,
+    "sourceRevision": null
+  },
+  {
+    "command": "pnpm test:e2e:closure",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T04:13:02.630753+00:00",
+    "completedAt": "2026-10-09T04:13:03.153907+00:00",
+    "log": "test-e2e-closure.log",
+    "sha256": "f93775a8e813509ef1679dcbcacdac9b519596dd7c73d86aa2ce6e56e5d68e28",
+    "environment": "isolated source archive; no .env; no credentials or DATABASE_URL provided",
+    "status": "BLOCKED",
+    "testKind": "authenticated-runtime-attempt",
+    "actorRole": null,
+    "sourceRevision": null
+  },
+  {
+    "command": "pnpm verify:e2e:authenticated",
+    "exitCode": 2,
+    "startedAt": "2026-10-09T04:13:24.513644+00:00",
+    "completedAt": "2026-10-09T04:13:25.441772+00:00",
+    "log": "verify-e2e-authenticated-retry.log",
+    "sha256": "3153aab95456d73915b6fa2e9bb5c53af91339087abed134a615c0ef62a0ab25",
+    "environment": "isolated archive; no .env/database/credentials; dependency pre-run reinstallation disabled to preserve shared dependencies",
+    "status": "BLOCKED",
+    "testKind": "authenticated-runtime-attempt",
+    "actorRole": null,
+    "sourceRevision": null
+  },
+  {
+    "command": "pnpm test:e2e:closure",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T04:13:25.441995+00:00",
+    "completedAt": "2026-10-09T04:14:15.899040+00:00",
+    "log": "test-e2e-closure-retry.log",
+    "sha256": "41e0a85fc1f64094602c66c56907469614e8843f2ab7b1a866a50fe1a3660dc8",
+    "environment": "isolated archive; no .env/database/credentials; dependency pre-run reinstallation disabled to preserve shared dependencies",
+    "status": "BLOCKED",
+    "testKind": "authenticated-runtime-attempt",
+    "actorRole": null,
+    "sourceRevision": null
+  },
+  {
+    "command": "pnpm verify:e2e:authenticated",
+    "exitCode": 2,
+    "log": "authenticated-synthetic-preflight.log",
+    "sha256": "52be0e54e43ff8f06271b554e5910595ac9945b69761f0f3b964b682d69a62f2",
+    "timestamp": "2026-10-09T04:14:05.460606+00:00",
+    "environment": "isolated archive; generated synthetic credentials; blocked on missing run-context.json before database startup",
+    "status": "BLOCKED",
+    "testKind": "authenticated-runtime-attempt",
+    "actorRole": null,
+    "sourceRevision": null
+  }
+]

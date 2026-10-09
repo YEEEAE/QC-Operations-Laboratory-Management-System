@@ -1,0 +1,378 @@
+{
+  "task": "QC-LAUNCH-009",
+  "criterionId": "QC360-SC-01-04",
+  "status": "BLOCKED",
+  "candidate": {
+    "sha": "fcdf98284bf53b9df4675dd01c39b6e74a0ee5de",
+    "reference": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "branch": "main",
+    "status": "",
+    "trackedFileManifestSha256": "88d37314754ea6a974fb9f35d6bb231f87177ffd1c84d890a7f0f9be3bafb00e",
+    "dirtyDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commitsBeyondReference": "6",
+    "migrationHead": "0047_task_references_occurrences.sql"
+  },
+  "timestamp": "2026-10-09T04:15:35.400928+00:00",
+  "testEnvironment": {
+    "kind": "isolated local source archive",
+    "path": "/private/tmp/qc-launch009-hg9wnlmk",
+    "node": "24.20.0",
+    "pnpm": "11.25.0",
+    "dataset": null,
+    "databaseEstablished": false,
+    "authenticatedServerEstablished": false,
+    "productionAccess": false
+  },
+  "expectedOutcome": "Full sequential authenticated controlled lifecycle, distinct QC Operator/Supervisor/QCM, genuine approved effective sources, signed decisions and separate release; all negative paths observed.",
+  "acceptedVerifiedPoints": 0,
+  "targetedPoints": 4.2,
+  "independentReviewer": null,
+  "signoff": {
+    "status": "NOT_SIGNED",
+    "owner": "QC + Supervisor + QCM + QA"
+  },
+  "commands": [
+    {
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T04:13:02.078736+00:00",
+      "completedAt": "2026-10-09T04:13:02.630514+00:00",
+      "log": "verify-e2e-authenticated.log",
+      "sha256": "f93775a8e813509ef1679dcbcacdac9b519596dd7c73d86aa2ce6e56e5d68e28",
+      "environment": "isolated source archive; no .env; no credentials or DATABASE_URL provided",
+      "status": "BLOCKED",
+      "testKind": "authenticated-runtime-attempt",
+      "actorRole": null,
+      "sourceRevision": null
+    },
+    {
+      "command": "pnpm test:e2e:closure",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T04:13:02.630753+00:00",
+      "completedAt": "2026-10-09T04:13:03.153907+00:00",
+      "log": "test-e2e-closure.log",
+      "sha256": "f93775a8e813509ef1679dcbcacdac9b519596dd7c73d86aa2ce6e56e5d68e28",
+      "environment": "isolated source archive; no .env; no credentials or DATABASE_URL provided",
+      "status": "BLOCKED",
+      "testKind": "authenticated-runtime-attempt",
+      "actorRole": null,
+      "sourceRevision": null
+    },
+    {
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 2,
+      "startedAt": "2026-10-09T04:13:24.513644+00:00",
+      "completedAt": "2026-10-09T04:13:25.441772+00:00",
+      "log": "verify-e2e-authenticated-retry.log",
+      "sha256": "3153aab95456d73915b6fa2e9bb5c53af91339087abed134a615c0ef62a0ab25",
+      "environment": "isolated archive; no .env/database/credentials; dependency pre-run reinstallation disabled to preserve shared dependencies",
+      "status": "BLOCKED",
+      "testKind": "authenticated-runtime-attempt",
+      "actorRole": null,
+      "sourceRevision": null
+    },
+    {
+      "command": "pnpm test:e2e:closure",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T04:13:25.441995+00:00",
+      "completedAt": "2026-10-09T04:14:15.899040+00:00",
+      "log": "test-e2e-closure-retry.log",
+      "sha256": "41e0a85fc1f64094602c66c56907469614e8843f2ab7b1a866a50fe1a3660dc8",
+      "environment": "isolated archive; no .env/database/credentials; dependency pre-run reinstallation disabled to preserve shared dependencies",
+      "status": "BLOCKED",
+      "testKind": "authenticated-runtime-attempt",
+      "actorRole": null,
+      "sourceRevision": null
+    },
+    {
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 2,
+      "log": "authenticated-synthetic-preflight.log",
+      "sha256": "52be0e54e43ff8f06271b554e5910595ac9945b69761f0f3b964b682d69a62f2",
+      "timestamp": "2026-10-09T04:14:05.460606+00:00",
+      "environment": "isolated archive; generated synthetic credentials; blocked on missing run-context.json before database startup",
+      "status": "BLOCKED",
+      "testKind": "authenticated-runtime-attempt",
+      "actorRole": null,
+      "sourceRevision": null
+    }
+  ],
+  "checks": [
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "approved effective template",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QC Technical Authority + Document Control",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "SOURCE NOT AVAILABLE"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "receiving → inspection draft → save → submit",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QC Operator",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "review + stage-one signed approval",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "Supervisor",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "final signed approval",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QCM",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "separately authorized release / PASS ≠ RELEASED",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "Release-authorized persona",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "exact version + audit + signature evidence",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "reject / return / HOLD",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "Supervisor + QCM",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "dashboard and registers",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QC Operator + Supervisor + QCM",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "operator self-approval",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "Supervisor self-approval",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "out-of-scope release",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "stale record",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "unavailable source",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "duplicate final decision",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "denied signature",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    },
+    {
+      "criterionId": "QC360-SC-01-04",
+      "expectedOutcome": "missing equipment",
+      "testKind": "authenticated-runtime",
+      "command": null,
+      "exitCode": null,
+      "authenticEvidenceUri": null,
+      "digest": null,
+      "actorRole": "QA + Security",
+      "sourceRevision": null,
+      "timestamp": "2026-10-09T04:15:35.400928+00:00",
+      "status": "NOT_TESTED"
+    }
+  ],
+  "sourceObservations": [
+    {
+      "file": "tests/e2e/critical-workflows.spec.ts",
+      "line": 90,
+      "finding": "Existing journey navigates distinct pre-created fixture records, with one login. No complete mutation sequence or independent stage signers."
+    },
+    {
+      "file": "tests/e2e/critical-workflows.spec.ts",
+      "line": 9,
+      "finding": "Fixture absence skips runtime checks; skips cannot earn lifecycle acceptance."
+    },
+    {
+      "file": "src/modules/quarantine/inspection/application/approve-inspection.ts",
+      "line": 69,
+      "finding": "Stage-one requires a formal finalResult; ceremony uses STAGE1_APPROVE and expectedVersion."
+    },
+    {
+      "file": "src/modules/quarantine/inspection/application/final-approve-inspection.ts",
+      "line": 71,
+      "finding": "Final approval calls account-bound ceremony. No authority emulation performed."
+    },
+    {
+      "file": "src/modules/quarantine/receiving/application/release-receiving.ts",
+      "line": 50,
+      "finding": "Release has a separate server-controlled PASS + RELEASE_PENDING + SoD/version/permission gate."
+    },
+    {
+      "file": "scripts/verification/run-authenticated-e2e.ts",
+      "line": 160,
+      "finding": "Runner requires isolated credentials and candidate release artifact before database setup."
+    },
+    {
+      "file": "scripts/verification/evidence-identity.mjs",
+      "line": 62,
+      "finding": "Fresh candidate-bound run-context is mandatory; isolated archive lacked it."
+    }
+  ],
+  "blockers": [
+    {
+      "id": "AUTHORITY",
+      "owner": "QC Technical Authority / QMS / Document Control",
+      "detail": "No supplied legitimately approved effective item-mapped test template and controlled scientific final-result authority. DRAFT catalogue inventory is insufficient. No authoritative revision claimed."
+    },
+    {
+      "id": "ENVIRONMENT",
+      "owner": "Engineering Verification",
+      "detail": "Required commands attempted in isolated source archive with Node24.20/pnpm11.25. Initial package preflight rejected symlinked modules; safe retry disabled dependency reinstallation. Authenticated runner stopped at missing test credentials; synthetic-only retry exposed missing run context. Closure browser failed with MachPortRendezvous Permission denied; reporter also lacked run context. No authenticated server or isolated PG18 established."
+    },
+    {
+      "id": "DEPENDENCIES",
+      "owner": "QC-LAUNCH-006/008/010/011 owners",
+      "detail": "006 packet remains partial/blocked. No execution packets for 008/010/011 supplied in launch-readiness; references in baseline are planning, not completion."
+    },
+    {
+      "id": "INDEPENDENT_REVIEW",
+      "owner": "Independent rubric reviewer + QA",
+      "detail": "No independent rubric acceptance or human signoff. Accepted verified points: 0; targeted 4.20 remains unresolved."
+    }
+  ],
+  "browserEvidence": {
+    "screenshots": [],
+    "recordings": [],
+    "note": "No QC lifecycle browser session reached; no screenshots/recordings generated or reconstructed."
+  },
+  "beforeAfter": {
+    "before": "Full current-candidate lifecycle unverified",
+    "after": "Still blocked; actual safe command attempts recorded; no product code or controlled sources changed."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "sha": "fcdf98284bf53b9df4675dd01c39b6e74a0ee5de",
+  "reference": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+  "branch": "main",
+  "status": "",
+  "trackedFileManifestSha256": "88d37314754ea6a974fb9f35d6bb231f87177ffd1c84d890a7f0f9be3bafb00e",
+  "dirtyDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "commitsBeyondReference": "6",
+  "migrationHead": "0047_task_references_occurrences.sql"
+}
