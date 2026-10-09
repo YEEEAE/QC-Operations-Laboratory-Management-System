@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { actions } from 'astro:actions';
 import { changeRequestsReadDependencies } from '../../../modules/change-requests/application/dependencies.js';
@@ -41,7 +42,7 @@ if (Astro.request.method === 'POST') {
 const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, item) => typeof item === 'bigint' ? item.toString() : item); } catch { return '[unavailable]'; } };
 ---
 <AppLayout title={`Review ${changeRequest.changeNo} · QC Operations`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Change request review</p><h1>Review {changeRequest.changeNo}</h1><p class="lede">Version {changeRequest.version.toString()} · target version {changeRequest.targetVersion.toString()}</p></div><a href={`/change-requests/${changeRequest.id}`}>Back to record</a></section>
+  <PageHeader><Fragment slot="heading"><h1>Review {changeRequest.changeNo}</h1></Fragment><p class="lede">Version {changeRequest.version.toString()} · target version {changeRequest.targetVersion.toString()}</p><Fragment slot="actions"><a href={`/change-requests/${changeRequest.id}`}>Back to record</a></Fragment></PageHeader>
   <section class="notice" role="note"><strong>Controlled decision boundary</strong><span>Approval records a decision against this request version. It does not silently edit the target record or mean RELEASED.</span></section>
   <section class="panel"><h2>Proposed changes</h2><p>{changeRequest.reason}</p><ul>{changes.map((change) => <li><strong>{change.fieldPath}</strong>: <code>{stringify(change.currentValue)}</code> to <code>{stringify(change.proposedValue)}</code></li>)}</ul></section>
   {canStartReview && <form class="decision" method="post" data-action="start-review" data-change-request-id={changeRequest.id} data-change-request-version={changeRequest.version.toString()}><input type="hidden" name="action" value="START_REVIEW" /><input type="hidden" name="expectedVersion" value={changeRequest.version.toString()} /><button type="submit" data-submit>Start review</button><p class="action-status" data-result role="status" tabindex="-1"></p></form>}

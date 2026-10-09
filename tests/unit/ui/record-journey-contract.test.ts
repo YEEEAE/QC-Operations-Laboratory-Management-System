@@ -11,14 +11,14 @@ describe('record journey linkage contract (QC-100-FINAL-024)', () => {
     const ncrRegister = read('src/pages/quality/ncr/index.astro');
     const rcaRegister = read('src/pages/quality/rca/index.astro');
     const capaRegister = read('src/pages/quality/capa/index.astro');
-    expect(ncrRegister).toContain('ncrReadDependencies().list.execute({ actor, state })');
-    expect(ncrRegister).toContain('rcaReadDependencies().list.execute({ actor })');
+    expect(ncrRegister).toContain('ncrReadDependencies().list.executePage({ actor, state, page:');
+    expect(ncrRegister).toContain('rcaReadDependencies().list.executePage({ actor, ncrId: ncr.id, page:');
     expect(ncrRegister).toContain('PD-15');
     expect(ncrRegister).toContain('PD-16');
     expect(ncrRegister).toContain('QC owner');
-    expect(rcaRegister).toContain('rcaReadDependencies().list.execute({ actor, ncrId })');
-    expect(rcaRegister).toContain('ncrReadDependencies().list.execute({ actor })');
-    expect(capaRegister).toContain('capaReadDependencies().list.execute({ actor, state })');
+    expect(rcaRegister).toContain('rcaReadDependencies().list.executePage({ actor, ncrId, state, page:');
+    expect(rcaRegister).toContain('ncrReadDependencies().list.executePage({ actor, page:');
+    expect(capaRegister).toContain('capaReadDependencies().list.executePage({ actor, state, ncrId, page:');
     expect(capaRegister).toContain('PD-18');
     for (const page of [ncrRegister, rcaRegister, capaRegister]) {
       expect(page).toContain('ProviderUnavailableState');

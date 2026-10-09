@@ -154,14 +154,14 @@ describe('printable help surface contract', () => {
 
   it('states the read-only and separation-of-duty facts without inventing authority', () => {
     expect(page).toContain('PASS ≠ RELEASED');
-    expect(page).toContain('Admin is never the approver');
+    expect(read('src/shared/copy/help-sections.ts')).toContain('Admin is never the approver');
   });
 
   it('renders the screen/state guidance matrix with an informational-vs-mutation boundary (QC-100-FINAL-021)', () => {
     expect(page).toContain('id="guidance-matrix"');
     expect(page).toContain('HELP_GUIDANCE_MATRIX');
-    expect(page).toContain('Informational steps');
-    expect(page).toContain(
+    expect(read('src/shared/copy/help-sections.ts')).toContain('Informational steps');
+    expect(read('src/shared/copy/help-sections.ts')).toContain(
       'authorized mutations (approve, release, sign) commit only when the server accepts',
     );
     expect(page).toContain('scope="row"');

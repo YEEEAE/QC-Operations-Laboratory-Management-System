@@ -302,6 +302,26 @@ export class PostgresInspectionRepository implements InspectionRepository {
     }
     return result;
   }
+  async listPage(i: Parameters<NonNullable<InspectionRepository['listPage']>>[0]) {
+    const grant = i.actor.permissions.find((p) => p.code === 'PERM-INSP-VIEW');
+    if (!grant || grant.active === false || !grant.scopes.some((scope) => scope === 'OWN' || scope === 'GLOBAL')) {
+      return { items: [], total: 0, page: 1, pageSize: i.page.pageSize };
+    }
+    let query = this.db.selectFrom('inspection_reports').select('id');
+    if (!grant.scopes.includes('GLOBAL')) query = query.where('author_id', '=', i.actor.id);
+    if (i.state) query = query.where('state', '=', i.state);
+    if (i.finalResult) query = query.where('final_result', '=', i.finalResult);
+    if (i.assignedTo) query = query.where('assigned_user_id', '=', i.assignedTo);
+    if (i.ownership === 'mine') query = query.where('author_id', '=', i.actor.id);
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(i.page.page, Math.max(1, Math.ceil(total / i.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(i.page.pageSize).offset((page - 1) * i.page.pageSize).execute();
+    const loaded = await this.loadMany(rows.map((row) => row.id));
+    const items = rows.map((row) => loaded.get(row.id)).filter((item): item is Inspection => Boolean(item));
+    return { items, total, page, pageSize: i.page.pageSize };
+  }
   async create(i: {
     inspection: Inspection;
     actor: ActorContext;

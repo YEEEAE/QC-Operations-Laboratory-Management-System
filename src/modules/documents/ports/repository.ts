@@ -19,6 +19,7 @@ export interface DocumentRepository {
   getDocument(id: string): Promise<DocumentIdentity | undefined>;
   listSourceFiles(documentId: string): Promise<readonly DocumentSourceFileOption[]>;
   listDocuments(input: { actor: ActorContext; filter?: DocumentListFilter }): Promise<readonly DocumentIdentity[]>;
+  listDocumentsPage?(input: { actor: ActorContext; filter?: DocumentListFilter; page: import('../../../shared/pagination/page.js').Page }): Promise<import('../../../shared/pagination/page.js').PageResult<DocumentIdentity>>;
   createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; expectedDocumentVersion: bigint; expectedPredecessor: ExpectedDocumentPredecessor | null; actor: ActorContext; requestId: string }): Promise<DocumentVersion>;
   getVersion(id: string): Promise<DocumentVersion | undefined>;
   /** Returns exact stored creation order: created_at DESC, then id DESC. */

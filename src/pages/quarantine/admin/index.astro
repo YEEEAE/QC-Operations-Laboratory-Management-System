@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import { inspectionCatalogDependencies } from '../../../modules/quarantine/catalog/application/catalog.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
@@ -14,8 +15,8 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fquarantine%2Fadmin');
 const hasTemplatePermission = actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES' && p.active !== false);
 const isAuthority = isTemplateAuthority(actor);
 
-const templateResult = await readOutcome(() => templateReadDependencies().list.execute({ actor }));
-let templates: Awaited<ReturnType<ReturnType<typeof templateReadDependencies>['list']['execute']>> = templateResult.status === 'AVAILABLE' ? templateResult.value : [];
+const templateResult = await readOutcome(() => templateReadDependencies().list.executePage({ actor, page: { page: Astro.url.searchParams.get('templatePage') ?? 1 } }));
+let templates: readonly import('../../../modules/quarantine/templates/domain/template.js').TemplateVersion[] = templateResult.status === 'AVAILABLE' ? templateResult.value.items : [];
 const denied = templateResult.status === 'NOT_VISIBLE';
 const listUnavailable = templateResult.status === 'UNAVAILABLE';
 
@@ -50,7 +51,7 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
     });
     const id = extractDetailId(created);
     if (id) return Astro.redirect(`/quarantine/admin/${id}`, 303);
-    templates = await templateReadDependencies().list.execute({ actor });
+    templates = (await templateReadDependencies().list.executePage({ actor, page: { page: Astro.url.searchParams.get('templatePage') ?? 1 } })).items;
     values = { catalogId: '', description: '' };
     reauthenticationSecret = '';
   } catch (error) {
@@ -94,14 +95,11 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
 }
 ---
 <AppLayout title="Quarantine Administration · QC Operations" locale="en" direction="ltr">
-  <section class="head">
-    <div>
-      <p class="eyebrow">Inspection templates</p>
-      <h1>Quarantine administration</h1>
+  <PageHeader><Fragment slot="heading"><h1>Quarantine administration</h1></Fragment>
+      
+      
       <p class="lede">Manage inspection templates. Approved content requires a new revision to change.</p>
-    </div>
-    <a href="/quarantine">Back to Quarantine</a>
-  </section>
+    <Fragment slot="actions"><a href="/quarantine">Back to Quarantine</a></Fragment></PageHeader>
 
   {denied ? (
     <section class="denied" role="alert">
@@ -184,6 +182,7 @@ function disabledReason(state: string, action: 'REVIEW' | 'APPROVE' | 'STOP' | '
       </section>
     </div>
   )}
+  {templateResult.status === 'AVAILABLE' && <nav aria-label="Template register pages"><span>Page {templateResult.value.page} of {Math.max(1, Math.ceil(templateResult.value.total / templateResult.value.pageSize))}; {templateResult.value.total} templates</span>{templateResult.value.page > 1 && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), templatePage: String(templateResult.value.page - 1) })}`}>Previous templates</a>}{templateResult.value.page * templateResult.value.pageSize < templateResult.value.total && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), templatePage: String(templateResult.value.page + 1) })}`}>Next templates</a>}</nav>}
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';

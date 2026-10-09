@@ -1,0 +1,13 @@
+---
+interface Decision { id: string; owner?: string; consequence: string; href?: string; }
+interface Props { decisions: readonly Decision[]; title?: string; }
+const { decisions, title = 'Governing decisions required' } = Astro.props;
+---
+<section class="policy-blocker" aria-label={title}>
+  <h2>{title}</h2>
+  <ul>{decisions.map((decision) => <li><div class="decision-identity"><strong>{decision.id}</strong><span>{decision.owner ?? 'Decision owner not supplied'}</span></div><p>{decision.consequence}</p>{decision.href ? <a href={decision.href}>View governing decision</a> : <span class="source-status">Decision link not supplied</span>}</li>)}</ul>
+</section>
+<style>
+  .policy-blocker{margin-block:var(--space-4);padding:var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--status-warning-bg)}
+  h2{margin:0 0 var(--space-3);font-size:var(--font-size-lg)}ul{list-style:none;padding:0;margin:0;display:grid;gap:var(--space-3)}li{min-inline-size:0}.decision-identity{display:flex;flex-wrap:wrap;gap:var(--space-3);font-size:var(--font-size-sm)}p{margin:var(--space-1) 0;font-size:var(--font-size-md)}.source-status{color:var(--text-secondary);font-size:var(--font-size-xs)}a{display:inline-flex;align-items:center;min-block-size:44px;color:var(--color-accent-primary-hover)}
+</style>

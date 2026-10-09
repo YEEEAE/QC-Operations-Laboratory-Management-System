@@ -1,0 +1,18 @@
+---
+import { navigationGroups } from '../navigation/navigation';
+interface Props { title?: string; section?: string; purpose?: string; }
+const { title, purpose } = Astro.props;
+const path = Astro.url.pathname;
+const section = Astro.props.section ?? navigationGroups.find((group) => group.items.some((item) => path === item.href || path.startsWith(`${item.href}/`)))?.label ?? 'Workspace tools';
+---
+<header class="page-header" data-page-header>
+  <div class="page-heading"><p class="section-label">{section}</p>{Astro.slots.has('heading') ? <slot name="heading" /> : <h1>{title}</h1>}{purpose && <p class="purpose">{purpose}</p>}<slot /></div>
+  {Astro.slots.has('actions') && <div class="page-header-actions"><slot name="actions" /></div>}
+</header>
+<style>
+  .page-header{display:flex;justify-content:space-between;align-items:start;gap:var(--space-5);margin-block-end:var(--space-6);padding-block-end:var(--space-4);border-block-end:1px solid var(--color-border-subtle)}
+  .page-heading{min-inline-size:0}.section-label{margin:0 0 var(--space-2);font-size:var(--font-size-xs);color:var(--text-muted);font-weight:var(--font-weight-semibold);letter-spacing:0}
+  .page-heading :global(h1){margin:0;font-size:var(--font-size-2xl);line-height:var(--line-height-tight);overflow-wrap:anywhere;letter-spacing:0}.purpose{margin:var(--space-2) 0 0;max-inline-size:65ch;color:var(--text-secondary);font-size:var(--font-size-md)}
+  .page-header-actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);min-inline-size:0}.page-header-actions :global(a),.page-header-actions :global(button){min-block-size:44px;display:inline-flex;align-items:center}
+  @media(max-width:760px){.page-header{flex-direction:column;gap:var(--space-3)}.page-header-actions{inline-size:100%}}
+</style>

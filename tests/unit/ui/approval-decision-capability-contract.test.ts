@@ -10,7 +10,9 @@ describe('approval decision capability presentation', () => {
     expect(indexPage).toContain('Decision signing policy unresolved');
     expect(indexPage).toContain('Contact the QMS signature-policy owner');
     expect(indexPage).toContain('this empty list is not evidence that decisions are available');
-    expect(indexPage).toContain("capability.state === 'POLICY_BLOCKED'");
+    expect(indexPage).toContain("item.state === 'POLICY_BLOCKED'");
+    expect(indexPage).toContain('label={decision.label}');
+    expect(indexPage).toContain('{decision.reason}');
   });
 
   it('surfaces the partial activation state once some generic decisions require a signature', () => {

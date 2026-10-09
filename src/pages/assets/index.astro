@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../ui/components/PageHeader.astro";
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { assetsReadDependencies } from '../../modules/assets/application/dependencies.js';
@@ -14,7 +15,7 @@ const scopeLabel = describeActorScope(actor);
 try { const read = assetsReadDependencies(); [equipment, calibrations, maintenance] = await Promise.all([read.equipment.list.execute({ actor }), read.calibration.list.execute({ actor }), read.maintenance.list.execute({ actor })]); } catch { providerUnavailable = true; }
 ---
 <AppLayout title="Assets · QC Operations" locale="en" direction="ltr">
-  <section class="hero"><div><p class="eyebrow">Assets</p><h1>Assets</h1><p>Equipment identity, calibration history, and maintenance work in one authorized workspace.</p></div><span class="scope">{scopeLabel}</span></section>
+  <PageHeader><Fragment slot="heading"><h1>Assets</h1></Fragment><p>Equipment identity, calibration history, and maintenance work in one authorized workspace.</p><Fragment slot="actions"><span class="scope">{scopeLabel}</span></Fragment></PageHeader>
   {providerUnavailable ? <ProviderUnavailableState title="Asset data is unavailable" description="Asset data could not be loaded. Counts are not shown." /> : <section class="cards" aria-label="Asset workspaces"><a href="/assets/equipment"><span>Equipment register</span><strong>{equipment.length}</strong><small>Identity, operational state, and controlled context</small></a><a href="/assets/calibrations"><span>Calibration records</span><strong>{calibrations.length}</strong><small>History and source-provided dates</small></a><a href="/assets/maintenance"><span>Maintenance</span><strong>{maintenance.length}</strong><small>Planned and completed work history</small></a></section>}
   <section class="note"><strong>Control boundary</strong><p>Asset master changes do not rewrite historical Laboratory snapshots. PASS, calibration status, and release are separate controlled facts.</p></section>
 </AppLayout>

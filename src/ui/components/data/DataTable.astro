@@ -1,12 +1,13 @@
 ---
-interface Props { caption: string; summary?: string; density?: 'standard' | 'compact' | 'comfortable'; empty?: boolean; }
-const { caption, summary, density = 'standard', empty = false } = Astro.props;
+interface Props { caption: string; summary?: string; total?: number | null; density?: 'standard' | 'compact' | 'comfortable'; empty?: boolean; }
+const { caption, summary, total, density = 'standard', empty = false } = Astro.props;
 ---
 <section class="data-panel" data-density={density}>
   <div class="table-context"><div><h2>{caption}</h2>{summary && <p>{summary}</p>}</div><label class="density-control">Row density<select aria-label="Row density" data-density-choice><option value="comfortable" selected={density === 'comfortable'}>Comfortable</option><option value="standard" selected={density === 'standard'}>Standard</option><option value="compact" selected={density === 'compact'}>Compact</option></select></label><slot name="count" /></div>
+  {total !== undefined && <p class="register-total">{total === null ? 'Total unavailable' : `${total} authorized record${total === 1 ? '' : 's'}`}</p>}
   <slot name="toolbar" />
   <p class="bulk-note" role="note"><slot name="bulk-action">Bulk actions: none are available for this register. Open a row to use its authorized, audited actions.</slot></p>
-  {empty ? <slot name="empty" /> : <div class="table-scroll"><table><caption class="visually-hidden">{caption}</caption><slot /></table></div>}
+  {empty ? <slot name="empty" /> : <div class="table-scroll" role="region" aria-label={caption} tabindex="0"><table><caption class="visually-hidden">{caption}</caption><slot /></table></div>}
   <slot name="pagination" />
 </section>
 <style>
@@ -19,20 +20,22 @@ const { caption, summary, density = 'standard', empty = false } = Astro.props;
   p { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-xs); }
   .table-scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; min-width: 680px; color: var(--text-secondary); font-size: var(--font-size-sm); }
-  th, td { padding: var(--table-cell-padding-block) var(--table-cell-padding-inline); border-block-end: 1px solid var(--color-border-subtle); text-align: start; vertical-align: middle; }
-  th { background: var(--table-header-background); color: var(--text-primary); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); white-space: nowrap; }
-  tbody tr:nth-child(even) { background: var(--table-stripe-background); }
-  tbody tr:hover { background: var(--color-surface-hover); }
-  tbody tr:focus-within { outline: var(--focus-width) solid var(--focus-ring); outline-offset: -2px; }
+  table :global(th), table :global(td) { padding: var(--table-cell-padding-block) var(--table-cell-padding-inline); border-block-end: 1px solid var(--color-border-subtle); text-align: start; vertical-align: middle; }
+  table :global(th) { background: var(--table-header-background); color: var(--text-primary); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); white-space: nowrap; }
+  table :global(tbody tr:nth-child(even)) { background: var(--table-stripe-background); }
+  table :global(tbody tr:hover) { background: var(--color-surface-hover); }
+  table :global(tbody tr:focus-within) { outline: var(--focus-width) solid var(--focus-ring); outline-offset: -2px; }
   .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
   @media (max-width: 760px) { .table-context { padding: var(--space-4); } .table-scroll { margin-inline: 0; } }
+  @media (pointer: coarse), (max-width: 760px) { .density-control select { min-height: 44px; } .table-context { flex-wrap: wrap; } }
 </style>
 <script>
-  const preferenceKey = 'qc.register-density';
+  const account = document.querySelector<HTMLElement>('[data-preference-account]')?.dataset.preferenceAccount ?? '';
+  const preferenceKey = `qc.register-density:${encodeURIComponent(account)}`;
   const panels = Array.from(document.querySelectorAll<HTMLElement>('.data-panel'));
   const allowed = new Set(['comfortable', 'standard', 'compact']);
   let saved = null;
-  try { saved = localStorage.getItem(preferenceKey); } catch { /* Storage can be unavailable in private contexts. */ }
+  try { saved = account ? localStorage.getItem(preferenceKey) : null; } catch { /* Storage can be unavailable in private contexts. */ }
   if (saved && allowed.has(saved)) {
     for (const panel of panels) {
       panel.dataset.density = saved;
@@ -49,7 +52,7 @@ const { caption, summary, density = 'standard', empty = false } = Astro.props;
         const select = sibling.querySelector<HTMLSelectElement>('[data-density-choice]');
         if (select) select.value = value;
       }
-      try { localStorage.setItem(preferenceKey, value); } catch { /* The setting still applies for this page view. */ }
+      try { if (account) localStorage.setItem(preferenceKey, value); } catch { /* The setting still applies for this page view. */ }
     });
   }
 </script>

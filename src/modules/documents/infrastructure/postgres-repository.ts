@@ -132,6 +132,32 @@ export class PostgresDocumentRepository implements DocumentRepository {
     return result;
   }
 
+  async listDocumentsPage(input: Parameters<NonNullable<DocumentRepository['listDocumentsPage']>>[0]) {
+    const grant = input.actor.permissions.find((p) => p.code === 'PERM-DOC-VIEW');
+    if (!grant || grant.active === false || !grant.scopes.some((scope) => scope === 'OWN' || scope === 'GLOBAL')) {
+      return { items: [], total: 0, page: 1, pageSize: input.page.pageSize };
+    }
+    let query = this.database.selectFrom('document_identities').selectAll().where('active', '=', true);
+    if (!grant.scopes.includes('GLOBAL')) query = query.where((eb) =>
+      eb(eb.fn.coalesce('owner_id', 'created_by'), '=', input.actor.id));
+    if (input.filter?.documentType) query = query.where('document_type', '=', input.filter.documentType);
+    if (input.filter?.search) query = query.where((eb) => eb.or([
+      eb('document_no', 'ilike', `%${input.filter!.search}%`),
+      eb('title', 'ilike', `%${input.filter!.search}%`),
+    ]));
+    if (input.filter?.state) query = query.where((eb) => eb.exists(
+      eb.selectFrom('document_versions').select('id')
+        .whereRef('document_versions.document_id', '=', 'document_identities.id')
+        .where('document_versions.state', '=', input.filter!.state!),
+    ));
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(input.page.page, Math.max(1, Math.ceil(total / input.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(input.page.pageSize).offset((page - 1) * input.page.pageSize).execute();
+    return { items: rows.map((row) => identityMap(row)), total, page, pageSize: input.page.pageSize };
+  }
+
   async createVersion(input: { version: DocumentVersion; sourceFiles: readonly { fileId: string; fileRole: string }[]; expectedDocumentVersion: bigint; expectedPredecessor: { id: string; state: DocumentVersion['state']; version: bigint } | null; actor: ActorContext; requestId: string }): Promise<DocumentVersion> {
     try {
       return await this.database.transaction().execute(async (tx) => {

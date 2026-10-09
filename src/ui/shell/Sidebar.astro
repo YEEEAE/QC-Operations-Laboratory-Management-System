@@ -33,6 +33,11 @@ const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((ite
     <Icon name="close" />
   </button>
 
+  <div class="navigation-filter" data-navigation-filter-panel hidden>
+    <label for="navigation-filter">Find a page</label>
+    <input id="navigation-filter" type="search" data-navigation-filter autocomplete="off" />
+    <p data-navigation-filter-status role="status" aria-live="polite"></p>
+  </div>
   <ul class="nav-groups" id="primary-navigation-list">
     {groups.map((group) => {
       const expanded = hasCurrentDescendant(group.items);
@@ -107,7 +112,15 @@ const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((ite
   )}
 </nav>
 
+<noscript><style>.nav-items[hidden] { display:block; } .nav-group-toggle, .collapse-button { display:none; }</style></noscript>
+
 <style>
+  .navigation-filter { padding-inline:var(--space-2); }
+  .navigation-filter label { display:block; font-size:.8rem; margin-block-end:var(--space-2); }
+  .navigation-filter input { inline-size:100%; min-block-size:44px; min-inline-size:0; padding:var(--space-2); border:1px solid var(--border-default); border-radius:4px; background:var(--surface-raised); color:var(--text-primary); }
+  .navigation-filter p { font-size:.75rem; color:var(--text-muted); margin-block:var(--space-2); }
+  .sidebar[data-collapsed='true'] .navigation-filter { display:none; }
+  .nav-group[hidden], .nav-items li[hidden], .nav-utilities li[hidden] { display:none; }
   .sidebar { position: sticky; top: 0; display: flex; flex-direction: column; gap: var(--space-3); min-height: 100vh; min-inline-size: 0; max-inline-size: 100%; padding: var(--space-5) var(--space-3); background: var(--color-sidebar); border-inline-end: 1px solid var(--color-border-subtle); }
   .brand { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; min-block-size: 44px; padding: 0 var(--space-2) var(--space-4); padding-inline-end: var(--space-12); font-weight: var(--font-weight-bold); color: var(--text-primary); }
   .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 9px; background: var(--color-accent-primary); color: var(--color-text-inverse); font-size: var(--font-size-xs); letter-spacing: .06em; }

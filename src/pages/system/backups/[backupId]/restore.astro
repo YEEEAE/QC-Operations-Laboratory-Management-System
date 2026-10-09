@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../../ui/components/FormErrorSummary.astro';
 import { actions } from 'astro:actions';
@@ -73,7 +74,7 @@ if (Astro.request.method === 'POST' && (canRequestDrill || canRequestProduction)
 }
 ---
 <AppLayout title={`Restore request · ${riyadh(backup.requestedAt)} · QC Operations`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Restore request</p><h1>Restore request</h1><p class="lede">Record a restore request. Requests remain planned; no restore is executed.</p></div><a href={`/system/backups/${backup.id}`}>Back to backup</a></section>
+  <PageHeader><Fragment slot="heading"><h1>Restore request</h1></Fragment><p class="lede">Record a restore request. Requests remain planned; no restore is executed.</p><Fragment slot="actions"><a href={`/system/backups/${backup.id}`}>Back to backup</a></Fragment></PageHeader>
   <section class="panel"><h2>Backup and recovery context</h2><dl>
     <div><dt>Internal backup reference</dt><dd><code>{backup.id}</code></dd></div>
     <div><dt>Backup job state</dt><dd>{stateLabel(backup.state)} — job result only, never restore evidence</dd></div>

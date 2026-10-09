@@ -2,6 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import Sidebar from '../shell/Sidebar.astro';
 import Topbar from '../shell/Topbar.astro';
+import CommandPalette from '../shell/CommandPalette.astro';
 import { routeBreadcrumbs } from '../navigation/navigation';
 import { actorRoleLabel, describeActorScope } from '../../shared/authorization/scope-description';
 interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; scope?: string; approvalCount?: number; notificationCount?: number; userRole?: string; }
@@ -11,13 +12,14 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 ---
 <BaseLayout {...props}>
   <a class="skip-link" href="#main-content" data-skip-link>Skip to main content</a>
-  <div class="app-shell" data-app-shell data-mobile-nav-open="false" data-sidebar-collapsed="false">
+  <div class="app-shell" data-app-shell data-preference-account={actor?.id ?? ''} data-mobile-nav-open="false" data-sidebar-collapsed="false">
     <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation" aria-hidden="false"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>
     <div class="app-workspace" data-app-workspace>
       <header class="app-topbar"><slot name="topbar"><Topbar breadcrumbs={breadcrumbs} userName={actor?.loginIdentity ?? 'Signed in'} userRole={props.userRole ?? actorRoleLabel(actor)} scope={props.scope ?? describeActorScope(actor)} approvalCount={props.approvalCount} notificationCount={props.notificationCount} /></slot></header>
       <main id="main-content" class="app-main"><slot /></main>
     </div>
   </div>
+  <CommandPalette />
 </BaseLayout>
 <style>
   .app-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(220px, 264px) minmax(0, 1fr); background: var(--surface-page); transition: grid-template-columns var(--motion-standard) ease; }
@@ -30,6 +32,8 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   @media (prefers-reduced-motion: reduce) { .app-shell,.app-sidebar { transition:none; } }
 </style>
 <script>
+  import { navigationPreferences, navigationMatches, recentRecordPath } from '../client/navigation-preferences';
+  import { openDialog, initDialogs } from '../client/dialog';
   const shell = document.querySelector<HTMLElement>('[data-app-shell]');
   const sidebarPanel = document.querySelector<HTMLElement>('[data-sidebar-panel]');
   const workspace = document.querySelector<HTMLElement>('[data-app-workspace]');
@@ -38,11 +42,98 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   const collapse = document.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
   const navigationToggle = document.querySelector<HTMLButtonElement>('[data-navigation-toggle]');
   const drawerClose = document.querySelector<HTMLButtonElement>('[data-drawer-close]');
-  const storageKey = 'qc-sidebar-collapsed';
-  const sectionsStorageKey = 'qc-navigation-expanded-sections';
+  let preferenceStorage: Storage | undefined;
+  try { preferenceStorage = window.localStorage; } catch { /* Storage is optional. */ }
+  const preferences = navigationPreferences(shell?.dataset.preferenceAccount ?? '', preferenceStorage);
   const mobileQuery = window.matchMedia('(max-width: 760px)');
   const isMobileDrawer = () => mobileQuery.matches;
   const isDrawerOpen = () => shell?.dataset.mobileNavOpen === 'true';
+
+  const filterPanel = sidebar?.querySelector<HTMLElement>('[data-navigation-filter-panel]');
+  const filter = sidebar?.querySelector<HTMLInputElement>('[data-navigation-filter]');
+  if (filterPanel) filterPanel.hidden = false;
+  const applyNavigationFilter = () => {
+    const query = filter?.value ?? '';
+    let count = 0;
+    sidebar?.querySelectorAll<HTMLElement>('.nav-group').forEach((group) => {
+      let matches = 0;
+      group.querySelectorAll<HTMLAnchorElement>('.nav-link').forEach((link) => {
+        const shown = navigationMatches(link.textContent ?? '', query);
+        link.closest('li')?.toggleAttribute('hidden', !shown);
+        if (shown) matches++;
+      });
+      group.hidden = matches === 0;
+      count += matches;
+      const button = group.querySelector<HTMLButtonElement>('[data-nav-section-toggle]');
+      const list = group.querySelector<HTMLElement>('.nav-items');
+      const expanded = query.trim() ? matches > 0 : expandedSections.has(group.dataset.navGroup ?? '');
+      button?.setAttribute('aria-expanded', String(expanded));
+      button?.setAttribute('aria-label', `${expanded ? 'Collapse' : 'Expand'} ${button.dataset.sectionLabel} section`);
+      if (list) list.hidden = !expanded;
+    });
+    sidebar?.querySelectorAll<HTMLAnchorElement>('.nav-utilities .nav-link').forEach((link) => {
+      const shown = navigationMatches(link.textContent ?? '', query);
+      link.closest('li')?.toggleAttribute('hidden', !shown);
+      if (shown) count++;
+    });
+    const status = sidebar?.querySelector<HTMLElement>('[data-navigation-filter-status]');
+    if (status) status.textContent = query.trim() ? `${count} matching pages` : '';
+  };
+  filter?.addEventListener('input', applyNavigationFilter);
+  filter?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') { filter.value = ''; applyNavigationFilter(); }
+  });
+
+  const palette = document.querySelector<HTMLDialogElement>('[data-command-palette]');
+  const commandQuery = palette?.querySelector<HTMLInputElement>('[data-command-query]');
+  const recentList = palette?.querySelector<HTMLElement>('[data-command-recent] ul');
+  const currentRecord = recentRecordPath(window.location.pathname);
+  if (currentRecord && shell?.dataset.preferenceAccount && !document.querySelector('#main-content .unavailable, #main-content .denied, #main-content .operational-state--error, #main-content .operational-state--denied')) {
+    const saved = preferences.read();
+    preferences.write({ ...saved, recent: [currentRecord, ...saved.recent.filter((path) => path !== currentRecord)] });
+  }
+  for (const path of preferences.read().recent) {
+    const item = document.createElement('li');
+    item.dataset.commandItem = '';
+    const link = document.createElement('a');
+    link.href = path;
+    link.textContent = path;
+    item.append(link);
+    recentList?.append(item);
+  }
+  const recentSection = palette?.querySelector<HTMLElement>('[data-command-recent]');
+  if (recentSection) recentSection.hidden = !recentList?.childElementCount;
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'qc-navigation-v2:account' && event.newValue !== shell?.dataset.preferenceAccount) {
+      recentList?.replaceChildren();
+      if (recentSection) recentSection.hidden = true;
+    }
+  });
+  const filterCommands = () => {
+    let count = 0;
+    palette?.querySelectorAll<HTMLElement>('[data-command-item]').forEach((item) => {
+      item.hidden = !navigationMatches(item.textContent ?? '', commandQuery?.value ?? '');
+      if (!item.hidden) count++;
+    });
+    const status = palette?.querySelector<HTMLElement>('[data-command-status]');
+    if (status) status.textContent = count ? `${count} results` : 'No matches';
+  };
+  commandQuery?.addEventListener('input', filterCommands);
+  palette?.addEventListener('keydown', (event) => {
+    if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
+    const links = Array.from(palette.querySelectorAll<HTMLAnchorElement>('[data-command-item]:not([hidden]) a'));
+    if (!links.length) return;
+    event.preventDefault();
+    const index = links.indexOf(document.activeElement as HTMLAnchorElement);
+    links[(index + (event.key === 'ArrowDown' ? 1 : links.length - 1) + links.length) % links.length]?.focus();
+  });
+  initDialogs();
+  document.querySelector<HTMLElement>('[data-command-trigger]')?.addEventListener('click', (event) => {
+    if (!palette || typeof palette.showModal !== 'function') return;
+    event.preventDefault();
+    openDialog(palette, event.currentTarget as HTMLElement);
+    filterCommands();
+  });
 
   const setCollapsed = (collapsed: boolean) => {
     if (!shell || !sidebar || !collapse) return;
@@ -50,20 +141,10 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     sidebar.dataset.collapsed = String(collapsed);
     collapse.setAttribute('aria-expanded', String(!collapsed));
     collapse.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
-    try {
-      localStorage.setItem(storageKey, String(collapsed));
-    } catch {
-      // The in-memory state still applies when browser storage is blocked.
-    }
+    preferences.write({ ...preferences.read(), collapsed });
   };
 
-  let savedSections: unknown = [];
-  try {
-    savedSections = JSON.parse(sessionStorage.getItem(sectionsStorageKey) ?? '[]');
-  } catch {
-    // A malformed client preference must not prevent the primary navigation
-    // from working; the current route still opens its own section.
-  }
+  const savedSections = preferences.read().sections;
   const expandedSections = new Set<string>(
     Array.isArray(savedSections)
       ? savedSections.filter((section): section is string => typeof section === 'string')
@@ -91,11 +172,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
       list.toggleAttribute('hidden', !nextOpen);
       if (nextOpen) expandedSections.add(sectionId);
       else expandedSections.delete(sectionId);
-      try {
-        sessionStorage.setItem(sectionsStorageKey, JSON.stringify([...expandedSections]));
-      } catch {
-        // Section expansion is a convenience; navigation stays usable.
-      }
+      preferences.write({ ...preferences.read(), sections: [...expandedSections] });
     });
     button.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape' || button.getAttribute('aria-expanded') !== 'true') return;
@@ -169,12 +246,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     }
   };
 
-  let collapsedPreference: string | null = null;
-  try {
-    collapsedPreference = localStorage.getItem(storageKey);
-  } catch {
-    // A blocked preference store must not prevent the drawer from opening.
-  }
+  const collapsedPreference = String(preferences.read().collapsed);
   if (collapsedPreference === 'true') {
     // Apply the preference without requiring a storage write.
     if (shell && sidebar && collapse) {
@@ -225,8 +297,12 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   });
   document.addEventListener('keydown', (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      if (document.querySelector('dialog[open]:not([data-command-palette])')) return;
       event.preventDefault();
-      window.location.assign('/search');
+      if (isDrawerOpen()) setMobileNav(false);
+      const palette = document.querySelector<HTMLDialogElement>('[data-command-palette]');
+      if (palette && typeof palette.showModal === 'function') { openDialog(palette); filterCommands(); }
+      else window.location.assign('/search');
     }
     if (event.key === 'Tab' && isDrawerOpen() && isMobileDrawer()) {
       const focusables = drawerFocusables();

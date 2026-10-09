@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
@@ -70,21 +71,18 @@ try {
 ---
 
 <AppLayout title="Users · Administration" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Members</p>
-      <h1>Users</h1>
+  <PageHeader><Fragment slot="heading"><h1>Users</h1></Fragment>
+      
+      
         
-    </div>
-    <div class="head-links">
+    <Fragment slot="actions"><div class="head-links">
       {canCreate && (
         <a class="button" href="/admin/users/new">
           Create user
         </a>
       )}
       <a href="/admin">Back to administration</a>
-    </div>
-  </section>
+    </div></Fragment></PageHeader>
   {providerUnavailable && <ProviderUnavailableState title="User register is temporarily unavailable" description="The user source did not confirm a complete page. Retry after the source is available." retryHref={Astro.url.pathname + Astro.url.search} />}
   {Boolean(stateParam && !accountState) && <p class="rejected" role="status">The account-state filter was not applied because its value is unsupported.</p>}
   {

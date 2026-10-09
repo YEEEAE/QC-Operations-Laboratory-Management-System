@@ -34,9 +34,9 @@ describe('universal shell preservation', () => {
     expect(dashboard).not.toContain("slot='topbar'");
     expect(dashboard).not.toContain('slot="sidebar"');
     expect(dashboard).not.toContain("slot='sidebar'");
-    // Page-specific command-center identity stays inside page content.
-    expect(dashboard).toContain('OPERATIONAL COMMAND CENTER');
-    expect(dashboard).toContain('page-head');
+    // Page-specific command-center context stays inside page content.
+    expect(dashboard).toContain('PageHeader');
+    expect(dashboard).toContain('Needs your attention');
     // Authorized scope context flows into the universal Topbar.
     expect(dashboard).toContain('scope=');
     expect(dashboard).toContain('dashboard.scopeLabel');
@@ -48,6 +48,7 @@ describe('universal shell preservation', () => {
 
   it('keeps dashboard metrics decision-ready and fail-closed', () => {
     const dashboard = read('src/pages/dashboard/index.astro');
+    const counts = read('src/ui/components/dashboard/DashboardCounts.astro');
     const query = read('src/modules/dashboard/ports/dashboard-query.ts');
     expect(query).toContain("unit: 'records'");
     expect(query).toContain("timeRange: 'current snapshot'");
@@ -66,8 +67,8 @@ describe('universal shell preservation', () => {
     expect(read('src/modules/dashboard/application/dashboard-sources.ts')).toContain(
       "state: 'NOT_SUPPLIED'",
     );
-    expect(dashboard).toContain('unavailableMessage={metric.unavailable?.message}');
-    expect(dashboard).toContain('drilldownLabel={metric.drilldownLabel}');
+    expect(counts).toContain('unavailableMessage={metric.unavailable?.message}');
+    expect(counts).toContain('drilldownLabel={metric.drilldownLabel}');
   });
 
   it('keeps every representative top-level group page on the universal shell', () => {
@@ -127,7 +128,8 @@ describe('universal shell preservation', () => {
     expect(topbar).toContain('Breadcrumbs');
     expect(topbar).toContain('ScopeIndicator');
     // These destinations appear once in the primary navigation tree.
-    expect(topbar).not.toContain('href="/search"');
+    expect(topbar).toContain('href="/search"');
+    expect(topbar).toContain('data-command-trigger');
     expect(topbar).not.toContain('href="/notifications"');
     expect(topbar).not.toContain('href="/approvals"');
     expect(read('src/ui/shell/Sidebar.astro')).toContain('nav-utilities-label');
@@ -176,7 +178,9 @@ describe('universal shell preservation', () => {
     expect(layout).toContain('setMobileNav(false, { returnFocus: true })');
     expect(layout).toContain("event.key === 'Tab'");
     expect(layout).toContain("event.key === 'Escape'");
-    expect(layout).toContain('sessionStorage.setItem(sectionsStorageKey');
+    expect(layout).toContain(
+      'preferences.write({ ...preferences.read(), sections: [...expandedSections] })',
+    );
     expect(layout).toContain('isCurrentSection || expandedSections.has(sectionId)');
     expect(layout).toContain("document.body.style.overflow = 'hidden'");
     expect(layout).toContain("document.body.style.overflow = ''");

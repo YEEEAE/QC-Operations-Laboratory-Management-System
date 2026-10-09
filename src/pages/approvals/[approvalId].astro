@@ -81,6 +81,9 @@ const approvalEvents = approval ? [
   </div>
   }
 </AppLayout>
+<style>
+  .evidence-record{max-width:1120px;margin-inline:auto}.grid{margin-top:var(--space-5)}.panel{border:0;border-block-start:1px solid var(--color-border-subtle);border-radius:0;background:transparent;padding-inline:0}.decision{border-block-start:3px solid var(--color-accent-primary);padding:var(--space-5);background:var(--surface-panel)}.decision h2{margin-bottom:var(--space-3)}.decision form{max-width:none;grid-template-columns:1fr 1fr}.decision form>label,.decision form>p,.decision form>span,.decision form>button,.decision form>output,.decision form>a{grid-column:1 / -1}.decision form>label:first-of-type{max-width:360px}.hint{color:var(--text-muted);font-size:.75rem}.signing-meaning{border-inline-start:3px solid var(--status-warning);padding:var(--space-3);background:var(--surface-page)}.eyebrow{letter-spacing:0}.head h1{overflow-wrap:anywhere}.head>div{min-width:0}.decision button{max-width:100%;white-space:normal}.crumb{flex-wrap:wrap}@media(max-width:700px){.decision form{grid-template-columns:1fr}.decision{padding:var(--space-4)}}
+</style>
 <script>
   import { actions } from 'astro:actions';
   import { classifyActionResult } from '../../ui/forms/mutation-interaction.js';

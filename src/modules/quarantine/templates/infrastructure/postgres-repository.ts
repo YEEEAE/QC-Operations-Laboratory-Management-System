@@ -106,6 +106,23 @@ export class PostgresTemplateRepository implements TemplateRepository {
     return result;
   }
 
+  async listPage(input: Parameters<NonNullable<TemplateRepository['listPage']>>[0]) {
+    if (input.actor.accountState !== 'ACTIVE' || !input.actor.permissions.some((p) => p.code === 'PERM-ADM-TEMPLATES')) {
+      return { items: [], total: 0, page: 1, pageSize: input.page.pageSize };
+    }
+    let query = this.db.selectFrom('inspection_template_versions').selectAll();
+    if (input.state) query = query.where('state', '=', input.state);
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(input.page.page, Math.max(1, Math.ceil(total / input.page.pageSize)));
+    const rows = await query.orderBy('created_at', 'desc').orderBy('id', 'desc')
+      .limit(input.page.pageSize).offset((page - 1) * input.page.pageSize).execute();
+    const headers = rows.length ? await this.db.selectFrom('inspection_templates').selectAll()
+      .where('id', 'in', [...new Set(rows.map((row) => row.template_id))]).execute() : [];
+    const byId = new Map(headers.map((header) => [header.id, header]));
+    const items = rows.map((row) => map(byId.get(row.template_id)!, row));
+    return { items, total, page, pageSize: input.page.pageSize };
+  }
   async create(input: {
     template: TemplateVersion;
     templateCode: string;

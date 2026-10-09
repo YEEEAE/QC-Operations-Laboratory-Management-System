@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 // RT-NCR-002. This page exists so the declared create route never falls through
 // to the NCR detail route (`/quality/ncr/[ncrId]`), which previously rendered a
 // detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
@@ -11,10 +12,10 @@ const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fncr%2Fnew');
 ---
 <AppLayout title="New NCR · Quality" locale="en" direction="ltr">
-  <section class="page-head">
-    <h1>New NCR</h1>
+  <PageHeader><Fragment slot="heading"><h1>New NCR</h1></Fragment>
+    
     <p class="lede">Create an NCR from a finding or inspection.</p>
-  </section>
+  </PageHeader>
   <section class="panel" role="status">
     <h2>Direct creation is not available</h2>
     <p>

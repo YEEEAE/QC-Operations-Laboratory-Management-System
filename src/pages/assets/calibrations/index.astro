@@ -1,5 +1,7 @@
 ---
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import Pagination from '../../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import EmptyTableState from '../../../ui/components/data/EmptyTableState.astro';
@@ -31,17 +33,24 @@ const search = params.get('q')?.slice(0, 200) || undefined;
 let records: readonly import('../../../modules/assets/calibration/domain/calibration.js').CalibrationRecord[] =
   [];
 let providerUnavailable = false;
+let page = 1;
+let total = 0;
+let pageSize = 25;
 try {
-  records = await assetsReadDependencies().calibration.list.execute({
+  const result = await assetsReadDependencies().calibration.list.executePage({
     actor,
     filter: { state, equipmentId, search },
+    page: { page: params.get('page') ?? 1, pageSize },
   });
+  records = result.items;
+  ({ page, total, pageSize } = result);
 } catch {
   providerUnavailable = true;
 }
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
   next.delete(drop);
+  next.delete('page');
   const query = next.toString();
   return `/assets/calibrations${query ? `?${query}` : ''}`;
 };
@@ -54,17 +63,10 @@ const hasFilters = appliedFilters.length > 0;
 ---
 
 <AppLayout title="Calibrations · Assets" locale="en" direction="ltr">
-  <section class="head">
-    <div>
-      <p class="eyebrow">Calibrations</p>
-      <h1>Calibration records</h1>
-      <p>
-        Historical calibration records linked to equipment. Dates are source-provided; no interval
-        is inferred.
-      </p>
-    </div>
-    {canCreate && <a class="button" href="/assets/calibrations/new">Add calibration record</a>}
-  </section>
+  <PageHeader purpose="Historical calibration records linked to equipment. Dates are source-provided; no interval is inferred.">
+    <Fragment slot="heading"><h1>Calibration records</h1></Fragment>
+    <Fragment slot="actions">{canCreate && <a class="button" href="/assets/calibrations/new">Add calibration record</a>}</Fragment>
+  </PageHeader>
   <FilterBar clearHref={hasFilters ? '/assets/calibrations' : undefined}>
     <label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label>
     <label for="state">State<select id="state" name="state">
@@ -82,7 +84,7 @@ const hasFilters = appliedFilters.length > 0;
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/assets/calibrations' : undefined}
-    note="Showing every calibration record in your authorized scope."
+    note={providerUnavailable ? undefined : `${total} calibration records in your authorized scope.`}
   />
   {
     providerUnavailable ? (
@@ -95,7 +97,7 @@ const hasFilters = appliedFilters.length > 0;
       <div class="table-wrap">
         <table>
           <caption>
-            {records.length} authorized calibration record{records.length === 1 ? '' : 's'}
+            {total} authorized calibration record{total === 1 ? '' : 's'}
             {hasFilters ? ' matching the current filters' : ''}
           </caption>
           <thead>
@@ -143,6 +145,7 @@ const hasFilters = appliedFilters.length > 0;
       />
     )
   }
+  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="calibration records" />}
 </AppLayout>
 <style>
   .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow){color:var(--text-muted);font-size:var(--font-size-sm)}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:var(--font-weight-bold)}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:900px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:var(--font-size-sm)}th{font-weight:var(--font-weight-semibold)}a{color:var(--color-accent-primary-hover)}.state{display:inline-flex;padding:.28rem .5rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}@media(max-width:650px){.head{display:grid}.button{width:max-content}}</style>

@@ -153,6 +153,26 @@ export class PostgresEquipmentRepository implements EquipmentRepository {
       .map(map)
       .filter((x) => actorHasScope(input.actor, entity(x), { ownerId: x.createdBy }, grant));
   }
+  async listPage(input: Parameters<NonNullable<EquipmentRepository['listPage']>>[0]) {
+    const grant = input.actor.permissions.find((p) => p.code === 'PERM-EQP-VIEW');
+    let query = this.db.selectFrom('equipment').selectAll();
+    if (!grant || grant.active === false || !grant.scopes.some((scope) => scope === 'OWN' || scope === 'GLOBAL')) {
+      return { items: [], total: 0, page: 1, pageSize: input.page.pageSize };
+    }
+    if (!grant.scopes.includes('GLOBAL')) query = query.where('created_by', '=', input.actor.id);
+    if (input.filter?.state) query = query.where('state', '=', input.filter.state);
+    if (input.filter?.search) query = query.where((eb) => eb.or([
+      eb('equipment_no', 'ilike', `%${input.filter!.search}%`),
+      eb('name', 'ilike', `%${input.filter!.search}%`),
+      eb('serial_no', 'ilike', `%${input.filter!.search}%`),
+    ]));
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(input.page.page, Math.max(1, Math.ceil(total / input.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(input.page.pageSize).offset((page - 1) * input.page.pageSize).execute();
+    return { items: rows.map(map), total, page, pageSize: input.page.pageSize };
+  }
   async history(id: string, actor: ActorContext): Promise<readonly EquipmentStatusHistory[]> {
     const current = await this.get(id, actor);
     if (!current) return [];

@@ -103,8 +103,17 @@ export function enhanceClassifiedForm<TData>(
       }
 
       if (output) {
+        output.dataset.feedbackClass = outcome.state;
+        output.setAttribute('role', 'alert');
+        output.setAttribute('tabindex', '-1');
         const classKey = outcome.state as Exclude<MutationState, 'IDLE' | 'SUBMITTING' | 'SUCCESS'>;
         output.textContent = copy.errorClasses[classKey] ?? copy.errorClasses.UNKNOWN_SAFE_ERROR;
+        if (outcome.state === 'CONFLICT_STALE' || outcome.state === 'DUPLICATE_COMMAND') {
+          const refresh = document.createElement('a');
+          refresh.href = window.location.pathname + window.location.search;
+          refresh.textContent = 'Refresh record';
+          output.append(' ', refresh);
+        }
         if (outcome.state === 'UNKNOWN_SAFE_ERROR' || outcome.state === 'PROVIDER_UNAVAILABLE') {
           const link = document.createElement('a');
           link.href = config.unknownRecoveryHref ?? config.detailBaseHref;

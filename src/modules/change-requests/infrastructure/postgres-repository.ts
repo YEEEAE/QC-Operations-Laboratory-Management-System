@@ -294,6 +294,24 @@ export class PostgresChangeRequestRepository implements ChangeRequestRepository 
     }
   }
 
+  async listPage(input: Parameters<NonNullable<ChangeRequestRepository['listPage']>>[0]) {
+    const grant = input.actor.permissions.find((permission) => permission.code === 'PERM-CHG-VIEW');
+    if (input.actor.accountState !== 'ACTIVE' || !grant || grant.active === false || !grant.scopes.some((scope) => ['OWN', 'GLOBAL', 'DOMAIN'].includes(scope))) {
+      return { items: [], total: 0, page: 1, pageSize: input.page.pageSize };
+    }
+    let query = this.database.selectFrom('change_requests').selectAll();
+    if (!grant.scopes.some((scope) => scope === 'GLOBAL' || scope === 'DOMAIN')) query = query.where('requested_by', '=', input.actor.id);
+    if (input.filter?.state) query = query.where('state', '=', input.filter.state);
+    if (input.filter?.targetType) query = query.where('target_type', '=', input.filter.targetType);
+    if (input.filter?.requestedBy) query = query.where('requested_by', '=', input.filter.requestedBy);
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(input.page.page, Math.max(1, Math.ceil(total / input.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(input.page.pageSize).offset((page - 1) * input.page.pageSize).execute();
+    const items = await Promise.all(rows.map((row) => this.loadAggregate(this.database, requestMap(row))));
+    return { items, total, page, pageSize: input.page.pageSize };
+  }
   async findTransitionByRequestId(input: {
     id: string;
     requestId: string;

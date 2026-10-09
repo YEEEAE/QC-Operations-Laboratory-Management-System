@@ -57,6 +57,9 @@ const REGISTERS = [
   'src/pages/documents/index.astro',
   'src/pages/change-requests/index.astro',
   'src/pages/quality/findings/index.astro',
+  'src/pages/quality/ncr/index.astro',
+  'src/pages/quality/rca/index.astro',
+  'src/pages/quality/capa/index.astro',
   'src/pages/laboratory/tests/index.astro',
   'src/pages/approvals/index.astro',
   'src/pages/admin/users/index.astro',
@@ -70,7 +73,18 @@ const BOUNDED_REGISTERS = [
   'src/pages/tasks/index.astro',
   'src/pages/audit.astro',
   'src/pages/reject-reports/index.astro',
+  'src/pages/quarantine/receiving/index.astro',
+  'src/pages/quarantine/inspections/index.astro',
+  'src/pages/quarantine/admin/index.astro',
+  'src/pages/assets/equipment/index.astro',
+  'src/pages/assets/calibrations/index.astro',
+  'src/pages/assets/maintenance/index.astro',
+  'src/pages/documents/index.astro',
+  'src/pages/change-requests/index.astro',
   'src/pages/quality/findings/index.astro',
+  'src/pages/quality/ncr/index.astro',
+  'src/pages/quality/rca/index.astro',
+  'src/pages/quality/capa/index.astro',
   // QC-100-FINAL-017: the laboratory register reads a bounded newest-first page
   // plus the readable total, so it no longer loads the whole table to count it.
   'src/pages/laboratory/tests/index.astro',
@@ -127,13 +141,7 @@ const tablePages = pages.filter((page) => read(page).includes('<table'));
 const isBounded = (page: string): boolean => {
   const source = read(page);
   if (page === 'src/pages/documents/index.astro') {
-    // The regular document library read is unbounded. Only the separate
-    // `review=mine` branch passes a limit, so that secondary read does not
-    // make the register itself bounded.
-    const primaryRead = /else documents = await reads\.list\.execute\(\{([\s\S]*?)\}\)/.exec(
-      source,
-    );
-    return Boolean(primaryRead && /\b(?:limit|offset|page)\s*:/.test(primaryRead[1]));
+    return /reads\.list\.executePage\(/.test(source) && source.includes('documents = result.items');
   }
   return (
     source.includes('parsePageInput') ||

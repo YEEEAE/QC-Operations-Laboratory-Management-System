@@ -22,6 +22,7 @@ export interface ChangeRequestListFilter {
 }
 
 export interface ChangeRequestRepository {
+  listPage?(input: { actor: ActorContext; filter?: ChangeRequestListFilter; page: import('../../../shared/pagination/page.js').Page }): Promise<import('../../../shared/pagination/page.js').PageResult<ChangeRequestAggregate>>;
   applyApproved?(input: {
     id: string;
     expectedVersion: bigint;

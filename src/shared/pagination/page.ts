@@ -10,13 +10,21 @@ export interface Page {
   pageSize: number;
   offset: number;
 }
+export interface PageResult<T> {
+  items: readonly T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 function parseInteger(value: unknown, fallback: number): number {
   if (value === undefined || value === null || value === '') return fallback;
   if (typeof value !== 'string' && typeof value !== 'number')
     throw new AppError('VALIDATION_INVALID_QUERY');
   if (!/^-?[0-9]+$/.test(String(value))) throw new AppError('VALIDATION_INVALID_QUERY');
-  return Number(value);
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) throw new AppError('VALIDATION_INVALID_QUERY');
+  return parsed;
 }
 
 export function parsePageInput(input: PageInput = {}): Page {

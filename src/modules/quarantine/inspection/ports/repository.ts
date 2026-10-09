@@ -7,6 +7,7 @@ import type { PointCriteria } from '../application/record-inspection-results.js'
 import type { AqlSampling } from '../domain/inspection-aql.js';
 import type { DatabaseTransaction } from '../../../../shared/database/transaction.js';
 export interface InspectionRepository {
+  listPage?(i: Parameters<InspectionRepository['list']>[0] & { page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<Inspection>>;
   /**
    * QC-DATA-002: approved point criteria of the bound template version for
    * server-side deterministic evaluation (BR-INSP-006).

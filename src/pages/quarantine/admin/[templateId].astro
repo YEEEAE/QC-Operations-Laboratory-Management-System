@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import ControlledInspectionForm from '../../../ui/components/quarantine/ControlledInspectionForm.astro';
 import { controlledFormSchema, type ControlledFormValues } from '../../../modules/quarantine/inspection/application/save-controlled-form.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
@@ -108,14 +109,11 @@ const digitalPreview=controlledFormSchema.safeParse(template.digitalForm);
 ---
 <AppLayout title={`${template.templateCode} ${template.versionNo} · Quarantine Administration`} locale="en" direction="ltr">
   <p class="crumb"><a href="/quarantine/admin">Quarantine administration</a> / {template.templateCode} {template.versionNo}</p>
-  <section class="head">
-    <div>
-      <p class="eyebrow">CONTROLLED TEMPLATE · {stateLabel(template.state)}</p>
-      <h1>{template.templateCode} · {template.versionNo}</h1>
+  <PageHeader><Fragment slot="heading"><h1>{template.templateCode} · {template.versionNo}</h1></Fragment>
+      
+      
       <p class="lede">{template.name} · version {template.version.toString()}</p>
-    </div>
-    <span class="state">{stateLabel(template.state)}</span>
-  </section>
+    <Fragment slot="actions"><span class="state">{stateLabel(template.state)}</span></Fragment></PageHeader>
 
   {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId: `${fieldId}-error`, message }))} listHref="/quarantine/admin" listLabel="template administration" />}
   {failure?.fieldErrors.expectedVersion && <p class="field-error" id="expectedVersion-error" role="alert">The expected version submitted for this action is invalid. Reload this page and try again; no change was applied.</p>}

@@ -24,6 +24,7 @@ export interface EquipmentRepository {
   }): Promise<Equipment>;
   get(id: string, actor: ActorContext): Promise<Equipment | undefined>;
   list(input: { actor: ActorContext; filter?: EquipmentListFilter }): Promise<readonly Equipment[]>;
+  listPage?(input: { actor: ActorContext; filter?: EquipmentListFilter; page: import('../../../../shared/pagination/page.js').Page }): Promise<{ items: readonly Equipment[]; total: number; page: number; pageSize: number }>;
   updateDraft(input: {
     id: string;
     expectedVersion: bigint;

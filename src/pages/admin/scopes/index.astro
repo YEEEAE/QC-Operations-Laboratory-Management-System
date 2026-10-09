@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { uxVocabulary } from '../../../shared/copy/ux-vocabulary.js';
 
@@ -7,14 +8,11 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
 ---
 
 <AppLayout title="Scopes · Administration" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Scopes</p>
-      <h1>Scopes</h1>
+  <PageHeader><Fragment slot="heading"><h1>Scopes</h1></Fragment>
+      
+      
       <p class="lede">Manage access scopes. Self-grants are blocked.</p>
-    </div>
-    <a href="/admin">Back to administration</a>
-  </section>
+    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment></PageHeader>
   <div class="grid">
         <section class="panel">
           <p class="eyebrow">SCOPE KINDS</p>

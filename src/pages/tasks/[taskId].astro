@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../ui/components/PageHeader.astro";
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { taskReadDependencies } from '../../modules/tasks/application/dependencies.js';
 import { priorityLabel, stateLabel } from '../../shared/copy/ux-vocabulary.js';
@@ -100,7 +101,7 @@ if (Astro.request.method === 'POST') {
 ---
 
 <AppLayout title={`${task.taskNo} · Tasks`} locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Task</p><h1>{task.title}</h1><p class="lede">{task.taskNo} · Version {task.version.toString()}</p></div><a href="/tasks">Back to tasks</a></section>
+  <PageHeader><Fragment slot="heading"><h1>{task.title}</h1></Fragment><p class="lede">{task.taskNo} · Version {task.version.toString()}</p><Fragment slot="actions"><a href="/tasks">Back to tasks</a></Fragment></PageHeader>
   <div class="grid">
     <section class="panel"><h2>Overview</h2><dl><dt>Owner</dt><dd>{details.ownerDisplayName}</dd><dt>Assignee</dt><dd>{details.assigneeDisplayName}</dd><dt>Priority</dt><dd>{priorityLabel(task.priority)}</dd><dt>Due date</dt><dd>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDateTime(task.dueAt)}</time> : 'Not set'}</dd><dt>State</dt><dd>{stateLabel(task.state)}</dd><dt>Version</dt><dd>{task.version.toString()}</dd><dt>Next step</dt><dd>{nextStep}</dd></dl><p>{task.description ?? 'No description.'}</p></section>
     <section class="panel"><h2>Related record and recurrence</h2>{task.specializedRecord ? details.specializedRecordHref ? <p><a href={details.specializedRecordHref}>Open related {task.specializedRecord.type.replaceAll('_', ' ').toLowerCase()}</a></p> : <p>{details.specializedRecordUnavailable ? 'The related record could not be checked. Try again later.' : 'The related record is not available in your current view scope.'}</p> : <p>No specialized record reference.</p>}{task.recurrence && <p>Rule: {task.recurrence.ruleId} · UTC occurrence: {task.recurrence.occurrenceKey}</p>}<p>Task completion does not approve or change the related record.</p></section>

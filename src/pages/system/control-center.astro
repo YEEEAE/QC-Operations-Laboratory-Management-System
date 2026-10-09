@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../ui/components/PageHeader.astro";
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import {
   isNamedSystemOwner,
@@ -155,20 +156,17 @@ const migrationBlocker = (migration: Overview['migration']) =>
           : 'none modeled in this view.';
 ---
 <AppLayout title="Control center · System" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Owner console</p>
-      <h1>System control center</h1>
+  <PageHeader><Fragment slot="heading"><h1>System control center</h1></Fragment>
+      
+      
       <p class="lede">Manage system access and operations.</p>
-    </div>
-    <span class={`banner ${overview?.coreStatus === 'READY' ? 'ok' : 'bad'}`}>
+    <Fragment slot="actions"><span class={`banner ${overview?.coreStatus === 'READY' ? 'ok' : 'bad'}`}>
       {overview
         ? overview.coreStatus === 'READY'
           ? 'Application and database connectivity: READY'
           : 'Application and database connectivity: NOT READY'
         : 'STATUS UNAVAILABLE'}
-    </span>
-  </section>
+    </span></Fragment></PageHeader>
 
   <section class="panel" aria-labelledby="overview-title">
     <h2 id="overview-title">System overview</h2>

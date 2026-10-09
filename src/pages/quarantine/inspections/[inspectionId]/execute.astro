@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../../ui/components/PageHeader.astro";
 import ControlledInspectionForm from '../../../../ui/components/quarantine/ControlledInspectionForm.astro';
 import { controlledFormSchema, type ControlledFormValues } from '../../../../modules/quarantine/inspection/application/save-controlled-form.js';
 import { decodeControlledFormPost } from '../../../../modules/quarantine/inspection/application/controlled-form-post.js';
@@ -67,7 +68,7 @@ const pointResultLabel: Record<string, string> = { PASS: 'Acceptable', FAIL: 'No
 ---
 <AppLayout title={`${inspection.inspectionNo} · Execute`} locale="en" direction="ltr">
   <div class="crumb"><a href="/quarantine/inspections">Inspection reports</a><span>/</span><span>Execute</span></div>
-  <section class="head"><div><p class="eyebrow">Inspection</p><h1>Execute inspection</h1><p class="lede">{inspection.inspectionNo} · {inspection.receiving.receivingNo} · {inspection.receiving.itemCode}</p></div><div class="version">Reviewing version <strong>{inspection.version.toString()}</strong></div></section>
+  <PageHeader><Fragment slot="heading"><h1>Execute inspection</h1></Fragment><p class="lede">{inspection.inspectionNo} · {inspection.receiving.receivingNo} · {inspection.receiving.itemCode}</p><Fragment slot="actions"><div class="version">Reviewing version <strong>{inspection.version.toString()}</strong></div></Fragment></PageHeader>
   {(!canEdit && stateEditable) ? <section class="readonly" role="alert"><strong>Execution is read-only for this account.</strong><span>The current state allows draft work, but your account needs draft-edit permission within this record’s scope. Ask your supervisor to check access.</span></section> : null}
   {(!canResume && inspection.state === 'RETURNED') ? <section class="readonly" role="alert"><strong>Resume is unavailable.</strong><span>The inspection was returned for correction, but your account lacks the explicit draft-edit permission.</span></section> : null}
   {digitalForm ? <ControlledInspectionForm schema={digitalForm} values={formValues} receiving={{...inspection.receiving}} editable={canEdit} canSubmit={canSubmit} inspectionId={inspection.id} version={inspection.version.toString()} error={formError} addedRow={addedRow} /> : (

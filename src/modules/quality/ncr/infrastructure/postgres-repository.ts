@@ -59,6 +59,17 @@ export class PostgresNcrRepository implements NcrRepository {
     const r = await query.executeTakeFirst();
     return r && this.map(r);
   }
+  async listPage(i: Parameters<NonNullable<NcrRepository['listPage']>>[0]) {
+    let query = this.db.selectFrom('ncrs').selectAll().where((eb) => eb.or([eb('owner_id', '=', i.actor.id), eb('created_by', '=', i.actor.id)]));
+    if (i.state) query = query.where('state', '=', i.state);
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(i.page.page, Math.max(1, Math.ceil(total / i.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(i.page.pageSize).offset((page - 1) * i.page.pageSize).execute();
+    const items = rows.map((row) => this.map(row));
+    return { items, total, page, pageSize: i.page.pageSize };
+  }
   async list(i: Parameters<NcrRepository['list']>[0]) {
     let q = this.db
       .selectFrom('ncrs')

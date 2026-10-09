@@ -1,9 +1,16 @@
+import { AppError } from '../../../../shared/errors/app-error.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
+import { parsePageInput } from '../../../../shared/pagination/page.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { InspectionRepository } from '../ports/repository.js';
 import type { Inspection } from '../domain/inspection.js';
 export class ListInspectionsUseCase {
   constructor(private readonly repo: InspectionRepository) {}
+  executePage(i: Parameters<InspectionRepository['list']>[0] & { page?: import('../../../../shared/pagination/page.js').PageInput }) {
+    this.authorize(i);
+    if (!this.repo.listPage) throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+    return this.repo.listPage({ ...i, page: parsePageInput(i.page) });
+  }
   execute(i: {
     actor: ActorContext;
     assignedTo?: string;
@@ -11,6 +18,10 @@ export class ListInspectionsUseCase {
     finalResult?: Inspection['finalResult'];
     ownership?: 'mine';
   }) {
+    this.authorize(i);
+    return this.repo.list(i);
+  }
+  private authorize(i: Parameters<InspectionRepository['list']>[0]) {
     authorize(
       {
         actor: i.actor,
@@ -30,6 +41,5 @@ export class ListInspectionsUseCase {
       },
       { throwOnDeny: true },
     );
-    return this.repo.list(i);
   }
 }

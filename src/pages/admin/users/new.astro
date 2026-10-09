@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { hasAdminCapability } from '../../../shared/authorization/admin-workspace.js';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
@@ -23,14 +24,11 @@ if (canAssignRoles) {
 ---
 
 <AppLayout title="Create user · Administration" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">New member</p>
-      <h1>Create user</h1>
+  <PageHeader><Fragment slot="heading"><h1>Create user</h1></Fragment>
+      
+      
       <p class="lede">New members must change their temporary password at first sign-in.</p>
-    </div>
-    <a href="/admin/users">Back to users</a>
-  </section>
+    <Fragment slot="actions"><a href="/admin/users">Back to users</a></Fragment></PageHeader>
   {
     canCreate ? (
       <form class="form" method="post" action="/admin/users/new" data-admin-create-user>

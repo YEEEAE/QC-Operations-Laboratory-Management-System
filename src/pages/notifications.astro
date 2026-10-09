@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../ui/components/PageHeader.astro";
 import { actions } from 'astro:actions';
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
@@ -49,7 +50,7 @@ const markReadMessage = (reason: string) => reason === 'missing'
     : 'The service did not confirm whether this notification changed. Refresh the register before deciding whether to retry.';
 ---
 <AppLayout title="Notifications · QC Operations" locale="en" direction="ltr">
-  <section class="page-head"><div><h1>Notifications</h1><p>Only notifications addressed to your authenticated account are shown.</p></div><nav aria-label="Notification filters"><a href="/notifications" aria-current={unreadOnly ? undefined : 'page'}>All</a><a href="/notifications?unread=1" aria-current={unreadOnly ? 'page' : undefined}>Unread</a></nav></section>
+  <PageHeader><Fragment slot="heading"><h1>Notifications</h1></Fragment><p>Only notifications addressed to your authenticated account are shown.</p><Fragment slot="actions"><nav aria-label="Notification filters"><a href="/notifications" aria-current={unreadOnly ? undefined : 'page'}>All</a><a href="/notifications?unread=1" aria-current={unreadOnly ? 'page' : undefined}>Unread</a></nav></Fragment></PageHeader>
   {providerUnavailable ? <ProviderUnavailableState title="Notifications are temporarily unavailable" description="The notification source did not confirm a result. No empty state or count is shown; refresh when the service is available." retryHref={Astro.url.pathname + Astro.url.search} /> : accessDenied ? <section class="empty" role="alert"><h2>Notifications are unavailable for this account</h2><p>Your account cannot read this notification register. Contact your administrator if you need access.</p></section> : invalidPage ? <section class="empty" role="alert"><h2>This page number is not valid</h2><p>Open the first page of the notification register to continue.</p><a href={pageBase}>Open page 1</a></section> : <>
     {unclassifiedActionError && <p class="action-error" role="alert" tabindex="-1">{unclassifiedActionError}</p>}
     <p class="bounded-label" role="status" aria-live="polite">{result?.total === 0 ? (unreadOnly ? 'No unread notifications. Your notifications are still available in All notifications.' : 'No notifications have been sent to this account.') : pageLabel}</p>

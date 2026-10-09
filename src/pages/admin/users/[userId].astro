@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import ConfirmDialog from '../../../ui/components/feedback/ConfirmDialog.astro';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
@@ -100,16 +101,13 @@ const scopeLabel = (scope: { kind: string; value: string | null }) => {
 ---
 
 <AppLayout title="User detail · Administration" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Member</p>
-      <h1>{user?.displayName ?? 'User detail'}</h1>
+  <PageHeader><Fragment slot="heading"><h1>{user?.displayName ?? 'User detail'}</h1></Fragment>
+      
+      
       <p class="lede">
         {user ? `${user.loginIdentity} · ${stateLabel(user.accountState)}` : ''}
       </p>
-    </div>
-    <a href="/admin/users">Back to users</a>
-  </section>
+    <Fragment slot="actions"><a href="/admin/users">Back to users</a></Fragment></PageHeader>
   {user && <details class="technical-record"><summary>Technical record details</summary><dl><div><dt>User record UUID</dt><dd><code>{user.id}</code></dd></div></dl></details>}
   {
     denied || !user ? (

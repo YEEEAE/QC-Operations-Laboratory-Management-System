@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { administrationDependencies } from '../../../modules/administration/application/dependencies.js';
 import { hasAdminCapability } from '../../../shared/authorization/admin-workspace.js';
@@ -48,16 +49,13 @@ const version = role?.version.toString() ?? '0';
 ---
 
 <AppLayout title="Role detail · Administration" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Role</p>
-      <h1>{role?.name ?? 'Role detail'}</h1>
+  <PageHeader><Fragment slot="heading"><h1>{role?.name ?? 'Role detail'}</h1></Fragment>
+      
+      
       <p class="lede">
         {role ? `${role.name} · ${role.code} · ${stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')} · Version ${version}` : ''}
       </p>
-    </div>
-    <a href="/admin/roles">Back to roles</a>
-  </section>
+    <Fragment slot="actions"><a href="/admin/roles">Back to roles</a></Fragment></PageHeader>
   {
     denied || !role ? (
       <section class="denied" role="alert">

@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../../../ui/layouts/AppLayout.astro';
 import { documentsReadDependencies } from '../../../../../modules/documents/application/dependencies.js';
 import { actions } from 'astro:actions';
@@ -44,7 +45,7 @@ if (submitted) {
 }
 ---
 <AppLayout title={`Edit draft · ${document.documentNo}`} locale="en" direction="ltr">
-  <section class="head"><div><p class="eyebrow">Edit draft</p><h1>Edit draft revision {version.revision}</h1><p>{document.documentNo} · Record version {version.version.toString()}</p></div><a href={`/documents/${document.id}/versions/${version.id}`}>Back to version</a></section>
+  <PageHeader><Fragment slot="heading"><h1>Edit draft revision {version.revision}</h1></Fragment><p>{document.documentNo} · Record version {version.version.toString()}</p><Fragment slot="actions"><a href={`/documents/${document.id}/versions/${version.id}`}>Back to version</a></Fragment></PageHeader>
   {canEdit || (submitted && failure) ? <form class="form" method="post" data-action="documents.updateDraft" data-document-id={document.id} data-version-id={version.id} data-expected-version={submittedExpectedVersion}>
     <input type="hidden" name="expectedVersion" value={submittedExpectedVersion} /><input type="hidden" name="expectedContentHash" value={submittedContentHash} />
     {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.kind === 'validation' ? [{fieldId:'revision',message:'Enter the revision reference assigned by Document Control.'}] : []} listHref={`/documents/${document.id}/versions/${version.id}`} listLabel="version" />}

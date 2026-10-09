@@ -1,5 +1,8 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import Icon from '../../ui/components/Icon.astro';
+import { HELP_SECTIONS, helpSectionSearchText } from '../../shared/copy/help-sections';
+import { navigationMatches } from '../../ui/client/navigation-preferences';
 import { getRouteById } from '../../shared/routing/routes.js';
 import { pageAccessDecision } from '../../shared/routing/page-access.js';
 import {
@@ -38,6 +41,18 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
   ...link,
   href: routeHref(link.routeId),
 }));
+const roleGuides = HELP_ROLE_GUIDES.filter((guide) => actor.roles.includes(guide.role));
+const guidance = HELP_GUIDANCE_MATRIX.filter((matrix) => canVisitRoute(matrix.routeId));
+const query = Astro.url.searchParams.get('q')?.slice(0, 200) ?? '';
+const sectionText: Record<string, string> = {
+  'start-of-day': helpSectionSearchText('start-of-day', roleGuides.map((guide) => [guide.title, guide.focus, guide.escalateTo, guide.startOfDay.filter(canVisitRoute).map(labelFor)])),
+  'quick-links': helpSectionSearchText('quick-links', quickLinks.map((link) => [link.label, link.purpose])),
+  'guidance-matrix': helpSectionSearchText('guidance-matrix', guidance.map((matrix) => [matrix.screen, `States and next actions on ${matrix.screen}`, matrix.entries.map((entry) => [entry.state, entry.meaning, entry.nextAction])])),
+  troubleshooting: helpSectionSearchText('troubleshooting', HELP_STATE_NOTES),
+  escalation: helpSectionSearchText('escalation'),
+  interruption: helpSectionSearchText('interruption'),
+};
+const showSection = (id: string) => navigationMatches(sectionText[id] ?? '', query);
 ---
 
 <AppLayout title="Operating guides · QC Operations" locale="en" direction="ltr">
@@ -47,31 +62,35 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
       <h1>Operating guides</h1>
       <p class="lede">Daily workflows and help with blocked actions.</p>
     </div>
-    <button type="button" class="print-button" data-print-guide>Print this guide</button>
+    <button type="button" class="print-button" data-print-guide aria-label="Print this guide" title="Print this guide"><Icon name="reports" /></button>
   </section>
 
-  <nav class="toc panel" aria-labelledby="help-toc">
+  <div class="help-layout">
+  <nav class="toc" aria-labelledby="help-toc">
     <h2 id="help-toc">On this page</h2>
+    <form method="get" action="/help" role="search">
+      <label for="help-query">Search this guide</label>
+      <input id="help-query" name="q" type="search" value={query} maxlength="200" data-help-query />
+      <button type="submit" aria-label="Search this guide" title="Search this guide"><Icon name="search" /></button>
+    </form>
+    <p data-help-search-status role="status" aria-live="polite">{query && !Object.keys(sectionText).some(showSection) ? 'No matching sections' : ''}</p>
     <ul>
-      <li><a href="#start-of-day">Start of day by role</a></li>
-      <li><a href="#quick-links">Everyday routes</a></li>
-      <li><a href="#guidance-matrix">Screen and state guidance</a></li>
-      <li><a href="#troubleshooting">Troubleshooting</a></li>
-      <li><a href="#escalation">Escalation and handoff</a></li>
-      <li><a href="#interruption">Service interruption</a></li>
+      <li hidden={!showSection('start-of-day')}><a href="#start-of-day">Start of day by role</a></li>
+      <li hidden={!showSection('quick-links')}><a href="#quick-links">Everyday routes</a></li>
+      <li hidden={!showSection('guidance-matrix')}><a href="#guidance-matrix">Screen and state guidance</a></li>
+      <li hidden={!showSection('troubleshooting')}><a href="#troubleshooting">Troubleshooting</a></li>
+      <li hidden={!showSection('escalation')}><a href="#escalation">Escalation and handoff</a></li>
+      <li hidden={!showSection('interruption')}><a href="#interruption">Service interruption</a></li>
     </ul>
   </nav>
+  <div class="help-content">
 
-  <section class="panel" id="start-of-day" aria-labelledby="start-of-day-h">
-    <h2 id="start-of-day-h">Start of day by role</h2>
-    <p class="muted">
-      Your role decides what you usually start with — not what you are allowed to do. Every action is
-      still authorized server-side by permission, scope, state, version, separation of duties and
-      signature.
-    </p>
+  <section class="panel" id="start-of-day" data-help-section data-help-search-text={sectionText['start-of-day']} hidden={!showSection('start-of-day')} aria-labelledby="start-of-day-h">
+    <h2 id="start-of-day-h">{HELP_SECTIONS['start-of-day'].title}</h2>
+    <p class="muted">{HELP_SECTIONS['start-of-day'].introduction}</p>
     <div class="role-grid">
       {
-        HELP_ROLE_GUIDES.map((guide) => (
+        roleGuides.map((guide) => (
           <article class="role-card" aria-labelledby={`role-${guide.role}`}>
             <h3 id={`role-${guide.role}`}>{guide.title}</h3>
             <p class="focus">{guide.focus}</p>
@@ -85,7 +104,7 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
               ))}
             </ol>
             <p class="escalate">
-              <span class="tag">Escalate to</span> {guide.escalateTo}
+              <span class="tag">{HELP_SECTIONS['start-of-day'].escalationLabel}</span> {guide.escalateTo}
             </p>
           </article>
         ))
@@ -93,8 +112,8 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
     </div>
   </section>
 
-  <section class="panel" id="quick-links" aria-labelledby="quick-links-h">
-    <h2 id="quick-links-h">Everyday routes</h2>
+  <section class="panel" id="quick-links" data-help-section data-help-search-text={sectionText['quick-links']} hidden={!showSection('quick-links')} aria-labelledby="quick-links-h">
+    <h2 id="quick-links-h">{HELP_SECTIONS['quick-links'].title}</h2>
     <ul class="link-list">
       {
         quickLinks.map((link) => (
@@ -107,26 +126,18 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
     </ul>
   </section>
 
-  <section class="panel" id="guidance-matrix" aria-labelledby="guidance-matrix-h">
-    <h2 id="guidance-matrix-h">Screen and state guidance</h2>
-    <p class="muted">
-      What each major workspace means in each state, and where the real next action lives. Guidance
-      is derived from the approved state machines and read models; it never grants authority — every
-      mutation is re-authorized server-side. Informational steps (open a workspace, read a register)
-      are links; authorized mutations (approve, release, sign) commit only when the server accepts
-      them.
-    </p>
+  <section class="panel" id="guidance-matrix" data-help-section data-help-search-text={sectionText['guidance-matrix']} hidden={!showSection('guidance-matrix')} aria-labelledby="guidance-matrix-h">
+    <h2 id="guidance-matrix-h">{HELP_SECTIONS['guidance-matrix'].title}</h2>
+    <p class="muted">{HELP_SECTIONS['guidance-matrix'].introduction}</p>
     {
-      HELP_GUIDANCE_MATRIX.map((matrix) => (
+      guidance.map((matrix) => (
         <div class="matrix-block">
           <h3>{matrix.screen}</h3>
           <table>
             <caption>{`States and next actions on ${matrix.screen}`}</caption>
             <thead>
               <tr>
-                <th scope="col">State you see</th>
-                <th scope="col">What it means</th>
-                <th scope="col">Next action</th>
+                {HELP_SECTIONS['guidance-matrix'].columns.map((column) => <th scope="col">{column}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -142,21 +153,16 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
         </div>
       ))
     }
-    <p class="muted">
-      Awaiting an approval stage means the record is readable but the decision belongs to another
-      role. If your row shows a stage but your account lacks the permission, the action buttons are
-      not rendered and the server refuses the mutation — this is fail-closed by design.
-    </p>
+    <p class="muted">{HELP_SECTIONS['guidance-matrix'].ending}</p>
   </section>
 
-  <section class="panel" id="troubleshooting" aria-labelledby="troubleshooting-h">
-    <h2 id="troubleshooting-h">Troubleshooting</h2>
+  <section class="panel" id="troubleshooting" data-help-section data-help-search-text={sectionText.troubleshooting} hidden={!showSection('troubleshooting')} aria-labelledby="troubleshooting-h">
+    <h2 id="troubleshooting-h">{HELP_SECTIONS.troubleshooting.title}</h2>
     <table>
-      <caption>What a state or refusal means and what to do next</caption>
+      <caption>{HELP_SECTIONS.troubleshooting.caption}</caption>
       <thead>
         <tr>
-          <th scope="col">You see</th>
-          <th scope="col">What it means and what to do</th>
+          {HELP_SECTIONS.troubleshooting.columns.map((column) => <th scope="col">{column}</th>)}
         </tr>
       </thead>
       <tbody>
@@ -168,45 +174,24 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
             </tr>
           ))
         }
-        <tr>
-          <th scope="row">Work returned for correction</th>
-          <td>Fix the draft and resubmit; the same review path resumes from the returned state.</td>
-        </tr>
-        <tr>
-          <th scope="row">A required source is missing (for example no official inspection result)</th>
-          <td>
-            Fail-closed. Do not invent a limit, criterion or result. Record the blocker and escalate.
-          </td>
-        </tr>
+        {HELP_SECTIONS.troubleshooting.notes.map((note) => <tr><th scope="row">{note.situation}</th><td>{note.meaning}</td></tr>)}
       </tbody>
     </table>
   </section>
 
-  <section class="panel" id="escalation" aria-labelledby="escalation-h">
-    <h2 id="escalation-h">Escalation and handoff</h2>
-    <p class="muted">
-      Escalation is by function, not by a named person. Organizational names are recorded (or left
-      unresolved) in the support ownership register, never invented here.
-    </p>
+  <section class="panel" id="escalation" data-help-section data-help-search-text={sectionText.escalation} hidden={!showSection('escalation')} aria-labelledby="escalation-h">
+    <h2 id="escalation-h">{HELP_SECTIONS.escalation.title}</h2>
+    <p class="muted">{HELP_SECTIONS.escalation.introduction}</p>
     <ul class="handoff">
-      <li><strong>Employee to Supervisor:</strong> blocked work, missing instruction, equipment ineligible, template invalid.</li>
-      <li><strong>Supervisor to QCM:</strong> critical FAIL, recurring failure, unresolved HOLD, major NCR, CAPA escalation.</li>
-      <li><strong>QCM to named system owner:</strong> compliance concern, cross-domain risk, release risk, production decision.</li>
-      <li><strong>Admin to named system owner:</strong> security, authentication, database, migration, backup or outage incident.</li>
+      {HELP_SECTIONS.escalation.entries.map((entry) => <li><strong>{entry.label}</strong> {entry.text}</li>)}
     </ul>
-    <p class="muted">
-      Who acts next after a submit: the review is owned by the <strong>Supervisor</strong> (stage 1),
-      and final approval by the <strong>QCM or the named owner</strong>. Admin is never the approver.
-    </p>
+    <p class="muted">{HELP_SECTIONS.escalation.ending}</p>
   </section>
 
-  <section class="panel" id="interruption" aria-labelledby="interruption-h">
-    <h2 id="interruption-h">Service interruption</h2>
+  <section class="panel" id="interruption" data-help-section data-help-search-text={sectionText.interruption} hidden={!showSection('interruption')} aria-labelledby="interruption-h">
+    <h2 id="interruption-h">{HELP_SECTIONS.interruption.title}</h2>
     <ol class="interruption">
-      <li>Do not re-enter controlled data into a second channel; there is no valid offline path.</li>
-      <li>Do not treat a failed read as an empty table — “Not available” is not zero.</li>
-      <li>Do not attempt a release, approval or signature while a dependency outage is shown.</li>
-      <li>Report the incident to the technical owner (Admin); production decisions go to the named owner.</li>
+      {HELP_SECTIONS.interruption.entries.map((entry) => <li>{entry}</li>)}
     </ol>
   </section>
 
@@ -218,14 +203,42 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
       <strong>PASS ≠ RELEASED.</strong>
     </p>
   </section>
+  </div>
+  </div>
 </AppLayout>
 
 <script>
+  import { navigationMatches } from '../../ui/client/navigation-preferences';
   const printButton = document.querySelector<HTMLButtonElement>('[data-print-guide]');
   printButton?.addEventListener('click', () => window.print());
+  const query = document.querySelector<HTMLInputElement>('[data-help-query]');
+  const filterGuide = () => {
+    let visible = 0;
+    document.querySelectorAll<HTMLElement>('[data-help-section]').forEach((section) => {
+      section.hidden = !navigationMatches(section.dataset.helpSearchText ?? '', query?.value ?? '');
+      document.querySelector<HTMLAnchorElement>(`.toc a[href="#${section.id}"]`)?.closest('li')?.toggleAttribute('hidden', section.hidden);
+      if (!section.hidden) visible++;
+    });
+    const status = document.querySelector<HTMLElement>('[data-help-search-status]');
+    if (status) status.textContent = query?.value.trim() ? `${visible} matching sections` : '';
+  };
+  query?.addEventListener('input', filterGuide);
+  filterGuide();
 </script>
 
 <style>
+  .help-layout { display:grid; grid-template-columns:minmax(12rem,16rem) minmax(0,1fr); gap:var(--space-6); align-items:start; }
+  .help-content { min-inline-size:0; }
+  .toc { position:sticky; top:var(--space-4); padding:var(--space-3); border-inline-end:1px solid var(--border-default); }
+  .toc h2 { font-size:.95rem; margin-block-start:0; }
+  .toc form { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:var(--space-2); margin-block-end:var(--space-4); }
+  .toc label { grid-column:1/-1; font-size:.8rem; }
+  .toc input { inline-size:100%; min-inline-size:0; min-block-size:44px; padding:var(--space-2); border:1px solid var(--border-default); border-radius:4px; background:var(--surface-raised); color:var(--text-primary); }
+  .toc button { inline-size:44px; block-size:44px; display:grid; place-items:center; border:1px solid var(--border-default); border-radius:4px; background:var(--surface-raised); color:var(--text-primary); cursor:pointer; }
+  .toc a { display:block; min-block-size:44px; padding-block:var(--space-2); }
+  [data-help-section][hidden], .toc li[hidden] { display:none; }
+  [data-help-search-status] { font-size:.8rem; color:var(--text-muted); }
+  @media(max-width:1000px) { .help-layout { grid-template-columns:minmax(0,1fr); } .toc { position:static; border-inline-end:0; border-block-end:1px solid var(--border-default); } }
   .page-head {
     display: flex;
     flex-wrap: wrap;
@@ -253,8 +266,12 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
     font-size: 0.85rem;
   }
   .print-button {
+    display:grid;
+    place-items:center;
+    inline-size:44px;
+    block-size:44px;
     min-height: var(--control-height);
-    padding-inline: 1rem;
+    padding: 0;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
     background: var(--surface-raised);
@@ -266,9 +283,7 @@ const quickLinks = HELP_ROUTE_LINKS.filter((link) => canVisitRoute(link.routeId)
   .panel {
     padding: var(--space-5);
     margin-bottom: var(--space-5);
-    background: var(--surface-panel);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-lg);
+    border-block-end: 1px solid var(--color-border-subtle);
     max-width: 960px;
   }
   .panel h2 {

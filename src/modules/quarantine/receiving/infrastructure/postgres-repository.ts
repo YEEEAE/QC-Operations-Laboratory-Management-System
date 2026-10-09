@@ -246,7 +246,7 @@ export class PostgresReceivingRepository implements ReceivingRepository {
       : undefined;
   }
 
-  async list(i: ReceivingListQuery) {
+  private listQuery(i: ReceivingListQuery) {
     let query = this.db
       .selectFrom('receiving_items')
       .selectAll()
@@ -314,7 +314,24 @@ export class PostgresReceivingRepository implements ReceivingRepository {
         )}`,
       ) as typeof query;
     }
-    const rows = await query.execute();
+    return query;
+  }
+  async listPage(i: Parameters<NonNullable<ReceivingRepository['listPage']>>[0]) {
+    const grant = i.actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');
+    if (!grant || grant.active === false || !grant.scopes.some((scope) => scope === 'OWN' || scope === 'GLOBAL')) {
+      return { items: [], total: 0, page: 1, pageSize: i.page.pageSize };
+    }
+    let query = this.listQuery(i).clearOrderBy();
+    if (!grant.scopes.includes('GLOBAL')) query = query.where('created_by', '=', i.actor.id);
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(i.page.page, Math.max(1, Math.ceil(total / i.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(i.page.pageSize).offset((page - 1) * i.page.pageSize).execute();
+    return { items: rows.map(map), total, page, pageSize: i.page.pageSize };
+  }
+  async list(i: ReceivingListQuery) {
+    const rows = await this.listQuery(i).execute();
     const grant = i.actor.permissions.find((p) => p.code === 'PERM-QUAR-VIEW');
     return rows
       .map(map)

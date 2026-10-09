@@ -1,5 +1,8 @@
 ---
+import PageHeader from "../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import PolicyBlocker from '../../../ui/components/feedback/PolicyBlocker.astro';
+import Pagination from '../../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
 import { ncrReadDependencies } from '../../../modules/quality/ncr/application/dependencies.js';
@@ -13,26 +16,35 @@ const requestedState = Astro.url.searchParams.get('state');
 const state = states.find((value) => value === requestedState);
 const requestedNcrId = Astro.url.searchParams.get('ncrId');
 const ncrId = requestedNcrId && /^[0-9a-f-]{36}$/i.test(requestedNcrId) ? requestedNcrId : undefined;
-const ncrResult = await readOutcome(() => ncrReadDependencies().list.execute({ actor }));
-const requestedNcrVisible = ncrId && ncrResult.status === 'AVAILABLE' && ncrResult.value.some((ncr) => ncr.id === ncrId);
+const selectedNcr = ncrId ? await readOutcome(() => ncrReadDependencies().get.execute({ actor, id: ncrId })) : undefined;
+const requestedNcrVisible = selectedNcr?.status === 'AVAILABLE';
 const capaResult = ncrId && !requestedNcrVisible
-  ? ncrResult.status === 'UNAVAILABLE'
+  ? selectedNcr?.status === 'UNAVAILABLE'
     ? ({ status: 'UNAVAILABLE' } as const)
-    : ({ status: 'AVAILABLE', value: [] } as const)
-  : await readOutcome(() => capaReadDependencies().list.execute({ actor, state }));
-let capas = capaResult.status === 'AVAILABLE' ? capaResult.value : [];
+    : ({ status: 'AVAILABLE', value: { items: [], total: 0, page: 1, pageSize: 25 } } as const)
+  : await readOutcome(() => capaReadDependencies().list.executePage({ actor, state, ncrId, page: { page: Astro.url.searchParams.get('page') ?? 1 } }));
+const capas = capaResult.status === 'AVAILABLE' ? capaResult.value.items : [];
+const ncrResult = await readOutcome(() => Promise.all([...new Set(capas.flatMap((capa) => capa.ncrId ? [capa.ncrId] : []))].map(async (id) => {
+  const result = await readOutcome(() => ncrReadDependencies().get.execute({ actor, id }));
+  if (result.status === 'UNAVAILABLE') throw new Error('NCR source unavailable');
+  return result.status === 'AVAILABLE' ? result.value : undefined;
+})));
 const ncrs = ncrResult.status === 'AVAILABLE' ? ncrResult.value : [];
-if (ncrId && requestedNcrVisible) capas = capas.filter((capa) => capa.ncrId === ncrId);
 const unavailable = capaResult.status === 'UNAVAILABLE';
 const primaryNotVisible = capaResult.status === 'NOT_VISIBLE';
-const ncrById = new Map(ncrs.map((ncr) => [ncr.id, ncr]));
+const ncrById = new Map(ncrs.flatMap((ncr) => ncr ? [[ncr.id, ncr] as const] : []));
 const rows = capas.map((capa) => ({ capa, ncr: capa.ncrId ? ncrById.get(capa.ncrId) : undefined }));
 ---
 <AppLayout title="CAPA · Quality" locale="en" direction="ltr">
-  <section class="page-head"><div><p class="eyebrow">Quality register</p><h1>CAPA records</h1></div></section>
-  <section class="policy" aria-labelledby="policy-heading"><h2 id="policy-heading">Policy status</h2><ul><li><strong>PD-18 · Quality-policy owner:</strong> general CAPA effectiveness requirement and criteria remain unresolved. No effectiveness verdict is inferred.</li><li><strong>PD-17 · QMS owner:</strong> NCR closure authority and required evidence remain unresolved.</li></ul><p><strong>Approved P-04 exception:</strong> only an active Supervisor with an authorized CAPA-close grant and scope may close an eligible CAPA, with a reason, matching version, reauthentication, and CLOSE e-signature. This exception does not record or imply effectiveness.</p></section>
+  <PageHeader><Fragment slot="heading"><h1>CAPA records</h1></Fragment></PageHeader>
+  <PolicyBlocker title="Policy status" decisions={[
+    { id: 'PD-18', owner: 'Quality-policy owner', consequence: 'General CAPA effectiveness requirement and criteria remain unresolved. No effectiveness verdict is inferred.' },
+    { id: 'PD-17', owner: 'QMS owner', consequence: 'NCR closure authority and required evidence remain unresolved.' },
+  ]} />
+  <p><strong>Approved P-04 exception:</strong> only an active Supervisor with an authorized CAPA-close grant and scope may close an eligible CAPA, with a reason, matching version, reauthentication, and CLOSE e-signature. This exception does not record or imply effectiveness.</p>
   <form class="filters" method="get"><label for="state">State<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>{ncrId && <input type="hidden" name="ncrId" value={ncrId} />}<button type="submit">Apply filter</button>{(state || ncrId) && <a href="/quality/capa">Clear filters</a>}</form>
-  {unavailable ? <ProviderUnavailableState title="CAPA records are temporarily unavailable" /> : primaryNotVisible ? <p role="status">CAPA records are not available in your authorized scope.</p> : <>{ncrResult.status === 'UNAVAILABLE' && <p role="status">Linked NCR details are temporarily unavailable; CAPA records remain available.</p>}{capas.length ? <div class="table-wrap"><table><caption>{capas.length} authorized CAPA record{capas.length === 1 ? '' : 's'}</caption><thead><tr><th scope="col">CAPA</th><th scope="col">Action plan</th><th scope="col">State</th><th scope="col">Source NCR</th><th scope="col">Actions</th><th scope="col">Effectiveness</th><th scope="col">Next step</th></tr></thead><tbody>{rows.map(({ capa, ncr }) => <tr><th scope="row"><a href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a></th><td>{capa.title}</td><td>{stateLabel(capa.state)}</td><td>{ncr ? <a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> : ncrResult.status === 'UNAVAILABLE' ? 'NCR source unavailable' : capa.ncrId ? 'Not visible in your scope' : 'Not linked'}</td><td>{capa.actions.filter((action) => action.state === 'COMPLETED').length} of {capa.actions.length} complete</td><td>{capa.effectivenessRequired ? 'Required; no verdict inferred' : 'Not required by this record'}</td><td>{capa.state === 'READY_FOR_CLOSURE' ? 'Controlled closure — see approved P-04 authority' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'Authorized verification step' : <a href={`/quality/capa/${capa.id}`}>Open CAPA record</a>}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No CAPA records in this view</h2><p>{ncrId ? 'No linked CAPA is visible for this NCR.' : state ? 'Clear the filter to see records in your authorized scope.' : 'No current CAPA records are available in your authorized scope.'}</p>{(state || ncrId) && <a href="/quality/capa">Clear filters</a></section>}</>}
+  {unavailable ? <ProviderUnavailableState title="CAPA records are temporarily unavailable" /> : primaryNotVisible ? <p role="status">CAPA records are not available in your authorized scope.</p> : <>{ncrResult.status === 'UNAVAILABLE' && <p role="status">Linked NCR details are temporarily unavailable; CAPA records remain available.</p>}{capas.length ? <div class="table-wrap"><table><caption>{capaResult.status === "AVAILABLE" ? capaResult.value.total : 0} authorized CAPA record{capaResult.status === "AVAILABLE" && capaResult.value.total === 1 ? '' : 's'}</caption><thead><tr><th scope="col">CAPA</th><th scope="col">Action plan</th><th scope="col">State</th><th scope="col">Source NCR</th><th scope="col">Actions</th><th scope="col">Effectiveness</th><th scope="col">Next step</th></tr></thead><tbody>{rows.map(({ capa, ncr }) => <tr><th scope="row"><a href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a></th><td>{capa.title}</td><td>{stateLabel(capa.state)}</td><td>{ncr ? <a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> : ncrResult.status === 'UNAVAILABLE' ? 'NCR source unavailable' : capa.ncrId ? 'Not visible in your scope' : 'Not linked'}</td><td>{capa.actions.filter((action) => action.state === 'COMPLETED').length} of {capa.actions.length} complete</td><td>{capa.effectivenessRequired ? 'Required; no verdict inferred' : 'Not required by this record'}</td><td>{capa.state === 'READY_FOR_CLOSURE' ? 'Controlled closure — see approved P-04 authority' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'Authorized verification step' : <a href={`/quality/capa/${capa.id}`}>Open CAPA record</a>}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No CAPA records in this view</h2><p>{ncrId ? 'No linked CAPA is visible for this NCR.' : state ? 'Clear the filter to see records in your authorized scope.' : 'No current CAPA records are available in your authorized scope.'}</p>{(state || ncrId) && <a href="/quality/capa">Clear filters</a></section>}</>}
+  {capaResult.status === 'AVAILABLE' && <Pagination page={capaResult.value.page} totalPages={Math.max(1, Math.ceil(capaResult.value.total / capaResult.value.pageSize))} total={capaResult.value.total} itemLabel="CAPA records" />}
 </AppLayout>
 <style>
   .page-head{margin-bottom:var(--space-5)}h1{margin:.25rem 0}.eyebrow,.lede,.policy p{color:var(--text-muted)}.eyebrow{font-size:var(--font-size-xs);font-weight:700;letter-spacing:.12em}.policy{margin-bottom:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}.policy h2{font-size:1rem;margin:0}.policy ul{padding-inline-start:1.25rem}.policy p{margin-bottom:0}.filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)}label{display:grid;gap:.35rem}select,button{min-height:var(--control-height);padding:.55rem .75rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.table-wrap{overflow-x:auto;max-width:100%;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:900px;border-collapse:collapse;background:var(--surface-panel)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle);vertical-align:top}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{padding:var(--space-5);background:var(--surface-panel);border:1px dashed var(--border-default)}@media(max-width:650px){.filters{display:grid;grid-template-columns:1fr}.filters button{width:max-content}}

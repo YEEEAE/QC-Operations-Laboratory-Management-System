@@ -21,6 +21,7 @@ export interface CalibrationListFilter {
   search?: string;
 }
 export interface CalibrationRepository {
+  listPage?(input: { actor: ActorContext; filter?: CalibrationListFilter; page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<CalibrationRecord>>;
   create(input: {
     calibration: CalibrationRecord;
     actor: ActorContext;

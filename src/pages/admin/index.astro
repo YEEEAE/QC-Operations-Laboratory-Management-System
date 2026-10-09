@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../ui/components/PageHeader.astro";
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { hasAdminCapability } from '../../shared/authorization/admin-workspace.js';
 
@@ -9,13 +10,11 @@ const canAudit = hasAdminCapability(actor, 'viewAudit');
 ---
 
 <AppLayout title="Administration · QC Operations" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Administration</p>
-      <h1>Administration</h1>
+  <PageHeader><Fragment slot="heading"><h1>Administration</h1></Fragment>
+      
+      
       <p class="lede">Manage members, roles and access.</p>
-    </div>
-  </section>
+    </PageHeader>
   <div class="grid">
         <section class="panel">
           <p class="eyebrow">UI-ADM-USR-001</p>

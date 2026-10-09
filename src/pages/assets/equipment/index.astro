@@ -1,5 +1,7 @@
 ---
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import Pagination from '../../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import EmptyTableState from '../../../ui/components/data/EmptyTableState.astro';
@@ -23,11 +25,17 @@ const search = params.get('q')?.slice(0, 200) || undefined;
 let equipment: readonly import('../../../modules/assets/equipment/domain/equipment.js').Equipment[] =
   [];
 let providerUnavailable = false;
+let page = 1;
+let total = 0;
+let pageSize = 25;
 try {
-  equipment = await assetsReadDependencies().equipment.list.execute({
+  const result = await assetsReadDependencies().equipment.list.executePage({
     actor,
     filter: { state, search },
+    page: { page: params.get('page') ?? 1, pageSize },
   });
+  equipment = result.items;
+  ({ page, total, pageSize } = result);
 } catch {
   providerUnavailable = true;
 }
@@ -35,6 +43,7 @@ try {
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
   next.delete(drop);
+  next.delete('page');
   const query = next.toString();
   return `/assets/equipment${query ? `?${query}` : ''}`;
 };
@@ -46,14 +55,10 @@ const hasFilters = appliedFilters.length > 0;
 ---
 
 <AppLayout title="Equipment · Assets" locale="en" direction="ltr">
-  <section class="head">
-    <div>
-      <p class="eyebrow">Equipment</p>
-      <h1>Equipment</h1>
-      <p>Stable equipment identity and its current operational state.</p>
-    </div>
-    {canCreate && <a class="button" href="/assets/equipment/new">Add equipment</a>}
-  </section>
+  <PageHeader purpose="Stable equipment identity and its current operational state.">
+    <Fragment slot="heading"><h1>Equipment</h1></Fragment>
+    <Fragment slot="actions">{canCreate && <a class="button" href="/assets/equipment/new">Add equipment</a>}</Fragment>
+  </PageHeader>
   <FilterBar clearHref={hasFilters ? '/assets/equipment' : undefined}>
     <label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label>
     <label for="state">Operational state<select id="state" name="state">
@@ -70,7 +75,7 @@ const hasFilters = appliedFilters.length > 0;
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/assets/equipment' : undefined}
-    note="Showing every equipment record in your authorized scope."
+    note={providerUnavailable ? undefined : `${total} equipment records in your authorized scope.`}
   />
   {
     providerUnavailable ? (
@@ -83,7 +88,7 @@ const hasFilters = appliedFilters.length > 0;
       <div class="table-wrap">
         <table>
           <caption>
-            {equipment.length} authorized equipment record{equipment.length === 1 ? '' : 's'}
+            {total} authorized equipment record{total === 1 ? '' : 's'}
             {hasFilters ? ' matching the current filters' : ''}
           </caption>
           <thead>
@@ -124,11 +129,12 @@ const hasFilters = appliedFilters.length > 0;
       <EmptyTableState
         title="No equipment yet"
         description="No equipment record exists in your authorized scope. Create the first draft to start the asset register."
-        actionLabel={canCreate ? 'Create equipment' : undefined}
+        actionLabel={canCreate ? 'Add equipment' : undefined}
         actionHref={canCreate ? '/assets/equipment/new' : undefined}
       />
     )
   }
+  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="equipment records" />}
 </AppLayout>
 <style>
   .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow){color:var(--text-muted);font-size:var(--font-size-sm)}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:var(--font-weight-bold)}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:850px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:var(--font-size-sm)}th{font-weight:var(--font-weight-semibold)}a{color:var(--color-accent-primary-hover)}.state{display:inline-flex;padding:.28rem .5rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}@media(max-width:650px){.head{display:grid}.button{width:max-content}}</style>

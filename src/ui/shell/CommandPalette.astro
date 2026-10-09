@@ -1,0 +1,39 @@
+---
+import { visibleNavigation, visibleNavigationUtilities } from '../navigation/navigation';
+import { getRouteById } from '../../shared/routing/routes';
+import { pageAccessDecision } from '../../shared/routing/page-access';
+import { HELP_ROUTE_LINKS } from '../../shared/copy/help-content';
+import Icon from '../components/Icon.astro';
+const actor = Astro.locals.actor;
+const links = [...visibleNavigation(actor).flatMap((group) => group.items), ...visibleNavigationUtilities(actor)];
+const creationPermissions: Record<string, string> = { 'RT-REC-002': 'PERM-QUAR-CREATE', 'RT-LAB-003': 'PERM-LAB-CREATE' };
+const actions = HELP_ROUTE_LINKS.flatMap((item) => {
+  const route = getRouteById(item.routeId);
+  const permission = creationPermissions[item.routeId];
+  return permission && actor?.permissions.some((grant) => grant.code === permission && grant.active !== false) && route?.path.endsWith('/new') && pageAccessDecision(actor, route.path) === 'ALLOWED'
+    ? [{ label: item.label, href: route.path }] : [];
+});
+---
+<dialog id="workspace-command-palette" class="command-palette" data-command-palette data-dialog aria-labelledby="command-palette-title">
+  <header><h2 id="command-palette-title">Go to</h2><button type="button" data-dialog-close aria-label="Close navigation" title="Close navigation"><Icon name="close" /></button></header>
+  <label for="command-query">Find a page or record reference</label>
+  <input id="command-query" type="search" data-command-query data-dialog-autofocus autocomplete="off" />
+  <p data-command-status role="status" aria-live="polite"></p>
+  <section><h3>Pages</h3><ul>{links.map((link) => <li data-command-item><a href={link.href}>{link.label}</a></li>)}</ul></section>
+  {actions.length > 0 && <section><h3>New record</h3><ul>{actions.map((link) => <li data-command-item><a href={link.href}>{link.label}</a></li>)}</ul></section>}
+  <section data-command-recent hidden><h3>Recent records</h3><ul></ul></section>
+  <a href="/search" class="full-search">Search authorized records <Icon name="arrow-right" /></a>
+</dialog>
+<style>
+  .command-palette { inline-size:min(36rem,calc(100vw - 2rem)); max-block-size:80dvh; padding:var(--space-5); border:1px solid var(--border-default); border-radius:8px; color:var(--text-primary); background:var(--surface-panel); overflow:auto; }
+  .command-palette::backdrop { background:var(--surface-overlay); }
+  header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); }
+  h2 { margin:0; font-size:1.1rem; } h3 { font-size:.85rem; margin-block:var(--space-4) var(--space-2); }
+  button { display:grid; place-items:center; inline-size:44px; block-size:44px; padding:0; border:1px solid var(--border-default); border-radius:4px; color:inherit; background:var(--surface-raised); cursor:pointer; }
+  label { display:block; margin-block:var(--space-3) var(--space-2); font-size:.85rem; }
+  input { inline-size:100%; min-block-size:44px; padding:var(--space-2); border:1px solid var(--border-default); border-radius:4px; color:inherit; background:var(--surface-raised); }
+  ul { list-style:none; margin:0; padding:0; } li[hidden],section[hidden] { display:none; }
+  a { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2); min-block-size:44px; color:var(--text-primary); overflow-wrap:anywhere; border-radius:4px; }
+  a:hover { background:var(--color-surface-hover); } a:focus-visible,button:focus-visible,input:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+  .full-search { border-block-start:1px solid var(--border-default); margin-block-start:var(--space-3); } [data-command-status] { font-size:.85rem; color:var(--text-muted); min-block-size:1.4em; }
+</style>

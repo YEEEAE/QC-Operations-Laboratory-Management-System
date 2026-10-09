@@ -1,4 +1,5 @@
 ---
+import RecordHeader from './RecordHeader.astro';
 interface RelatedLink {
   label: string;
   href: string;
@@ -64,6 +65,7 @@ const {
 } = Astro.props;
 ---
 
+<RecordHeader reference={recordReference} state={currentState} nextAction={nextAction} nextActionHref={nextActionHref} blocker={whyUnavailable} />
 <section class="journey-panel" aria-labelledby="journey-context-title">
   <div class="journey-heading">
     <div>

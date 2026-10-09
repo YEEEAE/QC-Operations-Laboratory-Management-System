@@ -1,0 +1,29 @@
+---
+interface Props { reference?: string; state: string; nextAction?: string; nextActionHref?: string; blocker?: string; }
+const { reference, state, nextAction, nextActionHref, blocker } = Astro.props;
+---
+<div data-record-header>
+  <strong>{reference ?? 'Record reference not supplied'}</strong>
+  <span class="record-state">{state}</span>
+  {blocker && <span class="record-blocker">{blocker}</span>}
+  {nextAction && nextActionHref && <a href={nextActionHref}>{nextAction}</a>}
+</div>
+<nav data-record-index aria-label="Record sections" hidden></nav>
+<script>
+  const index = document.querySelector<HTMLElement>('[data-record-index]');
+  const headings = Array.from(document.querySelectorAll<HTMLElement>('#main-content h2')).filter((heading) => !heading.closest('dialog,[data-page-header],[hidden]'));
+  if (index && headings.length >= 3) {
+    headings.forEach((heading, position) => {
+      if (!heading.id) heading.id = `record-section-${position + 1}`;
+      const link = document.createElement('a');
+      link.href = `#${heading.id}`;
+      link.textContent = heading.textContent;
+      index.append(link);
+    });
+    index.hidden = false;
+  }
+</script>
+<style>
+  .record-blocker{flex-basis:100%;font-size:var(--font-size-xs);color:var(--status-warning);overflow-wrap:anywhere}
+  @media(max-width:760px){[data-record-header]{position:static}}
+</style>

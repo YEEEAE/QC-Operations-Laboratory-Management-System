@@ -1,4 +1,15 @@
 @media (prefers-reduced-motion: no-preference) {
+  dialog {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity var(--motion-fast), transform var(--motion-fast), display var(--motion-fast) allow-discrete, overlay var(--motion-fast) allow-discrete;
+  }
+  dialog[open] { opacity: 1; transform: translateY(0); }
+  @starting-style { dialog[open] { opacity: 0; transform: translateY(4px); } }
+  dialog[open], [data-feedback-class] {
+    animation: feedback-enter var(--motion-fast) var(--motion-ease-standard);
+  }
+  @keyframes feedback-enter { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
   :where(a, button, input, select, textarea) {
     transition:
       background-color var(--motion-duration-fast) var(--motion-ease-standard),

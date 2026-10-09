@@ -12,8 +12,8 @@ interface Props {
   actionHref?: string;
 }
 const {
-  title = copy.states.noFilterMatches,
-  description = 'Clear a filter or change your search.',
+  title,
+  description,
   clearHref,
   actionLabel,
   actionHref,
@@ -23,8 +23,8 @@ const filtered = Boolean(clearHref);
 
 <div class="empty" role="status">
   <span class="empty-icon" aria-hidden="true"><Icon name="search" /></span>
-  <h3>{title}</h3>
-  <p>{description}</p>
+  <h3>{title ?? (filtered ? copy.states.noFilterMatches : copy.states.noRecords)}</h3>
+  <p>{description ?? (filtered ? 'Clear a filter or change your search.' : 'No records are available in your authorized scope.')}</p>
   {
     filtered && (
       <a class="empty-action" href={clearHref}>

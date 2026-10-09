@@ -1,5 +1,7 @@
 ---
+import PageHeader from '../../ui/components/PageHeader.astro';
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import Pagination from '../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { documentsReadDependencies } from '../../modules/documents/application/dependencies.js';
 import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
@@ -10,14 +12,21 @@ if (!actor) return Astro.redirect('/login?returnTo=%2Fdocuments');
 const search = Astro.url.searchParams.get('q')?.slice(0, 200) || undefined;
 const documentType = Astro.url.searchParams.get('type')?.slice(0, 80) || undefined;
 const reviewMine = Astro.url.searchParams.get('review') === 'mine';
-let documents: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['list']['execute']>> = [];
+let documents: Readonly<Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['list']['execute']>>> = [];
 let providerUnavailable = false;
 let reviewQueue: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['reviewQueue']['execute']>> | undefined;
 let reviewDenied = false;
+let page = 1;
+let total = 0;
+let pageSize = DEFAULT_PAGE_SIZE;
 try {
   const reads = documentsReadDependencies();
   if (reviewMine) reviewQueue = await reads.reviewQueue.execute({ actor, limit: DEFAULT_PAGE_SIZE });
-  else documents = await reads.list.execute({ actor, filter: { search, documentType } });
+  else {
+    const result = await reads.list.executePage({ actor, filter: { search, documentType }, page: { page: Astro.url.searchParams.get('page') ?? 1, pageSize } });
+    documents = result.items;
+    ({ page, total, pageSize } = result);
+  }
 } catch (error) {
   if (reviewMine && error instanceof AppError && error.category === 'AUTHORIZATION') reviewDenied = true;
   else providerUnavailable = true;
@@ -28,10 +37,7 @@ const canCreate = actor.permissions.some((permission) => permission.code === 'PE
 let accountNames = new Map<string, string>();
 try {
   accountNames = new Map(
-    (await identityAdminReadDependencies().listUsers.execute({ actor })).map((user) => [
-      user.id,
-      user.displayName,
-    ]),
+    await identityAdminReadDependencies().listUsers.resolveDisplayNames({ actor, userIds: documents.map((document) => document.ownerId ?? document.createdBy) }),
   );
 } catch {
   // Presentation-only; fall back to a named-account label below.
@@ -40,8 +46,9 @@ const accountLabel = (accountId: string | null | undefined) =>
   accountId ? (accountNames.get(accountId) ?? 'Named account') : 'Not recorded';
 ---
 <AppLayout title="Controlled documents · QC Operations" locale="en" direction="ltr">
-  <section class="head"><div><p class="eyebrow">Documents</p><h1>{reviewMine ? 'Documents awaiting your review' : 'Controlled documents'}</h1><p>{reviewMine ? 'Active versions in review that you may review; your own versions are excluded.' : 'Browse WI, SOP, and other controlled documents available to your account.'}</p></div>{canCreate && <a class="button" href="/documents/new">Create document</a>}</section>
+  <PageHeader purpose={reviewMine ? 'Active versions in review that you may review; your own versions are excluded.' : 'Browse WI, SOP, and other controlled documents available to your account.'}><Fragment slot="heading"><h1>{reviewMine ? 'Documents awaiting your review' : 'Controlled documents'}</h1></Fragment><Fragment slot="actions">{canCreate && <a class="button" href="/documents/new">Create document</a>}</Fragment></PageHeader>
   {reviewMine ? <p><a href="/documents">All controlled documents</a></p> : <form class="filters" method="get"><label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label><label for="type">Type<input id="type" name="type" value={documentType ?? ''} maxlength="80" /></label><button type="submit">Filter</button><a href="/documents?review=mine">My review queue</a></form>}
-  {reviewDenied ? <section class="empty" role="status"><h2>Review queue unavailable</h2><p>Your account is not authorized for both document review and approval review. No count is shown.</p></section> : providerUnavailable ? <ProviderUnavailableState title="Controlled documents are unavailable" description="Documents could not be loaded. Records and counts are unavailable; this does not mean the library is empty." /> : reviewMine ? reviewQueue && reviewQueue.items.length ? <div class="table-wrap"><table><caption>{reviewQueue.total} authorized document version{reviewQueue.total === 1 ? '' : 's'} awaiting your review; showing up to {DEFAULT_PAGE_SIZE}</caption><thead><tr><th scope="col">Document code</th><th scope="col">Title</th><th scope="col">Revision</th><th scope="col">State</th><th scope="col">Submitted</th></tr></thead><tbody>{reviewQueue.items.map((item) => <tr><th scope="row"><a href={`/documents/${item.documentId}/versions/${item.versionId}/review`}>{item.documentNo}</a></th><td>{item.title}</td><td>{item.revision}</td><td>In review</td><td><time datetime={item.createdAt.toISOString()}>{item.createdAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></td></tr>)}</tbody></table></div> : <section class="empty"><h2>No document versions are waiting for your review</h2><p>This is the current result for your review permissions and owner scope.</p></section> : documents.length ? <div class="table-wrap"><table><caption>{documents.length} authorized document identit{documents.length === 1 ? 'y' : 'ies'}</caption><thead><tr><th scope="col">Document code</th><th scope="col">Title</th><th scope="col">Type</th><th scope="col">Current effective version</th><th scope="col">Owner</th><th scope="col">Updated</th></tr></thead><tbody>{documents.map((document) => <tr><th scope="row"><a href={`/documents/${document.id}`}>{document.documentNo}</a></th><td>{document.title}</td><td>{document.documentType}</td><td>{document.currentEffectiveVersionId ? 'Available' : 'Not effective'}</td><td>{accountLabel(document.ownerId ?? document.createdBy)}</td><td>{document.updatedAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No documents in this view</h2><p>Only documents you are permitted to view are shown.</p>{canCreate && <a href="/documents/new">Create a document</a>}</section>}
+  {reviewDenied ? <section class="empty" role="status"><h2>Review queue unavailable</h2><p>Your account is not authorized for both document review and approval review. No count is shown.</p></section> : providerUnavailable ? <ProviderUnavailableState title="Controlled documents are unavailable" description="Documents could not be loaded. Records and counts are unavailable; this does not mean the library is empty." /> : reviewMine ? reviewQueue && reviewQueue.items.length ? <div class="table-wrap"><table><caption>{reviewQueue.total} authorized document version{reviewQueue.total === 1 ? '' : 's'} awaiting your review; showing up to {DEFAULT_PAGE_SIZE}</caption><thead><tr><th scope="col">Document code</th><th scope="col">Title</th><th scope="col">Revision</th><th scope="col">State</th><th scope="col">Submitted</th></tr></thead><tbody>{reviewQueue.items.map((item) => <tr><th scope="row"><a href={`/documents/${item.documentId}/versions/${item.versionId}/review`}>{item.documentNo}</a></th><td>{item.title}</td><td>{item.revision}</td><td>In review</td><td><time datetime={item.createdAt.toISOString()}>{item.createdAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></td></tr>)}</tbody></table></div> : <section class="empty"><h2>No document versions are waiting for your review</h2><p>This is the current result for your review permissions and owner scope.</p></section> : documents.length ? <div class="table-wrap"><table><caption>{total} authorized document identit{total === 1 ? 'y' : 'ies'}</caption><thead><tr><th scope="col">Document code</th><th scope="col">Title</th><th scope="col">Type</th><th scope="col">Current effective version</th><th scope="col">Owner</th><th scope="col">Updated</th></tr></thead><tbody>{documents.map((document) => <tr><th scope="row"><a href={`/documents/${document.id}`}>{document.documentNo}</a></th><td>{document.title}</td><td>{document.documentType}</td><td>{document.currentEffectiveVersionId ? 'Available' : 'Not effective'}</td><td>{accountLabel(document.ownerId ?? document.createdBy)}</td><td>{document.updatedAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No documents in this view</h2><p>Only documents you are permitted to view are shown.</p>{canCreate && <a href="/documents/new">Create document</a>}</section>}
+  {!reviewMine && !providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="documents" />}
 </AppLayout>
 <style>.head,.filters{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-end}.head{align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.empty p{color:var(--text-muted);font-size:.85rem}.button,button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:#fff;text-decoration:none;font:inherit;font-weight:700}.filters{justify-content:flex-start;margin-bottom:var(--space-5)}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}input{min-height:var(--control-height);padding:.6rem .7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--border-default);border-radius:var(--radius-sm);font:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:900px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem}@media(max-width:650px){.head,.filters{display:grid}.button{width:max-content}}</style>

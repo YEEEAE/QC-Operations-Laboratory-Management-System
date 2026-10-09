@@ -84,6 +84,19 @@ export class PostgresCapaRepository implements CapaRepository {
       .execute();
     return this.map(r, actions);
   }
+  async listPage(i: Parameters<NonNullable<CapaRepository['listPage']>>[0]) {
+    let query = this.db.selectFrom('capas').selectAll().where((eb) => eb.or([eb('owner_id', '=', i.actor.id), eb('created_by', '=', i.actor.id)]));
+    if (i.state) query = query.where('state', '=', i.state);
+    if (i.ncrId) query = query.where('ncr_id', '=', i.ncrId);
+    const counted = await query.clearSelect().select(({ fn }) => fn.countAll().as('count')).executeTakeFirst();
+    const total = Number(counted?.count ?? 0);
+    const page = Math.min(i.page.page, Math.max(1, Math.ceil(total / i.page.pageSize)));
+    const rows = await query.orderBy('updated_at', 'desc').orderBy('id', 'desc')
+      .limit(i.page.pageSize).offset((page - 1) * i.page.pageSize).execute();
+    const actions = rows.length ? await this.db.selectFrom('capa_actions').selectAll().where('capa_id', 'in', rows.map((row) => row.id)).orderBy('sequence_no').orderBy('id').execute() : [];
+    const items = rows.map((row) => this.map(row, actions.filter((action) => action.capa_id === row.id)));
+    return { items, total, page, pageSize: i.page.pageSize };
+  }
   async list(i: Parameters<CapaRepository['list']>[0]) {
     let q = this.db
       .selectFrom('capas')

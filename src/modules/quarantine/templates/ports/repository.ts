@@ -3,6 +3,7 @@ import type { TemplateVersion } from '../domain/template.js';
 import type { TemplateVersionAction } from '../domain/template-state.js';
 
 export interface TemplateRepository {
+  listPage?(input: { actor: ActorContext; state?: TemplateVersion['state']; page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<TemplateVersion>>;
   create(input: {
     template: TemplateVersion;
     templateCode: string;

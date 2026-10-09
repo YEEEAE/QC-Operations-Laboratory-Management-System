@@ -1,8 +1,14 @@
+import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
+import { parsePageInput } from '../../../../shared/pagination/page.js';
 import type { Capa } from '../domain/capa.js';
 import type { CapaRepository } from '../ports/repository.js';
 export class ListCapaUseCase {
   constructor(private repo: CapaRepository) {}
+  executePage(i: Omit<Parameters<NonNullable<CapaRepository['listPage']>>[0], 'page'> & { page?: import('../../../../shared/pagination/page.js').PageInput }) {
+    if (!this.repo.listPage) throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+    return this.repo.listPage({ ...i, page: parsePageInput(i.page) });
+  }
   execute(i: { actor: ActorContext; state?: Capa['state'] }) {
     return this.repo.list(i);
   }

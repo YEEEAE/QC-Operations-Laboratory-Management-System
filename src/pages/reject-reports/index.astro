@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../ui/components/PageHeader.astro';
 import ErrorState from '../../ui/components/feedback/ErrorState.astro';
 import { rejectReportReadDependencies } from '../../modules/reject-reports/application/dependencies.js';
 import { parsePageInput } from '../../shared/pagination/page.js';
@@ -119,6 +120,7 @@ const tabs = [
   { id: 'completed', label: 'Completed' },
 ] as const;
 const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' });
+const hasAnalytics = Boolean(summary.rejectedByUnit.length || analytics.trendByDate.length || analytics.topRejectItems.length || analytics.byReason.length || analytics.byDepartment.length || analytics.approvalStatus.length || analytics.rejectPctTrend.length);
 ---
 <AppLayout title="Reject reports · QC Operations" locale="en" direction="ltr">
   {
@@ -126,14 +128,7 @@ const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riy
       <ErrorState title={availabilityError.title} description={availabilityError.description} retryHref="/reject-reports" />
     ) : (
       <>
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Quality</p>
-      <h1>Reject reports</h1>
-      <p class="lede">Issue slips record approval confirmations. Daily rejects need no approval.</p>
-    </div>
-    {canCreate && <a class="button" href="/reject-reports/new">Create report</a>}
-  </section>
+  <PageHeader title="Reject reports" purpose="Issue slips record approval confirmations. Daily rejects need no approval."><Fragment slot="actions">{canCreate && <a class="button" href="/reject-reports/new">Create report</a>}</Fragment></PageHeader>
 
   <section class="cards" aria-label="Summary for current filters">
     <div class="card"><span>Reports today</span><strong>{summary.reportsToday}</strong></div>
@@ -145,6 +140,8 @@ const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riy
     <div class="card"><span>Finalized Daily reject</span><strong>{summary.finalizedDailyRejects}</strong></div>
   </section>
 
+  <details class="analytics-disclosure" open={hasAnalytics}>
+  <summary>Reject analytics{!hasAnalytics && ' · No matching data'}</summary>
   <section class="panel quantities" aria-labelledby="qty-heading">
     <h2 id="qty-heading">Rejected quantity by report type and recorded unit</h2>
     <p>Units are shown as recorded. Values from different units or report types are not added together.</p>
@@ -219,6 +216,7 @@ const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riy
     </div>
   </section>
 
+  </details>
   <nav class="tabs" aria-label="Report views">
     {tabs.map((t) => (
       <a href={tabHref(t.id)} aria-current={tab === t.id ? 'page' : undefined}>{t.label}</a>
@@ -354,4 +352,5 @@ const fmtDate = (d: Date) => d.toLocaleDateString('en-SA', { timeZone: 'Asia/Riy
   .recent li{display:flex;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;font-size:.85rem}
   @media(max-width:768px){.page-head{display:grid}.filters{display:grid}.filters button{width:max-content}}
   @media(max-width:360px){.cards{grid-template-columns:1fr 1fr}}
+  .analytics-disclosure{margin-bottom:var(--space-5);border-block:1px solid var(--color-border-subtle)}.analytics-disclosure>summary{min-height:44px;align-content:center;cursor:pointer;font-size:.9rem;font-weight:600}.panel{border:0;border-block-start:1px solid var(--color-border-subtle);border-radius:0;background:transparent;padding-inline:0}.card{border:0;border-inline-start:2px solid var(--color-border-subtle);border-radius:0;background:transparent;padding-block:var(--space-2)}.card span,.eyebrow{letter-spacing:0}.rank li{flex-wrap:wrap}.recent li span{overflow-wrap:anywhere}
 </style>

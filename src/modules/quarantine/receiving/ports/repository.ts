@@ -54,6 +54,7 @@ export interface ReceivingRepository {
   }): Promise<ReceivingItem>;
   get(id: string, actor: ActorContext): Promise<ReceivingItem | undefined>;
   list(i: ReceivingListQuery): Promise<readonly ReceivingItem[]>;
+  listPage?(i: ReceivingListQuery & { page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<ReceivingItem>>;
   updateDraft(i: {
     id: string;
     expectedVersion: bigint;

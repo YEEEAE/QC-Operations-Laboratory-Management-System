@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../ui/components/PageHeader.astro";
 import { actions } from 'astro:actions';
 import AppLayout from '../ui/layouts/AppLayout.astro';
 import { GetAccountUseCase } from '../modules/identity/application/get-account.js';
@@ -14,13 +15,11 @@ const currentPasswordError = changeError?.fieldErrors?.currentPassword?.[0];
 const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
 ---
 <AppLayout title="Account · QC Operations" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Your account</p>
-      <h1>Account</h1>
+  <PageHeader><Fragment slot="heading"><h1>Account</h1></Fragment>
+      
+      
       <p class="lede">Manage your password and session.</p>
-    </div>
-  </section>
+    </PageHeader>
   {
     account && (
       <>

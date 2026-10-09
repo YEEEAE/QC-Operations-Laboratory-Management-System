@@ -1,6 +1,7 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { Rca, RcaAction } from '../domain/rca.js';
 export interface RcaRepository {
+  listPage?(i: { actor: ActorContext; ncrId?: string; state?: Rca['state']; page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<Rca>>;
   create(i: {
     rca: Rca;
     expectedNcrVersion: bigint;

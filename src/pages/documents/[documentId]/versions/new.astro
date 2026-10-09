@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../../../ui/components/PageHeader.astro";
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../../ui/components/FormErrorSummary.astro';
 import { formatDate } from '../../../../shared/copy/format.js';
@@ -98,7 +99,7 @@ if (formData && canCreate) {
 }
 ---
 <AppLayout title={`New revision · ${document.documentNo}`} locale="en" direction="ltr">
-  <section class="head"><div><p class="eyebrow">New version</p><h1>New controlled version</h1><p>{document.documentNo} · Creating a new draft leaves existing controlled history unchanged.</p></div><a href={`/documents/${document.id}`}>Back to document</a></section>
+  <PageHeader><Fragment slot="heading"><h1>New controlled version</h1></Fragment><p>{document.documentNo} · Creating a new draft leaves existing controlled history unchanged.</p><Fragment slot="actions"><a href={`/documents/${document.id}`}>Back to document</a></Fragment></PageHeader>
   {canCreateForCurrentHistory || (formData && canCreate) ? <form class="form" method="post" data-action="documents.createVersion" data-document-id={document.id}>
     {failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={failure.field === 'revision' ? [{fieldId:'revision', message:'Enter the revision reference assigned by Document Control.'}] : failure.field === 'fileIds' ? [{fieldId:'fileIds', message:'Select at least one registered source file.'}] : []} listHref={`/documents/${document.id}`} listLabel="document" />}
     <input type="hidden" name="expectedDocumentVersion" value={values.expectedDocumentVersion} />

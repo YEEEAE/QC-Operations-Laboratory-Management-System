@@ -21,6 +21,7 @@ export interface MaintenanceListFilter {
   search?: string;
 }
 export interface MaintenanceRepository {
+  listPage?(input: { actor: ActorContext; filter?: MaintenanceListFilter; page: import('../../../../shared/pagination/page.js').Page }): Promise<import('../../../../shared/pagination/page.js').PageResult<MaintenanceRecord>>;
   create(input: {
     maintenance: MaintenanceRecord;
     actor: ActorContext;

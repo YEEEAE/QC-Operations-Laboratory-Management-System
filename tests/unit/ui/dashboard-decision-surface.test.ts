@@ -22,6 +22,7 @@ const read = (file: string) => readFileSync(join(root, file), 'utf8');
 describe('dashboard decision surface', () => {
   const dashboard = read('src/pages/dashboard/index.astro');
   const kpiCard = read('src/ui/charts/KpiCard.astro');
+  const counts = read('src/ui/components/dashboard/DashboardCounts.astro');
   const port = read('src/modules/dashboard/ports/dashboard-query.ts');
 
   it('defines the KPI contract on the read model, not in the page', () => {
@@ -62,7 +63,7 @@ describe('dashboard decision surface', () => {
       'metricFreshness={metric.freshness}',
       'drilldown={metric.drilldown}',
     ]) {
-      expect(dashboard, prop).toContain(prop);
+      expect(counts, prop).toContain(prop);
     }
     expect(kpiCard).toContain('numerator?: string');
     expect(kpiCard).toContain('denominator?: string');
@@ -80,14 +81,13 @@ describe('dashboard decision surface', () => {
   it('puts attention and decision queues before dashboard summary counts', () => {
     const attention = dashboard.indexOf('aria-labelledby="attention-title"');
     const decisionQueues = dashboard.indexOf('aria-labelledby="workflow-access-title"');
-    const summary = dashboard.indexOf('aria-label="Operational action counts"');
+    const summary = dashboard.indexOf('<DashboardCounts metrics={dashboard.metrics}');
     expect(attention).toBeGreaterThan(-1);
     expect(decisionQueues).toBeGreaterThan(attention);
     expect(summary).toBeGreaterThan(decisionQueues);
     expect(dashboard).toContain('href="/documents?review=mine"');
-    expect(dashboard).toContain(
-      'Active versions awaiting your review, excluding versions you authored',
-    );
+    expect(dashboard).toContain('Active versions awaiting your review, excluding versions you authored');
+    expect(read('src/modules/dashboard/application/dashboard-sources.ts')).toContain('/documents?review=mine');
     expect(dashboard).not.toContain('Review-specific document queue is not supplied');
   });
 
@@ -115,9 +115,18 @@ describe('dashboard decision surface', () => {
     expect(dashboard).toContain("error.category === 'AUTHORIZATION'");
     // The denied branch never claims a data outage, and the KPI grid is not
     // rendered for a denied account.
-    expect(dashboard).toContain('!accessDenied && !providerUnavailable && <section class="kpis"');
+    expect(dashboard).toContain('!accessDenied && !providerUnavailable && <DashboardCounts');
     expect(dashboard).toContain('!accessDenied && <section class="dashboard-grid"');
     expect(dashboard).toContain('Your account cannot open the dashboard');
+  });
+
+  it('compacts confirmed zero counts without changing unavailable values or drilldowns', () => {
+    expect(counts).toContain('metrics.length > 0');
+    expect(counts).toContain('metrics.every((metric) => !metric.unavailable && metric.value === 0)');
+    expect(counts).toContain('open={!confirmedEmpty}');
+    expect(counts).toContain('value={metric.value}');
+    expect(counts).toContain('href={metric.unavailable ? undefined : metric.href}');
+    expect(dashboard).toContain('<details class="panel coverage">');
   });
 
   it('links personal counters to the ownership filter their registers implement', () => {
@@ -133,7 +142,9 @@ describe('dashboard decision surface', () => {
     ]) {
       const source = read(page);
       if (page.includes('/receiving/')) {
-        expect(source, page).toContain('parseReceivingFilters(Astro.url.searchParams)');
+        expect(source, page).toContain('new URLSearchParams(Astro.url.searchParams)');
+        expect(source, page).toContain("filterParams.delete('page')");
+        expect(source, page).toContain('parseReceivingFilters(filterParams)');
         expect(source, page).toContain('const ownership = filters.ownership');
         expect(source, page).toContain('...filters');
       } else {

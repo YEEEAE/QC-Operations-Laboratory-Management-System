@@ -1,4 +1,6 @@
+import { AppError } from '../../../../shared/errors/app-error.js';
 import { authorize } from '../../../../shared/authorization/authorize.js';
+import { parsePageInput } from '../../../../shared/pagination/page.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { ReceivingRepository } from '../ports/repository.js';
 import type { ReceivingListFilters } from './receiving-filters.js';
@@ -22,6 +24,13 @@ export class ListReceivingUseCase {
     private readonly now: () => Date = () => new Date(),
   ) {}
   execute(i: ReceivingListFilters & { actor: ActorContext }) {
+    return this.repo.list(this.query(i));
+  }
+  executePage(i: ReceivingListFilters & { actor: ActorContext; page?: import('../../../../shared/pagination/page.js').PageInput }) {
+    if (!this.repo.listPage) throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+    return this.repo.listPage({ ...this.query(i), page: parsePageInput(i.page) });
+  }
+  private query(i: ReceivingListFilters & { actor: ActorContext }) {
     authorize(
       {
         actor: i.actor,
@@ -40,7 +49,7 @@ export class ListReceivingUseCase {
       },
       { throwOnDeny: true },
     );
-    return this.repo.list({
+    return {
       actor: i.actor,
       state: i.state,
       inspectionResult: i.inspectionResult,
@@ -58,6 +67,6 @@ export class ListReceivingUseCase {
       lot: i.lot,
       supplier: i.supplier,
       purchaseOrderNo: i.purchaseOrderNo,
-    });
+    };
   }
 }

@@ -1,4 +1,5 @@
 ---
+import PageHeader from "../../ui/components/PageHeader.astro";
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../ui/components/StatusBadge.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
@@ -25,14 +26,14 @@ const groups = queue?.groups ?? [];
 const unresolved = queue?.unresolvedSources ?? [];
 ---
 <AppLayout title="My work today · QC Operations" locale="en" direction="ltr" scope={queue?.scopeLabel}>
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Your queue</p>
-      <h1>My work today</h1>
+  <PageHeader><Fragment slot="heading"><h1>My work today</h1></Fragment>
+      
+      
       <p class="lede">Assigned, due, overdue and blocked work.</p>
-    </div>
-    {queue && <p class="snapshot"><time datetime={queue.generatedAt.toISOString()}>Server snapshot · {formatDateTime(queue.generatedAt)}</time><span>All windows in {queue.timezone}</span><a href="/work">Refresh</a></p>}
+    <Fragment slot="actions"> {queue && <p class="snapshot"><time datetime={queue.generatedAt.toISOString()}>Server snapshot · {formatDateTime(queue.generatedAt)}</time><span>All windows in {queue.timezone}</span><a href="/work">Refresh</a></p>}
   </section>
+
+ </Fragment></PageHeader>
 
   <section class="identity" aria-label="Your authenticated identity">
     <p><span>Signed in as</span> <strong>{actor.loginIdentity ?? 'Your account'}</strong></p>

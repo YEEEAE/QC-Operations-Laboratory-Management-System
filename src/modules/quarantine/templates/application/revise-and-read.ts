@@ -1,4 +1,5 @@
 import { authorize } from '../../../../shared/authorization/authorize.js';
+import { parsePageInput } from '../../../../shared/pagination/page.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import type { TemplateRepository } from '../ports/repository.js';
@@ -58,6 +59,11 @@ export class GetTemplateUseCase {
 
 export class ListTemplatesUseCase {
   constructor(private readonly repository: TemplateRepository) {}
+  executePage(input: Omit<Parameters<NonNullable<TemplateRepository['listPage']>>[0], 'page'> & { page?: import('../../../../shared/pagination/page.js').PageInput }) {
+    if (input.actor.accountState !== 'ACTIVE') throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    if (!this.repository.listPage) throw new AppError('SYSTEM_DATABASE_UNAVAILABLE', { userSafe: true });
+    return this.repository.listPage({ ...input, page: parsePageInput(input.page) });
+  }
   execute(input: {
     actor: ActorContext;
     state?: 'DRAFT' | 'UNDER_REVIEW' | 'APPROVED' | 'STOPPED' | 'VOID' | 'SUPERSEDED';

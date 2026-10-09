@@ -1,5 +1,7 @@
 ---
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import Pagination from '../../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
 import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import { inspectionReadDependencies } from '../../../modules/quarantine/application/dependencies.js';
@@ -22,6 +24,7 @@ const ownership = params.get('ownership') === 'mine' ? ('mine' as const) : undef
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
   next.delete(drop);
+  next.delete('page');
   const search = next.toString();
   return `/quarantine/inspections${search ? `?${search}` : ''}`;
 };
@@ -39,41 +42,34 @@ const hasFilters = appliedFilters.length > 0;
 // The register names the inspector, never a raw account identifier. Resolution
 // is presentation-only and failure-tolerant.
 let inspectorNames = new Map<string, string>();
-try {
-  inspectorNames = new Map(
-    (await identityAdminReadDependencies().listUsers.execute({ actor })).map((user) => [
-      user.id,
-      user.displayName,
-    ]),
-  );
-} catch {
-  // Presentation-only; fall back to a named-account label below.
-}
 const inspectorLabel = (inspectorId: string | null | undefined) =>
   inspectorId ? (inspectorNames.get(inspectorId) ?? 'Named account') : 'Not recorded';
 
 let inspections: Awaited<ReturnType<ReturnType<typeof inspectionReadDependencies>['list']['execute']>> = [];
 let providerUnavailable = false;
+let page = 1;
+let total = 0;
+let pageSize = 25;
 try {
-  inspections = await inspectionReadDependencies().list.execute({
+  const result = await inspectionReadDependencies().list.executePage({
     actor,
     state,
     finalResult,
     ownership,
+    page: { page: params.get('page') ?? 1, pageSize },
   });
+  inspections = result.items;
+  ({ page, total, pageSize } = result);
+  inspectorNames = new Map(await identityAdminReadDependencies().listUsers.resolveDisplayNames({ actor, userIds: inspections.map((inspection) => inspection.authorId) }).catch(() => new Map<string, string>()));
 } catch {
   providerUnavailable = true;
 }
 ---
 <AppLayout title="Inspections · Quarantine" locale="en" direction="ltr">
-  <section class="page-head">
-    <div>
-      <p class="eyebrow">Controlled execution</p>
-      <h1>Inspection reports</h1>
-      <p class="lede">Report status and scientific result are shown separately.</p>
-    </div>
-    <a href="/quarantine/receiving">Open receiving register</a>
-  </section>
+  <PageHeader purpose="Report status and scientific result are shown separately.">
+    <Fragment slot="heading"><h1>Inspection reports</h1></Fragment>
+    <Fragment slot="actions"><a href="/quarantine/receiving">Open receiving register</a></Fragment>
+  </PageHeader>
   <form class="filters" method="get">
     <label for="state">Workflow state<select id="state" name="state">
         <option value="">All states</option>
@@ -100,7 +96,7 @@ try {
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/quarantine/inspections' : undefined}
-    note="Showing every inspection report in your authorized scope."
+    note={providerUnavailable ? undefined : `${total} inspection reports in your authorized scope.`}
   />
   {
     providerUnavailable ? (
@@ -109,7 +105,7 @@ try {
       <div class="table-wrap">
         <table>
           <caption>
-            {inspections.length} inspection report{inspections.length === 1 ? '' : 's'}
+            {total} inspection report{total === 1 ? '' : 's'}
             {hasFilters ? ' matching the current filters' : ''}
           </caption>
           <thead>
@@ -156,6 +152,7 @@ try {
       </section>
     )
   }
+  {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="inspection reports" />}
 </AppLayout>
 <style>
   .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.85rem}.page-head a,a{color:var(--color-accent-primary-hover)}.filters{display:flex;align-items:end;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select,button{min-height:var(--control-height);padding:.6rem .8rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}button{background:var(--color-accent-primary);border-color:var(--color-accent-primary);color:#fff;font-weight:700}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:760px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}.state{padding:.25rem .5rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:.75rem;font-weight:700}.empty{padding:3rem 1.5rem;text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}@media(max-width:650px){.page-head,.filters{display:grid}}
