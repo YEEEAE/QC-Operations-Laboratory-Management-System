@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-005 — تتبع المصادر العلمية</title>
+  <style>
+    :root{font:16px/1.65 system-ui,sans-serif;color:#17212b;background:#f5f7f8}body{max-width:1100px;margin:2rem auto;padding:0 1rem}header,section{background:#fff;border:1px solid #d5dde2;border-radius:8px;padding:1rem 1.25rem;margin:1rem 0}h1,h2{line-height:1.4}h1{font-size:1.6rem}h2{font-size:1.15rem}table{border-collapse:collapse;width:100%;margin:.75rem 0}th,td{text-align:right;vertical-align:top;border:1px solid #d5dde2;padding:.55rem}th{background:#edf2f4}code{direction:ltr;unicode-bidi:plaintext;overflow-wrap:anywhere}.blocked{color:#8b2d13;font-weight:700}.partial{color:#755400;font-weight:700}.pass{color:#17653a;font-weight:700}.small{font-size:.9rem;color:#40515e}ul{padding-inline-start:1.5rem}a{overflow-wrap:anywhere}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QC-LAUNCH-005 — سلسلة المصادر العلمية ومعايير القبول</h1>
+    <p><strong>الحالة العامة:</strong> <span class="blocked">BLOCKED / NO-GO</span> للمعيار <code>QC360-SC-02-02</code>. لم يعتمد مراجع مستقل أي نقاط.</p>
+    <p><strong>المرشح:</strong> <code>ef3e0defe7ef6f27d7fba7dc40fca241a5d59f09</code><br>
+      <strong>مرجع التدقيق:</strong> <code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> (سلف للمرشح).<br>
+      <strong>بصمة المصدر عند بدء التحقق:</strong> SHA-256 لشجرة نظيفة: <code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>.<br>
+      <strong>البيئة:</strong> Node 24.20.0 وpnpm 11.25.0 على macOS محلي؛ لم تُستخدم قاعدة بيانات أو بيانات إنتاج.<br>
+      <strong>وقت الرصد:</strong> 2026-10-09، 03:51:58 بتوقيت الرياض.</p>
+    <p class="small">أُنشئ التقرير وحزمة الأدلة بعد التحقق. لم يتغير كود المنتج. هذه الأدلة لا تعادل قبولًا مستقلًا أو UAT أو تحققًا على PostgreSQL ببيانات ممثلة أو قرار إطلاق إنتاجي.</p>
+  </header>
+
+  <section id="source-review">
+    <h2>سلسلة المصادر التي تمت مراجعتها</h2>
+    <table>
+      <thead><tr><th>المصدر</th><th>الدليل الدقيق</th><th>النتيجة والقرار</th></tr></thead>
+      <tbody>
+        <tr><td>السياسة الفنية للمختبر، الإصدار 1</td><td><a href="../../../Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md#L3-L15">Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md:3–15</a></td><td>تذكر السياسة صراحة أن الاعتماد العلمي والفعالية غير مثبتين، ولا تقدم حدودًا أو عوامل تحويل أو خطة قبول للعينات أو توقيعات QC أو طريقة مختبر فعّالة. مفردات التقييم عقد برمجي وليست سياسة طريقة معتمدة. <span class="blocked">SOURCE NOT AVAILABLE لمرجعية الطريقة.</span></td></tr>
+        <tr><td>متطلبات المختبر</td><td><a href="../../../Documents/REQUIREMENTS-TRACEABILITY.md#L709-L729">Documents/REQUIREMENTS-TRACEABILITY.md:709–729</a></td><td>المتطلبات REQ-LAB-002 وREQ-LAB-008 وREQ-LAB-011 وREQ-LAB-020 ما زالت SOURCE-DEPENDENT؛ ولا يجوز وضع حدود علمية افتراضية (REQ-LAB-003). توجد معرّفات ثابتة للمتطلبات، لكن لم يثبت الربط الكامل بين المنتج والطريقة وإصدار المصدر والقالب والقاعدة.</td></tr>
+        <tr><td>متطلبات التفتيش وحدود السياسة</td><td><a href="../../../Documents/REQUIREMENTS-TRACEABILITY.md#L689-L693">Documents/REQUIREMENTS-TRACEABILITY.md:689–693</a>؛ <a href="../../../Documents/REQUIREMENTS-TRACEABILITY.md#L1429-L1449">:1429–1449</a></td><td>المتطلبان REQ-INSP-004 وREQ-INSP-006 بحالة SOURCE-DEPENDENT. معايير القبول العلمي وقواعد أخذ العينات والدقة/التقريب محجوزة صراحة لمالكي السياسة. أبقِ القرار deny/HOLD حتى حسمها.</td></tr>
+        <tr><td>حراسة التقييم في المختبر</td><td><a href="../../../src/modules/laboratory/domain/controlled-evaluation.ts#L5-L58">src/modules/laboratory/domain/controlled-evaluation.ts:5–58</a></td><td>تشترط سياسة تجميع معلنة من الطريقة، وتطابق المصدر/الإصدار وبصمة المحتوى ووجود عينات؛ والنقص يؤدي إلى HOLD. هذا يثبت سلوكًا تقنيًا فقط ولا يثبت أصالة المصدر أو اعتماده.</td></tr>
+        <tr><td>حل المصدر المعتمد</td><td><a href="../../../src/modules/laboratory/infrastructure/postgres-controlled-sources.ts#L40-L79">src/modules/laboratory/infrastructure/postgres-controlled-sources.ts:40–79</a>؛ <a href="../../../src/modules/laboratory/infrastructure/postgres-controlled-sources.ts#L145-L157">:145–157</a></td><td>يشترط نسخة APPROVED ومرجع طريقة وبصمة محتوى ووثائق مرتبطة فعّالة ومعايير مكتملة، ثم يعيد حل المصدر قبل قبول التقييم. لم يُختبر مصدر معتمد ومعبأ ببيانات ممثلة.</td></tr>
+        <tr><td>حقول أخذ العينات في التفتيش</td><td><a href="../../../src/modules/quarantine/inspection/domain/inspection-aql.ts#L4-L10">src/modules/quarantine/inspection/domain/inspection-aql.ts:4–10</a>؛ <a href="../../../src/modules/quarantine/inspection/domain/inspection-aql.ts#L44-L66">:44–66</a></td><td>يدخل المستخدم حقائق AQL والعينة من مصدر معتمد؛ التطبيق لا يحسب خطة AQL. يُفحص وجود مرجع المصدر شكليًا، لكن لا يتحقق من كونه مرخصًا أو معتمدًا للاستخدام.</td></tr>
+        <tr><td>حل قالب التفتيش</td><td><a href="../../../src/modules/quarantine/inspection/application/resolve-inspection-template.ts#L35-L71">src/modules/quarantine/inspection/application/resolve-inspection-template.ts:35–71</a></td><td>يتحقق من اعتماد وفعالية نسخة القالب ومن نشاط الربط والفهرس وتطابق المراجعة. هذه الشروط تثبت اتساق الحالة داخل النظام، ولا تثبت بند ISO حاكمًا أو صفحة مرخصة أو طريقة علمية أو معتمدًا مسؤولًا.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>حزمة WI/SOP:</strong> لم نعدل الملفات المضبوطة. لم يظهر في سلسلة المصادر التي راجعناها ربط علمي بين الملفات والمنتجات أو فهرس صفحات ISO المرخصة. على الملاك تحديد الطريقة والمصدر لكل حالة منطبقة؛ وعدم وجود ربط موثق لا يثبت عدم وجود مصدر.</p>
+    <p><strong>قبل / بعد:</strong> لم يتغير الكود أو جدول المتطلبات أو السياسة الفنية أو WI/SOP. قبل المهمة لم تكن هناك سلسلة مصادر فعّالة كاملة مثبتة. بعدها أضافت هذه الحزمة العوائق وطلب القرار، بينما بقيت فجوة الصلاحية العلمية مفتوحة.</p>
+  </section>
+
+  <section>
+    <h2>حالة المتطلبات</h2>
+    <table><thead><tr><th>المعرّف الثابت</th><th>الحالة المرصودة</th><th>العائق / المالك</th></tr></thead><tbody>
+      <tr><td><code>QC360-SC-02-02</code></td><td class="blocked">BLOCKED; SOURCE_ONLY</td><td>لا يوجد ربط كامل ومقبول مستقلًا بين المصدر والقاعدة والقالب والسجل والتدقيق. الملاك: QC Technical Authority وLaboratory Method Owner ومراقبة وثائق QMS.</td></tr>
+      <tr><td><code>REQ-LAB-002 / 008 / 011 / 020</code></td><td class="blocked">SOURCE-DEPENDENT</td><td>يلزم ربط الطرق ومتطلبات البيئة والمعدات والإصدارات الفعّالة والمعايير والوحدات وسجلات الاعتماد بمصادر معتمدة.</td></tr>
+      <tr><td><code>REQ-INSP-004 / 006</code></td><td class="blocked">SOURCE-DEPENDENT</td><td>معايير القبول والقواعد الحتمية تحتاج مصادر معتمدة وفعّالة.</td></tr>
+      <tr><td><code>REQ-LAB-003 / 005 / 006 / 010 / 012 / 013</code></td><td class="partial">العقود التقنية موجودة؛ الاعتماد والتشغيل غير مثبتين</td><td>احتفظ بالقياسات الخام والوحدات والسياق المجمد ولقطات المعايرة. لا تعتبر هذه الضوابط اعتمادًا للطريقة.</td></tr>
+    </tbody></table>
+  </section>
+
+  <section>
+    <h2>مراجعة الأثر المطلوبة</h2>
+    <ul>
+      <li><strong>تغيير إصدار مصدر معتمد:</strong> تحقق من الإصدار الفعّال ومراجعات الوثائق المرتبطة وبصمات محتواها والسياق المجمد للاختبار وأثر التغيير على القرارات المعلقة. يقارن الكود الحالي المصدر بعد إعادة حله قبل التقييم.</li>
+      <li><strong>وحدة غير صالحة أو خارج النطاق:</strong> تُرفض الصيغة غير الصالحة والتحويلات غير المدعومة تقنيًا. أما نطاق الطريقة ودقتها وتقريبها فتحتاج قرار مالك المصدر.</li>
+      <li><strong>استبدال WI:</strong> حدّد السلوك عند الاستخدام الفعلي والعمل المفتوح المتأثر ومعاملة السجلات التاريخية وفق سياسة الوثائق المضبوطة؛ لا تستنتج ذلك من حالة APPROVED وحدها.</li>
+      <li><strong>انتهاء معايرة معدة:</strong> حدّد الانطباق وسلوك المنع أو HOLD مع مالك الطريقة وسياسة المعايرة، مع إبقاء لقطة المعايرة المسجلة في العمل التاريخي.</li>
+    </ul>
+    <p>هذه أسئلة أثر ليحسمها الملاك، وليست قرارات سياسة جديدة.</p>
+  </section>
+
+  <section>
+    <h2>أدلة التحقق</h2>
+    <table><thead><tr><th>الأمر</th><th>النتيجة</th><th>السجل الأصلي وبصمة SHA-256</th></tr></thead><tbody>
+      <tr><td><code>pnpm requirements:check</code></td><td class="blocked">رمز الخروج 1 — مصفوفة إغلاق السياسات المطلوبة غير موجودة (ENOENT: audit/100-percent/POLICY-CLOSURE-MATRIX.md)</td><td><code>logs/requirements-check.log</code><br><code>dd4399b804060ad7f751b88c9f3cc11fecf69a649685e7a4ce6ccd4385131466</code></td></tr>
+      <tr><td><code>pnpm test:unit</code></td><td class="blocked">رمز الخروج 1 — نجح 1370 وفشل 12 من أصل 1382 عبر 5 مجموعات: اختبار نموذج الاستعادة (توقع نصي غير مطابق، 1)؛ مصالحة المتطلبات (المصفوفة مفقودة، 2)؛ مدقق UAT (السكربت مفقود، 6)؛ قبول المسارات (ملف تدقيق تاريخي مفقود، 2)؛ سلامة التغييرات (توقع خط أساس no-JS غير مطابق، 1).</td><td><code>logs/unit-test.log</code><br><code>d69a535d4ac4fe2ba9f66031f424cd9b0c2206432bc7d6231a034b0178603fb7</code></td></tr>
+    </tbody></table>
+    <p>نجحت مجموعتا اختبارات الحراسة الاصطناعية للحوكمة العلمية للمختبر والعلم المضبوط. هذا لا يثبت أصالة المصادر أو تواريخ فعاليتها أو تغطية المنتجات أو سلوك PostgreSQL أو قبول المستخدم أو الجاهزية للإطلاق.</p>
+  </section>
+
+  <section>
+    <h2>القرار والنقاط والمعالجة</h2>
+    <p><strong>القرار:</strong> أبقِ السلوك مانعًا عند غياب المصدر. سجّل الطرق والمعايير غير المحسومة `SOURCE NOT AVAILABLE`، والتعارضات مثل AQL/S2 أو اختلاف العنوان/المراجعة `NEEDS SOURCE DECISION`. لا تصدر PASS/FAIL رسميًا بلا مصدر داعم.</p>
+    <p><strong>النقاط:</strong> صفر نقاط مثبتة ومقبولة. قيمة 1.80 مستهدفة فقط؛ ولم يصل قرار المراجع المستقل.</p>
+    <p><strong>الملاك التاليون:</strong> يقدّم QC Technical Authority وLaboratory Method Owner مصادر كل منتج وقرارات الأثر؛ وتتحقق مراقبة وثائق QMS من الاعتماد والفعالية؛ ثم يربط مالك البرمجيات المعرّفات المقبولة بالقوالب والقواعد والسجلات والتدقيق. بعد ذلك يراجع المراجع المستقل الأدلة على مرشح متحقق منه حديثًا.</p>
+    <p><strong>المخاطر المتبقية:</strong> لم تثبت معايير القبول العلمي للمنتجات والقوالب المنطبقة. لم تُنفذ مراجعة PostgreSQL/التشغيل أو UAT. لا يوجد ما يدعم قرار GO للإنتاج.</p>
+    <p><strong>التوقيع:</strong> سجل منفذ التحقق المحلي مراجعة المصادر التقنية. توقيع مالك QC/QMS ومراجعة rubric المستقلة: <span class="blocked">غير متوفرين.</span></p>
+    <p><a href="patch-or-decision-plan.md">طلب قرار المصادر المضبوطة وخطة التراجع</a> · <a href="evidence.json">ملف الأدلة القابل للمعالجة آليًا</a></p>
+  </section>
+</body>
+</html>

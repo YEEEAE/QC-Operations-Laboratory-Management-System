@@ -1,0 +1,91 @@
+{
+  "taskId": "QC-LAUNCH-005",
+  "criterionId": "QC360-SC-02-02",
+  "criterion": "تتبّع كل متطلب قبول منطبق إلى مصدره المعتمد وطريقته وإصداره الفعّال وقاعدة التطبيق والسجل والصلاحية ودليل التدقيق، أو تسجيل عائق مصدر صريح.",
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "auditReferenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "sourceRevision": "ef3e0defe7ef6f27d7fba7dc40fca241a5d59f09",
+    "referenceIsAncestor": true,
+    "workingTreeFingerprintAtVerificationStart": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fingerprintMeaning": "بصمة SHA-256 لفارق شجرة المصدر النظيفة عند بدء التحقق؛ أُنشئت حزمة الأدلة بعد الأوامر ولم يتغير أي مصدر ضمن النطاق."
+  },
+  "environment": {
+    "node": "24.20.0",
+    "pnpm": "11.25.0",
+    "os": "مساحة عمل محلية على macOS",
+    "database": "NOT USED",
+    "dataset": "لا توجد؛ لم يقدم في هذه المهمة دليل مصدر معبأ لمنتج أو قالب",
+    "actorRole": "منفذ تحقق محلي؛ لم يدّعِ أي دور اعتماد في QC",
+    "verificationRunId": "baf14b59-58d6-4c6e-90f1-7355084e2ae9"
+  },
+  "observedAt": "2026-10-09T03:51:58+03:00",
+  "decisions": [
+    {
+      "id": "DEC-005-01",
+      "status": "BLOCKED",
+      "decision": "السياسة الفنية لا تثبت اعتماد المصدر العلمي أو فعاليته؛ ولم تُحدد حدود قبول أو قواعد AQL.",
+      "owners": ["الجهة الفنية المسؤولة عن QC", "مالك طريقة المختبر", "مراقبة وثائق QMS"],
+      "evidence": [
+        { "uri": "Documents/QC360-LABORATORY-TECHNICAL-POLICY-2026-10-08.md#L3-L5", "digest": "sha256:3f17142bf53f35c0973e73784d319131e5016430b84b3228313cc9bcb9d2d40b", "kind": "controlled-repository-source" },
+        { "uri": "Documents/REQUIREMENTS-TRACEABILITY.md#L710-L728", "digest": "sha256:33534685f8b7515546cca62630ba56ac28fdfed541e2e88130ec90fbeccf56bb", "kind": "requirements-source" },
+        { "uri": "Documents/REQUIREMENTS-TRACEABILITY.md#L1429-L1449", "digest": "sha256:33534685f8b7515546cca62630ba56ac28fdfed541e2e88130ec90fbeccf56bb", "kind": "policy-boundary-source" }
+      ]
+    },
+    {
+      "id": "DEC-005-02",
+      "status": "PARTIAL",
+      "decision": "يتضمن الكود تقييمًا مرتبطًا بالمصدر وحواجز تمنع المتابعة عند النقص، كما أن قيم AQL في التفتيش يدخلها المشغل؛ لكن هذه الضوابط التقنية لا تثبت الصلاحية العلمية.",
+      "owners": ["الجهة الفنية المسؤولة عن QC", "مالك طريقة المختبر"],
+      "evidence": [
+        { "uri": "src/modules/laboratory/domain/controlled-evaluation.ts#L5-L58", "digest": "sha256:fa8b6d4a091e3891d965060f30c189c32d31d398781c6e63002402a13f421e36", "kind": "source-review" },
+        { "uri": "src/modules/laboratory/infrastructure/postgres-controlled-sources.ts#L40-L79", "digest": "sha256:d32b8c6bd921cfc31bdc4b0664fa31a106900816f427bed3e372f27ab22957e0", "kind": "source-review" },
+        { "uri": "src/modules/quarantine/inspection/domain/inspection-aql.ts#L4-L10", "digest": "sha256:2f1ea64bf1295aa35f4092b8bab4288a2d213163aac38f02516f14a734b5aad5", "kind": "source-review" }
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "criterionId": "QC360-SC-02-02",
+      "expectedOutcome": "لكل طريقة أو قالب منطبق تتبع لمصدر معتمد أو عائق مصدر صريح بمالك مسمى؛ وتبقى PASS/FAIL غير المدعومة ممنوعة.",
+      "testKind": "أمر مصالحة المتطلبات",
+      "command": "pnpm requirements:check",
+      "exitCode": 1,
+      "logUri": "audit/launch-readiness/QC-LAUNCH-005/logs/requirements-check.log",
+      "logSha256": "dd4399b804060ad7f751b88c9f3cc11fecf69a649685e7a4ce6ccd4385131466",
+      "result": "BLOCKED",
+      "detail": "تعذر على الفاحص قراءة audit/100-percent/POLICY-CLOSURE-MATRIX.md بسبب ENOENT (الملف غير موجود)."
+    },
+    {
+      "criterionId": "QC360-SC-02-02",
+      "expectedOutcome": "التحقق باختبارات الوحدة من سلوك منع التقييم العلمي عند غياب المصدر، على إصدار Node المعتمد.",
+      "testKind": "أمر اختبارات الوحدة",
+      "command": "pnpm test:unit",
+      "exitCode": 1,
+      "logUri": "audit/launch-readiness/QC-LAUNCH-005/logs/unit-test.log",
+      "logSha256": "d69a535d4ac4fe2ba9f66031f424cd9b0c2206432bc7d6231a034b0178603fb7",
+      "result": "FAIL",
+      "detail": "نجح 1370 وفشل 12 من أصل 1382، عبر 5 مجموعات اختبارات: اختبار نموذج الاستعادة 1 بسبب توقع نصي غير مطابق؛ مصالحة المتطلبات 2 بسبب مصفوفة مفقودة؛ مدقق UAT عدد 6 بسبب سكربت مفقود؛ قبول المسارات 2 بسبب ملف تدقيق تاريخي مفقود؛ وسلامة التغييرات 1 بسبب عدم تطابق توقع خط أساس no-JS. اختبارات الحراسة العلمية اصطناعية؛ والمجموعة الكاملة لم تنجح."
+    },
+    {
+      "criterionId": "QC360-SC-02-02-SOURCE-REVIEW",
+      "expectedOutcome": "تحدد الشيفرة والمتطلبات الحالية متطلبات المصدر والفعالية وتحافظ على المنع عند غيابها.",
+      "testKind": "مراجعة مصادر للقراءة فقط",
+      "command": "nl -ba / بحث rg موجه في ملفات المصدر المحددة ضمن النطاق",
+      "exitCode": 0,
+      "logUri": "execution-report.html#source-review",
+      "logSha256": "sha256:3f17142bf53f35c0973e73784d319131e5016430b84b3228313cc9bcb9d2d40b; sha256:33534685f8b7515546cca62630ba56ac28fdfed541e2e88130ec90fbeccf56bb; sha256:fa8b6d4a091e3891d965060f30c189c32d31d398781c6e63002402a13f421e36; sha256:d32b8c6bd921cfc31bdc4b0664fa31a106900816f427bed3e372f27ab22957e0; sha256:2f1ea64bf1295aa35f4092b8bab4288a2d213163aac38f02516f14a734b5aad5",
+      "result": "PARTIAL",
+      "detail": "تؤكد مراجعة المصدر غياب إثبات صلاحية الطريقة وفعاليتها للقبول العلمي ضمن النطاق؛ ولا تثبت مصادر كل منتج أو صفحات المعايير المرخصة أو ربط القوالب الحية."
+    }
+  ],
+  "rubric": {
+    "targetPoints": 1.8,
+    "independentReviewer": "غير مقدم",
+    "acceptedVerifiedPoints": 0,
+    "status": "NOT ACCEPTED"
+  },
+  "remoteChanges": false,
+  "controlledDocumentsChanged": false,
+  "productionDatabaseAccess": false
+}
