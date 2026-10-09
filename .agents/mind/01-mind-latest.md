@@ -1,3 +1,13 @@
+- **2026-10-09 — WI-FRS-100 / تعليمة عمل موحّدة لـSOP-FRS-001**
+  - Changed: أُنشئت `WI-FRS-100-Document-Control-and-Sources.docx` (كود مرشّح) في `WIs/review-drafts/` بنفس قالب WI-FRS-001–005 وترويسته/تذييله؛ تغطي كامل دورة SOP-FRS-001 (استلام المصادر → الإعداد/ربط المصدر → المراجعة → الاعتماد بالتوقيع → التفعيل → التوزيع/التغيير/السحب) في 6 مراحل/21 خطوة، وتفصل المنفّذ عن المحجوب (POLICY_SOURCE_REQUIRED؛ MAKE_EFFECTIVE/ARCHIVE غير موصولين؛ Supersede deny-by-default). لم يُعدّل SOP-FRS-001 ولا الخمس. المراجع المسمّاة R1–R3 موثّقة كغير متاحة في شجرة Documents الحالية بلا بصمة حالية.
+  - Evidence: فحص zip/بنية PASS؛ 6 جداول بعناوين/صفوف صحيحة؛ الترويسة والتذييل يحملان WI-FRS-100؛ 10 أقسام؛ بصمات المصادر الحالية محسوبة (SOP + WI-FRS-001–005 + 11 ملف تنفيذ). لا PostgreSQL/متصفح/UAT.
+  - State: DONE (تأليف مسودة فقط)؛ اعتماد/فعالية غير مسجّلين، وكود WI-FRS-100 مرشّح بانتظار تعيين المالك.
+  - Key files: `Documents/QC_System_WI_SOP_Pack/WIs/review-drafts/WI-FRS-100-Document-Control-and-Sources.docx`.
+- **2026-10-09 — OPENCODE-STITCH-MCP-FIX / تصحيح موضع إعداد Stitch**
+  - Changed: إعداد Stitch remote MCP كان موضوعًا بالخطأ تحت مفتاح `agent` في `.opencode/opencode.json` فلم يُسجَّل كخادم MCP. نُقل إلى مفتاح `mcp` الأعلى مستوى بنفس الرأس `Authorization: Bearer {env:STITCH_API_KEY}`؛ المفتاح باقٍ في `.env` وغير محفوظ في الإعدادات.
+  - Evidence: `node` parse OK و`git diff` يظهر نقل الكتلة فقط؛ استدعاء MCP `initialize` مباشرة مقابل `https://stitch.googleapis.com/mcp` بمفتاح `.env` رجع HTTP 200. داخل جلسة opencode الحالية لا يزال الاتصال فاشلًا لأن `STITCH_API_KEY` غير مُصدَّر لبيئة العملية → `Incompatible auth server`. يحتاج إعادة تشغيل opencode مع تصدير المتغير.
+  - State: PARTIAL (الإعداد صحيح؛ الاتصال ينتظر إعادة التشغيل). لا commit/push.
+  - Key files: `.opencode/opencode.json`.
 - **2026-10-09 — SOP-FRS-011 / Workspace Tools**
   - Changed: مسودة Word D0.1 بنفس قالب FRS والأقسام السبعة والدليل البصري؛ تغطي Notifications/Search/Account settings/Operating guides، فصل القراءة عن إنجاز العمل وسلطة القرار، وأثر تغيير كلمة المرور على الجلسات.
   - Evidence: قراءة حية مصادقة بحساب yazeed للصفحات الأربع والتنقل وUnread وبحث غير سري (0 نتائج)؛ الإشعارات فارغة. حفظ أجزاء القالب وفحص البنية ومراجعة عرض 10 صفحات PASS؛ mark-read/password/logout/print/populated paging/UAT NOT RUN. ملخص help لا يذكر توقيع المرحلة الأولى صراحةً؛ المستند يحيل للسياسة ومسار الدومين الحاليين، deployed-artifact parity NOT VERIFIED.
