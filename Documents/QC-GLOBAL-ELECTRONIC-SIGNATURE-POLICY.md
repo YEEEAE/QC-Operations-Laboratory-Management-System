@@ -4,6 +4,17 @@
 **Policy Status:** Owner-Approved Functional Requirement  
 **Scope:** Entire System — All Modules and Controlled Workflows
 
+> **Repository reference.** Registered in `Documents/DOCUMENTATION-INVENTORY.md`. This
+> is the canonical text of the owner-supplied global electronic-signature and approval
+> policy. It is an owner-approved functional requirement. It is **not yet** a revisioned
+> or effective controlled QMS policy: the action × subject × state × signer ×
+> signature-meaning × policy-version map, the controlled revision and effective date, and
+> the independent QMS/Security/Release disposition remain open. Keep unmapped actions
+> fail-closed; do not implement code, permissions or migrations from this text alone.
+> Related: `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (the P-05
+> account-bound approval decision) and the reconciliation artifact
+> `audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md`.
+
 ### 1. Global Electronic Signature Requirement
 
 The system shall implement a centralized, reusable Electronic Signature and Approval Engine applicable to **all system modules, records, documents, and workflows that require formal authorization, approval, verification, closure, or controlled decision-making**.

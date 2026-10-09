@@ -1,3 +1,8 @@
+- **2026-10-09 — DOC-ESIG-001 / تسجيل سياسة التوقيع الإلكتروني كمستند مرجعي**
+  - Changed: نُقلت السياسة الموردة من المالك من جذر المستودع (`سياسة وصلاحيات.md`) إلى `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (rename يحفظ السجل)، وأُضيف رأس مرجعي يصرّح بحالة السلطة، وسُجّلت في `Documents/DOCUMENTATION-INVENTORY.md` و`Documents/README.md` وأُدرجت في مراجع الـMind. لا تغيير كود/صلاحيات/migrations.
+  - Evidence: المحتوى محفوظ كما هو (SHA-256 الأصلي `f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08`)؛ `git status` يظهر rename فقط بلا تعديل محتوى دلالي.
+  - State: DONE (توثيق فقط)؛ فعالية السياسة وخريطة action×signer/effectivity تبقى مفتوحة fail-closed.
+  - Key files: `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md`, `Documents/DOCUMENTATION-INVENTORY.md`, `Documents/README.md`.
 - **2026-10-09 — QC-LAUNCH-013 / human audit-signature acceptance:** Candidate `1289f44c3aff68fc2f77e5b8063a961a49a77fd1`, 9 commits beyond reference; scoped product diff empty. Source review only; no human/browser/PG18 execution, named acceptance authority or effective action-specific signature policy. `QC360-SC-03-05` remains NOT_TESTED, accepted points 0; packet `audit/launch-readiness/QC-LAUNCH-013/`. State BLOCKED.
 - **2026-10-09 — QC-LAUNCH-012 / audit atomicity and rollback:** current candidate `acf7b5a74ab62845f95f1134e61f34d72f7c5fb3`, eight commits beyond audit reference, clean product source at test freeze. Production action factories source-bind audit/outbox within mutation transactions; audit update/delete guards are in 0028 and truncate guards in 0033. Required commands: integration 316 PASS/2 FAIL/294 skipped; migrations 33 skipped; concurrency 17 skipped because Docker/Testcontainers is unavailable. QC360-SC-03-03 and 03-04 remain BLOCKED / 0 accepted points; no source patch, independent reviewer unavailable. Packet `audit/launch-readiness/QC-LAUNCH-012/`.
 - **2026-10-09 — QC-LAUNCH-010 / global e-signature policy:** at its candidate `f9409b298fadb2270f28e8658ab39740db4b4e61`, seven commits beyond audit reference; source fingerprint `e3b0c442…`. No QMS-approved revisioned/effective action map was available, so generic approval signature policy remains UNRESOLVED and fail-closed; no code or controlled source changed. Unit 1371/1383 PASS (12 FAIL); integration 316 PASS/2 FAIL/294 skipped with missing PG18 runtime; security 36 PASS/1 skipped and two suites blocked. QC360-SC-04-02 remains VERIFIED_FAIL, 0 accepted points, independent review unavailable. Packet `audit/launch-readiness/QC-LAUNCH-010/`. State BLOCKED.
@@ -110,7 +115,7 @@
 - الـowner control center يستدعي `GetControlCenterOverviewUseCase` (بوابة `isNamedSystemOwner`) ولا ينفّذ SQL أو منطق أعمال؛ الإنشاء/التعديل/الأدوار/النطاقات تمر عبر الـuse cases وactions القائمة نفسها.
 
 ### P-05 authority
-- **2026-10-05 current owner change:** every in-system approval, including Supervisor inspection/lab stage 1, requires a formal account-bound electronic signature with fresh reauthentication and version/action binding. This working tree implements the stage-one inspection/lab slice; broader action applicability remains open and requires the owner-specified action × subject × state × signer × signature-meaning × evidence mapping. Canonical source: `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (not the historical `audit/` path).
+- **2026-10-05 current owner change:** every in-system approval, including Supervisor inspection/lab stage 1, requires a formal account-bound electronic signature with fresh reauthentication and version/action binding. This working tree implements the stage-one inspection/lab slice; broader action applicability remains open and requires the owner-specified action × subject × state × signer × signature-meaning × evidence mapping. Canonical sources: `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (the account-bound approval decision; not the historical `audit/` path) and the registered owner-supplied policy text `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (owner-approved functional requirement; revision/effectivity and per-action signer map still open).
 - OD-2026-09-23-RBAC-01 يحسم مسار التفتيش/المختبر: Supervisor وحده بصفة الدور يمنح المرحلة الأولى؛ QCM/MANAGER نهائي فقط؛ المالك المسمى يبقى استثناءً صريحًا داخل use case. أدلة الوحدة PASS، لكن التحقق على PostgreSQL 18 ما زال BLOCKED.
 - QC 01/02/03 يستخدمون EMPLOYEE bundle واحدًا لأسطح الإنشاء الـ12؛ لا مراجعة/إرجاع/اعتماد/توقيع/إغلاق/تجاوز. لم تُنشأ حسابات UAT لأن PostgreSQL المعزولة غير متاحة.
 - أدلة UAT تُسجل عبر authenticated actions مع participant login/role matching، وتكتب مع audit داخل transaction؛ PostgreSQL write/read round-trip لم يُتحقق.
@@ -320,6 +325,8 @@
 - `Documents/STATE-MACHINES.md`
 - `Documents/ROLE-MATRIX.md`
 - `Documents/PERMISSION-MATRIX.md`
+- `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (owner-approved functional requirement; not yet revisioned/effective QMS policy)
+- `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md`
 - `Documents/REQUIREMENTS-TRACEABILITY.md`
 - `Documents/DATA-MODEL.md`
 - `Documents/UI-UX-SPECIFICATION.md`

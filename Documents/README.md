@@ -18,6 +18,7 @@
 | **التصميم المعماري** (البنية، الطبقات، الأخطاء، المراقبة) | `ARCHITECTURE-SPECIFICATION.md`, `DATABASE-ARCHITECTURE.md`, `DEPLOYMENT-ARCHITECTURE.md`, `ERROR-ARCHITECTURE.md`, `OBSERVABILITY-ARCHITECTURE.md`, `SECURITY-ARCHITECTURE.md`, `THREAT-MODEL-030.md` |
 | **الواجهة والتجربة** | `DESIGN-SYSTEM.md`, `UI-UX-SPECIFICATION.md`, `UX-WRITING-GUIDE.md`, `AUTHORIZATION-VISIBILITY-DECISION.md` |
 | **الصلاحيات والأدوار** (من يفعل ماذا) | `ROLE-MATRIX.md`, `PERMISSION-MATRIX.md`, `AUTHORIZATION-VISIBILITY-DECISION.md` — مع `ROUTE-MATRIX.md` و`ROUTE-MANIFEST-SPECIFICATION.md` لربط المسارات بالأدوار |
+| **التوقيع الإلكتروني والاعتمادات** | `QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (متطلب وظيفي معتمد من المالك؛ لا يزال revision/effectivity وخريطة action×signer مفتوحة), `QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (قرار P-05 للاعتماد المرتبط بالحساب) |
 | **الرفض (Reject)** (سير عمل الرفض وتقاريره) | `REJECT-REPORTS.md`, `STATE-MACHINES.md` |
 | **التخطيط والحوكمة** (المتطلبات، المخاطر، الاستعداد) | `REQUIREMENTS-TRACEABILITY.md`, `UAT-ACCEPTANCE-PLAN.md`, `RISK-REGISTER.md`, `PRODUCTION-READINESS-CHECKLIST.md`, `PRODUCT-ANALYTICS-MEASUREMENT-PLAN.md`, `QC-SYSTEM-DESIGN-CONSTITUTION.md` |
 | **التوسعة** (كيف تضيف ميزة/مسار/جدول) | `EXTENDING-THE-SYSTEM.md`, `ROUTE-MATRIX.md`, `db/migrations/README.md` |
