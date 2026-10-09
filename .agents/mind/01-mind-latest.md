@@ -1,3 +1,48 @@
+- **2026-10-09 — SOP-FRS-011 / Workspace Tools**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS والأقسام السبعة والدليل البصري؛ تغطي Notifications/Search/Account settings/Operating guides، فصل القراءة عن إنجاز العمل وسلطة القرار، وأثر تغيير كلمة المرور على الجلسات.
+  - Evidence: قراءة حية مصادقة بحساب yazeed للصفحات الأربع والتنقل وUnread وبحث غير سري (0 نتائج)؛ الإشعارات فارغة. حفظ أجزاء القالب وفحص البنية ومراجعة عرض 10 صفحات PASS؛ mark-read/password/logout/print/populated paging/UAT NOT RUN. ملخص help لا يذكر توقيع المرحلة الأولى صراحةً؛ المستند يحيل للسياسة ومسار الدومين الحاليين، deployed-artifact parity NOT VERIFIED.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-011-D0.1-Workspace-Tools.docx`.
+- **2026-10-09 — SOP-FRS-010 / System pages**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS والأقسام السبعة والدليل البصري؛ تغطي صفحات System الخمس، وفصل connectivity/identity/QC acceptance وPLANNED restore/review/approval/effectivity.
+  - Evidence: قراءة حية مصادقة بحساب yazeed للصفحات الخمس ونموذج مستند بلا حفظ؛ 4 أحداث، حساب واحد، backup/documents فارغان؛ READY connectivity مع QC BLOCKED و0045 applied/0047 shipped. بنية القالب ومراجعة عرض 12 صفحة PASS؛ mutations/restore/signatures/UAT NOT RUN، independent deployed-artifact parity NOT VERIFIED.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-010-D0.1-System-Pages.docx`.
+- **2026-10-09 — SOP-FRS-009 / Administration pages**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS والأقسام السبعة والدليل البصري؛ تغطي Users/Roles/Permissions/Scopes، فصل عضوية الدور عن منح الصلاحيات وحماية الذات/المالك ومعالجة stale/unknown.
+  - Evidence: قراءة حية مصادقة بحساب yazeed للصفحات الخمس والإنشاء وتفاصيل المالك/Admin بلا تغيير؛ حساب واحد و5 أدوار. حفظ أجزاء القالب ومراجعة 10 صفحات PASS؛ عمليات الحساب والمنح والجلسات وكلمات المرور/UAT NOT RUN، deployed-source parity NOT VERIFIED.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-009-D0.1-Administration-Pages.docx`.
+- **2026-10-09 — SOP-FRS-008 / Insights pages**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS والأقسام السبعة والدليل البصري؛ تغطي Reports وAI advisory، نطاق OWN ونسخ التقارير المعلوماتية وتحقق snapshot، وخطوات AI المشروطة بسياسة المعالجة والموافقة لكل طلب.
+  - Evidence: قراءة حية مصادقة بحساب yazeed؛ تقرير واحد و0 صفوف مصرح بها، وإرسال AI معطل لغياب السياسة/الموافقة والإعدادات. حفظ أجزاء القالب ومراجعة عرض Word؛ تنزيلات CSV/XLSX والطباعة والاستجابات الحية/UAT NOT RUN، deployed-source parity NOT VERIFIED.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-008-D0.1-Insights-Pages.docx`.
+- **2026-10-09 — SOP-FRS-007 / Governance pages**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS والأقسام السبعة والدليل البصري؛ تغطي My approval queue وChange requests وفصل التوقيع/القرار/التطبيق/فعالية الوثيقة، وتوضح غياب أزرار submit/edit/resume/cancel في تفاصيل طلب التغيير المحلية.
+  - Evidence: قراءة حية مصادقة بحساب yazeed للسجلين ونموذج الإنشاء بلا حفظ؛ قائمة الاعتمادات 0 وسجل التغيير فارغ ولا نسخ مستندات للاختيار. حفظ أجزاء القالب ومراجعة عرض 9 صفحات PASS؛ إجراءات السجلات والتواقيع والتطبيق/UAT NOT RUN، deployed-source parity NOT VERIFIED.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-007-D0.1-Governance-Pages.docx`.
+- **2026-10-09 — SOP-FRS-006 / Assets pages**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS وسبعة أقسام ودليل بصري؛ تغطي Equipment/Calibration records/Maintenance وخطوات التشغيل وحدود activation/Current/return-to-service والتوقيع غير المنفذ للمعايرة.
+  - Evidence: قراءة حية مصادقة بحساب yazeed لـAssets والسجلات الثلاثة ونماذج الإنشاء بلا حفظ؛ السجلات 0 ولا معدات للاختيار. حفظ بنية القالب وفحص XML ومراجعة عرض 8 صفحات PASS؛ populated actions/signatures/UAT NOT RUN، deployed-source parity NOT VERIFIED.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-006-D0.1-Assets-Pages.docx`.
+- **2026-10-09 — SOP-FRS-005 / Laboratory tests**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS؛ اختار المالك 005 مستقلًا وحفظ 004 لـQuarantine. تغطي السجل والقياسات والمراجعة والتوقيع ومسودات النسخ المنفصلة.
+  - Evidence: قراءة حية مصادقة للسجل والإنشاء ونسخ التقرير بلا حفظ؛ 0 اختبارات ولا قوالب معتمدة. بنية القالب ومراجعة 7 صفحات PASS؛ الإجراءات والتوقيع NOT RUN. غياب sample/run setup وBegin review/Resume في صفحات المصدر موضح بالمستند.
+  - State: DONE (تأليف مسودة؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-005-D0.1-Laboratory-Tests.docx`.
+- **2026-10-09 — SOP-FRS-004 / صفحات Quarantine**
+  - Changed: مسودة Word D0.1 بنفس قالب FRS الحالي، تغطي dashboard/receiving/inspections/admin وخطوات التشغيل وفصل PASS عن RELEASED وحدود المصدر والتنقل والتوقيع.
+  - Evidence: قراءة حية مصادقة بحساب yazeed للصفحات الأربع ونموذج الاستلام بلا حفظ؛ سجلات فارغة وكتالوج غير متاح. تحقق بنية القالب ومراجعة 9 صفحات Word؛ الإجراءات والتواقيع والإفراج NOT RUN. مراجع سياسة التوقيع المسماة سابقًا غير موجودة في شجرة Documents المعاد إنشاؤها؛ لا تعتبرها مصادر متاحة دون استرجاعها.
+  - State: DONE (تأليف مسودة فقط؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-004-D0.1-Quarantine-Pages.docx`.
+- **2026-10-09 — SOP-FRS-003 / صفحات Quality**
+  - Changed: مسودة Word D0.1 تغطي Findings/NCR/RCA/CAPA/Reject Reports بنفس قالب SOP-FRS-002، مع خطوات التشغيل وحدود PD-15–18 وP-04 وفصل نوعي تقارير الرفض.
+  - Evidence: قراءة حية مصادقة بحساب yazeed للصفحات الخمس (سجلات فارغة، فلاتر ورسائل السياسة)؛ مراجعة المصدر وتصميم Word في 7 صفحات. لا إنشاء/تعديل/اعتماد سجلات؛ التفاصيل الممتلئة ومراسم التوقيع NOT RUN.
+  - State: DONE (تأليف مسودة فقط؛ approval/effectivity غير مسجلين).
+  - Key files: `Documents/QC_System_WI_SOP_Pack/SOPs/review-drafts/SOP-FRS-003-D0.1-Quality-Pages.docx`.
 - **2026-10-09 — GIT-PUSH-FIX / إزالة PDF عملاق من commitين محليين**
   - Changed: فشل `git push` (HTTP 408، pack ~430MB) سببه `audit/Wi.pdf` (206MB) و`audit/Wi2.pdf` (219MB) داخل commit المحلي `1455ab54` — يتجاوزان حد GitHub الفعلي 100MB. أُعيدت كتابة commitين محليين فقط (جديدًا `00b91558` + `70c7b725`) بإزالتهما، وأُضيف `audit/*.pdf` إلى `.gitignore`؛ الملفان باقين على القرص.
   - Evidence: نطاق `origin/main..HEAD` = 64 blobs / 17.2MB، لا blob >5MB، لا PDF في `audit/` متتبّع.
