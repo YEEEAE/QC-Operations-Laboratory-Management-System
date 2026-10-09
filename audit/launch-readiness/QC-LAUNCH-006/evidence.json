@@ -1,0 +1,167 @@
+{
+  "taskId": "QC-LAUNCH-006",
+  "status": "PARTIAL_BLOCKED",
+  "acceptedPoints": 0,
+  "targetedPoints": 6.6,
+  "independentRubricReviewer": "NOT AVAILABLE",
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "referenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "sourceRevision": "b3db4d91ca2483e8fcdc908e581409474b62d4f9",
+    "branch": "main",
+    "commitsAfterReference": 5,
+    "workingTreeFingerprintAtVerification": "6c95a9fb2bd55f791d1bbbed5636009956781881929041e8852273e22c04695d",
+    "fingerprintMeaning": "SHA-256 source fingerprint produced by scripts/verification/evidence-identity.mjs after the two scoped code/test changes and before this audit packet and Mind ledger entry were added",
+    "migrationHead": "0047_task_references_occurrences.sql"
+  },
+  "verificationRun": {
+    "runId": "e4c68b5d-9a79-46f1-8421-a5027f52ed40",
+    "startedAt": "2026-10-09T02:29:48.571Z",
+    "completedAt": "2026-10-09T02:30:36.265Z",
+    "nodeVersion": "v24.20.0",
+    "packageManager": "pnpm 11.25.0",
+    "environment": {
+      "kind": "local",
+      "platform": "darwin",
+      "architecture": "arm64",
+      "databaseUrlConfigured": false,
+      "qcTestDatabaseUrlConfigured": false,
+      "postgres18ContainerRuntime": "BLOCKED: Could not find a working container runtime strategy"
+    },
+    "sourceWorkingTreeWasCleanBeforeTask": true
+  },
+  "detachedIsolatedRerun": {
+    "purpose": "Repeat the same scoped candidate in a detached local checkout as a separate isolation check; these totals are not combined with or substituted for the requested pnpm command results above.",
+    "runId": "8993d7bf-9a58-4dc0-816b-9e57eb4bac9a",
+    "sourceRevision": "b3db4d91ca2483e8fcdc908e581409474b62d4f9",
+    "workingTreeFingerprint": "6c95a9fb2bd55f791d1bbbed5636009956781881929041e8852273e22c04695d",
+    "timestamp": "2026-10-09T02:31:57.616Z",
+    "environment": "Detached local macOS arm64 checkout, Node v24.20.0; no database URLs configured; Testcontainers unavailable",
+    "packageManagerLimitation": "pnpm refused the external node_modules symlink in the temporary checkout; the same project verification wrapper was invoked directly through Node and Vitest. The pnpm command runs above remain the authoritative required-command results.",
+    "criteriaIds": ["QC360-SC-02-03", "QC360-SC-02-04"],
+    "actorRole": "No authenticated runtime actor; unit fixtures are synthetic",
+    "runs": [
+      {
+        "command": "node scripts/verification/run-vitest-evidence.mjs unit -- node node_modules/vitest/vitest.mjs run tests/unit",
+        "exitCode": 1,
+        "summary": "1371 passed, 12 failed, 3 skipped",
+        "evidenceUri": ".ci-results/QC-LAUNCH-006/detached/unit.log",
+        "sha256": "576baf6a5156b97ebde724ebc3a88b623880be5435e507d6f6f2ed6e0475db81"
+      },
+      {
+        "command": "node scripts/verification/run-vitest-evidence.mjs integration -- node node_modules/vitest/vitest.mjs run tests/integration",
+        "exitCode": 1,
+        "summary": "359 passed, 3 failed, 294 skipped",
+        "evidenceUri": ".ci-results/QC-LAUNCH-006/detached/integration.log",
+        "sha256": "154fe8f2cb33042b583ad55fb98d006f570afb5740b77303f0e351c84f37a760"
+      },
+      {
+        "command": "node scripts/verification/run-vitest-evidence.mjs concurrency -- node node_modules/vitest/vitest.mjs run tests/integration/concurrency",
+        "exitCode": 1,
+        "summary": "44 passed, 20 skipped; container setup failures",
+        "evidenceUri": ".ci-results/QC-LAUNCH-006/detached/concurrency.log",
+        "sha256": "f8628bda6a28632cf61664ae2f31db24c6ca952eeada15d93963f734931b12e2"
+      },
+      {
+        "command": "node scripts/verification/run-vitest-evidence.mjs security -- node node_modules/vitest/vitest.mjs run tests/unit/shared/security-headers.test.ts tests/integration/security tests/integration/ai-advisory tests/integration/http",
+        "exitCode": 1,
+        "summary": "79 passed, 1 failed, 4 skipped",
+        "evidenceUri": ".ci-results/QC-LAUNCH-006/detached/security.log",
+        "sha256": "5c88cceb035d010a30f181bc1242dfb8668d3a627b6c82d51a5f45686d205502"
+      }
+    ]
+  },
+  "criteria": [
+    {
+      "criterionId": "QC360-SC-02-03",
+      "expectedOutcome": "Exact decimal arithmetic/conversion and source-controlled deterministic PASS/FAIL/HOLD with independently calculated reference fixtures",
+      "status": "BLOCKED",
+      "acceptedPoints": 0,
+      "testKind": "unit plus integration suite; no accepted scientific runtime evidence",
+      "actorRole": "No authenticated runtime actor; synthetic technical unit fixtures only",
+      "sourceRevision": "b3db4d91ca2483e8fcdc908e581409474b62d4f9",
+      "timestamp": "2026-10-09T02:29:48.571Z",
+      "evidence": [
+        {
+          "command": "pnpm test:unit",
+          "exitCode": 1,
+          "summary": "1371 passed, 12 failed, 0 skipped; target lab-runs 23/23 and controlled-science 7/7 passed",
+          "evidenceUri": ".ci-results/QC-LAUNCH-006/unit.log",
+          "sha256": "791ea3504ba97dc6cae61b37c092331149d1665daa2c405cae65391db80a60cf",
+          "runnerArtifactDigest": "7a7e83d22c48482d487469aa01273933a0b93f3dd7b4fc3c3d0140aa901d4316",
+          "runId": "e4c68b5d-9a79-46f1-8421-a5027f52ed40"
+        },
+        {
+          "command": "pnpm test:integration",
+          "exitCode": 1,
+          "summary": "316 passed, 2 failed, 294 skipped; 11 laboratory execution/scientific-boundary tests passed; database-backed lab suites blocked at container startup",
+          "evidenceUri": ".ci-results/QC-LAUNCH-006/integration.log",
+          "sha256": "50fe7287e1006fbdea62edb5e822d15441c9c62c879e09629c48e65e59399159",
+          "runnerArtifactDigest": "5e7bb17a783f0e3bc2ae95b62da137a10422bba02c456671d39cd98873e784c6",
+          "runId": "e4c68b5d-9a79-46f1-8421-a5027f52ed40"
+        }
+      ],
+      "blockers": [
+        "Approved effective method and criteria source unavailable",
+        "No independent scientific reference fixture or reviewer acceptance",
+        "PostgreSQL 18 runtime and populated isolated database unavailable",
+        "Boundary/property coverage for the full sample and correction state matrix not established"
+      ]
+    },
+    {
+      "criterionId": "QC360-SC-02-04",
+      "expectedOutcome": "Effective approved source/template, synthetic populated batch, eligible calibrated equipment at use time, authorized review/sign/retest with immutable history",
+      "status": "BLOCKED",
+      "acceptedPoints": 0,
+      "testKind": "integration/concurrency/security suites; no authenticated end-to-end or UAT",
+      "actorRole": "No authenticated runtime actor; synthetic technical fixtures are not UAT evidence",
+      "sourceRevision": "b3db4d91ca2483e8fcdc908e581409474b62d4f9",
+      "timestamp": "2026-10-09T02:30:36.265Z",
+      "evidence": [
+        {
+          "command": "pnpm test:integration",
+          "exitCode": 1,
+          "summary": "Laboratory PostgreSQL suites could not initialize because no container runtime was available; 294 integration cases were skipped overall",
+          "evidenceUri": ".ci-results/QC-LAUNCH-006/integration.log",
+          "sha256": "50fe7287e1006fbdea62edb5e822d15441c9c62c879e09629c48e65e59399159",
+          "runnerArtifactDigest": "5e7bb17a783f0e3bc2ae95b62da137a10422bba02c456671d39cd98873e784c6",
+          "runId": "e4c68b5d-9a79-46f1-8421-a5027f52ed40"
+        },
+        {
+          "command": "pnpm test:concurrency",
+          "exitCode": 1,
+          "summary": "17 skipped; Testcontainers reported no working runtime strategy",
+          "evidenceUri": ".ci-results/QC-LAUNCH-006/concurrency.log",
+          "sha256": "61811231df7134fb61bc98c0cc8066c5f1a75918945991781a911a7dacc2ded0",
+          "runnerArtifactDigest": "3f2f1d73639eec6a3c5bc277bc124cbb6e407bff6918f5a5ee77cd22f07df044",
+          "runId": "e4c68b5d-9a79-46f1-8421-a5027f52ed40"
+        },
+        {
+          "command": "pnpm test:security",
+          "exitCode": 1,
+          "summary": "36 passed, 1 skipped; integration setup blocked by container runtime and a missing deterministic AI evaluation dataset",
+          "evidenceUri": ".ci-results/QC-LAUNCH-006/security.log",
+          "sha256": "a1f33a41501d616bc14a709a7a6bdd976e942c7ee199102e47d5e60ca6e4d964",
+          "runnerArtifactDigest": "b7990a2d4759df19435526893da6d99926afde304da5cb2639bf0a7864984a21",
+          "runId": "e4c68b5d-9a79-46f1-8421-a5027f52ed40"
+        }
+      ],
+      "blockers": [
+        "Effective approved controlled template/method and source digest unavailable",
+        "No approved real equipment/calibration evidence or populated isolated PostgreSQL 18 scenario",
+        "No authenticated review, signature, retest, preserved-history runtime scenario or human UAT",
+        "Independent rubric reviewer unavailable"
+      ]
+    }
+  ],
+  "scopeNotes": {
+    "sourceScopeComparedToReference": "No scoped differences were present from the audit reference to candidate HEAD before this task; this task changes only parameter-acceptance decimal representation handling and its unit fixture.",
+    "notPerformed": [
+      "No production or remote database access/write",
+      "No migration execution",
+      "No deployment, GitHub write, branch creation, commit, push or pull request",
+      "No controlled document modification or signature creation",
+      "No authenticated human UAT"
+    ]
+  }
+}

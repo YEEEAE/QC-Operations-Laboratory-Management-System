@@ -1,5 +1,79 @@
 # QC360 formal rollover — 2026-10-08 (oldest historical ledger only)
 
+
+- **2026-10-01 — QC-ADP26-21 / restore intent atomicity:** Restore intent, audit, and outbox now share a transaction; the operator reason is persisted and replay fingerprints reject changed requests. Requests remain `PLANNED`, production stays denied, and PostgreSQL 18/browser proof is still open. Handoff: `audit/2026-09-30/handoff-QC-ADP26-21.md`.
+- **2026-10-01 — QC-ADP26-20 / UI contract reconciliation**
+  - Changed: replaced the actual print hex colors with visual-system tokens; fixed Findings date formatting and reconciled stale date, register-bound, and mutation-copy assertions to live source and approved intent.
+  - Evidence: four focused UI suites 45/45 PASS; build/release verification PASS on HEAD `318b3e7`; full Astro check still has one unrelated `ai-advisory.astro` error. Authenticated browser/AT/UAT NOT VERIFIED.
+  - State: PARTIAL — contract and source fixes complete; human/render acceptance remains open. `audit/2026-09-30/handoff-QC-ADP26-20.md`.
+- **2026-10-01 — QC-COPY26-01 / interface copy implementation**
+  - Changed: 207 documented text entries; plain English and confirmation labels, exact PASS/FAIL, unconfirmed-write recovery; no authority/schema change.
+  - Evidence: focused 72/72 PASS; broader 103/105 (2 failures in baseline-identical classifier/500 source); diff check PASS. Full state/display coverage 0/88; complete text/defect denominator NOT VERIFIED; browser/AT/UAT NOT RUN.
+  - State: PARTIAL — dynamic/shared review and rendered acceptance remain open. `audit/2026-10-01/handoff-QC-COPY26-01.md`.
+- **2026-10-01 — QC-COPY26-01 / full-page interface copy prompt**
+  - Changed: inserted one executable copy-cleanup prompt immediately after QC-ADP26-19, before QC-ADP26-20; 42 total prompts, 38 findings, 88-page linkage. Preserves language, controlled terminology, permissions, warnings, user data and historical records.
+  - Evidence: HTML/JSON order, unique IDs, anchors, copy targets and all-page linkage PASS. Writing coverage remains NOT VERIFIED; historical page scores unchanged. Report includes coverage denominator rules.
+  - State: DONE for prompt addition only; actual page copy cleanup remains planned.
+- **2026-10-01 — QC-ADP26-19 / release evidence boundaries:** Provider attestation DTOs/errors now live in `release-governance/application/ports`, signature verification and intake orchestration are application-owned, and the API route delegates through a composition factory. Task list presentation type now comes through application/ports; template authority pages use an application facade. No schema change. Architecture + route checker and build pass; focused unit 8/8 pass. PostgreSQL18 integration BLOCKED (no container runtime/DB URL); typecheck has 10 errors in unrelated verification/release scripts; authenticated browser/AT/UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-19.md`.
+- **2026-10-01 — QC-ADP26-18 / shell preferences and recovery:** Browser preference storage failures no longer block drawer use; help route links follow `pageAccessDecision`; 500 recovery distinguishes ended sessions/unknown results and offers guest sign-in. Focused UI unit 55/55 and local Astro build PASS under Node 24.19.0 (below contract); typecheck FAILS in unrelated verification `.mjs` declarations/implicit-any. Preview E2E hit sanitized config-invalid 503 before rendering; authenticated browser/AT/UAT NOT VERIFIED. `audit/2026-10-01/handoff-QC-ADP26-18.md`.
+- **2026-10-01 — QC-ADP26-16 / AI advisory request transport**
+  - Changed: `/ai-advisory` now keeps no-JavaScript transport POST-only with submission disabled until policy/configuration and client readiness; pending, refusal, provider timeout, ambiguous transport, consent reset, copy fallback, and local editing feedback are explicit. No AI provider activation or database change.
+  - Evidence: focused AI/UI suites 97/97 PASS and candidate build PASS after verification context; authenticated browser, applied schema, external provider behavior, and UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-16.md`.
+  - State: PARTIAL — source transport finding addressed; PD-31 processing/audit decision and authenticated acceptance remain open.
+
+- **2026-10-01 — QC-ADP26-15 / notifications read state and paging**
+  - Changed: authenticated own mark-read Action and visible 50-row paging/total are connected; Dashboard reports the full unread total and only samples a bounded page. No schema, business audit, outbox, or controlled-record write.
+  - Evidence: focused service 3/3 PASS; PG18 blocked (Docker unavailable), typecheck has the existing `Date.formatDate` error, architecture check has unrelated route-boundary violations; authenticated browser/AT/UAT NOT VERIFIED. `audit/2026-09-30/handoff-QC-ADP26-15.md`.
+  - State: PARTIAL — source implementation is present; owner decision on notification read-state audit policy and database/browser acceptance remain open.
+
+- **2026-10-01 — QC-ENV26-05 / canonical environment and operator isolation**
+  - Changed: generic local env loading is runtime-only; bootstrap/QC_VERIFY/seed/UAT settings require explicit operator CLI loading. `API_Render`/provider exports are ignored. No remote Render, schema, or migration change.
+  - Evidence: source migrations 42/42 match manifest; focused 27/27 PASS. Applied/isolated PostgreSQL proof BLOCKED; Render Key/Value target not preserved in sanitized evidence. Handoff: `audit/2026-10-01/handoff-QC-ENV26-05.md`.
+  - State: PARTIAL — owner read-back/cleanup decision and isolated PG18 evidence remain open.
+
+- **2026-10-01 — QC-ENV26-04 / storage, backup, and monitoring integration**
+  - Changed: configuration reference now states R2 is optional and the local adapter is memory-only; the app has no wired durable backup scheduler/restore or OTEL exporter. No runtime/schema change.
+  - Evidence: `audit/2026-10-01/handoff-QC-ENV26-04.md`; service snapshot 0/4 R2 and 0/2 OTEL was during deployment, and local `.env` has both groups absent. Provider round-trip/restore/export NOT VERIFIED.
+  - State: PARTIAL — required/optional decision on durable backup and monitoring backend needs the named owner; no external resources changed.
+
+- **2026-10-01 — QC-ENV26-03 / AI environment gates**
+  - Changed: `/ai/advisory` now distinguishes owner approval/policy, missing credential/model settings, invalid configuration, and provider outage; selection defaults do not imply credentials or approval. External sending remains fail-closed and requires per-request consent. No schema change.
+  - Evidence: handoff `audit/2026-10-01/handoff-QC-ENV26-03.md`; Render environment snapshot remains 0/7 and belongs to a deploy-in-progress, not a verified current runtime. Isolated PostgreSQL ledger validation and live page acceptance status are recorded there.
+  - State: PARTIAL — owner policy decision, candidate-bound completed runtime, isolated ledger proof, and route acceptance remain open.
+
+- **2026-10-01 — QC-ENV26-02 / release identity and runtime evidence**
+  - Changed: six identity fields now come from a generated build artifact matched to the running server entry; release approval also requires a fresh clean production runtime identity matching the candidate. Health classifies AI policy/configuration/provider states separately; no DB schema change.
+  - Evidence: implementation-local artifact/runtime 6/6 PASS but dirty; missing/mismatched/stale approval identity tests PASS. Render runtime NOT VERIFIED; PostgreSQL 18 isolated ledger rehearsal BLOCKED by missing container runtime. Handoff: `audit/2026-10-01/handoff-QC-ENV26-02.md`.
+  - State: PARTIAL — production acceptance and owner decision remain open; no external writes or deploy.
+
+- **2026-10-01 — QC-ENV26-01 / server migration parity**
+  - Changed: `/system/health` distinguishes missing/invalid `DATABASE_URL` from provider outage using sanitized classifications; no migration files changed.
+  - Evidence: frozen HEAD `ffc218ca`; source 42-migration manifest captured. Focused unit 19/19 PASS; PG18 rehearsal/integration BLOCKED by Testcontainers runtime and host `shmget` restriction. Render snapshot remains 18/42 and deploy-in-progress evidence is not candidate-bound.
+  - State: PARTIAL / BLOCKED — production remains NO-GO; forward upgrade, rollback, restore, exact applied ledger export, route acceptance and named-owner migration authority remain open. `audit/2026-10-01/handoff-QC-ENV26-01.md`.
+
+- **2026-10-01 — QC-ADP26-14 / search authorization and paging**
+  - Changed: `/search` applies each source read permission and supported scope before rows/counts, searches task titles, uses bounded keyset pages plus exact total in a read-only repeatable-read transaction, and reports source latency in privacy-safe buckets; no schema change.
+  - Evidence: focused search contracts and Node 24.20 build PASS; PostgreSQL 18/Testcontainers BLOCKED (runtime absent), applied schema and authenticated browser/AT/UAT NOT VERIFIED. Handoff: `audit/2026-10-01/handoff-QC-ADP26-14.md`.
+  - State: PARTIAL — live DB/runtime and route acceptance remain open.
+
+- **2026-10-01 — QC-ENV26 / environment and database parity addendum**
+  - Changed: five environment prompts inserted immediately after QC-ADP26-14 in the dated HTML pack; report has denominator-based percentages. Totals: 41 prompts / 38 findings; original historical page checklist remains 38.4%.
+  - Evidence: Render API names/presence comparison and PostgreSQL18.6 READ ONLY + TLS catalog/ledger: 18/42 applied (42.9%), 24 pending, 18/18 applied checksums matching source. Core config 5/5; explicit AI vars 0/7; explicit release identity vars 0/6. Optional R2/OTEL absence requires contract assessment. Evidence: `audit/2026-10-01/env-parity/`.
+  - State: PARTIAL / NO-GO — exact runtime candidate NOT VERIFIED (deployment in progress at snapshot); AI sending still needs approved policy. No external writes or deployment performed.
+
+- **2026-10-01 — QC-ADP26-13 / credential/session/audit atomicity**
+  - Changed: self-service change and admin reset now share one PostgreSQL transaction for credential, session revocation, and audit; account feedback reflects revoked sessions and directs confirmed success to login.
+  - Evidence: focused source tests and candidate build are recorded in `.ci-results/build.json` and `audit/2026-10-01/handoff-QC-ADP26-13.md`; PostgreSQL 18 failure-injection, authenticated browser/AT, and UAT remain NOT VERIFIED because no container runtime or authenticated fixture is available.
+  - State: PARTIAL — source implementation updated; database and page acceptance remain open.
+
+- **2026-10-01 — QC-ADP26-12 / register pagination**
+  - Changed: source pagination/filtering and human-first labels implemented for `/admin/users` and `/system/backups`; remaining F-012 routes are still open.
+  - Evidence: focused synthetic tests 18/18 and candidate Astro build PASS; PostgreSQL 18, authenticated browser, AT and UAT NOT VERIFIED. Handoff: `audit/2026-09-30/handoff-QC-ADP26-12.md`.
+  - State: PARTIAL.
+
+- **2026-10-01 — Mind rollover (QC-ADP26-17):** نُقلت أقدم سجلات Ledger بتاريخ 2026-09-30 إلى `02-mind-mid.md` بعد التحقق من حفظها؛ بقيت الحالة الحالية والمشكلات المفتوحة في 01.
+- **2026-10-02 — Mind rollover (QC-POST-100-001):** نُقلت أقدم أربعة سجلات Ledger (QC-ADP26-07/08/09/17) إلى أعلى `02-mind-mid.md` بعد التحقق؛ بقيت الحالة الحالية والثوابت والمشكلات المفتوحة في 01.
+
 - **2026-09-20 — Mind rollover (QC-100-FINAL-026):** تجاوز `01` الحد الصلب (121,894 بايت)؛ نُقلت أقدم سجلات 2026-09-18 إلى أعلى `02-mind-mid.md` بعد التحقق من غيابها فيه، مع تثبيت ثوابت `NO-GO`/gates وانحراف Render في أقسام الحالة الحالية. لم تُمس القرارات الحالية ولا الـinvariants ولا المشاكل المفتوحة. الحالة: DONE.
 
 - **2026-09-20 — QC-100-FINAL-026-B / تكامل سجل القرار والدليل الفني (مرشح `802de981a6dcaf9a4bde7ed6fa155c23b7726ee3`، بصمة التنفيذ `43771dc773e7cf2a73a3851ff9cea3298c19b57ceaad6e7df665c32fc4ff4c27`)**

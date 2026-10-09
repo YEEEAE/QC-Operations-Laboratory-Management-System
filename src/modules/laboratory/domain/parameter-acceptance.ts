@@ -42,7 +42,9 @@ export interface ParameterAcceptanceInput {
 
 function numericBound(payload: Record<string, unknown>, key: string): string | undefined {
   const raw = payload[key];
-  if (typeof raw === 'number') return String(raw);
+  // JSON numbers are parsed through IEEE-754 before reaching this function.
+  // Converting one to text here cannot recover its original decimal literal.
+  // Controlled numeric criteria must therefore be stored as decimal strings.
   if (typeof raw === 'string' && isNumericLiteral(raw)) return raw.trim();
   return undefined;
 }

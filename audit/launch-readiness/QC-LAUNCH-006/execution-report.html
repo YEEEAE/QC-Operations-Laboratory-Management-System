@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QC-LAUNCH-006 — Scientific calculations and laboratory measurements</title>
+    <style>
+      :root { color-scheme: light; font: 16px/1.55 system-ui, sans-serif; color: #17212b; background: #f4f6f7; }
+      body { max-width: 980px; margin: 2rem auto; padding: 0 1rem 3rem; }
+      main { background: white; border: 1px solid #d5dde2; padding: clamp(1rem, 4vw, 2.5rem); }
+      h1, h2 { line-height: 1.2; }
+      h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
+      h2 { margin-top: 2rem; font-size: 1.25rem; border-bottom: 1px solid #d5dde2; padding-bottom: .4rem; }
+      .state { padding: .8rem 1rem; border-left: 4px solid #9a5b00; background: #fff6e5; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; vertical-align: top; border: 1px solid #d5dde2; padding: .55rem; }
+      code { overflow-wrap: anywhere; }
+      .muted { color: #52616b; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>QC-LAUNCH-006 — Scientific calculations and laboratory measurements</h1>
+      <p class="state"><strong>PARTIAL / BLOCKED — NO-GO.</strong> Technical decimal checks ran. Approved scientific authority, isolated PostgreSQL 18 execution, real calibrated-equipment evidence, authenticated UAT, and independent rubric acceptance are absent. Accepted score: <strong>0 / 6.60 points</strong>.</p>
+
+      <h2>Candidate and execution boundary</h2>
+      <table>
+        <tbody>
+          <tr><th>Audit reference</th><td><code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code></td></tr>
+          <tr><th>Candidate HEAD</th><td><code>b3db4d91ca2483e8fcdc908e581409474b62d4f9</code> on <code>main</code>, five commits after the reference</td></tr>
+          <tr><th>Working-tree source fingerprint at test start</th><td><code>6c95a9fb2bd55f791d1bbbed5636009956781881929041e8852273e22c04695d</code></td></tr>
+          <tr><th>Verification run</th><td><code>e4c68b5d-9a79-46f1-8421-a5027f52ed40</code></td></tr>
+          <tr><th>Environment</th><td>Local macOS arm64; Node 24.20.0; pnpm 11.25.0; migration head <code>0047_task_references_occurrences.sql</code>; <code>DATABASE_URL</code> and <code>QC_TEST_DATABASE_URL</code> unset</td></tr>
+          <tr><th>Timestamp</th><td>2026-10-09 02:29:48–02:30:36 UTC (05:29:48–05:30:36 Asia/Riyadh)</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">The audit reference is an ancestor of the candidate. The task-scoped source files had no differences from the reference at HEAD before this task. The final local working tree adds the two files summarized in the decision plan. No GitHub action, branch operation, database write, migration, deployment, controlled-document change, or signature creation was performed.</p>
+
+      <h2>Observed code and change</h2>
+      <ul>
+        <li><code>src/modules/laboratory/domain/exact-decimal.ts:16-77</code> uses decimal strings and scaled <code>BigInt</code> for comparison, summation and half-up division. Internal calculation calls choose a scale at least as large as every input.</li>
+        <li><code>src/modules/laboratory/domain/unit-conversion.ts:5-55</code> permits only one matching <code>EXACT_AFFINE</code> rule with string factor/offset and matching source reference plus a nonempty version. It retains original and converted values in the conversion trace.</li>
+        <li><code>src/modules/laboratory/domain/calculation.ts:76-153</code> requires a rule source reference; MEAN requires declared precision (0–18), and missing/malformed values yield no calculation. The approved context and content hash are frozen separately.</li>
+        <li><code>src/modules/laboratory/domain/controlled-evaluation.ts:6-58</code> requires the source/version-bound aggregation policy; duplicate measurement rows deny, missing/incomplete observations can HOLD, and the function returns a scientific result without changing release state.</li>
+        <li><code>src/modules/laboratory/application/approve-lab-test.ts:57-86</code> rechecks evaluation source/hash and obtains signature evidence before stage-one transition. This does not establish an effective approved method or successful runtime ceremony.</li>
+        <li><code>src/modules/assets/equipment/application/get-equipment-eligibility.ts:184-250</code> captures server-side equipment/calibration snapshots only when equipment is active and the calibration is current and not overdue. PostgreSQL evidence for history protection remains unavailable; <code>db/migrations/0042_immutable_lab_equipment_usage.sql:1-9</code> defines append-only triggers.</li>
+      </ul>
+      <p><strong>Before:</strong> numeric acceptance bounds could arrive as JSON numbers and were converted to strings after IEEE-754 parsing, which can lose the original decimal digits. <strong>After:</strong> <code>src/modules/laboratory/domain/parameter-acceptance.ts:43-49</code> accepts numeric criteria only as decimal strings; malformed or number-valued limits yield no PASS/FAIL and remain incomplete. <code>tests/unit/laboratory/lab-runs.test.ts:166-184</code> covers both ambiguous-number rejection and exact-string evaluation.</p>
+      <p>This change defines a lossless technical representation, not a scientific limit or approval. Existing JSON-number criteria may now produce no automated outcome and require source-owner migration to exact decimal strings before use.</p>
+
+      <h2>Verification results</h2>
+      <table>
+        <thead><tr><th>Command</th><th>Observed result</th><th>Evidence</th></tr></thead>
+        <tbody>
+          <tr><td><code>pnpm test:unit</code></td><td>Exit 1; 1371 passed, 12 failed, 0 skipped. The exact-decimal and controlled-science unit files passed 23/23 and 7/7. Broad failures include missing historical audit inputs and unrelated restore/UAT/UI contracts.</td><td><a href="../../../.ci-results/QC-LAUNCH-006/unit.log">unit.log</a>; SHA-256 <code>791ea3504ba97dc6cae61b37c092331149d1665daa2c405cae65391db80a60cf</code></td></tr>
+          <tr><td><code>pnpm test:integration</code></td><td>Exit 1; 316 passed, 2 failed, 294 skipped. The lab execution/scientific-boundary files passed 11/11; database-backed lab suites could not start because no container runtime was available. Another failure referenced a missing AI evaluation dataset.</td><td><a href="../../../.ci-results/QC-LAUNCH-006/integration.log">integration.log</a>; SHA-256 <code>50fe7287e1006fbdea62edb5e822d15441c9c62c879e09629c48e65e59399159</code></td></tr>
+          <tr><td><code>pnpm test:concurrency</code></td><td>Exit 1; all 17 tests skipped after Testcontainers reported <code>Could not find a working container runtime strategy</code>.</td><td><a href="../../../.ci-results/QC-LAUNCH-006/concurrency.log">concurrency.log</a>; SHA-256 <code>61811231df7134fb61bc98c0cc8066c5f1a75918945991781a911a7dacc2ded0</code></td></tr>
+          <tr><td><code>pnpm test:security</code></td><td>Exit 1; 36 passed, 1 skipped; integration setup failures include unavailable PostgreSQL container and missing AI evaluation dataset.</td><td><a href="../../../.ci-results/QC-LAUNCH-006/security.log">security.log</a>; SHA-256 <code>a1f33a41501d616bc14a709a7a6bdd976e942c7ee199102e47d5e60ca6e4d964</code></td></tr>
+        </tbody>
+      </table>
+      <p>Each test command used the same candidate SHA and source fingerprint. The four exit codes are real and nonzero. No test result is represented as runtime, PostgreSQL, production, provider, or human-acceptance evidence.</p>
+      <p>A second run used a detached local checkout of the same SHA and exact source fingerprint. pnpm rejected the temporary dependency symlink there, so the same project verification wrapper was called directly with Node/Vitest. Its separate logs and counts are preserved under <code>.ci-results/QC-LAUNCH-006/detached/</code>; they are not mixed into the four requested pnpm results above.</p>
+
+      <h2>Criteria and residual blockers</h2>
+      <table>
+        <thead><tr><th>Requirement</th><th>Status</th><th>Reason / owner</th></tr></thead>
+        <tbody>
+          <tr><td>QC360-SC-02-03 — decimal/conversion/PASS/FAIL/HOLD</td><td>BLOCKED; 0 accepted points</td><td>Technical unit evidence is partial; independent scientific reference fixtures, effective method/criteria, full input-state matrix and independent rubric acceptance are absent. Laboratory QA + QC method owner + independent rubric reviewer.</td></tr>
+          <tr><td>QC360-SC-02-04 — real laboratory source/equipment/calibration</td><td>BLOCKED; 0 accepted points</td><td>No populated isolated PG18 run, effective approved template, authenticated review/sign/retest history, or real calibration-at-use evidence. QC method owner + Assets/Calibration owner + QMS/Document Control + Laboratory QA.</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>No approved scientific source, effective revision, numeric limits, conversion rule, rounding policy, applicability/NA disposition, or signed method acceptance was available. Official scientific PASS/FAIL/HOLD therefore remains blocked.</li>
+        <li>PostgreSQL 18 integration was NOT VERIFIED: Testcontainers could not start. Direct database immutability/overwrite protection and atomic approval/signature history are not established by these source/unit checks.</li>
+        <li>No authenticated end-to-end scenario, human UAT, or independent reviewer signoff was run. PASS is not RELEASED; APPROVED is not EFFECTIVE.</li>
+        <li>Numeric strings have no explicit maximum length/scale guard before BigInt work. No scientific precision cap was invented; technical resource/storage bounds need an approved engineering decision and boundary verification.</li>
+        <li>NOT_APPLICABLE remains unsupported by the declared laboratory parameter types and evaluator output. Do not infer that it is equivalent to PASS, FAIL, or HOLD.</li>
+      </ul>
+
+      <h2>Decision</h2>
+      <p>Keep official scientific outcome and release acceptance fail-closed. QC-LAUNCH-002/004/005 authority and environment dependencies remain open. Remediation, owner inputs, and rollback are in <a href="patch-or-decision-plan.md">patch-or-decision-plan.md</a>. No production GO is supported.</p>
+    </main>
+  </body>
+</html>

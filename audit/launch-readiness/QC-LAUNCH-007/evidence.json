@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "QC-LAUNCH-007",
+  "status": "PARTIAL / BLOCKED",
+  "generatedAt": "2026-10-09",
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "referenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "sourceSha": "b3db4d91ca2483e8fcdc908e581409474b62d4f9",
+    "branch": "main",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "sourceFingerprint": "d8517457f8eb11aeb3b9c088994a2e6dfd8261d6ca915d69a837e77275d89d66",
+    "verificationRunId": "86a54ad3-18bd-410b-bc93-22ef2c5f2b6a",
+    "verificationGeneratedAt": "2026-10-09T02:48:56.186Z",
+    "nodeVersion": "v24.20.0",
+    "pnpmVersion": "11.25.0",
+    "databaseUrlConfigured": false,
+    "qcTestDatabaseUrlConfigured": false
+  },
+  "sourceValidation": {
+    "masterWorkbookSha256": "199f1a8c453e4340fdf3e0c79ba93c53510f35b4b2b5875f6ef8e55750f128e4",
+    "sourcePdfSha256": "e0b227cbe847ffdb3784e02a712a83726dcdfcc9204f31dc56e1e048917658da",
+    "masterIdentityCount": 194,
+    "excludedBlankTitleEntry": "F-823-T175",
+    "sourcePdfPages": 28,
+    "pageStatusCounts": {
+      "SOURCE_REVISION_CONFLICT": 3,
+      "MATCHED": 16,
+      "SOURCE_TITLE_CONFLICT": 3,
+      "NEEDS_SOURCE_RESCAN": 4,
+      "NOT_IN_MASTER_LIST": 2
+    },
+    "digitizedSourceDraftEntries": 13,
+    "runtimeApprovedEffectiveTemplatesVerified": 0,
+    "itemCodeMappingsVerified": 0,
+    "sourceFileCountManifested": 87,
+    "authority": "Workbook governs identity/revision; PDF evidence supports structure/content. No authority supplied for item mapping, approval, or effectivity."
+  },
+  "commands": [
+    {
+      "command": "pnpm test:migrations",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "summary": "8 test files failed during Testcontainers runtime discovery; 33 skipped, 0 passed/failed assertions. No PostgreSQL 18 runtime available.",
+      "log": "../../../.ci-results/QC-LAUNCH-007/migrations.log",
+      "runnerArtifact": "../../../.ci-results/QC-LAUNCH-007/migrations.json",
+      "logSha256": "3d488dfba002352cf070e32cca4361a7905ccdda532cf2fb24a6896b330265a7",
+      "runnerArtifactSha256": "81370fe54359ce5feee7358d97454b353f05db98a7418fa5acf748c431d5f374"
+    },
+    {
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "status": "PARTIAL / BLOCKED",
+      "summary": "115 files: 63 passed, 51 failed, 1 skipped; 612 cases: 316 passed, 2 failed, 294 skipped, 2 errors. Testcontainers setup failures dominate; observed unrelated failures include task permission and database connection-chain suites.",
+      "log": "../../../.ci-results/QC-LAUNCH-007/integration.log",
+      "runnerArtifact": "../../../.ci-results/QC-LAUNCH-007/integration.json",
+      "logSha256": "a3a862a5d4c9b347701b1fb79ab4fcabe63ac83b687cd2c1c64e2c15212d7d25",
+      "runnerArtifactSha256": "693274e583628da68c4bf0ada50d9c25f23fce76780af87e1c4c76637350064c"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 1,
+      "status": "FAIL",
+      "summary": "173 files: 168 passed, 5 failed; 1,383 cases: 1,371 passed, 12 failed. Failures are outside quarantine controlled-catalog tests (backup restore contract, requirements reconciliation, UAT validator, mutation safety, route acceptance).",
+      "log": "../../../.ci-results/QC-LAUNCH-007/unit.log",
+      "runnerArtifact": "../../../.ci-results/QC-LAUNCH-007/unit.json",
+      "logSha256": "81d7dfefc971046568802ea0b9fd592467d917aaba1fe7226e63bc9147bbc353",
+      "runnerArtifactSha256": "7a0c4ad84a869d5cb7274668fe9de84d59433d903b52784167f7bd40a3f95409"
+    },
+    {
+      "command": "pnpm exec vitest run tests/unit/quarantine/controlled-report-catalog.test.ts --reporter=default --reporter=json --outputFile=.ci-results/QC-LAUNCH-007/controlled-catalog-unit.vitest.json",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "64/64 focused controlled-catalog unit tests passed.",
+      "log": "../../../.ci-results/QC-LAUNCH-007/controlled-catalog-unit.log",
+      "runnerArtifact": "../../../.ci-results/QC-LAUNCH-007/controlled-catalog-unit.vitest.json",
+      "logSha256": "8f19002f074bffebd2e86e067c85e4d861b3d0280ce53e0802874c1008ffbd98",
+      "runnerArtifactSha256": "a69d0390216b3d1d00e0d254467557f9870a0da9f02c5989666c3d58d040bb72"
+    }
+  ],
+  "runtimeChecks": {
+    "postgres18": "BLOCKED — Docker daemon unavailable; local PostgreSQL is 14.19. No task database URL was configured.",
+    "productionWrites": 0,
+    "productionMigrations": 0,
+    "providerDatabaseRead": "NOT RUN",
+    "authenticatedUAT": "NOT RUN",
+    "independentRubricReview": "NOT RUN",
+    "rubricId": "QC360-SC-05-02",
+    "acceptedPoints": 0
+  },
+  "codeReferences": [
+    {
+      "path": "src/modules/quarantine/catalog/application/import-controlled-sources.ts",
+      "lines": "63-123, 124-216",
+      "finding": "Retains page/source digest evidence and creates DRAFT versions without approval, approver, or effective time."
+    },
+    {
+      "path": "src/modules/quarantine/inspection/application/resolve-inspection-template.ts",
+      "lines": "35-71, 88-103",
+      "finding": "Requires active exact mapping and approved effective matched catalogue selection; explicit selected candidate is checked."
+    },
+    {
+      "path": "src/modules/quarantine/receiving/application/create-inspection-from-receiving.ts",
+      "lines": "85-96",
+      "finding": "Blocks duplicate in-flight inspection and requires mapped approved selection; captures server snapshot."
+    },
+    {
+      "path": "db/migrations/0046_inspection_report_catalog.sql",
+      "lines": "36-53",
+      "finding": "Database guard requires active/effective/approved exact-revision matched template and active effective item map."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "audit/launch-readiness/QC-LAUNCH-007/crosswalk.json",
+      "sha256": "5d7e4d9b075ce902e8d2bdd66ef9059c53c8455deb1a2410072f511a8786fcc3",
+      "bytes": 196263
+    },
+    {
+      "path": "audit/launch-readiness/QC-LAUNCH-007/source-file-manifest.json",
+      "sha256": "2f4020ad8e6860072b37a12985c44bf51def8f6d19297a0c9a381b82c260c981",
+      "bytes": 21041
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/run-context.json",
+      "sha256": "f0d6ed5022dcced28a91a5f309ba7a85ab582c6afeeeb54f081189b792874519",
+      "bytes": 483
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/migrations.json",
+      "sha256": "81370fe54359ce5feee7358d97454b353f05db98a7418fa5acf748c431d5f374",
+      "bytes": 20962
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/integration.json",
+      "sha256": "693274e583628da68c4bf0ada50d9c25f23fce76780af87e1c4c76637350064c",
+      "bytes": 369381
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/unit.json",
+      "sha256": "7a0c4ad84a869d5cb7274668fe9de84d59433d903b52784167f7bd40a3f95409",
+      "bytes": 823225
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/migrations.log",
+      "sha256": "3d488dfba002352cf070e32cca4361a7905ccdda532cf2fb24a6896b330265a7",
+      "bytes": 13308
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/integration.log",
+      "sha256": "a3a862a5d4c9b347701b1fb79ab4fcabe63ac83b687cd2c1c64e2c15212d7d25",
+      "bytes": 104706
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/unit.log",
+      "sha256": "81d7dfefc971046568802ea0b9fd592467d917aaba1fe7226e63bc9147bbc353",
+      "bytes": 48584
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/controlled-catalog-unit.log",
+      "sha256": "8f19002f074bffebd2e86e067c85e4d861b3d0280ce53e0802874c1008ffbd98",
+      "bytes": 473
+    },
+    {
+      "path": ".ci-results/QC-LAUNCH-007/controlled-catalog-unit.vitest.json",
+      "sha256": "a69d0390216b3d1d00e0d254467557f9870a0da9f02c5989666c3d58d040bb72",
+      "bytes": 24080
+    }
+  ],
+  "evidenceBoundary": "Candidate fingerprint was frozen before final report/evidence/decision-plan and Mind updates. Those documentation-only files are outside that captured fingerprint. No product source or schema was changed by this task."
+}

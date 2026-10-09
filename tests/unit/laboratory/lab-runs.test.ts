@@ -163,6 +163,25 @@ describe('approved acceptance rules (QC-DATA-003)', () => {
     ).toBe('FAIL');
   });
 
+  it('does not accept IEEE-754 numbers as exact scientific bounds', () => {
+    expect(
+      evaluateParameterAcceptance({
+        dataType: 'NUMERIC',
+        value: '0.10000000000000001',
+        ruleType: 'MAX_LIMIT',
+        rulePayload: { max: 0.10000000000000001 },
+      }),
+    ).toBeNull();
+    expect(
+      evaluateParameterAcceptance({
+        dataType: 'NUMERIC',
+        value: '0.10000000000000001',
+        ruleType: 'MAX_LIMIT',
+        rulePayload: { max: '0.10000000000000001' },
+      }),
+    ).toBe('PASS');
+  });
+
   it('applies enum and boolean rules', () => {
     expect(
       evaluateParameterAcceptance({
