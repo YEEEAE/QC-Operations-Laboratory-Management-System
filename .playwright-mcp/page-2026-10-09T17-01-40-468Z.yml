@@ -1,0 +1,475 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - complementary "Primary navigation" [ref=e5]:
+      - navigation "Primary navigation" [ref=e6]:
+        - generic [ref=e7]:
+          - generic [aria-hidden] [ref=e8]: QC
+          - generic [ref=e9]: QC Operations
+        - button "Collapse navigation" [expanded] [ref=e10] [cursor=pointer]
+        - list [ref=e13]:
+          - listitem [ref=e14]:
+            - generic [ref=e15]:
+              - generic [ref=e21]: Overview
+              - button "Collapse Overview section" [expanded] [ref=e22] [cursor=pointer]
+            - list [ref=e25]:
+              - listitem [ref=e26]:
+                - link "Dashboard" [ref=e27] [cursor=pointer]:
+                  - /url: /dashboard
+                  - generic [ref=e35]: Current page
+          - listitem [ref=e36]:
+            - generic [ref=e37]:
+              - generic [ref=e43]: Work
+              - button "Expand Work section" [ref=e44] [cursor=pointer]
+          - listitem [ref=e47]:
+            - generic [ref=e48]:
+              - generic [ref=e51]: Quality
+              - button "Expand Quality section" [ref=e52] [cursor=pointer]
+          - listitem [ref=e55]:
+            - generic [ref=e56]:
+              - generic [ref=e60]: Quarantine
+              - button "Expand Quarantine section" [ref=e61] [cursor=pointer]
+          - listitem [ref=e64]:
+            - generic [ref=e65]:
+              - generic [ref=e68]: Laboratory
+              - button "Expand Laboratory section" [ref=e69] [cursor=pointer]
+          - listitem [ref=e72]:
+            - generic [ref=e73]:
+              - generic [ref=e76]: Assets
+              - button "Expand Assets section" [ref=e77] [cursor=pointer]
+          - listitem [ref=e80]:
+            - generic [ref=e81]:
+              - generic [ref=e84]: Governance
+              - button "Expand Governance section" [ref=e85] [cursor=pointer]
+          - listitem [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e92]: Insights
+              - button "Expand Insights section" [ref=e93] [cursor=pointer]
+          - listitem [ref=e96]:
+            - generic [ref=e97]:
+              - generic [ref=e99]: Administration
+              - button "Expand Administration section" [ref=e100] [cursor=pointer]
+          - listitem [ref=e103]:
+            - generic [ref=e104]:
+              - generic [ref=e108]: System
+              - button "Expand System section" [ref=e109] [cursor=pointer]
+        - region [ref=e112]:
+          - heading "Workspace tools" [level=2] [ref=e113]
+          - list [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Notifications" [ref=e116] [cursor=pointer]:
+                - /url: /notifications
+            - listitem [ref=e121]:
+              - link "Search" [ref=e122] [cursor=pointer]:
+                - /url: /search
+            - listitem [ref=e128]:
+              - link "Account settings" [ref=e129] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=e135]:
+              - link "Operating guides" [ref=e136] [cursor=pointer]:
+                - /url: /help
+    - generic [ref=e142]:
+      - banner [ref=e143]:
+        - generic [ref=e144]:
+          - generic [ref=e145]:
+            - navigation "Breadcrumb" [ref=e146]:
+              - list [ref=e147]:
+                - listitem [ref=e148]:
+                  - link "Home" [ref=e149] [cursor=pointer]:
+                    - /url: /dashboard
+                - listitem [ref=e150]: /Dashboard
+            - 'generic "Operational scope: All sites (global)" [ref=e151]':
+              - generic [ref=e153]:
+                - generic [ref=e154]: Current scope
+                - strong [ref=e155]: All sites (global)
+          - group [ref=e157]:
+            - generic "yazeed Administrator · System owner" [ref=e158] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e159]: "Y"
+              - generic [ref=e160]:
+                - strong [ref=e161]: yazeed
+                - generic [ref=e162]: Administrator · System owner
+      - main [ref=e165]:
+        - generic [ref=e166]:
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - paragraph [ref=e169]: QC OPERATIONAL COMMAND CENTER
+              - heading "Dashboard" [level=1] [ref=e170]
+            - paragraph [ref=e171]:
+              - time [ref=e172]: Server snapshot · 09 Oct 2026, 20:01
+              - link "Refresh" [ref=e173] [cursor=pointer]:
+                - /url: /dashboard
+          - region [ref=e174]:
+            - generic [ref=e175]:
+              - generic [ref=e176]:
+                - paragraph [ref=e177]: Decisions
+                - heading "Needs your attention" [level=2] [ref=e178]
+              - generic [ref=e179]:
+                - link "Open my approvals" [ref=e180] [cursor=pointer]:
+                  - /url: /approvals
+                - link "Open my overdue tasks" [ref=e181] [cursor=pointer]:
+                  - /url: /tasks?assignee=mine&due=overdue
+            - status [ref=e182]: No readable source has an open item for you right now.
+            - group [ref=e183]:
+              - generic "Sources behind this queue" [ref=e184] [cursor=pointer]
+          - region [ref=e185]:
+            - generic [ref=e187]:
+              - paragraph [ref=e188]: Decision queues
+              - heading "Work queues" [level=2] [ref=e189]
+            - list [ref=e190]:
+              - listitem [ref=e191]:
+                - link "Review and approval work items" [ref=e192] [cursor=pointer]:
+                  - /url: /approvals
+                - generic [ref=e193]: Open your authorized approval queue
+              - listitem [ref=e194]:
+                - link "Documents awaiting my review" [ref=e195] [cursor=pointer]:
+                  - /url: /documents?review=mine
+                - generic [ref=e196]: Active versions awaiting your review, excluding versions you authored
+              - listitem [ref=e197]:
+                - link "Receiving HOLD" [ref=e198] [cursor=pointer]:
+                  - /url: /quarantine/receiving?state=HOLD
+                - generic [ref=e199]: Receiving workflow state is HOLD
+              - listitem [ref=e200]:
+                - link "Inspection review" [ref=e201] [cursor=pointer]:
+                  - /url: /quarantine/inspections?state=SUBMITTED
+                - generic [ref=e202]: Open submitted inspection reports
+              - listitem [ref=e203]:
+                - link "Laboratory review" [ref=e204] [cursor=pointer]:
+                  - /url: /laboratory/tests?state=SUBMITTED
+                - generic [ref=e205]: Open submitted laboratory tests
+              - listitem [ref=e206]:
+                - link "PASS, not released" [ref=e207] [cursor=pointer]:
+                  - /url: /quarantine/receiving?inspectionResult=PASS&releaseState=NOT_RELEASED
+                - generic [ref=e208]: Inspection result is PASS; release system state is NOT_RELEASED
+          - region "Operational action counts" [ref=e209]:
+            - article [ref=e210]:
+              - generic [ref=e211]:
+                - generic [ref=e212]: Pending review
+                - group [ref=e213]:
+                  - generic "Show definition for Pending review" [ref=e214] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e215]: i
+              - generic [ref=e216]:
+                - strong [ref=e217]: "0"
+                - generic [ref=e218]: records
+              - generic [ref=e219]:
+                - term [ref=e220]: Source
+                - definition [ref=e221]: My approvals queue
+                - term [ref=e222]: Scope
+                - definition [ref=e223]: Assigned to you or your role
+              - link "Open my approvals" [ref=e224] [cursor=pointer]:
+                - /url: /approvals
+            - article [ref=e227]:
+              - generic [ref=e228]:
+                - generic [ref=e229]: Unread notifications
+                - group [ref=e230]:
+                  - generic "Show definition for Unread notifications" [ref=e231] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e232]: i
+              - generic [ref=e233]:
+                - strong [ref=e234]: "0"
+                - generic [ref=e235]: records
+              - generic [ref=e236]:
+                - term [ref=e237]: Source
+                - definition [ref=e238]: Notifications addressed to your account
+                - term [ref=e239]: Scope
+                - definition [ref=e240]: Addressed to you
+              - link "Open unread notifications" [ref=e241] [cursor=pointer]:
+                - /url: /notifications?unread=1
+            - article [ref=e244]:
+              - generic [ref=e245]:
+                - generic [ref=e246]: My HOLD items
+                - group [ref=e247]:
+                  - generic "Show definition for My HOLD items" [ref=e248] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e249]: i
+              - generic [ref=e250]:
+                - strong [ref=e251]: "0"
+                - generic [ref=e252]: records
+              - generic [ref=e253]:
+                - term [ref=e254]: Source
+                - definition [ref=e255]: Quarantine receiving register
+                - term [ref=e256]: Scope
+                - definition [ref=e257]: Created by you
+              - link "Open my HOLD records" [ref=e258] [cursor=pointer]:
+                - /url: /quarantine/receiving?inspectionResult=HOLD&ownership=mine
+            - article [ref=e261]:
+              - generic [ref=e262]:
+                - generic [ref=e263]: Returned to me
+                - group [ref=e264]:
+                  - generic "Show definition for Returned to me" [ref=e265] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e266]: i
+              - generic [ref=e267]:
+                - strong [ref=e268]: "0"
+                - generic [ref=e269]: records
+              - generic [ref=e270]:
+                - term [ref=e271]: Source
+                - definition [ref=e272]: Inspection reports register
+                - term [ref=e273]: Scope
+                - definition [ref=e274]: Authored by you
+              - link "Open my returned reports" [ref=e275] [cursor=pointer]:
+                - /url: /quarantine/inspections?state=RETURNED&ownership=mine
+            - article [ref=e278]:
+              - generic [ref=e279]:
+                - generic [ref=e280]: Tasks overdue
+                - group [ref=e281]:
+                  - generic "Show definition for Tasks overdue" [ref=e282] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e283]: i
+              - generic [ref=e284]:
+                - strong [ref=e285]: "0"
+                - generic [ref=e286]: records
+              - generic [ref=e287]:
+                - term [ref=e288]: Source
+                - definition [ref=e289]: Tasks register
+                - term [ref=e290]: Scope
+                - definition [ref=e291]: Assigned to you
+              - link "Open my overdue tasks" [ref=e292] [cursor=pointer]:
+                - /url: /tasks?assignee=mine&due=overdue
+            - article [ref=e295]:
+              - generic [ref=e296]:
+                - generic [ref=e297]: Tasks due today
+                - group [ref=e298]:
+                  - generic "Show definition for Tasks due today" [ref=e299] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e300]: i
+              - generic [ref=e301]:
+                - strong [ref=e302]: "0"
+                - generic [ref=e303]: records
+              - generic [ref=e304]:
+                - term [ref=e305]: Source
+                - definition [ref=e306]: Tasks register
+                - term [ref=e307]: Scope
+                - definition [ref=e308]: Assigned to you
+              - link "Open my tasks due today" [ref=e309] [cursor=pointer]:
+                - /url: /tasks?assignee=mine&due=today
+            - article [ref=e312]:
+              - generic [ref=e313]:
+                - generic [ref=e314]: Tasks assigned to me
+                - group [ref=e315]:
+                  - generic "Show definition for Tasks assigned to me" [ref=e316] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e317]: i
+              - generic [ref=e318]:
+                - strong [ref=e319]: "0"
+                - generic [ref=e320]: records
+              - generic [ref=e321]:
+                - term [ref=e322]: Source
+                - definition [ref=e323]: Tasks register
+                - term [ref=e324]: Scope
+                - definition [ref=e325]: Assigned to you
+              - link "Open everything assigned to me" [ref=e326] [cursor=pointer]:
+                - /url: /tasks?assignee=mine&open=1
+            - article [ref=e329]:
+              - generic [ref=e330]:
+                - generic [ref=e331]: Tasks on hold
+                - group [ref=e332]:
+                  - generic "Show definition for Tasks on hold" [ref=e333] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e334]: i
+              - generic [ref=e335]:
+                - strong [ref=e336]: "0"
+                - generic [ref=e337]: records
+              - generic [ref=e338]:
+                - term [ref=e339]: Source
+                - definition [ref=e340]: Tasks register
+                - term [ref=e341]: Scope
+                - definition [ref=e342]: Assigned to you
+              - link "Open my held tasks" [ref=e343] [cursor=pointer]:
+                - /url: /tasks?assignee=mine&state=ON_HOLD
+            - article [ref=e346]:
+              - generic [ref=e347]:
+                - generic [ref=e348]: Calibrations overdue
+                - group [ref=e349]:
+                  - generic "Show definition for Calibrations overdue" [ref=e350] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e351]: i
+              - generic [ref=e352]:
+                - strong [ref=e353]: "0"
+                - generic [ref=e354]: records
+              - generic [ref=e355]:
+                - term [ref=e356]: Source
+                - definition [ref=e357]: Calibration register
+                - term [ref=e358]: Scope
+                - definition [ref=e359]: Your authorized scope — every equipment record you are allowed to read
+              - link "Open overdue calibrations" [ref=e360] [cursor=pointer]:
+                - /url: /assets/calibrations?state=OVERDUE
+            - article [ref=e363]:
+              - generic [ref=e364]:
+                - generic [ref=e365]: Lab tests returned to me
+                - group [ref=e366]:
+                  - generic "Show definition for Lab tests returned to me" [ref=e367] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e368]: i
+              - generic [ref=e369]:
+                - strong [ref=e370]: "0"
+                - generic [ref=e371]: records
+              - generic [ref=e372]:
+                - term [ref=e373]: Source
+                - definition [ref=e374]: Laboratory register
+                - term [ref=e375]: Scope
+                - definition [ref=e376]: Authored by you
+              - link "Open my returned lab tests" [ref=e377] [cursor=pointer]:
+                - /url: /laboratory/tests?state=RETURNED&ownership=mine
+            - article [ref=e380]:
+              - generic [ref=e381]:
+                - generic [ref=e382]: Documents awaiting your review
+                - group [ref=e383]:
+                  - generic "Show definition for Documents awaiting your review" [ref=e384] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=e385]: i
+              - generic [ref=e386]:
+                - strong [ref=e387]: "0"
+                - generic [ref=e388]: records
+              - generic [ref=e389]:
+                - term [ref=e390]: Source
+                - definition [ref=e391]: Document review queue
+                - term [ref=e392]: Scope
+                - definition [ref=e393]: Both document-review and approval-review grants; owner scope or global scope
+              - link "Open documents awaiting my review" [ref=e394] [cursor=pointer]:
+                - /url: /documents?review=mine
+          - generic [ref=e397]:
+            - generic [ref=e398]:
+              - region [ref=e399]:
+                - generic [ref=e400]:
+                  - generic [ref=e401]:
+                    - paragraph [ref=e402]: Bottlenecks
+                    - heading "Quarantine flow" [level=2] [ref=e403]
+                    - paragraph [ref=e404]: One stage per server-side predicate, in the order an item moves through quarantine. Every stage opens the receiving register with the filter that reproduces its own count.
+                  - link "Open the receiving register" [ref=e406] [cursor=pointer]:
+                    - /url: /quarantine/receiving
+                - list [ref=e407]:
+                  - listitem [ref=e408]:
+                    - link "Stage 1 Received today 0records Receiving date = current UTC server date" [ref=e409] [cursor=pointer]:
+                      - /url: /quarantine/receiving?receivedOn=today
+                      - generic [ref=e410]: Stage 1
+                      - strong [ref=e411]: Received today
+                      - generic [ref=e412]: 0records
+                      - generic [ref=e413]: Receiving date = current UTC server date
+                  - listitem [ref=e414]:
+                    - link "Stage 2 Awaiting inspection 0records workflow state = READY_FOR_INSPECTION" [ref=e415] [cursor=pointer]:
+                      - /url: /quarantine/receiving?state=READY_FOR_INSPECTION
+                      - generic [ref=e416]: Stage 2
+                      - strong [ref=e417]: Awaiting inspection
+                      - generic [ref=e418]: 0records
+                      - generic [ref=e419]: workflow state = READY_FOR_INSPECTION
+                  - listitem [ref=e420]:
+                    - link "Stage 3 Under inspection 0records workflow state = UNDER_INSPECTION" [ref=e421] [cursor=pointer]:
+                      - /url: /quarantine/receiving?state=UNDER_INSPECTION
+                      - generic [ref=e422]: Stage 3
+                      - strong [ref=e423]: Under inspection
+                      - generic [ref=e424]: 0records
+                      - generic [ref=e425]: workflow state = UNDER_INSPECTION
+                  - listitem [ref=e426]:
+                    - link "Stage 4 HOLD 0records inspection result = HOLD" [ref=e427] [cursor=pointer]:
+                      - /url: /quarantine/receiving?inspectionResult=HOLD
+                      - generic [ref=e428]: Stage 4
+                      - strong [ref=e429]: HOLD
+                      - generic [ref=e430]: 0records
+                      - generic [ref=e431]: inspection result = HOLD
+                  - listitem [ref=e432]:
+                    - link "Stage 5 PASS not released 0records inspection result = PASS AND release system state = false" [ref=e433] [cursor=pointer]:
+                      - /url: /quarantine/receiving?inspectionResult=PASS&releaseState=NOT_RELEASED
+                      - generic [ref=e434]: Stage 5
+                      - strong [ref=e435]: PASS not released
+                      - generic [ref=e436]: 0records
+                      - generic [ref=e437]: inspection result = PASS AND release system state = false
+                  - listitem [ref=e438]:
+                    - link "Stage 6 Released 0records release system state = true" [ref=e439] [cursor=pointer]:
+                      - /url: /quarantine/receiving?releaseState=RELEASED
+                      - generic [ref=e440]: Stage 6
+                      - strong [ref=e441]: Released
+                      - generic [ref=e442]: 0records
+                      - generic [ref=e443]: release system state = true
+                - generic [ref=e444]:
+                  - generic [ref=e445]:
+                    - term [ref=e446]: Source
+                    - definition [ref=e447]: Quarantine receiving register
+                  - generic [ref=e448]:
+                    - term [ref=e449]: Scope
+                    - definition [ref=e450]: Your authorized scope — every creator you are allowed to read
+                  - generic [ref=e451]:
+                    - term [ref=e452]: Window
+                    - definition [ref=e453]: Current snapshot, except "Received today", which counts the current UTC server date.
+              - region [ref=e454]:
+                - generic [ref=e455]:
+                  - generic [ref=e456]:
+                    - paragraph [ref=e457]: Trend
+                    - heading "Receiving records per day" [level=2] [ref=e458]
+                  - link "Open the receiving register" [ref=e459] [cursor=pointer]:
+                    - /url: /quarantine/receiving
+                - status [ref=e460]: The series was read successfully and every day in 2026-09-26 – 2026-10-09 has no receiving records. Nothing is plotted; this is a real zero, not missing data.
+                - generic [ref=e461]:
+                  - generic [ref=e462]:
+                    - term [ref=e463]: Source
+                    - definition [ref=e464]: Quarantine receiving register
+                  - generic [ref=e465]:
+                    - term [ref=e466]: Unit
+                    - definition [ref=e467]: records
+                  - generic [ref=e468]:
+                    - term [ref=e469]: Grain
+                    - definition [ref=e470]: One calendar day of the receiving date (UTC), ascending
+                  - generic [ref=e471]:
+                    - term [ref=e472]: Counts
+                    - definition [ref=e473]: Receiving items you recorded that you are allowed to read, per day
+                  - generic [ref=e474]:
+                    - term [ref=e475]: Scope
+                    - definition [ref=e476]: Records you created, inside your authorized scope
+                  - generic [ref=e477]:
+                    - term [ref=e478]: Period
+                    - definition [ref=e479]: 2026-09-26 to 2026-10-09 (14 days, current UTC server date)
+                  - generic [ref=e480]:
+                    - term [ref=e481]: Freshness
+                    - definition [ref=e482]: 09 Oct 2026, 20:01
+            - complementary [ref=e483]:
+              - region [ref=e484]:
+                - generic [ref=e485]:
+                  - generic [ref=e486]:
+                    - paragraph [ref=e487]: What changed
+                    - heading "Recent activity" [level=2] [ref=e488]
+                    - paragraph [ref=e489]: Your account activity, newest first. The audit history retains every event.
+                  - link "Open history" [ref=e490] [cursor=pointer]:
+                    - /url: /audit
+                - list [ref=e491]:
+                  - listitem [ref=e492]:
+                    - time [ref=e493]: 05 Oct 2026, 12:51
+                    - strong [ref=e494]: Grant system owner access
+                    - generic [ref=e495]: User · User-approved exclusive full-system access
+              - region [ref=e496]:
+                - generic [ref=e498]:
+                  - paragraph [ref=e499]: Data coverage
+                  - heading "What this snapshot can answer" [level=2] [ref=e500]
+                - list [ref=e501]:
+                  - listitem [ref=e502]:
+                    - strong [ref=e503]: Approvals waiting for your decision
+                    - generic [ref=e504]: Read through the canonical approvals queue — the same set /approvals lists.
+                  - listitem [ref=e505]:
+                    - strong [ref=e506]: Quarantine pipeline stages
+                    - generic [ref=e507]: Projected from the quarantine overview, which reads the same receiving register its links open.
+                  - listitem [ref=e508]:
+                    - strong [ref=e509]: Unread notifications addressed to you
+                    - generic [ref=e510]: Read through the notification service for your authenticated account only.
+                  - listitem [ref=e511]:
+                    - strong [ref=e512]: Your assigned, due, overdue and held tasks
+                    - generic [ref=e513]: "Read through the tasks register: the same assignee, still-open, due-date and single-state filters the links apply are implemented in the register, so assigned work with no due date is counted rather than invisible."
+                  - listitem [ref=e514]:
+                    - strong [ref=e515]: Inspection reports returned to you
+                    - generic [ref=e516]: Read through the inspection register with the return filter the link applies.
+                  - listitem [ref=e517]:
+                    - strong [ref=e518]: Overdue calibrations
+                    - generic [ref=e519]: Read through the calibration register filtered to its explicit OVERDUE state.
+                  - listitem [ref=e520]:
+                    - strong [ref=e521]: Receiving records per day
+                    - generic [ref=e522]: The single approved server series, with its grain, unit, window and zero policy.
+                  - listitem [ref=e523]:
+                    - strong [ref=e524]: Laboratory workload (state-filtered, owner-scoped)
+                    - generic [ref=e525]: "Read through the laboratory register’s own bounded workload read: the count is the register’s full filtered population for one workflow state and the queue samples its bounded newest-first page. The multi-state workload chart from the chart pool is not drawn; each state is queryable on the register instead."
+                  - listitem [ref=e526]:
+                    - strong [ref=e527]: Document review queue
+                    - generic [ref=e528]: The documents read model uses one indexed IN_REVIEW query scoped by both required review grants and the reviewer/author rule; the same query supplies its full match count and bounded review links.
+                  - listitem [ref=e529]:
+                    - strong [ref=e530]: Blocked reasons
+                    - generic [ref=e531]: "Blocked work is readable (held tasks and HOLD receiving items each have their own counter, and \"My work today\" groups them as blocked), but no register stores a blocked reason as a field: a task records its reason in the immutable audit trail at the transition. A queue column of blocked reasons therefore cannot be read, and none is inferred. Owner: 013/026 if a reason column is approved."
+                  - listitem [ref=e532]:
+                    - strong [ref=e533]: Reject quantity, top items/reasons/departments and daily trend
+                    - generic [ref=e534]: "The reject analytics read model aggregates the whole register with no actor-scope predicate, and /reject-reports is declared an authenticated route rather than a permission-bound one, so a global reject aggregate placed on a scope-aware dashboard would be an unauthorized aggregate: no rejected quantity or trend is estimated here. Owner: 017-B with 013/014 to define the read scope."
+                  - listitem [ref=e535]:
+                    - strong [ref=e536]: Quality record summary
+                    - generic [ref=e537]: "The quality registers support a state filter only — no ownership filter exists server-side — so a quality count could not be reproduced by the link it would carry. Owner: 017-B."
+                  - listitem [ref=e538]:
+                    - strong [ref=e539]: System health cards
+                    - generic [ref=e540]: "System health is deliberately not a dashboard data product: /system/health is gated by the system-health read use case, which redirects non-owners to 404, so it is excluded from this shared surface rather than missing."
+                - paragraph [ref=e541]: Source, scope and period are listed with each dataset.
+              - generic [ref=e542]:
+                - strong [ref=e543]: PASS and RELEASED are separate
+                - paragraph [ref=e544]: A scientific PASS does not change the release system state. Follow the controlled workflow for release decisions.

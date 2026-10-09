@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background text-on-surface" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LIMS QC Core - Receiving Record REC-2024-0881</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed-dim": "#bcc7de",
+            "surface-container-low": "#eff4ff",
+            "outline": "#75777d",
+            "on-secondary-container": "#006f67",
+            "on-error-container": "#93000a",
+            "surface-dim": "#cbdbf5",
+            "primary-container": "#1e293b",
+            "on-primary-fixed-variant": "#3c475a",
+            "on-tertiary-fixed": "#0d1c2f",
+            "on-background": "#0b1c30",
+            "surface-bright": "#f8f9ff",
+            "primary-fixed": "#d8e3fb",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary-container": "#1b293c",
+            "on-surface": "#0b1c30",
+            "background": "#f8f9ff",
+            "primary": "#091426",
+            "tertiary": "#051426",
+            "surface-container-highest": "#d3e4fe",
+            "on-tertiary-container": "#8290a7",
+            "on-surface-variant": "#45474c",
+            "error": "#ba1a1a",
+            "tertiary-fixed": "#d5e3fd",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#99efe5",
+            "secondary-fixed-dim": "#80d5cb",
+            "surface-tint": "#545f73",
+            "surface": "#f8f9ff",
+            "secondary": "#006a63",
+            "surface-container": "#e5eeff",
+            "tertiary-fixed-dim": "#b9c7e0",
+            "on-primary": "#ffffff",
+            "inverse-primary": "#bcc7de",
+            "outline-variant": "#c5c6cd",
+            "inverse-surface": "#213145",
+            "on-tertiary": "#ffffff",
+            "on-error": "#ffffff",
+            "secondary-fixed": "#9cf2e8",
+            "on-secondary-fixed-variant": "#00504a",
+            "on-primary-container": "#8590a6",
+            "on-secondary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-variant": "#d3e4fe",
+            "on-primary-fixed": "#111c2d",
+            "on-tertiary-fixed-variant": "#3a485c",
+            "on-secondary-fixed": "#00201d",
+            "surface-container-high": "#dce9ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin-tablet": "1.5rem",
+            "space-lg": "1.25rem",
+            "margin-desktop": "2rem",
+            "gutter-desktop": "1.5rem",
+            "space-md": "0.75rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Geist"],
+            "headline-xl": ["Geist"],
+            "headline-md": ["Geist"],
+            "headline-xl-mobile": ["Geist"],
+            "headline-sm": ["Geist"],
+            "label-sm": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "headline-lg": ["Geist"],
+            "body-lg": ["Geist"],
+            "code-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "code-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 18px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-body-md text-body-md bg-background antialiased selection:bg-surface-container-highest">
+<!-- ================= TOP APP BAR (Shared Component JSON) ================= -->
+<header class="flex justify-between items-center w-full px-space-lg h-14 bg-surface-container-lowest dark:bg-primary border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<!-- Brand Anchor & Search -->
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="science">science</span>
+<span class="text-headline-sm font-headline-sm font-semibold text-primary dark:text-surface tracking-tight">LIMS QC Core</span>
+</div>
+<div class="h-5 w-px bg-outline-variant"></div>
+<!-- Search Bar -->
+<div class="relative flex items-center w-64">
+<span class="material-symbols-outlined absolute left-2.5 text-on-surface-variant pointer-events-none" data-icon="search">search</span>
+<input class="w-full h-8 pl-8 pr-2.5 bg-surface-container-low text-on-surface font-body-sm text-body-sm border border-outline-variant rounded-DEFAULT focus:outline-none focus:border-secondary" placeholder="Lookup lot, item, run ID..." type="text"/>
+</div>
+</div>
+<!-- Top Links: Active mapping for 'Sample Intake' -->
+<nav class="hidden md:flex items-center gap-space-lg h-full pt-3">
+<!-- Active Link -->
+<a class="text-secondary dark:text-secondary-fixed border-b-2 border-secondary dark:border-secondary-fixed pb-3 font-medium text-body-md font-body-md flex items-center gap-1" href="#">
+        Sample Intake
+      </a>
+<a class="text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface pb-3 font-normal text-body-md font-body-md" href="#">
+        Batch Runs
+      </a>
+<a class="text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface pb-3 font-normal text-body-md font-body-md" href="#">
+        Analytical Logs
+      </a>
+<a class="text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface pb-3 font-normal text-body-md font-body-md" href="#">
+        Compliance
+      </a>
+<a class="text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface pb-3 font-normal text-body-md font-body-md" href="#">
+        Audits
+      </a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-space-md">
+<button class="flex items-center gap-1.5 h-8 px- space-md bg-surface-container-lowest text-on-surface-variant border border-outline-variant hover:bg-surface-container-low rounded-DEFAULT text-label-md font-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span>Scan Barcode</span>
+</button>
+<button class="flex items-center gap-1.5 h-8 px-space-md bg-primary-container text-on-primary border border-primary-container hover:bg-primary rounded-DEFAULT text-label-md font-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+<span>Check-in Lot</span>
+</button>
+<div class="h-4 w-px bg-outline-variant mx-1"></div>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-DEFAULT transition-colors" title="Notifications">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-DEFAULT transition-colors" title="Help">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-DEFAULT transition-colors" title="Settings">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<!-- Avatar -->
+<div class="w-7 h-7 rounded-DEFAULT bg-surface-container-high border border-outline-variant flex items-center justify-center text-label-sm font-label-sm text-on-surface" title="Technician profile avatar">
+        QA
+      </div>
+</div>
+</header>
+<!-- ================= MAIN BODY CONTAINER ================= -->
+<div class="flex-1 flex overflow-hidden">
+<!-- ================= SIDE NAV BAR (Shared Component JSON) ================= -->
+<aside class="flex flex-col justify-between h-[calc(100vh-3.5rem)] w-64 p-space-sm bg-surface-container-lowest dark:bg-primary border-r border-outline-variant dark:border-outline shrink-0">
+<div class="space-y-space-md">
+<!-- Site / Station Metadata -->
+<div class="px-space-md py-space-sm border-b border-outline-variant pb-3">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-DEFAULT bg-surface-container flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-primary" data-icon="precision_manufacturing">precision_manufacturing</span>
+</div>
+<div>
+<div class="text-headline-sm font-headline-sm font-semibold text-primary leading-tight">QC Station Alpha-4</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Batch Isolation Facility</div>
+</div>
+</div>
+</div>
+<!-- Primary Navigation Tabs -->
+<nav class="space-y-0.5">
+<!-- Intake Registry (Active matching Receiving Record context) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-secondary dark:text-secondary-fixed bg-surface-container-low dark:bg-primary-container border-l-2 border-secondary dark:border-secondary-fixed text-body-md font-body-md" href="#">
+<span class="material-symbols-outlined text-secondary" data-icon="inventory_2">inventory_2</span>
+<span>Intake Registry</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface text-body-md font-body-md hover:bg-surface-container dark:hover:bg-primary-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span>Quarantine Buffer</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface text-body-md font-body-md hover:bg-surface-container dark:hover:bg-primary-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+<span>Incubation Matrix</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface text-body-md font-body-md hover:bg-surface-container dark:hover:bg-primary-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span>Equipment Log</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface text-body-md font-body-md hover:bg-surface-container dark:hover:bg-primary-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="report_problem">report_problem</span>
+<span>OOS Deviations</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-primary-container hover:text-on-surface dark:hover:text-surface text-body-md font-body-md hover:bg-surface-container dark:hover:bg-primary-container transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span>21 CFR Records</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Footer Operations & Hold Button -->
+<div class="space-y-space-md pt-space-sm border-t border-outline-variant">
+<button class="w-full flex items-center justify-center gap-2 h-9 px-space-md bg-surface-container-lowest text-error border border-error-container hover:bg-error-container/20 rounded-DEFAULT text-body-sm font-body-sm font-semibold transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="front_hand">front_hand</span>
+<span>Emergency Hold</span>
+</button>
+<div class="space-y-0.5">
+<a class="flex items-center gap-space-sm px-space-md py-1.5 text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:bg-surface-container rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="health_and_safety">health_and_safety</span>
+<span>System Diagnostics</span>
+</a>
+<a class="flex items-center gap-space-sm px-space-md py-1.5 text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:bg-surface-container rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="gavel">gavel</span>
+<span>Regulatory Audit</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- ================= CANVAS CONTENT AREA ================= -->
+<main class="flex-1 overflow-y-auto bg-background px-margin-desktop py-space-xl">
+<div class="max-w-7xl mx-auto space-y-space-lg">
+<!-- BREADCRUMBS -->
+<nav aria-label="Breadcrumb" class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant">
+<span class="hover:text-on-surface cursor-pointer">Operations</span>
+<span class="text-outline-variant">/</span>
+<span class="hover:text-on-surface cursor-pointer">Receiving items</span>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface font-semibold text-code-sm font-code-sm">REC-2024-0881</span>
+</nav>
+<!-- RECORD HEADER -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-lg rounded-DEFAULT flex flex-col md:flex-row justify-between items-start md:items-center gap-space-md">
+<div class="space-y-1">
+<div class="flex items-center gap-space-md flex-wrap">
+<h1 class="text-headline-xl font-headline-xl text-primary tracking-tight">REC-2024-0881</h1>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-DEFAULT text-label-sm font-label-sm bg-surface-container-low border border-outline-variant text-on-surface-variant">
+                  CONTROLLED INTAKE
+                </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-DEFAULT text-label-sm font-label-sm bg-amber-500/10 border border-amber-600/30 text-amber-800 dark:text-amber-300">
+                  ACTIVE ISOLATION
+                </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant">
+              Logged record under active quarantine protocol. Clear separation between analytical inspection criteria and inventory disposition.
+            </p>
+</div>
+<!-- Quick Navigation Actions -->
+<div class="flex items-center gap-2 self-stretch md:self-auto justify-end">
+<a class="h-9 px-3 flex items-center gap-1.5 bg-surface-container-lowest text-on-surface border border-outline-variant hover:bg-surface-container-low rounded-DEFAULT text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="science">science</span>
+<span>Analytical Logs</span>
+</a>
+<a class="h-9 px-3 flex items-center gap-1.5 bg-surface-container-lowest text-on-surface border border-outline-variant hover:bg-surface-container-low rounded-DEFAULT text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="shield">shield</span>
+<span>Quarantine Buffer</span>
+</a>
+</div>
+</div>
+<!-- PROMINENT BLOCKER CARD -->
+<div class="bg-amber-500/5 border border-amber-600/40 rounded-DEFAULT p-space-md" role="alert">
+<div class="flex items-start gap-space-md">
+<div class="p-1 rounded-DEFAULT bg-amber-600/10 text-amber-800 shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-amber-700" data-icon="lock">lock</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span>Action unavailable due to active hold condition.</span>
+</div>
+<div class="flex items-center gap-3 text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Decision Reference:</span>
+<span class="text-code-sm font-code-sm px-1.5 py-0.5 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT text-on-surface">DEC-HLD-0419</span>
+<span class="text-on-surface-variant">Owner:</span>
+<span class="font-semibold text-on-surface">Station Lead QA-3</span>
+</div>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+                Standard disposition procedures are locked until analytical validation confirms identity compliance. Release signatures cannot be executed while analytical state remains in HOLD status.
+              </p>
+</div>
+</div>
+</div>
+<!-- FACTS GRID: Explicit visual separation between Inspection Result & Release State -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-space-md">
+<!-- Item Code -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded-DEFAULT space-y-1">
+<div class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Item Code</div>
+<div class="text-code-sm font-code-sm font-semibold text-primary truncate" title="ITM-CHEM-0492">
+              ITM-CHEM-0492
+            </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant truncate">Analytical Reagent Grade</div>
+</div>
+<!-- Lot -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded-DEFAULT space-y-1">
+<div class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Lot Identification</div>
+<div class="text-code-sm font-code-sm font-semibold text-primary truncate" title="LOT-99420-B">
+              LOT-99420-B
+            </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Container Count: 14 Units</div>
+</div>
+<!-- Supplier -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded-DEFAULT space-y-1 lg:col-span-2">
+<div class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Registered Supplier</div>
+<div class="text-body-md font-body-md font-semibold text-primary truncate" title="Sigma Aldrich Fine Chemicals">
+              Sigma Aldrich Fine Chemicals
+            </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Direct Manifest Delivery</div>
+</div>
+<!-- Received Timestamp -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded-DEFAULT space-y-1 lg:col-span-2">
+<div class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Received Timestamp</div>
+<div class="text-code-sm font-code-sm font-semibold text-primary">
+              2024-10-18 08:30 UTC
+            </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Intake Bay 02 • Station Alpha-4</div>
+</div>
+<!-- DISTINCT FACT 1: Inspection Result -->
+<div class="bg-surface-container-lowest border-2 border-amber-600/30 p-space-md rounded-DEFAULT space-y-2 lg:col-span-3">
+<div class="flex items-center justify-between border-b border-outline-variant/60 pb-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Analytical Assessment</span>
+<span class="text-label-sm font-label-sm text-amber-800">Station QA Quarantine</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Inspection result</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant text-[11px]">Laboratory test outcome</div>
+</div>
+<!-- Literal state word ONLY: HOLD -->
+<div class="px-3 py-1 bg-amber-500/10 border border-amber-600/40 rounded-DEFAULT text-amber-900 dark:text-amber-300 font-label-md text-label-md font-bold tracking-wider">
+                HOLD
+              </div>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant pt-1 border-t border-outline-variant/40 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-amber-700 text-[14px]" data-icon="info">info</span>
+<span>Pending identity confirmation chromatographic trace.</span>
+</div>
+</div>
+<!-- DISTINCT FACT 2: Release State -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded-DEFAULT space-y-2 lg:col-span-3">
+<div class="flex items-center justify-between border-b border-outline-variant/60 pb-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Inventory Disposition</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Material Control</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Release state</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant text-[11px]">Warehouse distribution status</div>
+</div>
+<!-- Literal state word ONLY: NOT_RELEASED -->
+<div class="px-3 py-1 bg-surface-container-high border border-outline rounded-DEFAULT text-on-surface font-label-md text-label-md font-bold tracking-wider">
+                NOT_RELEASED
+              </div>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant pt-1 border-t border-outline-variant/40 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[14px]" data-icon="lock">lock</span>
+<span>Physical staging in Buffer C-14. Not authorized for transfer.</span>
+</div>
+</div>
+</div>
+<!-- SPECIMEN RUN BAR (Pipeline Progress Tracker) -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded-DEFAULT space-y-space-sm">
+<div class="flex justify-between items-center text-label-sm font-label-sm text-on-surface-variant">
+<span>RECEIVING PROTOCOL PIPELINE</span>
+<span class="text-code-sm font-code-sm">STAGE 3 OF 5: LABORATORY HOLD</span>
+</div>
+<div class="grid grid-cols-5 gap-1.5 pt-1">
+<!-- Stage 1 -->
+<div class="p-2 border border-secondary/40 bg-secondary/10 rounded-DEFAULT">
+<div class="text-label-sm font-label-sm text-secondary font-semibold">01 INTAKE</div>
+<div class="text-body-sm font-body-sm text-on-surface font-medium mt-0.5">PASS</div>
+</div>
+<!-- Stage 2 -->
+<div class="p-2 border border-secondary/40 bg-secondary/10 rounded-DEFAULT">
+<div class="text-label-sm font-label-sm text-secondary font-semibold">02 QUARANTINE</div>
+<div class="text-body-sm font-body-sm text-on-surface font-medium mt-0.5">ACTIVE</div>
+</div>
+<!-- Stage 3 - Current Active Hold -->
+<div class="p-2 border-2 border-amber-600/50 bg-amber-500/10 rounded-DEFAULT">
+<div class="text-label-sm font-label-sm text-amber-800 font-semibold">03 ANALYTICAL</div>
+<div class="text-body-sm font-body-sm text-amber-900 font-bold mt-0.5">HOLD</div>
+</div>
+<!-- Stage 4 -->
+<div class="p-2 border border-outline-variant bg-surface-container-low rounded-DEFAULT opacity-60">
+<div class="text-label-sm font-label-sm text-on-surface-variant">04 DISPOSITION</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">NOT_RELEASED</div>
+</div>
+<!-- Stage 5 -->
+<div class="p-2 border border-outline-variant bg-surface-container-low rounded-DEFAULT opacity-60">
+<div class="text-label-sm font-label-sm text-on-surface-variant">05 ARCHIVAL</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">DRAFT</div>
+</div>
+</div>
+</div>
+<!-- ACTIONS & AUDIT DISCLOSURE PANEL -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT overflow-hidden">
+<!-- Actions Bar Header -->
+<div class="p-space-md border-b border-outline-variant flex flex-col md:flex-row justify-between items-start md:items-center gap-space-md bg-surface-bright">
+<div class="space-y-0.5">
+<div class="text-headline-sm font-headline-sm text-primary">Operational Decision Gateway</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Authorized actions for Station Lead QA-3 under current protocol lock</div>
+</div>
+<!-- Controlled Actions -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<!-- Secondary Action: Resolve Hold Condition -->
+<button class="h-9 px-space-md bg-surface-container-lowest text-on-surface border border-outline hover:bg-surface-container-low rounded-DEFAULT text-body-md font-body-md font-medium transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit_note">edit_note</span>
+<span>Resolve Hold Condition</span>
+</button>
+<!-- Conditional Primary Action (Disabled with lock tooltip) -->
+<div class="relative group">
+<button class="h-9 px-space-md bg-outline-variant text-on-surface-variant border border-outline-variant rounded-DEFAULT text-body-md font-body-md font-semibold cursor-not-allowed flex items-center gap-2 opacity-80" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock">lock</span>
+<span>Execute Release Sign-off</span>
+</button>
+<!-- Tooltip -->
+<div class="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-primary text-on-primary text-body-sm font-body-sm rounded-DEFAULT shadow-lg z-20 pointer-events-none">
+                  Blocked: Both Inspection result must be PASS and DEC-HLD-0419 must be resolved prior to release signature.
+                </div>
+</div>
+</div>
+</div>
+<!-- AUDIT DISCLOSURE TAB / ACCORDION -->
+<div class="p-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant mb-space-md">
+<div class="flex items-center gap-2 text-headline-sm font-headline-sm text-primary">
+<span class="material-symbols-outlined text-secondary" data-icon="history">history</span>
+<span>Audit Trail &amp; State Transitions</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">21 CFR PART 11 COMPLIANT LOG</span>
+</div>
+<!-- Structured Ledger Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant text-label-sm font-label-sm text-on-surface-variant">
+<th class="py-2 px-3 font-medium">TIMESTAMP (UTC)</th>
+<th class="py-2 px-3 font-medium">EVENT CODE</th>
+<th class="py-2 px-3 font-medium">PREVIOUS STATE</th>
+<th class="py-2 px-3 font-medium">RESULTING STATE</th>
+<th class="py-2 px-3 font-medium">AUTHORITY</th>
+<th class="py-2 px-3 font-medium">REASON FOR ENTRY</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-body-sm font-body-sm">
+<!-- Event 3: Quarantine Hold Placed -->
+<tr class="hover:bg-surface-container-low/50">
+<td class="py-2.5 px-3 font-code-sm text-code-sm text-primary">2024-10-18 10:14:02</td>
+<td class="py-2.5 px-3 font-code-sm text-code-sm">EVT-ST-0941</td>
+<td class="py-2.5 px-3">
+<span class="px-1.5 py-0.5 bg-surface-container border border-outline-variant text-label-sm font-label-sm rounded-DEFAULT">ACTIVE</span>
+</td>
+<td class="py-2.5 px-3">
+<span class="px-1.5 py-0.5 bg-amber-500/10 border border-amber-600/30 text-amber-800 text-label-sm font-label-sm font-bold rounded-DEFAULT">HOLD</span>
+</td>
+<td class="py-2.5 px-3 text-on-surface">Station Lead QA-3</td>
+<td class="py-2.5 px-3 text-on-surface-variant">Assay variance outside standard deviation tolerance; hold DEC-HLD-0419 instituted.</td>
+</tr>
+<!-- Event 2: Intake Activated -->
+<tr class="hover:bg-surface-container-low/50">
+<td class="py-2.5 px-3 font-code-sm text-code-sm text-primary">2024-10-18 08:42:19</td>
+<td class="py-2.5 px-3 font-code-sm text-code-sm">EVT-ST-0883</td>
+<td class="py-2.5 px-3">
+<span class="px-1.5 py-0.5 bg-surface-container border border-outline-variant text-label-sm font-label-sm rounded-DEFAULT">DRAFT</span>
+</td>
+<td class="py-2.5 px-3">
+<span class="px-1.5 py-0.5 bg-surface-container-low border border-outline-variant text-label-sm font-label-sm rounded-DEFAULT">ACTIVE</span>
+</td>
+<td class="py-2.5 px-3 text-on-surface">Station Lead QA-3</td>
+<td class="py-2.5 px-3 text-on-surface-variant">Lot received at Intake Bay 02; barcodes scanned and quarantined in Buffer C-14.</td>
+</tr>
+<!-- Event 1: Intake Draft Record Created -->
+<tr class="hover:bg-surface-container-low/50">
+<td class="py-2.5 px-3 font-code-sm text-code-sm text-primary">2024-10-18 08:30:00</td>
+<td class="py-2.5 px-3 font-code-sm text-code-sm">EVT-ST-0870</td>
+<td class="py-2.5 px-3 text-on-surface-variant font-code-sm text-code-sm">--</td>
+<td class="py-2.5 px-3">
+<span class="px-1.5 py-0.5 bg-surface-container border border-outline-variant text-label-sm font-label-sm rounded-DEFAULT">DRAFT</span>
+</td>
+<td class="py-2.5 px-3 text-on-surface">System Intake Auto-Log</td>
+<td class="py-2.5 px-3 text-on-surface-variant">Direct inbound manifest ingested for Sigma Aldrich Fine Chemicals shipping reference.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Audit Footer Meta -->
+<div class="mt-space-md pt-space-sm border-t border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center text-label-sm font-label-sm text-on-surface-variant gap-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock_clock">lock_clock</span>
+<span>Cryptographic verification hash: sha256:7f01c2...8b91 (VALID)</span>
+</div>
+<div class="flex items-center gap-3">
+<span>Total records: 3 entries</span>
+<span>Export ledger: CSV / PDF</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
