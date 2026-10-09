@@ -8,12 +8,12 @@ import { PostgresSignatureEvidenceRepository } from '../../e-signatures/infrastr
 import { SignControlledActionUseCase } from '../../e-signatures/application/sign-controlled-action.js';
 import { ListMyApprovalsUseCase } from './list-my-approvals.js';
 import { GetApprovalUseCase } from './get-approval.js';
-import {
-  DecideApprovalUseCase,
-  type SubjectTransition,
-  type SignaturePolicy,
-} from './decide-approval.js';
+import { DecideApprovalUseCase, type SubjectTransition } from './decide-approval.js';
 import { ResolveApprovalDecisionCapabilitiesUseCase } from './decision-capabilities.js';
+import {
+  approvalSignaturePolicyStatus,
+  createApprovedSignaturePolicy,
+} from './signature-policy-registry.js';
 import { documentsActionDependencies } from '../../documents/application/dependencies.js';
 import { laboratoryActionDependencies } from '../../laboratory/application/dependencies.js';
 import { quarantineActionDependencies } from '../../quarantine/application/dependencies.js';
@@ -131,11 +131,10 @@ export function approvalsReadDependencies() {
   const database = getDatabase();
   const repository = new PostgresApprovalRepository(database);
   const transitions = transitionDependencies();
-  // PD-32 is still open. Keep decision signing unresolved until QMS supplies
-  // the approved action-to-signature map; capabilities expose that block.
-  const signaturePolicy: SignaturePolicy = {
-    requirement: () => ({ status: 'UNRESOLVED' }),
-  };
+  // Owner-approved action map effective 2026-10-09
+  // (`Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md`). Unlisted
+  // subject/decision rows stay fail-closed (`UNRESOLVED`).
+  const signaturePolicy = createApprovedSignaturePolicy();
   const capabilities = new ResolveApprovalDecisionCapabilitiesUseCase({
     subjectTransitions: transitions,
     signaturePolicy,
@@ -147,7 +146,7 @@ export function approvalsReadDependencies() {
     documentEvidence: {
       execute: (versionId: string) => getDocumentApprovalEvidence(database, versionId),
     },
-    decisionPolicyStatus: 'UNRESOLVED' as const,
+    decisionPolicyStatus: approvalSignaturePolicyStatus(),
   };
 }
 
@@ -163,7 +162,7 @@ export function approvalsActionDependencies() {
   return {
     decide: new DecideApprovalUseCase(repository, {
       subjectTransitions: transitionDependencies(),
-      signaturePolicy: { requirement: () => ({ status: 'UNRESOLVED' }) },
+      signaturePolicy: createApprovedSignaturePolicy(),
       signer,
     }),
   };

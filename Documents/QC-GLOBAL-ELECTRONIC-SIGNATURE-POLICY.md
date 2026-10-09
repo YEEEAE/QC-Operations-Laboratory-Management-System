@@ -14,6 +14,7 @@
 > Related: `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (the P-05
 > account-bound approval decision) and the reconciliation artifact
 > `audit/launch-readiness/QC-LAUNCH-002/global-esign-policy-reconciliation.md`.
+> Activation map (owner-approved, effective 2026-10-09): `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md`.
 
 ### 1. Global Electronic Signature Requirement
 

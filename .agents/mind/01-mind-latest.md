@@ -1,3 +1,13 @@
+- **2026-10-09 — DOC-ESIG-003 / تفعيل خريطة التوقيع الإلكتروني (المرحلة 1: طلبات التغيير)**
+  - Changed: أُضيف السجل المركزي `src/modules/approvals/application/signature-policy-registry.ts` (خريطة معتمدة effective 2026-10-09) ووُصل بـ`approvalsReadDependencies`/`approvalsActionDependencies`. اعتماد طلب التغيير صار يتطلب توقيعاً إلكترونياً مرتبطاً بالحساب بمعنى `Authorize change request {id}`، وRETURN/REJECT يبقيان رفضاً إجرائياً بلا توقيع. `decisionPolicyStatus` صار `PARTIAL` وواجهة `/approvals` تعرضه. الوثائق المضبوطة (PD-13/RD-019) وبقية الوحدات تبقى fail-closed.
+  - Evidence: `pnpm typecheck` 0 errors؛ focused 7/7 ووحدات approvals/documents/change-requests 25/25 PASS؛ تكامل المواضيع 41 PASS/9 skipped/2 suites BLOCKED (Docker غير متاح). لا PG18/browser مطلوب لهذه المرحلة.
+  - State: PARTIAL (المرحلة 1 لطلبات التغيير DONE؛ الوثائق والمراحل 2–7 مفتوحة). لا تغيير في درجات القبول (policy §9).
+  - Key files: `src/modules/approvals/application/signature-policy-registry.ts`, `src/modules/approvals/application/dependencies.ts`, `src/pages/approvals/index.astro`, `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md`.
+- **2026-10-09 — DOC-ESIG-002 / خريطة تفعيل التوقيع الإلكتروني (PROPOSED)**
+  - Changed: أُنشئت `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md` كخريطة Action×subject×event×stage×signer×permission×meaning مستخرجة من `policy-registry.ts` ومسار الاعتماد العام ومراسم التوقيع الحالية؛ تُبيّن المنفّذ (`IMPLEMENTED`)، المعلّق fail-closed (`UNRESOLVED`: DOCUMENT_VERSION/CHANGE_REQUEST)، وغير المنفّذ (`NOT_IMPLEMENTED`: NCR/RCA/Findings/receiving release/reject-reports/equipment/calibration/maintenance/admin/reports/tasks). سُجّلت في الفهرس وREADME والـMind.
+  - Evidence: مراجعة مصدرية فقط (لا كود/صلاحيات/migrations)؛ لا اختبارات تشغيل لأنها وثيقة. لا تغيير سلوك النظام.
+  - State: DONE (وثيقة PROPOSED)؛ التفعيل الكامل BLOCKED حتى اعتماد المالك/QMS للخريطة (revision + effective date + معاني + حدود override).
+  - Key files: `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md`, `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md`.
 - **2026-10-09 — DOC-ESIG-001 / تسجيل سياسة التوقيع الإلكتروني كمستند مرجعي**
   - Changed: نُقلت السياسة الموردة من المالك من جذر المستودع (`سياسة وصلاحيات.md`) إلى `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (rename يحفظ السجل)، وأُضيف رأس مرجعي يصرّح بحالة السلطة، وسُجّلت في `Documents/DOCUMENTATION-INVENTORY.md` و`Documents/README.md` وأُدرجت في مراجع الـMind. لا تغيير كود/صلاحيات/migrations.
   - Evidence: المحتوى محفوظ كما هو (SHA-256 الأصلي `f9d92c4973524578b98fdfc78c0957228ce4293800ae0accee7ffe41ee3fcc08`)؛ `git status` يظهر rename فقط بلا تعديل محتوى دلالي.
@@ -115,7 +125,7 @@
 - الـowner control center يستدعي `GetControlCenterOverviewUseCase` (بوابة `isNamedSystemOwner`) ولا ينفّذ SQL أو منطق أعمال؛ الإنشاء/التعديل/الأدوار/النطاقات تمر عبر الـuse cases وactions القائمة نفسها.
 
 ### P-05 authority
-- **2026-10-05 current owner change:** every in-system approval, including Supervisor inspection/lab stage 1, requires a formal account-bound electronic signature with fresh reauthentication and version/action binding. This working tree implements the stage-one inspection/lab slice; broader action applicability remains open and requires the owner-specified action × subject × state × signer × signature-meaning × evidence mapping. Canonical sources: `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (the account-bound approval decision; not the historical `audit/` path) and the registered owner-supplied policy text `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (owner-approved functional requirement; revision/effectivity and per-action signer map still open).
+- **2026-10-05 current owner change:** every in-system approval, including Supervisor inspection/lab stage 1, requires a formal account-bound electronic signature with fresh reauthentication and version/action binding. This working tree implements the stage-one inspection/lab slice; broader action applicability remains open and requires the owner-specified action × subject × state × signer × signature-meaning × evidence mapping. Canonical sources: `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md` (the account-bound approval decision; not the historical `audit/` path) and the registered owner-supplied policy text `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (owner-approved functional requirement; revision/effectivity and per-action signer map still open). The Action×signer×meaning activation map `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md` is owner-approved and effective 2026-10-09 (`QC-GESAP-ACTION-MAP-v1`). The central registry `src/modules/approvals/application/signature-policy-registry.ts` now activates change-request authorization signature (`Authorize change request {id}`), while RETURN/REJECT stay unsigned workflow refusals; `decisionPolicyStatus` is `PARTIAL`. Controlled document approval (PD-13/RD-019) and every other module remain blocked until implemented and verified; unlisted rows stay fail-closed.
 - OD-2026-09-23-RBAC-01 يحسم مسار التفتيش/المختبر: Supervisor وحده بصفة الدور يمنح المرحلة الأولى؛ QCM/MANAGER نهائي فقط؛ المالك المسمى يبقى استثناءً صريحًا داخل use case. أدلة الوحدة PASS، لكن التحقق على PostgreSQL 18 ما زال BLOCKED.
 - QC 01/02/03 يستخدمون EMPLOYEE bundle واحدًا لأسطح الإنشاء الـ12؛ لا مراجعة/إرجاع/اعتماد/توقيع/إغلاق/تجاوز. لم تُنشأ حسابات UAT لأن PostgreSQL المعزولة غير متاحة.
 - أدلة UAT تُسجل عبر authenticated actions مع participant login/role matching، وتكتب مع audit داخل transaction؛ PostgreSQL write/read round-trip لم يُتحقق.
@@ -326,6 +336,8 @@
 - `Documents/ROLE-MATRIX.md`
 - `Documents/PERMISSION-MATRIX.md`
 - `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-POLICY.md` (owner-approved functional requirement; not yet revisioned/effective QMS policy)
+- `Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md` (owner-approved, effective 2026-10-09; change-request signatures active, all other rows fail-closed)
+- `src/modules/approvals/application/signature-policy-registry.ts` (central generic-approval signature map)
 - `Documents/QC-OWNER-DECISION-ALL-APPROVALS-SIGNATURE-2026-10-05.md`
 - `Documents/REQUIREMENTS-TRACEABILITY.md`
 - `Documents/DATA-MODEL.md`

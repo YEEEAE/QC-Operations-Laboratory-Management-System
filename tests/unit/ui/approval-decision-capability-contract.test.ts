@@ -13,6 +13,16 @@ describe('approval decision capability presentation', () => {
     expect(indexPage).toContain("capability.state === 'POLICY_BLOCKED'");
   });
 
+  it('surfaces the partial activation state once some generic decisions require a signature', () => {
+    expect(indexPage).toContain("approvalReads.decisionPolicyStatus === 'PARTIAL'");
+    expect(indexPage).toContain(
+      'Change-request authorization requires an account-bound electronic signature',
+    );
+    expect(indexPage).toContain(
+      'Other generic decision types still have no approved signature policy',
+    );
+  });
+
   it('renders only available wired decisions and no password field when policy is blocked', () => {
     expect(detailPage).toContain(
       "approval?.decisionCapabilities.filter((capability) => capability.state === 'AVAILABLE')",
