@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QC-LAUNCH-016 — الأمن والتسريب والأذونات</title>
+  <style>
+    :root{color-scheme:light;--ink:#17212b;--muted:#526170;--line:#d8e0e7;--paper:#fff;--bg:#f2f5f7;--pass:#17623b;--warn:#775000;--block:#8a2630}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1100px;margin:28px auto;padding:28px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+    h1,h2{line-height:1.3}h1{margin-top:0}h2{margin-top:2rem;border-bottom:1px solid var(--line);padding-bottom:.45rem}
+    .meta,.risk,.result{padding:14px 16px;border:1px solid var(--line);border-radius:8px;margin:12px 0;background:#fbfcfd}
+    .block{border-inline-start:4px solid var(--block)}.pass{border-inline-start:4px solid var(--pass)}.warn{border-inline-start:4px solid var(--warn)}
+    table{border-collapse:collapse;width:100%;margin:1rem 0}th,td{border:1px solid var(--line);padding:9px;text-align:start;vertical-align:top}th{background:#edf2f5}
+    code,pre{direction:ltr;unicode-bidi:embed;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}code{overflow-wrap:anywhere}a{color:#075da8}
+    .muted{color:var(--muted)}.ltr{direction:ltr;unicode-bidi:embed;text-align:left}
+  </style>
+</head>
+<body><main>
+  <h1>QC-LAUNCH-016 — الأمن، التسريب، والأذونات</h1>
+  <p><strong>الحالة العامة: BLOCKED / PARTIAL.</strong> هذه الحزمة تعرض النتائج الفعلية للمرشح المحلي فقط؛ ما فيه قبول أمني مستقل أو دليل إنتاجي.</p>
+  <div class="meta">
+    <div><strong>المرشح:</strong> <code>ac274e5348e38d5bc778d3154ea159063f8728f4</code></div>
+    <div><strong>مرجع التدقيق:</strong> <code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> — HEAD مختلف، والأدلة أعيد ربطها بالمرشح الحالي.</div>
+    <div><strong>بصمة المرشح عند بدء الاختبارات:</strong> <code>26b56c4df0766eb9eaede8be867d38b8537ed5e421fecc22793cc911db848d2d</code>. خوارزمية المشروع تُدخل الملفات غير المتتبعة غير المستثناة، بما فيها نسخة الحزمة وقتها؛ عُدّل التقرير بعد الاختبارات فقط، ولم يتغير كود التطبيق أو fixture بعدها.</div>
+    <div><strong>verification run:</strong> <code>a75687f1-9b79-49c9-a9f2-6e3c3eaf3492</code> — بدأ بـNode 24.20.0 قبل إعادة security وunit.</div>
+    <div><strong>قاعدة البيانات في المصدر:</strong> <code>0047_task_references_occurrences.sql</code> — هذا لا يثبت أن مخطط مزود مطبق.</div>
+    <div><strong>البيئة:</strong> Node 24.20.0، pnpm 11.25.0، macOS arm64، اختبارات وممثلون صناعيون محليون.</div>
+    <div><strong>التوقيت:</strong> تجميد التحقق 2026-10-14 16:55 UTC؛ إعادة security وunit بدأت 19:55 AST / 16:55 UTC.</div>
+    <div><strong>مصدر الطلب:</strong> <code>QC-LAUNCH-016</code>، مرجع checklist المحتمل 3.85 نقطة، لا يعني نقاط مكتسبة.</div>
+  </div>
+
+  <h2>ملخص النتائج</h2>
+  <table><thead><tr><th>المعيار</th><th>الحالة</th><th>الملاحظة</th></tr></thead><tbody>
+    <tr><td><code>QC360-SC-07-03</code></td><td class="block">BLOCKED</td><td>بعد استعادة dataset الاصطناعي حرفيًا من parent commit الحذف، security سجّل 73 نجاحًا وواحدًا متخطى؛ AI eval شغّل 33 حالة بلا أخطاء فئوية. الأمر خرج 1 لأن Testcontainers بلا runtime. SCA لم يُرجع advisory نتيجة تعذر DNS. SBOM محلي جزئي متاح.</td></tr>
+    <tr><td><code>QC360-SC-07-04</code></td><td class="block">BLOCKED</td><td>90 فحصًا مركزًا عبر 12 ملفًا نجح، واختبار endpoint المقاييس أعاد 404 في production-mode. لكن لم يُنفذ اختبار HTTP موثق بممثلين وقاعدة PostgreSQL 18 فعلية؛ لا نقبل هذه الفحوص كدليل runtime/IDOR شامل.</td></tr>
+  </tbody></table>
+  <p><strong>النقاط المقبولة بشكل مستقل: 0 / 3.85.</strong> لا يوجد مراجع rubric مستقل معيّن؛ الأوزان غير مكتسبة وتبقى صفرًا إلى حين قرار المراجع.</p>
+
+  <h2>أدلة التنفيذ</h2>
+  <ul>
+    <li><code>pnpm test:security</code> — أُعيد على بصمة المرشح أعلاه: exit 1؛ 73 PASS / 1 SKIP. AI eval: 33 حالة، 0 أخطاء تصنيف. <a href="../../../.ci-results/QC-LAUNCH-016/observed/test-security-final.log">السجل</a>، SHA-256 <code>83f7e92aea7ef989dee92918f17a99bdf3db437611add31100f1d2cfb97ebbfc</code>. بقي فشل PostgreSQL rate-limit بسبب Testcontainers.</li>
+    <li><code>pnpm test:unit</code> — exit 1؛ 1385/1410 PASS و25 FAIL عبر 10 ملفات؛ منها مسارات توثيق مفقودة في المرشح. <a href="../../../.ci-results/QC-LAUNCH-016/observed/test-unit-final.log">السجل</a>، SHA-256 <code>c03095f85c0c9183e7594ba1fe20ca7aaf8c6d43c783443077ed4c4c6456c7bc</code>.</li>
+    <li><code>pnpm audit --audit-level high</code> — exit 1؛ <code>ENOTFOUND registry.npmjs.org</code>. أُجري على Git SHA نفسه وقبل استعادة fixture؛ lockfile لم يتغير، لكن source fingerprint وقتها كان <code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>. لا توجد نتيجة ثغرات ولا يصح تفسيرها كصفر. <a href="../../../.ci-results/QC-LAUNCH-016/observed/pnpm-audit.log">السجل</a>، SHA-256 <code>302261d87a86910bbda8b9f51cb9434f4bfcc989d100f8a53ec9460fda782cbb</code>.</li>
+    <li>SBOM CycloneDX 1.5: 839 حزمة من lockfile. 713 كانت مثبتة على runner، و126 غير مثبتة فلم تُفحص رخصها المثبتة؛ القائمة لا تحمل unknown ترخيص للحزم المثبتة. lockfile SHA-256 <code>17645568f90d1fca602b5f7a52766954e84fffae8cc339a7e153bc7d3581dfe4</code>. <a href="../../../.ci-results/QC-LAUNCH-016/observed/sbom.cdx.json">SBOM</a> · <a href="../../../.ci-results/QC-LAUNCH-016/observed/licenses.json">قائمة التراخيص</a>.</li>
+    <li>الفحوص المركزية: 90/90 PASS عبر 12 ملفًا لاختبارات الجلسات والكوكيز وOrigin وlogger privacy وauthorization وتنزيل الملفات الاصطناعي وAI consent/sensitive-data/prompt-injection مع fake provider. <a href="../../../.ci-results/QC-LAUNCH-016/observed/focused-security.log">السجل</a>، SHA-256 <code>0d2c2ae1044c9251283355f6a26f6684e45499f7fc4f7e5b83ef52507c58b994</code>. هذا دليل وحدة/Use Case محلي.</li>
+    <li>اختبار production-mode endpoint: 404 و<code>no-store</code> مع host localhost وعلم/رمز اصطناعيين. <a href="../../../.ci-results/QC-LAUNCH-016/observed/performance-metrics-negative.log">السجل</a>، SHA-256 <code>81dec360c9900e86569e7e76c469b18d78ce14d249fafbb802b82d47e1e8679d</code>.</li>
+  </ul>
+
+  <h2>مراجعة المصدر قبل/بعد</h2>
+  <p>التغيير المحلي الوحيد خارج حزمة التقرير هو استعادة fixture الاصطناعي المحذوف الذي يحتاجه اختبار AI eval؛ لا تغييرات في كود التطبيق أو الصلاحيات أو lockfile. المراجعة الساكنة أدناه لا تستبدل طلبًا حيًا:</p>
+  <table><thead><tr><th>المطلب</th><th>مصدر حالي مثبت</th><th>الحد</th></tr></thead><tbody>
+    <tr><td>المقاييس في الإنتاج</td><td><code>src/pages/api/performance-metrics.ts:7-19</code> يشترط development/test، وعلم opt-in، ورمز Bearer، ومضيف loopback فقط؛ الرفض 404 بلا تخزين.</td><td>فحص handler مباشر اصطناعي؛ ليس طلبًا على نشر حقيقي.</td></tr>
+    <tr><td>أمان الكوكي والترويسات</td><td><code>src/shared/security/session-cookie.ts:1-25</code> و<code>src/shared/security/security-headers.ts:16-49</code>؛ <code>__Host-</code>، Secure/HttpOnly/SameSite=Strict، CSP/HSTS حسب البيئة.</td><td>عقود unit، لا browser/HTTP خارجي.</td></tr>
+    <tr><td>انتهاء الجلسة</td><td><code>src/modules/identity/application/session-service.ts:32-57</code> يولد 32 بايت عشوائية، يخزن hash ويفحص الانتهاء/الإبطال/الحساب.</td><td>الاختبار يغطي expiry/revocation، لكن لا session-fixation drill أو DB persisted run.</td></tr>
+    <tr><td>CSRF/Origin</td><td><code>astro.config.mjs:53-55</code> يحتوي <code>security.checkOrigin: true</code>.</td><td>عقد إعداد فقط؛ رفض طلب cross-origin فعلي غير منفذ.</td></tr>
+    <tr><td>منع تنزيل خارج النطاق</td><td><code>src/shared/files/file-service.ts:147-158</code> يفوض قبل قراءة/حفظ، واختبار memory fixture يتحقق أن bytes ما قُرئت للفاعل خارج النطاق.</td><td>لا اختبار IDOR HTTP أو قاعدة بيانات حقيقية في هذه الجولة.</td></tr>
+    <tr><td>تسريب بيانات الهوية</td><td><code>src/modules/identity/application/safe-user-view.ts:3-29</code> يستبعد password hash والجلسات؛ فحوص logger privacy نجحت ضمن الاختبارات المركزة.</td><td>لا فحص شامل لكل response/audit على تطبيق حي.</td></tr>
+    <tr><td>AI outbound</td><td>الموفر معطل افتراضيًا؛ التفعيل يتطلب موافقة العلم وسياسة معالجة مكتملة وموافقة لكل طلب حسب <code>src/modules/ai-advisory/infrastructure/ai-configuration.ts</code>.</td><td>لم يُرسل أي طلب لموفر خارجي؛ إعداد البيئة الفعلي لدى المزود NOT VERIFIED.</td></tr>
+  </tbody></table>
+
+  <h2>سجل المخاطر المتبقية</h2>
+  <table><thead><tr><th>الخطر</th><th>الحالة والأثر</th><th>المالك والإجراء</th></tr></thead><tbody>
+    <tr><td>نتيجة SCA حديثة غير متاحة</td><td class="block">BLOCKED؛ مستوى الثغرات الحالية غير معلوم، لذلك لا يوجد تصنيف high/critical صالح.</td><td>Engineering/CI: استعادة الشبكة ثم audit لنفس SHA؛ ترقيع lockfile فقط بعد تحليل advisory.</td></tr>
+    <tr><td>rate-limit على PostgreSQL 18</td><td class="block">BLOCKED؛ بقيت المجموعة تفشل قبل الاختبار لغياب container runtime؛ السلوك الذري عبر مخزن PG لم يختبر. AI eval dataset استعيد محليًا من parent commit وتجاوزت 33 حالة بلا أخطاء تصنيف.</td><td>Engineering: تشغيل suite على قاعدة اصطناعية PostgreSQL 18 مع Testcontainers؛ لا بديل PG14.</td></tr>
+    <tr><td>negative runtime matrix</td><td class="block">BLOCKED/NOT RUN: session fixation، CSRF request، output encoding بالمتصفح، brute-force persisted، IDOR/download عبر HTTP، ومراجعة audit/response leakage.</td><td>Security/QC: تشغيل ممثلين صناعيين وضابط موجب/سلبي في PostgreSQL 18 معزولة، مع التقاط status/body وحالة السجل.</td></tr>
+    <tr><td>full unit baseline</td><td class="warn">VERIFIED_FAIL: 25/1410. بعض الفشل سببه ملفات وثائق غائبة في HEAD الحالي؛ تبقى failures كما ظهرت ولا تُنسب إلى هذا العمل بلا إعادة أساس.</td><td>Engineering: تمييز intentional removal من stale contract، ثم إعادة تشغيل full suite على مرشح مصالَح.</td></tr>
+    <tr><td>موافقة أمن مستقلة</td><td class="block">لا signoff بشري أو قبول rubric؛ النقاط المقبولة 0.</td><td>Security/QC reviewer: مراجعة أدلة نفس SHA بعد إغلاق الحواجز؛ لا waiver رقمي.</td></tr>
+  </tbody></table>
+
+  <h2>القرار والتوقيع</h2>
+  <p><strong>القرار:</strong> لا نعلن إغلاق أمني ولا نمنح نقاط QC360. نحافظ على القيود fail-closed؛ لا تغيير في الصلاحيات أو إعدادات AI أو الاعتماديات دون دليل/مصدر مبرر.</p>
+  <p><strong>توقيع Engineering:</strong> سجل التنفيذ المحلي فقط — 2026-10-14. <strong>توقيع Security/QC المستقل:</strong> غير مسجل. <strong>UAT:</strong> NOT RUN.</p>
+  <p class="muted">للتفاصيل المنظمة وأكواد الخروج والـdigest راجع <code>evidence.json</code>، وخطة المالكين/التبعيات/rollback في <code>patch-or-decision-plan.md</code>. لا توجد بيانات حقيقية أو أسرار أو كوكيز في هذه الحزمة.</p>
+</main></body></html>
