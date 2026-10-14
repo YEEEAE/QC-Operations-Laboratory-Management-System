@@ -69,6 +69,7 @@ export class PostgresChangeTargetSource implements ChangeTargetSource {
           'd.created_by as createdBy',
           'd.active as active',
         ])
+        .where('v.state', '=', 'DRAFT')
         .orderBy('d.updated_at', 'desc')
         .limit(LIST_LIMIT)
         .execute();
@@ -135,6 +136,7 @@ export class PostgresChangeTargetSource implements ChangeTargetSource {
           'd.active as active',
         ])
         .where('v.id', '=', input.id)
+        .where('v.state', '=', 'DRAFT')
         .executeTakeFirst();
       if (!row) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
       const ownerId = (row.ownerId as string | null) ?? (row.createdBy as string);

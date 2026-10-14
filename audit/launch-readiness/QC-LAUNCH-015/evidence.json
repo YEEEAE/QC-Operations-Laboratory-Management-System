@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-LAUNCH-015",
+  "status": "PARTIAL / BLOCKED",
+  "acceptedPoints": 0,
+  "independentRubricReviewer": "NOT AVAILABLE — no independent reviewer evidence supplied",
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "sourceSha": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+    "sourceShaMatchesAuditReference": false,
+    "sourceFingerprintAtVerification": "f04430bb68ff06935884ffac2d79ccc68959c7d4456ef3beb89e6bed0e8c87a6",
+    "workingTreeAtVerification": "isolated detached local clone; source changes only in the four paths described in patch-or-decision-plan.md",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "pnpmVersion": "11.25.0",
+    "executionEnvironment": "local macOS arm64 isolated clone at /private/tmp/qc-launch-015-9c43fe5",
+    "verificationRunId": "41e78cb2-6fe8-477e-b10d-ee7580bc9f6e"
+  },
+  "policySource": {
+    "requiredPath": "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md",
+    "status": "SOURCE NOT AVAILABLE / BLOCKED",
+    "observation": "The path is absent at candidate HEAD. No replacement policy or controlled action/effectivity authority was inferred."
+  },
+  "targetCoverage": [
+    {
+      "targetType": "DOCUMENT_VERSION",
+      "operation": "DRAFT revision/changeSummary metadata",
+      "implementationStatus": "IMPLEMENTED_WITH_SOURCE_GUARDS",
+      "runtimeStatus": "NOT_TESTED",
+      "decisionNeeded": "Document Control/QMS owner to supply the effective change-application policy and approve any source-effectiveness/retention semantics beyond the existing active-file digest binding."
+    },
+    {
+      "targetType": "All other or unlisted values in change_requests.target_type",
+      "operation": "Apply mutation",
+      "implementationStatus": "NOT_SUPPORTED",
+      "runtimeStatus": "NOT_TESTED",
+      "decisionNeeded": "Owner must provide the complete intended target vocabulary and owning-domain adapters. Source permits a free-text stored target value, but the apply adapter denies types other than one DOCUMENT_VERSION change. No production inventory was queried."
+    },
+    {
+      "targetType": "DOCUMENT_VERSION",
+      "operation": "APPROVED/EFFECTIVE in-place mutation",
+      "implementationStatus": "BLOCKED_AT_CREATION_AND_OWNING_DOMAIN",
+      "runtimeStatus": "NOT_TESTED",
+      "decisionNeeded": "Use the authorized new-revision/effectivity/signature path after the effective controlled authority is supplied. No historical version rewrite is supported."
+    }
+  ],
+  "evidence": [
+    {
+      "criterionId": "QC-LAUNCH-015-AC1",
+      "expectedOutcome": "APPLIED is committed only with a successful owning-domain mutation; stale, denied, replayed, competing, and failed-audit attempts cannot create a false APPLIED state.",
+      "testKind": "Required full integration suite; isolated PG18 transaction/concurrency evidence",
+      "command": "pnpm test:integration",
+      "realExitCode": 1,
+      "executionNote": "The required package command stopped before the suite because pnpm attempted dependency installation, registry access failed, and it refused to purge the external node_modules target. The repository evidence runner was then invoked directly with the same configured Vitest integration suite.",
+      "equivalentCommand": "node scripts/verification/run-vitest-evidence.mjs integration -- vitest run tests/integration",
+      "equivalentExitCode": 1,
+      "totals": {
+        "passed": 317,
+        "failed": 3,
+        "skipped": 310,
+        "failedSuites": 51,
+        "reportedContainerRuntimeErrors": 22
+      },
+      "testFailures": [
+        "tests/integration/http/release-identity.test.ts — expected RUNTIME_MISMATCH, observed ARTIFACT_MISSING",
+        "tests/integration/tasks/use-cases.test.ts — two permission assertions failed"
+      ],
+      "blockers": [
+        "51 suites failed; Testcontainers setup failures include `Could not find a working container runtime strategy`. The report exposes this exact runtime message in 22 failed-suite records; other setup errors are blank in the JSON reporter.",
+        "310 tests skipped; skipped PostgreSQL checks are not PASS",
+        "AI advisory test data file audit/100-percent/ai-evals/deterministic-eval-dataset.json is absent"
+      ],
+      "authenticEvidence": [
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-integration-equivalent.log",
+          "sha256": "d8c8585326fadd68e3a3eee61ae4d561715e4c6cb663a5cdb8400830ea076ca1"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-integration.json",
+          "sha256": "8d15e80fc73f87a6d0e58b9cd1976deb155491ff81cac9da070cf052aba46310"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-test-integration.log",
+          "sha256": "e7c83e842062c7db037900544f2d2211b4aa0092ad7b6a2ca57b8ecee4496b7a"
+        }
+      ],
+      "actorRole": "Synthetic fixture actors only; no live actor or production data",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:27:34.179Z",
+      "status": "BLOCKED"
+    },
+    {
+      "criterionId": "QC-LAUNCH-015-AC2",
+      "expectedOutcome": "Only documented DRAFT metadata changes may be proposed/applied; source binding and exact version/state/digest are rechecked in the owning transaction.",
+      "testKind": "Focused source-level integration tests (no PostgreSQL runtime)",
+      "command": "node scripts/verification/run-vitest-evidence.mjs integration -- vitest run tests/integration/change-requests/document-version-change-request.test.ts",
+      "realExitCode": 0,
+      "totals": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      "authenticEvidence": [
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-focused-integration.log",
+          "sha256": "892409006eb3f469fc96b34b363b8fe4e82c6720e27a251922e1cf5675bca096"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-focused-integration.json",
+          "sha256": "8c249e13092f25d0f44f83cf85ce314d129041216a6628db61e4ab06571d7c0d"
+        }
+      ],
+      "actorRole": "Synthetic MANAGER fixture; no database-backed actor",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:26:56.332Z",
+      "status": "VERIFIED_PASS",
+      "scopeLimit": "Proves the creation guard only. It does not prove PostgreSQL locking, source-file rows, audit/outbox atomicity, or QMS authority."
+    },
+    {
+      "criterionId": "QC-LAUNCH-015-AC2-SOURCE-DIGEST",
+      "expectedOutcome": "Owning-domain update rechecks source_binding_verified, active source-file state, and digest equality before changing DRAFT metadata; update, audit, and outbox remain in one transaction.",
+      "testKind": "Source inspection and Astro/TypeScript diagnostics; PostgreSQL transaction test not available",
+      "command": "node_modules/.bin/astro check",
+      "realExitCode": 0,
+      "totals": {
+        "errors": 0,
+        "warnings": 0,
+        "hints": 115
+      },
+      "authenticEvidence": [
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-typecheck.log",
+          "sha256": "f21552b4c9d26fd925d9982c963badc5650985b66ae7c68e5827d35e28d3406e"
+        }
+      ],
+      "actorRole": "Not applicable to static diagnostics",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:29:00Z",
+      "status": "BLOCKED",
+      "scopeLimit": "Static diagnostics passed; the digest guard and transactional rollback were not exercised against PostgreSQL 18."
+    },
+    {
+      "criterionId": "QC-LAUNCH-015-APPLY-UNIT",
+      "expectedOutcome": "Apply authorization, stale target rejection, unsupported-field denial, and verified replay guards remain intact.",
+      "testKind": "Focused unit suite",
+      "command": "node scripts/verification/run-vitest-evidence.mjs unit -- vitest run tests/unit/change-requests/apply-approved-change-request.test.ts",
+      "realExitCode": 0,
+      "totals": {
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      "authenticEvidence": [
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-apply-unit.log",
+          "sha256": "b7bc27a9359d7694dbdd92b269911481dd491576788719213bbfd7defe1474c0"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-unit.json",
+          "sha256": "ee0e74d97a94b9583fbc14127da7f48fdfc5d5106ce02a0ccc6e8da88f4b594c"
+        }
+      ],
+      "actorRole": "Synthetic fixture actor with MANAGER role and explicit grants",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:28:58.764Z",
+      "status": "VERIFIED_PASS",
+      "scopeLimit": "The test double does not prove database transaction or audit/outbox behavior."
+    },
+    {
+      "criterionId": "QC-LAUNCH-015-CONCURRENCY",
+      "expectedOutcome": "Competing applies, stale contexts, and replay yield at most one persisted owning-domain mutation on PostgreSQL 18.",
+      "testKind": "Required concurrency suite",
+      "command": "pnpm test:concurrency",
+      "realExitCode": 1,
+      "executionNote": "pnpm stopped before the suite during dependency-directory validation/registry metadata lookup. The repository's direct evidence runner then invoked the same concurrency tests.",
+      "equivalentCommand": "node scripts/verification/run-vitest-evidence.mjs concurrency -- vitest run tests/integration/concurrency",
+      "equivalentExitCode": 1,
+      "totals": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 17
+      },
+      "authenticEvidence": [
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-concurrency-equivalent.log",
+          "sha256": "f7b188dbb9c531c6aad81d0e52bc2d9eed9362d1655fb4a89663da5dae3a3780"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-concurrency.json",
+          "sha256": "47155b5e4b4b7b63274e3024dc7ceaff4a506b651c91db6e2733447ccbc260c5"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-test-concurrency.log",
+          "sha256": "2276de2d1fb42c72c88b1e7c8503c68cfaf2029daa1e5967f309d03e9fdcf404"
+        }
+      ],
+      "actorRole": "Synthetic fixtures only; no PostgreSQL actor rows were created",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:28:31.957Z",
+      "status": "BLOCKED",
+      "blocker": "Could not find a working container runtime strategy; all 17 PostgreSQL concurrency tests skipped."
+    },
+    {
+      "criterionId": "QC-LAUNCH-015-SECURITY",
+      "expectedOutcome": "Required security suite executes in the isolated environment with results bound to this candidate.",
+      "testKind": "Required security suite",
+      "command": "pnpm test:security",
+      "realExitCode": 1,
+      "executionNote": "pnpm stopped before the suite during dependency-directory validation/registry metadata lookup. The repository's direct evidence runner then invoked the configured security suite.",
+      "equivalentCommand": "node scripts/verification/run-vitest-evidence.mjs security -- vitest run tests/unit/shared/security-headers.test.ts tests/integration/security tests/integration/ai-advisory tests/integration/http",
+      "equivalentExitCode": 1,
+      "totals": {
+        "passed": 35,
+        "failed": 1,
+        "skipped": 1
+      },
+      "failure": "Existing release-identity test expected RUNTIME_MISMATCH but observed ARTIFACT_MISSING; AI evaluation dataset file is absent; PostgreSQL rate-limit case cannot start Testcontainers.",
+      "authenticEvidence": [
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-security-equivalent.log",
+          "sha256": "c9ed627448d814156774022b45618070be17eda9d3feb66e10ce837ec210890c"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-security.json",
+          "sha256": "8eb2daac7278664251b25ec10373f47f6306c5ee2f71ff034e36b96b8bcdd46c"
+        },
+        {
+          "uri": ".ci-results/QC-LAUNCH-015-test-security.log",
+          "sha256": "e7c83e842062c7db037900544f2d2211b4aa0092ad7b6a2ca57b8ecee4496b7a"
+        }
+      ],
+      "actorRole": "Synthetic security fixtures only",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:28:36.677Z",
+      "status": "BLOCKED"
+    },
+    {
+      "criterionId": "QC-LAUNCH-015-POLICY",
+      "expectedOutcome": "Apply rules and target coverage are backed by an authentic controlled policy with effective revision and authority.",
+      "testKind": "Controlled source availability check",
+      "command": "rg --files Documents",
+      "realExitCode": 0,
+      "authenticEvidence": [
+        {
+          "uri": "Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md",
+          "sha256": null,
+          "note": "Expected path is absent at candidate HEAD."
+        },
+        {
+          "uri": "Documents/QC_System_WI_SOP_Pack/SOPs/approved/SOP-FRS-012-D0.1-Electronic-Signatures-and-Approval-Authority.docx",
+          "sha256": null,
+          "note": "Existing file; its applicability/effectivity to QC-LAUNCH-015 was not established by this check."
+        }
+      ],
+      "actorRole": "Not applicable",
+      "sourceRevision": "9c43fe5d108413e4871e2477eda7f0bace16413a",
+      "timestamp": "2026-10-14T16:32:47Z",
+      "status": "BLOCKED"
+    }
+  ],
+  "notTested": [
+    "Two competing change requests apply against isolated PostgreSQL 18",
+    "Stale request and target contexts with before/after row, audit, and outbox counts",
+    "Same-request replay after success and conflicting requestId replay",
+    "Authorization denial with zero attempt/mutation/audit/outbox effects",
+    "Injected audit failure proving rollback of target, change-request state, attempt, audit, and outbox",
+    "Failed attempt persistence for source-binding failure",
+    "Human UAT, independent rubric review, provider, production, or release acceptance"
+  ]
+}

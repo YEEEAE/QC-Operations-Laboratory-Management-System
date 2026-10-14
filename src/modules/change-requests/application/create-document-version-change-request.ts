@@ -74,6 +74,9 @@ export class CreateDocumentVersionChangeRequestUseCase {
       id: input.documentVersionId,
       actor: input.actor,
     });
+    if (target.state !== 'DRAFT') {
+      throw new AppError('AUTHZ_DENIED', { userSafe: true });
+    }
     if (target.version !== input.expectedDocumentVersion) {
       throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
     }

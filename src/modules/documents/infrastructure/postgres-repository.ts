@@ -255,6 +255,19 @@ export class PostgresDocumentRepository implements DocumentRepository {
         const old = await tx.selectFrom('document_versions').selectAll().where('id', '=', input.id).where('version', '=', input.expectedVersion).where('content_hash', '=', input.expectedContentHash).where('state', '=', 'DRAFT').forUpdate().executeTakeFirst();
         if (!old) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
         const files = await this.listVersionFiles(tx, input.id, true);
+        let boundSourceDigest: string;
+        try {
+          boundSourceDigest = documentContentDigest({ documentId: old.document_id, revision: old.revision, files });
+        } catch {
+          throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        }
+        if (
+          old.source_binding_verified !== true ||
+          files.some((file) => file.state !== 'ACTIVE') ||
+          old.content_hash !== boundSourceDigest
+        ) {
+          throw new AppError('AUTHZ_DENIED', { userSafe: true });
+        }
         const contentHash = documentContentDigest({ documentId: old.document_id, revision: input.revision, files });
         const row = await tx.updateTable('document_versions').set({ revision: input.revision.trim(), change_summary: input.changeSummary?.trim() || null, content_hash: contentHash, source_binding_verified: true, version: input.expectedVersion + 1n }).where('id', '=', input.id).where('version', '=', input.expectedVersion).where('content_hash', '=', input.expectedContentHash).where('state', '=', 'DRAFT').returningAll().executeTakeFirst();
         if (!row) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });

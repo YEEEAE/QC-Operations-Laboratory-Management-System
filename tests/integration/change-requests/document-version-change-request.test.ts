@@ -29,7 +29,7 @@ const actor = (
 const requester = actor(requesterId, ['PERM-CHG-CREATE', 'PERM-DOC-VIEW']);
 const outsider = actor(outsiderId, ['PERM-CHG-CREATE']);
 
-function target(version = 7n): DocumentVersionChangeTarget {
+function target(version = 7n, state = 'DRAFT'): DocumentVersionChangeTarget {
   return {
     id: versionId,
     documentId: '01900000-0000-7000-8000-000000000204',
@@ -39,7 +39,7 @@ function target(version = 7n): DocumentVersionChangeTarget {
     revision: 'B',
     changeSummary: 'Current summary',
     contentHash: 'hash-current',
-    state: 'EFFECTIVE',
+    state,
     version,
   };
 }
@@ -117,7 +117,7 @@ describe('contextual DOCUMENT_VERSION change requests (Prompt 2)', () => {
     expect(created.changeRequest.targetSnapshot).toMatchObject({
       documentNo: 'DOC-2026-001',
       revision: 'B',
-      state: 'EFFECTIVE',
+      state: 'DRAFT',
       version: '7',
     });
     expect(created.changes).toHaveLength(1);
@@ -210,4 +210,25 @@ describe('contextual DOCUMENT_VERSION change requests (Prompt 2)', () => {
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT_STALE_VERSION' });
   });
+
+  it.each(['APPROVED', 'EFFECTIVE'])(
+    'does not create an in-place change request for a %s document version',
+    async (state) => {
+      const repo = repository();
+      const useCase = new CreateDocumentVersionChangeRequestUseCase(repo, source(target(7n, state)));
+      await expect(
+        useCase.execute({
+          actor: requester,
+          changeNo: 'CR-2026-0106',
+          reason: 'A controlled version requires its authorized revision workflow.',
+          documentVersionId: versionId,
+          expectedDocumentVersion: 7n,
+          changeField: 'revision',
+          proposedValue: 'C',
+          requestId: `ctx-state-${state.toLowerCase()}`,
+        }),
+      ).rejects.toMatchObject({ code: 'AUTHZ_DENIED' });
+      expect(repo.created).toBeUndefined();
+    },
+  );
 });

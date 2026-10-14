@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QC-LAUNCH-015 — Controlled Change Requests and Apply</title>
+  <style>
+    :root { color-scheme: light; --ink:#182230; --muted:#526173; --line:#d5dde6; --paper:#fff; --canvas:#f3f6f9; --blue:#174a78; --amber:#815400; --red:#8a2c2c; --green:#17603b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:1120px; margin:32px auto; padding:0 20px 48px; }
+    header,.panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:22px 26px; margin:0 0 16px; }
+    h1 { margin:0 0 5px; font-size:27px; line-height:1.2; } h2 { margin:0 0 14px; font-size:19px; } h3 { margin:18px 0 8px; font-size:16px; }
+    p { margin:7px 0; } .muted,small { color:var(--muted); } code { font:13px/1.45 ui-monospace,SFMono-Regular,monospace; overflow-wrap:anywhere; }
+    table { width:100%; border-collapse:collapse; margin:10px 0 2px; } th,td { border-top:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:top; } th { color:var(--muted); font-size:12px; letter-spacing:.03em; text-transform:uppercase; }
+    .status { display:inline-block; border-radius:999px; padding:2px 9px; font-size:12px; font-weight:700; white-space:nowrap; }
+    .blocked { color:var(--red); background:#fceeee; } .pass { color:var(--green); background:#eaf6ef; } .partial { color:var(--amber); background:#fff4d9; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .callout { border-left:4px solid #b77a00; background:#fff8e8; padding:10px 13px; }
+    a { color:var(--blue); } ul { margin:8px 0; padding-left:22px; } li { margin:4px 0; }
+    @media(max-width:700px) { main { margin:14px auto; padding:0 10px 28px; } header,.panel { padding:17px; } .grid { grid-template-columns:1fr; } table { display:block; overflow-x:auto; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>QC-LAUNCH-015 — Controlled Change Requests and Apply</h1>
+    <p><span class="status partial">PARTIAL / BLOCKED</span> &nbsp; Priority P0 · local isolated execution · no remote changes</p>
+    <p class="muted">Prepared 2026-10-14. This report records the current candidate, observed source changes, executable evidence, and unresolved authority/runtime decisions.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Candidate and evidence boundary</h2>
+    <div class="grid">
+      <div><p><strong>Repository HEAD</strong><br><code>9c43fe5d108413e4871e2477eda7f0bace16413a</code></p><p><strong>Audit reference</strong><br><code>60e78cc6fdafe6c70e249be2d687c1df3af45412</code> — different candidate; no historical evidence was carried forward.</p></div>
+      <div><p><strong>Working-tree fingerprint at verification</strong><br><code>f04430bb68ff06935884ffac2d79ccc68959c7d4456ef3beb89e6bed0e8c87a6</code></p><p><strong>Environment</strong><br>Isolated detached clone · Node 24.20.0 · pnpm 11.25.0 · migration head <code>0047_task_references_occurrences.sql</code> · macOS arm64.</p></div>
+    </div>
+    <p class="muted">The fingerprint binds the tested source changes before this evidence package was written. Verification output files are under ignored <code>.ci-results/</code>. No production database, user, supplier, or patient data was used.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Observed change</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Before</th><th>After</th><th>Evidence location</th></tr></thead>
+      <tbody>
+        <tr><td>Target selection</td><td>Document versions in any state could be listed and loaded as change-request targets.</td><td>Contextual selection/load now admits only <code>DRAFT</code>; the use case independently rejects <code>APPROVED</code>/<code>EFFECTIVE</code> before creating a request.</td><td><code>src/modules/change-requests/infrastructure/postgres-change-target-source.ts:72</code>, <code>:139</code>; <code>src/modules/change-requests/application/create-document-version-change-request.ts:77</code></td></tr>
+        <tr><td>Owning-domain source binding</td><td>Draft update checked target id, version, state, and stored digest, then recomputed a new hash; it did not first prove the current hash matched verified active source files.</td><td>Inside the same transaction, draft update now requires <code>source_binding_verified</code>, active linked files, and exact digest equality before changing metadata.</td><td><code>src/modules/documents/infrastructure/postgres-repository.ts:257–275</code></td></tr>
+        <tr><td>Audit and outbox</td><td>Already performed by the owning Documents repository within the supplied transaction.</td><td>Kept in that transaction with the document mutation; change-request transitions and success attempt are also in the Change Requests transaction.</td><td><code>src/modules/documents/infrastructure/postgres-repository.ts:274–278</code>; <code>src/modules/change-requests/infrastructure/postgres-repository.ts:594–634</code></td></tr>
+      </tbody>
+    </table>
+    <p>The code path writes <code>APPLIED</code> only after the owning-domain update returns, and the target write, change-request transitions, success attempt, audit, and outbox share a transaction. A database rollback should therefore leave the request unapplied; PostgreSQL 18 evidence for this candidate is still blocked.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Target coverage</h2>
+    <table>
+      <thead><tr><th>Target / operation</th><th>Implementation status</th><th>Observed decision</th><th>Remaining evidence</th></tr></thead>
+      <tbody>
+        <tr><td><code>DOCUMENT_VERSION</code> in <code>DRAFT</code>, fields <code>revision</code>/<code>changeSummary</code></td><td><span class="status pass">IMPLEMENTED</span></td><td>Server resolves snapshot and owning-domain permission. State, version, current field value, active source links, source-binding flag, and digest are checked before mutation. One transaction holds document, audit, outbox, and change-request effects.</td><td>PostgreSQL 18 race/replay/rollback execution and effective controlled policy.</td></tr>
+        <tr><td><code>DOCUMENT_VERSION</code> in <code>APPROVED</code>/<code>EFFECTIVE</code></td><td><span class="status partial">BLOCKED AT CREATION</span></td><td>In-place requests are denied. Historical records remain immutable through the owning-domain DRAFT guard. Revision/effectivity/signature must use the authorized document lifecycle.</td><td>Confirm lifecycle applicability against effective Document Control/QMS authority.</td></tr>
+        <tr><td>All other or unlisted <code>target_type</code> values</td><td><span class="status blocked">NOT SUPPORTED</span></td><td>The registered UI vocabulary exposes only <code>DOCUMENT_VERSION</code>. Stored target text is generic, but apply denies any non-document target or a change set other than one field.</td><td>Owner must supply complete target vocabulary and owning-domain adapters. No production inventory was queried.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>Controlled source blocker:</strong> <code>Documents/QC360-CHANGE-APPLICATION-POLICY-2026-10-08.md</code> is absent at this HEAD. No replacement policy, allowed target set, source-effectiveness rule, or approval meaning was invented.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Lifecycle semantics observed in source</h2>
+    <ul>
+      <li><code>APPROVED → APPLYING → APPLIED</code> is executed in one database transaction. <code>APPLYING</code> is an intermediate state inside that transaction, not a separately durable in-progress job.</li>
+      <li>A persisted successful attempt is recorded with the owning-domain target version after mutation; exact-request replay requires persisted success evidence.</li>
+      <li>Some stale/invalid-transition failures can persist a <code>FAILED</code> attempt while the request remains <code>APPROVED</code>. The domain state <code>APPLICATION_FAILED</code> is defined but no current apply path transitions to it.</li>
+      <li>An audit failure should roll back the transaction and leave the request unapplied. Whether and when a separate failure-attempt row must persist, including failed-audit cases, remains NOT TESTED and needs an approved failure/retry policy.</li>
+      <li>A valid approval signature authorizes the change request decision; it is not evidence that target data was applied.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Verification results</h2>
+    <table>
+      <thead><tr><th>Check</th><th>Observed result</th><th>Status</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Focused change-request source test</td><td>7 passed, 0 failed, 0 skipped. Covers contextual target/snapshot derivation, stale version, and denial for APPROVED/EFFECTIVE selection.</td><td><span class="status pass">VERIFIED_PASS</span></td><td><code>.ci-results/QC-LAUNCH-015-focused-integration.log</code></td></tr>
+        <tr><td>Focused apply unit suite</td><td>8 passed, 0 failed, 0 skipped. Uses test doubles; does not prove PostgreSQL atomicity.</td><td><span class="status pass">VERIFIED_PASS</span></td><td><code>.ci-results/QC-LAUNCH-015-apply-unit.log</code></td></tr>
+        <tr><td>Astro/TypeScript check</td><td>Exit 0; 0 errors, 0 warnings, 115 hints.</td><td><span class="status pass">VERIFIED_PASS</span></td><td><code>.ci-results/QC-LAUNCH-015-typecheck.log</code></td></tr>
+        <tr><td>Full integration suite</td><td>317 passed, 3 failed, 310 skipped; 51 suites reported setup failures. Testcontainers explicitly reports no working runtime in the affected PostgreSQL paths. Existing failing assertions include release identity (1) and tasks authorization (2); AI eval data file is absent.</td><td><span class="status blocked">BLOCKED</span></td><td><code>.ci-results/QC-LAUNCH-015-integration-equivalent.log</code></td></tr>
+        <tr><td>Concurrency suite</td><td>0 passed, 0 failed, 17 skipped; PostgreSQL 18 container could not start.</td><td><span class="status blocked">BLOCKED</span></td><td><code>.ci-results/QC-LAUNCH-015-concurrency-equivalent.log</code></td></tr>
+        <tr><td>Security suite</td><td>35 passed, 1 failed, 1 skipped. Release-identity assertion failed; AI fixture data is absent; PostgreSQL rate-limit test is blocked by container startup.</td><td><span class="status blocked">BLOCKED</span></td><td><code>.ci-results/QC-LAUNCH-015-security-equivalent.log</code></td></tr>
+      </tbody>
+    </table>
+    <p class="muted">The required pnpm package commands were attempted and exited 1 before test execution because pnpm tried an install/registry check and refused to purge the external node_modules target. The repository's verification runner was run directly on Node 24.20.0 using the same package-script Vitest arguments. Logs and machine-readable reports are separately retained.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Decision, blockers, and sign-off</h2>
+    <ul>
+      <li><strong>Decision:</strong> retain DRAFT-only metadata apply with source-digest guards; keep unsupported target adapters fail-closed.</li>
+      <li><strong>Required owner:</strong> Document Control/QMS to supply the effective application policy, complete target vocabulary, source-effectiveness rule, failure/retry semantics, and confirmation of the revision/effectivity/signature path.</li>
+      <li><strong>Required environment:</strong> working isolated PostgreSQL 18/Testcontainers runtime for competing apply, stale context, replay, denied action, failed audit, and rollback cases.</li>
+      <li><strong>Residual risk:</strong> source-level transaction structure is not runtime proof; application failure-attempt recording is not exhaustively characterized; no human UAT or independent reviewer evidence exists.</li>
+      <li><strong>Sign-off:</strong> NOT RECORDED. Accepted rubric points: 0 pending independent rubric review. Production/release GO: NOT CLAIMED.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
