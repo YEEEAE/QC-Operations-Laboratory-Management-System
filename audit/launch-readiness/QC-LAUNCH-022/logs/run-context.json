@@ -1,0 +1,2 @@
+$ node scripts/verification/begin-verification-run.mjs
+{"started":true,"runId":"32ec91d7-2778-48f2-b7c4-6bf77df328c3","gitSha":"df822596d693dd5dfed61e24a7c3475e9835a966","sourceFingerprint":"d66d78957c79555e690bd3139797abd1949a182014c468025dafdb984f5de6cc"}

@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 2,
+  "suite": "concurrency",
+  "runId": "7d6078e3-c1eb-4009-a00e-440f7022e82c",
+  "candidate": {
+    "gitSha": "df822596d693dd5dfed61e24a7c3475e9835a966",
+    "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "generatedAt": "2026-10-15T21:06:49.841Z",
+    "executionEnvironment": {
+      "kind": "local",
+      "platform": "darwin",
+      "architecture": "arm64"
+    }
+  },
+  "artifactDigest": "e10a080d47995b65962d8bad59afdff93082ac2fb81558453e421d3b47d3ba2f",
+  "totals": {
+    "total": 17,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 17
+  },
+  "report": {
+    "numTotalTestSuites": 4,
+    "numPassedTestSuites": 2,
+    "numFailedTestSuites": 2,
+    "numPendingTestSuites": 0,
+    "numTotalTests": 17,
+    "numPassedTests": 0,
+    "numFailedTests": 0,
+    "numPendingTests": 17,
+    "numTodoTests": 0,
+    "snapshot": {
+      "added": 0,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0,
+      "didUpdate": false
+    },
+    "startTime": 1792098408674,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency pages findings after applying the authorized owner predicate and counts the same filtered set",
+            "status": "skipped",
+            "title": "pages findings after applying the authorized owner predicate and counts the same filtered set",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency advances quality aggregate versions so concurrent same-version transitions cannot both commit",
+            "status": "skipped",
+            "title": "advances quality aggregate versions so concurrent same-version transitions cannot both commit",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency executes exactly one of two concurrent receiving releases and never overwrites silently",
+            "status": "skipped",
+            "title": "executes exactly one of two concurrent receiving releases and never overwrites silently",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency executes exactly one of two concurrent inspection approvals and denies a stale replay without new evidence",
+            "status": "skipped",
+            "title": "executes exactly one of two concurrent inspection approvals and denies a stale replay without new evidence",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency does not overwrite a receiving item placed on HOLD while its inspection approval is pending",
+            "status": "skipped",
+            "title": "does not overwrite a receiving item placed on HOLD while its inspection approval is pending",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency executes exactly one of two concurrent laboratory approvals on the same version",
+            "status": "skipped",
+            "title": "executes exactly one of two concurrent laboratory approvals on the same version",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency rejects both concurrent document approvals without an approved authority and signature source",
+            "status": "skipped",
+            "title": "rejects both concurrent document approvals without an approved authority and signature source",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency serializes concurrent new revisions and commits only one draft with its audit/outbox",
+            "status": "skipped",
+            "title": "serializes concurrent new revisions and commits only one draft with its audit/outbox",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency keeps a readable effective revision unchanged when revision permission is denied",
+            "status": "skipped",
+            "title": "keeps a readable effective revision unchanged when revision permission is denied",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency rolls back version, file link, audit, and outbox when outbox enqueue fails",
+            "status": "skipped",
+            "title": "rolls back version, file link, audit, and outbox when outbox enqueue fails",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "Tier-1 controlled mutations under real PostgreSQL concurrency"
+            ],
+            "fullName": "Tier-1 controlled mutations under real PostgreSQL concurrency applies exactly one of two concurrent role permission updates on the same role version",
+            "status": "skipped",
+            "title": "applies exactly one of two concurrent role permission updates on the same role version",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          }
+        ],
+        "startTime": 1792098408674,
+        "endTime": 1792098408674,
+        "status": "failed",
+        "message": "Could not find a working container runtime strategy",
+        "name": "/Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/tests/integration/concurrency/controlled-mutations.test.ts"
+      },
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "durable idempotency against real PostgreSQL"
+            ],
+            "fullName": "durable idempotency against real PostgreSQL reserves a given idempotency key exactly once under concurrent reservation attempts",
+            "status": "skipped",
+            "title": "reserves a given idempotency key exactly once under concurrent reservation attempts",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "durable idempotency against real PostgreSQL"
+            ],
+            "fullName": "durable idempotency against real PostgreSQL returns the stored response on replay without rerunning the mutation",
+            "status": "skipped",
+            "title": "returns the stored response on replay without rerunning the mutation",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "durable idempotency against real PostgreSQL"
+            ],
+            "fullName": "durable idempotency against real PostgreSQL rejects reuse of a completed key with a different command fingerprint",
+            "status": "skipped",
+            "title": "rejects reuse of a completed key with a different command fingerprint",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "durable idempotency against real PostgreSQL"
+            ],
+            "fullName": "durable idempotency against real PostgreSQL marks a failed command as FAILED and denies replay of the same key",
+            "status": "skipped",
+            "title": "marks a failed command as FAILED and denies replay of the same key",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "durable idempotency against real PostgreSQL"
+            ],
+            "fullName": "durable idempotency against real PostgreSQL executes a controlled release exactly once when the same idempotency key is replayed or raced",
+            "status": "skipped",
+            "title": "executes a controlled release exactly once when the same idempotency key is replayed or raced",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          },
+          {
+            "ancestorTitles": [
+              "durable idempotency against real PostgreSQL"
+            ],
+            "fullName": "durable idempotency against real PostgreSQL records exactly one signature evidence row when a signing ceremony is replayed under the same key",
+            "status": "skipped",
+            "title": "records exactly one signature evidence row when a signing ceremony is replayed under the same key",
+            "failureMessages": [],
+            "meta": {},
+            "tags": [],
+            "benchmarks": []
+          }
+        ],
+        "startTime": 1792098408674,
+        "endTime": 1792098408674,
+        "status": "failed",
+        "message": "Could not find a working container runtime strategy",
+        "name": "/Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/tests/integration/concurrency/idempotency.test.ts"
+      }
+    ]
+  }
+}

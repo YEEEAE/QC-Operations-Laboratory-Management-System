@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-LAUNCH-021",
+  "criterionId": "NOT_RECORDED_IN_AVAILABLE_SOURCES",
+  "criterion": "إثبات أن ملكية المهمة والتكرار والربط بسجل خارجي لا تمنح وصولًا غير مصرح به إلى DOCUMENT / LAB_TEST / CHANGE_REQUEST / FINDING / NCR / RCA / CAPA، وأنه لا يتسرب عنوان السجل المرجعي ولا رابطه بعد سحب الصلاحية.",
+  "expectedOutcome": "لا يحصل مستخدم المهمة على عنوان أو رابط السجل المرجعي دون صلاحية العرض الحالية للسجل نفسه؛ منع الوصول مفروض في الجهة الموثوقة لا في الواجهة فقط؛ ولا يوجد مسار كتابة أجنبي من وحدة المهام.",
+  "status": "BLOCKED",
+  "statusDetail": "BLOCKED مع PRE-GATE FAILURE: بوابة التحقق المطلوبة pnpm test:unit حمراء على HEAD نفسه (25 فشلًا)، والمصدر المتحكم Documents/QC360-TASK-POLICY-2026-10-08.md غير موجود في المرشح الحالي، وسويتا integration/concurrency محجوبتان لغياب Docker. لذلك لا يُمنح أي ادعاء قبول على هذا المرشح.",
+  "score": {
+    "targetPoints": null,
+    "targetPointsNote": "تخصيص النقاط وcriterionId من الـrubric الأصلية غير متاحين في المصادر القابلة للاسترجاع في هذا المرشح؛ لم يُختلق رقم.",
+    "acceptedPoints": 0,
+    "acceptedPointsReason": "لا يوجد حكم مستقل من rubric reviewer، وبوابة الوحدة حمراء؛ أي دليل وحدّي ناجح يبقى دليلًا مرشحًا لا نقاطًا مقبولة.",
+    "independentRubricReviewer": "NOT RECORDED"
+  },
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "gitSha": "df822596d693dd5dfed61e24a7c3475e9835a966",
+    "auditReferenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceMatchesHead": false,
+    "rebaselineRequired": true,
+    "rebaselineMagnitude": "394 ملفًا، 66,079 إضافة، 73,341 حذفًا بين مرجع التدقيق وHEAD؛ ومنه حذف 70 من 74 ملف Documents/*.md.",
+    "executionSourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fingerprintScope": "scripts/verification/evidence-identity.mjs sourceFingerprint عند التنفيذ؛ القيمة e3b0c442… تطابق SHA-256 لمدخل فارغ، أي working tree نظيف بلا تعديلات أو ملفات غير متتبعة داخل النطاق. حزمة التقرير أُنشئت بعد التنفيذ.",
+    "workingTreeClean": true,
+    "branch": "main",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "packageManager": "pnpm@11.25.0",
+    "platform": "darwin-arm64",
+    "environment": "local",
+    "verificationRunId": "7d6078e3-c1eb-4009-a00e-440f7022e82c"
+  },
+  "timestamp": "2026-10-15T21:05:46.147Z",
+  "timestampNote": "وقت إنشاء سياق التحقق run-context.json. سجلات السويتات وملفات الأدلة كُتبت بعده في الجلسة نفسها على نفس المرشح (gitSha + sourceFingerprint متطابقان في كل ملفات .ci-results).",
+  "testKind": "Vitest suites عبر scripts/verification/run-vitest-evidence.mjs + مراجعة مصدر ثابتة",
+  "actors": [],
+  "actorRole": "NONE — لم يُنشأ أي actor اصطناعي ولم تُنشأ قاعدة بيانات",
+  "testCaseIds": [],
+  "attempts": [
+    {
+      "command": "pnpm verification:begin",
+      "exitCode": 0,
+      "status": "RUN",
+      "reason": null,
+      "logUri": "audit/launch-readiness/QC-LAUNCH-021/logs/run-context.json",
+      "logSha256": "9594166485aa76ab6ea61f7e4042ea023aa13bb80dd95e008c083cd0d82ba230"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exitCode": 1,
+      "status": "FAIL",
+      "reason": "25 فشلًا من 1410 اختبارًا في 10 ملفات، 17 منها ENOENT بسبب حذف Documents/*.md في المرشح الحالي، و6 بسبب سكربت validator غير موجود أصلًا في مرجع التدقيق أيضًا (عيب سابق)، و2 بسبب تغيّر مصدر الصفحات (PageHeader).",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-021/logs/pnpm-test-unit.log",
+      "logSha256": "a953e97ccb9c1dd583f1c74d287b2ed958cae95ada917879d9766f3801c5ad2f",
+      "runnerArtifactUri": "audit/launch-readiness/QC-LAUNCH-021/logs/suite-unit.json",
+      "runnerArtifactSha256": "cd356d4395578cb7f41a0b1888bd811a90ab6c776ae99ebc8dc993d9924aec36",
+      "runnerArtifactDigest": "896d85cdd8f1b230b53e0c7ab2471602842f49e0b608edfc2a18d18e450bb423",
+      "totals": { "total": 1410, "passed": 1385, "failed": 25, "skipped": 0 },
+      "files": { "total": 179, "failed": 10 }
+    },
+    {
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "reason": "50 من 51 ملفًا فاشلًا تعتمد على PostgreSQL 18 عبر Testcontainers وانهارت بـ Could not find a working container runtime strategy لغياب Docker. الاستثناء الوحيد هو tests/integration/tasks/use-cases.test.ts الذي لا يعتمد على حاوية وفشل بفشلين حقيقيين.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-021/logs/pnpm-test-integration.log",
+      "logSha256": "cab681cbf79918dc3ce599bb00b66d909b483afd71c82918ac8309629e3d270f",
+      "runnerArtifactUri": "audit/launch-readiness/QC-LAUNCH-021/logs/suite-integration.json",
+      "runnerArtifactSha256": "69952134d9b46b780cb3ea658fb36671f55668c1a5b08e01da142f580560b8d5",
+      "runnerArtifactDigest": "cc1001630f634acb5a6254867e88f8edc646e82ffcc3ab51b8ac07d57898acb3",
+      "totals": { "total": 667, "passed": 355, "failed": 2, "skipped": 310 },
+      "files": { "total": 116, "failed": 51, "skipped": 1 }
+    },
+    {
+      "command": "pnpm test:concurrency",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "reason": "ملفا الاختبار فشلا قبل أي اختبار بـ Could not find a working container runtime strategy؛ 17 اختبارًا متخطىً ولا اختبار منفَّذ.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-021/logs/pnpm-test-concurrency.log",
+      "logSha256": "1fd66535e158bf1e204e5baa58dcabab921daa4412ab5cf5287bae4c54f1fdf7",
+      "runnerArtifactUri": "audit/launch-readiness/QC-LAUNCH-021/logs/suite-concurrency.json",
+      "runnerArtifactSha256": "c7ee4eb2ef318103f56b78d5a2f7bcd75088972114f7cd40793fd52ded94e349",
+      "runnerArtifactDigest": "e10a080d47995b65962d8bad59afdff93082ac2fb81558453e421d3b47d3ba2f",
+      "totals": { "total": 17, "passed": 0, "failed": 0, "skipped": 17 }
+    }
+  ],
+  "criteria": [
+    {
+      "id": "C1-no-access-via-reference",
+      "statement": "الربط بسجل خارجي لا يمنح وصولًا إليه، ولا يسرب عنوانه أو رابطه.",
+      "assessment": "PARTIAL_SOURCE_AND_UNIT_ONLY",
+      "acceptedPoints": 0,
+      "sourceFindings": [
+        "src/modules/tasks/application/get.ts:47-67 — عند ربط سجل، تُنادى assertVisible؛ أي رفض AUTHZ_DENIED/AUTHZ_PERMISSION_MISSING/AUTHZ_SCOPE_DENIED/RESOURCE_NOT_FOUND يترك specializedRecordHref = undefined ولا يُعاد أي عنوان.",
+        "src/modules/tasks/application/record-source.ts:14-22 و37-44 — خريطة صلاحية لكل نوع: DOCUMENT→PERM-DOC-VIEW، LAB_TEST→PERM-LAB-VIEW، CHANGE_REQUEST→PERM-CHG-VIEW، FINDING→PERM-FIND-VIEW، NCR→PERM-NCR-VIEW، RCA→PERM-RCA-VIEW، CAPA→PERM-CAPA-VIEW، مع شرط accountState ACTIVE ورفض المنحة inactive.",
+        "src/modules/tasks/application/record-source.ts:45-98 — تحقق UUID ثم استدعاء واجهة القراءة لكل تطبيق مالك؛ ولسجلات الجودة assertQualityScope يفرض نطاق OWNER/scope.",
+        "src/pages/tasks/[taskId].astro — الواجهة تعرض رابطًا فقط عند وجود specializedRecordHref، وإلا نص «not available in your current view scope»، ولا تعرض أي عنوان للسجل المرجعي."
+      ],
+      "runtimeEvidence": [
+        "tests/unit/tasks/references-occurrences.test.ts:151-168 (PASS) — فتح تفاصيل المهمة أمام مستخدم مهمة آخر مع رفض عرض السجل الأجنبي يُنتج specializedRecordHref undefined و specializedRecordUnavailable false.",
+        "tests/unit/tasks/references-occurrences.test.ts:115-138 (PASS) — فشل مغلق عند رفض/غياب المرجع الأجنبي بلا أي كتابة مهمة.",
+        "tests/unit/tasks/references-occurrences.test.ts:171-193 (PASS) — assertVisible يرفض المنحة المفقودة/غير النشطة ويرفض المعرّفات المشوّهة قبل مخاطبة المزوّد."
+      ],
+      "residualRisks": [
+        "يُعاد task.specializedRecord {type,id} (UUID) لمستخدم المهمة حتى عند منعه من عرض السجل الأجنبي؛ لا يوجد تسرب عنوان أو رابط، لكن يبقى كشف وجود معرّف غير شفاف. يحتاج قرار مالك هل هذا مقبول.",
+        "الدليل الناجح وحدّي بمزوّد مُحاكى (mock assertVisible)، وليس على قاعدة بيانات حقيقية مع سحب صلاحية فعلي ثم إعادة فتح التفاصيل؛ سيناريو السحب الحقيقي محجوب مع integration."
+      ]
+    },
+    {
+      "id": "C2-permissions-enforced-server-side",
+      "statement": "الصلاحيات مفروضة في الجهة الموثوقة ولا يكفي إخفاء الواجهة.",
+      "assessment": "PARTIAL_SOURCE_ONLY",
+      "acceptedPoints": 0,
+      "sourceFindings": [
+        "src/modules/tasks/application/get.ts:13-19 — رفض accountState غير ACTIVE وغياب PERM-TASK-VIEW قبل أي قراءة.",
+        "src/modules/tasks/application/create.ts:32 — authorize مع throwOnDeny للمسار الحرج قبل الكتابة.",
+        "src/modules/tasks/application/transition.ts — CANCEL مرفوض دائمًا AUTHZ_DENIED؛ التحقق من الصلاحية والحالة والإصدار قبل الكتابة.",
+        "src/actions/tasks.ts — جميع إجراءات الخادم تستدعي حالات الاستخدام ولا تنفّذ منطق صلاحية بنفسها.",
+        "src/shared/authorization/policy-registry.ts:222-247 — عقد PERM-TASK-VIEW/CREATE/ASSIGN/EDIT/BLOCK/COMPLETE/REOPEN مع الحالات المسموحة لكل إجراء."
+      ],
+      "runtimeEvidence": [
+        "tests/unit/tasks/domain.test.ts (4 اختبارات PASS) — انتقالات غير معلنة وسبب HOLD/REOPEN.",
+        "tests/unit/tasks/transition-cancel-deny.test.ts (2 اختبار PASS) — رفض CANCEL قبل أي كتابة، ومسار RESUME المصرح.",
+        "tests/integration/tasks/authorization-matrix.test.ts (PASS) — رفض غياب الصلاحية ونطاق المالك الخاطئ.",
+        "tests/integration/tasks/repository.test.ts (PASS)."
+      ],
+      "blockingEvidence": [
+        "بوابة pnpm test:unit حمراء على HEAD نفسه (exit 1؛ 25 فشلًا)، ومنها tests/unit/authorization/qc-permission-contract.test.ts الذي يقرأ Documents/OWNER-DECISION-RBAC-2026-09-23.md ويفشل بـ ENOENT.",
+        "tests/integration/tasks/use-cases.test.ts — فشلان حقيقيان: expected function to throw an error, but it didn't، عند السطرين 113 و128، مع unhandled rejection مزدوج. السبب أن CreateTaskUseCase.execute غير متزامن (src/modules/tasks/application/create.ts:17) بينما الاختبار يستخدم expect(() => ...).toThrow(). السلوك الأمني صحيح (authorize → throwOnDeny → AppError AUTHZ_PERMISSION_MISSING)، لكن الدعوى غير صحيحة وتعطي نتيجة سلبية كاذبة. الملف مطابق تمامًا في مرجع التدقيق وHEAD (3798e92d)، فالعيب سابق ولا يُنسب للـrebaseline.",
+        "اختبارات المسار الكامل للصلاحيات على قاعدة بيانات حقيقية (tests/integration/tasks/lifecycle.test.ts و occurrences-postgres.test.ts) متخطاة: 3 و4 اختبارات على التوالي، لغياب Docker."
+      ]
+    },
+    {
+      "id": "C3-no-foreign-mutation-from-tasks",
+      "statement": "لا يمنح الربط أي قدرة تعديل على التطبيق المالك للسجل.",
+      "assessment": "SOURCE_ONLY",
+      "acceptedPoints": 0,
+      "sourceFindings": [
+        "src/modules/tasks/application/record-source.ts:36-100 — المنفذ المعلن لواجهة TaskRecordSource يحتوي assertVisible فقط، وتعليق السطر 73 ينص صراحة أن واجهات القراءة تفرض نطاق العرض الحالي لكل تطبيق وأنه لا يوجد منفذ تعديل أجنبي هنا.",
+        "src/modules/tasks/application/get.ts — الوحدة تستورد taskRecordHref فقط من طبقة المرجع، ولا تستورد أي منفذ كتابة من الوحدات المالكة."
+      ],
+      "runtimeEvidence": [],
+      "note": "لا يوجد أي اختبار ينفّذ هذا الشرط وقت التشغيل. الاستنتاج مبني على مراجعة مصدر ثابتة فقط، ولا يستحق نقاط تشغيل."
+    }
+  ],
+  "unitFailureAttribution": {
+    "totalFailed": 25,
+    "classes": [
+      {
+        "class": "A_MISSING_CONTROLLED_DOCUMENTS",
+        "tests": 17,
+        "files": [
+          "tests/unit/authorization/qc-permission-contract.test.ts",
+          "tests/unit/requirements/reconciliation-contract.test.ts",
+          "tests/unit/verification/route-acceptance.test.ts",
+          "tests/unit/ui/help-content-contract.test.ts",
+          "tests/unit/ui/record-journey-contract.test.ts",
+          "tests/unit/ui/visual-token-contract.test.ts"
+        ],
+        "cause": "ENOENT لملفات Documents/*.md محذوفة في المرشح الحالي.",
+        "attribution": "REBASELINE",
+        "evidence": "git ls-tree: 74 ملف Documents/*.md في مرجع التدقيق مقابل 4 في HEAD. الملفات مفقودة ومنها Documents/PERMISSION-MATRIX.md وDocuments/BUSINESS-RULES.md وDocuments/OWNER-DECISION-RBAC-2026-09-23.md وDocuments/QC360-TASK-POLICY-2026-10-08.md. الحذف منفَّذ في 70c7b725 «update site»."
+      },
+      {
+        "class": "B_MISSING_VALIDATOR_SCRIPT",
+        "tests": 6,
+        "files": ["tests/unit/uat/uat-record-validator.test.ts"],
+        "cause": "الاختبار يشغّل audit/100-percent/uat/validate-uat-records.mjs عبر execFileSync؛ المسار غير موجود.",
+        "attribution": "PRE_EXISTING",
+        "evidence": "git cat-file -e يُظهر غياب الملف في HEAD وفي مرجع التدقيق معًا، وaudit/100-percent يحتوي في HEAD ملفًا واحدًا فقط (ai-evals/deterministic-eval-dataset.json). ملف الاختبار مطابق تمامًا بين المرجعين."
+      },
+      {
+        "class": "C_PAGE_SOURCE_CONTRACT",
+        "tests": 2,
+        "files": [
+          "tests/unit/backup-recovery/restore-form-contract.test.ts",
+          "tests/unit/ui/mutation-safety-contract.test.ts"
+        ],
+        "cause": "اختبارات تربط نص/بنية مصدر الصفحات؛ تقرأ الصفحات الآن PageHeader بدل page-head فتنكسر التوقعات.",
+        "attribution": "REBASELINE",
+        "evidence": "فرق المرشح على src/pages يستبدل <section class=\"page-head\"> بمكوّن PageHeader في الصفحات الثلاث ضمن نطاق المهام، وملفا الاختبار مطابقان تمامًا بين المرجعين."
+      }
+    ],
+    "inScopeTaskUnitTests": {
+      "status": "PASS",
+      "files": [
+        "tests/unit/tasks/references-occurrences.test.ts (19)",
+        "tests/unit/tasks/domain.test.ts (4)",
+        "tests/unit/tasks/transition-cancel-deny.test.ts (2)"
+      ]
+    }
+  },
+  "environmentBlockers": [
+    {
+      "component": "PostgreSQL 18 disposable runtime (Docker / Testcontainers)",
+      "status": "BLOCKED",
+      "evidence": "docker info فشل؛ وتشغيل integration وconcurrency وtestcontainers بين Could not find a working container runtime strategy من node_modules/testcontainers/build/container-runtime/clients/client.js:67 عبر tests/helpers/postgres-container.ts:67 و:120 و:122. لم تُنشأ قاعدة اختبار ولم يُنفَّذ أي اختبار قاعدة بيانات."
+    },
+    {
+      "component": "المصادر المتحكمة (Controlled sources) في المرشح الحالي",
+      "status": "MISSING",
+      "evidence": "Documents/QC360-TASK-POLICY-2026-10-08.md — المرجع الذي يثبّت بصمة التكرار عبر النص الحرفي 'QC360-TASK-POLICY-2026-10-08/v1' في src/modules/tasks/application/occurrence.ts:34 — غير موجود في HEAD، مع 69 ملف Documents/*.md آخر. لا يمكن التحقق من السياسة المتحكمة ولا من مصفوفة الصلاحيات على هذا المرشح."
+    },
+    {
+      "component": "بيئة العقد مقابل بيئة التنفيذ",
+      "status": "ALIGNED_AFTER_NVM",
+      "evidence": "صدفة الشيل الافتراضية node v22.22.3 بينما package.json:9-10 و.nvmrc يطلبان >=24.20.0 <25؛ نُفِّذت كل السويتات بعد nvm use على Node v24.20.0 كما يسجله candidate.nodeVersion في ملفات .ci-results الثلاثة."
+    }
+  ],
+  "observations": [
+    {
+      "type": "REPO_HYGIENE",
+      "detail": "يوجد مرجع Git باسم مكسور refs/remotes/origin/main 2 (اسم يحتوي مسافة) يجعل أوامر مثل git log --all تصدر تحذيرًا وتفشل. لم يُعدَّل لأنه خارج نطاق المهمة."
+    },
+    {
+      "type": "REPO_HYGIENE",
+      "detail": "ملفات مكررة بأسماء macOS مرفوعة داخل audit/ (Wi 2.pdf، Wi2 2.pdf) ولا أثر لها على المهمة."
+    }
+  ],
+  "contractCompliance": {
+    "githubWrites": "NONE — لا commit ولا push ولا تعديل بعيد.",
+    "productionAccess": "NONE",
+    "roleOrPermissionChanges": "NONE",
+    "fabricatedSignaturesOrUat": "NONE",
+    "evidenceBoundToCandidate": "نعم — كل ملفات .ci-results تحمل gitSha=df822596d693dd5dfed61e24a7c3475e9835a966 وsourceFingerprint=e3b0c442… وrunId=7d6078e3-c1eb-4009-a00e-440f7022e82c.",
+    "historicalEvidenceReuse": "لم يُنقل أي دليل من مرجع التدقيق 60e78cc6 أو من تقارير QC-LAUNCH السابقة؛ مغلق كـHISTORICAL."
+  },
+  "finalStatus": "BLOCKED",
+  "finalStatusReason": "لا يجوز منح قبول على مرشح بوابة وحدته حمراء ومصادره المتحكمة ناقصة. C1 جزئي بدليل وحدّي ناجح على مزوّد مُحاكى فقط، C2 جزئي بمصدر ثابت مع فشلين حقيقيين في اختبار المنع وغياب اختبار قاعدة البيانات، C3 مصدر فقط بلا أي دليل تشغيل. النقاط المقبولة 0 بانتظار مراجع rubric مستقل ومرشح سليم."
+}

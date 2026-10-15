@@ -1,0 +1,15 @@
+{
+  "runId": "7d6078e3-c1eb-4009-a00e-440f7022e82c",
+  "candidate": {
+    "gitSha": "df822596d693dd5dfed61e24a7c3475e9835a966",
+    "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "generatedAt": "2026-10-15T21:05:46.147Z",
+    "executionEnvironment": {
+      "kind": "local",
+      "platform": "darwin",
+      "architecture": "arm64"
+    }
+  }
+}

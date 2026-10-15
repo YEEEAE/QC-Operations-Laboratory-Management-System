@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QC-LAUNCH-021 — المهام والمراجع والصلاحيات</title>
+    <style>
+      :root { color-scheme: light; font: 16px/1.65 system-ui, sans-serif; color: #17212b; background: #f4f6f8; }
+      body { max-width: 1080px; margin: 0 auto; padding: 28px 18px 60px; }
+      header, section { background: white; border: 1px solid #d9e0e6; border-radius: 10px; padding: 20px 24px; margin: 14px 0; }
+      h1, h2 { line-height: 1.3; } h1 { margin-top: 0; } h2 { font-size: 1.15rem; margin-top: 0; }
+      .state { display: inline-block; border: 1px solid #9a5b00; background: #fff4d7; padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+      .bad { display: inline-block; border: 1px solid #a11212; background: #ffe1e1; padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+      .ok { display: inline-block; border: 1px solid #1c6b32; background: #e4f6e9; padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+      code, .mono { direction: ltr; unicode-bidi: isolate; font-family: ui-monospace, monospace; overflow-wrap: anywhere; font-size: 0.92em; }
+      table { width: 100%; border-collapse: collapse; } th, td { text-align: start; vertical-align: top; border-bottom: 1px solid #e4e9ed; padding: 8px; }
+      th { width: 24%; } .muted { color: #52606d; }
+      ul { padding-inline-start: 20px; } li { margin-bottom: 6px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>QC-LAUNCH-021 — المهام والمراجع والصلاحيات</h1>
+      <p><span class="state">BLOCKED</span> <span class="bad">بوابة الوحدة حمراء</span> <span class="bad">المصادر المتحكمة ناقصة</span> <span class="bad">Docker غير متاح</span></p>
+      <p>نُفِّذت السويتات الثلاث المطلوبة ومراجعة مصدر ثابتة على HEAD الحالي. لم تُنشأ قاعدة اختبار، ولم يُنشأ actor اصطناعي، ولم تُسجَّل UAT أو موافقة أو توقيع. وقت إنشاء سياق التحقق: 2026-10-15 21:05:46 UTC.</p>
+    </header>
+
+    <section>
+      <h2>هوية المرشح</h2>
+      <table>
+        <tr><th>المستودع / HEAD</th><td><span class="mono">YEEEAE/QC-Operations-Laboratory-Management-System</span><br><span class="mono">df822596d693dd5dfed61e24a7c3475e9835a966</span> — فرع <span class="mono">main</span>، working tree نظيف.</td></tr>
+        <tr><th>مرجع التدقيق</th><td><span class="mono">60e78cc6fdafe6c70e249be2d687c1df3af45412</span> سلف لـHEAD. الفرق 394 ملفًا، 66,079 إضافة، 73,341 حذفًا. إعادة تأسيس إلزامية؛ لا يُنقل أي دليل من المرجع السابق ويُعامل كـHISTORICAL.</td></tr>
+        <tr><th>بصمة المصدر عند التنفيذ</th><td><span class="mono">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span> — مطابقة لـSHA-256 لمدخل فارغ، أي لا تعديلات ولا ملفات غير متتبعة. سياق تحقق <span class="mono">7d6078e3-c1eb-4009-a00e-440f7022e82c</span> على Node <span class="mono">v24.20.0</span>، macOS arm64.</td></tr>
+        <tr><th>رأس الترحيلات</th><td><span class="mono">0047_task_references_occurrences.sql</span> — إضافي: أعمدة مرجع/تكرار مع CHECK وUNIQUE INDEX، بلا تعديل تدميري.</td></tr>
+        <tr><th>بيئة Node</th><td>صدفة الشيل الافتراضية كانت <span class="mono">v22.22.3</span> بينما <span class="mono">package.json</span> و<span class="mono">.nvmrc</span> يطلبان <span class="mono">24.20.0</span>؛ نُفِّذ كل شيء بعد <span class="mono">nvm use</span> على <span class="mono">v24.20.0</span> كما تسجله ملفات النتائج.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>التنفيذ الفعلي</h2>
+      <table>
+        <tr><th>pnpm test:unit</th><td><span class="bad">Exit 1</span> — 1385 ناجح / 25 فاشل من 1410، في 10 ملفات من 179. سجل: <span class="mono">logs/pnpm-test-unit.log</span>، SHA-256 <span class="mono">a953e97c…c5ad2f</span>. تقرير الآلة: <span class="mono">logs/suite-unit.json</span>، digest <span class="mono">896d85cd…0bb423</span>.</td></tr>
+        <tr><th>pnpm test:integration</th><td><span class="state">BLOCKED</span> — 355 ناجح / فشلان حقيقيان / 310 متخطىً من 667، في 51 ملفًا فاشلًا من 116. سجل: <span class="mono">logs/pnpm-test-integration.log</span>، SHA-256 <span class="mono">cab681cb…3d270f</span>. digest <span class="mono">cc100163…98acb3</span>.</td></tr>
+        <tr><th>pnpm test:concurrency</th><td><span class="state">BLOCKED</span> — لم يُنفَّذ أي اختبار: 17 متخطىً من 17 وملفان فاشلان. سجل: <span class="mono">logs/pnpm-test-concurrency.log</span>، SHA-256 <span class="mono">1fd66535…4f1fdf7</span>. digest <span class="mono">e10a080d…47d3ba2f</span>.</td></tr>
+        <tr><th>PostgreSQL 18</th><td><span class="state">BLOCKED</span> — <span class="mono">docker info</span> فشل، وTestcontainers رمى <span class="mono">Could not find a working container runtime strategy</span> من <span class="mono">node_modules/testcontainers/.../clients/client.js:67</span> عبر <span class="mono">tests/helpers/postgres-container.ts:67</span>. لم تُنشأ قاعدة بيانات.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>تصنيف فشل الوحدة (25 فشلًا)</h2>
+      <table>
+        <tr><th>17 اختبارًا — ملفات متحكمة مفقودة</th><td><span class="mono">ENOENT</span> لملفات <span class="mono">Documents/*.md</span>: مصفوفة الصلاحيات وقواعد العمل وسجل قرار RBAC ومصفوفة القبول وغيرها. في مرجع التدقيق 74 ملف <span class="mono">.md</span> تحت <span class="mono">Documents/</span>، وفي HEAD 4 فقط. الحذف نُفِّذ في <span class="mono">70c7b725 «update site»</span>. <strong>يُنسب إلى إعادة التأسيس.</strong></td></tr>
+        <tr><th>6 اختبارات — سكربت مدقق مفقود</th><td><span class="mono">tests/unit/uat/uat-record-validator.test.ts</span> يشغّل <span class="mono">audit/100-percent/uat/validate-uat-records.mjs</span> وهو غير موجود في HEAD <em>ولا</em> في مرجع التدقيق. <strong>عيب سابق لا يُنسب للـrebaseline.</strong></td></tr>
+        <tr><th>2 اختباران — عقد مصدر الصفحات</th><td>اختبارات تربط نص المصدر، وتقرأ الآن مكوّن <span class="mono">PageHeader</span> بدل <span class="mono">page-head</span>. <strong>يُنسب إلى إعادة التأسيس.</strong></td></tr>
+      </table>
+      <p class="muted">اختبارات وحدة نطاق المهام نفسها كلها ناجحة: <span class="mono">references-occurrences</span> (19)، <span class="mono">domain</span> (4)، <span class="mono">transition-cancel-deny</span> (2).</p>
+    </section>
+
+    <section>
+      <h2>نتيجة المعايير الثلاثة</h2>
+      <table>
+        <tr>
+          <th>C1 — الربط لا يمنح وصولًا ولا يسرب عنوانًا أو رابطًا</th>
+          <td><span class="state">جزئي — مصدر + دليل وحدّي فقط</span>
+          <ul>
+            <li><span class="mono">get.ts:47-67</span> يترك <span class="mono">specializedRecordHref</span> غير معرّف عند أي رفض، و<span class="mono">record-source.ts:14-22</span> يربط كل نوع بصلاحية عرضه (DOCUMENT→PERM-DOC-VIEW … CAPA→PERM-CAPA-VIEW) مع رفض الحساب غير النشط والمنحة المعطّلة.</li>
+            <li>واجهة <span class="mono">[taskId].astro</span> لا تعرض عنوان السجل المرجعي إطلاقًا، فقط نوعه عند نجاح التحقق.</li>
+            <li><span class="ok">دليل وحدّي ناجح</span> <span class="mono">references-occurrences.test.ts:151-168</span>: فتح التفاصيل مع رفض عرض السجل الأجنبي ⇒ لا رابط؛ و<span class="mono">:115-138</span> فشل مغلق بلا كتابة؛ و<span class="mono">:171-193</span> رفض المنحة المفقودة/غير النشطة والمعرّف المشوّه.</li>
+            <li><strong>متبقٍ:</strong> يُعاد <span class="mono">{type,id}</span> (UUID) لمستخدم المهمة حتى عند منعه؛ لا تسرب عنوان لكن كشف معرّف. وسيناريو سحب الصلاحية الفعلي ثم إعادة فتح التفاصيل على قاعدة حقيقية <strong>محجوب</strong>.</li>
+          </ul>
+          </td>
+        </tr>
+        <tr>
+          <th>C2 — الصلاحيات مفروضة في الجهة الموثوقة</th>
+          <td><span class="state">جزئي — مصدر ثابت فقط</span>
+          <ul>
+            <li>الفرض داخل حالات الاستخدام: <span class="mono">get.ts:13-19</span>، <span class="mono">create.ts:32</span>، <span class="mono">transition.ts</span> (CANCEL مرفوض دائمًا)، و<span class="mono">actions/tasks.ts</span> لا ينفّذ منطق صلاحية بنفسه.</li>
+            <li>عقد <span class="mono">PERM-TASK-*</span> مع الحالات المسموحة موجود في <span class="mono">policy-registry.ts:222-247</span>.</li>
+            <li><span class="bad">فشلان حقيقيان</span> في <span class="mono">tests/integration/tasks/use-cases.test.ts:113,128</span>: «expected function to throw an error, but it didn't» مع unhandled rejection مزدوج، لأن <span class="mono">execute</span> غير متزامن والاختبار يستخدم <span class="mono">toThrow</span> متزامنًا. السلوك الأمني سليم في التتبع (<span class="mono">authorize → throwOnDeny → AUTHZ_PERMISSION_MISSING</span>) لكن الدعوى سلبية كاذبة. الملف مطابق تمامًا بين المرجعين ⇒ <strong>عيب سابق</strong>.</li>
+            <li><span class="bad">بوابة حمراء</span>: <span class="mono">qc-permission-contract.test.ts</span> يفشل لأن ملف قرار RBAC المتحكم مفقود في المرشح الحالي.</li>
+            <li><strong>محجوب:</strong> <span class="mono">lifecycle</span> (3) و<span class="mono">occurrences-postgres</span> (4) متخطاة لغياب Docker؛ لا إثبات صلاحيات على قاعدة حقيقية.</li>
+          </ul>
+          </td>
+        </tr>
+        <tr>
+          <th>C3 — لا قدرة تعديل أجنبية من المهام</th>
+          <td><span class="state">مصدر فقط — بلا دليل تشغيل</span>
+          <ul>
+            <li>منفذ <span class="mono">TaskRecordSource</span> يحتوي <span class="mono">assertVisible</span> فقط، وتعليق <span class="mono">record-source.ts:73</span> ينص أنه لا يوجد منفذ تعديل أجنبي، ولا تستورد الوحدة أي منفذ كتابة من التطبيقات المالكة.</li>
+            <li>لا يوجد أي اختبار ينفّذ هذا الشرط وقت التشغيل ⇒ لا نقاط تشغيل.</li>
+          </ul>
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>الحاجز الحاسم</h2>
+      <ul>
+        <li><strong>المصدر المتحكم مفقود:</strong> <span class="mono">Documents/QC360-TASK-POLICY-2026-10-08.md</span> — المرجع الذي يثبّت بصمة التكرار عبر النص الحرفي <span class="mono">'QC360-TASK-POLICY-2026-10-08/v1'</span> في <span class="mono">occurrence.ts:34</span> — غير موجود في HEAD، مع 69 ملفًا متحكمًا آخر. لا يمكن التحقق من السياسة ولا من مصفوفة الصلاحيات على هذا المرشح، والفشل مغلق.</li>
+        <li><strong>بوابة الوحدة حمراء على HEAD نفسه</strong>، وليس بسبب بيئة ناقصة: 25 فشلًا حقيقيًا. أي ادعاء قبول فوق بوابة حمراء غير مقبول.</li>
+        <li><strong>Docker غير متاح</strong> ⇒ 50 من 51 ملف integration فاشلًا محجوب، وكل اختبارات التزامن (17) متخطاة. الاستثناء الوحيد غير المحجوب هو <span class="mono">tests/integration/tasks/use-cases.test.ts</span> وهو نفسه مصاب بالفشلين السابقين.</li>
+      </ul>
+      <p><strong>النقاط المقبولة:</strong> 0. لا يوجد حكم مستقل من rubric reviewer، وتخصيص النقاط وcriterionId غير متاحين في المصادر القابلة للاسترجاع؛ لم يُختلق رقم. الأدلة الوحدية الناجحة في نطاق المهام تُسجَّل كدليل مرشح لا كنقاط.</p>
+      <p><strong>الحالة النهائية:</strong> BLOCKED. لا ادعاء جاهزية إطلاق، ولا PASS، ولا قبول جزئي مُحتسب.</p>
+    </section>
+
+    <section>
+      <h2>الالتزام بالعقد</h2>
+      <ul>
+        <li>GitHub للقراءة فقط: لا commit ولا push ولا كتابة بعيدة. لا وصول إنتاج، ولا تغيير أدوار أو صلاحيات، ولا UAT أو توقيع مُختلق.</li>
+        <li>كل الأدلة مربوطة بالمرشح: ملفات <span class="mono">.ci-results</span> الثلاثة تحمل نفس <span class="mono">gitSha</span> ونفس <span class="mono">sourceFingerprint</span> ونفس <span class="mono">runId</span>.</li>
+        <li>لم يُنقل أي دليل من مرجع التدقيق أو من تقارير QC-LAUNCH السابقة.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>المصادر والمواضع</h2>
+      <ul>
+        <li><span class="mono">src/modules/tasks/application/get.ts:13-19,47-67</span> — فرض الصلاحية وكتم الرابط.</li>
+        <li><span class="mono">src/modules/tasks/application/record-source.ts:14-22,36-100</span> — خريطة الصلاحيات والمسارات ومنفذ القراءة فقط.</li>
+        <li><span class="mono">src/modules/tasks/application/occurrence.ts:21-32,54-61</span> — تحقق مفتاح التكرار وبصمة السياسة وإعادة التشغيل.</li>
+        <li><span class="mono">src/modules/tasks/application/create.ts:17,32</span> — <span class="mono">execute</span> غير متزامن و<span class="mono">authorize</span> مع <span class="mono">throwOnDeny</span>.</li>
+        <li><span class="mono">src/pages/tasks/[taskId].astro</span> — حد العرض؛ لا عنوان لسجل مرجعي.</li>
+        <li><span class="mono">db/migrations/0047_task_references_occurrences.sql</span> — عقد البيانات الإضافي.</li>
+        <li><span class="mono">tests/unit/tasks/references-occurrences.test.ts:115-193</span> — الدليل الوحدي الناجح.</li>
+        <li><span class="mono">tests/integration/tasks/use-cases.test.ts:106-129</span> — الدعوى السلبية الكاذبة.</li>
+        <li><span class="mono">scripts/verification/run-vitest-evidence.mjs</span> و<span class="mono">evidence-identity.mjs:61-74</span> — ربط الأدلة بالمرشح.</li>
+      </ul>
+    </section>
+  </body>
+</html>
