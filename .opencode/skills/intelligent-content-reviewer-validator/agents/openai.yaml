@@ -1,0 +1,4 @@
+interface:
+  display_name: "Intelligent Content Reviewer & Validator"
+  short_description: "يراجع ترابط المحتوى واتساقه بعد التغيير"
+  default_prompt: "Use $intelligent-content-reviewer-validator to review changed content, repair clear integrity issues, and return a content integrity report."

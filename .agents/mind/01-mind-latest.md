@@ -1,3 +1,8 @@
+- **2026-10-16 — TOOLING-GRAPHIFY / graphifyy + graphify-mcp معزولان في venv**
+  - Changed: `graphifyy 0.9.91` مع الإضافتين `[mcp]` و`[sql]` مثبّتة في venv معزول `~/.venvs/graphifyy` (Python 3.13 Framework). **درس مهم:** التثبيت الأول في البيئة العامة 3.13 (بيت fastapi/streamlit/gradio/textual) رفع `starlette 0.41.2→1.8.0` و`h11→0.16.0` و`rich→15.0.0` وكسر توافق fastapi/gradio/httpcore؛ أُرجعت البيئة العامة (starlette 0.41.2، h11 0.14.0، rich 14.3.4) وأُزيلت حزم mcp/graphifyy منها. خادم MCP `graphify` مسجّل في `~/.config/opencode/opencode.jsonc` (stdio). لا يبقى أي graphifyy في البيئة العامة (`pip3`/`python3` = python.org 3.13)؛ يوجد أيضًا Homebrew Python 3.14 (`pip3.14`) بيئة مستقلة.
+  - Evidence: مصافحة MCP initialize/tools/list PASS (10 أدوات + 6 موارد)؛ `graph_stats` → 26393 عقدة/66157 حافة/588 مجتمع (EXTRACTED 96%)، `Built at commit e118e5ba` = HEAD؛ `get_node` يعيد `src/actions/release-governance.ts L51`. `pip check` العام رجع لمجموعة التعارضات السابقة؛ تعارض `streamlit↔rich<14` سابق لا يخص التثبيت لأن `textual 8.2.8` يفرض `rich>=14.2`.
+  - State: DONE.
+  - Key files: `~/.venvs/graphifyy`, `~/.config/opencode/opencode.jsonc`, `.gitignore` (سطر `graphify-out/`)، `graphify-out/graph.json` غير متتبَّع (الكاش أُزيل بطلب المستخدم).
 - **2026-10-14 — QC-LAUNCH-019 / authenticated E2E rebaseline**
   - Changed: Rebased the criterion on HEAD f51d7408; recorded NOT_TESTED/BLOCKED with 0 accepted points. Packet: audit/launch-readiness/QC-LAUNCH-019/.
   - Evidence: runner rejected stale dist identity before DB/Playwright; Docker daemon unavailable; pinned pnpm fetch failed on registry DNS. No application-source/runtime mutations.

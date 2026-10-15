@@ -1,0 +1,4 @@
+interface:
+  display_name: "Postgres Verified Analytics"
+  short_description: "Safe, evidence-backed QC database analytics"
+  default_prompt: "Use $postgres-verified-analytics to answer this QC PostgreSQL analytics question with verified, read-only evidence."

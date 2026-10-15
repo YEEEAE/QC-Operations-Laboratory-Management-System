@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Image Audit"
+  short_description: "Check image SEO, ALT text, size, format, and CLS risk."
+  default_prompt: "Use $seo-images to review these page images and return the fixes in Arabic."

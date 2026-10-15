@@ -34,3 +34,6 @@ Thumbs.db
 # Local-only oversized audit exports (exceed GitHub 100 MB limit — preserve on disk)
 audit/*.pdf
 .neon
+
+# Local code knowledge graph (graphify; machine-local, regenerate with `graphify extract . --code-only`)
+graphify-out/

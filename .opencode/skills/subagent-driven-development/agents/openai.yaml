@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subagent Driven Development"
+  short_description: "Coordinate implementation with subagents."
+  default_prompt: "Use $subagent-driven-development to implement this plan with coordinated subagents."

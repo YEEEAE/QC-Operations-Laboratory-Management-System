@@ -1,0 +1,4 @@
+interface:
+  display_name: "Transformer Workspace Auditor"
+  short_description: "J-lens workspace auditing for LLM reasoning"
+  default_prompt: "Use -workspace-auditor to audit an LLM transcript for hidden reasoning, workspace signals, and alignment risks."

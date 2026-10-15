@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing Plans"
+  short_description: "Write implementation plans before coding."
+  default_prompt: "Use $writing-plans to produce an implementation plan for this work."
