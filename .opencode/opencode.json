@@ -27,12 +27,15 @@
     }
   },
   "mcp": {
-    "stitch": {
-      "type": "remote",
-      "url": "https://stitch.googleapis.com/mcp",
-      "enabled": true,
-      "headers": {
-        "X-Goog-Api-Key": "{env:STITCH_API_KEY}"
+    "servers": {
+      "stitch": {
+        "type": "local",
+        "command": [
+          "python3",
+          "-u",
+          "-c",
+          "import sys,json,pathlib,urllib.request\np=pathlib.Path('/Users/yzydalshmry/Desktop/QC-Operations-Laboratory-Management-System/.env')\nk=next((s.split('=',1)[1].strip().strip(chr(34)+chr(39)) for s in p.read_text().splitlines() if s.startswith('STITCH_API_KEY=')),None)\nif not k: raise SystemExit('Stitch credential is not configured')\nfor line in sys.stdin:\n try:\n  m=json.loads(line)\n  if 'id' not in m: continue\n  req=urllib.request.Request('https://stitch.googleapis.com/mcp',data=json.dumps(m).encode(),headers={'Content-Type':'application/json','Accept':'application/json','X-Goog-Api-Key':k})\n  with urllib.request.urlopen(req,timeout=7200) as r: result=json.load(r)\n  print(json.dumps(result),flush=True)\n except Exception:\n  if isinstance(locals().get('m'),dict) and 'id' in m: print(json.dumps({'jsonrpc':'2.0','id':m['id'],'error':{'code':-32603,'message':'Stitch upstream request failed; credentials and upstream details withheld'}}),flush=True)"
+        ]
       }
     }
   }

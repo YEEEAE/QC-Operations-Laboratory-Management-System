@@ -1,0 +1,435 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "QC-LAUNCH-022",
+  "title": "Quality NCR/RCA/CAPA والتحقق من الإغلاق",
+  "generatedAt": "2026-10-16T00:45:00Z",
+
+  "criterionId": "NOT_RECORDED_IN_AVAILABLE_SOURCES",
+  "criterionIdNote": "البطاقة الأصلية في `audit/QC360-LAUNCH-EXECUTION-PROMPTS.html` تصرّح حرفيًا: `OWNED QC360 SCORE CRITERIA — No unique points owned. Required supporting work and/or release gate.` مع `max_outstanding_points: 0`. لا يوجد معرّف بند مُخصَّص لهذه البطاقة في المصادر القابلة للاسترجاع، فلم يُختلق معرّف. البنود المرجعية المستخدمة للتتبع هي REQ-QUAL-001..010 وBR-QUAL-001/002/003/010/011/012/020/021/030/031/032/033 المقروءة من المرشّح المرجعي.",
+
+  "criterion": "Prove findings→NCR→RCA→CAPA workflows, evidence, review and effectiveness cannot close without applicable criteria.",
+  "expectedOutcome": "الحالات المعتمدة من المصدر تنجح بتاريخ سجل غير قابل للتغيير، والإغلاق التنظيمي غير المدعوم لا يُوسم مكتملًا بصمت.",
+
+  "status": "BLOCKED",
+  "statusDetail": "BLOCKED مع FAIL-CLOSED مثبت. سياسات الإغلاق غير محسومة (PD-15/PD-16/PD-17/PD-18/PD-32) والكود يرفضها فعليًا في طبقة الاستخدام والمستودع (لا وسم مكتمل بصمت). لكن المصدر المتحكم داخل النطاق `Documents/REQUIREMENTS-TRACEABILITY.md` مُحذوف من المرشّح (يكسر عقد وحدة و`pnpm requirements:check`)، ووصف مصدر RCA التقني المضمّن في سجل التدقيق يشير لوثيقة محذوفة من المرشّح؛ ودليل PostgreSQL 18 الحي لثبات السجل غير قابل للتنفيذ لغياب container runtime وغياب قاعدة معزولة. لا يُمنح أي ادعاء قبول على هذا المرشّح.",
+
+  "score": {
+    "targetPoints": 0,
+    "targetPointsNote": "0.00 من 100 كما تصرّح البطاقة (متطلّب داعم / بوّابة إصدار، بلا نقاط فريدة).",
+    "acceptedPoints": 0,
+    "acceptedPointsReason": "لا يوجد حكم من rubric reviewer مستقل، وبوّابة runtime (PostgreSQL 18 / concurrency) محجوبة، وأحد المصادر المتحكمة داخل النطاق مفقود. أي دليل وحدّي ناجح يبقى دليلًا مرشحًا لا نقاطًا مقبولة.",
+    "independentRubricReviewer": "NOT AVAILABLE"
+  },
+
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "branch": "main",
+    "gitSha": "df822596d693dd5dfed61e24a7c3475e9835a966",
+    "referenceAuditSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceIsAncestor": true,
+    "referenceMatchesHead": false,
+    "rebaselineRequired": true,
+    "rebaselineMagnitude": "27 commitًا بين مرجع التدقيق وHEAD؛ `git diff --stat` = 394 ملفًا، 66,079 إضافة، 73,341 حذفًا. من بينها `70c7b725 «update site»` الذي حذف 70 من 74 ملفًا تحت `Documents/` بما يشمل `Documents/REQUIREMENTS-TRACEABILITY.md` و`Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md` (كلاهما ضمن نطاق هذه البطاقة).",
+    "executionSourceFingerprint": "71bbb019795f8bca9021bece8e0a70e0a8b5b59c6295aeb1ba1f4ce38b38d456",
+    "fingerprintMethod": "scripts/verification/evidence-identity.mjs sourceFingerprint = SHA-256 لـ`git diff --binary HEAD` مضافًا إليه محتوى الملفات غير المتتبعة بعد استثناء `.ci-results/`, `dist/`, `node_modules/`, `test-results/`, `playwright-report/`. القيمة أعلاه هي القيمة المسجلة في `.ci-results/run-context.json` عند تنفيذ السويتات الثلاث. ملفات الحزمة (`evidence.json`, `execution-report.html`, `patch-or-decision-plan.md`, `logs/**`) كُتبت بعد التنفيذ فغيّرت البصمة؛ لذلك فُصلت بصمة التنفيذ عن بصمة التسليم.",
+    "deliverySourceFingerprint": "RECOMPUTED_AT_DELIVERY_SEE_EXECUTION_REPORT",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "pnpmVersion": "11.25.0",
+    "platform": "darwin-arm64",
+    "workingTreeTrackedChanges": "NONE — لا تعديل على أي ملف متتبَّع. الملفات غير المتتبعة هي حزم تدقيق فقط (QC-LAUNCH-021 السابقة وQC-LAUNCH-022 هذه)."
+  },
+
+  "environment": {
+    "kind": "local",
+    "nodeSource": "nvm use 24.20.0 (Node المحلي الافتراضي كان v22.22.3، وهو خارج عقد المشروع؛ لم يُستخدم في أي قياس مُسجَّل هنا).",
+    "dockerDaemon": "UNAVAILABLE",
+    "isolatedDatabaseUrl": "UNSET — DATABASE_URL وQC_TEST_DATABASE_URL وPGHOST كلها غير مضبوطة.",
+    "productionAccess": "NONE — لم يُفتح أي اتصال بقاعدة إنتاج ولم تُكتب أي بيانات. كل السجلات تركيبية أو نصوص اختبار.",
+    "verificationRunId": "a560ff98-a824-4923-9d16-bfadfba9d27f",
+    "verificationRunContextAt": "2026-10-15T21:39:10.679Z"
+  },
+
+  "testKind": "Vitest suites عبر `scripts/verification/run-vitest-evidence.mjs` (ربط مرشّح إلزامي) + اختبارات وحدة مركّزة + مراجعة مصدر ثابتة متتبَّعة بالملف والسطر وبصمة SHA-256.",
+
+  "attempts": [
+    {
+      "command": "pnpm verification:begin",
+      "exitCode": 0,
+      "status": "RUN",
+      "reason": null,
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/run-context.json",
+      "logSha256": "294fc5022fba0d63eca35ebaf89b6b6b02b017c07ebad16428d4afd9f388800d"
+    },
+    {
+      "command": "./node_modules/.bin/vitest run tests/unit/quality",
+      "exitCode": 0,
+      "status": "PASS",
+      "reason": "27/27 اختبارًا ناجحًا في 4 ملفات (capa-close، prerequisite-evidence-boundary، rca-workflow، related-ncrs). هذا دليل وحدة فقط، لا يُثبت أي سلوك قاعدة بيانات.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/quality-unit.log",
+      "logSha256": "1595d9d2388c6780d6ada2d9dc5458b1169d11d7a8f9aeda8d215c85872df1e4"
+    },
+    {
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "reason": "116 ملفًا: 64 نجحت، 51 فشلت، 1 متخطّى. 50 من الـ51 فشلًا هي انهيار قبل أي اختبار بـ`Could not find a working container runtime strategy` لغياب Docker؛ الفشل الحقيقي الوحيد هو `tests/integration/tasks/use-cases.test.ts` (2 فشل AUTHZ_PERMISSION_MISSING) وهو خارج نطاق Quality. للمقارنة مع QC-LAUNCH-021 على HEAD نفسه: 51/64/1 و355/2/310 — مطابق.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/pnpm-test-integration.log",
+      "logSha256": "a5672d83c2a7767758f942b3cdf937fc332f369e7618afc2f7a251fc72271379",
+      "runnerArtifactUri": "audit/launch-readiness/QC-LAUNCH-022/logs/suite-integration.json",
+      "runnerArtifactSha256": "2f0b2fa5924858d91e2ea3d484f7ed1241f5ea4bd87473c1fcd93b06d7a07316",
+      "runnerArtifactDigest": "4df07c76aecaf8e444f886183474986164ab44bedf639c756282e68ecd47a15c",
+      "totals": { "total": 667, "passed": 355, "failed": 2, "skipped": 310 },
+      "files": { "total": 116, "passed": 64, "failed": 51, "skipped": 1 },
+      "qualityScopeFiles": [
+        { "path": "tests/integration/quality/findings.test.ts", "result": "PASS", "tests": 2 },
+        { "path": "tests/integration/quality/capa.test.ts", "result": "PASS", "tests": 3 },
+        { "path": "tests/integration/quality/ncr.test.ts", "result": "PASS", "tests": 2 },
+        { "path": "tests/integration/quality/authorization-matrix.test.ts", "result": "PASS", "tests": 1 },
+        { "path": "tests/integration/quality/rca.test.ts", "result": "PASS", "tests": 1 },
+        {
+          "path": "tests/integration/quality/capa-close-postgres.test.ts",
+          "result": "SKIPPED",
+          "tests": 5,
+          "note": "يتطلب `QC_TEST_DATABASE_URL` على loopback بقاعدة `qc_adp26_07` (السطر 12–14 من الملف). غير متاح ⇒ سقوط كامل لدليل PostgreSQL لإغلاق CAPA."
+        }
+      ],
+      "qualityScopeNote": "الملفات الخمسة الناجحة في `tests/integration/quality/` هي اختبارات domain/authorize داخلية لا تلمس قاعدة بيانات (تمر في ~2ms وتستورد من `src/modules/quality/**/domain` و`src/shared/authorization` مباشرة). لذلك لا يجوز احتسابها دليل runtime PostgreSQL."
+    },
+    {
+      "command": "pnpm test:concurrency",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "reason": "ملفان فشلا قبل تشغيل أي اختبار بـ`Could not find a working container runtime strategy`؛ 17 اختبارًا متخطّى و0 اختبار منفَّذ فعليًا. لا يمكن ادعاء أي سلوك تزامن/تكرار (duplicate retry) على قاعدة حقيقية.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/pnpm-test-concurrency.log",
+      "logSha256": "2ec8bb38fd7396779f3f9b3f144879d4400e10962ca279d37206b25fced11af7",
+      "runnerArtifactUri": "audit/launch-readiness/QC-LAUNCH-022/logs/suite-concurrency.json",
+      "runnerArtifactSha256": "9fae8053d53842e39378f7ba4f1701d5ec4b6efc3f12fb46ececf4be094ed82c",
+      "runnerArtifactDigest": "82fb7ad36534fdffe55ff832d499ada74d1f20eafbeca3fe14c47fa0806783ff",
+      "totals": { "total": 17, "passed": 0, "failed": 0, "skipped": 17 },
+      "files": { "total": 2, "passed": 0, "failed": 2 }
+    },
+    {
+      "command": "pnpm test:security",
+      "exitCode": 1,
+      "status": "PARTIAL",
+      "reason": "7 ملفات: 6 نجحت و1 فشل (`tests/integration/security/rate-limit.test.ts`) لسبب الحاوية نفسه (PostgreSqlContainer). 73 اختبارًا ناجحًا و1 متخطّى. لا يوجد في هذه المجموعة أي ملف يخص Quality، فلا تُضيف تغطية لدوال NCR/RCA/CAPA.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/pnpm-test-security.log",
+      "logSha256": "a48e1f54b03dc250d924349f4807a106fe7733c2a77c58b28de66a7b421050d9",
+      "runnerArtifactUri": "audit/launch-readiness/QC-LAUNCH-022/logs/suite-security.json",
+      "runnerArtifactSha256": "89b20ef05cea28b6d23e3164917a534459e1092757de3a6b8d2eab2fb8b835b0",
+      "runnerArtifactDigest": "6290a64fc46535cd194f375daa366580f4a83421cf2a24a7929dfd6f3c4d4f46",
+      "totals": { "total": 74, "passed": 73, "failed": 0, "skipped": 1 },
+      "files": { "total": 7, "passed": 6, "failed": 1 }
+    },
+    {
+      "command": "./node_modules/.bin/vitest run tests/unit/requirements/reconciliation-contract.test.ts",
+      "exitCode": 1,
+      "status": "FAIL",
+      "reason": "7/7 اختبارات فاشلة بـENOENT على ملفات Documents محذوفة من المرشّح، ومنها `Documents/REQUIREMENTS-TRACEABILITY.md` (أحد المصادر المتحكمة داخل نطاق هذه البطاقة). عيب مرشّح لا عيب كود Quality.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/requirements-contract-unit.log",
+      "logSha256": "0afd56884067ddd37b4fc06dc8aab184892d20fd979e267ad49712e465184fb2",
+      "totals": { "total": 7, "passed": 0, "failed": 7, "skipped": 0 }
+    },
+    {
+      "command": "pnpm requirements:check",
+      "exitCode": 1,
+      "status": "FAIL",
+      "reason": "استثناء غير معالج: `ENOENT: no such file or directory, open '.../Documents/REQUIREMENTS-TRACEABILITY.md'` من `scripts/requirements/check-reconciliation.mjs:16`. أي أن مصفوفة التتبع داخل النطاق لا يمكن مصالحتها على هذا المرشّح إطلاقًا.",
+      "logUri": "audit/launch-readiness/QC-LAUNCH-022/logs/pnpm-requirements-check.log",
+      "logSha256": "ec8fa58cef798d07167d812c78c54f88e22e05fe836263c7f217085a7a68d578"
+    }
+  ],
+
+  "actorRole": "NONE — لم يُنشأ أي actor اصطناعي، ولم تُكتب أي صفوف، ولم تُفتح أي قاعدة بيانات. الأدوار المذكورة في أدلة المصدر (`SUPERVISOR`, `EMPLOYEE`, `MANAGER`, `ADMIN`, `SYSTEM_OWNER`) هي قيم ثوابت اختبار وحدة أو ثوابت سياسة، وليست جلسات مصادَق عليها.",
+
+  "sourceEvidence": [
+    {
+      "sourcePath": "src/modules/quality/rca/application/create-rca.ts",
+      "lines": "26-44",
+      "sha256": "53d8f1076f85b303f36c0770422d2ab62e318f4c34f0503ea875e37806a5aed8",
+      "disposition": "إنشاء RCA يتطلب قراءة NCR المصدر بصلاحية `PERM-NCR-VIEW` (سطر 28–40)، ويقارن `source.version !== i.expectedNcrVersion` فيرفض `CONFLICT_STALE_VERSION` (سطر 41–42)، ويرفض NCR في `CLOSED`/`VOID` (سطر 43–44)، ثم يشترط `PERM-RCA-CREATE` (سطر 46–58)."
+    },
+    {
+      "sourcePath": "src/modules/quality/rca/infrastructure/postgres-repository.ts",
+      "lines": "87-151",
+      "sha256": "e90771b9052df3ce91c7af41c50744c742bbde71ae1aa08e30c63cab5897244a",
+      "disposition": "داخل معاملة إنشاء واحدة: إعادة قراءة NCR عبر `ncrReadDependencies(trx, true)` (سطر 89) أي `FOR SHARE` (انظر ncr repo سطر 58)، إعادة التفويض (سطر 94–106)، إعادة فحص نسخة NCR (107–108)، رفض CLOSED/VOID ورفض ادعاء غير المالك لـ`createdBy`/`state` (109–114)، ثم INSERT في `rcas` فقط (128–146) + INSERT في `audit_events` (148). لا يوجد أي UPDATE/DELETE على `ncrs`."
+    },
+    {
+      "sourcePath": "src/modules/quality/rca/infrastructure/postgres-repository.ts",
+      "lines": "78-83, 212-217",
+      "sha256": "e90771b9052df3ce91c7af41c50744c742bbde71ae1aa08e30c63cab5897244a",
+      "disposition": "حمولة التدقيق تسجّل `ncrId` و`priorVersion`/`version` و`technicalSource: 'QC360-RCA-TECHNICAL-POLICY-2026-10-08@1'` (82) ولا تنسخ نص التحليل. `transition` يرفض كل ما ليس `START`/`SUBMIT` مقدمًا في المستودع بـ`AUTHZ_DENIED` + `errors.policy_source_required` (213–217)."
+    },
+    {
+      "sourcePath": "src/modules/quality/rca/application/transition-rca.ts",
+      "lines": "27-31",
+      "sha256": "151398ed82b90ae180961d9549639f9c105f5618deef2778687575e53a6d6e9e",
+      "disposition": "طبقة الاستخدام ترفض `APPROVE`/`RETURN`/`VOID` قبل أي قراءة أو كتابة، برسالة `errors.policy_source_required` — أي أن مسار مراجعة/اعتماد RCA غير موجود بدلًا من أن يكون مفتوحًا."
+    },
+    {
+      "sourcePath": "src/modules/quality/rca/domain/rca.ts",
+      "lines": "27-51",
+      "sha256": "9c1bfb3bedb71c6ee7a7018de3bbea1634f69239dca09c5e82dc1f1a3770b44c",
+      "disposition": "`updateRca` يحصر التعديل في `DRAFT`/`IN_PROGRESS`/`RETURNED` (31–32) ⇒ أي تعديل على `SUBMITTED`/`APPROVED`/`VOID` مرفوض. `transitionRca` يشترط نصي `analysis` و`rootCause` غير فراغ قبل `SUBMIT` (44–48)."
+    },
+    {
+      "sourcePath": "src/modules/quality/ncr/application/transition-ncr.ts",
+      "lines": "29-31, 34-47",
+      "sha256": "9ffef688d5e52040ce821c5f088b973c150f2aa5278a384d43e479df4d8b3130",
+      "disposition": "أي `conditions` قادمة من المستدعي تُرفض بـ`VALIDATION_FAILED` قبل أي كتابة (31). التفويض عبر خريطة صلاحيات لكل فعل (7–15) مع فحص نسخة ونطاق."
+    },
+    {
+      "sourcePath": "src/modules/quality/ncr/infrastructure/postgres-repository.ts",
+      "lines": "81-86",
+      "sha256": "0a6649f66b0af4260b036a5f288d262ceffdeb0bd6a9dce69f52cd266308f45",
+      "disposition": "المستودع يرفض مباشرة `MOVE_TO_CAPA`/`READY_FOR_CLOSURE`/`CLOSE` لأن عقد إثبات المتطلبات المستمر غير موجود ⇒ لا يمكن تجاوز حدّ الأدلة من المستدعي."
+    },
+    {
+      "sourcePath": "src/modules/quality/capa/application/transition-capa.ts",
+      "lines": "29-32",
+      "sha256": "2f1c5fe71af356e4c99a6818f6d71caacc730fd9ee5d1cec5deade4a1c9864e0",
+      "disposition": "أعلام الفعالية/التحقق من المستدعي تُرفض (31)، و`CLOSE` مرفوض عبر المسار العام (32) ليجبر على مراسم `CloseCapaUseCase`."
+    },
+    {
+      "sourcePath": "src/modules/quality/capa/infrastructure/postgres-repository.ts",
+      "lines": "125-130",
+      "sha256": "546fba3f4c22caf97096b415905616a6a77f1cd8a3db195058da3917b9a170b1",
+      "disposition": "المستودع يرفض `ACTIONS_COMPLETE`/`READY_FOR_CLOSURE` (تابعة للأدلة) و`CLOSE` (تابع لـP-04) قبل أي UPDATE."
+    },
+    {
+      "sourcePath": "src/modules/quality/capa/application/close-capa.ts",
+      "lines": "36-83",
+      "sha256": "3f6ca4ddd0d1c9dcf4ea1d43a12dbeca20fa0f3e14f6b6ef616ff8109ae7ed73",
+      "disposition": "مراسم P-04: سبب إلزامي و`requestId` إلزامي (36–37)، دور SUPERVISOR (38–39)، تفويض `PERM-CAPA-CLOSE` مع `businessCondition = CAPA_CLOSE_ELIGIBLE_STATES.includes(state)` وفحص نسخة (42–59)، إعادة مصادقة إلزامية والتحقق منها (61–68)، وبصمة SHA-256 للحالة والإجراءات ثم توقيع CLOSE مربوط بالنسخة (69–82)."
+    },
+    {
+      "sourcePath": "src/modules/quality/capa/infrastructure/postgres-repository.ts",
+      "lines": "156-302",
+      "sha256": "546fba3f4c22caf97096b415905616a6a77f1cd8a3db195058da3917b9a170b1",
+      "disposition": "الإغلاق داخل معاملة واحدة: مفتاح idempotency `CAPA:CLOSE:{id}:{requestId}` مع بصمة أمر ورفض التعارض (157–203)، قفل `FOR UPDATE` وإعادة فحص النسخة (204–212)، رفض CLOSED/VOID (213–214)، إعادة حساب بصمة اللقطة ورفض عدم التطابق بـ`CONFLICT_STALE_VERSION` (221–226)، INSERT في `capa_close_snapshots` (227–235) و`electronic_signatures` (249–265) و`audit_events` مع `transition_id 'TR-CAPA-006'` (273–289)، ثم تثبيت الرد المخزَّن للـreplay (291–299)."
+    },
+    {
+      "sourcePath": "src/modules/quality/capa/domain/capa.ts",
+      "lines": "52-106",
+      "sha256": "2a367db9c863161c3077e501de6ab5cdef3f52682e6422dd791b1a4807955b89",
+      "disposition": "`CAPA_CLOSE_ELIGIBLE_STATES` صريحة (52–59). `transitionCapa` يشترط لا إجراءات ناقصة + `verified` لـ`ACTIONS_COMPLETE`، و`effectivenessAccepted` لـ`READY_FOR_CLOSURE` (93–100) — أي أن المسار العام لا يسمح بالانتقال بلا معايير."
+    },
+    {
+      "sourcePath": "src/modules/quality/findings/domain/finding.ts",
+      "lines": "44-61",
+      "sha256": "b4b5faa7268cf03afa49474cc20842fe38b670ef404178daa8cd9e01f403b664",
+      "disposition": "دورة Finding: OPEN ثم SUBMIT_REVIEW ثم CLOSE، مع رفض RETURN/VOID بلا سبب. لا يوجد أي إنشاء تلقائي لـNCR."
+    },
+    {
+      "sourcePath": "db/migrations/0028_qc_closure_009_controlled_records.sql",
+      "lines": "30-66",
+      "sha256": "48b5535141860615e6e9e808f7dac4995db71948c98198ac9425ed38832f0313",
+      "disposition": "دالة `reject_controlled_history_mutation` ومشغّلات BEFORE UPDATE OR DELETE على `audit_events` (40)، `electronic_signatures` (44)، `capa_close_snapshots` (64) — أي أن تاريخ الإغلاق والتوقيع والتدقيق append-only. (ملاحظة نطاق: سجلات العمل ncrs/rcas/capas/findings ليست append-only بالتصميم؛ ثباتها يأتي من CAS بالنسخة + سجل التدقيق + اللقطات.)"
+    },
+    {
+      "sourcePath": "src/pages/quality/findings/index.astro, src/pages/quality/ncr/index.astro, src/pages/quality/rca/index.astro, src/pages/quality/capa/index.astro",
+      "lines": "findings 50; ncr 37-41; rca 61; capa 40-44",
+      "disposition": "واجهات السجلات تُعلن صراحة القرارات المعلّقة عبر `PolicyBlocker`: PD-15 (معايير Finding→NCR)، PD-16 (تبعة FAIL)، PD-17 (سلطة/مسار إغلاق NCR)، PD-18 (متطلب ومعايير الفعالية العامة). لا يوجد إجراء إغلاق معروض بلا سلطة."
+    },
+    {
+      "sourcePath": "src/pages/quality/ncr/new.astro",
+      "lines": "19-30",
+      "sha256": "UNCHANGED_TRACKED_FILE",
+      "disposition": "مسار إنشاء NCR لا يعرض نموذجًا غير قابل للإرسال؛ يعلن أن سياسة الإنشاء المعتمدة غير سارية ويسمّي مالكي القرار PD-15/PD-16."
+    },
+    {
+      "sourcePath": "src/pages/quality/capa/[capaId].astro",
+      "lines": "22, 41, 44-56, 60-80",
+      "disposition": "لوحة الإغلاق تُعرض فقط عند `capaRead.canClose(actor, capa.state)` (22)، وتضمّن سببًا إلزاميًا وإعادة مصادقة ومعنى توقيع CLOSE (47–55)، لكن الإرسال يتم عبر `<script>` + `actions.capa.close` (60–79) ⇒ سطح إغلاق JS-only بلا POST baseline (فجوة مسجَّلة مسبقًا كـ005-B)."
+    },
+    {
+      "sourcePath": "src/shared/authorization/policy-registry.ts",
+      "lines": "193-223",
+      "disposition": "سياسات RCA/CAPA مسجّلة بأفعالها وحالاتها، ومنها `PERM-RCA-APPROVE APPROVE states:[SUBMITTED]` و`PERM-CAPA-CLOSE CLOSE` على الحالات الست المؤهلة. وجودُ السياسة لا يفتح المسار: حاجز الاستخدام/المستودع يسبقه."
+    },
+    {
+      "sourcePath": "src/modules/quality/** (كامل الوحدة)",
+      "lines": "n/a",
+      "disposition": "بحث `sod|SeparationOfDuties|separation` في `src/modules/quality/` لا يعيد أي نتيجة ⇒ لا يوجد تقييم SoD (فصل المهام) داخل وحدة Quality. هذا مطابق لصياغة P-04 المعتمدة (Supervisor + صلاحية + سبب + نسخة + reauthentication + توقيع) التي لا تشترط SoD، لكن فصل الفاعل عن مراجع الفعالية يبقى ضمن PD-18 المفتوح."
+    }
+  ],
+
+  "criterionResults": [
+    {
+      "id": "AC-1-A",
+      "maps": "ACCEPTANCE CRITERIA 1 — «Source-approved cases pass»",
+      "expectedOutcome": "الحالات المسموح بها من المصدر المعتمد (إنشاء RCA مرتبط بـNCR، START/SUBMIT، فصل Finding→NCR، بدء CAPA، إغلاق CAPA بمراسم P-04) تنجح ولا تُمنع زيفًا.",
+      "observedStatus": "PARTIAL",
+      "executionStatus": "SOURCE_AND_UNIT_ONLY",
+      "evidence": [
+        "./node_modules/.bin/vitest run tests/unit/quality → 27/27 PASS (exit 0)",
+        "pnpm test:integration ⇒ tests/integration/quality/{ncr,rca,capa,findings,authorization-matrix}.test.ts ناجحة (9 اختبارات مجموعًا) لكنها بلا قاعدة بيانات"
+      ],
+      "reason": "لا يوجد أي دليل PostgreSQL 18 حي على أن الحالات المعتمدة تنتهي كتابةً فعليًا (create/transition/close) على مخطط مطبَّق. `capa-close-postgres.test.ts` (5 اختبارات) متخطّى لغياب `QC_TEST_DATABASE_URL`.",
+      "acceptedPoints": 0
+    },
+    {
+      "id": "AC-1-B",
+      "maps": "ACCEPTANCE CRITERIA 1 — «immutable record history»",
+      "expectedOutcome": "تاريخ السجل (تدقيق/توقيع/لقطة الإغلاق) غير قابل للتعديل أو الحذف.",
+      "observedStatus": "SOURCE_ONLY",
+      "executionStatus": "BLOCKED",
+      "evidence": [
+        "db/migrations/0028_qc_closure_009_controlled_records.sql:30-66 — مشغّلات append-only على audit_events/electronic_signatures/capa_close_snapshots",
+        "db/migrations/0033_controlled_document_execution_context.sql:116-134 — حرّاس TRUNCATE على الجداول نفسها",
+        "pnpm test:concurrency → 17 متخطّى / 0 منفَّذ (exit 1)"
+      ],
+      "reason": "إثبات عدم قابلية التغيير يحتاج تنفيذ UPDATE/DELETE/TRUNCATE فعليًا مقابل PostgreSQL 18، وهذا محجوب. لا يُحتسب فحص المصدر كإثبات runtime.",
+      "acceptedPoints": 0
+    },
+    {
+      "id": "AC-1-C",
+      "maps": "ACCEPTANCE CRITERIA 1 — «unsupported regulated closure is not silently marked completed»",
+      "expectedOutcome": "الإغلاق التنظيمي غير المدعوم يبقى مغلقًا فشلًا (fail-closed) ولا يُوسم مكتملًا.",
+      "observedStatus": "PASS_AT_SOURCE_AND_UNIT",
+      "executionStatus": "PASS",
+      "evidence": [
+        "tests/unit/quality/prerequisite-evidence-boundary.test.ts — 9 حالات: رفض أعلام `conditions` المزوَّرة قبل NCR persistence، بقاء NCR CLOSE مرفوضًا بلا دليل مستمر، رفض أعلام الفعالية المزوَّرة بلا كتابة CAPA، منع المسار العام من تجاوز توقيع P-04، ورفض `MOVE_TO_CAPA`/`READY_FOR_CLOSURE`/`CLOSE` مباشرة على مستودع NCR، و`ACTIONS_COMPLETE`/`READY_FOR_CLOSURE`/`CLOSE` مباشرة على مستودع CAPA — كلها PASS",
+        "tests/unit/quality/rca-workflow.test.ts — رفض APPROVE/RETURN/VOID قبل المستودع، ومنع تعديل SUBMITTED، ومنع مصدر CLOSED/VOID/stale/غير مرئي — PASS",
+        "transition-rca.ts:27-31 و postgres-repository.ts:213-217 (RCA)؛ transition-ncr.ts:31 و ncr repo:82-86؛ transition-capa.ts:31-32 و capa repo:126-130"
+      ],
+      "reason": "السلوك مثبت على مستوى الاستخدام والمستودع باختبارات وحدة ناجحة على HEAD. تبقى قيمته دليلًا مرشحًا بلا نقاط لأن البطاقة لا تملك نقاطًا فريدة وبوابة runtime محجوبة.",
+      "acceptedPoints": 0
+    },
+    {
+      "id": "MEA-1",
+      "maps": "MANDATORY ACTION 1 — تتبع الصلاحيات والحالات والسياسات التقنية",
+      "observedStatus": "DONE",
+      "evidence": [
+        "26 صلاحية Quality في src/shared/authorization/permissions.ts:26-55 وسياساتها في policy-registry.ts:131-223",
+        "آلات الحالة: ncr.ts:2-11، rca.ts:2-9، capa.ts:2-11، finding.ts:3",
+        "السياسة التقنية المقروءة من المرشّح المرجعي: Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md (SHA-256 للمحتوى عند 60e78cc6 = c1207f49a776242728fe6221d6c628e4da85067bbd41a6cd98b5f7290c068ea3، Status: «controlled QMS acceptance and electronic approval NOT ESTABLISHED»، Scope: REQ-QUAL-005)"
+      ],
+      "acceptedPoints": 0
+    },
+    {
+      "id": "MEA-2",
+      "maps": "MANDATORY ACTION 2 — RCA child of NCR بعقد scope/version وبلا تعديل غير مصرّح لـNCR المالك",
+      "observedStatus": "PASS_AT_SOURCE_AND_UNIT",
+      "evidence": [
+        "create-rca.ts:26-44 + postgres-repository.ts:87-151 (recheck داخل المعاملة بـFOR SHARE عبر ncrReadDependencies(trx,true) ⇒ ncr repo:58)",
+        "لا يوجد أي `updateTable('ncrs')` في مسار RCA: الاستيراد الوحيد لـNCR هو read facade، وكل الكتابة في `rcas` و`audit_events` فقط",
+        "tests/unit/quality/rca-workflow.test.ts «creates a separate draft from authorized version-bound NCR without foreign mutation» — PASS",
+        "ملاحظة: ودجت NCR عبر طبقة القراءة الخاصة فقط، و`expectedNcrVersion` يُفحص مرتين (استخدام + معاملة)"
+      ],
+      "reason": "لا دليل PostgreSQL على أن `FOR SHARE` يمنع فعلًا التعديل المتزامن على NCR أو أنه يقفل الصف كما هو مُعلن.",
+      "acceptedPoints": 0
+    },
+    {
+      "id": "MEA-3",
+      "maps": "MANDATORY ACTION 3 — اختبار الحالات المطلوبة",
+      "observedStatus": "PARTIAL",
+      "coverage": [
+        { "case": "stale version", "status": "COVERED", "where": "rca-workflow.test.ts (UpdateRcaUseCase stale)، prerequisite-evidence-boundary.test.ts، create-rca.ts:41-42، capa repo:211-212، close-capa مسار اللقطة 225" },
+        { "case": "missing required cause/evidence", "status": "COVERED", "where": "rca domain:44-48 (SUBMIT بلا analysis/rootCause)، ncr transition CLOSE بلا verificationComplete (prerequisite-evidence-boundary)" },
+        { "case": "incorrect linkage", "status": "PARTIAL", "where": "createNcr يشترط findingId (ncr.ts:41)، createCapa يشترط ncrId (capa.ts:66)، CreateRca يرفض NCR غير موجود/غير مرئي/CLOSED/VOID — كل ذلك PASS. لا تغطية صريحة لربط NCR بFinding غير موجود أو بمالك آخر على قاعدة حقيقية." },
+        { "case": "self-review", "status": "NOT_ENFORCED", "where": "لا وجود لأي تقييم SoD في src/modules/quality/** (بحث sod/SeparationOfDuties لا يعيد نتائج). لا يوجد منع تقني لإغلاق CAPA بواسطة مالك الإجراء نفسه، وهو متوافق مع صياغة P-04 المعتمدة لكنه يترك فصل الفاعل عن مراجعة الفعالية داخل PD-18 المفتوح." },
+        { "case": "approval signature", "status": "COVERED", "where": "close-capa.test.ts يثبت توقيع `CLOSE`؛ close-capa.ts:69-82 + repo:249-265 (كتابة electronic_signatures داخل نفس المعاملة). اعتماد RCA (APPROVE) مرفوض بدلًا من أن يُوقَّع بلا سياسة." },
+        { "case": "duplicate retry", "status": "NOT_VERIFIED_RUNTIME", "where": "المنطق قائم في capa repo:157-203 (idempotency_records + بصمة الأمر + CONFLICT_DUPLICATE_COMMAND + رد مخزَّن). لا اختبار وحدة و`capa-close-postgres.test.ts` متخطّى ⇒ لم يُشاهد سلوك الـreplay فعليًا." },
+        { "case": "closed record edits", "status": "COVERED", "where": "updateRca يرفض كل ما ليس DRAFT/IN_PROGRESS/RETURNED (rca.ts:31-32) واختباره PASS؛ capa repo:213-214 يرفض إغلاق CLOSED/VOID؛ ncr repo:101 يصفّر closed_at لغير CLOSE" }
+      ],
+      "acceptedPoints": 0
+    },
+    {
+      "id": "MEA-4",
+      "maps": "MANDATORY ACTION 4 — تقييم خطوات الإغلاق التي تحتاج قرارات QMS ناقصة وإبقاؤها محجوبة مع تسجيل طلب قرار",
+      "observedStatus": "DONE",
+      "evidence": [
+        "PD-15 (معايير Finding→NCR) — findings/index.astro:50؛ ncr/new.astro:25؛ ncr/index.astro:38",
+        "PD-16 (تبعة FAIL في التفتيش) — ncr/new.astro:25؛ ncr/index.astro:39",
+        "PD-17 (سلطة ومسار إغلاق NCR) — ncr/index.astro:40؛ ncr/[ncrId].astro:43؛ rca/index.astro:61؛ capa/index.astro:42",
+        "PD-18 (متطلب/معايير الفعالية العامة) — capa/index.astro:41؛ capa/[capaId].astro:41؛ capa/new.astro:26؛ rca/[rcaId].astro:77",
+        "PD-32 (نطاق التوقيع لكل إجراء) — خارج وحدة Quality لكنه يحكم مراسم الاعتماد العامة"
+      ],
+      "acceptedPoints": 0
+    }
+  ],
+
+  "verifiedRequirementIds": [
+    "REQ-QUAL-001", "REQ-QUAL-002", "REQ-QUAL-003", "REQ-QUAL-004", "REQ-QUAL-005",
+    "REQ-QUAL-006", "REQ-QUAL-007", "REQ-QUAL-008", "REQ-QUAL-009", "REQ-QUAL-010",
+    "BR-QUAL-001", "BR-QUAL-002", "BR-QUAL-003", "BR-QUAL-010", "BR-QUAL-011",
+    "BR-QUAL-012", "BR-QUAL-020", "BR-QUAL-021", "BR-QUAL-030", "BR-QUAL-031",
+    "BR-QUAL-032", "BR-QUAL-033"
+  ],
+  "verifiedRequirementIdsNote": "المعرّفات مقروءة من `Documents/REQUIREMENTS-TRACEABILITY.md` و`Documents/BUSINESS-RULES.md` على المرجع 60e78cc6 فقط، لأن الملفين محذوفان من HEAD. لا يجوز اعتبارها «متحققة على المرشّح» بمعنى القبول؛ هي مراجع تتبع فقط، و`REQ-QUAL-009/010` حالتها POLICY-DEPENDENT في المصدر نفسه، و`BR-QUAL-010/012/033` حالتها UNCONFIRMED/POLICY-DEPENDENT/UNCONFIRMED.",
+
+  "decisionsRequired": [
+    {
+      "id": "D-1",
+      "question": "هل حذف `Documents/*.md` (ومنها `Documents/REQUIREMENTS-TRACEABILITY.md` و`Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md`) مقصود في المرشّح؟",
+      "impact": "`Documents/REQUIREMENTS-TRACEABILITY.md` داخل نطاق هذه البطاقة، وحذفه يُفشل `pnpm requirements:check` (ENOENT) و7 اختبارات عقد مصالحة، ويمنع إسناد أي معرّف متطلب على المرشّح. ووثيقة RCA التقنية محذوفة بينما سجل التدقيق ما زال يدّعي `technicalSource 'QC360-RCA-TECHNICAL-POLICY-2026-10-08@1'`.",
+      "owner": "System owner / Document Control",
+      "options": ["(أ) إعادة المصادر المتحكمة إلى المرشّح بمساراتها", "(ب) نقلها إلى مسار متحكم موثّق وتحديث الاختبارات والمراجع", "(ج) إعلان صريح أن المرشّح بلا مصادر متحكمة وإلغاء البنود المعتمدة عليها"],
+      "blocking": true
+    },
+    {
+      "id": "D-2",
+      "question": "اعتماد PD-17 لسلطة ومسار إغلاق NCR، وPD-15/PD-16 لمعايير بدء NCR وتبعة FAIL.",
+      "impact": "بدونها تبقى `MOVE_TO_CAPA`/`READY_FOR_CLOSURE`/`CLOSE` على NCR مرفوضة في المستودع؛ أي أن مسار NCR لا يمكن أن يُغلق تنظيميًا، وهذا مقصود fail-closed لكنه يعني أن AC-1 «الحالات المعتمدة تنجح» غير قابل للإثبات لمسار NCR.",
+      "owner": "QC owner / QMS owner",
+      "blocking": true
+    },
+    {
+      "id": "D-3",
+      "question": "اعتماد PD-18 لمعيار الفعالية العامة، وقرار فصل الفاعل عن مراجع الفعالية (SoD) إن كان مطلوبًا.",
+      "impact": "لا يوجد تقييم SoD في وحدة Quality؛ إغلاق CAPA متاح لمالك الإجراء نفسه إن كان Supervisor بصلاحية `PERM-CAPA-CLOSE`. هذا مطابق لـP-04 المعتمد نصًّا، لكنه يبقى بلا معيار فعالية مستقل ما دام PD-18 مفتوحًا.",
+      "owner": "Quality Policy owner",
+      "blocking": true
+    },
+    {
+      "id": "D-4",
+      "question": "اعتماد PD-32 (نطاق التوقيع لكل إجراء) لدور RCA/CAPA في خريطة التوقيع العامة.",
+      "impact": "مراسم توقيع CAPA CLOSE منفَّذة محليًا، لكن تفعيل التوقيع في السجل المركزي للأفعال الأخرى غير مكتمل.",
+      "owner": "QMS + named owner",
+      "blocking": true
+    },
+    {
+      "id": "D-5",
+      "question": "توفير PostgreSQL 18 معزولة (Docker أو `QC_TEST_DATABASE_URL` على loopback) لإثبات ثبات السجل والـidempotency والتزامن.",
+      "impact": "بدونه تبقى AC-1-B وMEA-3/duplicate retry بلا إثبات، وTARGET لن يتحوّل إلى VERIFIED_PASS.",
+      "owner": "Engineering / Verification owner",
+      "blocking": true
+    }
+  ],
+
+  "blockers": [
+    "بوابة runtime: لا container runtime ولا قاعدة معزولة ⇒ integration/concurrency محجوبتان (50 من 51 فشل integration هو الحاوية نفسها).",
+    "`tests/integration/quality/capa-close-postgres.test.ts` (5 اختبارات) متخطّى ⇒ لا إثبات PostgreSQL لإغلاق CAPA ولا للـidempotency.",
+    "مصدر متحكم داخل النطاق مفقود: `Documents/REQUIREMENTS-TRACEABILITY.md` ⇒ `pnpm requirements:check` يفشل و7 اختبارات عقد تفشل.",
+    "مصدر RCA التقني المذكور في سجل التدقيق مفقود من المرشّح ⇒ ادعاء المصدرية في حمولة التدقيق غير قابل للتحقق على هذا المرشّح.",
+    "قرارات QMS ناقصة: PD-15/PD-16/PD-17/PD-18/PD-32.",
+    "سطح إغلاق CAPA JS-only بلا POST baseline ⇒ لا يمكن إثبات الإغلاق في مسار no-JS."
+  ],
+
+  "residualRisk": [
+    "HIGH — بلا PostgreSQL حي، أي انحدار في مشغّلات append-only أو في قفل `FOR UPDATE`/`FOR SHARE` لن يُكتشف بالاختبارات المتاحة.",
+    "HIGH — غياب مصفوفة التتبع من المرشّح يعني أن أي معرّف متطلب يُسند إلى كود Quality غير قابل للتحقق آليًا على هذا المرشّح.",
+    "MEDIUM — عدم وجود SoD في وحدة Quality يجعل إغلاق CAPA ممكنًا لمالك الإجراء؛ مقبول نصًّا تحت P-04 لكنه يحتاج قرار PD-18/PD-32 لإغلاقه كخطر.",
+    "MEDIUM — سطح إغلاق CAPA يعتمد JavaScript؛ الفشل مغلق (لا إغلاق) لكنه عيب قابلية استخدام/بديل تشغيل مسجَّل تحت 005-B.",
+    "LOW — `pnpm test:integration` و`pnpm test:security` يفشلان دائمًا في هذه البيئة لأسباب حاويات، ما يجعل «exit code أحمر» إشارة بيئية لا إشارة جودة كود."
+  ],
+
+  "remediation": [
+    "استعادة `Documents/REQUIREMENTS-TRACEABILITY.md` و`Documents/QC360-RCA-TECHNICAL-POLICY-2026-10-08.md` إلى المرشّح أو نقلهما إلى مسار متحكم موثّق مع تحديث الاختبارات و`scripts/requirements/check-reconciliation.mjs`.",
+    "توفير PostgreSQL 18 معزولة وتشغيل `tests/integration/quality/capa-close-postgres.test.ts` و`pnpm test:concurrency` لإثبات ثبات السجل والـidempotency والتزامن.",
+    "إضافة حارس انحدار وحدة يثبت أن مسار إنشاء RCA لا يصدر أي UPDATE/DELETE على `ncrs` (MEA-2) — لم يُضف في هذه الجلسة عن قصد حتى لا تختلط الأدلة على مرشّحين مختلفين.",
+    "اعتماد قرارات PD-15/PD-16/PD-17/PD-18/PD-32 قبل تفعيل أي انتقال إغلاق تنظيمي."
+  ],
+
+  "signoff": {
+    "executor": "Opencode audit session (engineering + QC verification role)",
+    "status": "BLOCKED",
+    "acceptedPoints": 0,
+    "rubricReviewer": "NOT AVAILABLE",
+    "statement": "لا GO إنتاجي ولا ادعاء امتثال. الإغلاق التنظيمي غير المدعوم يبقى مرفوضًا في المصدر والاختبارات؛ وما ينقص هو قرار QMS ومصادر متحكمة وبيئة PostgreSQL معزولة — وكلها خارج صلاحية هذه الجلسة.",
+    "noRemoteAction": "لم يُنفَّذ أي commit أو push أو تغيير فرع أو إعداد CI أو كتابة في المستودع البعيد."
+  }
+}
