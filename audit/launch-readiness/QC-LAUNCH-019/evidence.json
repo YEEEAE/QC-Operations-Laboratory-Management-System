@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-LAUNCH-019",
+  "criterionId": "QC360-SC-08-04",
+  "criterion": "نجاح authenticated E2E مع حفظ artifacts مربوطة بالمرشح",
+  "expectedOutcome": "Mandatory CI authenticated E2E exits 0; real authenticated scenarios pass without false skipped-case attribution; candidate-bound traces, video, screenshots, logs and browser/timing metadata are retained.",
+  "status": "NOT_TESTED",
+  "score": {
+    "targetPoints": 1.8,
+    "acceptedPoints": 0,
+    "independentRubricReviewer": "NOT RECORDED"
+  },
+  "candidate": {
+    "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+    "gitSha": "f51d7408c73ee4fd6d7a56783e7d5a99de5b58b8",
+    "auditReferenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+    "referenceMatchesHead": false,
+    "executionSourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fingerprintScope": "scripts/verification/evidence-identity.mjs sourceFingerprint at execution time; delivery packet created afterward",
+    "migrationHead": "0047_task_references_occurrences.sql",
+    "nodeVersion": "v24.20.0",
+    "platform": "darwin-arm64",
+    "environment": "local",
+    "verificationRunId": "7b5e5782-cbc2-4cfc-b24c-dfc905ddaa31"
+  },
+  "testKind": "authenticated Playwright E2E / setup preflight",
+  "timestamp": "2026-10-14T17:20:32.558Z",
+  "actors": [],
+  "actorRole": "NONE — setup stopped before actor creation or login",
+  "testCaseIds": [],
+  "totals": {
+    "executed": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "attempts": [
+    {
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 1,
+      "status": "BLOCKED_BEFORE_TEST_RUNNER",
+      "reason": "Corepack could not fetch the pinned pnpm@11.25.0 because registry.npmjs.org resolved ENOTFOUND.",
+      "logUri": ".ci-results/QC-LAUNCH-019/verify-e2e-authenticated.log",
+      "logSha256": "c6fa7679d311005a0395c239c645b5cb9fc208177c8d1d1460416f33cac6466b",
+      "authenticatedEvidenceUri": null
+    },
+    {
+      "command": "pnpm test:e2e:closure",
+      "exitCode": 1,
+      "status": "BLOCKED_BEFORE_TEST_RUNNER",
+      "reason": "Corepack could not fetch the pinned pnpm@11.25.0 because registry.npmjs.org resolved ENOTFOUND.",
+      "logUri": ".ci-results/QC-LAUNCH-019/test-e2e-closure.log",
+      "logSha256": "c6fa7679d311005a0395c239c645b5cb9fc208177c8d1d1460416f33cac6466b",
+      "authenticatedEvidenceUri": null
+    },
+    {
+      "command": "node --import=tsx scripts/verification/run-authenticated-e2e.ts",
+      "exitCode": 2,
+      "status": "BLOCKED_BEFORE_DATABASE_AND_PLAYWRIGHT",
+      "reason": "Candidate artifact validation failed: dist/release-identity.json is bound to 2e8ca5e04922f12ff456105f388f7f073880f127, expected f51d7408c73ee4fd6d7a56783e7d5a99de5b58b8.",
+      "logUri": ".ci-results/authenticated-e2e-evidence.json",
+      "logSha256": "297d4844753f13206000e04e1b203c797cef1321d0700f076ee4c7277684cfa4",
+      "runnerArtifactDigest": "7c9aceb738ab96b10330a61e6e4d555dac1e8ab11ac657d30be3c1aa1b15a635",
+      "authenticatedEvidenceUri": null
+    }
+  ],
+  "environmentBlockers": [
+    {
+      "component": "candidate application artifact",
+      "status": "STALE",
+      "evidence": "runner rejected dist release identity 2e8ca5e04922f12ff456105f388f7f073880f127 against HEAD f51d7408c73ee4fd6d7a56783e7d5a99de5b58b8"
+    },
+    {
+      "component": "PostgreSQL 18 disposable runtime",
+      "status": "BLOCKED",
+      "evidence": "Docker API socket ~/.docker/run/docker.sock was absent; no container or database was started"
+    },
+    {
+      "component": "pinned package manager",
+      "status": "BLOCKED",
+      "evidence": "pnpm@11.25.0 is not cached and registry DNS returned ENOTFOUND"
+    }
+  ],
+  "ineligibleOrPolicyBlockedScenarios": [
+    {
+      "scenario": "Any workflow requiring unresolved controlled source, scientific criterion, signature authority, or effectivity",
+      "status": "NOT_RUN",
+      "reason": "No policy or authority was inferred or fabricated; the full runtime setup did not start."
+    }
+  ],
+  "browser": "NOT_STARTED",
+  "traceVideoScreenshots": "NONE — Playwright did not start",
+  "verifiedRequirementIds": [],
+  "unresolvedRequirementIds": [
+    "QC360-SC-08-04",
+    "QC-LAUNCH-019 acceptance criteria 1-2"
+  ],
+  "capturedAt": "2026-10-14T17:25:46Z",
+  "sourceFiles": [
+    {
+      "path": "scripts/verification/run-authenticated-e2e.ts",
+      "lines": "113-153,164-180,238-305,324-346"
+    },
+    {
+      "path": "tests/e2e/verify-fixtures.ts",
+      "lines": "14-36"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "lines": "148-162"
+    },
+    {
+      "path": "package.json",
+      "lines": "30-31"
+    }
+  ],
+  "uatClaim": false,
+  "releaseClaim": "NO-GO / NOT VERIFIED"
+}

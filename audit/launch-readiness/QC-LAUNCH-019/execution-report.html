@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QC-LAUNCH-019 — تقرير تنفيذ E2E المصادق</title>
+    <style>
+      :root { color-scheme: light; font: 16px/1.65 system-ui, sans-serif; color: #17212b; background: #f4f6f8; }
+      body { max-width: 1050px; margin: 0 auto; padding: 28px 18px 60px; }
+      header, section { background: white; border: 1px solid #d9e0e6; border-radius: 10px; padding: 20px 24px; margin: 14px 0; }
+      h1, h2 { line-height: 1.3; } h1 { margin-top: 0; } h2 { font-size: 1.15rem; }
+      .state { display: inline-block; border: 1px solid #9a5b00; background: #fff4d7; padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+      code, .mono { direction: ltr; unicode-bidi: isolate; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+      table { width: 100%; border-collapse: collapse; } th, td { text-align: start; vertical-align: top; border-bottom: 1px solid #e4e9ed; padding: 8px; }
+      th { width: 24%; } .muted { color: #52606d; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>QC-LAUNCH-019 — Authenticated E2E لكل العمليات المهمة</h1>
+      <p><span class="state">NOT_TESTED / BLOCKED</span> — لم يبدأ أي اختبار Playwright على التطبيق.</p>
+      <p>وقت توثيق الأدلة: 2026-10-14 17:25:46 UTC (20:25:46 بتوقيت الرياض). لم تُسجل UAT أو موافقة أو توقيع.</p>
+    </header>
+    <section>
+      <h2>هوية المرشح</h2>
+      <table>
+        <tr><th>المستودع / HEAD</th><td><span class="mono">YEEEAE/QC-Operations-Laboratory-Management-System</span><br><span class="mono">f51d7408c73ee4fd6d7a56783e7d5a99de5b58b8</span></td></tr>
+        <tr><th>مرجع التدقيق</th><td><span class="mono">60e78cc6fdafe6c70e249be2d687c1df3af45412</span> موجود محليًا؛ HEAD الحالي مختلف. المقارنة المحلية تُظهر اختلافًا واسعًا (391 ملفًا، 65,857 إضافة و73,341 حذفًا)، لذا لا يُنقل أي دليل من المرشح المرجعي.</td></tr>
+        <tr><th>بصمة المصدر عند محاولة runner</th><td><span class="mono">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>، من سياق تحقق جديد <span class="mono">7b5e5782-cbc2-4cfc-b24c-dfc905ddaa31</span> على Node <span class="mono">v24.20.0</span>، macOS arm64. بصمة التنفيذ تخص المصدر عند المحاولة؛ ملفات حزمة التقرير أُنشئت بعدها.</td></tr>
+        <tr><th>رأس الترحيلات المصدرية</th><td><span class="mono">0047_task_references_occurrences.sql</span></td></tr>
+        <tr><th>صفحات Astro</th><td>88 ملف صفحة مادي في src/pages. ملف Documents/ROUTE-ACCEPTANCE-MATRIX.md المشار إليه في فهرس المشروع غير موجود في هذا المرشح؛ لم يُثبت عدد المسارات المسجلة أو مراجعة الصفحات يدويًا.</td></tr>
+      </table>
+    </section>
+    <section>
+      <h2>التنفيذ الفعلي</h2>
+      <table>
+        <tr><th>pnpm verify:e2e:authenticated</th><td>Exit 1 قبل تشغيل السكربت: Corepack لم يستطع تنزيل pnpm 11.25.0 بسبب <span class="mono">ENOTFOUND registry.npmjs.org</span>. السجل: <span class="mono">.ci-results/QC-LAUNCH-019/verify-e2e-authenticated.log</span>، SHA-256 <span class="mono">c6fa7679d311005a0395c239c645b5cb9fc208177c8d1d1460416f33cac6466b</span>.</td></tr>
+        <tr><th>pnpm test:e2e:closure</th><td>Exit 1 للسبب نفسه، قبل Playwright. السجل: <span class="mono">.ci-results/QC-LAUNCH-019/test-e2e-closure.log</span>، SHA-256 <span class="mono">c6fa7679d311005a0395c239c645b5cb9fc208177c8d1d1460416f33cac6466b</span>.</td></tr>
+        <tr><th>تشغيل runner المباشر للتحقق من حاجز المرشح</th><td><span class="mono">node --import=tsx scripts/verification/run-authenticated-e2e.ts</span> باستخدام Node 24.20.0؛ Exit 2. تحقق هوية البناء رفض dist/release-identity.json: المتوقع <span class="mono">f51d7408c73ee4fd6d7a56783e7d5a99de5b58b8</span>، بينما الأثر المبني يحمل <span class="mono">2e8ca5e04922f12ff456105f388f7f073880f127</span>. توقف قبل إنشاء PostgreSQL أو تشغيل المتصفح. دليل runner: <span class="mono">.ci-results/authenticated-e2e-evidence.json</span>، SHA-256 <span class="mono">297d4844753f13206000e04e1b203c797cef1321d0700f076ee4c7277684cfa4</span>.</td></tr>
+        <tr><th>PostgreSQL 18</th><td>Docker CLI متاح، لكن daemon غير متاح: تعذر الاتصال بـ <span class="mono">~/.docker/run/docker.sock</span>. لم تُنشأ قاعدة اختبار.</td></tr>
+      </table>
+    </section>
+    <section>
+      <h2>التغطية والقرار</h2>
+      <ul>
+        <li>لا جلسة actor ولا سجل synthetic أُنشئ في هذه المحاولة؛ عدد السيناريوهات المنفذة 0، الناجحة 0، الفاشلة 0، والمتخطاة 0. لهذا لا يُعامل الحاجز كفشل سلوكي أو نجاح.</li>
+        <li>خطوة CI في .github/workflows/ci.yml:148-162 تستدعي runner. الاختيار الافتراضي في scripts/verification/run-authenticated-e2e.ts:324-327 يضم authenticated-closure.spec.ts وaccessibility.spec.ts فقط. أمر الإغلاق في package.json:30 يضم ستة ملفات، بينها authorization matrix وcritical workflows وerror recovery وfile reports؛ لم يُثبت أنها تعمل ضمن خطوة CI المصادق عليها.</li>
+        <li>لم تُتحقق دورة الإنشاء إلى الحفظ والإرسال والمراجعة والإرجاع والتوقيع والاسترجاع والتصدير، ولا 401/403 أو unavailable/stale/duplicate/session timeout أو metadata. لا traces أو videos أو screenshots ناتجة من هذه المحاولة.</li>
+        <li>المسارات التي تتطلب قرارًا أو مصدرًا فعالًا غير محسوم تبقى غير مؤهلة لدليل إيجابي؛ لا تُختلق صلاحية اعتماد أو توقيع أو قبول علمي لتشغيلها.</li>
+      </ul>
+      <p><strong>QC360-SC-08-04:</strong> 0 من 1.80 نقطة مقبولة في هذا التقرير. لا يوجد حكم مستقل من rubric reviewer؛ النقاط المستهدفة غير مكتسبة.</p>
+      <p><strong>الحالة النهائية:</strong> NOT_TESTED / BLOCKED. لا ادعاء جاهزية إطلاق.</p>
+    </section>
+    <section>
+      <h2>المصادر والمواضع</h2>
+      <ul>
+        <li>scripts/verification/run-authenticated-e2e.ts:113-153 يكتب سجل BLOCKED مرتبطًا بسياق المرشح؛ :164-180 يفحص هوية الأثر قبل قاعدة البيانات؛ :238-305 يهيئ PostgreSQL والـfixtures؛ :324-346 يختار ملفات Playwright.</li>
+        <li>tests/e2e/verify-fixtures.ts:14-36 يجعل QC_VERIFY fixtures إلزامية حين يفعّلها runner.</li>
+        <li>tests/e2e/critical-workflows.spec.ts وملفات الإغلاق الأخرى مصادر اختبار فقط؛ لم تُنفذ في هذا التشغيل.</li>
+      </ul>
+      <p class="muted">إعداد التقرير لا يثبت route metadata أو مراجعة بشرية لـ88 صفحة. مصفوفة القبول المشار إليها غير موجودة على HEAD الحالي.</p>
+    </section>
+  </body>
+</html>
