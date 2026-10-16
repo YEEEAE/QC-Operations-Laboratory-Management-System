@@ -15,6 +15,9 @@ const y = (value: number) => baseline - (value / max) * (baseline - top);
 const coords = points
   .map((p, i) => `${x(i)},${y(p.value)}`)
   .join(' ');
+// QC-UX-360 Batch 4: quarter gridlines make the series scannable without adding
+// a second data definition; the values still come only from `points`.
+const gridFractions = [0.25, 0.5, 0.75];
 ---
 <figure class="chart">
   <div class="chart-head">
@@ -43,6 +46,9 @@ const coords = points
     focusable="false"
   >
     <line x1={left} y1={baseline} x2={width - right} y2={baseline} stroke="var(--color-border-strong)" stroke-width="1" />
+    {gridFractions.map((fraction) => (
+      <line x1={left} y1={y(max * fraction)} x2={width - right} y2={y(max * fraction)} stroke="var(--color-border-subtle)" stroke-width="1" stroke-dasharray="2 6" />
+    ))}
     <line x1={left} y1={y(max)} x2={width - right} y2={y(max)} stroke="var(--color-border-subtle)" stroke-width="1" stroke-dasharray="4 6" />
     <text x="8" y={baseline + 4} fill="var(--text-secondary)" font-size="12">0</text>
     <text x="8" y={y(max) + 4} fill="var(--text-secondary)" font-size="12">{max}</text>

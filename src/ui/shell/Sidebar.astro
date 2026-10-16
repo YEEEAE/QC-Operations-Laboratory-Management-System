@@ -1,5 +1,5 @@
 ---
-import { visibleNavigation, visibleNavigationUtilities } from '../navigation/navigation';
+import { navigationCurrentState, visibleNavigation, visibleNavigationUtilities } from '../navigation/navigation';
 import Icon from '../components/Icon.astro';
 import type { ActorContext } from '../../shared/authorization/types';
 
@@ -12,8 +12,11 @@ interface Props {
 const { actor, activePath = Astro.url.pathname, collapsed = false } = Astro.props;
 const groups = visibleNavigation(actor);
 const utilities = visibleNavigationUtilities(actor);
-const isCurrent = (href: string) => activePath === href || activePath.startsWith(`${href}/`);
-const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((item) => isCurrent(item.href));
+// The exact route owns aria-current="page"; a containing section is only marked
+// as active (UX-003) so the sidebar never announces two current pages.
+const stateOf = (href: string) => navigationCurrentState(activePath, href);
+const hasCurrentDescendant = (items: Array<{ href: string }>) =>
+  items.some((item) => stateOf(item.href) !== 'none');
 ---
 
 <nav class="sidebar" data-collapsed={collapsed} aria-label="Primary navigation">
@@ -60,20 +63,22 @@ const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((ite
           </div>
           <ul class="nav-items" id={listId} hidden={!expanded}>
             {group.items.map((item) => {
-              const current = isCurrent(item.href);
+              const state = stateOf(item.href);
+              const current = state === 'current';
+              const containsCurrent = state === 'ancestor';
               return (
                 <li>
                   <a
-                    class:list={['nav-link', { active: current }]}
+                    class:list={['nav-link', { active: current || containsCurrent }]}
                     href={item.href}
                     title={item.label}
-                    aria-label={item.label}
+                    aria-label={current ? `${item.label} Current page` : item.label}
                     aria-current={current ? 'page' : undefined}
                     data-collapsed-tip={item.label}
                   >
                     <span class="nav-icon"><Icon name={item.icon} /></span>
                     <span class="nav-label">{item.label}</span>
-                    {current && <span class="current-indicator">Current page</span>}
+                    {current && <span class="current-indicator" aria-hidden="true">Current page</span>}
                   </a>
                 </li>
               );
@@ -89,20 +94,22 @@ const hasCurrentDescendant = (items: Array<{ href: string }>) => items.some((ite
       <h2 id="nav-utilities-label">Workspace tools</h2>
       <ul>
         {utilities.map((item) => {
-          const current = isCurrent(item.href);
+          const state = stateOf(item.href);
+          const current = state === 'current';
+          const containsCurrent = state === 'ancestor';
           return (
             <li>
               <a
-                class:list={['nav-link', { active: current }]}
+                class:list={['nav-link', { active: current || containsCurrent }]}
                 href={item.href}
                 title={item.label}
-                aria-label={item.label}
+                aria-label={current ? `${item.label} Current page` : item.label}
                 aria-current={current ? 'page' : undefined}
                 data-collapsed-tip={item.label}
               >
                 <span class="nav-icon"><Icon name={item.icon} /></span>
                 <span class="nav-label">{item.label}</span>
-                {current && <span class="current-indicator">Current page</span>}
+                {current && <span class="current-indicator" aria-hidden="true">Current page</span>}
               </a>
             </li>
           );

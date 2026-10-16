@@ -17,7 +17,7 @@ const reasonCopy = (reason: string) => {
 };
 ---
 <AppLayout title="Production release approval · Governance" locale="en" direction="ltr">
-  <main class="release-shell">
+  <div class="release-shell">
     <h1>Production release approval</h1>
     {model.candidateReadUnavailable ? <p role="alert" class="denied">Release details are temporarily unavailable. <a href={Astro.url.pathname + Astro.url.search}>Refresh this page</a> before reviewing or retrying an approval.</p> : candidate ? <>
       <p class="lede">Read-only evidence for this release. Only trusted evidence can establish gate status.</p>
@@ -38,7 +38,7 @@ const reasonCopy = (reason: string) => {
         <form data-release-approve data-approvable={String(model.approvable)} method="post"><input type="hidden" name="releaseId" value={candidate.releaseId} /><input type="hidden" name="expectedVersion" value={candidate.version.toString()} /><label for="rel-reauth">Re-enter password</label><input id="rel-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required /><p class="signature-meaning">I approve the server-derived evidence for release {candidate.releaseId}.</p><button type="submit" data-submit disabled={!model.approvable} aria-disabled={!model.approvable}>Approve release</button><output data-result role="status" tabindex="-1"></output></form>
       </section>
     </> : <p class="lede">The release candidate is unavailable or you are not authorized to view it.</p>}
-  </main>
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';

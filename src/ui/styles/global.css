@@ -232,6 +232,21 @@ textarea:disabled {
 [data-record-index]{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-block:var(--space-4)}
 [data-record-index] a{min-block-size:44px;display:inline-flex;align-items:center;color:var(--color-accent-primary-hover)}
 .app-main :where(h1,h2,h3,p,button,a,summary){letter-spacing:0}
+/* Shared table typography (QC-UX-360 Batch 3): `.app-main` sets
+   `overflow-wrap: anywhere`, which lets a column shrink to one character and
+   broke header words mid-word (UX-005 was one instance of this shared cause).
+   Header cells now wrap on word boundaries — the longest word becomes the
+   column's meaningful minimum width — while body cells keep `anywhere` so long
+   unbroken identifiers still cannot overflow their cell. */
+.app-main table th{overflow-wrap:break-word;word-break:normal}
+/* Shared data-table foundation. These low-specificity defaults apply when a
+   route does not provide a variant; purpose-built tables (audit/report grids,
+   compact projections, print layouts) keep their more-specific overrides.
+   Density tokens feed both the comfortable and compact register modes. */
+.app-main :where(table){width:100%;border-collapse:collapse;color:var(--text-primary);font-size:var(--font-size-sm)}
+.app-main :where(caption){caption-side:top;padding:var(--space-3);color:var(--text-secondary);font-size:var(--font-size-xs);font-weight:600;text-align:start}
+.app-main :where(th,td){padding-block:var(--table-cell-padding-block);padding-inline:var(--table-cell-padding-inline);border-block-end:1px solid var(--color-border-subtle);text-align:start;vertical-align:top}
+.app-main :where(thead th){background:var(--table-header-background);color:var(--text-primary);font-weight:var(--font-weight-semibold)}
 .app-main :where(section[id],h2[id]){scroll-margin-block-start:6rem}
 @media(max-width:760px){
   .advanced-filters,.advanced-filter-fields,.filter-presets{inline-size:100%}.advanced-filter-fields{display:grid;grid-template-columns:minmax(0,1fr)}

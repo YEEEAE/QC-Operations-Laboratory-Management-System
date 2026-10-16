@@ -284,7 +284,27 @@ export const onRequest = defineMiddleware(
       if (sessionRecovery) recovery.set('session', sessionRecovery);
       response = redirect(`/login?${recovery.toString()}`, 303);
     }
-    if (url.pathname === '/login' && locals.user) response = redirect('/dashboard', 303);
+    // A native Astro Action POST redirects back to the referrer and stores its
+    // result in `_astroActionPayload`; `login.astro` consumes that one-shot
+    // result and performs the requested safe `returnTo` redirect. Do not let
+    // the authenticated-login shortcut overwrite that transaction with a
+    // generic `/dashboard` redirect before the route can read the action
+    // result. The payload is framework-owned and is cleared by Astro's action
+    // middleware after rendering this response.
+    let pendingLoginActionResult = false;
+    if (url.pathname === '/login' && locals.user) {
+      try {
+        const payload = cookies.get('_astroActionPayload')?.json();
+        pendingLoginActionResult =
+          typeof payload === 'object' && payload !== null && 'actionName' in payload &&
+          payload.actionName === 'login';
+      } catch {
+        // A malformed framework flash cookie must never suppress the normal
+        // authenticated-login redirect.
+      }
+    }
+    if (url.pathname === '/login' && locals.user && !pendingLoginActionResult)
+      response = redirect('/dashboard', 303);
 
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
     const routeTemplate = normalizeRouteTemplate(url.pathname);

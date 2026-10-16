@@ -16,7 +16,7 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
     <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation" aria-hidden="false"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>
     <div class="app-workspace" data-app-workspace>
       <header class="app-topbar"><slot name="topbar"><Topbar breadcrumbs={breadcrumbs} userName={actor?.loginIdentity ?? 'Signed in'} userRole={props.userRole ?? actorRoleLabel(actor)} scope={props.scope ?? describeActorScope(actor)} approvalCount={props.approvalCount} notificationCount={props.notificationCount} /></slot></header>
-      <main id="main-content" class="app-main"><slot /></main>
+      <main id="main-content" class="app-main" tabindex="-1"><slot /></main>
     </div>
   </div>
   <CommandPalette />
@@ -28,17 +28,32 @@ const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
   .app-workspace { min-width: 0; min-inline-size: 0; max-inline-size: 100%; display: flex; flex-direction: column; }
   .app-topbar { min-height: 64px; display: flex; align-items: center; padding: var(--space-3) var(--space-6); background: var(--surface-panel); border-block-end: 1px solid var(--color-border-subtle); }
   .app-main { width: min(100% - 2 * var(--space-6), 1600px); max-inline-size: 100%; margin-inline: auto; flex: 1; padding-block: var(--space-8); overflow-wrap: anywhere; }
+  /* UX-004: the skip link moves keyboard focus to the content landmark. The
+     landmark itself is not interactive, so its focus ring is suppressed and the
+     next Tab continues from the first control inside the content. */
+  .app-main:focus { outline: none; }
   @media (max-width: 760px) { .app-shell,.app-shell[data-sidebar-collapsed='true'] { display:block; } .app-sidebar { position:fixed; z-index:20; inset-block:0; inset-inline-start:0; inset-inline-end:auto; inline-size:min(86vw,20rem); max-inline-size:calc(100vw - 3rem); visibility:hidden; transform:translateX(-105%); transition:transform var(--motion-standard) ease, visibility var(--motion-standard); box-shadow:var(--shadow-3); } [dir='rtl'] .app-sidebar { transform:translateX(105%); } .app-shell[data-mobile-nav-open='true'] .app-sidebar { transform:translateX(0); visibility:visible; } .app-main { width: min(100% - 2 * var(--space-4), 1600px); padding-block: var(--space-6); } .app-topbar { padding-inline: var(--space-4); flex-wrap:wrap; } }
   @media (prefers-reduced-motion: reduce) { .app-shell,.app-sidebar { transition:none; } }
 </style>
 <script>
   import { navigationPreferences, navigationMatches, recentRecordPath } from '../client/navigation-preferences';
   import { openDialog, initDialogs } from '../client/dialog';
+  import { initScrollRegions, watchScrollRegions } from '../client/scroll-regions';
+  // QC-UX-360 Batch 3: wide registers are keyboard-scrollable, not mouse-only.
+  initScrollRegions();
+  watchScrollRegions();
   const shell = document.querySelector<HTMLElement>('[data-app-shell]');
   const sidebarPanel = document.querySelector<HTMLElement>('[data-sidebar-panel]');
   const workspace = document.querySelector<HTMLElement>('[data-app-workspace]');
   const sidebar = document.querySelector<HTMLElement>('[data-sidebar-panel] .sidebar');
   const skipLink = document.querySelector<HTMLElement>('[data-skip-link]');
+  // UX-004: following the skip link must actually move focus. A fragment
+  // navigation only moves the sequential-focus starting point in some engines
+  // and leaves `document.activeElement` on <body>; `tabindex="-1"` on <main>
+  // makes the landmark programmatically focusable so this call always lands.
+  skipLink?.addEventListener('click', () => {
+    document.getElementById('main-content')?.focus();
+  });
   const collapse = document.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
   const navigationToggle = document.querySelector<HTMLButtonElement>('[data-navigation-toggle]');
   const drawerClose = document.querySelector<HTMLButtonElement>('[data-drawer-close]');

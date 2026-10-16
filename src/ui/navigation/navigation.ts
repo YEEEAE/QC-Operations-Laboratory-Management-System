@@ -289,6 +289,23 @@ export const navigationRouteIds = navigationGroups
   .flatMap((group) => group.items.map((item) => item.routeId))
   .concat(navigationUtilities.map((item) => item.routeId));
 
+export type NavigationCurrentState = 'current' | 'ancestor' | 'none';
+
+/**
+ * UX-003 — which link is the exact current page, and which only contains it.
+ *
+ * A plain prefix test marks both the containing section and the exact route as
+ * current: on `/admin/users` the `/admin` link and the `/admin/users` link both
+ * matched, so the sidebar announced two `aria-current="page"` destinations.
+ * The containing section may stay visually identifiable, but only the exact
+ * route may claim to be the current page.
+ */
+export function navigationCurrentState(activePath: string, href: string): NavigationCurrentState {
+  if (activePath === href) return 'current';
+  if (activePath.startsWith(`${href}/`)) return 'ancestor';
+  return 'none';
+}
+
 export function visibleNavigation(actor: ActorContext | undefined) {
   return navigationGroups
     .map((group) => ({

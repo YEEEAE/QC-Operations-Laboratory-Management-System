@@ -56,7 +56,7 @@ const {
   <div class="kpi-label">
     <span>{label}</span>
     <details class="definition">
-      <summary aria-label={'Show definition for ' + label}><span aria-hidden="true">i</span></summary>
+      <summary aria-label={'Show definition for ' + label}><span aria-hidden="true"></span></summary>
       <p>
         {definition}
         {
@@ -116,9 +116,22 @@ const {
   .definition summary{position:relative;display:grid;place-items:center;inline-size:44px;block-size:44px;margin-block:-8px;padding:0;border:0;background:none;color:var(--text-secondary);cursor:pointer;list-style:none}
   .definition summary::-webkit-details-marker{display:none}
   .definition summary::before{content:'';position:absolute;inline-size:22px;block-size:22px;border:1px solid var(--color-border-strong);border-radius:50%}
-  .definition summary span{position:relative;font-size:var(--font-size-xs);font-weight:700;line-height:1}
+   /* The visible info mark is CSS-generated, not a text node. That keeps the
+      icon decorative for assistive technology and avoids WCAG 2.5.3 label-in-
+      name mismatches on the summary's descriptive accessible name. */
+   .definition summary span::before{content:'i';position:relative;font-size:var(--font-size-xs);font-weight:700;line-height:1}
   .definition p{position:absolute;z-index:2;inset-inline-end:0;top:calc(100% + var(--space-2));display:grid;gap:var(--space-2);width:min(280px,70vw);margin:0;padding:var(--space-3);background:var(--surface-raised);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);color:var(--text-primary);font-size:var(--font-size-xs);font-weight:400;line-height:1.45;box-shadow:var(--shadow-2)}
   .definition-meta{display:grid;gap:2px;color:var(--text-muted)}
   .definition-meta strong{color:var(--text-secondary)}
   .kpi-warning{border-inline-start-color:var(--status-warning)}.kpi-danger{border-inline-start-color:var(--status-danger)}.kpi-success{border-inline-start-color:var(--status-approved)}
+  /* QC-UX-360 Batch 4/7: restrained dimensional depth for priority counts.
+     GPU-only transform, no layout impact, motion is opt-in (never autoplayed)
+     and both the depth and the motion are removed for reduced-motion and
+     forced-colors users. */
+  .kpi{background-image:linear-gradient(180deg,color-mix(in srgb,var(--surface-raised) 60%,transparent),transparent 46%);box-shadow:var(--shadow-1)}
+  @media (prefers-reduced-motion: no-preference){
+    .kpi{transition:transform var(--motion-fast) ease,box-shadow var(--motion-fast) ease}
+    .kpi:hover,.kpi:focus-within{transform:perspective(900px) rotateX(1.2deg) translateY(-2px);box-shadow:var(--shadow-2)}
+  }
+  @media (forced-colors: active){.kpi{background-image:none;box-shadow:none}}
 </style>

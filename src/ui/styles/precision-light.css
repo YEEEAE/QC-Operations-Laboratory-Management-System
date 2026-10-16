@@ -120,6 +120,13 @@ html[data-visual-direction='precision-light'] .app-sidebar {
   --color-accent-primary-hover: #8ae5e7;
   --color-text-inverse: #111d2d;
   --focus-ring: #8ae5e7;
+  /* UX-002: re-resolve `color` inside the sidebar. `.app-shell` computes
+     `color: var(--text-primary)` from the document-level palette, and that
+     computed colour is inherited as-is — the sidebar-scoped token overrides
+     above never re-resolve it. Any sidebar text without its own colour
+     (e.g. the "Find a page" filter label) inherited #14243b and rendered at
+     ~1.09:1 on the dark sidebar surface. */
+  color: var(--text-primary);
   color-scheme: dark;
   background: #111d2d;
 }

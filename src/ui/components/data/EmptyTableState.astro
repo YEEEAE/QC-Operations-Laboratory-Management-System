@@ -23,7 +23,7 @@ const filtered = Boolean(clearHref);
 
 <div class="empty" role="status">
   <span class="empty-icon" aria-hidden="true"><Icon name="search" /></span>
-  <h3>{title ?? (filtered ? copy.states.noFilterMatches : copy.states.noRecords)}</h3>
+  <h2>{title ?? (filtered ? copy.states.noFilterMatches : copy.states.noRecords)}</h2>
   <p>{description ?? (filtered ? 'Clear a filter or change your search.' : 'No records are available in your authorized scope.')}</p>
   {
     filtered && (

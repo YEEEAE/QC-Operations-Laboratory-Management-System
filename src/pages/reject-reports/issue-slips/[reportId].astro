@@ -2,6 +2,7 @@
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import { rejectReportReadDependencies } from '../../../modules/reject-reports/application/dependencies.js';
 import ErrorState from '../../../ui/components/feedback/ErrorState.astro';
+import { AppError } from '../../../shared/errors/app-error.js';
 import {
   ISSUE_SLIP_APPROVAL_ROLES,
   nextPendingApprovalRole,
@@ -18,7 +19,25 @@ const printMode = Astro.url.searchParams.get('print') === '1';
 const deps = rejectReportReadDependencies();
 const availability = await deps.availability.execute({ actor });
 if (!availability.available) Astro.response.status = 503;
-const slip = availability.available ? await deps.getIssueSlip.execute({ actor, reportId }) : null;
+// Missing or unauthorized slip uses the not-found surface (never a 500); the page's
+// not-found branch covers both cases without leaking whether the record exists.
+let slip: Awaited<ReturnType<typeof deps.getIssueSlip.execute>> | null = null;
+let slipNotFound = false;
+if (availability.available) {
+  try {
+    slip = await deps.getIssueSlip.execute({ actor, reportId });
+  } catch (error) {
+    if (
+      error instanceof AppError &&
+      (error.code === 'RESOURCE_NOT_FOUND' || error.category === 'AUTHORIZATION')
+    ) {
+      slipNotFound = true;
+      Astro.response.status = 404;
+    } else {
+      throw error;
+    }
+  }
+}
 // Operational surfaces show a human identity, never the internal UUID (P1-3).
 const creatorLabel = slip?.createdBy === actor.id ? 'You' : 'Another authorized user';
 const hasPermission = (code: string) =>
@@ -62,7 +81,13 @@ const fmtDateTime = (d?: Date) =>
 ---
 
 <AppLayout title={slip ? `${slip.reportNo} · Issue Slip` : 'Issue Slip unavailable'} locale="en" direction="ltr">
-  {!slip ? (
+  {slipNotFound ? (
+    <ErrorState
+      title="Issue slip not found"
+      description="This issue slip does not exist or is outside your authorized scope. No report was changed."
+      retryHref="/reject-reports"
+    />
+  ) : !slip ? (
     <ErrorState
       title="Reject Reports are unavailable in this environment"
       description="This report could not be opened. No report was changed. Contact your system administrator, then try opening it again."

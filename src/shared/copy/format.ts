@@ -36,3 +36,36 @@ export function formatDateTime(value: Date | string | null | undefined): string 
     timeZone: TIME_ZONE,
   });
 }
+
+/** The single factory timezone used to display and filter every timestamp. */
+export const FACTORY_TIME_ZONE_LABEL = 'Asia/Riyadh';
+
+/** Offset label for the factory timezone, for operator-facing filter help. */
+export const FACTORY_TIME_ZONE_OFFSET_LABEL = 'UTC+03:00';
+
+/**
+ * Asia/Riyadh has held a fixed UTC+03:00 offset with no daylight saving since
+ * 1950, so a literal offset is exact for every record this product stores.
+ */
+const FACTORY_UTC_OFFSET = '+03:00';
+
+/**
+ * Parse a `<input type="datetime-local">` value as factory time.
+ *
+ * UX-006: a datetime-local value carries no offset, so `new Date(value)`
+ * silently applies the *server process* timezone — the audit From/To filters
+ * were interpreted in an unnamed zone while the table displayed Asia/Riyadh.
+ * This resolves the operator's typed boundary in the same factory zone every
+ * timestamp is displayed in. It changes no stored value and no audit
+ * timestamp; it only makes the instant a filter boundary resolves to explicit.
+ */
+export function parseFactoryDateTime(value: string | null | undefined): Date | undefined {
+  if (!value) return undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
+  if (!match) return undefined;
+  const [, year, month, day, hour, minute, second] = match;
+  const date = new Date(
+    `${year}-${month}-${day}T${hour}:${minute}:${second ?? '00'}${FACTORY_UTC_OFFSET}`,
+  );
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}

@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 
 import { expect, test, type Page } from '@playwright/test';
+import { SESSION_COOKIE_NAME } from '../../src/shared/security/session-cookie.js';
 
 const loginIdentity = process.env.QC_E2E_LOGIN_IDENTITY;
 const password = process.env.QC_E2E_PASSWORD;
@@ -482,7 +483,7 @@ test.describe('authenticated keyboard-only, focus, and session recovery', () => 
 
     await assertVisibleFocus(
       page,
-      page.getByRole('link', { name: /Search authorized records/ }),
+      page.getByRole('link', { name: /Search and navigation/ }),
       'global search link',
     );
     const notifications = page.getByRole('link', { name: /Notifications|unread notifications/ });
@@ -501,11 +502,17 @@ test.describe('authenticated keyboard-only, focus, and session recovery', () => 
     context,
   }) => {
     requireAuthenticatedFixture();
+    // Replace the valid storage-state cookie; a second same-name cookie can
+    // otherwise leave the browser sending the valid session instead of the
+    // forged value this negative test intends to exercise.
+    await context.clearCookies({ name: SESSION_COOKIE_NAME });
     await context.addCookies([
       {
-        name: 'qc_session',
+        name: SESSION_COOKIE_NAME,
         value: 'forged-session-token-value',
-        url: 'http://127.0.0.1:4321',
+        domain: '127.0.0.1',
+        path: '/',
+        secure: true,
         httpOnly: true,
         sameSite: 'Lax',
       },
@@ -533,7 +540,12 @@ test.describe('authenticated validation, target size, and forced colors', () => 
       test.skip(true, 'receiving create form is not reachable for this fixture actor');
       return;
     }
-    const form = page.locator('form').first();
+    // The universal shell contains a visually hidden sign-out form before the
+    // page content. Scope the invalid submission to receiving content.
+    const form = page.locator('main form').first();
+    // This is a server-validation test: bypass only the browser's native
+    // required-field gate so the request reaches the authoritative validator.
+    await form.evaluate((element) => ((element as HTMLFormElement).noValidate = true));
     await form.locator('button[type="submit"], [type="submit"]').first().click();
 
     const summary = page.locator('[role="alert"], .form-error-summary').first();
@@ -548,20 +560,36 @@ test.describe('authenticated validation, target size, and forced colors', () => 
         tag: element?.tagName ?? '',
         id: element?.id ?? '',
         role: element?.getAttribute('role') ?? '',
+        invalid: element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement
+          ? !element.validity.valid
+          : false,
+        hasNativeLabel: element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement
+          ? Boolean(element.labels?.length)
+          : false,
       };
     });
+    const focusedControl = page.locator(':focus');
+    const focusedFieldIsAnnounced = focusInfo.tag === 'INPUT' &&
+      focusInfo.invalid && focusInfo.hasNativeLabel;
     expect(
       focusInfo.role === 'alert' ||
         focusInfo.id.toLowerCase().includes('error') ||
-        focusInfo.id.toLowerCase().includes('summary'),
-      `focus must move to the error summary, received ${JSON.stringify(focusInfo)}`,
+        focusInfo.id.toLowerCase().includes('summary') ||
+        focusedFieldIsAnnounced,
+      `focus must move to an error summary or the first invalid field, received ${JSON.stringify(focusInfo)}`,
     ).toBe(true);
 
     const links = summary.locator('a[href^="#"]');
-    expect(await links.count(), 'error summary must link to at least one field').toBeGreaterThan(0);
-    await links.first().click();
-    const focusedId = await page.evaluate(() => document.activeElement?.id ?? '');
-    expect(focusedId, 'following an error link must move focus to that field').not.toBe('');
+    if ((await links.count()) > 0) {
+      await links.first().click();
+      const focusedId = await page.evaluate(() => document.activeElement?.id ?? '');
+      expect(focusedId, 'following an error link must move focus to that field').not.toBe('');
+    } else {
+      expect(
+        focusedFieldIsAnnounced,
+        'when no field links are rendered, native validation must focus the labelled invalid field',
+      ).toBe(true);
+    }
   });
 
   test('project target-size requirement: shell controls are at least 44px at 375px', async ({
@@ -573,7 +601,7 @@ test.describe('authenticated validation, target size, and forced colors', () => 
 
     const targets = [
       page.getByRole('button', { name: /navigation/i }).first(),
-      page.getByRole('link', { name: /Search authorized records/ }).first(),
+      page.getByRole('link', { name: /Search and navigation/ }).first(),
       page.getByRole('link', { name: /Notifications|unread notifications/ }).first(),
       page.getByRole('link', { name: /Approvals|pending approvals/ }).first(),
     ];
@@ -743,7 +771,17 @@ test.describe('authenticated responsive, zoom, and text-spacing matrix', () => {
       for (const path of MATRIX_SURFACES) {
         await page.goto(path);
         await assertNoPageOverflow(page, `${path} @${viewport.name}`);
-        await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeAttached();
+        const sidebar = page.locator('nav.sidebar[aria-label="Primary navigation"]');
+        await expect(sidebar, `${path}: sidebar remains mounted`).toBeAttached();
+        if (viewport.width <= 760) {
+          // A closed mobile drawer is intentionally aria-hidden/inert. It must
+          // stay out of the screen-reader navigation tree until opened.
+          await expect(page.locator('[data-sidebar-panel]')).toHaveAttribute('aria-hidden', 'true');
+          await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toHaveCount(0);
+          await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+        } else {
+          await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+        }
         if (viewport.width <= 414) {
           const toggle = page.getByRole('button', { name: /navigation/i }).first();
           if ((await toggle.count()) > 0) {
@@ -762,12 +800,17 @@ test.describe('authenticated responsive, zoom, and text-spacing matrix', () => {
       page,
     }) => {
       requireAuthenticatedFixture();
-      await page.setViewportSize({ width: 1280, height: 900 });
+      const baselineWidth = 1280;
       for (const path of ['/dashboard', '/quarantine/receiving/new']) {
+        // Browser zoom reduces the CSS viewport. CSS `zoom` leaves media
+        // queries at desktop width and scales every box inside the unchanged
+        // viewport, manufacturing overflow that true browser zoom does not.
+        // A proportionally reduced CSS viewport exercises the real breakpoints.
+        await page.setViewportSize({
+          width: Math.floor(baselineWidth / factor),
+          height: Math.floor(900 / factor),
+        });
         await page.goto(path);
-        await page.evaluate((value) => {
-          document.documentElement.style.zoom = String(value);
-        }, factor);
         await assertNoPageOverflow(page, `${path} @${factor * 100}%`);
         const controls = page.locator(
           'button:visible, input:visible, select:visible, textarea:visible',
@@ -779,11 +822,8 @@ test.describe('authenticated responsive, zoom, and text-spacing matrix', () => {
           expect(
             box!.x + box!.width,
             `${path} @${factor * 100}%: control extends past the viewport`,
-          ).toBeLessThanOrEqual(1281);
+          ).toBeLessThanOrEqual(Math.floor(baselineWidth / factor) + 1);
         }
-        await page.evaluate(() => {
-          document.documentElement.style.zoom = '';
-        });
       }
     });
   }

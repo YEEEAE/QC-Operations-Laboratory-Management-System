@@ -154,7 +154,7 @@ describe('universal shell preservation', () => {
     expect(sidebar).toContain('data-sidebar-toggle');
     expect(sidebar).toContain('aria-label="Collapse navigation"');
     expect(sidebar).toContain('aria-expanded');
-    expect(sidebar).toContain('aria-label={item.label}');
+    expect(sidebar).toContain("aria-label={current ? `${item.label} Current page` : item.label}");
     expect(sidebar).toContain("aria-current={current ? 'page' : undefined}");
     expect(sidebar).toContain('data-nav-section-toggle');
     expect(sidebar).toContain('aria-controls={listId}');

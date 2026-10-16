@@ -6,6 +6,7 @@ import {
   isProtectedOwnerRoleGrant,
 } from '../../shared/authorization/p05-authority.js';
 import { controlCenterReadDependencies } from '../../modules/system-health/application/dependencies.js';
+import { formatDateTime } from '../../shared/copy/format.js';
 import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
 import { administrationDependencies } from '../../modules/administration/application/dependencies.js';
 import { auditQueryDependencies } from '../../shared/audit/audit-dependencies.js';
@@ -141,9 +142,9 @@ const statusClass = (status: string) =>
       : status === 'UNKNOWN'
         ? 'unknown'
         : 'bad';
-const generatedAt = overview?.generatedAt.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' });
-const formatDate = (value?: Date) =>
-  value ? value.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) : '—';
+const generatedAt = overview ? formatDateTime(overview.generatedAt) : '—';
+// Shared formatter contract: en-GB + Asia/Riyadh everywhere (no ad-hoc locale).
+const formatDate = (value?: Date) => formatDateTime(value);
 const migrationBlocker = (migration: Overview['migration']) =>
   !migration.sourceAvailable
     ? 'the shipped migration source could not be verified.'
@@ -154,19 +155,22 @@ const migrationBlocker = (migration: Overview['migration']) =>
         : migration.drift
           ? `the database is at ${migration.appliedHead} while this release expects ${migration.expectedHead}.`
           : 'none modeled in this view.';
+// UX-001: the console's most prominent indicator is release readiness, never a
+// connectivity probe. The old connectivity badge at the top read as overall
+// approval while QC acceptance stayed NOT VERIFIED and the release decision
+// stayed NO-GO. Connectivity and migration facts stay in their own cards; this
+// console never establishes release readiness.
+const releaseBanner = {
+  class: 'bad',
+  title: overview ? 'Release readiness: NOT VERIFIED' : 'Release readiness: UNAVAILABLE',
+};
 ---
 <AppLayout title="Control center · System" locale="en" direction="ltr">
   <PageHeader><Fragment slot="heading"><h1>System control center</h1></Fragment>
       
       
       <p class="lede">Manage system access and operations.</p>
-    <Fragment slot="actions"><span class={`banner ${overview?.coreStatus === 'READY' ? 'ok' : 'bad'}`}>
-      {overview
-        ? overview.coreStatus === 'READY'
-          ? 'Application and database connectivity: READY'
-          : 'Application and database connectivity: NOT READY'
-        : 'STATUS UNAVAILABLE'}
-    </span></Fragment></PageHeader>
+    <Fragment slot="actions"><span class={`banner ${releaseBanner.class}`}>{releaseBanner.title}</span></Fragment></PageHeader>
 
   <section class="panel" aria-labelledby="overview-title">
     <h2 id="overview-title">System overview</h2>

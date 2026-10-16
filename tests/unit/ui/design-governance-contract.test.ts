@@ -71,7 +71,6 @@ const ADHOC_DATE_PAGES = [
   'src/pages/system/backups/[backupId]/index.astro',
   'src/pages/system/backups/[backupId]/restore.astro',
   'src/pages/system/backups/index.astro',
-  'src/pages/system/control-center.astro',
 ];
 
 /**
