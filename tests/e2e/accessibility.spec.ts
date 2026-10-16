@@ -62,11 +62,22 @@ interface AxeScanResult {
 // label-content-name-mismatch (best-practice rule, not covered by the wcag tags and
 // the source of the 2026-09-18 serious finding on the global search link).
 async function analyzeAccessibility(page: Page): Promise<AxeScanResult> {
-  const result = await new AxeBuilder({ page })
+  const wcag = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  // Axe's runOnly option is a union (tags OR explicit rules), not additive.
+  // Run the experimental label-in-name regression separately so the WCAG tag
+  // scan still evaluates all tagged rules including color-contrast.
+  const labelName = await new AxeBuilder({ page })
     .withRules(['label-content-name-mismatch'])
     .analyze();
-  return result as AxeScanResult;
+  const mergeById = <T extends { id: string }>(items: readonly T[]): T[] =>
+    [...new Map(items.map((item) => [item.id, item])).values()];
+  return {
+    violations: mergeById([...wcag.violations, ...labelName.violations]),
+    incomplete: mergeById([...wcag.incomplete, ...labelName.incomplete]),
+    passes: mergeById([...wcag.passes, ...labelName.passes]),
+  } as AxeScanResult;
 }
 
 async function expectNoAxeViolations(page: Page, surface: string): Promise<void> {

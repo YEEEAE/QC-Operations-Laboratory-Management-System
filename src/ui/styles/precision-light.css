@@ -166,6 +166,20 @@ html[data-visual-direction='precision-light'] .system-background::after {
 }
 
 @media (forced-colors: active) {
+  html[data-visual-direction='precision-light'] .app-sidebar {
+    --text-primary: CanvasText;
+    --text-secondary: CanvasText;
+    --text-muted: CanvasText;
+    --color-text-primary: CanvasText;
+    --color-text-secondary: CanvasText;
+    --color-text-muted: CanvasText;
+    --surface-raised: Canvas;
+    --surface-panel: Canvas;
+    --color-surface-selected: Canvas;
+    --focus-ring: Highlight;
+    color: CanvasText;
+    background: Canvas;
+  }
   html[data-visual-direction='precision-light'] .app-main :where(.panel, .chart, .identity) {
     box-shadow: none;
   }

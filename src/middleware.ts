@@ -20,6 +20,7 @@ import { pageAccessDecision } from './shared/routing/page-access';
 import { AppError } from './shared/errors/app-error';
 import { getServerEnv } from './config/env';
 import { PROBLEM_CONTENT_TYPE } from './config/constants';
+import { safeReturnTo } from './shared/http/safe-return-to.js';
 import {
   degradedConfigurationResponse,
   headerEnvironmentForHealth,
@@ -284,6 +285,36 @@ export const onRequest = defineMiddleware(
       if (sessionRecovery) recovery.set('session', sessionRecovery);
       response = redirect(`/login?${recovery.toString()}`, 303);
     }
+    // Astro Actions redirect a successful native POST to the referrer's
+    // pathname (dropping its query string) and store the result in a one-shot
+    // cookie. Preserve the login form's safe returnTo on that internal redirect
+    // so the login page can consume the action result and resume the intended
+    // local route. Never trust a Referer origin or an external return target.
+    if (isLoginActionPost && response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location');
+      const referrer = request.headers.get('referer');
+      if (location && referrer) {
+        try {
+          const target = new URL(location, url);
+          const source = new URL(referrer);
+          if (target.pathname === '/login' && source.origin === url.origin && source.pathname === '/login') {
+            const returnTo = safeReturnTo(source.searchParams.get('returnTo'));
+            const loginUrl = new URL('/login', url);
+            loginUrl.searchParams.set('returnTo', returnTo);
+            const headers = new Headers(response.headers);
+            headers.set('location', `${loginUrl.pathname}${loginUrl.search}`);
+            response = new Response(response.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers,
+            });
+          }
+        } catch {
+          // Malformed referrer/location keeps Astro's original safe redirect.
+        }
+      }
+    }
+
     // A native Astro Action POST redirects back to the referrer and stores its
     // result in `_astroActionPayload`; `login.astro` consumes that one-shot
     // result and performs the requested safe `returnTo` redirect. Do not let
@@ -304,7 +335,7 @@ export const onRequest = defineMiddleware(
       }
     }
     if (url.pathname === '/login' && locals.user && !pendingLoginActionResult)
-      response = redirect('/dashboard', 303);
+      response = redirect(safeReturnTo(url.searchParams.get('returnTo')), 303);
 
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
     const routeTemplate = normalizeRouteTemplate(url.pathname);

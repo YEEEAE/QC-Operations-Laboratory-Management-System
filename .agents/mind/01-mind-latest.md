@@ -1,3 +1,7 @@
+- **2026-10-16 — QC-UX-360-CONTINUATION / إغلاق إخفاقات E2E المصادق المختار**
+  - Changed: إصلاح safe returnTo بعد login، ألوان النظام للشريط في forced-colors، وفصل فحص WCAG عن experimental label-in-name؛ لا تغيير IA/صلاحيات. HEAD تقدم خارجيًا إلى `d1dfb44d`؛ الوكيل لم ينفذ commit/push/deploy.
+  - Evidence: authenticated runner على PG18 محلي جديد: Playwright 40 pass/0 fail/5 skip؛ reporter PARTIAL (41/0/5). typecheck 0 errors؛ architecture PASS؛ focused unit 34/34؛ diff-check PASS.
+  - State: PARTIAL للبرنامج الكامل؛ E2E الكامل/قارئ الشاشة/الأداء قبل وبعد/السجلات الديناميكية المعبأة لم تُتحقق. درجات 100% والتغطية 93/93 السابقة ليست صالحة للتطبيق ككل؛ 88 طلب sweep تضمنت 29 استجابة 404، فلا تُحسب قبولًا لـ88 شاشة. تفاصيل: `audit/QC-UX-360/continuation-verification.md`.
 - **2026-10-16 — QC-UX-360 / إصلاح العيوب الستة المؤكدة للواجهة + بوابة تثبيت التنقل**
   - Changed: أُصلحت العيوب الستة المؤكدة (UX-001..006) من جذرها في 9 ملفات + اختبار انحدار جديد (15 عقدًا). لا تغيير في معلومات/بنية التنقل (المجموعات العشر، العناصر، الأسماء، الترتيب، الأيقونات، الروابط، تصفية الصلاحيات) ولا في السلطات أو الحوكمة. لا commit/push/deploy ولا migration على الإنتاج.
   - Evidence: typecheck 0 errors؛ architecture PASS؛ build PASS؛ unit 1421/1446 بنفس **25 FAIL القديمة** (+15 اختبارًا جديدًا)؛ integration A/B مقابل worktree نقي على HEAD = **نفس** النتائج في 5 ملفات (8 fail/14 pass/7 skip) ⇒ صفر انحدار؛ PG18 مصرفي: 48/48 migration، 48/89 جدول، 0 orphans؛ متصفح محلي مصادق: **12/12** فحص للعيوب و**64/64** تركيبة (8 مسارات × 8 مقاسات) بصفر أخطاء صفحة.
