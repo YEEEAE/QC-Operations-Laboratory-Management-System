@@ -16,6 +16,7 @@ import {
 } from '../../modules/dashboard/application/dashboard-presentation.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { formatDateTime } from '../../shared/copy/format.js';
+import { visibleNavigation, visibleNavigationUtilities } from '../../ui/navigation/navigation.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fdashboard');
@@ -39,6 +40,8 @@ try {
 const activity = dedupeDashboardActivity(dashboard.activity);
 const startAction = !accessDenied && !providerUnavailable ? dashboardStartAction(actor, dashboard) : undefined;
 const emptyFlow = dashboard.flow.state === 'AVAILABLE' && dashboard.flow.stages.length > 0 && dashboard.flow.stages.every((stage) => stage.value === 0);
+const departments = visibleNavigation(actor);
+const departmentTools = visibleNavigationUtilities(actor);
 ---
 <AppLayout title="Dashboard · QC Operations" locale="en" direction="ltr" scope={dashboard.scopeLabel}>
   <div class="decision-room">
@@ -61,6 +64,10 @@ const emptyFlow = dashboard.flow.state === 'AVAILABLE' && dashboard.flow.stages.
       <li><a href="/laboratory/tests?state=SUBMITTED">Laboratory review</a><span>Open submitted laboratory tests</span></li>
       <li><a href="/quarantine/receiving?inspectionResult=PASS&amp;releaseState=NOT_RELEASED">PASS, not released</a><span>Inspection result is PASS; release system state is NOT_RELEASED</span></li>
     </ol>
+  </section>}
+  {!accessDenied && !providerUnavailable && departments.length > 0 && <section class="panel departments" aria-labelledby="departments-title">
+    <div class="panel-head"><div><p class="eyebrow">Departments</p><h2 id="departments-title">Operational areas</h2><p class="panel-intro">Every area you may open, filtered by your current authorization. Navigation stays in the sidebar; this is discoverability, not a second navigation.</p></div></div>
+    <ul class="department-grid">{departments.map((group) => <li><h3>{group.label}</h3><ul>{group.items.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul></li>)}{departmentTools.length > 0 && <li><h3>Workspace tools</h3><ul>{departmentTools.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul></li>}</ul>
   </section>}
   {!accessDenied && !providerUnavailable && <DashboardCounts metrics={dashboard.metrics} />}
   {!accessDenied && <section class="dashboard-grid">
@@ -111,4 +118,5 @@ const emptyFlow = dashboard.flow.state === 'AVAILABLE' && dashboard.flow.stages.
   .attention-list a{min-block-size:52px;border-radius:var(--radius-sm);padding-inline:var(--space-2)}
   .attention-list a:hover{background:var(--color-surface-hover)}
   @media(max-width:960px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}}
+  .departments .department-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:var(--space-4);list-style:none;margin:var(--space-4) 0 0;padding:0}.departments .department-grid>li{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);background:var(--surface-raised)}.departments h3{margin:0 0 var(--space-2);font-size:var(--font-size-sm);color:var(--text-primary)}.departments ul ul{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-1)}.departments ul ul a{display:inline-flex;align-items:center;min-block-size:44px;color:var(--color-accent-primary-hover);font-size:var(--font-size-sm);font-weight:600;text-decoration:none}.departments ul ul a:hover{text-decoration:underline}
 </style>

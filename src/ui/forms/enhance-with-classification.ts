@@ -26,6 +26,7 @@ import {
 } from './mutation-interaction';
 import { FORM_COMMITTED_EVENT } from './unsaved-changes';
 import { copy } from '../../shared/copy/ux-vocabulary';
+import { createValidationFeedback } from './validation-feedback';
 
 export interface FormEnhanceConfig<TData> {
   /** The page's Astro Action call, e.g. `(payload) => actions.assets.createEquipment(payload)`. */
@@ -51,13 +52,6 @@ export interface FormEnhanceConfig<TData> {
  * Focus the first invalid field the browser natively flags; otherwise focus
  * the status region so keyboard and screen-reader users land on the message.
  */
-function focusFirstInvalid(form: HTMLFormElement, output: HTMLElement | null): void {
-  const firstInvalid = form.querySelector<HTMLElement>(
-    'select:invalid,input:invalid,textarea:invalid',
-  );
-  (firstInvalid ?? output)?.focus?.();
-}
-
 /**
  * Attach the classified-failure contract to one form. Idempotent via a
  * dataset flag; safe to call once per page. The status region must exist in
@@ -69,17 +63,39 @@ export function enhanceClassifiedForm<TData>(
 ): void {
   if (form.dataset.enhance === 'classified') return;
   form.dataset.enhance = 'classified';
+  const validation = createValidationFeedback(form);
+  let invalidQueued = false;
+  // Native interactive validation happens before submit; retain that baseline
+  // and present all native failures in one linked summary per attempt.
+  form.addEventListener(
+    'invalid',
+    (event) => {
+      event.preventDefault();
+      if (invalidQueued) return;
+      invalidQueued = true;
+      queueMicrotask(() => {
+        invalidQueued = false;
+        validation.show();
+      });
+    },
+    true,
+  );
 
   form.addEventListener('submit', async (event: Event) => {
     event.preventDefault();
     if (form.getAttribute('aria-busy') === 'true') return;
+    validation.clear();
 
     const submit = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
     const output = form.querySelector<HTMLElement>('[data-result]');
 
     form.setAttribute('aria-busy', 'true');
     if (submit) submit.disabled = true;
-    if (output) output.textContent = config.progressText;
+    if (output) {
+      output.setAttribute('role', 'status');
+      delete output.dataset.feedbackClass;
+      output.textContent = config.progressText;
+    }
 
     try {
       const payload = config.payload(new FormData(form));
@@ -102,6 +118,7 @@ export function enhanceClassifiedForm<TData>(
         return;
       }
 
+      const hasFieldErrors = outcome.state === 'VALIDATION_ERROR' && validation.show(result?.error);
       if (output) {
         output.dataset.feedbackClass = outcome.state;
         output.setAttribute('role', 'alert');
@@ -120,13 +137,15 @@ export function enhanceClassifiedForm<TData>(
           link.textContent = copy.actions.reviewBeforeRetry;
           output.append(' ', link);
         }
-        if (outcome.state === 'VALIDATION_ERROR') focusFirstInvalid(form, output);
-        else output?.focus?.();
+        if (!hasFieldErrors) output.focus();
       }
     } catch {
       // Transport failure has an unknown commit outcome. Keep entries and
       // require a record/history read before the operator decides to retry.
       if (output) {
+        output.setAttribute('role', 'alert');
+        output.setAttribute('tabindex', '-1');
+        output.dataset.feedbackClass = 'UNKNOWN_SAFE_ERROR';
         output.textContent = copy.errorClasses.UNKNOWN_SAFE_ERROR;
         const link = document.createElement('a');
         link.href = config.unknownRecoveryHref ?? config.detailBaseHref;

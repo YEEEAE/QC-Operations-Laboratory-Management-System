@@ -86,8 +86,12 @@ describe('dashboard decision surface', () => {
     expect(decisionQueues).toBeGreaterThan(attention);
     expect(summary).toBeGreaterThan(decisionQueues);
     expect(dashboard).toContain('href="/documents?review=mine"');
-    expect(dashboard).toContain('Active versions awaiting your review, excluding versions you authored');
-    expect(read('src/modules/dashboard/application/dashboard-sources.ts')).toContain('/documents?review=mine');
+    expect(dashboard).toContain(
+      'Active versions awaiting your review, excluding versions you authored',
+    );
+    expect(read('src/modules/dashboard/application/dashboard-sources.ts')).toContain(
+      '/documents?review=mine',
+    );
     expect(dashboard).not.toContain('Review-specific document queue is not supplied');
   });
 
@@ -122,7 +126,9 @@ describe('dashboard decision surface', () => {
 
   it('compacts confirmed zero counts without changing unavailable values or drilldowns', () => {
     expect(counts).toContain('metrics.length > 0');
-    expect(counts).toContain('metrics.every((metric) => !metric.unavailable && metric.value === 0)');
+    expect(counts).toContain(
+      'metrics.every((metric) => !metric.unavailable && metric.value === 0)',
+    );
     expect(counts).toContain('open={!confirmedEmpty}');
     expect(counts).toContain('value={metric.value}');
     expect(counts).toContain('href={metric.unavailable ? undefined : metric.href}');
@@ -230,7 +236,10 @@ describe('dashboard decision surface', () => {
     // The disclosure carries an accessible name; its visible glyph must be
     // hidden from the name computation or the visible text ("i") would not be
     // contained in the accessible name (WCAG 2.5.3 label in name).
-    expect(kpiCard).toContain('<span aria-hidden="true">i</span>');
+    // The glyph is CSS-generated (::before content 'i') on an empty
+    // aria-hidden span, so no text node enters the accessibility tree.
+    expect(kpiCard).toContain('<span aria-hidden="true"></span>');
+    expect(kpiCard).toContain(".definition summary span::before{content:'i'");
     // The rebuilt mobile shell exposes a named navigation control.
     const topbar = read('src/ui/shell/Topbar.astro');
     expect(topbar).toContain('aria-label="Open navigation"');

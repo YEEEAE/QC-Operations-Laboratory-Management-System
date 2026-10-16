@@ -71,8 +71,9 @@ async function analyzeAccessibility(page: Page): Promise<AxeScanResult> {
   const labelName = await new AxeBuilder({ page })
     .withRules(['label-content-name-mismatch'])
     .analyze();
-  const mergeById = <T extends { id: string }>(items: readonly T[]): T[] =>
-    [...new Map(items.map((item) => [item.id, item])).values()];
+  const mergeById = <T extends { id: string }>(items: readonly T[]): T[] => [
+    ...new Map(items.map((item) => [item.id, item])).values(),
+  ];
   return {
     violations: mergeById([...wcag.violations, ...labelName.violations]),
     incomplete: mergeById([...wcag.incomplete, ...labelName.incomplete]),
@@ -571,17 +572,22 @@ test.describe('authenticated validation, target size, and forced colors', () => 
         tag: element?.tagName ?? '',
         id: element?.id ?? '',
         role: element?.getAttribute('role') ?? '',
-        invalid: element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement
-          ? !element.validity.valid
-          : false,
-        hasNativeLabel: element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement
-          ? Boolean(element.labels?.length)
-          : false,
+        invalid:
+          element instanceof HTMLInputElement ||
+          element instanceof HTMLSelectElement ||
+          element instanceof HTMLTextAreaElement
+            ? !element.validity.valid
+            : false,
+        hasNativeLabel:
+          element instanceof HTMLInputElement ||
+          element instanceof HTMLSelectElement ||
+          element instanceof HTMLTextAreaElement
+            ? Boolean(element.labels?.length)
+            : false,
       };
     });
-    const focusedControl = page.locator(':focus');
-    const focusedFieldIsAnnounced = focusInfo.tag === 'INPUT' &&
-      focusInfo.invalid && focusInfo.hasNativeLabel;
+    const focusedFieldIsAnnounced =
+      focusInfo.tag === 'INPUT' && focusInfo.invalid && focusInfo.hasNativeLabel;
     expect(
       focusInfo.role === 'alert' ||
         focusInfo.id.toLowerCase().includes('error') ||
