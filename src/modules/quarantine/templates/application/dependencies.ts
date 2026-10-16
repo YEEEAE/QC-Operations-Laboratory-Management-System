@@ -20,6 +20,10 @@ import {
   ListTemplatesUseCase,
   ReviseTemplateUseCase,
 } from './revise-and-read.js';
+import {
+  CreateAuthoredTemplateUseCase,
+  SaveTemplateDraftDesignUseCase,
+} from './authoring.js';
 
 function verifier(database: ReturnType<typeof getDatabase>) {
   const users = new PostgresUserRepository(database);
@@ -45,8 +49,11 @@ export function templateActionDependencies() {
   );
   const signatures = new PostgresSignatureEvidenceRepository(database);
   const ceremony = createTemplateCeremony(signatures, verifier(database));
+  const create = new CreateTemplateUseCase(repository, ceremony);
   return {
-    create: new CreateCatalogTemplateUseCase(new InspectionReportCatalog(database),new CreateTemplateUseCase(repository, ceremony)),
+    create: new CreateCatalogTemplateUseCase(new InspectionReportCatalog(database),create),
+    createAuthored: new CreateAuthoredTemplateUseCase(create),
+    saveDesign: new SaveTemplateDraftDesignUseCase(repository),
     review: new ReviewTemplateUseCase(repository),
     approve: new ApproveTemplateUseCase(repository, ceremony),
     stop: new StopTemplateUseCase(repository, ceremony),

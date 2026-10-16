@@ -2,7 +2,7 @@ import { authorize } from '../../../../shared/authorization/authorize.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
-import { createTemplateVersion } from '../domain/template.js';
+import { createTemplateVersion, type TemplateAuthoringOrigin } from '../domain/template.js';
 import { isTemplateAuthority } from '../domain/template-policy.js';
 import type { TemplateRepository } from '../ports/repository.js';
 import type { TemplateCeremony } from './template-ceremony.js';
@@ -21,6 +21,12 @@ export class CreateTemplateUseCase {
     description?: string;
     /** Server-only catalog authoring starts as DRAFT until a source is bound. */
     draftOnly?: boolean;
+    /**
+     * How this version obtains controlled content. An authored specification is
+     * always created as DRAFT: an empty authored template can never be approved
+     * on creation, because approval depends on a design and a bound document.
+     */
+    authoringOrigin?: TemplateAuthoringOrigin;
     reauthenticationSecret?: string;
     requestId: string;
   }) {
@@ -31,13 +37,17 @@ export class CreateTemplateUseCase {
       (p) => p.code === 'PERM-ADM-TEMPLATES',
     );
     if (!hasTemplatePermission) throw new AppError('AUTHZ_PERMISSION_MISSING', { userSafe: true });
+    const authoringOrigin: TemplateAuthoringOrigin =
+      input.authoringOrigin ?? 'SOURCE_TRANSCRIPTION';
+    const draftOnly =
+      input.draftOnly === true || authoringOrigin === 'USER_AUTHORED_SPECIFICATION';
     const authority = isTemplateAuthority(input.actor);
     // P-06: Employee creation produces DRAFT without a signature ceremony.
     // Authority creation produces APPROVED immediately and always requires
     // reauthentication + E-Signature.
     let signatureId: string | undefined;
     let initialState: 'DRAFT' | 'APPROVED' = 'DRAFT';
-    if (authority && !input.draftOnly) {
+    if (authority && !draftOnly) {
       if (!this.ceremony) throw new AppError('DOMAIN_SIGNATURE_REQUIRED', { userSafe: true });
       const id = uuidv7();
       signatureId = await this.ceremony.verifySignature({
@@ -73,6 +83,7 @@ export class CreateTemplateUseCase {
         description: input.description ?? null,
         contentHash: null,
         sourceDocument: null,
+        authoringOrigin,
         createdBy: input.actor.id,
         initialState,
         now: new Date(),
@@ -108,6 +119,7 @@ export class CreateTemplateUseCase {
       description: input.description ?? null,
       contentHash: null,
       sourceDocument: null,
+      authoringOrigin,
       createdBy: input.actor.id,
       initialState,
       now: new Date(),

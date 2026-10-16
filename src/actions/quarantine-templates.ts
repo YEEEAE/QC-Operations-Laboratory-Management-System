@@ -55,6 +55,58 @@ const createTemplate = defineAction({
     ),
 });
 
+/**
+ * Create a template identity + first DRAFT from in-system authoring. The design
+ * is filled in separately through `saveTemplateDesign`; this action never
+ * approves and never generates a document number.
+ */
+const createAuthoredTemplate = defineAction({
+  accept: 'json',
+  input: z
+    .object({
+      templateCode: z.string().trim().min(1).max(64),
+      versionNo: z.string().trim().min(1).max(64),
+      name: z.string().trim().min(1).max(200),
+      description: z.string().trim().max(2000).optional(),
+    })
+    .strict(),
+  handler: (input, context) =>
+    run(() =>
+      templateActionDependencies().createAuthored.execute({
+        ...input,
+        actor: requireActor(context),
+        requestId: requestId(context),
+      }),
+    ),
+});
+
+/** Save the controlled design of a DRAFT version. */
+const saveTemplateDesign = defineAction({
+  accept: 'json',
+  input: z
+    .object({
+      id: z.string().uuid(),
+      expectedVersion: z
+        .string()
+        .max(19)
+        .regex(/^[1-9]\d*$/)
+        .transform((value) => BigInt(value))
+        .refine((value) => value <= POSTGRES_BIGINT_MAX),
+      design: z.unknown(),
+    })
+    .strict(),
+  handler: (input, context) =>
+    run(() =>
+      templateActionDependencies().saveDesign.execute({
+        actor: requireActor(context),
+        id: input.id,
+        expectedVersion: input.expectedVersion,
+        design: input.design,
+        requestId: requestId(context),
+      }),
+    ),
+});
+
 const reviewTemplate = defineAction({
   accept: 'json',
   input: idVersion,
@@ -151,6 +203,8 @@ const importSourceDrafts=defineAction({accept:'json',input:z.object({}).strict()
 export const quarantineTemplates = {
   importSourceDrafts,
   createTemplate,
+  createAuthoredTemplate,
+  saveTemplateDesign,
   reviewTemplate,
   approveTemplate,
   stopTemplate,

@@ -1,5 +1,5 @@
 import type { ActorContext } from '../../../../shared/authorization/types.js';
-import type { TemplateVersion } from '../domain/template.js';
+import type { TemplateAuthoringOrigin, TemplateVersion } from '../domain/template.js';
 import type { TemplateVersionAction } from '../domain/template-state.js';
 
 export interface TemplateRepository {
@@ -10,6 +10,20 @@ export interface TemplateRepository {
     actor: ActorContext;
     requestId: string;
     signatureId?: string;
+  }): Promise<TemplateVersion>;
+  /**
+   * Write the controlled design of a DRAFT version. Never available for
+   * APPROVED content: approved revisions change by creating a new revision.
+   */
+  saveDesign(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    design: unknown;
+    contentHash: string;
+    reportRevision: string;
+    authoringOrigin: TemplateAuthoringOrigin;
+    requestId: string;
   }): Promise<TemplateVersion>;
   get(id: string, actor: ActorContext): Promise<TemplateVersion | undefined>;
   list(input: {

@@ -2,9 +2,28 @@ import { AppError } from '../../../../shared/errors/app-error.js';
 import type { TemplateVersionAction, TemplateVersionState } from './template-state.js';
 import { requireTemplateReason, transitionTemplateVersion } from './template-state.js';
 
+/**
+ * How a template version obtained its controlled content. The distinction is
+ * load-bearing: it decides which evidence the approval guard accepts. It is
+ * never a synonym for confidence, and it never approves anything by itself.
+ */
+export const TEMPLATE_AUTHORING_ORIGINS = [
+  'SOURCE_TRANSCRIPTION',
+  'USER_AUTHORED_SPECIFICATION',
+] as const;
+export type TemplateAuthoringOrigin = (typeof TEMPLATE_AUTHORING_ORIGINS)[number];
+
+export function isTemplateAuthoringOrigin(value: unknown): value is TemplateAuthoringOrigin {
+  return (
+    typeof value === 'string' &&
+    (TEMPLATE_AUTHORING_ORIGINS as readonly string[]).includes(value)
+  );
+}
+
 export interface TemplateVersion {
   digitalForm?: unknown;
   reportRevision?: string;
+  authoringOrigin: TemplateAuthoringOrigin;
   id: string;
   templateId: string;
   templateCode: string;
@@ -47,6 +66,7 @@ export function createTemplateVersion(input: {
   description?: string | null;
   contentHash?: string | null;
   sourceDocument?: string | null;
+  authoringOrigin?: TemplateAuthoringOrigin;
   createdBy: string;
   initialState: TemplateVersionState;
   now: Date;
@@ -69,6 +89,7 @@ export function createTemplateVersion(input: {
     description: input.description?.trim() ? input.description.trim() : null,
     contentHash: input.contentHash?.trim() ? input.contentHash.trim() : null,
     sourceDocument: input.sourceDocument?.trim() ? input.sourceDocument.trim() : null,
+    authoringOrigin: input.authoringOrigin ?? 'SOURCE_TRANSCRIPTION',
     createdBy: input.createdBy,
     authorId: input.createdBy,
     reviewerId: null,

@@ -1,0 +1,335 @@
+---
+import type { DesignerDesign } from '../../client/template-designer.js';
+
+/**
+ * Delivery-layer view of a template version. Declared structurally so the
+ * component never imports the quarantine domain directly.
+ */
+interface DesignerTemplate {
+  id: string;
+  templateCode: string;
+  versionNo: string;
+  name: string;
+  state: string;
+  authoringOrigin: string;
+  version: bigint;
+}
+
+interface Props {
+  template: DesignerTemplate;
+  design: DesignerDesign;
+  editable: boolean;
+  schemaVersion: 2;
+  failureSummary?: string;
+  failureRecovery?: string | null;
+}
+const { template, design, editable, failureSummary, failureRecovery } = Astro.props;if (!editable)
+  throw new Error('TemplateDesigner requires an editable DRAFT template version.');
+if (template.authoringOrigin !== 'USER_AUTHORED_SPECIFICATION')
+  throw new Error('TemplateDesigner writes user-authored specifications only.');
+
+const FIELD_TYPES: Array<{ group: string; types: Array<[string, string]> }> = [
+  { group: 'Text', types: [['TEXT', 'Short text'], ['TEXT_MULTILINE', 'Long text']] },
+  { group: 'Numeric', types: [['INTEGER', 'Whole number'], ['DECIMAL', 'Decimal'], ['MEASUREMENT', 'Measurement'], ['DATE', 'Date']] },
+  { group: 'Choice', types: [['PASS_FAIL_NA', 'PASS / FAIL / N/A'], ['OPTION', 'Options'], ['YES_NO', 'Yes / No']] },
+  { group: 'Evidence', types: [['REMARK', 'Remarks'], ['READ_ONLY_SPECIFICATION', 'Read-only requirement'], ['DOCUMENT_REFERENCE', 'Document reference'], ['EQUIPMENT_REFERENCE', 'Equipment reference'], ['FILE_EVIDENCE', 'File evidence']] },
+  { group: 'Table', types: [['TABLE', 'Inspection / repeatable table']] },
+];
+
+const initialJson = JSON.stringify(design, null, 2);
+---
+
+<form
+  method="post"
+  data-template-designer
+  data-schema-version={String(2)}
+  data-doc-code={template.templateCode}
+  data-report-revision={template.versionNo}
+  data-source-title={template.name}
+  aria-labelledby="designer-heading"
+>
+  <input type="hidden" name="intent" value="save-design" />
+  <input type="hidden" name="expectedVersion" value={template.version.toString()} />
+
+  {failureSummary && (
+    <div class="failure" role="alert" tabindex="-1" id="designer-failure">
+      <p><strong>{failureSummary}</strong></p>
+      {failureRecovery && <p>{failureRecovery}</p>}
+      <p>Your design is preserved in the form below. Nothing was saved.</p>
+    </div>
+  )}
+
+  <p class="status" data-designer-status role="status" aria-live="polite"></p>
+
+  <section class="block" aria-labelledby="designer-identity">
+    <h2 id="designer-identity">Report identity</h2>
+    <p class="note">
+      This design is the controlled content of <strong>{template.templateCode} · Rev
+      {template.versionNo}</strong>. The document code and revision are fixed by the record and
+      cannot drift here — change them by creating a new revision.
+    </p>
+    <dl class="identity">
+      <div><dt>Document code</dt><dd>{template.templateCode}</dd></div>
+      <div><dt>Report revision</dt><dd>{template.versionNo}</dd></div>
+      <div><dt>Title</dt><dd>{template.name}</dd></div>
+      <div><dt>Authoring origin</dt><dd>User-authored specification</dd></div>
+    </dl>
+    <label class="field">
+      <span>Source date (optional)</span>
+      <input type="date" data-prop="sourceDate" value={design.sourceDate ?? ''} />
+    </label>
+    <label class="field">
+      <span>Critical inspection points column</span>
+      <select data-prop="criticalInspectionColumn">
+        <option value="" selected={design.criticalInspectionColumn === undefined}>
+          Not designated in source
+        </option>
+        <option value="true" selected={design.criticalInspectionColumn === true}>
+          Designate critical points
+        </option>
+        <option value="false" selected={design.criticalInspectionColumn === false}>
+          No critical points
+        </option>
+      </select>
+    </label>
+  </section>
+
+  <section class="block" aria-labelledby="designer-headers">
+    <h2 id="designer-headers">Report header fields</h2>
+    <p class="note">
+      Header fields are recorded once per inspection. A field bound to a Receiving key is filled
+      from the receiving record and is not typed by the inspector.
+    </p>
+    <div class="list" data-list="headerFields" role="list"></div>
+    <div class="palette" role="group" aria-label="Add header field">
+      {FIELD_TYPES.map((entry) => (
+        <span class="palette-group">
+          <span class="palette-label">{entry.group}</span>
+          {entry.types.map(([type, label]) => (
+            <button
+              type="submit"
+              formnovalidate
+              data-action="add-field"
+              data-field-type={type}
+              data-list="headerFields"
+            >+ {label}</button>
+          ))}
+        </span>
+      ))}
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="designer-sections">
+    <div class="block-head">
+      <h2 id="designer-sections">Inspection sections and points</h2>
+      <button type="button" data-action="add-section">+ Add section</button>
+    </div>
+    <p class="note">
+      Each point records an inspection requirement. Order here is the order the inspector sees.
+      Reorder with the arrows, or move a focused row with the keyboard using Alt+Arrow.
+    </p>
+    <div class="list" data-list="sections" role="list"></div>
+  </section>
+
+  <section class="block" aria-labelledby="designer-tail">
+    <h2 id="designer-tail">AQL, disposition and review</h2>
+    <label class="field">
+      <span>AQL / sampling fields (one per line)</span>
+      <textarea data-prop="aqlFields" rows="4">{design.aqlFields.join('\n')}</textarea>
+    </label>
+    <label class="field">
+      <span>Final disposition options (one per line)</span>
+      <textarea data-prop="finalDisposition" rows="3">{design.finalDisposition.join('\n')}</textarea>
+    </label>
+    <label class="field">
+      <span>Review responsibilities (one per line)</span>
+      <textarea data-prop="reviewResponsibilities" rows="3">{design.reviewResponsibilities.join('\n')}</textarea>
+    </label>
+  </section>
+
+  <details class="raw">
+    <summary>Design JSON</summary>
+    <p class="note">
+      This is the exact content that will be saved and hashed. It is editable without JavaScript, so
+      the designer is never the only way to prepare a draft.
+    </p>
+    <label class="field">
+      <span class="sr-only">Design JSON source</span>
+      <textarea name="design" data-design-json data-prop="designSource" rows="18">{initialJson}</textarea>
+    </label>
+  </details>
+
+  <div class="savebar" role="group" aria-label="Designer actions">
+    <button type="submit" data-action="save" data-submit>Save draft design</button>
+    <button type="button" data-action="undo" disabled>Undo</button>
+    <a href={`/quarantine/admin/${template.id}`}>Discard and reopen the saved design</a>
+  </div>
+  <p class="note">
+    Saving writes a DRAFT only. Approval, effectivity and item mapping are separate governed
+    actions, and approved content can never be edited in place.
+  </p>
+</form>
+
+<template id="designer-field-row">
+  <div class="row" data-field-row data-row-index="0">
+    <p class="row-head">
+      <span class="rownum">Field <span data-row-number>1</span></span>
+      <span class="row-actions">
+        <button type="button" data-action="move-up" aria-label="Move field up">Move up</button>
+        <button type="button" data-action="move-down" aria-label="Move field down">Move down</button>
+        <button type="button" data-action="duplicate" aria-label="Duplicate field">Duplicate</button>
+        <button type="button" data-action="remove" aria-label="Remove field">Remove</button>
+      </span>
+    </p>
+    <div class="grid">
+      <label class="field"><span>Label</span><input type="text" data-prop="label" maxlength="300" /></label>
+      <label class="field">
+        <span>Field key</span>
+        <input type="text" data-prop="key" maxlength="64" pattern="[A-Za-z0-9_-]+" />
+      </label>
+      <label class="field">
+        <span>Data type</span>
+        <select data-prop="dataType">
+          <option value="">Choose…</option>
+          {FIELD_TYPES.flatMap((entry) => entry.types).map(([type, label]) => (
+            <option value={type}>{label}</option>
+          ))}
+        </select>
+      </label>
+      <label class="field" data-applies="point header"><span>Required</span>
+        <select data-prop="required">
+          <option value="true">Required</option>
+          <option value="false">Optional</option>
+        </select>
+      </label>
+      <label class="field" data-applies="point header"><span>Unit</span>
+        <input type="text" data-prop="unit" maxlength="30" />
+      </label>
+      <label class="field" data-applies="header"><span>Receiving key (header fields only)</span>
+        <select data-prop="receivingKey">
+          <option value="">Not bound to Receiving</option>
+          <option value="supplier">Supplier</option>
+          <option value="purchaseOrderNo">Purchase order</option>
+          <option value="itemCode">Item code</option>
+          <option value="description">Description</option>
+          <option value="lot">Lot</option>
+          <option value="qty">Quantity</option>
+          <option value="receivingDate">Receiving date</option>
+          <option value="expiryDate">Expiry date</option>
+        </select>
+      </label>
+      <label class="field" data-applies="point header column"><span>Field description (shown to the inspector)</span>
+        <textarea data-prop="description" rows="2" maxlength="2000"></textarea>
+      </label>
+      <label class="field" data-applies="point"><span>Inspection requirement</span>
+        <textarea data-prop="requirementText" rows="2" maxlength="4000"></textarea>
+      </label>
+      <label class="field" data-applies="point"><span>Critical inspection point</span>
+        <select data-prop="criticalInspectionPoint">
+          <option value="">Not designated in source</option>
+          <option value="true">Critical</option>
+          <option value="false">Not critical</option>
+        </select>
+      </label>
+      <label class="field" data-applies="point"><span>Result required</span>
+        <select data-prop="resultRequired">
+          <option value="true">Result required</option>
+          <option value="false">Observation only</option>
+        </select>
+      </label>
+      <label class="field" data-applies="point"><span>Remarks allowed</span>
+        <select data-prop="remarksAllowed">
+          <option value="true">Remarks allowed</option>
+          <option value="false">No remarks</option>
+        </select>
+      </label>
+      <label class="field" data-applies="point"><span>Related specification</span>
+        <input type="text" data-prop="relatedSpecification" maxlength="500" />
+      </label>
+      <label class="field" data-applies="point"><span>Equipment reference</span>
+        <input type="text" data-prop="equipmentReference" maxlength="200" />
+      </label>
+      <label class="field" data-applies="point"><span>Accuracy statement</span>
+        <input type="text" data-prop="accuracyText" maxlength="200" />
+      </label>
+    </div>
+    <div class="sub" data-list-values-block hidden>
+      <label class="field"><span>Accepted values (comma separated)</span>
+        <input type="text" data-prop="allowedValues" maxlength="500" />
+      </label>
+    </div>
+    <div class="sub" data-numeric-block hidden>
+      <label class="field"><span>Minimum</span><input type="number" step="any" data-prop="minValue" /></label>
+      <label class="field"><span>Maximum</span><input type="number" step="any" data-prop="maxValue" /></label>
+      <label class="field"><span>Validation pattern (regular expression)</span>
+        <input type="text" data-prop="validationPattern" maxlength="500" />
+      </label>
+    </div>
+    <div class="sub" data-columns-block hidden>
+      <p class="note">Table columns</p>
+      <div class="list nested" data-list="columns" role="list"></div>
+      <button type="button" data-action="add-field" data-field-type="MEASUREMENT" data-list="columns">
+        + Add table column
+      </button>
+    </div>
+  </div>
+</template>
+
+<template id="designer-section-row">
+  <fieldset class="section" data-section-row data-section-index="0">
+    <legend>Section <span data-section-number>1</span></legend>
+    <div class="grid">
+      <label class="field"><span>Section code</span><input type="text" data-prop="code" maxlength="40" /></label>
+      <label class="field"><span>Section title</span><input type="text" data-prop="title" maxlength="200" /></label>
+    </div>
+    <div class="list nested" data-list="points" role="list"></div>
+    <p class="row-actions">
+      <button type="button" data-action="add-field" data-field-type="PASS_FAIL_NA" data-list="points">
+        + Add inspection point
+      </button>
+      <button type="button" data-action="remove">Remove section</button>
+    </p>
+  </fieldset>
+</template>
+
+<script>
+  import { initialiseTemplateDesigners } from '../../client/template-designer.js';
+  initialiseTemplateDesigners();
+</script>
+
+<style>
+  form{display:grid;gap:var(--space-5)}
+  .block{padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .block-head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);flex-wrap:wrap}
+  h2{margin:0 0 var(--space-2);font-size:1rem}
+  .note{margin:0 0 var(--space-3);color:var(--text-muted);font-size:.8rem;line-height:1.5}
+  .identity{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-3);margin:0 0 var(--space-4)}
+  dt{color:var(--text-muted);font-size:var(--font-size-xs)}
+  dd{margin:.2rem 0 0;font-size:.85rem;font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)}
+  .field{display:grid;gap:.3rem;font-size:.78rem}
+  .field span{color:var(--text-muted)}
+  input,select,textarea{min-height:2.4rem;padding:.5rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit;font-size:.82rem}
+  textarea{min-height:3.5rem}
+  .list{display:grid;gap:var(--space-3);margin-bottom:var(--space-3)}
+  .nested{padding-inline-start:var(--space-4);border-inline-start:2px solid var(--color-border-subtle)}
+  .row{padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);display:grid;gap:var(--space-3)}
+  .row-head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin:0;flex-wrap:wrap}
+  .rownum{font-size:.75rem;font-weight:700;color:var(--text-muted)}
+  .row-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+  .section{padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);display:grid;gap:var(--space-3)}
+  legend{font-weight:700;font-size:.85rem}
+  button{min-height:2.4rem;padding:.45rem .7rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-raised);color:inherit;font:inherit;font-size:.78rem;cursor:pointer}
+  button[disabled]{opacity:.5}
+  .palette{display:flex;flex-wrap:wrap;gap:.5rem}
+  .palette-group{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;padding:.35rem .5rem;border:1px dashed var(--color-border-subtle);border-radius:var(--radius-sm)}
+  .palette-label{font-size:var(--font-size-xs);color:var(--text-muted);font-weight:700}
+  .savebar{position:sticky;inset-block-end:0;display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;padding:var(--space-3);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);z-index:2}
+  .savebar button[data-action="save"]{background:var(--color-accent-primary);border-color:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700}
+  .failure{padding:var(--space-3);border-inline-start:3px solid var(--status-danger);background:var(--surface-panel)}
+  .failure p{margin:.2rem 0;font-size:.82rem}
+  .status{margin:0;color:var(--text-muted);font-size:.78rem;min-height:1.2rem}
+  .raw summary{cursor:pointer;font-size:.82rem;font-weight:600}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:760px){.savebar{position:static}}
+</style>

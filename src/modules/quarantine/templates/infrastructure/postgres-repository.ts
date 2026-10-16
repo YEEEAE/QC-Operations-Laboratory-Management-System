@@ -21,6 +21,7 @@ function map(header: HeaderRow, row: TemplateRow): TemplateVersion {
     id: row.id,
     digitalForm: row.digital_form ?? undefined,
     reportRevision: row.report_revision ?? undefined,
+    authoringOrigin: (row.authoring_origin ?? 'SOURCE_TRANSCRIPTION') as TemplateVersion['authoringOrigin'],
     templateId: row.template_id,
     templateCode: header.template_code,
     versionNo: row.version_no,
@@ -134,23 +135,54 @@ export class PostgresTemplateRepository implements TemplateRepository {
       const created = await this.db.transaction().execute(async (tx) => {
         const replay = await this.findReplayTx(tx, input.requestId, input.template.id);
         if (replay) return replay;
-        const catalog = await tx.selectFrom('inspection_report_catalog').selectAll().where('doc_code','=',input.templateCode.trim()).where('catalog_state','=','ACTIVE').forShare().executeTakeFirst();
-        if(!catalog || catalog.official_title.trim()!==input.template.name || catalog.master_revision!==input.template.versionNo) throw new AppError('VALIDATION_FAILED',{userSafe:true});
-        const header = await tx
+        const origin = input.template.authoringOrigin ?? 'SOURCE_TRANSCRIPTION';
+        let catalog: { id: string; official_title: string; master_revision: string } | undefined;
+        let existingHeader = await tx
           .selectFrom('inspection_templates')
           .selectAll()
           .where('template_code', '=', input.templateCode.trim())
           .executeTakeFirst();
-        if(header && header.catalog_id!==catalog.id)throw new AppError('VALIDATION_FAILED',{userSafe:true});
-        let templateId = header?.id;
+
+        if (origin === 'SOURCE_TRANSCRIPTION') {
+          catalog = await tx
+            .selectFrom('inspection_report_catalog')
+            .selectAll()
+            .where('doc_code', '=', input.templateCode.trim())
+            .where('catalog_state', '=', 'ACTIVE')
+            .forShare()
+            .executeTakeFirst();
+          if (
+            !catalog ||
+            catalog.official_title.trim() !== input.template.name ||
+            catalog.master_revision !== input.template.versionNo
+          )
+            throw new AppError('VALIDATION_FAILED', { userSafe: true });
+          if (existingHeader && existingHeader.catalog_id !== catalog.id)
+            throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        } else {
+          // A user-authored identity may only reuse a code that is not already
+          // owned by a controlled catalogue identity. A catalogue code can never
+          // be repurposed as free authoring, and an authored code never silently
+          // becomes a catalogue identity.
+          if (existingHeader && existingHeader.catalog_id !== null)
+            throw new AppError('VALIDATION_FAILED', { userSafe: true });
+          const clash = await tx
+            .selectFrom('inspection_report_catalog')
+            .select('id')
+            .where('doc_code', '=', input.templateCode.trim())
+            .executeTakeFirst();
+          if (clash) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+        }
+
+        let templateId = existingHeader?.id;
         if (!templateId) {
           const inserted = await tx
             .insertInto('inspection_templates')
             .values({
               id: input.template.templateId,
-              catalog_id: catalog.id,
+              catalog_id: catalog ? catalog.id : null,
               template_code: input.templateCode.trim(),
-              name: catalog.official_title,
+              name: catalog ? catalog.official_title : input.template.name,
               description: input.template.description,
               active: true,
               created_by: input.actor.id,
@@ -173,10 +205,11 @@ export class PostgresTemplateRepository implements TemplateRepository {
             approved_at: input.template.state === 'APPROVED' ? now : null,
             approved_by: input.template.state === 'APPROVED' ? input.actor.id : null,
             source_document: input.template.sourceDocument ?? null,
-            name: catalog.official_title,
+            name: catalog ? catalog.official_title : input.template.name,
             description: input.template.description,
             created_by: input.actor.id,
             content_hash: input.template.contentHash ?? null,
+            authoring_origin: origin,
             version: 1n,
           })
           .returningAll()
@@ -192,6 +225,13 @@ export class PostgresTemplateRepository implements TemplateRepository {
           reason: input.template.description ?? undefined,
           requestId: input.requestId,
           signatureId: input.signatureId,
+          payload: {
+            authoringOrigin: origin,
+            authoringOriginMeaning:
+              origin === 'SOURCE_TRANSCRIPTION'
+                ? 'Verbatim transcription of a controlled source report'
+                : 'Specification authored in-system by an authorized QC user',
+          },
         });
         await this.outboxFor(tx)?.enqueue({
           eventType: 'TEMPLATE_CHANGED',
@@ -275,6 +315,76 @@ export class PostgresTemplateRepository implements TemplateRepository {
     }
   }
 
+  async saveDesign(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    design: unknown;
+    contentHash: string;
+    reportRevision: string;
+    authoringOrigin: TemplateVersion['authoringOrigin'];
+    requestId: string;
+  }): Promise<TemplateVersion> {
+    const current = await this.load(input.id);
+    if (!current) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    // The authoring origin is decided when the version is created and is
+    // immutable afterwards. Allowing it to change here would let a source
+    // transcription be re-declared as an authored specification and approved
+    // without the transcription evidence chain.
+    if (current.authoringOrigin !== input.authoringOrigin)
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    if (current.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (!input.contentHash.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    try {
+      const updated = await this.db.transaction().execute(async (tx) => {
+        const replay = await this.findReplayTx(tx, input.requestId, input.id);
+        if (replay) return replay;
+        const row = await tx
+          .updateTable('inspection_template_versions')
+          .set({
+            digital_form: JSON.stringify(input.design),
+            content_hash: input.contentHash,
+            report_revision: input.reportRevision,
+            version: input.expectedVersion + 1n,
+          })
+          .where('id', '=', input.id)
+          .where('version', '=', input.expectedVersion)
+          .where('state', '=', 'DRAFT')
+          .returningAll()
+          .executeTakeFirst();
+        if (!row) throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+        await this.auditFor(tx)?.append({
+          actorType: 'USER',
+          actorId: input.actor.id,
+          subjectType: 'INSPECTION_TEMPLATE_VERSION',
+          subjectId: input.id,
+          action: 'TEMPLATE_DESIGN_SAVED',
+          requestId: input.requestId,
+          payload: {
+            authoringOrigin: current.authoringOrigin,
+            contentHash: input.contentHash,
+            reportRevision: input.reportRevision,
+            version: String(row.version),
+          },
+        });
+        await this.outboxFor(tx)?.enqueue({
+          eventType: 'TEMPLATE_CHANGED',
+          aggregateType: 'INSPECTION_TEMPLATE_VERSION',
+          aggregateId: input.id,
+          payload: { action: 'DESIGN_SAVED', state: 'DRAFT' },
+          dedupeKey: `template:${input.id}:v${input.expectedVersion + 1n}`,
+        });
+        return row;
+      });
+      const item = await this.load(updated.id);
+      if (!item) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+      return item;
+    } catch (e) {
+      if (e instanceof AppError) throw e;
+      throw translateDatabaseError(e);
+    }
+  }
+
   async createRevision(input: {
     id: string;
     expectedVersion: bigint;
@@ -327,6 +437,7 @@ export class PostgresTemplateRepository implements TemplateRepository {
             description: input.description ?? null,
             created_by: input.actor.id,
             content_hash: input.contentHash ?? null,
+            authoring_origin: old.authoringOrigin,
             version: 1n,
           })
           .returningAll()

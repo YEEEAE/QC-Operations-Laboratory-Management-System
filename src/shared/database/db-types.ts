@@ -380,6 +380,7 @@ export interface InspectionTemplatesTable {
 }
 export interface InspectionTemplateVersionsTable {
  report_revision: Generated<string|null>; digital_form: Generated<unknown|null>; source_evidence_id: Generated<string|null>;
+  authoring_origin: Generated<string>;
   id: Generated<string>;
   template_id: string;
   version_no: string;
@@ -856,9 +857,23 @@ export interface DocumentVersionsTable {
   change_summary: string | null;
   content_hash: string | null;
   source_binding_verified: Generated<boolean>;
+  body_hash: Generated<string | null>;
   created_by: string;
   created_at: Generated<Date>;
   version: Generated<bigint>;
+}
+export interface DocumentVersionSectionsTable {
+  id: Generated<string>;
+  document_version_id: string;
+  block_type: string;
+  level: number | null;
+  heading_text: string | null;
+  body_text: string | null;
+  table_payload: unknown | null;
+  reference_key: string | null;
+  position: number;
+  created_by: string;
+  created_at: Generated<Date>;
 }
 export interface DocumentVersionFilesTable {
   id: Generated<string>;
@@ -1349,6 +1364,7 @@ export interface DatabaseSchema {
   document_identities: DocumentIdentitiesTable;
   document_versions: DocumentVersionsTable;
   document_version_files: DocumentVersionFilesTable;
+  document_version_sections: DocumentVersionSectionsTable;
   change_requests: ChangeRequestsTable;
   change_request_changes: ChangeRequestChangesTable;
   change_application_attempts: ChangeApplicationAttemptsTable;

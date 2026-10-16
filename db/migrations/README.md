@@ -2,8 +2,13 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current workspace source head is `0047_task_references_occurrences` (47 migration
-files). Migration 0047 adds scoped task references and an immutable, uniquely
+Current workspace source head is `0048_inspection_template_authoring` (48 migration
+files). Migration 0048 adds an explicit template authoring origin — a verbatim
+source transcription keeps the 0046 evidence chain unchanged, while an in-system
+authored specification is approved against a bound EFFECTIVE controlled document
+version — plus structured controlled-document bodies
+(`qc.document_version_sections`, `qc.document_versions.body_hash`) that are
+writable only while their revision is a draft. Migration 0047 adds scoped task references and an immutable, uniquely
 keyed recurring occurrence contract. Migration 0046 adds the controlled inspection
 report catalogue and source-bound selection guards. These are source changes;
 provider application requires a separate authorized migration operation.

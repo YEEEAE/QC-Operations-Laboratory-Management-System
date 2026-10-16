@@ -1,7 +1,9 @@
 ---
 import PageHeader from "../../../ui/components/PageHeader.astro";
 import ControlledInspectionForm from '../../../ui/components/quarantine/ControlledInspectionForm.astro';
+import TemplateDesigner from '../../../ui/components/quarantine/TemplateDesigner.astro';
 import { controlledFormSchema, type ControlledFormValues } from '../../../modules/quarantine/inspection/application/save-controlled-form.js';
+import { starterAuthoredDesign } from '../../../modules/quarantine/templates/application/authoring.js';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { field, parseExpectedVersionField, toFormFailure, type FormFailure } from '../../../ui/forms/mutation-post.js';
@@ -69,7 +71,22 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   try {
     const expectedVersion = parseExpectedVersionField(formValues.expectedVersion);
     const deps = templateActionDependencies();
-    if (intent === 'review') await deps.review.execute({ actor, id: template.id, expectedVersion, requestId });
+    if (intent === 'save-design') {
+      const rawDesign = field(formData, 'design');
+      let design: unknown;
+      try {
+        design = JSON.parse(rawDesign);
+      } catch {
+        throw new AppError('VALIDATION_FAILED', { userSafe: true });
+      }
+      await deps.saveDesign.execute({
+        actor,
+        id: template.id,
+        expectedVersion,
+        design,
+        requestId,
+      });
+    } else if (intent === 'review') await deps.review.execute({ actor, id: template.id, expectedVersion, requestId });
     else if (intent === 'approve') await deps.approve.execute({ actor, id: template.id, expectedVersion, reauthenticationSecret, requestId });
     else if (intent === 'stop') await deps.stop.execute({ actor, id: template.id, expectedVersion, reason: formValues.reason, reauthenticationSecret, requestId });
     else if (intent === 'void') await deps.void.execute({ actor, id: template.id, expectedVersion, reason: formValues.reason, reauthenticationSecret, requestId });
@@ -105,6 +122,17 @@ if (Astro.request.method === 'POST' && hasTemplatePermission) {
   }
 }
 const digitalPreview=controlledFormSchema.safeParse(template.digitalForm);
+const parsedDesign = controlledFormSchema.safeParse(template.digitalForm);
+const isAuthoredDraft =
+  template.state === 'DRAFT' && template.authoringOrigin === 'USER_AUTHORED_SPECIFICATION';
+const designerDesign =
+  parsedDesign.success && parsedDesign.data.schemaVersion === 2
+    ? parsedDesign.data
+    : starterAuthoredDesign({
+        templateCode: template.templateCode,
+        versionNo: template.versionNo,
+        name: template.name,
+      });
 
 ---
 <AppLayout title={`${template.templateCode} ${template.versionNo} · Quarantine Administration`} locale="en" direction="ltr">
@@ -181,6 +209,21 @@ const digitalPreview=controlledFormSchema.safeParse(template.digitalForm);
       </section>
     </aside>
   </section>
+  {isAuthoredDraft && hasTemplatePermission && (
+    <section class="designer-shell" aria-labelledby="designer-title">
+      <h2 id="designer-title">Template designer</h2>
+      <p class="muted">Author and revise this DRAFT design. Saving keeps the revision in DRAFT.</p>
+      <TemplateDesigner
+        template={template}
+        design={designerDesign as unknown as import('../../../ui/client/template-designer.js').DesignerDesign}
+        editable={true}
+        schemaVersion={2}
+        {...(formIntent === 'save-design' && failure
+          ? { failureSummary: failure.summary, failureRecovery: failure.recovery }
+          : {})}
+      />
+    </section>
+  )}
 {digitalPreview.success && <ControlledInspectionForm schema={digitalPreview.data} values={{headers:{},points:{}}} receiving={{}} editable={false} canSubmit={false} inspectionId={template.id} version={template.version.toString()} />}
 </AppLayout>
 <style>

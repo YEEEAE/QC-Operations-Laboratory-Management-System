@@ -539,6 +539,15 @@ const policies: readonly AuthorizationPolicy[] = [
     states: ['DRAFT'],
   },
   {
+    // Authoring the controlled design of an existing DRAFT version. Editing is
+    // bound to DRAFT only: APPROVED content is immutable in the database and a
+    // change requires a new revision followed by Supersede.
+    permission: 'PERM-ADM-TEMPLATES',
+    action: 'EDIT',
+    entityType: 'INSPECTION_TEMPLATE_VERSION',
+    states: ['DRAFT'],
+  },
+  {
     permission: 'PERM-ADM-TEMPLATES',
     action: 'REVIEW',
     entityType: 'INSPECTION_TEMPLATE_VERSION',

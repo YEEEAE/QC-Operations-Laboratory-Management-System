@@ -71,6 +71,43 @@ export class InMemoryTemplateRepository implements TemplateRepository {
     return input.template;
   }
 
+  async saveDesign(input: {
+    id: string;
+    expectedVersion: bigint;
+    actor: ActorContext;
+    design: unknown;
+    contentHash: string;
+    reportRevision: string;
+    authoringOrigin: TemplateVersion['authoringOrigin'];
+    requestId: string;
+  }): Promise<TemplateVersion> {
+    const replayKey = `${input.requestId}:${input.id}`;
+    const existing = this.replayIndex.get(replayKey);
+    if (existing) return this.rows.get(existing)!;
+    const current = this.rows.get(input.id);
+    if (!current) throw new AppError('RESOURCE_NOT_FOUND', { userSafe: true });
+    if (current.state !== 'DRAFT') throw new AppError('DOMAIN_INVALID_TRANSITION', { userSafe: true });
+    if (current.version !== input.expectedVersion)
+      throw new AppError('CONFLICT_STALE_VERSION', { userSafe: true });
+    if (current.authoringOrigin !== input.authoringOrigin)
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    const next: TemplateVersion = {
+      ...current,
+      digitalForm: input.design,
+      contentHash: input.contentHash,
+      reportRevision: input.reportRevision,
+      version: input.expectedVersion + 1n,
+    };
+    this.rows.set(input.id, next);
+    this.replayIndex.set(replayKey, input.id);
+    this.audits.push({
+      subjectId: input.id,
+      action: 'TEMPLATE_DESIGN_SAVED',
+      requestId: input.requestId,
+    });
+    return next;
+  }
+
   async get(id: string): Promise<TemplateVersion | undefined> {
     return this.rows.get(id);
   }
