@@ -10,7 +10,7 @@ const props = Astro.props;
 const actor = Astro.locals.actor;
 const breadcrumbs = routeBreadcrumbs(Astro.url.pathname);
 ---
-<BaseLayout {...props}>
+<BaseLayout {...props} visualDirection="precision-light">
   <a class="skip-link" href="#main-content" data-skip-link>Skip to main content</a>
   <div class="app-shell" data-app-shell data-preference-account={actor?.id ?? ''} data-mobile-nav-open="false" data-sidebar-collapsed="false">
     <aside id="primary-navigation" class="app-sidebar" data-sidebar-panel aria-label="Primary navigation" aria-hidden="false"><slot name="sidebar"><Sidebar actor={actor} /></slot></aside>

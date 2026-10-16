@@ -3,6 +3,9 @@ import KpiCard from '../../charts/KpiCard.astro';
 import type { DashboardMetric } from '../../../modules/dashboard/ports/dashboard-query.js';
 interface Props { metrics: readonly DashboardMetric[] }
 const { metrics } = Astro.props;
+const featuredKeys = ['pending-review', 'tasks-due-today', 'tasks-overdue', 'hold-items'];
+const featured = featuredKeys.map((key) => metrics.find((metric) => metric.key === key)).filter((metric): metric is DashboardMetric => Boolean(metric));
+const remaining = metrics.filter((metric) => !featuredKeys.includes(metric.key));
 const confirmedEmpty = metrics.length > 0 && metrics.every((metric) => !metric.unavailable && metric.value === 0);
 const groups = [
   { label: 'Review and quality', keys: ['pending-review', 'hold-items', 'returned-inspections', 'lab-tests-returned', 'documents-pending-my-review'] },
@@ -13,14 +16,20 @@ const knownKeys = new Set(groups.flatMap((group) => group.keys));
 const otherMetrics = metrics.filter((metric) => !knownKeys.has(metric.key));
 if (otherMetrics.length) groups.push({ label: 'Other operational sources', keys: [], metrics: otherMetrics });
 ---
-<section aria-label="Operational action counts">
+<section class="dashboard-counts" aria-label="Operational action counts">
+  {!confirmedEmpty && featured.length > 0 && <div class="featured-metrics" aria-label="Priority counts">{featured.map((metric) => <KpiCard label={metric.label} value={metric.value} unavailableMessage={metric.unavailable?.message} unit={metric.unit} definition={metric.definition} source={metric.source} timeRange={metric.timeRange} numerator={metric.numerator} denominator={metric.denominator} grain={metric.grain} state={metric.state} actorScope={metric.actorScope} timezone={metric.timezone} metricFreshness={metric.freshness} drilldown={metric.drilldown} href={metric.unavailable ? undefined : metric.href} drilldownLabel={metric.drilldownLabel} tone={metric.tone} />)}</div>}
   {confirmedEmpty && <div class="zero-strip" role="status"><strong>No open records in these queues</strong><span>Current authorized snapshot</span><ul>{metrics.map((metric) => <li><a href={metric.href}>{metric.label}<strong>{metric.value}</strong></a></li>)}</ul></div>}
   <details open={!confirmedEmpty} class="counts">
-    <summary>{confirmedEmpty ? 'Count definitions and matching registers' : 'Operational counts and source definitions'}</summary>
-    {groups.filter((group) => group.metrics.length).map((group) => <div class="metric-group"><h3>{group.label}</h3><div class="kpis">{group.metrics.map((metric) => <KpiCard label={metric.label} value={metric.value} unavailableMessage={metric.unavailable?.message} unit={metric.unit} definition={metric.definition} source={metric.source} timeRange={metric.timeRange} numerator={metric.numerator} denominator={metric.denominator} grain={metric.grain} state={metric.state} actorScope={metric.actorScope} timezone={metric.timezone} metricFreshness={metric.freshness} drilldown={metric.drilldown} href={metric.unavailable ? undefined : metric.href} drilldownLabel={metric.drilldownLabel} tone={metric.tone} />)}</div></div>)}
+    <summary>{confirmedEmpty ? 'Count definitions and matching registers' : 'More counts and source definitions'}</summary>
+    {groups.filter((group) => group.metrics.some((metric) => remaining.includes(metric))).map((group) => <div class="metric-group"><h3>{group.label}</h3><div class="kpis">{group.metrics.filter((metric) => remaining.includes(metric)).map((metric) => <KpiCard label={metric.label} value={metric.value} unavailableMessage={metric.unavailable?.message} unit={metric.unit} definition={metric.definition} source={metric.source} timeRange={metric.timeRange} numerator={metric.numerator} denominator={metric.denominator} grain={metric.grain} state={metric.state} actorScope={metric.actorScope} timezone={metric.timezone} metricFreshness={metric.freshness} drilldown={metric.drilldown} href={metric.unavailable ? undefined : metric.href} drilldownLabel={metric.drilldownLabel} tone={metric.tone} />)}</div></div>)}
   </details>
 </section>
 <style>
   section{margin-bottom:var(--space-5)}summary{min-height:44px;align-content:center;cursor:pointer;font-size:var(--font-size-sm);color:var(--text-secondary)}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:var(--space-4)}.zero-strip{border-block:1px solid var(--color-border-subtle);padding:var(--space-4) 0}.zero-strip>strong{font-size:var(--font-size-sm)}.zero-strip>span{margin-inline-start:var(--space-3);color:var(--text-muted);font-size:var(--font-size-xs)}ul{display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-5);list-style:none;margin:var(--space-3) 0 0;padding:0}li a{display:flex;align-items:center;gap:var(--space-3);min-height:44px;color:var(--color-accent-primary-hover);font-size:var(--font-size-sm)}li strong{font-variant-numeric:tabular-nums}@media(max-width:520px){.kpis{grid-template-columns:1fr}.zero-strip>span{display:block;margin:var(--space-2) 0 0}ul{display:grid}}
 </style>
 <style>.metric-group{margin-top:var(--space-4)}h3{font-size:var(--font-size-sm);margin:0 0 var(--space-3);color:var(--text-secondary)}</style>
+<style>
+  .featured-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3);margin-block-end:var(--space-4)}
+  @media(max-width:1100px){.featured-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:520px){.featured-metrics{grid-template-columns:minmax(0,1fr)}}
+</style>

@@ -4,10 +4,16 @@ interface Props { title: string; summary: string; points: Point[]; unit?: string
 const { title, summary, points, unit = '', sourceHref, sourceLabel = 'Open data', meta = [] } = Astro.props;
 const max = Math.max(...points.map((p) => p.value), 1);
 const width = 640;
-const height = 220;
-const step = points.length > 1 ? width / (points.length - 1) : width;
+const height = 240;
+const left = 40;
+const right = 20;
+const top = 20;
+const baseline = 194;
+const step = points.length > 1 ? (width - left - right) / (points.length - 1) : 0;
+const x = (index: number) => left + index * step;
+const y = (value: number) => baseline - (value / max) * (baseline - top);
 const coords = points
-  .map((p, i) => `${i * step},${height - (p.value / max) * 170 - 20}`)
+  .map((p, i) => `${x(i)},${y(p.value)}`)
   .join(' ');
 ---
 <figure class="chart">
@@ -36,6 +42,10 @@ const coords = points
     aria-label={`${title}: ${summary}`}
     focusable="false"
   >
+    <line x1={left} y1={baseline} x2={width - right} y2={baseline} stroke="var(--color-border-strong)" stroke-width="1" />
+    <line x1={left} y1={y(max)} x2={width - right} y2={y(max)} stroke="var(--color-border-subtle)" stroke-width="1" stroke-dasharray="4 6" />
+    <text x="8" y={baseline + 4} fill="var(--text-secondary)" font-size="12">0</text>
+    <text x="8" y={y(max) + 4} fill="var(--text-secondary)" font-size="12">{max}</text>
     <polyline
       points={coords}
       fill="none"
@@ -47,13 +57,14 @@ const coords = points
     {
       points.map((point, i) => (
         <circle
-          cx={i * step}
-          cy={height - (point.value / max) * 170 - 20}
-          r="5"
+          cx={x(i)}
+          cy={y(point.value)}
+          r="4"
           fill="var(--color-accent-primary)"
-        />
+        ><title>{point.label}: {point.value} {unit}</title></circle>
       ))
     }
+    {points.length > 1 && <><text x={left} y="225" fill="var(--text-secondary)" font-size="12">{points[0].label}</text><text x={width - right} y="225" fill="var(--text-secondary)" text-anchor="end" font-size="12">{points[points.length - 1].label}</text></>}
   </svg>
   <table class="data-alt">
     <caption>Accessible data for {title}</caption>
@@ -132,7 +143,7 @@ const coords = points
     width: 100%;
     height: auto;
     margin-top: 16px;
-    background: linear-gradient(to bottom, transparent 49%, var(--color-border-subtle) 50%, transparent 51%);
+    background: var(--surface-panel);
   }
   .data-alt {
     width: 100%;

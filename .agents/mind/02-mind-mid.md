@@ -1,4 +1,28 @@
 # QC360 formal rollover — 2026-10-08 (oldest historical ledger only)
+
+## Rollover 2026-10-16 — أقدم سجلات Ledger (نُقلت للحد من حجم 01)
+
+- **2026-10-09 — Mind rollover:** نُقلت أقدم سجلات الـLedger (سلسلة QC-LAUNCH-001..014 وQC360) من 01 إلى أعلى 02 بعد التحقق من احتوائها؛ بقيت الحالة الحالية والثوابت والمشاكل المفتوحة والقواعد السلبية في 01.
+- **2026-10-09 — Mind rollover (QC-LAUNCH-007):** نُقلت أقدم سجلات الـLedger (WI-SOURCES-001، DOC-ESIG-003) إلى أعلى 02 للحد من حجم 01؛ الحالة الحالية والمشاكل المفتوحة والقواعد السلبية بقيت في 01.
+- **2026-10-09 — GIT-PUSH-FIX / إزالة PDF عملاق من commitين محليين**
+  - Changed: فشل `git push` (HTTP 408، pack ~430MB) سببه `audit/Wi.pdf` (206MB) و`audit/Wi2.pdf` (219MB) داخل commit المحلي `1455ab54` — يتجاوزان حد GitHub الفعلي 100MB. أُعيدت كتابة commitين محليين فقط (جديدًا `00b91558` + `70c7b725`) بإزالتهما، وأُضيف `audit/*.pdf` إلى `.gitignore`؛ الملفان باقين على القرص.
+  - Evidence: نطاق `origin/main..HEAD` = 64 blobs / 17.2MB، لا blob >5MB، لا PDF في `audit/` متتبّع.
+  - State: DONE (الpush لم يُنفَّذ — بانتظار أمر المستخدم).
+- **2026-10-09 — OPENCODE-STITCH-MCP-FIX / تصحيح موضع إعداد Stitch**
+  - Changed: إعداد Stitch remote MCP كان موضوعًا بالخطأ تحت مفتاح `agent` في `.opencode/opencode.json` فلم يُسجَّل كخادم MCP. نُقل إلى مفتاح `mcp` الأعلى مستوى بنفس الرأس `Authorization: Bearer {env:STITCH_API_KEY}`؛ المفتاح باقٍ في `.env` وغير محفوظ في الإعدادات.
+  - Evidence: `node` parse OK و`git diff` يظهر نقل الكتلة فقط؛ استدعاء MCP `initialize` مباشرة مقابل `https://stitch.googleapis.com/mcp` بمفتاح `.env` رجع HTTP 200. **تحديث 2026-10-09:** عمليًا نجح الاتصال المباشر HTTP JSON-RPC عبر ترويسة `X-Goog-Api-Key` (إنشاء مشروع/شاشات/تنزيل 200)، بينما `Authorization: Bearer` أعاد 401 عند `create_project`. أداة stitch المدمجة داخل الجلسة ما زالت تفشل بـ`Incompatible auth server` لعدم تصدير المتغير؛ تحتاج إعادة تشغيل opencode مع تصديره.
+  - State: PARTIAL (الإعداد صحيح؛ الاتصال ينتظر إعادة التشغيل). لا commit/push. **ملاحظة 2026-10-16:** حُلّت نهائيًا بوسيط stdio محلي يقرأ المفتاح من `.env` (انظر القسم الحالي في 01).
+  - Key files: `.opencode/opencode.json`.
+- **2026-10-09 — WI-FRS-100 / تعليمة عمل موحّدة لـSOP-FRS-001**
+  - Changed: أُنشئت `WI-FRS-100-Document-Control-and-Sources.docx` (كود مرشّح) في `WIs/review-drafts/` بنفس قالب WI-FRS-001–005 وترويسته/تذييله؛ تغطي كامل دورة SOP-FRS-001 (استلام المصادر → الإعداد/ربط المصدر → المراجعة → الاعتماد بالتوقيع → التفعيل → التوزيع/التغيير/السحب) في 6 مراحل/21 خطوة، وتفصل المنفّذ عن المحجوب (POLICY_SOURCE_REQUIRED؛ MAKE_EFFECTIVE/ARCHIVE غير موصولين؛ Supersede deny-by-default). لم يُعدّل SOP-FRS-001 ولا الخمس. المراجع المسمّاة R1–R3 موثّقة كغير متاحة في شجرة Documents الحالية بلا بصمة حالية.
+  - Evidence: فحص zip/بنية PASS؛ 6 جداول بعناوين/صفوف صحيحة؛ الترويسة والتذييل يحملان WI-FRS-100؛ 10 أقسام؛ بصمات المصادر الحالية محسوبة (SOP + WI-FRS-001–005 + 11 ملف تنفيذ). لا PostgreSQL/متصفح/UAT.
+  - State: DONE (تأليف مسودة فقط)؛ اعتماد/فعالية غير مسجّلين، وكود WI-FRS-100 مرشّح بانتظار تعيين المالك.
+  - Key files: `Documents/QC_System_WI_SOP_Pack/WIs/review-drafts/WI-FRS-100-Document-Control-and-Sources.docx`.
+- **2026-10-09 — SOP-FRS-012 / التوقيع الإلكتروني وسلطة الاعتماد**
+  - Changed: أعيدت صياغة نسخة الجذر `سياسة وصلاحيات.md` بالرقم الذي حدده المستخدم SOP-FRS-012، مسودة D0.1 إنجليزية بسبعة أقسام، مع خطوات تشغيل وصلاحيات واستثناءات موثقة. المصدر المسجل في Documents لم يتغير؛ المسودة لا تسجل اعتمادًا أو فعالية ولا تغيّر سياسة التطبيق.
+  - Evidence: مراجعة الأقسام الأصلية العشرة؛ حفظ الوحدات 21/21 وحدود الأدوار والتوقيع والنسخة والتدقيق؛ فحص بنية الجداول PASS. أُنشئت نسخة `SOP-FRS-012-D0.1-Electronic-Signatures-and-Approval-Authority.docx` بجوار MD في `SOPs/review-drafts/` بقالب SOP-FRS-011؛ تطابق النص بالترتيب 264/264 كتلة/خلية و8 جداول وبنية DOCX PASS؛ العرض البصري NOT VERIFIED. لا runtime/UAT.
+  - State: DONE (صياغة مسودة)؛ approval NOT RECORDED / effective date NOT ASSIGNED.
+
 ## Rollover 2026-10-09 — QC-LAUNCH-001..014 / QC360 historical ledger
 
 ### Moved from 01 on the 2026-10-09 QC-LAUNCH-007 rollover

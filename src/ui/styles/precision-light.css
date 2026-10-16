@@ -1,0 +1,165 @@
+/* Precision Light is a presentation layer on the authenticated shell. It does
+   not change route visibility, state labels, or domain decisions.
+
+   The palette is declared on the document element so the page background and
+   the inherited body text colour change with it; declaring it on `.app-shell`
+   alone leaves `body` on the previous dark palette and any element that does
+   not set its own colour inherits unreadable light-on-light text. */
+html[data-visual-direction='precision-light'] {
+  color-scheme: light;
+  --color-canvas: #f3f6fa;
+  --color-canvas-deep: #eaf0f6;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f5f8fb;
+  --color-surface-3: #eaf1f5;
+  --color-surface-hover: #e9f3f5;
+  --color-surface-selected: #e1f1f2;
+  --color-border-subtle: #dfe7ee;
+  --color-border-default: #cbd7e1;
+  --color-border-strong: #9daebb;
+  --color-text-primary: #14243b;
+  --color-text-secondary: #344962;
+  --color-text-muted: #53677d;
+  --color-text-disabled: #657789;
+  --color-text-inverse: #ffffff;
+  --color-accent-primary: #087f8c;
+  --color-accent-primary-hover: #086575;
+  --color-accent-primary-muted: #d9f0f0;
+  --status-approved: #23643d;
+  --status-approved-bg: #e5f3e9;
+  --status-pass: #2a713e;
+  --status-pass-bg: #e8f4e7;
+  --status-released: #086575;
+  --status-released-bg: #e0f0f2;
+  --status-hold: #86520b;
+  --status-hold-bg: #fff1d8;
+  --status-warning: #86520b;
+  --status-warning-bg: #fff1d8;
+  --status-danger: #a92c39;
+  --status-danger-bg: #fcebee;
+  --status-review: #295793;
+  --status-review-bg: #e9f0fc;
+  --status-neutral: #455a6c;
+  --status-neutral-bg: #edf2f5;
+  --status-stale: #86520b;
+  --status-stale-bg: #fff1d8;
+  --surface-page: #f3f6fa;
+  --surface-panel: #ffffff;
+  --surface-raised: #f5f8fb;
+  --surface-popover: #ffffff;
+  --surface-evidence: #f5f8fb;
+  --surface-decision: #eaf1f5;
+  --surface-readonly: #ffffff;
+  --surface-disabled: #f5f8fb;
+  --input-background: #f5f8fb;
+  --input-readonly-background: #ffffff;
+  --table-header-background: #f5f8fb;
+  --table-stripe-background: #f8fafc;
+  --text-primary: #14243b;
+  --text-secondary: #344962;
+  --text-muted: #53677d;
+  --text-provenance: #53677d;
+  --text-evidence: #344962;
+  --text-on-accent: #ffffff;
+  --text-danger: #a92c39;
+  --border-default: #cbd7e1;
+  --border-evidence: #cbd7e1;
+  --border-command: #9daebb;
+  --border-focus: #086575;
+  --border-invalid: #a92c39;
+  --border-selected: #087f8c;
+  --focus-ring: #086575;
+  --status-success: #2a713e;
+  --status-error: #a92c39;
+  --state-idle: #455a6c;
+  --state-loading: #295793;
+  --state-empty: #455a6c;
+  --state-filtered-empty: #295793;
+  --state-denied: #86520b;
+  --state-stale: #86520b;
+  --state-success: #2a713e;
+  --state-error: #a92c39;
+  --surface-command: #eef4f8;
+  --surface-table-stripe: #f8fafc;
+  --surface-overlay: rgb(11 29 48 / 55%);
+  --shadow-1: 0 2px 8px rgb(22 41 63 / 6%);
+  --shadow-2: 0 10px 30px rgb(22 41 63 / 10%);
+  --shadow-3: 0 20px 48px rgb(22 41 63 / 18%);
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+}
+
+html[data-visual-direction='precision-light'],
+html[data-visual-direction='precision-light'] body,
+html[data-visual-direction='precision-light'] .system-content {
+  background: var(--color-canvas);
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='precision-light'] .app-shell {
+  background: var(--color-canvas);
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='precision-light'] .app-sidebar {
+  /* The page bar keeps its current location, groups, links and dark surface. */
+  --color-text-primary: #f2f6f9;
+  --color-text-secondary: #ccd8e2;
+  --color-text-muted: #aebdca;
+  --color-surface-hover: #20354b;
+  --color-surface-selected: #193e50;
+  --color-border-subtle: #31465b;
+  --color-border-default: #4c6074;
+  --surface-panel: #17283b;
+  --surface-raised: #20354b;
+  --surface-popover: #17283b;
+  --text-primary: #f2f6f9;
+  --text-secondary: #ccd8e2;
+  --text-muted: #aebdca;
+  --color-accent-primary: #5dd0d7;
+  --color-accent-primary-hover: #8ae5e7;
+  --color-text-inverse: #111d2d;
+  --focus-ring: #8ae5e7;
+  color-scheme: dark;
+  background: #111d2d;
+}
+
+html[data-visual-direction='precision-light'] .app-sidebar .sidebar {
+  background: #111d2d;
+}
+
+html[data-visual-direction='precision-light'] .app-topbar {
+  box-shadow: 0 2px 12px rgb(22 41 63 / 4%);
+}
+
+html[data-visual-direction='precision-light'] .app-main :where(.panel, .chart, .identity) {
+  box-shadow: var(--shadow-1);
+}
+
+/* The decorative workspace background is authored for the dark palette: its
+   veil is a 72% near-black layer and its grid lines are white. Left as-is it
+   turns the light canvas into a dark charcoal field, so the same treatment is
+   re-authored here in light terms (soft teal/navy wash, ink grid, white veil). */
+html[data-visual-direction='precision-light'] .system-background {
+  background:
+    radial-gradient(60% 75% at 18% 14%, rgb(8 127 140 / 6%), transparent 66%),
+    radial-gradient(55% 70% at 92% 86%, rgb(20 36 59 / 5%), transparent 72%),
+    var(--color-canvas-deep);
+}
+
+html[data-visual-direction='precision-light'] .system-background::before {
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgb(20 36 59 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(20 36 59 / 4%) 1px, transparent 1px);
+}
+
+html[data-visual-direction='precision-light'] .system-background::after {
+  background: rgb(243 246 250 / 55%);
+}
+
+@media (forced-colors: active) {
+  html[data-visual-direction='precision-light'] .app-main :where(.panel, .chart, .identity) {
+    box-shadow: none;
+  }
+}

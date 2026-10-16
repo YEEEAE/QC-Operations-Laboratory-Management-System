@@ -1,11 +1,11 @@
 ---
 import '../styles/global.css';
 import SystemBackground from '../components/SystemBackground.astro';
-interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; systemBackground?: boolean; }
-const { title = 'QC Operations & Laboratory Management System', locale = 'en', direction = locale.startsWith('ar') ? 'rtl' : 'ltr', density = 'standard', systemBackground = true } = Astro.props;
+interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; density?: 'comfortable' | 'standard' | 'compact'; systemBackground?: boolean; visualDirection?: string; }
+const { title = 'QC Operations & Laboratory Management System', locale = 'en', direction = locale.startsWith('ar') ? 'rtl' : 'ltr', density = 'standard', systemBackground = true, visualDirection } = Astro.props;
 ---
 <!doctype html>
-<html lang={locale} dir={direction} data-density={density}>
+<html lang={locale} dir={direction} data-density={density} data-visual-direction={visualDirection}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
