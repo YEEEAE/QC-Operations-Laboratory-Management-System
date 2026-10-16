@@ -4,6 +4,17 @@
 > النطاق: المشروع الذي يحتوي هذا الملف، مع مراعاة التعليمات المحلية الأكثر تخصيصًا.
 > الهدف: فهم صحيح، اختيار المهارات والأدوات المناسبة تلقائيًا، تنفيذ مكتمل، تحقق مناسب، وسياق مختصر قابل للاستمرار.
 
+## Map
+
+بعد قراءة `.agents/mind/01-mind-latest.md` حسب القاعدة صفر، افتح ملف التوجيه المناسب للمهمة أولًا، ثم افتح فقط المسارات التي تحتاجها. كل ملف توجيه قصير يحيل إلى فهرس تفصيلي بأسماء الملفات في `workspace-map/`. لا تشمل الفهارس الاختبارات أو مخرجات البناء والاعتمادات. جدّدها بـ`python3 scripts/diagnostics/generate-workspace-map.py` عند تغيير الملفات؛ الكود والمستندات المعتمدة هي مصادر الحقيقة.
+
+- `PRODUCT.md` — المتطلبات، قواعد العمل، الأدوار، وتجربة المنتج.
+- `ENGINEERING.md` — بنية التطبيق والكود وإعداد التطوير.
+- `DATA.md` — نموذج البيانات والهجرات والبيانات الأولية.
+- `OPERATIONS.md` — الإعداد والنشر والإصدار والاستعادة والدعم.
+- `VERIFICATION.md` — القبول وأدلة التدقيق.
+- `TOOLING.md` — تعليمات الوكلاء والمهارات والأدوات وملفات الجذر الأخرى.
+
 ## بروتوكول القاعدة صفر — Project Mind
 
 > ترتيب الأولوية أدناه يخص مصادر الذاكرة، ولا يتجاوز تعليمات النظام أو المستخدم. أسماء الأقسام والأشخاص والتقنيات والقيم في الأمثلة توضيحية فقط، وليست إعدادات مفروضة على كل مشروع.
@@ -665,3 +676,17 @@ Local tests → تتحقق من الإصلاح
 الرد النهائي مختصر: **ما تغير ولماذا، أهم تحقق ونتيجته، وأي نقص مؤثر**. أرفق مسارات الملفات أو الناتج عند الحاجة. لا تقل «تم» عن جزء لم يكتمل، ولا تنه الرد بعرض متابعة شكلي.
 
 > افهم المطلوب، اقرأ الذاكرة والمهارات، اكتشف Plugins وMCP المفيدة، اختر أقل مجموعة قدرات مناسبة، افحص الواقع، نفّذ ضمن النطاق، وتحقق قبل الادعاء.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
