@@ -10,7 +10,7 @@
 - [`README-system-detailed/TOOLING.md`](README-system-detailed/TOOLING.md) — أدوات الوكيل: `AGENTS.md`، الـMind، الـSkills، وسكربتات التشخيص.
 - [`README-system-detailed/brief.md`](README-system-detailed/brief.md) — موجز تصميم `QC Universe`: ‏31/31 قرار معتمد، هوية `Graphite Intelligence`، وديمو عام معزول ببيانات وهمية.
 - [`README-system-detailed/pags.md`](README-system-detailed/pags.md) — جرد صفحة-بصفحة (88 صفحة): السلوك والحقول والصلاحيات لكل مسار.
-- [`README-system-detailed/Approval-Electronic-Signature-Release-Policy.md`](README-system-detailed/Approval-Electronic-Signature-Release-Policy.md) — سياسة الموافقات والتوقيع الإلكتروني والإفراج: صلاحيات yazeed/QCM/Supervisor/QC، فصل الداخلي عن الميداني، ومعايير القبول.
+- [`README-system-detailed/Approval-Electronic-Signature-Release-Policy.md`](README-system-detailed/Approval-Electronic-Signature-Release-Policy.md) — source of authority مصدر للسلطة 
 
 ---
 
