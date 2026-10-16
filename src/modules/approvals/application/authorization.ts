@@ -1,6 +1,7 @@
 import { authorize } from '../../../shared/authorization/authorize.js';
 import type { PermissionCode } from '../../../shared/authorization/permissions.js';
 import type { ActorContext, EntityContext } from '../../../shared/authorization/types.js';
+import { isNamedSystemOwner } from '../../../shared/authorization/p05-authority.js';
 import { decisionAction, type ApprovalDecisionKind } from '../domain/approval.js';
 import type { ApprovalRecord } from '../ports/repository.js';
 
@@ -28,6 +29,17 @@ export function isAssignedToActor(record: ApprovalRecord, actor: ActorContext): 
       actor.roles.includes(record.workItem.assignedRoleRequirement),
     )
   );
+}
+
+/**
+ * Owner-Controlled Internal Approval: the named owner may review and decide any
+ * actionable record, so the owner's direct internal decision is not gated behind
+ * a Supervisor/QCM assignment. Every other actor keeps the assignment
+ * requirement, and the assignment-independent permission/scope/state/version
+ * checks still run for the owner too.
+ */
+function viewIsPermitted(record: ApprovalRecord, actor: ActorContext): boolean {
+  return isAssignedToActor(record, actor) || isNamedSystemOwner(actor);
 }
 
 export function genericPermissionFor(
@@ -73,7 +85,7 @@ function subjectEntity(record: ApprovalRecord, actor: ActorContext): EntityConte
 }
 
 export function authorizeApprovalView(record: ApprovalRecord, actor: ActorContext): void {
-  if (!isAssignedToActor(record, actor)) throw new Error('not assigned');
+  if (!viewIsPermitted(record, actor)) throw new Error('not assigned');
   authorize(
     {
       actor,
@@ -90,7 +102,7 @@ export function authorizeApprovalView(record: ApprovalRecord, actor: ActorContex
 }
 
 export function authorizeApprovalHistory(record: ApprovalRecord, actor: ActorContext): void {
-  if (!isAssignedToActor(record, actor)) throw new Error('not assigned');
+  if (!viewIsPermitted(record, actor)) throw new Error('not assigned');
   authorize(
     {
       actor,

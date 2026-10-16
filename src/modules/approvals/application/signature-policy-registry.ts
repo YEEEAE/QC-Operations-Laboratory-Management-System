@@ -1,6 +1,10 @@
 import type { ApprovalDecisionKind, ApprovalSubjectType } from '../domain/approval.js';
 import type { ApprovalRecord } from '../ports/repository.js';
 import type { SignaturePolicy, SignatureRequirement } from './decide-approval.js';
+import {
+  OWNER_INTERNAL_APPROVAL_AUTHORITY,
+  isOwnerApprovalPath,
+} from './owner-approval-policy.js';
 
 /**
  * Central generic-approval signature registry.
@@ -51,7 +55,19 @@ export type ApprovalSignaturePolicyStatus = 'ACTIVE' | 'PARTIAL' | 'UNRESOLVED';
 
 export function createApprovedSignaturePolicy(): SignaturePolicy {
   return {
-    requirement({ record, decision }) {
+    requirement({ record, decision, actor }) {
+      // Owner-Controlled Internal Approval, 2026-10-16: the owner pathway records
+      // a direct, auditable internal decision with the signature ceremony DEFERRED
+      // by an explicit owner decision. This is the single place the deferral is
+      // applied, so every owner decision routed through the shared approval
+      // pipeline is covered without touching the standard (non-owner) rules below.
+      if (isOwnerApprovalPath(actor)) {
+        return {
+          status: 'NOT_REQUIRED',
+          deferred: true,
+          authority: OWNER_INTERNAL_APPROVAL_AUTHORITY,
+        };
+      }
       const rule = APPROVED_RULES[record.subject.subjectType]?.[decision];
       if (!rule) return { status: 'UNRESOLVED' };
       return {

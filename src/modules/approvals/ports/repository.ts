@@ -8,6 +8,7 @@ import type {
 } from '../domain/approval.js';
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
+import type { OwnerDecisionMetadata } from '../application/owner-approval-policy.js';
 
 export interface ApprovalSubjectContext {
   subjectType: ApprovalSubjectType;
@@ -40,11 +41,31 @@ export interface RecordApprovalDecisionInput {
   signature?: SignatureEvidence;
   requestId: string;
   now: Date;
+  /**
+   * Owner-Controlled Internal Approval metadata. Present on both paths: the
+   * owner path records the real `SYSTEM_OWNER` authority and the deferred
+   * signature marker; the standard path records `STANDARD_WORKFLOW` and never
+   * fabricates an authority.
+   */
+  ownerMetadata?: OwnerDecisionMetadata;
+  previousState?: string;
+  resultingState?: string;
+  /** Audit-safe authorization context (owner path only). */
+  authorizationContext?: Record<string, unknown>;
+  /** Evidence references the decision relied on (snapshot/digest identifiers). */
+  evidenceReferences?: Record<string, unknown>;
 }
 
 export interface ApprovalRepository {
   runDecisionTransaction<T>(work: (transaction: DatabaseTransaction) => Promise<T>): Promise<T>;
-  listActionable(input: { actor: ActorContext }): Promise<readonly ApprovalRecord[]>;
+  listActionable(input: {
+    actor: ActorContext;
+    /**
+     * Owner-Controlled Internal Approval: the named owner reviews all actionable
+     * records, not only those assigned to them.
+     */
+    includeAllActionable?: boolean;
+  }): Promise<readonly ApprovalRecord[]>;
   get(input: { approvalId: string; actor: ActorContext }): Promise<ApprovalRecord | undefined>;
   findDecisionByRequestId(input: {
     approvalCaseId: string;

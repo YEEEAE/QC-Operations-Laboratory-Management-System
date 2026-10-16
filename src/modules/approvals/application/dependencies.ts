@@ -20,6 +20,7 @@ import { quarantineActionDependencies } from '../../quarantine/application/depen
 import { changeRequestsActionDependencies } from '../../change-requests/application/dependencies.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { getDocumentApprovalEvidence } from './document-approval-evidence.js';
+import { OWNER_APPROVAL_DEFERRAL } from './owner-approval-policy.js';
 
 const blocked = async (): Promise<never> => {
   throw new AppError('AUTHZ_DENIED', { userSafe: true });
@@ -147,6 +148,7 @@ export function approvalsReadDependencies() {
       execute: (versionId: string) => getDocumentApprovalEvidence(database, versionId),
     },
     decisionPolicyStatus: approvalSignaturePolicyStatus(),
+    ownerApprovalDeferral: OWNER_APPROVAL_DEFERRAL,
   };
 }
 

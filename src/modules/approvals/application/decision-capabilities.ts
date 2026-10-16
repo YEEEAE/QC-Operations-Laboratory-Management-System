@@ -17,6 +17,14 @@ export interface ApprovalDecisionCapability {
   state: ApprovalDecisionCapabilityState;
   signature: 'REQUIRED' | 'NOT_REQUIRED' | 'UNRESOLVED';
   meaning?: string;
+  /**
+   * TRUE when the signature ceremony is deferred for this decision by the
+   * Owner-Controlled Internal Approval governance model. The decision is a real,
+   * auditable internal owner decision — it is not an electronic signature.
+   */
+  signatureDeferred?: boolean;
+  /** Exact owner authority for a deferred decision (`SYSTEM_OWNER`). */
+  authority?: string;
 }
 
 export interface ApprovalCapabilityResolver {
@@ -69,7 +77,11 @@ export class ResolveApprovalDecisionCapabilitiesUseCase implements ApprovalCapab
 
       let requirement: ReturnType<SignaturePolicy['requirement']>;
       try {
-        requirement = this.options.signaturePolicy.requirement({ record: input.record, decision });
+        requirement = this.options.signaturePolicy.requirement({
+          record: input.record,
+          decision,
+          actor: input.actor,
+        });
       } catch {
         return { decision, state: 'POLICY_BLOCKED', signature: 'UNRESOLVED' };
       }
@@ -90,6 +102,8 @@ export class ResolveApprovalDecisionCapabilitiesUseCase implements ApprovalCapab
         state: 'AVAILABLE',
         signature: requirement.status,
         ...(requirement.meaning ? { meaning: requirement.meaning } : {}),
+        ...(requirement.deferred ? { signatureDeferred: true } : {}),
+        ...(requirement.authority ? { authority: requirement.authority } : {}),
       };
     });
   }

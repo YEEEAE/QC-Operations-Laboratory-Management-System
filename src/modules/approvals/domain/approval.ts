@@ -80,6 +80,14 @@ export interface ApprovalDecision {
   signatureId?: string;
   decidedAt: Date;
   requestId: string;
+  /** Owner-Controlled Internal Approval metadata (absent on historical rows). */
+  decisionType?: string;
+  ownerAuthority?: string;
+  ownerLoginIdentity?: string;
+  previousState?: string;
+  resultingState?: string;
+  signatureDeferred?: boolean;
+  auditEventId?: string;
 }
 
 export function assertApprovalSubjectType(value: string): asserts value is ApprovalSubjectType {

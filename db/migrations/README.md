@@ -2,8 +2,18 @@
 
 This directory contains the authoritative PostgreSQL migrations for the QC system.
 
-Current workspace source head is `0048_inspection_template_authoring` (48 migration
-files). Migration 0048 adds an explicit template authoring origin — a verbatim
+Current workspace source head is `0049_owner_approval_authority` (49 migration
+files). Migration 0049 introduces Owner-Controlled Internal Approval: it adds
+non-destructive owner-decision columns to `qc.approval_decisions` (decision type,
+owner authority and login identity, previous/resulting state, authorization
+context, evidence references, the deferred-signature marker and a real FK to the
+linked audit event), a fail-closed unique idempotency index on
+`(approval_case_id, work_item_id, request_id)`, and CHECK constraints that keep
+the owner authority a closed vocabulary. It rewrites no historical decision and
+creates no electronic signature; the electronic-signature ceremony is deferred for
+the owner pathway by owner decision
+(`README-system-detailed/OWNER-DECISION-OWNER-CONTROLLED-APPROVAL-2026-10-16.md`).
+Migration 0048 adds an explicit template authoring origin — a verbatim
 source transcription keeps the 0046 evidence chain unchanged, while an in-system
 authored specification is approved against a bound EFFECTIVE controlled document
 version — plus structured controlled-document bodies

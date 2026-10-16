@@ -965,6 +965,15 @@ export interface ApprovalDecisionsTable {
   signature_id: string | null;
   decided_at: Generated<Date>;
   request_id: string;
+  decision_type: string | null;
+  owner_authority: string | null;
+  owner_login_identity: string | null;
+  previous_state: string | null;
+  resulting_state: string | null;
+  authorization_context: unknown | null;
+  evidence_references: unknown | null;
+  signature_deferred: Generated<boolean>;
+  audit_event_id: string | null;
 }
 export interface ElectronicSignaturesTable {
   id: Generated<string>;

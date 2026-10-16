@@ -1,5 +1,6 @@
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { authorizeApprovalView } from './authorization.js';
+import { isOwnerApprovalPath } from './owner-approval-policy.js';
 import type { ApprovalRecord, ApprovalRepository } from '../ports/repository.js';
 import {
   approvalWithCapabilities,
@@ -18,7 +19,12 @@ export class ListMyApprovalsUseCase {
   ) {}
 
   async execute(input: { actor: ActorContext }): Promise<readonly ApprovalQueueRecord[]> {
-    const records = await this.repository.listActionable(input);
+    // Owner-Controlled Internal Approval: the named owner reviews every
+    // actionable record and is not restricted to records assigned to them.
+    const records = await this.repository.listActionable({
+      actor: input.actor,
+      includeAllActionable: isOwnerApprovalPath(input.actor),
+    });
     const visible: ApprovalQueueRecord[] = [];
     const capabilityResolver = this.capabilities ?? { execute: () => [] };
     for (const record of records) {

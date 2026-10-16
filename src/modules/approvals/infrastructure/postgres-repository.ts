@@ -3,6 +3,7 @@ import type { DatabaseRow, DatabaseSchema } from '../../../shared/database/db-ty
 import { translateDatabaseError } from '../../../shared/database/database.js';
 import { AppError } from '../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../shared/id/uuid.js';
+import { stableJson } from '../../../shared/json/stable-stringify.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import type { AuditRepository } from '../../../shared/audit/audit-repository.js';
 import { PostgresAuditRepository } from '../../../shared/audit/postgres-audit-repository.js';
@@ -66,6 +67,13 @@ const decisionMap = (row: DatabaseRow<'approval_decisions'>): ApprovalDecision =
   ...(row.signature_id ? { signatureId: row.signature_id } : {}),
   decidedAt: row.decided_at,
   requestId: row.request_id,
+  ...(row.decision_type ? { decisionType: row.decision_type } : {}),
+  ...(row.owner_authority ? { ownerAuthority: row.owner_authority } : {}),
+  ...(row.owner_login_identity ? { ownerLoginIdentity: row.owner_login_identity } : {}),
+  ...(row.previous_state ? { previousState: row.previous_state } : {}),
+  ...(row.resulting_state ? { resultingState: row.resulting_state } : {}),
+  ...(row.signature_deferred ? { signatureDeferred: true } : {}),
+  ...(row.audit_event_id ? { auditEventId: row.audit_event_id } : {}),
 });
 
 export class PostgresApprovalRepository implements ApprovalRepository {
@@ -79,7 +87,10 @@ export class PostgresApprovalRepository implements ApprovalRepository {
     return inTransaction(this.database, work);
   }
 
-  async listActionable(input: { actor: ActorContext }): Promise<readonly ApprovalRecord[]> {
+  async listActionable(input: {
+    actor: ActorContext;
+    includeAllActionable?: boolean;
+  }): Promise<readonly ApprovalRecord[]> {
     try {
       let query = this.database
         .selectFrom('approval_work_items')
@@ -109,14 +120,16 @@ export class PostgresApprovalRepository implements ApprovalRepository {
           'approval_cases.version as case_version',
         ])
         .where('approval_work_items.state', 'in', ['PENDING', 'IN_PROGRESS']);
-      query = query.where((eb) =>
-        eb.or([
-          eb('approval_work_items.assigned_user_id', '=', input.actor.id),
-          ...(input.actor.roles.length
-            ? [eb('approval_work_items.assigned_role_requirement', 'in', input.actor.roles)]
-            : []),
-        ]),
-      );
+      if (!input.includeAllActionable) {
+        query = query.where((eb) =>
+          eb.or([
+            eb('approval_work_items.assigned_user_id', '=', input.actor.id),
+            ...(input.actor.roles.length
+              ? [eb('approval_work_items.assigned_role_requirement', 'in', input.actor.roles)]
+              : []),
+          ]),
+        );
+      }
       const rows = await query.orderBy('approval_cases.requested_at', 'asc').execute();
       const records: ApprovalRecord[] = [];
       for (const row of rows) {
@@ -236,23 +249,6 @@ export class PostgresApprovalRepository implements ApprovalRepository {
             })
             .execute();
         }
-        const row = await tx
-          .insertInto('approval_decisions')
-          .values({
-            id: uuidv7(),
-            approval_case_id: input.approvalCaseId,
-            work_item_id: input.workItemId,
-            actor_id: input.actor.id,
-            decision: input.decision,
-            subject_version: input.subjectVersion,
-            reason: input.reason?.trim() || null,
-            comments: input.comments?.trim() || null,
-            signature_id: signatureId ?? null,
-            decided_at: input.now,
-            request_id: input.requestId,
-          })
-          .returningAll()
-          .executeTakeFirstOrThrow();
         const nextWorkState = input.decision === 'RETURN' ? 'RETURNED' : 'COMPLETED';
         await tx
           .updateTable('approval_work_items')
@@ -287,17 +283,69 @@ export class PostgresApprovalRepository implements ApprovalRepository {
           })
           .where('id', '=', input.approvalCaseId)
           .execute();
-        await this.auditFor(tx)?.append({
-          actorType: 'USER',
+        // `approval_decisions` is append-only (migration 0028), so the linked
+        // audit event must exist before the decision row is written. The audit
+        // event is appended first and its real id is stored on the decision.
+        const ownerMeta = input.ownerMetadata;
+        const audit = this.auditFor(tx);
+        const auditEvent = {
+          actorType: 'USER' as const,
           actorId: input.actor.id,
           subjectType: 'APPROVAL_CASE',
           subjectId: input.approvalCaseId,
           action: `APPROVAL_${input.decision}`,
+          ...(input.previousState ? { oldState: input.previousState } : {}),
           newState: caseState,
           reason: input.reason,
           requestId: input.requestId,
-          signatureId,
-        });
+          ...(signatureId ? { signatureId } : {}),
+          ...(ownerMeta?.decisionType === 'OWNER_INTERNAL_APPROVAL'
+            ? {
+                payload: {
+                  decisionType: ownerMeta.decisionType,
+                  authority: ownerMeta.ownerAuthority,
+                  ownerLoginIdentity: ownerMeta.ownerLoginIdentity,
+                  signatureDeferred: ownerMeta.signatureDeferred ?? false,
+                },
+              }
+            : {}),
+        };
+        let auditEventId: string | undefined;
+        if (audit instanceof PostgresAuditRepository) {
+          auditEventId = await audit.appendReturningId(auditEvent);
+        } else if (audit) {
+          await audit.append(auditEvent);
+        }
+        const row = await tx
+          .insertInto('approval_decisions')
+          .values({
+            id: uuidv7(),
+            approval_case_id: input.approvalCaseId,
+            work_item_id: input.workItemId,
+            actor_id: input.actor.id,
+            decision: input.decision,
+            subject_version: input.subjectVersion,
+            reason: input.reason?.trim() || null,
+            comments: input.comments?.trim() || null,
+            signature_id: signatureId ?? null,
+            decided_at: input.now,
+            request_id: input.requestId,
+            decision_type: ownerMeta?.decisionType ?? null,
+            owner_authority: ownerMeta?.ownerAuthority ?? null,
+            owner_login_identity: ownerMeta?.ownerLoginIdentity ?? null,
+            previous_state: input.previousState ?? null,
+            resulting_state: input.resultingState ?? null,
+            authorization_context: input.authorizationContext
+              ? stableJson(input.authorizationContext)
+              : null,
+            evidence_references: input.evidenceReferences
+              ? stableJson(input.evidenceReferences)
+              : null,
+            signature_deferred: ownerMeta?.signatureDeferred ?? false,
+            audit_event_id: auditEventId ?? null,
+          })
+          .returningAll()
+          .executeTakeFirstOrThrow();
         await this.outboxFor(tx)?.enqueue({
           eventType: 'APPROVAL_DECIDED',
           aggregateType: 'APPROVAL_CASE',
@@ -306,6 +354,8 @@ export class PostgresApprovalRepository implements ApprovalRepository {
             decision: input.decision,
             workItemId: input.workItemId,
             subjectVersion: input.subjectVersion.toString(),
+            ...(ownerMeta ? { decisionType: ownerMeta.decisionType } : {}),
+            ...(ownerMeta?.signatureDeferred ? { signatureDeferred: true } : {}),
           },
           dedupeKey: `approval-decision:${input.approvalCaseId}:${input.workItemId}:${input.requestId}`,
         });

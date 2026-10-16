@@ -7,12 +7,23 @@ import type { AuditRepository } from './audit-repository';
 export class PostgresAuditRepository implements AuditRepository {
   constructor(private readonly database: Kysely<DatabaseSchema>) {}
   async append(event: AuditEventInput): Promise<void> {
+    await this.appendReturningId(event);
+  }
+  /**
+   * Append an audit event and return its generated id.
+   *
+   * Used by callers that must reference the exact audit row they wrote (for
+   * example the owner internal approval decision, which stores a real FK to its
+   * audit event). The shared `append` contract is unchanged.
+   */
+  async appendReturningId(event: AuditEventInput): Promise<string> {
     assertSafeAuditPayload(event.payload);
     assertSafeAuditText(event.reason);
+    const id = uuidv7();
     await this.database
       .insertInto('audit_events')
       .values({
-        id: uuidv7(),
+        id,
         actor_type: event.actorType,
         actor_id: event.actorId ?? null,
         subject_type: event.subjectType,
@@ -27,5 +38,6 @@ export class PostgresAuditRepository implements AuditRepository {
         payload: event.payload ? stableJson(event.payload) : null,
       })
       .execute();
+    return id;
   }
 }

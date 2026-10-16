@@ -6,12 +6,28 @@ import type { ApprovalRepository, ApprovalRecord } from '../ports/repository.js'
 import type { SignatureEvidence } from '../../e-signatures/domain/signature-evidence.js';
 import type { SignControlledActionUseCase } from '../../e-signatures/application/sign-controlled-action.js';
 import type { DatabaseTransaction } from '../../../shared/database/transaction.js';
+import {
+  isOwnerApprovalPath,
+  ownerAuthorizationContext,
+  ownerDecisionMetadata,
+} from './owner-approval-policy.js';
 
 export type SignatureRequirement = 'REQUIRED' | 'NOT_REQUIRED' | 'UNRESOLVED';
 export interface SignaturePolicy {
-  requirement(input: { record: ApprovalRecord; decision: ApprovalDecisionKind }): {
+  requirement(input: {
+    record: ApprovalRecord;
+    decision: ApprovalDecisionKind;
+    actor: ActorContext;
+  }): {
     status: SignatureRequirement;
     meaning?: string;
+    /**
+     * TRUE only on the owner pathway where the signature ceremony is deferred by
+     * an explicit owner decision. Never presented as an electronic signature.
+     */
+    deferred?: boolean;
+    /** Exact authority for a deferred owner decision (`SYSTEM_OWNER`). */
+    authority?: string;
   };
 }
 export interface SubjectTransitionResult {
@@ -99,6 +115,7 @@ export class DecideApprovalUseCase {
     const signatureRequirement = this.signaturePolicy.requirement({
       record,
       decision: input.decision,
+      actor: input.actor,
     });
     if (signatureRequirement.status === 'UNRESOLVED')
       throw new AppError('DOMAIN_SIGNATURE_REQUIRED', { userSafe: true });
@@ -121,6 +138,12 @@ export class DecideApprovalUseCase {
         persist: false,
       });
     }
+    // Owner-Controlled Internal Approval: the owner's decision is recorded once,
+    // under the canonical owner identity, with the signature ceremony deferred by
+    // an explicit owner decision. No signature row is created and the decision is
+    // never labelled as an electronic signature. Non-owner actors are unchanged.
+    const ownerPath = isOwnerApprovalPath(input.actor);
+    const ownerMetadata = ownerDecisionMetadata(input.actor, input.decision);
     return this.repository.runDecisionTransaction(async (transaction) => {
       const subject = await transition.execute({
         actor: input.actor,
@@ -143,6 +166,20 @@ export class DecideApprovalUseCase {
           reason: input.reason,
           comments: input.comments,
           signature,
+          previousState: record.subject.state,
+          resultingState: subject.state,
+          ownerMetadata,
+          ...(record.subject.snapshotHash
+            ? {
+                evidenceReferences: {
+                  subjectType: record.subject.subjectType,
+                  snapshotHash: record.subject.snapshotHash,
+                },
+              }
+            : {}),
+          ...(ownerPath
+            ? { authorizationContext: ownerAuthorizationContext(input.actor) }
+            : {}),
           requestId: input.requestId,
           now: this.now(),
         },
