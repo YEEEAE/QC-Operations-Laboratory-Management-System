@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "taskId": "QC-LAUNCH-024",
+  "repository": "YEEEAE/QC-Operations-Laboratory-Management-System",
+  "auditReferenceSha": "60e78cc6fdafe6c70e249be2d687c1df3af45412",
+  "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+  "referenceRelationship": "audit reference is ancestor; candidate is 38 commits later",
+  "candidateFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "fingerprintMeaning": "SHA-256 of clean git diff --binary HEAD before local evidence packet; no source modifications",
+  "workingEnvironment": {
+    "os": "macOS arm64",
+    "node": "v24.20.0",
+    "pnpm": "11.25.0",
+    "postgresql": "PostgreSQL 18.6 local disposable TLS cluster",
+    "database": "qc_launch024 on localhost port 55432; no production database",
+    "startedAt": "2026-10-16T10:07:29Z",
+    "completedAt": "2026-10-16T10:09:25Z"
+  },
+  "authoritySource": {
+    "expected": "Documents/REJECT-REPORTS.md",
+    "status": "NOT AVAILABLE",
+    "searchedPaths": [
+      "Documents/REJECT-REPORTS.md",
+      "Documents/QC_System_WI_SOP_Pack/",
+      "Documents/QC-GLOBAL-ELECTRONIC-SIGNATURE-ACTION-MAP.md"
+    ],
+    "note": "No reject-report controlled source; generic approval action-map does not list Issue Slip applicability."
+  },
+  "criteria": [
+    {
+      "criterionId": "AC-1 / M-2",
+      "expectedOutcome": "Issue Slip cannot complete without policy-required authenticated signatures; unauthorized actions denied",
+      "testKind": "source review + focused PostgreSQL integration",
+      "command": "pnpm vitest run tests/integration/reject-reports/reject-reports.test.ts",
+      "exitCode": 1,
+      "evidence": [
+        {
+          "uri": ".ci-results/qc-launch-024/focused-integration.log",
+          "sha256": "170b644df6590316910aba0660865ef6b45d296263a881fd14902eb9afc5d09b"
+        }
+      ],
+      "actorRole": "synthetic creator EMPLOYEE; other EMPLOYEE",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "VERIFIED_FAIL (source gap); runtime NOT VERIFIED",
+      "note": "6/8 tests passed. Current source completes from creator-recorded confirmations which are explicitly not e-signatures; controlled applicability source absent."
+    },
+    {
+      "criterionId": "M-1",
+      "expectedOutcome": "Creation/category/quantity/lot/reason/date/attachment/reviewer/role decisions match effective controlled procedure",
+      "testKind": "controlled-source availability review",
+      "command": null,
+      "exitCode": null,
+      "evidence": [],
+      "actorRole": "not applicable",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "BLOCKED",
+      "note": "Documents/REJECT-REPORTS.md not found; no effective reject-report WI/SOP/action-map row located. No thresholds or required evidence inferred."
+    },
+    {
+      "criterionId": "M-3",
+      "expectedOutcome": "Replay/duplicates/corrections/exports/receiving linkage/audit all remain single-candidate traceable",
+      "testKind": "source review + focused PostgreSQL integration",
+      "command": "pnpm vitest run tests/integration/reject-reports/reject-reports.test.ts",
+      "exitCode": 1,
+      "evidence": [
+        {
+          "uri": ".ci-results/qc-launch-024/focused-integration.log",
+          "sha256": "170b644df6590316910aba0660865ef6b45d296263a881fd14902eb9afc5d09b"
+        }
+      ],
+      "actorRole": "synthetic EMPLOYEE creator",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "PARTIAL",
+      "note": "Version CAS, unique approval-role rows and correction history exist; runtime suite 6 pass/2 fail. Export and receiving linkage policy not established."
+    },
+    {
+      "criterionId": "M-4",
+      "expectedOutcome": "No-data and unavailable states distinct; rows filtered only to authorized user scope",
+      "testKind": "source review",
+      "command": null,
+      "exitCode": null,
+      "evidence": [],
+      "actorRole": "ACTIVE authenticated reader (not runtime-tested)",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "PARTIAL / NOT TESTED",
+      "note": "Page contains separate unavailable/empty render branches and list filters; runtime role/scope matrix not run."
+    },
+    {
+      "criterionId": "REQ-INTEGRATION",
+      "expectedOutcome": "Required integration suite runs on isolated PG18 and evidence remains candidate-bound",
+      "testKind": "full integration suite",
+      "command": "pnpm test:integration",
+      "exitCode": 1,
+      "evidence": [
+        {
+          "uri": ".ci-results/qc-launch-024/test-integration-final.log",
+          "sha256": "4b19b6ce695478eeba9c47d4b65b020a7933c6492b056a290390456d54dcde71"
+        }
+      ],
+      "actorRole": "synthetic local test actors",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "FAIL",
+      "note": "606 passed, 45 failed, 18 skipped; 16 files failed/101 passed. Same source SHA and clean source fingerprint."
+    },
+    {
+      "criterionId": "REQ-SECURITY",
+      "expectedOutcome": "Required security suite passes on isolated environment",
+      "testKind": "security suite",
+      "command": "pnpm test:security",
+      "exitCode": 0,
+      "evidence": [
+        {
+          "uri": ".ci-results/qc-launch-024/test-security-final.log",
+          "sha256": "dd3ebdd224b400bfba0d1da2c6b8a4cddc01bb498cb4da58fbe314d1f18af982"
+        }
+      ],
+      "actorRole": "synthetic local test actors",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "PASS",
+      "note": "74 passed, 0 failed; does not alone validate Issue Slip action/signature policy."
+    },
+    {
+      "criterionId": "REQ-E2E",
+      "expectedOutcome": "Authenticated E2E acceptance runs against exact built candidate",
+      "testKind": "authenticated E2E verifier",
+      "command": "pnpm verify:e2e:authenticated",
+      "exitCode": 2,
+      "evidence": [
+        {
+          "uri": ".ci-results/qc-launch-024/verify-e2e-authenticated.log",
+          "sha256": "282a067422de8071d4de4a7c45a5ac83ef9ab5c0a68d754f346e52118a19adc0"
+        },
+        {
+          "uri": ".ci-results/qc-launch-024/authenticated-e2e.json",
+          "sha256": "3e083de68ffa24445cbec2323f3107ea659b48d65a3a95b125e40c62a5e97f71"
+        }
+      ],
+      "actorRole": "disposable configured roles (no runtime actors created; blocked before DB/Playwright)",
+      "sourceRevision": "e0a677180872064a18281b6152e1cf01f43d55a0",
+      "sourceFingerprint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "2026-10-16T10:09:25Z",
+      "status": "BLOCKED",
+      "note": "Runner refused stale artifact: artifact source SHA f4ec31844ec32db33b16761421801525f877f83c differs from expected checkout e0a677180872064a18281b6152e1cf01f43d55a0."
+    }
+  ],
+  "acceptedVerifiedPoints": 0.0,
+  "scoreReviewer": "NOT AVAILABLE \u2014 independent rubric reviewer did not accept any points",
+  "overallStatus": "BLOCKED",
+  "localLogsOnly": true,
+  "remoteActions": [],
+  "sourceObservations": [
+    {
+      "file": "src/modules/reject-reports/infrastructure/postgres-repository.ts",
+      "lines": "743-777",
+      "sha256": "440c210a6ce73b2f48659bbfd7735e5684374d72a11f2f79e168ac3add91e393",
+      "finding": "Slip status moves to COMPLETED when no PENDING approval confirmation rows remain."
+    },
+    {
+      "file": "src/modules/reject-reports/application/confirm-issue-slip-approval.ts",
+      "lines": "8-18",
+      "sha256": "0d58d11934590a011b7569735dcb3556245f9194f092748596434032e446e23e",
+      "finding": "Approval checkpoint is recorded by report creator and is not the approver electronic signature."
+    },
+    {
+      "file": "src/modules/reject-reports/domain/issue-slip.ts",
+      "lines": "16-19",
+      "sha256": "eba25665dc127ed119a1b0d6800840ccaa6fc97f4eb536aff305f27a8c9afbd1",
+      "finding": "Domain explicitly says confirmation is not the named approver electronic signature."
+    },
+    {
+      "file": "src/actions/reject-reports.ts",
+      "lines": "143-163",
+      "sha256": "25bfb7a364c7c494d9d753157081853dc56030682a6016e4ba2093bfb0b6f037",
+      "finding": "Approval evidenceFileId is optional at the action input boundary."
+    }
+  ]
+}
