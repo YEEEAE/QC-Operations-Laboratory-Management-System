@@ -1,3 +1,19 @@
+# فهرس المراجع التفصيلية — README-system-detailed
+
+> هذا المجلد هو **الدليل التفصيلي للوكيل** — إذا احتجت تفاصيل أكثر من هذا الـREADME المختصر، روح له مباشرة. كل ملف فيه له هدف واضح ومختصر تحت.
+
+- [`README-system-detailed/PRODUCT.md`](README-system-detailed/PRODUCT.md) — خريطة المنتج: المتطلبات، قواعد العمل، الأدوار، والـUX.
+- [`README-system-detailed/ENGINEERING.md`](README-system-detailed/ENGINEERING.md) — خريطة الهندسة: المعمارية والكود (`src/modules`, `actions`, `pages`, `ui`, `shared`).
+- [`README-system-detailed/DATA.md`](README-system-detailed/DATA.md) — خريطة البيانات: الموديل، القاموس، الـmigrations، والـseeds.
+- [`README-system-detailed/OPERATIONS.md`](README-system-detailed/OPERATIONS.md) — التشغيل: النشر على Render، الإعدادات، الـRelease، والـBackup/Recovery.
+- [`README-system-detailed/VERIFICATION.md`](README-system-detailed/VERIFICATION.md) — التحقق والقبول: الـUAT، مصفوفة المسارات، والـaudit.
+- [`README-system-detailed/TOOLING.md`](README-system-detailed/TOOLING.md) — أدوات الوكيل: `AGENTS.md`، الـMind، الـSkills، وسكربتات التشخيص.
+- [`README-system-detailed/brief.md`](README-system-detailed/brief.md) — موجز تصميم `QC Universe`: ‏31/31 قرار معتمد، هوية `Graphite Intelligence`، وديمو عام معزول ببيانات وهمية.
+- [`README-system-detailed/pags.md`](README-system-detailed/pags.md) — جرد صفحة-بصفحة (88 صفحة): السلوك والحقول والصلاحيات لكل مسار.
+- [`README-system-detailed/Approval-Electronic-Signature-Release-Policy.md`](README-system-detailed/Approval-Electronic-Signature-Release-Policy.md) — سياسة الموافقات والتوقيع الإلكتروني والإفراج: صلاحيات yazeed/QCM/Supervisor/QC، فصل الداخلي عن الميداني، ومعايير القبول.
+
+---
+
 # ابي اضيف 
 
 ERP *نظام تخطيط موارد الشركات *
