@@ -3,7 +3,10 @@ import { AppError } from '../../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { createNcr } from '../domain/ncr.js';
+import { createNcrInput } from '../domain/create-input.js';
 import type { NcrRepository } from '../ports/repository.js';
+export { createNcrInput } from '../domain/create-input.js';
+
 export class CreateNcrUseCase {
   constructor(
     private repo: NcrRepository,
@@ -19,30 +22,40 @@ export class CreateNcrUseCase {
     affectedLot?: string;
     ownerId?: string;
     requestId: string;
+    intentId: string;
   }) {
     authorize(
       {
         actor: i.actor,
         permission: 'PERM-NCR-CREATE',
         action: 'CREATE',
-        entity: { type: 'NCR', id: 'new', state: 'DRAFT', ownerId: i.ownerId ?? i.actor.id },
-        scope: { ownerId: i.ownerId ?? i.actor.id },
+        entity: { type: 'NCR', id: 'new', state: 'DRAFT', ownerId: i.actor.id },
+        scope: { ownerId: i.actor.id },
         currentVersion: 1n,
         expectedVersion: 1n,
-        businessCondition: Boolean(i.findingId),
+        businessCondition: true,
       },
       { throwOnDeny: true },
     );
-    // CA-F-00: a nonempty Finding ID is not approved eligibility, numbering
-    // or assignment evidence. The delivery stub must not be the only gate.
-    this.assertCreationSource();
+    const { actor, requestId, ...raw } = i;
+    const parsed = createNcrInput.safeParse(raw);
+    if (!parsed.success) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+    const c = parsed.data;
     return this.repo.create({
-      ncr: createNcr({ id: uuidv7(), createdBy: i.actor.id, now: this.now(), ...i }),
-      actor: i.actor,
-      requestId: i.requestId,
+      ncr: createNcr({
+        id: uuidv7(),
+        createdBy: actor.id,
+        now: this.now(),
+        findingId: c.findingId,
+        ncrNo: c.ncrNo,
+        title: c.title,
+        description: c.description,
+        affectedItemCode: c.affectedItemCode,
+        affectedLot: c.affectedLot,
+      }),
+      actor,
+      requestId,
+      intentId: c.intentId,
     });
-  }
-  private assertCreationSource(): void {
-    throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
   }
 }

@@ -9,9 +9,11 @@ import { rcaReadDependencies } from '../../../modules/quality/rca/application/de
 import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
+import { authorize } from '../../../shared/authorization/authorize.js';
 
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fncr');
+const canCreate = authorize({ actor, permission: 'PERM-NCR-CREATE', action: 'CREATE', entity: { type: 'NCR', id: 'new', state: 'DRAFT', ownerId: actor.id }, scope: { ownerId: actor.id }, currentVersion: 1n, expectedVersion: 1n, businessCondition: true }).allowed;
 const states = ['DRAFT', 'OPEN', 'UNDER_INVESTIGATION', 'RCA_IN_PROGRESS', 'CAPA_IN_PROGRESS', 'READY_FOR_CLOSURE', 'CLOSED', 'VOID'] as const;
 const requestedState = Astro.url.searchParams.get('state');
 const state = states.find((value) => value === requestedState);
@@ -33,13 +35,12 @@ const rcaCount = new Map(rcaResult.status === 'AVAILABLE' ? rcaResult.value : []
 const rows = ncrs.map((ncr) => ({ ncr, finding: ncr.findingId ? findingById.get(ncr.findingId) : undefined, rcaCount: rcaResult.status === 'AVAILABLE' ? (rcaCount.get(ncr.id) ?? 0) : null }));
 ---
 <AppLayout title="NCR · Quality" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>NCR records</h1></Fragment></PageHeader>
+  <PageHeader><Fragment slot="heading"><h1>NCR records</h1></Fragment>{canCreate && <Fragment slot="actions"><a class="button" href="/quality/ncr/new">Create NCR</a></Fragment>}</PageHeader>
   <PolicyBlocker title="Workflow decisions still pending" decisions={[
-    { id: 'PD-15', owner: 'QC owner', consequence: 'Approved Finding-to-NCR initiation criteria remain unresolved.' },
-    { id: 'PD-16', owner: 'QC / inspection procedure owner', consequence: 'The consequence of an inspection FAIL remains unresolved.' },
+    { id: 'PD-16', owner: 'QC / inspection procedure owner', consequence: 'The consequence of an inspection FAIL remains unresolved; this register does not create an NCR automatically.' },
     { id: 'PD-17', owner: 'QMS owner', consequence: 'NCR closure authority and workflow remain unresolved.' },
   ]} />
-  <p>These actions stay unavailable until their owners approve the governing decision. Existing records remain readable.</p>
+  <p>Authorized users can create a draft NCR from a finding they can access. Creation does not approve the NCR, change the finding, or start a CAPA.</p>
   <form class="filters" method="get"><label for="state">State<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label><button type="submit">Apply filter</button>{state && <a href="/quality/ncr">Clear filter</a>}</form>
   {unavailable ? <ProviderUnavailableState title="NCR records are temporarily unavailable" /> : primaryNotVisible ? <p role="status">NCR records are not available in your authorized scope.</p> : <>{rcaResult.status === 'UNAVAILABLE' && <p role="status">RCA links and counts are temporarily unavailable; NCR records remain available.</p>}{findingResult.status === 'UNAVAILABLE' && <p role="status">Finding links are temporarily unavailable; NCR records remain available.</p>}{ncrs.length ? <div class="table-wrap"><table><caption>{ncrResult.status === "AVAILABLE" ? ncrResult.value.total : 0} authorized NCR record{ncrResult.status === "AVAILABLE" && ncrResult.value.total === 1 ? '' : 's'}</caption><thead><tr><th scope="col">NCR</th><th scope="col">Nonconformance</th><th scope="col">State</th><th scope="col">Source finding</th><th scope="col">RCA</th><th scope="col">Next step</th></tr></thead><tbody>{rows.map(({ ncr, finding, rcaCount: count }) => <tr><th scope="row"><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a></th><td>{ncr.title}</td><td>{stateLabel(ncr.state)}</td><td>{finding ? <a href={`/quality/findings/${finding.id}`}>{finding.findingNo}</a> : findingResult.status === 'UNAVAILABLE' ? 'Finding source unavailable' : ncr.findingId ? 'Not visible in your scope' : 'Not linked'}</td><td>{count === null ? 'Count unavailable' : count ? <a href={`/quality/rca?ncrId=${encodeURIComponent(ncr.id)}`}>{count} analysis{count === 1 ? '' : 'es'}</a> : 'None visible'}</td><td>{ncr.state === 'OPEN' || ncr.state === 'UNDER_INVESTIGATION' ? <a href={`/quality/ncr/${ncr.id}`}>Review record and investigation</a> : ncr.state === 'RCA_IN_PROGRESS' ? <a href={`/quality/rca?ncrId=${encodeURIComponent(ncr.id)}`}>Review linked RCA</a> : ncr.state === 'CAPA_IN_PROGRESS' ? <a href={`/quality/capa?ncrId=${encodeURIComponent(ncr.id)}`}>Review linked CAPA</a> : ncr.state === 'READY_FOR_CLOSURE' ? 'Closure decision — QMS owner approval required' : <a href={`/quality/ncr/${ncr.id}`}>Open record</a>}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No NCR records in this view</h2><p>{state ? 'Clear the filter to see records in your authorized scope.' : 'No current NCR records are available in your authorized scope.'}</p>{state && <a href="/quality/ncr">Clear state filter</a>}</section>}</>}
   {ncrResult.status === 'AVAILABLE' && <Pagination page={ncrResult.value.page} totalPages={Math.max(1, Math.ceil(ncrResult.value.total / ncrResult.value.pageSize))} total={ncrResult.value.total} itemLabel="NCR records" />}

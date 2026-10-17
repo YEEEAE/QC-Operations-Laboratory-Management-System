@@ -1,35 +1,286 @@
 ---
-import PageHeader from "../../../ui/components/PageHeader.astro";
-import DecisionStateCard from "../../../ui/components/feedback/DecisionStateCard.astro";
-// RT-NCR-002. This page exists so the declared create route never falls through
-// to the NCR detail route (`/quality/ncr/[ncrId]`), which previously rendered a
-// detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
-//
-// Direct NCR creation stays gated by PD-15/PD-16. The surface reports that
-// server state; it does not implement an eligibility rule that has no source.
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import { actions } from 'astro:actions';
+import { randomUUID } from 'node:crypto';
+import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
+import { authorize } from '../../../shared/authorization/authorize.js';
+import {
+  detailHref,
+  extractDetailId,
+  toFormFailure,
+  type FormFailure,
+} from '../../../ui/forms/mutation-post.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fncr%2Fnew');
+
+const canCreate = authorize({
+  actor,
+  permission: 'PERM-NCR-CREATE',
+  action: 'CREATE',
+  entity: { type: 'NCR', id: 'new', state: 'DRAFT', ownerId: actor.id },
+  scope: { ownerId: actor.id },
+  currentVersion: 1n,
+  expectedVersion: 1n,
+  businessCondition: true,
+}).allowed;
+
+const fields = [
+  { name: 'ncrNo', label: 'NCR number' },
+  { name: 'title', label: 'Title' },
+  { name: 'description', label: 'Description' },
+  { name: 'findingId', label: 'Finding' },
+] as const;
+
+let values: Record<string, string> = {
+  // One intent per rendered form. Double submission and replay of this exact
+  // intent resolve to the same committed record; requestId remains trace only.
+  intentId: randomUUID(),
+  findingId: Astro.url.searchParams.get('findingId') ?? '',
+  ncrNo: '',
+  title: '',
+  description: '',
+  affectedItemCode: '',
+  affectedLot: '',
+};
+let failure: FormFailure | null = null;
+
+if (Astro.request.method === 'POST') {
+  const data = await Astro.request.formData();
+  values = Object.fromEntries([...data.entries()].map(([key, value]) => [key, String(value)]));
+  try {
+    const result = await Astro.callAction(
+      actions.ncr.create,
+      values as Parameters<typeof actions.ncr.create>[0],
+    );
+    if (result.error) throw result.error;
+    const id = extractDetailId(result.data);
+    if (id) return Astro.redirect(detailHref('/quality/ncr', id), 303);
+    throw new Error('Unconfirmed result');
+  } catch (error) {
+    failure = toFormFailure(error, {
+      entity: 'NCR',
+      requiredFields: fields,
+      values,
+      listHref: '/quality/ncr',
+      listLabel: 'NCRs',
+    });
+  }
+}
+
+let findings: Awaited<
+  ReturnType<ReturnType<typeof findingsReadDependencies>['list']['execute']>
+> = [];
+let sourceUnavailable = false;
+if (canCreate) {
+  try {
+    findings = await findingsReadDependencies().list.execute({ actor });
+  } catch {
+    sourceUnavailable = true;
+  }
+}
+const selectedFinding = findings.find((finding) => finding.id === values.findingId);
+const describedBy = (name: string, hint?: string): string | undefined => {
+  const ids = [
+    failure?.fieldErrors[name] ? `${name}-error` : null,
+    hint ? `${name}-help` : null,
+  ].filter(Boolean);
+  return ids.length ? ids.join(' ') : undefined;
+};
+const invalid = (name: string): 'true' | undefined =>
+  failure?.fieldErrors[name] ? 'true' : undefined;
 ---
 <AppLayout title="New NCR · Quality" locale="en" direction="ltr">
   <PageHeader section="Quality">
     <Fragment slot="heading"><h1>New NCR</h1></Fragment>
-    <p class="lede">Create an NCR from a finding or inspection.</p>
+    <p>Create a draft NCR linked to a finding you can access.</p>
   </PageHeader>
-  <DecisionStateCard
-    heading="Direct creation is not available."
-    decisionId="PD-15 · PD-16"
-    owner="QC owner; QC / inspection procedure owner"
-    decisionNote="Finding-to-NCR criteria and inspection FAIL handling are not in force. No eligibility rule or record number is inferred."
-    actions={[
-      { href: '/quality/ncr', label: 'Open the NCR register' },
-      { href: '/quality/findings', label: 'Open findings' },
-    ]}
-  >
-    <p>This page does not provide the authorized NCR creation flow. Creating an NCR requires an authorized finding relationship and the NCR-create permission. Nothing was changed.</p>
-    <p class="state-card__muted">Existing NCR records stay available in the register. The original source content and recorded state are not modified by this page.</p>
-  </DecisionStateCard>
+  {!canCreate ? (
+    <section class="state-card" data-state="policy-blocked" role="status">
+      <h2>NCR creation is not available to this account</h2>
+      <p>Your account does not have the NCR-create permission in its authorized scope. Nothing was changed.</p>
+      <p><a href="/quality/ncr">Open the NCR register</a></p>
+    </section>
+  ) : sourceUnavailable ? (
+    <section class="state-card" data-state="source-unavailable" role="alert">
+      <h2>Findings are temporarily unavailable</h2>
+      <p>The authorized finding list could not be read. Your record was not changed. Reload this page to try again.</p>
+      <p><a href="/quality/ncr">Open the NCR register</a></p>
+    </section>
+  ) : findings.length === 0 ? (
+    <section class="state-card" data-state="empty" role="status">
+      <h2>No accessible findings</h2>
+      <p>No finding is visible in your authorized scope, so an NCR cannot be linked. Nothing was changed.</p>
+      <p><a href="/quality/findings">Open findings</a></p>
+    </section>
+  ) : (
+    <form method="post" class="ncr-form" data-ncr-create data-state="eligible">
+      <input type="hidden" name="intentId" value={values.intentId} />
+      {failure && (
+        <FormErrorSummary
+          summary={failure.summary}
+          recovery={failure.recovery}
+          errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+          listHref="/quality/ncr"
+          listLabel="NCRs"
+        />
+      )}
+      <section class="source" aria-labelledby="source-heading">
+        <h2 id="source-heading">Source finding</h2>
+        <label for="findingId">Finding</label>
+        <select
+          id="findingId"
+          name="findingId"
+          required
+          aria-invalid={invalid('findingId')}
+          aria-describedby={describedBy('findingId', 'findingId-help')}
+        >
+          <option value="">Select a finding</option>
+          {findings.map((finding) => (
+            <option
+              value={finding.id}
+              selected={values.findingId === finding.id}
+              data-finding-no={finding.findingNo}
+              data-finding-title={finding.title}
+              data-finding-state={finding.state}
+              data-finding-version={finding.version.toString()}
+            >
+              {finding.findingNo} — {finding.title}
+            </option>
+          ))}
+        </select>
+        <p class="hint" id="findingId-help">
+          Only findings in your authorized scope are listed. The source is re-read with its version
+          and access checked again when you save.
+        </p>
+        {failure?.fieldErrors.findingId && (
+          <p class="field-error" id="findingId-error">{failure.fieldErrors.findingId}</p>
+        )}
+        <dl class="context" data-finding-context hidden={!selectedFinding}>
+          <div><dt>Finding number</dt><dd data-context="number">{selectedFinding?.findingNo ?? ''}</dd></div>
+          <div><dt>Title</dt><dd data-context="title">{selectedFinding?.title ?? ''}</dd></div>
+          <div><dt>State</dt><dd data-context="state">{selectedFinding?.state ?? ''}</dd></div>
+          <div><dt>Version</dt><dd data-context="version">{selectedFinding?.version.toString() ?? ''}</dd></div>
+        </dl>
+        <p class="hint">
+          All finding states are eligible, and a finding may have more than one NCR. The finding is
+          not changed by this form.
+        </p>
+      </section>
+
+      <label for="ncrNo">NCR number</label>
+      <input
+        id="ncrNo"
+        name="ncrNo"
+        required
+        value={values.ncrNo}
+        aria-invalid={invalid('ncrNo')}
+        aria-describedby={describedBy('ncrNo', 'ncrNo-help')}
+      />
+      <p class="hint" id="ncrNo-help">
+        Enter the unique number from your approved source. No format or sequence is assigned
+        automatically.
+      </p>
+      {failure?.fieldErrors.ncrNo && (
+        <p class="field-error" id="ncrNo-error">{failure.fieldErrors.ncrNo}</p>
+      )}
+
+      <label for="title">Title</label>
+      <input
+        id="title"
+        name="title"
+        required
+        value={values.title}
+        aria-invalid={invalid('title')}
+        aria-describedby={describedBy('title')}
+      />
+      {failure?.fieldErrors.title && (
+        <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>
+      )}
+
+      <label for="description">Description</label>
+      <textarea
+        id="description"
+        name="description"
+        required
+        aria-invalid={invalid('description')}
+        aria-describedby={describedBy('description')}
+      >{values.description}</textarea>
+      {failure?.fieldErrors.description && (
+        <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>
+      )}
+
+      <label for="affectedItemCode">Affected item code <span class="optional">(optional)</span></label>
+      <input id="affectedItemCode" name="affectedItemCode" value={values.affectedItemCode} />
+
+      <label for="affectedLot">Affected lot <span class="optional">(optional)</span></label>
+      <input id="affectedLot" name="affectedLot" value={values.affectedLot} />
+      <p class="hint">
+        These references are entered by you and are not matched to the finding. No owner is
+        assigned on creation.
+      </p>
+
+      <div class="form-actions">
+        <button type="submit" data-submit>Create NCR</button>
+        <a href="/quality/ncr">Cancel</a>
+      </div>
+      <p role="status" data-result tabindex="-1"></p>
+    </form>
+  )}
 </AppLayout>
+<script>
+  import { actions } from 'astro:actions';
+  import { enhanceClassifiedForm } from '../../../ui/forms/enhance-with-classification';
+
+  const form = document.querySelector<HTMLFormElement>('[data-ncr-create]');
+  const select = form?.querySelector<HTMLSelectElement>('#findingId');
+  const context = form?.querySelector<HTMLElement>('[data-finding-context]');
+  const writeContext = () => {
+    if (!select || !context) return;
+    const option = select.selectedOptions[0];
+    const available = Boolean(option?.value);
+    context.hidden = !available;
+    if (!available) return;
+    for (const [key, attribute] of [
+      ['number', 'findingNo'],
+      ['title', 'findingTitle'],
+      ['state', 'findingState'],
+      ['version', 'findingVersion'],
+    ] as const) {
+      const target = context.querySelector<HTMLElement>(`[data-context="${key}"]`);
+      if (target) target.textContent = option.dataset[attribute] ?? '';
+    }
+  };
+  select?.addEventListener('change', writeContext);
+  writeContext();
+
+  if (form)
+    enhanceClassifiedForm(form, {
+      invoke: (payload) => actions.ncr.create(payload as Parameters<typeof actions.ncr.create>[0]),
+      payload: (data) => Object.fromEntries(data.entries()),
+      progressText: 'Saving NCR draft…',
+      detailBaseHref: '/quality/ncr',
+      unknownRecoveryHref: '/quality/ncr',
+    });
+</script>
 <style>
-  .lede { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-md); }
+  .ncr-form{display:grid;gap:var(--space-3);max-width:48rem;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .state-card{max-width:48rem;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  .source{display:grid;gap:var(--space-3);padding:var(--space-4);background:var(--surface-inset);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
+  .source h2{margin:0;font-size:var(--font-size-md)}
+  label{display:grid;gap:var(--space-1);font-weight:600}
+  input,select,textarea{min-inline-size:0;max-inline-size:100%;min-height:44px;padding:.7rem;font:inherit;color:inherit;background:var(--surface-inset);border:1px solid var(--control-border);border-radius:var(--radius-sm)}
+  textarea{min-height:9rem}
+  .hint,.optional{color:var(--text-muted);font-size:var(--font-size-sm);font-weight:400}
+  .field-error{margin:0;color:var(--status-danger);font-size:var(--font-size-sm)}
+  .context{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:var(--space-3);margin:0}
+  .context div{display:grid;gap:var(--space-1)}
+  .context dt{color:var(--text-muted);font-size:var(--font-size-xs);text-transform:uppercase;letter-spacing:.04em}
+  .context dd{margin:0;overflow-wrap:anywhere}
+  .form-actions{display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap}
+  button{min-height:44px;padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);border:0;border-radius:var(--radius-md)}
+  button[disabled]{opacity:.6;cursor:progress}
+  a{color:var(--color-accent-primary-hover)}
 </style>

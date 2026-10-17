@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CreateNcrUseCase } from '../../../src/modules/quality/ncr/application/create-ncr.js';
 import { CreateCapaUseCase } from '../../../src/modules/quality/capa/application/create-capa.js';
-import { PostgresNcrRepository } from '../../../src/modules/quality/ncr/infrastructure/postgres-repository.js';
 import { PostgresCapaRepository } from '../../../src/modules/quality/capa/infrastructure/postgres-repository.js';
 import { createNcr } from '../../../src/modules/quality/ncr/domain/ncr.js';
 import { createCapa } from '../../../src/modules/quality/capa/domain/capa.js';
@@ -27,6 +26,7 @@ const ncr = {
   description: 'Fixture observation',
   findingId: '01900000-0000-7000-8000-000000000002',
   requestId: 'fixture-command',
+  intentId: '01900000-0000-7000-8000-000000000004',
 };
 const capa = {
   actor,
@@ -51,14 +51,11 @@ const capa = {
 };
 
 describe('CA-F-00 creation source boundaries', () => {
-  it.each(['NCR', 'CAPA'] as const)(
+  it.each(['CAPA'] as const)(
     '%s refuses a valid-shaped command even for the named owner',
     (kind) => {
       const create = vi.fn();
-      const work =
-        kind === 'NCR'
-          ? () => new CreateNcrUseCase({ create } as unknown as NcrRepository).execute(ncr)
-          : () => new CreateCapaUseCase({ create } as unknown as CapaRepository).execute(capa);
+      const work = () => new CreateCapaUseCase({ create } as unknown as CapaRepository).execute(capa);
       expect(work).toThrowError(expect.objectContaining({ code: 'POLICY_SOURCE_REQUIRED' }));
       expect(create).not.toHaveBeenCalled();
     },
@@ -84,7 +81,7 @@ describe('CA-F-00 creation source boundaries', () => {
     ).toThrowError(expect.objectContaining({ code: 'AUTHZ_PERMISSION_MISSING' }));
     expect(create).not.toHaveBeenCalled();
   });
-  it('both PostgreSQL adapters deny before any database operation', async () => {
+  it('CAPA PostgreSQL adapter still denies before any database operation', async () => {
     const database = new Proxy(
       {},
       {
@@ -94,19 +91,25 @@ describe('CA-F-00 creation source boundaries', () => {
       },
     );
     await expect(
-      new PostgresNcrRepository(database as never).create({
-        ncr: createNcr({ ...ncr, id: 'ncr', createdBy: actor.id, now }),
-        actor,
-        requestId: ncr.requestId,
-      }),
-    ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
-    await expect(
       new PostgresCapaRepository(database as never).create({
         capa: createCapa({ ...capa, id: 'capa', createdBy: actor.id, now }),
         actor,
         requestId: capa.requestId,
       }),
     ).rejects.toMatchObject({ code: 'POLICY_SOURCE_REQUIRED' });
+  });
+  it('NCR forwards the scoped owner-authorized command without assigning owner', () => {
+    const create = vi.fn();
+    new CreateNcrUseCase({ create } as unknown as NcrRepository).execute(ncr);
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ intentId: ncr.intentId,
+      ncr: expect.objectContaining({ state: 'DRAFT', findingId: ncr.findingId }) }));
+    expect(create.mock.calls[0]![0].ncr.ownerId).toBeUndefined();
+  });
+  it.each(['ownerId', 'createdBy', 'state', 'createdAt'])( 'NCR rejects supplied %s', key => {
+    const create = vi.fn();
+    expect(() => new CreateNcrUseCase({ create } as unknown as NcrRepository).execute({ ...ncr, [key]: actor.id }))
+      .toThrowError(expect.objectContaining({ code: 'VALIDATION_FAILED' }));
+    expect(create).not.toHaveBeenCalled();
   });
 });
 

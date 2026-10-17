@@ -1,0 +1,28 @@
+{
+  "executedAt": "2026-10-17T06:01:25.126Z",
+  "checks": [
+    "JS authorized contextual source and hidden out-of-scope source",
+    "JS shared server validation retains values and intent",
+    "Populated JS form axe zero and no overflow at 1440/768/390/320",
+    "JS committed draft/relation/audit and detail navigation",
+    "JS-session replay same record; conflict/owner/missing/out-of-scope denied without duplicate audit",
+    "native authorized contextual source and hidden out-of-scope source",
+    "native shared server validation retains values and intent",
+    "native 303 committed draft/relation/audit and detail navigation",
+    "native-session replay same record; conflict/owner/missing/out-of-scope denied without duplicate audit",
+    "No-permission actor denied UI and direct action on existing accessible Finding",
+    "Guest native POST redirected without write"
+  ],
+  "fixtures": {
+    "users": [
+      "bb76a031-3626-4eeb-bb1e-3dc174d36315",
+      "8c969b61-6c8f-4911-9cee-c57f971f3fc8"
+    ],
+    "findings": [
+      "efabe54c-8156-47dd-9916-5a08b97922dc",
+      "51f1669a-7a32-4f81-b41d-a2080d99a6ce"
+    ]
+  },
+  "boundary": "Synthetic local browser acceptance, not human UAT or scientific acceptance",
+  "status": "PASS"
+}
