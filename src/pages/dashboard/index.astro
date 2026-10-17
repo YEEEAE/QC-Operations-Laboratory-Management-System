@@ -107,16 +107,74 @@ const departmentTools = visibleNavigationUtilities(actor);
 .workflow-access ol{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3);padding:0;margin:var(--space-4) 0 0;list-style:none}.workflow-access li{display:grid;gap:.25rem;padding:var(--space-3);background:var(--surface-raised);border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.workflow-access li a{font-weight:700;color:var(--color-accent-primary-hover)}.workflow-access li span{color:var(--text-muted);font-size:var(--font-size-xs)}
  </style>
 <style>
-  .flow-empty{gap:0;border-block:1px solid var(--color-border-subtle)}.flow-empty .flow-stage a{min-block-size:88px;border:0;border-radius:0;background:transparent}.flow-empty .flow-value{font-size:1.1rem}.flow-empty .flow-step{display:none}.panel{background:transparent;border:0;border-block-start:1px solid var(--color-border-subtle);border-radius:0;padding-inline:0}.priority-panel{border-block-start:0}.page-head h1{font-size:2rem}.eyebrow{letter-spacing:0}.workflow-access li{background:transparent;border:0;border-inline-start:2px solid var(--color-border-subtle);border-radius:0}.panel-head a{white-space:normal}.snapshot time{overflow-wrap:anywhere}.main-column,.side-column{min-width:0}
- </style>
-<style>
-  .dashboard-grid{grid-template-columns:minmax(0,1.65fr) minmax(290px,.85fr)}
-  .main-column :global(.chart),.main-column .series-state{order:-1}
-  .priority-panel,.dashboard-grid .panel,.workflow-access{padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);box-shadow:var(--shadow-1)}
-  .priority-panel{margin-block-end:var(--space-4)}
-  .workflow-access li{padding:var(--space-3);border-inline-start:2px solid var(--color-accent-primary);background:var(--color-surface-2)}
-  .attention-list a{min-block-size:52px;border-radius:var(--radius-sm);padding-inline:var(--space-2)}
-  .attention-list a:hover{background:var(--color-surface-hover)}
-  @media(max-width:960px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}}
-  .departments .department-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:var(--space-4);list-style:none;margin:var(--space-4) 0 0;padding:0}.departments .department-grid>li{border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);padding:var(--space-4);background:var(--surface-raised)}.departments h3{margin:0 0 var(--space-2);font-size:var(--font-size-sm);color:var(--text-primary)}.departments ul ul{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-1)}.departments ul ul a{display:inline-flex;align-items:center;min-block-size:44px;color:var(--color-accent-primary-hover);font-size:var(--font-size-sm);font-weight:600;text-decoration:none}.departments ul ul a:hover{text-decoration:underline}
+  /* CA-P-DASHBOARD: overview presentation only. Keep DOM/source order and all
+     server-owned contracts intact; no selector reaches the workspace Sidebar. */
+  .decision-room { display:grid; gap:var(--space-5); min-inline-size:0; }
+  .decision-room > :global(*) { min-inline-size:0; margin-block:0; }
+  .decision-room > :global(.page-header) { padding-block-end:var(--space-5); }
+  .snapshot { margin:0; gap:var(--space-2); padding:0; max-inline-size:38ch; }
+  .snapshot time { font-size:var(--font-size-xs); color:var(--text-muted); }
+  .snapshot a { padding-inline:var(--space-4); border:1px solid var(--control-border); border-radius:var(--radius-sm); text-decoration:none; }
+  .decision-room .panel { padding:clamp(1rem,2vw,1.5rem); background:var(--surface-panel); border:1px solid var(--color-border-default); border-radius:var(--radius-lg); box-shadow:var(--shadow-1); }
+  .panel-head { flex-wrap:wrap; gap:var(--space-3); }
+  .panel-head > div { min-inline-size:0; flex:1 1 15rem; }
+  .panel h2 { font-size:var(--font-size-md); line-height:1.5; }
+  .panel-intro { line-height:1.625; max-inline-size:70ch; }
+  .panel-links { justify-content:flex-start; gap:var(--space-2) var(--space-4); }
+  .decision-room a { min-inline-size:44px; }
+  .panel-head a,.snapshot a,.workflow-access li a,.panel-intro a,.denied a { display:inline-flex; align-items:center; min-block-size:44px; white-space:normal; }
+  .decision-room :is(a,summary):focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; border-radius:var(--radius-sm); }
+  .decision-room summary { min-block-size:44px; align-content:center; cursor:pointer; font-size:var(--font-size-sm); line-height:1.5; }
+  .attention-list a { min-block-size:64px; padding:var(--space-3) var(--space-2); flex-wrap:wrap; }
+  .attention-list a > span:first-child { min-inline-size:0; flex:1 1 15rem; }
+  .attention-list strong { line-height:1.5; }
+  .attention-list :global(.status-badge) { flex:none; }
+  .workflow-access ol,.departments .department-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); gap:var(--space-3); }
+  .departments .department-grid { display:grid; list-style:none; margin:var(--space-4) 0 0; padding:0; }
+  .departments h3 { margin:0 0 var(--space-2); font-size:var(--font-size-sm); color:var(--text-primary); }
+  .departments ul ul { list-style:none; margin:0; padding:0; display:grid; gap:var(--space-1); }
+  .departments ul ul a { align-items:center; min-block-size:44px; color:var(--color-accent-primary-hover); font-size:var(--font-size-sm); font-weight:600; text-decoration:none; }
+  .departments ul ul a:hover { text-decoration:underline; }
+  .workflow-access li { border:1px solid var(--color-border-subtle); border-inline-start:2px solid var(--color-accent-primary); background:var(--surface-inset); border-radius:var(--radius-sm); }
+  .workflow-access li span { line-height:1.5; }
+  .departments .department-grid > li { background:var(--surface-inset); padding:var(--space-4); border:1px solid var(--color-border-subtle); border-radius:var(--radius-md); }
+  .departments ul ul a { display:flex; }
+  .dashboard-grid { grid-template-columns:minmax(0,1fr); gap:var(--space-5); }
+  .main-column,.side-column { min-inline-size:0; gap:var(--space-5); }
+  /* Match visual and keyboard/reading order; the flow precedes the chart in DOM. */
+  .main-column :global(.chart),.main-column .series-state { order:0; }
+  .flow { grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr)); gap:var(--space-3); }
+  .flow-stage:not(:last-child)::after { content:none; }
+  .flow-stage a { min-block-size:132px; gap:var(--space-2); background:var(--surface-inset); box-shadow:none; }
+  .flow-stage a:hover,.flow-stage a:focus-visible { transform:none; box-shadow:none; }
+  .flow-empty { gap:var(--space-3); border:0; }
+  .flow-empty .flow-stage a { min-block-size:100px; padding:var(--space-3); border:1px solid var(--color-border-subtle); border-radius:var(--radius-sm); background:var(--surface-inset); }
+  .flow-contract,.series-contract { gap:var(--space-2); margin-block-start:var(--space-4); }
+  .flow-contract div,.series-contract div { grid-template-columns:minmax(0,5rem) minmax(0,1fr); }
+  .activity li { gap:var(--space-2); }
+  .activity strong { font-size:var(--font-size-sm); }
+  .note { border-inline-start:3px solid var(--status-warning)!important; }
+  /* Scope fixes for the existing nested primitives without changing other pages. */
+  .decision-room :global(.dashboard-counts) { margin-block:0; }
+  .decision-room :global(.kpi) { min-inline-size:0; transform:none; }
+  .decision-room :global(.kpis) { grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr)); }
+  .decision-room :global(.chart-head) { flex-wrap:wrap; }
+  .decision-room :global(.chart-head a) { display:inline-flex; align-items:center; min-block-size:44px; }
+  .decision-room :global(.definition-meta strong) { font-size:inherit; line-height:inherit; }
+  @media(min-width:1280px) {
+    .dashboard-grid { grid-template-columns:minmax(0,1.65fr) minmax(0,1fr); }
+  }
+  @media(max-width:520px) {
+    .snapshot { justify-items:start; text-align:start; }
+    .panel-links { display:grid; inline-size:100%; }
+    .flow-contract div,.series-contract div { grid-template-columns:minmax(0,1fr); gap:var(--space-1); }
+  }
+  @media(forced-colors:active) {
+    .decision-room .panel,.workflow-access li,.departments .department-grid > li,.flow-stage a { border-color:CanvasText; box-shadow:none; }
+    .decision-room :is(a,summary):focus-visible { outline-color:Highlight; }
+  }
+  @media print {
+    .decision-room,.dashboard-grid,.main-column,.side-column { display:block; }
+    .decision-room .panel { margin-block:var(--space-4); break-inside:avoid; }
+  }
 </style>

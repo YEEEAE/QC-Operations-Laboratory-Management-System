@@ -1,0 +1,15 @@
+- generic [active] [ref=f6e1]:
+  - main [ref=f6e3]:
+    - region [ref=f6e4]:
+      - heading "Something interrupted this request" [level=1] [ref=f6e5]
+      - paragraph [ref=f6e6]: The request result could not be confirmed. Review the affected record and its history before deciding whether to try again. Contact support if the result remains unclear.
+      - paragraph [ref=f6e7]:
+        - text: "Reference:"
+        - code [ref=f6e8]: req_01a148f6-16c3-74b0-9b4a-52cbde5cf062
+      - link "Sign in to continue" [ref=f6e10] [cursor=pointer]:
+        - /url: /login?returnTo=%2F500
+  - generic [ref=f6e13]:
+    - button [ref=f6e14]
+    - button [ref=f6e20]
+    - button [ref=f6e24]
+    - button [ref=f6e29]

@@ -1,18 +1,22 @@
 ---
 import BaseLayout from '../ui/layouts/BaseLayout.astro';
+// One canonical failure region for this route. The page reports an existing
+// server outcome; it never decides eligibility and never replays a mutation.
 const requestId = Astro.locals.requestContext?.requestId;
 const hasSession = Boolean(Astro.locals.actor);
 const returnTo = encodeURIComponent(`${Astro.url.pathname}${Astro.url.search}`);
 const recoveryHref = hasSession ? '/dashboard' : `/login?returnTo=${returnTo}`;
 const recoveryLabel = hasSession ? 'Back to dashboard' : 'Sign in to continue';
 const sessionEnded = Astro.locals.sessionRecovery === 'SESSION_ENDED';
+const message = sessionEnded
+  ? 'Your session ended while this request was being processed. Sign in again, then review the affected record and its history before deciding whether to retry.'
+  : 'The request result could not be confirmed. Review the affected record and its history before deciding whether to try again. Contact support if the result remains unclear.';
 ---
 <BaseLayout title="Service unavailable" visualDirection="capa-a">
   <main class="error-shell" id="main-content">
     <section class="state-card" aria-labelledby="error-title">
-      <p class="eyebrow">Request could not be completed</p>
       <h1 id="error-title">Something interrupted this request</h1>
-      <p>{sessionEnded ? 'Your session ended while this request was being processed. Sign in again, then review the affected record and its history before deciding whether to retry.' : 'The request result could not be confirmed. Review the affected record and its history before deciding whether to try again. Contact support if the result remains unclear.'}</p>
+      <p class="state-card__message">{message}</p>
       {requestId && <p class="reference">Reference: <code>{requestId}</code></p>}
       <div class="state-card__actions">
         <a href={recoveryHref}>{recoveryLabel}</a>
@@ -21,11 +25,49 @@ const sessionEnded = Astro.locals.sessionRecovery === 'SESSION_ENDED';
   </main>
 </BaseLayout>
 <style>
-  .error-shell { min-height: 100vh; display: grid; align-content: center; justify-items: center; padding: var(--space-6); }
-  .eyebrow { margin: 0 0 var(--space-2); color: var(--status-danger); font-size: var(--font-size-xs); font-weight: 700; }
-  h1 { margin: 0; color: var(--text-primary); font-size: 1.75rem; line-height: 1.2; }
-  .state-card p:not(.eyebrow) { color: var(--text-secondary); }
-  .reference { font-size: var(--font-size-sm); }
-  .reference code { color: var(--text-primary); font-family: var(--font-mono); overflow-wrap: anywhere; }
-  @media (max-width: 520px) { .error-shell { padding: var(--space-4); } }
+  .error-shell {
+    min-block-size: 100vh;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    padding: var(--space-6);
+  }
+
+  /* This surface states its own type hierarchy. The shared decision card gives
+     paragraphs a default role with one qualifying class, so these selectors add
+     one further qualifier instead of touching the shared layer. Tokens and
+     logical properties only. */
+  .error-shell h1 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+
+  .error-shell .state-card p.state-card__message {
+    margin: 0;
+    margin-block-start: var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+  }
+
+  .error-shell .state-card p.reference {
+    margin: 0;
+    margin-block-start: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .error-shell .state-card p.reference code {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 520px) {
+    .error-shell {
+      padding: var(--space-4);
+    }
+  }
 </style>

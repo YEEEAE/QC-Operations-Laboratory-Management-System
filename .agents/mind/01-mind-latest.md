@@ -1,3 +1,7 @@
+- **2026-10-17 — CA-P-DASHBOARD / عرض overview محلي**
+  - Changed: CSS محلي graphite للوحة؛ non-style source وSidebar مطابقان لـHEAD، بلا تغيير مصادر/سياسات/روابط.
+  - Evidence: Node24 focused31/31 وtypecheck0 errors؛ PG18 authenticated matched five viewports: overflow0/axe0 وأهداف محتوى≥44×44؛ حساب least قرأ سجلًا فعليًا ثم owner route404، وليس denied-dashboard. graphify update PASS؛ `audit/CA-P-DASHBOARD/execution-status.md`.
+  - State: PARTIAL؛ native zoom/AT وpopulated attention/chart/provider matrix وقراءة جميع775 skill paths NOT RUN. لا commit/push/deploy/إنتاج.
 - **2026-10-17 — CA-P-QUARANTINE-RECEIVING-RECEIVINGID / طبقة عرض محلية للتفاصيل**
   - Changed: CSS محلي لرأس الهوية والحالات والحقائق والتاريخ والعلاقات وrail متجاوب؛ frontmatter/markup/client script مطابقون حرفيًا لـHEAD وSidebar بلا تغيير.
   - Evidence: Node24.20.0 focused44/44 وtypecheck0 errors؛ graphify update PASS. المتصفح المصادق وصل للسجل لكن اكتشاف detail معبأ لم ينجح؛ مصفوفة detail/actions/zoom/AT NOT RUN. `audit/CA-P-QUARANTINE-RECEIVING-RECEIVINGID/execution-status.md`.

@@ -1,0 +1,82 @@
+{
+  "head": "710453e55d00f0f931d3238bb93b167dfef27cf8",
+  "nonStyleSource": "IDENTICAL",
+  "sidebarSource": "IDENTICAL",
+  "sidebarSHA256": "973afdc935c684880b4a6f07a0f341270347fc3a1e43ecd20389e9dad6aeb818",
+  "nodeBefore": "v24.20.0",
+  "nodeAfter": "v24.20.0",
+  "checks": [
+    {
+      "width": 320,
+      "sidebarLinksCountsAttention": "IDENTICAL",
+      "targetsBefore": 6,
+      "targetsAfter": 0,
+      "textUnder12": 0,
+      "overflow": 0,
+      "axe": 0
+    },
+    {
+      "width": 390,
+      "sidebarLinksCountsAttention": "IDENTICAL",
+      "targetsBefore": 6,
+      "targetsAfter": 0,
+      "textUnder12": 0,
+      "overflow": 0,
+      "axe": 0
+    },
+    {
+      "width": 768,
+      "sidebarLinksCountsAttention": "IDENTICAL",
+      "targetsBefore": 7,
+      "targetsAfter": 0,
+      "textUnder12": 0,
+      "overflow": 0,
+      "axe": 0
+    },
+    {
+      "width": 1024,
+      "sidebarLinksCountsAttention": "IDENTICAL",
+      "targetsBefore": 6,
+      "targetsAfter": 0,
+      "textUnder12": 0,
+      "overflow": 0,
+      "axe": 0
+    },
+    {
+      "width": 1440,
+      "sidebarLinksCountsAttention": "IDENTICAL",
+      "targetsBefore": 6,
+      "targetsAfter": 0,
+      "textUnder12": 0,
+      "overflow": 0,
+      "axe": 0
+    }
+  ],
+  "contrast": [
+    {
+      "selector": ".priority-panel h2",
+      "color": "rgb(232, 237, 245)",
+      "background": "rgb(37, 43, 52)",
+      "ratio": 12.120603481042549
+    },
+    {
+      "selector": ".priority-panel .empty",
+      "color": "rgb(155, 163, 175)",
+      "background": "rgb(37, 43, 52)",
+      "ratio": 5.598871275066463
+    },
+    {
+      "selector": ".priority-panel .eyebrow",
+      "color": "rgb(155, 163, 175)",
+      "background": "rgb(37, 43, 52)",
+      "ratio": 5.598871275066463
+    },
+    {
+      "selector": ".priority-panel a",
+      "color": "rgb(166, 197, 245)",
+      "background": "rgb(37, 43, 52)",
+      "ratio": 8.092285532979922
+    }
+  ],
+  "beforeRunnerNote": "Five baseline viewport captures succeeded; later assertion incorrectly expected least to be denied dashboard. That assertion timed out; baseline not claimed as a complete PASS."
+}
