@@ -1,3 +1,7 @@
+- **2026-10-17 — CA-P-QUARANTINE-RECEIVING-RECEIVINGID / طبقة عرض محلية للتفاصيل**
+  - Changed: CSS محلي لرأس الهوية والحالات والحقائق والتاريخ والعلاقات وrail متجاوب؛ frontmatter/markup/client script مطابقون حرفيًا لـHEAD وSidebar بلا تغيير.
+  - Evidence: Node24.20.0 focused44/44 وtypecheck0 errors؛ graphify update PASS. المتصفح المصادق وصل للسجل لكن اكتشاف detail معبأ لم ينجح؛ مصفوفة detail/actions/zoom/AT NOT RUN. `audit/CA-P-QUARANTINE-RECEIVING-RECEIVINGID/execution-status.md`.
+  - State: PARTIAL؛ فصل evidence في قسم مستقل وmatched baseline والقبول الكامل باقية؛ عقود native POST القائمة محفوظة ولم تُصلح خارج نطاق العرض. لا commit/push/deploy/إنتاج.
 - **2026-10-17 — CA-P-TASKS-NEW / عرض نموذج المهام وفجوة native POST**
   - Changed: CSS محلي فقط للنموذج (عمود هاتف/عمودان مستقلان واسعًا و44px)؛ non-style source وSidebar مطابقان لـHEAD.
   - Evidence: Node24 unit26/26؛ خمسة عروض overflow0 وaxe0؛ حساب employee أنشأ سجلًا فعليًا، least بلا نموذج. native POST أعاد200 unconfirmed رغم حفظ السجل؛ reconciliation وجد UUID الحقيقي. `audit/CA-P-TASKS-NEW/execution-status.md`.
