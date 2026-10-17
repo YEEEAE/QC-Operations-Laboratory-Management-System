@@ -1,0 +1,32 @@
+{
+  "promptId": "CA-03",
+  "state": "PARTIAL",
+  "date": "2026-10-17",
+  "candidate": {
+    "head": "b4eea27a80cf4bc71b9180f75443a4391fcbcaac",
+    "workingTree": "Uncommitted CA-03 changes; HEAD alone does not identify the tested bytes",
+    "sha256": {
+      "src/ui/forms/mutation-interaction.ts": "1777f7d8ecd5334875337740c57f58d3d3b6e778aa80d5da7e7a46e2eb40468b",
+      "src/ui/forms/enhance-with-classification.ts": "59fb2f1b91478d0e56efb26bd57f2697219ea880d9c0d0450c749933cb83346a",
+      "tests/unit/ui/ca03-mutation-transitions.test.ts": "fbac77c445e9612063d11f72c8195c43b4e6b4f42c94495e2d5f6b06d801631b"
+    }
+  },
+  "evidence": [
+    { "check": "Focused Vitest: CA-03, validation feedback, mutation POST, admin errors", "status": "PASS", "passed": 89, "failed": 0 },
+    { "check": "Astro check under Node 24.20.0", "status": "PASS", "errors": 0, "warnings": 0, "hints": 118 },
+    { "check": "Astro build under Node 24.20.0 (not full release evidence pipeline)", "status": "PASS" },
+    { "check": "Architecture boundary and canonical route integrity", "status": "PASS" },
+    { "check": "git diff --check", "status": "PASS" },
+    { "check": "Authenticated browser, screenshots, no-JS runtime, AT and all seven transition suites", "status": "NOT RUN" },
+    { "check": "CA-F creation authority", "status": "BLOCKED", "reason": "Existing PD-15/16/18 and RetestPolicy authority gates remain; no creation-policy implementation in CA-03" }
+  ],
+  "remaining": [
+    "All reachable transitions plus negative guard and forbidden transition per concern are not covered; only mutation reducer and one mocked listener journey tested",
+    "Reconciliation links do not enforce reconciliation before manual resubmission",
+    "Dialog validity/focus fallback, auth sign-out failure and export recovery require implementation and runtime evidence",
+    "Read/filter/block contracts are source documentation, not new runtime machines",
+    "All-skill reading discovery prerequisite incomplete (387 found, 11 read by subtask)",
+    "No screenshots of this candidate; do not reuse CA-01/02 as CA-03 evidence"
+  ],
+  "remoteOperations": "No commit, push, merge, deploy, production connection or migration"
+}

@@ -256,7 +256,10 @@ describe('shared async mutation interaction contract (ui-ux-pro-max)', () => {
     expect(contract).toContain('[data-submit]');
     expect(contract).toContain('mutationEnhanced');
     expect(contract).toContain('progressText');
-    expect(contract).not.toMatch(/form\.reset|value\s*=\s*['"]{2}/);
+    expect(contract).not.toMatch(/form\.reset/);
+    // CA-03 retains non-secret values only; credentials must be cleared.
+    expect(contract).toContain('querySelectorAll<HTMLInputElement>(\'input[type="password"]\')');
+    expect(contract.match(/input\.value = ''/g)).toHaveLength(1);
   });
 
   it('preserves input, focuses status, and never leaks technical detail', () => {

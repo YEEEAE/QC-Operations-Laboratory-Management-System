@@ -4,7 +4,7 @@
  *   AUTHORIZATION_CHANGED DEPENDENCY_UNAVAILABLE UNKNOWN_SAFE_ERROR
  * During SUBMITTING: disable ONLY the triggering submit, set
  * aria-busy on the form, write progress text to [data-result],
- * guard duplicates. Never clears input. No-JS POST stays valid.
+ * guard duplicates. Retains non-secret input only. No-JS POST stays valid.
  */
 export type MutationState =
   | 'IDLE'
@@ -21,6 +21,28 @@ export type MutationState =
 export interface MutationOutcome {
   state: MutationState;
   recordId?: string;
+}
+
+/** UI only: server classification remains the authority for every outcome. */
+export type MutationEvent =
+  | { type: 'SUBMIT'; valid: boolean }
+  | { type: 'RESOLVE'; outcome: MutationOutcome }
+  | { type: 'TRANSPORT_FAILED' };
+
+export function transitionMutation(state: MutationState, event: MutationEvent): MutationState {
+  switch (event.type) {
+    case 'SUBMIT':
+      if (state === 'SUBMITTING' || state === 'SUCCESS' || !event.valid) return state;
+      return 'SUBMITTING';
+    case 'RESOLVE':
+      if (state !== 'SUBMITTING') return state;
+      // A response cannot reset a pending interaction to another pending/idle state.
+      return event.outcome.state === 'IDLE' || event.outcome.state === 'SUBMITTING'
+        ? state
+        : event.outcome.state;
+    case 'TRANSPORT_FAILED':
+      return state === 'SUBMITTING' ? 'UNKNOWN_SAFE_ERROR' : state;
+  }
 }
 
 function messageOf(error: unknown): string {
@@ -80,13 +102,13 @@ export function classifyActionResult(
   result: { data?: unknown; error?: unknown } | null | undefined,
 ): MutationOutcome {
   const data = result?.data as { id?: unknown } | undefined;
-  if (data && typeof data.id === 'string' && data.id.length > 0) {
+  if (!result?.error && data && typeof data.id === 'string' && data.id.length > 0) {
     return { state: 'SUCCESS', recordId: data.id };
   }
-  if (data && (typeof data !== 'object' || !('id' in (data as object)))) {
+  if (!result?.error && data && (typeof data !== 'object' || !('id' in (data as object)))) {
     return { state: 'SUCCESS' };
   }
-  if (data && typeof data === 'object') return { state: 'SUCCESS' };
+  if (!result?.error && data && typeof data === 'object') return { state: 'SUCCESS' };
   const exact = appErrorCodeOf(result?.error);
   if (exact && EXACT_CODE_STATE[exact]) return { state: EXACT_CODE_STATE[exact]! };
   const message = messageOf(result?.error);
@@ -131,9 +153,12 @@ export function enhanceMutationForm<TData>(options: EnhanceOptions<TData>): void
   const { form, invoke, progressText, copy, onSuccess } = options;
   if (form.dataset.mutationEnhanced === 'true') return;
   form.dataset.mutationEnhanced = 'true';
+  let state: MutationState = 'IDLE';
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (form.getAttribute('aria-busy') === 'true') return;
+    if (state === 'SUBMITTING' || state === 'SUCCESS') return;
+    state = transitionMutation(state, { type: 'SUBMIT', valid: form.checkValidity() });
+    if (state !== 'SUBMITTING') return;
     const submit = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
     const output = form.querySelector<HTMLElement>('[data-result]');
     form.setAttribute('aria-busy', 'true');
@@ -142,6 +167,7 @@ export function enhanceMutationForm<TData>(options: EnhanceOptions<TData>): void
     try {
       const result = await invoke(new FormData(form));
       const outcome = classifyActionResult(result);
+      state = transitionMutation(state, { type: 'RESOLVE', outcome });
       if (outcome.state === 'SUCCESS') {
         if (onSuccess) onSuccess(outcome, form);
         else window.location.reload();
@@ -164,11 +190,15 @@ export function enhanceMutationForm<TData>(options: EnhanceOptions<TData>): void
         }
       }
     } catch {
+      state = transitionMutation(state, { type: 'TRANSPORT_FAILED' });
       if (output) {
         output.textContent = copy.UNKNOWN_SAFE_ERROR;
         output?.focus?.();
       }
     } finally {
+      form.querySelectorAll<HTMLInputElement>('input[type="password"]').forEach((input) => {
+        input.value = '';
+      });
       form.removeAttribute('aria-busy');
       if (submit) submit.disabled = false;
     }

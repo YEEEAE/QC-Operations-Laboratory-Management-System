@@ -21,6 +21,7 @@
  */
 import {
   classifyActionResult,
+  transitionMutation,
   type MutationOutcome,
   type MutationState,
 } from './mutation-interaction';
@@ -64,6 +65,7 @@ export function enhanceClassifiedForm<TData>(
   if (form.dataset.enhance === 'classified') return;
   form.dataset.enhance = 'classified';
   const validation = createValidationFeedback(form);
+  let state: MutationState = 'IDLE';
   let invalidQueued = false;
   // Native interactive validation happens before submit; retain that baseline
   // and present all native failures in one linked summary per attempt.
@@ -83,7 +85,12 @@ export function enhanceClassifiedForm<TData>(
 
   form.addEventListener('submit', async (event: Event) => {
     event.preventDefault();
-    if (form.getAttribute('aria-busy') === 'true') return;
+    if (state === 'SUBMITTING' || state === 'SUCCESS') return;
+    state = transitionMutation(state, { type: 'SUBMIT', valid: form.checkValidity() });
+    if (state !== 'SUBMITTING') {
+      validation.show();
+      return;
+    }
     validation.clear();
 
     const submit = form.querySelector<HTMLButtonElement>('[data-submit], button[type="submit"]');
@@ -101,6 +108,7 @@ export function enhanceClassifiedForm<TData>(
       const payload = config.payload(new FormData(form));
       const result = await config.invoke(payload);
       const outcome = classifyActionResult(result);
+      state = transitionMutation(state, { type: 'RESOLVE', outcome });
 
       if (outcome.state === 'SUCCESS') {
         // The record was committed: notify unsaved-change guards before the
@@ -140,6 +148,7 @@ export function enhanceClassifiedForm<TData>(
         if (!hasFieldErrors) output.focus();
       }
     } catch {
+      state = transitionMutation(state, { type: 'TRANSPORT_FAILED' });
       // Transport failure has an unknown commit outcome. Keep entries and
       // require a record/history read before the operator decides to retry.
       if (output) {
@@ -154,6 +163,9 @@ export function enhanceClassifiedForm<TData>(
         output?.focus?.();
       }
     } finally {
+      form.querySelectorAll<HTMLInputElement>('input[type="password"]').forEach((input) => {
+        input.value = '';
+      });
       form.removeAttribute('aria-busy');
       if (submit) submit.disabled = false;
     }
