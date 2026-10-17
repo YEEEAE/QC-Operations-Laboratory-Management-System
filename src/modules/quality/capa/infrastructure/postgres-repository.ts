@@ -44,28 +44,10 @@ export class PostgresCapaRepository implements CapaRepository {
       })),
     };
   }
-  async create(i: Parameters<CapaRepository['create']>[0]) {
-    const r = await this.db
-      .insertInto('capas')
-      .values({
-        id: i.capa.id,
-        capa_no: i.capa.capaNo,
-        ncr_id: i.capa.ncrId ?? null,
-        state: 'DRAFT',
-        title: i.capa.title,
-        description: i.capa.description,
-        owner_id: i.capa.ownerId ?? null,
-        target_date: i.capa.targetDate ?? null,
-        verification_required: i.capa.verificationRequired,
-        effectiveness_required: i.capa.effectivenessRequired,
-        closed_at: null,
-        created_by: i.actor.id,
-        updated_at: i.capa.updatedAt,
-        version: 1n,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return this.map(r);
+  async create(_i: Parameters<CapaRepository['create']>[0]): Promise<Capa> {
+    // No approved creation-source/atomic action-plan/audit/replay contract.
+    // Previously this silently dropped actions[] and wrote only the header.
+    throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
   }
   async get(id: string, a: ActorContext) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;

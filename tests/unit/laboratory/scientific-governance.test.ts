@@ -273,6 +273,115 @@ describe('lab test reject transition (TR-LAB-007)', () => {
 });
 
 describe('retest governance (TR-RETEST-003, BR-LAB-014..018 guards)', () => {
+  it('starts with no inherited run evidence or derived verdict and audits the reason', async () => {
+    const original = labTest({
+      state: 'APPROVED',
+      scientificResult: 'FAIL',
+      batches: [
+        { id: 'batch', batchNo: 'fixture', sequence: 1, startedAt: '2026-01-01T00:00:00Z' },
+      ],
+      readings: [
+        {
+          id: 'reading',
+          batchId: 'batch',
+          sampleId: 'sample-1',
+          parameterId: 'parameter-1',
+          readingIndex: 1,
+          raw: '1',
+          unit: 'mg',
+          enteredBy: AUTHOR_ID,
+          enteredAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      sampleResults: [
+        {
+          id: 'result',
+          batchId: 'batch',
+          sampleId: 'sample-1',
+          result: 'FAIL',
+          source: 'SYSTEM_EVALUATION',
+          sourceReference: 'fixture',
+          contentHash: 'fixture',
+          derivedFrom: null,
+          evaluatedAt: '2026-01-01T00:00:00Z',
+          evaluatedBy: AUTHOR_ID,
+        },
+      ],
+      derivedResult: {
+        result: 'FAIL',
+        source: 'fixture',
+        inputsHash: 'fixture',
+        computedAt: '2026-01-01T00:00:00Z',
+      },
+    });
+    const before = structuredClone(original);
+    const repository = labRepository(original);
+    let mutation: Mutation | undefined;
+    repository.create = async (next, recorded) => {
+      mutation = recorded;
+      return next;
+    };
+    const next = await new CreateRetestUseCase(repository, matchingSources, {
+      authorize: async () => ({
+        sequence: 1,
+        labTestNo: 'TEST-ONLY-002',
+        templateVersionId: 'template-version-1',
+      }),
+    }).execute({
+      actor: supervisorActor(),
+      originalId: original.id,
+      reason: '  Repeat observation  ',
+      requestId: 'fixture-retest',
+    });
+    expect(next).toMatchObject({
+      state: 'DRAFT',
+      scientificResult: null,
+      derivedResult: null,
+      samples: [],
+      measurements: [],
+      batches: [],
+      readings: [],
+      sampleResults: [],
+    });
+    expect(mutation).toMatchObject({ action: 'CREATE_RETEST', reason: 'Repeat observation' });
+    expect(original).toEqual(before);
+    expect(repository.saves).toHaveLength(0);
+  });
+
+  it.each(['blank-number', 'blank-template', 'fraction-sequence', 'mismatched-template'] as const)(
+    'rejects an invalid provider response: %s without a write',
+    async (problem) => {
+      const repository = labRepository(labTest());
+      let writes = 0;
+      repository.create = async (next) => {
+        writes++;
+        return next;
+      };
+      const sources =
+        problem === 'mismatched-template'
+          ? {
+              ...matchingSources,
+              resolve: async () => ({ ...labTest().context, templateVersionId: 'wrong' }),
+            }
+          : matchingSources;
+      await expect(
+        new CreateRetestUseCase(repository, sources, {
+          authorize: async () => ({
+            sequence: problem === 'fraction-sequence' ? 1.5 : 1,
+            labTestNo: problem === 'blank-number' ? ' ' : 'TEST-ONLY-002',
+            templateVersionId: problem === 'blank-template' ? ' ' : 'template-version-1',
+          }),
+        }).execute({
+          actor: supervisorActor(),
+          originalId: labTest().id,
+          reason: 'Repeat observation',
+          requestId: 'fixture-invalid',
+        }),
+      ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+      expect(writes).toBe(0);
+    },
+  );
+
   it('rejects a retest-of-a-retest chain link at the domain boundary', () => {
     const original = labTest({ originalTestId: '01900000-0000-7000-8000-0000000000b9' });
     const next = labTest({

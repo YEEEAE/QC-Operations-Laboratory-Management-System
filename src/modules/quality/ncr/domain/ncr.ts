@@ -39,7 +39,9 @@ export function createNcr(
   input: Omit<Ncr, 'state' | 'version' | 'createdAt' | 'updatedAt'> & { now: Date },
 ): Ncr {
   if (!input.findingId) throw new AppError('AUTHZ_DENIED', { userSafe: true });
-  if (!input.description.trim()) throw new AppError('VALIDATION_FAILED', { userSafe: true });
+  // Both fields already have nonblank CHECK constraints in 0007_quality.
+  if (!input.title.trim() || !input.description.trim())
+    throw new AppError('VALIDATION_FAILED', { userSafe: true });
   return { ...input, state: 'DRAFT', version: 1n, createdAt: input.now, updatedAt: input.now };
 }
 export function transitionNcr(

@@ -66,6 +66,17 @@ export function createCapa(
   if (!input.ncrId) throw new AppError('AUTHZ_DENIED', { userSafe: true });
   if (!input.title.trim() || !input.description.trim() || !input.actions.length)
     throw new AppError('VALIDATION_FAILED', { userSafe: true });
+  // Mirror existing 0007 column types/CHECK/UNIQUE constraints, not a QMS
+  // choice of flags, initial action states, deadlines or sequence policy.
+  if (
+    typeof input.verificationRequired !== 'boolean' ||
+    typeof input.effectivenessRequired !== 'boolean' ||
+    new Set(input.actions.map((action) => action.sequenceNo)).size !== input.actions.length ||
+    input.actions.some(
+      (action) => !action.description.trim() || !Number.isInteger(action.sequenceNo),
+    )
+  )
+    throw new AppError('VALIDATION_FAILED', { userSafe: true });
   return { ...input, state: 'DRAFT', version: 1n, createdAt: input.now, updatedAt: input.now };
 }
 export function transitionCapa(

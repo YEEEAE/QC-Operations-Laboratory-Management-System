@@ -1,4 +1,5 @@
 import { authorize } from '../../../../shared/authorization/authorize.js';
+import { AppError } from '../../../../shared/errors/app-error.js';
 import { uuidv7 } from '../../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../../shared/authorization/types.js';
 import { createNcr } from '../domain/ncr.js';
@@ -32,10 +33,16 @@ export class CreateNcrUseCase {
       },
       { throwOnDeny: true },
     );
+    // CA-F-00: a nonempty Finding ID is not approved eligibility, numbering
+    // or assignment evidence. The delivery stub must not be the only gate.
+    this.assertCreationSource();
     return this.repo.create({
       ncr: createNcr({ id: uuidv7(), createdBy: i.actor.id, now: this.now(), ...i }),
       actor: i.actor,
       requestId: i.requestId,
     });
+  }
+  private assertCreationSource(): void {
+    throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
   }
 }

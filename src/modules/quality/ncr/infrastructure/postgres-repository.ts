@@ -25,28 +25,10 @@ export class PostgresNcrRepository implements NcrRepository {
       version: BigInt(r.version),
     };
   }
-  async create(i: Parameters<NcrRepository['create']>[0]) {
-    const r = await this.db
-      .insertInto('ncrs')
-      .values({
-        id: i.ncr.id,
-        ncr_no: i.ncr.ncrNo,
-        title: i.ncr.title,
-        description: i.ncr.description,
-        state: 'DRAFT',
-        finding_id: i.ncr.findingId ?? null,
-        affected_item_code: i.ncr.affectedItemCode ?? null,
-        affected_lot: i.ncr.affectedLot ?? null,
-        owner_id: i.ncr.ownerId ?? null,
-        opened_at: null,
-        closed_at: null,
-        created_by: i.actor.id,
-        updated_at: i.ncr.updatedAt,
-        version: 1n,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    return this.map(r);
+  async create(_i: Parameters<NcrRepository['create']>[0]): Promise<Ncr> {
+    // No approved creation-source/atomic audit/replay contract exists yet.
+    // A direct adapter call must not restore the unaudited row-only write.
+    throw new AppError('POLICY_SOURCE_REQUIRED', { userSafe: true });
   }
   async get(id: string, a: ActorContext) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return;

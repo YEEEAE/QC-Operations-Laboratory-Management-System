@@ -4,6 +4,7 @@ import { uuidv7 } from '../../../shared/id/uuid.js';
 import type { ActorContext } from '../../../shared/authorization/types.js';
 import { isP05Authority } from '../../../shared/authorization/p05-authority.js';
 import { assertRetestLink } from '../domain/retest.js';
+import { assertContext } from '../domain/lab-test.js';
 import type { ControlledLabSources, RetestPolicy } from '../ports/controlled-sources.js';
 import type { LabRepository } from '../ports/repository.js';
 const unresolvedRetestPolicy: RetestPolicy = {
@@ -54,7 +55,18 @@ export class CreateRetestUseCase {
       actor: input.actor,
       reason: input.reason.trim(),
     });
+    // Validate the provider contract without choosing any policy values.
+    if (
+      !Number.isSafeInteger(authorization.sequence) ||
+      authorization.sequence <= 0 ||
+      !authorization.labTestNo.trim() ||
+      !authorization.templateVersionId.trim()
+    )
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const context = await this.sources.resolve(authorization.templateVersionId, input.actor);
+    assertContext(context);
+    if (context.templateVersionId !== authorization.templateVersionId)
+      throw new AppError('VALIDATION_FAILED', { userSafe: true });
     const at = this.now().toISOString();
     const next = {
       ...original,
@@ -68,6 +80,12 @@ export class CreateRetestUseCase {
       context,
       samples: [],
       measurements: [],
+      // A new DRAFT has no execution evidence. Spreading the original used to
+      // carry runs/readings/results (including derived FAIL/PASS) into it.
+      batches: [],
+      readings: [],
+      sampleResults: [],
+      derivedResult: null,
       originalTestId: original.id,
       retestSequence: authorization.sequence,
       retestReason: input.reason.trim(),
@@ -83,6 +101,7 @@ export class CreateRetestUseCase {
       actor: input.actor,
       requestId: input.requestId,
       action: 'CREATE_RETEST',
+      reason: input.reason.trim(),
     });
   }
 }
