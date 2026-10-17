@@ -104,6 +104,23 @@ The reference therefore proves only rest, hover and focus. Active, disabled and
 loading treatments are **PROPOSED** from the existing product conventions
 (`opacity: var(--disabled-opacity)` = 0.55, no second fill colour).
 
+### Implemented derived states — PROPOSED, not reference
+
+These were added to the presentation layer because the application already exposes
+pressed/disabled/busy affordances and the reference provides no value for them. They
+are derived, not copied.
+
+| State | Applied value | Contrast / evidence |
+|---|---|---|
+| primary pressed | `--color-accent-primary-active: #7EA6E0`, same fill on border | 7.14:1 against `#14181E` label |
+| secondary pressed | `--color-surface-active: #303845` | 10.05:1 with `#E8EDF5` text |
+| disabled / `aria-disabled` | existing `opacity: 0.55` + `cursor: not-allowed` | computed 0.55 in browser |
+| loading / `aria-busy` | `opacity: 0.85` + `cursor: progress`; no new spinner | computed 0.85 and `progress` |
+
+Measured in the authenticated candidate: rest `rgb(146,184,242)`, hover
+`rgb(166,197,245)`, pressed `rgb(126,166,224)`. The reference itself still has no
+pressed, disabled or loading state.
+
 ## 6. Layout and exclusions — OBSERVED
 
 - Two-column page: a 264px empty rail (`hidden lg:block`) plus a `flex-1` main area.

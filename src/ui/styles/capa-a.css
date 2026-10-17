@@ -35,6 +35,10 @@ html[data-visual-direction='capa-a'] {
   --color-text-inverse: #14181e;
   --color-accent-primary: #92b8f2;
   --color-accent-primary-hover: #a6c5f5;
+  /* Derived pressed state: not present in the reference. #7EA6E0 keeps 7.14:1
+     against the inverse label while reading as a pressed accent. */
+  --color-accent-primary-active: #7ea6e0;
+  --color-surface-active: #303845;
   --color-accent-primary-muted: #22344e;
 
   /* Status semantics are not present in the reference seeds. Keep the
@@ -275,9 +279,33 @@ html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-but
   border-color: var(--color-accent-primary-hover);
 }
 
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):not(.secondary, .controlled, .danger, .link-button.secondary):active:not(:disabled) {
+  background: var(--color-accent-primary-active);
+  border-color: var(--color-accent-primary-active);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.secondary, .button.secondary, .link-button.secondary):active:not(:disabled),
+html[data-visual-direction='capa-a'] .app-main :where(.controlled, .button.controlled):active:not(:disabled) {
+  background: var(--color-surface-active);
+}
+
 html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):disabled {
   opacity: var(--disabled-opacity);
   cursor: not-allowed;
+}
+
+/* Loading and disabled affordances. No spinner is introduced: the existing
+   pending/status regions remain the source of progress feedback. */
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit'])[aria-busy='true'],
+html[data-visual-direction='capa-a'] .state-card__actions :where(a, button)[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit'])[aria-disabled='true'],
+html[data-visual-direction='capa-a'] .state-card__actions :where(a, button)[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: var(--disabled-opacity);
 }
 
 /* Tables keep their existing responsive/scroll contracts; only the surface,
@@ -432,6 +460,11 @@ html[data-visual-direction='capa-a'] .state-card__actions a:first-child:hover {
   border-color: var(--color-accent-primary-hover);
 }
 
+html[data-visual-direction='capa-a'] .state-card__actions a:first-child:active {
+  background: var(--color-accent-primary-active);
+  border-color: var(--color-accent-primary-active);
+}
+
 html[data-visual-direction='capa-a'] .state-card__actions a:not(:first-child) {
   background: transparent;
   border: 1px solid var(--control-border);
@@ -440,6 +473,10 @@ html[data-visual-direction='capa-a'] .state-card__actions a:not(:first-child) {
 
 html[data-visual-direction='capa-a'] .state-card__actions a:not(:first-child):hover {
   background: var(--color-surface-2);
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions a:not(:first-child):active {
+  background: var(--color-surface-active);
 }
 
 /* Modal surfaces sit outside `.app-main` (command palette) or inside it;

@@ -1,0 +1,29 @@
+{
+  "identity": "verify-least",
+  "generatedAt": "2026-10-17T03:50:56.619Z",
+  "list": {
+    "url": "/tasks",
+    "overflowPx": 0,
+    "bodyText": "Skip to main content\nQC\nQC Operations\nFind a page\n\nOverview\nWork\nMy work today\nTasks\nCurrent page\nQuality\nQuarantine\nLaboratory\nAssets\nGovernance\nInsights\nAdministration\nSystem\nWORKSPACE TOOLS\nNotifications\nSearch\nAccount settings\nOperating guides\nHome\nTasks\nCurrent scope\nAll sites (global)\nV\nverify-least\nNo role assigned\n\nWork\n\nTasks\nSearch\nState\nAll states\nDraft\nOpen\nIn progress\nOn hold\nCompleted\nCancelled\nDue\nAny due date\nOverdue\nDue today\nMore filters (2 applied)\nApply filters\nSaved filters\nPreset name\nSave filters\nDelete preset\n\nShowing 1 of 1 in your authorized scope — page 1 of 1.\n\nTasks — 1 matching records\n\nShowing 1 of 1 authorized tasks · page 1 of 1. Sorted by updated (desc).\n\nRow density\nComfortable\nStandard\nCompact\n\nBulk actions: none are available for this register. Open a row to use its authorized, audited actions.\n\nTasks — 1 matching records\nTask number\tTitle\tOwner\tPriority\tAssignee\tDue\tState\tVersion\tNext step\nVERIFY-AUTHZ-READONLY\tAuthorization read-only boundary fixture\tVerification Active user without sensitive permissions (disposable, 24h)\tNormal\tUnassigned\t—\tDraft\t1\tWait for an authorized user to activate this draft\nPage 1 of 1 — 1 tasks\nPrevious\nNext",
+    "links": [
+      "/tasks/b82044e4-68d2-49d3-81fb-19cb03d73b54"
+    ]
+  },
+  "detail": {
+    "url": "/tasks/b82044e4-68d2-49d3-81fb-19cb03d73b54",
+    "overflowPx": 0,
+    "h1": "Authorization read-only boundary fixture",
+    "hasTaskNo": true,
+    "headings": [
+      "Workspace tools",
+      "Authorization read-only boundary fixture",
+      "Overview",
+      "Related record and recurrence",
+      "Checklist",
+      "Available actions",
+      "Transition history",
+      "Go to"
+    ],
+    "axe": []
+  }
+}

@@ -1,0 +1,1523 @@
+{
+  "base": "http://127.0.0.1:4331",
+  "identity": "verify-employee",
+  "generatedAt": "2026-10-17T03:50:13.634Z",
+  "pages": [
+    {
+      "path": "/quality/capa/new",
+      "label": "capa-new",
+      "w1440": {
+        "label": "/quality/capa/new@1440",
+        "url": "/quality/capa/new",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 12,
+        "interactiveCount": 30,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Quality",
+            "w": 40,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "CAPA",
+            "w": 32,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Direct creation is not available.",
+          "actions": [
+            {
+              "text": "Open the CAPA register",
+              "w": 206,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open NCR",
+              "w": 119,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 720
+        },
+        "sidebar": {
+          "width": 264,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "New CAPA"
+      },
+      "w720": {
+        "label": "/quality/capa/new@720",
+        "url": "/quality/capa/new",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 12,
+        "interactiveCount": 10,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Quality",
+            "w": 40,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "CAPA",
+            "w": 32,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Direct creation is not available.",
+          "actions": [
+            {
+              "text": "Open the CAPA register",
+              "w": 206,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open NCR",
+              "w": 119,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 688
+        },
+        "sidebar": {
+          "width": 320,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "New CAPA"
+      },
+      "w360": {
+        "label": "/quality/capa/new@360",
+        "url": "/quality/capa/new",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 12,
+        "interactiveCount": 10,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Quality",
+            "w": 40,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "CAPA",
+            "w": 32,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Direct creation is not available.",
+          "actions": [
+            {
+              "text": "Open the CAPA register",
+              "w": 278,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open NCR",
+              "w": 278,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 328
+        },
+        "sidebar": {
+          "width": 310,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "New CAPA"
+      },
+      "axe": {
+        "label": "capa-new",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "capa-new",
+        "nodes": 245,
+        "named": 133,
+        "roles": {
+          "heading": 3,
+          "link": 16,
+          "button": 11,
+          "main": 1,
+          "navigation": 2
+        }
+      }
+    },
+    {
+      "path": "/quality/ncr/new",
+      "label": "ncr-new",
+      "w1440": {
+        "label": "/quality/ncr/new@1440",
+        "url": "/quality/ncr/new",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 12,
+        "interactiveCount": 30,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Quality",
+            "w": 40,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "NCR",
+            "w": 25,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Direct creation is not available.",
+          "actions": [
+            {
+              "text": "Open the NCR register",
+              "w": 199,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open findings",
+              "w": 142,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 720
+        },
+        "sidebar": {
+          "width": 264,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "New NCR"
+      },
+      "w720": {
+        "label": "/quality/ncr/new@720",
+        "url": "/quality/ncr/new",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 12,
+        "interactiveCount": 10,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Quality",
+            "w": 40,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "NCR",
+            "w": 25,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Direct creation is not available.",
+          "actions": [
+            {
+              "text": "Open the NCR register",
+              "w": 199,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open findings",
+              "w": 142,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 688
+        },
+        "sidebar": {
+          "width": 320,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "New NCR"
+      },
+      "w360": {
+        "label": "/quality/ncr/new@360",
+        "url": "/quality/ncr/new",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 12,
+        "interactiveCount": 10,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Quality",
+            "w": 40,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "NCR",
+            "w": 25,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Direct creation is not available.",
+          "actions": [
+            {
+              "text": "Open the NCR register",
+              "w": 278,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open findings",
+              "w": 278,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 328
+        },
+        "sidebar": {
+          "width": 310,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "New NCR"
+      },
+      "axe": {
+        "label": "ncr-new",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "ncr-new",
+        "nodes": 245,
+        "named": 133,
+        "roles": {
+          "heading": 3,
+          "link": 16,
+          "button": 11,
+          "main": 1,
+          "navigation": 2
+        }
+      }
+    },
+    {
+      "path": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new",
+      "label": "retest-new",
+      "w1440": {
+        "label": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new@1440",
+        "url": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 12,
+        "interactiveCount": 26,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Laboratory",
+            "w": 62,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Laboratory tests",
+            "w": 93,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Retest creation is not available.",
+          "actions": [
+            {
+              "text": "Open the original test",
+              "w": 192,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open laboratory tests",
+              "w": 194,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 720
+        },
+        "sidebar": {
+          "width": 264,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "Retest request"
+      },
+      "w720": {
+        "label": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new@720",
+        "url": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 12,
+        "interactiveCount": 10,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Laboratory",
+            "w": 62,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Laboratory tests",
+            "w": 93,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Retest creation is not available.",
+          "actions": [
+            {
+              "text": "Open the original test",
+              "w": 192,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open laboratory tests",
+              "w": 194,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 688
+        },
+        "sidebar": {
+          "width": 320,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "Retest request"
+      },
+      "w360": {
+        "label": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new@360",
+        "url": "/laboratory/tests/00000000-0000-7000-8000-000000000000/retests/new",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 12,
+        "interactiveCount": 10,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Laboratory",
+            "w": 62,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Laboratory tests",
+            "w": 62,
+            "h": 36
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 4,
+        "card": {
+          "heading": "Retest creation is not available.",
+          "actions": [
+            {
+              "text": "Open the original test",
+              "w": 278,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            },
+            {
+              "text": "Open laboratory tests",
+              "w": 278,
+              "h": 44,
+              "bg": "rgba(0, 0, 0, 0)",
+              "color": "rgb(232, 237, 245)",
+              "border": "rgb(112, 122, 140)"
+            }
+          ],
+          "width": 328
+        },
+        "sidebar": {
+          "width": 310,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1028
+        },
+        "h1": "Retest request"
+      },
+      "axe": {
+        "label": "retest-new",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "retest-new",
+        "nodes": 221,
+        "named": 121,
+        "roles": {
+          "heading": 3,
+          "link": 12,
+          "button": 11,
+          "main": 1,
+          "navigation": 2
+        }
+      }
+    },
+    {
+      "path": "/tasks",
+      "label": "tasks",
+      "w1440": {
+        "label": "/tasks@1440",
+        "url": "/tasks",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 12,
+        "interactiveCount": 38,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 154,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All statesDraftOpenIn progressOn holdCom",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Any due dateOverdueDue today",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All assigneesOnly mine",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All tasksOpen work only",
+            "w": 131,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Recently updatedDue datePriorityTask num",
+            "w": 142,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "DescendingAscending",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "text": "Apply filters",
+            "w": 106,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Saved filters",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 154,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 13,
+        "card": null,
+        "sidebar": {
+          "width": 264,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "Tasks"
+      },
+      "w720": {
+        "label": "/tasks@720",
+        "url": "/tasks",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 12,
+        "interactiveCount": 21,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 154,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All statesDraftOpenIn progressOn holdCom",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Any due dateOverdueDue today",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All assigneesOnly mine",
+            "w": 688,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All tasksOpen work only",
+            "w": 688,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Recently updatedDue datePriorityTask num",
+            "w": 688,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "DescendingAscending",
+            "w": 688,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "text": "Apply filters",
+            "w": 106,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Saved filters",
+            "w": 688,
+            "h": 40
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 154,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 13,
+        "card": null,
+        "sidebar": {
+          "width": 320,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "Tasks"
+      },
+      "w360": {
+        "label": "/tasks@360",
+        "url": "/tasks",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 12,
+        "interactiveCount": 21,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 154,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All statesDraftOpenIn progressOn holdCom",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Any due dateOverdueDue today",
+            "w": 130,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All assigneesOnly mine",
+            "w": 328,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "All tasksOpen work only",
+            "w": 328,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Recently updatedDue datePriorityTask num",
+            "w": 328,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "DescendingAscending",
+            "w": 328,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "text": "Apply filters",
+            "w": 106,
+            "h": 40
+          },
+          {
+            "tag": "select",
+            "text": "Saved filters",
+            "w": 328,
+            "h": 40
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 154,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 13,
+        "card": null,
+        "sidebar": {
+          "width": 310,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "Tasks"
+      },
+      "axe": {
+        "label": "tasks",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "tasks",
+        "nodes": 256,
+        "named": 139,
+        "roles": {
+          "heading": 3,
+          "link": 11,
+          "button": 14,
+          "main": 1,
+          "navigation": 2
+        }
+      }
+    },
+    {
+      "path": "/dashboard",
+      "label": "dashboard",
+      "w1440": {
+        "label": "/dashboard@1440",
+        "url": "/dashboard",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 12,
+        "interactiveCount": 96,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          },
+          {
+            "tag": "a",
+            "text": "Tasks",
+            "w": 36,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "NCR",
+            "w": 28,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "RCA",
+            "w": 27,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "CAPA",
+            "w": 35,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "Users",
+            "w": 37,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "Roles",
+            "w": 35,
+            "h": 44
+          }
+        ],
+        "smallTargetCount": 8,
+        "card": null,
+        "sidebar": {
+          "width": 264,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "Dashboard"
+      },
+      "w720": {
+        "label": "/dashboard@720",
+        "url": "/dashboard",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 12,
+        "interactiveCount": 80,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          },
+          {
+            "tag": "a",
+            "text": "Tasks",
+            "w": 36,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "NCR",
+            "w": 28,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "RCA",
+            "w": 27,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "CAPA",
+            "w": 35,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "Users",
+            "w": 37,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "Roles",
+            "w": 35,
+            "h": 44
+          },
+          {
+            "tag": "summary",
+            "text": "Data coverage · What this snapshot can a",
+            "w": 646,
+            "h": 24
+          }
+        ],
+        "smallTargetCount": 9,
+        "card": null,
+        "sidebar": {
+          "width": 320,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "Dashboard"
+      },
+      "w360": {
+        "label": "/dashboard@360",
+        "url": "/dashboard",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 12,
+        "interactiveCount": 80,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          },
+          {
+            "tag": "a",
+            "text": "Tasks",
+            "w": 36,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "NCR",
+            "w": 28,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "RCA",
+            "w": 27,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "CAPA",
+            "w": 35,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "Users",
+            "w": 37,
+            "h": 44
+          },
+          {
+            "tag": "a",
+            "text": "Roles",
+            "w": 35,
+            "h": 44
+          }
+        ],
+        "smallTargetCount": 8,
+        "card": null,
+        "sidebar": {
+          "width": 310,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "Dashboard"
+      },
+      "axe": {
+        "label": "dashboard",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "dashboard",
+        "nodes": 1086,
+        "named": 675,
+        "roles": {
+          "heading": 22,
+          "link": 68,
+          "button": 11,
+          "main": 1,
+          "navigation": 2
+        }
+      }
+    },
+    {
+      "path": "/quality/capa",
+      "label": "capa-register",
+      "w1440": {
+        "label": "/quality/capa@1440",
+        "url": "/quality/capa",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 12,
+        "interactiveCount": 32,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 2,
+        "card": null,
+        "sidebar": {
+          "width": 264,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "CAPA records"
+      },
+      "w720": {
+        "label": "/quality/capa@720",
+        "url": "/quality/capa",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 12,
+        "interactiveCount": 12,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 2,
+        "card": null,
+        "sidebar": {
+          "width": 320,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "CAPA records"
+      },
+      "w360": {
+        "label": "/quality/capa@360",
+        "url": "/quality/capa",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 12,
+        "interactiveCount": 12,
+        "smallTargets": [
+          {
+            "tag": "a",
+            "text": "Home",
+            "w": 33,
+            "h": 24
+          },
+          {
+            "tag": "summary",
+            "text": "Vverify-employeeEmployee",
+            "w": 172,
+            "h": 40
+          }
+        ],
+        "smallTargetCount": 2,
+        "card": null,
+        "sidebar": {
+          "width": 310,
+          "background": "rgb(17, 29, 45)",
+          "color": "rgb(242, 246, 249)",
+          "links": 32,
+          "textLength": 1040
+        },
+        "h1": "CAPA records"
+      },
+      "axe": {
+        "label": "capa-register",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "capa-register",
+        "nodes": 289,
+        "named": 161,
+        "roles": {
+          "heading": 4,
+          "link": 12,
+          "button": 14,
+          "main": 1,
+          "navigation": 3
+        }
+      }
+    },
+    {
+      "path": "/404",
+      "label": "not-found",
+      "w1440": {
+        "label": "/404@1440",
+        "url": "/404",
+        "viewport": {
+          "w": 1440,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "minFontPx": 14,
+        "interactiveCount": 1,
+        "smallTargets": [],
+        "smallTargetCount": 0,
+        "card": {
+          "heading": null,
+          "actions": [
+            {
+              "text": "Go to dashboard",
+              "w": 160,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            }
+          ],
+          "width": 720
+        },
+        "sidebar": null,
+        "h1": "We could not find that page"
+      },
+      "w720": {
+        "label": "/404@720",
+        "url": "/404",
+        "viewport": {
+          "w": 720,
+          "h": 1000
+        },
+        "overflowPx": 0,
+        "scrollWidth": 720,
+        "clientWidth": 720,
+        "minFontPx": 14,
+        "interactiveCount": 1,
+        "smallTargets": [],
+        "smallTargetCount": 0,
+        "card": {
+          "heading": null,
+          "actions": [
+            {
+              "text": "Go to dashboard",
+              "w": 160,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            }
+          ],
+          "width": 672
+        },
+        "sidebar": null,
+        "h1": "We could not find that page"
+      },
+      "w360": {
+        "label": "/404@360",
+        "url": "/404",
+        "viewport": {
+          "w": 360,
+          "h": 844
+        },
+        "overflowPx": 0,
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "minFontPx": 14,
+        "interactiveCount": 1,
+        "smallTargets": [],
+        "smallTargetCount": 0,
+        "card": {
+          "heading": null,
+          "actions": [
+            {
+              "text": "Go to dashboard",
+              "w": 278,
+              "h": 44,
+              "bg": "rgb(146, 184, 242)",
+              "color": "rgb(20, 24, 30)",
+              "border": "rgb(146, 184, 242)"
+            }
+          ],
+          "width": 328
+        },
+        "sidebar": null,
+        "h1": "We could not find that page"
+      },
+      "axe": {
+        "label": "not-found",
+        "violations": [],
+        "violationCount": 0
+      },
+      "ax": {
+        "label": "not-found",
+        "nodes": 20,
+        "named": 12,
+        "roles": {
+          "heading": 1,
+          "link": 1,
+          "button": 0,
+          "main": 1,
+          "navigation": 0
+        }
+      }
+    },
+    {
+      "path": "/tasks",
+      "label": "task-detail",
+      "absent": "no table task link found"
+    }
+  ],
+  "redirects": {
+    "rootAuthenticated": {
+      "from": "/",
+      "to": "/dashboard"
+    },
+    "laboratoryAuthenticated": {
+      "from": "/laboratory",
+      "to": "/laboratory/tests"
+    }
+  },
+  "login": {
+    "status": "PASS",
+    "url": "/dashboard"
+  }
+}

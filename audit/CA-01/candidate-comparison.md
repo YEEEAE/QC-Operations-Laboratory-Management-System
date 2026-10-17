@@ -13,7 +13,7 @@ renders an existing policy decision; it does not decide eligibility and has no w
 |---|---|---|---|
 | page shell | single `main`, no product sidebar | `AppLayout` sidebar + topbar + main | **EXPECTED** — the reference is an isolated exploration canvas; the product must keep its shell |
 | 264px empty rail | HTML L43 | absent | **EXCLUDED** by contract |
-| breadcrumb `Quality / CAPA Register / New CAPA` | HTML L50–56, `aria-label="Breadcrumb"`, one `aria-current="page"` | absent; `PageHeader` renders the section label “Quality” | **DELTA** — candidate has one fewer navigation cue |
+| breadcrumb `Quality / CAPA Register / New CAPA` | HTML L50–56, `aria-label="Breadcrumb"` | `Topbar` renders `Home / Quality / CAPA / New record` from the navigation model | **DELTA** — trail, labels and placement differ (topbar vs page header) |
 | `h1` “New CAPA” | HTML L57–59 | `PageHeader` slot heading, `new.astro` L16 | **MATCH** (text) |
 | lede “Link the CAPA to an NCR or RCA.” | HTML L60–62 | `new.astro` L17, `.lede` L34 | **MATCH** (text) |
 | header divider | none | `PageHeader.astro` L13 adds 1px bottom border + 16px padding | **DELTA** |
@@ -88,14 +88,32 @@ Line references without a file prefix are `src/ui/styles/capa-a.css`.
 | domain | `CreateCapaUseCase` | checks `Boolean(ncrId)` only — not sufficient for enablement |
 | route declaration | `routes.ts` L89–95 | `RT-CAPA-002`, `conditional` |
 
+## 5b. Derived interaction states
+
+The reference proves rest, hover and focus only. The candidate now also defines
+pressed, disabled and busy states so real controls do not fall back to browser
+defaults:
+
+| State | Candidate value | Measured | Contrast |
+|---|---|---|---|
+| primary pressed | `#7EA6E0` fill/border | `rgb(126,166,224)` | 7.14:1 with `#14181E` |
+| secondary pressed | `#303845` | `rgb(48,56,69)` | 10.05:1 with `#E8EDF5` |
+| disabled / `aria-disabled` | opacity `.55`, `cursor: not-allowed` | 0.55 | — |
+| busy / `aria-busy` | opacity `.85`, `cursor: progress` | 0.85 | — |
+
+These are **derived**, not reference fidelity, and change no behaviour: no spinner,
+no new pending source, no submit guard. Evidence: `candidate/state-*.png` and
+`tests/unit/ui/capa-a-surface.test.ts`.
+
 ## 6. Net verdict
 
 The candidate preserves the reference's **card anatomy, palette, geometry and action
 hierarchy**, while intentionally dropping the exploration rail and the remote
-fonts/icons. It is **not pixel-identical**: it omits the breadcrumb, adds a header
-divider, uses a larger icon badge, a darker shadow, a subtler divider and a
-higher-contrast secondary boundary. No product authority, record number or status is
-copied from the reference.
+fonts/icons. It is **not pixel-identical**: it uses a different breadcrumb trail
+(topbar `Home / Quality / CAPA / New record` vs `Quality / CAPA Register / New CAPA`),
+adds a header divider, uses a larger icon badge, a darker shadow, a subtler divider
+and a higher-contrast secondary boundary. No product authority, record number or
+status is copied from the reference.
 
 `LAYER_APPLIED` — not a fidelity score, not WCAG conformance and not visual acceptance
 of populated records.

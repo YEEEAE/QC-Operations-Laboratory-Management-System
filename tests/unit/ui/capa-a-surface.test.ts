@@ -36,7 +36,7 @@ describe('CAPA Variant A layer contracts', () => {
     expect(styles).toContain('--color-accent-primary: #92b8f2;');
     expect(styles).toContain('--color-accent-primary-hover: #a6c5f5;');
     expect(styles).toContain('--color-text-inverse: #14181e;');
-    expect(styles).toContain("color: var(--color-text-inverse) !important;");
+    expect(styles).toContain('color: var(--color-text-inverse) !important;');
   });
 
   it('gives the policy state card the reference anatomy and 44px actions', () => {
@@ -55,6 +55,31 @@ describe('CAPA Variant A layer contracts', () => {
     expect(read('src/pages/500.astro')).toContain('visualDirection="capa-a"');
     expect(read('src/pages/login.astro')).toContain('<QCLogin3DBackground');
     expect(read('src/pages/login.astro')).toContain('transparent');
+  });
+
+  it('defines pressed, disabled and busy affordances as derived states', () => {
+    const styles = read('src/ui/styles/capa-a.css');
+    expect(styles).toContain('--color-accent-primary-active: #7ea6e0;');
+    expect(styles).toContain('--color-surface-active: #303845;');
+    expect(styles).toContain(':active:not(:disabled)');
+    expect(styles).toContain(":where(a, button)[aria-busy='true']");
+    expect(styles).toContain(":where(a, button)[aria-disabled='true']");
+    expect(styles).toContain('cursor: progress;');
+    expect(styles).toContain('cursor: not-allowed;');
+
+    const luminance = (hex: string) => {
+      const channels = [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
+      const linear = channels.map((value) =>
+        value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4,
+      );
+      return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+    };
+    const contrast = (a: string, b: string) => {
+      const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (high + 0.05) / (low + 0.05);
+    };
+    expect(contrast('#7ea6e0', '#14181e')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast('#e8edf5', '#303845')).toBeGreaterThanOrEqual(4.5);
   });
 
   it('keeps the three creation routes as honest source gates, not enabled fake forms', () => {

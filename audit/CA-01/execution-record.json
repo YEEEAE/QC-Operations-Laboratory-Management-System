@@ -1,28 +1,29 @@
 {
   "task": "CA-01 — reference pinning and source inventory",
-  "head": "567028c18bd3c25794a886fefd8e0a5f592e8529",
   "branch": "main",
   "workingTreeAtStart": "clean",
-  "generatedAt": "2026-10-17T02:12:00Z",
+  "generatedAt": "2026-10-17T03:50:00Z",
   "node": "v24.20.0",
   "pnpm": "11.25.0",
   "ids": [
     {
       "id": "CA-01",
       "status": "DONE",
-      "scope": "Reference re-verified live and pinned; 88-file inventory reconciled; source/static/runtime register; candidate vs source comparison",
+      "scope": "Reference verified and pinned; 88-file register; candidate comparison; authenticated screenshots, populated record, axe, reflow and derived states",
       "evidence": [
         "audit/CA-01/source-manifest.json",
         "audit/CA-01/route-register.json",
         "audit/CA-01/reference-extraction.md",
         "audit/CA-01/candidate-comparison.md",
-        "audit/CA-01/reference-renders/reference-1440.png",
-        "audit/CA-01/reference-renders/reference-390.png"
+        "audit/CA-01/candidate/evidence.json",
+        "audit/CA-01/candidate/evidence-least.json",
+        "audit/CA-01/candidate/state-active-1440.png",
+        "audit/CA-01/reference-renders/reference-1440.png"
       ],
       "limits": [
-        "Authenticated candidate screenshot on this HEAD NOT RUN (no session/environment bootstrap)",
-        "HTTP preview redirect check BLOCKED by config.invalid_environment (503); destinations covered by unit tests instead",
-        "Axe/screen-reader/200-400% zoom on this HEAD NOT RUN",
+        "Manual VoiceOver/NVDA session NOT RUN; only an accessibility-tree inspection was performed",
+        "Full 86-screen populated-record matrix NOT RUN; pilot surfaces plus one populated task detail are covered",
+        "Four sub-44px elements measured on creation pages: three breadcrumb links (24px) and the account summary (40px); they meet WCAG 2.2 AA 24px minimum but not the 44px house target",
         "Route classification derives from page frontmatter imports/calls and the registries; bodies of all 88 pages were not re-read line by line"
       ]
     },
@@ -31,7 +32,7 @@
       "status": "NOT BLOCKED",
       "scope": "Reference availability was the only CA-02 gate; the reference is AVAILABLE",
       "evidence": ["audit/CA-00/reference/capa-a.html", "src/ui/styles/capa-a.css"],
-      "note": "CA-00 already applied the layer; this task did not change product code or presentation."
+      "note": "The layer was already applied by CA-00. This task only added derived pressed/disabled/busy states."
     },
     {
       "id": "CA-F-01",
@@ -62,6 +63,11 @@
   ],
   "correctedFacts": [
     {
+      "claim": "The working HEAD stayed on the CA-01 base commit",
+      "status": "EXTERNAL_CHANGE",
+      "evidence": "HEAD moved to c38d1877 (update site) at 06:42:46 while the task was running. It included the CA-01 docs and redirect test; the CSS/test changes for derived states remained in the working tree. No commit or push was performed by this session."
+    },
+    {
       "claim": "Stitch get_screen returns 'Authentication required' and no CAPA Variant A export exists",
       "status": "HISTORICAL",
       "evidence": "2026-10-17T02:09:13.854Z get_screen returned the pinned title; downloaded HTML is character-identical to the pinned file (normalized fdc1f690 / 904da0fc)."
@@ -85,6 +91,11 @@
       "claim": "audit/CA-00/report.md after-*.png artifacts exist",
       "status": "ABSENT",
       "evidence": "Only reference/*.png and JSON/MD files are present in audit/CA-00; no after-*.png. Not used as evidence here."
+    },
+    {
+      "claim": "Authenticated creation routes have zero interactive targets below 44px",
+      "status": "PARTIAL",
+      "evidence": "Measured 4 per creation page: three breadcrumb links at 24px high and the account summary at 40px. They meet WCAG 2.2 AA 24px target minimum but not the 44px house convention."
     }
   ],
   "inventory": {
@@ -103,22 +114,106 @@
     "handoffMinusPages": [],
     "pagesMinusHandoff": ["/", "/laboratory"]
   },
+  "authenticatedEvidence": {
+    "environment": "disposable PostgreSQL 18.6, 49/49 migrations, 89 tables, 0 orphans; foundation seed + local admin + verify-* personas; passwords in a 0600 ignored file and never printed; no .env sourced",
+    "login": "PASS",
+    "redirects": {
+      "/": "/dashboard",
+      "/laboratory": "/laboratory/tests"
+    },
+    "surfaces": [
+      {
+        "path": "/quality/capa/new",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/quality/ncr/new",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/laboratory/tests/[labTestId]/retests/new",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/tasks",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/dashboard",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/quality/capa",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/404",
+        "overflow1440": 0,
+        "overflow720": 0,
+        "overflow360": 0,
+        "axe": 0
+      },
+      {
+        "path": "/tasks/[taskId]",
+        "populatedRecord": "VERIFY-AUTHZ-READONLY",
+        "axe": 0
+      }
+    ],
+    "sidebar1440": {
+      "width": 264,
+      "background": "rgb(17,29,45)",
+      "text": "rgb(242,246,249)",
+      "links": 32
+    }
+  },
+  "derivedStates": {
+    "disclaimer": "Not present in the reference; derived presentation states.",
+    "rest": "rgb(146,184,242)",
+    "hover": "rgb(166,197,245)",
+    "pressed": "rgb(126,166,224)",
+    "pressedContrastWithInverse": 7.14,
+    "secondaryPressed": "#303845",
+    "disabledOpacity": 0.55,
+    "busyOpacity": 0.85
+  },
   "verification": [
     {
       "command": "git status --short",
-      "result": "PASS — clean"
+      "result": "PASS — clean at start"
     },
     {
       "command": "pnpm exec astro build (Node 24.20.0)",
       "result": "PASS — exit 0"
     },
     {
-      "command": "pnpm exec vitest run tests/unit/routing/design-route-boundaries.test.ts tests/unit/identity/session-recovery.test.ts tests/unit/ui/register-surface-contract.test.ts tests/unit/ui/capa-a-surface.test.ts",
-      "result": "PASS — 4 files / 26 tests"
+      "command": "pnpm typecheck",
+      "result": "PASS — 0 errors, 118 hints"
+    },
+    {
+      "command": "focused vitest: design-route-boundaries, session-recovery, register-surface, capa-a-surface",
+      "result": "PASS — 4 files / 27 tests"
     },
     {
       "command": "pnpm test:architecture",
-      "result": "PASS — boundaries + canonical route registry"
+      "result": "PASS"
     },
     {
       "command": "route reconciliation (pages vs routes.ts vs handoff §10.4)",
@@ -129,15 +224,35 @@
       "result": "PASS — AVAILABLE, title matched, HTML character-identical"
     },
     {
-      "command": "browser computed styles at 1440x1000 and 390x844",
-      "result": "PASS — values recorded in reference-extraction.md"
+      "command": "disposable PG18 db:migrate + db:schema:check",
+      "result": "PASS — 49/49, 89 tables, 0 orphans"
     },
     {
-      "command": "astro preview HTTP check of / and /laboratory",
-      "result": "BLOCKED — 503 SERVICE_UNAVAILABLE, config.invalid_environment; .env not sourced"
+      "command": "authenticated Playwright run (login, redirects, 8 surfaces)",
+      "result": "PASS"
     },
     {
-      "command": "authenticated candidate screenshot on 567028c1",
+      "command": "axe WCAG A/AA on 8 surfaces",
+      "result": "PASS — 0 violations"
+    },
+    {
+      "command": "reflow at 1440/720/360",
+      "result": "PASS — 0 horizontal overflow"
+    },
+    {
+      "command": "populated task register + detail",
+      "result": "PASS — VERIFY-AUTHZ-READONLY rendered"
+    },
+    {
+      "command": "pressed/disabled/busy computed states",
+      "result": "PASS — values recorded"
+    },
+    {
+      "command": "screen-reader session (VoiceOver/NVDA)",
+      "result": "NOT RUN"
+    },
+    {
+      "command": "full 86-screen populated matrix",
       "result": "NOT RUN"
     }
   ],
@@ -147,14 +262,22 @@
     "audit/CA-01/reference-extraction.md",
     "audit/CA-01/candidate-comparison.md",
     "audit/CA-01/report.md",
+    "audit/CA-01/candidate/evidence.json",
+    "audit/CA-01/candidate/evidence-least.json",
+    "audit/CA-01/candidate/*.png",
     "audit/CA-01/reference-renders/reference-1440.png",
     "audit/CA-01/reference-renders/reference-390.png",
-    "tests/unit/routing/design-route-boundaries.test.ts"
+    "tests/unit/routing/design-route-boundaries.test.ts",
+    "src/ui/styles/capa-a.css",
+    "tests/unit/ui/capa-a-surface.test.ts"
   ],
   "notDone": [
-    "No commit, push, merge, deploy or migration.",
-    "No product page, schema, API, policy or permission changed.",
+    "No commit, push, merge, deploy or production migration.",
+    "No schema, API, business-rule, permission or policy change.",
     "No .env read or sourced.",
-    "No claim of visual acceptance, WCAG conformance, UAT or production readiness."
-  ]
+    "No claim of full 86-screen visual acceptance, WCAG conformance, UAT or production readiness."
+  ],
+  "headAtStart": "567028c18bd3c25794a886fefd8e0a5f592e8529",
+  "headObservedAfterExternalCommit": "c38d1877",
+  "externalCommitNote": "An external \"update site\" commit c38d1877 appeared at 06:42:46 during the task and included the CA-01 docs plus the redirect test. This session performed no git commit or push."
 }

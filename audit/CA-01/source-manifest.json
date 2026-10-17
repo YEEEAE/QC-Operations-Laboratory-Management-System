@@ -103,7 +103,11 @@
         "value": "#D5A36F",
         "evidence": "lock badge and policy callout (HTML L68, L86, L90)"
       },
-      { "role": "inverse", "value": "#14181E", "evidence": "primary button label (HTML L96)" }
+      {
+        "role": "inverse",
+        "value": "#14181E",
+        "evidence": "primary button label (HTML L96)"
+      }
     ],
     "observedOpacityVariants": [
       "selection accent /30 (HTML L41)",
@@ -177,7 +181,15 @@
       "visited",
       "selected",
       "destructive"
-    ]
+    ],
+    "derived": {
+      "status": "PROPOSED_NOT_IN_REFERENCE",
+      "primaryPressed": "#7EA6E0 (7.14:1 with #14181E inverse)",
+      "secondaryPressed": "#303845 (10.05:1 with #E8EDF5)",
+      "disabled": "opacity 0.55 + cursor not-allowed",
+      "busy": "opacity 0.85 + cursor progress; no new spinner",
+      "evidence": "measured in the authenticated candidate; see audit/CA-01/candidate/state-*.png"
+    }
   },
   "notAcceptedAsProductTruth": [
     "The 264px empty rail is exploration scaffolding and is not copied into the application.",
@@ -199,5 +211,7 @@
       "bytes": 125645,
       "pixels": "2560x2048"
     }
-  ]
+  ],
+  "headObservedAfterExternalCommit": "c38d1877",
+  "externalCommitNote": "External \"update site\" commit at 06:42:46; not created by this session."
 }
