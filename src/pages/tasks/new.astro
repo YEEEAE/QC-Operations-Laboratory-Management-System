@@ -109,4 +109,30 @@ const invalid = (name: keyof typeof values): 'true' | undefined =>
   }
 </script>
 <style>.page-head{margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}h1{margin:.25rem 0}.lede,.empty,.hint,.draft-summary p{color:var(--text-muted)}.form{display:grid;gap:var(--space-4);max-width:720px;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.draft-summary{padding:var(--space-4);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.draft-summary h2{margin:0 0 var(--space-3);font-size:1rem}.draft-summary dl{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:.5rem 1rem;margin:0}.draft-summary dt{color:var(--text-muted)}.draft-summary dd{margin:0;font-weight:600}.draft-summary p{margin-bottom:0}fieldset{min-inline-size:0;display:grid;gap:var(--space-3);border:1px solid var(--color-border-subtle)}label{display:grid;gap:.4rem;font-size:.85rem}input,textarea,select{min-width:0;max-width:100%;font:inherit;padding:.7rem;background:var(--surface-page);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}textarea{min-height:8rem}.actions,.actions-top{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}button{border:0;padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);border-radius:var(--radius-md);font-weight:700}button[disabled]{opacity:.6}a{color:var(--color-accent-primary-hover)}
+  /* Local CAPA A form layout; transport, field values and shell stay unchanged. */
+  .form{max-inline-size:960px;grid-template-columns:minmax(0,1fr);padding:clamp(1rem,3vw,2rem);gap:var(--space-5)}
+  .form>*{min-inline-size:0;grid-column:1/-1}
+  .form>label{align-content:start;font-size:var(--font-size-sm)}
+  .hint{font-size:var(--font-size-xs);line-height:1.6;font-weight:400}
+  .draft-summary{background:var(--surface-inset)}
+  .draft-summary dl{grid-template-columns:minmax(0,1fr);gap:var(--space-1)}
+  .draft-summary dd:not(:last-child){margin-block-end:var(--space-3)}
+  fieldset{margin:0;padding:var(--space-4);border-radius:var(--radius-md)}
+  legend{max-inline-size:100%;padding-inline:var(--space-2);font-size:var(--font-size-sm);font-weight:600}
+  fieldset>.hint{margin:0;grid-column:1/-1}
+  input,select,textarea{inline-size:100%;box-sizing:border-box;border-color:var(--control-border);min-block-size:44px}
+  .field-error{line-height:1.6}
+  .actions{border-block-start:1px solid var(--color-border-subtle);padding-block-start:var(--space-4);justify-content:flex-end}
+  .actions a,.actions-top a,button{display:inline-flex;align-items:center;justify-content:center;min-block-size:44px;box-sizing:border-box}
+  .actions a{padding-inline:var(--space-4);border:1px solid var(--control-border);border-radius:var(--radius-md)}
+  [data-result]:empty{margin:0}
+  @media(min-width:960px){
+    .form{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .form>label:not([for="description"]){grid-column:auto}
+    fieldset{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .draft-summary dl{grid-template-columns:minmax(7rem,auto) minmax(0,1fr);gap:var(--space-2) var(--space-4)}
+    .draft-summary dd:not(:last-child){margin-block-end:0}
+  }
+  @media(max-width:480px){.actions{flex-direction:column;align-items:stretch}.actions a,button{inline-size:100%}}
+  @media(forced-colors:active){input,select,textarea,.actions a{border-color:ButtonText}}
 </style>

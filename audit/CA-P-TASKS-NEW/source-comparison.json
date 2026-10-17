@@ -1,0 +1,33 @@
+{
+  "head": "c70bd8c9d231c488d2728129c6446944aaf423f3",
+  "sourceBefore": "04872dbe0a56b780e1af84a29bf9903537131ee4a6fbd717f84a72ba1959db34",
+  "sourceAfter": "6e4604fc13624bdc1c8370fbf527a7afd2ceb668a2341fc4125f147631c07b4c",
+  "nonStyleIdentical": true,
+  "sidebarIdentical": true,
+  "sidebarSha256": "973afdc935c684880b4a6f07a0f341270347fc3a1e43ecd20389e9dad6aeb818",
+  "fieldsBefore": [
+    "taskNo",
+    "title",
+    "description",
+    "priority",
+    "dueAt",
+    "recordType",
+    "recordId",
+    "recurrenceRuleId",
+    "occurrenceKey"
+  ],
+  "fieldsAfter": [
+    "taskNo",
+    "title",
+    "description",
+    "priority",
+    "dueAt",
+    "recordType",
+    "recordId",
+    "recurrenceRuleId",
+    "occurrenceKey"
+  ],
+  "hiddenInputs": 0,
+  "nativePostUnchanged": true,
+  "guardsScriptsValuesCopyUnchanged": true
+}

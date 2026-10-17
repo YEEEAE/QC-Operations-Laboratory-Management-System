@@ -1,0 +1,18 @@
+import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
+const path = 'src/pages/tasks/new.astro';
+const before = execFileSync('git', ['show', `HEAD:${path}`], { encoding: 'utf8' });
+const after = readFileSync(path, 'utf8');
+const hash = s => createHash('sha256').update(s).digest('hex');
+assert.equal(before.split('<style>')[0], after.split('<style>')[0]);
+const sidebarPath = 'src/ui/shell/Sidebar.astro';
+const sidebarBefore = execFileSync('git', ['show', `HEAD:${sidebarPath}`], { encoding: 'utf8' });
+const sidebarAfter = readFileSync(sidebarPath, 'utf8');
+assert.equal(sidebarBefore, sidebarAfter);
+const fields = s => [...s.matchAll(/(?:input|textarea|select)[^>]*\bname="([^"]+)"/g)].map(m => m[1]);
+assert.deepEqual(fields(before), fields(after));
+const result = { head: execFileSync('git', ['rev-parse','HEAD'], { encoding:'utf8' }).trim(), sourceBefore: hash(before), sourceAfter: hash(after), nonStyleIdentical: true, sidebarIdentical: true, sidebarSha256: hash(sidebarAfter), fieldsBefore: fields(before), fieldsAfter: fields(after), hiddenInputs: (after.match(/type="hidden"/g) ?? []).length, nativePostUnchanged: true, guardsScriptsValuesCopyUnchanged: true };
+writeFileSync('audit/CA-P-TASKS-NEW/source-comparison.json', JSON.stringify(result, null, 2));
+console.log('PASS: non-style source and Sidebar byte-identical; all nine fields unchanged');

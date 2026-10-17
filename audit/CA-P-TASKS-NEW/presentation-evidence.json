@@ -1,0 +1,1325 @@
+{
+  "status": "PARTIAL",
+  "checks": [
+    {
+      "width": 320,
+      "overflow": 0,
+      "columns": "254px",
+      "fields": [
+        [
+          "taskNo",
+          "",
+          "text"
+        ],
+        [
+          "title",
+          "",
+          "text"
+        ],
+        [
+          "description",
+          "",
+          "textarea"
+        ],
+        [
+          "priority",
+          "",
+          "text"
+        ],
+        [
+          "dueAt",
+          "",
+          "datetime-local"
+        ],
+        [
+          "recordType",
+          "",
+          "select-one"
+        ],
+        [
+          "recordId",
+          "",
+          "text"
+        ],
+        [
+          "recurrenceRuleId",
+          "",
+          "text"
+        ],
+        [
+          "occurrenceKey",
+          "",
+          "text"
+        ]
+      ],
+      "sidebar": [
+        [
+          "    Dashboard  ",
+          "/dashboard"
+        ],
+        [
+          "    My work today  ",
+          "/work"
+        ],
+        [
+          "    Tasks  ",
+          "/tasks"
+        ],
+        [
+          "    Findings  ",
+          "/quality/findings"
+        ],
+        [
+          "    NCR  ",
+          "/quality/ncr"
+        ],
+        [
+          "    RCA  ",
+          "/quality/rca"
+        ],
+        [
+          "    CAPA  ",
+          "/quality/capa"
+        ],
+        [
+          "    Reject Reports  ",
+          "/reject-reports"
+        ],
+        [
+          "    Quarantine dashboard  ",
+          "/quarantine"
+        ],
+        [
+          "    Receiving items  ",
+          "/quarantine/receiving"
+        ],
+        [
+          "    Inspection reports  ",
+          "/quarantine/inspections"
+        ],
+        [
+          "    Quarantine administration  ",
+          "/quarantine/admin"
+        ],
+        [
+          "    Laboratory tests  ",
+          "/laboratory/tests"
+        ],
+        [
+          "    Equipment  ",
+          "/assets/equipment"
+        ],
+        [
+          "    Calibration records  ",
+          "/assets/calibrations"
+        ],
+        [
+          "    Maintenance  ",
+          "/assets/maintenance"
+        ],
+        [
+          "    My approval queue  ",
+          "/approvals"
+        ],
+        [
+          "    Change requests  ",
+          "/change-requests"
+        ],
+        [
+          "    Reports  ",
+          "/reports"
+        ],
+        [
+          "    AI advisory  ",
+          "/ai-advisory"
+        ],
+        [
+          "    Administration  ",
+          "/admin"
+        ],
+        [
+          "    Users  ",
+          "/admin/users"
+        ],
+        [
+          "    Roles  ",
+          "/admin/roles"
+        ],
+        [
+          "    Permissions  ",
+          "/admin/permissions"
+        ],
+        [
+          "    Scopes  ",
+          "/admin/scopes"
+        ],
+        [
+          "    Audit history  ",
+          "/audit"
+        ],
+        [
+          "    Backup and recovery  ",
+          "/system/backups"
+        ],
+        [
+          "    Controlled documents  ",
+          "/documents"
+        ],
+        [
+          "    Notifications  ",
+          "/notifications"
+        ],
+        [
+          "    Search  ",
+          "/search"
+        ],
+        [
+          "    Account settings  ",
+          "/account"
+        ],
+        [
+          "    Operating guides  ",
+          "/help"
+        ]
+      ],
+      "sidebarBackground": "rgb(17, 29, 45)",
+      "targets": [
+        {
+          "id": "Back to tasks",
+          "height": 44
+        },
+        {
+          "id": "taskNo",
+          "height": 44
+        },
+        {
+          "id": "title",
+          "height": 44
+        },
+        {
+          "id": "description",
+          "height": 63.375
+        },
+        {
+          "id": "priority",
+          "height": 44
+        },
+        {
+          "id": "dueAt",
+          "height": 45.875
+        },
+        {
+          "id": "recordType",
+          "height": 44
+        },
+        {
+          "id": "recordId",
+          "height": 44.765625
+        },
+        {
+          "id": "recurrenceRuleId",
+          "height": 44.765625
+        },
+        {
+          "id": "occurrenceKey",
+          "height": 44.765625
+        },
+        {
+          "id": "Cancel",
+          "height": 44
+        },
+        {
+          "id": "Save draft",
+          "height": 46.375
+        }
+      ],
+      "axeViolations": 0
+    },
+    {
+      "width": 390,
+      "overflow": 0,
+      "columns": "324px",
+      "fields": [
+        [
+          "taskNo",
+          "",
+          "text"
+        ],
+        [
+          "title",
+          "",
+          "text"
+        ],
+        [
+          "description",
+          "",
+          "textarea"
+        ],
+        [
+          "priority",
+          "",
+          "text"
+        ],
+        [
+          "dueAt",
+          "",
+          "datetime-local"
+        ],
+        [
+          "recordType",
+          "",
+          "select-one"
+        ],
+        [
+          "recordId",
+          "",
+          "text"
+        ],
+        [
+          "recurrenceRuleId",
+          "",
+          "text"
+        ],
+        [
+          "occurrenceKey",
+          "",
+          "text"
+        ]
+      ],
+      "sidebar": [
+        [
+          "    Dashboard  ",
+          "/dashboard"
+        ],
+        [
+          "    My work today  ",
+          "/work"
+        ],
+        [
+          "    Tasks  ",
+          "/tasks"
+        ],
+        [
+          "    Findings  ",
+          "/quality/findings"
+        ],
+        [
+          "    NCR  ",
+          "/quality/ncr"
+        ],
+        [
+          "    RCA  ",
+          "/quality/rca"
+        ],
+        [
+          "    CAPA  ",
+          "/quality/capa"
+        ],
+        [
+          "    Reject Reports  ",
+          "/reject-reports"
+        ],
+        [
+          "    Quarantine dashboard  ",
+          "/quarantine"
+        ],
+        [
+          "    Receiving items  ",
+          "/quarantine/receiving"
+        ],
+        [
+          "    Inspection reports  ",
+          "/quarantine/inspections"
+        ],
+        [
+          "    Quarantine administration  ",
+          "/quarantine/admin"
+        ],
+        [
+          "    Laboratory tests  ",
+          "/laboratory/tests"
+        ],
+        [
+          "    Equipment  ",
+          "/assets/equipment"
+        ],
+        [
+          "    Calibration records  ",
+          "/assets/calibrations"
+        ],
+        [
+          "    Maintenance  ",
+          "/assets/maintenance"
+        ],
+        [
+          "    My approval queue  ",
+          "/approvals"
+        ],
+        [
+          "    Change requests  ",
+          "/change-requests"
+        ],
+        [
+          "    Reports  ",
+          "/reports"
+        ],
+        [
+          "    AI advisory  ",
+          "/ai-advisory"
+        ],
+        [
+          "    Administration  ",
+          "/admin"
+        ],
+        [
+          "    Users  ",
+          "/admin/users"
+        ],
+        [
+          "    Roles  ",
+          "/admin/roles"
+        ],
+        [
+          "    Permissions  ",
+          "/admin/permissions"
+        ],
+        [
+          "    Scopes  ",
+          "/admin/scopes"
+        ],
+        [
+          "    Audit history  ",
+          "/audit"
+        ],
+        [
+          "    Backup and recovery  ",
+          "/system/backups"
+        ],
+        [
+          "    Controlled documents  ",
+          "/documents"
+        ],
+        [
+          "    Notifications  ",
+          "/notifications"
+        ],
+        [
+          "    Search  ",
+          "/search"
+        ],
+        [
+          "    Account settings  ",
+          "/account"
+        ],
+        [
+          "    Operating guides  ",
+          "/help"
+        ]
+      ],
+      "sidebarBackground": "rgb(17, 29, 45)",
+      "targets": [
+        {
+          "id": "Back to tasks",
+          "height": 44
+        },
+        {
+          "id": "taskNo",
+          "height": 44
+        },
+        {
+          "id": "title",
+          "height": 44
+        },
+        {
+          "id": "description",
+          "height": 63.375
+        },
+        {
+          "id": "priority",
+          "height": 44
+        },
+        {
+          "id": "dueAt",
+          "height": 45.875
+        },
+        {
+          "id": "recordType",
+          "height": 44
+        },
+        {
+          "id": "recordId",
+          "height": 44.765625
+        },
+        {
+          "id": "recurrenceRuleId",
+          "height": 44.765625
+        },
+        {
+          "id": "occurrenceKey",
+          "height": 44.765625
+        },
+        {
+          "id": "Cancel",
+          "height": 44
+        },
+        {
+          "id": "Save draft",
+          "height": 46.375
+        }
+      ],
+      "axeViolations": 0
+    },
+    {
+      "width": 768,
+      "overflow": 0,
+      "columns": "407.938px",
+      "fields": [
+        [
+          "taskNo",
+          "",
+          "text"
+        ],
+        [
+          "title",
+          "",
+          "text"
+        ],
+        [
+          "description",
+          "",
+          "textarea"
+        ],
+        [
+          "priority",
+          "",
+          "text"
+        ],
+        [
+          "dueAt",
+          "",
+          "datetime-local"
+        ],
+        [
+          "recordType",
+          "",
+          "select-one"
+        ],
+        [
+          "recordId",
+          "",
+          "text"
+        ],
+        [
+          "recurrenceRuleId",
+          "",
+          "text"
+        ],
+        [
+          "occurrenceKey",
+          "",
+          "text"
+        ]
+      ],
+      "sidebar": [
+        [
+          "    Dashboard  ",
+          "/dashboard"
+        ],
+        [
+          "    My work today  ",
+          "/work"
+        ],
+        [
+          "    Tasks  ",
+          "/tasks"
+        ],
+        [
+          "    Findings  ",
+          "/quality/findings"
+        ],
+        [
+          "    NCR  ",
+          "/quality/ncr"
+        ],
+        [
+          "    RCA  ",
+          "/quality/rca"
+        ],
+        [
+          "    CAPA  ",
+          "/quality/capa"
+        ],
+        [
+          "    Reject Reports  ",
+          "/reject-reports"
+        ],
+        [
+          "    Quarantine dashboard  ",
+          "/quarantine"
+        ],
+        [
+          "    Receiving items  ",
+          "/quarantine/receiving"
+        ],
+        [
+          "    Inspection reports  ",
+          "/quarantine/inspections"
+        ],
+        [
+          "    Quarantine administration  ",
+          "/quarantine/admin"
+        ],
+        [
+          "    Laboratory tests  ",
+          "/laboratory/tests"
+        ],
+        [
+          "    Equipment  ",
+          "/assets/equipment"
+        ],
+        [
+          "    Calibration records  ",
+          "/assets/calibrations"
+        ],
+        [
+          "    Maintenance  ",
+          "/assets/maintenance"
+        ],
+        [
+          "    My approval queue  ",
+          "/approvals"
+        ],
+        [
+          "    Change requests  ",
+          "/change-requests"
+        ],
+        [
+          "    Reports  ",
+          "/reports"
+        ],
+        [
+          "    AI advisory  ",
+          "/ai-advisory"
+        ],
+        [
+          "    Administration  ",
+          "/admin"
+        ],
+        [
+          "    Users  ",
+          "/admin/users"
+        ],
+        [
+          "    Roles  ",
+          "/admin/roles"
+        ],
+        [
+          "    Permissions  ",
+          "/admin/permissions"
+        ],
+        [
+          "    Scopes  ",
+          "/admin/scopes"
+        ],
+        [
+          "    Audit history  ",
+          "/audit"
+        ],
+        [
+          "    Backup and recovery  ",
+          "/system/backups"
+        ],
+        [
+          "    Controlled documents  ",
+          "/documents"
+        ],
+        [
+          "    Notifications  ",
+          "/notifications"
+        ],
+        [
+          "    Search  ",
+          "/search"
+        ],
+        [
+          "    Account settings  ",
+          "/account"
+        ],
+        [
+          "    Operating guides  ",
+          "/help"
+        ]
+      ],
+      "sidebarBackground": "rgb(17, 29, 45)",
+      "targets": [
+        {
+          "id": "Back to tasks",
+          "height": 44
+        },
+        {
+          "id": "taskNo",
+          "height": 44
+        },
+        {
+          "id": "title",
+          "height": 44
+        },
+        {
+          "id": "description",
+          "height": 63.375
+        },
+        {
+          "id": "priority",
+          "height": 44
+        },
+        {
+          "id": "dueAt",
+          "height": 45.875
+        },
+        {
+          "id": "recordType",
+          "height": 44
+        },
+        {
+          "id": "recordId",
+          "height": 44.765625
+        },
+        {
+          "id": "recurrenceRuleId",
+          "height": 44.765625
+        },
+        {
+          "id": "occurrenceKey",
+          "height": 44.765625
+        },
+        {
+          "id": "Cancel",
+          "height": 44
+        },
+        {
+          "id": "Save draft",
+          "height": 46.375
+        }
+      ],
+      "axeViolations": 0
+    },
+    {
+      "width": 1024,
+      "overflow": 0,
+      "columns": "314.281px 314.281px",
+      "fields": [
+        [
+          "taskNo",
+          "",
+          "text"
+        ],
+        [
+          "title",
+          "",
+          "text"
+        ],
+        [
+          "description",
+          "",
+          "textarea"
+        ],
+        [
+          "priority",
+          "",
+          "text"
+        ],
+        [
+          "dueAt",
+          "",
+          "datetime-local"
+        ],
+        [
+          "recordType",
+          "",
+          "select-one"
+        ],
+        [
+          "recordId",
+          "",
+          "text"
+        ],
+        [
+          "recurrenceRuleId",
+          "",
+          "text"
+        ],
+        [
+          "occurrenceKey",
+          "",
+          "text"
+        ]
+      ],
+      "sidebar": [
+        [
+          "    Dashboard  ",
+          "/dashboard"
+        ],
+        [
+          "    My work today  ",
+          "/work"
+        ],
+        [
+          "    Tasks  ",
+          "/tasks"
+        ],
+        [
+          "    Findings  ",
+          "/quality/findings"
+        ],
+        [
+          "    NCR  ",
+          "/quality/ncr"
+        ],
+        [
+          "    RCA  ",
+          "/quality/rca"
+        ],
+        [
+          "    CAPA  ",
+          "/quality/capa"
+        ],
+        [
+          "    Reject Reports  ",
+          "/reject-reports"
+        ],
+        [
+          "    Quarantine dashboard  ",
+          "/quarantine"
+        ],
+        [
+          "    Receiving items  ",
+          "/quarantine/receiving"
+        ],
+        [
+          "    Inspection reports  ",
+          "/quarantine/inspections"
+        ],
+        [
+          "    Quarantine administration  ",
+          "/quarantine/admin"
+        ],
+        [
+          "    Laboratory tests  ",
+          "/laboratory/tests"
+        ],
+        [
+          "    Equipment  ",
+          "/assets/equipment"
+        ],
+        [
+          "    Calibration records  ",
+          "/assets/calibrations"
+        ],
+        [
+          "    Maintenance  ",
+          "/assets/maintenance"
+        ],
+        [
+          "    My approval queue  ",
+          "/approvals"
+        ],
+        [
+          "    Change requests  ",
+          "/change-requests"
+        ],
+        [
+          "    Reports  ",
+          "/reports"
+        ],
+        [
+          "    AI advisory  ",
+          "/ai-advisory"
+        ],
+        [
+          "    Administration  ",
+          "/admin"
+        ],
+        [
+          "    Users  ",
+          "/admin/users"
+        ],
+        [
+          "    Roles  ",
+          "/admin/roles"
+        ],
+        [
+          "    Permissions  ",
+          "/admin/permissions"
+        ],
+        [
+          "    Scopes  ",
+          "/admin/scopes"
+        ],
+        [
+          "    Audit history  ",
+          "/audit"
+        ],
+        [
+          "    Backup and recovery  ",
+          "/system/backups"
+        ],
+        [
+          "    Controlled documents  ",
+          "/documents"
+        ],
+        [
+          "    Notifications  ",
+          "/notifications"
+        ],
+        [
+          "    Search  ",
+          "/search"
+        ],
+        [
+          "    Account settings  ",
+          "/account"
+        ],
+        [
+          "    Operating guides  ",
+          "/help"
+        ]
+      ],
+      "sidebarBackground": "rgb(17, 29, 45)",
+      "targets": [
+        {
+          "id": "Back to tasks",
+          "height": 44
+        },
+        {
+          "id": "taskNo",
+          "height": 44
+        },
+        {
+          "id": "title",
+          "height": 44
+        },
+        {
+          "id": "description",
+          "height": 63.375
+        },
+        {
+          "id": "priority",
+          "height": 44
+        },
+        {
+          "id": "dueAt",
+          "height": 45.875
+        },
+        {
+          "id": "recordType",
+          "height": 44.390625
+        },
+        {
+          "id": "recordId",
+          "height": 44.765625
+        },
+        {
+          "id": "recurrenceRuleId",
+          "height": 44.765625
+        },
+        {
+          "id": "occurrenceKey",
+          "height": 44.765625
+        },
+        {
+          "id": "Cancel",
+          "height": 44
+        },
+        {
+          "id": "Save draft",
+          "height": 46.375
+        }
+      ],
+      "axeViolations": 0
+    },
+    {
+      "width": 1440,
+      "overflow": 0,
+      "columns": "437px 437px",
+      "fields": [
+        [
+          "taskNo",
+          "",
+          "text"
+        ],
+        [
+          "title",
+          "",
+          "text"
+        ],
+        [
+          "description",
+          "",
+          "textarea"
+        ],
+        [
+          "priority",
+          "",
+          "text"
+        ],
+        [
+          "dueAt",
+          "",
+          "datetime-local"
+        ],
+        [
+          "recordType",
+          "",
+          "select-one"
+        ],
+        [
+          "recordId",
+          "",
+          "text"
+        ],
+        [
+          "recurrenceRuleId",
+          "",
+          "text"
+        ],
+        [
+          "occurrenceKey",
+          "",
+          "text"
+        ]
+      ],
+      "sidebar": [
+        [
+          "    Dashboard  ",
+          "/dashboard"
+        ],
+        [
+          "    My work today  ",
+          "/work"
+        ],
+        [
+          "    Tasks  ",
+          "/tasks"
+        ],
+        [
+          "    Findings  ",
+          "/quality/findings"
+        ],
+        [
+          "    NCR  ",
+          "/quality/ncr"
+        ],
+        [
+          "    RCA  ",
+          "/quality/rca"
+        ],
+        [
+          "    CAPA  ",
+          "/quality/capa"
+        ],
+        [
+          "    Reject Reports  ",
+          "/reject-reports"
+        ],
+        [
+          "    Quarantine dashboard  ",
+          "/quarantine"
+        ],
+        [
+          "    Receiving items  ",
+          "/quarantine/receiving"
+        ],
+        [
+          "    Inspection reports  ",
+          "/quarantine/inspections"
+        ],
+        [
+          "    Quarantine administration  ",
+          "/quarantine/admin"
+        ],
+        [
+          "    Laboratory tests  ",
+          "/laboratory/tests"
+        ],
+        [
+          "    Equipment  ",
+          "/assets/equipment"
+        ],
+        [
+          "    Calibration records  ",
+          "/assets/calibrations"
+        ],
+        [
+          "    Maintenance  ",
+          "/assets/maintenance"
+        ],
+        [
+          "    My approval queue  ",
+          "/approvals"
+        ],
+        [
+          "    Change requests  ",
+          "/change-requests"
+        ],
+        [
+          "    Reports  ",
+          "/reports"
+        ],
+        [
+          "    AI advisory  ",
+          "/ai-advisory"
+        ],
+        [
+          "    Administration  ",
+          "/admin"
+        ],
+        [
+          "    Users  ",
+          "/admin/users"
+        ],
+        [
+          "    Roles  ",
+          "/admin/roles"
+        ],
+        [
+          "    Permissions  ",
+          "/admin/permissions"
+        ],
+        [
+          "    Scopes  ",
+          "/admin/scopes"
+        ],
+        [
+          "    Audit history  ",
+          "/audit"
+        ],
+        [
+          "    Backup and recovery  ",
+          "/system/backups"
+        ],
+        [
+          "    Controlled documents  ",
+          "/documents"
+        ],
+        [
+          "    Notifications  ",
+          "/notifications"
+        ],
+        [
+          "    Search  ",
+          "/search"
+        ],
+        [
+          "    Account settings  ",
+          "/account"
+        ],
+        [
+          "    Operating guides  ",
+          "/help"
+        ]
+      ],
+      "sidebarBackground": "rgb(17, 29, 45)",
+      "targets": [
+        {
+          "id": "Back to tasks",
+          "height": 44
+        },
+        {
+          "id": "taskNo",
+          "height": 44
+        },
+        {
+          "id": "title",
+          "height": 44
+        },
+        {
+          "id": "description",
+          "height": 63.375
+        },
+        {
+          "id": "priority",
+          "height": 44
+        },
+        {
+          "id": "dueAt",
+          "height": 45.875
+        },
+        {
+          "id": "recordType",
+          "height": 44.390625
+        },
+        {
+          "id": "recordId",
+          "height": 44.765625
+        },
+        {
+          "id": "recurrenceRuleId",
+          "height": 44.765625
+        },
+        {
+          "id": "occurrenceKey",
+          "height": 44.765625
+        },
+        {
+          "id": "Cancel",
+          "height": 44
+        },
+        {
+          "id": "Save draft",
+          "height": 46.375
+        }
+      ],
+      "axeViolations": 0
+    },
+    {
+      "media": {
+        "forcedColors": "active"
+      },
+      "overflow": 0
+    },
+    {
+      "media": {
+        "forcedColors": "none",
+        "reducedMotion": "reduce"
+      },
+      "overflow": 0
+    }
+  ],
+  "errors": [],
+  "keyboard": [
+    {
+      "id": "taskNo",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "title",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "description",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "priority",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "dueAt",
+      "text": "",
+      "outline": "none"
+    },
+    {
+      "id": "recordType",
+      "text": "No referenceDOCUMENTLAB TESTCHANGE REQUESTFINDINGNCRRCACAPA",
+      "outline": "solid"
+    },
+    {
+      "id": "recordId",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "recurrenceRuleId",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "occurrenceKey",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "",
+      "text": "Cancel",
+      "outline": "solid"
+    },
+    {
+      "id": "",
+      "text": "Save draft",
+      "outline": "solid"
+    },
+    {
+      "id": "",
+      "text": "",
+      "outline": "none"
+    },
+    {
+      "id": "",
+      "text": "",
+      "outline": "none"
+    },
+    {
+      "id": "",
+      "text": "",
+      "outline": "none"
+    },
+    {
+      "id": "",
+      "text": "",
+      "outline": "none"
+    },
+    {
+      "id": "",
+      "text": "Skip to main content    QC QC Operations           Find a page          Overview           Dashboard          Work           My work today        Tasks          Quality           Findings        NCR        RCA        CAPA        Reject Reports          Quarantine           Quarantine dashboard        Receiving items        Inspection reports        Quarantine administration          Laboratory           Laboratory tests          Assets           Equipment        Calibration records        Maintenance          Governance           My approval queue        Change requests          Insights           Reports        AI advisory          Administration           Administration        Users        Roles        Permissions        Scopes          System           Audit history        Backup and recovery        Controlled documents        Workspace tools       Notifications        Search        Account settings        Operating guides       <style>.nav-items[hidden] { display:block; } .nav-group-toggle, .collapse-button { display:none; }</style>     HomeTasksNew record Current scopeOWN · All sites (global)   Vverify-employeeEmployee  Sign out     WorkCreate taskNew tasks start as drafts.   Back to tasksAfter savingOwnerYou (signed-in account)PriorityEntered value, or Not specifiedDue dateSelected date, or Not setStateDraftVersion1Next stepActivate the draft when it is readyTransition history appears after a state change.Task numberUse the task number from your approved source. Reference numbers are assigned automatically.TitleDescriptionPriorityLeave blank if no priority is assigned. It will show as “Not specified”.Due dateRelated specialized record (optional)A reference keeps ownership and decisions in the original application. Your current permission to view that record is required.Record typeNo referenceDOCUMENTLAB TESTCHANGE REQUESTFINDINGNCRRCACAPARecord identityRecurring occurrence (optional)Enter both the established rule identity and the exact UTC occurrence to generate one draft. An identical retry returns the same task. Changed input for the same pair is refused.Rule identityUTC occurrenceCancelSave draft    Go to   Find a page or record reference   PagesDashboardMy work todayTasksFindingsNCRRCACAPAReject ReportsQuarantine dashboardReceiving itemsInspection reportsQuarantine administrationLaboratory testsEquipmentCalibration recordsMaintenanceMy approval queueChange requestsReportsAI advisoryAdministrationUsersRolesPermissionsScopesAudit historyBackup and recoveryControlled documentsNotificationsSearchAccount settingsOperating guides New recordNew receiving itemNew laboratory test Recent records Search authorized records",
+      "outline": "none"
+    },
+    {
+      "id": "",
+      "text": "Skip to main content",
+      "outline": "solid"
+    },
+    {
+      "id": "",
+      "text": "",
+      "outline": "solid"
+    },
+    {
+      "id": "navigation-filter",
+      "text": "",
+      "outline": "solid"
+    }
+  ],
+  "clientValidation": {
+    "invalid": [
+      "taskNo",
+      "title"
+    ],
+    "focus": false,
+    "overflow": 0
+  },
+  "deniedForm": "PASS (page projection only; no action denial claimed)"
+}

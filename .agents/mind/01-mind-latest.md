@@ -1,3 +1,7 @@
+- **2026-10-17 — CA-P-TASKS-NEW / عرض نموذج المهام وفجوة native POST**
+  - Changed: CSS محلي فقط للنموذج (عمود هاتف/عمودان مستقلان واسعًا و44px)؛ non-style source وSidebar مطابقان لـHEAD.
+  - Evidence: Node24 unit26/26؛ خمسة عروض overflow0 وaxe0؛ حساب employee أنشأ سجلًا فعليًا، least بلا نموذج. native POST أعاد200 unconfirmed رغم حفظ السجل؛ reconciliation وجد UUID الحقيقي. `audit/CA-P-TASKS-NEW/execution-status.md`.
+  - State: PARTIAL؛ لا إصلاح منطق الحفظ ضمن العرض؛ true zoom200/400 وmatched runtime baseline وnegative action وAT NOT RUN. لا commit/push/deploy/إنتاج.
 - **2026-10-17 — CA-P-TASKS / تنظيم سجل المهام محليًا**
   - Changed: لوحة فلاتر CAPA A محلية للصفحة، شبكة تراعي advanced/presets الفعلية، روابط سجل44px؛ frontmatter والعقود والSidebar بلا تغيير.
   - Evidence: Node24.20.0 final focused43/43 PASS وtypecheck0 errors؛ Playwright مصادق PG18: خمسة عروض بصفر overflow وaxe0 وnative GET وسجل موجود. مقارنة الصفوف/Sidebar قبل وبعد متطابقة؛ baseline كان Node26 فلا تُدّعى مقارنة runtime متطابق. `audit/CA-P-TASKS/execution-status.md`.
