@@ -3,5 +3,22 @@ import BaseLayout from '../ui/layouts/BaseLayout.astro';
 const recoveryHref = Astro.locals.user ? '/dashboard' : '/login';
 const recoveryLabel = Astro.locals.user ? 'Go to dashboard' : 'Go to sign in';
 ---
-<BaseLayout title="Page not found"><main class="error-page"><p class="eyebrow">Page not found</p><h1>We could not find that page</h1><p>The address may be outdated, or you may not have access to the requested record.</p><div><a href={recoveryHref}>{recoveryLabel}</a></div></main></BaseLayout>
-<style>.error-page{min-height:70vh;display:grid;place-content:center;gap:12px;width:min(560px,calc(100% - 32px));margin:auto}.eyebrow{color:var(--color-accent-primary);font:600 11px var(--font-mono)}h1{margin:0;color:var(--text-primary);font-size:clamp(28px,5vw,46px)}p{margin:0;color:var(--text-secondary);line-height:1.6}.error-page div{display:flex;gap:16px;margin-top:12px}.error-page a{color:var(--color-accent-primary-hover);font-size:13px}</style>
+<BaseLayout title="Page not found" visualDirection="capa-a">
+  <main class="error-shell" id="main-content">
+    <section class="state-card" aria-labelledby="error-title">
+      <p class="eyebrow">Page not found</p>
+      <h1 id="error-title">We could not find that page</h1>
+      <p>The address may be outdated, or you may not have access to the requested record.</p>
+      <div class="state-card__actions">
+        <a href={recoveryHref}>{recoveryLabel}</a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+<style>
+  .error-shell { min-height: 100vh; display: grid; align-content: center; justify-items: center; padding: var(--space-6); }
+  .eyebrow { margin: 0 0 var(--space-2); color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  h1 { margin: 0; color: var(--text-primary); font-size: 1.75rem; line-height: 1.2; }
+  .state-card p:not(.eyebrow) { color: var(--text-secondary); }
+  @media (max-width: 520px) { .error-shell { padding: var(--space-4); } }
+</style>

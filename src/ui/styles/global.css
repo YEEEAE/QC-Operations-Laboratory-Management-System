@@ -3,6 +3,7 @@
 @import './density.css';
 @import './workspaces.css';
 @import './precision-light.css';
+@import './capa-a.css';
 
 /* Fonts are local-only by design: no external stylesheet, CDN, or font request. */
 @font-face {

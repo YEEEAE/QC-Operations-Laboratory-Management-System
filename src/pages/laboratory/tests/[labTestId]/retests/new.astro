@@ -1,4 +1,31 @@
 ---
-import AppLayout from '../../../../../ui/layouts/AppLayout.astro';const actor=Astro.locals.actor;if(!actor)return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+import AppLayout from '../../../../../ui/layouts/AppLayout.astro';
+import PageHeader from '../../../../../ui/components/PageHeader.astro';
+import DecisionStateCard from '../../../../../ui/components/feedback/DecisionStateCard.astro';
+const actor = Astro.locals.actor;
+if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
+const labTestId = Astro.params.labTestId ?? '';
+const originalHref = /^[0-9a-f-]{36}$/i.test(labTestId) ? `/laboratory/tests/${labTestId}` : '/laboratory/tests';
 ---
-<AppLayout title="Retest request"><h1>Retest</h1><p>Retest is blocked until the approved policy supplies authority, count, sequence, and original-result handling. The original test cannot be overwritten.</p></AppLayout>
+<AppLayout title="Retest request · Laboratory" locale="en" direction="ltr">
+  <PageHeader section="Laboratory">
+    <Fragment slot="heading"><h1>Retest request</h1></Fragment>
+    <p class="lede">A retest is a new controlled test linked to the original result.</p>
+  </PageHeader>
+  <DecisionStateCard
+    heading="Retest creation is not available."
+    decisionId="POLICY_SOURCE_REQUIRED"
+    owner="Laboratory policy owner"
+    decisionNote="No approved retest policy supplies authority, count, sequence, record number, template or original-result handling. The original test cannot be overwritten."
+    actions={[
+      { href: originalHref, label: 'Open the original test' },
+      { href: '/laboratory/tests', label: 'Open laboratory tests' },
+    ]}
+  >
+    <p>This page does not offer a retest form because the values that decide a retest are not approved. Nothing was changed.</p>
+    <p class="state-card__muted">The original test, its measurements and its recorded result remain unchanged and readable.</p>
+  </DecisionStateCard>
+</AppLayout>
+<style>
+  .lede { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-md); }
+</style>

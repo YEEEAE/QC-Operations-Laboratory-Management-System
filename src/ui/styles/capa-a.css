@@ -1,0 +1,540 @@
+/* CAPA Variant A presentation layer.
+   Source: Stitch project 1787344711919595236, screen
+   b93297bebbbd41c69aa4bbcbea0e3b6f ("CAPA unavailable EXPLORE A").
+   Local pinned copy: audit/CA-00/reference/capa-a.{html,png}.
+
+   Scope contract:
+   - Authenticated shell (html[data-visual-direction='capa-a']) adopts the
+     reference palette and surface treatment in the workspace.
+   - The sidebar keeps its current structure, links, order, icons, permissions
+     and dark surface; its values are re-declared here exactly as the previous
+     presentation layer did so inheritance cannot restyle it.
+   - No external fonts, Tailwind, Material Symbols or runtime script. Icons in
+     the reference are replaced by the project's inline SVG set.
+   - Tokens only. Business rules, routes, labels and permissions are untouched. */
+
+html[data-visual-direction='capa-a'] {
+  color-scheme: dark;
+
+  /* Canvas / surface / border / text roles measured from the reference HTML. */
+  --color-canvas: #14181e;
+  --color-canvas-deep: #101418;
+  --color-sidebar: #111d2d;
+  --color-surface-1: #252b34;
+  --color-surface-2: #2b323c;
+  --color-surface-3: #323a45;
+  --color-surface-hover: #323a45;
+  --color-surface-selected: #2c3a4e;
+  --color-border-subtle: #303845;
+  --color-border-default: #383f4c;
+  --color-border-strong: #4c5566;
+  --color-text-primary: #e8edf5;
+  --color-text-secondary: #c3cbd6;
+  --color-text-muted: #9ba3af;
+  --color-text-disabled: #7a828e;
+  --color-text-inverse: #14181e;
+  --color-accent-primary: #92b8f2;
+  --color-accent-primary-hover: #a6c5f5;
+  --color-accent-primary-muted: #22344e;
+
+  /* Status semantics are not present in the reference seeds. Keep the
+     approved dark-palette status hues (DESIGN-SYSTEM.md v1.1) so PASS,
+     HOLD, RELEASED and danger keep their established meaning. */
+  --status-approved: #6fa66d;
+  --status-approved-bg: #233424;
+  --status-pass: #79af70;
+  --status-pass-bg: #253a25;
+  --status-released: #4f9b91;
+  --status-released-bg: #1f3532;
+  --status-hold: #d5a36f;
+  --status-hold-bg: #3a3024;
+  --status-warning: #d5a36f;
+  --status-warning-bg: #3a3024;
+  --status-danger: #e08585;
+  --status-danger-bg: #3c2528;
+  --status-review: #92b8f2;
+  --status-review-bg: #22344e;
+  --status-neutral: #9ba3af;
+  --status-neutral-bg: #2b323c;
+  --status-stale: #d5a36f;
+  --status-stale-bg: #3a3024;
+
+  --surface-page: var(--color-canvas);
+  --surface-panel: var(--color-surface-1);
+  --surface-raised: var(--color-surface-2);
+  --surface-popover: var(--color-surface-3);
+  --surface-command: var(--color-canvas-deep);
+  --surface-register: var(--color-surface-1);
+  --surface-evidence: var(--color-surface-2);
+  --surface-decision: var(--color-surface-3);
+  --surface-readonly: var(--color-surface-1);
+  --surface-disabled: var(--color-surface-2);
+  --surface-overlay: rgb(8 11 16 / 72%);
+  --surface-table-stripe: rgb(255 255 255 / 1.5%);
+
+  --input-background: var(--color-surface-2);
+  --input-readonly-background: var(--color-surface-1);
+  --table-header-background: var(--color-surface-2);
+  --table-stripe-background: var(--surface-table-stripe);
+
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --text-provenance: var(--color-text-muted);
+  --text-evidence: var(--color-text-secondary);
+  --text-on-accent: var(--color-text-inverse);
+  --text-danger: var(--status-danger);
+
+  --border-default: var(--color-border-default);
+  --border-evidence: var(--color-border-default);
+  --border-command: var(--color-border-strong);
+  --border-focus: var(--color-accent-primary);
+  --border-invalid: var(--status-danger);
+  --border-selected: var(--color-accent-primary);
+  --focus-ring: var(--color-accent-primary);
+  /* Interactive-control boundary: measured 3.29:1 on the panel surface
+     (#707A8C on #252B34). Decorative panel separators stay subtler. */
+  --control-border: #707a8c;
+
+  --status-success: var(--status-pass);
+  --status-error: var(--status-danger);
+  --state-idle: var(--status-neutral);
+  --state-loading: var(--status-review);
+  --state-empty: var(--status-neutral);
+  --state-filtered-empty: var(--status-review);
+  --state-denied: var(--status-warning);
+  --state-stale: var(--status-warning);
+  --state-success: var(--status-pass);
+  --state-error: var(--status-danger);
+
+  /* Reference geometry: 12px cards, 8px controls, hairline 1px borders. */
+  --radius-sm: 8px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+  --panel-padding: var(--space-6);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 24%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 28%);
+  --shadow-3: 0 16px 40px rgb(0 0 0 / 36%);
+}
+
+html[data-visual-direction='capa-a'],
+html[data-visual-direction='capa-a'] body,
+html[data-visual-direction='capa-a'] .system-content {
+  background: var(--color-canvas);
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='capa-a'] .app-shell {
+  background: var(--color-canvas);
+  color: var(--text-primary);
+}
+
+/* Sidebar is intentionally preserved. These are the same values the previous
+   presentation layer declared; do not replace them with the CAPA A palette. */
+html[data-visual-direction='capa-a'] .app-sidebar {
+  --color-text-primary: #f2f6f9;
+  --color-text-secondary: #ccd8e2;
+  --color-text-muted: #aebdca;
+  --color-surface-hover: #20354b;
+  --color-surface-selected: #193e50;
+  --color-border-subtle: #31465b;
+  --color-border-default: #4c6074;
+  --surface-panel: #17283b;
+  --surface-raised: #20354b;
+  --surface-popover: #17283b;
+  --text-primary: #f2f6f9;
+  --text-secondary: #ccd8e2;
+  --text-muted: #aebdca;
+  --color-accent-primary: #5dd0d7;
+  --color-accent-primary-hover: #8ae5e7;
+  --color-text-inverse: #111d2d;
+  --focus-ring: #8ae5e7;
+  color: var(--text-primary);
+  color-scheme: dark;
+  background: #111d2d;
+}
+
+html[data-visual-direction='capa-a'] .app-sidebar .sidebar {
+  background: #111d2d;
+}
+
+/* Topbar follows the reference panel surface; it is not part of the sidebar. */
+html[data-visual-direction='capa-a'] .app-topbar {
+  background: var(--color-surface-1);
+  border-block-end-color: var(--color-border-subtle);
+  box-shadow: none;
+}
+
+html[data-visual-direction='capa-a'] .app-main {
+  padding-block: var(--space-8) var(--space-12);
+}
+
+/* Reference type: Inter, tight headings, 12px muted utility floor. */
+html[data-visual-direction='capa-a'] .app-main :where(h1) {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(h2) {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(h3) {
+  font-weight: 600;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(p, li, dd) {
+  line-height: 1.55;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.eyebrow, .section-label) {
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Shared surfaces. Pages that already declare .panel inherit this treatment
+   unless their own rule is more specific (purpose-built panels keep it). */
+html[data-visual-direction='capa-a'] .app-main :where(.panel, .card, .identity) {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.panel, .card) :where(h2, h3) {
+  color: var(--text-primary);
+}
+
+/* Form controls. */
+html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea) {
+  background: var(--input-background);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  min-block-size: 44px;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(input, textarea)::placeholder {
+  color: var(--color-text-disabled);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea):disabled {
+  opacity: var(--disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* The reference uses a light-blue filled action with near-black label. Many
+   route styles still hard-code `color:#fff` for accent-filled controls; this
+   scoped correction keeps the measured 4.5:1 pair without editing every page. */
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit'], .tabs a[aria-current='page']) {
+  color: var(--color-text-inverse) !important;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.secondary, .button.secondary, .link-button.secondary) {
+  color: var(--text-primary) !important;
+  border-color: var(--control-border) !important;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.controlled, .button.controlled) {
+  color: var(--text-primary) !important;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.danger, .button.danger) {
+  color: var(--status-danger) !important;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']) {
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):not(.secondary, .controlled, .danger, .link-button.secondary) {
+  background: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):not(.secondary, .controlled, .danger, .link-button.secondary):hover:not(:disabled) {
+  background: var(--color-accent-primary-hover);
+  border-color: var(--color-accent-primary-hover);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):disabled {
+  opacity: var(--disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* Tables keep their existing responsive/scroll contracts; only the surface,
+   header and separators change. */
+html[data-visual-direction='capa-a'] .app-main :where(table) {
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(thead th) {
+  background: var(--table-header-background);
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(th, td) {
+  border-block-end-color: var(--color-border-subtle);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.table-wrap, .table-scroll) {
+  border-color: var(--color-border-subtle);
+}
+
+/* Status chips. Text carries the meaning; colour only reinforces it. */
+html[data-visual-direction='capa-a'] .app-main :where(.state, .state-pill, .status-badge, .status-pill, .pill, .result) {
+  border-color: var(--color-border-default);
+  color: var(--text-primary);
+}
+
+/* Links and disclosure affordances. */
+html[data-visual-direction='capa-a'] .app-main :where(a) {
+  color: var(--color-accent-primary-hover);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(a:hover) {
+  color: var(--color-accent-primary);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(summary) {
+  color: var(--text-primary);
+}
+
+/* Reference card anatomy for policy-blocked/creation surfaces. */
+html[data-visual-direction='capa-a'] .state-card {
+  inline-size: 100%;
+  max-inline-size: 720px;
+  margin-inline: auto;
+  padding: var(--space-6);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+@media (min-width: 640px) {
+  html[data-visual-direction='capa-a'] .state-card {
+    padding: var(--space-8);
+  }
+}
+
+html[data-visual-direction='capa-a'] .state-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+html[data-visual-direction='capa-a'] .state-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--status-warning) 32%, transparent);
+  background: color-mix(in srgb, var(--status-warning) 12%, transparent);
+  color: var(--status-warning);
+}
+
+html[data-visual-direction='capa-a'] .state-card__head :where(h2) {
+  margin: 0;
+  padding-block-start: 2px;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+html[data-visual-direction='capa-a'] .state-card :where(p) {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+}
+
+html[data-visual-direction='capa-a'] .state-card :where(p.state-card__muted) {
+  color: var(--text-muted);
+}
+
+html[data-visual-direction='capa-a'] .state-card__callout {
+  margin-block: var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 40%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--status-warning) 12%, transparent);
+}
+
+html[data-visual-direction='capa-a'] .state-card__callout p {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+html[data-visual-direction='capa-a'] .state-card__callout strong {
+  color: var(--status-warning);
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--color-border-subtle);
+}
+
+@media (min-width: 640px) {
+  html[data-visual-direction='capa-a'] .state-card__actions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions :where(a, button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding-inline: var(--space-6);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions a:first-child {
+  background: var(--color-accent-primary);
+  border: 1px solid var(--color-accent-primary);
+  color: var(--color-text-inverse) !important;
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions a:first-child:hover {
+  background: var(--color-accent-primary-hover);
+  border-color: var(--color-accent-primary-hover);
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions a:not(:first-child) {
+  background: transparent;
+  border: 1px solid var(--control-border);
+  color: var(--text-primary) !important;
+}
+
+html[data-visual-direction='capa-a'] .state-card__actions a:not(:first-child):hover {
+  background: var(--color-surface-2);
+}
+
+/* Modal surfaces sit outside `.app-main` (command palette) or inside it;
+   both consume the same palette and control boundary. */
+html[data-visual-direction='capa-a'] dialog {
+  background: var(--color-surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+html[data-visual-direction='capa-a'] dialog :where(input, select, textarea) {
+  background: var(--input-background);
+  border: 1px solid var(--control-border);
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='capa-a'] dialog :where(button, .button, .link-button, input[type='submit']) {
+  color: var(--color-text-inverse);
+}
+
+/* The decorative workspace background was authored for the previous green
+   dark palette. Re-author it in CAPA A terms without a new grid or renderer. */
+html[data-visual-direction='capa-a'] .system-background {
+  background:
+    radial-gradient(60% 75% at 18% 14%, rgb(146 184 242 / 5%), transparent 66%),
+    radial-gradient(55% 70% at 92% 86%, rgb(146 184 242 / 3%), transparent 72%),
+    var(--color-canvas-deep);
+}
+
+html[data-visual-direction='capa-a'] .system-background::before {
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px);
+}
+
+html[data-visual-direction='capa-a'] .system-background::after {
+  background: rgb(20 24 30 / 78%);
+}
+
+/* Public surfaces (login/404/500) share the palette but keep their own
+   background treatment; the login renders its own 3D background. */
+html[data-visual-direction='capa-a'] .auth-layout:not(.is-transparent) {
+  background: rgb(20 24 30 / 94%);
+}
+
+html[data-visual-direction='capa-a'] .error-page .eyebrow {
+  color: var(--color-accent-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-visual-direction='capa-a'] :where(.app-shell, .app-sidebar) {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html[data-visual-direction='capa-a'] .app-sidebar {
+    --text-primary: CanvasText;
+    --text-secondary: CanvasText;
+    --text-muted: CanvasText;
+    --color-text-primary: CanvasText;
+    --color-text-secondary: CanvasText;
+    --color-text-muted: CanvasText;
+    --surface-raised: Canvas;
+    --surface-panel: Canvas;
+    --color-surface-selected: Canvas;
+    --focus-ring: Highlight;
+    color: CanvasText;
+    background: Canvas;
+  }
+
+  html[data-visual-direction='capa-a'] .state-card,
+  html[data-visual-direction='capa-a'] .state-card__callout {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(.panel, .card) {
+    box-shadow: none;
+  }
+}
+
+@media print {
+  html[data-visual-direction='capa-a'],
+  html[data-visual-direction='capa-a'] body,
+  html[data-visual-direction='capa-a'] .system-content,
+  html[data-visual-direction='capa-a'] .app-main {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-sidebar,
+  html[data-visual-direction='capa-a'] .app-topbar {
+    display: none !important;
+  }
+}

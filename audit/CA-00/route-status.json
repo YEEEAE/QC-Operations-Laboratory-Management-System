@@ -1,0 +1,534 @@
+{
+  "head": "e62f44745d5936d89747209673c3035a9986b6db",
+  "generatedAt": "2026-10-17T02:02:44.319482+00:00",
+  "rows": [
+    {
+      "route": "/",
+      "file": "src/pages/index.astro",
+      "kind": "redirect",
+      "status": "REDIRECT_TESTED_303"
+    },
+    {
+      "route": "/404",
+      "file": "src/pages/404.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_PUBLIC"
+    },
+    {
+      "route": "/500",
+      "file": "src/pages/500.astro",
+      "kind": "screen",
+      "status": "ERROR_PAGE_NOT_ROUTABLE"
+    },
+    {
+      "route": "/account",
+      "file": "src/pages/account.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin",
+      "file": "src/pages/admin/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin/permissions",
+      "file": "src/pages/admin/permissions/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin/roles",
+      "file": "src/pages/admin/roles/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin/roles/[roleId]",
+      "file": "src/pages/admin/roles/[roleId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin/scopes",
+      "file": "src/pages/admin/scopes/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin/users",
+      "file": "src/pages/admin/users/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/admin/users/[userId]",
+      "file": "src/pages/admin/users/[userId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/admin/users/new",
+      "file": "src/pages/admin/users/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/ai-advisory",
+      "file": "src/pages/ai-advisory.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/approvals",
+      "file": "src/pages/approvals/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/approvals/[approvalId]",
+      "file": "src/pages/approvals/[approvalId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets",
+      "file": "src/pages/assets/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/calibrations",
+      "file": "src/pages/assets/calibrations/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/calibrations/[calibrationId]",
+      "file": "src/pages/assets/calibrations/[calibrationId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/calibrations/new",
+      "file": "src/pages/assets/calibrations/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/equipment",
+      "file": "src/pages/assets/equipment/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/assets/equipment/[equipmentId]",
+      "file": "src/pages/assets/equipment/[equipmentId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/equipment/new",
+      "file": "src/pages/assets/equipment/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/maintenance",
+      "file": "src/pages/assets/maintenance/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/maintenance/[maintenanceId]",
+      "file": "src/pages/assets/maintenance/[maintenanceId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/assets/maintenance/new",
+      "file": "src/pages/assets/maintenance/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/audit",
+      "file": "src/pages/audit.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/change-requests",
+      "file": "src/pages/change-requests/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/change-requests/[changeRequestId]",
+      "file": "src/pages/change-requests/[changeRequestId]/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/change-requests/[changeRequestId]/review",
+      "file": "src/pages/change-requests/[changeRequestId]/review.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/change-requests/new",
+      "file": "src/pages/change-requests/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/dashboard",
+      "file": "src/pages/dashboard/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/documents",
+      "file": "src/pages/documents/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/documents/[documentId]",
+      "file": "src/pages/documents/[documentId]/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/documents/[documentId]/versions/[versionId]",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/documents/[documentId]/versions/[versionId]/edit",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/edit.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/documents/[documentId]/versions/[versionId]/review",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/review.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/documents/[documentId]/versions/new",
+      "file": "src/pages/documents/[documentId]/versions/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/documents/new",
+      "file": "src/pages/documents/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/governance/releases/[releaseId]",
+      "file": "src/pages/governance/releases/[releaseId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/help",
+      "file": "src/pages/help/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/laboratory",
+      "file": "src/pages/laboratory/index.astro",
+      "kind": "redirect",
+      "status": "REDIRECT_TESTED_303"
+    },
+    {
+      "route": "/laboratory/report-templates",
+      "file": "src/pages/laboratory/report-templates.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/laboratory/tests",
+      "file": "src/pages/laboratory/tests/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]",
+      "file": "src/pages/laboratory/tests/[labTestId]/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]/retests/new",
+      "file": "src/pages/laboratory/tests/[labTestId]/retests/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]/review",
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/laboratory/tests/new",
+      "file": "src/pages/laboratory/tests/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/login",
+      "file": "src/pages/login.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_PUBLIC"
+    },
+    {
+      "route": "/notifications",
+      "file": "src/pages/notifications.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality",
+      "file": "src/pages/quality/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/capa",
+      "file": "src/pages/quality/capa/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/capa/[capaId]",
+      "file": "src/pages/quality/capa/[capaId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/capa/new",
+      "file": "src/pages/quality/capa/new.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/quality/findings",
+      "file": "src/pages/quality/findings/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/findings/[findingId]",
+      "file": "src/pages/quality/findings/[findingId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/findings/new",
+      "file": "src/pages/quality/findings/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/ncr",
+      "file": "src/pages/quality/ncr/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/quality/ncr/[ncrId]",
+      "file": "src/pages/quality/ncr/[ncrId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/ncr/new",
+      "file": "src/pages/quality/ncr/new.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/quality/rca",
+      "file": "src/pages/quality/rca/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quality/rca/[rcaId]",
+      "file": "src/pages/quality/rca/[rcaId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine",
+      "file": "src/pages/quarantine/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/quarantine/admin",
+      "file": "src/pages/quarantine/admin/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/admin/[templateId]",
+      "file": "src/pages/quarantine/admin/[templateId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/inspections",
+      "file": "src/pages/quarantine/inspections/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/inspections/[inspectionId]",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/inspections/[inspectionId]/execute",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/execute.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/inspections/[inspectionId]/review",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/review.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/receiving",
+      "file": "src/pages/quarantine/receiving/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/receiving/[receivingId]",
+      "file": "src/pages/quarantine/receiving/[receivingId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/quarantine/receiving/new",
+      "file": "src/pages/quarantine/receiving/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/reject-reports",
+      "file": "src/pages/reject-reports/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/reject-reports/daily/[reportId]",
+      "file": "src/pages/reject-reports/daily/[reportId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/reject-reports/issue-slips/[reportId]",
+      "file": "src/pages/reject-reports/issue-slips/[reportId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/reject-reports/new",
+      "file": "src/pages/reject-reports/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/reports",
+      "file": "src/pages/reports/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/reports/[reportCode]",
+      "file": "src/pages/reports/[reportCode].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/search",
+      "file": "src/pages/search.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/system/backups",
+      "file": "src/pages/system/backups/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/system/backups/[backupId]",
+      "file": "src/pages/system/backups/[backupId]/index.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/system/backups/[backupId]/restore",
+      "file": "src/pages/system/backups/[backupId]/restore.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/system/control-center",
+      "file": "src/pages/system/control-center.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/system/health",
+      "file": "src/pages/system/health.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/tasks",
+      "file": "src/pages/tasks/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    },
+    {
+      "route": "/tasks/[taskId]",
+      "file": "src/pages/tasks/[taskId].astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/tasks/new",
+      "file": "src/pages/tasks/new.astro",
+      "kind": "screen",
+      "status": "LAYER_APPLIED_NOT_VERIFIED"
+    },
+    {
+      "route": "/work",
+      "file": "src/pages/work/index.astro",
+      "kind": "screen",
+      "status": "VERIFIED_SAMPLE_5_WIDTHS"
+    }
+  ]
+}

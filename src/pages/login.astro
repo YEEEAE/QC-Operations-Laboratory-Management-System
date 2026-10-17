@@ -28,7 +28,7 @@ const copy = {
   submit: 'Sign in',
 };
 ---
-<AuthLayout title="Sign in · QC Operations" locale="en" direction="ltr" systemBackground={false} transparent>
+<AuthLayout title="Sign in · QC Operations" locale="en" direction="ltr" systemBackground={false} transparent visualDirection="capa-a">
   <QCLogin3DBackground modelUrl="/assets/qc-medical-hero.glb" />
   <section class="login-panel login-content" aria-labelledby="login-title">
       <p>{copy.application}</p>
@@ -89,9 +89,9 @@ const copy = {
   #session-recovery { padding: var(--space-3); border: 1px solid var(--status-review); border-radius: var(--radius-sm); color: var(--text-primary); background: var(--status-review-bg); }
   .login-form { display: grid; gap: var(--space-3); }
   .login-form label { font-weight: 600; }
-  .login-form input:not([type="hidden"]) { width: 100%; min-height: 48px; padding-inline: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-page); }
+  .login-form input:not([type="hidden"]) { width: 100%; min-height: 48px; padding-inline: var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); }
   .password-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }
-  .password-field [data-password-toggle] { min-height: 48px; min-width: 72px; margin-top: 0; padding-inline: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-weight: 600; cursor: pointer; }
+  .password-field [data-password-toggle] { min-height: 48px; min-width: 72px; margin-top: 0; padding-inline: var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-weight: 600; cursor: pointer; }
   .login-form button { min-height: 48px; margin-top: var(--space-2); padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--color-text-inverse); font-weight: 700; cursor: pointer; }
   .login-form button:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
   .login-form button:active { transform: scale(.96); }

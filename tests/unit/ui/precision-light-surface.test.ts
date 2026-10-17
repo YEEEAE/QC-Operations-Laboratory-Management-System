@@ -3,27 +3,27 @@ import { describe, expect, it } from 'vitest';
 
 const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
 
-describe('Precision Light presentation', () => {
+describe('CAPA Variant A presentation', () => {
   it('styles the authenticated shell without replacing its permission-filtered sidebar', () => {
     const layout = read('src/ui/layouts/AppLayout.astro');
     const base = read('src/ui/layouts/BaseLayout.astro');
-    const styles = read('src/ui/styles/precision-light.css');
-    expect(layout).toContain('visualDirection="precision-light"');
+    const styles = read('src/ui/styles/capa-a.css');
+    expect(layout).toContain('visualDirection="capa-a"');
     expect(layout).toContain('<Sidebar actor={actor} />');
     expect(base).toContain('data-visual-direction={visualDirection}');
-    expect(styles).toContain("html[data-visual-direction='precision-light'] .app-sidebar");
-    expect(styles).toContain('--color-canvas: #f3f6fa;');
-    expect(styles).toContain('--color-text-primary: #14243b;');
+    expect(styles).toContain("html[data-visual-direction='capa-a'] .app-sidebar");
+    expect(styles).toContain('--color-canvas: #14181e;');
+    expect(styles).toContain('--color-text-primary: #e8edf5;');
   });
 
   it('sets the palette on the document element so body text and background follow it', () => {
-    const styles = read('src/ui/styles/precision-light.css');
+    const styles = read('src/ui/styles/capa-a.css');
     // Declaring the palette only on `.app-shell` leaves `body` on the previous
     // dark tokens, so any element without its own colour renders unreadable
     // light-on-light text.
-    expect(styles).toContain("html[data-visual-direction='precision-light'] body");
+    expect(styles).toContain("html[data-visual-direction='capa-a'] body");
     expect(styles).toContain('color: var(--text-primary);');
-    expect(styles).not.toContain(".app-shell[data-visual-direction='precision-light'] {");
+    expect(styles).not.toContain(".app-shell[data-visual-direction='capa-a'] {");
   });
 
   it('presents priority counts from existing register-backed metrics without synthetic numbers', () => {

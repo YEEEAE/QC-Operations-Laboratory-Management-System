@@ -50,7 +50,6 @@ const uiFiles = walk('src/ui').filter((path) => /\.(astro|ts)$/.test(path));
  */
 const NO_JS_BASELINE_OPEN = [
   'src/pages/documents/[documentId]/versions/[versionId]/index.astro',
-  'src/pages/laboratory/tests/[labTestId]/execute.astro',
   'src/pages/quality/capa/[capaId].astro',
 ];
 

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; systemBackground?: boolean; transparent?: boolean; }
+interface Props { title?: string; locale?: string; direction?: 'ltr' | 'rtl'; systemBackground?: boolean; transparent?: boolean; visualDirection?: string; }
 const { systemBackground = true, transparent = false, ...props } = Astro.props;
 ---
 <BaseLayout {...props} systemBackground={systemBackground}>

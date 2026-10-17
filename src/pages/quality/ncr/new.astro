@@ -1,40 +1,35 @@
 ---
 import PageHeader from "../../../ui/components/PageHeader.astro";
+import DecisionStateCard from "../../../ui/components/feedback/DecisionStateCard.astro";
 // RT-NCR-002. This page exists so the declared create route never falls through
 // to the NCR detail route (`/quality/ncr/[ncrId]`), which previously rendered a
 // detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
 //
-// Direct NCR creation is not enabled until the approved creation policy is
-// available, so this page states that honestly instead of showing a form that
-// cannot be submitted.
+// Direct NCR creation stays gated by PD-15/PD-16. The surface reports that
+// server state; it does not implement an eligibility rule that has no source.
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fncr%2Fnew');
 ---
 <AppLayout title="New NCR · Quality" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>New NCR</h1></Fragment>
-    
+  <PageHeader section="Quality">
+    <Fragment slot="heading"><h1>New NCR</h1></Fragment>
     <p class="lede">Create an NCR from a finding or inspection.</p>
   </PageHeader>
-  <section class="panel" role="status">
-    <h2>Direct creation is not available</h2>
-    <p>
-      The approved NCR creation policy is not in force yet, so this page does not offer a create
-      form. Nothing was changed. Existing NCR records stay available in the register.
-    </p>
-    <p><strong>Decision owners:</strong> PD-15 Finding-to-NCR criteria — QC owner; PD-16 inspection FAIL handling — QC / inspection procedure owner.</p>
-    <p class="links">
-      <a href="/quality/ncr">Open the NCR register</a>
-      <a href="/quality/findings">Open findings</a>
-    </p>
-  </section>
+  <DecisionStateCard
+    heading="Direct creation is not available."
+    decisionId="PD-15 · PD-16"
+    owner="QC owner; QC / inspection procedure owner"
+    decisionNote="Finding-to-NCR criteria and inspection FAIL handling are not in force. No eligibility rule or record number is inferred."
+    actions={[
+      { href: '/quality/ncr', label: 'Open the NCR register' },
+      { href: '/quality/findings', label: 'Open findings' },
+    ]}
+  >
+    <p>This page does not provide the authorized NCR creation flow. Creating an NCR requires an authorized finding relationship and the NCR-create permission. Nothing was changed.</p>
+    <p class="state-card__muted">Existing NCR records stay available in the register. The original source content and recorded state are not modified by this page.</p>
+  </DecisionStateCard>
 </AppLayout>
 <style>
-  .page-head { margin-bottom: var(--space-6); }
-  h1 { margin: .25rem 0 .4rem; }
-  .lede, .panel p { color: var(--text-muted); }
-  .panel { max-width: 720px; padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
-  .panel h2 { margin-top: 0; font-size: 1rem; }
-  .links { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-  .links a { color: var(--color-accent-primary-hover); font-weight: 600; }
+  .lede { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-md); }
 </style>

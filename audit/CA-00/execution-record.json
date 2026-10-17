@@ -1,0 +1,227 @@
+{
+  "task": "CA-00 master execution record",
+  "head": "e62f44745d5936d89747209673c3035a9986b6db",
+  "dirtyFingerprint": {
+    "statusSha256": "e91f7c111510430eb73d0d6d7b6238a84c9cd8217884801c66079f681b777daa",
+    "diffSha256": "851ea634e64fa7ffca4aa655a0a81297887a39c9d90b9070ff0fca037919bf4f",
+    "changedFiles": 15
+  },
+  "generatedAt": "2026-10-17T02:02:44.322446+00:00",
+  "node": "v24.20.0",
+  "pnpm": "11.25.0",
+  "ids": [
+    {
+      "id": "CA-00",
+      "status": "PARTIAL",
+      "scope": "Visual layer generalized; three creation writes blocked; full 86-page acceptance not run",
+      "evidence": [
+        "audit/CA-00/report.md",
+        "audit/CA-00/route-status.json"
+      ],
+      "blockers": [
+        "Forms blocked by PD-15/PD-16/PD-18 and missing retest policy",
+        "86-page populated acceptance NOT VERIFIED"
+      ]
+    },
+    {
+      "id": "CA-01",
+      "status": "DONE",
+      "scope": "Reference restored and pinned; route inventory recomputed",
+      "evidence": [
+        "audit/CA-00/source-manifest.json",
+        "audit/CA-00/route-register.json"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "CA-02",
+      "status": "DONE",
+      "scope": "CAPA A tokens/layout layer scoped to main; sidebar preserved",
+      "evidence": [
+        "src/ui/styles/capa-a.css",
+        "tests/unit/ui/capa-a-surface.test.ts"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "CA-03",
+      "status": "DONE",
+      "scope": "UI state contracts documented",
+      "evidence": [
+        "audit/CA-00/state-contracts.md"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "CA-04",
+      "status": "PARTIAL",
+      "scope": "Pilot sample verified at 5 widths; not every pilot route",
+      "evidence": [
+        "audit/CA-00/after-*.png"
+      ],
+      "blockers": [
+        "Pilot set not fully enumerated/verified"
+      ]
+    },
+    {
+      "id": "CA-05",
+      "status": "PARTIAL",
+      "scope": "Global layer applies to all screens; per-page visual acceptance sampled only",
+      "evidence": [
+        "audit/CA-00/route-status.json"
+      ],
+      "blockers": [
+        "83 screens LAYER_APPLIED_NOT_VERIFIED"
+      ]
+    },
+    {
+      "id": "CA-06",
+      "status": "PARTIAL",
+      "scope": "12 routes x 5 widths, 8 axe pairs, keyboard/focus, forced colors, reduced motion, redirects",
+      "evidence": [
+        "audit/CA-00/report.md"
+      ],
+      "blockers": [
+        "Screen reader NOT VERIFIED",
+        "Full 86-route populated matrix NOT RUN",
+        "Exact 200%/400% browser zoom not emulated; 320/768 proxies"
+      ]
+    },
+    {
+      "id": "CA-07",
+      "status": "PARTIAL",
+      "scope": "Delivery docs and route classification produced",
+      "evidence": [
+        "audit/CA-00/report.md"
+      ],
+      "blockers": [
+        "No functional completion percentage claimed"
+      ]
+    },
+    {
+      "id": "CA-F-00",
+      "status": "DONE",
+      "scope": "Field/guard decision matrix and gate verdicts",
+      "evidence": [
+        "audit/CA-00/ca-f-00-decision-matrix.md"
+      ],
+      "blockers": []
+    },
+    {
+      "id": "CA-F-01",
+      "status": "BLOCKED",
+      "scope": "NCR create form/write",
+      "evidence": [
+        "src/actions/ncr.ts",
+        "src/pages/quality/ncr/new.astro"
+      ],
+      "blockers": [
+        "PD-15 Finding-to-NCR criteria",
+        "PD-16 inspection FAIL consequence",
+        "NCR numbering authority"
+      ]
+    },
+    {
+      "id": "CA-F-02",
+      "status": "BLOCKED",
+      "scope": "CAPA create form/write",
+      "evidence": [
+        "src/actions/capa.ts",
+        "src/pages/quality/capa/new.astro"
+      ],
+      "blockers": [
+        "PD-18 effectiveness requirement/criteria",
+        "CAPA numbering authority",
+        "action-plan policy"
+      ]
+    },
+    {
+      "id": "CA-F-03",
+      "status": "BLOCKED",
+      "scope": "Retest create form/write",
+      "evidence": [
+        "src/modules/laboratory/application/create-retest.ts"
+      ],
+      "blockers": [
+        "RetestPolicy source: authority/count/sequence/number/template/original handling"
+      ]
+    },
+    {
+      "id": "CA-F-04",
+      "status": "BLOCKED",
+      "scope": "Acceptance of the three creation functions",
+      "evidence": [
+        "audit/CA-00/ca-f-00-decision-matrix.md"
+      ],
+      "blockers": [
+        "All three writes blocked; no positive/negative runtime acceptance possible"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "command": "pnpm typecheck",
+      "result": "PASS 0 errors"
+    },
+    {
+      "command": "pnpm exec astro build",
+      "result": "PASS exit 0"
+    },
+    {
+      "command": "pnpm build",
+      "result": "PARTIAL — Astro build + release id PASS; write-build-evidence fails without a verification run context (tooling prerequisite, not code)"
+    },
+    {
+      "command": "pnpm test:architecture",
+      "result": "PASS"
+    },
+    {
+      "command": "focused vitest (11 files)",
+      "result": "PASS 98/98"
+    },
+    {
+      "command": "browser sweep 12 routes x 320/390/768/1024/1440",
+      "result": "PASS — 0 horizontal overflow, 0 targets <44px, min font >=12px"
+    },
+    {
+      "command": "axe (8 route/width pairs)",
+      "result": "PASS — 0 WCAG A/AA violations"
+    },
+    {
+      "command": "forced-colors + reduced-motion emulation",
+      "result": "PASS — Canvas/Highlight mapping, transition 0s"
+    },
+    {
+      "command": "redirects / and /laboratory (unauthenticated)",
+      "result": "PASS — 303 to /login?returnTo=..."
+    },
+    {
+      "command": "screen reader / full 86-route populated acceptance",
+      "result": "NOT RUN"
+    }
+  ],
+  "files": [
+    "src/ui/styles/capa-a.css",
+    "src/ui/styles/global.css",
+    "src/ui/layouts/AppLayout.astro",
+    "src/ui/layouts/AuthLayout.astro",
+    "src/ui/components/feedback/DecisionStateCard.astro",
+    "src/pages/quality/ncr/new.astro",
+    "src/pages/quality/capa/new.astro",
+    "src/pages/laboratory/tests/[labTestId]/retests/new.astro",
+    "src/pages/login.astro",
+    "src/pages/404.astro",
+    "src/pages/500.astro",
+    "tests/unit/ui/capa-a-surface.test.ts",
+    "tests/unit/ui/precision-light-surface.test.ts",
+    "tests/unit/ui/mutation-safety-contract.test.ts",
+    "audit/CA-00/reference/capa-a.html",
+    "audit/CA-00/reference/capa-a.png",
+    "audit/CA-00/source-manifest.json",
+    "audit/CA-00/route-register.json",
+    "audit/CA-00/route-status.json",
+    "audit/CA-00/state-contracts.md",
+    "audit/CA-00/ca-f-00-decision-matrix.md",
+    "audit/CA-00/report.md"
+  ]
+}

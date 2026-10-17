@@ -1,41 +1,35 @@
 ---
 import PageHeader from "../../../ui/components/PageHeader.astro";
+import DecisionStateCard from "../../../ui/components/feedback/DecisionStateCard.astro";
 // RT-CAPA-002. This page exists so the declared create route never falls through
-// to the CAPA detail route (`/quality/capa/[capaId]`), which previously rendered
-// a detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
+// to the CAPA detail route (`/quality/capa/[capaId]`), which previously rendered a
+// detail view for the literal id `new` (QC-100-FINAL-016 P2-4).
 //
-// This route intentionally remains informational until its authorized creation
-// flow is available; P-04 closure is a separate approved exception.
+// The authorized creation flow depends on PD-18 and on a source NCR relation.
+// P-04 closure is a separate approved exception and is not a creation path.
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality%2Fcapa%2Fnew');
 ---
 <AppLayout title="New CAPA · Quality" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>New CAPA</h1></Fragment>
-    
+  <PageHeader section="Quality">
+    <Fragment slot="heading"><h1>New CAPA</h1></Fragment>
     <p class="lede">Link the CAPA to an NCR or RCA.</p>
   </PageHeader>
-  <section class="panel" role="status">
-    <h2>Direct creation is not available</h2>
-    <p>
-      This page does not provide the authorized CAPA creation flow. Creating a CAPA requires an
-      authorized NCR relationship and the CAPA-create permission. Nothing was changed.
-      P-04 separately permits controlled closure by an active Supervisor with the explicit
-      close grant and scope, reason, matching version, reauthentication, and CLOSE e-signature.
-    </p>
-    <p><strong>Still unresolved:</strong> PD-18 — whether an effectiveness check is generally required and its criteria. No effectiveness result is inferred.</p>
-    <p class="links">
-      <a href="/quality/capa">Open the CAPA register</a>
-      <a href="/quality/ncr">Open NCR</a>
-    </p>
-  </section>
+  <DecisionStateCard
+    heading="Direct creation is not available."
+    decisionId="PD-18"
+    owner="QC owner"
+    decisionNote="Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectiveness result is inferred."
+    actions={[
+      { href: '/quality/capa', label: 'Open the CAPA register' },
+      { href: '/quality/ncr', label: 'Open NCR' },
+    ]}
+  >
+    <p>This page does not provide the authorized CAPA creation flow. Creating a CAPA requires an authorized NCR relationship and the CAPA-create permission. Nothing was changed.</p>
+    <p class="state-card__muted">P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matching version, reauthentication, and CLOSE e-signature.</p>
+  </DecisionStateCard>
 </AppLayout>
 <style>
-  .page-head { margin-bottom: var(--space-6); }
-  h1 { margin: .25rem 0 .4rem; }
-  .lede, .panel p { color: var(--text-muted); }
-  .panel { max-width: 720px; padding: var(--space-5); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
-  .panel h2 { margin-top: 0; font-size: 1rem; }
-  .links { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-  .links a { color: var(--color-accent-primary-hover); font-weight: 600; }
+  .lede { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-md); }
 </style>

@@ -1,0 +1,44 @@
+{
+  "task": "CA-00 / CA-01 source manifest",
+  "generatedAt": "2026-10-17T01:49:08.134681Z",
+  "head": "e62f44745d5936d89747209673c3035a9986b6db",
+  "stitch": {
+    "project": "1787344711919595236",
+    "screen": "b93297bebbbd41c69aa4bbcbea0e3b6f",
+    "title": "QC Universe — CAPA unavailable EXPLORE A (/quality/capa/new)",
+    "width": 2560,
+    "height": 2048,
+    "retrievedAt": "2026-10-17T01:49:08.161149Z",
+    "access": "get_screen returned HTML download URL and screenshot"
+  },
+  "files": [
+    {
+      "path": "audit/CA-00/reference/capa-a.html",
+      "sha256": "03b26630a1374338cc522be466b9adcb760a56e99f2e83ef169538f969cbd289",
+      "bytes": 5440
+    },
+    {
+      "path": "audit/CA-00/reference/capa-a.png",
+      "sha256": "53b0136482d83ad7ac23932b7d90b3ad8a9ce4a394b84597be54883ae7e0cb91",
+      "bytes": 125645
+    }
+  ],
+  "extracted": {
+    "canvas": "#14181E",
+    "surface": "#252B34",
+    "border": "#383F4C",
+    "text": "#E8EDF5",
+    "muted": "#9BA3AF",
+    "accent": "#92B8F2",
+    "accentHover": "#A6C5F5",
+    "warning": "#D5A36F",
+    "type": "Inter 400/500/600/700; h1 24px/600; body 14px; callout 12-13px",
+    "geometry": "card radius 12px, control radius 8px, 1px borders, 264px reserved exploration rail (not copied), 720px max card",
+    "touch": "44px minimum action height in reference; login remains 48px"
+  },
+  "notAcceptedAsProductTruth": [
+    "The 264px empty rail is exploration scaffolding and is not copied into the application.",
+    "Material Symbols and Tailwind CDN from the reference are not imported.",
+    "Reference copy is adapted to existing product content; no new permissions, thresholds or statuses were imported."
+  ]
+}
