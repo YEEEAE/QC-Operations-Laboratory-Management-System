@@ -100,9 +100,11 @@ const canCreate = actor.permissions.some(
 );
 ---
 <AppLayout title="Tasks · QC Operations" locale="en" direction="ltr">
-  <div class="scientific-register">
+  <div class="scientific-register tasks-register">
   <PageHeader><Fragment slot="heading"><h1>Tasks</h1></Fragment><Fragment slot="actions">{canCreate && <a class="button" href="/tasks/new">Create task</a>}</Fragment></PageHeader>
-  <FilterBar clearHref={hasFilters ? '/tasks' : undefined}>
+  <section class="task-filter-panel" aria-labelledby="task-filters-heading">
+  <h2 id="task-filters-heading">Find tasks</h2>
+  <FilterBar label="Task filters" clearHref={hasFilters ? '/tasks' : undefined}>
     <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Task number or title" /></label>
     <label for="state">State<select id="state" name="state"><option value="">All states</option>{validStates.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
     <label for="due">Due<select id="due" name="due"><option value="">Any due date</option><option value="overdue" selected={due === 'overdue'}>Overdue</option><option value="today" selected={due === 'today'}>Due today</option></select></label>
@@ -111,6 +113,7 @@ const canCreate = actor.permissions.some(
     <label for="sort">Sort by<select id="sort" name="sort"><option value="updated" selected={sort === 'updated'}>Recently updated</option><option value="due" selected={sort === 'due'}>Due date</option><option value="priority" selected={sort === 'priority'}>Priority</option><option value="taskNo" selected={sort === 'taskNo'}>Task number</option></select></label>
     <label for="direction">Direction<select id="direction" name="direction"><option value="desc" selected={direction === 'desc'}>Descending</option><option value="asc" selected={direction === 'asc'}>Ascending</option></select></label>
   </FilterBar>
+  </section>
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/tasks' : undefined}
@@ -121,5 +124,55 @@ const canCreate = actor.permissions.some(
   {authorizationUnavailable ? <section class="empty"><h2>Tasks are not available in your permission scope</h2><p>No task data or count is shown for this account.</p></section> : providerUnavailable ? <ProviderUnavailableState title="Tasks are temporarily unavailable" description="Task data could not be loaded. No records or count are shown." retryHref="/tasks" /> : tasks.length ? <DataTable caption={`Tasks — ${result.total} matching records`} summary={`Showing ${tasks.length} of ${result.total} authorized tasks · page ${page.page} of ${totalPages}. Sorted by ${sort} (${direction}).`} density="compact"><thead><tr><th scope="col">Task number</th><th scope="col">Title</th><th scope="col">Owner</th><th scope="col">Priority</th><th scope="col">Assignee</th><th scope="col">Due</th><th scope="col">State</th><th scope="col">Version</th><th scope="col">Next step</th></tr></thead><tbody>{tasks.map((task) => <tr><th scope="row"><a href={`/tasks/${task.id}`}>{task.taskNo}</a></th><td>{task.title}</td><td>{task.ownerDisplayName}</td><td>{priorityLabel(task.priority)}</td><td>{task.assigneeDisplayName}</td><td>{task.dueAt ? <time datetime={task.dueAt.toISOString()}>{formatDate(task.dueAt)}</time> : '—'}</td><td>{stateLabel(task.state)}</td><td>{task.version.toString()}</td><td>{nextStep(task)}</td></tr>)}</tbody><Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="tasks" baseUrl="/tasks" /></Fragment></DataTable> : <section class="empty"><h2>{hasFilters ? 'No tasks match these filters' : 'No tasks in your authorized scope'}</h2><p>{hasFilters ? 'Remove a filter to widen the search. The due filter only counts open work: completed and cancelled tasks are never overdue.' : 'Tasks appear here once they are created.'}</p>{hasFilters ? <a href="/tasks">Clear all filters</a> : canCreate && <a href="/tasks/new">Create task</a>}</section>}
   </div>
 </AppLayout>
+<style>
+  .tasks-register { min-inline-size: 0; }
+  .task-filter-panel {
+    padding: var(--space-5);
+    margin-block-end: var(--space-4);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--card-radius);
+  }
+  .task-filter-panel h2 {
+    margin: 0 0 var(--space-4);
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+  }
+  .task-filter-panel :global(.filters) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    align-items: end;
+    margin: 0;
+  }
+  .task-filter-panel :global(label) { min-inline-size: 0; }
+  .task-filter-panel :global(input), .task-filter-panel :global(select) {
+    inline-size: 100%; min-inline-size: 0; min-block-size: 44px;
+    border-color: var(--control-border);
+  }
+  .task-filter-panel :global(.filters-actions) { flex-wrap: wrap; }
+  .task-filter-panel :global(.advanced-filters),
+  .task-filter-panel :global(.filter-presets),
+  .task-filter-panel :global(.submit-status) { grid-column: 1 / -1; }
+  .task-filter-panel :global(.filter-presets) {
+    display: flex; align-items: end; flex-wrap: wrap; gap: var(--space-3);
+  }
+  .task-filter-panel :global(.filter-presets input),
+  .task-filter-panel :global(.filter-presets select) { inline-size: auto; max-inline-size: 100%; }
+  .tasks-register :global(tbody th a) {
+    display: inline-flex; align-items: center; min-block-size: 44px;
+    font-weight: var(--font-weight-semibold); text-underline-offset: .2em;
+  }
+  .tasks-register :global(td:last-child) { min-inline-size: 14rem; }
+  .tasks-register :global(td:nth-child(8)) { font-variant-numeric: tabular-nums; }
+  .tasks-register .empty a { display: inline-flex; align-items: center; min-block-size: 44px; }
+  @media (max-width: 600px) {
+    .task-filter-panel { padding: var(--space-4); }
+    .tasks-register .empty { padding: var(--space-5); }
+  }
+  @media (forced-colors: active) {
+    .task-filter-panel { border-color: CanvasText; }
+    .task-filter-panel :global(input), .task-filter-panel :global(select) { border-color: ButtonText; }
+  }
+</style>
 <style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.lede,.empty p{color:var(--text-muted);font-size:.86rem}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--color-text-inverse);padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700;cursor:pointer}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-5);flex-wrap:wrap}label{display:grid;gap:.35rem;font-size:.8rem;color:var(--text-secondary)}input,select{min-height:2.5rem;padding:.5rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle)}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{margin-top:var(--space-5);padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem;font-size:1.1rem}@media(max-width:600px){.page-head,.filters{display:grid}.filters button{width:max-content}}
 </style>

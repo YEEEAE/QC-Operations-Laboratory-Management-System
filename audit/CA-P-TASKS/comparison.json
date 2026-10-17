@@ -1,0 +1,42 @@
+{
+  "comparisons": [
+    {
+      "width": 320,
+      "rowsIdentical": true,
+      "sidebarIdentical": true,
+      "overflowBefore": 0,
+      "overflowAfter": 0
+    },
+    {
+      "width": 390,
+      "rowsIdentical": true,
+      "sidebarIdentical": true,
+      "overflowBefore": 0,
+      "overflowAfter": 0
+    },
+    {
+      "width": 768,
+      "rowsIdentical": true,
+      "sidebarIdentical": true,
+      "overflowBefore": 0,
+      "overflowAfter": 0
+    },
+    {
+      "width": 1024,
+      "rowsIdentical": true,
+      "sidebarIdentical": true,
+      "overflowBefore": 0,
+      "overflowAfter": 0
+    },
+    {
+      "width": 1440,
+      "rowsIdentical": true,
+      "sidebarIdentical": true,
+      "overflowBefore": 0,
+      "overflowAfter": 0
+    }
+  ],
+  "frontmatterIdentical": true,
+  "baselineRuntime": "26.0.0 (Homebrew node@24 symlink returned v26)",
+  "finalRuntime": "24.20.0 (explicit nvm executable)"
+}

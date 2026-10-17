@@ -1,3 +1,15 @@
+- **2026-10-17 — CA-P-TASKS / تنظيم سجل المهام محليًا**
+  - Changed: لوحة فلاتر CAPA A محلية للصفحة، شبكة تراعي advanced/presets الفعلية، روابط سجل44px؛ frontmatter والعقود والSidebar بلا تغيير.
+  - Evidence: Node24.20.0 final focused43/43 PASS وtypecheck0 errors؛ Playwright مصادق PG18: خمسة عروض بصفر overflow وaxe0 وnative GET وسجل موجود. مقارنة الصفوف/Sidebar قبل وبعد متطابقة؛ baseline كان Node26 فلا تُدّعى مقارنة runtime متطابق. `audit/CA-P-TASKS/execution-status.md`.
+  - State: PARTIAL — zoom200/400 وAT وnegative account/final provider/empty matrix NOT RUN. **مسار Node الصالح:** `~/.nvm/versions/node/v24.20.0/bin/node`؛ `/opt/homebrew/opt/node@24/bin/node` أعاد v26.0.0. لا commit/push/deploy/إنتاج.
+- **2026-10-17 — CA-P-QUALITY-CAPA-NEW / توقف الصفحة عند اعتماد الإنشاء**
+  - Changed: سجل تنفيذ الصفحة BLOCKED؛ لا تعديل منتج أو نموذج شكلي، لأن CA-F-02 محجوب ولا سجل CA-F-04 في audit؛ الاستثناء الوظيفي لا يحسم السلطة الناقصة.
+  - Evidence: قراءة الصفحة ومكوناتها المباشرة وAppLayout client script وأكشن CAPA الرافض؛ قبول المتصفح والحفظ NOT RUN/BLOCKED. التقرير `audit/CA-P-QUALITY-CAPA-NEW/execution-status.md`.
+  - State: BLOCKED؛ نموذج الإنشاء الفعلي ما زال مطلوبًا بعد حسم المصدر ثم CA-F-04.
+- **2026-10-17 — CA-F-02 / فحص بوابة إنشاء CAPA وخطة الإجراءات**
+  - Changed: توثيق سجل تنفيذ BLOCKED؛ CA-F-00 لم يحسم علاقة NCR/RCA أو PD-18 أو حالات/إسناد الإجراءات؛ لا فتح حفظ أو اختراع قيم ولا تغيير كود المنتج/P-04.
+  - Evidence: اختبارات `creation-source-gates` الحالية 17/17 PASS على Node26 (خارج العقد؛ مسار node@24 أعاد v26.0.0)؛ دليل رفض/شكل فقط، PG/JS/no-JS creation acceptance BLOCKED. التقرير `audit/CA-F-02/execution-status.md` عند `a8e289f7`.
+  - State: BLOCKED؛ يلزم مصدر معتمد محدد للمصالحة في CA-F-00 قبل التنفيذ التشغيلي.
 - **2026-10-17 — CA-F-01 / إنشاء NCR من Finding بسلطة مالك محددة**
   - Changed: حُسمت بوابة NCR بقرار مالك في المحادثة (كل حالات Finding، أكثر من NCR لكل Finding، `ncrNo` يدوي فريد، `ownerId` غائب ومرفوض إن أُرسل، `affectedItemCode/Lot` بلا مطابقة للمصدر). نُفّذ `ncr.create` + `CreateNcrInput` + use case + Postgres create ذري: قفل Finding وإعادة فحص وجوده/نطاقه/الصلاحية داخل transaction، ثم DRAFT + relation + CREATE audit + intent receipt معًا. `requestId` تتبع فقط؛ idempotency بمفتاح نطاق الفاعل + `intentId`، replay المطابق يعيد السجل نفسه، وتعارض المحتوى يُرفض. صفحة `/quality/ncr/new` صارت native POST + JS enhancement مع selector من Findings المصرح، حالات policy-blocked/source-unavailable/empty/eligible، و303 بعد نجاح مؤكد؛ وأُضيف الدخول من Finding ومن السجل. لا migration/schema/Sidebar/CAPA/Retest/signature changes.
   - Evidence: Node24.20.0 focused unit+PG18 integration **28/28 PASS** (يشمل atomicity/audit rollback/source lock/replay/conflict/owner tamper/all Finding states)؛ Astro typecheck **0 errors**. Playwright المصادق على PG18 مصرفي: سيناريو الإنشاء/السجل/التفاصيل/التدقيق **PASS**، ثم أُوقف التشغيل أثناء إصلاح replay cookie؛ replay/no-JS/negative E2E **NOT RUN**. build/architecture/graphify/AT **NOT RUN** بعد التغيير.
