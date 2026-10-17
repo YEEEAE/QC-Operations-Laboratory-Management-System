@@ -1,0 +1,422 @@
+{
+  "generatedAt": "2026-10-17T04:30:06.581Z",
+  "phase": "CA-02 before → after",
+  "beforeScreenshotsRetained": false,
+  "afterScreenshotsRetained": false,
+  "reviewedScreenshots": 8,
+  "surfaces": {
+    "dashboard": {
+      "before": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": null,
+        "tableHeadBackground": null,
+        "overflow": 0
+      },
+      "after": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": null,
+        "tableHeadBackground": null,
+        "overflow": 0
+      }
+    },
+    "tasks": {
+      "before": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": null,
+        "tableHeadBackground": "rgb(43, 50, 60)",
+        "overflow": 0
+      },
+      "after": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": null,
+        "tableHeadBackground": "rgb(43, 50, 60)",
+        "overflow": 0
+      }
+    },
+    "capa-new": {
+      "before": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": 720,
+        "tableHeadBackground": null,
+        "overflow": 0
+      },
+      "after": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": 720,
+        "tableHeadBackground": null,
+        "overflow": 0
+      }
+    },
+    "receiving-new": {
+      "before": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": null,
+        "tableHeadBackground": null,
+        "overflow": 0
+      },
+      "after": {
+        "mainWidth": 1128,
+        "mainColor": "rgb(232, 237, 245)",
+        "sidebarWidth": 264,
+        "sidebarBackground": "rgb(17, 29, 45)",
+        "sidebarTokens": {
+          "textPrimary": "#f2f6f9",
+          "accent": "#5dd0d7",
+          "background": "rgb(17, 29, 45)",
+          "colorScheme": "dark"
+        },
+        "stateCardWidth": null,
+        "tableHeadBackground": null,
+        "overflow": 0
+      }
+    }
+  },
+  "statesAfter": {
+    "primaryRest": {
+      "state": "rest",
+      "text": "Open the CAPA register",
+      "background": "rgb(146, 184, 242)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(146, 184, 242)",
+      "outline": "none 3px rgb(20, 24, 30)",
+      "minHeight": 44
+    },
+    "primaryHover": {
+      "state": "hover",
+      "text": "Open the CAPA register",
+      "background": "rgb(166, 197, 245)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(166, 197, 245)",
+      "outline": "none 3px rgb(20, 24, 30)",
+      "minHeight": 44
+    },
+    "primaryFocus": {
+      "state": "focus",
+      "text": "Open the CAPA register",
+      "background": "rgb(166, 197, 245)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(166, 197, 245)",
+      "outline": "solid 2px rgb(146, 184, 242)",
+      "minHeight": 44
+    },
+    "buttonRest": {
+      "state": "rest",
+      "text": "Save draft",
+      "background": "rgb(146, 184, 242)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(20, 24, 30)",
+      "outline": "none 3px rgb(20, 24, 30)",
+      "opacity": "1",
+      "cursor": "pointer",
+      "minHeight": 46
+    },
+    "buttonFocus": {
+      "state": "focus",
+      "text": "Save draft",
+      "background": "rgb(146, 184, 242)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(20, 24, 30)",
+      "outline": "solid 2px rgb(146, 184, 242)",
+      "opacity": "1",
+      "cursor": "pointer",
+      "minHeight": 46
+    },
+    "busy": {
+      "state": "busy (synthetic aria-busy)",
+      "text": "Save draft",
+      "background": "rgb(146, 184, 242)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(20, 24, 30)",
+      "outline": "solid 2px rgb(146, 184, 242)",
+      "opacity": "0.85",
+      "cursor": "progress",
+      "minHeight": 46
+    },
+    "ariaDisabled": {
+      "state": "aria-disabled (synthetic)",
+      "text": "Save draft",
+      "background": "rgb(146, 184, 242)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(20, 24, 30)",
+      "outline": "solid 2px rgb(146, 184, 242)",
+      "opacity": "0.55",
+      "cursor": "not-allowed",
+      "minHeight": 46
+    },
+    "disabled": {
+      "state": "disabled (synthetic property)",
+      "text": "Save draft",
+      "background": "rgb(146, 184, 242)",
+      "color": "rgb(20, 24, 30)",
+      "borderColor": "rgb(20, 24, 30)",
+      "outline": "none 3px rgb(20, 24, 30)",
+      "opacity": "0.55",
+      "cursor": "not-allowed",
+      "minHeight": 46
+    },
+    "error": {
+      "inputBorder": "rgb(224, 133, 133)",
+      "inputBackground": "rgb(43, 50, 60)",
+      "errorColor": "rgb(224, 133, 133)",
+      "errorFontSize": "13px"
+    }
+  },
+  "dialog": {
+    "before": {
+      "background": "rgb(37, 43, 52)",
+      "color": "rgb(232, 237, 245)",
+      "borderColor": "rgb(56, 63, 76)",
+      "colorScheme": "dark",
+      "input": {
+        "background": "rgb(43, 50, 60)",
+        "color": "rgb(232, 237, 245)",
+        "borderColor": "rgb(112, 122, 140)"
+      },
+      "close": {
+        "color": "rgb(20, 24, 30)",
+        "background": "rgb(43, 50, 60)",
+        "borderColor": "rgb(56, 63, 76)",
+        "minHeight": 44
+      },
+      "buttonCount": 1
+    },
+    "after": {
+      "background": "rgb(37, 43, 52)",
+      "color": "rgb(232, 237, 245)",
+      "borderColor": "rgb(56, 63, 76)",
+      "colorScheme": "dark",
+      "input": {
+        "background": "rgb(43, 50, 60)",
+        "color": "rgb(232, 237, 245)",
+        "borderColor": "rgb(112, 122, 140)"
+      },
+      "close": {
+        "color": "rgb(232, 237, 245)",
+        "background": "rgb(43, 50, 60)",
+        "borderColor": "rgb(56, 63, 76)",
+        "minHeight": 44
+      },
+      "buttonCount": 1
+    }
+  },
+  "print": {
+    "before": {
+      "html": {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "block"
+      },
+      "body": {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "block"
+      },
+      "main": {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "block"
+      },
+      "panel": null,
+      "tableHead": {
+        "background": "rgb(43, 50, 60)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(48, 56, 69)",
+        "display": "table-cell"
+      },
+      "sidebar": {
+        "background": "rgb(17, 29, 45)",
+        "color": "rgb(242, 246, 249)",
+        "borderColor": "rgb(242, 246, 249)",
+        "display": "none"
+      },
+      "topbar": {
+        "background": "rgb(37, 43, 52)",
+        "color": "rgb(232, 237, 245)",
+        "borderColor": "rgb(232, 237, 245)",
+        "display": "none"
+      },
+      "background": {
+        "background": "rgb(16, 20, 24)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "none"
+      }
+    },
+    "after": {
+      "html": {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "block"
+      },
+      "body": {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "block"
+      },
+      "main": {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "block"
+      },
+      "panel": null,
+      "tableHead": {
+        "background": "rgb(238, 238, 238)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(153, 153, 153)",
+        "display": "table-cell"
+      },
+      "sidebar": {
+        "background": "rgb(17, 29, 45)",
+        "color": "rgb(242, 246, 249)",
+        "borderColor": "rgb(242, 246, 249)",
+        "display": "none"
+      },
+      "topbar": {
+        "background": "rgb(37, 43, 52)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "none"
+      },
+      "background": {
+        "background": "rgb(16, 20, 24)",
+        "color": "rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "display": "none"
+      }
+    },
+    "reviewed": "Before print was squeezed into the hidden-sidebar grid track; after print collapses the shell to one flow and restates row headers on white."
+  },
+  "contrastFailures": {
+    "before": {
+      "dashboard": 0,
+      "tasks": 0,
+      "capa-new": 0,
+      "receiving-new": 0
+    },
+    "after": {
+      "dashboard": 0,
+      "tasks": 0,
+      "capa-new": 0,
+      "receiving-new": 0
+    }
+  },
+  "axe": {
+    "before": [
+      {
+        "label": "dashboard",
+        "violations": [],
+        "count": 0
+      },
+      {
+        "label": "tasks",
+        "violations": [],
+        "count": 0
+      },
+      {
+        "label": "capa-new",
+        "violations": [],
+        "count": 0
+      }
+    ],
+    "after": [
+      {
+        "label": "dashboard",
+        "violations": [],
+        "count": 0
+      },
+      {
+        "label": "tasks",
+        "violations": [],
+        "count": 0
+      },
+      {
+        "label": "capa-new",
+        "violations": [],
+        "count": 0
+      }
+    ]
+  },
+  "sidebarInvariant": {
+    "before": {
+      "dashboard": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1040",
+      "tasks": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1040",
+      "capa-new": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1028",
+      "receiving-new": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1028"
+    },
+    "after": {
+      "dashboard": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1040",
+      "tasks": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1040",
+      "capa-new": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1028",
+      "receiving-new": "rgb(17, 29, 45)|#f2f6f9|#5dd0d7|32|1028"
+    }
+  }
+}

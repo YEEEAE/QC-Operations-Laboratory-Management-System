@@ -1,0 +1,86 @@
+{
+  "task": "CA-02 — tokens, layout and the Precision Light conflict",
+  "generatedAt": "2026-10-17T07:35:00Z",
+  "head": "7d46507ccc7bcb7604509f69deebf56c2493e9aa",
+  "workingTreeAtEnd": "dirty",
+  "node": "v24.20.0",
+  "pnpm": "11.25.0",
+  "status": "PARTIAL",
+  "scope": "Active CAPA A semantic tokens and consumers, sidebar isolation, fixed-white correction in main, measured contrast pairs, dense-register layout, print/forced-colors/reduced-motion/logical-property contracts",
+  "ids": [
+    {
+      "id": "CA-02",
+      "status": "PARTIAL",
+      "changed": [
+        "Added semantic role aliases including --surface-inset, --accent, --warning, --error, --success, --focus and --text-on-accent.",
+        "Corrected 41 page files that hard-coded white labels on accent fills to var(--text-on-accent).",
+        "Narrowed the layer's primary-button correction so secondary/controlled/ghost/icon/print/form-action variants keep their own surfaces.",
+        "Fixed dialog cancel/close contrast, placeholder contrast, RELEASED badge contrast and invalid/error field styling.",
+        "Collapsed the print shell to one flow and restated panels, row headers, chips, inputs and buttons on white.",
+        "Applied tabular figures to register/data surfaces."
+      ],
+      "evidence": [
+        "audit/CA-02/token-map.md",
+        "audit/CA-02/precision-light-mapping.md",
+        "audit/CA-02/assumptions.md",
+        "audit/CA-02/comparison.json",
+        "audit/CA-02/before/evidence.json",
+        "audit/CA-02/after/evidence.json",
+        "audit/CA-02/screenshot-manifest.json",
+        "tests/unit/ui/capa-a-surface.test.ts"
+      ],
+      "verification": {
+        "focused_unit_contracts": "PASS 23/23",
+        "ui_unit_suite": "451 pass / 7 fail (pre-existing missing Documents consumers)",
+        "typecheck": "PASS — 0 errors, 118 hints",
+        "architecture": "PASS",
+        "build": "PASS",
+        "playwright_capture": "PASS — authenticated 4 surfaces, axe 0, contrast 0, overflow 0",
+        "state_probes": "PASS — hover/focus/disabled/aria-disabled/aria-busy/error",
+        "manual_screen_reader": "NOT RUN",
+        "exact_zoom_200_400": "NOT RUN",
+        "full_86_route_matrix": "NOT RUN",
+        "requirements_check": "NOT RUN — missing audit/100-percent/POLICY-CLOSURE-MATRIX.md"
+      },
+      "limits": [
+        "68 screens remain LAYER_APPLIED_NOT_VERIFIED from CA-01; this task sampled four surfaces plus print and dialog.",
+        "Screenshots were reviewed and deleted at the user request; only the numeric evidence and screenshot manifest remain.",
+        "Derived/assumed values (pressed, disabled, busy, control border, RELEASED adjustment, print palette) await design-owner acceptance.",
+        "No WCAG AA, UAT, release or production-readiness claim."
+      ],
+      "blockers": []
+    },
+    {
+      "id": "CA-F-01",
+      "status": "BLOCKED",
+      "scope": "NCR create write",
+      "blockers": ["PD-15", "PD-16", "NCR numbering authority"]
+    },
+    {
+      "id": "CA-F-02",
+      "status": "BLOCKED",
+      "scope": "CAPA create write",
+      "blockers": ["PD-18", "CAPA numbering authority", "action-plan policy"]
+    },
+    {
+      "id": "CA-F-03",
+      "status": "BLOCKED",
+      "scope": "Retest create write",
+      "blockers": ["RetestPolicy source: authority/count/sequence/number/template/original-result handling"]
+    },
+    {
+      "id": "CA-F-04",
+      "status": "BLOCKED",
+      "scope": "Acceptance of the three creation functions",
+      "blockers": ["All three writes blocked by the decisions above"]
+    }
+  ],
+  "authorization": {
+    "commit": false,
+    "push": false,
+    "merge": false,
+    "deploy": false,
+    "productionWrite": false,
+    "schemaApiBusinessChange": false
+  }
+}

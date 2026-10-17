@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-10-17T04:30:06.574Z",
+  "note": "Screenshots were reviewed during CA-02 and deleted at the user request. This manifest records what was reviewed; the PNG files are intentionally absent.",
+  "screenshots": [
+    {
+      "path": "audit/CA-02/after/capa-new-1440.png",
+      "bytes": 112668,
+      "sha256": "cd00462f470f12f5a520b6e56bf06e39c853fc584c00907d913d1bec249d107e",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/dashboard-1024.png",
+      "bytes": 125518,
+      "sha256": "f9a231ce2c900a41b1caf7a25eed647d5b82e1f00d7032d4b929fb63941c3a28",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/dashboard-1440.png",
+      "bytes": 140361,
+      "sha256": "cea79094dc178be116939a6fbe657b5fc77e96ed0ff7c5e7d829828dda1c80e5",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/dialog-command-palette-1440.png",
+      "bytes": 153070,
+      "sha256": "abedd25f4ffbc0c8e93052da44e9f6be1b652c8e0ba39c906e7f2f64cc3690d1",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/print-tasks-1440.png",
+      "bytes": 60841,
+      "sha256": "fbcb568f3411f0594117ba4bfed99d268d8d0bcdbb4b59ac89d544421f2506ca",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/receiving-new-1440.png",
+      "bytes": 81567,
+      "sha256": "4a183f684aca29ed62fa6ea05a445c8b2a48214f10ddcf64019ebcbbbf5068b4",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/tasks-1440.png",
+      "bytes": 127890,
+      "sha256": "932a4ef37735bf6449d156def5fd1dba5d419aa7d388b72cc5e31f3c4c5ad142",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    },
+    {
+      "path": "audit/CA-02/after/tasks-720.png",
+      "bytes": 73430,
+      "sha256": "68cebd213212a2251d1575755b05a57dc4e8f8edb92af283ae27ed2de6d13960",
+      "reviewed": true,
+      "deletedAtEndOfTask": true
+    }
+  ]
+}

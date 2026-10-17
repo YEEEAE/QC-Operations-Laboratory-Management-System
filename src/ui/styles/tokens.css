@@ -67,6 +67,9 @@
   --surface-page: var(--color-canvas);
   --surface-panel: var(--color-surface-1);
   --surface-raised: var(--color-surface-2);
+  /* Inset fields and wells sit below the panel plane. Declared here so every
+     visual direction can resolve it without guessing a primitive. */
+  --surface-inset: var(--color-surface-2);
   --surface-popover: var(--color-surface-3);
   --border-default: var(--color-border-default);
   --text-primary: var(--color-text-primary);
@@ -84,6 +87,7 @@
   --border-selected: var(--color-accent-primary);
 
   /* Component contracts: components consume these aliases, not primitives. */
+  --control-border: var(--color-border-strong);
   --button-radius: var(--radius-sm);
   --button-gap: var(--space-2);
   --button-padding-inline: var(--space-4);

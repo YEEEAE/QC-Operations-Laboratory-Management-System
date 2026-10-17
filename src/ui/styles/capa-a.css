@@ -43,12 +43,16 @@ html[data-visual-direction='capa-a'] {
 
   /* Status semantics are not present in the reference seeds. Keep the
      approved dark-palette status hues (DESIGN-SYSTEM.md v1.1) so PASS,
-     HOLD, RELEASED and danger keep their established meaning. */
+     HOLD, RELEASED and danger keep their established meaning. These are
+     inherited semantics, not colours extracted from the CAPA A reference. */
   --status-approved: #6fa66d;
   --status-approved-bg: #233424;
   --status-pass: #79af70;
   --status-pass-bg: #253a25;
-  --status-released: #4f9b91;
+  /* Measured adjustment, not a reference colour: #4F9B91 read at 3.98:1 on
+     the released background (12px badge text). #5FB3A6 keeps the teal
+     meaning and reaches 5.26:1 on that background / 5.76:1 on the panel. */
+  --status-released: #5fb3a6;
   --status-released-bg: #1f3532;
   --status-hold: #d5a36f;
   --status-hold-bg: #3a3024;
@@ -64,8 +68,10 @@ html[data-visual-direction='capa-a'] {
   --status-stale-bg: #3a3024;
 
   --surface-page: var(--color-canvas);
+  --surface-canvas: var(--color-canvas);
   --surface-panel: var(--color-surface-1);
   --surface-raised: var(--color-surface-2);
+  --surface-inset: var(--color-surface-2);
   --surface-popover: var(--color-surface-3);
   --surface-command: var(--color-canvas-deep);
   --surface-register: var(--color-surface-1);
@@ -88,6 +94,13 @@ html[data-visual-direction='capa-a'] {
   --text-evidence: var(--color-text-secondary);
   --text-on-accent: var(--color-text-inverse);
   --text-danger: var(--status-danger);
+  --accent: var(--color-accent-primary);
+  --accent-hover: var(--color-accent-primary-hover);
+  --accent-active: var(--color-accent-primary-active);
+  --warning: var(--status-warning);
+  --error: var(--status-error);
+  --success: var(--status-success);
+  --focus: var(--focus-ring);
 
   --border-default: var(--color-border-default);
   --border-evidence: var(--color-border-default);
@@ -236,7 +249,9 @@ html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea):f
 }
 
 html[data-visual-direction='capa-a'] .app-main :where(input, textarea)::placeholder {
-  color: var(--color-text-disabled);
+  /* Placeholder text is readable text, not a disabled control: #7A828E on the
+     inset surface measured 3.33:1. Muted reaches 5.08:1. */
+  color: var(--text-muted);
 }
 
 html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea):disabled {
@@ -244,11 +259,26 @@ html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea):d
   cursor: not-allowed;
 }
 
-/* The reference uses a light-blue filled action with near-black label. Many
-   route styles still hard-code `color:#fff` for accent-filled controls; this
-   scoped correction keeps the measured 4.5:1 pair without editing every page. */
-html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit'], .tabs a[aria-current='page']) {
-  color: var(--color-text-inverse) !important;
+/* Invalid fields and field-level errors are stated by the layer so a route
+   that only scopes its own error styles still gets the measured danger pair
+   (#E08585 on the inset surface = 5.34:1). */
+html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea)[aria-invalid='true'] {
+  border-color: var(--border-invalid);
+}
+
+html[data-visual-direction='capa-a'] .app-main :where(.field-error) {
+  color: var(--text-danger);
+  font-size: var(--font-size-sm);
+}
+
+/* The reference uses a light-blue filled action with near-black label. Route
+   styles that hard-code `color:#fff` on an accent fill were corrected at the
+   source to `var(--text-on-accent)`; this narrower rule remains as a guard for
+   the shared `.button` / submit / current-tab contracts. Plain transparent
+   buttons (for example the register filter action) keep their own text colour,
+   so the layer cannot make a label dark on a transparent surface. */
+html[data-visual-direction='capa-a'] .app-main :where(.button, input[type='submit'], .tabs a[aria-current='page']):not(.secondary, .controlled, .danger, .action--secondary, .action--controlled, .ui-button--secondary, .ui-button--ghost, .ui-button--controlled, .ui-button--danger, .icon-button, .print-button, .close, .drawer-close) {
+  color: var(--text-on-accent) !important;
 }
 
 html[data-visual-direction='capa-a'] .app-main :where(.secondary, .button.secondary, .link-button.secondary) {
@@ -269,17 +299,17 @@ html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-but
   font-weight: 600;
 }
 
-html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):not(.secondary, .controlled, .danger, .link-button.secondary) {
+html[data-visual-direction='capa-a'] .app-main :where(.button, input[type='submit'], .tabs a[aria-current='page']):not(.secondary, .controlled, .danger, .action--secondary, .action--controlled, .ui-button--secondary, .ui-button--ghost, .ui-button--controlled, .ui-button--danger, .icon-button, .print-button, .close, .drawer-close) {
   background: var(--color-accent-primary);
   border-color: var(--color-accent-primary);
 }
 
-html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):not(.secondary, .controlled, .danger, .link-button.secondary):hover:not(:disabled) {
+html[data-visual-direction='capa-a'] .app-main :where(.button, input[type='submit'], .tabs a[aria-current='page']):not(.secondary, .controlled, .danger, .action--secondary, .action--controlled, .ui-button--secondary, .ui-button--ghost, .ui-button--controlled, .ui-button--danger, .icon-button, .print-button, .close, .drawer-close):hover:not(:disabled) {
   background: var(--color-accent-primary-hover);
   border-color: var(--color-accent-primary-hover);
 }
 
-html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):not(.secondary, .controlled, .danger, .link-button.secondary):active:not(:disabled) {
+html[data-visual-direction='capa-a'] .app-main :where(.button, input[type='submit'], .tabs a[aria-current='page']):not(.secondary, .controlled, .danger, .action--secondary, .action--controlled, .ui-button--secondary, .ui-button--ghost, .ui-button--controlled, .ui-button--danger, .icon-button, .print-button, .close, .drawer-close):active:not(:disabled) {
   background: var(--color-accent-primary-active);
   border-color: var(--color-accent-primary-active);
 }
@@ -291,20 +321,20 @@ html[data-visual-direction='capa-a'] .app-main :where(.controlled, .button.contr
 
 html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']):disabled {
   opacity: var(--disabled-opacity);
-  cursor: not-allowed;
+  cursor: not-allowed !important;
 }
 
 /* Loading and disabled affordances. No spinner is introduced: the existing
    pending/status regions remain the source of progress feedback. */
 html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit'])[aria-busy='true'],
 html[data-visual-direction='capa-a'] .state-card__actions :where(a, button)[aria-busy='true'] {
-  cursor: progress;
+  cursor: progress !important;
   opacity: 0.85;
 }
 
 html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit'])[aria-disabled='true'],
 html[data-visual-direction='capa-a'] .state-card__actions :where(a, button)[aria-disabled='true'] {
-  cursor: not-allowed;
+  cursor: not-allowed !important;
   opacity: var(--disabled-opacity);
 }
 
@@ -325,6 +355,12 @@ html[data-visual-direction='capa-a'] .app-main :where(th, td) {
 
 html[data-visual-direction='capa-a'] .app-main :where(.table-wrap, .table-scroll) {
   border-color: var(--color-border-subtle);
+}
+
+/* Numeric data is set on the regular type scale and aligned with tabular
+   figures so registers, dates and quantities keep a stable column rhythm. */
+html[data-visual-direction='capa-a'] .app-main :where(table, time, output, dd, .kpi strong, .flow-value, .group-count strong, [data-numeric]) {
+  font-variant-numeric: var(--numeric-figures);
 }
 
 /* Status chips. Text carries the meaning; colour only reinforces it. */
@@ -494,8 +530,16 @@ html[data-visual-direction='capa-a'] dialog :where(input, select, textarea) {
   color: var(--text-primary);
 }
 
-html[data-visual-direction='capa-a'] dialog :where(button, .button, .link-button, input[type='submit']) {
-  color: var(--color-text-inverse);
+/* Dialog buttons keep their component surfaces. The primary and danger fills
+   take the inverse label; every other dialog control (cancel, close, refresh)
+   keeps readable primary text on the panel instead of inheriting the accent
+   label colour. */
+html[data-visual-direction='capa-a'] dialog :where(button, .button, .link-button) {
+  color: var(--text-primary);
+}
+
+html[data-visual-direction='capa-a'] dialog :where(.primary, .danger, input[type='submit']) {
+  color: var(--text-on-accent);
 }
 
 /* The decorative workspace background was authored for the previous green
@@ -551,17 +595,35 @@ html[data-visual-direction='capa-a'] .error-page .eyebrow {
   }
 
   html[data-visual-direction='capa-a'] .state-card,
-  html[data-visual-direction='capa-a'] .state-card__callout {
+  html[data-visual-direction='capa-a'] .state-card__callout,
+  html[data-visual-direction='capa-a'] dialog {
     border-color: CanvasText;
     background: Canvas;
+  }
+
+  html[data-visual-direction='capa-a'] .state-card__icon {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
   }
 
   html[data-visual-direction='capa-a'] .app-main :where(.panel, .card) {
     box-shadow: none;
   }
+
+  html[data-visual-direction='capa-a'] .app-main :where(a) {
+    color: LinkText;
+  }
 }
 
+/* Print is a white, ink-light reading surface. The CAPA A palette is a screen
+   treatment; every panel, table and status chip is re-stated here so a printed
+   record never carries a dark fill or an accent label. Meaning stays in text. */
 @media print {
+  html[data-visual-direction='capa-a'] {
+    color-scheme: light;
+  }
+
   html[data-visual-direction='capa-a'],
   html[data-visual-direction='capa-a'] body,
   html[data-visual-direction='capa-a'] .system-content,
@@ -571,7 +633,79 @@ html[data-visual-direction='capa-a'] .error-page .eyebrow {
   }
 
   html[data-visual-direction='capa-a'] .app-sidebar,
-  html[data-visual-direction='capa-a'] .app-topbar {
+  html[data-visual-direction='capa-a'] .app-topbar,
+  html[data-visual-direction='capa-a'] .system-background,
+  html[data-visual-direction='capa-a'] .skip-link {
     display: none !important;
+  }
+
+  /* The screen shell is a two-column grid whose first track is the sidebar.
+     Hiding the sidebar is not enough: its grid track would still squeeze the
+     printed record into a narrow column. Collapse the shell to one flow. */
+  html[data-visual-direction='capa-a'] .app-shell,
+  html[data-visual-direction='capa-a'] .app-workspace {
+    display: block !important;
+    grid-template-columns: 1fr !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(section, .panel, .card, .identity, .state-card, .state-card__callout, .empty, .table-wrap, .table-scroll) {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #999 !important;
+    box-shadow: none !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(h1, h2, h3, h4, p, li, dt, dd, span, strong, small, label, summary, code, time, output) {
+    color: #111 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(a) {
+    color: #111 !important;
+    text-decoration: underline;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(table) {
+    color: #111 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(thead th) {
+    background: #eee !important;
+    color: #111 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(th, td) {
+    border-color: #999 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main tbody :where(th, td) {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(input, select, textarea) {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #666 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(button, .button, .link-button, input[type='submit']) {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #666 !important;
+    box-shadow: none !important;
+  }
+
+  html[data-visual-direction='capa-a'] .app-main :where(.state, .state-pill, .status-badge, .status-pill, .pill, .result, .release) {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #666 !important;
+  }
+
+  html[data-visual-direction='capa-a'] .state-card__icon {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #666 !important;
   }
 }

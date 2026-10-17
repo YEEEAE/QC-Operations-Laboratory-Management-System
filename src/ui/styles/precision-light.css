@@ -46,6 +46,7 @@ html[data-visual-direction='precision-light'] {
   --surface-page: #f3f6fa;
   --surface-panel: #ffffff;
   --surface-raised: #f5f8fb;
+  --surface-inset: #f5f8fb;
   --surface-popover: #ffffff;
   --surface-evidence: #f5f8fb;
   --surface-decision: #eaf1f5;
@@ -68,6 +69,7 @@ html[data-visual-direction='precision-light'] {
   --border-focus: #086575;
   --border-invalid: #a92c39;
   --border-selected: #087f8c;
+  --control-border: #7b8a99;
   --focus-ring: #086575;
   --status-success: #2a713e;
   --status-error: #a92c39;
