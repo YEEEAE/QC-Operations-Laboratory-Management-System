@@ -47,6 +47,7 @@ const counted =
 <style>
   .pagination {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: var(--space-3);
@@ -56,6 +57,7 @@ const counted =
   }
   .pagination div {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-2);
   }
   .pagination a,
@@ -63,7 +65,7 @@ const counted =
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--control-height);
+    min-block-size: max(44px, var(--control-height));
     padding: 7px 10px;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);

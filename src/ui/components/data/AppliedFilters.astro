@@ -15,7 +15,7 @@ const { filters = [], clearHref, note } = Astro.props;
 ---
 {
   filters.length ? (
-    <div class="applied-filters" role="group" aria-label="Applied filters">
+    <div class="applied-filters" role="group" aria-label="Applied filters" data-applied-filters>
       <span class="applied-label">Filtered by</span>
       <ul>
         {filters.map((filter) => (
@@ -62,12 +62,16 @@ const { filters = [], clearHref, note } = Astro.props;
     list-style: none;
     margin: 0;
     padding: 0;
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
+  .applied-filters li { min-inline-size: 0; max-inline-size: 100%; }
   .applied-filters a {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-height: 32px;
+    min-block-size: 44px;
+    max-inline-size: 100%;
     padding-inline: 10px;
     border: 1px solid var(--border-default);
     border-radius: 999px;
@@ -76,12 +80,16 @@ const { filters = [], clearHref, note } = Astro.props;
     text-decoration: none;
   }
   .chip-label {
+    flex: none;
     color: var(--text-muted);
   }
   .chip-value {
     font-weight: 600;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
   }
   .chip-remove {
+    flex: none;
     font-size: 0.875rem;
     line-height: 1;
     color: var(--text-muted);

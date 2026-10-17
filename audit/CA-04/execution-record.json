@@ -1,0 +1,94 @@
+{
+  "task": "CA-04",
+  "state": "PARTIAL",
+  "head": "bacc2ad32acf0e7d8ea6777424267d3d7cc4a998",
+  "sourceSha256": {
+    "src/ui/client/register-preferences.ts": "824221bbee9f99da07814f1fa9eadbb36c35fa1282d8f7cb3b6da3981db8ce70",
+    "src/ui/components/data/AppliedFilters.astro": "58221e1c525e4a16caf9a19d4620c886dcc46fbd6ba124481929383f477f0f2a",
+    "src/ui/components/data/Pagination.astro": "a1f7327fb9bda69096da774334915e437379736807ea982fbc7346dcf645244b",
+    "src/ui/components/feedback/ProviderUnavailableState.astro": "960a0928dddc37c436ca94c39700a6f045c5db8bd6ed288463e7fb81cc17c905"
+  },
+  "serverArtifactTreeSha256": "c95464a7150bff5330fcf436f9cc2ba0715ae26a33f546933b9d81abe8e71dc8",
+  "entrySha256": "addbdba94965b4d4a824106e740b20210825c325b62a2f4cf9317436b4ee0655",
+  "preservationProof": {
+    "src/ui/components/data/AppliedFilters.astro": {
+      "frontmatterAndMarkupUnchangedExceptPresentationMarker": true
+    },
+    "src/ui/components/data/Pagination.astro": {
+      "frontmatterAndMarkupUnchangedExceptPresentationMarker": true
+    },
+    "src/ui/components/feedback/ProviderUnavailableState.astro": {
+      "frontmatterAndMarkupUnchangedExceptPresentationMarker": true
+    }
+  },
+  "checks": {
+    "staticInventory": {
+      "status": "PASS",
+      "screens": 86,
+      "primitives": 14
+    },
+    "focusedUnit": {
+      "status": "PASS",
+      "passed": 67,
+      "failed": 0
+    },
+    "typecheck": {
+      "status": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "hints": 118
+    },
+    "astroBuild": "PASS",
+    "architecture": "PASS",
+    "browser": {
+      "status": "PASS",
+      "checks": 44,
+      "pageErrors": []
+    },
+    "graphifyUpdate": "PASS (final refresh after audit script changes)",
+    "matchedBeforeAfter": "NOT RUN",
+    "realBrowserZoom200400": "NOT RUN",
+    "screenReader": "NOT RUN",
+    "all86RuntimeAnatomy": "NOT RUN",
+    "CA-FCreationAuthority": "BLOCKED",
+    "completeLocalSkillReading": "NOT COMPLETED",
+    "diffCheck": "PASS"
+  },
+  "runtimeEvidence": "browser-evidence.json",
+  "report": "report.md",
+  "scope": "Local-only; no commit/push/merge/deploy or production connection.",
+  "dirtyRuntimeSourceFingerprint": "66d00248ea37efd4a7d37487929afd0d3b9f6c0faf2d05bb48a7be84d016005c",
+  "actualFiles": [
+    ".agents/mind/01-mind-latest.md",
+    "audit/CA-04/browser-evidence.json",
+    "audit/CA-04/browser.mjs",
+    "audit/CA-04/execution-record.json",
+    "audit/CA-04/import-inventory.json",
+    "audit/CA-04/inventory.mjs",
+    "audit/CA-04/local-run.mjs",
+    "audit/CA-04/report.md",
+    "audit/CA-04/screenshots/lab_tests-unavailable-1440.png",
+    "audit/CA-04/screenshots/lab_tests-unavailable-320.png",
+    "audit/CA-04/screenshots/laboratory-long-filter-1440.png",
+    "audit/CA-04/screenshots/laboratory-long-filter-320.png",
+    "audit/CA-04/screenshots/notifications-pagination-1440.png",
+    "audit/CA-04/screenshots/notifications-pagination-320.png",
+    "audit/CA-04/screenshots/tasks-long-filter-1440.png",
+    "audit/CA-04/screenshots/tasks-long-filter-320.png",
+    "audit/CA-04/screenshots/tasks-pagination-1440.png",
+    "audit/CA-04/screenshots/tasks-pagination-320.png",
+    "audit/CA-04/screenshots/tasks-unavailable-1440.png",
+    "audit/CA-04/screenshots/tasks-unavailable-320.png",
+    "src/ui/client/register-preferences.ts",
+    "src/ui/components/data/AppliedFilters.astro",
+    "src/ui/components/data/Pagination.astro",
+    "src/ui/components/feedback/ProviderUnavailableState.astro",
+    "tests/unit/ui/ca04-presentation-contract.test.ts",
+    "workspace-map/VERIFICATION.md"
+  ],
+  "cleanup": {
+    "localAppStopped": true,
+    "disposablePgRemoved": true,
+    "ephemeralCredentialsRemoved": true
+  }
+}

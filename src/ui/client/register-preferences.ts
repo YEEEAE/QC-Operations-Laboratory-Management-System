@@ -56,7 +56,10 @@ export function enhanceRegisterFilters(root: ParentNode = document): void {
       chip.setAttribute('aria-label', `Remove ${label} filter: ${value}`);
       chips.append(chip);
     }
-    if (chips.childElementCount) {
+    // The server component owns validated, human-readable chips when supplied.
+    // Do not duplicate them with raw URL values (or add a second clear action).
+    const serverFilters = form.closest('#main-content')?.querySelector('[data-applied-filters]');
+    if (chips.childElementCount && !serverFilters) {
       const clear = document.createElement('a');
       const next = new URLSearchParams();
       if (applied.has('tab')) next.set('tab', applied.get('tab')!);

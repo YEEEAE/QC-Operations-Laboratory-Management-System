@@ -24,5 +24,6 @@ const {
   .indicator { display:grid; place-items:center; flex:none; inline-size:2rem; block-size:2rem; border-radius:50%; background:var(--status-warning); color:var(--text-on-accent); font-weight:800; }
   h2 { margin:0; font-size:var(--font-size-md); color:var(--text-primary); }
   p { margin:var(--space-1) 0 var(--space-3); color:var(--text-secondary); font-size:var(--font-size-sm); }
-  a { color:var(--color-accent-primary-hover); font-weight:var(--font-weight-semibold); }
+  .unavailable > div { min-inline-size:0; overflow-wrap:anywhere; }
+  a { display:inline-flex; align-items:center; min-block-size:44px; color:var(--color-accent-primary-hover); font-weight:var(--font-weight-semibold); }
 </style>
