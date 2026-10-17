@@ -1,0 +1,2196 @@
+{
+  "task": "CA-01 route register",
+  "head": "567028c18bd3c25794a886fefd8e0a5f592e8529",
+  "generatedAt": "2026-10-17T02:08:35.648829+00:00",
+  "scope": "src/pages/**/*.astro reconciled with src/shared/routing/routes.ts and audit/QC-UNIVERSE-STITCH-HANDOFF.md §10.4",
+  "summary": {
+    "astroFiles": 88,
+    "screens": 86,
+    "runtimeRedirects": 2,
+    "classCounts": {
+      "source": 76,
+      "static": 10,
+      "runtime": 2
+    },
+    "routesTsEntries": 86,
+    "handoffEntries": 86,
+    "handoffMinusPages": [],
+    "pagesMinusHandoff": ["/", "/laboratory"],
+    "routesTsMissingFiles": [],
+    "pagesNotDeclaredInRoutesTs": ["/404", "/500"],
+    "declaredWithoutPageFile": []
+  },
+  "classificationRule": "runtime = no design surface, resolves a server redirect. source = reads/writes application state through a server dependency, use case, register or POST action. static = renders fixed content or authorization/policy-derived presentation only.",
+  "routes": [
+    {
+      "route": "/",
+      "file": "src/pages/index.astro",
+      "routeId": "RT-ROOT-001",
+      "registry": "routes.ts",
+      "kind": "redirect",
+      "class": "runtime",
+      "basis": "runtime-redirect",
+      "shell": "none",
+      "handoffListed": false,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "none",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 266
+    },
+    {
+      "route": "/404",
+      "file": "src/pages/404.astro",
+      "routeId": null,
+      "registry": "framework-error-page",
+      "kind": "screen",
+      "class": "static",
+      "basis": "fixed-content",
+      "shell": "public-base",
+      "handoffListed": true,
+      "routesTsDeclared": false,
+      "guard": {
+        "central": null,
+        "page": "none",
+        "catalog": "not declared in src/shared/routing/routes.ts (framework error page)"
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 1206
+    },
+    {
+      "route": "/500",
+      "file": "src/pages/500.astro",
+      "routeId": null,
+      "registry": "framework-error-page",
+      "kind": "screen",
+      "class": "static",
+      "basis": "fixed-content",
+      "shell": "public-base",
+      "handoffListed": true,
+      "routesTsDeclared": false,
+      "guard": {
+        "central": null,
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": "not declared in src/shared/routing/routes.ts (framework error page)"
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 2016
+    },
+    {
+      "route": "/account",
+      "file": "src/pages/account.astro",
+      "routeId": "RT-SHARED-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["account"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../modules/identity/application/get-account.js",
+        "../modules/identity/application/identity-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 9358
+    },
+    {
+      "route": "/admin",
+      "file": "src/pages/admin/index.astro",
+      "routeId": "RT-ADMIN-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "policy-presentation",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 3957
+    },
+    {
+      "route": "/admin/permissions",
+      "file": "src/pages/admin/permissions/index.astro",
+      "routeId": "RT-ADMIN-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/administration/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 3866
+    },
+    {
+      "route": "/admin/roles",
+      "file": "src/pages/admin/roles/index.astro",
+      "routeId": "RT-ROLE-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/administration/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 3794
+    },
+    {
+      "route": "/admin/roles/[roleId]",
+      "file": "src/pages/admin/roles/[roleId].astro",
+      "routeId": "RT-ROLE-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/administration/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 11519
+    },
+    {
+      "route": "/admin/scopes",
+      "file": "src/pages/admin/scopes/index.astro",
+      "routeId": "RT-ADMIN-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "policy-presentation",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 5438
+    },
+    {
+      "route": "/admin/users",
+      "file": "src/pages/admin/users/index.astro",
+      "routeId": "RT-USER-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/administration/application/dependencies.js",
+        "../../../modules/identity/application/admin-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 9526
+    },
+    {
+      "route": "/admin/users/[userId]",
+      "file": "src/pages/admin/users/[userId].astro",
+      "routeId": "RT-USER-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/administration/application/dependencies.js",
+        "../../../modules/identity/application/admin-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 43791
+    },
+    {
+      "route": "/admin/users/new",
+      "file": "src/pages/admin/users/new.astro",
+      "routeId": "RT-USER-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/administration/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 11090
+    },
+    {
+      "route": "/ai-advisory",
+      "file": "src/pages/ai-advisory.astro",
+      "routeId": "RT-AI-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "policy-presentation",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../modules/ai-advisory/application/page-availability.js"],
+      "mutationGuard": null,
+      "bytes": 26394
+    },
+    {
+      "route": "/approvals",
+      "file": "src/pages/approvals/index.astro",
+      "routeId": "RT-APPROVAL-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/approvals/application/dependencies.js",
+        "../../modules/approvals/application/owner-approval-policy.js",
+        "../../modules/identity/application/admin-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 10001
+    },
+    {
+      "route": "/approvals/[approvalId]",
+      "file": "src/pages/approvals/[approvalId].astro",
+      "routeId": "RT-APPROVAL-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/approvals/application/dependencies.js",
+        "../../modules/approvals/application/owner-approval-policy.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 20065
+    },
+    {
+      "route": "/assets",
+      "file": "src/pages/assets/index.astro",
+      "routeId": "RT-ASSET-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 3949
+    },
+    {
+      "route": "/assets/calibrations",
+      "file": "src/pages/assets/calibrations/index.astro",
+      "routeId": "RT-CAL-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 7640
+    },
+    {
+      "route": "/assets/calibrations/[calibrationId]",
+      "file": "src/pages/assets/calibrations/[calibrationId].astro",
+      "routeId": "RT-CAL-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 10539
+    },
+    {
+      "route": "/assets/calibrations/new",
+      "file": "src/pages/assets/calibrations/new.astro",
+      "routeId": "RT-CAL-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["assets"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 12979
+    },
+    {
+      "route": "/assets/equipment",
+      "file": "src/pages/assets/equipment/index.astro",
+      "routeId": "RT-EQUIP-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 7126
+    },
+    {
+      "route": "/assets/equipment/[equipmentId]",
+      "file": "src/pages/assets/equipment/[equipmentId].astro",
+      "routeId": "RT-EQUIP-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 9817
+    },
+    {
+      "route": "/assets/equipment/new",
+      "file": "src/pages/assets/equipment/new.astro",
+      "routeId": "RT-EQUIP-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["assets"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 8744
+    },
+    {
+      "route": "/assets/maintenance",
+      "file": "src/pages/assets/maintenance/index.astro",
+      "routeId": "RT-MAINT-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 7553
+    },
+    {
+      "route": "/assets/maintenance/[maintenanceId]",
+      "file": "src/pages/assets/maintenance/[maintenanceId].astro",
+      "routeId": "RT-MAINT-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 7184
+    },
+    {
+      "route": "/assets/maintenance/new",
+      "file": "src/pages/assets/maintenance/new.astro",
+      "routeId": "RT-MAINT-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["assets"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../modules/assets/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 12689
+    },
+    {
+      "route": "/audit",
+      "file": "src/pages/audit.astro",
+      "routeId": "RT-SHARED-004",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../modules/identity/application/admin-dependencies.js",
+        "../shared/audit/audit-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 10218
+    },
+    {
+      "route": "/change-requests",
+      "file": "src/pages/change-requests/index.astro",
+      "routeId": "RT-CHANGE-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../modules/change-requests/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 6208
+    },
+    {
+      "route": "/change-requests/[changeRequestId]",
+      "file": "src/pages/change-requests/[changeRequestId]/index.astro",
+      "routeId": "RT-CHANGE-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["changeRequests"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../modules/change-requests/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 10390
+    },
+    {
+      "route": "/change-requests/[changeRequestId]/review",
+      "file": "src/pages/change-requests/[changeRequestId]/review.astro",
+      "routeId": "RT-CHANGE-004",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["changeRequests"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../modules/change-requests/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 7681
+    },
+    {
+      "route": "/change-requests/new",
+      "file": "src/pages/change-requests/new.astro",
+      "routeId": "RT-CHANGE-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["changeRequests"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../modules/change-requests/application/dependencies.js",
+        "../../modules/change-requests/application/document-version-change-fields.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 16233
+    },
+    {
+      "route": "/dashboard",
+      "file": "src/pages/dashboard/index.astro",
+      "routeId": "RT-DASH-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/dashboard/application/dashboard-empty.js",
+        "../../modules/dashboard/application/dashboard-presentation.js",
+        "../../modules/dashboard/application/dependencies.js",
+        "../../modules/dashboard/application/get-dashboard.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 20891
+    },
+    {
+      "route": "/documents",
+      "file": "src/pages/documents/index.astro",
+      "routeId": "RT-DOC-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/documents/application/dependencies.js",
+        "../../modules/identity/application/admin-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 7692
+    },
+    {
+      "route": "/documents/[documentId]",
+      "file": "src/pages/documents/[documentId]/index.astro",
+      "routeId": "RT-DOC-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/documents/application/dependencies.js",
+        "../../../modules/identity/application/admin-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 6265
+    },
+    {
+      "route": "/documents/[documentId]/versions/[versionId]",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/index.astro",
+      "routeId": "RT-DOC-005",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../../../modules/approvals/application/dependencies.js",
+        "../../../../../modules/documents/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 12074
+    },
+    {
+      "route": "/documents/[documentId]/versions/[versionId]/edit",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/edit.astro",
+      "routeId": "RT-DOC-007",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["documents"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../../../modules/documents/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 9483
+    },
+    {
+      "route": "/documents/[documentId]/versions/[versionId]/review",
+      "file": "src/pages/documents/[documentId]/versions/[versionId]/review.astro",
+      "routeId": "RT-DOC-006",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../../../modules/documents/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 6772
+    },
+    {
+      "route": "/documents/[documentId]/versions/new",
+      "file": "src/pages/documents/[documentId]/versions/new.astro",
+      "routeId": "RT-DOC-004",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["documents"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../../modules/documents/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 16678
+    },
+    {
+      "route": "/documents/new",
+      "file": "src/pages/documents/new.astro",
+      "routeId": "RT-DOC-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["documents"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../modules/documents/application/document-vocabulary.js"],
+      "mutationGuard": null,
+      "bytes": 8044
+    },
+    {
+      "route": "/governance/releases/[releaseId]",
+      "file": "src/pages/governance/releases/[releaseId].astro",
+      "routeId": "RT-REL-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/release-governance/application/capability.js"],
+      "mutationGuard": null,
+      "bytes": 9713
+    },
+    {
+      "route": "/help",
+      "file": "src/pages/help/index.astro",
+      "routeId": "RT-HELP-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "fixed-content",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 15738
+    },
+    {
+      "route": "/laboratory",
+      "file": "src/pages/laboratory/index.astro",
+      "routeId": "RT-LAB-001",
+      "registry": "routes.ts",
+      "kind": "redirect",
+      "class": "runtime",
+      "basis": "runtime-redirect",
+      "shell": "none",
+      "handoffListed": false,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "none",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 52
+    },
+    {
+      "route": "/laboratory/report-templates",
+      "file": "src/pages/laboratory/report-templates.astro",
+      "routeId": "RT-LAB-009",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/laboratory/application/report-drafts.js",
+        "../../modules/laboratory/application/report-template-form.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 15680
+    },
+    {
+      "route": "/laboratory/tests",
+      "file": "src/pages/laboratory/tests/index.astro",
+      "routeId": "RT-LAB-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/identity/application/admin-dependencies.js",
+        "../../../modules/laboratory/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 10336
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]",
+      "file": "src/pages/laboratory/tests/[labTestId]/index.astro",
+      "routeId": "RT-LAB-004",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../../modules/laboratory/application/dependencies.js",
+        "../../../../modules/laboratory/application/get-source-receiving.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 6388
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]/execute",
+      "file": "src/pages/laboratory/tests/[labTestId]/execute.astro",
+      "routeId": "RT-LAB-005",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../../modules/assets/application/dependencies.js",
+        "../../../../modules/laboratory/application/dependencies.js",
+        "../../../../modules/laboratory/application/lab-authorization.js",
+        "../../../../modules/laboratory/application/lab-presentation.js",
+        "../../../../modules/laboratory/application/measurement-bulk-preview.js",
+        "../../../../modules/laboratory/application/measurement-post.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 27496
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]/retests/new",
+      "file": "src/pages/laboratory/tests/[labTestId]/retests/new.astro",
+      "routeId": "RT-LAB-007",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "policy-presentation",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": {
+        "entrypoints": ["CreateRetestUseCase"],
+        "guard": "RetestPolicy default throws POLICY_SOURCE_REQUIRED"
+      },
+      "bytes": 1703
+    },
+    {
+      "route": "/laboratory/tests/[labTestId]/review",
+      "file": "src/pages/laboratory/tests/[labTestId]/review.astro",
+      "routeId": "RT-LAB-006",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["laboratory"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../../modules/laboratory/application/dependencies.js",
+        "../../../../modules/laboratory/application/lab-presentation.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 16580
+    },
+    {
+      "route": "/laboratory/tests/new",
+      "file": "src/pages/laboratory/tests/new.astro",
+      "routeId": "RT-LAB-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["laboratory"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../modules/laboratory/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 8439
+    },
+    {
+      "route": "/login",
+      "file": "src/pages/login.astro",
+      "routeId": "RT-AUTH-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "identity-session",
+      "shell": "public-auth",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "none",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["login"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 7768
+    },
+    {
+      "route": "/notifications",
+      "file": "src/pages/notifications.astro",
+      "routeId": "RT-SHARED-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["notifications"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../shared/notifications/notification-dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 11323
+    },
+    {
+      "route": "/quality",
+      "file": "src/pages/quality/index.astro",
+      "routeId": "RT-QUAL-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "fixed-content",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 897
+    },
+    {
+      "route": "/quality/capa",
+      "file": "src/pages/quality/capa/index.astro",
+      "routeId": "RT-CAPA-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quality/capa/application/dependencies.js",
+        "../../../modules/quality/ncr/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 7508
+    },
+    {
+      "route": "/quality/capa/[capaId]",
+      "file": "src/pages/quality/capa/[capaId].astro",
+      "routeId": "RT-CAPA-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/quality/capa/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 8425
+    },
+    {
+      "route": "/quality/capa/new",
+      "file": "src/pages/quality/capa/new.astro",
+      "routeId": "RT-CAPA-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "policy-presentation",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": {
+        "entrypoints": ["src/actions/capa.ts#create"],
+        "guard": "FORBIDDEN (unconditional); CreateCapaUseCase checks Boolean(ncrId) only"
+      },
+      "bytes": 1901
+    },
+    {
+      "route": "/quality/findings",
+      "file": "src/pages/quality/findings/index.astro",
+      "routeId": "RT-FIND-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/identity/application/admin-dependencies.js",
+        "../../../modules/quality/findings/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 6563
+    },
+    {
+      "route": "/quality/findings/[findingId]",
+      "file": "src/pages/quality/findings/[findingId].astro",
+      "routeId": "RT-FIND-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quality/findings/application/dependencies.js",
+        "../../../modules/quality/findings/application/list-related-ncrs.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 5535
+    },
+    {
+      "route": "/quality/findings/new",
+      "file": "src/pages/quality/findings/new.astro",
+      "routeId": "RT-FIND-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["findings"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 5757
+    },
+    {
+      "route": "/quality/ncr",
+      "file": "src/pages/quality/ncr/index.astro",
+      "routeId": "RT-NCR-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quality/findings/application/dependencies.js",
+        "../../../modules/quality/ncr/application/dependencies.js",
+        "../../../modules/quality/rca/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 7671
+    },
+    {
+      "route": "/quality/ncr/[ncrId]",
+      "file": "src/pages/quality/ncr/[ncrId].astro",
+      "routeId": "RT-NCR-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quality/capa/application/dependencies.js",
+        "../../../modules/quality/findings/application/list-findings-for-actor.js",
+        "../../../modules/quality/ncr/application/dependencies.js",
+        "../../../modules/quality/rca/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 7361
+    },
+    {
+      "route": "/quality/ncr/new",
+      "file": "src/pages/quality/ncr/new.astro",
+      "routeId": "RT-NCR-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "static",
+      "basis": "policy-presentation",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [],
+      "mutationGuard": {
+        "entrypoints": ["src/actions/ncr.ts#create"],
+        "guard": "FORBIDDEN (unconditional); CreateNcrUseCase checks Boolean(findingId) only"
+      },
+      "bytes": 1910
+    },
+    {
+      "route": "/quality/rca",
+      "file": "src/pages/quality/rca/index.astro",
+      "routeId": "RT-RCA-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["rca"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../modules/quality/ncr/application/dependencies.js",
+        "../../../modules/quality/rca/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 9709
+    },
+    {
+      "route": "/quality/rca/[rcaId]",
+      "file": "src/pages/quality/rca/[rcaId].astro",
+      "routeId": "RT-RCA-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["rca"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../modules/quality/capa/application/dependencies.js",
+        "../../../modules/quality/ncr/application/dependencies.js",
+        "../../../modules/quality/rca/application/dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 10671
+    },
+    {
+      "route": "/quarantine",
+      "file": "src/pages/quarantine/index.astro",
+      "routeId": "RT-QUAR-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../modules/quarantine/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 7003
+    },
+    {
+      "route": "/quarantine/admin",
+      "file": "src/pages/quarantine/admin/index.astro",
+      "routeId": "RT-QUAR-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quarantine/catalog/application/catalog.js",
+        "../../../modules/quarantine/templates/application/dependencies.js",
+        "../../../modules/quarantine/templates/application/template-authority.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 22085
+    },
+    {
+      "route": "/quarantine/admin/[templateId]",
+      "file": "src/pages/quarantine/admin/[templateId].astro",
+      "routeId": "RT-QUAR-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quarantine/inspection/application/save-controlled-form.js",
+        "../../../modules/quarantine/templates/application/authoring.js",
+        "../../../modules/quarantine/templates/application/dependencies.js",
+        "../../../modules/quarantine/templates/application/template-authority.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 16796
+    },
+    {
+      "route": "/quarantine/inspections",
+      "file": "src/pages/quarantine/inspections/index.astro",
+      "routeId": "RT-INSP-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/identity/application/admin-dependencies.js",
+        "../../../modules/quarantine/application/dependencies.js",
+        "../../../modules/quarantine/inspection/application/inspection-result-options.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 8759
+    },
+    {
+      "route": "/quarantine/inspections/[inspectionId]",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/index.astro",
+      "routeId": "RT-INSP-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../../modules/assets/application/dependencies.js",
+        "../../../../modules/quarantine/application/dependencies.js",
+        "../../../../modules/quarantine/inspection/application/inspection-aql-equipment.js",
+        "../../../../modules/quarantine/inspection/application/save-controlled-form.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 11233
+    },
+    {
+      "route": "/quarantine/inspections/[inspectionId]/execute",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/execute.astro",
+      "routeId": "RT-INSP-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../../modules/quarantine/application/dependencies.js",
+        "../../../../modules/quarantine/inspection/application/controlled-form-post.js",
+        "../../../../modules/quarantine/inspection/application/save-controlled-form.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 21323
+    },
+    {
+      "route": "/quarantine/inspections/[inspectionId]/review",
+      "file": "src/pages/quarantine/inspections/[inspectionId]/review.astro",
+      "routeId": "RT-INSP-004",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["quarantine"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../../modules/quarantine/application/dependencies.js",
+        "../../../../modules/quarantine/inspection/application/save-controlled-form.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 22204
+    },
+    {
+      "route": "/quarantine/receiving",
+      "file": "src/pages/quarantine/receiving/index.astro",
+      "routeId": "RT-REC-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../../modules/quarantine/application/dependencies.js",
+        "../../../modules/quarantine/receiving/application/presentation.js",
+        "../../../modules/quarantine/receiving/application/receiving-filters.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 15336
+    },
+    {
+      "route": "/quarantine/receiving/[receivingId]",
+      "file": "src/pages/quarantine/receiving/[receivingId].astro",
+      "routeId": "RT-REC-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["quarantine"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../modules/quarantine/application/dependencies.js",
+        "../../../modules/quarantine/receiving/application/presentation.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 27112
+    },
+    {
+      "route": "/quarantine/receiving/new",
+      "file": "src/pages/quarantine/receiving/new.astro",
+      "routeId": "RT-REC-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["quarantine"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../modules/quarantine/receiving/application/presentation.js"],
+      "mutationGuard": null,
+      "bytes": 12938
+    },
+    {
+      "route": "/reject-reports",
+      "file": "src/pages/reject-reports/index.astro",
+      "routeId": "RT-REJ-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/reject-reports/application/dependencies.js",
+        "../../modules/reject-reports/application/view-model.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 20048
+    },
+    {
+      "route": "/reject-reports/daily/[reportId]",
+      "file": "src/pages/reject-reports/daily/[reportId].astro",
+      "routeId": "RT-REJ-004",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["rejectReports"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../modules/reject-reports/application/dependencies.js",
+        "../../../modules/reject-reports/application/view-model.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 24722
+    },
+    {
+      "route": "/reject-reports/issue-slips/[reportId]",
+      "file": "src/pages/reject-reports/issue-slips/[reportId].astro",
+      "routeId": "RT-REJ-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["rejectReports"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [
+        "../../../modules/reject-reports/application/dependencies.js",
+        "../../../modules/reject-reports/application/view-model.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 17649
+    },
+    {
+      "route": "/reject-reports/new",
+      "file": "src/pages/reject-reports/new.astro",
+      "routeId": "RT-REJ-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["rejectReports"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../modules/reject-reports/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 22935
+    },
+    {
+      "route": "/reports",
+      "file": "src/pages/reports/index.astro",
+      "routeId": "RT-REPORT-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../modules/reporting/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 2054
+    },
+    {
+      "route": "/reports/[reportCode]",
+      "file": "src/pages/reports/[reportCode].astro",
+      "routeId": "RT-REPORT-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/reporting/application/dependencies.js",
+        "../../modules/reporting/application/parse-report-filters.js",
+        "../../modules/reporting/application/report-provenance.js",
+        "../../modules/reporting/application/report-snapshot.js",
+        "../../modules/reporting/application/run-report.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 11795
+    },
+    {
+      "route": "/search",
+      "file": "src/pages/search.astro",
+      "routeId": "RT-SHARED-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../shared/search/search-dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 6859
+    },
+    {
+      "route": "/system/backups",
+      "file": "src/pages/system/backups/index.astro",
+      "routeId": "RT-BACKUP-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../modules/backup-recovery/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 9359
+    },
+    {
+      "route": "/system/backups/[backupId]",
+      "file": "src/pages/system/backups/[backupId]/index.astro",
+      "routeId": "RT-BACKUP-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../../../modules/backup-recovery/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 9057
+    },
+    {
+      "route": "/system/backups/[backupId]/restore",
+      "file": "src/pages/system/backups/[backupId]/restore.astro",
+      "routeId": "RT-BACKUP-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["system"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../../../modules/backup-recovery/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 13997
+    },
+    {
+      "route": "/system/control-center",
+      "file": "src/pages/system/control-center.astro",
+      "routeId": "RT-SYSTEM-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null,
+        "visibility": "YAZEED_ONLY (RT-SYSTEM-001/002)"
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/administration/application/dependencies.js",
+        "../../modules/identity/application/admin-dependencies.js",
+        "../../modules/system-health/application/dependencies.js",
+        "../../shared/audit/audit-dependencies.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 32819
+    },
+    {
+      "route": "/system/health",
+      "file": "src/pages/system/health.astro",
+      "routeId": "RT-SYSTEM-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null,
+        "visibility": "YAZEED_ONLY (RT-SYSTEM-001/002)"
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../modules/system-health/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 17715
+    },
+    {
+      "route": "/tasks",
+      "file": "src/pages/tasks/index.astro",
+      "routeId": "RT-TASK-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": [
+        "../../modules/tasks/application/dependencies.js",
+        "../../modules/tasks/application/ports/task-list-item.js"
+      ],
+      "mutationGuard": null,
+      "bytes": 11354
+    },
+    {
+      "route": "/tasks/[taskId]",
+      "file": "src/pages/tasks/[taskId].astro",
+      "routeId": "RT-TASK-003",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["tasks"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": ["../../modules/tasks/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 12301
+    },
+    {
+      "route": "/tasks/new",
+      "file": "src/pages/tasks/new.astro",
+      "routeId": "RT-TASK-002",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": true,
+      "actionEntrypoints": ["tasks"],
+      "actionModules": ["astro:actions"],
+      "serverDependencies": [],
+      "mutationGuard": null,
+      "bytes": 10721
+    },
+    {
+      "route": "/work",
+      "file": "src/pages/work/index.astro",
+      "routeId": "RT-WORK-001",
+      "registry": "routes.ts",
+      "kind": "screen",
+      "class": "source",
+      "basis": "application-data",
+      "shell": "authenticated",
+      "handoffListed": true,
+      "routesTsDeclared": true,
+      "guard": {
+        "central": "pageAccessDecision (src/middleware.ts)",
+        "page": "actor-null → 303 /login?returnTo=<path>",
+        "catalog": null
+      },
+      "nativePost": false,
+      "actionEntrypoints": [],
+      "actionModules": [],
+      "serverDependencies": ["../../modules/dashboard/application/dependencies.js"],
+      "mutationGuard": null,
+      "bytes": 9921
+    }
+  ]
+}

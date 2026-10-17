@@ -1,0 +1,160 @@
+{
+  "task": "CA-01 — reference pinning and source inventory",
+  "head": "567028c18bd3c25794a886fefd8e0a5f592e8529",
+  "branch": "main",
+  "workingTreeAtStart": "clean",
+  "generatedAt": "2026-10-17T02:12:00Z",
+  "node": "v24.20.0",
+  "pnpm": "11.25.0",
+  "ids": [
+    {
+      "id": "CA-01",
+      "status": "DONE",
+      "scope": "Reference re-verified live and pinned; 88-file inventory reconciled; source/static/runtime register; candidate vs source comparison",
+      "evidence": [
+        "audit/CA-01/source-manifest.json",
+        "audit/CA-01/route-register.json",
+        "audit/CA-01/reference-extraction.md",
+        "audit/CA-01/candidate-comparison.md",
+        "audit/CA-01/reference-renders/reference-1440.png",
+        "audit/CA-01/reference-renders/reference-390.png"
+      ],
+      "limits": [
+        "Authenticated candidate screenshot on this HEAD NOT RUN (no session/environment bootstrap)",
+        "HTTP preview redirect check BLOCKED by config.invalid_environment (503); destinations covered by unit tests instead",
+        "Axe/screen-reader/200-400% zoom on this HEAD NOT RUN",
+        "Route classification derives from page frontmatter imports/calls and the registries; bodies of all 88 pages were not re-read line by line"
+      ]
+    },
+    {
+      "id": "CA-02",
+      "status": "NOT BLOCKED",
+      "scope": "Reference availability was the only CA-02 gate; the reference is AVAILABLE",
+      "evidence": ["audit/CA-00/reference/capa-a.html", "src/ui/styles/capa-a.css"],
+      "note": "CA-00 already applied the layer; this task did not change product code or presentation."
+    },
+    {
+      "id": "CA-F-01",
+      "status": "BLOCKED",
+      "scope": "NCR create write",
+      "blockers": ["PD-15", "PD-16", "NCR numbering authority"]
+    },
+    {
+      "id": "CA-F-02",
+      "status": "BLOCKED",
+      "scope": "CAPA create write",
+      "blockers": ["PD-18", "CAPA numbering authority", "action-plan policy"]
+    },
+    {
+      "id": "CA-F-03",
+      "status": "BLOCKED",
+      "scope": "Retest create write",
+      "blockers": [
+        "RetestPolicy source: authority/count/sequence/number/template/original-result handling"
+      ]
+    },
+    {
+      "id": "CA-F-04",
+      "status": "BLOCKED",
+      "scope": "Acceptance of the three creation functions",
+      "blockers": ["All three writes blocked by the decisions above"]
+    }
+  ],
+  "correctedFacts": [
+    {
+      "claim": "Stitch get_screen returns 'Authentication required' and no CAPA Variant A export exists",
+      "status": "HISTORICAL",
+      "evidence": "2026-10-17T02:09:13.854Z get_screen returned the pinned title; downloaded HTML is character-identical to the pinned file (normalized fdc1f690 / 904da0fc)."
+    },
+    {
+      "claim": "audit/QC-UNIVERSE-STITCH/live-downloads/capa_a.html exists or is required",
+      "status": "ABSENT",
+      "evidence": "The directory does not exist on this checkout; the pinned copy lives at audit/CA-00/reference/capa-a.html."
+    },
+    {
+      "claim": "The available ZIP can serve as Variant A",
+      "status": "REJECTED",
+      "evidence": "The ZIP contains a CAPA register screen, not the Variant A unavailable state; it was not substituted."
+    },
+    {
+      "claim": "Live screenshot equals the pinned PNG",
+      "status": "PARTIAL",
+      "evidence": "Live download is 32,347 bytes (smaller rendition) vs pinned 125,645 bytes at 2560x2048. Identity is proven by HTML/title; the pinned PNG remains the visual reference."
+    },
+    {
+      "claim": "audit/CA-00/report.md after-*.png artifacts exist",
+      "status": "ABSENT",
+      "evidence": "Only reference/*.png and JSON/MD files are present in audit/CA-00; no after-*.png. Not used as evidence here."
+    }
+  ],
+  "inventory": {
+    "astroFiles": 88,
+    "screens": 86,
+    "runtimeRedirects": 2,
+    "classCounts": {
+      "source": 76,
+      "static": 10,
+      "runtime": 2
+    },
+    "routesTsEntries": 86,
+    "declaredWithoutPageFile": 0,
+    "pagesNotDeclaredInRoutesTs": ["/404", "/500"],
+    "handoffEntries": 86,
+    "handoffMinusPages": [],
+    "pagesMinusHandoff": ["/", "/laboratory"]
+  },
+  "verification": [
+    {
+      "command": "git status --short",
+      "result": "PASS — clean"
+    },
+    {
+      "command": "pnpm exec astro build (Node 24.20.0)",
+      "result": "PASS — exit 0"
+    },
+    {
+      "command": "pnpm exec vitest run tests/unit/routing/design-route-boundaries.test.ts tests/unit/identity/session-recovery.test.ts tests/unit/ui/register-surface-contract.test.ts tests/unit/ui/capa-a-surface.test.ts",
+      "result": "PASS — 4 files / 26 tests"
+    },
+    {
+      "command": "pnpm test:architecture",
+      "result": "PASS — boundaries + canonical route registry"
+    },
+    {
+      "command": "route reconciliation (pages vs routes.ts vs handoff §10.4)",
+      "result": "PASS — 88 = 86 + 2; 0 mismatches"
+    },
+    {
+      "command": "Stitch get_screen live retrieval",
+      "result": "PASS — AVAILABLE, title matched, HTML character-identical"
+    },
+    {
+      "command": "browser computed styles at 1440x1000 and 390x844",
+      "result": "PASS — values recorded in reference-extraction.md"
+    },
+    {
+      "command": "astro preview HTTP check of / and /laboratory",
+      "result": "BLOCKED — 503 SERVICE_UNAVAILABLE, config.invalid_environment; .env not sourced"
+    },
+    {
+      "command": "authenticated candidate screenshot on 567028c1",
+      "result": "NOT RUN"
+    }
+  ],
+  "files": [
+    "audit/CA-01/source-manifest.json",
+    "audit/CA-01/route-register.json",
+    "audit/CA-01/reference-extraction.md",
+    "audit/CA-01/candidate-comparison.md",
+    "audit/CA-01/report.md",
+    "audit/CA-01/reference-renders/reference-1440.png",
+    "audit/CA-01/reference-renders/reference-390.png",
+    "tests/unit/routing/design-route-boundaries.test.ts"
+  ],
+  "notDone": [
+    "No commit, push, merge, deploy or migration.",
+    "No product page, schema, API, policy or permission changed.",
+    "No .env read or sourced.",
+    "No claim of visual acceptance, WCAG conformance, UAT or production readiness."
+  ]
+}

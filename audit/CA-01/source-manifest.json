@@ -1,0 +1,203 @@
+{
+  "task": "CA-01 — reference pinning and source inventory",
+  "head": "567028c18bd3c25794a886fefd8e0a5f592e8529",
+  "branch": "main",
+  "workingTree": "clean",
+  "manifestGeneratedAt": "2026-10-17T02:10:00Z",
+  "contract": {
+    "nodeRequired": ">=24.20.0 <25 (.node-version and .nvmrc = 24.20.0; package.json engines)",
+    "pnpmRequired": "11.25.0",
+    "nodeObservedInShell": "v22.22.3 — outside the project contract; used only for inspection",
+    "verificationRuntime": "Node v24.20.0 / pnpm 11.25.0 via nvm",
+    "envHandling": "No .env sourced, printed or modified. No secret value read or transmitted."
+  },
+  "reference": {
+    "source": "Stitch",
+    "project": "1787344711919595236",
+    "screen": "b93297bebbbd41c69aa4bbcbea0e3b6f",
+    "title": "QC Universe — CAPA unavailable EXPLORE A (/quality/capa/new)",
+    "width": 2560,
+    "height": 2048,
+    "deviceType": "DESKTOP",
+    "liveRetrieval": {
+      "method": "tools.stitch.get_screen",
+      "name": "projects/1787344711919595236/screens/b93297bebbbd41c69aa4bbcbea0e3b6f",
+      "startedAt": "2026-10-17T02:09:13.854Z",
+      "finishedAt": "2026-10-17T02:09:16.763Z",
+      "result": "AVAILABLE",
+      "titleMatched": true,
+      "htmlDownloadStatus": 200,
+      "screenshotDownloadStatus": 200
+    },
+    "identityVerification": {
+      "verdict": "VERIFIED_IDENTITY",
+      "method": "Live Stitch HTML compared with the pinned export",
+      "pinnedHtmlSha256": "03b26630a1374338cc522be466b9adcb760a56e99f2e83ef169538f969cbd289",
+      "liveHtmlChars": 5436,
+      "pinnedHtmlChars": 5436,
+      "pinnedHtmlUtf8Bytes": 5440,
+      "normalizedFnv1a32": "fdc1f690",
+      "normalizedDjb2": "904da0fc",
+      "normalizedHashesMatchPinned": true,
+      "note": "Character-for-character identical after CRLF/terminal-whitespace normalization. The 4-byte difference between chars and bytes is the UTF-8 em dash in the title."
+    },
+    "screenshot": {
+      "pinnedPath": "audit/CA-00/reference/capa-a.png",
+      "pinnedSha256": "53b0136482d83ad7ac23932b7d90b3ad8a9ce4a394b84597be54883ae7e0cb91",
+      "pinnedBytes": 125645,
+      "pinnedPixels": "2560x2048 RGB",
+      "liveDownloadBytes": 32347,
+      "liveRendition": "The current download URL serves a smaller rendition than the pinned 2560x2048 PNG.",
+      "consequence": "Screen identity is proven by the title and HTML equality. The pinned PNG remains the visual reference; the live rendition is not a byte-identical replacement and was not substituted."
+    },
+    "priorAttemptStatus": {
+      "authenticationRequired": "HISTORICAL — the 2026-10-17 call now succeeds",
+      "audit/QC-UNIVERSE-STITCH/live-downloads/capa_a.html": "ABSENT (directory does not exist on this checkout)",
+      "availableZip": "Contains a CAPA register screen, not Variant A; not substituted",
+      "currentVerdict": "Reference AVAILABLE and pinned; CA-02 is not blocked by reference availability."
+    }
+  },
+  "palette": {
+    "seedsFromDeliveryFile": {
+      "status": "HISTORICAL SEEDS ONLY — not used as measured product truth",
+      "values": ["#14181E", "#252B34", "#E8EDF5", "#92B8F2", "#D5A36F"]
+    },
+    "observed": [
+      {
+        "role": "canvas",
+        "value": "#14181E",
+        "evidence": "body background (HTML L41; computed rgb(20,24,30))"
+      },
+      {
+        "role": "panel",
+        "value": "#252B34",
+        "evidence": "state card background (HTML L65; computed rgb(37,43,52))"
+      },
+      {
+        "role": "border-default",
+        "value": "#383F4C",
+        "evidence": "card/secondary button/divider (HTML L65, L99; computed rgb(56,63,76)); NOT in the seed list"
+      },
+      {
+        "role": "text-primary",
+        "value": "#E8EDF5",
+        "evidence": "body text and headings (HTML L41, L57)"
+      },
+      {
+        "role": "text-muted",
+        "value": "#9BA3AF",
+        "evidence": "breadcrumb/lede/secondary paragraph (HTML L50, L60, L82); NOT in the seed list"
+      },
+      {
+        "role": "accent",
+        "value": "#92B8F2",
+        "evidence": "primary button fill and focus ring (HTML L96)"
+      },
+      {
+        "role": "accent-hover",
+        "value": "#A6C5F5",
+        "evidence": "primary hover class (HTML L96); NOT in the seed list"
+      },
+      {
+        "role": "warning",
+        "value": "#D5A36F",
+        "evidence": "lock badge and policy callout (HTML L68, L86, L90)"
+      },
+      { "role": "inverse", "value": "#14181E", "evidence": "primary button label (HTML L96)" }
+    ],
+    "observedOpacityVariants": [
+      "selection accent /30 (HTML L41)",
+      "rail border #252B34/40 (HTML L43) — excluded layout, colour noted only",
+      "warning badge background /10 and border /30 (HTML L68)",
+      "policy callout background /10 and border /40 (HTML L86)",
+      "body-secondary text /90 (HTML L78, L90)",
+      "muted separators /50 (HTML L52, L54)",
+      "action divider #383F4C/60 (HTML L95)"
+    ]
+  },
+  "typography": {
+    "family": "Inter 400/500/600/700 (loaded by the reference from Google Fonts; not imported by the product)",
+    "observed": {
+      "h1": "24px / 600 / 32px line-height / -0.6px tracking",
+      "h2": "20px / 500 / 28px line-height",
+      "body": "16px browser base; copy is 14px with 1.625 line-height",
+      "breadcrumb": "12px",
+      "callout": "12px below 640px; 13px at 640px and above; 1.625 line-height",
+      "button": "14px / 500"
+    }
+  },
+  "spacing": {
+    "observedAt1440": {
+      "mainPadding": "48px block / 24px inline",
+      "contentMaxWidth": "720px",
+      "cardMarginTop": "24px",
+      "cardPadding": "32px",
+      "iconToHeadingGap": "14px",
+      "calloutPadding": "16px",
+      "calloutMargin": "24px block",
+      "actionsPaddingTop": "8px",
+      "actionsGap": "12px",
+      "buttonPadding": "24px inline / 10px block",
+      "buttonMinHeight": "44px"
+    },
+    "observedAt390": {
+      "mainPadding": "32px block / 16px inline",
+      "containerWidth": "358px",
+      "cardPadding": "24px",
+      "actionsDirection": "column / stretch",
+      "buttonWidth": "308px (full width, 44px high)"
+    }
+  },
+  "geometry": {
+    "observed": {
+      "cardRadius": "12px",
+      "controlRadius": "8px",
+      "iconBox": "40x40px at 8px radius",
+      "borderWidth": "1px",
+      "excludedRail": "264px empty exploration rail at >=1024px (HTML L43) — not part of the product"
+    }
+  },
+  "buttonStates": {
+    "observed": {
+      "primary": {
+        "rest": "background #92B8F2; label #14181E",
+        "hover": "background #A6C5F5",
+        "focusVisible": "2px ring #92B8F2, 2px offset, ring-offset #252B34"
+      },
+      "secondary": {
+        "rest": "transparent; label #E8EDF5; 1px border #383F4C",
+        "hover": "background #383F4C at 50%",
+        "focusVisible": "same focus ring as primary"
+      }
+    },
+    "notObservedInReference": [
+      "active/pressed",
+      "disabled",
+      "loading",
+      "visited",
+      "selected",
+      "destructive"
+    ]
+  },
+  "notAcceptedAsProductTruth": [
+    "The 264px empty rail is exploration scaffolding and is not copied into the application.",
+    "Tailwind CDN, Material Symbols and Google Fonts from the reference are not imported.",
+    "The reference's own copy is not copied where the product lacks the corresponding record, role or policy; only existing product statements are rendered.",
+    "The screenshot download currently serves a smaller rendition; it is not treated as a replacement for the pinned 2560x2048 PNG.",
+    "Any state not present in the HTML (active/disabled/loading) is a proposal, not an observed reference state."
+  ],
+  "files": [
+    {
+      "path": "audit/CA-00/reference/capa-a.html",
+      "sha256": "03b26630a1374338cc522be466b9adcb760a56e99f2e83ef169538f969cbd289",
+      "bytes": 5440,
+      "chars": 5436
+    },
+    {
+      "path": "audit/CA-00/reference/capa-a.png",
+      "sha256": "53b0136482d83ad7ac23932b7d90b3ad8a9ce4a394b84597be54883ae7e0cb91",
+      "bytes": 125645,
+      "pixels": "2560x2048"
+    }
+  ]
+}
