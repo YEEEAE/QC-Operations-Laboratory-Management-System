@@ -1,0 +1,347 @@
+{
+  "base": "http://127.0.0.1:4331",
+  "node": "v24.20.0",
+  "checks": [],
+  "login": "PASS",
+  "taskRows": 1,
+  "receivingReused": true,
+  "receivingUrl": "http://127.0.0.1:4331/quarantine/receiving/01a16087-856c-70ba-b976-8cd6f201b279",
+  "receivingHeading": "CA05-RCV-001",
+  "employeeSidebar": {
+    "background": "rgb(17, 29, 45)",
+    "color": "rgb(242, 246, 249)",
+    "width": 264,
+    "links": [
+      {
+        "text": "Dashboard",
+        "href": "/dashboard",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "My work today",
+        "href": "/work",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Tasks",
+        "href": "/tasks",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Findings",
+        "href": "/quality/findings",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "NCR",
+        "href": "/quality/ncr",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "RCA",
+        "href": "/quality/rca",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "CAPA",
+        "href": "/quality/capa",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Reject Reports",
+        "href": "/reject-reports",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Quarantine dashboard",
+        "href": "/quarantine",
+        "width": 215,
+        "height": 44
+      },
+      {
+        "text": "Receiving items",
+        "href": "/quarantine/receiving",
+        "width": 215,
+        "height": 44
+      },
+      {
+        "text": "Inspection reports",
+        "href": "/quarantine/inspections",
+        "width": 215,
+        "height": 44
+      },
+      {
+        "text": "Quarantine administration",
+        "href": "/quarantine/admin",
+        "width": 215,
+        "height": 44
+      },
+      {
+        "text": "Laboratory tests",
+        "href": "/laboratory/tests",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Equipment",
+        "href": "/assets/equipment",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Calibration records",
+        "href": "/assets/calibrations",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Maintenance",
+        "href": "/assets/maintenance",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "My approval queue",
+        "href": "/approvals",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Change requests",
+        "href": "/change-requests",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Reports",
+        "href": "/reports",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "AI advisory",
+        "href": "/ai-advisory",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Administration",
+        "href": "/admin",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Users",
+        "href": "/admin/users",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Roles",
+        "href": "/admin/roles",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Permissions",
+        "href": "/admin/permissions",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Scopes",
+        "href": "/admin/scopes",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Audit history",
+        "href": "/audit",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Backup and recovery",
+        "href": "/system/backups",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Controlled documents",
+        "href": "/documents",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "text": "Notifications",
+        "href": "/notifications",
+        "width": 238,
+        "height": 44
+      },
+      {
+        "text": "Search",
+        "href": "/search",
+        "width": 238,
+        "height": 44
+      },
+      {
+        "text": "Account settings",
+        "href": "/account",
+        "width": 238,
+        "height": 44
+      },
+      {
+        "text": "Operating guides",
+        "href": "/help",
+        "width": 238,
+        "height": 44
+      }
+    ]
+  },
+  "leastSidebar": {
+    "width": 264,
+    "background": "rgb(17, 29, 45)",
+    "color": "rgb(242, 246, 249)",
+    "links": [
+      {
+        "text": "Dashboard Current page",
+        "href": "/dashboard"
+      },
+      {
+        "text": "My work today",
+        "href": "/work"
+      },
+      {
+        "text": "Tasks",
+        "href": "/tasks"
+      },
+      {
+        "text": "Findings",
+        "href": "/quality/findings"
+      },
+      {
+        "text": "NCR",
+        "href": "/quality/ncr"
+      },
+      {
+        "text": "RCA",
+        "href": "/quality/rca"
+      },
+      {
+        "text": "CAPA",
+        "href": "/quality/capa"
+      },
+      {
+        "text": "Reject Reports",
+        "href": "/reject-reports"
+      },
+      {
+        "text": "Quarantine dashboard",
+        "href": "/quarantine"
+      },
+      {
+        "text": "Receiving items",
+        "href": "/quarantine/receiving"
+      },
+      {
+        "text": "Inspection reports",
+        "href": "/quarantine/inspections"
+      },
+      {
+        "text": "Quarantine administration",
+        "href": "/quarantine/admin"
+      },
+      {
+        "text": "Laboratory tests",
+        "href": "/laboratory/tests"
+      },
+      {
+        "text": "Equipment",
+        "href": "/assets/equipment"
+      },
+      {
+        "text": "Calibration records",
+        "href": "/assets/calibrations"
+      },
+      {
+        "text": "Maintenance",
+        "href": "/assets/maintenance"
+      },
+      {
+        "text": "My approval queue",
+        "href": "/approvals"
+      },
+      {
+        "text": "Change requests",
+        "href": "/change-requests"
+      },
+      {
+        "text": "Reports",
+        "href": "/reports"
+      },
+      {
+        "text": "AI advisory",
+        "href": "/ai-advisory"
+      },
+      {
+        "text": "Administration",
+        "href": "/admin"
+      },
+      {
+        "text": "Users",
+        "href": "/admin/users"
+      },
+      {
+        "text": "Roles",
+        "href": "/admin/roles"
+      },
+      {
+        "text": "Permissions",
+        "href": "/admin/permissions"
+      },
+      {
+        "text": "Scopes",
+        "href": "/admin/scopes"
+      },
+      {
+        "text": "Audit history",
+        "href": "/audit"
+      },
+      {
+        "text": "Backup and recovery",
+        "href": "/system/backups"
+      },
+      {
+        "text": "Controlled documents",
+        "href": "/documents"
+      },
+      {
+        "text": "Notifications",
+        "href": "/notifications"
+      },
+      {
+        "text": "Search",
+        "href": "/search"
+      },
+      {
+        "text": "Account settings",
+        "href": "/account"
+      },
+      {
+        "text": "Operating guides",
+        "href": "/help"
+      }
+    ]
+  },
+  "employeeLinkCount": 32,
+  "leastLinkCount": 32,
+  "status": "PASS"
+}

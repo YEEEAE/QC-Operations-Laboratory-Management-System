@@ -46,7 +46,9 @@ const { action = copy.actions.applyFilters, clearHref, label = 'Register filters
   .filters :global(input),
   .filters :global(select) {
     min-width: 130px;
-    min-height: var(--control-height);
+    /* 44px target floor for interactive controls; the density token stays the
+       preferred height and never shrinks the control below the target. */
+    min-height: max(var(--control-height), 44px);
     padding: 8px 10px;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
@@ -65,7 +67,7 @@ const { action = copy.actions.applyFilters, clearHref, label = 'Register filters
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--control-height);
+    min-height: max(var(--control-height), 44px);
     padding-inline: var(--space-4);
     border: 1px solid var(--color-accent-primary);
     border-radius: var(--radius-sm);

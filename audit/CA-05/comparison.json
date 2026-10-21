@@ -1,0 +1,3085 @@
+{
+  "pages": {
+    "dashboard": {
+      "path": "/dashboard",
+      "viewports": [
+        {
+          "width": 390,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ],
+            "after": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            },
+            "after": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11"
+            ],
+            "after": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "7b0f76766b47c4418f07ed38614df9305f61a5f87d2d9c33e6b391f6ea355540",
+            "after": "7b0f76766b47c4418f07ed38614df9305f61a5f87d2d9c33e6b391f6ea355540",
+            "rect": {
+              "x": -336,
+              "y": 0,
+              "w": 320,
+              "h": 1000
+            },
+            "linkCount": 5
+          }
+        },
+        {
+          "width": 768,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ],
+            "after": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            },
+            "after": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11",
+              "button:8.83"
+            ],
+            "after": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11",
+              "button:8.83"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "2cfb792885e9d46a92cba0047e189b5ed028c886383a18ecac07a688cc0a74b0",
+            "after": "2cfb792885e9d46a92cba0047e189b5ed028c886383a18ecac07a688cc0a74b0",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 7607
+            },
+            "linkCount": 5
+          }
+        },
+        {
+          "width": 1440,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ],
+            "after": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            },
+            "after": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11",
+              "button:8.83"
+            ],
+            "after": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11",
+              "button:8.83"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "1c7fa837862809435bac39ab451d4630f972c4b7a07f39c35e490a4a4eef290a",
+            "after": "1c7fa837862809435bac39ab451d4630f972c4b7a07f39c35e490a4a4eef290a",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 3830
+            },
+            "linkCount": 5
+          }
+        },
+        {
+          "width": 320,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ],
+            "after": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            },
+            "after": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11"
+            ],
+            "after": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "58406a397a4c071ce0b1dc7e711ff62825a8eb0964120e89e3395b95bcd062fe",
+            "after": "58406a397a4c071ce0b1dc7e711ff62825a8eb0964120e89e3395b95bcd062fe",
+            "rect": {
+              "x": -286,
+              "y": 0,
+              "w": 272,
+              "h": 1000
+            },
+            "linkCount": 5
+          }
+        },
+        {
+          "width": 1024,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ],
+            "after": [
+              "TrendReceiving records per dayOpen the receiving registerThe series was read successfully and every day in 2026-10-08 – "
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            },
+            "after": {
+              "12": 353,
+              "13": 85,
+              "16": 13,
+              "24": 7,
+              "28": 10
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11",
+              "button:8.83"
+            ],
+            "after": [
+              "h1:15.15",
+              ".eyebrow:5.6",
+              ".kpi-value:12.12",
+              ".kpi-label:8.71",
+              ".empty:5.6",
+              "a:10.11",
+              "button:8.83"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "52d85ed60239aec02d826c725f25937fe5a7710a5fa8659d6eeb3763a3ec9b8b",
+            "after": "52d85ed60239aec02d826c725f25937fe5a7710a5fa8659d6eeb3763a3ec9b8b",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 5171
+            },
+            "linkCount": 5
+          }
+        }
+      ],
+      "focus": {
+        "before": null,
+        "after": 14
+      },
+      "timings": {
+        "before": [
+          217,
+          172,
+          228
+        ],
+        "after": [
+          217,
+          101,
+          161
+        ]
+      }
+    },
+    "tasks": {
+      "path": "/tasks",
+      "viewports": [
+        {
+          "width": 390,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 1,
+            "after": 1
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [
+              {
+                "tag": "button",
+                "text": "Apply filters",
+                "w": 105.95,
+                "h": 40,
+                "href": null
+              }
+            ],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ],
+            "after": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "859f633c018a518910c3d329649437bcb3ed41bf7de004c7d533561d747c8a50",
+            "after": "859f633c018a518910c3d329649437bcb3ed41bf7de004c7d533561d747c8a50",
+            "rect": {
+              "x": -336,
+              "y": 0,
+              "w": 320,
+              "h": 1000
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 768,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 1,
+            "after": 1
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [
+              {
+                "tag": "button",
+                "text": "Apply filters",
+                "w": 105.95,
+                "h": 40,
+                "href": null
+              },
+              {
+                "tag": "select",
+                "text": "ComfortableStandardCompact",
+                "w": 75.2,
+                "h": 40,
+                "href": null
+              }
+            ],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ],
+            "after": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "6693c1fc124bc7fcc6fc846c2954b1eba11eba703d0ed20e7aa2b1525a928ce7",
+            "after": "a29cff55234f0e45da99ac7dae485d3ae653904b1080d1ccf8b0098822319db6",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1314
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 1440,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 1,
+            "after": 1
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [
+              {
+                "tag": "button",
+                "text": "Apply filters",
+                "w": 105.95,
+                "h": 40,
+                "href": null
+              },
+              {
+                "tag": "select",
+                "text": "ComfortableStandardCompact",
+                "w": 109,
+                "h": 40,
+                "href": null
+              }
+            ],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ],
+            "after": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "8c5940e95dc515f537e59fbb8f44edc80a8cb2a1a3520fc05c7cdf1adc7fc9d8",
+            "after": "8c5940e95dc515f537e59fbb8f44edc80a8cb2a1a3520fc05c7cdf1adc7fc9d8",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1000
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 320,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 1,
+            "after": 1
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [
+              {
+                "tag": "button",
+                "text": "Apply filters",
+                "w": 105.95,
+                "h": 40,
+                "href": null
+              }
+            ],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ],
+            "after": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "43f95658a1ecac5caca7ebe6e65696d2178cd9bc37deaae22af3a94c0d45a5be",
+            "after": "43f95658a1ecac5caca7ebe6e65696d2178cd9bc37deaae22af3a94c0d45a5be",
+            "rect": {
+              "x": -286,
+              "y": 0,
+              "w": 272,
+              "h": 1000
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 1024,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 1,
+            "after": 1
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 27,
+              "13": 10,
+              "14": 1,
+              "16": 3,
+              "17": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [
+              {
+                "tag": "button",
+                "text": "Apply filters",
+                "w": 105.95,
+                "h": 40,
+                "href": null
+              },
+              {
+                "tag": "select",
+                "text": "ComfortableStandardCompact",
+                "w": 109,
+                "h": 40,
+                "href": null
+              }
+            ],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ],
+            "after": [
+              "h1:15.15",
+              "th:11",
+              "td:12.12",
+              "a:8.79",
+              "button:8.09"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "91400a637004e82510331c1c0743e0276c96d10cd418c2c78c206cbc5db8098a",
+            "after": "7cda8b7075f51c6e8d1ce1e305320f89b5d7d5e76e15e8dad0456bcf4eedf59a",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1167
+            },
+            "linkCount": 6
+          }
+        }
+      ],
+      "focus": {
+        "before": null,
+        "after": 14
+      },
+      "timings": {
+        "before": [
+          182,
+          123,
+          118
+        ],
+        "after": [
+          134,
+          101,
+          79
+        ]
+      }
+    },
+    "tasks-new": {
+      "path": "/tasks/new",
+      "viewports": [
+        {
+          "width": 390,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            },
+            "after": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "28e0e2a7607416626e5761fbf2701e7e4b27fe23aa75d3fde4a079d8b0a53652",
+            "after": "28e0e2a7607416626e5761fbf2701e7e4b27fe23aa75d3fde4a079d8b0a53652",
+            "rect": {
+              "x": -336,
+              "y": 0,
+              "w": 320,
+              "h": 1000
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 768,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            },
+            "after": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "b54d72532a1590f0206099515dea88be71c42f0fc04eb0c553d2100b20510128",
+            "after": "b54d72532a1590f0206099515dea88be71c42f0fc04eb0c553d2100b20510128",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 2156
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 1440,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            },
+            "after": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "396761f374a6fd43a6d2408f71887f71c02cd12593f3a1f2fa66fc8c77351e7c",
+            "after": "396761f374a6fd43a6d2408f71887f71c02cd12593f3a1f2fa66fc8c77351e7c",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1588
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 320,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            },
+            "after": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "c3af8699b2bbbd049732dd32013fa339edd55ae6904be65034a49773b050eb8b",
+            "after": "c3af8699b2bbbd049732dd32013fa339edd55ae6904be65034a49773b050eb8b",
+            "rect": {
+              "x": -286,
+              "y": 0,
+              "w": 272,
+              "h": 1000
+            },
+            "linkCount": 6
+          }
+        },
+        {
+          "width": 1024,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [],
+            "after": []
+          },
+          "textSizes": {
+            "before": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            },
+            "after": {
+              "12": 5,
+              "13": 7,
+              "16": 18,
+              "24": 1,
+              "13.6": 4
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              "a:8.09",
+              "button:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "f9ef68017488bcaee005d4c11fccec9c25d4640499c16f66ad7fd8e8ac0cb195",
+            "after": "f9ef68017488bcaee005d4c11fccec9c25d4640499c16f66ad7fd8e8ac0cb195",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1624
+            },
+            "linkCount": 6
+          }
+        }
+      ],
+      "focus": {
+        "before": null,
+        "after": 14
+      },
+      "timings": {
+        "before": [
+          214,
+          170,
+          212
+        ],
+        "after": [
+          171,
+          97,
+          65
+        ]
+      }
+    },
+    "receiving-detail": {
+      "path": "/quarantine/receiving/01a16087-856c-70ba-b976-8cd6f201b279",
+      "viewports": [
+        {
+          "width": 390,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ],
+            "after": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            },
+            "after": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:1.15"
+            ],
+            "after": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:8.79"
+            ]
+          },
+          "axe": {
+            "before": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "nodes": 1,
+                "targets": [
+                  ".start"
+                ]
+              }
+            ],
+            "after": []
+          },
+          "sidebar": {
+            "before": "d6e804bdb2d67809c04dd197e440590e249e576d7f96451bdd7b0900d2c4232e",
+            "after": "d6e804bdb2d67809c04dd197e440590e249e576d7f96451bdd7b0900d2c4232e",
+            "rect": {
+              "x": -336,
+              "y": 0,
+              "w": 320,
+              "h": 1000
+            },
+            "linkCount": 8
+          }
+        },
+        {
+          "width": 768,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ],
+            "after": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            },
+            "after": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:1.15"
+            ],
+            "after": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:8.79"
+            ]
+          },
+          "axe": {
+            "before": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "nodes": 1,
+                "targets": [
+                  ".start"
+                ]
+              }
+            ],
+            "after": []
+          },
+          "sidebar": {
+            "before": "87ccabce50b77b10a2dfc3da44230ebc072c04a4c7c5e52d003d80764b6b88d2",
+            "after": "87ccabce50b77b10a2dfc3da44230ebc072c04a4c7c5e52d003d80764b6b88d2",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 3411
+            },
+            "linkCount": 8
+          }
+        },
+        {
+          "width": 1440,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ],
+            "after": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            },
+            "after": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:1.15"
+            ],
+            "after": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:8.79"
+            ]
+          },
+          "axe": {
+            "before": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "nodes": 1,
+                "targets": [
+                  ".start"
+                ]
+              }
+            ],
+            "after": []
+          },
+          "sidebar": {
+            "before": "b34dcc18710702888ded8e97c35b3e1c332a7f51909e6011137d8d90a90289f9",
+            "after": "b34dcc18710702888ded8e97c35b3e1c332a7f51909e6011137d8d90a90289f9",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 2945
+            },
+            "linkCount": 8
+          }
+        },
+        {
+          "width": 320,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ],
+            "after": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            },
+            "after": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:1.15"
+            ],
+            "after": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:8.79"
+            ]
+          },
+          "axe": {
+            "before": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "nodes": 1,
+                "targets": [
+                  ".start"
+                ]
+              }
+            ],
+            "after": []
+          },
+          "sidebar": {
+            "before": "0e7f03516ff79cab92225df6919552f0947714abfc18dc4da96a7508e5c11202",
+            "after": "0e7f03516ff79cab92225df6919552f0947714abfc18dc4da96a7508e5c11202",
+            "rect": {
+              "x": -286,
+              "y": 0,
+              "w": 272,
+              "h": 1000
+            },
+            "linkCount": 8
+          }
+        },
+        {
+          "width": 1024,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ],
+            "after": [
+              "PENDING · Inspection NOT_STARTED · Release NO",
+              "Record details Current state RecordCA05-RCV-001 · version 1 Record ownerNot supplied by record source"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            },
+            "after": {
+              "12": 28,
+              "13": 1,
+              "16": 30,
+              "17": 8,
+              "24": 1,
+              "13.44": 7,
+              "16.8": 1,
+              "13.12": 16,
+              "12.48": 3,
+              "12.8": 3
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:1.15"
+            ],
+            "after": [
+              "h1:12.12",
+              ".eyebrow:5.6",
+              ".lede:5.6",
+              "a:10.11",
+              "button:11",
+              ".start:8.79"
+            ]
+          },
+          "axe": {
+            "before": [
+              {
+                "id": "color-contrast",
+                "impact": "serious",
+                "nodes": 1,
+                "targets": [
+                  ".start"
+                ]
+              }
+            ],
+            "after": []
+          },
+          "sidebar": {
+            "before": "369c5233daf214c1a049e81ee010aa97a38c06e76be9efa7418607e463bd656c",
+            "after": "369c5233daf214c1a049e81ee010aa97a38c06e76be9efa7418607e463bd656c",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 3102
+            },
+            "linkCount": 8
+          }
+        }
+      ],
+      "focus": {
+        "before": null,
+        "after": 14
+      },
+      "timings": {
+        "before": [
+          186,
+          105,
+          138
+        ],
+        "after": [
+          183,
+          137,
+          108
+        ]
+      }
+    },
+    "capa-new": {
+      "path": "/quality/capa/new",
+      "viewports": [
+        {
+          "width": 390,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ],
+            "after": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "0fca6f3c247bd10b07459cab9c382753de3f9985746ebdddad5920e5360251ec",
+            "after": "0fca6f3c247bd10b07459cab9c382753de3f9985746ebdddad5920e5360251ec",
+            "rect": {
+              "x": -336,
+              "y": 0,
+              "w": 320,
+              "h": 1000
+            },
+            "linkCount": 9
+          }
+        },
+        {
+          "width": 768,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ],
+            "after": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79",
+              "button:8.83"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79",
+              "button:8.83"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "64670e31e24cfff808151d664098522a2aa483ded969a4b73ca1893ed08e103c",
+            "after": "64670e31e24cfff808151d664098522a2aa483ded969a4b73ca1893ed08e103c",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1135
+            },
+            "linkCount": 9
+          }
+        },
+        {
+          "width": 1440,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ],
+            "after": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79",
+              "button:8.83"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79",
+              "button:8.83"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "64670e31e24cfff808151d664098522a2aa483ded969a4b73ca1893ed08e103c",
+            "after": "64670e31e24cfff808151d664098522a2aa483ded969a4b73ca1893ed08e103c",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1135
+            },
+            "linkCount": 9
+          }
+        },
+        {
+          "width": 320,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ],
+            "after": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "5b9c4692c5d2e669c140e5ed8d0f03f9890f731352cec6333bb4bec15acd144e",
+            "after": "5b9c4692c5d2e669c140e5ed8d0f03f9890f731352cec6333bb4bec15acd144e",
+            "rect": {
+              "x": -286,
+              "y": 0,
+              "w": 272,
+              "h": 1000
+            },
+            "linkCount": 9
+          }
+        },
+        {
+          "width": 1024,
+          "overflow": {
+            "before": 0,
+            "after": 0
+          },
+          "rows": {
+            "before": 0,
+            "after": 0
+          },
+          "states": {
+            "before": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ],
+            "after": [
+              "Direct creation is not available. This page does not provide the authorized CAPA creation flow. Creating a CAPA requires",
+              "Direct creation is not available.",
+              "P-04 separately permits controlled closure by an active Supervisor with the explicit close grant and scope, reason, matc",
+              "PD-18 · QC owner — Whether an effectiveness check is generally required, and its criteria, is unresolved. No effectivene",
+              "Open the CAPA registerOpen NCR"
+            ]
+          },
+          "textSizes": {
+            "before": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            },
+            "after": {
+              "12": 1,
+              "13": 2,
+              "14": 5,
+              "20": 1,
+              "24": 1
+            }
+          },
+          "tinyText": {
+            "before": 0,
+            "after": 0
+          },
+          "smallTargets": {
+            "before": [],
+            "after": []
+          },
+          "contrast": {
+            "before": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79",
+              "button:8.83"
+            ],
+            "after": [
+              "h1:15.15",
+              ".lede:7",
+              ".state-card:12.12",
+              ".state-card__muted:5.6",
+              "a:8.79",
+              "button:8.83"
+            ]
+          },
+          "axe": {
+            "before": [],
+            "after": []
+          },
+          "sidebar": {
+            "before": "64670e31e24cfff808151d664098522a2aa483ded969a4b73ca1893ed08e103c",
+            "after": "64670e31e24cfff808151d664098522a2aa483ded969a4b73ca1893ed08e103c",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "w": 264,
+              "h": 1135
+            },
+            "linkCount": 9
+          }
+        }
+      ],
+      "focus": {
+        "before": null,
+        "after": 14
+      },
+      "timings": {
+        "before": [
+          141,
+          87,
+          108
+        ],
+        "after": [
+          157,
+          90,
+          95
+        ]
+      }
+    }
+  },
+  "sidebar": {
+    "verify-admin": {
+      "linkCount": {
+        "before": 5,
+        "after": 5
+      },
+      "width": {
+        "before": 264,
+        "after": 264
+      },
+      "background": {
+        "before": "rgb(17, 29, 45)",
+        "after": "rgb(17, 29, 45)"
+      },
+      "color": {
+        "before": "rgb(242, 246, 249)",
+        "after": "rgb(242, 246, 249)"
+      },
+      "visibleLinksIdentical": false,
+      "allLinkCount": {
+        "before": 32,
+        "after": 32
+      },
+      "visibleLinksBefore": [
+        {
+          "text": "Account settings",
+          "href": "/account",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Administration",
+          "href": "/admin",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Permissions",
+          "href": "/admin/permissions",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Roles",
+          "href": "/admin/roles",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Scopes",
+          "href": "/admin/scopes",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Users",
+          "href": "/admin/users",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "AI advisory",
+          "href": "/ai-advisory",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "My approval queue",
+          "href": "/approvals",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Calibration records",
+          "href": "/assets/calibrations",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Equipment",
+          "href": "/assets/equipment",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Maintenance",
+          "href": "/assets/maintenance",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Audit history",
+          "href": "/audit",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Change requests",
+          "href": "/change-requests",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Dashboard Current page",
+          "href": "/dashboard",
+          "h": 55,
+          "visible": true,
+          "ariaCurrent": "page"
+        },
+        {
+          "text": "Controlled documents",
+          "href": "/documents",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Operating guides",
+          "href": "/help",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Laboratory tests",
+          "href": "/laboratory/tests",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Notifications",
+          "href": "/notifications",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "CAPA",
+          "href": "/quality/capa",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Findings",
+          "href": "/quality/findings",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "NCR",
+          "href": "/quality/ncr",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "RCA",
+          "href": "/quality/rca",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Quarantine dashboard",
+          "href": "/quarantine",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Quarantine administration",
+          "href": "/quarantine/admin",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Inspection reports",
+          "href": "/quarantine/inspections",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Receiving items",
+          "href": "/quarantine/receiving",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Reject Reports",
+          "href": "/reject-reports",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Reports",
+          "href": "/reports",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Search",
+          "href": "/search",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Backup and recovery",
+          "href": "/system/backups",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Tasks",
+          "href": "/tasks",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "My work today",
+          "href": "/work",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        }
+      ],
+      "visibleLinksAfter": [
+        {
+          "text": "Account settings",
+          "href": "/account",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Dashboard Current page",
+          "href": "/dashboard",
+          "h": 55,
+          "visible": true,
+          "ariaCurrent": "page"
+        },
+        {
+          "text": "Operating guides",
+          "href": "/help",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Notifications",
+          "href": "/notifications",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Search",
+          "href": "/search",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        }
+      ],
+      "backgroundIdentical": true,
+      "widthIdentical": true
+    },
+    "verify-employee": {
+      "linkCount": {
+        "before": 5,
+        "after": 5
+      },
+      "width": {
+        "before": 264,
+        "after": 264
+      },
+      "background": {
+        "before": "rgb(17, 29, 45)",
+        "after": "rgb(17, 29, 45)"
+      },
+      "color": {
+        "before": "rgb(242, 246, 249)",
+        "after": "rgb(242, 246, 249)"
+      },
+      "visibleLinksIdentical": false,
+      "allLinkCount": {
+        "before": 32,
+        "after": 32
+      },
+      "visibleLinksBefore": [
+        {
+          "text": "Account settings",
+          "href": "/account",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Administration",
+          "href": "/admin",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Permissions",
+          "href": "/admin/permissions",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Roles",
+          "href": "/admin/roles",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Scopes",
+          "href": "/admin/scopes",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Users",
+          "href": "/admin/users",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "AI advisory",
+          "href": "/ai-advisory",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "My approval queue",
+          "href": "/approvals",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Calibration records",
+          "href": "/assets/calibrations",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Equipment",
+          "href": "/assets/equipment",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Maintenance",
+          "href": "/assets/maintenance",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Audit history",
+          "href": "/audit",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Change requests",
+          "href": "/change-requests",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Dashboard Current page",
+          "href": "/dashboard",
+          "h": 55,
+          "visible": true,
+          "ariaCurrent": "page"
+        },
+        {
+          "text": "Controlled documents",
+          "href": "/documents",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Operating guides",
+          "href": "/help",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Laboratory tests",
+          "href": "/laboratory/tests",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Notifications",
+          "href": "/notifications",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "CAPA",
+          "href": "/quality/capa",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Findings",
+          "href": "/quality/findings",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "NCR",
+          "href": "/quality/ncr",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "RCA",
+          "href": "/quality/rca",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Quarantine dashboard",
+          "href": "/quarantine",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Quarantine administration",
+          "href": "/quarantine/admin",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Inspection reports",
+          "href": "/quarantine/inspections",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Receiving items",
+          "href": "/quarantine/receiving",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Reject Reports",
+          "href": "/reject-reports",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Reports",
+          "href": "/reports",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Search",
+          "href": "/search",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Backup and recovery",
+          "href": "/system/backups",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Tasks",
+          "href": "/tasks",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "My work today",
+          "href": "/work",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        }
+      ],
+      "visibleLinksAfter": [
+        {
+          "text": "Account settings",
+          "href": "/account",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Dashboard Current page",
+          "href": "/dashboard",
+          "h": 55,
+          "visible": true,
+          "ariaCurrent": "page"
+        },
+        {
+          "text": "Operating guides",
+          "href": "/help",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Notifications",
+          "href": "/notifications",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Search",
+          "href": "/search",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        }
+      ],
+      "backgroundIdentical": true,
+      "widthIdentical": true
+    },
+    "verify-least": {
+      "linkCount": {
+        "before": 5,
+        "after": 5
+      },
+      "width": {
+        "before": 264,
+        "after": 264
+      },
+      "background": {
+        "before": "rgb(17, 29, 45)",
+        "after": "rgb(17, 29, 45)"
+      },
+      "color": {
+        "before": "rgb(242, 246, 249)",
+        "after": "rgb(242, 246, 249)"
+      },
+      "visibleLinksIdentical": false,
+      "allLinkCount": {
+        "before": 32,
+        "after": 32
+      },
+      "visibleLinksBefore": [
+        {
+          "text": "Account settings",
+          "href": "/account",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Administration",
+          "href": "/admin",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Permissions",
+          "href": "/admin/permissions",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Roles",
+          "href": "/admin/roles",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Scopes",
+          "href": "/admin/scopes",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Users",
+          "href": "/admin/users",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "AI advisory",
+          "href": "/ai-advisory",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "My approval queue",
+          "href": "/approvals",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Calibration records",
+          "href": "/assets/calibrations",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Equipment",
+          "href": "/assets/equipment",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Maintenance",
+          "href": "/assets/maintenance",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Audit history",
+          "href": "/audit",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Change requests",
+          "href": "/change-requests",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Dashboard Current page",
+          "href": "/dashboard",
+          "h": 55,
+          "visible": true,
+          "ariaCurrent": "page"
+        },
+        {
+          "text": "Controlled documents",
+          "href": "/documents",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Operating guides",
+          "href": "/help",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Laboratory tests",
+          "href": "/laboratory/tests",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Notifications",
+          "href": "/notifications",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "CAPA",
+          "href": "/quality/capa",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Findings",
+          "href": "/quality/findings",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "NCR",
+          "href": "/quality/ncr",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "RCA",
+          "href": "/quality/rca",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Quarantine dashboard",
+          "href": "/quarantine",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Quarantine administration",
+          "href": "/quarantine/admin",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Inspection reports",
+          "href": "/quarantine/inspections",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Receiving items",
+          "href": "/quarantine/receiving",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Reject Reports",
+          "href": "/reject-reports",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Reports",
+          "href": "/reports",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Search",
+          "href": "/search",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Backup and recovery",
+          "href": "/system/backups",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Tasks",
+          "href": "/tasks",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        },
+        {
+          "text": "My work today",
+          "href": "/work",
+          "h": 0,
+          "visible": false,
+          "ariaCurrent": null
+        }
+      ],
+      "visibleLinksAfter": [
+        {
+          "text": "Account settings",
+          "href": "/account",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Dashboard Current page",
+          "href": "/dashboard",
+          "h": 55,
+          "visible": true,
+          "ariaCurrent": "page"
+        },
+        {
+          "text": "Operating guides",
+          "href": "/help",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Notifications",
+          "href": "/notifications",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        },
+        {
+          "text": "Search",
+          "href": "/search",
+          "h": 44,
+          "visible": true,
+          "ariaCurrent": null
+        }
+      ],
+      "backgroundIdentical": true,
+      "widthIdentical": true
+    }
+  },
+  "timings": {},
+  "guard": {
+    "capaBefore": {
+      "status": 403,
+      "body": "{\"type\":\"AstroActionError\",\"code\":\"FORBIDDEN\",\"status\":403,\"message\":\"CAPA creation requires an approved source/RCA relation.\"}",
+      "registerStatus": 200
+    },
+    "capaAfter": {
+      "status": 403,
+      "body": "{\"type\":\"AstroActionError\",\"code\":\"FORBIDDEN\",\"status\":403,\"message\":\"CAPA creation requires an approved source/RCA relation.\"}",
+      "registerStatus": 200
+    },
+    "receivingBefore": {
+      "status": 403,
+      "body": "{\"type\":\"AstroActionError\",\"code\":\"FORBIDDEN\",\"status\":403,\"message\":\"AUTHZ_DENIED\"}"
+    },
+    "receivingAfter": {
+      "status": 403,
+      "body": "{\"type\":\"AstroActionError\",\"code\":\"FORBIDDEN\",\"status\":403,\"message\":\"AUTHZ_DENIED\"}"
+    },
+    "taskValidationBefore": {
+      "url": "http://127.0.0.1:4331/tasks/new",
+      "resultText": "",
+      "summaryText": "Check the following fields.\n\nTask numberUse the task number from your approved source. Reference numbers are assigned automatically.Please fill out this field.: Please fill out this field.\nTitlePlease fill out this field.: Please fill out this field.",
+      "taskNoValue": "",
+      "invalidFields": 2,
+      "bodyText": "Work\n\nCreate task\n\nNew tasks start as drafts.\n\nCheck the following fields.\n\nTask numberUse the task number from your approved source. Reference numbers are assigned automatically.Please fill out this field.: Please fill out this field.\nTitlePlease fill out this field.: Please fill out this field.\nBack to tasks\nAfter saving\nOwner\nYou (signed-in account)\nPriority\nEntered value, or Not specified\nDue date\nSelected date, or Not set\nState\nDraft\nVersion\n1\nNext step\nActivate the draft when it is ready\n\nTransition history appears after a state change.\n\nTask number\nUse the task number from your approved source. Reference numbers are assigned automatically.\n\nPlease fill out this field.\n\nTitle\n\nPlease fill out this field.\n\nDescription\nPriority\nLeave blank if no priority is assigned. It will show as “Not specified”.\nDue date\nRelated specialized record (optional)\n\nA reference keeps ownership and decis"
+    },
+    "taskValidationAfter": {
+      "url": "http://127.0.0.1:4331/tasks/new",
+      "resultText": "",
+      "summaryText": "Check the following fields.\n\nTask numberUse the task number from your approved source. Reference numbers are assigned automatically.Please fill out this field.: Please fill out this field.\nTitlePlease fill out this field.: Please fill out this field.",
+      "taskNoValue": "",
+      "invalidFields": 2,
+      "bodyText": "Work\n\nCreate task\n\nNew tasks start as drafts.\n\nCheck the following fields.\n\nTask numberUse the task number from your approved source. Reference numbers are assigned automatically.Please fill out this field.: Please fill out this field.\nTitlePlease fill out this field.: Please fill out this field.\nBack to tasks\nAfter saving\nOwner\nYou (signed-in account)\nPriority\nEntered value, or Not specified\nDue date\nSelected date, or Not set\nState\nDraft\nVersion\n1\nNext step\nActivate the draft when it is ready\n\nTransition history appears after a state change.\n\nTask number\nUse the task number from your approved source. Reference numbers are assigned automatically.\n\nPlease fill out this field.\n\nTitle\n\nPlease fill out this field.\n\nDescription\nPriority\nLeave blank if no priority is assigned. It will show as “Not specified”.\nDue date\nRelated specialized record (optional)\n\nA reference keeps ownership and decis"
+    },
+    "noJsBefore": {
+      "tasksFilteredEmpty": true,
+      "receivingDetail": true,
+      "taskValidation": {
+        "url": "http://127.0.0.1:4331/tasks/new",
+        "stayedOnForm": true,
+        "errorSummary": true,
+        "fieldErrors": [],
+        "invalidFields": 0,
+        "body": "Work Create task New tasks start as drafts. Back to tasks There is a problem The task creation result could not be confirmed. Check the task list before trying again to avoid a duplicate. Back to tasks After saving Owner You (signed-in account) Priority Entered value, or Not specified Due date Selected date, or Not set State Draft Version 1 Next step Activate the draft when it is ready Transition "
+      }
+    },
+    "noJsAfter": {
+      "tasksFilteredEmpty": true,
+      "receivingDetail": true,
+      "taskValidation": {
+        "url": "http://127.0.0.1:4331/tasks/new",
+        "stayedOnForm": true,
+        "errorSummary": true,
+        "fieldErrors": [],
+        "invalidFields": 0,
+        "body": "Work Create task New tasks start as drafts. Back to tasks There is a problem The task creation result could not be confirmed. Check the task list before trying again to avoid a duplicate. Back to tasks After saving Owner You (signed-in account) Priority Entered value, or Not specified Due date Selected date, or Not set State Draft Version 1 Next step Activate the draft when it is ready Transition "
+      }
+    }
+  },
+  "status": "PASS"
+}

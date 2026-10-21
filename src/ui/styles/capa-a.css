@@ -369,12 +369,15 @@ html[data-visual-direction='capa-a'] .app-main :where(.state, .state-pill, .stat
   color: var(--text-primary);
 }
 
-/* Links and disclosure affordances. */
-html[data-visual-direction='capa-a'] .app-main :where(a) {
+/* Links and disclosure affordances. Control-like links keep the colour their
+   own surface contract sets; otherwise a light-on-accent label is recoloured
+   into the accent and loses contrast (for example the receiving correction
+   "Start correction" link). */
+html[data-visual-direction='capa-a'] .app-main :where(a:not(.button):not(.link-button):not(.start):not(.action):not(.primary):not(.secondary):not(.controlled):not(.print-report):not(.empty-action)) {
   color: var(--color-accent-primary-hover);
 }
 
-html[data-visual-direction='capa-a'] .app-main :where(a:hover) {
+html[data-visual-direction='capa-a'] .app-main :where(a:not(.button):not(.link-button):not(.start):not(.action):not(.primary):not(.secondary):not(.controlled):not(.print-report):not(.empty-action):hover) {
   color: var(--color-accent-primary);
 }
 
