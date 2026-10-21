@@ -1,5 +1,5 @@
 {
-  "head": "710453e55d00f0f931d3238bb93b167dfef27cf8",
+  "head": "3b63508319abdd83ebe6ed5b91799846c896f0d7",
   "nonStyleSource": "IDENTICAL",
   "sidebarSource": "IDENTICAL",
   "sidebarSHA256": "973afdc935c684880b4a6f07a0f341270347fc3a1e43ecd20389e9dad6aeb818",
@@ -9,7 +9,7 @@
     {
       "width": 320,
       "sidebarLinksCountsAttention": "IDENTICAL",
-      "targetsBefore": 6,
+      "targetsBefore": 0,
       "targetsAfter": 0,
       "textUnder12": 0,
       "overflow": 0,
@@ -18,7 +18,7 @@
     {
       "width": 390,
       "sidebarLinksCountsAttention": "IDENTICAL",
-      "targetsBefore": 6,
+      "targetsBefore": 0,
       "targetsAfter": 0,
       "textUnder12": 0,
       "overflow": 0,
@@ -27,7 +27,7 @@
     {
       "width": 768,
       "sidebarLinksCountsAttention": "IDENTICAL",
-      "targetsBefore": 7,
+      "targetsBefore": 0,
       "targetsAfter": 0,
       "textUnder12": 0,
       "overflow": 0,
@@ -36,7 +36,7 @@
     {
       "width": 1024,
       "sidebarLinksCountsAttention": "IDENTICAL",
-      "targetsBefore": 6,
+      "targetsBefore": 0,
       "targetsAfter": 0,
       "textUnder12": 0,
       "overflow": 0,
@@ -45,7 +45,7 @@
     {
       "width": 1440,
       "sidebarLinksCountsAttention": "IDENTICAL",
-      "targetsBefore": 6,
+      "targetsBefore": 0,
       "targetsAfter": 0,
       "textUnder12": 0,
       "overflow": 0,

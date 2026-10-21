@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-DASHBOARD / متابعة تحقق CAPA A**
+  - Changed: لا تعديل منتج؛ التصميم والـmarkup والعقود الموجودة مطابقة لنطاق overview، وسُجلت مصفوفة المصدر والحالات والأدلة الحالية في تقرير التنفيذ.
+  - Evidence: browser قبل/بعد على نفس HEAD وبيانات PostgreSQL محلية، 5 مقاسات بلا overflow/axe/أهداف أو نص دون الحد؛ unit 31/31 وdashboard guard 11/11 وAstro build PASS. `astro check` FAIL بسبب ملفي audit قديمين؛ populated attention/series وnative zoom/AT NOT VERIFIED. الحساب النشط الأقل يملك `PERM-DASH-VIEW` حسب المصدر، فلا توجد persona مصرح رفضها عن `/dashboard`.
+  - State: PARTIAL — لا تغيير/اختلاق للبيانات؛ الحساب المرفوض للوحة غير منطبق بالمصدر الحالي.
+  - Key files: `audit/CA-P-DASHBOARD/execution-status.md`, `audit/CA-P-DASHBOARD/{before,after}/`.
 - **2026-10-22 — CA-P-QUARANTINE-RECEIVING-RECEIVINGID / CAPA A details re-layout**
   - Changed: Receiving details now use the approved single-column layout with a separate read-only evidence/source section; action/frontmatter/client contracts and Sidebar remain unchanged.
   - Evidence: focused 76 PASS / 1 existing mutation-safety assertion FAIL; Astro compilation PASS, typecheck/architecture/package evidence gate FAIL on unrelated baseline issues. Populated-record/browser/AT/matched screenshots NOT VERIFIED; `audit/CA-P-QUARANTINE-RECEIVING-RECEIVINGID/`.

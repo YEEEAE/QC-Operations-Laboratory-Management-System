@@ -1,6 +1,6 @@
 # CA-P-DASHBOARD — local graphite overview
 
-**State: PARTIAL.** Local presentation implemented; not full route/workflow,
+**State: PARTIAL (latest follow-up 2026-10-22).** Local presentation implemented; not full route/workflow,
 WCAG, UAT or release acceptance. Candidate HEAD at comparison:
 `710453e55d00f0f931d3238bb93b167dfef27cf8` plus this working tree.
 No commit, push, deployment, production connection, migration, API, schema,
@@ -144,3 +144,45 @@ git diff --check
 Local CSS improvement is verified within the listed checks; acceptance stays
 **PARTIAL** until the unrun matrix and procedural skill-reading requirement are
 completed. PASS is not RELEASED.
+
+## CA-P-DASHBOARD prompt follow-up — 2026-10-22
+
+**Prompt state: PARTIAL.** No product source was changed: the current candidate
+already contains the scoped CAPA A overview layout and its markup/data contracts.
+Changing it again without a confirmed visual or functional gap would add churn.
+The design direction was approved in-session; this section records the current
+candidate check, not a new implementation claim.
+
+### Current source and guard matrix
+
+| Concern | Current transition / authority | Status |
+|---|---|---|
+| AUTH | Missing `Astro.locals.actor` → native redirect to login. Authenticated page visibility is server-derived. | VERIFIED in source; browser used existing disposable employee/least identities. |
+| READ / dashboard guard | `emptyDashboard(actor)` is only the unconfirmed fallback; `GetDashboardUseCase` requires an active allowed dashboard permission before query. `AUTHORIZATION` → denied view; other errors → provider-unavailable view. | Source and use-case denial test PASS. Dashboard-level denied account is **N/A under current authority model**: active operational actors receive universal `PERM-DASH-VIEW` (`visibility.ts`); `verify-least` also has that read permission. `/system/health` 404 is a separate owner-only route and is not counted as dashboard denial. |
+| Metric source denial | A source-level `AUTHORIZATION` result renders `value: null`, “Not available”, and no drilldown; it is not zero. | Browser PASS for the employee's document-review source; null count had zero links. |
+| EMPTY / populated overview | Confirmed zeros render as zeros; queue and activity render actual returned rows. Current local disposable DB had 5 task rows (all DRAFT), 0 receiving items, 0 inspection reports, and 8 audit events. The visible attention queue was empty; this run did **not** establish a populated attention item. | True-zero and empty-attention branch PASS; populated attention, receiving chart and failure snapshots NOT VERIFIED. No records/KPIs were seeded to manufacture a positive screenshot. |
+| Series | `AVAILABLE` uses the existing `Chart` with summary, source/scope/period/freshness and accessible data table; unavailable/not-supplied states have no fabricated points. | Browser observed the available 14-day series with real zeros and explicit summary/source/period; populated series NOT VERIFIED. |
+| FILTER | No dashboard filter form or editable filter state exists. Existing metric/flow hrefs continue to carry their source register filters and scope. | N/A as an interactive machine; link list was identical before/after at all five measured widths. |
+| EXPORT | No page-level export action/endpoint is imported or rendered. | N/A; no export UI added. Browser print is not a dashboard export workflow. |
+| MUTATION / AUTHZ action | The dashboard is read-only. Existing “Create receiving item” is a navigation link only, rendered only for its existing zero condition and current server-side authorization projection; the receiving use case remains the final authority. No NCR/CAPA/Retest action was added. | No dashboard mutation to exercise. N/A. |
+| PENDING / refresh | SSR waits for the authorized read to finish; there is no synthetic loading state. Refresh is native `GET /dashboard`. | Native refresh PASS; artificial pending state N/A. |
+| Error/status | Authorization denial, provider unavailability, source-level non-authorization and empty results remain distinct. | Source-level denial and true empty observed. General provider outage/recovery NOT RUN. |
+| Keyboard / preference modes | Native links/disclosures; scoped focus ring; reduced motion and forced-colors rules in page CSS. | Sources disclosure Enter + next Tab measured a 2px focus ring; 320px forced-colors/reduced-motion overflow 0; complete traversal, screen reader and native zoom NOT VERIFIED. |
+
+### Fresh candidate evidence
+
+- Same `HEAD` `3b63508319abdd83ebe6ed5b91799846c896f0d7`, same local PostgreSQL 18.6 database, Node 24.20.0, employee and least identities, locale `en-GB`, timezone `Asia/Riyadh`, height 1000. Before/after runs changed no page, component, data, count, filter, sidebar link or sidebar styling. This is a same-candidate presentation check, not proof of a visual delta.
+- Browser captures: `before/{320,390,768,1024,1440}.png` and `after/{320,390,768,1024,1440}.png`; plus `after/denied.png` (owner-only health route, **not** dashboard denial). Actual dynamic `VERIFY-AUTHZ-READONLY` record rendered on its task detail; no 404 sentinel used for that record. The dashboard itself showed a real empty attention queue, not a fabricated populated row.
+- Five viewport widths: horizontal overflow 0, visible dashboard targets under 44px 0, text under 12px 0, axe WCAG 2.0 A/AA + 2.1 AA main-content violations 0. Sidebar source was identical to candidate HEAD (SHA-256 `973afdc935c684880b4a6f07a0f341270347fc3a1e43ecd20389e9dad6aeb818`); `comparison.json` records unchanged hrefs, counts, attention and sidebar links.
+- Four measured contrast pairs on rendered graphite panel: heading 12.12:1, muted/empty 5.60:1, eyebrow 5.60:1, accent link 8.09:1. These checks cover only the listed selectors, not every visual state.
+- Focused UI tests: 31/31 PASS. Read guard tests: 11/11 PASS. `astro build`: PASS (existing bundle warnings). `git diff --check`: PASS before this report update.
+- `astro check`: FAIL with two TS2307 errors in existing audit capture files `audit/CA-P-500/{committed-500,workingtree-500}.astro`, each importing `../ui/layouts/BaseLayout.astro`; the dashboard itself produced only the existing unused `GetDashboardUseCase` hint. No unrelated audit artifact was edited.
+
+### Remaining / NOT VERIFIED
+
+- Native browser zoom at 200% and 400%, complete keyboard traversal, actual screen reader, forced-colors visual/name check, full long-text stress, populated attention and populated chart/table, and provider failure/recovery were not verified by this run.
+- A real active account denied dashboard access is not constructible from current approved authorization sources: both named disposable accounts are active and carry `PERM-DASH-VIEW`, as does the universal operational read grant. Do not substitute the unrelated `/system/health` 404 or an invented role. Use-case-level permission denial is covered by tests; account-level denied-dashboard acceptance stays N/A/BLOCKED until a source-authorized persona exists.
+- Skill discovery found 775 paths across `.agents/skills` and `.opencode/skills`; relevant UI/accessibility/verification skills were read, but complete reading of every discovered skill file was not completed.
+- Independent prior functional debts remain out of scope: populated attention/provider acceptance, full dashboard auth-denial persona, and the unused `GetDashboardUseCase` import. No CSS, business rule, API/schema, Sidebar, permission, or component behavior was changed in this follow-up.
+
+The required acceptance is **PARTIAL**, not DONE: current presentation, responsive measurements and scoped source denial are verified; populated operational data, account-level denied-dashboard, native zoom and full AT acceptance remain open. `PASS ≠ RELEASED`.
