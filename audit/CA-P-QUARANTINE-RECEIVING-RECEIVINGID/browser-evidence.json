@@ -1,6 +1,25 @@
 {
-  "status": "PARTIAL",
-  "checks": [],
-  "href": "/quarantine/receiving/new",
-  "blocker": "No populated receiving detail located; no fixture fabricated."
+  "candidate": "current working tree",
+  "status": "BLOCKED",
+  "reason": "The disposable local PostgreSQL cluster was stopped; no currently available populated, authorized receiving record and paired denied-account scenario were established. No fixture or 404 sentinel was substituted.",
+  "productionAccess": "NOT USED",
+  "viewportWidths": {
+    "320": "NOT RUN",
+    "390": "NOT RUN",
+    "768": "NOT RUN",
+    "1024": "NOT RUN",
+    "1440": "NOT RUN"
+  },
+  "keyboardAndVisibleFocus": "NOT RUN",
+  "zoom200And400": "NOT RUN",
+  "reducedMotion": "NOT RUN",
+  "forcedColors": "NOT RUN",
+  "renderedContrast": "NOT RUN",
+  "matchedBeforeAfterScreenshots": "NOT RUN",
+  "dynamicActionCeremonies": "NOT RUN",
+  "historicalAttempt": {
+    "date": "2026-10-17",
+    "status": "PARTIAL",
+    "observation": "The authorized employee reached the register, but the only discovered receiving link was the new-item route; no populated detail was tested."
+  }
 }

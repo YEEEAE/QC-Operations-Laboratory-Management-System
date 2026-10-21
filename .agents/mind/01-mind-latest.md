@@ -1,3 +1,13 @@
+- **2026-10-22 — CA-P-QUARANTINE-RECEIVING-RECEIVINGID / CAPA A details re-layout**
+  - Changed: Receiving details now use the approved single-column layout with a separate read-only evidence/source section; action/frontmatter/client contracts and Sidebar remain unchanged.
+  - Evidence: focused 76 PASS / 1 existing mutation-safety assertion FAIL; Astro compilation PASS, typecheck/architecture/package evidence gate FAIL on unrelated baseline issues. Populated-record/browser/AT/matched screenshots NOT VERIFIED; `audit/CA-P-QUARANTINE-RECEIVING-RECEIVINGID/`.
+  - State: PARTIAL — runtime and accessibility acceptance blocked; existing native-POST action debt documented, not repaired.
+  - Key files: `src/pages/quarantine/receiving/[receivingId].astro`, `audit/CA-P-QUARANTINE-RECEIVING-RECEIVINGID/execution-status.md`.
+- **2026-10-22 — OPENCODE-STITCH-MCP / إصلاح مهلة اتصال Stitch**
+  - Changed: رفع مهلة startup/catalog الخاصة بخادم Stitch في `.opencode/opencode.json` إلى 120 ثانية.
+  - Evidence: `opencode mcp list` أظهر Stitch connected؛ استدعاء قراءة `get_project` نجح؛ JSON config صالح.
+  - State: DONE.
+  - Key files: `.opencode/opencode.json`.
 - **2026-10-17 — CA-P-DASHBOARD / عرض overview محلي**
   - Changed: CSS محلي graphite للوحة؛ non-style source وSidebar مطابقان لـHEAD، بلا تغيير مصادر/سياسات/روابط.
   - Evidence: Node24 focused31/31 وtypecheck0 errors؛ PG18 authenticated matched five viewports: overflow0/axe0 وأهداف محتوى≥44×44؛ حساب least قرأ سجلًا فعليًا ثم owner route404، وليس denied-dashboard. graphify update PASS؛ `audit/CA-P-DASHBOARD/execution-status.md`.

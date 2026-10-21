@@ -1,6 +1,73 @@
 {
-  "nonStyleIdentical": true,
-  "beforeSha256": "c8b7566d343e72b6e5678f47dab21309f6363fa7b2cc7e93cf65d44dea74576e",
-  "afterSha256": "cad981585e94de7cbeb88a62c1cc2c56af8d7485c2e981306b24c5fa61c1f391",
-  "sidebarUnchanged": true
+  "candidate": "working tree after CA-P-QUARANTINE-RECEIVING-RECEIVINGID",
+  "baseline": "HEAD before this task",
+  "presentationChanged": true,
+  "frontmatterIdentical": true,
+  "clientScriptsIdentical": true,
+  "formCount": {
+    "before": 4,
+    "after": 4
+  },
+  "hiddenInputNames": {
+    "before": [
+      "intent",
+      "templateVersionId",
+      "intent",
+      "intent",
+      "intent"
+    ],
+    "after": [
+      "intent",
+      "templateVersionId",
+      "intent",
+      "intent",
+      "intent"
+    ],
+    "identical": true
+  },
+  "actionNames": {
+    "before": [
+      "quarantine.transitionReceiving",
+      "quarantine.releaseReceiving"
+    ],
+    "after": [
+      "quarantine.transitionReceiving",
+      "quarantine.releaseReceiving"
+    ],
+    "identical": true
+  },
+  "nativePostIntents": {
+    "before": [
+      "create-inspection",
+      "hold",
+      "void",
+      "correct"
+    ],
+    "after": [
+      "create-inspection",
+      "hold",
+      "void",
+      "correct"
+    ],
+    "identical": true
+  },
+  "visibleLabelTargets": {
+    "before": 13,
+    "after": 13,
+    "identical": true
+  },
+  "sharedCorrectionComponentExpectedVersion": {
+    "before": true,
+    "after": true,
+    "identical": true
+  },
+  "controlledStateTextRetained": [
+    "Receiving state",
+    "Inspection result",
+    "Release System State",
+    "PASS ≠ RELEASED"
+  ],
+  "evidenceAndSourceSeparated": true,
+  "sidebarChanged": false,
+  "runtimeMatchedBeforeAfter": "NOT RUN — no populated, authorized local receiving record available"
 }

@@ -30,6 +30,10 @@
     "servers": {
       "stitch": {
         "type": "local",
+        "timeout": {
+          "startup": 120000,
+          "catalog": 120000
+        },
         "command": [
           "python3",
           "-u",
