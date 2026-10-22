@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ASSETS-EQUIPMENT-NEW / CAPA A new equipment form**
+  - Changed: form presentation uses source-honest eligibility/history N/A states before an equipment record exists; field names, native POST, server action guards, and Sidebar remain unchanged.
+  - Evidence: focused 14/14 and Astro build PASS; `astro check` has 2 unrelated CA-P-500 import errors. Authenticated same-record, responsive/keyboard/zoom/contrast acceptance NOT RUN; graphify unavailable. `audit/CA-P-ASSETS-EQUIPMENT-NEW/execution-status.md`.
+  - State: PARTIAL. Source inspection also identified an unverified native POST result-unwrapping issue on this route; kept outside presentation scope.
+  - Key files: `src/pages/assets/equipment/new.astro`, `audit/CA-P-ASSETS-EQUIPMENT-NEW/execution-status.md`.
 - **2026-10-22 — CA-P-ASSETS-EQUIPMENT / CAPA A equipment register**
   - Changed: equipment register now presents source-derived eligibility, current calibration, in-progress maintenance and source requirement flags; list reads, guards, detail history and Sidebar remain unchanged.
   - Evidence: focused 36/36, Docker PostgreSQL 18 integration 20/20, and Astro build PASS; `astro check` FAIL on 2 unrelated CA-P-500 imports. Authenticated populated-record comparison and responsive/accessibility matrix NOT RUN (no source-backed equipment record in the disposable database); graph refresh BLOCKED (CLI unavailable). `audit/CA-P-ASSETS-EQUIPMENT/execution-status.md`.
@@ -433,6 +438,7 @@
 - stale version له UX صريح: `STALE_VERSION_MESSAGE` + زر `Refresh record`، ولا يوجد auto-retry للنية القديمة على data أحدث. `role/scope` لا تحمل version فلا تعرض رسالة stale مُختلقة.
 - لا native `confirm()`/`alert()` في مسار الإدارة؛ الحوارات تمر عبر `ConfirmDialog.astro` + `src/ui/client/dialog.ts` (native `<dialog showModal>` للـfocus trap، opener registry لرجوع focus، Escape لا يُغلق أثناء submission، pending + error region + stale refresh). إتاحة الأزرار 44px والمناطق role=status/role=alert مفصولة.
 - الأخطاء مرئية ومترابطة مع الحقول، القيم تُحفظ بعد الفشل، النجاح `303` إلى record id مفحوص.
+- `src/pages/assets/equipment/new.astro`: source-identified, runtime-unverified no-JS success risk — `Astro.callAction` result is passed whole to `extractDetailId` rather than its `data`; this route may render an unconfirmed result after commit. Keep outside presentation scope unless separately authorized.
 - لا SQL أو business rules داخل الصفحات.
 - dialogs/pagination/sort primitives نضجت محليًا، لكن التوصيل الكامل لكل route families يحتاج استمرار تدريجي.
 

@@ -82,7 +82,90 @@ const describedBy = (name: keyof typeof values): string | undefined =>
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="New equipment · Assets" locale="en" direction="ltr"><PageHeader><Fragment slot="heading"><h1>New equipment</h1></Fragment><p>Create an equipment draft. Activation follows the approved policy.</p><Fragment slot="actions"><a href="/assets/equipment">Back to equipment</a></Fragment></PageHeader>{canCreate ? <form class="form" method="post" data-action="assets.createEquipment">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={LIST_HREF} listLabel="equipment" />}<fieldset><legend>Equipment identity</legend><div class="fields"><div><label for="equipmentNo">Equipment number<span class="hint" id="equipmentNo-help">Use the equipment number from your approved source. Reference numbers are assigned automatically.</span><input id="equipmentNo" name="equipmentNo" required value={values.equipmentNo} aria-invalid={invalid('equipmentNo')} aria-describedby={failure?.fieldErrors.equipmentNo ? 'equipmentNo-error equipmentNo-help' : 'equipmentNo-help'} /></label>{failure?.fieldErrors.equipmentNo && <p class="field-error" id="equipmentNo-error">{failure.fieldErrors.equipmentNo}</p>}</div><div><label for="name">Name<input id="name" name="name" required value={values.name} aria-invalid={invalid('name')} aria-describedby={describedBy('name')} /></label>{failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}</div><div><label for="manufacturer">Manufacturer<input id="manufacturer" name="manufacturer" value={values.manufacturer} /></label></div><div><label for="model">Model<input id="model" name="model" value={values.model} /></label></div><div><label for="serialNo">Serial number<input id="serialNo" name="serialNo" value={values.serialNo} /></label></div><div><label for="location">Location<input id="location" name="location" value={values.location} /></label></div><label class="check"><input type="checkbox" name="calibrationRequired" value="true" checked={values.calibrationRequired} />Calibration required</label><label class="check"><input type="checkbox" name="maintenanceRequired" value="true" checked={values.maintenanceRequired} />Maintenance required</label></div></fieldset><div class="actions"><a class="secondary" href="/assets/equipment">Cancel</a><button type="submit" data-submit>Create draft</button></div><p role="status" data-result></p></form> : <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Equipment create permission.</p></section>}</AppLayout>
+<AppLayout title="New equipment · Assets" locale="en" direction="ltr">
+  <PageHeader>
+    <Fragment slot="heading"><h1>New equipment</h1></Fragment>
+    <p>Create an equipment draft. Activation follows the approved policy.</p>
+    <Fragment slot="actions"><a href="/assets/equipment">Back to equipment</a></Fragment>
+  </PageHeader>
+  {canCreate ? (
+    <form class="form" method="post" data-action="assets.createEquipment">
+      {failure && (
+        <FormErrorSummary
+          summary={failure.summary}
+          recovery={failure.recovery}
+          errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+          listHref={LIST_HREF}
+          listLabel="equipment"
+        />
+      )}
+      <section class="source-records" aria-labelledby="source-records-title">
+        <div class="source-records-heading">
+          <h2 id="source-records-title">Eligibility and source records</h2>
+          <a href={LIST_HREF}>View equipment records and history</a>
+        </div>
+        <p class="source-intro">This new draft has no linked calibration or maintenance records yet. The source-based assessment and history are available from its equipment record after creation.</p>
+        <dl class="source-states">
+          <div><dt>Equipment eligibility</dt><dd>Not assessed — no equipment record exists yet.</dd></div>
+          <div><dt>Calibration status and history</dt><dd>Not available — no calibration record is linked to this draft.</dd></div>
+          <div><dt>Maintenance status and history</dt><dd>Not available — no maintenance record is linked to this draft.</dd></div>
+        </dl>
+      </section>
+      <fieldset>
+        <legend>Equipment identity</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="equipmentNo">Equipment number
+              <span class="hint" id="equipmentNo-help">Use the equipment number from your approved source. Reference numbers are assigned automatically.</span>
+              <input id="equipmentNo" name="equipmentNo" required value={values.equipmentNo} aria-invalid={invalid('equipmentNo')} aria-describedby={failure?.fieldErrors.equipmentNo ? 'equipmentNo-error equipmentNo-help' : 'equipmentNo-help'} />
+            </label>
+            {failure?.fieldErrors.equipmentNo && <p class="field-error" id="equipmentNo-error">{failure.fieldErrors.equipmentNo}</p>}
+          </div>
+          <div class="field">
+            <label for="name">Name
+              <span class="hint" id="name-help">Enter the equipment name used by your source records.</span>
+              <input id="name" name="name" required value={values.name} aria-invalid={invalid('name')} aria-describedby={failure?.fieldErrors.name ? 'name-error name-help' : 'name-help'} />
+            </label>
+            {failure?.fieldErrors.name && <p class="field-error" id="name-error">{failure.fieldErrors.name}</p>}
+          </div>
+          <div class="field">
+            <label for="manufacturer">Manufacturer
+              <span class="hint" id="manufacturer-help">Optional. Use the value recorded by the source.</span>
+              <input id="manufacturer" name="manufacturer" value={values.manufacturer} aria-describedby="manufacturer-help" />
+            </label>
+          </div>
+          <div class="field">
+            <label for="model">Model
+              <span class="hint" id="model-help">Optional. Use the model recorded by the source.</span>
+              <input id="model" name="model" value={values.model} aria-describedby="model-help" />
+            </label>
+          </div>
+          <div class="field">
+            <label for="serialNo">Serial number
+              <span class="hint" id="serialNo-help">Optional. Enter the serial number shown on the equipment source record.</span>
+              <input id="serialNo" name="serialNo" value={values.serialNo} aria-describedby="serialNo-help" />
+            </label>
+          </div>
+          <div class="field">
+            <label for="location">Location
+              <span class="hint" id="location-help">Optional. Enter the location recorded by the source.</span>
+              <input id="location" name="location" value={values.location} aria-describedby="location-help" />
+            </label>
+          </div>
+          <label class="check"><input type="checkbox" name="calibrationRequired" value="true" checked={values.calibrationRequired} />Calibration required</label>
+          <label class="check"><input type="checkbox" name="maintenanceRequired" value="true" checked={values.maintenanceRequired} />Maintenance required</label>
+        </div>
+      </fieldset>
+      <div class="actions">
+        <a class="secondary" href={LIST_HREF}>Cancel</a>
+        <button type="submit" data-submit>Create draft</button>
+      </div>
+      <p class="result-status" role="status" data-result></p>
+    </form>
+  ) : (
+    <section class="denied" role="alert"><h2>Creation is not available</h2><p>Your account does not have the explicit Equipment create permission.</p></section>
+  )}
+</AppLayout>
 <script>
 import { actions } from 'astro:actions';
 import { enhanceClassifiedForm } from '../../../ui/forms/enhance-with-classification';
@@ -94,5 +177,39 @@ if(form){enhanceClassifiedForm(form,{
   progressText:'Saving equipment draft…',
   detailBaseHref:'/assets/equipment',
 });guardUnsavedChanges(form);}</script>
-<style>.head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow),.denied p{color:var(--text-muted);font-size:.85rem}.head a{color:var(--color-accent-primary-hover)}.hint{color:var(--text-muted);font-size:.78rem}.form{max-width:900px;display:grid;gap:var(--space-5)}fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}legend{padding-inline:.5rem;font-weight:700}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}label{display:grid;gap:.4rem;color:var(--text-secondary);font-size:.82rem}input{min-height:var(--control-height);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}input[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:.25rem 0 0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;justify-content:flex-end;gap:var(--space-3)}button,.secondary{min-height:var(--control-height);padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700}.secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none}button[disabled]{opacity:.6}.denied{padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}@media(max-width:650px){.head{display:grid}.fields{grid-template-columns:1fr}.actions{justify-content:stretch;display:grid}}
+<style>
+  .form{max-inline-size:56rem;display:grid;gap:var(--space-5);min-inline-size:0}
+  .source-records,fieldset{padding:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel);min-inline-size:0}
+  .source-records-heading{display:flex;justify-content:space-between;align-items:start;gap:var(--space-4);flex-wrap:wrap}
+  .source-records h2{margin:0;font-size:1.125rem;line-height:1.35}
+  .source-records a{min-block-size:44px;display:inline-flex;align-items:center;color:var(--color-accent-primary-hover)}
+  .source-intro{max-inline-size:70ch;color:var(--text-secondary);font-size:.875rem;line-height:1.55}
+  .source-states{display:grid;gap:var(--space-3);margin:var(--space-4) 0 0}
+  .source-states div{padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);background:var(--surface-raised);min-inline-size:0}
+  .source-states dt{font-weight:700;font-size:.875rem}
+  .source-states dd{margin:.25rem 0 0;color:var(--text-secondary);font-size:.875rem;line-height:1.5;overflow-wrap:anywhere}
+  fieldset{padding-block-start:var(--space-4)}
+  legend{padding-inline:.5rem;font-weight:700}
+  .fields{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-4)}
+  .field{min-inline-size:0}
+  label{display:grid;gap:.45rem;color:var(--text-secondary);font-size:.875rem;line-height:1.4;min-inline-size:0}
+  .hint{color:var(--text-muted);font-size:.75rem;line-height:1.45}
+  input{inline-size:100%;min-block-size:max(var(--control-height),44px);padding:.65rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit;min-inline-size:0}
+  input[type="checkbox"]{inline-size:1.25rem;block-size:1.25rem;min-block-size:1.25rem;accent-color:var(--color-accent-primary)}
+  .check{min-block-size:44px;display:flex;align-items:center;gap:.7rem;padding:.5rem 0}
+  input[aria-invalid="true"]{border-color:var(--status-danger)}
+  .field-error{margin:.3rem 0 0;color:var(--status-danger);font-size:.8125rem;line-height:1.45}
+  .actions{display:flex;justify-content:flex-end;gap:var(--space-3);flex-wrap:wrap}
+  button,.secondary{min-block-size:44px;padding:.65rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .secondary{border-color:var(--border-default);background:var(--surface-raised);color:var(--text-primary);text-decoration:none}
+  button[disabled]{opacity:.6}
+  .result-status:empty{display:none}
+  .result-status{margin:0;color:var(--text-primary);font-size:.875rem;line-height:1.5;overflow-wrap:anywhere}
+  .denied{max-inline-size:56rem;padding:var(--space-6);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}
+  .denied p{color:var(--text-secondary);font-size:.875rem;line-height:1.5}
+  :where(a,button,input):focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:2px}
+  @media(min-width:60rem){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:30rem){.source-records,fieldset{padding:var(--space-4)}.actions{display:grid;grid-template-columns:1fr}.actions>*{inline-size:100%}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  @media(forced-colors:active){.source-records,fieldset,.source-states div,input,button,.secondary{border:1px solid CanvasText}.source-states div{background:Canvas;color:CanvasText}button{forced-color-adjust:auto}}
 </style>
