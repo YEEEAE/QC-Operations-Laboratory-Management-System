@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ADMIN-USERS / CAPA A users register**
+  - Changed: `/admin/users` now has applied-filter chips/count and desktop-table/mobile-card presentations; read, role/scope projections, guards, Sidebar, API/schema, and mutation workflows remain unchanged.
+  - Evidence: focused contracts 24/24 and Astro build PASS; `astro check` remains blocked by 2 unrelated CA-P-500 missing imports. Real-account matched browser, viewport/keyboard/zoom/contrast evidence NOT RUN; graph refresh BLOCKED (CLI unavailable). `audit/CA-P-ADMIN-USERS/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/admin/users/index.astro`, `tests/unit/admin/users-register-surface.test.ts`.
 - **2026-10-22 — CA-P-ADMIN-SCOPES / CAPA A scopes overview**
   - Changed: promoted the existing Browse members link as the next step; retained both destinations, all seven canonical scope definitions, and the authorization caveat. No action/API/schema/Sidebar/guard changes.
   - Evidence: focused UI + scope guard tests 46/46 and Astro build compilation PASS; full evidence writer blocked by missing verification context, typecheck has 2 unrelated CA-P-500 imports. Authenticated same-record browser/viewport/keyboard/zoom evidence NOT RUN; `audit/CA-P-ADMIN-SCOPES/execution-status.md`.

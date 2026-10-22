@@ -19,6 +19,17 @@ const query = (params.get('q') ?? '').trim().slice(0, 120);
 const stateParam = params.get('state');
 const accountState = stateParam === 'ACTIVE' || stateParam === 'INACTIVE' || stateParam === 'DISABLED' ? stateParam : undefined;
 const pageSize = 25;
+const hasFilters = Boolean(query || accountState);
+const filterHref = (updates: { query?: string; state?: string; page?: number } = {}) => {
+  const search = new URLSearchParams();
+  const nextQuery = updates.query ?? query;
+  const nextState = updates.state ?? accountState;
+  if (nextQuery) search.set('q', nextQuery);
+  if (nextState) search.set('state', nextState);
+  if (updates.page) search.set('page', String(updates.page));
+  const value = search.toString();
+  return value ? `/admin/users?${value}` : '/admin/users';
+};
 
 type UserList = Awaited<ReturnType<ReturnType<typeof identityAdminReadDependencies>['listUsers']['execute']>>;
 let users: UserList | undefined;
@@ -71,10 +82,8 @@ try {
 ---
 
 <AppLayout title="Users · Administration" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Users</h1></Fragment>
-      
-      
-        
+  <PageHeader>
+    <Fragment slot="heading"><h1>Users</h1></Fragment>
     <Fragment slot="actions"><div class="head-links">
       {canCreate && (
         <a class="button" href="/admin/users/new">
@@ -84,148 +93,146 @@ try {
       <a href="/admin">Back to administration</a>
     </div></Fragment></PageHeader>
   {providerUnavailable && <ProviderUnavailableState title="User register is temporarily unavailable" description="The user source did not confirm a complete page. Retry after the source is available." retryHref={Astro.url.pathname + Astro.url.search} />}
-  {Boolean(stateParam && !accountState) && <p class="rejected" role="status">The account-state filter was not applied because its value is unsupported.</p>}
-  {
-    denied ? (
-      <section class="denied" role="alert">
-        <h2>User administration is not available</h2>
-        <p>
-          The member projection is not available right now. Retry the register to read the current page.
-        </p>
-      </section>
-    ) : providerUnavailable || !users ? null : (
-      <form class="filters" method="get" aria-label="Filter user accounts">
+  {denied ? (
+    <section class="denied" role="alert" aria-labelledby="users-denied-title">
+      <h2 id="users-denied-title">User administration is not available</h2>
+      <p>The member projection is not available right now. Retry the register to read the current page.</p>
+    </section>
+  ) : providerUnavailable || !users ? null : (
+    <section class="register" aria-labelledby="users-register-title">
+      <h2 id="users-register-title" class="sr-only">User account register</h2>
+      {Boolean(stateParam && !accountState) && <p class="filter-notice" role="status">The account-state filter was not applied because its value is unsupported.</p>}
+      <form class="filters" method="get" action="/admin/users" role="search" aria-label="Filter user accounts">
         <label for="q">Search accounts<input id="q" name="q" type="search" maxlength="120" value={query} placeholder="Login, name, or email" /></label>
         <label for="state">Account state<select id="state" name="state">
           <option value="">All states</option><option value="ACTIVE" selected={accountState === 'ACTIVE'}>Active</option><option value="INACTIVE" selected={accountState === 'INACTIVE'}>Inactive</option><option value="DISABLED" selected={accountState === 'DISABLED'}>Disabled</option>
         </select></label>
-        <button type="submit">Apply filters</button>
-        {(query || accountState) && <a href="/admin/users">Clear filters</a>}
+        <div class="filter-actions">
+          <button type="submit">Apply filters</button>
+          {hasFilters && <a href="/admin/users">Clear filters</a>}
+        </div>
       </form>
-    )}
-  {
-    denied || !users ? null : users.length ? (
-      <div class="table-wrap">
-        <table>
-          <caption>{total} authorized member account{total === 1 ? '' : 's'}{query || accountState ? ' matching these filters' : ''}; page {page} of {pages}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Login identity</th>
-              <th scope="col">Display name</th>
-              <th scope="col">State</th>
-              <th scope="col">Roles</th>
-              <th scope="col">Scopes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr>
-                <th scope="row">
-                  <a href={`/admin/users/${user.id}`}>{user.loginIdentity}</a>
-                </th>
-                <td>{user.displayName}</td>
-                <td>{stateLabel(user.accountState)}</td>
-                <td>{relationshipUnavailable ? 'Not confirmed' : roleSummary.get(user.id) ?? '—'}</td>
-                <td>{relationshipUnavailable ? 'Not confirmed' : scopeSummary.get(user.id) ?? '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div class="active-filters" aria-label="Applied user filters" hidden={!hasFilters}>
+        <span class="active-label">Active filters</span>
+        {query && <span class="filter-chip"><span class="chip-value">Search: {query}</span><a href={filterHref({ query: '' })} aria-label="Remove search filter">Remove</a></span>}
+        {accountState && <span class="filter-chip"><span class="chip-value">Account state: {stateLabel(accountState)}</span><a href={filterHref({ state: '' })} aria-label="Remove account-state filter">Remove</a></span>}
       </div>
-    ) : (
-      <p class="empty">{query || accountState ? 'No member accounts match these filters.' : 'No member accounts are visible under your authorized scope.'}</p>
-    )
-  }
-  {relationshipUnavailable && <p class="rejected" role="status">Role and scope details could not be confirmed. The user records remain available; retry this page to check these relationships again.</p>}
-  {!denied && !providerUnavailable && users && pages > 1 && <nav class="pagination" aria-label="User account pages">
-    {page > 1 ? <a href={`/admin/users?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(accountState ? { state: accountState } : {}), page: String(page - 1) })}`} rel="prev">Previous page</a> : <span>Previous page</span>}
-    <span aria-current="page">Page {page} of {pages}</span>
-    {page < pages ? <a href={`/admin/users?${new URLSearchParams({ ...(query ? { q: query } : {}), ...(accountState ? { state: accountState } : {}), page: String(page + 1) })}`} rel="next">Next page</a> : <span>Next page</span>}
-  </nav>}
+
+      <p class="result-count" role="status" aria-live="polite">
+        {total} authorized member account{total === 1 ? '' : 's'}{hasFilters ? ' matching these filters' : ''} · Page {page} of {pages}
+      </p>
+
+      {users.length ? (
+        <>
+          <div class="table-wrap" role="region" aria-label="User account table" tabindex="0">
+            <table>
+              <caption>User accounts visible under your authorized scope</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Login identity</th>
+                  <th scope="col">Display name</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Roles</th>
+                  <th scope="col">Scopes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr>
+                    <th scope="row"><a class="user-link" href={`/admin/users/${user.id}`}>{user.loginIdentity}</a></th>
+                    <td class="long-value">{user.displayName}</td>
+                    <td>{stateLabel(user.accountState)}</td>
+                    <td class="long-value">{relationshipUnavailable ? 'Not confirmed' : roleSummary.get(user.id) ?? '—'}</td>
+                    <td class="long-value">{relationshipUnavailable ? 'Not confirmed' : scopeSummary.get(user.id) ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="user-cards" aria-label="User accounts">
+            {users.map((user) => (
+              <li class="user-card">
+                <article aria-labelledby={`user-${user.id}-identity`}>
+                  <h3 id={`user-${user.id}-identity`}><a class="user-link" href={`/admin/users/${user.id}`}>{user.loginIdentity}</a></h3>
+                  <p class="display-name">{user.displayName}</p>
+                  <dl>
+                    <div><dt>State</dt><dd>{stateLabel(user.accountState)}</dd></div>
+                    <div><dt>Roles</dt><dd>{relationshipUnavailable ? 'Not confirmed' : roleSummary.get(user.id) ?? '—'}</dd></div>
+                    <div><dt>Scopes</dt><dd>{relationshipUnavailable ? 'Not confirmed' : scopeSummary.get(user.id) ?? '—'}</dd></div>
+                  </dl>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p class="empty">{hasFilters ? 'No member accounts match these filters.' : 'No member accounts are visible under your authorized scope.'}</p>
+      )}
+
+      {relationshipUnavailable && <p class="relationship-notice" role="status">Role and scope details could not be confirmed. The user records remain available; retry this page to check these relationships again.</p>}
+      {pages > 1 && <nav class="pagination" aria-label="User account pages">
+        {page > 1 ? <a href={filterHref({ page: page - 1 })} rel="prev">Previous page</a> : <span aria-disabled="true">Previous page</span>}
+        <span class="page-status" aria-current="page">Page {page} of {pages}</span>
+        {page < pages ? <a href={filterHref({ page: page + 1 })} rel="next">Next page</a> : <span aria-disabled="true">Next page</span>}
+      </nav>}
+    </section>
+  )}
 </AppLayout>
 <style>
-  .page-head {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-5);
-    align-items: start;
-    margin-bottom: var(--space-6);
+  .register { min-inline-size: 0; }
+  .head-links,.filter-actions { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
+  .button,.filter-actions button,.filter-actions a,.filter-chip a,.user-link,.pagination a,.pagination > span[aria-disabled] { min-block-size:44px; display:inline-flex; align-items:center; }
+  .button { padding-inline:var(--space-4); border:1px solid var(--color-accent-primary); border-radius:var(--radius-md); background:var(--color-accent-primary); color:var(--text-on-accent); text-decoration:none; font-weight:700; }
+  .filters { display:grid; grid-template-columns:minmax(14rem,1fr) minmax(11rem,.45fr) auto; gap:var(--space-3); align-items:end; margin-block-end:var(--space-3); }
+  .filters label { display:grid; gap:var(--space-2); min-inline-size:0; color:var(--text-secondary); font-size:var(--font-size-xs); font-weight:var(--font-weight-semibold); }
+  .filters input,.filters select { inline-size:100%; min-inline-size:0; min-block-size:44px; padding:.625rem .75rem; border:1px solid var(--control-border,var(--color-border-subtle)); border-radius:var(--radius-sm); background:var(--surface-inset,var(--surface-page)); color:var(--text-primary); font:inherit; }
+  .filter-actions button,.filter-actions a,.pagination a,.pagination > span[aria-disabled] { justify-content:center; padding-inline:var(--space-3); border:1px solid var(--control-border,var(--color-border-subtle)); border-radius:var(--radius-sm); background:var(--surface-panel); color:var(--text-primary); font:inherit; text-decoration:none; }
+  .filter-actions button { border-color:var(--color-accent-primary); background:var(--color-accent-primary); color:var(--text-on-accent); font-weight:var(--font-weight-semibold); cursor:pointer; }
+  .filter-actions a,.filter-chip a,.pagination a,.user-link { color:var(--color-accent-primary-hover); }
+  :where(button,input,select,a,.table-wrap):focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+  .active-filters { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); margin-block-end:var(--space-3); color:var(--text-secondary); font-size:var(--font-size-xs); }
+  .active-label { font-weight:var(--font-weight-semibold); }
+  .filter-chip { display:inline-flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); max-inline-size:100%; min-block-size:44px; padding-inline:.65rem; border:1px solid var(--color-border-subtle); border-radius:var(--radius-sm); }
+  .chip-value { min-inline-size:0; overflow-wrap:anywhere; }
+  .filter-notice,.relationship-notice { margin:var(--space-3) 0; padding:var(--space-3); border-inline-start:3px solid var(--status-warning); background:var(--surface-panel); color:var(--text-secondary); font-size:var(--font-size-xs); line-height:1.5; overflow-wrap:anywhere; }
+  .result-count { margin:0 0 var(--space-3); color:var(--text-secondary); font-size:var(--font-size-xs); line-height:1.5; }
+  .table-wrap { max-inline-size:100%; overflow:auto; border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); scrollbar-width:auto; }
+  table { inline-size:100%; min-inline-size:58rem; border-collapse:collapse; background:var(--surface-panel); }
+  caption { padding:var(--space-4); color:var(--text-muted); text-align:start; font-size:var(--font-size-xs); }
+  th,td { padding:.75rem; border-block-start:1px solid var(--color-border-subtle); text-align:start; vertical-align:top; }
+  thead th { color:var(--text-secondary); font-size:var(--font-size-xs); font-weight:var(--font-weight-semibold); white-space:nowrap; }
+  tbody th { min-inline-size:12rem; font-weight:var(--font-weight-semibold); }
+  tbody tr:nth-child(even) { background:var(--surface-inset,var(--surface-page)); }
+  .user-link { overflow-wrap:anywhere; word-break:normal; }
+  .long-value { min-inline-size:10rem; max-inline-size:30rem; overflow-wrap:anywhere; word-break:normal; }
+  .user-cards { display:none; list-style:none; margin:0; padding:0; }
+  .user-card { padding:var(--space-4); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg); background:var(--surface-panel); }
+  .user-card + .user-card { margin-block-start:var(--space-3); }
+  .user-card h3 { margin:0; font-size:var(--font-size-md); }
+  .display-name { margin:var(--space-1) 0 0; color:var(--text-secondary); overflow-wrap:anywhere; }
+  .user-card dl { display:grid; gap:var(--space-2); margin:var(--space-4) 0 0; }
+  .user-card dl div { display:grid; grid-template-columns:minmax(5rem,.35fr) minmax(0,1fr); gap:var(--space-3); padding-block-start:var(--space-2); border-block-start:1px solid var(--color-border-subtle); }
+  .user-card dt { color:var(--text-muted); font-size:var(--font-size-xs); }
+  .user-card dd { margin:0; overflow-wrap:anywhere; word-break:normal; }
+  .pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:var(--space-3); margin-block-start:var(--space-4); }
+  .pagination > span[aria-disabled] { color:var(--text-muted); }
+  .page-status { color:var(--text-secondary); font-size:var(--font-size-xs); }
+  .empty,.denied { padding:var(--space-5); border:1px solid var(--color-border-subtle); border-inline-start:3px solid var(--status-warning); border-radius:var(--radius-lg); background:var(--surface-panel); color:var(--text-secondary); font-size:var(--font-size-sm); line-height:1.5; }
+  .denied h2 { margin-block:0 .5rem; color:var(--text-primary); font-size:var(--font-size-lg); }
+  .denied p { margin:0; color:var(--text-secondary); font-size:var(--font-size-sm); }
+  .sr-only { position:absolute; inline-size:1px; block-size:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  @media (max-width:760px) {
+    .filters { grid-template-columns:minmax(0,1fr); }
+    .filter-actions { align-items:stretch; }
+    .filter-actions > * { flex:1 1 auto; }
+    .table-wrap { display:none; }
+    .user-cards { display:block; }
   }
-  h1 {
-    margin: 0.25rem 0;
+  @media (forced-colors:active) {
+    :where(button,input,select,a,.table-wrap):focus-visible { outline:2px solid Highlight; }
+    .button,.filter-actions button,.filter-actions a,.filter-chip,.user-card,.empty,.denied { border-color:CanvasText; }
   }
-  .eyebrow {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-  }
-  .lede,
-  .empty {
-    color: var(--text-muted);
-    font-size: 0.86rem;
-  }
-  .head-links {
-    display: flex;
-    gap: var(--space-4);
-    align-items: center;
-  }
-  .button {
-    border: 1px solid var(--color-accent-primary);
-    background: var(--color-accent-primary);
-    color:var(--text-on-accent);
-    padding: 0.65rem 1rem;
-    border-radius: var(--radius-md);
-    text-decoration: none;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .denied {
-    padding: var(--space-5);
-    background: var(--surface-panel);
-    border: 1px solid var(--color-border-subtle);
-    border-inline-start: 3px solid var(--status-warning);
-    border-radius: var(--radius-lg);
-  }
-  .denied p {
-    color: var(--text-muted);
-    font-size: 0.84rem;
-  }
-  .table-wrap {
-    overflow-x: auto;
-  }
-  .filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-4);margin-bottom:var(--space-4)}
-  .rejected{padding:var(--space-3);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel)}
-  .filters label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}
-  .filters input,.filters select,.filters button{min-height:var(--control-height);padding:.45rem .7rem}
-  .pagination{display:flex;align-items:center;justify-content:center;gap:var(--space-5);padding:var(--space-5)}
-  .pagination span{color:var(--text-muted)}
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--surface-panel);
-  }
-  caption {
-    text-align: start;
-    padding: var(--space-4);
-    color: var(--text-muted);
-  }
-  th,
-  td {
-    padding: 0.75rem;
-    text-align: start;
-    border-top: 1px solid var(--color-border-subtle);
-  }
-  th {
-    font-weight: 700;
-  }
-  a {
-    color: var(--color-accent-primary-hover);
-  }
-  @media (max-width: 600px) {
-    .page-head {
-      display: grid;
-    }
-  }
+  @media (prefers-reduced-motion:reduce) { .table-wrap { scroll-behavior:auto; } }
 </style>
