@@ -1,45 +1,939 @@
 ---
-import PageHeader from "../../../ui/components/PageHeader.astro";
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import StatusBadge from '../../../ui/components/StatusBadge.astro';
 import { documentsReadDependencies } from '../../../modules/documents/application/dependencies.js';
-import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { identityAdminReadDependencies } from '../../../modules/identity/application/admin-dependencies.js';
+import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
+import {
+  classifyReadFailure,
+  providerUnavailableResponse,
+} from '../../../shared/errors/read-failure.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
-import { classifyReadFailure, providerUnavailableResponse } from '../../../shared/errors/read-failure.js';
-let document: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['get']['execute']>> | undefined;
+
+let document: Awaited<
+  ReturnType<ReturnType<typeof documentsReadDependencies>['get']['execute']>
+> | undefined;
 try {
-  document = await documentsReadDependencies().get.execute({ actor, documentId: Astro.params.documentId ?? '' });
+  document = await documentsReadDependencies().get.execute({
+    actor,
+    documentId: Astro.params.documentId ?? '',
+  });
 } catch (error) {
   if (classifyReadFailure(error) === 'UNAVAILABLE') {
-    return providerUnavailableResponse('Document details are temporarily unavailable', Astro.url.pathname + Astro.url.search);
+    return providerUnavailableResponse(
+      'Document details are temporarily unavailable',
+      Astro.url.pathname + Astro.url.search,
+    );
   }
 }
 if (!document) return Astro.redirect('/404');
-const effective = document.versions.find((version) => version.state === 'EFFECTIVE');
-// Owner and author names are presentation-only; resolution is failure-tolerant.
-let accountNames = new Map<string, string>();
+
+const versions = document.versions;
+const latestVersion = versions[0];
+const effective = versions.find((version) => version.state === 'EFFECTIVE');
+const openVersion = versions.find((version) =>
+  ['DRAFT', 'IN_REVIEW', 'RETURNED'].includes(version.state),
+);
+const recordState = effective ? 'EFFECTIVE' : (latestVersion?.state ?? 'CATALOG_ONLY');
+const recordStateLabel =
+  recordState === 'APPROVED'
+    ? 'Approved — not effective'
+    : recordState === 'CATALOG_ONLY'
+      ? 'Catalog only'
+      : stateLabel(recordState);
+
+type BadgeStatus =
+  | 'APPROVED'
+  | 'REVIEW'
+  | 'DRAFT'
+  | 'WARNING'
+  | 'VOID'
+  | 'SUPERSEDED'
+  | 'READ_ONLY'
+  | 'INFO';
+const badgeStatus = (state: string): BadgeStatus =>
+  state === 'EFFECTIVE' || state === 'APPROVED'
+    ? 'APPROVED'
+    : state === 'IN_REVIEW'
+      ? 'REVIEW'
+      : state === 'RETURNED'
+        ? 'WARNING'
+        : state === 'SUPERSEDED'
+          ? 'SUPERSEDED'
+          : state === 'VOID'
+            ? 'VOID'
+            : state === 'ARCHIVED'
+              ? 'READ_ONLY'
+              : state === 'DRAFT'
+                ? 'DRAFT'
+                : 'INFO';
+
+// Owner, author, approver, and file-linker names are presentation-only and
+// failure-tolerant. Only the identifiers already present in this record are read.
+const referencedAccountIds = [
+  ...new Set(
+    [
+      document.ownerId,
+      document.createdBy,
+      ...versions.flatMap((version) => [
+        version.createdBy,
+        version.approvedBy,
+        ...version.files.map((file) => file.linkedBy),
+      ]),
+    ].filter((value): value is string => Boolean(value)),
+  ),
+];
+let accountNames: ReadonlyMap<string, string> = new Map();
 try {
-  accountNames = new Map(
-    (await identityAdminReadDependencies().listUsers.execute({ actor })).map((user) => [
-      user.id,
-      user.displayName,
-    ]),
-  );
+  accountNames = await identityAdminReadDependencies().listUsers.resolveDisplayNames({
+    actor,
+    userIds: referencedAccountIds,
+  });
 } catch {
   // Presentation-only; fall back to a named-account label below.
 }
 const accountLabel = (accountId: string | null | undefined) =>
   accountId ? (accountNames.get(accountId) ?? 'Named account') : 'Not recorded';
-const canCreateVersion = actor.permissions.some((permission) => ['PERM-DOC-CREATE','PERM-DOC-REVISE'].includes(permission.code) && permission.active !== false);
+
+const date = (value?: Date) =>
+  value?.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not recorded';
+const timestamp = (value?: Date) =>
+  value?.toLocaleString('en-SA', { timeZone: 'Asia/Riyadh' }) ?? 'Not recorded';
+
+const focusVersion = effective ?? latestVersion;
+const focusTitle = effective ? 'Current effective revision' : 'Latest recorded revision';
+const focusHash = focusVersion
+  ? focusVersion.sourceBindingVerified === true
+    ? (focusVersion.contentHash ?? 'Not supplied by record source')
+    : 'Unverified historical value'
+  : 'Not supplied by record source';
+const focusBinding = focusVersion
+  ? focusVersion.sourceBindingVerified === true
+    ? 'Verified by source'
+    : focusVersion.sourceBindingVerified === false
+      ? 'Not verified by source'
+      : 'Not recorded'
+  : 'Not recorded';
+const inactiveSourceFiles =
+  focusVersion?.files.some((file) => file.state !== 'ACTIVE') ?? false;
+
+const canCreateVersion = actor.permissions.some(
+  (permission) =>
+    permission.active !== false && ['PERM-DOC-CREATE', 'PERM-DOC-REVISE'].includes(permission.code),
+);
+const creationDecision = document.revisionCreation;
+const creationPredecessor = creationDecision.allowed
+  ? creationDecision.predecessor
+  : undefined;
+const blockingVersion = creationDecision.allowed
+  ? undefined
+  : creationDecision.blockingVersion;
+const requiredCreationPermission =
+  creationDecision.allowed && creationDecision.predecessor
+    ? 'PERM-DOC-REVISE'
+    : 'PERM-DOC-CREATE';
+const hasRequiredCreationPermission = actor.permissions.some(
+  (permission) =>
+    permission.code === requiredCreationPermission && permission.active !== false,
+);
+const canCreateForCurrentHistory =
+  document.active && canCreateVersion && creationDecision.allowed && hasRequiredCreationPermission;
+const revisionUnavailableReason = !document.active
+  ? 'The document identity is inactive, so revision creation is not offered on this record.'
+  : !canCreateVersion
+    ? 'This account does not have a document revision permission for this record.'
+    : !creationDecision.allowed
+      ? creationDecision.reason === 'REVISION_IN_PROGRESS'
+        ? `Revision ${creationDecision.blockingVersion.revision} is already in progress (${stateLabel(
+            creationDecision.blockingVersion.state,
+          )}). Continue that revision before starting another.`
+        : `The latest revision (${creationDecision.blockingVersion.revision}) is ${stateLabel(
+            creationDecision.blockingVersion.state,
+          )}. A new revision can start only from an effective predecessor.`
+      : !hasRequiredCreationPermission
+        ? `This account does not have the ${
+            requiredCreationPermission === 'PERM-DOC-REVISE' ? 'revise' : 'create'
+          } permission required for the current document history.`
+        : '';
+
+const relatedRecords: Array<{ label: string; href: string; detail: string }> = [
+  ...(effective
+    ? [
+        {
+          label: `Effective revision ${effective.revision}`,
+          href: `/documents/${document.id}/versions/${effective.id}`,
+          detail: effective.effectiveAt
+            ? `Effective ${date(effective.effectiveAt)}`
+            : 'Effective date not recorded',
+        },
+      ]
+    : []),
+  ...(openVersion
+    ? [
+        {
+          label: `Revision ${openVersion.revision} in progress`,
+          href: `/documents/${document.id}/versions/${openVersion.id}`,
+          detail: `${stateLabel(openVersion.state)} · open revision record`,
+        },
+      ]
+    : []),
+  {
+    label: 'Controlled document register',
+    href: '/documents',
+    detail: 'All controlled documents in your authorized scope',
+  },
+];
 ---
+
 <AppLayout title={`${document.documentNo} · Controlled documents`} locale="en" direction="ltr">
-  <nav class="crumb"><a href="/documents">Controlled documents</a><span>/</span><span>{document.documentNo}</span></nav>
-  <PageHeader><Fragment slot="heading"><h1>{document.title}</h1></Fragment><p>{document.documentNo} · {document.documentType} · Identity version {document.version.toString()}</p><Fragment slot="actions">{effective ? <StatusBadge status="APPROVED" label={`EFFECTIVE · Rev ${effective.revision}`} /> : <StatusBadge status="DRAFT" label="No effective version" />}</Fragment></PageHeader>
-  <section class="overview"><div><span>Current effective version</span><strong>{effective?.revision ?? 'None'}</strong></div><div><span>Owner</span><strong>{accountLabel(document.ownerId ?? document.createdBy)}</strong></div><div><span>Active document</span><strong>{document.active ? 'Yes' : 'No'}</strong></div></section>
-  <section class="panel"><div class="panel-head"><div><p class="eyebrow">Version history</p><h2>Controlled versions</h2></div>{canCreateVersion && <a class="button" href={`/documents/${document.id}/versions/new`}>Create revision</a>}</div>{document.versions.length ? <div class="table-wrap"><table><caption>Historical versions are retained; approved versions are read-only.</caption><thead><tr><th scope="col">Revision</th><th scope="col">State</th><th scope="col">Created</th><th scope="col">Approved</th><th scope="col">Effective</th><th scope="col">Author</th></tr></thead><tbody>{document.versions.map((version) => <tr><th scope="row"><a href={`/documents/${document.id}/versions/${version.id}`}>{version.revision}</a></th><td><StatusBadge status={version.state === 'IN_REVIEW' ? 'REVIEW' : version.state === 'EFFECTIVE' ? 'APPROVED' : version.state === 'SUPERSEDED' ? 'SUPERSEDED' : version.state === 'VOID' ? 'VOID' : 'DRAFT'} label={stateLabel(version.state)} /></td><td>{version.createdAt.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'})}</td><td>{version.approvedAt?.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'}) ?? '—'}</td><td>{version.effectiveAt?.toLocaleDateString('en-SA',{timeZone:'Asia/Riyadh'}) ?? '—'}</td><td>{accountLabel(version.createdBy)}</td></tr>)}</tbody></table></div> : <p class="muted">No versions exist yet. This document has a catalog record only.</p>}</section>
-  <section class="panel"><h2>Control boundary</h2><p class="muted">The effective version is the approved revision available to your account. Creating a revision leaves approved and superseded versions unchanged.</p></section>
+  <div class="record-detail">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="/documents">Controlled documents</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{document.documentNo}</span>
+    </nav>
+
+    <PageHeader>
+      <Fragment slot="heading"><h1>{document.documentNo}</h1></Fragment>
+      <p class="record-meta">
+        <span class="record-title">{document.title}</span>
+        <span><span class="meta-label">Type</span> {document.documentType}</span>
+        <span>
+          <span class="meta-label">Identity version</span>
+          <strong class="numeric">{document.version.toString()}</strong>
+        </span>
+        <span>
+          <span class="meta-label">Latest revision</span>
+          {latestVersion?.revision ?? 'None'}
+        </span>
+        <span>
+          <span class="meta-label">Effective revision</span>
+          {effective?.revision ?? 'None'}
+        </span>
+      </p>
+      <Fragment slot="actions">
+        <StatusBadge status={badgeStatus(recordState)} label={recordStateLabel} />
+      </Fragment>
+    </PageHeader>
+
+    <div class="detail-layout">
+      <div class="detail-main">
+        <section class="panel" aria-labelledby="facts-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Record facts</p>
+              <h2 id="facts-heading">Document identity</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">01</span>
+          </div>
+          <dl class="facts-grid">
+            <div><dt>Document number</dt><dd class="identifier">{document.documentNo}</dd></div>
+            <div><dt>Document type</dt><dd>{document.documentType}</dd></div>
+            <div>
+              <dt>Owner</dt><dd>{accountLabel(document.ownerId ?? document.createdBy)}</dd>
+            </div>
+            <div><dt>Active document</dt><dd>{document.active ? 'Yes' : 'No'}</dd></div>
+            <div>
+              <dt>Identity version</dt>
+              <dd class="numeric">{document.version.toString()}</dd>
+            </div>
+            <div>
+              <dt>Latest revision</dt>
+              <dd>
+                {latestVersion
+                  ? `${latestVersion.revision} · ${stateLabel(latestVersion.state)}`
+                  : 'No revision'}
+              </dd>
+            </div>
+            <div>
+              <dt>Current effective revision</dt>
+              <dd>{effective?.revision ?? 'None'}</dd>
+            </div>
+            <div>
+              <dt>Effective since</dt>
+              <dd>{effective?.effectiveAt ? date(effective.effectiveAt) : 'Not recorded'}</dd>
+            </div>
+            <div>
+              <dt>Open revision</dt>
+              <dd>
+                {openVersion
+                  ? `${openVersion.revision} · ${stateLabel(openVersion.state)}`
+                  : 'None'}
+              </dd>
+            </div>
+            <div><dt>Created by</dt><dd>{accountLabel(document.createdBy)}</dd></div>
+            <div><dt>Created</dt><dd>{date(document.createdAt)}</dd></div>
+            <div><dt>Last updated</dt><dd>{date(document.updatedAt)}</dd></div>
+          </dl>
+          <p class="note">
+            Approved does not mean effective. This page reports the state recorded by the source;
+            it does not activate a revision.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="evidence-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Source evidence</p>
+              <h2 id="evidence-heading">Revision evidence</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">02</span>
+          </div>
+
+          {focusVersion ? (
+            <>
+              <div class="evidence-lead">
+                <div>
+                  <span class="lead-label">{focusTitle}</span>
+                  <a
+                    class="lead-link"
+                    href={`/documents/${document.id}/versions/${focusVersion.id}`}
+                  >
+                    Revision {focusVersion.revision}
+                  </a>
+                </div>
+                <StatusBadge
+                  status={badgeStatus(focusVersion.state)}
+                  label={stateLabel(focusVersion.state)}
+                />
+              </div>
+
+              {focusVersion.state === 'APPROVED' && (
+                <p class="notice">
+                  This revision is approved. Approval does not make it effective, and no effective
+                  revision is recorded for this document.
+                </p>
+              )}
+
+              <dl class="facts-grid evidence-facts">
+                <div><dt>Source binding</dt><dd>{focusBinding}</dd></div>
+                <div>
+                  <dt>Bound source files</dt>
+                  <dd class="numeric">{focusVersion.files.length}</dd>
+                </div>
+                <div class="fact-wide">
+                  <dt>Server source fingerprint</dt>
+                  <dd class="identifier">{focusHash}</dd>
+                </div>
+                <div>
+                  <dt>Approved by</dt>
+                  <dd>
+                    {focusVersion.approvedBy
+                      ? accountLabel(focusVersion.approvedBy)
+                      : 'Not approved'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Approved at</dt>
+                  <dd>{focusVersion.approvedAt ? timestamp(focusVersion.approvedAt) : 'Not approved'}</dd>
+                </div>
+                <div>
+                  <dt>Effective at</dt>
+                  <dd>
+                    {focusVersion.effectiveAt ? timestamp(focusVersion.effectiveAt) : 'Not effective'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Superseded at</dt>
+                  <dd>
+                    {focusVersion.supersededAt
+                      ? timestamp(focusVersion.supersededAt)
+                      : 'Not superseded'}
+                  </dd>
+                </div>
+                {focusVersion.changeSummary && (
+                  <div class="fact-wide">
+                    <dt>Recorded change summary</dt>
+                    <dd>{focusVersion.changeSummary}</dd>
+                  </div>
+                )}
+                {focusVersion.voidReason && (
+                  <div class="fact-wide">
+                    <dt>VOID reason</dt>
+                    <dd>{focusVersion.voidReason}</dd>
+                  </div>
+                )}
+              </dl>
+
+              <div class="evidence-block">
+                <h3>Source file manifest</h3>
+                {focusVersion.sourceBindingVerified !== true && (
+                  <p class="notice">
+                    The stored source binding is not verified. The manifest is shown as recorded
+                    and is not proof of an approved or effective binding.
+                  </p>
+                )}
+                {focusVersion.files.length ? (
+                  <>
+                    <div
+                      class="table-scroll"
+                      role="region"
+                      aria-label="Bound source file manifest"
+                      tabindex="0"
+                    >
+                      <table>
+                        <caption>Source files bound to revision {focusVersion.revision}</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">Source file</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Size</th>
+                            <th scope="col">SHA-256</th>
+                            <th scope="col">File state</th>
+                            <th scope="col">Linked</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {focusVersion.files.map((file) => (
+                            <tr>
+                              <th scope="row" class="file-name">
+                                {file.originalFilename}
+                              </th>
+                              <td>{file.fileRole === 'SOURCE' ? 'Source' : file.fileRole}</td>
+                              <td class="numeric">
+                                {file.sizeBytes.toLocaleString('en-US')} bytes
+                              </td>
+                              <td class="hash">{file.sha256}</td>
+                              <td>{stateLabel(file.state)}</td>
+                              <td>
+                                {date(file.linkedAt)}
+                                <span class="linked-by">by {accountLabel(file.linkedBy)}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {inactiveSourceFiles && (
+                      <p class="notice">
+                        At least one listed source file is not active. The manifest is shown as
+                        recorded; it is not evidence that the current binding is valid.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p class="note">
+                    No source files are bound to this revision record. The source fingerprint and
+                    file manifest are therefore not available.
+                  </p>
+                )}
+              </div>
+              <p class="note">
+                The fingerprint and file manifest are stored with the version record. This page does
+                not recompute, approve, or activate them.
+              </p>
+            </>
+          ) : (
+            <p class="note">
+              No revision record exists. This document identity has a catalog record only, so there
+              is no content hash or source manifest to show.
+            </p>
+          )}
+        </section>
+
+        <section class="panel" id="version-history" aria-labelledby="history-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Controlled history</p>
+              <h2 id="history-heading">Controlled versions</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">03</span>
+          </div>
+
+          {versions.length ? (
+            <div
+              class="table-scroll"
+              role="region"
+              aria-label="Controlled document version history"
+              tabindex="0"
+            >
+              <table>
+                <caption>Historical versions are retained; approved versions are read-only.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Revision</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Approved</th>
+                    <th scope="col">Effective</th>
+                    <th scope="col">Author</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {versions.map((version) => (
+                    <tr>
+                      <th scope="row">
+                        <a
+                          class="revision-link"
+                          href={`/documents/${document.id}/versions/${version.id}`}
+                        >
+                          {version.revision}
+                        </a>
+                      </th>
+                      <td>
+                        <StatusBadge
+                          status={badgeStatus(version.state)}
+                          label={stateLabel(version.state)}
+                        />
+                      </td>
+                      <td>{date(version.createdAt)}</td>
+                      <td>{version.approvedAt ? date(version.approvedAt) : '—'}</td>
+                      <td>{version.effectiveAt ? date(version.effectiveAt) : '—'}</td>
+                      <td>{accountLabel(version.createdBy)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="note">
+              No versions exist yet. This document has a catalog record only.
+            </p>
+          )}
+        </section>
+
+        <section class="panel" aria-labelledby="relationships-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Related records</p>
+              <h2 id="relationships-heading">Relationships</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">04</span>
+          </div>
+          <ul class="related">
+            {relatedRecords.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+                <span>{item.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="panel boundary" aria-labelledby="boundary-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Control boundary</p>
+              <h2 id="boundary-heading">Read-only record view</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">05</span>
+          </div>
+          <p>
+            The effective revision is the version the source records as effective for this
+            document. Approval alone does not make a revision effective. Creating a revision leaves
+            approved, effective, and superseded versions unchanged.
+          </p>
+          <p class="note">
+            This page does not upload files, approve, activate, supersede, or void a version. Those
+            decisions remain outside this view and are enforced by the server.
+          </p>
+        </section>
+      </div>
+
+      <aside class="action-rail" aria-label="Current document action">
+        <section class="panel action-panel" aria-labelledby="action-heading">
+          <p class="eyebrow">Current action</p>
+          <h2 id="action-heading">
+            {canCreateForCurrentHistory ? 'Create a revision' : 'No revision action is offered'}
+          </h2>
+          {canCreateForCurrentHistory ? (
+            <>
+              <p>
+                A new draft starts from
+                {creationPredecessor
+                  ? ` revision ${creationPredecessor.revision}`
+                  : ' this catalog-only identity'}. Existing approved, effective, and superseded
+                versions are unchanged.
+              </p>
+              <a class="button" href={`/documents/${document.id}/versions/new`}>
+                Create revision
+              </a>
+              <p class="note">
+                The server rechecks the current history, your permission, and the registered source
+                files when the form is submitted.
+              </p>
+            </>
+          ) : (
+            <>
+              <p>{revisionUnavailableReason}</p>
+              {blockingVersion && (
+                <a
+                  class="text-link"
+                  href={`/documents/${document.id}/versions/${blockingVersion.id}`}
+                >
+                  Open revision {blockingVersion.revision}
+                </a>
+              )}
+              <p class="note">
+                The server decides whether revision creation is available. This page does not submit
+                a change.
+              </p>
+            </>
+          )}
+        </section>
+      </aside>
+    </div>
+  </div>
 </AppLayout>
-<style>.crumb{display:flex;gap:.5rem;margin-bottom:var(--space-5);color:var(--text-muted);font-size:.8rem}.crumb a,a{color:var(--color-accent-primary-hover)}.head,.panel-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.head{margin-bottom:var(--space-5)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.muted{color:var(--text-muted);font-size:.85rem}.overview{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-bottom:var(--space-5)}.overview>div{display:grid;gap:.4rem;padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}.overview span{color:var(--text-muted);font-size:.75rem}.overview strong{font-size:1rem}.panel{padding:var(--space-5);margin-top:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.panel h2{margin:0;font-size:1rem}.button{display:inline-flex;align-items:center;min-height:var(--control-height);padding:.6rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);text-decoration:none;border-radius:var(--radius-sm);font-weight:700}.table-wrap{overflow-x:auto}table{width:100%;min-width:820px;border-collapse:collapse;margin-top:var(--space-4)}caption{text-align:start;color:var(--text-muted);font-size:.75rem;padding-block-end:.5rem}th,td{padding:.75rem .4rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}@media(max-width:650px){.head,.panel-head{display:grid}.overview{grid-template-columns:1fr}.button{width:max-content}}
+
+<style>
+  .record-detail {
+    --detail-gap: var(--space-5);
+    min-inline-size: 0;
+  }
+  .crumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .crumb a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    overflow-wrap: anywhere;
+  }
+  .record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .record-meta > span {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+  .record-title {
+    flex-basis: 100%;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+  }
+  .meta-label {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem);
+    align-items: start;
+    gap: var(--detail-gap);
+  }
+  .detail-main,
+  .action-rail {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--detail-gap);
+  }
+  .panel {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+  .section-heading h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+  .section-index {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+  .facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: 0;
+  }
+  .evidence-facts {
+    margin-block-start: var(--space-4);
+  }
+  .facts-grid > div {
+    min-inline-size: 0;
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .fact-wide {
+    grid-column: 1 / -1;
+  }
+  dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+  dd {
+    margin: var(--space-1) 0 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .identifier,
+  .hash {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+  .note {
+    margin: var(--space-4) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .notice {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3) var(--space-4);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .evidence-lead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block-end: var(--space-3);
+    border-block-end: 1px solid var(--color-border-subtle);
+  }
+  .lead-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+  .lead-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .evidence-block {
+    margin-block-start: var(--space-5);
+  }
+  .evidence-block h3 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+  }
+  .table-scroll {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+  .table-scroll:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  table {
+    inline-size: 100%;
+    min-inline-size: 52rem;
+    border-collapse: collapse;
+  }
+  caption {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  th,
+  td {
+    padding: var(--space-3);
+    text-align: start;
+    border-block-start: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-sm);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+  .file-name {
+    min-inline-size: 12rem;
+    font-weight: 700;
+  }
+  .hash {
+    min-inline-size: 14rem;
+  }
+  .linked-by {
+    display: block;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .revision-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .related {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .related li {
+    display: grid;
+    gap: var(--space-1);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .related li:first-child {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+  .related a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .related span {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+  .boundary p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .boundary .note {
+    margin-block-start: var(--space-3);
+  }
+  .action-panel {
+    border-inline-start: 3px solid var(--color-accent-primary);
+  }
+  .action-panel h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+  .action-panel p {
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+  .action-panel p.note {
+    color: var(--text-muted);
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    margin-block-start: var(--space-4);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .button:hover {
+    border-color: var(--color-accent-primary-hover);
+    background: var(--color-accent-primary-hover);
+  }
+  .text-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    margin-block-start: var(--space-2);
+    color: var(--color-accent-primary-hover);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 1000px) {
+    .detail-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .action-rail {
+      order: -1;
+    }
+  }
+  @media (max-width: 760px) {
+    .facts-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .fact-wide {
+      grid-column: auto;
+    }
+    .panel {
+      padding: var(--space-4);
+    }
+    .evidence-lead {
+      align-items: flex-start;
+    }
+  }
+  @media (forced-colors: active) {
+    .panel,
+    .table-scroll,
+    .button,
+    .notice {
+      border-color: CanvasText;
+    }
+    .table-scroll:focus-visible {
+      outline-color: Highlight;
+    }
+  }
 </style>

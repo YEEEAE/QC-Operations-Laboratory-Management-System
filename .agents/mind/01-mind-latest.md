@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-DOCUMENTS-DOCUMENTID / CAPA A document detail**
+  - Changed: `/documents/[documentId]` now presents a record header (identity, state, identity version, latest/effective revision), then facts, focus-revision evidence (server hash + bound source manifest), controlled version history, relationships and a separate read-only action rail. `APPROVED` is explicitly separated from `EFFECTIVE`; revision eligibility now follows server `revisionCreation` plus the permission required by the current history. Read guards, 404/503 paths, Create-revision route, version links, all existing fields and Sidebar are unchanged. No API/schema/policy/action change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/AT); source and textual `git diff` review only.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/documents/[documentId]/index.astro`.
 - **2026-10-22 — CA-P-DOCUMENTS / CAPA A controlled-documents register**
   - Changed: `/documents` now uses the wide register order (header → native GET filters → server-derived chips → canonical count → table → pager). Long document numbers/titles/owner names wrap without truncation and row links meet 44px; denial and provider outage share one feedback region. Fields, read use cases, `PERM-DOC-CREATE` link, effective-version semantics, guards, routes and Sidebar are unchanged.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/AT). Source and textual `git diff` review only; `AppliedFilters` consumer ratchet updated.
