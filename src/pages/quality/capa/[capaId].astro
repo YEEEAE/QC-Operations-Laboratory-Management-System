@@ -1,6 +1,8 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
+import PolicyBlocker from '../../../ui/components/feedback/PolicyBlocker.astro';
+import { formatDateTime } from '../../../shared/copy/format.js';
 import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
@@ -30,31 +32,151 @@ if (capa?.ncrId) {
   sourceStatus = sourceOutcome.status;
   if (sourceOutcome.status === 'AVAILABLE') sourceNcr = sourceOutcome.value[0];
 }
+// CA-03 source mapping (no runtime checks): READ = awaited SSR record,
+// missing/not-visible, provider unavailable and independent NCR read feedback.
+// READ loading is N/A: this route awaits its reads before rendering.
+// FORM = existing canClose gate, required inputs, one pending/error output,
+// duplicate-submit guard and success reload through actions.capa.close only.
+// DIALOG = N/A locally: closure is an inline form, with no dialog/opener.
+// FILTER / EXPORT = N/A: no detail filter or export action exists here.
+// AUTH = absent-actor redirect, scoped reads and canClose presentation gate;
+// CloseCapaUseCase remains authoritative for scope/state/version/signature.
+// Pre-existing functional debt (outside this presentation change): close has
+// no native POST baseline; errors share generic copy; requestId comes from
+// server requestContext rather than a stable client command key. The read
+// model exposes no effectiveness verdict, signature evidence or closure reason.
+// RCA is reached via the authorized NCR context; no direct RCA binding is
+// supplied by Capa. Do not infer a finding/RCA approval from this relationship.
+// Local CAPA A tokens used; literal visual-reference match is unconfirmed.
 ---
-<AppLayout title="CAPA detail · Quality" locale="en" direction="ltr">
+<AppLayout title={`${capa?.capaNo ?? 'CAPA detail'} · Quality`} locale="en" direction="ltr">
   <div class="capa-shell">
-    <h1>CAPA detail</h1>
-  {providerUnavailable ? <section class="unavailable"><h1>CAPA details are temporarily unavailable</h1><p role="status">The record source could not be reached. No record was changed. Retry from <a href="/quality/capa">CAPA records</a>.</p></section> : capa ? <>
-      <p class="lede">Actions, evidence and closure history.</p>
+    {providerUnavailable ? (
+      <section class="unavailable" aria-labelledby="read-heading">
+        <h1 id="read-heading">CAPA details are temporarily unavailable</h1>
+        <p role="status">The record source could not be reached. No record was changed. Retry from <a href="/quality/capa">CAPA records</a>.</p>
+      </section>
+    ) : capa ? <>
+      <header class="page-head">
+        <div>
+          <p class="eyebrow">Quality / CAPA detail</p>
+          <h1>{capa.capaNo}</h1>
+          <p class="record-title">{capa.title}</p>
+        </div>
+        <a class="back-link" href="/quality/capa">CAPA records</a>
+      </header>
       <JourneyContextPanel ownerDomain="Quality / CAPA" recordReference={`${capa.capaNo} · version ${capa.version.toString()}`} currentState={stateLabel(capa.state)} nextOwner={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'CAPA action owner' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'CAPA verifier' : undefined} whyUnavailable={capa.state === 'READY_FOR_CLOSURE' ? 'P-04 closure is available only to an active Supervisor with the explicit close grant and authorized scope, subject to its reason, version, reauthentication, and e-signature checks' : capa.state === 'CLOSED' ? 'state: controlled closure is complete and evidence is preserved' : undefined} waitingOn={['OPEN', 'IN_PROGRESS'].includes(capa.state) ? 'Action execution' : capa.state === 'AWAITING_VERIFICATION' ? 'Verification' : capa.state === 'EFFECTIVENESS_REVIEW' ? 'Effectiveness review' : undefined} expectedEvent={capa.state === 'IN_PROGRESS' ? 'Action completion' : ['AWAITING_VERIFICATION', 'EFFECTIVENESS_REVIEW'].includes(capa.state) ? 'Verification progress' : capa.state === 'READY_FOR_CLOSURE' ? 'Controlled P-04 closure with reason and e-signature' : undefined} controlledContext={`CAPA ${capa.capaNo} · record version ${capa.version.toString()}`} evidenceSummary={`Actions: ${capa.actions.length} · verification ${capa.verificationRequired ? 'required' : 'not required'} · recorded effectiveness requirement: ${capa.effectivenessRequired ? 'yes' : 'no'} (not an effectiveness verdict)`} auditHref={`/audit?subjectType=CAPA&subjectId=${encodeURIComponent(capa.id)}`} relatedLinks={[{ label: sourceNcr ? `Source NCR ${sourceNcr.ncrNo}` : 'NCR register', href: sourceNcr ? `/quality/ncr/${sourceNcr.id}` : '/quality/ncr', detail: 'Owning non-conformance record' }]} />
-      <p class="lede">View related RCA, action owners, evidence, verification, closure and history through the authorized CAPA workflow.</p>
-      <p class="policy"><strong>PD-18 · Quality-policy owner:</strong> the general effectiveness requirement and criteria remain unresolved. The stored flag is record data, not an effectiveness verdict. P-04 is a separate approved closure exception and does not establish effectiveness.</p>
-      {capa.ncrId && sourceStatus === 'UNAVAILABLE' && <p role="status">The related NCR source is temporarily unavailable. Retry before treating this relationship as absent.</p>}
-      {capa.ncrId && sourceStatus === 'NOT_VISIBLE' && <p role="status">The related NCR details are not available in your authorized scope.</p>}
-      {canClose && <section aria-labelledby="close-heading" class="close-panel">
-        <h2 id="close-heading">Close CAPA</h2>
-        <p>P-04 allows this exception only for an active Supervisor with the explicit close grant and authorized scope. The CAPA must be in an eligible state and at the displayed version. Enter a reason, reauthenticate, and sign the CLOSE meaning. Incomplete actions or unaccepted effectiveness do not block this exception; closure does not claim effectiveness.</p>
+
+      <PolicyBlocker title="Effectiveness policy" decisions={[
+        { id: 'PD-18', owner: 'Quality-policy owner', consequence: 'The general effectiveness requirement and criteria remain unresolved. The stored flag is record data, not an effectiveness verdict. P-04 is a separate approved closure exception and does not establish effectiveness.' },
+      ]} />
+
+      <div class="detail-grid">
+        <div class="record-content">
+          <section class="panel" aria-labelledby="facts-heading">
+            <h2 id="facts-heading">Record facts</h2>
+            <p class="preserve-text">{capa.description}</p>
+            <dl class="facts">
+              <div><dt>CAPA ID</dt><dd>{capa.id}</dd></div>
+              <div><dt>Owner ID</dt><dd>{capa.ownerId ?? 'Not recorded'}</dd></div>
+              <div><dt>Created by ID</dt><dd>{capa.createdBy}</dd></div>
+              <div><dt>Target date</dt><dd>{capa.targetDate ?? 'Not recorded'}</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel" aria-labelledby="actions-heading">
+            <h2 id="actions-heading">Recorded actions</h2>
+            <p class="muted">Action progress and verification are recorded separately from CAPA closure.</p>
+            {capa.actions.length ? <div class="table-wrap" role="region" aria-labelledby="actions-caption" tabindex="0">
+              <table>
+                <caption id="actions-caption">{capa.actions.length} recorded CAPA action{capa.actions.length === 1 ? '' : 's'} · read-only</caption>
+                <thead><tr>
+                  <th scope="col">Action / version</th>
+                  <th scope="col">Owner / due</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Completion evidence</th>
+                  <th scope="col">Verification</th>
+                </tr></thead>
+                <tbody>{capa.actions.map((action) => <tr>
+                  <th scope="row">
+                    <span>Action {action.sequenceNo}</span>
+                    <p class="preserve-text">{action.description}</p>
+                    <span class="metadata">ID: {action.id}</span>
+                    <span class="metadata">Version {action.version.toString()}</span>
+                  </th>
+                  <td>{action.ownerId}<span class="metadata">Due: {action.dueAt ? formatDateTime(action.dueAt) : 'Not recorded'}</span></td>
+                  <td>{stateLabel(action.state)}</td>
+                  <td>{action.completedAt ? formatDateTime(action.completedAt) : 'Completion time not recorded'}<span class="metadata">Completed by ID: {action.completedBy ?? 'Not recorded'}</span></td>
+                  <td>{action.verificationState ? stateLabel(action.verificationState) : 'Not recorded'}</td>
+                </tr>)}</tbody>
+              </table>
+            </div> : <p>No actions are recorded in this CAPA source.</p>}
+          </section>
+
+          <section class="panel" aria-labelledby="evidence-heading">
+            <h2 id="evidence-heading">Verification and effectiveness</h2>
+            <dl class="facts">
+              <div><dt>Verification requirement</dt><dd>{capa.verificationRequired ? 'Required' : 'Not required'} · recorded flag</dd></div>
+              <div><dt>Effectiveness requirement</dt><dd>{capa.effectivenessRequired ? 'Required' : 'Not required'} · recorded flag</dd></div>
+              <div><dt>Effectiveness verdict</dt><dd>Not supplied by this record source</dd></div>
+            </dl>
+            <p class="muted">Action completion, verification and P-04 closure do not establish CAPA effectiveness.</p>
+          </section>
+
+          <section class="panel" aria-labelledby="history-heading">
+            <h2 id="history-heading">Recorded history</h2>
+            <p class="muted">Times shown in Asia/Riyadh. These timestamps are separate from the full audit history.</p>
+            <dl class="facts">
+              <div><dt>Created</dt><dd>{formatDateTime(capa.createdAt)}</dd></div>
+              <div><dt>Last updated</dt><dd>{formatDateTime(capa.updatedAt)}</dd></div>
+              <div><dt>Closure timestamp</dt><dd>{capa.closedAt ? formatDateTime(capa.closedAt) : 'Not recorded'}</dd></div>
+            </dl>
+            <p>Closure reason and signature evidence are not supplied by this read model.</p>
+            <a href={`/audit?subjectType=CAPA&subjectId=${encodeURIComponent(capa.id)}`}>View audit history for this record</a>
+          </section>
+
+          <section class="panel" aria-labelledby="relationships-heading">
+            <h2 id="relationships-heading">Source relationships</h2>
+            {sourceNcr ? <>
+              <dl class="facts">
+                <div><dt>Source NCR</dt><dd><a href={`/quality/ncr/${sourceNcr.id}`}>{sourceNcr.ncrNo}</a><span class="metadata">ID: {sourceNcr.id}</span></dd></div>
+                <div><dt>NCR state / version</dt><dd>{stateLabel(sourceNcr.state)} · version {sourceNcr.version.toString()}</dd></div>
+                <div><dt>Finding reference on NCR</dt><dd>{sourceNcr.findingId ?? 'Not recorded'}</dd></div>
+              </dl>
+              <p class="muted">Open the source NCR for its authorized Finding and RCA relationships. This CAPA source does not supply a direct RCA reference.</p>
+              <a href={`/quality/rca?ncrId=${encodeURIComponent(sourceNcr.id)}`}>View RCA records for {sourceNcr.ncrNo}</a>
+            </> : capa.ncrId ? <p role="status">{sourceStatus === 'UNAVAILABLE' ? 'The related NCR source is temporarily unavailable. Retry before treating this relationship as absent.' : 'The related NCR details are not available in your authorized scope.'}</p> : <p>No source NCR reference is recorded.</p>}
+            <p class="muted">Relationships are read-only; each owning domain retains its transition authority.</p>
+          </section>
+        </div>
+
+        <aside class="action-rail" aria-labelledby="current-actions-heading">
+          <section class="panel">
+            <h2 id="current-actions-heading">Current actions</h2>
+            {canClose ? <section aria-labelledby="close-heading" class="close-panel">
+              <h3 id="close-heading">Close CAPA · P-04</h3>
+              <p id="close-help">P-04 allows this exception only for an active Supervisor with the explicit close grant and authorized scope. The CAPA must be in an eligible state and at the displayed version. Enter a reason, reauthenticate, and sign the CLOSE meaning. Incomplete actions or unaccepted effectiveness do not block this exception; closure does not claim effectiveness.</p>
         <form data-capa-close data-capa-id={capa.id} data-capa-version={capa.version.toString()}>
           <label for="close-reason">Closure reason</label>
-          <textarea id="close-reason" name="reason" required maxlength="2000"></textarea>
+          <textarea id="close-reason" name="reason" aria-describedby="close-help" required maxlength="2000"></textarea>
           <label for="close-reauth">Reauthentication</label>
           <input id="close-reauth" name="reauthenticationSecret" type="password" autocomplete="current-password" required />
-          <p class="signature-meaning">I close CAPA {capa.capaNo}, version {capa.version}.</p>
-          <button type="submit" data-submit>Close CAPA</button>
+          <p id="close-meaning" class="signature-meaning">I close CAPA {capa.capaNo}, version {capa.version}.</p>
+          <button type="submit" aria-describedby="close-meaning" data-submit>Close CAPA</button>
           <output data-result role="status" tabindex="-1"></output>
         </form>
-      </section>}
-    </> : <section class="unavailable"><h1>CAPA record not found</h1><p>This record does not exist or is outside your authorized scope.</p><a href="/quality/capa">Return to CAPA records</a></section>}
+
+            </section> : <p class="muted">{capa.state === 'CLOSED' ? 'This CAPA is closed. Closure does not establish effectiveness.' : capa.state === 'VOID' ? 'This CAPA is void; P-04 closure is unavailable.' : 'P-04 closure is unavailable for this account under the current close-permission and state gate.'}</p>}
+          </section>
+        </aside>
+      </div>
+    </> : (
+      <section class="unavailable" aria-labelledby="read-heading">
+        <h1 id="read-heading">CAPA record not found</h1>
+        <p>This record does not exist or is outside your authorized scope.</p>
+        <a href="/quality/capa">Return to CAPA records</a>
+      </section>
+    )}
   </div>
 </AppLayout>
 <script>
@@ -79,9 +201,28 @@ if (capa?.ncrId) {
   });
 </script>
 <style>
-  .capa-shell{max-width:60rem;margin:0 auto;padding:2rem 1rem}.lede{color:var(--text-muted)}
-  .policy,.unavailable{padding:var(--space-4);background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}.policy{color:var(--text-muted)}.unavailable a{color:var(--color-accent-primary-hover)}
-  .close-panel{margin-top:2rem;padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md)}
-  form{display:grid;gap:.75rem;max-width:38rem}textarea{min-height:7rem}button{width:max-content;padding:.7rem 1rem}.signature-meaning{font-weight:600}
-  output{min-height:1.5rem}
+  .capa-shell{min-inline-size:0;max-inline-size:100%;font-variant-numeric:tabular-nums}
+  .page-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-block-end:var(--space-5)}
+  .page-head>div{min-inline-size:0}.eyebrow,.muted,.metadata{color:var(--text-muted)}
+  .eyebrow{font-size:var(--font-size-xs);margin:0}.page-head h1{margin-block:var(--space-2);overflow-wrap:anywhere}.record-title{margin:0;color:var(--text-secondary)}
+  .detail-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-5);align-items:start}
+  .record-content,.action-rail{display:grid;gap:var(--space-5);min-inline-size:0}
+  .panel,.unavailable{min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-default);border-radius:var(--radius-lg)}
+  .panel h2{margin-block:0 var(--space-3)}.panel p{max-inline-size:70ch}.close-panel h3{margin-block:0 var(--space-3);font-size:var(--font-size-md)}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--space-4);margin-block:var(--space-4) 0}
+  .facts>div{min-inline-size:0}dt{color:var(--text-secondary);font-size:var(--font-size-sm);font-weight:600}dd{margin:var(--space-1) 0 0;overflow-wrap:anywhere}
+  .preserve-text{white-space:pre-wrap;overflow-wrap:anywhere}.metadata{display:block;margin-block-start:var(--space-2);font-size:var(--font-size-xs);font-weight:400;overflow-wrap:anywhere}
+  .table-wrap{max-inline-size:100%;overflow-x:auto;border:1px solid var(--color-border-default);border-radius:var(--radius-md)}
+  table{inline-size:100%;min-inline-size:48rem;border-collapse:collapse;table-layout:fixed}caption{text-align:start;padding:var(--space-4);color:var(--text-secondary);font-size:var(--font-size-sm)}
+  th,td{padding:var(--space-3);text-align:start;vertical-align:top;border-block-start:1px solid var(--color-border-default);overflow-wrap:anywhere;font-size:var(--font-size-sm)}
+  thead th{background:var(--surface-raised);overflow-wrap:break-word}tbody th{font-weight:600}th:first-child{inline-size:28%}td p,th p{margin-block:var(--space-2)}
+  a{display:inline-flex;align-items:center;min-block-size:44px;max-inline-size:100%;color:var(--color-accent-primary-hover);overflow-wrap:anywhere}
+  form{display:grid;gap:var(--space-3);min-inline-size:0}label{font-weight:600;font-size:var(--font-size-sm)}
+  textarea,input{box-sizing:border-box;inline-size:100%;max-inline-size:100%;min-block-size:44px;padding:var(--space-3);font:inherit}textarea{min-block-size:8rem;resize:vertical}
+  button{inline-size:fit-content;max-inline-size:100%;min-block-size:44px;padding:var(--space-3) var(--space-4);background:var(--color-accent-primary);color:var(--text-on-accent);border:1px solid var(--control-border);border-radius:var(--radius-sm);font:inherit;font-weight:600;white-space:normal;cursor:pointer}
+  button:hover:not(:disabled){background:var(--color-accent-primary-hover)}button:disabled{cursor:progress}.signature-meaning{font-weight:600}output{display:block;min-block-size:1.5rem;overflow-wrap:anywhere}
+  a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,.table-wrap:focus-visible,output:focus{outline:2px solid var(--focus-ring);outline-offset:3px}
+  @media(min-width:1200px){.detail-grid{grid-template-columns:minmax(0,2fr) minmax(18rem,1fr)}}
+  @media(max-width:560px){.panel,.unavailable{padding:var(--space-4)}}
+  @media(forced-colors:active){button{border-color:ButtonText}.panel,.table-wrap,.unavailable,th,td{border-color:CanvasText}}
 </style>

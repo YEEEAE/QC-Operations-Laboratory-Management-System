@@ -34,18 +34,150 @@ const unavailable = capaResult.status === 'UNAVAILABLE';
 const primaryNotVisible = capaResult.status === 'NOT_VISIBLE';
 const ncrById = new Map(ncrs.flatMap((ncr) => ncr ? [[ncr.id, ncr] as const] : []));
 const rows = capas.map((capa) => ({ capa, ncr: capa.ncrId ? ncrById.get(capa.ncrId) : undefined }));
+// CA-03 READ: SSR populated/empty/filtered-empty, primary unavailable/not-visible,
+// and independent linked-NCR unavailable states follow readOutcome above.
+// FILTER: native GET state + retained ncrId; page resets on submit. BaseLayout's
+// register-preferences owns filter pending/preset feedback and table enhancement.
+// The server-rendered applied-filter region prevents duplicate client chips.
+// READ loading: N/A — awaited SSR read; retry is ProviderUnavailableState's link.
+// EXPORT / register mutation AUTH: N/A — no export or mutation control here;
+// the absent-actor redirect and repository owner/creator predicates remain intact.
+// Existing functional debt: CAPA repository create rejects POLICY_SOURCE_REQUIRED;
+// this register does not implement creation or verification/effectiveness ceremonies.
+// Local CAPA A tokens are used; literal visual-reference match is unconfirmed.
 ---
 <AppLayout title="CAPA · Quality" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>CAPA records</h1></Fragment></PageHeader>
-  <PolicyBlocker title="Policy status" decisions={[
-    { id: 'PD-18', owner: 'Quality-policy owner', consequence: 'General CAPA effectiveness requirement and criteria remain unresolved. No effectiveness verdict is inferred.' },
-    { id: 'PD-17', owner: 'QMS owner', consequence: 'NCR closure authority and required evidence remain unresolved.' },
-  ]} />
-  <p><strong>Approved P-04 exception:</strong> only an active Supervisor with an authorized CAPA-close grant and scope may close an eligible CAPA, with a reason, matching version, reauthentication, and CLOSE e-signature. This exception does not record or imply effectiveness.</p>
-  <form class="filters" method="get"><label for="state">State<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>{ncrId && <input type="hidden" name="ncrId" value={ncrId} />}<button type="submit">Apply filter</button>{(state || ncrId) && <a href="/quality/capa">Clear filters</a>}</form>
-  {unavailable ? <ProviderUnavailableState title="CAPA records are temporarily unavailable" /> : primaryNotVisible ? <p role="status">CAPA records are not available in your authorized scope.</p> : <>{ncrResult.status === 'UNAVAILABLE' && <p role="status">Linked NCR details are temporarily unavailable; CAPA records remain available.</p>}{capas.length ? <div class="table-wrap"><table><caption>{capaResult.status === "AVAILABLE" ? capaResult.value.total : 0} authorized CAPA record{capaResult.status === "AVAILABLE" && capaResult.value.total === 1 ? '' : 's'}</caption><thead><tr><th scope="col">CAPA</th><th scope="col">Action plan</th><th scope="col">State</th><th scope="col">Source NCR</th><th scope="col">Actions</th><th scope="col">Effectiveness</th><th scope="col">Next step</th></tr></thead><tbody>{rows.map(({ capa, ncr }) => <tr><th scope="row"><a href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a></th><td>{capa.title}</td><td>{stateLabel(capa.state)}</td><td>{ncr ? <a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> : ncrResult.status === 'UNAVAILABLE' ? 'NCR source unavailable' : capa.ncrId ? 'Not visible in your scope' : 'Not linked'}</td><td>{capa.actions.filter((action) => action.state === 'COMPLETED').length} of {capa.actions.length} complete</td><td>{capa.effectivenessRequired ? 'Required; no verdict inferred' : 'Not required by this record'}</td><td>{capa.state === 'READY_FOR_CLOSURE' ? 'Controlled closure — see approved P-04 authority' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'Authorized verification step' : <a href={`/quality/capa/${capa.id}`}>Open CAPA record</a>}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No CAPA records in this view</h2><p>{ncrId ? 'No linked CAPA is visible for this NCR.' : state ? 'Clear the filter to see records in your authorized scope.' : 'No current CAPA records are available in your authorized scope.'}</p>{(state || ncrId) && <a href="/quality/capa">Clear filters</a></section>}</>}
-  {capaResult.status === 'AVAILABLE' && <Pagination page={capaResult.value.page} totalPages={Math.max(1, Math.ceil(capaResult.value.total / capaResult.value.pageSize))} total={capaResult.value.total} itemLabel="CAPA records" />}
+  <div class="capa-register">
+    <PageHeader><Fragment slot="heading"><h1>CAPA records</h1></Fragment></PageHeader>
+
+    <section class="filter-panel" aria-label="CAPA filters">
+      <form class="filters" method="get" role="search" aria-label="Filter CAPA records">
+        <label for="state">
+          State
+          <select id="state" name="state">
+            <option value="">All states</option>
+            {states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}
+          </select>
+        </label>
+        {ncrId && <input type="hidden" name="ncrId" value={ncrId} />}
+        <button type="submit">Apply filter</button>
+        {(state || ncrId) && <a class="clear-filters" href="/quality/capa">Clear filters</a>}
+      </form>
+      <div class="active-filters" role="group" aria-label="Applied filters" data-applied-filters>
+        {(state || ncrId) ? <>
+          <span class="filter-label">Filtered by</span>
+          <ul>
+            {state && <li><span class="filter-label">State:</span> {stateLabel(state)}</li>}
+            {ncrId && <li><span class="filter-label">Source NCR:</span> {selectedNcr?.status === 'AVAILABLE' ? selectedNcr.value.ncrNo : 'NCR context retained'}</li>}
+          </ul>
+        </> : <p>Showing records in your authorized scope.</p>}
+      </div>
+    </section>
+
+    <section class="policy-context" aria-label="CAPA decision boundaries">
+      <PolicyBlocker title="Policy status" decisions={[
+        { id: 'PD-18', owner: 'Quality-policy owner', consequence: 'General CAPA effectiveness requirement and criteria remain unresolved. No effectiveness verdict is inferred.' },
+        { id: 'PD-17', owner: 'QMS owner', consequence: 'NCR closure authority and required evidence remain unresolved.' },
+      ]} />
+      <p class="closure-boundary"><strong>Approved P-04 exception:</strong> only an active Supervisor with an authorized CAPA-close grant and scope may close an eligible CAPA, with a reason, matching version, reauthentication, and CLOSE e-signature. This exception does not record or imply effectiveness.</p>
+    </section>
+
+    <section class="register-results" aria-label="CAPA register">
+      {unavailable ? (
+        <ProviderUnavailableState title="CAPA records are temporarily unavailable" />
+      ) : primaryNotVisible ? (
+        <p class="read-feedback" role="status">CAPA records are not available in your authorized scope.</p>
+      ) : <>
+        {ncrResult.status === 'UNAVAILABLE' && <p class="read-feedback" role="status">Linked NCR details are temporarily unavailable; CAPA records remain available.</p>}
+        {capas.length ? (
+          <div class="table-wrap" role="region" aria-labelledby="capa-register-caption" tabindex="0">
+            <table>
+              <caption id="capa-register-caption">{capaResult.status === 'AVAILABLE' ? capaResult.value.total : 0} authorized CAPA record{capaResult.status === 'AVAILABLE' && capaResult.value.total === 1 ? '' : 's'}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">CAPA</th>
+                  <th scope="col">Action plan</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Source NCR</th>
+                  <th scope="col">Actions</th>
+                  <th scope="col">Effectiveness</th>
+                  <th scope="col">Next step</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ capa, ncr }) => (
+                  <tr>
+                    <th scope="row"><a href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a></th>
+                    <td class="plan-title">{capa.title}</td>
+                    <td><span class="state-pill">{stateLabel(capa.state)}</span></td>
+                    <td>{ncr ? <a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> : ncrResult.status === 'UNAVAILABLE' ? 'NCR source unavailable' : capa.ncrId ? 'Not visible in your scope' : 'Not linked'}</td>
+                    <td class="action-count">{capa.actions.filter((action) => action.state === 'COMPLETED').length} of {capa.actions.length} complete</td>
+                    <td>{capa.effectivenessRequired ? 'Required; no verdict inferred' : 'Not required by this record'}</td>
+                    <td>{capa.state === 'READY_FOR_CLOSURE' ? 'Controlled closure — see approved P-04 authority' : capa.state === 'AWAITING_VERIFICATION' || capa.state === 'EFFECTIVENESS_REVIEW' ? 'Authorized verification step' : <a href={`/quality/capa/${capa.id}`}>Open CAPA record</a>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <section class="empty">
+            <h2>No CAPA records in this view</h2>
+            <p>{ncrId ? 'No linked CAPA is visible for this NCR.' : state ? 'Clear the filter to see records in your authorized scope.' : 'No current CAPA records are available in your authorized scope.'}</p>
+            {(state || ncrId) && <a href="/quality/capa">Clear filters</a>}
+          </section>
+        )}
+      </>}
+      {capaResult.status === 'AVAILABLE' && <Pagination page={capaResult.value.page} totalPages={Math.max(1, Math.ceil(capaResult.value.total / capaResult.value.pageSize))} total={capaResult.value.total} itemLabel="CAPA records" />}
+    </section>
+  </div>
 </AppLayout>
 <style>
-  .page-head{margin-bottom:var(--space-5)}h1{margin:.25rem 0}.eyebrow,.lede,.policy p{color:var(--text-muted)}.eyebrow{font-size:var(--font-size-xs);font-weight:700;letter-spacing:.12em}.policy{margin-bottom:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}.policy h2{font-size:1rem;margin:0}.policy ul{padding-inline-start:1.25rem}.policy p{margin-bottom:0}.filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)}label{display:grid;gap:.35rem}select,button{min-height:var(--control-height);padding:.55rem .75rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.table-wrap{overflow-x:auto;max-width:100%;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:900px;border-collapse:collapse;background:var(--surface-panel)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle);vertical-align:top}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{padding:var(--space-5);background:var(--surface-panel);border:1px dashed var(--border-default)}@media(max-width:650px){.filters{display:grid;grid-template-columns:1fr}.filters button{width:max-content}}
+  .capa-register { display: grid; gap: var(--space-5); min-inline-size: 0; inline-size: 100%; }
+  .capa-register :global(.page-header) { margin-block-end: 0; }
+  .filter-panel, .register-results, .policy-context { min-inline-size: 0; }
+  .filter-panel { padding: var(--space-4); background: var(--surface-panel); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+  .filters { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); min-inline-size: 0; }
+  label { display: grid; gap: var(--space-2); min-inline-size: 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+  select, button { min-block-size: max(44px, var(--control-height)); min-inline-size: 44px; padding: var(--space-2) var(--space-3); background: var(--surface-panel); border: 1px solid var(--control-border); border-radius: var(--radius-sm); color: var(--text-primary); font: inherit; }
+  select { inline-size: 100%; max-inline-size: 100%; }
+  button { cursor: pointer; font-weight: 600; border-color: var(--color-accent-primary); color: var(--color-accent-primary-hover); }
+  button:hover { background: var(--surface-raised); }
+  .clear-filters, .empty a { display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: var(--space-2); }
+  .active-filters { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); margin-block-start: var(--space-4); font-size: var(--font-size-sm); }
+  .active-filters ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; min-inline-size: 0; max-inline-size: 100%; }
+  .active-filters li { min-inline-size: 0; max-inline-size: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-inset); overflow-wrap: anywhere; }
+  .active-filters p { margin: 0; }
+  .filter-label, .active-filters p { color: var(--text-muted); }
+  .policy-context :global(.policy-blocker) { margin-block: 0; }
+  .closure-boundary { margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+  .read-feedback { margin: 0 0 var(--space-4); padding: var(--space-4); border-inline-start: 3px solid var(--status-warning); background: var(--status-warning-bg); }
+  .table-wrap { overflow-x: auto; max-inline-size: 100%; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  table { inline-size: 100%; min-inline-size: 68rem; table-layout: fixed; border-collapse: collapse; font-size: var(--font-size-sm); }
+  caption { padding: var(--space-4); text-align: start; color: var(--text-secondary); font-weight: 600; font-variant-numeric: tabular-nums; }
+  th, td { padding: var(--space-3) var(--space-4); text-align: start; border-block-start: 1px solid var(--color-border-subtle); vertical-align: top; white-space: normal; overflow-wrap: anywhere; line-height: 1.55; }
+  thead th { background: var(--table-header-background); overflow-wrap: break-word; font-weight: 600; }
+  thead th:nth-child(1), thead th:nth-child(4) { inline-size: 14%; }
+  thead th:nth-child(2) { inline-size: 20%; }
+  thead th:nth-child(3), thead th:nth-child(5) { inline-size: 11%; }
+  thead th:nth-child(6), thead th:nth-child(7) { inline-size: 15%; }
+  tbody th { font-weight: 600; }
+  tbody tr:hover { background: var(--surface-raised); }
+  .plan-title { font-weight: 600; }
+  .action-count { font-variant-numeric: tabular-nums; }
+  .state-pill { display: inline-block; max-inline-size: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-default); border-radius: var(--radius-sm); background: var(--surface-inset); color: var(--text-primary); }
+  a { color: var(--color-accent-primary-hover); text-underline-offset: 3px; }
+  td a, tbody th a { display: inline-flex; align-items: center; min-block-size: 44px; max-inline-size: 100%; }
+  a:focus-visible, button:focus-visible, select:focus-visible, .table-wrap:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .empty { padding: var(--space-5); background: var(--surface-panel); border: 1px dashed var(--border-default); border-radius: var(--radius-lg); }
+  .empty h2 { margin: 0; }
+  .empty p { margin-block: var(--space-2); color: var(--text-secondary); }
+  .filters :global(.submit-status) { flex-basis: 100%; margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  @media (max-width: 650px) {
+    .filters { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .filters button, .clear-filters { justify-self: start; }
+  }
+  @media (forced-colors: active) {
+    .filter-panel, .table-wrap, .active-filters li, .state-pill { border-color: CanvasText; }
+    .table-wrap:focus-visible, a:focus-visible, button:focus-visible, select:focus-visible { outline-color: Highlight; }
+  }
 </style>

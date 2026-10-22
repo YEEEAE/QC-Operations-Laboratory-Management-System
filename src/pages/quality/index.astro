@@ -1,7 +1,81 @@
 ---
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import PolicyBlocker from '../../ui/components/feedback/PolicyBlocker.astro';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fquality');
+// CA-03 READ: authenticated SSR overview; absent actor uses the login redirect.
+// Loading / empty / filtered-empty / provider-error / retry: N/A — no record read.
+// FILTER / EXPORT / page-specific AUTH: N/A — no such controls on this overview;
+// shared shell navigation and native sign-out remain owned by AppLayout.
+// Record relationships and eligibility remain in the existing destination routes.
+// Presentation uses local CAPA A tokens; literal reference match is unconfirmed.
 ---
-<AppLayout title="Quality · QC Operations" locale="en" direction="ltr"><section class="page-head"><p class="eyebrow">Quality</p><h1>Quality</h1></section><nav class="cards" aria-label="Quality areas"><a href="/quality/findings">Findings</a><a href="/quality/ncr">NCR</a><a href="/quality/rca">RCA</a><a href="/quality/capa">CAPA</a></nav></AppLayout>
-<style>.page-head{margin-bottom:2rem}.eyebrow,.lede{color:var(--text-muted)}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}.cards a{padding:1.25rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-md);color:var(--color-accent-primary-hover);font-weight:700;text-decoration:none}</style>
+<AppLayout title="Quality · QC Operations" locale="en" direction="ltr">
+  <div class="quality-overview">
+    <header class="page-head">
+      <p class="eyebrow">Quality</p>
+      <h1>Quality</h1>
+      <p class="lede">Open a quality register to continue with its recorded context.</p>
+    </header>
+    <nav class="cards" aria-label="Quality areas">
+      <a class="quality-card quality-card--primary" href="/quality/findings">
+        <span class="card-context">Next step</span>
+        <span class="card-title">Findings</span>
+        <span class="card-link">Open register <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="quality-card" href="/quality/ncr">
+        <span class="card-title">NCR</span>
+        <span class="card-link">Open register <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="quality-card" href="/quality/rca">
+        <span class="card-title">RCA</span>
+        <span class="card-link">Open register <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="quality-card" href="/quality/capa">
+        <span class="card-title">CAPA</span>
+        <span class="card-link">Open register <span aria-hidden="true">→</span></span>
+      </a>
+    </nav>
+    <!-- Existing decision sources: quality/ncr/index.astro and quality/capa/index.astro.
+         This notice grants no mutation authority and supplies no effectiveness result. -->
+    <PolicyBlocker title="Controlled decisions" decisions={[
+      { id: 'PD-17', owner: 'QMS owner', consequence: 'NCR closure authority and required evidence remain unresolved.' },
+      { id: 'PD-18', owner: 'Quality-policy owner', consequence: 'Effectiveness requirements and criteria remain unresolved; no verdict is inferred.' },
+    ]} />
+  </div>
+</AppLayout>
+<style>
+  .quality-overview { display: grid; gap: var(--space-6); min-inline-size: 0; }
+  .page-head { min-inline-size: 0; }
+  .eyebrow { margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  h1 { margin-block: var(--space-2); }
+  .lede { margin: 0; max-inline-size: 65ch; color: var(--text-muted); font-size: var(--font-size-md); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--space-4); min-inline-size: 0; }
+  .quality-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    min-inline-size: 0;
+    min-block-size: 44px;
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .quality-card--primary { border-inline-start: 3px solid var(--color-accent-primary); }
+  .card-context { color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  .card-title { color: var(--text-primary); font-size: var(--font-size-lg); font-weight: 600; }
+  .card-link { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: auto; font-size: var(--font-size-sm); font-weight: 600; }
+  .quality-card:hover { background: var(--surface-raised); border-color: var(--color-accent-primary); }
+  .quality-card:hover .card-title { text-decoration: underline; text-underline-offset: 3px; }
+  .quality-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+  @media (forced-colors: active) {
+    .quality-card { background: Canvas; border-color: LinkText; }
+    .card-title, .card-link { color: LinkText; }
+    .card-context { color: CanvasText; }
+    .quality-card:focus-visible { outline-color: Highlight; }
+  }
+</style>
