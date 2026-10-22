@@ -1,4 +1,5 @@
 ---
+import PageHeader from '../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
 import { actions } from 'astro:actions';
@@ -108,7 +109,88 @@ const describedBy = (name: keyof typeof values): string | undefined =>
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="Create laboratory test" locale="en" direction="ltr"><div class="scientific-form">{allowed?<form method="post" data-lab-create><h1>Create laboratory test</h1><p><a href={returnHref}>Back to laboratory tests</a></p>{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={returnHref} listLabel="laboratory tests" />}<label for="templateVersionId">Approved template<span id="templateVersionId-help">Choose a template from the approved controlled list in your scope. The approved source and version are assigned automatically.</span><select id="templateVersionId" name="templateVersionId" required aria-invalid={invalid('templateVersionId')} aria-describedby={failure?.fieldErrors.templateVersionId ? 'templateVersionId-error templateVersionId-help' : 'templateVersionId-help'}><option value="">Select an approved template…</option>{templateOptions.map((option)=><option value={option.value} selected={option.value===values.templateVersionId}>{option.label}</option>)}</select></label>{staleSelection && <p class="field-warning" role="status">The previously linked template is no longer available in your authorized scope. Choose an approved template explicitly.</p>}{selectorError && <p class="field-warning" role="status">The approved template list is temporarily unavailable. Your entries are kept — you can try again, or return to the list.</p>}{!selectorError && templateOptions.length===0 && <p class="field-warning" role="status">No approved templates are available in your authorized scope. A new test cannot be started until a controlled template is approved — template administration remains policy-controlled.</p>}{failure?.fieldErrors.templateVersionId && <p class="field-error" id="templateVersionId-error">{failure.fieldErrors.templateVersionId}</p>}<label for="labTestNo">Approved laboratory test number<span id="labTestNo-help">Use the test number from your approved source.</span><input id="labTestNo" name="labTestNo" required value={values.labTestNo} aria-invalid={invalid('labTestNo')} aria-describedby={failure?.fieldErrors.labTestNo ? 'labTestNo-error labTestNo-help' : 'labTestNo-help'} /></label>{failure?.fieldErrors.labTestNo && <p class="field-error" id="labTestNo-error">{failure.fieldErrors.labTestNo}</p>}<div class="actions"><a href={returnHref}>Cancel</a><button data-submit>Save draft</button></div><p data-result role="status"></p></form>:<p>You are not authorized to create laboratory tests.</p>}</div></AppLayout>
+<AppLayout title="Create laboratory test" locale="en" direction="ltr">
+  <div class="scientific-form">
+    <PageHeader
+      title="Create laboratory test"
+      purpose="Save a draft using an approved template and the test number from your approved source."
+    >
+      <Fragment slot="actions"><a href={returnHref}>Back to laboratory tests</a></Fragment>
+    </PageHeader>
+
+    {/* Source mapping: READ = approved-template options, unavailable/empty/stale source.
+        FORM = native POST + classified enhancement, validation, pending and retained entries.
+        AUTH = existing actor redirect / create-permission branch; the use case reauthorizes.
+        FILTER/EXPORT N/A: no register query, pager or download exists on this create route.
+        Record version/history/scientific result N/A: no test exists before creation. */}
+    {allowed ? (
+      <form method="post" data-lab-create aria-label="Create laboratory test">
+        <div class="form-feedback">
+          {failure && (
+            <FormErrorSummary
+              summary={failure.summary}
+              recovery={failure.recovery}
+              errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+              listHref={returnHref}
+              listLabel="laboratory tests"
+            />
+          )}
+          <p class="result-status" data-result role="status" aria-live="polite" tabindex="-1"></p>
+        </div>
+
+        <fieldset>
+          <legend>Test details</legend>
+          <p class="section-note">Both fields are required. The approved source and version are assigned automatically.</p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="templateVersionId">Approved template</label>
+              <p class="hint" id="templateVersionId-help">Choose a template from the approved controlled list in your scope. The approved source and version are assigned automatically.</p>
+              <select
+                id="templateVersionId"
+                name="templateVersionId"
+                required
+                aria-invalid={invalid('templateVersionId')}
+                aria-describedby={failure?.fieldErrors.templateVersionId ? 'templateVersionId-error templateVersionId-help' : 'templateVersionId-help'}
+              >
+                <option value="">Select an approved template…</option>
+                {templateOptions.map((option) => <option value={option.value} selected={option.value === values.templateVersionId}>{option.label}</option>)}
+              </select>
+              {failure?.fieldErrors.templateVersionId && <p class="field-error" id="templateVersionId-error">{failure.fieldErrors.templateVersionId}</p>}
+              {(staleSelection || selectorError || templateOptions.length === 0) && (
+                <div class="field-warning" role="status" aria-label="Approved template availability">
+                  {staleSelection && <p>The previously linked template is no longer available in your authorized scope. Choose an approved template explicitly.</p>}
+                  {selectorError && <p>The approved template list is temporarily unavailable. Your entries are kept — you can try again, or return to the list.</p>}
+                  {!selectorError && templateOptions.length === 0 && <p>No approved templates are available in your authorized scope. A new test cannot be started until a controlled template is approved — template administration remains policy-controlled.</p>}
+                </div>
+              )}
+            </div>
+
+            <div class="field">
+              <label for="labTestNo">Approved laboratory test number</label>
+              <p class="hint" id="labTestNo-help">Use the test number from your approved source.</p>
+              <input
+                id="labTestNo"
+                name="labTestNo"
+                required
+                value={values.labTestNo}
+                aria-invalid={invalid('labTestNo')}
+                aria-describedby={failure?.fieldErrors.labTestNo ? 'labTestNo-error labTestNo-help' : 'labTestNo-help'}
+              />
+              {failure?.fieldErrors.labTestNo && <p class="field-error" id="labTestNo-error">{failure.fieldErrors.labTestNo}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <a class="secondary" href={returnHref}>Cancel</a>
+          <button type="submit" data-submit>Save draft</button>
+        </div>
+      </form>
+    ) : (
+      <p class="denied" role="alert">You are not authorized to create laboratory tests.</p>
+    )}
+  </div>
+</AppLayout>
 <script>import {actions} from 'astro:actions';
 import{enhanceClassifiedForm}from'../../../ui/forms/enhance-with-classification';
 import{guardUnsavedChanges}from'../../../ui/forms/unsaved-changes';
@@ -119,4 +201,166 @@ if(form){enhanceClassifiedForm(form,{
   progressText:'Saving…',
   detailBaseHref:'/laboratory/tests',
 });guardUnsavedChanges(form);}</script>
-<style>form{display:grid;gap:1rem;max-width:40rem}label{display:grid;gap:.4rem}label span{color:var(--text-muted);font-size:.8rem}input,select,button{padding:.7rem;font:inherit}input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.field-warning{margin:0;padding:.7rem;border-inline-start:3px solid var(--status-warning);background:var(--surface-panel);font-size:.85rem}button{background:var(--color-accent-primary);color:var(--text-on-accent);border:0;border-radius:var(--radius-md)}button[disabled]{opacity:.6}.actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}.actions a{color:var(--color-accent-primary-hover)}</style>
+<style>
+  .scientific-form { min-inline-size: 0; }
+  form {
+    display: grid;
+    gap: var(--space-5);
+    inline-size: min(100%, 64rem);
+    min-inline-size: 0;
+    margin: 0;
+  }
+  .form-feedback { display: grid; gap: var(--space-3); min-inline-size: 0; }
+  .form-feedback:has(> :only-child:empty) { display: block; }
+  fieldset {
+    min-inline-size: 0;
+    margin: 0;
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  legend {
+    padding-inline: var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+  .section-note {
+    margin: 0 0 var(--space-5);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .field-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-5);
+  }
+  .field { min-inline-size: 0; }
+  label {
+    display: block;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+  .hint {
+    margin: var(--space-1) 0 var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+  }
+  input,
+  select {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.7rem;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+  input[aria-invalid='true'],
+  select[aria-invalid='true'] { border-color: var(--status-danger); }
+  .field-error {
+    margin: var(--space-2) 0 0;
+    color: var(--status-danger);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .field-warning,
+  .denied {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-sm);
+    background: var(--surface-panel);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .field-warning p { margin: 0; }
+  .field-warning p + p { margin-block-start: var(--space-3); }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .actions a,
+  .actions button {
+    box-sizing: border-box;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+  }
+  .actions .secondary { background: var(--surface-raised); color: var(--text-primary); }
+  .actions button {
+    border-color: var(--color-accent-primary);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+  }
+  button[disabled] { opacity: 0.6; cursor: not-allowed; }
+  .result-status {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  .result-status:empty { min-block-size: 0; }
+  .section-note,
+  .hint,
+  .field-error,
+  .field-warning,
+  .result-status,
+  .denied { overflow-wrap: anywhere; }
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  .result-status:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  form :global(.form-error a),
+  form :global(.form-error-summary a),
+  .result-status :global(a) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    overflow-wrap: anywhere;
+  }
+  @media (min-width: 64rem) {
+    .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 40rem) {
+    .actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .actions > * { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    fieldset,
+    input,
+    select,
+    .field-warning,
+    .denied,
+    .actions a,
+    .actions button { border: 1px solid ButtonText; }
+    .field-error { color: CanvasText; }
+  }
+</style>
