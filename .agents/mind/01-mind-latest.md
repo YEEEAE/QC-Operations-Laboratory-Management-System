@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ADMIN-PERMISSIONS / CAPA A permissions register**
+  - Changed: `/admin/permissions` now presents the full safe permission projection (including existing riskLevel) with client-side filtering/count/pagination; server read and authorization guards unchanged. No export, mutation, schema/API, or Sidebar change.
+  - Evidence: focused 15/15 and Astro build PASS; graph refreshed. Authenticated populated before/after, browser sizes/keyboard/zoom/AT and measured contrast NOT RUN. Details: `audit/CA-P-ADMIN-PERMISSIONS/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/admin/permissions/index.astro`, `tests/unit/admin/permissions-register-surface.test.ts`.
 - **2026-10-22 — CA-P-ADMIN / CAPA A administration overview**
   - Changed: `/admin` makes the existing Users card primary; all sections, copy, links, capability predicates, shell and Sidebar remain unchanged. No data/actions/API/schema/policy added.
   - Evidence: focused contracts 24/24, Astro build, route registry and graph update PASS. Authenticated same-record comparison, authorization personas, browser accessibility/responsive matrix NOT RUN; `astro check` fails only on unrelated missing imports in `audit/CA-P-500/`. Details: `audit/CA-P-ADMIN/execution-status.md`.

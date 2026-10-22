@@ -9,6 +9,8 @@ const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 
 type PermissionList = Awaited<ReturnType<ReturnType<typeof administrationDependencies>['listPermissions']['execute']>>;
+const permissionSearchText = (permission: PermissionList[number]) =>
+  [permission.code, permission.domain, permission.action, permission.description ?? ''].join(' ');
 let permissions: PermissionList | undefined;
 let denied = false;
 try {
@@ -20,49 +22,112 @@ try {
 ---
 
 <AppLayout title="Permissions · Administration" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Permissions</h1></Fragment>
-      
-      
-      <p class="lede">Read-only catalog. Manage grants through roles.</p>
-    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment></PageHeader>
+  <PageHeader>
+    <Fragment slot="heading"><h1>Permissions</h1></Fragment>
+    <p class="lede">Read-only catalog. Manage grants through roles.</p>
+    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment>
+  </PageHeader>
   {
     denied || !permissions ? (
-      <section class="denied" role="alert">
-        <h2>Permission catalog is not available</h2>
+      <section class="denied" role="alert" aria-labelledby="permissions-unavailable-title">
+        <h2 id="permissions-unavailable-title">Permission catalog is not available</h2>
         <p>
           The permission catalog is temporarily unavailable. Retry this page to read the current records.
         </p>
       </section>
     ) : permissions.length ? (
-      <div class="table-wrap">
-        <table>
-          <caption>Active permissions</caption>
-          <thead>
-            <tr>
-              <th scope="col">Permission</th>
-              <th scope="col">Domain</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {permissions.map((permission) => (
+      <section class="register" aria-labelledby="permissions-register-title">
+        <h2 id="permissions-register-title" class="sr-only">Permission catalog</h2>
+        <form class="filters" role="search" data-permission-filters>
+          <label for="permission-query">Filter permissions</label>
+          <input id="permission-query" name="q" type="search" autocomplete="off" placeholder="Code, domain, action, or description" />
+          <button type="reset" class="clear-filter">Clear filter</button>
+        </form>
+        <div class="active-filters" data-active-filters hidden>
+          <span>Active filter</span>
+          <span class="filter-chip"><span data-filter-value></span><button type="button" aria-label="Remove permission filter" data-remove-filter>×</button></span>
+        </div>
+        <p class="result-count" role="status" aria-live="polite" data-result-count>{permissions.length} active permissions</p>
+        <div class="table-wrap" role="region" aria-label="Permission catalog table" tabindex="0">
+          <table>
+            <caption>Active permissions</caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  <strong>{permission.description || `${stateLabel(permission.domain)} ${stateLabel(permission.action)}`}</strong>
-                  <code class="code-secondary">{permission.code}</code>
-                </th>
-                <td>{stateLabel(permission.domain)}</td>
-                <td>{stateLabel(permission.action)}</td>
+                <th scope="col">Permission</th>
+                <th scope="col">Domain</th>
+                <th scope="col">Action</th>
+                <th scope="col">Risk level</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody data-permission-rows>
+              {permissions.map((permission) => (
+                <tr data-permission-row data-search-text={permissionSearchText(permission)}>
+                  <th scope="row">
+                    <strong>{permission.description || `${stateLabel(permission.domain)} ${stateLabel(permission.action)}`}</strong>
+                    <code class="code-secondary">{permission.code}</code>
+                  </th>
+                  <td>{stateLabel(permission.domain)}</td>
+                  <td>{stateLabel(permission.action)}</td>
+                  <td>{stateLabel(permission.riskLevel)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <nav class="pagination" aria-label="Permission catalog pages" data-pagination hidden>
+          <button type="button" data-page-previous aria-label="Previous page">Previous</button>
+          <span data-page-status></span>
+          <button type="button" data-page-next aria-label="Next page">Next</button>
+        </nav>
+        <noscript><p class="no-script">Filtering and pagination require JavaScript; all active permissions remain listed above.</p></noscript>
+      </section>
     ) : (
       <p class="empty">No active permissions are cataloged.</p>
     )
   }
 </AppLayout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-permission-filters]');
+  const input = form?.querySelector<HTMLInputElement>('input[name="q"]');
+  const rows = Array.from(document.querySelectorAll<HTMLTableRowElement>('[data-permission-row]'));
+  const activeFilters = document.querySelector<HTMLElement>('[data-active-filters]');
+  const filterValue = document.querySelector<HTMLElement>('[data-filter-value]');
+  const count = document.querySelector<HTMLElement>('[data-result-count]');
+  const pagination = document.querySelector<HTMLElement>('[data-pagination]');
+  const pageStatus = document.querySelector<HTMLElement>('[data-page-status]');
+  const previous = document.querySelector<HTMLButtonElement>('[data-page-previous]');
+  const next = document.querySelector<HTMLButtonElement>('[data-page-next]');
+  const pageSize = 25;
+  let page = 0;
+
+  const render = () => {
+    const query = (input?.value ?? '').trim().toLocaleLowerCase();
+    const matches = rows.filter((row) => !query || (row.dataset.searchText ?? '').toLocaleLowerCase().includes(query));
+    const pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+    page = Math.min(page, pageCount - 1);
+    const visible = new Set(matches.slice(page * pageSize, (page + 1) * pageSize));
+    for (const row of rows) row.hidden = !visible.has(row);
+    if (count) count.textContent = `${matches.length} ${matches.length === 1 ? 'active permission' : 'active permissions'}${query ? ' match this filter' : ''}`;
+    if (activeFilters) activeFilters.hidden = !query;
+    if (filterValue) filterValue.textContent = query;
+    if (pagination) pagination.hidden = matches.length <= pageSize;
+    if (pageStatus) pageStatus.textContent = `Page ${page + 1} of ${pageCount}`;
+    if (previous) previous.disabled = page === 0;
+    if (next) next.disabled = page >= pageCount - 1;
+  };
+
+  input?.addEventListener('input', () => { page = 0; render(); });
+  form?.addEventListener('reset', () => requestAnimationFrame(() => { page = 0; render(); input?.focus(); }));
+  document.querySelector('[data-remove-filter]')?.addEventListener('click', () => {
+    if (input) input.value = '';
+    page = 0;
+    render();
+    input?.focus();
+  });
+  previous?.addEventListener('click', () => { page = Math.max(0, page - 1); render(); });
+  next?.addEventListener('click', () => { page += 1; render(); });
+  render();
+</script>
 <style>
   .page-head {
     display: flex;
@@ -84,7 +149,7 @@ try {
   .lede,
   .empty {
     color: var(--text-muted);
-    font-size: 0.86rem;
+    font-size: 0.875rem;
   }
   .denied {
     padding: var(--space-5);
@@ -99,6 +164,62 @@ try {
   }
   .table-wrap {
     overflow-x: auto;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    scrollbar-width: auto;
+  }
+  .table-wrap:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  table { min-width: 48rem; }
+  .register { min-width: 0; }
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) auto;
+    gap: var(--space-2) var(--space-3);
+    align-items: end;
+    max-width: 52rem;
+    margin-block-end: var(--space-4);
+  }
+  .filters label { grid-column: 1 / -1; font-weight: 600; }
+  .filters input {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--control-border, var(--color-border-subtle));
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset, var(--surface-page));
+    color: var(--text-primary);
+    font: inherit;
+  }
+  .filters button, .pagination button {
+    min-height: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--control-border, var(--color-border-subtle));
+    border-radius: var(--radius-sm);
+    background: var(--surface-panel);
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+  .filters button:hover, .pagination button:hover:not(:disabled) { border-color: var(--color-accent-primary); }
+  :where(button, input, a, .table-wrap):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .active-filters { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); margin-block-end:var(--space-3); color:var(--text-secondary); font-size:var(--font-size-xs); }
+  .filter-chip { display:inline-flex; align-items:center; gap:var(--space-2); max-width:100%; padding-inline:0.65rem; min-height:32px; border:1px solid var(--color-border-subtle); border-radius:999px; overflow-wrap:anywhere; }
+  .filter-chip button { min-width:44px; min-height:44px; border:0; background:transparent; color:inherit; font-size:1.1rem; cursor:pointer; }
+  .result-count { margin:0 0 var(--space-3); color:var(--text-secondary); font-size:var(--font-size-xs); }
+  .pagination { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:var(--space-3); margin-block-start:var(--space-4); }
+  .pagination button:disabled { opacity:.55; cursor:not-allowed; }
+  .pagination span, .no-script { color:var(--text-muted); font-size:var(--font-size-xs); }
+  .sr-only { position:absolute; inline-size:1px; block-size:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  tr[hidden] { display:none; }
+  @media (forced-colors: active) {
+    .table-wrap:focus-visible, :where(button, input, a):focus-visible { outline:2px solid Highlight; }
+    .filters button, .pagination button, .filter-chip { border:1px solid ButtonText; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-wrap { scroll-behavior:auto; }
   }
   table {
     width: 100%;
@@ -120,7 +241,9 @@ try {
     font-weight: 700;
   }
   code {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
   .code-secondary {
     display: block;
@@ -130,9 +253,9 @@ try {
   a {
     color: var(--color-accent-primary-hover);
   }
-  @media (max-width: 600px) {
-    .page-head {
-      display: grid;
-    }
+  @media (max-width: 520px) {
+    .filters { grid-template-columns: minmax(0, 1fr); }
+    .filters label { grid-column:auto; }
+    .filters button { width:100%; }
   }
 </style>
