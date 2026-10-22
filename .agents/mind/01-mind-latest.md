@@ -1,3 +1,13 @@
+- **2026-10-22 — CA-P-ADMIN-SCOPES / CAPA A scopes overview**
+  - Changed: promoted the existing Browse members link as the next step; retained both destinations, all seven canonical scope definitions, and the authorization caveat. No action/API/schema/Sidebar/guard changes.
+  - Evidence: focused UI + scope guard tests 46/46 and Astro build compilation PASS; full evidence writer blocked by missing verification context, typecheck has 2 unrelated CA-P-500 imports. Authenticated same-record browser/viewport/keyboard/zoom evidence NOT RUN; `audit/CA-P-ADMIN-SCOPES/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/admin/scopes/index.astro`, `tests/unit/ui/admin-scopes-overview.test.ts`, `audit/CA-P-ADMIN-SCOPES/execution-status.md`.
+- **2026-10-22 — CODERABBIT-MCP-CONFIG / ضبط مرجع MCP في CodeRabbit**
+  - Changed: أُضيف `.coderabbit.yaml` (أول ملف إعداد CodeRabbit في المستودع) مع `knowledge_base.mcp.usage: enabled`، لأن مستودع GitHub **public** والافتراضي `auto` يعطّل MCP للمستودعات العامة.
+  - Evidence: YAML parse (pyyaml) و`prettier --check` PASS؛ المفاتيح كلها من أمثلة الوثائق الرسمية. **لا تحقق من CodeRabbit نفسه**: لا CLI مثبت ولا وصول إلى حساب/Connections، فإضافة خوادم MCP وربطها بـBase Scope خطوة واجهة على المستخدم.
+  - State: PARTIAL — الملف محلي غير مدفوع؛ لا commit/push.
+  - Key files: `.coderabbit.yaml`.
 - **2026-10-22 — CA-P-ADMIN-ROLES / CAPA A roles register**
   - Changed: `/admin/roles` now has native GET filters, applied-filter chips, count, and pagination; role projection and detail-only grant guard remain unchanged.
   - Evidence: focused contracts 20/20 and Astro compile PASS; full build evidence writer/typecheck blocked by missing verification context, unsupported Node 22, and unrelated CA-P-500 imports. Real-data browser/AT and matched comparison NOT RUN; `audit/CA-P-ADMIN-ROLES/execution-status.md`.

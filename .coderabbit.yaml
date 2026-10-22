@@ -1,0 +1,25 @@
+# CodeRabbit configuration
+# Reference: https://docs.coderabbit.ai/reference/configuration
+language: 'en-US'
+
+reviews:
+  profile: 'chill'
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+chat:
+  auto_reply: true
+
+# MCP servers are added and authenticated in the CodeRabbit web app
+# (https://app.coderabbit.ai/connections), not in this file. This section only
+# controls whether connected servers may be used as review context.
+# `auto` skips public repositories; this repository is public, so `enabled` is
+# required for connected MCP servers to be consulted during reviews.
+knowledge_base:
+  mcp:
+    usage: 'enabled'

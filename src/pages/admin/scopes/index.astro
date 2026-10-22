@@ -8,88 +8,87 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
 ---
 
 <AppLayout title="Scopes · Administration" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Scopes</h1></Fragment>
-      
-      
-      <p class="lede">Manage access scopes. Self-grants are blocked.</p>
-    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment></PageHeader>
-  <div class="grid">
-        <section class="panel">
-          <p class="eyebrow">SCOPE KINDS</p>
-          <h2>Canonical vocabulary</h2>
-          <ul class="kinds">
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.OWN} <small>OWN</small></strong>
-              <span>Records owned by the member</span>
-            </li>
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.ASSIGNED} <small>ASSIGNED</small></strong>
-              <span>Records formally assigned to the member</span>
-            </li>
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.TEAM} <small>TEAM</small></strong>
-              <span>Records of the member's team</span>
-            </li>
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.DEPARTMENT} <small>DEPARTMENT</small></strong>
-              <span>Records of the member's department</span>
-            </li>
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.SITE} <small>SITE</small></strong>
-              <span>Records of an operational site</span>
-            </li>
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.DOMAIN} <small>DOMAIN</small></strong>
-              <span>Wide visibility inside one domain only</span>
-            </li>
-            <li>
-              <strong>{uxVocabulary.scopeKindLabels.GLOBAL} <small>GLOBAL</small></strong>
-              <span>System-wide visibility for this grant</span>
-            </li>
-          </ul>
-          <p class="note">
-            Scope alone never authorizes an action. Every mutation still requires the matching
-            explicit permission plus entity, state, SoD, version, and business rule.
-          </p>
-        </section>
-        <section class="panel">
-          <p class="eyebrow">MEMBER SCOPES</p>
-          <h2>Choose a member</h2>
-          <p class="note">
-            Choose a member to review their account state and current scopes before assigning or removing a scope.
-          </p>
-          <div class="actions">
-            <a class="button" href="/admin/users">Browse members</a>
-          </div>
-        </section>
+  <PageHeader>
+    <Fragment slot="heading"><h1>Scopes</h1></Fragment>
+    <p class="lede">Manage access scopes. Self-grants are blocked.</p>
+    <Fragment slot="actions"><a href="/admin">Back to administration</a></Fragment>
+  </PageHeader>
+
+  <div class="page-content">
+    <section class="panel next-step" aria-labelledby="next-step-heading">
+      <div class="next-step-copy">
+        <p class="eyebrow">Next step</p>
+        <h2 id="next-step-heading">Review a member’s current scopes</h2>
+        <p class="note">
+          Choose a member to review their account state and current scopes before assigning or removing a scope.
+        </p>
+      </div>
+      <div class="actions">
+        <a class="button" href="/admin/users">Browse members</a>
+      </div>
+    </section>
+
+    <section class="panel vocabulary" aria-labelledby="vocabulary-heading">
+      <p class="eyebrow">Scope kinds</p>
+      <h2 id="vocabulary-heading">Canonical vocabulary</h2>
+      <ul class="kinds">
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.OWN} <small>OWN</small></strong>
+          <span>Records owned by the member</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.ASSIGNED} <small>ASSIGNED</small></strong>
+          <span>Records formally assigned to the member</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.TEAM} <small>TEAM</small></strong>
+          <span>Records of the member's team</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.DEPARTMENT} <small>DEPARTMENT</small></strong>
+          <span>Records of the member's department</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.SITE} <small>SITE</small></strong>
+          <span>Records of an operational site</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.DOMAIN} <small>DOMAIN</small></strong>
+          <span>Wide visibility inside one domain only</span>
+        </li>
+        <li>
+          <strong>{uxVocabulary.scopeKindLabels.GLOBAL} <small>GLOBAL</small></strong>
+          <span>System-wide visibility for this grant</span>
+        </li>
+      </ul>
+      <p class="note safety-note">
+        Scope alone never authorizes an action. Every mutation still requires the matching
+        explicit permission plus entity, state, SoD, version, and business rule.
+      </p>
+    </section>
   </div>
 </AppLayout>
 <style>
-  .page-head {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-5);
-    align-items: start;
-    margin-bottom: var(--space-6);
-  }
-  h1 {
-    margin: 0.25rem 0;
-  }
   .eyebrow {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
     font-weight: 700;
   }
   .lede {
     color: var(--text-muted);
     font-size: 0.86rem;
   }
+  .page-content {
+    display: grid;
+    gap: var(--space-5);
+    min-inline-size: 0;
+  }
   .button {
     display: inline-flex;
     align-items: center;
-    min-height: var(--control-height);
+    min-height: max(var(--control-height), 44px);
     padding: 0 var(--space-4);
     border: 1px solid var(--color-accent-primary);
     border-radius: var(--radius-sm);
@@ -98,94 +97,83 @@ if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.ur
     font-weight: 700;
     text-decoration: none;
   }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
-    gap: var(--space-5);
+  .button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
   }
-  .panel,
-  .denied {
+  .panel {
+    min-inline-size: 0;
     padding: var(--space-5);
     background: var(--surface-panel);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-lg);
   }
-  .denied {
-    border-inline-start: 3px solid var(--status-warning);
-  }
-  .denied p {
-    color: var(--text-muted);
-    font-size: 0.84rem;
+  .next-step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-5);
+    border-inline-start: 3px solid var(--color-accent-primary);
   }
   h2 {
-    margin: 0.25rem 0 0;
-    font-size: 1rem;
+    margin: var(--space-1) 0 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
   }
   .kinds {
     list-style: none;
-    margin: var(--space-4) 0;
+    margin: var(--space-4) 0 0;
     padding: 0;
     display: grid;
-    gap: var(--space-2);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: var(--space-3);
   }
   .kinds li {
-    display: flex;
-    gap: var(--space-3);
-    align-items: baseline;
-    font-size: 0.82rem;
-    padding: 0.5rem 0;
-    border-top: 1px solid var(--color-border-subtle);
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    min-inline-size: 0;
+    padding: var(--space-3);
+    background: var(--surface-inset);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
   }
   .kinds span {
     color: var(--text-muted);
+    line-height: var(--line-height-normal);
   }
   .kinds small {
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: 0.75rem;
     font-weight: 400;
   }
   .note {
     color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 0.8125rem;
     line-height: 1.5;
   }
-  .form {
-    display: grid;
-    gap: var(--space-4);
-    margin-top: var(--space-4);
-  }
-  label {
-    display: grid;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-  }
-  input {
-    font: inherit;
-    padding: 0.65rem;
-    background: var(--surface-page);
-    color: inherit;
-    border: 1px solid var(--color-border-subtle);
+  .safety-note {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-inset);
+    border-inline-start: 2px solid var(--color-accent-primary);
     border-radius: var(--radius-sm);
+    overflow-wrap: anywhere;
   }
   .actions {
     display: flex;
     gap: var(--space-3);
     align-items: center;
-  }
-  button {
-    border: 0;
-    padding: 0.65rem 1rem;
-    background: var(--color-accent-primary);
-    color:var(--text-on-accent);
-    border-radius: var(--radius-md);
-    font-weight: 700;
-  }
-  a {
-    color: var(--color-accent-primary-hover);
+    flex-wrap: wrap;
   }
   @media (max-width: 600px) {
-    .page-head {
+    .next-step {
       display: grid;
+      justify-items: start;
+      gap: var(--space-4);
     }
   }
 </style>
