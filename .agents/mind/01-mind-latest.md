@@ -1,3 +1,13 @@
+- **2026-10-22 — CA-P-ADMIN / CAPA A administration overview**
+  - Changed: `/admin` makes the existing Users card primary; all sections, copy, links, capability predicates, shell and Sidebar remain unchanged. No data/actions/API/schema/policy added.
+  - Evidence: focused contracts 24/24, Astro build, route registry and graph update PASS. Authenticated same-record comparison, authorization personas, browser accessibility/responsive matrix NOT RUN; `astro check` fails only on unrelated missing imports in `audit/CA-P-500/`. Details: `audit/CA-P-ADMIN/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/admin/index.astro`, `tests/unit/admin/admin-workspace-guard.test.ts`.
+- **2026-10-22 — CA-P-ACCOUNT / CAPA A account overview**
+  - Changed: `/account` uses the approved balanced graphite overview; preserved account data/actions and server guards; added visible logout result/pending feedback. No schema/API/policy/permission/Sidebar change.
+  - Evidence: focused tests 11/11, Astro build and route registry PASS; `astro check`/architecture FAIL on unrelated files. Authenticated real-record browser, responsive/zoom/AT/contrast and matched screenshots NOT RUN (no authorized account session; no fixture substituted). Full status/guard matrix: `audit/CA-P-ACCOUNT/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/account.astro`, `tests/unit/ui/account-surface-contract.test.ts`, `audit/CA-P-ACCOUNT/execution-status.md`.
 - **2026-10-22 — CA-05 / بوابة اعتماد التجربة قبل التعميم (pilots الخمسة)**
   - Changed: إصلاحان مشتركان في طبقة العرض فقط: (1) `capa-a.css` استثنى روابط الأزرار من قاعدة الروابط العامة (كانت تعيد تلوين «Start correction» فوق accent ⇒ تباين 1.10:1)؛ (2) أرضية 44px لعناصر `FilterBar` و`DataTable` (زر «Apply filters» ومحدد «Row density» كانا 40px). بلا تغيير schema/API/سياسة/صلاحيات/Sidebar (SHA-256 `973afdc9…` مطابق).
   - Evidence: Node24.20.0 + PG18.6 معزول + Chromium مصادق: 5 pilots × 5 مقاسات ⇒ overflow 0 وaxe 0 و0 أهداف دون 44px (قبل: مخالفة contrast واحدة + 2 هدف دون 44px)؛ 14/14 محطة focus بحلقة 2px؛ سجلات حقيقية (مهمة CA05-TASK-001، استلام CA05-RCV-001)؛ رفض تحقق خادمي (0 صفوف)؛ انقطاعان (قاعدة كاملة ⇒ login redirect، ومصدر واحد ⇒ «temporarily unavailable» بلا أصفار)؛ ضوابط 403 (capa.create و releaseReceiving على سجل حقيقي)؛ مسح 53 مسارًا A/B ⇒ 12 فرقًا كلها انخفاض أهداف، بلا فرق status/overflow/axe؛ Sidebar مطابق (فرق واحد +4px ارتفاع الشريط على المهام بسبب أرضية 44px)؛ unit مركّز 14 فشل قبل = 14 بعد (نفس الأسماء)؛ astro build exit 0؛ السجل `audit/CA-05/`.

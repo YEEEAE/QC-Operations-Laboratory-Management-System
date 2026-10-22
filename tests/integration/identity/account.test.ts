@@ -48,6 +48,12 @@ describe('identity account use cases', () => {
     expect(result).not.toHaveProperty('passwordHash');
     expect(result.id).toBe('u1');
   });
+  it('denies self-read for an existing account without the explicit view permission', async () => {
+    const users = new Users();
+    await expect(
+      new GetAccountUseCase(users).execute({ ...actor, permissions: [] }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
+  });
   it('requires the current password and revokes sessions after change', async () => {
     const users = new Users();
     let commitInput: CredentialMutation | undefined;
@@ -112,6 +118,31 @@ describe('identity account use cases', () => {
         requestId: 'wrong-current',
       }),
     ).rejects.toMatchObject({ code: 'AUTH_REAUTH_REQUIRED' });
+    expect(commits).toBe(0);
+    expect(users.value.passwordHash).toBe('old');
+  });
+
+  it('denies password mutation before commit when the explicit permission is missing', async () => {
+    const users = new Users();
+    let commits = 0;
+    const commit: CredentialMutationCommit = {
+      execute: async () => {
+        commits += 1;
+      },
+    };
+    const hasher = {
+      hash: async (value: string) => `hash:${value}`,
+      verify: async (value: string, encoded: string) => value === 'current' && encoded === 'old',
+    };
+
+    await expect(
+      new ChangePasswordUseCase(users, hasher, commit).execute({
+        actor: { ...actor, permissions: [] },
+        currentPassword: 'current',
+        newPassword: 'next',
+        requestId: 'denied-change',
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHZ_PERMISSION_MISSING' });
     expect(commits).toBe(0);
     expect(users.value.passwordHash).toBe('old');
   });

@@ -16,7 +16,7 @@ const canAudit = hasAdminCapability(actor, 'viewAudit');
       <p class="lede">Manage members, roles and access.</p>
     </PageHeader>
   <div class="grid">
-        <section class="panel">
+        <section class="panel panel-featured">
           <p class="eyebrow">UI-ADM-USR-001</p>
           <h2>Users</h2>
           <p>Create, inspect, update, disable, and reset member accounts within your authority.</p>
@@ -90,6 +90,27 @@ const canAudit = hasAdminCapability(actor, 'viewAudit');
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-lg);
   }
+  .panel-featured {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3) var(--space-6);
+    padding: var(--space-6);
+  }
+  .panel-featured > :not(.links) {
+    grid-column: 1;
+    min-inline-size: 0;
+  }
+  .panel-featured h2 {
+    font-size: 1.125rem;
+  }
+  .panel-featured > .links {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    justify-content: flex-end;
+    margin-block-start: 0;
+  }
   .denied {
     border-inline-start: 3px solid var(--status-warning);
   }
@@ -123,5 +144,17 @@ const canAudit = hasAdminCapability(actor, 'viewAudit');
   .button.secondary {
     background: transparent;
     color: var(--color-accent-primary-hover);
+  }
+  @media (max-width: 600px) {
+    .panel-featured {
+      grid-template-columns: minmax(0, 1fr);
+      padding: var(--space-5);
+    }
+    .panel-featured > .links {
+      grid-column: 1;
+      grid-row: auto;
+      justify-content: flex-start;
+      margin-block-start: var(--space-4);
+    }
   }
 </style>

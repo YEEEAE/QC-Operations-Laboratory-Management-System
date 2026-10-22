@@ -30,6 +30,34 @@ const grant = (
 ) => ({ code, scopes, active });
 
 describe('administration action affordances', () => {
+  it('keeps the administration overview destinations and existing conditional actions', () => {
+    const page = read('src/pages/admin/index.astro');
+    for (const [label, href] of [
+      ['Open users', '/admin/users'],
+      ['Create user', '/admin/users/new'],
+      ['Open roles', '/admin/roles'],
+      ['Open permissions', '/admin/permissions'],
+      ['Open audit', '/audit'],
+      ['Open scopes', '/admin/scopes'],
+    ]) {
+      expect(page, `${label} destination`).toContain(`href="${href}"`);
+      expect(page, `${label} label`).toContain(label);
+    }
+    expect(page).toContain("hasAdminCapability(actor, 'createUser')");
+    expect(page).toContain("hasAdminCapability(actor, 'viewAudit')");
+    expect(page).toContain('class="panel panel-featured"');
+    expect(page).not.toMatch(/<form|data-(?:filter|export)/i);
+    for (const content of [
+      'Create, inspect, update, disable, and reset member accounts within your authority.',
+      'Inspect roles and manage their canonical permission grants with version checks.',
+      'Read-only catalog of canonical permissions. Grants change only through roles.',
+      'Manage member authorization scopes. Self-grants are always blocked and audited.',
+      'Administration changes are recorded as audit events and survive record changes.',
+    ]) {
+      expect(page).toContain(content);
+    }
+  });
+
   it('maps every visible mutation to a canonical permission and explicit global scope', () => {
     for (const [capability, requirement] of Object.entries(ADMIN_ACTION_CAPABILITIES)) {
       expect(isPermissionCode(requirement.permission), capability).toBe(true);

@@ -11,6 +11,9 @@ const account = await new GetAccountUseCase(identityDependencies().users).execut
 const actionResult = Astro.getActionResult(actions.account.changePassword);
 if (actionResult?.data?.ok) return Astro.redirect(actionResult.data.redirectTo, 303);
 const changeError = actionResult?.data && !actionResult.data.ok ? actionResult.data : undefined;
+const logoutResult = Astro.getActionResult(actions.logout);
+if (logoutResult?.data?.ok) return Astro.redirect(logoutResult.data.redirectTo, 303);
+const logoutError = logoutResult?.error;
 const currentPasswordError = changeError?.fieldErrors?.currentPassword?.[0];
 const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
 ---
@@ -23,22 +26,23 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
   {
     account && (
       <>
-        <section class="panel" aria-labelledby="account-info">
+        <div class="account-overview">
+        <section class="panel account-panel account-information" aria-labelledby="account-info">
           <h2 id="account-info">Account information</h2>
           <dl class="summary">
-            <div>
+            <div class="account-fact">
               <dt>Login identity</dt>
               <dd>{account.loginIdentity}</dd>
             </div>
-            <div>
+            <div class="account-fact">
               <dt>Display name</dt>
               <dd>{account.displayName}</dd>
             </div>
-            <div>
+            <div class="account-fact">
               <dt>Email</dt>
               <dd>{account.email ?? 'Not provided'}</dd>
             </div>
-            <div>
+            <div class="account-fact">
               <dt>State</dt>
               <dd>{stateLabel(account.accountState)}</dd>
             </div>
@@ -50,9 +54,9 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
             If your login identity, display name, or email is wrong, ask an administrator to correct it in the member register. Profile changes are controlled and audited; this page does not delete account history.
           </p>
         </section>
-        <section class="panel" aria-labelledby="security">
+        <section class="panel account-panel" aria-labelledby="security">
           <h2 id="security">Password and security</h2>
-          <form class="form" method="POST" action={actions.account.changePassword}>
+          <form class="form account-form" method="POST" action={actions.account.changePassword}>
             {changeError?.formError && <p role="alert" id="password-form-error" tabindex="-1">{changeError.formError === 'missing' ? 'This account is no longer available for password changes. Sign in again or contact an administrator.' : changeError.formError === 'denied' ? 'You no longer have permission to change this password. Contact an administrator.' : changeError.formError === 'stale' ? 'Account security details changed before this request completed. Reload the page before trying again.' : changeError.formError === 'provider' ? 'The password change is unconfirmed. Contact an administrator before submitting it again.' : 'We could not confirm whether the password change completed. Do not submit it again yet. Contact an administrator for help.'}</p>}
             <div class="field">
               <label for="currentPassword">Current password</label>
@@ -71,12 +75,12 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
                   data-password-toggle
                   aria-pressed="false"
                   aria-controls="currentPassword"
-                  aria-label="Show password"
+                  aria-label="Show current password"
                 >
                   Show
                 </button>
               </div>
-              {currentPasswordError && <p class="field-error" id="currentPassword-error" tabindex="-1" aria-live="assertive">The current password is incorrect. Check it and try again.</p>}
+              {currentPasswordError && <p class="field-error" id="currentPassword-error" tabindex="-1">The current password is incorrect. Check it and try again.</p>}
             </div>
             <div class="field">
               <label for="newPassword">New password</label>
@@ -88,19 +92,19 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
                   autocomplete="new-password"
                   required
                   aria-invalid={newPasswordError ? 'true' : undefined}
-                  aria-describedby={newPasswordError ? 'newPassword-error' : undefined}
+                  aria-describedby={newPasswordError ? 'newPassword-error' : 'password-change-hint'}
                 />
                 <button
                   type="button"
                   data-password-toggle-new
                   aria-pressed="false"
                   aria-controls="newPassword"
-                  aria-label="Show password"
+                  aria-label="Show new password"
                 >
                   Show
                 </button>
               </div>
-              {newPasswordError && <p class="field-error" id="newPassword-error">Enter a new password.</p>}
+              {newPasswordError && <p class="field-error" id="newPassword-error" tabindex="-1">Enter a new password.</p>}
             </div>
             <p class="hint" id="password-change-hint">Changing your password ends all active sessions, including this one. You will need to sign in again.</p>
             <div class="actions">
@@ -109,16 +113,19 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
             <p role="status" aria-live="polite" data-result tabindex="-1" class="status"></p>
           </form>
         </section>
-        <section class="panel" aria-labelledby="session">
+        <section class="panel account-panel" aria-labelledby="session">
           <h2 id="session">Session</h2>
           <p class="muted">
             Signing out ends this browser session. Sessions revoked by an administrator end
             immediately on their next request.
           </p>
-          <form method="POST" action={actions.logout}>
-            <button type="submit" class="secondary">Sign out</button>
+          {logoutError && <p role="alert" id="logout-error" tabindex="-1">We could not confirm that you were signed out. Check your session before continuing.</p>}
+          <form method="POST" action={actions.logout} data-logout-form aria-describedby={logoutError ? 'logout-error' : undefined}>
+            <button type="submit" class="secondary" data-logout-submit>Sign out</button>
+            <p role="status" aria-live="polite" data-logout-pending class="status"></p>
           </form>
         </section>
+        </div>
       </>
     )
   }
@@ -132,13 +139,23 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
       toggle.setAttribute('aria-pressed', String(show));
-      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      toggle.setAttribute('aria-label', show ? 'Hide current password' : 'Show current password');
       toggle.textContent = show ? 'Hide' : 'Show';
     });
   };
   wire('[data-password-toggle]', 'currentPassword');
-  wire('[data-password-toggle-new]', 'newPassword');
+  const newPasswordToggle = document.querySelector<HTMLButtonElement>('[data-password-toggle-new]');
+  const newPasswordInput = document.getElementById('newPassword') as HTMLInputElement | null;
+  newPasswordToggle?.addEventListener('click', () => {
+    if (!newPasswordInput || !newPasswordToggle) return;
+    const show = newPasswordInput.type === 'password';
+    newPasswordInput.type = show ? 'text' : 'password';
+    newPasswordToggle.setAttribute('aria-pressed', String(show));
+    newPasswordToggle.setAttribute('aria-label', show ? 'Hide new password' : 'Show new password');
+    newPasswordToggle.textContent = show ? 'Hide' : 'Show';
+  });
   document.querySelector<HTMLElement>('#password-form-error, .field-error')?.focus();
+  document.querySelector<HTMLElement>('#logout-error')?.focus();
   const form = document.querySelector<HTMLFormElement>('form[action*="changePassword"]');
   form?.addEventListener('submit', (event: Event) => {
     if (form.getAttribute('aria-busy') === 'true') {
@@ -151,7 +168,42 @@ const newPasswordError = changeError?.fieldErrors?.newPassword?.[0];
     if (submit) submit.disabled = true;
     if (output) output.textContent = 'Changing password…';
   });
+  const logoutForm = document.querySelector<HTMLFormElement>('[data-logout-form]');
+  logoutForm?.addEventListener('submit', (event: Event) => {
+    if (logoutForm.getAttribute('aria-busy') === 'true') {
+      event.preventDefault();
+      return;
+    }
+    logoutForm.setAttribute('aria-busy', 'true');
+    const submit = logoutForm.querySelector<HTMLButtonElement>('[data-logout-submit]');
+    const output = logoutForm.querySelector<HTMLElement>('[data-logout-pending]');
+    if (submit) submit.disabled = true;
+    if (output) output.textContent = 'Signing out…';
+  });
 </script>
 <style>
-  .page-head{margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.muted,.hint{color:var(--text-muted);font-size:.85rem}.panel{padding:var(--space-5);margin-bottom:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);max-width:640px}.panel h2{margin-top:0;font-size:1rem}.summary{display:grid;grid-template-columns:minmax(140px,auto) minmax(0,1fr);gap:.5rem 1rem;margin:0 0 var(--space-3)}.summary div{display:contents}.summary dt{color:var(--text-muted);font-size:.8rem}.summary dd{margin:0;font-size:.85rem}.form{display:grid;gap:var(--space-4)}.field{display:grid;gap:.35rem}label{font-size:.85rem;font-weight:600}.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:center}input{min-height:44px;padding-inline:.75rem;background:var(--surface-raised);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit;min-width:0}button{min-height:44px;padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);font-weight:700}button.secondary{background:var(--surface-raised);border-color:var(--border-default);color:var(--text-primary)}.actions{display:flex;gap:var(--space-3);flex-wrap:wrap}.status{margin:0;font-size:.85rem;color:var(--text-muted)}.field-error,#password-form-error{margin:0;color:var(--status-danger)}input[aria-invalid="true"]{border-color:var(--status-danger)}@media(max-width:520px){.summary{grid-template-columns:1fr}.summary dt{margin-top:var(--space-2)}}
+  .account-overview{display:grid;gap:var(--space-5);inline-size:100%;max-inline-size:800px}
+  .account-panel{min-inline-size:0;margin:0;padding:var(--space-6);background:var(--surface-panel);border:1px solid var(--color-border-default);border-radius:var(--radius-lg);box-shadow:var(--shadow-1)}
+  .account-panel h2{margin:0 0 var(--space-4);font-size:1.0625rem}
+  .lede,.muted,.hint{color:var(--text-muted);font-size:.85rem;line-height:1.55}
+  .summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);margin:0 0 var(--space-4)}
+  .account-fact{min-inline-size:0;padding:var(--space-3);border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);background:var(--surface-inset)}
+  .summary dt{margin:0 0 .25rem;color:var(--text-muted);font-size:.8rem}
+  .summary dd{margin:0;font-size:.9rem;overflow-wrap:anywhere}
+  .account-information .muted{margin:var(--space-3) 0 0}
+  .account-form{display:grid;gap:var(--space-4);max-inline-size:38rem}
+  .field{display:grid;gap:.4rem;min-inline-size:0}
+  label{font-size:.875rem;font-weight:600}
+  .password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-2);align-items:center}
+  input{min-block-size:44px;min-inline-size:0;width:100%;padding-inline:var(--space-3);background:var(--surface-inset);border:1px solid var(--control-border);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit}
+  button{min-block-size:44px;min-inline-size:44px;padding-inline:var(--space-4);border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:700;cursor:pointer}
+  .password-field button{padding-inline:var(--space-3);background:var(--surface-raised);border-color:var(--control-border);color:var(--text-primary);font-weight:600}
+  button.secondary{background:var(--surface-raised);border-color:var(--control-border);color:var(--text-primary)}
+  .actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
+  .status{min-block-size:1.4em;margin:0;color:var(--text-secondary);font-size:.85rem}
+  .field-error,#password-form-error,#logout-error{margin:0;color:var(--text-danger);font-size:.875rem}
+  input[aria-invalid="true"]{border-color:var(--border-invalid)}
+  .account-panel :where(button,input):focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+  @media(max-width:520px){.account-panel{padding:var(--space-4)}.summary{grid-template-columns:minmax(0,1fr)}}
+  @media(forced-colors:active){.account-panel,.account-fact{border:1px solid CanvasText;box-shadow:none}.account-panel :where(button,input):focus-visible{outline-color:Highlight}}
 </style>
