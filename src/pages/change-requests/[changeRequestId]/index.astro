@@ -22,22 +22,229 @@ if (!aggregate) return Astro.redirect('/404');
 const { changeRequest, changes, history, applicationAttempts } = aggregate;
 const canReview = actor.permissions.some((permission) => permission.active !== false && ['PERM-CHG-REVIEW', 'PERM-CHG-RETURN', 'PERM-CHG-APPROVE', 'PERM-CHG-REJECT'].includes(permission.code));
 const stringify = (value: unknown) => { try { return JSON.stringify(value, (_, item) => typeof item === 'bigint' ? item.toString() : item, 2); } catch { return '[unavailable]'; } };
+const timestamp = (value?: Date) => value ? formatDateTime(value) : 'Not recorded';
 const nextAction = changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? canReview ? 'Open review' : 'Awaiting change reviewer' : changeRequest.state === 'APPROVED' ? 'Awaiting owning-domain application' : changeRequest.state === 'APPLICATION_FAILED' ? 'Application failed — inspect the recorded attempt' : changeRequest.state === 'DRAFT' ? 'Submit change request' : undefined;
 const nextOwner = changeRequest.state === 'APPROVED' || changeRequest.state === 'APPLYING' ? 'Owning domain' : changeRequest.state === 'APPLICATION_FAILED' ? 'Owning domain / change operator' : changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? 'Change reviewer' : undefined;
 const timelineEvents = [
   ...history.map((event) => ({ label: event.action, detail: `${transitionLabel(event.oldState, event.newState)} · ${formatDateTime(event.occurredAt)}`, kind: 'audit' as const })),
   ...applicationAttempts.map((attempt) => ({ label: `Application attempt ${attempt.attemptNo}`, detail: `${attempt.result}${attempt.errorCode ? ` · ${attempt.errorCode}` : ''}`, kind: 'evidence' as const })),
 ];
+const showApplyAction = changeRequest.state === 'APPROVED' && changeRequest.targetType === 'DOCUMENT_VERSION';
+// The target identity is read from the captured snapshot, not from a new query.
+const snapshotDocumentId = typeof changeRequest.targetSnapshot.documentId === 'string' && isUuid(changeRequest.targetSnapshot.documentId) ? changeRequest.targetSnapshot.documentId : undefined;
+const targetHref = snapshotDocumentId ? `/documents/${snapshotDocumentId}/versions/${changeRequest.targetId}` : undefined;
+const relatedLinks = [
+  ...(targetHref ? [{ label: 'Target document version', href: targetHref, detail: 'Current guarded target record; the captured snapshot remains the review evidence' }] : []),
+  { label: 'Change request register', href: '/change-requests', detail: 'Controlled change lifecycle' },
+];
+const noApplyReason = changeRequest.state === 'APPLIED' ? 'The approved change is recorded as applied. No further application action is available for this request version.' : changeRequest.state === 'APPLYING' ? 'An application attempt is in progress. Its recorded result appears in the history below.' : changeRequest.state === 'APPLICATION_FAILED' ? 'The last application attempt failed. The recorded attempt is preserved below; this page does not offer a retry.' : changeRequest.state === 'APPROVED' ? 'Application is available only for a controlled document version change. This request targets another record type.' : changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? 'Application becomes available only after approval. Review decisions are made in the controlled review workspace.' : changeRequest.state === 'DRAFT' ? 'This request is a draft. Application becomes available only after submission and approval.' : changeRequest.state === 'RETURNED' ? 'This request was returned for correction. Application becomes available only after approval.' : changeRequest.state === 'REJECTED' ? 'This request was rejected. No application action is available.' : changeRequest.state === 'CANCELLED' ? 'This request was cancelled. No application action is available.' : 'No application action is available for this request.';
 ---
+
 <AppLayout title={`${changeRequest.changeNo} · Change Request`} locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>{changeRequest.changeNo}</h1></Fragment><p class="lede">Target: {targetTypeLabel(changeRequest.targetType)} · {changeRequest.targetId}</p><Fragment slot="actions"><div class="head-actions"><span class="state">{stateLabel(changeRequest.state)}</span>{canReview && (changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW') && <a class="button" href={`/change-requests/${changeRequest.id}/review`}>Open review</a>}<a href="/change-requests">All requests</a></div></Fragment></PageHeader>
-  <JourneyContextPanel ownerDomain="Change requests" currentState={stateLabel(changeRequest.state)} nextAction={nextAction} nextActionHref={changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? canReview ? `/change-requests/${changeRequest.id}/review` : undefined : '/change-requests'} nextOwner={nextOwner} whyUnavailable={changeRequest.state === 'APPLICATION_FAILED' ? 'dependency: owning-domain application failed; approval evidence remains preserved' : changeRequest.state === 'APPROVED' ? 'dependency: approval does not guarantee application success' : changeRequest.state === 'APPLIED' ? 'state: change has already been applied' : undefined} waitingOn={changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? 'Change reviewer' : changeRequest.state === 'APPROVED' || changeRequest.state === 'APPLYING' ? 'Owning domain application' : undefined} expectedEvent={changeRequest.state === 'APPROVED' ? 'Start/apply owning-domain change' : changeRequest.state === 'APPLYING' ? 'Application result' : changeRequest.state === 'APPLICATION_FAILED' ? 'Safe retry or correction decision' : undefined} controlledContext={`${targetTypeLabel(changeRequest.targetType)} · target version ${changeRequest.targetVersion.toString()}`} evidenceSummary={`Target snapshot hash ${changeRequest.targetSnapshotHash ?? 'not supplied'} · ${changes.length} proposed field change(s)`} auditHref={`/audit?subjectType=CHANGE_REQUEST&subjectId=${encodeURIComponent(changeRequest.id)}`} relatedLinks={[{ label: 'Change request register', href: '/change-requests', detail: 'Controlled change lifecycle' }]} />
-  {applyResult?.error && <p role="alert">{applyResult.error.message}</p>}
-  {changeRequest.state === "APPROVED" && changeRequest.targetType === "DOCUMENT_VERSION" && <section class="panel"><h2>Apply approved metadata change</h2><p>Documents rechecks permissions, the captured target and draft state. Controlled versions remain frozen. Approval does not confirm application or effectivity.</p><form method="POST" action={actions.changeRequests.apply}><input type="hidden" name="id" value={changeRequest.id}/><input type="hidden" name="expectedVersion" value={changeRequest.version.toString()}/><button type="submit">Apply approved change</button></form></section>}
-  <div class="grid"><section class="panel"><h2>Control context</h2><dl><div><dt>Request version</dt><dd>{changeRequest.version.toString()}</dd></div><div><dt>Target version at request</dt><dd>{changeRequest.targetVersion.toString()}</dd></div><div><dt>Requested by</dt><dd>{changeRequest.requestedBy}</dd></div><div><dt>Reason</dt><dd>{changeRequest.reason}</dd></div></dl></section><section class="panel"><h2>Captured target snapshot</h2><p class="muted">This snapshot is review evidence; it is not a live target read and does not authorize a rewrite.</p><pre>{stringify(changeRequest.targetSnapshot)}</pre></section></div>
-  <section class="panel"><h2>Proposed changes</h2><div class="table-wrap"><table><caption>Field-level proposed changes</caption><thead><tr><th scope="col">Field path</th><th scope="col">Current</th><th scope="col">Proposed</th><th scope="col">Data type</th></tr></thead><tbody>{changes.map((change) => <tr><th scope="row">{change.fieldPath}</th><td><code>{stringify(change.currentValue)}</code></td><td><code>{stringify(change.proposedValue)}</code></td><td>{change.dataType}</td></tr>)}</tbody></table></div></section>
-  <section class="panel"><h2>Audit history</h2>{history.length ? <ol class="timeline">{history.map((event) => <li><strong>{event.action}</strong><span>{transitionLabel(event.oldState, event.newState)} · {formatDateTime(event.occurredAt)}</span><small>Request: {event.requestId}{event.reason ? ` · ${event.reason}` : ''}</small></li>)}</ol> : <p class="muted">No audit events are available for this record.</p>}</section>
-  <HandoffTimeline events={timelineEvents} notificationStatus="Notification delivery is not shown here. Record changes and audit history are tracked separately." />
-  {applicationAttempts.length > 0 && <section class="panel"><h2>Application attempts</h2><p class="muted">Applying an approved change is a separate controlled action. Opening this page does not apply it.</p><ul>{applicationAttempts.map((attempt) => <li>Attempt {attempt.attemptNo}: {attempt.result}{attempt.errorCode ? ` · ${attempt.errorCode}` : ''}</li>)}</ul></section>}
+  <div class="change-detail">
+    <PageHeader>
+      <Fragment slot="heading"><h1>{changeRequest.changeNo}</h1></Fragment>
+      <p class="record-meta">
+        <span><span class="meta-label">Target</span> {targetTypeLabel(changeRequest.targetType)} · <code class="identifier">{changeRequest.targetId}</code></span>
+        <span><span class="meta-label">Request version</span> <strong class="numeric">{changeRequest.version.toString()}</strong></span>
+        <span><span class="meta-label">Target version at request</span> <strong class="numeric">{changeRequest.targetVersion.toString()}</strong></span>
+      </p>
+      <Fragment slot="actions">
+        <div class="head-actions">
+          <span class="state" data-state={changeRequest.state}>{stateLabel(changeRequest.state)}</span>
+          {canReview && (changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW') && <a class="button" href={`/change-requests/${changeRequest.id}/review`}>Open review</a>}
+          <a class="text-link" href="/change-requests">All requests</a>
+        </div>
+      </Fragment>
+    </PageHeader>
+
+    {applyResult?.error && <section class="feedback" aria-labelledby="action-feedback-heading"><h2 id="action-feedback-heading">Application could not be confirmed</h2><p role="alert" tabindex="-1">{applyResult.error.message} <a href={Astro.url.pathname}>Refresh this request</a> before trying again.</p></section>}
+
+    <JourneyContextPanel ownerDomain="Change requests" recordReference={changeRequest.changeNo} recordOwner={changeRequest.requestedBy} currentState={stateLabel(changeRequest.state)} lastUpdated={timestamp(changeRequest.updatedAt)} nextAction={nextAction} nextActionHref={changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? canReview ? `/change-requests/${changeRequest.id}/review` : undefined : '/change-requests'} nextOwner={nextOwner} whyUnavailable={changeRequest.state === 'APPLICATION_FAILED' ? 'dependency: owning-domain application failed; approval evidence remains preserved' : changeRequest.state === 'APPROVED' ? 'dependency: approval does not guarantee application success' : changeRequest.state === 'APPLIED' ? 'state: change has already been applied' : undefined} waitingOn={changeRequest.state === 'SUBMITTED' || changeRequest.state === 'UNDER_REVIEW' ? 'Change reviewer' : changeRequest.state === 'APPROVED' || changeRequest.state === 'APPLYING' ? 'Owning domain application' : undefined} expectedEvent={changeRequest.state === 'APPROVED' ? 'Start/apply owning-domain change' : changeRequest.state === 'APPLYING' ? 'Application result' : changeRequest.state === 'APPLICATION_FAILED' ? 'Safe retry or correction decision' : undefined} controlledContext={`${targetTypeLabel(changeRequest.targetType)} · target version ${changeRequest.targetVersion.toString()}`} evidenceSummary={`Target snapshot hash ${changeRequest.targetSnapshotHash ?? 'not supplied'} · ${changes.length} proposed field change(s)`} auditHref={`/audit?subjectType=CHANGE_REQUEST&subjectId=${encodeURIComponent(changeRequest.id)}`} relatedLinks={relatedLinks} />
+
+    <div class="detail-layout">
+      <div class="detail-main">
+        <section class="panel" aria-labelledby="control-context-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Record facts</p>
+              <h2 id="control-context-heading">Control context</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">01</span>
+          </div>
+          <dl class="facts">
+            <div><dt>Request version</dt><dd class="numeric">{changeRequest.version.toString()}</dd></div>
+            <div><dt>Target version at request</dt><dd class="numeric">{changeRequest.targetVersion.toString()}</dd></div>
+            <div><dt>Requested by</dt><dd class="identifier">{changeRequest.requestedBy}</dd></div>
+            <div><dt>Created</dt><dd>{timestamp(changeRequest.createdAt)}</dd></div>
+            <div><dt>Submitted</dt><dd>{timestamp(changeRequest.submittedAt)}</dd></div>
+            <div><dt>Approved</dt><dd>{timestamp(changeRequest.approvedAt)}</dd></div>
+            <div><dt>Rejected</dt><dd>{timestamp(changeRequest.rejectedAt)}</dd></div>
+            <div><dt>Applied</dt><dd>{timestamp(changeRequest.appliedAt)}</dd></div>
+            <div><dt>Last updated</dt><dd>{timestamp(changeRequest.updatedAt)}</dd></div>
+            <div class="fact-wide"><dt>Reason</dt><dd>{changeRequest.reason}</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="snapshot-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Review evidence</p>
+              <h2 id="snapshot-heading">Captured target snapshot</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">02</span>
+          </div>
+          <p class="note">This snapshot is review evidence; it is not a live target read and does not authorize a rewrite.</p>
+          <pre role="region" aria-label="Captured target snapshot JSON" tabindex="0">{stringify(changeRequest.targetSnapshot)}</pre>
+          <dl class="evidence-facts">
+            <div><dt>Snapshot hash</dt><dd class="identifier">{changeRequest.targetSnapshotHash ?? 'Not supplied by record source'}</dd></div>
+            <div><dt>Proposed field changes</dt><dd class="numeric">{changes.length}</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="proposed-changes-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Proposed change</p>
+              <h2 id="proposed-changes-heading">Proposed changes</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">03</span>
+          </div>
+          {changes.length ? (
+            <div class="table-scroll" role="region" aria-label="Field-level proposed changes table" tabindex="0">
+              <table>
+                <caption>Field-level proposed changes</caption>
+                <thead><tr><th scope="col">Field path</th><th scope="col">Current</th><th scope="col">Proposed</th><th scope="col">Data type</th></tr></thead>
+                <tbody>{changes.map((change) => <tr><th scope="row">{change.fieldPath}</th><td><code>{stringify(change.currentValue)}</code></td><td><code>{stringify(change.proposedValue)}</code></td><td>{change.dataType}</td></tr>)}</tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="note">No proposed field changes are recorded for this request.</p>
+          )}
+        </section>
+
+        <section class="panel" aria-labelledby="audit-history-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Append-only source</p>
+              <h2 id="audit-history-heading">Audit history</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">04</span>
+          </div>
+          {history.length ? (
+            <ol class="timeline">
+              {history.map((event) => <li><strong>{event.action}</strong><span>{transitionLabel(event.oldState, event.newState)} · {formatDateTime(event.occurredAt)}</span><small>Request: {event.requestId}{event.reason ? ` · ${event.reason}` : ''}</small></li>)}
+            </ol>
+          ) : (
+            <p class="note">No audit events are available for this record.</p>
+          )}
+        </section>
+
+        <HandoffTimeline events={timelineEvents} notificationStatus="Notification delivery is not shown here. Record changes and audit history are tracked separately." />
+
+        {applicationAttempts.length > 0 && (
+          <section class="panel" aria-labelledby="application-attempts-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Application evidence</p>
+                <h2 id="application-attempts-heading">Application attempts</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">05</span>
+            </div>
+            <p class="note">Applying an approved change is a separate controlled action. Opening this page does not apply it.</p>
+            <ul class="attempts">{applicationAttempts.map((attempt) => <li>Attempt {attempt.attemptNo}: {attempt.result}{attempt.errorCode ? ` · ${attempt.errorCode}` : ''}</li>)}</ul>
+          </section>
+        )}
+      </div>
+
+      <aside class="action-rail" aria-label="Current action">
+        {showApplyAction ? (
+          <section class="panel action-panel" aria-labelledby="apply-heading">
+            <p class="eyebrow">Controlled action</p>
+            <h2 id="apply-heading">Apply approved metadata change</h2>
+            <p>Documents rechecks permissions, the captured target and draft state. Controlled versions remain frozen. Approval does not confirm application or effectivity.</p>
+            <form method="POST" action={actions.changeRequests.apply}>
+              <input type="hidden" name="id" value={changeRequest.id}/>
+              <input type="hidden" name="expectedVersion" value={changeRequest.version.toString()}/>
+              <button type="submit">Apply approved change</button>
+            </form>
+            <p class="muted">The server decides whether this attempt is eligible. Page visibility does not grant application authority.</p>
+          </section>
+        ) : (
+          <section class="panel action-panel read-only-panel" aria-labelledby="no-apply-heading">
+            <p class="eyebrow">Current action</p>
+            <h2 id="no-apply-heading">No apply action is offered</h2>
+            <p>{noApplyReason}</p>
+          </section>
+        )}
+      </aside>
+    </div>
+  </div>
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:start;margin-bottom:var(--space-6)}h1{margin:.25rem 0}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.12em;font-weight:700}.lede,.muted{color:var(--text-muted);font-size:.86rem}.head-actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}.head-actions a{color:var(--color-accent-primary-hover)}.button{border:1px solid var(--color-accent-primary);background:var(--color-accent-primary);color:var(--text-on-accent)!important;padding:.65rem 1rem;border-radius:var(--radius-md);text-decoration:none;font-weight:700}.state{padding:.45rem .7rem;border:1px solid var(--color-border-strong);border-radius:999px;font-size:.75rem;font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5);margin-bottom:var(--space-5)}.panel{padding:var(--space-5);margin-bottom:var(--space-5);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}h2{margin-top:0;font-size:1rem}dl{display:grid;gap:var(--space-3);margin:0}dl div{display:flex;justify-content:space-between;gap:var(--space-4);border-bottom:1px solid var(--color-border-subtle);padding-bottom:.55rem}dt{color:var(--text-muted);font-size:.8rem}dd{margin:0;text-align:end;font-size:.8rem;overflow-wrap:anywhere}pre{max-height:360px;overflow:auto;padding:var(--space-4);background:var(--surface-raised);border-radius:var(--radius-sm);font-size:.75rem;white-space:pre-wrap}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}caption{text-align:start;padding-bottom:var(--space-3);color:var(--text-muted);font-size:.8rem}th,td{padding:.7rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem;vertical-align:top}th{font-weight:700}code{white-space:pre-wrap;overflow-wrap:anywhere}.timeline{display:grid;gap:var(--space-3);padding-inline-start:1.25rem}.timeline li{display:grid;gap:.25rem}.timeline span,.timeline small{color:var(--text-muted);font-size:.78rem}@media(max-width:700px){.page-head,.grid{display:grid}.head-actions{justify-content:start}dl div{display:grid;gap:.2rem}dd{text-align:start}}</style>
+
+<style>
+  .change-detail { --detail-gap: var(--space-5); min-inline-size: 0; }
+  .record-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-normal); }
+  .record-meta > span { min-inline-size: 0; overflow-wrap: anywhere; }
+  .meta-label { color: var(--text-muted); font-weight: 600; }
+  .record-meta code { font-size: inherit; }
+  .head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .head-actions a { display: inline-flex; align-items: center; min-block-size: 44px; }
+  .text-link { color: var(--color-accent-primary-hover); font-weight: 600; }
+  .button { padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--text-on-accent); font-weight: 700; text-decoration: none; }
+  .button:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  .state { display: inline-flex; align-items: center; min-block-size: 32px; padding-inline: var(--space-3); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--color-accent-primary); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text-primary); font-size: var(--font-size-sm); font-weight: 700; }
+  .state[data-state='REJECTED'], .state[data-state='CANCELLED'], .state[data-state='APPLICATION_FAILED'] { border-inline-start-color: var(--status-danger); }
+  .state[data-state='APPROVED'], .state[data-state='APPLIED'] { border-inline-start-color: var(--status-success); }
+  .state[data-state='SUBMITTED'], .state[data-state='UNDER_REVIEW'], .state[data-state='APPLYING'] { border-inline-start-color: var(--status-review); }
+  .change-detail :global(.journey-panel) { margin-block: var(--space-5) 0; }
+  .feedback { margin-block-end: var(--space-5); padding: var(--space-4) var(--space-5); border: 1px solid var(--status-danger); border-inline-start: 4px solid var(--status-danger); border-radius: var(--radius-md); background: var(--surface-panel); }
+  .feedback h2 { margin: 0; font-size: var(--font-size-md); }
+  .feedback p { margin: var(--space-2) 0 0; color: var(--text-primary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .feedback a { color: var(--color-accent-primary-hover); font-weight: 600; }
+  .detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem); align-items: start; gap: var(--detail-gap); margin-block-start: var(--space-5); }
+  .detail-main { display: grid; min-inline-size: 0; gap: var(--detail-gap); }
+  .action-rail { display: grid; min-inline-size: 0; gap: var(--detail-gap); }
+  .panel { min-inline-size: 0; margin: 0; padding: var(--space-5); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-block-end: var(--space-4); }
+  .section-heading h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+  .eyebrow { margin: 0 0 var(--space-1); color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 700; }
+  .section-index { color: var(--text-muted); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
+  .facts, .evidence-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin: 0; }
+  .evidence-facts { margin-block-start: var(--space-4); }
+  .facts > div, .evidence-facts > div { min-inline-size: 0; padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); }
+  .fact-wide { grid-column: 1 / -1; }
+  dt { color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 600; }
+  dd { margin: var(--space-1) 0 0; color: var(--text-primary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .identifier { font-family: var(--font-mono); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .numeric { font-variant-numeric: tabular-nums; }
+  .note { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  pre { max-block-size: 360px; overflow: auto; margin: var(--space-4) 0 0; padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-primary); font-family: var(--font-mono); font-size: var(--font-size-xs); line-height: var(--line-height-normal); white-space: pre-wrap; overflow-wrap: anywhere; }
+  pre:focus-visible, .table-scroll:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  .table-scroll { max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+  table { inline-size: 100%; border-collapse: collapse; }
+  caption { padding: var(--space-3) var(--space-4); text-align: start; color: var(--text-muted); font-size: var(--font-size-xs); }
+  th, td { padding: var(--space-3); text-align: start; border-block-start: 1px solid var(--color-border-subtle); font-size: var(--font-size-sm); vertical-align: top; }
+  thead th { background: var(--table-header-background); }
+  th { font-weight: 700; }
+  code { font-family: var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .timeline { display: grid; gap: var(--space-3); margin: 0; padding-inline-start: 1.25rem; }
+  .timeline li { display: grid; gap: var(--space-1); padding-block-end: var(--space-3); border-block-end: 1px solid var(--color-border-subtle); }
+  .timeline li:last-child { padding-block-end: 0; border-block-end: 0; }
+  .timeline strong { font-size: var(--font-size-sm); }
+  .timeline span, .timeline small { color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  .attempts { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding-inline-start: 1.25rem; }
+  .attempts li { font-size: var(--font-size-sm); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+  .action-panel { border-inline-start: 3px solid var(--color-accent-primary); }
+  .read-only-panel { border-inline-start-color: var(--color-border-subtle); }
+  .action-panel h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+  .action-panel p { margin: var(--space-3) 0 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); overflow-wrap: anywhere; }
+  .action-panel p.muted { color: var(--text-muted); }
+  .action-panel form { display: grid; gap: var(--space-3); margin-block-start: var(--space-4); }
+  .action-panel button { min-block-size: 44px; padding-inline: var(--space-4); border: 1px solid var(--color-accent-primary); border-radius: var(--radius-sm); background: var(--color-accent-primary); color: var(--text-on-accent); font: inherit; font-weight: 700; cursor: pointer; }
+  .action-panel button:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+  .muted { color: var(--text-muted); }
+  @media (forced-colors: active) { .state, .feedback, .panel { border-color: CanvasText; } }
+  @media (max-width: 1000px) { .detail-layout { grid-template-columns: minmax(0, 1fr); } .action-rail { order: -1; } }
+  @media (max-width: 760px) { .facts, .evidence-facts { grid-template-columns: minmax(0, 1fr); } .fact-wide { grid-column: auto; } .panel { padding: var(--space-4); } .feedback { padding: var(--space-4); } .head-actions { justify-content: flex-start; } }
+</style>
