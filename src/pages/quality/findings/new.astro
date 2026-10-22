@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import FormErrorSummary from '../../../ui/components/FormErrorSummary.astro';
+import PolicyBlocker from '../../../ui/components/feedback/PolicyBlocker.astro';
 import { actions } from 'astro:actions';
 import {
   detailHref,
@@ -69,8 +70,195 @@ const describedBy = (name: keyof typeof values): string | undefined =>
 const invalid = (name: keyof typeof values): 'true' | undefined =>
   failure?.fieldErrors[name] ? 'true' : undefined;
 ---
-<AppLayout title="Create finding · Quality" locale="en" direction="ltr"><h1>Create finding</h1><p><a href="/quality/findings">Back to findings</a></p><form method="post" data-action="findings.create">{failure && <FormErrorSummary summary={failure.summary} recovery={failure.recovery} errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))} listHref={LIST_HREF} listLabel="findings" />}<label for="findingNo">Finding number<span class="hint" id="findingNo-help">Use the finding number from your approved source. Reference numbers are assigned automatically.</span><input id="findingNo" name="findingNo" required value={values.findingNo} aria-invalid={invalid('findingNo')} aria-describedby={failure?.fieldErrors.findingNo ? 'findingNo-error findingNo-help' : 'findingNo-help'} /></label>{failure?.fieldErrors.findingNo && <p class="field-error" id="findingNo-error">{failure.fieldErrors.findingNo}</p>}<label for="title">Title<input id="title" name="title" required value={values.title} aria-invalid={invalid('title')} aria-describedby={describedBy('title')} /></label>{failure?.fieldErrors.title && <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>}<label for="description">Description<textarea id="description" name="description" required aria-invalid={invalid('description')} aria-describedby={describedBy('description')}>{values.description}</textarea></label>{failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}<label for="severity">Severity (if approved)<input id="severity" name="severity" value={values.severity} /></label><div class="actions"><button type="submit" data-submit>Save draft</button><a href="/quality/findings">Cancel</a></div><p role="status" data-result tabindex="-1"></p></form></AppLayout>
+<!-- CA-03 source mapping only; no runtime acceptance:
+  READ: authenticated form shell; unauthenticated requests redirect above.
+  Record loading/empty/history/relationships: N/A before a finding ID exists.
+  FORM: retained values + SSR FormErrorSummary; enhanced pending/result uses
+  the existing data-result target and shared classified validation feedback.
+  AUTH: create eligibility is rechecked by CreateFindingUseCase, not inferred here.
+  FILTER/EXPORT/DIALOG: N/A — this route has no such controls or handlers.
+  Prior functional debt, outside presentation scope: native POST passes the
+  callAction SafeResult to extractDetailId instead of its data/error branches.
+  Presentation uses local CAPA A tokens; literal reference match is unconfirmed.
+-->
+<AppLayout title="Create finding · Quality" locale="en" direction="ltr">
+  <div class="finding-create">
+    <header class="page-heading">
+      <div>
+        <h1>Create finding</h1>
+        <p class="purpose">Record the finding details and save a draft.</p>
+      </div>
+      <a class="back-link" href="/quality/findings">Back to findings</a>
+    </header>
+
+    <div class="form-surface">
+      <PolicyBlocker title="Workflow decision still pending" decisions={[
+        { id: 'PD-16', owner: 'QC / inspection procedure owner', consequence: 'The consequence of an inspection FAIL remains unresolved; this page does not create an NCR automatically.' },
+      ]} />
+
+      <form method="post" data-action="findings.create" aria-label="Create finding">
+        {failure && (
+          <FormErrorSummary
+            summary={failure.summary}
+            recovery={failure.recovery}
+            errors={Object.entries(failure.fieldErrors).map(([fieldId, message]) => ({ fieldId, message }))}
+            listHref={LIST_HREF}
+            listLabel="findings"
+          />
+        )}
+
+        <fieldset>
+          <legend>Finding identity</legend>
+          <div class="field-grid">
+            <div class="field">
+              <label for="findingNo">Finding number</label>
+              <p class="hint" id="findingNo-help">Use the finding number from your approved source. Reference numbers are assigned automatically.</p>
+              <input
+                id="findingNo"
+                name="findingNo"
+                required
+                value={values.findingNo}
+                aria-invalid={invalid('findingNo')}
+                aria-describedby={failure?.fieldErrors.findingNo ? 'findingNo-error findingNo-help' : 'findingNo-help'}
+              />
+              {failure?.fieldErrors.findingNo && <p class="field-error" id="findingNo-error">{failure.fieldErrors.findingNo}</p>}
+            </div>
+            <div class="field">
+              <label for="title">Title</label>
+              <input
+                id="title"
+                name="title"
+                required
+                value={values.title}
+                aria-invalid={invalid('title')}
+                aria-describedby={describedBy('title')}
+              />
+              {failure?.fieldErrors.title && <p class="field-error" id="title-error">{failure.fieldErrors.title}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Finding details</legend>
+          <div class="details-fields">
+            <div class="field">
+              <label for="description">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                required
+                rows="6"
+                aria-invalid={invalid('description')}
+                aria-describedby={describedBy('description')}
+              >{values.description}</textarea>
+              {failure?.fieldErrors.description && <p class="field-error" id="description-error">{failure.fieldErrors.description}</p>}
+            </div>
+            <div class="field severity-field">
+              <label for="severity">Severity (if approved)</label>
+              <input
+                id="severity"
+                name="severity"
+                value={values.severity}
+                aria-invalid={invalid('severity')}
+                aria-describedby={describedBy('severity')}
+              />
+              {failure?.fieldErrors.severity && <p class="field-error" id="severity-error">{failure.fieldErrors.severity}</p>}
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" data-submit>Save draft</button>
+          <a class="secondary" href="/quality/findings">Cancel</a>
+        </div>
+        <p class="result-status" role="status" data-result tabindex="-1"></p>
+      </form>
+    </div>
+  </div>
+</AppLayout>
 <script>
 import { actions } from 'astro:actions'; import { enhanceClassifiedForm } from '../../../ui/forms/enhance-with-classification'; import { guardUnsavedChanges } from '../../../ui/forms/unsaved-changes'; const form=document.querySelector<HTMLFormElement>('[data-action="findings.create"]'); if(form){enhanceClassifiedForm(form,{invoke:async(payload)=>actions.findings.create(payload as Parameters<typeof actions.findings.create>[0]),payload:(data)=>({findingNo:String(data.get('findingNo')??''),title:String(data.get('title')??''),description:String(data.get('description')??''),severity:String(data.get('severity')||'')||undefined}),progressText:'Saving finding…',detailBaseHref:'/quality/findings',unknownRecoveryHref:'/quality/findings'});guardUnsavedChanges(form);}
 </script>
-<style>form{display:grid;gap:1rem;max-width:42rem}label{display:grid;gap:.35rem}input,textarea{padding:.7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--color-border-subtle)}.hint{color:var(--text-muted);font-size:.8rem}input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--status-danger)}.field-error{margin:0;color:var(--status-danger);font-size:.8rem}.actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}button{width:max-content;padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--text-on-accent);border:0;border-radius:var(--radius-md)}button[disabled]{opacity:.6}a{color:var(--color-accent-primary-hover)}</style>
+<style>
+  .finding-create { display: grid; gap: var(--space-5); min-inline-size: 0; }
+  .page-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block-end: var(--space-5);
+    border-block-end: 1px solid var(--color-border-subtle);
+  }
+  .page-heading > div { min-inline-size: 0; }
+  h1 { margin: 0; color: var(--text-primary); }
+  .purpose { margin: var(--space-2) 0 0; color: var(--text-secondary); }
+  .back-link { display: inline-flex; align-items: center; min-block-size: 44px; }
+  .form-surface { inline-size: min(100%, 56rem); min-inline-size: 0; }
+  form { display: grid; gap: var(--space-5); margin: 0; min-inline-size: 0; }
+  fieldset {
+    min-inline-size: 0;
+    margin: 0;
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+  legend { padding-inline: var(--space-2); color: var(--text-primary); font-size: var(--font-size-lg); font-weight: 700; }
+  .field-grid, .details-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+  .field { display: grid; gap: var(--space-2); min-inline-size: 0; }
+  label { color: var(--text-primary); font-size: var(--font-size-sm); font-weight: 600; }
+  .hint { margin: 0; color: var(--text-secondary); font-size: var(--font-size-xs); line-height: var(--line-height-normal); }
+  input, textarea {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.7rem;
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+  }
+  textarea { resize: vertical; min-block-size: 10rem; }
+  input[aria-invalid='true'], textarea[aria-invalid='true'] { border-color: var(--status-danger); }
+  .field-error { margin: 0; color: var(--status-danger); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .actions button, .actions .secondary {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: max(var(--control-height), 44px);
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+  }
+  .actions button { background: var(--color-accent-primary); color: var(--text-on-accent); border-color: var(--color-accent-primary); }
+  .actions .secondary { background: var(--surface-raised); color: var(--text-primary); }
+  button[disabled] { opacity: 0.6; cursor: not-allowed; }
+  .result-status { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); overflow-wrap: anywhere; }
+  .result-status:empty { min-block-size: 0; }
+  a { color: var(--color-accent-primary-hover); }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, .result-status:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  @media (min-width: 64rem) {
+    .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .severity-field { max-inline-size: 26rem; }
+  }
+  @media (max-width: 40rem) {
+    .actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .actions > * { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    fieldset, input, textarea, .actions button, .actions .secondary { border: 1px solid ButtonText; }
+    .field-error { color: CanvasText; }
+  }
+</style>

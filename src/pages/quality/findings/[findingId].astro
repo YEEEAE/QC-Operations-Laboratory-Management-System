@@ -1,5 +1,7 @@
 ---
 import AppLayout from '../../../ui/layouts/AppLayout.astro';
+import PolicyBlocker from '../../../ui/components/feedback/PolicyBlocker.astro';
+import { formatDateTime } from '../../../shared/copy/format.js';
 import JourneyContextPanel from '../../../ui/components/workflow/JourneyContextPanel.astro';
 import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
 import { listRelatedNcrsForFinding } from '../../../modules/quality/findings/application/list-related-ncrs.js';
@@ -35,10 +37,118 @@ if (finding) {
   if (outcome.status === 'AVAILABLE') relatedNcrs = outcome.value;
 }
 if (providerUnavailable) Astro.response.status = 503;
+// CA-03 source mapping: READ = authenticated SSR record / unavailable / 404,
+// plus independent AVAILABLE / NOT_VISIBLE / UNAVAILABLE related-NCR reads.
+// FORM / record DIALOG / mutation pending: N/A — no record form, action
+// submission, or record dialog is wired here; Create NCR opens its own route.
+// FILTER / EXPORT: N/A — no such controls in this detail source.
+// Shared shell authentication and command-palette dialog are unchanged.
+// Existing functional debt: listRelatedNcrsForFinding loads the actor-scoped
+// NCR list before filtering by findingId; query changes are outside this edit.
+// Presentation uses local tokens; literal visual-reference match is unconfirmed.
 ---
-<AppLayout title={`${finding?.findingNo ?? 'Finding'} · Quality`} locale="en" direction="ltr">{providerUnavailable ? <div class="record-state"><h1>Finding details are temporarily unavailable</h1><p role="status">The record source could not be reached. Your record was not changed. Retry from <a href="/quality/findings">Findings</a>.</p></div> : finding ? <><p class="eyebrow">Finding</p><h1>{finding.findingNo}</h1><p>{finding.title}</p><p class="lede">{finding.description}</p>
-{canCreateNcr && <p><a href={`/quality/ncr/new?findingId=${encodeURIComponent(finding.id)}`}>Create NCR</a></p>}
-<JourneyContextPanel ownerDomain="Quality / Findings" currentState={stateLabel(finding.state)} nextAction={canCreateNcr ? 'Create NCR' : undefined} nextOwner={finding.state === 'DRAFT' || finding.state === 'OPEN' ? 'Quality owner' : finding.state === 'UNDER_REVIEW' ? 'Finding reviewer' : undefined} whyUnavailable={finding.state === 'UNDER_REVIEW' ? 'state: this record is waiting for an authorized review decision' : finding.state === 'CLOSED' ? 'state: controlled closure is complete and the record is immutable' : undefined} waitingOn={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} expectedEvent={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} controlledContext={`Finding ${finding.findingNo} · record version ${finding.version.toString()}`} evidenceSummary={finding.sourceContext ? 'Source context recorded by the owning workflow' : 'No source context was recorded for this finding'} auditHref={`/audit?subjectType=FINDING&subjectId=${encodeURIComponent(finding.id)}`} relatedLinks={[{ label: 'Findings register', href: '/quality/findings', detail: 'Quality-owned records' }, ...relatedNcrs.map((ncr) => ({ label: `NCR ${ncr.ncrNo}`, href: `/quality/ncr/${ncr.id}`, detail: stateLabel(ncr.state) }))]} />
-<dl><dt>State</dt><dd>{stateLabel(finding.state)}</dd><dt>Severity</dt><dd>{finding.severity ? severityLabel(finding.severity) : 'Not classified'}</dd><dt>Version</dt><dd>{finding.version.toString()}</dd><dt>Source context</dt><dd>{finding.sourceContext?'Recorded':'Not provided'}</dd></dl>
-<section class="related"><h2>Related NCRs</h2>{relatedNcrsStatus === 'AVAILABLE' ? relatedNcrs.length ? <ul>{relatedNcrs.map((ncr) => <li><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a><span>{stateLabel(ncr.state)}</span></li>)}</ul> : <p class="muted">No NCR linked to this finding is visible in your authorized scope.</p> : <p role="status">{relatedNcrsStatus === 'UNAVAILABLE' ? 'The NCR source is temporarily unavailable. Retry before treating the relationship as empty.' : 'Related NCR details are not available in your authorized scope.'}</p>}<p class="note">NCR creation does not change this finding or determine a scientific result.</p></section></> : <div class="record-state"><h1>Finding record not found</h1><p>This record does not exist or is outside your authorized scope.</p><a href="/quality/findings">Return to findings</a></div>}</AppLayout>
-<style>.eyebrow,.lede{color:var(--text-muted)}dl{display:grid;grid-template-columns:max-content 1fr;gap:.65rem 1rem;background:var(--surface-panel);padding:1rem}dt{font-weight:700}dd{margin:0}.related{margin-top:1rem;padding:1rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle)}.related ul{list-style:none;padding:0;margin:0;display:grid;gap:.4rem}.related a{color:var(--color-accent-primary-hover)}.related span{color:var(--text-muted);margin-inline-start:.5rem}.note{color:var(--text-muted);font-size:.8rem}</style>
+<AppLayout title={`${finding?.findingNo ?? 'Finding'} · Quality`} locale="en" direction="ltr">
+  <div class="finding-detail">
+    {providerUnavailable ? (
+      <div class="record-state">
+        <h1>Finding details are temporarily unavailable</h1>
+        <p role="status">The record source could not be reached. Your record was not changed. Retry from <a href="/quality/findings">Findings</a>.</p>
+      </div>
+    ) : finding ? <>
+      <header class="record-heading">
+        <div class="identity">
+          <p class="eyebrow">Finding</p>
+          <h1>{finding.findingNo}</h1>
+          <p class="record-title">{finding.title}</p>
+          <p class="record-id">Record ID: {finding.id}</p>
+        </div>
+        <dl class="record-summary">
+          <div><dt>State</dt><dd class="state-badge">{stateLabel(finding.state)}</dd></div>
+          <div><dt>Version</dt><dd>{finding.version.toString()}</dd></div>
+        </dl>
+      </header>
+
+      <div class="detail-grid">
+        <div class="record-content">
+          <section class="panel" aria-labelledby="finding-facts">
+            <h2 id="finding-facts">Facts</h2>
+            <dl class="facts">
+              <div><dt>Severity</dt><dd>{finding.severity ? severityLabel(finding.severity) : 'Not classified'}</dd></div>
+              <div class="description"><dt>Description</dt><dd>{finding.description}</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel" aria-labelledby="finding-evidence">
+            <h2 id="finding-evidence">Evidence</h2>
+            <dl class="facts">
+              <div><dt>Source context</dt><dd>{finding.sourceContext ? 'Recorded' : 'Not provided'}</dd></div>
+            </dl>
+            <p class="muted">{finding.sourceContext ? 'Source context recorded by the owning workflow' : 'No source context was recorded for this finding'}</p>
+          </section>
+
+          <section class="panel" aria-labelledby="finding-history">
+            <h2 id="finding-history">History</h2>
+            <p class="muted">Recorded timestamps · Asia/Riyadh</p>
+            <dl class="facts">
+              <div><dt>Created</dt><dd>{formatDateTime(finding.createdAt)}</dd></div>
+              <div><dt>Last updated</dt><dd>{formatDateTime(finding.updatedAt)}</dd></div>
+              <div><dt>Opened</dt><dd>{finding.openedAt ? formatDateTime(finding.openedAt) : 'Not recorded'}</dd></div>
+              <div><dt>Closed</dt><dd>{finding.closedAt ? formatDateTime(finding.closedAt) : 'Not recorded'}</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel related" aria-labelledby="finding-relationships">
+            <h2 id="finding-relationships">Related NCRs</h2>
+            {relatedNcrsStatus === 'AVAILABLE' ? relatedNcrs.length ? (
+              <ul>{relatedNcrs.map((ncr) => <li><a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a><span>{stateLabel(ncr.state)}</span></li>)}</ul>
+            ) : <p class="muted">No NCR linked to this finding is visible in your authorized scope.</p> : (
+              <p role="status">{relatedNcrsStatus === 'UNAVAILABLE' ? 'The NCR source is temporarily unavailable. Retry before treating the relationship as empty.' : 'Related NCR details are not available in your authorized scope.'}</p>
+            )}
+            <p class="note">NCR creation does not change this finding or determine a scientific result.</p>
+          </section>
+        </div>
+
+        <aside class="action-rail" aria-labelledby="finding-actions">
+          <section class="panel">
+            <h2 id="finding-actions">Current actions</h2>
+            <p class="muted">This finding is read-only here. Record actions use their own workspace and server checks.</p>
+            {canCreateNcr && <a class="button" href={`/quality/ncr/new?findingId=${encodeURIComponent(finding.id)}`}>Create NCR</a>}
+          </section>
+          <PolicyBlocker title="Workflow decision still pending" decisions={[
+            { id: 'PD-16', owner: 'QC / inspection procedure owner', consequence: 'The consequence of an inspection FAIL remains unresolved; this page does not create an NCR automatically.' },
+          ]} />
+        </aside>
+      </div>
+
+      <JourneyContextPanel ownerDomain="Quality / Findings" recordReference={finding.findingNo} currentState={stateLabel(finding.state)} nextAction={canCreateNcr ? 'Create NCR' : undefined} nextOwner={finding.state === 'DRAFT' || finding.state === 'OPEN' ? 'Quality owner' : finding.state === 'UNDER_REVIEW' ? 'Finding reviewer' : undefined} whyUnavailable={finding.state === 'UNDER_REVIEW' ? 'state: this record is waiting for an authorized review decision' : finding.state === 'CLOSED' ? 'state: controlled closure is complete and the record is immutable' : undefined} waitingOn={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} expectedEvent={finding.state === 'UNDER_REVIEW' ? 'Review decision' : undefined} controlledContext={`Finding ${finding.findingNo} · record version ${finding.version.toString()}`} evidenceSummary={finding.sourceContext ? 'Source context recorded by the owning workflow' : 'No source context was recorded for this finding'} auditHref={`/audit?subjectType=FINDING&subjectId=${encodeURIComponent(finding.id)}`} relatedLinks={[{ label: 'Findings register', href: '/quality/findings', detail: 'Quality-owned records' }, ...relatedNcrs.map((ncr) => ({ label: `NCR ${ncr.ncrNo}`, href: `/quality/ncr/${ncr.id}`, detail: stateLabel(ncr.state) }))]} />
+    </> : (
+      <div class="record-state">
+        <h1>Finding record not found</h1>
+        <p>This record does not exist or is outside your authorized scope.</p>
+        <a href="/quality/findings">Return to findings</a>
+      </div>
+    )}
+  </div>
+</AppLayout>
+
+<style>
+  .finding-detail{display:grid;gap:var(--space-5);min-inline-size:0;font-variant-numeric:tabular-nums}
+  .record-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--space-5);padding-block-end:var(--space-5);border-block-end:1px solid var(--color-border-subtle)}
+  .identity{flex:1 1 20rem;min-inline-size:0}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:700;letter-spacing:.1em}
+  h1{margin-block:.35rem;font-size:clamp(1.5rem,3vw,2rem)}.record-title{margin-block:.5rem;font-size:var(--font-size-lg)}.record-id{color:var(--text-muted);font-size:var(--font-size-xs)}
+  .record-summary{display:flex;flex-wrap:wrap;gap:var(--space-5);margin:0}.record-summary div{display:grid;gap:var(--space-2)}
+  dt{color:var(--text-secondary);font-size:var(--font-size-sm);font-weight:700}dd{margin:0;overflow-wrap:anywhere}.state-badge{padding:.35rem .65rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);background:var(--surface-raised);font-weight:700}
+  .detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(16rem,22rem);align-items:start;gap:var(--space-5)}.record-content,.action-rail{display:grid;gap:var(--space-4);min-inline-size:0}
+  .panel,.record-state{min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}
+  h2{margin:0 0 var(--space-4);font-size:var(--font-size-lg)}p{line-height:1.6}.muted,.note{color:var(--text-muted)}.note{font-size:var(--font-size-sm)}
+  .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);margin:0}.facts div{display:grid;gap:var(--space-2);min-inline-size:0}.description{grid-column:1 / -1}.description dd{white-space:pre-wrap}
+  .related ul{list-style:none;padding:0;margin:0;display:grid;gap:var(--space-2)}.related li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2);border-block-end:1px solid var(--color-border-subtle)}.related span{color:var(--text-muted)}
+  .related a,.record-state a{display:inline-flex;align-items:center;min-block-size:44px;color:var(--color-accent-primary-hover);overflow-wrap:anywhere}
+  .button{display:inline-flex;align-items:center;justify-content:center;min-block-size:44px;padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font-weight:700;text-decoration:none}.button:hover{background:var(--color-accent-primary-hover)}
+  .finding-detail a:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:3px}
+  .finding-detail :global(.journey-panel){margin-block:0}.finding-detail :global(.journey-heading){flex-wrap:wrap}.finding-detail :global(.owner){max-inline-size:100%;white-space:normal}
+  .finding-detail :global(.journey-panel a){display:inline-flex;align-items:center;min-block-size:44px;overflow-wrap:anywhere}.finding-detail :global(.journey-panel .related li){flex-wrap:wrap;min-inline-size:0}
+  .action-rail :global(.policy-blocker){margin-block:0}
+  @media(max-width:1000px){.detail-grid{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:560px){.facts{grid-template-columns:minmax(0,1fr)}.panel,.record-state{padding:var(--space-4)}.button{inline-size:100%;box-sizing:border-box}}
+</style>
