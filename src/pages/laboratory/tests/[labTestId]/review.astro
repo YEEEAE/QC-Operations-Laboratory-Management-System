@@ -65,12 +65,33 @@ if (Astro.request.method === 'POST') {
   }
 }
 ---
-<AppLayout title={`Review ${test.labTestNo}`}>
-  <h1>Laboratory review</h1>
-  <p>{test.labTestNo} · Submitted context version {test.version.toString()}</p>
+<AppLayout title={`Review ${test.labTestNo}`} locale="en" direction="ltr">
+  <!-- Source-only UI mapping: READ = primary read/404/503 and comparison rows;
+       FORM = existing native POST + enhanced pending/error/reload paths.
+       DIALOG = N/A: no decision dialog in this route. FILTER/EXPORT = N/A:
+       no filtering or export action exists here. No runtime acceptance claimed.
+       Existing functional debt, outside this presentation change: SUBMITTED has
+       no start-review control on this route. Form visibility mirrors only the
+       existing state/permission predicates; full eligibility remains server-side.
+       Literal visual-reference match is not confirmed. -->
+  <header class="review-header">
+    <div>
+      <p class="eyebrow">Laboratory · Review</p>
+      <h1>Laboratory review</h1>
+      <p>{test.labTestNo} · Submitted context version {test.version.toString()}</p>
+    </div>
+    <dl class="result-summary">
+      <dt>Official scientific result</dt>
+      <dd>{test.scientificResult ?? 'Not recorded'}</dd>
+      <dt>Workflow state</dt>
+      <dd>{test.state}</dd>
+    </dl>
+  </header>
   <JourneyContextPanel ownerDomain="Laboratory" recordReference={`${test.labTestNo} · version ${test.version.toString()}`} currentState={test.state} nextAction={atSupervisorStage && canStageApprove ? 'Supervisor approval or return' : atQcmStage && canFinalApprove ? 'QCM final approval or return' : canReturn ? 'Return for correction' : 'Review actions depend on current state and permissions'} nextOwner={atSupervisorStage ? 'Supervisor review stage' : atQcmStage ? 'QCM final review stage' : undefined} whyUnavailable={!canStageApprove && !canFinalApprove && !canReturn ? 'permission: this account has no available review action' : undefined} controlledContext={`${test.context.methodReference} · version ${test.context.versionNo} · source ${test.context.sourceReference}`} evidenceSummary={`${test.measurements.length} raw measurement(s) · ${documents.length} linked controlled document(s) · ${test.context.equipment.length} equipment/calibration snapshot(s)`} auditHref={`/audit?subjectType=LAB_TEST&subjectId=${encodeURIComponent(test.id)}`} relatedLinks={[{label:'Laboratory test record',href:`/laboratory/tests/${test.id}`,detail:'Read-only record overview'}]} />
-  <section>
-    <h2>Observed results vs approved criteria</h2>
+  <div class="review-workspace">
+  <div class="review-evidence">
+  <section class="review-panel" aria-labelledby="comparison-title">
+    <h2 id="comparison-title">Observed results vs approved criteria</h2>
     <p>
       PASS and FAIL badges are evaluated only from the approved acceptance rules frozen with this
       record. Rows marked “Reviewer decision” have no approved rule and are decided by the
@@ -79,6 +100,7 @@ if (Astro.request.method === 'POST') {
     </p>
     {
       rows.length ? (
+        <div class="comparison-scroll" role="region" aria-labelledby="comparison-title" tabindex="0">
         <table class="comparison">
           <caption>Measured results and controlled criteria for {test.labTestNo}</caption>
           <thead>
@@ -114,13 +136,14 @@ if (Astro.request.method === 'POST') {
             ))}
           </tbody>
         </table>
+        </div>
       ) : (
         <p class="muted">No controlled parameters are attached to this record.</p>
       )
     }
   </section>
-  <section>
-    <h2>Read-only submission context</h2>
+  <section class="review-panel" aria-labelledby="submission-title">
+    <h2 id="submission-title">Read-only submission context</h2>
     <p>Measurements: {test.measurements.length}; samples: {test.samples.length}</p>
     <p>
       Reviewers cannot edit submitted measurements. Review and approval require server-side
@@ -149,12 +172,22 @@ if (Astro.request.method === 'POST') {
       )
     }
   </section>
-  <aside class="decision" data-lab-id={test.id} data-version={test.version.toString()}>
-    <h2>Decision rail</h2>
+  </div>
+  <aside class="decision" aria-labelledby="decision-title" data-lab-id={test.id} data-version={test.version.toString()}>
+    <h2 id="decision-title">Decision rail</h2>
+    <p id="decision-conditions">Review the evidence before deciding. The server checks authority, scope, separation of duties, current version and approval requirements when you submit.</p>
+    <p id="lab-decision-feedback" data-decision-feedback data-decision-error={decisionFailure ? '' : undefined} role={decisionFailure ? 'alert' : 'status'} aria-atomic="true" tabindex="-1" class="action-status">{decisionFailure}</p>
+    {!atSupervisorStage && !atQcmStage ? (
+      <p class="decision-unavailable">No decision form is shown in the current workflow state: {test.state}.</p>
+    ) : (atSupervisorStage && !canStageApprove && !canReturn) || (atQcmStage && !canFinalApprove && !canReturn) ? (
+      <p class="decision-unavailable">This account does not have the permissions required to show a decision form at this stage.</p>
+    ) : null}
     {
       atSupervisorStage && canStageApprove ? (
-      <form method="post" data-action="laboratory.approve">
+      <form method="post" data-action="laboratory.approve" aria-labelledby="stage-decision-title" aria-describedby="decision-conditions lab-decision-feedback">
+        <h3 id="stage-decision-title">Supervisor stage approval</h3>
         <p>Supervisor stage approval sends this report to QCM for final review. It does not approve or release the report.</p>
+        <p class="muted">Shown during UNDER_REVIEW with laboratory approval and e-sign permissions. The server must accept the source-bound scientific evaluation and this stage's signature.</p>
         <input type="hidden" name="intent" value="approve" />
         <input type="hidden" name="expectedVersion" value={test.version.toString()} />
         <label for="lab-stage-approval-password">
@@ -169,22 +202,26 @@ if (Astro.request.method === 'POST') {
     }
     {
       atSupervisorStage && canReturn ? (
-        <form method="post" data-action="laboratory.returnTest">
+        <form class="return-decision" method="post" data-action="laboratory.returnTest" aria-labelledby="return-decision-title" aria-describedby="decision-conditions lab-decision-feedback">
+          <h3 id="return-decision-title">Return for correction</h3>
+          <p id="lab-return-help">Return the submitted report to its author for correction. A reason is required; the scientific result is preserved.</p>
           <input type="hidden" name="intent" value="return" />
           <input type="hidden" name="expectedVersion" value={test.version.toString()} />
           <label for="lab-return-reason">
-            Return reason<textarea id="lab-return-reason" name="reason" required>{retainedReason}</textarea>
+            Return reason<textarea id="lab-return-reason" name="reason" aria-describedby="lab-return-help" required>{retainedReason}</textarea>
           </label>
           <button class="secondary" type="submit" data-submit>
             Return for correction
           </button>
-          <p data-result role="status" tabindex="-1" class="action-status"></p>
         </form>
       ) : null
     }
     {
       atQcmStage && canFinalApprove ? (
-        <form method="post" data-action="laboratory.finalApprove">
+        <form class="final-decision" method="post" data-action="laboratory.finalApprove" aria-labelledby="final-decision-title" aria-describedby="decision-conditions lab-decision-feedback">
+          <h3 id="final-decision-title">QCM final approval</h3>
+          <p>Approve and lock this report with the final approval signature. This decision does not release material.</p>
+          <p class="muted">Shown during PENDING_QCM_APPROVAL with final approval and e-sign permissions. Final authority and reauthentication are checked by the server.</p>
           <input type="hidden" name="intent" value="final-approve" />
           <input type="hidden" name="expectedVersion" value={test.version.toString()} />
           <label for="lab-final-approval-password">
@@ -200,88 +237,242 @@ if (Astro.request.method === 'POST') {
           <button type="submit" data-submit>
             QCM final approval — approve and lock
           </button>
-          <p data-result role="status" tabindex="-1" class="action-status"></p>
         </form>
       ) : null
     }
     {
       atQcmStage && canReturn ? (
-        <form method="post" data-action="laboratory.returnTest">
+        <form class="return-decision" method="post" data-action="laboratory.returnTest" aria-labelledby="qcm-return-decision-title" aria-describedby="decision-conditions lab-decision-feedback">
+          <h3 id="qcm-return-decision-title">Return at QCM stage</h3>
+          <p id="lab-qcm-return-help">Return this report to its author instead of applying final approval. A reason is required; the scientific result is preserved.</p>
           <input type="hidden" name="intent" value="return" />
           <input type="hidden" name="expectedVersion" value={test.version.toString()} />
           <label for="lab-qcm-return-reason">
-            QCM return reason<textarea id="lab-qcm-return-reason" name="reason" required>{retainedReason}</textarea>
+            QCM return reason<textarea id="lab-qcm-return-reason" name="reason" aria-describedby="lab-qcm-return-help" required>{retainedReason}</textarea>
           </label>
           <button class="secondary" type="submit" data-submit>
             Return at QCM stage
           </button>
-          <p data-result role="status" tabindex="-1" class="action-status"></p>
         </form>
       ) : null
     }
-    {decisionFailure && <p role="alert" tabindex="-1" data-decision-error>{decisionFailure}</p>}
     <p class="muted">
       Only the QCM final approval carries the binding electronic signature. PASS is never a release
       command.
     </p>
   </aside>
+  </div>
 </AppLayout>
 <script>
-  import{actions}from'astro:actions';
-const context=document.querySelector<HTMLElement>('[data-lab-id]');const id=context?.dataset.labId??'';const version=context?.dataset.version??'0';
-const busy=(scope:Element|null,on:boolean)=>{if(on)scope?.setAttribute('aria-busy','true');else scope?.removeAttribute('aria-busy');};
-document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.approve"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();const btn=form.querySelector<HTMLButtonElement>('[data-submit]');if(!btn||btn.disabled||form.getAttribute('aria-busy')==='true')return;const reauthenticationSecret=String(new FormData(form).get('reauthenticationSecret')??'');btn.disabled=true;busy(form,true);btn.textContent='Sending for QCM review…';try{const result=await actions.laboratory.approve({id,expectedVersion:BigInt(version),reauthenticationSecret});if(result.data)location.reload();else{btn.textContent='Not applied — refresh and verify the current version.';btn.disabled=false;}}catch{btn.textContent='The service did not confirm the result. Refresh the test and its history before deciding whether to try again.';btn.disabled=false;}finally{const password=form.querySelector<HTMLInputElement>('[name="reauthenticationSecret"]');if(password)password.value='';busy(form,false);}}));
-document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.returnTest"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();if(form.getAttribute('aria-busy')==='true')return;const btn=form.querySelector<HTMLButtonElement>('[data-submit]');const out=form.querySelector<HTMLElement>('[data-result]');const reason=String(new FormData(form).get('reason')??'');if(btn)btn.disabled=true;busy(form,true);if(out)out.textContent='Returning for correction…';try{const result=await actions.laboratory.returnTest({id,expectedVersion:BigInt(version),reason});if(result.data)location.reload();else if(out){out.textContent='Return was not applied. Refresh and verify the current version.';out.focus?.();}}catch{if(out){out.textContent='The service did not confirm the result. Your reason is kept. Refresh the record and its history before deciding whether to try again.';out.focus?.();}}finally{busy(form,false);if(btn)btn.disabled=false;}}));
-document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.finalApprove"]').forEach((form)=>form.addEventListener('submit',async(e)=>{e.preventDefault();if(form.getAttribute('aria-busy')==='true')return;const btn=form.querySelector<HTMLButtonElement>('[data-submit]');const out=form.querySelector<HTMLElement>('[data-result]');const password=form.querySelector<HTMLInputElement>('[name="reauthenticationSecret"]');let reauthenticationSecret=password?.value??'';if(btn)btn.disabled=true;busy(form,true);if(out)out.textContent='Applying QCM final approval with signature…';try{const result=await actions.laboratory.finalApprove({id,expectedVersion:BigInt(version),reauthenticationSecret});reauthenticationSecret='';if(password)password.value='';if(result.data)location.reload();else if(out){out.textContent='The final approval was not applied. Verify your reauthentication password and the current version, then try again.';out.focus?.();}}catch{reauthenticationSecret='';if(password)password.value='';if(out){out.textContent='The service did not confirm the result. Refresh the test and its approval history before deciding whether to try again.';out.focus?.();}}finally{reauthenticationSecret='';if(password)password.value='';busy(form,false);if(btn)btn.disabled=false;}}));
+  import { actions } from 'astro:actions';
+
+  const context = document.querySelector<HTMLElement>('[data-lab-id]');
+  const id = context?.dataset.labId ?? '';
+  const version = context?.dataset.version ?? '0';
+  const feedback = context?.querySelector<HTMLElement>('[data-decision-feedback]');
+  const report = (message: string, failed = false) => {
+    if (!feedback) return;
+    feedback.setAttribute('role', failed ? 'alert' : 'status');
+    feedback.toggleAttribute('data-decision-error', failed);
+    feedback.textContent = message;
+    if (failed) feedback.focus();
+  };
+  const busy = (scope: Element | null, on: boolean) => {
+    if (on) scope?.setAttribute('aria-busy', 'true');
+    else scope?.removeAttribute('aria-busy');
+  };
+
+  document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.approve"]').forEach((form) => form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector<HTMLButtonElement>('[data-submit]');
+    if (!btn || btn.disabled || form.getAttribute('aria-busy') === 'true') return;
+    const reauthenticationSecret = String(new FormData(form).get('reauthenticationSecret') ?? '');
+    btn.disabled = true;
+    busy(form, true);
+    report('Sending for QCM review…');
+    try {
+      const result = await actions.laboratory.approve({ id, expectedVersion: BigInt(version), reauthenticationSecret });
+      if (result.data) location.reload();
+      else report('Not applied — refresh and verify the current version.', true);
+    } catch {
+      report('The service did not confirm the result. Refresh the test and its history before deciding whether to try again.', true);
+    } finally {
+      const password = form.querySelector<HTMLInputElement>('[name="reauthenticationSecret"]');
+      if (password) password.value = '';
+      busy(form, false);
+      btn.disabled = false;
+    }
+  }));
+
+  document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.returnTest"]').forEach((form) => form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (form.getAttribute('aria-busy') === 'true') return;
+    const btn = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const reason = String(new FormData(form).get('reason') ?? '');
+    if (btn) btn.disabled = true;
+    busy(form, true);
+    report('Returning for correction…');
+    try {
+      const result = await actions.laboratory.returnTest({ id, expectedVersion: BigInt(version), reason });
+      if (result.data) location.reload();
+      else report('Return was not applied. Refresh and verify the current version.', true);
+    } catch {
+      report('The service did not confirm the result. Your reason is kept. Refresh the record and its history before deciding whether to try again.', true);
+    } finally {
+      busy(form, false);
+      if (btn) btn.disabled = false;
+    }
+  }));
+
+  document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.finalApprove"]').forEach((form) => form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (form.getAttribute('aria-busy') === 'true') return;
+    const btn = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const password = form.querySelector<HTMLInputElement>('[name="reauthenticationSecret"]');
+    let reauthenticationSecret = password?.value ?? '';
+    if (btn) btn.disabled = true;
+    busy(form, true);
+    report('Applying QCM final approval with signature…');
+    try {
+      const result = await actions.laboratory.finalApprove({ id, expectedVersion: BigInt(version), reauthenticationSecret });
+      reauthenticationSecret = '';
+      if (password) password.value = '';
+      if (result.data) location.reload();
+      else report('The final approval was not applied. Verify your reauthentication password and the current version, then try again.', true);
+    } catch {
+      reauthenticationSecret = '';
+      if (password) password.value = '';
+      report('The service did not confirm the result. Refresh the test and its approval history before deciding whether to try again.', true);
+    } finally {
+      reauthenticationSecret = '';
+      if (password) password.value = '';
+      busy(form, false);
+      if (btn) btn.disabled = false;
+    }
+  }));
 </script>
 <style>
-  section,
-  aside {
-    padding: 1rem;
-    margin-top: 1rem;
+  .review-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin-block-end: var(--space-5);
+  }
+  h1 { margin-block: var(--space-2); }
+  h2, h3 { margin-block: 0 var(--space-3); }
+  p { line-height: 1.6; }
+  .eyebrow, .result-summary dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+  }
+  .eyebrow { margin: 0; }
+  .result-summary {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border-evidence);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+  .result-summary dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .review-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .review-evidence { display: grid; gap: var(--space-5); min-inline-size: 0; }
+  .review-panel, .decision {
+    min-inline-size: 0;
+    padding: var(--space-5);
     background: var(--surface-panel);
     border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow-wrap: anywhere;
   }
-  button {
-    padding: 0.7rem;
-    background: var(--color-accent-primary);
-    color:var(--text-on-accent);
-    border: 0;
+  .decision { background: var(--surface-decision); border-color: var(--border-command); }
+  .decision form {
+    margin-block-start: var(--space-5);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--border-default);
+  }
+  .decision .return-decision, .decision .final-decision {
+    padding: var(--space-4);
+    border: 1px solid var(--border-command);
+    border-inline-start: 3px solid var(--status-warning);
     border-radius: var(--radius-md);
+    background: var(--surface-inset);
+  }
+  .decision .final-decision { border-inline-start-color: var(--color-accent-primary); }
+  .action-status { margin: 0; }
+  .action-status:not(:empty), .decision-unavailable {
+    padding: var(--space-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--surface-panel);
+  }
+  .action-status[data-decision-error] { border-color: var(--status-danger); }
+  .muted { color: var(--text-muted); }
+  button {
+    min-block-size: 44px;
+    inline-size: 100%;
+    margin-block-start: var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-weight: 700;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    cursor: pointer;
   }
   button.secondary {
-    border-color: var(--border-default);
+    border-color: var(--control-border);
     background: var(--surface-raised);
     color: var(--text-primary);
   }
-  label {
-    display: block;
-    margin-top: 0.75rem;
+  button:disabled { cursor: progress; }
+  label { display: block; margin-block-start: var(--space-4); font-weight: 600; }
+  textarea, input {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    margin-block-start: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-md);
+    background: var(--input-background);
+    color: var(--text-primary);
+    font: inherit;
   }
-  textarea,
-  input {
-    width: 100%;
-    margin-top: 0.25rem;
+  textarea { min-block-size: 7rem; resize: vertical; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible,
+  .comparison-scroll:focus-visible, .action-status:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
   }
-  .comparison {
-    border-collapse: collapse;
-    width: 100%;
-    margin-top: 1rem;
-  }
-  .comparison th,
-  .comparison td {
+  .comparison-scroll { max-inline-size: 100%; overflow-x: auto; margin-block-start: var(--space-4); }
+  .comparison { border-collapse: collapse; inline-size: 100%; min-inline-size: 42rem; font-variant-numeric: tabular-nums; }
+  .comparison caption { text-align: start; padding-block-end: var(--space-3); color: var(--text-secondary); }
+  .comparison th, .comparison td {
     border: 1px solid var(--color-border-subtle);
-    padding: 0.5rem;
+    padding: var(--space-3);
     text-align: start;
     vertical-align: top;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
-  .criteria {
-    font-size: 0.85rem;
-  }
-  .calc-note {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-  }
+  .comparison thead { background: var(--table-header-background); }
+  .criteria { font-size: 0.85rem; }
+  .calc-note { color: var(--text-muted); font-size: 0.8rem; }
   .outcome {
     display: inline-block;
     padding: 0.15rem 0.5rem;
@@ -289,14 +480,19 @@ document.querySelectorAll<HTMLFormElement>('[data-action="laboratory.finalApprov
     font-size: 0.8rem;
     border: 1px solid var(--color-border-subtle);
   }
-  .outcome-pass {
-    border-color: var(--status-success, green);
+  .outcome-pass { border-color: var(--status-success); }
+  .outcome-fail { border-color: var(--status-danger); }
+  .outcome-reviewer-decision, .outcome-not-recorded { border-style: dashed; }
+  @media (min-width: 1200px) {
+    .review-workspace { grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem); }
   }
-  .outcome-fail {
-    border-color: var(--status-danger, red);
+  @media (max-width: 560px) {
+    .review-panel, .decision { padding: var(--space-4); }
+    .result-summary { inline-size: 100%; }
   }
-  .outcome-reviewer-decision,
-  .outcome-not-recorded {
-    border-style: dashed;
+  @media print {
+    .review-workspace { display: block; }
+    .comparison-scroll { overflow: visible; }
+    .comparison { min-inline-size: 0; }
   }
 </style>
