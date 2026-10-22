@@ -35,7 +35,8 @@ describe('audit human labels and filter access', () => {
 
   it('provides a named filter landmark and human audit columns without printing actor IDs', () => {
     const page = read('src/pages/audit.astro');
-    expect(page).toContain('aria-label="Audit history filters"');
+    expect(page).toContain('<FilterBar');
+    expect(page).toContain('label="Audit history filters"');
     expect(page).toContain('Changed by account reference');
     expect(page).toContain('Record reference');
     expect(page).toContain('Request reference');

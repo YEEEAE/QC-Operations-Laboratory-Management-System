@@ -1,0 +1,410 @@
+{
+  "task": "CA-P-AUDIT",
+  "candidate": "working tree on f4ac3129",
+  "account": "verify-admin (ACTIVE ADMIN)",
+  "database": "qc_disposable @ localhost:55432 (PostgreSQL 18.6)",
+  "before": {
+    "state": "PASS",
+    "auditEventCount": 9,
+    "authorized": [
+      {
+        "width": 320,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 7,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit events available to your account \u2014 scrollable",
+        "clipped": 0
+      },
+      {
+        "width": 390,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 7,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit events available to your account \u2014 scrollable",
+        "clipped": 0
+      },
+      {
+        "width": 768,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 7,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit events available to your account \u2014 scrollable",
+        "clipped": 0
+      },
+      {
+        "width": 1024,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 7,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit events available to your account \u2014 scrollable",
+        "clipped": 0
+      },
+      {
+        "width": 1440,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 7,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": null,
+        "tableLabel": null,
+        "clipped": 0
+      }
+    ],
+    "filterStates": {
+      "filteredRows": 1,
+      "filteredEmptyRows": 0,
+      "beyondRows": 0
+    },
+    "focus": [
+      {
+        "label": "filter-input",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "table-region",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "auto",
+        "outlineWidth": "1px",
+        "outlineColor": "rgb(153, 200, 255)"
+      },
+      {
+        "label": "pager-link",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "applied-filter-chip",
+        "status": "NOT PRESENT"
+      }
+    ],
+    "least": {
+      "status": "RECORDED",
+      "text": "System Audit history View the audit history available to your account. Use filters to find a record or action. 9 events Record type Record reference Changed by account reference Action From (Asia/Riyadh) To (Asia/Riyadh) Results per page Apply filters Clear filters Saved filters Preset name Save filters Delete preset Dates and times are factory time (Asia/Riyadh, UTC+03:00); the \"When\" column is shown in the same zone. Showing the latest authorized events. Pages hold at most 50 events. Audit events available to your account When Action Changed by Record reference Transition Reason Request reference 22 Oct 2026, 17:22 Create calibration Verification Employee/member verification account (disposable, 24h) Calibration record Business record number unavailable \u2192 Draft Not recorded req_01a163fe-",
+      "rows": 9,
+      "table": 1,
+      "count": 0,
+      "states": 0,
+      "mutationControls": 0,
+      "overflow": 0
+    },
+    "unauthenticated": {
+      "status": "PASS",
+      "finalUrl": "http://127.0.0.1:4333/login?returnTo=%2Faudit"
+    },
+    "providerUnavailable": {
+      "status": "RECORDED",
+      "text": "System Audit history View the audit history available to your account. Use filters to find a record or action. Record type Record reference Changed by account reference Action From (Asia/Riyadh) To (Asia/Riyadh) Results per page Apply filters Clear filters Saved filters Preset name Save filters Delete preset Dates and times are factory time (Asia/Riyadh, UTC+03:00); the \"When\" column is shown in the same zone. Showing the latest authorized events. Pages hold at most 50 events. ! Audit history is temporarily unavailable The audit read did not return a confirmed result. This view is not empty and no count is shown. Try again",
+      "unavailable": 1,
+      "rows": 0,
+      "count": 0,
+      "overflow": 0
+    },
+    "noJs": {
+      "status": "PASS",
+      "rowsAfterClear": 9
+    },
+    "media": [
+      {
+        "media": {
+          "reducedMotion": "reduce"
+        },
+        "status": "RECORDED",
+        "overflow": 0,
+        "bodyBackground": "rgb(20, 24, 30)"
+      },
+      {
+        "media": {
+          "forcedColors": "active"
+        },
+        "status": "RECORDED",
+        "overflow": 0,
+        "bodyBackground": "rgb(255, 255, 255)"
+      }
+    ],
+    "contrast": null,
+    "invalidIdentifierFilter": null
+  },
+  "after": {
+    "state": "PASS",
+    "auditEventCount": 9,
+    "authorized": [
+      {
+        "width": 320,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit event table",
+        "clipped": 0
+      },
+      {
+        "width": 390,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit event table",
+        "clipped": 0
+      },
+      {
+        "width": 768,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit event table",
+        "clipped": 0
+      },
+      {
+        "width": 1024,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit event table",
+        "clipped": 0
+      },
+      {
+        "width": 1440,
+        "rows": 9,
+        "globalOverflow": 0,
+        "undersized": 0,
+        "smallText": 0,
+        "axe": [],
+        "tableRole": "region",
+        "tableLabel": "Audit event table",
+        "clipped": 0
+      }
+    ],
+    "filterStates": {
+      "filteredRows": 1,
+      "filteredEmptyRows": 0,
+      "beyondRows": 0,
+      "longFilterChips": 2,
+      "longFilterRows": 0
+    },
+    "focus": [
+      {
+        "label": "filter-input",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "table-region",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "pager-link",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      },
+      {
+        "label": "applied-filter-chip",
+        "status": "PASS",
+        "active": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "outlineColor": "rgb(146, 184, 242)"
+      }
+    ],
+    "least": {
+      "status": "PASS",
+      "text": "System Audit history View the audit history available to your account. Use filters to find a record or action. Find audit events Record type Record reference Changed by account reference More filters (1 applied) Apply filters Clear filters Saved filters Preset name Save filters Delete preset Dates and times are factory time (Asia/Riyadh, UTC+03:00); the \"When\" column is shown in the same zone. Showing the latest authorized events. Pages hold at most 50 events. Audit event register Showing 1\u20139 of 9 authorized events \u00b7 Page 1 of 1 Audit events available to your account When Action Changed by Record Transition Reason Request reference 22 Oct 2026, 17:22 Create calibration Verification Employee/member verification account (disposable, 24h) Calibration record Business record number unavailable ",
+      "rows": 9,
+      "table": 1,
+      "count": 1,
+      "states": 0,
+      "mutationControls": 0,
+      "overflow": 0
+    },
+    "unauthenticated": {
+      "status": "PASS",
+      "finalUrl": "http://127.0.0.1:4333/login?returnTo=%2Faudit"
+    },
+    "providerUnavailable": {
+      "status": "PASS",
+      "text": "System Audit history View the audit history available to your account. Use filters to find a record or action. Find audit events Record type Record reference Changed by account reference More filters (1 applied) Apply filters Clear filters Saved filters Preset name Save filters Delete preset Dates and times are factory time (Asia/Riyadh, UTC+03:00); the \"When\" column is shown in the same zone. ! Audit history is temporarily unavailable The audit read did not return a confirmed result. This view is not empty and no count is shown. Try again",
+      "unavailable": 1,
+      "rows": 0,
+      "count": 0,
+      "overflow": 0
+    },
+    "noJs": {
+      "status": "PASS",
+      "rowsAfterClear": 9
+    },
+    "media": [
+      {
+        "media": {
+          "reducedMotion": "reduce"
+        },
+        "status": "PASS",
+        "overflow": 0,
+        "bodyBackground": "rgb(20, 24, 30)"
+      },
+      {
+        "media": {
+          "forcedColors": "active"
+        },
+        "status": "PASS",
+        "overflow": 0,
+        "bodyBackground": "rgb(255, 255, 255)"
+      }
+    ],
+    "contrast": [
+      {
+        "label": "h1",
+        "selector": "h1",
+        "fontSize": 24,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(20 24 30)",
+        "ratio": 15.15
+      },
+      {
+        "label": "filter heading",
+        "selector": ".filter-panel h2",
+        "fontSize": 14,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(37 43 52)",
+        "ratio": 12.12
+      },
+      {
+        "label": "filter label",
+        "selector": ".filter-panel label",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "timezone note",
+        "selector": ".timezone-note",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(155, 163, 175)",
+        "background": "rgb(37 43 52)",
+        "ratio": 5.6
+      },
+      {
+        "label": "result count",
+        "selector": ".result-count",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "table action",
+        "selector": "tbody td.action",
+        "fontSize": 13,
+        "fontWeight": "400",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(37 43 52)",
+        "ratio": 12.12
+      },
+      {
+        "label": "record reference",
+        "selector": ".record-reference",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(155, 163, 175)",
+        "background": "rgb(37 43 52)",
+        "ratio": 5.6
+      },
+      {
+        "label": "request reference",
+        "selector": ".request-reference",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "applied filter chip",
+        "selector": "[data-applied-filters] .chip-value",
+        "fontSize": 13,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(43 50 60)",
+        "ratio": 11
+      },
+      {
+        "label": "h1",
+        "selector": "h1",
+        "fontSize": 24,
+        "fontWeight": "600",
+        "foreground": "rgb(232, 237, 245)",
+        "background": "rgb(20 24 30)",
+        "ratio": 15.15
+      },
+      {
+        "label": "result count",
+        "selector": ".result-count",
+        "fontSize": 12,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      },
+      {
+        "label": "empty message",
+        "selector": ".state-notice p",
+        "fontSize": 13,
+        "fontWeight": "400",
+        "foreground": "rgb(195, 203, 214)",
+        "background": "rgb(37 43 52)",
+        "ratio": 8.71
+      }
+    ],
+    "invalidIdentifierFilter": {
+      "status": "RECORDED",
+      "unavailable": 1,
+      "rows": 0,
+      "count": 0
+    }
+  }
+}

@@ -1,14 +1,27 @@
 ---
-import PageHeader from "../ui/components/PageHeader.astro";
+import PageHeader from '../ui/components/PageHeader.astro';
 import AppLayout from '../ui/layouts/AppLayout.astro';
-import { AuditQueryService } from '../shared/audit/audit-query.js';
+import AppliedFilters from '../ui/components/data/AppliedFilters.astro';
+import FilterBar from '../ui/components/data/FilterBar.astro';
+import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
+import { AuditQueryService, normalizeAuditQueryFilter } from '../shared/audit/audit-query.js';
 import { auditQueryDependencies } from '../shared/audit/audit-dependencies.js';
 import { transitionLabel } from '../shared/copy/ux-vocabulary.js';
-import { FACTORY_TIME_ZONE_LABEL, FACTORY_TIME_ZONE_OFFSET_LABEL, formatDateTime, parseFactoryDateTime } from '../shared/copy/format.js';
-import { auditActionLabel, auditActorLabel, auditSubjectLabel } from '../shared/copy/audit-vocabulary.js';
+import {
+  FACTORY_TIME_ZONE_LABEL,
+  FACTORY_TIME_ZONE_OFFSET_LABEL,
+  formatDateTime,
+  parseFactoryDateTime,
+} from '../shared/copy/format.js';
+import {
+  auditActionLabel,
+  auditActorLabel,
+  auditSubjectLabel,
+} from '../shared/copy/audit-vocabulary.js';
 import { AppError } from '../shared/errors/app-error.js';
-import ProviderUnavailableState from '../ui/components/feedback/ProviderUnavailableState.astro';
+import { removeFilter } from '../shared/pagination/remove-filter.js';
 import { identityAdminReadDependencies } from '../modules/identity/application/admin-dependencies.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Faudit');
 const params = Astro.url.searchParams;
@@ -30,9 +43,12 @@ const filter = {
   limit: parseCount(params.get('limit')),
   offset: parseCount(params.get('offset')),
 };
-let result = { events: [], total: 0, limit: 50, offset: 0 } as Awaited<ReturnType<AuditQueryService['list']>>;
-// Existence-leakage protection: a denied query renders the same empty state as
-// "no matching events" — the page never distinguishes the two.
+const applied = normalizeAuditQueryFilter(filter);
+let result = { events: [], total: 0, limit: 50, offset: 0 } as Awaited<
+  ReturnType<AuditQueryService['list']>
+>;
+// Existence-leakage protection: a denied query renders no record content and no
+// count, and never distinguishes a denial from an empty authorized history.
 let authorizationDenied = false;
 // A dependency outage is NOT an empty register: it renders UNAVAILABLE with no
 // count, so an operator never reads a provider failure as "0 events".
@@ -48,30 +64,558 @@ try {
   providerUnavailable = !authorizationDenied;
   result = { events: [], total: 0, limit: 50, offset: 0 };
 }
-const pageHref = (offset: number): string => {
-  const next = new URLSearchParams();
-  for (const [key, value] of params) if (key !== 'offset') next.set(key, value);
-  next.set('offset', String(Math.max(0, offset)));
-  return `/audit?${next.toString()}`;
+
+const auditHref = (next: URLSearchParams): string => {
+  const query = next.toString();
+  return query ? `/audit?${query}` : '/audit';
 };
+const filterHref = (name: string): string => {
+  const next = removeFilter(params, name);
+  next.delete('offset');
+  return auditHref(next);
+};
+const pageHref = (offset: number): string => {
+  const next = new URLSearchParams(params);
+  next.set('offset', String(Math.max(0, offset)));
+  return auditHref(next);
+};
+
+const hasFilters = Boolean(
+  applied.subjectType ||
+    applied.subjectId ||
+    applied.actorId ||
+    applied.action ||
+    applied.from ||
+    applied.to,
+);
+const appliedFilters = [
+  applied.subjectType && {
+    label: 'Record type',
+    value: auditSubjectLabel(applied.subjectType),
+    href: filterHref('subjectType'),
+  },
+  applied.subjectId && {
+    label: 'Record reference',
+    value: applied.subjectId,
+    href: filterHref('subjectId'),
+  },
+  applied.actorId && {
+    label: 'Changed by',
+    value: applied.actorId,
+    href: filterHref('actorId'),
+  },
+  applied.action && {
+    label: 'Action',
+    value: auditActionLabel(applied.action),
+    href: filterHref('action'),
+  },
+  applied.from && {
+    label: 'From',
+    value: formatDateTime(applied.from),
+    href: filterHref('from'),
+  },
+  applied.to && {
+    label: 'To',
+    value: formatDateTime(applied.to),
+    href: filterHref('to'),
+  },
+].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
+
+const shownStart = result.events.length ? result.offset + 1 : 0;
+const shownEnd = result.offset + result.events.length;
+const totalPages = Math.max(1, Math.ceil(result.total / result.limit));
+const currentPage = Math.floor(result.offset / result.limit) + 1;
 const hasPrev = result.offset > 0;
 const hasNext = result.offset + result.events.length < result.total;
-const activeFilters = [
-  filter.subjectType ? `subject ${filter.subjectType}` : null,
-  filter.subjectId ? `id ${filter.subjectId}` : null,
-  filter.actorId ? `actor ${filter.actorId}` : null,
-  filter.action ? `action ${filter.action}` : null,
-  filter.from ? `from ${formatDateTime(filter.from)}` : null,
-  filter.to ? `to ${formatDateTime(filter.to)}` : null,
-].filter((part): part is string => part !== null);
+const registerNote = providerUnavailable
+  ? 'Audit data is unavailable, so no count is shown.'
+  : authorizationDenied
+    ? 'Audit data is not shown for this account.'
+    : `Showing the latest authorized events. Pages hold at most ${result.limit} events.`;
+const beyondLastPage = result.total > 0 && result.events.length === 0 && result.offset > 0;
+const countText =
+  result.total === 0
+    ? '0 authorized events'
+    : result.events.length === 0
+      ? `${result.total} authorized event${result.total === 1 ? '' : 's'} available · no events at this offset`
+      : `Showing ${shownStart}–${shownEnd} of ${result.total} authorized event${result.total === 1 ? '' : 's'}${hasFilters ? ' matching these filters' : ''} · Page ${currentPage} of ${totalPages}`;
 ---
+
 <AppLayout title="Audit · QC Operations" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Audit history</h1></Fragment><p>View the audit history available to your account. Use filters to find a record or action.</p><Fragment slot="actions">{!providerUnavailable && !authorizationDenied && <span>{result.total} events</span>}</Fragment></PageHeader>
-  <form class="filters" method="get" action="/audit" role="search" aria-label="Audit history filters"><div><label for="f-subjectType">Record type</label><input id="f-subjectType" name="subjectType" type="text" maxlength="200" value={params.get('subjectType') ?? ''} /></div><div><label for="f-subjectId">Record reference</label><input id="f-subjectId" name="subjectId" type="text" maxlength="200" value={params.get('subjectId') ?? ''} /></div><div><label for="f-actorId">Changed by account reference</label><input id="f-actorId" name="actorId" type="text" maxlength="200" value={params.get('actorId') ?? ''} /></div><div><label for="f-action">Action</label><input id="f-action" name="action" type="text" maxlength="200" value={params.get('action') ?? ''} /></div><div><label for="f-from">From ({FACTORY_TIME_ZONE_LABEL})</label><input id="f-from" name="from" type="datetime-local" value={params.get('from') ?? ''} aria-describedby="audit-timezone-note" /></div><div><label for="f-to">To ({FACTORY_TIME_ZONE_LABEL})</label><input id="f-to" name="to" type="datetime-local" value={params.get('to') ?? ''} aria-describedby="audit-timezone-note" /></div><div><label for="f-limit">Results per page</label><input id="f-limit" name="limit" type="number" min="1" max="100" value={params.get('limit') ?? '50'} /></div><div class="filters-actions"><button class="button primary" type="submit">Apply filters</button><a class="button secondary" href="/audit">Clear filters</a></div></form>
-  <p class="filter-note" id="audit-timezone-note">Dates and times are factory time ({FACTORY_TIME_ZONE_LABEL}, {FACTORY_TIME_ZONE_OFFSET_LABEL}); the "When" column is shown in the same zone.</p>
-  {activeFilters.length ? <p class="filter-note" aria-live="polite">Active filters: {activeFilters.join(' · ')}. The list shows only events the account is authorized to view.</p> : <p class="filter-note" aria-live="polite">Showing the latest authorized events. Pages hold at most {result.limit} events.</p>}
-  {providerUnavailable ? <ProviderUnavailableState title="Audit history is temporarily unavailable" description="The audit read did not return a confirmed result. This view is not empty and no count is shown." retryHref="/audit" /> : authorizationDenied ? <section class="empty"><h2>Audit history is unavailable</h2><p>This account cannot view the requested audit history. No record details or count are shown.</p></section> : result.events.length ? <div class="table-wrap"><table><caption>Audit events available to your account</caption><thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">Changed by</th><th scope="col">Record reference</th><th scope="col">Transition</th><th scope="col">Reason</th><th scope="col">Request reference</th></tr></thead><tbody>{result.events.map((event) => <tr><td><time datetime={event.occurredAt.toISOString()}>{formatDateTime(event.occurredAt)}</time></td><td>{auditActionLabel(event.action)}</td><td>{auditActorLabel({ actorType: event.actorType, displayName: event.actorDisplayName })}</td><td><span>{auditSubjectLabel(event.subjectType)}</span><br /><span class="muted">Business record number unavailable</span></td><td>{transitionLabel(event.oldState, event.newState)}</td><td>{event.reason ?? <span class="muted">Not recorded</span>}</td><td><code aria-label="Request reference">{event.requestId}</code></td></tr>)}</tbody></table></div> : <section class="empty"><h2>No audit events available</h2><p>The query returned no events, or the account does not hold the explicit audit-view permission.</p></section>}
-  {!providerUnavailable && !authorizationDenied && result.total > 0 && <nav class="pager" aria-label="Audit pages"><span>Showing {result.events.length} of {result.total} events</span><span class="pager-links">{hasPrev ? <a href={pageHref(result.offset - result.limit)}>Previous</a> : <span aria-hidden="true">Previous</span>}{hasNext ? <a href={pageHref(result.offset + result.limit)}>Next</a> : <span aria-hidden="true">Next</span>}</span></nav>}
+  <div class="audit-register">
+    <PageHeader>
+      <Fragment slot="heading"><h1>Audit history</h1></Fragment>
+      <p>View the audit history available to your account. Use filters to find a record or action.</p>
+    </PageHeader>
+
+    <section class="filter-panel" aria-labelledby="audit-filters-heading">
+      <h2 id="audit-filters-heading">Find audit events</h2>
+      <FilterBar label="Audit history filters" clearHref="/audit">
+        <label for="f-subjectType"
+          >Record type<input
+            id="f-subjectType"
+            name="subjectType"
+            type="text"
+            maxlength="200"
+            value={params.get('subjectType') ?? ''}
+          /></label
+        >
+        <label for="f-subjectId"
+          >Record reference<input
+            id="f-subjectId"
+            name="subjectId"
+            type="text"
+            maxlength="200"
+            value={params.get('subjectId') ?? ''}
+          /></label
+        >
+        <label for="f-actorId"
+          >Changed by account reference<input
+            id="f-actorId"
+            name="actorId"
+            type="text"
+            maxlength="200"
+            value={params.get('actorId') ?? ''}
+          /></label
+        >
+        <label for="f-action"
+          >Action<input
+            id="f-action"
+            name="action"
+            type="text"
+            maxlength="200"
+            value={params.get('action') ?? ''}
+          /></label
+        >
+        <label for="f-from"
+          >From ({FACTORY_TIME_ZONE_LABEL})<input
+            id="f-from"
+            name="from"
+            type="datetime-local"
+            value={params.get('from') ?? ''}
+            aria-describedby="audit-timezone-note"
+          /></label
+        >
+        <label for="f-to"
+          >To ({FACTORY_TIME_ZONE_LABEL})<input
+            id="f-to"
+            name="to"
+            type="datetime-local"
+            value={params.get('to') ?? ''}
+            aria-describedby="audit-timezone-note"
+          /></label
+        >
+        <label for="f-limit"
+          >Results per page<input
+            id="f-limit"
+            name="limit"
+            type="number"
+            min="1"
+            max="100"
+            value={params.get('limit') ?? '50'}
+          /></label
+        >
+      </FilterBar>
+      <p class="timezone-note" id="audit-timezone-note">
+        Dates and times are factory time ({FACTORY_TIME_ZONE_LABEL},
+        {FACTORY_TIME_ZONE_OFFSET_LABEL}); the "When" column is shown in the same zone.
+      </p>
+    </section>
+
+    <AppliedFilters
+      filters={appliedFilters}
+      clearHref={hasFilters ? '/audit' : undefined}
+      note={providerUnavailable || authorizationDenied ? undefined : registerNote}
+    />
+
+    {
+      providerUnavailable ? (
+        <ProviderUnavailableState
+          title="Audit history is temporarily unavailable"
+          description="The audit read did not return a confirmed result. This view is not empty and no count is shown."
+          retryHref={`${Astro.url.pathname}${Astro.url.search}`}
+        />
+      ) : authorizationDenied ? (
+        <section class="state-notice denied" role="alert" aria-labelledby="audit-denied-title">
+          <h2 id="audit-denied-title">Audit history is unavailable</h2>
+          <p>
+            This account cannot view the requested audit history. No record details or count are
+            shown.
+          </p>
+        </section>
+      ) : (
+        <section class="register" aria-labelledby="audit-register-title">
+          <h2 id="audit-register-title" class="sr-only">
+            Audit event register
+          </h2>
+          <p class="result-count" role="status" aria-live="polite">{countText}</p>
+
+          {result.events.length ? (
+            <div
+              class="table-scroll"
+              role="region"
+              aria-label="Audit event table"
+              tabindex="0"
+            >
+              <table>
+                <caption>Audit events available to your account</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">When</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Changed by</th>
+                    <th scope="col">Record</th>
+                    <th scope="col">Transition</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">Request reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.events.map((event) => (
+                    <tr>
+                      <th scope="row" class="when">
+                        <time datetime={event.occurredAt.toISOString()}>
+                          {formatDateTime(event.occurredAt)}
+                        </time>
+                      </th>
+                      <td class="action">{auditActionLabel(event.action)}</td>
+                      <td class="actor">
+                        {auditActorLabel({ actorType: event.actorType, displayName: event.actorDisplayName })}
+                      </td>
+                      <td class="record">
+                        <span class="record-type">{auditSubjectLabel(event.subjectType)}</span>
+                        <span class="record-reference">Business record number unavailable</span>
+                      </td>
+                      <td class="transition">{transitionLabel(event.oldState, event.newState)}</td>
+                      <td class="reason">
+                        {event.reason ?? <span class="not-recorded">Not recorded</span>}
+                      </td>
+                      <td class="request">
+                        <code class="request-reference" aria-label="Request reference">
+                          {event.requestId}
+                        </code>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : beyondLastPage ? (
+            <section class="state-notice empty" role="status" aria-labelledby="audit-page-empty-title">
+              <h2 id="audit-page-empty-title">No audit events on this page</h2>
+              <p>The page offset is beyond the events available for this filter set.</p>
+              <a href={auditHref(new URLSearchParams())}>Back to the first page</a>
+            </section>
+          ) : (
+            <section class="state-notice empty" role="status" aria-labelledby="audit-empty-title">
+              <h2 id="audit-empty-title">
+                {hasFilters ? 'No audit events match these filters' : 'No audit events available'}
+              </h2>
+              <p>
+                {hasFilters
+                  ? 'Remove a filter or widen the time range to see more events.'
+                  : 'The query returned no events, or the account does not hold the explicit audit-view permission.'}
+              </p>
+              {hasFilters && <a href="/audit">Clear all filters</a>}
+            </section>
+          )}
+
+          {result.events.length > 0 && result.total > 0 && (
+            <nav class="pager" aria-label="Audit pages">
+              <span class="pager-links">
+                {hasPrev ? (
+                  <a href={pageHref(Math.max(0, result.offset - result.limit))} rel="prev">
+                    Previous
+                  </a>
+                ) : (
+                  <span aria-disabled="true">Previous</span>
+                )}
+                {hasNext ? (
+                  <a href={pageHref(result.offset + result.limit)} rel="next">
+                    Next
+                  </a>
+                ) : (
+                  <span aria-disabled="true">Next</span>
+                )}
+              </span>
+            </nav>
+          )}
+        </section>
+      )
+    }
+  </div>
 </AppLayout>
-<style>.page-head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start}.page-head h1{margin:.3rem 0}.page-head p,.page-head>span{color:var(--text-muted);font-size:.85rem}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--space-3);margin-top:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}.filters label{display:block;margin-bottom:4px;color:var(--text-primary);font-size:var(--font-size-xs);font-weight:700}.filters input{width:100%;max-inline-size:100%;min-height:var(--control-height);padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-default);border-radius:var(--radius-md);font-size:var(--font-size-xs)}.filters-actions{display:flex;gap:var(--space-3);align-items:end}.filter-note{margin-top:var(--space-4);color:var(--text-muted);font-size:.8rem}.table-wrap{overflow-x:auto;margin-top:var(--space-6);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:820px;border-collapse:collapse}caption{padding:var(--space-4);text-align:start;color:var(--text-primary);font-weight:700}th,td{padding:var(--space-3) var(--space-4);border-block-start:1px solid var(--color-border-subtle);text-align:start;font-size:.8rem}th{color:var(--text-primary);background:var(--surface-raised);font-size:var(--font-size-xs)}.empty{margin-top:var(--space-6);padding:var(--space-10);text-align:center;border:1px dashed var(--color-border-default);border-radius:var(--radius-lg);color:var(--text-muted)}.empty h2{color:var(--text-primary);font-size:1rem}.pager{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-top:var(--space-4);color:var(--text-muted);font-size:.8rem}.pager-links{display:flex;gap:var(--space-4)}.pager-links a{display:inline-flex;align-items:center;min-height:var(--control-height);color:var(--color-accent-primary-hover)}.muted{color:var(--text-muted)}@media(max-width:650px){.page-head{display:grid}.pager{flex-direction:column;align-items:flex-start}}
+
+<style>
+  .audit-register {
+    min-inline-size: 0;
+  }
+  .filter-panel {
+    margin-block-end: var(--space-4);
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--card-radius);
+  }
+  .filter-panel h2 {
+    margin: 0 0 var(--space-4);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+  }
+  .filter-panel :global(.filters) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    align-items: end;
+    margin: 0;
+  }
+  .filter-panel :global(label) {
+    min-inline-size: 0;
+  }
+  .filter-panel :global(input),
+  .filter-panel :global(select) {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    border-color: var(--control-border);
+  }
+  .filter-panel :global(.filters-actions) {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+  .filter-panel :global(.advanced-filters),
+  .filter-panel :global(.filter-presets),
+  .filter-panel :global(.submit-status) {
+    grid-column: 1 / -1;
+  }
+  .filter-panel :global(.filter-presets) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+  }
+  .filter-panel :global(.filter-presets input),
+  .filter-panel :global(.filter-presets select) {
+    inline-size: auto;
+    max-inline-size: 100%;
+  }
+  .timezone-note {
+    margin: var(--space-3) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .register {
+    min-inline-size: 0;
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .result-count {
+    margin: 0;
+    padding: var(--space-4) var(--space-5) var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .table-scroll {
+    max-inline-size: 100%;
+    overflow: auto;
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .table-scroll:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+  table {
+    inline-size: 100%;
+    min-inline-size: 64rem;
+    border-collapse: collapse;
+    background: var(--surface-panel);
+  }
+  caption {
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-muted);
+    text-align: start;
+    font-size: var(--font-size-xs);
+  }
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    border-block-start: 1px solid var(--color-border-subtle);
+    text-align: start;
+    vertical-align: top;
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+  }
+  tbody th {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+  tbody tr:nth-child(even) {
+    background: var(--table-stripe-background);
+  }
+  .when {
+    min-inline-size: 9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .action {
+    min-inline-size: 7rem;
+  }
+  .actor {
+    min-inline-size: 10rem;
+  }
+  .record {
+    min-inline-size: 10rem;
+  }
+  .transition {
+    min-inline-size: 9rem;
+  }
+  .reason {
+    min-inline-size: 11rem;
+  }
+  .request {
+    min-inline-size: 11rem;
+  }
+  .record-type,
+  .record-reference {
+    display: block;
+  }
+  .record-reference,
+  .not-recorded {
+    margin-block-start: 2px;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .request-reference {
+    display: inline-block;
+    max-inline-size: 100%;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-block-start: 1px solid var(--color-border-subtle);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .pager-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .pager a,
+  .pager [aria-disabled='true'] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+  .pager a:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+  }
+  .pager [aria-disabled='true'] {
+    opacity: var(--disabled-opacity);
+  }
+  .state-notice {
+    padding: var(--space-8) var(--space-5);
+    background: var(--surface-panel);
+    border: 1px dashed var(--color-border-default);
+    border-radius: var(--radius-lg);
+    text-align: center;
+  }
+  .state-notice.denied {
+    border-inline-start: 3px solid var(--status-warning);
+    text-align: start;
+  }
+  .register .state-notice {
+    border: 0;
+    border-block-start: 1px solid var(--color-border-subtle);
+    border-radius: 0;
+  }
+  .state-notice h2 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+  }
+  .state-notice p {
+    margin: 0 auto;
+    max-inline-size: 60ch;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+  }
+  .state-notice.denied p {
+    margin-inline: 0;
+  }
+  .state-notice a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    margin-block-start: var(--space-4);
+    color: var(--color-accent-primary-hover);
+    font-weight: var(--font-weight-semibold);
+  }
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (max-width: 760px) {
+    .filter-panel {
+      padding: var(--space-4);
+    }
+    .result-count,
+    .pager {
+      padding-inline: var(--space-4);
+    }
+    .pager {
+      align-items: flex-start;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-scroll {
+      scroll-behavior: auto;
+    }
+  }
+  @media (forced-colors: active) {
+    .filter-panel,
+    .register,
+    .pager a,
+    .pager [aria-disabled='true'],
+    .state-notice {
+      border-color: CanvasText;
+    }
+    .table-scroll:focus-visible {
+      outline-color: Highlight;
+    }
+  }
 </style>
