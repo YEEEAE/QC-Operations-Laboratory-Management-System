@@ -9,6 +9,7 @@ import FilterBar from '../../../ui/components/data/FilterBar.astro';
 import { assetsReadDependencies } from '../../../modules/assets/application/dependencies.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { formatDate } from '../../../shared/copy/format.js';
+import type { EquipmentEligibilityAssessment } from '../../../modules/assets/equipment/application/get-equipment-eligibility.js';
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fassets%2Fcalibrations');
 const canCreate = actor.permissions.some((permission) => permission.active !== false && permission.code === 'PERM-CAL-CREATE');
@@ -36,14 +37,48 @@ let providerUnavailable = false;
 let page = 1;
 let total = 0;
 let pageSize = 25;
+type EligibilityCell =
+  | { kind: 'ASSESSED'; assessment: EquipmentEligibilityAssessment }
+  | { kind: 'UNAVAILABLE' };
+const eligibilityByEquipment = new Map<string, EligibilityCell>();
+let eligibilityUnavailable = false;
 try {
-  const result = await assetsReadDependencies().calibration.list.executePage({
+  const read = assetsReadDependencies();
+  const result = await read.calibration.list.executePage({
     actor,
     filter: { state, equipmentId, search },
     page: { page: params.get('page') ?? 1, pageSize },
   });
   records = result.items;
   ({ page, total, pageSize } = result);
+  const equipmentIds = [...new Set(records.map((record) => record.equipmentId))];
+  try {
+    const assessed = await read.equipment.assessEligibility.assessMany(actor, equipmentIds);
+    for (const id of equipmentIds) {
+      const assessment = assessed.get(id);
+      eligibilityByEquipment.set(
+        id,
+        assessment ? { kind: 'ASSESSED', assessment } : { kind: 'UNAVAILABLE' },
+      );
+    }
+  } catch {
+    // One denied or unavailable source must not hide the other rows. Retry per
+    // equipment; every failure stays "Not confirmed" instead of clearing.
+    const settled = await Promise.allSettled(
+      equipmentIds.map((id) => read.equipment.assessEligibility.assess(actor, id)),
+    );
+    settled.forEach((outcome, index) => {
+      const id = equipmentIds[index]!;
+      if (outcome.status === 'fulfilled') {
+        eligibilityByEquipment.set(id, { kind: 'ASSESSED', assessment: outcome.value });
+        return;
+      }
+      eligibilityByEquipment.set(id, { kind: 'UNAVAILABLE' });
+    });
+  }
+  eligibilityUnavailable = [...eligibilityByEquipment.values()].some(
+    (cell) => cell.kind === 'UNAVAILABLE',
+  );
 } catch {
   providerUnavailable = true;
 }
@@ -60,10 +95,29 @@ const appliedFilters = [
   search && { label: 'Search', value: search, href: chipHref('q') },
 ].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
 const hasFilters = appliedFilters.length > 0;
+const eligibilityReason = (reason: string | undefined) => {
+  switch (reason) {
+    case 'UNDER_MAINTENANCE': return 'Equipment is under maintenance';
+    case 'OUT_OF_SERVICE': return 'Equipment is out of service';
+    case 'NOT_ACTIVE': return 'Equipment is not active';
+    case 'NO_CURRENT_CALIBRATION': return 'No current calibration is recorded';
+    case 'CALIBRATION_NOT_CURRENT': return 'Current calibration is not confirmed';
+    case 'CALIBRATION_EXPIRED': return 'Current source due date has passed';
+    default: return 'Eligibility not confirmed';
+  }
+};
+const eligibilityText = (cell: EligibilityCell | undefined): string => {
+  if (!cell || cell.kind === 'UNAVAILABLE') return 'Not confirmed';
+  return cell.assessment.eligible
+    ? 'Eligible for laboratory and inspection use'
+    : eligibilityReason(cell.assessment.reason);
+};
+const equipmentStateText = (cell: EligibilityCell | undefined): string =>
+  cell?.kind === 'ASSESSED' ? stateLabel(cell.assessment.equipmentState) : '';
 ---
 
 <AppLayout title="Calibrations · Assets" locale="en" direction="ltr">
-  <PageHeader purpose="Historical calibration records linked to equipment. Dates are source-provided; no interval is inferred.">
+  <PageHeader purpose="Calibration history linked to equipment. Dates and status are source-provided; no interval or threshold is inferred.">
     <Fragment slot="heading"><h1>Calibration records</h1></Fragment>
     <Fragment slot="actions">{canCreate && <a class="button" href="/assets/calibrations/new">Add calibration record</a>}</Fragment>
   </PageHeader>
@@ -84,8 +138,9 @@ const hasFilters = appliedFilters.length > 0;
   <AppliedFilters
     filters={appliedFilters}
     clearHref={hasFilters ? '/assets/calibrations' : undefined}
-    note={providerUnavailable ? undefined : `${total} calibration records in your authorized scope.`}
+    note={providerUnavailable ? undefined : `${total} calibration record${total === 1 ? '' : 's'} in your authorized scope.`}
   />
+  {!providerUnavailable && eligibilityUnavailable && <p class="source-notice" role="status">Equipment eligibility and maintenance could not be confirmed. Calibration records remain available.</p>}
   {
     providerUnavailable ? (
       <ProviderUnavailableState
@@ -94,7 +149,7 @@ const hasFilters = appliedFilters.length > 0;
         retryHref="/assets/calibrations"
       />
     ) : records.length ? (
-      <div class="table-wrap">
+      <div class="table-wrap" role="region" aria-label="Calibration records table" tabindex="0" data-scroll-region>
         <table>
           <caption>
             {total} authorized calibration record{total === 1 ? '' : 's'}
@@ -104,7 +159,9 @@ const hasFilters = appliedFilters.length > 0;
             <tr>
               <th scope="col">Calibration number</th>
               <th scope="col">Equipment</th>
-              <th scope="col">State</th>
+              <th scope="col">Calibration state</th>
+              <th scope="col">Eligibility</th>
+              <th scope="col">Maintenance</th>
               <th scope="col">Calibration date</th>
               <th scope="col">Due date</th>
               <th scope="col">Certificate</th>
@@ -116,15 +173,41 @@ const hasFilters = appliedFilters.length > 0;
                 <th scope="row">
                   <a href={`/assets/calibrations/${record.id}`}>{record.calibrationNo}</a>
                 </th>
-                <td>
-                  <a href={`/assets/equipment/${record.equipmentId}`}>{record.equipmentId}</a>
-                </td>
-                <td>
-                  <span class="state">{stateLabel(record.state)}</span>
-                </td>
+                <td class="identifier"><a href={`/assets/equipment/${record.equipmentId}`}>{record.equipmentId}</a></td>
+                <td><span class="state">{stateLabel(record.state)}</span></td>
+                {
+                  (() => {
+                    const cell = eligibilityByEquipment.get(record.equipmentId);
+                    const equipmentState = equipmentStateText(cell);
+                    const verdict = cell?.kind === 'ASSESSED' && cell.assessment.eligible ? 'eligible' : 'blocked';
+                    return (
+                      <td>
+                        <span class="eligibility-stack">
+                          <span class={`eligibility eligibility--${verdict}`}>{eligibilityText(cell)}</span>
+                          {equipmentState && <span class="cell-detail">Equipment state: {equipmentState}</span>}
+                        </span>
+                      </td>
+                    );
+                  })()
+                }
+                {
+                  (() => {
+                    const cell = eligibilityByEquipment.get(record.equipmentId);
+                    if (!cell || cell.kind !== 'ASSESSED') return <td>{eligibilityText(cell)}</td>;
+                    if (!cell.assessment.maintenanceNo) return <td>No in-progress maintenance recorded</td>;
+                    return (
+                      <td>
+                        <span class="maintenance-state">{stateLabel(cell.assessment.maintenanceState)}</span>{' '}
+                        <a href={`/assets/maintenance?equipmentId=${encodeURIComponent(record.equipmentId)}`}>
+                          {cell.assessment.maintenanceNo}
+                        </a>
+                      </td>
+                    );
+                  })()
+                }
                 <td>{formatDate(record.calibrationDate)}</td>
                 <td>{record.dueDate ? formatDate(record.dueDate) : 'Not supplied'}</td>
-                <td>{record.certificateNo ?? 'Not supplied'}</td>
+                <td class="long-value">{record.certificateNo ?? 'Not supplied'}</td>
               </tr>
             ))}
           </tbody>
@@ -148,4 +231,24 @@ const hasFilters = appliedFilters.length > 0;
   {!providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="calibration records" />}
 </AppLayout>
 <style>
-  .head{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);letter-spacing:.12em;font-weight:700}.head p:not(.eyebrow){color:var(--text-muted);font-size:var(--font-size-sm)}.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:var(--font-weight-bold)}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:900px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;font-size:var(--font-size-sm)}th{font-weight:var(--font-weight-semibold)}a{color:var(--color-accent-primary-hover)}.state{display:inline-flex;padding:.28rem .5rem;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}@media(max-width:650px){.head{display:grid}.button{width:max-content}}</style>
+  .button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding-inline:1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--color-text-inverse);text-decoration:none;font-weight:var(--font-weight-bold)}
+  .source-notice{margin:0 0 var(--space-4);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--surface-panel);color:var(--text-secondary);font-size:var(--font-size-sm)}
+  .table-wrap{max-width:100%;overflow:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg);background:var(--surface-panel)}
+  table{width:100%;min-width:1120px;border-collapse:collapse;background:var(--surface-panel)}
+  caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs)}
+  th,td{padding:.85rem;border-top:1px solid var(--color-border-subtle);text-align:start;vertical-align:top;font-size:var(--font-size-sm)}
+  th{font-weight:var(--font-weight-semibold);color:var(--text-primary)}
+  tbody tr:nth-child(even){background:var(--surface-raised)}
+  a{color:var(--color-accent-primary-hover);overflow-wrap:anywhere}
+  tbody a{display:inline-flex;align-items:center;min-block-size:44px}
+  .identifier,.long-value{min-width:9rem;max-width:16rem;overflow-wrap:anywhere;word-break:break-word}
+  .state,.maintenance-state{display:inline-flex;max-width:18rem;padding:.28rem .5rem;border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);overflow-wrap:anywhere}
+  .eligibility-stack{display:block;min-width:0}
+  .eligibility{display:block;font-weight:var(--font-weight-semibold);overflow-wrap:anywhere}
+  .eligibility--blocked{color:var(--text-primary)}
+  .cell-detail{display:block;margin-top:.2rem;color:var(--text-muted);font-size:var(--font-size-xs)}
+  .table-wrap:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+  @media(max-width:650px){.button{width:max-content}}
+  @media(prefers-reduced-motion:reduce){.table-wrap{scroll-behavior:auto}}
+  @media(forced-colors:active){.table-wrap,.state,.maintenance-state{border:1px solid CanvasText}.source-notice{border-inline-start-color:CanvasText}}
+</style>
