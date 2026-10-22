@@ -1,20 +1,29 @@
 ---
 import PageHeader from '../../ui/components/PageHeader.astro';
 import AppLayout from '../../ui/layouts/AppLayout.astro';
+import AppliedFilters from '../../ui/components/data/AppliedFilters.astro';
+import EmptyTableState from '../../ui/components/data/EmptyTableState.astro';
+import FilterBar from '../../ui/components/data/FilterBar.astro';
 import Pagination from '../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../ui/components/feedback/ProviderUnavailableState.astro';
 import { documentsReadDependencies } from '../../modules/documents/application/dependencies.js';
 import { identityAdminReadDependencies } from '../../modules/identity/application/admin-dependencies.js';
 import { DEFAULT_PAGE_SIZE } from '../../config/constants.js';
 import { AppError } from '../../shared/errors/app-error.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect('/login?returnTo=%2Fdocuments');
-const search = Astro.url.searchParams.get('q')?.slice(0, 200) || undefined;
-const documentType = Astro.url.searchParams.get('type')?.slice(0, 80) || undefined;
-const reviewMine = Astro.url.searchParams.get('review') === 'mine';
-let documents: Readonly<Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['list']['execute']>>> = [];
+const params = Astro.url.searchParams;
+const search = params.get('q')?.slice(0, 200) || undefined;
+const documentType = params.get('type')?.slice(0, 80) || undefined;
+const reviewMine = params.get('review') === 'mine';
+let documents: Readonly<
+  Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['list']['execute']>>
+> = [];
 let providerUnavailable = false;
-let reviewQueue: Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['reviewQueue']['execute']>> | undefined;
+let reviewQueue:
+  | Awaited<ReturnType<ReturnType<typeof documentsReadDependencies>['reviewQueue']['execute']>>
+  | undefined;
 let reviewDenied = false;
 let page = 1;
 let total = 0;
@@ -23,32 +32,519 @@ try {
   const reads = documentsReadDependencies();
   if (reviewMine) reviewQueue = await reads.reviewQueue.execute({ actor, limit: DEFAULT_PAGE_SIZE });
   else {
-    const result = await reads.list.executePage({ actor, filter: { search, documentType }, page: { page: Astro.url.searchParams.get('page') ?? 1, pageSize } });
+    const result = await reads.list.executePage({
+      actor,
+      filter: { search, documentType },
+      page: { page: params.get('page') ?? 1, pageSize },
+    });
     documents = result.items;
     ({ page, total, pageSize } = result);
   }
 } catch (error) {
-  if (reviewMine && error instanceof AppError && error.category === 'AUTHORIZATION') reviewDenied = true;
+  if (reviewMine && error instanceof AppError && error.category === 'AUTHORIZATION')
+    reviewDenied = true;
   else providerUnavailable = true;
 }
-const canCreate = actor.permissions.some((permission) => permission.code === 'PERM-DOC-CREATE' && permission.active !== false);
+const canCreate = actor.permissions.some(
+  (permission) => permission.code === 'PERM-DOC-CREATE' && permission.active !== false,
+);
 // The register names the owner, never a raw account identifier. Resolution is
 // presentation-only and failure-tolerant.
 let accountNames = new Map<string, string>();
 try {
   accountNames = new Map(
-    await identityAdminReadDependencies().listUsers.resolveDisplayNames({ actor, userIds: documents.map((document) => document.ownerId ?? document.createdBy) }),
+    await identityAdminReadDependencies().listUsers.resolveDisplayNames({
+      actor,
+      userIds: documents.map((document) => document.ownerId ?? document.createdBy),
+    }),
   );
 } catch {
   // Presentation-only; fall back to a named-account label below.
 }
 const accountLabel = (accountId: string | null | undefined) =>
   accountId ? (accountNames.get(accountId) ?? 'Named account') : 'Not recorded';
+
+const hasFilters = Boolean(search || documentType);
+/** Drop one validated filter and reset paging while preserving the rest. */
+const chipHref = (drop: 'q' | 'type'): string => {
+  const next = new URLSearchParams(params);
+  next.delete(drop);
+  next.delete('page');
+  const query = next.toString();
+  return `/documents${query ? `?${query}` : ''}`;
+};
+const appliedFilters = [
+  search && { label: 'Search', value: search, href: chipHref('q') },
+  documentType && { label: 'Type', value: documentType, href: chipHref('type') },
+].filter((chip): chip is { label: string; value: string; href: string } => Boolean(chip));
+
+const totalPages = Math.max(1, Math.ceil(total / pageSize));
+const shownStart = documents.length ? (page - 1) * pageSize + 1 : 0;
+const shownEnd = documents.length ? shownStart + documents.length - 1 : 0;
+const countText = `Showing ${shownStart}–${shownEnd} of ${total} document identit${total === 1 ? 'y' : 'ies'}${hasFilters ? ' matching these filters' : ' in your authorized scope'} · Page ${page} of ${totalPages}`;
+const reviewTotal = reviewQueue?.total ?? 0;
+const reviewCountText = `Showing ${reviewQueue?.items.length ?? 0} of ${reviewTotal} document version${reviewTotal === 1 ? '' : 's'} awaiting your review`;
 ---
+
 <AppLayout title="Controlled documents · QC Operations" locale="en" direction="ltr">
-  <PageHeader purpose={reviewMine ? 'Active versions in review that you may review; your own versions are excluded.' : 'Browse WI, SOP, and other controlled documents available to your account.'}><Fragment slot="heading"><h1>{reviewMine ? 'Documents awaiting your review' : 'Controlled documents'}</h1></Fragment><Fragment slot="actions">{canCreate && <a class="button" href="/documents/new">Create document</a>}</Fragment></PageHeader>
-  {reviewMine ? <p><a href="/documents">All controlled documents</a></p> : <form class="filters" method="get"><label for="q">Search<input id="q" name="q" value={search ?? ''} maxlength="200" /></label><label for="type">Type<input id="type" name="type" value={documentType ?? ''} maxlength="80" /></label><button type="submit">Filter</button><a href="/documents?review=mine">My review queue</a></form>}
-  {reviewDenied ? <section class="empty" role="status"><h2>Review queue unavailable</h2><p>Your account is not authorized for both document review and approval review. No count is shown.</p></section> : providerUnavailable ? <ProviderUnavailableState title="Controlled documents are unavailable" description="Documents could not be loaded. Records and counts are unavailable; this does not mean the library is empty." /> : reviewMine ? reviewQueue && reviewQueue.items.length ? <div class="table-wrap"><table><caption>{reviewQueue.total} authorized document version{reviewQueue.total === 1 ? '' : 's'} awaiting your review; showing up to {DEFAULT_PAGE_SIZE}</caption><thead><tr><th scope="col">Document code</th><th scope="col">Title</th><th scope="col">Revision</th><th scope="col">State</th><th scope="col">Submitted</th></tr></thead><tbody>{reviewQueue.items.map((item) => <tr><th scope="row"><a href={`/documents/${item.documentId}/versions/${item.versionId}/review`}>{item.documentNo}</a></th><td>{item.title}</td><td>{item.revision}</td><td>In review</td><td><time datetime={item.createdAt.toISOString()}>{item.createdAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</time></td></tr>)}</tbody></table></div> : <section class="empty"><h2>No document versions are waiting for your review</h2><p>This is the current result for your review permissions and owner scope.</p></section> : documents.length ? <div class="table-wrap"><table><caption>{total} authorized document identit{total === 1 ? 'y' : 'ies'}</caption><thead><tr><th scope="col">Document code</th><th scope="col">Title</th><th scope="col">Type</th><th scope="col">Current effective version</th><th scope="col">Owner</th><th scope="col">Updated</th></tr></thead><tbody>{documents.map((document) => <tr><th scope="row"><a href={`/documents/${document.id}`}>{document.documentNo}</a></th><td>{document.title}</td><td>{document.documentType}</td><td>{document.currentEffectiveVersionId ? 'Available' : 'Not effective'}</td><td>{accountLabel(document.ownerId ?? document.createdBy)}</td><td>{document.updatedAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No documents in this view</h2><p>Only documents you are permitted to view are shown.</p>{canCreate && <a href="/documents/new">Create document</a>}</section>}
-  {!reviewMine && !providerUnavailable && <Pagination page={page} totalPages={Math.max(1, Math.ceil(total / pageSize))} total={total} itemLabel="documents" />}
+  <div class="documents-register">
+    <PageHeader
+      purpose={reviewMine
+        ? 'Active versions in review that you may review; your own versions are excluded.'
+        : 'Browse WI, SOP, and other controlled documents available to your account.'}
+    >
+      <Fragment slot="heading"
+        ><h1>{reviewMine ? 'Documents awaiting your review' : 'Controlled documents'}</h1></Fragment
+      >
+      <Fragment slot="actions"
+        >{canCreate && <a class="button" href="/documents/new">Create document</a>}</Fragment
+      >
+    </PageHeader>
+
+    {
+      reviewMine ? (
+        <nav class="view-switch" aria-label="Document view">
+          <a href="/documents">All controlled documents</a>
+        </nav>
+      ) : (
+        <section class="filter-panel" aria-labelledby="document-filters-heading">
+          <div class="filter-panel-heading">
+            <h2 id="document-filters-heading">Find controlled documents</h2>
+            <a class="view-switch-link" href="/documents?review=mine">My review queue</a>
+          </div>
+          <FilterBar
+            label="Controlled document filters"
+            clearHref={hasFilters ? '/documents' : undefined}
+          >
+            <label for="q"
+              >Search<input
+                id="q"
+                name="q"
+                type="search"
+                maxlength="200"
+                value={search ?? ''}
+              /></label
+            >
+            <label for="type"
+              >Type<input id="type" name="type" maxlength="80" value={documentType ?? ''} /></label
+            >
+          </FilterBar>
+        </section>
+      )
+    }
+
+    {
+      !reviewMine && (
+        <AppliedFilters
+          filters={appliedFilters}
+          clearHref={hasFilters ? '/documents' : undefined}
+          note="Showing every controlled document in your authorized scope."
+        />
+      )
+    }
+
+    {
+      reviewDenied || providerUnavailable ? (
+        <div class="feedback-region">
+          {reviewDenied ? (
+            <section class="state-panel" role="status">
+              <h2>Review queue unavailable</h2>
+              <p>
+                Your account is not authorized for both document review and approval review. No
+                count is shown.
+              </p>
+            </section>
+          ) : (
+            <ProviderUnavailableState
+              title="Controlled documents are unavailable"
+              description="Documents could not be loaded. Records and counts are unavailable; this does not mean the library is empty."
+              retryHref={`${Astro.url.pathname}${Astro.url.search}`}
+            />
+          )}
+        </div>
+      ) : null
+    }
+
+    {
+      !reviewDenied && !providerUnavailable && reviewMine ? (
+        reviewQueue && reviewQueue.items.length ? (
+          <section class="register" aria-labelledby="review-register-title">
+            <h2 id="review-register-title" class="sr-only">
+              Document versions awaiting your review
+            </h2>
+            <p class="result-count" role="status" aria-live="polite">
+              {reviewCountText}
+            </p>
+            <div
+              class="table-wrap"
+              role="region"
+              aria-label="Document review queue table"
+              tabindex="0"
+            >
+              <table>
+                <caption>Authorized document versions awaiting your review</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Document code</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Revision</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Submitted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviewQueue.items.map((item) => (
+                    <tr>
+                      <th scope="row" class="document-number">
+                        <a href={`/documents/${item.documentId}/versions/${item.versionId}/review`}>
+                          {item.documentNo}
+                        </a>
+                      </th>
+                      <td class="document-title">{item.title}</td>
+                      <td class="revision">{item.revision}</td>
+                      <td class="state">In review</td>
+                      <td class="updated">
+                        <time datetime={item.createdAt.toISOString()}>
+                          {item.createdAt.toLocaleDateString('en-SA', { timeZone: 'Asia/Riyadh' })}
+                        </time>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : (
+          <EmptyTableState
+            title="No document versions are waiting for your review"
+            description="This is the current result for your review permissions and owner scope."
+          />
+        )
+      ) : !reviewDenied && !providerUnavailable ? (
+        <section class="register" aria-labelledby="document-register-title">
+          <h2 id="document-register-title" class="sr-only">Controlled document register</h2>
+          {documents.length ? (
+            <>
+              <p class="result-count" role="status" aria-live="polite">
+                {countText}
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                aria-label="Controlled document register table"
+                tabindex="0"
+              >
+                <table>
+                  <caption>Controlled documents in your authorized scope</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Document code</th>
+                      <th scope="col">Title</th>
+                      <th scope="col">Type</th>
+                      <th scope="col">Current effective version</th>
+                      <th scope="col">Owner</th>
+                      <th scope="col">Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {documents.map((document) => (
+                      <tr>
+                        <th scope="row" class="document-number">
+                          <a href={`/documents/${document.id}`}>{document.documentNo}</a>
+                        </th>
+                        <td class="document-title">{document.title}</td>
+                        <td class="document-type">{document.documentType}</td>
+                        <td class="version-state">
+                          {document.currentEffectiveVersionId ? 'Available' : 'Not effective'}
+                        </td>
+                        <td class="owner">
+                          {accountLabel(document.ownerId ?? document.createdBy)}
+                        </td>
+                        <td class="updated">
+                          <time datetime={document.updatedAt.toISOString()}>
+                            {document.updatedAt.toLocaleDateString('en-SA', {
+                              timeZone: 'Asia/Riyadh',
+                            })}
+                          </time>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : hasFilters ? (
+            <EmptyTableState
+              title="No documents match these filters"
+              description="Nothing in your authorized scope matches the selected search or type."
+              clearHref="/documents"
+            />
+          ) : (
+            <EmptyTableState
+              title="No documents in this view"
+              description="Only documents you are permitted to view are shown."
+              actionLabel={canCreate ? 'Create document' : undefined}
+              actionHref={canCreate ? '/documents/new' : undefined}
+            />
+          )}
+        </section>
+      ) : null
+    }
+
+    {
+      !reviewMine && !reviewDenied && !providerUnavailable && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          itemLabel="documents"
+        />
+      )
+    }
+  </div>
 </AppLayout>
-<style>.head,.filters{display:flex;justify-content:space-between;gap:var(--space-5);align-items:flex-end}.head{align-items:flex-start;margin-bottom:var(--space-6)}h1{margin:.25rem 0 .4rem}.eyebrow{margin:0;color:var(--text-muted);font-size:.7rem;letter-spacing:.13em;font-weight:700}.head p:not(.eyebrow),.empty p{color:var(--text-muted);font-size:.85rem}.button,button{min-height:var(--control-height);padding:.6rem 1rem;border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);text-decoration:none;font:inherit;font-weight:700}.filters{justify-content:flex-start;margin-bottom:var(--space-5)}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}input{min-height:var(--control-height);padding:.6rem .7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--border-default);border-radius:var(--radius-sm);font:inherit}.table-wrap{overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:900px;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.85rem;text-align:start;border-top:1px solid var(--color-border-subtle);font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem}@media(max-width:650px){.head,.filters{display:grid}.button{width:max-content}}</style>
+
+<style>
+  .documents-register {
+    min-inline-size: 0;
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+  }
+  .filter-panel {
+    margin-block-end: var(--space-4);
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--card-radius);
+  }
+  .filter-panel-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-end: var(--space-4);
+  }
+  .filter-panel-heading h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+  }
+  .view-switch {
+    margin-block-end: var(--space-4);
+  }
+  .view-switch a,
+  .view-switch-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: underline;
+  }
+  .filter-panel :global(.filters) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    align-items: end;
+    margin: 0;
+  }
+  .filter-panel :global(label) {
+    min-inline-size: 0;
+  }
+  .filter-panel :global(input) {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    border-color: var(--control-border);
+  }
+  .filter-panel :global(.filters-actions),
+  .filter-panel :global(.advanced-filters),
+  .filter-panel :global(.filter-presets),
+  .filter-panel :global(.submit-status) {
+    grid-column: 1 / -1;
+  }
+  .filter-panel :global(.filter-presets) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+  }
+  .filter-panel :global(.filter-presets input),
+  .filter-panel :global(.filter-presets select) {
+    inline-size: auto;
+    max-inline-size: 100%;
+  }
+  .feedback-region {
+    margin-block-end: var(--space-4);
+  }
+  .state-panel {
+    padding: var(--space-8);
+    text-align: center;
+    background: var(--surface-panel);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-lg);
+  }
+  .state-panel h2 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+  }
+  .state-panel p {
+    margin: 0 auto;
+    max-inline-size: 52ch;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+  }
+  .register {
+    min-inline-size: 0;
+    background: var(--surface-panel);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .result-count {
+    margin: 0;
+    padding: var(--space-4) var(--space-5) var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .table-wrap {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .table-wrap:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: -2px;
+  }
+  table {
+    inline-size: 100%;
+    min-inline-size: 54rem;
+    border-collapse: collapse;
+    background: var(--surface-panel);
+  }
+  caption {
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-muted);
+    text-align: start;
+    font-size: var(--font-size-xs);
+  }
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    border-block-start: 1px solid var(--color-border-subtle);
+    text-align: start;
+    vertical-align: top;
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) {
+    background: var(--table-stripe-background);
+  }
+  .document-number {
+    min-inline-size: 9rem;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+  .document-number a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .document-title {
+    min-inline-size: 14rem;
+    white-space: normal;
+  }
+  .document-type,
+  .owner {
+    min-inline-size: 8rem;
+  }
+  .version-state,
+  .state {
+    min-inline-size: 8rem;
+  }
+  .revision {
+    min-inline-size: 5rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .updated {
+    min-inline-size: 8rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .register :global(.empty) {
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+  .documents-register :global(.empty h2) {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+  }
+  .documents-register :global(.empty p) {
+    margin: var(--space-2) auto 0;
+    max-inline-size: 46ch;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+  }
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (max-width: 760px) {
+    .filter-panel {
+      padding: var(--space-4);
+    }
+    .result-count {
+      padding-inline: var(--space-4);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-wrap {
+      scroll-behavior: auto;
+    }
+  }
+  @media (forced-colors: active) {
+    .filter-panel,
+    .register,
+    .button,
+    .table-wrap,
+    .state-panel {
+      border-color: CanvasText;
+    }
+    .table-wrap:focus-visible {
+      outline-color: Highlight;
+    }
+  }
+</style>

@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-DOCUMENTS / CAPA A controlled-documents register**
+  - Changed: `/documents` now uses the wide register order (header → native GET filters → server-derived chips → canonical count → table → pager). Long document numbers/titles/owner names wrap without truncation and row links meet 44px; denial and provider outage share one feedback region. Fields, read use cases, `PERM-DOC-CREATE` link, effective-version semantics, guards, routes and Sidebar are unchanged.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser/AT). Source and textual `git diff` review only; `AppliedFilters` consumer ratchet updated.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/documents/index.astro`, `tests/unit/ui/register-surface-contract.test.ts`.
 - **2026-10-22 — CA-P-CHANGE-REQUESTS-CHANGEREQUESTID-REVIEW / CAPA A review surface**
   - Changed: review now reads context → captured snapshot + server-derived before/after → recorded history first, then a decision rail that carries the existing START_REVIEW native POST, source-derived conditions (state, both review permissions, presentation SoD mirror) and a separate direct-decision boundary; pending/error share one canonical feedback region. Hidden `action`/`expectedVersion`, the transition action, snapshot/apply, guards, copy boundaries and Sidebar are unchanged.
   - Evidence: focused design-governance 11/11, register-surface 9/9 and the change-request mutation-safety case 1/1 PASS; Astro build PASS; `astro check` only the 2 unrelated CA-P-500 imports. Runtime/denied/responsive/keyboard/AT NOT RUN — presentation-only, no authenticated record used.
