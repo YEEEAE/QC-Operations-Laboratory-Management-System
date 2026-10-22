@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-ADMIN-USERS-NEW / CAPA A create-user form**
+  - Changed: page-only form hierarchy and responsive account-field layout; field names/action, independent create/role/scope guards, AppLayout/Sidebar and business behavior remain unchanged. No screenshot artifacts retained.
+  - Evidence: focused 23/23 and final Astro build PASS; `astro check` still has 2 unrelated CA-P-500 missing imports. Authenticated before/after, browser matrix/AT/real account guards NOT RUN; `audit/CA-P-ADMIN-USERS-NEW/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/admin/users/new.astro`, `tests/unit/admin/users-create-form-surface.test.ts`.
 - **2026-10-22 — CA-P-ADMIN-USERS / CAPA A users register**
   - Changed: `/admin/users` now has applied-filter chips/count and desktop-table/mobile-card presentations; read, role/scope projections, guards, Sidebar, API/schema, and mutation workflows remain unchanged.
   - Evidence: focused contracts 24/24 and Astro build PASS; `astro check` remains blocked by 2 unrelated CA-P-500 missing imports. Real-account matched browser, viewport/keyboard/zoom/contrast evidence NOT RUN; graph refresh BLOCKED (CLI unavailable). `audit/CA-P-ADMIN-USERS/execution-status.md`.

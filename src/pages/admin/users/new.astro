@@ -24,33 +24,40 @@ if (canAssignRoles) {
 ---
 
 <AppLayout title="Create user · Administration" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Create user</h1></Fragment>
-      
-      
-      <p class="lede">New members must change their temporary password at first sign-in.</p>
+  <PageHeader purpose="Create a member account and set its initial access where authorized."><Fragment slot="heading"><h1>Create user</h1></Fragment>
     <Fragment slot="actions"><a href="/admin/users">Back to users</a></Fragment></PageHeader>
   {
     canCreate ? (
       <form class="form" method="post" action="/admin/users/new" data-admin-create-user>
-        <label for="loginIdentity">
-          Login identity<span aria-hidden="true"> *</span>
-          <input id="loginIdentity" name="loginIdentity" required maxlength="200" autocomplete="username" />
-        </label>
-        <label for="displayName">
-          Display name<span aria-hidden="true"> *</span>
-          <input id="displayName" name="displayName" required maxlength="200" autocomplete="off" />
-        </label>
-        <label for="email">
-          Email (optional)
-          <input id="email" name="email" type="email" maxlength="320" autocomplete="email" />
-        </label>
-        <label for="temporaryPassword">
-          Temporary password<span aria-hidden="true"> *</span>
-          <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" />
-        </label>
+        <section class="form-section account-section" aria-labelledby="account-heading">
+          <div class="section-intro">
+            <h2 id="account-heading">Account details</h2>
+            <p class="note">Create an account first; initial roles and scopes are separate permissions.</p>
+          </div>
+          <div class="account-fields">
+            <label for="loginIdentity">
+              Login identity<span aria-hidden="true"> *</span>
+              <input id="loginIdentity" name="loginIdentity" required maxlength="200" autocomplete="username" />
+            </label>
+            <label for="displayName">
+              Display name<span aria-hidden="true"> *</span>
+              <input id="displayName" name="displayName" required maxlength="200" autocomplete="off" />
+            </label>
+            <label for="email">
+              Email (optional)
+              <input id="email" name="email" type="email" maxlength="320" autocomplete="email" />
+            </label>
+            <label for="temporaryPassword">
+              Temporary password<span aria-hidden="true"> *</span>
+              <input id="temporaryPassword" name="temporaryPassword" type="password" required autocomplete="new-password" aria-describedby="password-help" />
+              <span class="note" id="password-help">The member changes this password at first sign-in.</span>
+            </label>
+          </div>
+        </section>
         {canAssignRoles ? (
-          <fieldset>
+          <fieldset class="form-section grant-section">
             <legend>Initial roles (optional)</legend>
+            <p class="note">Role assignment requires a separate role-assignment permission.</p>
             {roles.map((role) => (
               <label class="check"><input type="checkbox" name="roleCode" value={role.code} /> {role.name} ({role.code})</label>
             ))}
@@ -64,7 +71,7 @@ if (canAssignRoles) {
           <p class="note">You can create the member without roles. Initial role assignment requires a separate role-assignment permission; an authorized administrator can add roles later.</p>
         )}
         {canAssignScopes ? (
-          <fieldset>
+          <fieldset class="form-section grant-section">
             <legend>Initial scopes (optional)</legend>
             <p class="note" id="scope-instructions">
               Kinds that name a collection require a value; GLOBAL is a whole-system grant and takes none.
@@ -96,9 +103,9 @@ if (canAssignRoles) {
         )}
         <div class="actions">
           <button type="submit" data-submit>Create user</button>
-          <a href="/admin/users">Cancel</a>
+          <a class="cancel-link" href="/admin/users">Cancel</a>
         </div>
-        <p role="status" data-result tabindex="-1" />
+        <p class="form-result" role="status" data-result tabindex="-1" aria-live="polite" />
       </form>
     ) : (
       <section class="denied" role="alert">
@@ -162,35 +169,22 @@ if (canAssignRoles) {
   }
 </script>
 <style>
-  .page-head {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-5);
-    align-items: start;
-    margin-bottom: var(--space-6);
-  }
-  .eyebrow {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-  }
-  h1 {
-    margin: 0.25rem 0;
-  }
-  .lede {
-    color: var(--text-muted);
-    font-size: 0.86rem;
-  }
   .form {
     display: grid;
-    gap: var(--space-4);
-    max-width: 720px;
-    padding: var(--space-5);
+    gap: var(--space-5);
+    max-width: 760px;
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
     background: var(--surface-panel);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-lg);
+  }
+  .form-section { min-inline-size: 0; }
+  .account-section { display: grid; gap: var(--space-4); }
+  .section-intro h2 { margin: 0; font-size: var(--font-size-lg); }
+  .section-intro .note { margin-block-start: var(--space-1); }
+  .account-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  @media (min-width: 760px) {
+    .account-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   .denied {
     padding: var(--space-5);
@@ -207,16 +201,24 @@ if (canAssignRoles) {
   label {
     display: grid;
     gap: 0.4rem;
-    font-size: 0.85rem;
+    min-inline-size: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
   }
   input {
     min-height: 44px;
+    min-width: 0;
+    width: 100%;
     padding: 0.7rem;
     background: var(--surface-page);
     color: inherit;
     font: inherit;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
+  }
+  input:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
   }
   .note {
     margin: 0;
@@ -226,7 +228,7 @@ if (canAssignRoles) {
   }
   fieldset {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--space-3);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
     padding: var(--space-4);
@@ -235,7 +237,8 @@ if (canAssignRoles) {
   legend {
     padding: 0 0.4rem;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 700;
   }
   .scope-row {
     display: grid;
@@ -249,6 +252,7 @@ if (canAssignRoles) {
   }
   .check {
     display: flex;
+    min-block-size: 44px;
     gap: 0.5rem;
     align-items: center;
     flex-direction: row;
@@ -260,26 +264,39 @@ if (canAssignRoles) {
   }
   .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-3);
     align-items: center;
+    padding-block-start: var(--space-2);
+    border-block-start: 1px solid var(--color-border-subtle);
   }
   button {
     border: 0;
-    padding: 0.7rem 1rem;
+    min-height: 44px;
+    padding: 0.7rem 1.1rem;
     background: var(--color-accent-primary);
     color:var(--text-on-accent);
     border-radius: var(--radius-md);
     font-weight: 700;
+    cursor: pointer;
   }
-  a {
+  .cancel-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: var(--space-2);
     color: var(--color-accent-primary-hover);
   }
+  .form-result:empty { display: none; }
+  .form-result { min-height: 44px; margin: 0; padding: var(--space-3); border-radius: var(--radius-sm); }
+  .form-result:not(:empty) { background: var(--surface-inset); }
   @media (max-width: 600px) {
-    .page-head {
-      display: grid;
-    }
     .scope-row {
       grid-template-columns: minmax(0, 1fr);
     }
+  }
+  @media (forced-colors: active) {
+    .form, fieldset, input, .actions { border-color: CanvasText; }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline-color: Highlight; }
   }
 </style>
