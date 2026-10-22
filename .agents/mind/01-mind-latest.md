@@ -1,3 +1,8 @@
+- **2026-10-22 — CA-P-APPROVALS / CAPA A approvals register**
+  - Changed: register presentation now separates recorded work-item state from server-resolved decision availability; source reads, owner policy, detail actions, Sidebar and domain authority unchanged.
+  - Evidence: focused surface/owner-policy tests 22/22 and Astro build PASS; `astro check` remains blocked by 2 unrelated CA-P-500 imports. Populated authenticated comparison and responsive/keyboard/zoom/contrast browser acceptance NOT RUN because disposable DB contains no approval records. Graph refresh BLOCKED (CLI unavailable); details `audit/CA-P-APPROVALS/execution-status.md`.
+  - State: PARTIAL.
+  - Key files: `src/pages/approvals/index.astro`, `tests/unit/approvals/approvals-register-surface.test.ts`.
 - **2026-10-22 — CA-P-ADMIN-USERS-NEW / CAPA A create-user form**
   - Changed: page-only form hierarchy and responsive account-field layout; field names/action, independent create/role/scope guards, AppLayout/Sidebar and business behavior remain unchanged. No screenshot artifacts retained.
   - Evidence: focused 23/23 and final Astro build PASS; `astro check` still has 2 unrelated CA-P-500 missing imports. Authenticated before/after, browser matrix/AT/real account guards NOT RUN; `audit/CA-P-ADMIN-USERS-NEW/execution-status.md`.
