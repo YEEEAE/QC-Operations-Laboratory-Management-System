@@ -45,17 +45,24 @@ if (role) {
 
 const granted = new Set((grants ?? []).map(String));
 const canAssign = hasAdminCapability(actor, 'assignRolePermissions') && (role?.active ?? false);
+const canViewAudit = hasAdminCapability(actor, 'viewAudit');
 const version = role?.version.toString() ?? '0';
 ---
 
 <AppLayout title="Role detail · Administration" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>{role?.name ?? 'Role detail'}</h1></Fragment>
-      
-      
-      <p class="lede">
-        {role ? `${role.name} · ${role.code} · ${stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')} · Version ${version}` : ''}
-      </p>
-    <Fragment slot="actions"><a href="/admin/roles">Back to roles</a></Fragment></PageHeader>
+  <PageHeader>
+    <Fragment slot="heading"><h1>{role?.name ?? 'Role detail'}</h1></Fragment>
+    {role && (
+      <div class="record-meta" aria-label="Role identity and state">
+        <code>{role.code}</code>
+        <span class:list={['state', role.active ? 'state-active' : 'state-inactive']}>
+          {stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')}
+        </span>
+        <span class="record-version">Record version {version}</span>
+      </div>
+    )}
+    <Fragment slot="actions"><a class="back-link" href="/admin/roles">Back to roles</a></Fragment>
+  </PageHeader>
   {
     denied || !role ? (
       <section class="denied" role="alert">
@@ -65,89 +72,119 @@ const version = role?.version.toString() ?? '0';
         </p>
       </section>
     ) : (
-      <div class="grid">
-        <section class="panel">
-          <p class="eyebrow">ROLE</p>
-          <h2>Configuration</h2>
-          <dl>
-            <div>
-              <dt>Code</dt>
-              <dd>{role.code}</dd>
-            </div>
-            <div>
-              <dt>System role</dt>
-              <dd>{role.isSystemRole ? 'System role' : 'Custom role'}</dd>
-            </div>
-            <div>
-              <dt>Description</dt>
-              <dd>{role.description ?? '—'}</dd>
-            </div>
+      <div class="detail-layout">
+        <section class="panel facts-panel" aria-labelledby="role-facts-heading">
+          <div class="section-heading">
+            <div><p class="eyebrow">ROLE RECORD</p><h2 id="role-facts-heading">Facts</h2></div>
+            <span class="read-only-label">Read-only</span>
+          </div>
+          <dl class="facts-list">
+            <div><dt>Role name</dt><dd>{role.name}</dd></div>
+            <div><dt>Code</dt><dd><code>{role.code}</code></dd></div>
+            <div><dt>State</dt><dd>{stateLabel(role.active ? 'ACTIVE' : 'INACTIVE')}</dd></div>
+            <div><dt>Role type</dt><dd>{role.isSystemRole ? 'System role' : 'Custom role'}</dd></div>
+            <div class="description-fact"><dt>Description</dt><dd>{role.description ?? 'Not provided'}</dd></div>
           </dl>
           {!role.active && (
-            <p class="note">
+            <p class="note inactive-note">
               This role is inactive. Permission grants cannot change until it is reactivated
               through the approved workflow.
             </p>
           )}
         </section>
-        <section class="panel">
-          <p class="eyebrow">PERMISSION GRANTS</p>
-          <h2>Canonical grants</h2>
-          {catalogRestricted || !catalog ? (
-            <p class="note">
+
+        <section class="panel evidence-panel" aria-labelledby="grants-heading">
+          <div class="section-heading">
+            <div><p class="eyebrow">AUTHORIZATION RELATIONSHIP</p><h2 id="grants-heading">Permission grants</h2></div>
+            <span class="read-only-label">Current record</span>
+          </div>
+          {catalogRestricted || !catalog || !grants ? (
+            <p class="note" role="status">
               Role grant details are temporarily unavailable. Retry this page to read the current grants.
             </p>
-          ) : canAssign ? (
-            <form method="post" class="form" data-role-grants data-role={role.id} data-version={version}>
-              <p class="note">
-                Replacing grants is a high-risk, audited mutation. The current version is
-                required; stale versions are rejected without overwriting.
-              </p>
-              <div class="grants">
-                {catalog.map((permission) => (
-                  <label class="check">
-                    <input
-                      type="checkbox"
-                      name="permission"
-                      value={permission.code}
-                      checked={granted.has(permission.code)}
-                    />
-                    <span>
-                      <strong>{permission.description || `${permission.domain} ${permission.action}`}</strong>
-                      <code class="code-secondary">{permission.code}</code>
-                      <small>
-                        {stateLabel(permission.domain)} · {stateLabel(permission.action)} · {stateLabel(permission.riskLevel)}
-                      </small>
-                    </span>
-                  </label>
-                ))}
-              </div>
-              <div class="actions">
-              <button type="submit" data-submit>Replace grants</button>
-              </div>
-              <p role="status" data-result tabindex="-1" />
-            </form>
+          ) : grants.length ? (
+            <ul class="grants-read" aria-label="Current permission grants">
+              {grants.map((code) => {
+                const permission = catalog.find((item) => item.code === code);
+                return (
+                  <li>
+                    <strong>{permission?.description || `${permission?.domain ?? 'Permission'} ${permission?.action ?? ''}`}</strong>
+                    <code>{code}</code>
+                    {permission && <small>{stateLabel(permission.domain)} · {stateLabel(permission.action)} · {stateLabel(permission.riskLevel)}</small>}
+                  </li>
+                );
+              })}
+            </ul>
           ) : (
-            <div>
-              {grants?.length ? (
-                <ul class="grants-read">
-                  {grants.map((code) => (
-                    <li>
-                      {catalog?.find((permission) => permission.code === code)?.description ?? code}
-                      <code class="code-secondary">{code}</code>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p class="note">No active grants on this role.</p>
-              )}
-              <p class="note">
-                Changing grants requires the explicit permission-assignment grant on an active
-                role.
-              </p>
-            </div>
+            <p class="empty-note">No active grants on this role.</p>
           )}
+          <p class="note evidence-note">
+            These are the active permission grants returned by the authorization read model. They do not by themselves show whether a specific action is currently eligible.
+          </p>
         </section>
+
+        <section class="panel history-panel" aria-labelledby="history-heading">
+          <div class="section-heading">
+            <div><p class="eyebrow">RECORDED CHANGES</p><h2 id="history-heading">Audit history</h2></div>
+          </div>
+          <p class="note">Permission changes are recorded in the audit trail. This page does not load or reproduce audit payloads.</p>
+          {canViewAudit ? (
+            <a class="audit-link" href={`/audit?subjectType=ROLE&subjectId=${encodeURIComponent(role.id)}`}>Open role audit history</a>
+          ) : (
+            <p class="muted-note">Audit history is not available for this account.</p>
+          )}
+          <p class="source-note">Member assignments are not supplied by the role-detail read source.</p>
+        </section>
+
+        {catalogRestricted || !catalog || !grants ? (
+          <section class="panel edit-panel" aria-labelledby="grant-edit-heading">
+            <div class="section-heading"><div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Edit permission grants</h2></div></div>
+            <p class="note" role="status">Grant editing is unavailable because the current permission data could not be read.</p>
+          </section>
+        ) : canAssign ? (
+          <section class="panel edit-panel" aria-labelledby="grant-edit-heading">
+            <div class="section-heading">
+              <div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Edit permission grants</h2></div>
+              <span class="edit-label">Replace grants</span>
+            </div>
+            <p class="note">
+              Replacing grants is a high-risk, audited mutation. The current role version is required; stale versions are rejected without overwriting.
+            </p>
+            <form method="post" class="form" data-role-grants data-role={role.id} data-version={version}>
+              <fieldset class="grant-options">
+                <legend>Available permissions</legend>
+                <div class="grants">
+                  {catalog.map((permission) => (
+                    <label class="check" for={`permission-${permission.code}`}>
+                      <input
+                        id={`permission-${permission.code}`}
+                        type="checkbox"
+                        name="permission"
+                        value={permission.code}
+                        checked={granted.has(permission.code)}
+                      />
+                      <span class="permission-copy">
+                        <strong>{permission.description || `${permission.domain} ${permission.action}`}</strong>
+                        <code class="code-secondary">{permission.code}</code>
+                        <small>
+                          {stateLabel(permission.domain)} · {stateLabel(permission.action)} · {stateLabel(permission.riskLevel)}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div class="actions"><button type="submit" data-submit>Replace grants</button></div>
+              <p class="mutation-result" role="status" aria-live="polite" data-result tabindex="-1"></p>
+            </form>
+          </section>
+        ) : (
+          <section class="panel edit-panel" aria-labelledby="grant-edit-heading">
+            <div class="section-heading"><div><p class="eyebrow">CONTROLLED ACTION</p><h2 id="grant-edit-heading">Edit permission grants</h2></div></div>
+            <p class="note">Changing grants requires the explicit permission-assignment grant on an active role.</p>
+            <p class="muted-note">Grant editing is read-only for this account or this inactive role.</p>
+          </section>
+        )}
       </div>
     )
   }
@@ -161,9 +198,11 @@ const version = role?.version.toString() ?? '0';
     if (!form || form.getAttribute('aria-busy') === 'true') return;
     const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
     let output = form.querySelector<HTMLElement>('[data-result]');
-    if (!output) { output = document.createElement('p'); output.setAttribute('data-result',''); output.setAttribute('role','status'); output.setAttribute('tabindex','-1'); form.appendChild(output); }
+    if (!output) { output = document.createElement('p'); output.setAttribute('data-result',''); output.setAttribute('role','status'); output.setAttribute('aria-live','polite'); output.setAttribute('tabindex','-1'); form.appendChild(output); }
     form.setAttribute('aria-busy', 'true');
     if (submit) submit.disabled = true;
+    output.setAttribute('role', 'status');
+    output.setAttribute('aria-live', 'polite');
     output.textContent = 'Replacing grants…';
     try {
       const permissionCodes = [...form.querySelectorAll<HTMLInputElement>('input[name="permission"]')].filter((input) => input.checked).map((input) => String(input.value));
@@ -179,47 +218,45 @@ const version = role?.version.toString() ?? '0';
         UNKNOWN_SAFE_ERROR: 'Grant replacement is unconfirmed. Review the role and its history before deciding whether to try again.',
       };
       output.textContent = copy[outcome.state] ?? copy.UNKNOWN_SAFE_ERROR;
+      output.setAttribute('role', 'alert');
+      output.setAttribute('aria-live', 'assertive');
       output.focus?.();
     } catch {
+      output.setAttribute('role', 'alert');
+      output.setAttribute('aria-live', 'assertive');
       output.textContent = 'The service did not confirm the result. Refresh the role and its history before deciding whether to try again.';
       output.focus?.();
     } finally { form.removeAttribute('aria-busy'); if (submit) submit.disabled = false; }
   });
 </script>
 <style>
-  .page-head {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-5);
-    align-items: start;
-    margin-bottom: var(--space-6);
-  }
-  h1 {
-    margin: 0.25rem 0;
-  }
+  .record-meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+  .record-meta code, .facts-list code { overflow-wrap: anywhere; }
+  .record-version, .read-only-label, .edit-label { color: var(--text-secondary); font-size: var(--font-size-xs); }
+  .state { display: inline-flex; align-items: center; min-height: 28px; padding-inline: 0.6rem; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); font-size: var(--font-size-xs); font-weight: 700; }
+  .state-active { color: var(--status-success); }
+  .state-inactive { color: var(--status-warning); }
+  .back-link, .audit-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-5); align-items: start; }
+  .facts-panel, .history-panel { grid-column: 1; }
+  .evidence-panel, .edit-panel { grid-column: 2; }
   .eyebrow {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
     letter-spacing: 0.12em;
     font-weight: 700;
   }
-  .lede {
-    color: var(--text-muted);
-    font-size: 0.86rem;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
-    gap: var(--space-5);
-  }
   .panel,
   .denied {
-    padding: var(--space-5);
+    min-width: 0;
+    padding: clamp(var(--space-4), 2vw, var(--space-6));
     background: var(--surface-panel);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-lg);
   }
+  .section-heading { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .section-heading h2 { margin: 0.3rem 0 0; }
   .denied {
     border-inline-start: 3px solid var(--status-warning);
   }
@@ -228,101 +265,97 @@ const version = role?.version.toString() ?? '0';
     font-size: 0.84rem;
   }
   h2 {
-    margin: 0.25rem 0 0;
+    margin: 0;
     font-size: 1rem;
   }
-  dl {
+  .facts-list {
     display: grid;
     gap: var(--space-3);
-    margin: var(--space-4) 0 0;
+    margin: 0;
   }
-  dl div {
-    display: flex;
-    justify-content: space-between;
+  .facts-list div {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.7fr) minmax(0, 1fr);
     gap: var(--space-4);
     border-bottom: 1px solid var(--color-border-subtle);
-    padding-bottom: 0.55rem;
+    padding-block-end: 0.7rem;
   }
-  dt {
+  dt, .source-note {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
   }
   dd {
     margin: 0;
-    text-align: end;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 700;
+    overflow-wrap: anywhere;
   }
-  .note {
+  .note, .muted-note, .empty-note {
     color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     line-height: 1.5;
   }
+  .inactive-note, .evidence-note { margin-block-end: 0; }
+  .muted-note { margin-block: 0; }
+  .source-note { margin-block: var(--space-4) 0; }
+  .empty-note { padding: var(--space-4); border: 1px dashed var(--color-border-subtle); border-radius: var(--radius-md); }
   .form {
     display: grid;
     gap: var(--space-4);
-    margin-top: var(--space-4);
+    margin-block-start: var(--space-4);
   }
+  .grant-options { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+  .grant-options legend { margin-block-end: var(--space-3); font-size: 0.875rem; font-weight: 700; }
   .grants {
     display: grid;
     gap: var(--space-2);
-    max-height: 480px;
+    max-height: min(34rem, 65vh);
     overflow-y: auto;
+    padding: 1px;
   }
   .check {
     display: flex;
     gap: 0.6rem;
-    align-items: start;
-    font-size: 0.82rem;
-    padding: 0.5rem;
+    align-items: flex-start;
+    min-height: 44px;
+    min-width: 0;
+    padding: 0.65rem;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-sm);
   }
-  .check small {
-    display: block;
-    color: var(--text-muted);
-  }
-  .grants-read {
-    list-style: none;
-    margin: var(--space-4) 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .code-secondary {
-    display: block;
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    font-weight: 400;
-  }
-  .grants-read code {
-    padding: 0.2rem 0.45rem;
-    background: var(--surface-page);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-  }
-  .actions {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
-  }
+  .check input { flex: 0 0 auto; inline-size: 1rem; block-size: 1rem; margin: 0.2rem 0 0; }
+  .permission-copy { min-width: 0; display: grid; gap: 0.25rem; }
+  .check small, .grants-read small { display: block; color: var(--text-muted); font-size: var(--font-size-xs); }
+  .grants-read { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+  .grants-read li { min-width: 0; display: grid; gap: 0.35rem; padding: var(--space-3); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); }
+  .grants-read strong { font-size: 0.875rem; overflow-wrap: anywhere; }
+  .grants-read code { color: var(--text-muted); font-size: var(--font-size-xs); overflow-wrap: anywhere; }
+  .actions { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
   button {
+    min-height: 44px;
     border: 0;
     padding: 0.65rem 1rem;
     background: var(--color-accent-primary);
-    color:var(--text-on-accent);
+    color: var(--text-on-accent);
     border-radius: var(--radius-md);
+    font: inherit;
     font-weight: 700;
+    cursor: pointer;
   }
-  a {
-    color: var(--color-accent-primary-hover);
+  button:disabled { opacity: 0.7; cursor: progress; }
+  a { color: var(--color-accent-primary-hover); }
+  .mutation-result:empty { display: none; }
+  .mutation-result { margin: 0; padding: var(--space-3); border-inline-start: 3px solid var(--status-error); color: var(--text-primary); font-size: 0.875rem; }
+  @media (max-width: 900px) {
+    .detail-layout { grid-template-columns: minmax(0, 1fr); }
+    .facts-panel, .history-panel, .evidence-panel, .edit-panel { grid-column: 1; }
   }
-  @media (max-width: 760px) {
-    .page-head,
-    .grid {
-      display: grid;
-    }
+  @media (max-width: 480px) {
+    .facts-list div { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
+  }
+  @media (forced-colors: active) {
+    .state, .panel, .check, .grants-read li, .empty-note { border-color: CanvasText; }
+    .state-active, .state-inactive { color: CanvasText; }
+    .mutation-result { border-color: Mark; }
   }
 </style>
