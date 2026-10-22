@@ -6,8 +6,11 @@ import AppLayout from '../../../ui/layouts/AppLayout.astro';
 import PolicyBlocker from '../../../ui/components/feedback/PolicyBlocker.astro';
 import Pagination from '../../../ui/components/data/Pagination.astro';
 import ProviderUnavailableState from '../../../ui/components/feedback/ProviderUnavailableState.astro';
+import AppliedFilters from '../../../ui/components/data/AppliedFilters.astro';
 import { rcaReadDependencies } from '../../../modules/quality/rca/application/dependencies.js';
 import { ncrReadDependencies } from '../../../modules/quality/ncr/application/dependencies.js';
+import { findingsReadDependencies } from '../../../modules/quality/findings/application/dependencies.js';
+import { capaReadDependencies } from '../../../modules/quality/capa/application/dependencies.js';
 import { stateLabel } from '../../../shared/copy/ux-vocabulary.js';
 import { readOutcome } from '../../../shared/errors/read-outcome.js';
 
@@ -50,27 +53,101 @@ const ncrs = ncrResult.status === 'AVAILABLE' ? ncrResult.value : [];
 const unavailable = rcaResult.status === 'UNAVAILABLE';
 const primaryNotVisible = rcaResult.status === 'NOT_VISIBLE';
 const ncrById = new Map(ncrs.map((ncr) => [ncr.id, ncr]));
+const ncrLookupFailures = new Map<string, 'NOT_VISIBLE' | 'UNAVAILABLE'>();
 await Promise.all([...new Set(rcas.map((rca) => rca.ncrId))].filter((id) => !ncrById.has(id)).map(async (id) => {
   const result = await readOutcome(() => ncrReadDependencies().get.execute({ actor, id }));
   if (result.status === 'AVAILABLE') ncrById.set(id, result.value);
+  else ncrLookupFailures.set(id, result.status);
 }));
+const ncrLookupUnavailable = [...ncrLookupFailures.values()].includes('UNAVAILABLE');
 const rows = rcas.map((rca) => ({ rca, ncr: ncrById.get(rca.ncrId) }));
+const findingIds = [...new Set([...ncrById.values()].flatMap((ncr) => ncr.findingId ? [ncr.findingId] : []))];
+const [findingResults, capaResult] = await Promise.all([
+  Promise.all(findingIds.map(async (id) => [id, await readOutcome(() => findingsReadDependencies().get.execute({ actor, id }))] as const)),
+  readOutcome(() => capaReadDependencies().list.execute({ actor })),
+]);
+const findingById = new Map(findingResults.flatMap(([id, result]) => result.status === 'AVAILABLE' ? [[id, result.value] as const] : []));
+const findingUnavailable = findingResults.some(([, result]) => result.status === 'UNAVAILABLE');
+const capas = capaResult.status === 'AVAILABLE' ? capaResult.value : [];
+const activeFilters = [
+  ...(state ? [{ label: 'State', value: stateLabel(state), href: ncrId ? `/quality/rca?ncrId=${encodeURIComponent(ncrId)}` : '/quality/rca' }] : []),
+  ...(ncrId ? [{ label: 'NCR', value: ncrById.get(ncrId)?.ncrNo ?? ncrId, href: state ? `/quality/rca?state=${encodeURIComponent(state)}` : '/quality/rca' }] : []),
+];
+const total = rcaResult.status === 'AVAILABLE' ? rcaResult.value.total : 0;
 ---
 <AppLayout title="RCA · Quality" locale="en" direction="ltr">
-  <PageHeader><Fragment slot="heading"><h1>Root-cause analyses</h1></Fragment><p class="lede">Root cause analyses linked to NCRs.</p></PageHeader>
+  <PageHeader>
+    <Fragment slot="heading"><h1>Root-cause analyses</h1></Fragment>
+    <p class="lede">Root cause analyses linked to NCRs.</p>
+  </PageHeader>
+
+  <section class="register-filters" aria-label="Filter root-cause analyses">
+    <form class="filters" method="get" role="search" aria-label="Filter root-cause analyses">
+      <label for="state">State
+        <select id="state" name="state">
+          <option value="">All states</option>
+          {states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}
+        </select>
+      </label>
+      {ncrId && <input type="hidden" name="ncrId" value={ncrId} />}
+      <button type="submit">Apply filter</button>
+    </form>
+    <AppliedFilters filters={activeFilters} clearHref={(state || ncrId) ? '/quality/rca' : undefined} note="Showing analyses in your authorized scope" />
+  </section>
+
   <PolicyBlocker title="Controlled decisions" decisions={[{ id: 'PD-17', owner: 'QMS owner', consequence: 'NCR closure authority remains unresolved. RCA drafts and analysis submission are available. Approval and NCR closure require the controlled QMS decision; submission does not approve or close the source NCR.' }]} />
-  {ncrs.filter((ncr) => !['CLOSED', 'VOID'].includes(ncr.state)).length > 0 && <section class="policy"><h2>Create linked RCA draft</h2>
-    {createError && <p role="alert">{createError}</p>}
+  <!-- Source states: READ = available/empty/not-visible/unavailable from readOutcome; FILTER = native GET state + NCR; AUTH = create action denial is surfaced from the guarded rca.create action. EXPORT = N/A (no export control or export source on this page). -->
+
+  {ncrResult.status === 'UNAVAILABLE' && <p class="source-status" role="status">{ncrId && !requestedNcrVisible ? 'The selected NCR source is temporarily unavailable. No linked analysis details are shown.' : 'Linked NCR details are temporarily unavailable; RCA records remain available.'}</p>}
+  {ncrResult.status === 'AVAILABLE' && ncrId && !requestedNcrVisible && <p class="source-status" role="status">The selected NCR is not visible in your authorized scope. Showing no record details for that reference.</p>}
+  {ncrLookupUnavailable && ncrResult.status !== 'UNAVAILABLE' && <p class="source-status" role="status">Some linked NCR details are temporarily unavailable; RCA records remain available.</p>}
+  {findingUnavailable && <p class="source-status" role="status">Finding references are temporarily unavailable; RCA and NCR records remain available.</p>}
+  {capaResult.status === 'UNAVAILABLE' && <p class="source-status" role="status">CAPA references are temporarily unavailable; RCA and NCR records remain available.</p>}
+
+  {unavailable ? <ProviderUnavailableState title="RCA records are temporarily unavailable" /> : primaryNotVisible ? <p role="status">RCA records are not available in your authorized scope.</p> : <>
+    <p class="register-count">{total} authorized root-cause analys{total === 1 ? 'is' : 'es'}</p>
+    {rcas.length ? <div class="table-wrap" role="region" aria-label="Root-cause analysis records" tabindex="0">
+      <table>
+        <caption>Root-cause analyses with their linked quality records and recorded analysis context</caption>
+        <thead><tr><th scope="col">RCA</th><th scope="col">Linked NCR</th><th scope="col">Source finding</th><th scope="col">State</th><th scope="col">Method and root cause</th><th scope="col">Linked CAPA</th><th scope="col">Next step</th></tr></thead>
+        <tbody>{rows.map(({ rca, ncr }) => {
+          const findingId = ncr?.findingId;
+          const finding = findingId ? findingById.get(findingId) : undefined;
+          const relatedCapas = capas.filter((capa) => capa.ncrId === rca.ncrId);
+          return <tr>
+            <th scope="row"><a class="record-link" href={`/quality/rca/${rca.id}`}>{rca.rcaNo ?? (ncr ? `RCA for ${ncr.ncrNo}` : 'Root-cause analysis')}</a><code class="record-id">{rca.id}</code></th>
+            <td>{ncr ? <><a class="record-link" href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a><span class="record-context">{ncr.title}</span><span class="record-context">{stateLabel(ncr.state)}</span><code class="record-id">{ncr.id}</code></> : ncrResult.status === 'UNAVAILABLE' || ncrLookupFailures.get(rca.ncrId) === 'UNAVAILABLE' ? 'NCR source unavailable' : 'Linked NCR not visible in your scope'}</td>
+            <td>{finding ? <><a class="record-link" href={`/quality/findings/${finding.id}`}>{finding.findingNo}</a><span class="record-context">{finding.title}</span><code class="record-id">{finding.id}</code></> : findingId ? findingResults.find(([id]) => id === findingId)?.[1].status === 'UNAVAILABLE' ? 'Finding source unavailable' : <>Finding not visible in your scope<code class="record-id">{findingId}</code></> : 'No source finding linked to this NCR'}</td>
+            <td>{stateLabel(rca.state)}</td>
+            <td>{rca.method && <span class="record-context"><strong>Method:</strong> {rca.method}</span>}{rca.rootCause ? <span class="record-context"><strong>Root cause:</strong> {rca.rootCause}</span> : <span class="record-context">Root cause not recorded</span>}{rca.analysis && <details><summary>Analysis text</summary><p>{rca.analysis}</p></details>}</td>
+            <td>{relatedCapas.length ? <ul class="related-list">{relatedCapas.map((capa) => <li><a class="record-link" href={`/quality/capa/${capa.id}`}>{capa.capaNo}</a><span class="record-context">{stateLabel(capa.state)}</span><code class="record-id">{capa.id}</code></li>)}</ul> : capaResult.status === 'UNAVAILABLE' ? 'CAPA source unavailable' : ncr ? 'No CAPA linked to this NCR' : 'NCR link unavailable'}</td>
+            <td>{rca.state === 'RETURNED' ? 'Returned for authorized revision' : rca.state === 'SUBMITTED' ? 'Awaiting authorized review' : rca.state === 'APPROVED' ? ncr ? <a class="record-link" href={`/quality/ncr/${ncr.id}`}>Return to NCR record</a> : 'NCR not visible' : <a class="record-link" href={`/quality/rca/${rca.id}`}>Open analysis</a>}</td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </div> : <section class="empty"><h2>No RCA records in this view</h2><p>{ncrId ? 'No linked analysis is visible for this NCR.' : state ? 'Clear the filter to see analyses in your authorized scope.' : 'No current root-cause analyses are available in your authorized scope.'}</p>{(state || ncrId) && <a href="/quality/rca">Clear filters</a>}</section>}
+  </>}
+  {rcaResult.status === 'AVAILABLE' && <Pagination page={rcaResult.value.page} totalPages={Math.max(1, Math.ceil(rcaResult.value.total / rcaResult.value.pageSize))} total={rcaResult.value.total} itemLabel="root-cause analyses" />}
+  {sourcePaging && sourcePaging.total > sourcePaging.pageSize && <nav class="source-pagination" aria-label="NCR source pages"><span>NCR sources: page {sourcePaging.page} of {Math.ceil(sourcePaging.total / sourcePaging.pageSize)}</span>{sourcePaging.page > 1 && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), sourcePage: String(sourcePaging.page - 1) })}`}>Previous NCR sources</a>}{sourcePaging.page * sourcePaging.pageSize < sourcePaging.total && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), sourcePage: String(sourcePaging.page + 1) })}`}>Next NCR sources</a>}</nav>}
+
+  {ncrs.filter((ncr) => !['CLOSED', 'VOID'].includes(ncr.state)).length > 0 && <section class="policy" aria-labelledby="create-rca-heading"><h2 id="create-rca-heading">Create linked RCA draft</h2>
+    {createError && <p class="create-error" role="alert">{createError}</p>}
     <p>Select the scoped NCR source. Each draft remains a separate analysis record.</p>
     {ncrs.filter((ncr) => !['CLOSED', 'VOID'].includes(ncr.state)).map((ncr) => <form method="post"><input type="hidden" name="ncrId" value={ncr.id} /><input type="hidden" name="expectedNcrVersion" value={submittedNcr === ncr.id && createError ? submittedNcrVersion : ncr.version.toString()} /><button type="submit">Create RCA draft for {ncr.ncrNo}</button></form>)}
   </section>}
-  <form class="filters" method="get"><label for="state">State<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>{ncrId && <input type="hidden" name="ncrId" value={ncrId} />}<button type="submit">Apply filter</button>{(state || ncrId) && <a href="/quality/rca">Clear filters</a>}</form>
-  {ncrId && !requestedNcrVisible && ncrResult.status === 'UNAVAILABLE' && <p class="context" role="status">The selected NCR source is temporarily unavailable. No linked analysis details are shown.</p>}
-  {ncrId && ncrResult.status === 'AVAILABLE' && !requestedNcrVisible && <p class="context" role="status">The selected NCR is not visible in your authorized scope. Showing no record details for that reference.</p>}
-  {unavailable ? <ProviderUnavailableState title="RCA records are temporarily unavailable" /> : primaryNotVisible ? <p role="status">RCA records are not available in your authorized scope.</p> : <>{ncrResult.status === 'UNAVAILABLE' && <p role="status">Linked NCR details are temporarily unavailable; RCA records remain available.</p>}{rcas.length ? <div class="table-wrap"><table><caption>{rcaResult.status === "AVAILABLE" ? rcaResult.value.total : 0} authorized root-cause analys{rcaResult.status === "AVAILABLE" && rcaResult.value.total === 1 ? 'is' : 'es'}</caption><thead><tr><th scope="col">RCA</th><th scope="col">Linked NCR</th><th scope="col">State</th><th scope="col">Root cause recorded</th><th scope="col">Next step</th></tr></thead><tbody>{rows.map(({ rca, ncr }) => <tr><th scope="row"><a href={`/quality/rca/${rca.id}`}>{rca.rcaNo ?? (ncr ? `RCA for ${ncr.ncrNo}` : 'Root-cause analysis')}</a></th><td>{ncr ? <a href={`/quality/ncr/${ncr.id}`}>{ncr.ncrNo}</a> : ncrResult.status === 'UNAVAILABLE' ? 'NCR source unavailable' : 'Linked NCR not visible in your scope'}</td><td>{stateLabel(rca.state)}</td><td>{rca.rootCause ? 'Recorded' : 'Not recorded'}</td><td>{rca.state === 'RETURNED' ? 'Returned for authorized revision' : rca.state === 'SUBMITTED' ? 'Awaiting authorized review' : rca.state === 'APPROVED' ? ncr ? <a href={`/quality/ncr/${ncr.id}`}>Return to NCR record</a> : 'NCR not visible' : <a href={`/quality/rca/${rca.id}`}>Open analysis</a>}</td></tr>)}</tbody></table></div> : <section class="empty"><h2>No RCA records in this view</h2><p>{ncrId ? 'No linked analysis is visible for this NCR.' : state ? 'Clear the filter to see analyses in your authorized scope.' : 'No current root-cause analyses are available in your authorized scope.'}</p>{(state || ncrId) && <a href="/quality/rca">Clear filters</a>}</section>}</>}
-  {rcaResult.status === 'AVAILABLE' && <Pagination page={rcaResult.value.page} totalPages={Math.max(1, Math.ceil(rcaResult.value.total / rcaResult.value.pageSize))} total={rcaResult.value.total} itemLabel="root-cause analyses" />}
-  {sourcePaging && sourcePaging.total > sourcePaging.pageSize && <nav aria-label="NCR source pages"><span>NCR sources: page {sourcePaging.page} of {Math.ceil(sourcePaging.total / sourcePaging.pageSize)}</span>{sourcePaging.page > 1 && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), sourcePage: String(sourcePaging.page - 1) })}`}>Previous NCR sources</a>}{sourcePaging.page * sourcePaging.pageSize < sourcePaging.total && <a href={`?${new URLSearchParams({ ...Object.fromEntries(Astro.url.searchParams), sourcePage: String(sourcePaging.page + 1) })}`}>Next NCR sources</a>}</nav>}
 </AppLayout>
 <style>
-  .page-head{margin-bottom:var(--space-5)}h1{margin:.25rem 0}.eyebrow,.lede,.policy p{color:var(--text-muted)}.eyebrow{font-size:var(--font-size-xs);font-weight:700;letter-spacing:.12em}.policy{margin-bottom:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border-inline-start:3px solid var(--color-accent-primary)}.policy h2{font-size:1rem;margin:0}.policy p{margin-bottom:0}.filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)}label{display:grid;gap:.35rem}select,button{min-height:var(--control-height);padding:.55rem .75rem;background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:inherit;font:inherit}.table-wrap{overflow-x:auto;max-width:100%;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:760px;border-collapse:collapse;background:var(--surface-panel)}th,td{padding:.75rem;text-align:start;border-top:1px solid var(--color-border-subtle);vertical-align:top}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty,.context{padding:var(--space-5);background:var(--surface-panel);border:1px dashed var(--border-default)}@media(max-width:650px){.filters{display:grid;grid-template-columns:1fr}.filters button{width:max-content}}
+  .register-filters{min-inline-size:0;margin-block:var(--space-5);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--radius-lg)}
+  .filters{display:flex;flex-wrap:wrap;align-items:end;gap:var(--space-3)}label{display:grid;gap:var(--space-2);min-inline-size:0;flex:1 1 18rem;color:var(--text-secondary);font-size:var(--font-size-xs)}
+  select,button{min-block-size:max(44px,var(--control-height));max-inline-size:100%;padding:var(--space-3);background:var(--surface-panel);border:1px solid var(--control-border);border-radius:var(--radius-sm);color:var(--text-primary);font:inherit}button{cursor:pointer}
+  .register-count{margin-block:var(--space-4) var(--space-2);color:var(--text-secondary);font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold)}.source-status{margin-block:var(--space-3);padding:var(--space-3) var(--space-4);border-inline-start:3px solid var(--status-warning);background:var(--status-warning-bg);color:var(--text-secondary);overflow-wrap:anywhere}
+  .table-wrap{overflow-x:auto;max-inline-size:100%;min-inline-size:0;border:1px solid var(--border-default);border-radius:var(--radius-lg)}table{inline-size:100%;min-inline-size:82rem;table-layout:fixed;border-collapse:collapse;background:var(--surface-panel)}caption{text-align:start;padding:var(--space-4);color:var(--text-secondary);font-weight:var(--font-weight-semibold)}
+  th,td{padding:var(--space-4);text-align:start;border-block-start:1px solid var(--border-default);vertical-align:top;overflow-wrap:anywhere;white-space:normal}thead{background:var(--surface-inset)}th{font-weight:var(--font-weight-semibold)}
+  th:nth-child(1){inline-size:12%}th:nth-child(2){inline-size:15%}th:nth-child(3){inline-size:15%}th:nth-child(4){inline-size:9%}th:nth-child(5){inline-size:24%}th:nth-child(6){inline-size:13%}th:nth-child(7){inline-size:12%}
+  .record-link{display:inline-flex;align-items:center;min-block-size:44px;max-inline-size:100%;overflow-wrap:anywhere}.record-context{display:block;margin-block-start:var(--space-1);color:var(--text-secondary);overflow-wrap:anywhere;white-space:normal}.record-id{display:block;margin-block-start:var(--space-1);color:var(--text-muted);font-size:var(--font-size-xs);overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+  .related-list{margin:0;padding-inline-start:1rem}.related-list li{margin-block-end:var(--space-2)}details{margin-block-start:var(--space-2)}summary{min-block-size:44px;display:flex;align-items:center;cursor:pointer}details p{white-space:pre-wrap;overflow-wrap:anywhere}
+  .policy{margin-block:var(--space-6);padding:var(--space-4);background:var(--surface-panel);border:1px solid var(--border-default);border-inline-start:3px solid var(--color-accent-primary);border-radius:var(--radius-lg)}.policy h2{font-size:var(--font-size-lg);margin:0}.policy p{color:var(--text-secondary)}.policy form{display:inline-flex;margin:var(--space-2) var(--space-2) 0 0}.create-error{padding:var(--space-3);border-inline-start:3px solid var(--status-danger);background:var(--status-danger-bg)}
+  .empty{padding:var(--space-5);background:var(--surface-panel);border:1px dashed var(--border-default);border-radius:var(--radius-lg)}.empty a,.source-pagination a{display:inline-flex;align-items:center;min-block-size:44px;color:var(--color-accent-primary-hover)}.source-pagination{display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:center;margin-block:var(--space-3);color:var(--text-secondary)}
+  a{color:var(--color-accent-primary-hover)}a:focus-visible,button:focus-visible,select:focus-visible,.table-wrap:focus-visible,summary:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:2px}
+  @media(max-width:650px){.filters{display:grid;grid-template-columns:minmax(0,1fr)}.filters button{inline-size:100%}}
 </style>
