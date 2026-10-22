@@ -1,3 +1,18 @@
+- **2026-10-22 — CA-P-LABORATORY-TESTS-LABTESTID-EXECUTE / CAPA A execution workspace**
+  - Changed: execution route reorganized into a wide header, controlled observation entry, separate submit/equipment sections, and read-only frozen context; sample order, exact measurement strings/units, server decisions, actions, guards and Sidebar retained. Prior JS-only mutation/no-JS baseline debt remains outside scope.
+  - Evidence: NOT RUN by instruction; source and textual `git diff` review only. Literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/laboratory/tests/[labTestId]/execute.astro`.
+- **2026-10-22 — CA-P-LABORATORY-TESTS-LABTESTID / CAPA A laboratory test detail**
+  - Changed: `/laboratory/tests/[labTestId]` now has a record header (identity/state/version), a separate official-result area, derived-evidence and controlled-context facts, evidence tables that preserve recorded value strings, recorded lifecycle timestamps, and separate read-only action/relationship rails. The source-receiving alert stays the single error region. No evaluator, unit/limit, VOID, retest control, form, API/schema/policy, guard, link or Sidebar change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. The CA-04 route-binding hash was not refreshed because audit artifacts are outside this task's scope; literal visual-reference match is not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/laboratory/tests/[labTestId]/index.astro`.
+- **2026-10-22 — CA-P-LABORATORY-REPORT-TEMPLATES / CAPA A laboratory report templates**
+  - Changed: `/laboratory/report-templates` now reads as a wide CAPA A surface: header → template filter + applied-template summary → one canonical save feedback region → saved-drafts register (caption, server-derived count, full wrapping Draft IDs, 44px row links) → draft-entry panel. No paged read, export, or client-side pending state exists in source, so none was simulated. Transcription-only copy, sample fields, source/review warnings, hidden `version`/`reportType`, native POST, permission checks and Sidebar are unchanged. No API/schema/policy change.
+  - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. CSS/token-based; literal visual-reference match not confirmed.
+  - State: DONE — code edit only; untested.
+  - Key files: `src/pages/laboratory/report-templates.astro`.
 - **2026-10-22 — CA-P-HELP / CAPA A operating guides**
   - Changed: `/help` now reads header → guide search form + active-filter chip + one canonical section-count status → wide guide content with sticky section nav; both content tables sit in focusable scroll regions with a readable minimum width and no truncation. The native GET `q` contract, identical server/client search index, heading order, print affordance, route-visibility guards, internal links and Sidebar are unchanged. No paged read, export, action, API/schema or guide-content change.
   - Evidence: NOT RUN by task instruction (no tests/typecheck/lint/build/browser); source and textual `git diff` review only. CSS/token-based; literal visual-reference match not confirmed.

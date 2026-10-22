@@ -1,4 +1,5 @@
 ---
+import PageHeader from '../../ui/components/PageHeader.astro';
 import AppLayout from '../../ui/layouts/AppLayout.astro';
 import { AppError } from '../../shared/errors/app-error.js';
 import {
@@ -105,52 +106,166 @@ const groups = [
   { title: 'Remarks and signoffs', keys: ['remarks', 'testedBy', 'reviewedBy', 'approvedBy'] },
 ] as const;
 const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1] ?? key;
+const savedNotice = Astro.url.searchParams.get('saved') === '1';
+const draftTypeLabel = (reportType: string) => reportTypes[reportType as ReportType] ?? reportType;
+const printReportVisible = printMode && Boolean(id) && !draftStorageUnavailable && !selectedDraftUnavailable;
+// No paged read exists for saved drafts: listReportDrafts returns one read of
+// at most 50 rows, newest first. A pager would have to invent a total, so the
+// register states its bound instead of rendering pagination. This surface also
+// has no export and no client-side pending state in source: writes are a native
+// POST followed by a 303. None of those states is simulated.
+const draftCountText = `Showing ${drafts.length} saved draft${drafts.length === 1 ? '' : 's'} in your authorized scope. This single read returns up to 50 drafts, newest first; no paging is available.`;
 ---
+
 <AppLayout title="Laboratory report templates" locale="en" direction="ltr">
-  <div class="report-entry">
-     <p><a href="/laboratory/tests">Back to laboratory tests</a></p>
-    <h1>Laboratory report templates</h1>
-    <p>Enter the report as a draft. Recorded PASS / FAIL values and names are transcribed observations; they do not approve a controlled laboratory test.</p>
-    {!canView ? <p role="alert">You are not authorized to view laboratory reports. Ask the system owner to review your active PERM-LAB-VIEW grant and OWN or GLOBAL scope.</p> : <>
-      <nav aria-label="Choose report template" class="template-choices">
-        {Object.entries(reportTypes).map(([key, title]) =>
-          <a href={`/laboratory/report-templates?type=${key}`} aria-current={!id && data.reportType === key ? 'page' : undefined}>{title}</a>)}
-      </nav>
-      {drafts.length > 0 && <section aria-labelledby="saved-drafts"><h2 id="saved-drafts">Saved drafts</h2><ul class="draft-list">{drafts.map((draft) =>
-        <li><a href={`/laboratory/report-templates?draft=${draft.id}`}><strong>{reportTypes[draft.report_type as ReportType]}</strong><span>{draft.form_data.lotNumber ? `Lot ${draft.form_data.lotNumber}` : 'Lot not recorded'} · {draft.form_data.productDescription || 'Item not recorded'} · Updated {draft.updated_at.toISOString().slice(0, 10)}</span></a></li>)}</ul></section>}
-      {Astro.url.searchParams.get('saved') === '1' && <p role="status">Draft saved.</p>}
-      {error && <p role="alert">{error}</p>}
-      {id && data && <p class="draft-meta"><strong>Draft ID:</strong> {id} · <strong>Version:</strong> {version.toString()}</p>}
-      {printMode && id && !draftStorageUnavailable && !selectedDraftUnavailable ? <>
-        <div class="print-actions"><a href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}`}>Back to draft</a><button type="button" data-print-report>Print report</button></div>
-        <article class="print-report">
-          <header><p>TRANSCRIPTION DRAFT · NOT AN APPROVED LABORATORY RESULT</p><h2>{reportTypes[data.reportType]}</h2><p>Draft ID: {id} · Version {version.toString()}</p></header>
-          {groups.map((group) => <section><h3>{group.title}</h3><dl>{group.keys.map((key) => <div><dt>{labelOf(key)}</dt><dd>{data[key] || 'Not recorded'}</dd></div>)}</dl></section>)}
-          <section><h3>Connector type</h3><p>{data.connectorType || 'Not recorded'}</p></section>
-          <section><h3>Sample measurements</h3><div class="table-scroll"><table><caption>Recorded values for all 12 samples</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>{data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key]) => <td>{sample[key] || 'Not recorded'}</td>)}</tr>)}</tbody></table></div></section>
-          <section><h3>Overall result entered on source report</h3><p>{data.overallResult || 'Not recorded'}</p></section>
-          <p class="transcription-note">Tested By, Reviewed By, and Approved By are transcribed source text only. They are not electronic signatures or current approvals. This draft does not approve a laboratory test or release product.</p>
-        </article>
-      </> : !printMode && !draftStorageUnavailable && !selectedDraftUnavailable && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form data-report-draft method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
-        <input type="hidden" name="version" value={submittedVersion ?? version.toString()} />
-        <input type="hidden" name="reportType" value={data.reportType} />
-        <h2>{reportTypes[data.reportType]}</h2>
-        {id && <p><a href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}&print=1`}>Open print view</a></p>}
-        <p class="dirty-state" data-dirty-label role="status" aria-live="polite"></p>
-        {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="field-grid">{group.keys.map((key) =>
-          <label>{labelOf(key)}<input name={key} type="text" maxlength="2000" value={data[key]} /></label>)}</div></fieldset>)}
-        <fieldset><legend>Connector configuration</legend><label>Transcribe the configuration shown on the source report<input name="connectorType" maxlength="500" value={data.connectorType} /></label></fieldset>
-        <fieldset><legend>Test results · 12 samples</legend><p id="sample-transcription-help">Transcribe each value, unit, and decimal precision exactly as shown on the source report. No conversion, rounding, or scientific evaluation is applied.</p><div class="table-scroll"><table><caption>Measurements and result for each numbered sample</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>
-          {data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key, label]) => <td><label class="sr-only" for={`sample-${index}-${key}`}>{label} for sample {index + 1}</label><input id={`sample-${index}-${key}`} name={`samples.${index}.${key}`} value={sample[key]} maxlength="500" /></td>)}</tr>)}
-        </tbody></table></div></fieldset>
-        <fieldset><legend>Overall result entered on the source report</legend><div class="radio-group">
-          {[
-            ['', 'Not recorded'], ['PASS', 'PASS'], ['FAIL', 'FAIL'],
-            ['HOLD_FURTHER_EVALUATION', 'HOLD / FURTHER EVALUATION'],
-          ].map(([value, label]) => <label><input type="radio" name="overallResult" value={value} checked={data.overallResult === value} />{label}</label>)}
-        </div></fieldset>
-        <button type="submit">Save draft</button>
-      </form> : draftStorageUnavailable ? <p role="status">Draft editing is unavailable until draft storage is restored. Resolve the data-source error above and reload.</p> : selectedDraftUnavailable ? <p role="status">This draft is unavailable in your account scope. Ask the system owner to review PERM-LAB-VIEW and OWN or GLOBAL scope.</p> : <p role="status">You cannot {id ? 'edit this draft' : 'create a report draft'}. Ask the system owner to review your active {id ? 'PERM-LAB-EDIT-DRAFT' : 'PERM-LAB-CREATE'} grant and OWN or GLOBAL scope. This does not grant review or approval authority.</p>}
+  <div class="report-workspace" data-print-mode={printReportVisible ? 'true' : undefined}>
+    <div class="page-head">
+      <PageHeader
+        section="Laboratory"
+        purpose="Enter the report as a draft. Recorded PASS / FAIL values and names are transcribed observations; they do not approve a controlled laboratory test."
+      >
+        <Fragment slot="heading"><h1>Laboratory report templates</h1></Fragment>
+        <Fragment slot="actions"><a class="button secondary" href="/laboratory/tests">Back to laboratory tests</a></Fragment>
+      </PageHeader>
+    </div>
+
+    {!canView ? (
+      <div class="feedback-region" aria-label="Laboratory report access">
+        <p class="feedback feedback--error" role="alert">You are not authorized to view laboratory reports. Ask the system owner to review your active PERM-LAB-VIEW grant and OWN or GLOBAL scope.</p>
+      </div>
+    ) : <>
+      <section class="filter-panel" aria-labelledby="template-filter-heading">
+        <h2 id="template-filter-heading">Report template</h2>
+        <p class="filter-help">Choose the source template you are transcribing. This changes the entry fields below; it does not filter the saved drafts register.</p>
+        <nav aria-label="Report template" class="template-choices">
+          {Object.entries(reportTypes).map(([key, title]) =>
+            <a
+              class="button secondary"
+              href={`/laboratory/report-templates?type=${key}`}
+              aria-current={!id && data.reportType === key ? 'page' : undefined}
+            >{title}</a>)}
+        </nav>
+        <div class="applied-filters" role="group" aria-label="Applied template filter">
+          <span class="applied-label">Applied filter</span>
+          <span class="applied-chip">
+            <span class="chip-label">Template</span>
+            <span class="chip-value">{reportTypes[data.reportType]}</span>
+          </span>
+          <span class="filter-note">The template choice is required; there is no all-template view. Opening a saved draft uses that draft's template.</span>
+        </div>
+      </section>
+
+      {(savedNotice || error) && (
+        <div class="feedback-region" aria-label="Draft save status">
+          {savedNotice && <p class="feedback feedback--success" role="status">Draft saved.</p>}
+          {error && <p class="feedback feedback--error" role="alert">{error}</p>}
+        </div>
+      )}
+
+      <section class="register" aria-labelledby="saved-drafts">
+        <div class="register-heading">
+          <div>
+            <h2 id="saved-drafts">Saved drafts</h2>
+            <p class="register-note">Drafts are transcription records only. Open a draft from its template name. Opening a draft does not submit, review, approve, or release a laboratory test.</p>
+          </div>
+          {!draftStorageUnavailable && drafts.length > 0 && (
+            <p class="result-count" role="status" aria-live="polite">{draftCountText}</p>
+          )}
+        </div>
+        {draftStorageUnavailable ? (
+          <p class="register-placeholder" role="status">Saved drafts are unavailable; no draft count or rows are shown for this request.</p>
+        ) : drafts.length ? (
+          <div class="table-wrap" role="region" aria-label="Saved report drafts" tabindex="0">
+            <table>
+              <caption>Saved laboratory report drafts in your authorized scope, newest first</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Template</th>
+                  <th scope="col">Lot</th>
+                  <th scope="col">Item</th>
+                  <th scope="col">Updated</th>
+                  <th scope="col">Version</th>
+                  <th scope="col">Draft ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {drafts.map((draft) => (
+                  <tr>
+                    <th scope="row">
+                      <a
+                        class="row-link"
+                        href={`/laboratory/report-templates?draft=${encodeURIComponent(draft.id)}`}
+                        aria-current={draft.id === id ? 'page' : undefined}
+                      >{draftTypeLabel(draft.report_type)}</a>
+                    </th>
+                    <td>{draft.form_data.lotNumber || 'Not recorded'}</td>
+                    <td class="cell-long">{draft.form_data.productDescription || 'Not recorded'}</td>
+                    <td class="cell-numeric">
+                      <time datetime={draft.updated_at.toISOString()}>{draft.updated_at.toISOString().slice(0, 10)}</time>
+                    </td>
+                    <td class="cell-numeric">{draft.version.toString()}</td>
+                    <td class="cell-id"><code>{draft.id}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p class="register-placeholder" role="status">No saved drafts in your authorized scope. A draft appears here after you save one.</p>
+        )}
+      </section>
+
+      <section class="entry-panel" aria-labelledby="draft-entry-heading">
+        <header class="entry-header">
+          <div>
+            <p class="entry-kicker">{printReportVisible ? 'Print preview' : 'Draft entry'}</p>
+            <h2 id="draft-entry-heading">{reportTypes[data.reportType]}</h2>
+            <p class="entry-note">Transcribe each value exactly as recorded on the source report. No calculation, rounding, unit conversion, or scientific evaluation is applied.</p>
+            <p class="source-review-note">Tested By, Reviewed By, and Approved By are transcribed source text only. They are not electronic signatures or current approvals.</p>
+          </div>
+          {id && !draftStorageUnavailable && !selectedDraftUnavailable && (
+            <div class="draft-meta">
+              <p><strong>Draft ID:</strong> <code>{id}</code></p>
+              <p><strong>Version:</strong> <span>{version.toString()}</span></p>
+            </div>
+          )}
+        </header>
+        {id && !draftStorageUnavailable && !selectedDraftUnavailable && has('PERM-LAB-EDIT-DRAFT') && !printReportVisible && (
+          <p class="entry-links"><a class="button secondary" href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}&print=1`}>Open print view</a></p>
+        )}
+
+        {printReportVisible ? <>
+          <div class="print-actions"><a href={`/laboratory/report-templates?draft=${encodeURIComponent(id)}`}>Back to draft</a><button type="button" data-print-report>Print report</button></div>
+          <article class="print-report">
+            <header><p>TRANSCRIPTION DRAFT · NOT AN APPROVED LABORATORY RESULT</p><h2>{reportTypes[data.reportType]}</h2><p>Draft ID: {id} · Version {version.toString()}</p></header>
+            {groups.map((group) => <section><h3>{group.title}</h3><dl>{group.keys.map((key) => <div><dt>{labelOf(key)}</dt><dd>{data[key] || 'Not recorded'}</dd></div>)}</dl></section>)}
+            <section><h3>Connector type</h3><p>{data.connectorType || 'Not recorded'}</p></section>
+            <section><h3>Sample measurements</h3><div class="table-scroll"><table><caption>Recorded values for all 12 samples</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>{data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key]) => <td>{sample[key] || 'Not recorded'}</td>)}</tr>)}</tbody></table></div></section>
+            <section><h3>Overall result entered on source report</h3><p>{data.overallResult || 'Not recorded'}</p></section>
+            <p class="transcription-note">Tested By, Reviewed By, and Approved By are transcribed source text only. They are not electronic signatures or current approvals. This draft does not approve a laboratory test or release product.</p>
+          </article>
+        </> : !printMode && !draftStorageUnavailable && !selectedDraftUnavailable && (id ? has('PERM-LAB-EDIT-DRAFT') : canCreate) ? <form data-report-draft aria-labelledby="draft-entry-heading" method="post" action={id ? `/laboratory/report-templates?draft=${encodeURIComponent(id)}` : '/laboratory/report-templates'}>
+          <input type="hidden" name="version" value={submittedVersion ?? version.toString()} />
+          <input type="hidden" name="reportType" value={data.reportType} />
+          <p class="dirty-state" data-dirty-label role="status" aria-live="polite"></p>
+          {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="field-grid">{group.keys.map((key) =>
+            <label><span class="field-label">{labelOf(key)}</span><input name={key} type="text" maxlength="2000" value={data[key]} /></label>)}</div></fieldset>)}
+          <fieldset><legend>Connector configuration</legend><label><span class="field-label">Transcribe the configuration shown on the source report</span><input name="connectorType" type="text" maxlength="500" value={data.connectorType} /></label></fieldset>
+          <fieldset aria-describedby="sample-transcription-help"><legend>Test results · 12 samples</legend><p id="sample-transcription-help">Transcribe each value, unit, and decimal precision exactly as shown on the source report. No conversion, rounding, or scientific evaluation is applied.</p><div class="table-scroll" role="region" aria-label="Sample measurement fields" tabindex="0"><table><caption>Measurements and result for each numbered sample</caption><thead><tr><th scope="col">Sample no.</th>{sampleFields.map(([, label]) => <th scope="col">{label}</th>)}</tr></thead><tbody>
+            {data.samples.map((sample, index) => <tr><th scope="row">{index + 1}</th>{sampleFields.map(([key, label]) => <td><label class="sr-only" for={`sample-${index}-${key}`}>{label} for sample {index + 1}</label><input id={`sample-${index}-${key}`} name={`samples.${index}.${key}`} type="text" value={sample[key]} maxlength="500" /></td>)}</tr>)}
+          </tbody></table></div></fieldset>
+          <fieldset><legend>Overall result entered on the source report</legend><div class="radio-group">
+            {[
+              ['', 'Not recorded'], ['PASS', 'PASS'], ['FAIL', 'FAIL'],
+              ['HOLD_FURTHER_EVALUATION', 'HOLD / FURTHER EVALUATION'],
+            ].map(([value, label]) => <label><input type="radio" name="overallResult" value={value} checked={data.overallResult === value} />{label}</label>)}
+          </div></fieldset>
+          <div class="form-actions">
+            <button type="submit">Save draft</button>
+            <p class="form-note">Saving stores or updates a DRAFT only. It does not submit, review, approve, or release the report.</p>
+          </div>
+        </form> : draftStorageUnavailable ? <p class="availability-note" role="status">Draft editing is unavailable until draft storage is restored. Resolve the data-source error above and reload.</p> : selectedDraftUnavailable ? <p class="availability-note" role="status">This draft is unavailable in your account scope. Ask the system owner to review PERM-LAB-VIEW and OWN or GLOBAL scope.</p> : <p class="availability-note" role="status">You cannot {id ? 'edit this draft' : 'create a report draft'}. Ask the system owner to review your active {id ? 'PERM-LAB-EDIT-DRAFT' : 'PERM-LAB-CREATE'} grant and OWN or GLOBAL scope. This does not grant review or approval authority.</p>}
+      </section>
     </>}
   </div>
 </AppLayout>
@@ -167,18 +282,110 @@ const labelOf = (key: string) => reportFields.find(([name]) => name === key)?.[1
   document.querySelector<HTMLButtonElement>('[data-print-report]')?.addEventListener('click', () => window.print());
 </script>
 <style>
-  .report-entry{max-width:78rem;margin-inline:auto;padding:1rem}.report-entry a{color:var(--color-accent-primary-hover)}
-  .template-choices{display:flex;gap:1rem;flex-wrap:wrap;margin:1.5rem 0}.template-choices a{padding:.75rem;border:1px solid var(--border-default);border-radius:var(--radius-md)}
-  .template-choices [aria-current]{border-color:var(--color-accent-primary);font-weight:700}
-  form{display:grid;gap:1.25rem;min-width:0}fieldset{min-width:0;border:1px solid var(--border-default);border-radius:var(--radius-md);padding:1rem}legend{font-weight:700;padding:0 .35rem}
-  .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:1rem}.field-grid label{display:grid;gap:.35rem}
-  input[type=text],input[type=date],select{width:100%;min-height:2.75rem;padding:.55rem;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-panel);color:inherit;font:inherit}
-  .radio-group{display:flex;gap:1rem;flex-wrap:wrap}.radio-group label{display:flex;align-items:center;gap:.4rem}
-  .table-scroll{position:relative;overflow-x:auto}table{border-collapse:collapse;min-width:1100px;width:100%}th,td{border:1px solid var(--border-default);padding:.35rem}th{text-align:start}td input{min-width:7rem}
-  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-  button{justify-self:start;min-height:2.75rem;padding:.65rem 1rem;background:var(--color-accent-primary);color:var(--color-text-inverse);border:0;border-radius:var(--radius-md);font:inherit;cursor:pointer}
-  .draft-list{display:grid;gap:.5rem;padding-inline-start:1.25rem}.draft-list a{display:grid;gap:.2rem}.draft-list span,.draft-meta{color:var(--text-muted);overflow-wrap:anywhere}
-  .print-actions{display:flex;gap:1rem;align-items:center;margin-block:1rem}.print-report{background:white;color:#111;padding:1rem}.print-report header{border-bottom:2px solid #111;margin-bottom:1rem}.print-report header>p:first-child,.transcription-note{font-weight:700}.print-report section{margin-block:1rem}.print-report dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}.print-report dl div{display:grid;grid-template-columns:minmax(8rem,1fr) 2fr;border-bottom:1px solid #ccc}.print-report dt{font-weight:700}.print-report dd{margin:0}.dirty-state:empty{display:none}
+  .report-workspace{min-inline-size:0}
+  .page-head{min-inline-size:0}
+  .button{display:inline-flex;align-items:center;justify-content:center;min-block-size:44px;max-inline-size:100%;padding:var(--space-2) var(--space-4);border:1px solid var(--color-accent-primary);border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:var(--font-weight-semibold);text-align:center;text-decoration:none;cursor:pointer}
+  .button.secondary{background:var(--surface-raised);border-color:var(--control-border);color:var(--text-primary)}
+  .button:hover{background:var(--color-accent-primary-hover);border-color:var(--color-accent-primary-hover)}
+  .button.secondary:hover{background:var(--color-surface-hover);border-color:var(--control-border)}
+  .feedback-region{display:grid;gap:var(--space-2);margin-block-end:var(--space-4)}
+  .feedback-region:empty{display:none}
+  .feedback{margin:0;padding:var(--space-3) var(--space-4);border:1px solid var(--border-default);border-inline-start:4px solid var(--color-border-strong);border-radius:var(--radius-sm);background:var(--surface-panel);color:var(--text-primary);font-size:var(--font-size-sm);line-height:1.5}
+  .feedback--success{border-inline-start-color:var(--status-success)}
+  .feedback--error{border-inline-start-color:var(--status-danger)}
+  .filter-panel{margin-block-end:var(--space-4);padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--border-default);border-radius:var(--card-radius);min-inline-size:0}
+  .filter-panel h2{margin:0;color:var(--text-primary);font-size:var(--font-size-md)}
+  .filter-help{margin:var(--space-1) 0 var(--space-4);max-inline-size:78ch;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  .template-choices{display:flex;flex-wrap:wrap;gap:var(--space-3);margin:0}
+  .template-choices a{flex:0 1 auto;text-align:start}
+  .template-choices a[aria-current='page']{box-shadow:inset 0 0 0 2px var(--color-accent-primary);font-weight:var(--font-weight-bold)}
+  .applied-filters{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-3);margin-block-start:var(--space-4);color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  .applied-label{font-weight:var(--font-weight-semibold)}
+  .applied-chip{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;min-block-size:32px;max-inline-size:100%;padding-inline:10px;border:1px solid var(--border-default);border-radius:999px;background:var(--surface-raised);color:var(--text-primary)}
+  .chip-label{color:var(--text-muted)}
+  .chip-value{min-inline-size:0;overflow-wrap:anywhere;font-weight:var(--font-weight-semibold)}
+  .filter-note{min-inline-size:0;max-inline-size:70ch;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  .register{margin-block-end:var(--space-4);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--card-radius);overflow:hidden;min-inline-size:0}
+  .register-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--space-3) var(--space-5);padding:var(--space-5) var(--space-5) var(--space-3)}
+  .register-heading h2{margin:0;color:var(--text-primary);font-size:var(--font-size-lg)}
+  .register-note{margin:var(--space-1) 0 0;max-inline-size:75ch;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  .result-count{margin:0;max-inline-size:100%;color:var(--text-secondary);font-size:var(--font-size-xs);line-height:1.5}
+  .table-wrap{max-inline-size:100%;overflow-x:auto;border-block-start:1px solid var(--color-border-subtle)}
+  .table-wrap:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:-2px}
+  table{inline-size:100%;min-inline-size:62rem;border-collapse:collapse;background:var(--surface-panel)}
+  caption{padding:var(--space-4) var(--space-5);color:var(--text-muted);text-align:start;font-size:var(--font-size-xs);line-height:1.5}
+  th,td{padding:var(--space-3) var(--space-4);border-block-start:1px solid var(--color-border-subtle);text-align:start;vertical-align:top;font-size:var(--font-size-sm);overflow-wrap:anywhere;word-break:normal}
+  thead th{background:var(--table-header-background);color:var(--text-primary);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);white-space:nowrap}
+  tbody tr:nth-child(even){background:var(--table-stripe-background)}
+  .row-link{display:inline-flex;align-items:center;min-block-size:44px;font-weight:var(--font-weight-semibold);overflow-wrap:anywhere;white-space:normal}
+  .cell-long{min-inline-size:16rem;white-space:normal}
+  .cell-numeric{min-inline-size:5rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .cell-id{min-inline-size:20rem;font-size:var(--font-size-xs);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+  .cell-id code{font-family:var(--font-mono)}
+  .register-placeholder{margin:0;padding:var(--space-6) var(--space-5);border-block-start:1px solid var(--color-border-subtle);color:var(--text-muted);font-size:var(--font-size-sm);line-height:1.5}
+  .entry-panel{min-inline-size:0;padding:var(--space-5);background:var(--surface-panel);border:1px solid var(--color-border-subtle);border-radius:var(--card-radius)}
+  .entry-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--space-4);margin-block-end:var(--space-5);padding-block-end:var(--space-4);border-block-end:1px solid var(--color-border-subtle)}
+  .entry-kicker{margin:0;color:var(--text-muted);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);letter-spacing:.08em;text-transform:uppercase}
+  .entry-header h2{margin:var(--space-1) 0 0;color:var(--text-primary);font-size:var(--font-size-xl);overflow-wrap:anywhere}
+  .entry-note{margin:var(--space-2) 0 0;max-inline-size:80ch;color:var(--text-secondary);font-size:var(--font-size-sm);line-height:1.5}
+  .source-review-note{margin:var(--space-2) 0 0;max-inline-size:80ch;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  .draft-meta{display:grid;gap:var(--space-1);max-inline-size:100%;margin:0;padding:var(--space-3);background:var(--surface-raised);border:1px solid var(--color-border-subtle);border-radius:var(--radius-sm);font-size:var(--font-size-xs)}
+  .draft-meta p{display:flex;flex-wrap:wrap;gap:var(--space-2);margin:0;min-inline-size:0}
+  .draft-meta code{font-family:var(--font-mono);overflow-wrap:anywhere;word-break:break-word}
+  .entry-links{margin:0 0 var(--space-4)}
+  .print-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-block-end:var(--space-4)}
+  .print-actions a{display:inline-flex;align-items:center;min-block-size:44px}
+  form{display:grid;gap:var(--space-5);min-inline-size:0}
+  fieldset{min-inline-size:0;border:1px solid var(--border-default);border-radius:var(--radius-md);padding:var(--space-4)}
+  legend{padding-inline:var(--space-2);color:var(--text-primary);font-weight:var(--font-weight-semibold);font-size:var(--font-size-md)}
+  .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--space-4)}
+  .field-grid label{display:grid;gap:var(--space-1);min-inline-size:0}
+  label{color:var(--text-secondary);font-size:var(--font-size-sm)}
+  .field-label{color:var(--text-primary);font-weight:var(--font-weight-semibold)}
+  input[type=text]{inline-size:100%;min-inline-size:0;min-block-size:44px;padding:var(--space-2);border:1px solid var(--control-border);border-radius:var(--radius-sm);background:var(--surface-panel);color:var(--text-primary);font:inherit}
+  input[type=radio]{inline-size:1.15rem;block-size:1.15rem}
+  .radio-group{display:flex;flex-wrap:wrap;gap:var(--space-2) var(--space-5)}
+  .radio-group label{display:inline-flex;align-items:center;gap:var(--space-2);min-block-size:44px;color:var(--text-primary)}
+  .table-scroll{position:relative;overflow-x:auto}
+  .table-scroll table{min-inline-size:68.75rem}
+  td input{min-inline-size:7rem}
+  .sr-only{position:absolute;inline-size:1px;block-size:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .report-workspace button{display:inline-flex;align-items:center;justify-content:center;min-block-size:44px;padding:var(--space-2) var(--space-4);border:0;border-radius:var(--radius-sm);background:var(--color-accent-primary);color:var(--text-on-accent);font:inherit;font-weight:var(--font-weight-semibold);cursor:pointer}
+  .report-workspace button:hover{background:var(--color-accent-primary-hover)}
+  .form-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4)}
+  .form-note{margin:0;max-inline-size:62ch;color:var(--text-muted);font-size:var(--font-size-xs);line-height:1.5}
+  .dirty-state{margin:0;color:var(--text-muted);font-size:var(--font-size-xs)}
+  .dirty-state:empty{display:none}
+  .availability-note{margin:0;color:var(--text-secondary);font-size:var(--font-size-sm);line-height:1.5}
+  .print-report{background:white;color:#111;padding:1rem}
+  .print-report header{border-block-end:2px solid #111;margin-block-end:1rem}
+  .print-report header>p:first-child,.transcription-note{font-weight:700}
+  .print-report section{margin-block:1rem}
+  .print-report dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem 1rem}
+  .print-report dl div{display:grid;grid-template-columns:minmax(8rem,1fr) 2fr;border-block-end:1px solid #ccc}
+  .print-report dt{font-weight:700}
+  .print-report dd{margin:0;overflow-wrap:anywhere}
   @page{size:landscape;margin:12mm}
-  @media print{:global(.app-sidebar),:global(.app-topbar),:global(.skip-link){display:none!important}:global(.app-shell),:global(.app-workspace){display:block;min-height:0}:global(.app-main){width:auto;max-width:none;margin:0;padding:0;overflow:visible}.report-entry>p:first-child,.report-entry>h1,.report-entry>p:nth-of-type(2),nav,.draft-list,section[aria-labelledby="saved-drafts"],.draft-meta,.print-actions,form{display:none!important}.report-entry{max-width:none;padding:0}.print-report{padding:0}.table-scroll{overflow:visible}table{min-width:0;font-size:8pt}th,td{padding:.2rem}.print-report{break-inside:auto}.print-report section{break-inside:avoid}}
+  @media (max-width:760px){
+    .filter-panel,.entry-panel{padding:var(--space-4)}
+    .register-heading{padding-inline:var(--space-4)}
+    .print-report dl{grid-template-columns:1fr}
+    .print-report dl div{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){.table-wrap,.table-scroll{scroll-behavior:auto}}
+  @media (forced-colors:active){.filter-panel,.register,.entry-panel,.feedback,.table-wrap,.button{border-color:CanvasText}.table-wrap:focus-visible{outline-color:Highlight}}
+  @media print{
+    :global(.app-sidebar),:global(.app-topbar),:global(.skip-link){display:none!important}
+    :global(.app-shell),:global(.app-workspace){display:block;min-height:0}
+    :global(.app-main){width:auto;max-width:none;margin:0;padding:0;overflow:visible}
+    [data-print-mode='true'] .page-head,[data-print-mode='true'] .filter-panel,[data-print-mode='true'] .feedback-region,[data-print-mode='true'] .register,[data-print-mode='true'] .entry-header,[data-print-mode='true'] .entry-links,[data-print-mode='true'] .print-actions,[data-print-mode='true'] form,[data-print-mode='true'] .source-review-note{display:none!important}
+    .report-workspace{max-inline-size:none;padding:0}
+    .entry-panel{padding:0;border:0;background:transparent}
+    .print-report{padding:0}
+    .table-scroll{overflow:visible}
+    table{min-inline-size:0;font-size:8pt}
+    .table-scroll table{min-inline-size:0}
+    th,td{padding:.2rem}
+    .print-report section{break-inside:avoid}
+  }
 </style>

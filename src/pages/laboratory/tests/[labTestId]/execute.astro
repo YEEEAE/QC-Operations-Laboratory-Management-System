@@ -5,6 +5,7 @@ import { authorizeLab } from '../../../../modules/laboratory/application/lab-aut
 import { decodeMeasurementPost } from '../../../../modules/laboratory/application/measurement-post.js';
 import { parseExpectedVersionField } from '../../../../ui/forms/mutation-post.js';
 import { AppError } from '../../../../shared/errors/app-error.js';
+import PageHeader from '../../../../ui/components/PageHeader.astro';
 import AppLayout from '../../../../ui/layouts/AppLayout.astro';
 import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
 import JourneyContextPanel from '../../../../ui/components/workflow/JourneyContextPanel.astro';
@@ -12,6 +13,7 @@ import { laboratoryReadDependencies } from '../../../../modules/laboratory/appli
 import { assetsReadDependencies } from '../../../../modules/assets/application/dependencies.js';
 import { equipmentEligibilityOptionLabel } from '../../../../ui/forms/equipment-eligibility.js';
 import { entryParameters } from '../../../../modules/laboratory/application/lab-presentation.js';
+import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
 
 const actor = Astro.locals.actor;
 if (!actor)
@@ -70,6 +72,7 @@ const canSubmit = canEdit && hasPermission('PERM-LAB-SUBMIT');
 // identifiers are rendered, never re-typed. The server still validates every
 // value against the same controlled context on save.
 const parameters = entryParameters(test);
+const requiredParameterCount = parameters.filter((parameter) => parameter.required).length;
 const measurementOf = (sampleId: string, parameterId: string) =>
   test.measurements.find((m) => m.sampleId === sampleId && m.parameterId === parameterId);
 const cellValue = (sampleId: string, parameterId: string): string => {
@@ -103,224 +106,415 @@ if (canEdit && canViewEquipment) {
     equipmentSourceError = true;
   }
 }
+const savedFeedback =
+  saveError ??
+  (bulkPreviewReady
+    ? 'Bulk observations validated for preview. Review the values and remarks below before saving. No observations have been saved.'
+    : 'The server confirms each save. Your entries stay on this page until a save is confirmed.');
 ---
-<AppLayout title={`Execute ${test.labTestNo}`}>
-  <h1>Laboratory execution</h1>
-  <p>{test.labTestNo} · {test.context.methodReference} · Version {test.version.toString()}</p>
-  <JourneyContextPanel ownerDomain="Laboratory" recordReference={`${test.labTestNo} · version ${test.version.toString()}`} currentState={test.state} nextAction={canEdit ? canSubmit ? 'Save observations or submit for review' : 'Save observations' : 'Read-only'} nextOwner={canEdit ? 'Laboratory executor' : undefined} whyUnavailable={!canEdit ? stateEditable ? 'permission: draft editing is not available to this account' : 'state: this record is not editable in its current state' : undefined} controlledContext={`${test.samples.length} sample(s) · ${test.context.methodReference} · version ${test.context.versionNo} · source ${test.context.sourceReference}`} evidenceSummary={`${test.measurements.length} raw measurement(s) · ${equipment.length} equipment/calibration usage snapshot(s)`} auditHref={`/audit?subjectType=LAB_TEST&subjectId=${encodeURIComponent(test.id)}`} relatedLinks={[{label:'Laboratory test record',href:`/laboratory/tests/${test.id}`,detail:'Read-only record overview'}]} />
-  {saveError ? <p role="alert">{saveError} <a href={Astro.url.pathname}>Refresh record</a></p> : null}
-  {
-    !canEdit ? (
-      <p role="status">
-        This record is read-only. {stateEditable
-          ? 'Your account lacks the explicit draft-edit permission.'
-          : 'This state cannot be edited here; returned records need a controlled resume before editing.'}
+
+<AppLayout title={`Execute ${test.labTestNo}`} locale="en" direction="ltr">
+  <div class="execute-page">
+    <PageHeader>
+      <Fragment slot="heading">
+        <h1>Laboratory execution</h1>
+      </Fragment>
+      <p class="record-meta">
+        <span>{test.labTestNo}</span>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span>{test.context.methodReference}</span>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span>Record version <span class="numeric">{test.version.toString()}</span></span>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span>Template version <span class="numeric">{test.context.versionNo}</span></span>
       </p>
-    ) : (
-      <section>
-        <h2>Raw observations</h2>
-        <p>
-          Raw values are validated on the server against the controlled method. Units and approved
-          criteria below come from the frozen method context — enter each value in the unit shown.
-          The browser collects raw inputs only; the official result is returned by the server.
-        </p>
-        <h3>Samples in this record</h3>
-        <ul class="samples">
-          {test.samples.map((sample) => (
-            <li>{sample.identifier}</li>
-          ))}
-        </ul>
-        <details class="bulk-entry">
-          <summary>Paste observations from Excel</summary>
-          <p>Copy five columns with this exact header: Sample, Parameter, Value, Unit, Remarks. Use the sample identifiers below and the parameter codes shown in the table. Leave Unit empty for a unitless parameter; Boolean values use true or false.</p>
-          <p>Preview keeps other saved observations. Review the entire entry form, then choose Save observations. Preview does not save data.</p>
-          <form method="post" action={Astro.url.pathname}>
-            <input type="hidden" name="expectedVersion" value={openedVersion} />
-            <input type="hidden" name="intent" value="preview-bulk" />
-            <label for="bulkRows">Excel clipboard rows</label>
-            <textarea id="bulkRows" name="bulkRows" rows="8" required>{bulkRows}</textarea>
-            <button type="submit">Preview observations</button>
-          </form>
-        </details>
-        {bulkPreviewReady && <p role="status">Bulk observations validated for preview. Review the values and remarks below before saving. No observations have been saved.</p>}
-        <form method="post" action={Astro.url.pathname} data-lab-measurements data-expected-version={openedVersion}>
-          <input type="hidden" name="expectedVersion" value={openedVersion} />
-          <input type="hidden" name="intent" value="save" />
-          {test.samples.map((sample) => (
-            <input
-              type="hidden"
-              data-sample
-              data-sample-id={sample.id}
-              value={sample.identifier}
-            />
-          ))}
-          <table class="measurements">
-            <caption>Controlled measurement entry for {test.labTestNo}</caption>
-            <thead>
-              <tr>
-                <th scope="col">Sample</th>
-                {parameters.map((parameter) => (
-                  <th scope="col">
-                    {parameter.label} <span class="param-meta">Code: {parameter.code}</span>
-                    {parameter.required ? <span aria-hidden="true"> *</span> : null}
-                    {parameter.unit ? <span class="unit"> ({parameter.unit})</span> : null}
-                    <span class="param-meta">
-                      {parameter.criteriaText}
-                      {parameter.precisionGuidance ? ` · Precision: ${parameter.precisionGuidance}` : null}
-                      {` · Source: ${parameter.sourceReference}`}
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {test.samples.map((sample) => (
-                <tr>
-                  <th scope="row">{sample.identifier}</th>
-                  {parameters.map((parameter) => (
-                    <td>
-                      {parameter.dataType === 'BOOLEAN' ? (
-                        <select
-                          name={`value-${sample.id}:${parameter.id}`}
-                          data-measurement
-                          data-sample-id={sample.id}
-                          data-parameter-id={parameter.id}
-                          data-data-type={parameter.dataType}
-                          data-unit={parameter.unit ?? ''}
-                          aria-label={`${parameter.label} for sample ${sample.identifier}`}
-                        >
-                          <option value="" selected={cellValue(sample.id, parameter.id) === ''}>
-                            —
-                          </option>
-                          <option value="true" selected={cellValue(sample.id, parameter.id) === 'true'}>
-                            Yes
-                          </option>
-                          <option value="false" selected={cellValue(sample.id, parameter.id) === 'false'}>
-                            No
-                          </option>
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          inputmode={parameter.dataType === 'NUMERIC' ? 'decimal' : undefined}
-                          name={`value-${sample.id}:${parameter.id}`}
-                          data-measurement
-                          data-sample-id={sample.id}
-                          data-parameter-id={parameter.id}
-                          data-data-type={parameter.dataType}
-                          data-unit={parameter.unit ?? ''}
-                          value={cellValue(sample.id, parameter.id)}
-                          aria-label={`${parameter.label}${parameter.unit ? ` (${parameter.unit})` : ''} for sample ${sample.identifier}`}
-                        />
-                      )}
-                      <label class="measurement-remarks">
-                        Remarks
-                        <textarea
-                          name={`remarks-${sample.id}:${parameter.id}`}
-                          data-measurement-remarks
-                          data-sample-id={sample.id}
-                          data-parameter-id={parameter.id}
-                          aria-label={`Remarks for ${parameter.label} for sample ${sample.identifier}`}
-                        >{submitted ? String(submitted.get(`remarks-${sample.id}:${parameter.id}`) ?? '') : measurementOf(sample.id, parameter.id)?.remarks ?? ''}</textarea>
-                      </label>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button type="submit" data-save-measurements>Save observations</button>
-          <p data-save-result role="status" tabindex="-1"></p>
-        </form>
-        {
-          canSubmit ? (
-            <button data-submit data-expected-version={test.version.toString()}>
-              Submit for review
-            </button>
-          ) : (
-            <p class="muted">
-              Submission is unavailable because your account lacks the explicit laboratory
-              submission permission.
+      <Fragment slot="actions">
+        <span class="state" data-state={test.state}>{stateLabel(test.state)}</span>
+      </Fragment>
+    </PageHeader>
+
+    <JourneyContextPanel
+      ownerDomain="Laboratory"
+      recordReference={`${test.labTestNo} · version ${test.version.toString()}`}
+      currentState={stateLabel(test.state)}
+      nextAction={canEdit ? canSubmit ? 'Save observations or submit for review' : 'Save observations' : 'Read-only'}
+      nextOwner={canEdit ? 'Laboratory executor' : undefined}
+      whyUnavailable={!canEdit ? stateEditable ? 'permission: draft editing is not available to this account' : 'state: this record is not editable in its current state' : undefined}
+      controlledContext={`${test.samples.length} sample(s) · ${test.context.methodReference} · version ${test.context.versionNo} · source ${test.context.sourceReference}`}
+      evidenceSummary={`${test.measurements.length} raw measurement(s) · ${equipment.length} equipment/calibration usage snapshot(s)`}
+      auditHref={`/audit?subjectType=LAB_TEST&subjectId=${encodeURIComponent(test.id)}`}
+      relatedLinks={[{ label: 'Laboratory test record', href: `/laboratory/tests/${test.id}`, detail: 'Read-only record overview' }]}
+    />
+
+    {
+      !canEdit ? (
+        <section class="panel" aria-labelledby="read-only-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Execution access</p>
+              <h2 id="read-only-heading">This record is read-only</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">01</span>
+          </div>
+          {saveError ? (
+            <p role="alert" class="feedback">
+              {saveError} <a href={Astro.url.pathname}>Refresh record</a>
             </p>
-          )
-        }
-        <p data-result role="status" tabindex="-1"></p>
-        <section aria-labelledby="equipment-use-heading">
-          <h2 id="equipment-use-heading">Equipment used for a run</h2>
-          <p>Choose a run and equipment. Eligibility and calibration are checked before recording; their details are preserved at the time of use.</p>
+          ) : null}
+          <p role="status" class="notice">
+            This record is read-only. {stateEditable
+              ? 'Your account lacks the explicit draft-edit permission.'
+              : 'This state cannot be edited here; returned records need a controlled resume before editing.'}
+          </p>
+          <p class="muted">
+            Execution stays read-only until the record is editable in its current state and the
+            account holds the explicit draft-edit permission. Page visibility never grants
+            authority, and nothing on this page is recorded until the server accepts it.
+          </p>
+        </section>
+      ) : (
+        <>
+          <section class="panel" aria-labelledby="observations-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Draft entry</p>
+                <h2 id="observations-heading">Raw observations</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">01</span>
+            </div>
+            <p class="section-intro">
+              Raw values are validated on the server against the controlled method. Units and
+              approved criteria below come from the frozen method context — enter each value in the
+              unit shown. The browser collects raw inputs only; the official result is returned by
+              the server.
+            </p>
+
+            <div class="samples-block">
+              <div class="samples-heading">
+                <h3>Samples in this record</h3>
+                <p class="samples-meta">
+                  <span class="numeric">{test.samples.length}</span> sample(s) in recorded order ·
+                  <span class="numeric"> {parameters.length}</span> controlled parameter(s) ·
+                  <span class="numeric"> {requiredParameterCount}</span> required
+                </p>
+              </div>
+              <ul class="samples">
+                {test.samples.map((sample) => (
+                  <li>{sample.identifier}</li>
+                ))}
+              </ul>
+              <p class="muted">
+                Sample identifiers, their order and the indicated units are frozen with this record.
+                This page does not add, remove, rename or reorder samples.
+              </p>
+            </div>
+
+            <details class="bulk-entry">
+              <summary>Paste observations from Excel</summary>
+              <div class="bulk-body">
+                <p>
+                  Copy five columns with this exact header: Sample, Parameter, Value, Unit, Remarks.
+                  Use the sample identifiers below and the parameter codes shown in the table. Leave
+                  Unit empty for a unitless parameter; Boolean values use true or false.
+                </p>
+                <p>
+                  Preview keeps other saved observations. Review the entire entry form, then choose
+                  Save observations. Preview does not save data.
+                </p>
+                <form method="post" action={Astro.url.pathname}>
+                  <input type="hidden" name="expectedVersion" value={openedVersion} />
+                  <input type="hidden" name="intent" value="preview-bulk" />
+                  <label for="bulkRows">Excel clipboard rows</label>
+                  <textarea id="bulkRows" name="bulkRows" rows="8" required>{bulkRows}</textarea>
+                  <p class="field-help">
+                    Tab-separated rows only. A value must use the unit shown for its parameter; a
+                    blank value cannot carry remarks.
+                  </p>
+                  <div class="action-row">
+                    <button type="submit" class="action-secondary">Preview observations</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+
+            <form method="post" action={Astro.url.pathname} data-lab-measurements data-expected-version={openedVersion}>
+              <input type="hidden" name="expectedVersion" value={openedVersion} />
+              <input type="hidden" name="intent" value="save" />
+              {test.samples.map((sample) => (
+                <input
+                  type="hidden"
+                  data-sample
+                  data-sample-id={sample.id}
+                  value={sample.identifier}
+                />
+              ))}
+              <div class="table-scroll" role="region" aria-label="Controlled measurement entry" tabindex="0">
+                <table class="measurements">
+                  <caption>Controlled measurement entry for {test.labTestNo}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Sample</th>
+                      {parameters.map((parameter) => (
+                        <th scope="col">
+                          <span class="param-title">
+                            {parameter.label}
+                            {parameter.required ? <span aria-hidden="true"> *</span> : null}
+                          </span>
+                          <span class="param-meta">Code: {parameter.code}</span>
+                          {parameter.unit ? <span class="unit"> ({parameter.unit})</span> : null}
+                          <span class="param-meta">
+                            {parameter.criteriaText}
+                            {parameter.precisionGuidance ? ` · Precision: ${parameter.precisionGuidance}` : null}
+                            {` · Source: ${parameter.sourceReference}`}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {test.samples.map((sample) => (
+                      <tr>
+                        <th scope="row">{sample.identifier}</th>
+                        {parameters.map((parameter) => (
+                          <td>
+                            {parameter.dataType === 'BOOLEAN' ? (
+                              <select
+                                name={`value-${sample.id}:${parameter.id}`}
+                                data-measurement
+                                data-sample-id={sample.id}
+                                data-parameter-id={parameter.id}
+                                data-data-type={parameter.dataType}
+                                data-unit={parameter.unit ?? ''}
+                                aria-label={`${parameter.label} for sample ${sample.identifier}`}
+                              >
+                                <option value="" selected={cellValue(sample.id, parameter.id) === ''}>
+                                  —
+                                </option>
+                                <option value="true" selected={cellValue(sample.id, parameter.id) === 'true'}>
+                                  Yes
+                                </option>
+                                <option value="false" selected={cellValue(sample.id, parameter.id) === 'false'}>
+                                  No
+                                </option>
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                inputmode={parameter.dataType === 'NUMERIC' ? 'decimal' : undefined}
+                                name={`value-${sample.id}:${parameter.id}`}
+                                data-measurement
+                                data-sample-id={sample.id}
+                                data-parameter-id={parameter.id}
+                                data-data-type={parameter.dataType}
+                                data-unit={parameter.unit ?? ''}
+                                value={cellValue(sample.id, parameter.id)}
+                                aria-label={`${parameter.label}${parameter.unit ? ` (${parameter.unit})` : ''} for sample ${sample.identifier}`}
+                              />
+                            )}
+                            <label class="measurement-remarks">
+                              Remarks
+                              <textarea
+                                name={`remarks-${sample.id}:${parameter.id}`}
+                                data-measurement-remarks
+                                data-sample-id={sample.id}
+                                data-parameter-id={parameter.id}
+                                rows="2"
+                                aria-label={`Remarks for ${parameter.label} for sample ${sample.identifier}`}
+                              >{submitted ? String(submitted.get(`remarks-${sample.id}:${parameter.id}`) ?? '') : measurementOf(sample.id, parameter.id)?.remarks ?? ''}</textarea>
+                            </label>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <p data-save-result role={saveError ? 'alert' : 'status'} tabindex="-1" class="feedback">
+                {savedFeedback}
+                {saveError ? <a href={Astro.url.pathname}> Refresh record</a> : null}
+              </p>
+              <div class="action-row">
+                <button type="submit" data-save-measurements class="action-primary">Save observations</button>
+                <span class="action-hint">
+                  Saves the draft only. Submission for review is a separate, authorized step below.
+                </span>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel" aria-labelledby="submission-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Workflow</p>
+                <h2 id="submission-heading">Submit for review</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">02</span>
+            </div>
+            <p class="section-intro">
+              Submission checks the frozen sources, required context and recorded equipment on the
+              server. Saving observations does not submit the test, and submission does not set the
+              official result.
+            </p>
+            {
+              canSubmit ? (
+                <button type="button" class="action-primary" data-submit data-expected-version={test.version.toString()}>
+                  Submit for review
+                </button>
+              ) : (
+                <p class="muted">
+                  Submission is unavailable because your account lacks the explicit laboratory
+                  submission permission.
+                </p>
+              )
+            }
+            <p data-result role="status" tabindex="-1" class="feedback">
+              The record reloads only after the server accepts the submission; any pending or
+              blocked state is reported here.
+            </p>
+          </section>
+
+          <section class="panel" aria-labelledby="equipment-use-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Run evidence</p>
+                <h2 id="equipment-use-heading">Equipment used for a run</h2>
+              </div>
+              <span class="section-index" aria-hidden="true">03</span>
+            </div>
+            <p class="section-intro">
+              Choose a run and equipment. Eligibility and calibration are checked before recording;
+              their details are preserved at the time of use.
+            </p>
+            {
+              canViewEquipment ? equipmentSourceError ? (
+                <p role="status" class="notice">
+                  The authorized equipment source is temporarily unavailable. No equipment usage was
+                  recorded.
+                </p>
+              ) : equipmentOptions.length ? (
+                <form data-record-equipment data-expected-version={test.version.toString()}>
+                  <div class="equipment-grid">
+                    <div class="equipment-field">
+                      <label for="equipmentBatchId">Run</label>
+                      <select id="equipmentBatchId" name="batchId" required>
+                        <option value="">Select a run…</option>
+                        {(test.batches ?? []).map((batch) => <option value={batch.id}>{batch.batchNo}{batch.label ? ` · ${batch.label}` : ''}</option>)}
+                      </select>
+                    </div>
+                    <div class="equipment-field">
+                      <label for="equipmentChoice">Equipment</label>
+                      <select id="equipmentChoice" name="equipmentId" required>
+                        <option value="">Select equipment…</option>
+                        {equipmentOptions.map((item) => <option value={item.id} data-calibration-id={item.calibrationId} disabled={!item.eligible}>{item.label}</option>)}
+                      </select>
+                      <p class="field-help">
+                        Ineligible or unavailable equipment stays disabled. Eligibility is decided by
+                        the server, not by the browser.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="action-row">
+                    <button type="submit" class="action-secondary" data-record-equipment-button>Record equipment use</button>
+                  </div>
+                  <p data-equipment-result role="status" tabindex="-1" class="feedback">
+                    Recorded usage appears in the frozen context below after the server confirms it.
+                  </p>
+                </form>
+              ) : (
+                <p class="muted">No equipment is available in your authorized scope. Ask an authorized equipment owner to confirm the record.</p>
+              ) : (
+                <p role="status" class="notice">Equipment selection is unavailable because your account lacks explicit equipment, calibration, or maintenance view permission.</p>
+              )
+            }
+          </section>
+        </>
+      )
+    }
+
+    <aside class="panel context-panel" aria-labelledby="frozen-context-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Read-only context</p>
+          <h2 id="frozen-context-heading">Frozen context</h2>
+        </div>
+        <span class="section-index" aria-hidden="true">04</span>
+      </div>
+
+      <div class="context-grid">
+        <section class="context-block result-block" aria-labelledby="official-result-heading">
+          <h3 id="official-result-heading">Official result from server</h3>
+          <p class="result-value" data-scientific-result={test.scientificResult ?? 'NOT_DETERMINED'}>
+            <strong>{test.scientificResult ?? 'Not determined by the server yet'}</strong>
+          </p>
+          <p class="muted">
+            The official result is set only by the server-side approved evaluation source. It is
+            independent of workflow state, and this page does not evaluate measurements, criteria,
+            limits or units.
+          </p>
+        </section>
+
+        <section class="context-block" aria-labelledby="controlled-source-heading">
+          <h3 id="controlled-source-heading">Controlled source</h3>
+          <dl class="facts-grid">
+            <div><dt>Method</dt><dd>{test.context.methodReference}</dd></div>
+            <div><dt>Template version</dt><dd>{test.context.versionNo}</dd></div>
+            <div><dt>Criteria source</dt><dd>{test.context.sourceReference || 'Not supplied by record source'}</dd></div>
+            <div><dt>Result source</dt><dd>{test.context.sourceReference || 'Not supplied by record source'}</dd></div>
+          </dl>
+        </section>
+
+        <section class="context-block" aria-labelledby="controlled-documents-heading">
+          <h3 id="controlled-documents-heading">Controlled documents</h3>
           {
-            canViewEquipment ? equipmentSourceError ? (
-              <p role="status">The authorized equipment source is temporarily unavailable. No equipment usage was recorded.</p>
-            ) : equipmentOptions.length ? (
-              <form data-record-equipment data-expected-version={test.version.toString()}>
-                <label for="equipmentBatchId">Run</label>
-                <select id="equipmentBatchId" name="batchId" required>
-                  <option value="">Select a run…</option>
-                  {(test.batches ?? []).map((batch) => <option value={batch.id}>{batch.batchNo}{batch.label ? ` · ${batch.label}` : ''}</option>)}
-                </select>
-                <label for="equipmentChoice">Equipment</label>
-                <select id="equipmentChoice" name="equipmentId" required>
-                  <option value="">Select equipment…</option>
-                  {equipmentOptions.map((item) => <option value={item.id} data-calibration-id={item.calibrationId} disabled={!item.eligible}>{item.label}</option>)}
-                </select>
-                <button type="submit" data-record-equipment-button>Record equipment use</button>
-                <p data-equipment-result role="status" tabindex="-1"></p>
-              </form>
+            documents.length ? (
+              <ul class="context-list">
+                {documents.map((document) => (
+                  <li>
+                    <span>
+                      {String(document.snapshot.documentNo ?? '')} — {String(document.snapshot.title ?? '')}
+                      {document.snapshot.revision ? ` (rev. ${String(document.snapshot.revision)})` : ''}
+                    </span>
+                    <span class="context-meta">{document.usageType}</span>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p>No equipment is available in your authorized scope. Ask an authorized equipment owner to confirm the record.</p>
-            ) : (
-              <p role="status">Equipment selection is unavailable because your account lacks explicit equipment, calibration, or maintenance view permission.</p>
+              <p class="muted">No controlled documents are linked to this method context.</p>
             )
           }
         </section>
-      </section>
-    )
-  }
-  <aside>
-    <h2>Frozen context</h2>
-    <p>Method: {test.context.methodReference} · Template version {test.context.versionNo}</p>
-    <p>Criteria source: {test.context.sourceReference}</p>
-    <p>Official result from server: <strong>{test.scientificResult ?? 'Not determined by the server yet'}</strong></p>
-    <p>Result source: {test.context.sourceReference || 'Not supplied by record source'}</p>
-    <h3>Controlled documents</h3>
-    {
-      documents.length ? (
-        <ul>
-          {documents.map((document) => (
-            <li>
-              {String(document.snapshot.documentNo ?? '')} — {String(document.snapshot.title ?? '')}
-              {document.snapshot.revision ? ` (rev. ${String(document.snapshot.revision)})` : ''} ·{' '}
-              {document.usageType}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="muted">No controlled documents are linked to this method context.</p>
-      )
-    }
-    <h3>Equipment records</h3>
-    {
-      equipment.length ? (
-        <ul>
-          {equipment.map((item) => (
-            <li>
-              <strong>{String(item.equipmentSnapshot.equipmentNo ?? item.equipmentId)}</strong> · used at {item.usedAt}
-              {item.usageRole ? ` · ${item.usageRole}` : ''}
-              <dl class="snapshot-facts">
-                <div><dt>Calibration record</dt><dd>{item.calibrationRecordId || 'Not supplied by source'}</dd></div>
-                <div><dt>Calibration snapshot at use</dt><dd><pre>{JSON.stringify(item.calibrationSnapshot, null, 2)}</pre></dd></div>
-                <div><dt>Equipment snapshot at use</dt><dd><pre>{JSON.stringify(item.equipmentSnapshot, null, 2)}</pre></dd></div>
-              </dl>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="muted">
-        No equipment is recorded for this test yet. Record the equipment used for each run above; eligibility is checked before recording.
-        </p>
-      )
-    }
-  </aside>
+
+        <section class="context-block" aria-labelledby="equipment-records-heading">
+          <h3 id="equipment-records-heading">Equipment records</h3>
+          {
+            equipment.length ? (
+              <ul class="context-list equipment-records">
+                {equipment.map((item) => (
+                  <li>
+                    <span>
+                      <strong>{String(item.equipmentSnapshot.equipmentNo ?? item.equipmentId)}</strong> · used at {item.usedAt}
+                      {item.usageRole ? ` · ${item.usageRole}` : ''}
+                    </span>
+                    <dl class="snapshot-facts">
+                      <div><dt>Calibration record</dt><dd>{item.calibrationRecordId || 'Not supplied by source'}</dd></div>
+                      <div><dt>Calibration snapshot at use</dt><dd><pre>{JSON.stringify(item.calibrationSnapshot, null, 2)}</pre></dd></div>
+                      <div><dt>Equipment snapshot at use</dt><dd><pre>{JSON.stringify(item.equipmentSnapshot, null, 2)}</pre></dd></div>
+                    </dl>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="muted">
+                No equipment is recorded for this test yet. Record the equipment used for each run
+                above; eligibility is checked before recording.
+              </p>
+            )
+          }
+        </section>
+      </div>
+    </aside>
+  </div>
 </AppLayout>
 <script>
   import { actions } from 'astro:actions';
@@ -332,13 +526,29 @@ if (canEdit && canViewEquipment) {
   const saveOut = document.querySelector<HTMLElement>('[data-save-result]');
   if (form) guardUnsavedChanges(form);
 
+  // Field adjacency: a value marked invalid is cleared as soon as the operator
+  // edits that point, so the state never outlives the corrected input.
+  form?.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.matches('[data-measurement]'))
+      target.removeAttribute('aria-invalid');
+  });
+  form?.addEventListener('change', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.matches('[data-measurement]'))
+      target.removeAttribute('aria-invalid');
+  });
+
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (form.getAttribute('aria-busy') === 'true') return;
     const button = form.querySelector<HTMLButtonElement>('[data-save-measurements]');
     if (button) button.disabled = true;
     form.setAttribute('aria-busy', 'true');
-    if (saveOut) saveOut.textContent = 'Saving observations…';
+    if (saveOut) {
+      saveOut.setAttribute('role', 'status');
+      saveOut.textContent = 'Saving observations…';
+    }
     const samples = Array.from(form.querySelectorAll<HTMLInputElement>('[data-sample]')).map(
       (el) => ({ id: el.dataset.sampleId ?? '', identifier: el.value }),
     );
@@ -348,16 +558,17 @@ if (canEdit && canViewEquipment) {
       ),
     );
     const entries = Array.from(form.querySelectorAll<HTMLElement>('[data-measurement]'));
-    const remarksWithoutValue = entries.some((el) => {
+    const invalidEntry = entries.find((el) => {
       const element = el as HTMLInputElement | HTMLSelectElement;
       const key = `${element.dataset.sampleId ?? ''}:${element.dataset.parameterId ?? ''}`;
       return element.value === '' && Boolean((remarksByPoint.get(key) ?? '').trim());
-    });
-    if (remarksWithoutValue) {
-      if (saveOut) {
-        saveOut.textContent = 'Enter a value before saving its remarks. A blank value is not a recorded result.';
-        saveOut.focus?.();
-      }
+    }) as HTMLInputElement | HTMLSelectElement | undefined;
+    if (invalidEntry) {
+      if (saveOut)
+        saveOut.textContent =
+          'Enter a value before saving its remarks. A blank value is not a recorded result.';
+      invalidEntry.setAttribute('aria-invalid', 'true');
+      invalidEntry.focus();
       if (button) button.disabled = false;
       form.removeAttribute('aria-busy');
       return;
@@ -485,81 +696,626 @@ if (canEdit && canViewEquipment) {
   });
 </script>
 <style>
-  section,
-  aside {
-    padding: 1rem;
-    margin-top: 1rem;
-    background: var(--surface-panel);
-    border: 1px solid var(--color-border-subtle);
+  .execute-page {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--space-5);
   }
-  button {
-    padding: 0.7rem;
-    background: var(--color-accent-primary);
-    color:var(--text-on-accent);
-    border: 0;
-    border-radius: var(--radius-md);
+
+  .execute-page :global([data-page-header]) {
+    align-items: center;
+    margin-block-end: 0;
+    padding-block-end: var(--space-4);
   }
-  button[disabled] {
-    opacity: 0.6;
+
+  .record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
   }
-  .bulk-entry { margin-block: 1rem; }
-  .bulk-entry textarea { width: 100%; box-sizing: border-box; }
-  .bulk-entry form { display: grid; gap: .75rem; }
-  .measurements {
-    border-collapse: collapse;
-    margin: 1rem 0;
-    width: 100%;
-  }
-  .measurements th,
-  .measurements td {
-    border: 1px solid var(--color-border-subtle);
-    padding: 0.5rem;
-    text-align: start;
-    vertical-align: top;
-  }
-  .measurements input,
-  .measurements textarea,
-  .measurements select {
-    padding: 0.5rem;
-    font: inherit;
-    min-width: 8rem;
-  }
-  .param-meta {
-    display: block;
-    font-weight: normal;
-    font-size: 0.75rem;
+
+  .meta-separator {
     color: var(--text-muted);
   }
-  .measurement-remarks {
-    display: grid;
-    gap: 0.25rem;
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
+
+  .numeric {
+    font-variant-numeric: tabular-nums;
   }
-  .snapshot-facts{display:grid;gap:.5rem;margin:.65rem 0}.snapshot-facts div{display:grid;grid-template-columns:minmax(10rem,auto) 1fr;gap:.4rem}.snapshot-facts dt{font-weight:700}.snapshot-facts dd{margin:0;min-width:0;overflow-wrap:anywhere}.snapshot-facts pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font:inherit;color:var(--text-muted)}
-  .unit {
-    font-weight: normal;
+
+  .state {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--color-accent-primary);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
   }
+
+  .state[data-state='REJECTED'],
+  .state[data-state='VOID'],
+  .state[data-state='HOLD'],
+  .state[data-state='RETURNED'] {
+    border-inline-start-color: var(--status-warning);
+  }
+
+  .state[data-state='APPROVED'] {
+    border-inline-start-color: var(--status-approved);
+  }
+
+  .panel {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+
+  .execute-page > :global(.journey-panel) {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+
+  .execute-page > :global(.journey-panel) :global(.journey-grid) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .section-index {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .section-intro {
+    max-inline-size: 92ch;
+    margin: 0 0 var(--space-4);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .samples-block {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+  }
+
+  .samples-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .samples-heading h3 {
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .samples-meta {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
   .samples {
     display: flex;
-    gap: 0.5rem;
     flex-wrap: wrap;
-    list-style: none;
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
     padding: 0;
+    list-style: none;
   }
+
   .samples li {
     padding: 0.3rem 0.6rem;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
+    background: var(--surface-panel);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
   }
-  form[data-lab-measurements] {
-    margin-bottom: 1rem;
+
+  .bulk-entry {
+    margin-block: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
   }
-  form[data-lab-measurements] > button {
-    margin-top: 0.5rem;
+
+  .bulk-entry summary {
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    align-content: center;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
   }
-  form[data-record-equipment]{display:grid;grid-template-columns:minmax(8rem,auto) minmax(15rem,1fr);gap:.6rem;max-width:54rem;align-items:center}
-  form[data-record-equipment] button,form[data-record-equipment] [role="status"]{grid-column:1/-1}
-  form[data-record-equipment] select{min-width:0;max-width:100%;padding:.6rem;font:inherit}
-  @media(max-width:650px){form[data-record-equipment]{grid-template-columns:1fr}form[data-record-equipment] button,form[data-record-equipment] [role="status"]{grid-column:auto}}
+
+  .bulk-entry summary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .bulk-body {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0 var(--space-4) var(--space-4);
+  }
+
+  .bulk-body p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .bulk-body form {
+    display: grid;
+    gap: var(--space-3);
+    max-inline-size: 60rem;
+  }
+
+  label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  textarea {
+    inline-size: 100%;
+    box-sizing: border-box;
+    padding: var(--space-2);
+    font: inherit;
+    resize: vertical;
+  }
+
+  .field-help {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .table-scroll {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .table-scroll:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .measurements {
+    inline-size: 100%;
+    min-inline-size: 48rem;
+    border-collapse: collapse;
+    text-align: start;
+  }
+
+  .measurements caption {
+    padding: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+    text-align: start;
+  }
+
+  .measurements th,
+  .measurements td {
+    min-inline-size: 12rem;
+    padding: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+    vertical-align: top;
+    text-align: start;
+    overflow-wrap: break-word;
+  }
+
+  .measurements thead th {
+    background: var(--table-header-background);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .measurements tbody th {
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .param-title {
+    display: block;
+    font-size: var(--font-size-sm);
+  }
+
+  .param-meta {
+    display: block;
+    margin-block-start: var(--space-1);
+    color: var(--text-muted);
+    font-weight: normal;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .unit {
+    display: inline;
+    color: var(--text-secondary);
+    font-weight: normal;
+    font-size: var(--font-size-xs);
+  }
+
+  .measurements input,
+  .measurements textarea,
+  .measurements select {
+    inline-size: 100%;
+    min-inline-size: 8rem;
+    box-sizing: border-box;
+    padding: var(--space-2);
+    font: inherit;
+  }
+
+  .measurement-remarks {
+    display: grid;
+    gap: var(--space-1);
+    margin-block-start: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .measurement-remarks textarea {
+    color: var(--text-primary);
+  }
+
+  .feedback {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .feedback[role='alert'] {
+    border-inline-start-color: var(--status-danger);
+    color: var(--text-primary);
+  }
+
+  .feedback a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .feedback:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .notice {
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block-start: var(--space-3);
+  }
+
+  .action-primary,
+  .action-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: var(--space-2) var(--space-5);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+  }
+
+  .action-primary {
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+  }
+
+  .action-primary:hover:not(:disabled) {
+    background: var(--color-accent-primary-hover);
+    border-color: var(--color-accent-primary-hover);
+  }
+
+  .action-primary:active:not(:disabled) {
+    background: var(--color-accent-primary-active);
+    border-color: var(--color-accent-primary-active);
+  }
+
+  .action-secondary {
+    background: transparent;
+    border-color: var(--control-border);
+    color: var(--text-primary);
+  }
+
+  .action-secondary:hover:not(:disabled) {
+    background: var(--surface-raised);
+  }
+
+  .action-primary:disabled,
+  .action-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .action-primary:focus-visible,
+  .action-secondary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .action-hint {
+    max-inline-size: 52ch;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .equipment-grid {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) minmax(18rem, 2fr);
+    gap: var(--space-4);
+    max-inline-size: 72rem;
+  }
+
+  .equipment-field {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--space-2);
+  }
+
+  .equipment-field select {
+    inline-size: 100%;
+    min-inline-size: 0;
+    padding: var(--space-2);
+    font: inherit;
+  }
+
+  .context-panel {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .context-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .context-block {
+    min-inline-size: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+  }
+
+  .context-block h3 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .result-block {
+    border-inline-start: 3px solid var(--color-accent-primary);
+  }
+
+  .result-value {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+
+  .facts-grid {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  .facts-grid > div {
+    min-inline-size: 0;
+    padding-block-start: var(--space-2);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+
+  dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  dd {
+    margin: var(--space-1) 0 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .context-list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .context-list li {
+    display: grid;
+    gap: var(--space-1);
+    padding-block: var(--space-2);
+    border-block-start: 1px solid var(--color-border-subtle);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .context-meta {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .snapshot-facts {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+  }
+
+  .snapshot-facts div {
+    display: grid;
+    grid-template-columns: minmax(10rem, auto) 1fr;
+    gap: var(--space-2);
+    min-inline-size: 0;
+  }
+
+  .snapshot-facts dt {
+    overflow-wrap: anywhere;
+  }
+
+  .snapshot-facts dd {
+    margin: 0;
+    min-inline-size: 0;
+  }
+
+  .snapshot-facts pre {
+    margin: 0;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: var(--font-size-xs);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .muted {
+    margin: var(--space-2) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 1100px) {
+    .execute-page > :global(.journey-panel) :global(.journey-grid) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .context-grid,
+    .equipment-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .panel,
+    .execute-page > :global(.journey-panel) {
+      padding: var(--space-4);
+    }
+
+    .section-heading {
+      align-items: flex-start;
+    }
+
+    .snapshot-facts div {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .state,
+    .notice,
+    .feedback,
+    .table-scroll,
+    .bulk-entry,
+    .samples-block,
+    .context-block {
+      border: 1px solid CanvasText;
+    }
+
+    .table-scroll:focus-visible,
+    .feedback:focus-visible,
+    .action-primary:focus-visible,
+    .action-secondary:focus-visible,
+    .bulk-entry summary:focus-visible {
+      outline-color: Highlight;
+    }
+  }
 </style>

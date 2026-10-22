@@ -1,31 +1,140 @@
 ---
 import AppLayout from '../../../../../ui/layouts/AppLayout.astro';
 import PageHeader from '../../../../../ui/components/PageHeader.astro';
-import DecisionStateCard from '../../../../../ui/components/feedback/DecisionStateCard.astro';
+import { laboratoryReadDependencies } from '../../../../../modules/laboratory/application/dependencies.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../../shared/errors/read-failure.js';
+import { isUuidLike } from '../../../../../ui/forms/mutation-post.js';
+import { stateLabel } from '../../../../../shared/copy/ux-vocabulary.js';
+
 const actor = Astro.locals.actor;
 if (!actor) return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);
 const labTestId = Astro.params.labTestId ?? '';
-const originalHref = /^[0-9a-f-]{36}$/i.test(labTestId) ? `/laboratory/tests/${labTestId}` : '/laboratory/tests';
+if (!isUuidLike(labTestId)) return Astro.redirect('/404');
+let original;
+try {
+  original = await laboratoryReadDependencies().get.execute({ actor, id: labTestId });
+} catch (error) {
+  if (classifyReadFailure(error) === 'UNAVAILABLE') {
+    return providerUnavailableResponse('Original laboratory test is temporarily unavailable', Astro.url.pathname);
+  }
+  return Astro.redirect('/404');
+}
+const originalHref = `/laboratory/tests/${original.id}`;
+
+// Current factory: laboratoryActionDependencies().retest uses the default
+// unresolvedRetestPolicy in application/create-retest.ts. It rejects with
+// POLICY_SOURCE_REQUIRED before resolving a template or creating a record.
+// This surface stays closed until that source and CA-F-03/04 are accepted;
+// account roles, original workflow state and scientific result cannot enable it.
+const policySourceRequired = true;
+const submitted = Astro.request.method === 'POST';
+let reason = '';
+if (submitted) {
+  const data = await Astro.request.formData();
+  const enteredReason = data.get('reason');
+  reason = typeof enteredReason === 'string' ? enteredReason : '';
+  // Disabling a button is not a server guard. Even a direct native POST is
+  // refused here; a posted originalId never replaces the route-bound original.
+  Astro.response.status = 403;
+}
+
+// Source-only UI mapping: READ = original context / missing-or-denied 404 /
+// provider-unavailable 503. FORM = unsaved reason / policy-blocked / refused
+// POST. Save success and pending are N/A while no policy provider is wired.
+// FILTER/EXPORT and a separate AUTH workflow are N/A: this route has none.
+// Presentation uses existing CAPA A tokens; literal visual-reference matching
+// is unconfirmed. No runtime, visual or acceptance checks were performed.
+// Pre-existing functional debt, separate from presentation: createRetest has
+// no client expectedVersion or stable form-intent idempotency contract. Do not
+// add decorative hidden tokens or enable saving before CA-F-03/04 resolves it.
 ---
 <AppLayout title="Retest request · Laboratory" locale="en" direction="ltr">
-  <PageHeader section="Laboratory">
-    <Fragment slot="heading"><h1>Retest request</h1></Fragment>
-    <p class="lede">A retest is a new controlled test linked to the original result.</p>
-  </PageHeader>
-  <DecisionStateCard
-    heading="Retest creation is not available."
-    decisionId="POLICY_SOURCE_REQUIRED"
-    owner="Laboratory policy owner"
-    decisionNote="No approved retest policy supplies authority, count, sequence, record number, template or original-result handling. The original test cannot be overwritten."
-    actions={[
-      { href: originalHref, label: 'Open the original test' },
-      { href: '/laboratory/tests', label: 'Open laboratory tests' },
-    ]}
-  >
-    <p>This page does not offer a retest form because the values that decide a retest are not approved. Nothing was changed.</p>
-    <p class="state-card__muted">The original test, its measurements and its recorded result remain unchanged and readable.</p>
-  </DecisionStateCard>
+  <div class="retest-workspace">
+    <PageHeader section="Laboratory">
+      <Fragment slot="heading"><h1>Retest request</h1></Fragment>
+      <p class="lede">Request a separate draft test linked to the original. The original result stays unchanged.</p>
+      <Fragment slot="actions"><a class="button button--secondary" href={originalHref}>Open the original test</a></Fragment>
+    </PageHeader>
+
+    <form method="post" action={Astro.url.pathname} class="retest-form" aria-labelledby="request-heading" aria-describedby="retest-eligibility">
+      <input type="hidden" name="originalId" value={original.id} />
+
+      <section class="form-section" aria-labelledby="original-heading">
+        <p class="eyebrow">Read-only context</p>
+        <h2 id="original-heading">Original laboratory test</h2>
+        <dl class="context-grid">
+          <div><dt>Test number</dt><dd>{original.labTestNo}</dd></div>
+          <div><dt>Record version</dt><dd class="numeric">{original.version.toString()}</dd></div>
+          <div><dt>Workflow state</dt><dd>{stateLabel(original.state)}</dd></div>
+          <div><dt>Scientific result</dt><dd>{original.scientificResult ?? stateLabel('NOT_DETERMINED')}</dd></div>
+          <div><dt>Method</dt><dd>{original.context.methodReference}</dd></div>
+          <div><dt>Template version</dt><dd>{original.context.versionNo}</dd></div>
+          <div class="full-width"><dt>Controlled source</dt><dd>{original.context.sourceReference}</dd></div>
+        </dl>
+        <p class="hint">Workflow state and scientific result are independent. This request does not edit the original test or its measurements.</p>
+      </section>
+
+      <section id="retest-eligibility" class="eligibility" role={submitted ? 'alert' : 'status'} aria-labelledby="eligibility-heading" tabindex="-1" data-state="policy-blocked">
+        <p class="eyebrow">Request eligibility</p>
+        <h2 id="eligibility-heading">Retest creation is not available</h2>
+        <p><strong>POLICY_SOURCE_REQUIRED</strong> · Laboratory policy owner</p>
+        <p>No approved retest policy supplies authority, count, sequence, record number, template or original-result handling.</p>
+        <p>{submitted ? 'The request was not submitted. No new test was created.' : 'Creation is blocked. Entering a reason does not save or submit a request.'}</p>
+      </section>
+
+      <section class="form-section" aria-labelledby="request-heading">
+        <p class="eyebrow">Request details</p>
+        <h2 id="request-heading">Reason for retest</h2>
+        <div class="field">
+          <label for="reason">Reason <span class="required">(required)</span></label>
+          <p id="reason-help" class="hint">Explain why a separate test is needed. Your entry is not saved while creation is blocked.</p>
+          <textarea id="reason" name="reason" required rows="5" aria-describedby="reason-help">{reason}</textarea>
+        </div>
+        <p class="hint">A new DRAFT requires server authorization and a verified policy source. Test numbering, sequence, template and equipment eligibility cannot be selected here.</p>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" disabled={policySourceRequired} aria-describedby="retest-eligibility">Create draft retest</button>
+        <a class="button button--secondary" href={originalHref}>Cancel</a>
+        <a class="register-link" href="/laboratory/tests">Open laboratory tests</a>
+      </div>
+    </form>
+  </div>
 </AppLayout>
 <style>
+  .retest-workspace { display: grid; gap: var(--space-6); min-inline-size: 0; }
   .lede { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--font-size-md); }
+  .retest-form { display: grid; gap: var(--space-5); min-inline-size: 0; max-inline-size: 64rem; padding: var(--space-6); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--surface-panel); }
+  .form-section, .field { display: grid; gap: var(--space-3); min-inline-size: 0; }
+  h2 { margin: 0; font-size: var(--font-size-lg); line-height: var(--line-height-tight); }
+  .eyebrow { margin: 0; color: var(--text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+  .hint, .required { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); font-weight: 400; }
+  .context-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin: 0; }
+  .context-grid > div { min-inline-size: 0; padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border-subtle); }
+  dt { color: var(--text-muted); font-size: var(--font-size-xs); }
+  dd { margin: var(--space-1) 0 0; color: var(--text-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; }
+  .numeric { font-variant-numeric: tabular-nums; }
+  .eligibility { padding: var(--space-4); border: 1px solid var(--color-border-subtle); border-inline-start: 3px solid var(--status-warning); border-radius: var(--radius-md); background: var(--surface-inset); overflow-wrap: anywhere; }
+  .eligibility h2 { margin-block-start: var(--space-2); }
+  .eligibility p:not(.eyebrow) { margin: var(--space-3) 0 0; font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); }
+  label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+  textarea { inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; min-block-size: 9rem; box-sizing: border-box; resize: vertical; padding: var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-inset); color: var(--text-primary); font: inherit; }
+  .form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding-block-start: var(--space-4); border-block-start: 1px solid var(--color-border-subtle); }
+  button, .button, .register-link { display: inline-flex; align-items: center; justify-content: center; min-block-size: 44px; box-sizing: border-box; padding: var(--space-2) var(--space-4); font: inherit; font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; }
+  button { border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--color-accent-primary); color: var(--text-on-accent); }
+  button:disabled { cursor: not-allowed; }
+  .register-link { color: var(--color-accent-primary-hover); }
+  textarea:focus-visible, button:focus-visible, a:focus-visible, .eligibility:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+  @media (min-width: 800px) {
+    .context-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .full-width { grid-column: 1 / -1; }
+  }
+  @media (max-width: 600px) {
+    .retest-form { padding: var(--space-4); }
+    .form-actions > * { inline-size: 100%; }
+  }
+  @media (forced-colors: active) {
+    .eligibility { border-color: CanvasText; }
+    textarea:focus-visible, button:focus-visible, a:focus-visible, .eligibility:focus-visible { outline-color: Highlight; }
+  }
 </style>

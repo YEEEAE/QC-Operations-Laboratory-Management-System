@@ -1,5 +1,14 @@
 ---
-import AppLayout from '../../../../ui/layouts/AppLayout.astro'; import JourneyContextPanel from '../../../../ui/components/workflow/JourneyContextPanel.astro'; import ProviderUnavailableState from '../../../../ui/components/feedback/ProviderUnavailableState.astro'; import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';import { getSourceReceivingForLabTest } from '../../../../modules/laboratory/application/get-source-receiving.js';import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';const actor=Astro.locals.actor;if(!actor)return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);let test;try{test=await laboratoryReadDependencies().get.execute({actor,id:Astro.params.labTestId??''});}catch(error){if(classifyReadFailure(error)==='UNAVAILABLE')return providerUnavailableResponse('Laboratory test details are temporarily unavailable',Astro.url.pathname+Astro.url.search);return Astro.redirect('/404');}if(!test)return Astro.redirect('/404');// Read-only provenance (QC-100-FINAL-024): the receiving workspace link does
+import PageHeader from '../../../../ui/components/PageHeader.astro';
+import AppLayout from '../../../../ui/layouts/AppLayout.astro';
+import JourneyContextPanel from '../../../../ui/components/workflow/JourneyContextPanel.astro';
+import ProviderUnavailableState from '../../../../ui/components/feedback/ProviderUnavailableState.astro';
+import { laboratoryReadDependencies } from '../../../../modules/laboratory/application/dependencies.js';
+import { getSourceReceivingForLabTest } from '../../../../modules/laboratory/application/get-source-receiving.js';
+import { formatDateTime } from '../../../../shared/copy/format.js';
+import { stateLabel } from '../../../../shared/copy/ux-vocabulary.js';
+import { classifyReadFailure, providerUnavailableResponse } from '../../../../shared/errors/read-failure.js';
+const actor=Astro.locals.actor;if(!actor)return Astro.redirect(`/login?returnTo=${encodeURIComponent(Astro.url.pathname)}`);let test;try{test=await laboratoryReadDependencies().get.execute({actor,id:Astro.params.labTestId??''});}catch(error){if(classifyReadFailure(error)==='UNAVAILABLE')return providerUnavailableResponse('Laboratory test details are temporarily unavailable',Astro.url.pathname+Astro.url.search);return Astro.redirect('/404');}if(!test)return Astro.redirect('/404');// Read-only provenance (QC-100-FINAL-024): the receiving workspace link does
 // not transfer any receiving mutation authority into this page.
 let sourceReceiving;
 let sourceReceivingUnavailable = false;
@@ -14,5 +23,827 @@ const canExecute = test.state === 'DRAFT' && hasPermission('PERM-LAB-EDIT-DRAFT'
 const atReviewerStage = ['SUBMITTED', 'UNDER_REVIEW'].includes(test.state);
 const atQcmStage = test.state === 'PENDING_QCM_APPROVAL';
 const canReview = (atReviewerStage && hasPermission('PERM-LAB-REVIEW') && hasPermission('PERM-APR-REVIEW')) || (atQcmStage && ((hasPermission('PERM-APR-APPROVE') && hasPermission('PERM-ESIG-SIGN')) || hasPermission('PERM-LAB-RETURN')));
+const recorded = (value: string | null | undefined) => (value ? formatDateTime(value) : 'Not recorded');
+const parameters = test.context.parameters;
+const requiredParameterCount = parameters.filter((parameter) => parameter.required).length;
+const batches = test.batches ?? [];
+const readings = test.readings ?? [];
+const sampleResults = test.sampleResults ?? [];
+const parameterById = new Map(parameters.map((parameter) => [parameter.id, parameter]));
+const sampleById = new Map(test.samples.map((sample) => [sample.id, sample]));
+const batchById = new Map(batches.map((batch) => [batch.id, batch]));
+const observations = test.measurements.map((measurement) => {
+  const parameter = parameterById.get(measurement.parameterId);
+  const sample = sampleById.get(measurement.sampleId);
+  const batch = measurement.batchId ? batchById.get(measurement.batchId) : undefined;
+  const calculated = measurement.raw === null && measurement.calculatedValue != null;
+  const value = calculated ? measurement.calculatedValue : measurement.raw;
+  return {
+    sample: sample?.identifier ?? 'Not supplied by source',
+    parameter: parameter?.label ?? 'Not supplied by source',
+    parameterCode: parameter?.code ?? null,
+    numeric: parameter?.dataType === 'NUMERIC',
+    value: value === null || value === undefined ? 'Not recorded' : typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value,
+    calculated,
+    unit: measurement.calculatedUnit ?? measurement.unit ?? parameter?.unit ?? 'Not supplied by source',
+    run: batch?.batchNo ?? (measurement.batchId ? 'Not supplied by source' : 'Test-level'),
+    remarks: measurement.remarks?.trim() || null,
+    enteredAt: measurement.enteredAt,
+  };
+});
+const sampleResultRows = sampleResults.map((result) => {
+  const sample = sampleById.get(result.sampleId);
+  const batch = batchById.get(result.batchId);
+  return {
+    sample: sample?.identifier ?? 'Not supplied by source',
+    run: batch?.batchNo ?? 'Not supplied by source',
+    result: result.result,
+    source: result.source === 'HUMAN' ? 'Human-recorded' : 'System evaluation',
+    evaluatedAt: result.evaluatedAt,
+  };
+});
+const equipmentEvidence = test.context.equipment.map((item) => ({
+  usageRole: item.usageRole?.trim() || 'Not supplied by source',
+  usedAt: recorded(item.usedAt),
+}));
+const documentEvidence = test.context.documents.map((item) => ({
+  usageType: item.usageType?.trim() || 'Not supplied by source',
+}));
 ---
-<AppLayout title={`${test.labTestNo} · Laboratory`}><h1>{test.labTestNo}</h1><p>State: <strong>{stateLabel(test.state)}</strong> · Official result: <strong>{test.scientificResult??'Not determined'}</strong> · Version {test.version.toString()}</p>{sourceReceivingUnavailable && <ProviderUnavailableState title="Source receiving link unavailable" description="The test remains visible, but its source receiving relationship could not be confirmed." retryHref={Astro.url.pathname} />}<JourneyContextPanel ownerDomain="Laboratory" recordReference={`${test.labTestNo} · version ${test.version.toString()}`} currentState={`${stateLabel(test.state)} · Result ${test.scientificResult ?? stateLabel('NOT_DETERMINED')}`} nextAction={canExecute ? 'Open execution workspace' : canReview ? atQcmStage ? 'Open QCM final review workspace' : 'Open review workspace' : 'No laboratory action is available'} nextActionHref={canExecute ? `/laboratory/tests/${test.id}/execute` : canReview ? `/laboratory/tests/${test.id}/review` : undefined} nextOwner={test.state === 'DRAFT' ? 'Laboratory executor' : atQcmStage ? 'QCM final reviewer' : atReviewerStage ? 'Laboratory reviewer' : undefined} whyUnavailable={!canExecute && test.state === 'DRAFT' ? 'permission: draft editing is not available to this account' : !canReview && (atReviewerStage || atQcmStage) ? 'permission/state: review is unavailable for this account or current state' : undefined} waitingOn={test.state === 'SUBMITTED' ? 'Laboratory reviewer' : test.state === 'UNDER_REVIEW' ? 'Supervisor approval' : atQcmStage ? 'QCM final approval or return' : undefined} expectedEvent={test.state === 'DRAFT' ? 'Submit test for review' : test.state === 'SUBMITTED' ? 'Begin review' : test.state === 'UNDER_REVIEW' ? 'Supervisor approval or return' : atQcmStage ? 'Final approval or return' : undefined} controlledContext={`${test.context.methodReference} · template ${test.context.versionNo} · source ${test.context.sourceReference}`} evidenceSummary={`${test.measurements.length} measurements · controlled equipment/calibration context preserved`} auditHref={`/audit?subjectType=LAB_TEST&subjectId=${encodeURIComponent(test.id)}`} relatedLinks={relatedLinks} /><section><h2>Controlled context</h2><dl><dt>Method</dt><dd>{test.context.methodReference}</dd><dt>Template version</dt><dd>{test.context.versionNo}</dd><dt>Source</dt><dd>{test.context.sourceReference}</dd></dl></section><section class="next"><h2>Next workspace</h2>{canExecute ? <a href={`/laboratory/tests/${test.id}/execute`}>Open execution workspace</a> : <p>Execution is read-only: the current state or your account does not allow draft editing.</p>}{canReview ? <a href={`/laboratory/tests/${test.id}/review`}>Open review workspace</a> : <p>Review is unavailable for the current state or account. Page visibility does not grant review authority.</p>}{test.originalTestId ? <p>Retest of an original laboratory test — sequence and authority follow the approved P-05 policy; the original test remains unchanged.</p> : canRetest ? <p>Retest authorization follows the approved P-05 policy: a retest may only be created by the approved authority, with its own record version and reason. The original test remains unchanged.</p> : <p>Retest requires the approved retest authority; this account does not hold it for this record.</p>}</section></AppLayout><style>section{padding:1rem;background:var(--surface-panel);border:1px solid var(--color-border-subtle)}dl{display:grid;grid-template-columns:auto 1fr;gap:.5rem 1rem}dd{margin:0}.next{display:grid;gap:.6rem;margin-top:1rem}.next p{margin:0;color:var(--text-muted)}a{color:var(--color-accent-primary-hover)}</style>
+
+<AppLayout title={`${test.labTestNo} · Laboratory`} locale="en" direction="ltr">
+  <div id="laboratory-test-detail" class="lab-detail">
+    <PageHeader>
+      <Fragment slot="heading">
+        <h1>{test.labTestNo}</h1>
+      </Fragment>
+      <p class="record-meta">
+        <span>Laboratory test record</span>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span>Record version <span class="numeric">{test.version.toString()}</span></span>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span>Template version <span class="numeric">{test.context.versionNo}</span></span>
+      </p>
+      <Fragment slot="actions">
+        <span class="state" data-state={test.state}>{stateLabel(test.state)}</span>
+      </Fragment>
+    </PageHeader>
+
+    <div class="record-layout">
+      <div class="record-content">
+        <JourneyContextPanel
+          ownerDomain="Laboratory"
+          recordReference={`${test.labTestNo} · version ${test.version.toString()}`}
+          currentState={stateLabel(test.state)}
+          nextAction={canExecute ? 'Open execution workspace' : canReview ? atQcmStage ? 'Open QCM final review workspace' : 'Open review workspace' : 'No laboratory action is available'}
+          nextActionHref={canExecute ? `/laboratory/tests/${test.id}/execute` : canReview ? `/laboratory/tests/${test.id}/review` : undefined}
+          nextOwner={test.state === 'DRAFT' ? 'Laboratory executor' : atQcmStage ? 'QCM final reviewer' : atReviewerStage ? 'Laboratory reviewer' : undefined}
+          whyUnavailable={!canExecute && test.state === 'DRAFT' ? 'permission: draft editing is not available to this account' : !canReview && (atReviewerStage || atQcmStage) ? 'permission/state: review is unavailable for this account or current state' : undefined}
+          waitingOn={test.state === 'SUBMITTED' ? 'Laboratory reviewer' : test.state === 'UNDER_REVIEW' ? 'Supervisor approval' : atQcmStage ? 'QCM final approval or return' : undefined}
+          expectedEvent={test.state === 'DRAFT' ? 'Submit test for review' : test.state === 'SUBMITTED' ? 'Begin review' : test.state === 'UNDER_REVIEW' ? 'Supervisor approval or return' : atQcmStage ? 'Final approval or return' : undefined}
+          controlledContext={`${test.context.methodReference} · template ${test.context.versionNo} · source ${test.context.sourceReference}`}
+          evidenceSummary={`${test.samples.length} sample(s) · ${test.measurements.length} recorded measurement(s) · ${test.context.equipment.length} equipment/calibration snapshot(s)`}
+          auditHref={`/audit?subjectType=LAB_TEST&subjectId=${encodeURIComponent(test.id)}`}
+        />
+
+        <section class="panel result-panel" aria-labelledby="official-result-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Scientific record</p>
+              <h2 id="official-result-heading">Official result</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">01</span>
+          </div>
+          <p class="result-value" data-result={test.scientificResult ?? 'NOT_DETERMINED'}>
+            {test.scientificResult ?? stateLabel('NOT_DETERMINED')}
+          </p>
+          <p class="notice">
+            The official result is set only by the server-side approved evaluation source. Workflow
+            state does not change it, and this page does not evaluate measurements, criteria, limits,
+            units or samples.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="facts-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Record facts</p>
+              <h2 id="facts-heading">Test facts</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">02</span>
+          </div>
+          <dl class="facts-grid">
+            <div><dt>Laboratory test number</dt><dd>{test.labTestNo}</dd></div>
+            <div><dt>Workflow state</dt><dd>{stateLabel(test.state)}</dd></div>
+            <div><dt>Record version</dt><dd class="numeric">{test.version.toString()}</dd></div>
+            <div><dt>Retest sequence</dt><dd class="numeric">{test.retestSequence}</dd></div>
+            <div class="wide">
+              <dt>Retest basis</dt>
+              <dd>
+                {test.originalTestId
+                  ? 'Retest of an original laboratory test. The original test remains unchanged.'
+                  : 'Original laboratory test.'}
+              </dd>
+            </div>
+            {test.retestReason ? (
+              <div class="wide"><dt>Retest reason</dt><dd>{test.retestReason}</dd></div>
+            ) : null}
+          </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="controlled-context-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Frozen with the record</p>
+              <h2 id="controlled-context-heading">Controlled context</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">03</span>
+          </div>
+          <dl class="facts-grid">
+            <div><dt>Method</dt><dd>{test.context.methodReference}</dd></div>
+            <div><dt>Template version</dt><dd>{test.context.versionNo}</dd></div>
+            <div><dt>Source</dt><dd>{test.context.sourceReference}</dd></div>
+            <div><dt>Requirements reference</dt><dd>{test.context.requirementsReference}</dd></div>
+            <div class="wide">
+              <dt>Controlled content hash</dt>
+              <dd class="hash">{test.context.contentHash}</dd>
+            </div>
+          </dl>
+          <p class="muted">
+            The method, source, template version and hash are the controlled context retained with
+            this record. This page does not reinterpret or re-evaluate them.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="evidence-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Recorded evidence</p>
+              <h2 id="evidence-heading">Evidence</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">04</span>
+          </div>
+          <dl class="facts-grid">
+            <div><dt>Samples</dt><dd class="numeric">{test.samples.length}</dd></div>
+            <div><dt>Test runs</dt><dd class="numeric">{batches.length}</dd></div>
+            <div>
+              <dt>Controlled parameters</dt>
+              <dd><span class="numeric">{parameters.length}</span> · {requiredParameterCount} required</dd>
+            </div>
+            <div><dt>Recorded measurements</dt><dd class="numeric">{test.measurements.length}</dd></div>
+            <div><dt>Replicate readings</dt><dd class="numeric">{readings.length}</dd></div>
+            <div><dt>Sample result records</dt><dd class="numeric">{sampleResults.length}</dd></div>
+            <div>
+              <dt>Equipment / calibration snapshots</dt>
+              <dd class="numeric">{test.context.equipment.length}</dd>
+            </div>
+            <div>
+              <dt>Controlled document versions</dt>
+              <dd class="numeric">{test.context.documents.length}</dd>
+            </div>
+          </dl>
+
+          {test.derivedResult ? (
+            <div class="assessment-message">
+              <strong>Derived run evidence: {test.derivedResult.result}.</strong> This server-derived
+              aggregate is evidence only; it is not the official result.
+              <span class="assessment-meta">
+                Computed {recorded(test.derivedResult.computedAt)} · inputs hash
+                <span class="hash"> {test.derivedResult.inputsHash || 'Not supplied by source'}</span>
+              </span>
+            </div>
+          ) : (
+            <p class="muted">No derived run evidence is recorded for this test.</p>
+          )}
+
+          {equipmentEvidence.length ? (
+            <div class="evidence-block">
+              <h3>Equipment and calibration context</h3>
+              <ul class="evidence-list">
+                {equipmentEvidence.map((item) => (
+                  <li>
+                    <span>Usage role: {item.usageRole}</span>
+                    <span>Recorded {item.usedAt}</span>
+                  </li>
+                ))}
+              </ul>
+              <p class="muted">
+                The snapshots above are preserved with the record. This page does not re-assess
+                equipment eligibility; eligibility is checked by the server when use is recorded and
+                when the test is submitted.
+              </p>
+            </div>
+          ) : null}
+
+          {documentEvidence.length ? (
+            <div class="evidence-block">
+              <h3>Controlled documents</h3>
+              <ul class="evidence-list">
+                {documentEvidence.map((item) => (
+                  <li>
+                    <span>Usage type: {item.usageType}</span>
+                    <span>Controlled version context preserved</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {observations.length ? (
+            <div class="table-scroll" role="region" aria-label="Recorded laboratory observations" tabindex="0">
+              <table>
+                <caption>
+                  Recorded observations from the current test record. Values are shown exactly as
+                  recorded; no evaluation is performed on this page.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Sample</th>
+                    <th scope="col">Parameter</th>
+                    <th scope="col">Recorded value</th>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Run</th>
+                    <th scope="col">Entered</th>
+                    <th scope="col">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {observations.map((observation) => (
+                    <tr>
+                      <th scope="row">{observation.sample}</th>
+                      <td>
+                        {observation.parameter}
+                        {observation.parameterCode ? (
+                          <span class="muted-inline"> · {observation.parameterCode}</span>
+                        ) : null}
+                      </td>
+                      <td class={observation.numeric ? 'numeric' : undefined}>
+                        {observation.value}
+                        {observation.calculated ? <span class="calculated-badge">Calculated</span> : null}
+                      </td>
+                      <td>{observation.unit}</td>
+                      <td>{observation.run}</td>
+                      <td>{recorded(observation.enteredAt)}</td>
+                      <td>{observation.remarks ?? 'Not recorded'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="muted">No measurements are recorded for this test.</p>
+          )}
+
+          {sampleResultRows.length ? (
+            <div class="table-scroll" role="region" aria-label="Recorded sample results" tabindex="0">
+              <table>
+                <caption>Sample result evidence recorded against this test.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Sample</th>
+                    <th scope="col">Run</th>
+                    <th scope="col">Result</th>
+                    <th scope="col">Recorded by source</th>
+                    <th scope="col">Evaluated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sampleResultRows.map((row) => (
+                    <tr>
+                      <th scope="row">{row.sample}</th>
+                      <td>{row.run}</td>
+                      <td>{row.result}</td>
+                      <td>{row.source}</td>
+                      <td>{recorded(row.evaluatedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </section>
+
+        <section class="panel" aria-labelledby="history-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Recorded timeline</p>
+              <h2 id="history-heading">History</h2>
+            </div>
+            <span class="section-index" aria-hidden="true">05</span>
+          </div>
+          <dl class="facts-grid">
+            <div><dt>Created</dt><dd>{recorded(test.createdAt)}</dd></div>
+            <div><dt>Last updated</dt><dd>{recorded(test.updatedAt)}</dd></div>
+            <div><dt>Submitted</dt><dd>{recorded(test.submittedAt)}</dd></div>
+            <div><dt>Review started</dt><dd>{recorded(test.reviewStartedAt)}</dd></div>
+            <div><dt>Approval recorded</dt><dd>{recorded(test.approvedAt)}</dd></div>
+            <div><dt>Rejection recorded</dt><dd>{recorded(test.rejectedAt)}</dd></div>
+          </dl>
+          <p class="muted">
+            These are the timestamps stored on the current record. This read does not reconstruct
+            transitions, signatures or approval stages; the audit register is the authoritative event
+            history.
+          </p>
+        </section>
+      </div>
+
+      <aside class="record-side" aria-label="Record actions and relationships">
+        <section class="panel actions-panel" aria-labelledby="actions-heading">
+          <p class="eyebrow">Current actions</p>
+          <h2 id="actions-heading">Workspaces</h2>
+          <div class="action-list">
+            <div class="action-item">
+              <h3>Execution workspace</h3>
+              {canExecute ? (
+                <a class="button" href={`/laboratory/tests/${test.id}/execute`}>Open execution workspace</a>
+              ) : (
+                <p class="action-note">
+                  Execution is read-only: the current state or your account does not allow draft
+                  editing.
+                </p>
+              )}
+            </div>
+            <div class="action-item">
+              <h3>Review workspace</h3>
+              {canReview ? (
+                <a class="button" href={`/laboratory/tests/${test.id}/review`}>Open review workspace</a>
+              ) : (
+                <p class="action-note">
+                  Review is unavailable for the current state or account. Page visibility does not
+                  grant review authority.
+                </p>
+              )}
+            </div>
+            <div class="action-item">
+              <h3>Retest</h3>
+              {test.originalTestId ? (
+                <p class="action-note">
+                  Retest of an original laboratory test — sequence and authority follow the approved
+                  P-05 policy; the original test remains unchanged.
+                </p>
+              ) : canRetest ? (
+                <p class="action-note">
+                  Retest authorization follows the approved P-05 policy: a retest may only be created
+                  by the approved authority, with its own record version and reason. The original test
+                  remains unchanged.
+                </p>
+              ) : (
+                <p class="action-note">
+                  Retest requires the approved retest authority; this account does not hold it for
+                  this record.
+                </p>
+              )}
+              <p class="action-note">
+                Retest creation is not offered on this read-only record page.
+              </p>
+            </div>
+          </div>
+          <p class="muted">
+            These links only open workspaces. Nothing on this page changes the record; a mutation
+            commits only when the server accepts it.
+          </p>
+        </section>
+
+        <section class="panel" aria-labelledby="relationships-heading">
+          <p class="eyebrow">Read-only links</p>
+          <h2 id="relationships-heading">Relationships</h2>
+          {sourceReceivingUnavailable ? (
+            <ProviderUnavailableState
+              title="Source receiving link unavailable"
+              description="The test remains visible, but its source receiving relationship could not be confirmed."
+              retryHref={Astro.url.pathname}
+            />
+          ) : null}
+          <ul class="related-list">
+            {relatedLinks.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+                {link.detail ? <span>{link.detail}</span> : null}
+              </li>
+            ))}
+          </ul>
+          {!sourceReceiving && !sourceReceivingUnavailable ? (
+            <p class="muted">No source receiving record is linked to this test.</p>
+          ) : null}
+        </section>
+      </aside>
+    </div>
+  </div>
+</AppLayout>
+
+<style>
+  .lab-detail {
+    --detail-gap: var(--space-5);
+    min-inline-size: 0;
+  }
+
+  .lab-detail :global([data-page-header]) {
+    align-items: center;
+    margin-block-end: var(--space-5);
+    padding-block-end: var(--space-5);
+  }
+
+  .record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .meta-separator {
+    color: var(--text-muted);
+  }
+
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .state {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--color-accent-primary);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .state[data-state='REJECTED'],
+  .state[data-state='VOID'],
+  .state[data-state='HOLD'],
+  .state[data-state='RETURNED'] {
+    border-inline-start-color: var(--status-warning);
+  }
+
+  .state[data-state='APPROVED'] {
+    border-inline-start-color: var(--status-approved);
+  }
+
+  .record-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 20rem);
+    align-items: start;
+    gap: var(--detail-gap);
+  }
+
+  .record-content {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--detail-gap);
+  }
+
+  .record-content > :global(.journey-panel),
+  .panel {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+  }
+
+  .record-content > :global(.journey-panel) {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .record-content > :global(.journey-panel) :global([data-record-header]),
+  .record-content > :global(.journey-panel) :global(.state-value) {
+    display: none;
+  }
+
+  .record-content > :global(.journey-panel) :global(.journey-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-4);
+  }
+
+  .section-heading h2,
+  .record-side h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+
+  .eyebrow {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .section-index {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-panel {
+    border-inline-start: 3px solid var(--color-accent-primary);
+  }
+
+  .result-value {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+  }
+
+  .notice {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-4);
+    border-inline-start: 3px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: 0;
+  }
+
+  .facts-grid > div {
+    min-inline-size: 0;
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+
+  .facts-grid > .wide {
+    grid-column: 1 / -1;
+  }
+
+  dt {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  dd {
+    margin: var(--space-1) 0 0;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .hash {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
+    overflow-wrap: anywhere;
+  }
+
+  .muted {
+    margin: var(--space-3) 0 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .muted-inline {
+    color: var(--text-muted);
+  }
+
+  .assessment-message {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-subtle);
+    border-inline-start: 3px solid var(--status-warning);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .assessment-meta {
+    display: block;
+    margin-block-start: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .evidence-block {
+    margin-block-start: var(--space-4);
+  }
+
+  .evidence-block h3 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+
+  .evidence-list,
+  .related-list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .evidence-list li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+    border-block-start: 1px solid var(--color-border-subtle);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .evidence-list li span:last-child {
+    color: var(--text-muted);
+  }
+
+  .table-scroll {
+    max-inline-size: 100%;
+    margin-block-start: var(--space-4);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .table-scroll:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    text-align: start;
+  }
+
+  caption {
+    padding: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+    text-align: start;
+  }
+
+  th,
+  td {
+    min-inline-size: 7rem;
+    padding: var(--space-3);
+    border-block-start: 1px solid var(--color-border-subtle);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    text-align: start;
+    overflow-wrap: break-word;
+  }
+
+  th {
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .calculated-badge {
+    display: inline-block;
+    margin-inline-start: var(--space-2);
+    padding-inline: var(--space-2);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .record-side {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--detail-gap);
+  }
+
+  .record-side .panel {
+    padding: var(--space-4);
+  }
+
+  .actions-panel {
+    position: sticky;
+    inset-block-start: var(--space-5);
+  }
+
+  .action-list {
+    display: grid;
+    gap: var(--space-4);
+    margin-block-start: var(--space-4);
+  }
+
+  .action-item h3 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+
+  .action-item .button {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  .action-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+
+  .related-list {
+    margin-block-start: var(--space-4);
+  }
+
+  .related-list li {
+    padding-block: var(--space-2);
+    border-block-start: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-sm);
+  }
+
+  .related-list li a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-weight: var(--font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  .related-list li span {
+    display: block;
+    margin-block-start: var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 1024px) {
+    .record-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .actions-panel {
+      position: static;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .record-content > :global(.journey-panel),
+    .panel {
+      padding: var(--space-4);
+    }
+
+    .record-content > :global(.journey-panel) :global(.journey-grid),
+    .facts-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .section-heading {
+      align-items: flex-start;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .state,
+    .notice,
+    .assessment-message,
+    .table-scroll {
+      border: 1px solid CanvasText;
+    }
+
+    a:focus-visible,
+    .table-scroll:focus-visible {
+      outline-color: Highlight;
+    }
+  }
+</style>

@@ -44,6 +44,7 @@ const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
 const chipHref = (drop: string) => {
   const next = new URLSearchParams(params);
   next.delete(drop);
+  next.delete('page');
   const search = next.toString();
   return `/laboratory/tests${search ? `?${search}` : ''}`;
 };
@@ -73,6 +74,8 @@ try {
 }
 const tests = result.items;
 const totalPages = Math.max(1, Math.ceil(result.total / page.pageSize));
+const sortLabels = { updated: 'last update', testNo: 'test number', state: 'workflow state' } as const;
+const countText = `Showing ${tests.length} of ${result.total} laboratory tests in your authorized scope · page ${page.page} of ${totalPages} · sorted by ${sortLabels[sort]} (${direction === 'asc' ? 'ascending' : 'descending'})`;
 
 // The register names the executor, never a raw account identifier. Resolution
 // is presentation-only and failure-tolerant: an unavailable identity read
@@ -92,23 +95,199 @@ const executorLabel = (executorId: string | null | undefined) =>
   executorId ? (executorNames.get(executorId) ?? 'Named account') : 'Not recorded';
 ---
 <AppLayout title="Laboratory Tests · QC Operations" locale="en" direction="ltr">
-  <div class="scientific-register">
-  <PageHeader><Fragment slot="heading"><h1>Laboratory tests</h1></Fragment><p><a href="/laboratory/report-templates">Enter Subatmospheric Air Leakage or Pressure Decay report draft</a></p><Fragment slot="actions"><a class="button" href="/laboratory/tests/new">Create laboratory test</a></Fragment></PageHeader>
-  <FilterBar clearHref={hasFilters ? '/laboratory/tests' : undefined} label="Laboratory test filters">
-    <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Test number or sample identifier" /></label>
-    <label for="state">Workflow state<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
-    <label for="ownership">Ownership<select id="ownership" name="ownership"><option value="">All records</option><option value="mine" selected={ownership === 'mine'}>Only mine</option></select></label>
-    <label for="sort">Sort by<select id="sort" name="sort"><option value="updated" selected={sort === 'updated'}>Recently updated</option><option value="testNo" selected={sort === 'testNo'}>Test number</option><option value="state" selected={sort === 'state'}>Workflow state</option></select></label>
-    <label for="direction">Direction<select id="direction" name="direction"><option value="desc" selected={direction === 'desc'}>Descending</option><option value="asc" selected={direction === 'asc'}>Ascending</option></select></label>
-  </FilterBar>
-  <AppliedFilters
-    filters={appliedFilters}
-    clearHref={hasFilters ? '/laboratory/tests' : undefined}
-    note={providerUnavailable || accessDenied
-      ? 'A confirmed laboratory count is unavailable for this request.'
-      : `Showing ${tests.length} of ${result.total} laboratory tests in your authorized scope — page ${page.page} of ${totalPages}.`}
-  />
-  {accessDenied ? <OperationalState state="denied" title="This account cannot view laboratory tests" description="No records or counts were returned for this account. Ask your administrator to confirm access." /> : providerUnavailable ? <ProviderUnavailableState title="Laboratory data is temporarily unavailable" description="No test count or result state is shown because the laboratory provider did not confirm a response." retryHref="/laboratory/tests" /> : tests.length ? <DataTable caption={`Laboratory tests — ${result.total} matching records`} summary={`Showing ${tests.length} of ${result.total} authorized records · page ${page.page} of ${totalPages}. Sorted by ${sort} ${direction}.`} density="compact"><thead><tr><th scope="col">Test number</th><th scope="col">Sample</th><th scope="col">Method / version</th><th scope="col">State</th><th scope="col">Official result</th><th scope="col">Executor</th><th scope="col">Last updated</th></tr></thead><tbody>{tests.map((test) => <tr><th scope="row"><a href={`/laboratory/tests/${test.id}`}>{test.labTestNo}</a></th><td>{test.samples.map((sample) => sample.identifier).join(', ') || 'Not recorded'}</td><td>{test.context.methodReference} · v{test.context.versionNo}</td><td>{stateLabel(test.state)}</td><td>{test.scientificResult ?? 'Not determined'}</td><td>{executorLabel(test.authorId)}</td><td><time datetime={test.updatedAt}>{formatDate(new Date(test.updatedAt))}</time></td></tr>)}</tbody><Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="laboratory tests" baseUrl="/laboratory/tests" /></Fragment></DataTable> : <OperationalState state={hasFilters ? "filtered-empty" : "empty"} title={hasFilters ? "No laboratory tests match these filters" : "No laboratory tests yet"} description={hasFilters ? "Nothing in your authorized scope matches the filters above. Remove a filter to widen the search." : "Tests appear here once they are created."} actionLabel={hasFilters ? "Clear all filters" : "Create laboratory test"} actionHref={hasFilters ? "/laboratory/tests" : "/laboratory/tests/new"} />}
+  <div class="scientific-register laboratory-register">
+    <PageHeader purpose="Browse laboratory tests in your authorized scope. Each test keeps its recorded scientific result separate from its workflow state.">
+      <Fragment slot="heading"><h1>Laboratory tests</h1></Fragment>
+      <p class="header-link"><a href="/laboratory/report-templates">Enter Subatmospheric Air Leakage or Pressure Decay report draft</a></p>
+      <Fragment slot="actions"><a class="button" href="/laboratory/tests/new">Create laboratory test</a></Fragment>
+    </PageHeader>
+
+    <section class="filter-panel" aria-labelledby="laboratory-filters-heading">
+      <h2 id="laboratory-filters-heading">Find laboratory tests</h2>
+      <FilterBar clearHref={hasFilters ? '/laboratory/tests' : undefined} label="Laboratory test filters">
+        <label for="q">Search<input id="q" name="q" type="search" value={search ?? ''} maxlength="200" placeholder="Test number or sample identifier" /></label>
+        <label for="state">Workflow state<select id="state" name="state"><option value="">All states</option>{states.map((value) => <option value={value} selected={state === value}>{stateLabel(value)}</option>)}</select></label>
+        <label for="ownership">Ownership<select id="ownership" name="ownership"><option value="">All records</option><option value="mine" selected={ownership === 'mine'}>Only mine</option></select></label>
+        <label for="sort">Sort by<select id="sort" name="sort"><option value="updated" selected={sort === 'updated'}>Recently updated</option><option value="testNo" selected={sort === 'testNo'}>Test number</option><option value="state" selected={sort === 'state'}>Workflow state</option></select></label>
+        <label for="direction">Direction<select id="direction" name="direction"><option value="desc" selected={direction === 'desc'}>Descending</option><option value="asc" selected={direction === 'asc'}>Ascending</option></select></label>
+      </FilterBar>
+    </section>
+
+    <AppliedFilters
+      filters={appliedFilters}
+      clearHref={hasFilters ? '/laboratory/tests' : undefined}
+      note={!accessDenied && !providerUnavailable && !hasFilters
+        ? 'Results are limited to your authorized scope.'
+        : undefined}
+    />
+
+    {(accessDenied || providerUnavailable) && (
+      <div class="feedback-region">
+        {accessDenied ? (
+          <OperationalState state="denied" title="This account cannot view laboratory tests" description="No records or counts were returned for this account. Ask your administrator to confirm access." />
+        ) : (
+          <ProviderUnavailableState title="Laboratory data is temporarily unavailable" description="No test count or result state is shown because the laboratory provider did not confirm a response." retryHref="/laboratory/tests" />
+        )}
+      </div>
+    )}
+
+    {!accessDenied && !providerUnavailable && (
+      tests.length ? (
+        <DataTable caption="Laboratory test register" summary={countText} density="compact">
+          <thead>
+            <tr>
+              <th scope="col">Test number</th>
+              <th scope="col">Samples</th>
+              <th scope="col">Method / version</th>
+              <th scope="col">Workflow state</th>
+              <th scope="col">Scientific result</th>
+              <th scope="col">Executor</th>
+              <th scope="col">Last updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tests.map((test) => (
+              <tr>
+                <th scope="row" class="cell-test-number"><a href={`/laboratory/tests/${test.id}`}>{test.labTestNo}</a></th>
+                <td class="cell-samples">{test.samples.map((sample) => sample.identifier).join(', ') || 'Not recorded'}</td>
+                <td class="cell-method">{test.context.methodReference} · v{test.context.versionNo}</td>
+                <td class="cell-state">{stateLabel(test.state)}</td>
+                <td class="cell-result">{test.scientificResult ?? 'Not determined'}</td>
+                <td class="cell-executor">{executorLabel(test.authorId)}</td>
+                <td class="cell-updated"><time datetime={test.updatedAt}>{formatDate(new Date(test.updatedAt))}</time></td>
+              </tr>
+            ))}
+          </tbody>
+          <Fragment slot="pagination"><Pagination page={page.page} totalPages={totalPages} total={result.total} itemLabel="laboratory tests" baseUrl="/laboratory/tests" /></Fragment>
+        </DataTable>
+      ) : (
+        <OperationalState
+          state={hasFilters ? 'filtered-empty' : 'empty'}
+          title={hasFilters ? 'No laboratory tests match these filters' : 'No laboratory tests yet'}
+          description={hasFilters ? 'Nothing in your authorized scope matches the filters above. Remove a filter to widen the search.' : 'Tests appear here once they are created.'}
+          actionLabel={hasFilters ? 'Clear all filters' : 'Create laboratory test'}
+          actionHref={hasFilters ? '/laboratory/tests' : '/laboratory/tests/new'}
+        />
+      )
+    )}
   </div>
 </AppLayout>
-<style>.head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-5);margin-bottom:var(--space-6)}.eyebrow{margin:0;color:var(--text-muted);font-size:.75rem;letter-spacing:.12em;font-weight:700}.lede,.empty p,.empty a{color:var(--text-muted);font-size:.85rem}.button,button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--control-height);padding:.7rem 1rem;background:var(--color-accent-primary);color:var(--color-text-inverse);border:1px solid var(--color-accent-primary);border-radius:var(--radius-md);text-decoration:none;font-weight:700;cursor:pointer}.filters{display:flex;gap:var(--space-4);align-items:end;margin-bottom:var(--space-4);flex-wrap:wrap}label{display:grid;gap:.35rem;color:var(--text-secondary);font-size:.8rem}select{min-height:var(--control-height);padding:.5rem .7rem;background:var(--surface-panel);color:inherit;border:1px solid var(--border-default);border-radius:var(--radius-sm);font:inherit}.table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--color-border-subtle);border-radius:var(--radius-lg)}table{width:100%;min-width:1000px;background:var(--surface-panel);border-collapse:collapse}caption{text-align:start;padding:var(--space-4);color:var(--text-muted);font-size:.8rem}th,td{padding:.75rem;border-top:1px solid var(--color-border-subtle);text-align:start;vertical-align:top;font-size:.8rem}th{font-weight:700}a{color:var(--color-accent-primary-hover)}.empty{padding:var(--space-8);text-align:center;background:var(--surface-panel);border:1px dashed var(--color-border-strong);border-radius:var(--radius-lg)}.empty h2{margin:0 0 .5rem}@media(max-width:650px){.head,.filters{display:grid}.button{width:max-content}}</style>
+<style>
+  .laboratory-register { min-inline-size: 0; }
+  .header-link { margin: var(--space-2) 0 0; }
+  .header-link a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--color-accent-primary-hover);
+    font-size: var(--font-size-sm);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: max(var(--control-height), 44px);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-primary);
+    color: var(--text-on-accent);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+  }
+  .filter-panel {
+    margin-block-end: var(--space-4);
+    padding: var(--space-5);
+    background: var(--surface-panel);
+    border: 1px solid var(--border-default);
+    border-radius: var(--card-radius);
+  }
+  .filter-panel h2 {
+    margin: 0 0 var(--space-4);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+  }
+  .filter-panel :global(.filters) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    align-items: end;
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .filter-panel :global(label) { min-inline-size: 0; }
+  .filter-panel :global(input),
+  .filter-panel :global(select) {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    border-color: var(--control-border);
+  }
+  .filter-panel :global(.filters-actions),
+  .filter-panel :global(.submit-status) { grid-column: 1 / -1; }
+  .filter-panel :global(.filters-actions) { flex-wrap: wrap; }
+  .feedback-region { margin-block-end: var(--space-4); }
+  .laboratory-register :global(.data-panel) { min-inline-size: 0; }
+  /* A wide register: long identifiers and sample lists wrap over several lines
+     instead of being clipped, while the focusable scroll region from DataTable
+     keeps narrow viewports usable. */
+  .laboratory-register :global(table) { min-inline-size: 68rem; }
+  .laboratory-register :global(.table-scroll:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+  .laboratory-register .cell-test-number {
+    min-inline-size: 11rem;
+    font-weight: var(--font-weight-semibold);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .laboratory-register .cell-test-number a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .laboratory-register .cell-samples {
+    min-inline-size: 12rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .laboratory-register .cell-method {
+    min-inline-size: 11rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .laboratory-register .cell-state {
+    min-inline-size: 8rem;
+    white-space: normal;
+  }
+  .laboratory-register .cell-result {
+    min-inline-size: 9rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .laboratory-register .cell-executor {
+    min-inline-size: 10rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .laboratory-register .cell-updated {
+    min-inline-size: 9rem;
+    font-variant-numeric: var(--numeric-figures);
+    white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    .filter-panel { padding: var(--space-4); }
+  }
+  @media (forced-colors: active) {
+    .filter-panel,
+    .button { border-color: CanvasText; }
+    .filter-panel :global(input),
+    .filter-panel :global(select) { border-color: ButtonText; }
+    .header-link a,
+    .laboratory-register .cell-test-number a { color: LinkText; }
+  }
+</style>
